@@ -2245,7 +2245,7 @@ void graphe::find_blocks_dfs(int v,int &t,ivector &dfi,ivector &p,stack<ipair> &
         w=*it;
         edge=make_edge(v,w);
         map<int,ivector>::const_iterator st;
-        if ((st=stacked.find(edge.first))==stacked.end() &&
+        if ((st=stacked.find(edge.first))==stacked.end() ||
                 find(st->second.begin(),st->second.end(),edge.second)==st->second.end()) {
             s.push(edge);
             // keep track of stacked edges
@@ -2262,6 +2262,13 @@ void graphe::find_blocks_dfs(int v,int &t,ivector &dfi,ivector &p,stack<ipair> &
                     block_edge=s.top();
                     s.pop();
                     blocks[n].push_back(block_edge);
+                    map<int,ivector>::iterator pt=stacked.find(block_edge.first);
+                    assert(pt!=stacked.end());
+                    ivector::iterator rt=find(pt->second.begin(),pt->second.end(),block_edge.second);
+                    assert(rt!=pt->second.end());
+                    pt->second.erase(rt);
+                    if (pt->second.empty())
+                        stacked.erase(pt);
                 } while (block_edge!=edge);
             }
             p[v]=std::min(p[v],p[w]);
@@ -2275,7 +2282,7 @@ void graphe::find_blocks(vector<vector<ipair> > &blocks) const {
     int t=1;
     stack<ipair> s;
     ivector dfi(node_count(),0);
-    ivector p;
+    ivector p(node_count());
     map<int,ivector> stacked;
     ivector::const_iterator it;
     dfs_parent=ivector(node_count(),-1);

@@ -1,5 +1,5 @@
 # graph-theory
-Graph theory package for Giac computer algebra system
+**A graph theory package for Giac computer algebra system**
 
 This repository contains a collection of graph theory commands for Giac which are compatible with the corresponding Maple commands.
 

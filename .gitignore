@@ -1,0 +1,9 @@
+*.out
+*.config
+*.creator
+*.creator.user
+*.creator.user*
+*.files
+*.o
+*.includes
+*.dot

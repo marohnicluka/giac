@@ -34,7 +34,7 @@ namespace giac {
 
 /* error messages */
 static const char *gt_error_messages[] = {
-    "unknown error"                                                     //  0
+    "unknown error",                                                    //  0
     "argument is not a graph",                                          //  1
     "a weighted graph is required",                                     //  2
     "an unweighted graph is required",                                  //  3
@@ -841,11 +841,15 @@ bool graphe::has_edge(int i,int j) const {
 }
 
 /* add edge {i,j} or arc [i,j], depending on the type (undirected or directed) */
-bool graphe::add_edge(int i, int j) {
+bool graphe::add_edge(int i, int j, const gen &w) {
     if (i<0 || i>=node_count() || j<0 || j>=node_count() || has_edge(i,j))
         return false;
     ipair edge=make_edge(i,j);
-    return nodes[edge.first].neighbors.insert(make_pair(edge.second,attrib())).second;
+    if (!nodes[edge.first].neighbors.insert(make_pair(edge.second,attrib())).second)
+        return false;
+    if (is_weighted())
+        set_edge_attribute(i,j,_GT_ATTRIB_WEIGHT,w);
+    return true;
 }
 
 /* add edge {i,j} or arc [i,j] with attributes */
@@ -858,11 +862,10 @@ bool graphe::add_edge(int i, int j,const attrib &attr) {
 }
 
 /* add edge {v,w} or arc [v,w], adding vertices v and/or w if necessary */
-graphe::ipair graphe::add_edge(const gen &v, const gen &w) {
+graphe::ipair graphe::add_edge(const gen &v, const gen &w,const gen &weight) {
     int i=add_node(v),j=add_node(w);
-    ipair edge=make_edge(i,j);
-    add_edge(edge);
-    return edge;
+    add_edge(i,j,weight);
+    return make_edge(i,j);
 }
 
 /* remove edge {v,w} or arc [v,w] */
@@ -871,8 +874,9 @@ bool graphe::remove_edge(int i, int j) {
         return false;
     ipair edge=make_edge(i,j);
     map<int,attrib>::iterator it;
-    it=nodes[edge.first].neighbors.find(edge.second);
-    nodes[edge.first].neighbors.erase(it);
+    map<int,attrib> &ngh=nodes[edge.first].neighbors;
+    it=ngh.find(edge.second);
+    ngh.erase(it);
     return true;
 }
 
@@ -892,6 +896,54 @@ int graphe::add_node(const gen &v) {
 void graphe::add_nodes(const vecteur &v) {
     for (const_iterateur it=v.begin();it!=v.end();++it) {
         add_node(*it);
+    }
+}
+
+/* remove the i-th node */
+bool graphe::remove_node(int i) {
+    if (i<0 || i>=node_count())
+        return false;
+    ivector adj=adjacent_nodes(i);
+    for (ivector::const_iterator it=adj.begin();it!=adj.end();++it) {
+        remove_edge(i,*it);
+        if (is_directed())
+            remove_edge(*it,i);
+    }
+    remove_isolated_node(i);
+    return true;
+}
+
+/* remove node v */
+bool graphe::remove_node(const gen &v) {
+    int i=node_index(v);
+    if (i==-1)
+        return false;
+    return remove_node(i);
+}
+
+/* remove all nodes from list v */
+void graphe::remove_nodes(const vecteur &v) {
+    ivector I(v.size());
+    int i=0;
+    for (const_iterateur it=v.begin();it!=v.end();++it) {
+        I[i++]=node_index(*it);
+    }
+    ivector isolated_nodes;
+    for (ivector::const_iterator it=I.begin();it!=I.end();++it) {
+        i=*it;
+        if (i<0)
+            continue;
+        ivector adj=adjacent_nodes(i);
+        for (ivector::const_iterator jt=adj.begin();jt!=adj.end();++jt) {
+            remove_edge(i,*jt);
+            if (is_directed())
+                remove_edge(*jt,i);
+        }
+        isolated_nodes.push_back(i);
+    }
+    sort(isolated_nodes.begin(),isolated_nodes.end());
+    for (i=int(isolated_nodes.size())-1;i>=0;--i) {
+        remove_isolated_node(isolated_nodes[i]);
     }
 }
 
@@ -2033,15 +2085,39 @@ void graphe::remove_isolated_node(int i) {
     }
 }
 
-/* collapse edge {i,j} in undirected graph */
-void graphe::collapse_edge(int v,int w) {
-    int i=v<w?v:w,j=v<w?w:v;
+/* collapse edge {i,j}, leaving j-th node isolated (not connected to any other node) */
+void graphe::collapse_edge(int i,int j) {
     ivector adj=adjacent_nodes(j);
     for (ivector::const_iterator it=adj.begin();it!=adj.end();++it) {
         remove_edge(*it,j);
         if (*it!=i)
             add_edge(*it,i);
+        if (is_directed()) {
+            remove_edge(j,*it);
+            if (*it!=i)
+                add_edge(i,*it);
+        }
     }
+}
+
+/* return list of edges incident to vertices in v */
+vector<graphe::ipair> graphe::incident_edges(const ivector &v) {
+    int i=0;
+    bool b;
+    map<int,bool> sw;
+    for (ivector::const_iterator it=v.begin();it!=v.end();++it) {
+        sw[*it]=true;
+    }
+    vector<ipair> res;
+    for (vector<vertex>::const_iterator it=nodes.begin();it!=nodes.end();++it) {
+        b=sw[i];
+        for (map<int,attrib>::const_iterator jt=it->neighbors.begin();jt!=it->neighbors.end();++jt) {
+            if (b || sw[jt->first])
+                res.push_back(make_pair(i,jt->first));
+        }
+        ++i;
+    }
+    return res;
 }
 
 /* make a list of all n-tuples of k integers 0,1,...,k-1 */
@@ -2103,7 +2179,7 @@ void graphe::make_sierpinski_graph(int n, int k, bool triangle,GIAC_CONTEXT) {
             if (it->size()==2) {
                 int v=it->front(),w=it->back();
                 collapse_edge(v,w);
-                isolated_nodes.push_back(v<w?w:v);
+                isolated_nodes.push_back(w);
             }
         }
         sort(isolated_nodes.begin(),isolated_nodes.end());
@@ -3144,13 +3220,11 @@ gen edge_disp(int color,int width) {
     return symbolic(at_equal,makesequence(at_display,change_subtype(color | width,_INT_COLOR)));
 }
 
-gen node_disp(int color,int width,int quadrant) {
-    int d = _POINT_POINT | width | color | quadrant;
-    return symbolic(at_equal,makesequence(at_display,change_subtype(d,_INT_COLOR)));
-}
-
-gen node_label(const gen &g) {
-    return symbolic(at_equal,makesequence(at_legende,g));
+gen draw_node(const gen &p,const gen &g,int width,int color,int quadrant) {
+    int d=_POINT_PLUS | width | color | quadrant;
+    gen disp=symbolic(at_equal,makesequence(at_display,change_subtype(d,_INT_COLOR)));
+    gen pos=symbolic(at_point,p);
+    return symbolic(at_legende,makesequence(pos,g,disp));
 }
 
 /*
@@ -3193,7 +3267,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     int line_color=d==2?_BLUE:0,line_width=d==2?_LINE_WIDTH_2:_LINE_WIDTH_1,node_width;
     if (n<30)
         node_width=_POINT_WIDTH_3;
-    else if (n<130)
+    else if (n<100)
         node_width=_POINT_WIDTH_2;
     else
         node_width=_POINT_WIDTH_1;
@@ -3214,26 +3288,22 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
         if (d==2) {
             switch (G.node_label_best_quadrant(x,center,i)) {
             case 1:
-                q=_QUADRANT1;
+                q=_QUADRANT4;
                 break;
             case 2:
-                q=_QUADRANT2;
+                q=_QUADRANT1;
                 break;
             case 3:
-                q=_QUADRANT3;
+                q=_QUADRANT2;
                 break;
             case 4:
-                q=_QUADRANT4;
+                q=_QUADRANT3;
                 break;
             default:
                 assert(false);
             }
         }
-        p1=graphe::rvec2gen(x[i]);
-        gen S=makesequence(p1,node_disp(0,node_width,d==2?q:0));
-        if (d==2)
-            S._VECTptr->push_back(node_label(G.node(i)));
-        res.push_back(symbolic(at_point,S));
+        res.push_back(draw_node(graphe::rvec2gen(x[i]),G.node(i),node_width,0,q));
     }
     return res;
 }
@@ -3339,6 +3409,11 @@ static const char _petersen_graph_s []="petersen_graph";
 static define_unary_function_eval(__petersen_graph,&_petersen_graph,_petersen_graph_s);
 define_unary_function_ptr5(at_petersen_graph,alias_at_petersen_graph,&__petersen_graph,0,true)
 
+/*
+ * Usage:   articulation_points(G)
+ *
+ * Returns the list of articulation points (i.e. cut vertices) of graph G.
+ */
 gen _articulation_points(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG &&g.subtype==-1) return g;
     if (g.type!=_VECT)
@@ -3359,7 +3434,13 @@ static const char _articulation_points_s []="articulation_points";
 static define_unary_function_eval(__articulation_points,&_articulation_points,_articulation_points_s);
 define_unary_function_ptr5(at_articulation_points,alias_at_articulation_points,&__articulation_points,0,true)
 
-gen _graph_blocks(const gen &g,GIAC_CONTEXT) {
+/*
+ * Usage:   biconnected_components(G)
+ *
+ * Returns the list of biconnected components of graph G. Every component is
+ * given as a list of edges of G belonging to that component.
+ */
+gen _biconnected_components(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG &&g.subtype==-1) return g;
     if (g.type!=_VECT)
         return gentypeerr(contextptr);
@@ -3380,9 +3461,463 @@ gen _graph_blocks(const gen &g,GIAC_CONTEXT) {
     }
     return res;
 }
-static const char _graph_blocks_s []="graph_blocks";
-static define_unary_function_eval(__graph_blocks,&_graph_blocks,_graph_blocks_s);
-define_unary_function_ptr5(at_graph_blocks,alias_at_graph_blocks,&__graph_blocks,0,true)
+static const char _biconnected_components_s []="biconnected_components";
+static define_unary_function_eval(__biconnected_components,&_biconnected_components,_biconnected_components_s);
+define_unary_function_ptr5(at_biconnected_components,alias_at_biconnected_components,&__biconnected_components,0,true)
+
+bool parse_edge_with_weight(graphe &G,const vecteur &E) {
+    if (E.size()!=2)
+        return false;
+    const vecteur &e=*E.front()._VECTptr;
+    const gen &w=E.back();
+    if (e.size()!=2)
+        return false;
+    G.add_edge(e.front(),e.back(),w);
+    return true;
+}
+
+bool parse_edges(graphe &G,const vecteur &E) {
+    if (ckmatrix(E,true)) {
+        if (E.front()._VECTptr->size()!=2)
+            return false;
+        for (const_iterateur it=E.begin();it!=E.end();++it) {
+            if (it->_VECTptr->front().type!=_VECT)
+                G.add_edge(it->_VECTptr->front(),it->_VECTptr->back());
+            else {
+                if (!parse_edge_with_weight(G,*it->_VECTptr))
+                    return false;
+            }
+        }
+    } else {
+        int n=E.size();
+        if (n<2)
+            return false;
+        if (E.front().type==_VECT) {
+            if (!parse_edge_with_weight(G,E))
+                return false;
+        } else {
+            for (int i=0;i<n-1;++i) {
+                G.add_edge(E[i],E[i+1]);
+            }
+        }
+    }
+    return true;
+}
+
+bool delete_edges(graphe &G,const vecteur &E) {
+    if (ckmatrix(E)) {
+        if (E.front()._VECTptr->size()!=2)
+            return false;
+        for (const_iterateur it=E.begin();it!=E.end();++it) {
+            int i=G.node_index(it->_VECTptr->front()),j=G.node_index(it->_VECTptr->back());
+            if (i>=0 && j>=0)
+                G.remove_edge(i,j);
+        }
+    } else {
+        int n=E.size();
+        if (n<2)
+            return false;
+        for (int k=0;k<n-1;++k) {
+            int i=G.node_index(E[k]),j=G.node_index(E[k+1]);
+            G.remove_edge(i,j);
+        }
+    }
+    return true;
+}
+
+/*
+ * Usage:   add_arc(G,e)
+ *
+ * Returns graph G (which must be directed) with added arc e (or trail or list
+ * of arcs).
+ */
+gen _add_arc(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    if (g._VECTptr->size()!=2)
+        return gensizeerr(contextptr);
+    if (g._VECTptr->front().type!=_VECT || g._VECTptr->back().type!=_VECT)
+        return gentypeerr(contextptr);
+    vecteur &E=*g._VECTptr->back()._VECTptr;
+    graphe G;
+    if (!G.read_gen(*g._VECTptr->front()._VECTptr,contextptr)) {
+        gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+        return gentypeerr(contextptr);
+    }
+    if (!G.is_directed()) {
+        gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED,contextptr);
+        return gentypeerr(contextptr);
+    }
+    if (!parse_edges(G,E))
+        return gendimerr(contextptr);
+    return G.to_gen();
+}
+static const char _add_arc_s []="add_arc";
+static define_unary_function_eval(__add_arc,&_add_arc,_add_arc_s);
+define_unary_function_ptr5(at_add_arc,alias_at_add_arc,&__add_arc,0,true)
+
+/*
+ * Usage:   delete_arc(G,e)
+ *
+ * Returns graph G (which must be directed) with arc e (or trail or list of
+ * arcs) removed.
+ */
+gen _delete_arc(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    if (g._VECTptr->size()!=2)
+        return gensizeerr(contextptr);
+    if (g._VECTptr->front().type!=_VECT || g._VECTptr->back().type!=_VECT)
+        return gentypeerr(contextptr);
+    vecteur &E=*g._VECTptr->back()._VECTptr;
+    graphe G;
+    if (!G.read_gen(*g._VECTptr->front()._VECTptr,contextptr)) {
+        gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+        return gentypeerr(contextptr);
+    }
+    if (!G.is_directed()) {
+        gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED,contextptr);
+        return gentypeerr(contextptr);
+    }
+    if (!delete_edges(G,E))
+        return gendimerr(contextptr);
+    return G.to_gen();
+}
+static const char _delete_arc_s []="delete_arc";
+static define_unary_function_eval(__delete_arc,&_delete_arc,_delete_arc_s);
+define_unary_function_ptr5(at_delete_arc,alias_at_delete_arc,&__delete_arc,0,true)
+
+/*
+ * Usage:   add_edge(G,e)
+ *
+ * Returns graph G (which must be undirected) with added edge e (or trail or
+ * list of edges).
+ */
+gen _add_edge(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    if (g._VECTptr->size()!=2)
+        return gensizeerr(contextptr);
+    if (g._VECTptr->front().type!=_VECT || g._VECTptr->back().type!=_VECT)
+        return gentypeerr(contextptr);
+    vecteur &E=*g._VECTptr->back()._VECTptr;
+    graphe G;
+    if (!G.read_gen(*g._VECTptr->front()._VECTptr,contextptr)) {
+        gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+        return gentypeerr(contextptr);
+    }
+    if (G.is_directed()) {
+        gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
+        return gentypeerr(contextptr);
+    }
+    if (!parse_edges(G,E))
+        return gendimerr(contextptr);
+    return G.to_gen();
+}
+static const char _add_edge_s []="add_edge";
+static define_unary_function_eval(__add_edge,&_add_edge,_add_edge_s);
+define_unary_function_ptr5(at_add_edge,alias_at_add_edge,&__add_edge,0,true)
+
+/*
+ * Usage:   delete_edge(G,e)
+ *
+ * Returns graph G (which must be undirected) with edge e (or trail or list of
+ * edges) removed.
+ */
+gen _delete_edge(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    if (g._VECTptr->size()!=2)
+        return gensizeerr(contextptr);
+    if (g._VECTptr->front().type!=_VECT || g._VECTptr->back().type!=_VECT)
+        return gentypeerr(contextptr);
+    vecteur &E=*g._VECTptr->back()._VECTptr;
+    graphe G;
+    if (!G.read_gen(*g._VECTptr->front()._VECTptr,contextptr)) {
+        gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+        return gentypeerr(contextptr);
+    }
+    if (G.is_directed()) {
+        gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
+        return gentypeerr(contextptr);
+    }
+    if (!delete_edges(G,E))
+        return gendimerr(contextptr);
+    return G.to_gen();
+}
+static const char _delete_edge_s []="delete_edge";
+static define_unary_function_eval(__delete_edge,&_delete_edge,_delete_edge_s);
+define_unary_function_ptr5(at_delete_edge,alias_at_delete_edge,&__delete_edge,0,true)
+
+/*
+ * Usage:   add_vertex(G,v)
+ *
+ * Returns graph G with added vertex v (or vertices from v if v is a list).
+ */
+gen _add_vertex(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    if (g._VECTptr->size()!=2)
+        return gensizeerr(contextptr);
+    if (g._VECTptr->front().type!=_VECT)
+        return gentypeerr(contextptr);
+    graphe G;
+    if (!G.read_gen(*g._VECTptr->front()._VECTptr,contextptr)) {
+        gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+        return gentypeerr(contextptr);
+    }
+    gen &V=g._VECTptr->back();
+    if (V.type==_VECT)
+        G.add_nodes(*V._VECTptr);
+    else
+        G.add_node(V);
+    return G.to_gen();
+}
+static const char _add_vertex_s []="add_vertex";
+static define_unary_function_eval(__add_vertex,&_add_vertex,_add_vertex_s);
+define_unary_function_ptr5(at_add_vertex,alias_at_add_vertex,&__add_vertex,0,true)
+
+/*
+ * Usage:   delete_vertex(G,v)
+ *
+ * Returns graph G with vertex v (or vertices from v if v is a list) removed.
+ */
+gen _delete_vertex(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    if (g._VECTptr->size()!=2)
+        return gensizeerr(contextptr);
+    if (g._VECTptr->front().type!=_VECT)
+        return gentypeerr(contextptr);
+    graphe G;
+    if (!G.read_gen(*g._VECTptr->front()._VECTptr,contextptr)) {
+        gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+        return gentypeerr(contextptr);
+    }
+    gen &V=g._VECTptr->back();
+    if (V.type==_VECT) {
+        G.remove_nodes(*V._VECTptr);
+    } else {
+        if (!G.remove_node(V))
+            gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+    }
+    return G.to_gen();
+}
+static const char _delete_vertex_s []="delete_vertex";
+static define_unary_function_eval(__delete_vertex,&_delete_vertex,_delete_vertex_s);
+define_unary_function_ptr5(at_delete_vertex,alias_at_delete_vertex,&__delete_vertex,0,true)
+
+/*
+ * Usage:   contract_edge(G,E)
+ *
+ * Returns graph G with edge E contracted (collapsed).
+ */
+gen _contract_edge(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    if (g._VECTptr->size()!=2)
+        return gensizeerr(contextptr);
+    if (g._VECTptr->front().type!=_VECT || g._VECTptr->back().type!=_VECT)
+        return gentypeerr(contextptr);
+    graphe G;
+    if (!G.read_gen(*g._VECTptr->front()._VECTptr,contextptr)) {
+        gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+        return gentypeerr(contextptr);
+    }
+    vecteur &E=*g._VECTptr->back()._VECTptr;
+    if (E.size()!=2)
+        return gensizeerr(contextptr);
+    int i=G.node_index(E.front()),j=G.node_index(E.back());
+    if (i<0 || j<0 || !G.has_edge(i,j))
+        gt_err(_GT_ERR_EDGE_NOT_FOUND,contextptr);
+    else {
+        G.collapse_edge(i,j);
+        G.remove_node(j);
+    }
+    return G.to_gen();
+}
+static const char _contract_edge_s []="contract_edge";
+static define_unary_function_eval(__contract_edge,&_contract_edge,_contract_edge_s);
+define_unary_function_ptr5(at_contract_edge,alias_at_contract_edge,&__contract_edge,0,true)
+
+/*
+ * Usage:   connected_components(G)
+ *
+ * Returns list of lists of vertices, each sublist representing a connected
+ * component of graph G. Individual components can be made available as
+ * subgraphs of G by applying the induced_subgraph command.
+ */
+gen _connected_components(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    graphe G;
+    if (!G.read_gen(*g._VECTptr,contextptr)) {
+        gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+        return gentypeerr(contextptr);
+    }
+    vector<graphe::ivector> components;
+    G.connected_components(components);
+    vecteur res;
+    for (vector<graphe::ivector>::const_iterator it=components.begin();it!=components.end();++it) {
+        vecteur component;
+        for (graphe::ivector::const_iterator jt=it->begin();jt!=it->end();++jt) {
+            component.push_back(G.node(*jt));
+        }
+        res.push_back(component);
+    }
+    return res;
+}
+static const char _connected_components_s []="connected_components";
+static define_unary_function_eval(__connected_components,&_connected_components,_connected_components_s);
+define_unary_function_ptr5(at_connected_components,alias_at_connected_components,&__connected_components,0,true)
+
+gen flights(const gen &g,bool arrive,bool all,GIAC_CONTEXT) {
+    if (!all && g._VECTptr->front().type!=_VECT)
+        return gentypeerr(contextptr);
+    graphe G;
+    if (!G.read_gen(all?*g._VECTptr:*g._VECTptr->front()._VECTptr,contextptr)) {
+        gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+        return gentypeerr(contextptr);
+    }
+    if (!G.is_directed()) {
+        gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED,contextptr);
+        return gentypeerr(contextptr);
+    }
+    int i=0;
+    if (!all) {
+        i=G.node_index(g._VECTptr->at(1));
+        if (i==-1) {
+            gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+            return gentypeerr(contextptr);
+        }
+    }
+    vecteur res;
+    do {
+        graphe::ivector adj=G.adjacent_nodes(i);
+        vecteur v;
+        for (graphe::ivector::const_iterator it=adj.begin();it!=adj.end();++it) {
+            if (G.has_edge(arrive?*it:i,arrive?i:*it))
+                v.push_back(G.node(*it));
+        }
+        if (!all)
+            return v;
+        res.push_back(v);
+    } while (i++<G.node_count());
+    return res;
+}
+
+/*
+ * Usage:   departures(G,[v])
+ *
+ * Returns list of vertices of directed graph G which are connected by v with
+ * arcs such that tails are in v. If v is omitted, list of departures is
+ * computed for every vertex and a list of lists is returned.
+ */
+gen _departures(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    return flights(g,false,g.subtype!=_SEQ__VECT,contextptr);
+}
+static const char _departures_s []="departures";
+static define_unary_function_eval(__departures,&_departures,_departures_s);
+define_unary_function_ptr5(at_departures,alias_at_departures,&__departures,0,true)
+
+/*
+ * Usage:   arrivals(G,[v])
+ *
+ * Returns list of vertices of directed graph G which are connected by v with
+ * arcs such that heads are in v. If v is omitted, list of departures is
+ * computed for every vertex and a list of lists is returned.
+ */
+gen _arrivals(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    return flights(g,true,g.subtype!=_SEQ__VECT,contextptr);
+}
+static const char _arrivals_s []="arrivals";
+static define_unary_function_eval(__arrivals,&_arrivals,_arrivals_s);
+define_unary_function_ptr5(at_arrivals,alias_at_arrivals,&__arrivals,0,true)
+
+/*
+ * Usage:   incident_edges(G,v)
+ *
+ * Returns list of all edges incident to vertex v (or vertices in the list v).
+ */
+gen _incident_edges(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    if (g._VECTptr->size()!=2)
+        return gensizeerr(contextptr);
+    graphe G;
+    if (!G.read_gen(*g._VECTptr->front()._VECTptr,contextptr)) {
+        gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+        return gentypeerr(contextptr);
+    }
+    vecteur V;
+    if (g._VECTptr->back().type==_VECT)
+        V=*g._VECTptr->back()._VECTptr;
+    else
+        V.push_back(g._VECTptr->back());
+    graphe::ivector indices;
+    int i;
+    for (const_iterateur it=V.begin();it!=V.end();++it) {
+        if ((i=G.node_index(*it))==-1) {
+            gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+            return gentypeerr(contextptr);
+        }
+        indices.push_back(i);
+    }
+    vector<graphe::ipair> E=G.incident_edges(indices);
+    vecteur res;
+    for (vector<graphe::ipair>::const_iterator it=E.begin();it!=E.end();++it) {
+        res.push_back(makevecteur(G.node(it->first),G.node(it->second)));
+    }
+    return res;
+}
+static const char _incident_edges_s []="incident_edges";
+static define_unary_function_eval(__incident_edges,&_incident_edges,_incident_edges_s);
+define_unary_function_ptr5(at_incident_edges,alias_at_incident_edges,&__incident_edges,0,true)
+
+/*
+ * Usage:   make_weighted(G,[M])
+ *
+ * Returns graph G with edge/arc weights as specified by matrix M. If M is
+ * omitted, a suqare matrix of ones is used. If G is undirected, M is assumed
+ * to be symmetric.
+ */
+gen _make_weighted(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    bool has_matrix=g.subtype==_SEQ__VECT;
+    if (has_matrix && g._VECTptr->size()!=2)
+        return gensizeerr(contextptr);
+    graphe G;
+    if (!G.read_gen(has_matrix?*g._VECTptr->front()._VECTptr:*g._VECTptr,contextptr)) {
+        gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+        return gentypeerr(contextptr);
+    }
+    int n=G.node_count();
+    matrice m=*_matrix(makesequence(n,n,1),contextptr)._VECTptr;
+    if (has_matrix) {
+        m=*g._VECTptr->back()._VECTptr;
+        if (int(m.size())!=n || int(m.front()._VECTptr->size())!=n)
+            return gendimerr(contextptr);
+    }
+    G.make_weighted(m);
+    return G.to_gen();
+}
 
 #ifndef NO_NAMESPACE_GIAC
 }

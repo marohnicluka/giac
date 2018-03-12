@@ -56,6 +56,7 @@ enum gt_attributes {
     _GT_ATTRIB_COLOR,
     _GT_ATTRIB_DIRECTED,
     _GT_ATTRIB_WEIGHTED,
+    _GT_ATTRIB_POSITION,
     //add more here
     _GT_ATTRIB_USER
 };
@@ -80,6 +81,7 @@ public:
     typedef std::vector<int> ivector;
     typedef std::map<int,gen> attrib;
     typedef std::pair<int,int> ipair;
+    typedef std::pair<double,double> dpair;
     typedef std::vector<double> rvec;
     typedef std::vector<rvec> layout;
     typedef std::map<int,std::map<int,double> > sparsemat;
@@ -128,23 +130,30 @@ public:
         void find_maximum_matching(std::vector<ipair> &matching);
     };
     class walker { // implementation of a node-positioning algorithm for general trees
+        struct prevnode {
+            int index;
+            prevnode *next_level;
+        };
         graphe *G;
-        std::vector<int> level_zero;
+        prevnode *level_zero_ptr;
         double x_top_adjustment;
         double y_top_adjustment;
         double level_separation;
         double sibling_separation;
         double subtree_separation;
+        double uniform_node_size;
         int max_depth;
-        std::vector<int> parent;
-        std::vector<int> first_child;
-        std::vector<int> left_sibling;
-        std::vector<int> right_sibling;
+        ivector parent;
+        ivector first_child;
+        ivector left_sibling;
+        ivector right_sibling;
+        ivector left_neighbor;
+        std::vector<double> modifier;
         std::vector<double> xcoord;
         std::vector<double> ycoord;
         std::vector<double> prelim;
-        std::vector<int> modifier;
-        std::vector<int> left_neighbor;
+        std::vector<double> left_size;
+        std::vector<double> right_size;
         bool position_tree(int node);
         void first_walk(int node,int level);
         bool second_walk(int node,int level,double modsum);
@@ -156,9 +165,13 @@ public:
         int get_prev_node_at_level(int level);
         void set_prev_node_at_level(int level,int node);
         bool is_leaf(int node);
+        int tree_depth(int node,int depth,int incumbent_depth,std::vector<bool> &visited);
+        int best_apex();
     public:
         walker(graphe *g);
-        std::vector<ipair> node_positions();
+        ~walker();
+        bool calculate_node_positions(double topleft_x,double topleft_y,
+                                      double &width,double &height,double sep,int apex=-1);
     };
     static const gen FAUX;
     static const gen VRAI;
@@ -317,6 +330,7 @@ public:
     bool planar_embedding_block(std::vector<ivector> &faces) const;
     void bridges(const std::vector<bool> &embedding,const std::vector<ivector> &faces,std::vector<graphe> &B) const;
     static ivector range_complement(const ivector &v, int n);
+    bool tree_node_positions(const dpair &topleft, dpair &dim, double sep, int apex=-1);
 
     graphe &operator = (const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };

@@ -177,6 +177,8 @@ int graphe::tag2index(const string &tag) {
         return _GT_ATTRIB_WEIGHT;
     if (tag=="color")
         return _GT_ATTRIB_COLOR;
+    if (tag=="pos")
+        return _GT_ATTRIB_POSITION;
     return register_user_tag(tag);
 }
 
@@ -192,6 +194,8 @@ string graphe::index2tag(int index) const {
         return "color";
     case _GT_ATTRIB_WEIGHT:
         return "weight";
+    case _GT_ATTRIB_POSITION:
+        return "pos";
     case _GT_ATTRIB_USER:
     default:
         len=index-_GT_ATTRIB_USER;
@@ -2716,11 +2720,28 @@ graphe::walker::walker(graphe *g) {
     xcoord=vector<double>(n,0);
     ycoord=vector<double>(n,0);
     prelim=vector<double>(n,0);
-    modifier=ivector(n,0);
+    modifier=vector<double>(n,0);
     left_neighbor=ivector(n,-1);
     max_depth=RAND_MAX;
 }
 
+graphe::walker::~walker() {
+    // delete prevnode list
+    prevnode *p=level_zero_ptr;
+    while (p!=NULL) {
+        prevnode *q=p;
+        p=p->next_level;
+        delete q;
+    }
+}
+
+/*
+ * This function determines the coordinates for each node in a tree. A pointer
+ * to the apex node of the tree is passed as input. This assumes that the x and
+ * y coordinates of the apex node are set as desired, since the tree underneath
+ * it will be positioned with respect to those coordinates. Returns TRUE if no
+ * errors, otherwise returns FALSE.
+ */
 bool graphe::walker::position_tree(int node) {
     if (node!=-1) {
         // initialize the list of previous nodes at each level
@@ -2737,6 +2758,7 @@ bool graphe::walker::position_tree(int node) {
     return true;
 }
 
+/* return true iff the node is a leaf, i.e. if there is no node with it as the parent */
 bool graphe::walker::is_leaf(int node) {
     for (ivector::const_iterator it=parent.begin();it!=parent.end();++it) {
         if (*it==node)
@@ -2745,6 +2767,12 @@ bool graphe::walker::is_leaf(int node) {
     return true;
 }
 
+/*
+ * In this first postorder walk, every node of the tree is assigned a
+ * preliminary x-coordinate (held in field PRELIM(Node)). In addition, internal
+ * nodes are given modifiers, which will be used to move their offspring to the
+ * right (held in field MODIFIER(Node)).
+ */
 void graphe::walker::first_walk(int node, int level) {
     left_neighbor[node]=get_prev_node_at_level(level);
     set_prev_node_at_level(level,node);
@@ -2763,7 +2791,7 @@ void graphe::walker::first_walk(int node, int level) {
         }
     } else {
         // this node is not a leaf, so call this procedure recursively for each of its offsprings
-        int leftmost=first_child(node),rightmost=leftmost;
+        int leftmost=first_child[node],rightmost=leftmost;
         first_walk(leftmost,level+1);
         while (right_sibling[rightmost]>=0) {
             rightmost=right_sibling[rightmost];
@@ -2777,6 +2805,295 @@ void graphe::walker::first_walk(int node, int level) {
         } else
             prelim[node]=midpoint;
     }
+}
+
+/*
+ * During a second preorder walk, each node is given a final x-coordinate by
+ * summing its preliminary x-coordinate and the modifiers of all the node's
+ * ancestors. The y-coordinate depends on the height of the tree. If the actual
+ * position of an interior node is right of its preliminary place, the subtree
+ * rooted at the node must be moved right to center the sons around the father.
+ * Rather than immediately readjust all the nodes in the subtree, each node
+ * remembers the distance to the provisional place in a modifier field
+ * (MODIFIER(Node)). In this second pass down the tree, modifiers are
+ * accumulated and applied to every node. Returns TRUE if no errors, otherwise
+ * returns FALSE.
+ */
+bool graphe::walker::second_walk(int node, int level, double modsum) {
+    bool result;
+    int s;
+    if (level<=max_depth) {
+        double xtemp=x_top_adjustment+prelim[node]+modsum;
+        double ytemp=y_top_adjustment+level*level_separation;
+        if (check_extents_range(xtemp,ytemp)) {
+            xcoord[node]=xtemp;
+            ycoord[node]=ytemp;
+            if (!is_leaf(node)) {
+                // apply the modifier value for this node to all its offsprings
+                bool result=second_walk(first_child[node],level+1,modsum+modifier[node]);
+                if (result && (s=right_sibling[node])>=0)
+                    result=second_walk(s,level+1,modsum);
+            }
+        } else // continuing would put the tree outside of the drawable extents range
+            result=false;
+    } else // we are at a level deeper than what we want to draw
+        result=true;
+    return result;
+}
+
+/*
+ * This procedure cleans up the positioning of small sibling subtrees, thus
+ * fixing the "left-to-right gluing" problem evident in earlier algorithms. When
+ * moving a new subtree farther and farther to the right, gaps may open up among
+ * smaller subtrees that were previously sandwiched between larger subtrees.
+ * Thus, when moving the new, larger subtree to the right, the distance it is
+ * moved is also apportioned to smaller, interior subtrees, creating a pleasing
+ * aesthetic placement.
+ */
+void graphe::walker::apportion(int node, int level) {
+    int leftmost=first_child[node];
+    int neighbor=left_neighbor[leftmost];
+    int compare_depth=1;
+    int depth_to_stop=max_depth-level;
+    while (leftmost>=0 && neighbor>=0 && compare_depth<=depth_to_stop) {
+        // compute the location of leftmost and where it should be w.r.t. neighbor
+        double left_modsum=0,right_modsum=0;
+        int ancestor_leftmost=leftmost,ancestor_neighbor=neighbor;
+        for (int i=0;i<compare_depth;++i) {
+            ancestor_leftmost=parent[ancestor_leftmost];
+            ancestor_neighbor=parent[ancestor_neighbor];
+            right_modsum+=modifier[ancestor_leftmost];
+            left_modsum+=modifier[ancestor_neighbor];
+        }
+        // Find the movedistance and apply it to node's subtree.
+        // Add appropriate portions to smaller interior subtrees.
+        double movedistance=prelim[neighbor]+left_modsum+subtree_separation+
+                mean_mode_size(leftmost,neighbor)-prelim[leftmost]-right_modsum;
+        if (movedistance>0) {
+            // count interior sibling trees in left_siblings
+            int t=node;
+            int left_siblings=0;
+            while (t>=0 && t!=ancestor_neighbor) {
+                left_siblings++;
+                t=left_sibling[t];
+            }
+            if (t>=0) {
+                // apply portions to appropriate left_sibling subtrees
+                double portion=movedistance/left_siblings;
+                t=node;
+                while (t==ancestor_neighbor) {
+                    prelim[t]+=movedistance;
+                    modifier[t]+=movedistance;
+                    movedistance-=portion;
+                    t=left_sibling[t];
+                }
+            } else {
+                // Don't need to move anything--ancestor_neighbor and ancestor_leftmost
+                // are not siblings of each other.
+                return;
+            }
+        }
+        // Determine the leftmost descendant of node at the next lower
+        // level to compare its positioning against that of the neighbor.
+        compare_depth++;
+        if (is_leaf(leftmost))
+            leftmost=get_leftmost(node,0,compare_depth);
+        else
+            leftmost=first_child[leftmost];
+    }
+}
+
+/*
+ * This function returns the leftmost descendant of a node at a given Depth.
+ * This is implemented using a postorder walk of the subtree under Node, down
+ * to the level of Depth. Level here is not the absolute tree level used in the
+ * two main tree walks; it refers to the level below the node whose leftmost
+ * descendant is being found.
+ */
+int graphe::walker::get_leftmost(int node, int level, int depth) {
+    if (level>=depth)
+        return node;
+    if (is_leaf(node))
+        return -1;
+    int s,rightmost=first_child[node];
+    int leftmost=get_leftmost(rightmost,level+1,depth);
+    // do a postorder walk of the subtree below node
+    while (leftmost<0 || (s=right_sibling[rightmost])>=0) {
+        leftmost=get_leftmost(s,level+1,depth);
+        rightmost=s;
+    }
+    return leftmost;
+}
+
+/*
+ * This function returns the mean size of the two passed nodes. It adds the size
+ * of the right half of lefthand node to the left half of righthand node. If all
+ * nodes are the same size, this is a trivial calculation.
+ */
+double graphe::walker::mean_mode_size(int left_node, int right_node) {
+    double nodesize=0;
+    if (left_node>=0)
+        nodesize+=right_size[left_node];
+    if (right_node>=0)
+        nodesize+=left_size[right_node];
+    return nodesize;
+}
+
+/*
+ * This function verifies that the passed x- and y-coordinates are within the
+ * coordinate system being used for the drawing.
+ */
+bool graphe::walker::check_extents_range(double xvalue, double yvalue) {
+    // for now, make no restrictions
+    return true;
+}
+
+/*
+ * Initialize the list of previous nodes at each level. Three list-maintenance
+ * procedures, GETPREVNODEATLEVEL, SETPREVNODEATLEVEL and INITPREVNODELIST
+ * maintain a singly-linked list. Each entry in the list corresponds to the node
+ * previous to the current node at a given level (for example, element 2 in the
+ * list corresponds to the node to the left of the current node at level 2). If
+ * the maximum tree size is known beforehand, this Jist can be replaced with a
+ * fixed-size array, and these procedures become trivial. Each list element
+ * contains two fields: PREVNODE-the previous node at this level, and
+ * NEXTLEVEL-a forward pointer to the next list element. The list is does not
+ * need to be cleaned up between calls to POSITIONTREE, for performance.
+ */
+void graphe::walker::init_prev_node_list() {
+    // start with the node at level 0 - the apex of the tree
+    prevnode *p=level_zero_ptr;
+    while (p!=NULL) {
+        p->index=-1;
+        p=p->next_level;
+    }
+}
+
+int graphe::walker::get_prev_node_at_level(int level) {
+    // start with the apex of the tree
+    prevnode *p=level_zero_ptr;
+    int i=0;
+    while (p!=NULL) {
+        if (i==level)
+            return p->index;
+        p=p->next_level;
+        ++i;
+    }
+    // there was no node at the specified level
+    return -1;
+}
+
+void graphe::walker::set_prev_node_at_level(int level, int node) {
+    // start with the apex of the tree
+    prevnode *p=level_zero_ptr;
+    int i=0;
+    while (p!=NULL) {
+        if (i==level) {
+            // at this level, replace the existing list element with the passed-in node
+            p->index=node;
+            return;
+        }
+        if (p->next_level==NULL) {
+            // There isn't a lfst element yet at this level, so add one
+            prevnode *elem=new prevnode();
+            elem->index=-1;
+            elem->next_level=NULL;
+            p->next_level=elem;
+        }
+        // prepare to move to the next level, to look again
+        p=p->next_level;
+        ++i;
+    }
+    // should only get here if level_zero_ptr is NULL
+    assert(level_zero_ptr==NULL);
+    level_zero_ptr=new prevnode();
+    level_zero_ptr->index=node;
+    level_zero_ptr->next_level=NULL;
+}
+
+int graphe::walker::tree_depth(int node, int depth, int incumbent_depth, vector<bool> &visited) {
+    if (depth==incumbent_depth)
+        return -1;
+    ivector adj=G->adjacent_nodes(node);
+    int d=depth,dd;
+    visited[node]=true;
+    for (ivector::const_iterator it=adj.begin();it!=adj.end();++it) {
+        if (visited[*it])
+            continue;
+        dd=tree_depth(*it,depth+1,incumbent_depth,visited);
+        if (dd<0)
+            return -1;
+        if (dd>d)
+            d=dd;
+    }
+    return d;
+}
+
+/* get a node suitable as an apex of the tree (such that tree depth is minimal) */
+int graphe::walker::best_apex() {
+    int n=G->node_count();
+    int depth=RAND_MAX,d,apex;
+    vector<bool> visited(n);
+    for (int i=0;i<n;++i) {
+        fill(visited.begin(),visited.end(),false);
+        d=tree_depth(i,0,depth,visited);
+        if (d>=0 && d<depth) {
+            depth=d;
+            apex=i;
+        }
+    }
+    return apex;
+}
+
+/* calculate node positions and save them as attributes to graph G */
+bool graphe::walker::calculate_node_positions(double topleft_x, double topleft_y,
+                                              double &width, double &height, double sep, int apex) {
+    int n=G->node_count();
+    if (n==0)
+        return true;
+    int ap=apex<0?best_apex():apex;
+    // set separators to something meaningful
+    sibling_separation=sep;
+    subtree_separation=sep*PLASTIC_NUMBER;
+    level_separation=sep*std::pow(PLASTIC_NUMBER,2);
+    uniform_node_size=sep*std::pow(PLASTIC_NUMBER,-5);
+    left_size=vector<double>(n,uniform_node_size/2.0);
+    right_size=vector<double>(n,uniform_node_size/2.0);
+    ycoord[ap]=topleft_y;
+    // compute node positions
+    if (!position_tree(ap))
+        return false;
+    // compute width and height
+    double x_min=0,x_max=0;
+    for (vector<double>::const_iterator it=xcoord.begin();it!=xcoord.end();++it) {
+        if (*it<x_min)
+            x_min=*it;
+        if (*it>x_max)
+            x_max=*it;
+    }
+    width=x_max-x_min;
+    height=0;
+    for (vector<double>::const_iterator it=ycoord.begin();it!=ycoord.end();++it) {
+        if (*it>height)
+            height=*it;
+    }
+    // save node positions as attributes to graph G
+    double x,y;
+    for (int i=0;i<n;++i) {
+        x=topleft_x+xcoord[i]-x_min;
+        y=topleft_y-ycoord[i];
+        G->set_node_attribute(i,_GT_ATTRIB_POSITION,makevecteur(x,y));
+    }
+    return true;
+}
+
+/*
+ * END OF NODE-POSITIONING ALGORITHM
+ ******************************************************************************/
+
+bool graphe::tree_node_positions(const dpair &topleft, dpair &dim, double sep, int apex) {
+    walker W(this);
+    return W.calculate_node_positions(topleft.first,topleft.second,dim.first,dim.second,sep,apex);
 }
 
 #ifndef NO_NAMESPACE_GIAC

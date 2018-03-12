@@ -923,7 +923,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     }
     int n=G.node_count();
     graphe::layout x;
-    int d=2,q;
+    int d=3,q;
     double K=100;
     //x.resize(n);
     //graphe::create_random_layout(x,K,d);

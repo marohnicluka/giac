@@ -30,6 +30,7 @@ namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
 #define PLASTIC_NUMBER 1.32471795724474602596090885
+#define _GRAPH__VECT 30
 
 const gen graphe::VRAI=gen(1).change_subtype(_INT_BOOLEAN);
 const gen graphe::FAUX=gen(0).change_subtype(_INT_BOOLEAN);
@@ -37,16 +38,15 @@ default_random_engine graphe::random_generator;
 normal_distribution<double> graphe::normal_distribution(0.0,1.0);
 uniform_real_distribution<double> graphe::uniform_distribution(0.0,1.0);
 
-/* returns vector of all nonnegative integers smaller than n and not in v */
-vector<int> range_complement(const vector<int> &v,int n) {
+/* returns vector of all nonnegative integers smaller than n and not in v, which must be sorted */
+graphe::ivector graphe::range_complement(const ivector &v,int n) {
     int k=0,l=0,m=v.size();
     if (n==m)
-        return vector<int>(0);
+        return ivector(0);
     assert(n>m);
-    vector<int> res(n-m),vs(v);
-    sort(vs.begin(),vs.end());
+    ivector res(n-m);
     for (int i=0;i<n;++i) {
-        if (vs[k]!=i)
+        if (v[k]!=i)
             res[l++]=i;
         else ++k;
     }
@@ -64,9 +64,9 @@ graphe::attrib graphe::copy_attributes(const attrib &attr) {
     return copy;
 }
 
-/* returns true iff g is graph, also sets basic info to display_str */
+/* returns true iff g is a graph and writes the basic info to 'display_str' */
 bool is_graphe(const gen &g,string &disp_out,GIAC_CONTEXT) {
-    if (g.type!=_VECT)
+    if (g.type!=_VECT || g.subtype!=_GRAPH__VECT)
         return false;
     graphe G;
     if (!G.read_gen(*g._VECTptr,contextptr))
@@ -136,10 +136,11 @@ graphe::graphe() {
     set_graph_attribute(_GT_ATTRIB_WEIGHTED,FAUX);
 }
 
-/* graphe constructor, inherits basic properties of G */
+/* graphe constructor, create a copy of G */
 graphe::graphe(const graphe &G) {
     set_graph_attribute(_GT_ATTRIB_DIRECTED,boole(G.is_directed()));
     set_graph_attribute(_GT_ATTRIB_WEIGHTED,boole(G.is_weighted()));
+    G.copy(*this);
 }
 
 /* export this graph as a Giac gen object */
@@ -163,7 +164,7 @@ gen graphe::to_gen() const {
         }
         gv.push_back(v);
     }
-    return gv;
+    return change_subtype(gv,_GRAPH__VECT);
 }
 
 /* return index associated with the specified attribute tag */
@@ -849,7 +850,7 @@ bool graphe::read_gen(const vecteur &v,GIAC_CONTEXT) {
     return true;
 }
 
-/* make a copy of this graph and store it in G = graphe(this) */
+/* make a copy of this graph and store it in G (initialized with 'graphe(this)') */
 void graphe::copy(graphe &G) const {
     G.set_name(graph_name);
     G.register_user_tags(user_tags);
@@ -1070,26 +1071,35 @@ void graphe::color_nodes(const gen &c) {
     }
 }
 
-void graphe::make_induced_subgraph(const ivector &vi, graphe &G) const {
+/* create the subgraph defined by vertices from 'vi' and store it in G */
+void graphe::make_induced_subgraph(const ivector &vi,graphe &G,bool copy_attrib) const {
+    int i,j;
     for (ivector::const_iterator it=vi.begin();it!=vi.end();++it) {
-        G.add_node(node(*it),nodes[*it].attributes);
-    }
-    int i=0,j;
-    neighbor_iter nt;
-    for (ivector::const_iterator it=vi.begin();it!=vi.end();++it) {
-        const map<int,attrib> &ngh=nodes[*it].neighbors;
-        j=0;
-        for (ivector::const_iterator jt=vi.begin();jt!=vi.end();++jt) {
-            if (it==jt)
+        ivector adj=adjacent_nodes(*it);
+        gen v=node(*it);
+        const attrib &attri=nodes[*it].attributes;
+        if (copy_attrib)
+            i=G.add_node(v,attri);
+        else
+            G.add_node(v);
+        for (ivector::const_iterator jt=adj.begin();jt!=adj.end();++jt) {
+            if (find(vi.begin(),vi.end(),*jt)==vi.end())
                 continue;
-            if ((nt=ngh.find(*jt))!=ngh.end())
+            gen w=node(*jt);
+            if (copy_attrib) {
+                const attrib &attrj=nodes[*jt].attributes;
+                j=G.add_node(w,attrj);
+                ipair edge=make_edge(*it,*jt);
+                const map<int,attrib> &ngh=nodes[edge.first].neighbors;
+                neighbor_iter nt=ngh.find(edge.second);
                 G.add_edge(i,j,nt->second);
-            ++j;
+            } else
+                G.add_edge(v,w);
         }
-        ++i;
     }
 }
 
+/* return list of vertices adjacent to i-th one */
 graphe::ivector graphe::adjacent_nodes(int i) const {
     assert(i>=0 && i<node_count());
     ivector res;
@@ -1103,6 +1113,7 @@ graphe::ivector graphe::adjacent_nodes(int i) const {
     return res;
 }
 
+/* return a maximal independent set of vertices */
 graphe::ivector graphe::maximal_independent_set() const {
     ivector V(node_count()),vc,vu,adj,adjj,gain(node_count());
     for (int i=0;i<node_count();++i) {
@@ -1831,16 +1842,6 @@ void graphe::transpose_sparsemat(const sparsemat &A, sparsemat &transp) {
     }
 }
 
-void graphe::print_sparsemat(const sparsemat &A) {
-    for (sparsemat::const_iterator it=A.begin();it!=A.end();++it) {
-        cout << "Row " << it->first << " contains ";
-        for (map<int,double>::const_iterator jt=it->second.begin();jt!=it->second.end();++jt) {
-            cout << jt->first << ":" << jt->second << ", ";
-        }
-        cout << endl;
-    }
-}
-
 /* return number of vertices in V which are incident to the i-th vertex */
 int graphe::mdeg(const ivector &V, int i) const {
     int d=0;
@@ -2095,9 +2096,9 @@ vector<graphe::ipair> graphe::incident_edges(const ivector &v) {
 }
 
 /* make a list of all n-tuples of k integers 0,1,...,k-1 */
-void ntupk(vector<vector<int> > &v,int n,int k,const vector<int> &elem,int i) {
+void ntupk(vector<graphe::ivector> &v,int n,int k,const graphe::ivector &elem,int i) {
     for (int j=0;j<k;++j) {
-        vector<int> e(elem);
+        graphe::ivector e(elem);
         e[i]=j;
         if (i<n-1)
             ntupk(v,n,k,e,i+1);
@@ -2107,7 +2108,7 @@ void ntupk(vector<vector<int> > &v,int n,int k,const vector<int> &elem,int i) {
 }
 
 /* return true iff the vertices u and v of sierpinski graph are adjacent */
-bool is_sierpinski_match(const vector<int> &u,const vector<int> &v,int n,int h) {
+bool is_sierpinski_match(const graphe::ivector &u,const graphe::ivector &v,int n,int h) {
     int t=0;
     for (;t<=h-1;++t) {
         if (u[t]!=v[t])
@@ -2124,17 +2125,17 @@ bool is_sierpinski_match(const vector<int> &u,const vector<int> &v,int n,int h) 
 
 /* create Sierpinski (triangle) graph */
 void graphe::make_sierpinski_graph(int n, int k, bool triangle,GIAC_CONTEXT) {
-    vector<vector<int> > tuples;
-    vector<int> elem(n,0);
+    vector<ivector> tuples;
+    ivector elem(n,0);
     ntupk(tuples,n,k,elem,0);
     int N=std::pow(k,n);
     vecteur V;
     make_default_vertex_labels(V,N,0,contextptr);
     add_nodes(V);
     for (int i=0;i<N;++i) {
-        vector<int> &u=tuples[i];
+        ivector &u=tuples[i];
         for (int j=i+1;j<N;++j) {
-            vector<int> &v=tuples[j];
+            ivector &v=tuples[j];
             int h=0;
             for (;h<n;++h) {
                 if (is_sierpinski_match(u,v,n,h))
@@ -2364,7 +2365,7 @@ int graphe::find_cycle_dfs(int v, stack<int> &path, vector<bool> &visited, ivect
     return -1;
 }
 
-/* return a cycle in a connected graph by DFS traversal */
+/* return a cycle in this graph using DFS (graph is assumed to be connected) */
 graphe::ivector graphe::find_cycle() const {
     vector<bool> visited(node_count(),false);
     ivector parent(node_count(),-1);
@@ -2382,6 +2383,400 @@ graphe::ivector graphe::find_cycle() const {
         }
     }
     return cycle;
+}
+
+bool graphe::find_path_dfs(int dest,int v,stack<int> &path,vector<bool> &visited) const {
+    path.push(v);
+    if (v==dest)
+        return true;
+    visited[v]=true;
+    ivector adj=adjacent_nodes(v);
+    int w;
+    for (ivector::const_iterator it=adj.begin();it!=adj.end();++it) {
+        w=*it;
+        if (visited[w])
+            continue;
+        if (find_path_dfs(dest,w,path,visited))
+            return true;
+    }
+    path.pop();
+    return false;
+}
+
+/* return a path from vertex v to vertex w using DFS (graph is assumed to be connected) */
+graphe::ivector graphe::find_path(int v, int w) const {
+    vector<bool> visited(node_count(),false);
+    stack<int> path;
+    ivector res;
+    if (find_path_dfs(v,w,path,visited)) {
+        while (!path.empty()) {
+            res.push_back(path.top());
+            path.pop();
+        }
+    }
+    return res;
+}
+
+/* get all edges as ipairs */
+void graphe::get_edges(vector<ipair> &E) const {
+    int i=0;
+    for (vector<vertex>::const_iterator it=nodes.begin();it!=nodes.end();++it) {
+        for (map<int,attrib>::const_iterator jt=it->neighbors.begin();jt!=it->neighbors.end();++jt) {
+            E.push_back(make_pair(i,jt->first));
+        }
+        ++i;
+    }
+}
+
+/* insert edges from G to this graph */
+void graphe::join(const graphe &G) {
+    bool weighted=G.is_weighted() && this->is_weighted();
+    vecteur E=G.edges(weighted);
+    gen v,w,weight(1);
+    for (const_iterateur it=E.begin();it!=E.end();++it) {
+        if (weighted) {
+            v=it->_VECTptr->front()._VECTptr->front();
+            w=it->_VECTptr->front()._VECTptr->back();
+            weight=it->_VECTptr->back();
+        } else {
+            v=it->_VECTptr->front();
+            w=it->_VECTptr->back();
+        }
+        add_edge(v,w,weight);
+    }
+}
+
+/* translate indices to match those in graph G (which must be a subgraph of this graph) */
+graphe::ivector graphe::translate_indices_to(const graphe &G, const ivector &indices) const {
+    int n=indices.size(),i=0;
+    ivector res(n);
+    for (ivector::const_iterator it=indices.begin();it!=indices.end();++it) {
+        res[i]=G.node_index(node(*it));
+        ++i;
+    }
+    return res;
+}
+
+/* translate indices of vertices in G (a subgraph of this) to match those in this graph */
+graphe::ivector graphe::translate_indices_from(const graphe &G, const ivector &indices) const {
+    int n=indices.size(),i=0;
+    ivector res(n);
+    for (ivector::const_iterator it=indices.begin();it!=indices.end();++it) {
+        res[i]=node_index(G.node(*it));
+        ++i;
+    }
+    return res;
+}
+
+bool face_has_edge(const graphe::ivector &face,int i,int j) {
+    int n=face.size(),u,v;
+    for (int k=0;k<n;++k) {
+        u=face[k];
+        v=face[(k+1)%n];
+        if ((i==u && j==v) || (i==v && j==u))
+            return true;
+    }
+    return false;
+}
+
+/* return sorted list of indices of all nodes shared by a bridge and planar embedding */
+void graphe::bridge_contact_vertices(const graphe &bridge,const vector<bool> &embedding,ivector &cp) const {
+    vecteur V=bridge.vertices();
+    int i;
+    cp.clear();
+    for (const_iterateur it=V.begin();it!=V.end();++it) {
+        i=node_index(*it);
+        if (embedding[i])
+            cp.push_back(i);
+    }
+    sort(cp.begin(),cp.end());
+}
+
+/* construct all bridges to the planar embedding defined by the specified faces and append them to B */
+void graphe::bridges(const vector<bool> &embedding,const vector<ivector> &faces,vector<graphe> &B) const {
+    ivector rest,adj;
+    int i=0,N=B.size();
+    for (vector<bool>::const_iterator it=embedding.begin();it!=embedding.end();++it) {
+        if (!*it)
+            rest.push_back(i);
+        ++i;
+    }
+    if (rest.empty())
+        return;
+    graphe G;
+    make_induced_subgraph(rest,G,false);
+    vector<ivector> components;
+    G.connected_components(components);
+    for (vector<ivector>::iterator ct=components.begin();ct!=components.end();++ct) {
+        *ct=translate_indices_from(G,*ct);
+    }
+    // find non-facial edges which connect embedded vertices
+    vector<ipair> v;
+    vector<ivector>::const_iterator it;
+    for (i=0;i<node_count();++i) {
+        if (!embedding[i])
+            continue;
+        for (int j=is_directed()?0:i+1;j<node_count();++j) {
+            if (i==j || !embedding[j] || !has_edge(i,j))
+                continue;
+            for (it=faces.begin();it!=faces.end();++it) {
+                if (face_has_edge(*it,i,j))
+                    break;
+            }
+            if (it==faces.end())
+                v.push_back(make_pair(i,j));
+        }
+    }
+    B.resize(N+components.size()+v.size());
+    // create bridges from components
+    i=0;
+    for (it=components.begin();it!=components.end();++it) {
+        graphe &bridge=B[N+i];
+        make_induced_subgraph(*it,bridge,false);
+        // add edges connecting the component with embedding to bridge
+        for (ivector::const_iterator jt=it->begin();jt!=it->end();++jt) {
+            adj=adjacent_nodes(*jt);
+            gen v=node(*jt);
+            for (ivector::const_iterator kt=adj.begin();kt!=adj.end();++kt) {
+                if (embedding[*kt])
+                    bridge.add_edge(v,node(*kt));
+            }
+        }
+        ++i;
+    }
+    // create bridges from edges in v
+    int m=components.size(),n=v.size();
+    for (i=0;i<n;++i) {
+        const ipair &p=v[i];
+        B[N+m+i].add_edge(node(p.first),node(p.second));
+    }
+    // This is a fix of the Gibbons' implementation of Demoucron algorithm:
+    // combine bridges with the same two points of contact.
+    // See the paper "Errors in graph embedding algorithms" by W.Myrvold et.al for details.
+    vector<bool> is_joined(m+n,false);
+    vector<ivector> C(m+n);
+    for (i=0;i<m+n;++i) {
+        bridge_contact_vertices(B[N+i],embedding,C[i]);
+    }
+    for (i=0;i<m+n;++i) {
+        if (is_joined[i])
+            continue;
+        graphe &bridge=B[N+i];
+        ivector &ci=C[i];
+        if (C[i].size()==2) {
+            for (int j=i+1;j<m+n;++j) {
+                if (is_joined[j])
+                    continue;
+                ivector &cj=C[j];
+                if (cj.size()==2 && ci.front()==cj.front() && ci.back()==cj.back()) {
+                    bridge.join(B[N+j]);
+                    is_joined[j]=true;
+                }
+            }
+        }
+    }
+    // remove joined bridges
+    for (i=m+n-1;i>=0;--i) {
+        if (is_joined[i])
+            B.erase(B.begin()+N+i);
+    }
+}
+
+/* finds planar embedding of a biconnected graph as a list of faces, returns true iff the graph is planar */
+bool graphe::planar_embedding_block(vector<ivector> &faces) const {
+    ivector cycle=find_cycle(); // a cycle in the graph
+    vector<bool> embedding(node_count(),false); // planar embedding as a set of vertices
+    for (ivector::const_iterator it=cycle.begin();it!=cycle.end();++it) {
+        embedding[*it]=true;
+    }
+    faces=vector<ivector>(2,cycle); // initial two faces, front is always the exterior one
+    vector<graphe> B;
+    // find bridges
+    bridges(embedding,faces,B);
+    vector<ivector> F,C;
+    int i,j,k,n,f,s;
+    while (!B.empty()) {
+        // for each bridge, find all faces in which it can be drawn
+        i=0;
+        F.resize(B.size());
+        C.resize(B.size());
+        for (vector<graphe>::const_iterator it=B.begin();it!=B.end();++it) {
+            bridge_contact_vertices(*it,embedding,C[i]);
+            ivector &c=C[i];
+            assert(c.size()>1);
+            ivector::const_iterator ct;
+            int f=0;
+            F[i].clear();
+            for (vector<ivector>::const_iterator ft=faces.begin();ft!=faces.end();++ft) {
+                for (ct=c.begin();ct!=c.end();++ct) {
+                    if (find(ft->begin(),ft->end(),*ct)==ft->end())
+                        break;
+                }
+                if (ct==c.end())
+                    F[i].push_back(f);
+                ++f;
+            }
+            if (F[i].empty())
+                return false; // graph is not planar
+            ++i;
+        }
+        // get i-th bridge such that F[i] is minimal (>=1)
+        n=F.front().size();
+        k=0;
+        for (i=1;i<int(F.size());++i) {
+            if ((s=F[i].size())<n) {
+                n=s;
+                k=i;
+            }
+        }
+        graphe &bridge=B[k];
+        graphe G(bridge);
+        bridge.copy(G);
+        for (vector<ivector>::const_iterator ft=faces.begin();ft!=faces.end();++ft) {
+            n=ft->size();
+            for (i=0;i<n;++i) {
+                G.add_edge(node(ft->at(i)),node(ft->at((i+1)%n)));
+            }
+        }
+        // get the first face in which bridge can be drawn
+        f=F[k].front();
+        ivector &c=C[k]; // points of contact for the bridge
+        // find a path between first two points of contact
+        i=bridge.node_index(node(c[0]));
+        j=bridge.node_index(node(c[1]));
+        ivector path=bridge.find_path(i,j);
+        for (ivector::iterator it=path.begin();it!=path.end();++it) {
+            embedding[*it=node_index(bridge.node(*it))]=true;
+        }
+        B.erase(B.begin()+k);
+        // draw path to the face f, splitting the latter in two
+        ivector &face=faces[f];
+        i=find(face.begin(),face.end(),c[0])-face.begin();
+        j=find(face.begin(),face.end(),c[1])-face.begin();
+        ivector::iterator pt=face.begin()+(i<j?i:j),qt=face.begin()+(i<j?j:i);
+        ivector face_part(pt+1,qt);
+        if (i>j)
+            reverse(path.begin(),path.end());
+        face.erase(pt,qt+1);
+        face.insert(face.begin()+(i<j?i:j),path.begin(),path.end());
+        reverse(face_part.begin(),face_part.end());
+        path.insert(path.end(),face_part.begin(),face_part.end());
+        faces.push_back(path);
+        // add new bridges to B
+        vector<bool> G_embedding(G.node_count(),false);
+        n=embedding.size();
+        for (i=0;i<n;++i) {
+            if (embedding[i])
+                G_embedding[G.node_index(node(i))]=true;
+        }
+        vector<ivector> G_faces;
+        for (vector<ivector>::const_iterator ft=faces.begin();ft!=faces.end();++ft) {
+            G_faces.push_back(translate_indices_to(G,*ft));
+        }
+        G.bridges(G_embedding,G_faces,B);
+    }
+    assert(int(faces.size())==edge_count()-node_count()+2);
+    return true;
+}
+
+/* finds planar embedding of a connected graph as a list of faces, returns true iff the graph is planar */
+bool graphe::planar_embedding_connected(vector<ivector> &faces) const {
+    if (edge_count()+6>3*node_count())
+        return false;
+    // split graph to blocks
+    vector<vector<ipair> > blocks;
+    find_blocks(blocks);
+    for (vector<vector<ipair> >::const_iterator it=blocks.begin();it!=blocks.end();++it) {
+        // test each block separately
+        graphe G;
+        for (vector<ipair>::const_iterator jt=it->begin();jt!=it->end();++jt) {
+            G.add_edge(node(jt->first),node(jt->second));
+        }
+        vector<ivector> block_faces;
+        if (int(it->size())+6>3*G.node_count() || !G.planar_embedding_block(block_faces))
+            return false;
+        for (vector<ivector>::const_iterator ft=block_faces.begin();ft!=block_faces.end();++ft) {
+            faces.push_back(translate_indices_from(G,*ft));
+        }
+    }
+    return true;
+}
+
+/******************************************************************************
+ *              A NODE-POSITIONING ALGORITHM FOR GENERAL TREES                *
+ ******************************************************************************/
+
+graphe::walker::walker(graphe *g) {
+    G=g;
+    int n=G->node_count();
+    parent=ivector(n,-1);
+    first_child=ivector(n,-1);
+    left_sibling=ivector(n,-1);
+    right_sibling=ivector(n,-1);
+    xcoord=vector<double>(n,0);
+    ycoord=vector<double>(n,0);
+    prelim=vector<double>(n,0);
+    modifier=ivector(n,0);
+    left_neighbor=ivector(n,-1);
+    max_depth=RAND_MAX;
+}
+
+bool graphe::walker::position_tree(int node) {
+    if (node!=-1) {
+        // initialize the list of previous nodes at each level
+        init_prev_node_list();
+        // do the preliminary positioning with a postorder walk
+        first_walk(node,0);
+        // determine how to adjust all the nodes with respect to the location of the root
+        x_top_adjustment=xcoord[node]-prelim[node];
+        y_top_adjustment=ycoord[node];
+        // do the final positioning with preorder walk
+        return second_walk(node,0,0);
+    }
+    // the trivial case
+    return true;
+}
+
+bool graphe::walker::is_leaf(int node) {
+    for (ivector::const_iterator it=parent.begin();it!=parent.end();++it) {
+        if (*it==node)
+            return false;
+    }
+    return true;
+}
+
+void graphe::walker::first_walk(int node, int level) {
+    left_neighbor[node]=get_prev_node_at_level(level);
+    set_prev_node_at_level(level,node);
+    modifier[node]=0;
+    int s;
+    if (is_leaf(node) || level==max_depth) {
+        if ((s=left_sibling[node])>=0) {
+            // Determine the preliminary x-coordinate based on:
+            // the prelim x-coordinate of the left sibling, the separation
+            // between sibling nodes and the mean size of the left sibling
+            // and the current node.
+            prelim[node]=prelim[s]+sibling_separation+mean_mode_size(s,node);
+        } else {
+            // no sibling on the left to worry about
+            prelim[node]=0;
+        }
+    } else {
+        // this node is not a leaf, so call this procedure recursively for each of its offsprings
+        int leftmost=first_child(node),rightmost=leftmost;
+        first_walk(leftmost,level+1);
+        while (right_sibling[rightmost]>=0) {
+            rightmost=right_sibling[rightmost];
+            first_walk(rightmost,level+1);
+        }
+        double midpoint=(prelim[leftmost]+prelim[rightmost])/2.0;
+        if ((s=left_sibling[node])>=0) {
+            prelim[node]=prelim[s]+sibling_separation+mean_mode_size(s,node);
+            modifier[node]=prelim[node]-midpoint;
+            apportion(node,level);
+        } else
+            prelim[node]=midpoint;
+    }
 }
 
 #ifndef NO_NAMESPACE_GIAC

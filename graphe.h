@@ -167,11 +167,19 @@ public:
         bool is_leaf(int node);
         int tree_depth(int node,int depth,int incumbent_depth,std::vector<bool> &visited);
         int best_apex();
+        void init_structure(int node,std::vector<bool> &visited);
     public:
         walker(graphe *g);
         ~walker();
         bool calculate_node_positions(double topleft_x,double topleft_y,
                                       double &width,double &height,double sep,int apex=-1);
+    };
+    struct rectangle {
+        double x;
+        double y;
+        double width;
+        double height;
+        rectangle(double X,double Y,double W,double H) { x=X; y=Y; width=W; height=H; }
     };
     static const gen FAUX;
     static const gen VRAI;
@@ -193,12 +201,14 @@ private:
     static void add_rvec(rvec &a,const rvec &b);
     static void subtract_rvec(rvec &a,const rvec &b);
     static void scale_rvec(rvec &p,double s);
+    static double rvec_vecprod2d(const rvec &v,const rvec &w);
     static void clear_rvec_coords(rvec &p);
     static double rvec_norm(const rvec &p,bool sqroot=true);
     static void copy_layout(const layout &src,layout &dest);
     static void copy_rvec(const rvec &src,rvec &dest);
     static void rand_rvec(rvec &p,double radius=1.0);
     static void rotate_layout(layout &x, double phi);
+    static double best_rotation_angle(layout &x,double step,bool circ);
     static void translate_layout(layout &x,const rvec &dx);
     static double layout_min(const layout &x,int d);
     static void make_rvec_polar(rvec &p);
@@ -219,6 +229,10 @@ private:
     bool find_path_dfs(int dest, int v, std::stack<int> &path, std::vector<bool> &visited) const;
     void get_edges(std::vector<ipair> &E) const;
     void bridge_contact_vertices(const graphe &bridge,const std::vector<bool> &embedding,ivector &cp) const;
+    static void sort_rectangles(std::vector<rectangle> &rectangles);
+    static bool pack_rectangles(const std::vector<rectangle> &rectangles,std::vector<dpair> &embedding,double ew,double eh);
+    static std::vector<dpair> pack_rectangles_with_minimal_perimeter(const std::vector<rectangle> &rectangles);
+    static double ccw(const dpair &p1,const dpair &p2,const dpair &p3);
 
 public:
     graphe();
@@ -290,8 +304,8 @@ public:
     void set_directed(bool yes) { set_graph_attribute(_GT_ATTRIB_DIRECTED,boole(yes)); }
     void make_weighted(const matrice &m);
     void make_directed();
-    void strip_weights();
-    void make_underlying();
+    void make_unweighted();
+    void underlying(graphe &G) const;
     bool permute_nodes(const vecteur &sigma);
     bool relabel_nodes(const vecteur &labels);
     void make_induced_subgraph(const ivector &vi,graphe &G,bool copy_attrib=true) const;
@@ -331,6 +345,8 @@ public:
     void bridges(const std::vector<bool> &embedding,const std::vector<ivector> &faces,std::vector<graphe> &B) const;
     static ivector range_complement(const ivector &v, int n);
     bool tree_node_positions(const dpair &topleft, dpair &dim, double sep, int apex=-1);
+    static std::vector<dpair> convex_hull(const std::vector<dpair> &points);
+    static bool edge_crossing(const rvec &p,const rvec &r,const rvec &q,const rvec &s, dpair &crossing);
 
     graphe &operator = (const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };

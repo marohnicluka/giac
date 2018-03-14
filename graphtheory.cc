@@ -744,10 +744,11 @@ gen _underlying_graph(const gen &g,GIAC_CONTEXT) {
     graphe G;
     if (!G.read_gen(*g._VECTptr,contextptr))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    G.make_underlying();
-    return G.to_gen();
+    graphe U;
+    G.underlying(U);
+    return U.to_gen();
 }
-static const char _underlying_graph_s []="make_underlying";
+static const char _underlying_graph_s []="underlying_graph";
 static define_unary_function_eval(__underlying_graph,&_underlying_graph,_underlying_graph_s);
 define_unary_function_ptr5(at_underlying_graph,alias_at_underlying_graph,&__underlying_graph,0,true)
 
@@ -923,7 +924,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     }
     int n=G.node_count();
     graphe::layout x;
-    int d=3,q;
+    int d=2,q;
     double K=100;
     //x.resize(n);
     //graphe::create_random_layout(x,K,d);

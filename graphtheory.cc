@@ -643,7 +643,7 @@ gen _induced_subgraph(const gen &g,GIAC_CONTEXT) {
         vi[i++]=index;
     }
     graphe S(G);
-    G.make_induced_subgraph(vi,S);
+    G.induce_subgraph(vi,S);
     return S.to_gen();
 }
 static const char _induced_subgraph_s []="induced_subgraph";
@@ -890,17 +890,6 @@ static const char _seidel_switch_s []="seidel_switch";
 static define_unary_function_eval(__seidel_switch,&_seidel_switch,_seidel_switch_s);
 define_unary_function_ptr5(at_seidel_switch,alias_at_seidel_switch,&__seidel_switch,0,true)
 
-gen edge_disp(int color,int width) {
-    return symbolic(at_equal,makesequence(at_display,change_subtype(color | width,_INT_COLOR)));
-}
-
-gen draw_node(const gen &p,const gen &g,int width,int color,int quadrant) {
-    int d=_POINT_PLUS | width | color | quadrant;
-    gen disp=symbolic(at_equal,makesequence(at_display,change_subtype(d,_INT_COLOR)));
-    gen pos=symbolic(at_point,p);
-    return symbolic(at_legende,makesequence(pos,g,disp));
-}
-
 /*
  * Usage:   draw_graph(G,[opts])
  *
@@ -922,62 +911,16 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
             ;
         }
     }
-    int n=G.node_count();
-    graphe::layout x;
-    int d=2,q;
-    double K=100;
-    //x.resize(n);
-    //graphe::create_random_layout(x,K,d);
-    //G.force_directed(x,K,0);
-    G.multilevel_force_directed(x,d,K);
-    graphe::scale_layout(x,K);
-    if (d==2)
-        graphe::make_layout_unique(x,K);
-    vecteur res;
-    gen p1,p2;
-    // draw edges
-    int line_color=d==2?_BLUE:0,line_width=d==2?_LINE_WIDTH_2:_LINE_WIDTH_1,node_width;
-    if (n<30)
-        node_width=_POINT_WIDTH_3;
-    else if (n<100)
-        node_width=_POINT_WIDTH_2;
-    else
-        node_width=_POINT_WIDTH_1;
-    for (int i=0;i<n;++i) {
-        for (int j=G.is_directed()?0:i+1;j<n;++j) {
-            if (i==j)
-                continue;
-            if (G.has_edge(i,j)) {
-                p1=graphe::rvec2gen(x[i],true);
-                p2=graphe::rvec2gen(x[j],true);
-                res.push_back(symbolic(at_segment,makesequence(p1,p2,edge_disp(line_color,line_width))));
-            }
-        }
-    }
-    graphe::rvec center=G.layout_center(x);
-    // draw vertices
-    for (int i=0;i<n;++i) {
-        if (d==2) {
-            switch (G.node_label_best_quadrant(x,center,i)) {
-            case 1:
-                q=_QUADRANT4;
-                break;
-            case 2:
-                q=_QUADRANT1;
-                break;
-            case 3:
-                q=_QUADRANT2;
-                break;
-            case 4:
-                q=_QUADRANT3;
-                break;
-            default:
-                assert(false);
-            }
-        }
-        res.push_back(draw_node(graphe::rvec2gen(x[i]),G.node(i),node_width,0,q));
-    }
-    return res;
+    int d=2;
+    double K=10;
+    graphe::ivector face;
+    //G.get_leading_cycle(face);
+    graphe::layout x=G.make_layout(K,d==2?_GT_STYLE_PLANAR:_GT_STYLE_3D,face);
+    vecteur drawing;
+    G.draw_edges(drawing,x);
+    G.draw_nodes(drawing,x);
+    G.draw_labels(drawing,x);
+    return drawing;
 }
 static const char _draw_graph_s []="draw_graph";
 static define_unary_function_eval(__draw_graph,&_draw_graph,_draw_graph_s);

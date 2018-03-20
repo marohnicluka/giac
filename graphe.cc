@@ -2723,25 +2723,26 @@ void graphe::embed_children_blocks(int i,ivectors &block_tree,vector<ivectors> &
         return; // this is a leaf node in the tree
     // embed each child to a largest available face of the parent
     ivectors &parent_faces=blocks_faces[i];
-    int c,d,pf,cf,k,n,a1,a2;
-    ivector::iterator vt,wt,ct;
+    int c,d,pf,cf,k,n;
+    ivector::iterator vt,wt;
     for (ivector_iter it=children.begin();it!=children.end();++it) {
         embed_children_blocks(*it,block_tree,blocks_faces,temp_edges);
         ivectors &child_faces=blocks_faces[*it];
         c=block_tree[*it][2]; // articulation vertex connecting child with its parent
         // find the largest parent and child faces that contains c
-        d=0;
         pf=cf=-1;
+        d=0;
         for (ivectors_iter ft=parent_faces.begin();ft!=parent_faces.end();++ft) {
             const ivector &face=*ft;
-            if (find(face.begin(),face.end(),c)!=face.begin() && int(face.size())>d) {
+            if (find(face.begin(),face.end(),c)!=face.end() && int(face.size())>d) {
                 pf=ft-parent_faces.begin();
                 d=face.size();
             }
         }
+        d=0;
         for (ivectors_iter ft=child_faces.begin();ft!=child_faces.end();++ft) {
             const ivector &face=*ft;
-            if (find(face.begin(),face.end(),c)!=face.begin() && int(face.size())>d) {
+            if (find(face.begin(),face.end(),c)!=face.end() && int(face.size())>d) {
                 cf=ft-child_faces.begin();
                 d=face.size();
             }
@@ -2750,7 +2751,7 @@ void graphe::embed_children_blocks(int i,ivectors &block_tree,vector<ivectors> &
         parent_faces.resize(n+child_faces.size());
         // Add all child faces different than child_face to parent_faces,
         // add a new triangular face obtained by connecting neighbors of c in child and parent,
-        // modify the parent_face by adding child_face edges and removing two edges.
+        // and modify the parent_face by adding child_face edges and removing two edges.
         k=n;
         for (ivectors::iterator ft=child_faces.begin();ft!=child_faces.end();++ft) {
             if (int(ft-child_faces.begin())==cf)
@@ -2760,28 +2761,41 @@ void graphe::embed_children_blocks(int i,ivectors &block_tree,vector<ivectors> &
         ivector &parent_face=parent_faces[pf],&child_face=child_faces[cf],&new_face=parent_faces.back();
         // get a1, a2 as neighbors of c in parent resp. child face
         vt=find(parent_face.begin(),parent_face.end(),c)+1;
-        a1=vt==parent_face.end()?parent_face.front():*vt;
-        wt=(ct=find(child_face.begin(),child_face.end(),c))+1;
-        a2=wt==child_face.end()?child_face.front():*wt;
-        add_edge(a1,a2); // add the temporary edge {a1,a2}
+        if (vt==parent_face.end())
+            vt=parent_face.begin();
+        wt=find(child_face.begin(),child_face.end(),c)+1;
+        if (wt==child_face.end())
+            wt=child_face.begin();
+        add_edge(*vt,*wt);
+        temp_edges.push_back(make_edge(*vt,*wt)); // add the temporary edge {a1,a2}
         // construct the new face
         new_face.resize(3);
         new_face[0]=c;
-        new_face[1]=a1;
-        new_face[2]=a2;
+        new_face[1]=*vt;
+        new_face[2]=*wt;
         // modify parent_face
-
+        ivector path(child_face.size()-1);
+        k=0;
+        while (*wt!=c) {
+            path[k++]=*(wt++);
+            if (wt==child_face.end())
+                wt=child_face.begin();
+        }
+        reverse(path.begin(),path.end());
+        parent_face.insert(vt,path.begin(),path.end());
     }
 }
 
-/* finds planar embedding of a connected graph as a list of faces,
- * returns true iff the graph is planar */
-bool graphe::planar_embedding_connected(ivectors &faces,ipairs &temp_edges) const {
+/* finds planar embedding of a connected graph as a list of faces, returns true iff the graph is planar */
+bool graphe::planar_embedding_connected(ivectors &faces,ipairs &temp_edges) {
     if (edge_count()+6>3*node_count())
         return false;
     // split graph to blocks
     vector<ipairs> blocks;
     find_blocks(blocks);
+    if (blocks.size()==1)
+        return planar_embedding_block(faces);
+    // there exist at least one articulation point
     vector<ivectors> blocks_faces(blocks.size());
     ivector cv=find_cut_vertices();
     int i=0,nf;
@@ -2797,12 +2811,17 @@ bool graphe::planar_embedding_connected(ivectors &faces,ipairs &temp_edges) cons
             if (int(it->size())+6>3*G.node_count() || !G.planar_embedding_block(block_faces))
                 return false;
         } else {
-            // block is contained of a single edge
+            // block contains only a single edge
             ivector bin_face(2,0);
             bin_face[1]=1;
             block_faces.push_back(bin_face);
         }
         // push back a vector of articulation points which belong to this component
+        ivector tmp_face;
+        for (ivectors::iterator ft=block_faces.begin();ft!=block_faces.end();++ft) {
+            translate_indices_from(G,*ft,tmp_face);
+            ft->swap(tmp_face);
+        }
         nf=block_faces.size();
         block_faces.resize(block_faces.size()+1);
         ivector &articulation_points=block_faces.back();
@@ -2832,8 +2851,20 @@ bool graphe::planar_embedding_connected(ivectors &faces,ipairs &temp_edges) cons
     for (vector<ivectors>::iterator it=blocks_faces.begin();it!=blocks_faces.end();++it) {
         it->pop_back();
     }
-    // embed all blocks to the root block by climbing up the tree
-
+    // embed all blocks to the root block by climbing up the tree recursively
+    for (ivectors_iter bt=block_tree.begin();bt!=block_tree.end();++bt) {
+        if (bt->at(1)<0) {
+            // root found
+            i=bt-block_tree.begin();
+            embed_children_blocks(i,block_tree,blocks_faces,temp_edges);
+            ivectors &block_faces=blocks_faces[i];
+            faces.resize(block_faces.size());
+            for (ivectors::iterator it=block_faces.begin();it!=block_faces.end();++it) {
+                faces[it-block_faces.begin()].swap(*it);
+            }
+            break;
+        }
+    }
     return true;
 }
 
@@ -2849,6 +2880,10 @@ int graphe::two_dimensional_subdivision(ivectors &faces,int outer) {
         const ivector &face=*ft;
         if (int(ft-faces.begin())==outer) {
             new_outer=new_faces.size();
+            new_faces.push_back(face);
+            continue;
+        }
+        if (face.size()<4) {
             new_faces.push_back(face);
             continue;
         }
@@ -3797,7 +3832,7 @@ bool graphe::make_planar_layout(layout &x,double K) const {
     if (!G.planar_embedding_connected(faces,temp_edges))
         return false;
     int lf=-1;
-    for (ivectors::const_iterator it=faces.begin();it!=faces.end();++it) {
+    for (ivectors_iter it=faces.begin();it!=faces.end();++it) {
         if (lf==-1 || faces[lf].size()<it->size())
             lf=int(it-faces.begin());
     }

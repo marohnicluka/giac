@@ -373,7 +373,7 @@ public:
     ipairs incident_edges(const ivector &v);
     bool get_layout(std::vector<point> &positions, int &dim) const;
     void planar_force_directed(layout &x,const ivector &face,double tol=0.01);
-    bool planar_embedding_connected(ivectors &faces,ipairs &temp_edges) const;
+    bool planar_embedding_connected(ivectors &faces,ipairs &temp_edges);
     bool planar_embedding_block(ivectors &faces) const;
     int two_dimensional_subdivision(ivectors &faces,int outer);
     void bridges(const std::vector<bool> &embedding,const ivectors &faces,std::vector<graphe> &B) const;

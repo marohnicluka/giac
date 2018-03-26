@@ -126,9 +126,9 @@ public:
         bool chain_empty() { return pos==0 && chain.front()==0; }
     };
     class edmonds { // implementation of the blossom algorithm
+        graphe *G;
         std::map<int,ivector> blossoms;
         std::map<int,int> forest;
-        graphe *G;
         int mate(const ipairs &matching,int v);
         int find_root(int k);
         int root_distance(std::map<int,int>::const_iterator it);
@@ -145,50 +145,26 @@ public:
         bool find_augmenting_path(const ipairs &matching,ivector &path);
         void find_maximum_matching(ipairs &matching);
     };
-    class walker { // implementation of a node-positioning algorithm for general trees
-        struct prevnode {
-            int index;
-            prevnode *next_level;
-        };
+    class treeshaper {
         graphe *G;
-        prevnode *level_zero_ptr;
-        double x_top_adjustment;
-        double y_top_adjustment;
-        double level_separation;
-        double sibling_separation;
-        double subtree_separation;
-        double uniform_node_size;
-        int max_depth;
-        ivector parent;
-        ivector first_child;
-        ivector left_sibling;
-        ivector right_sibling;
-        ivector left_neighbor;
+        ivector ancestor;
+        std::map<int,ivector> level;
         std::vector<double> modifier;
-        std::vector<double> xcoord;
-        std::vector<double> ycoord;
         std::vector<double> prelim;
-        std::vector<double> left_size;
-        std::vector<double> right_size;
-        bool position_tree(int node);
-        void first_walk(int node,int level);
-        bool second_walk(int node,int level,double modsum);
-        void apportion(int node,int level);
-        int get_leftmost(int node,int level,int depth);
-        double mean_mode_size(int left_node,int right_node);
-        bool check_extents_range(double xvalue,double yvalue);
-        void init_prev_node_list();
-        int get_prev_node_at_level(int level);
-        void set_prev_node_at_level(int level,int node);
-        bool is_leaf(int node);
-        int tree_depth(int node,int depth,int incumbent_depth,std::vector<bool> &visited);
+        std::vector<bool> visited;
+        double hsep;
+        double vsep;
+        double t;
+        void layout_level(const ivector &V);
+        void walk(layout &x,int v,int lev,double modsum);
+        int max_depth(int node,int depth,int incumbent_depth);
         int best_apex();
-        void init_structure(int node,std::vector<bool> &visited);
+        void make_all_unvisited() { std::fill(visited.begin(),visited.end(),false); }
+        void sort_nodes_by_levels(int v,int lev);
     public:
-        walker(graphe *g);
-        ~walker();
-        bool calculate_node_positions(double topleft_x,double topleft_y,
-                                      double &width,double &height,double sep,int apex=-1);
+        treeshaper(graphe *g);
+        void make_layout(layout &x,double sep,int apex=0);
+        double seconds_elapsed() { return t; }
     };
     struct rectangle {
         double x;
@@ -244,12 +220,13 @@ private:
     bool find_path_dfs(int dest, int v, std::stack<int> &path, std::vector<bool> &visited) const;
     void get_edges(ipairs &E) const;
     void bridge_contact_vertices(const graphe &bridge,const std::vector<bool> &embedding,ivector &cp) const;
+    static void split_faces(const ivector &face,ivectors &faces);
     static void sort_rectangles(std::vector<rectangle> &rectangles);
     static bool pack_rectangles(const std::vector<rectangle> &rectangles,dpairs &embedding,double ew,double eh);
     static dpairs pack_rectangles_neatly(const std::vector<rectangle> &rectangles);
     static bool edge_crossing(const point &p,const point &r,const point &q,const point &s, point &crossing);
     static double ccw(const point &p1, const point &p2, const point &p3);
-    static double convexpoly_area(const layout &v);
+    static double polyarea(const layout &v);
     void promote_edge_crossings(layout &x);
     double purchase(const layout &x, int v, int w, int orig_node_count, const point &axis,
                     const ipairs &E, std::vector<double> &sc, double tol) const;
@@ -269,6 +246,7 @@ private:
     static void find_block_neighbors(int i,ivectors &blocks);
     static int common_element(const ivector &v1,const ivector &v2,int offset=0);
     void embed_children_blocks(int i,ivectors &block_tree,std::vector<ivectors> &blocks_faces,ipairs &temp_edges);
+    int two_dimensional_subdivision(ivectors &faces,int outer);
 
 public:
     graphe();
@@ -306,6 +284,7 @@ public:
     bool remove_node(const gen &v);
     void remove_nodes(const vecteur &v);
     gen node(int i) const { assert(i>=0 && i<node_count()); return nodes[i].symbol; }
+    vecteur get_nodes(const ivector &v) const;
     int node_index(const gen &v) const;
     const attrib &node_attributes(int i) const { assert(i>=0 && i<node_count()); return nodes[i].attributes; }
     const attrib &edge_attributes(int i,int j) const;
@@ -317,10 +296,11 @@ public:
     ipair add_edge(const gen &v,const gen &w,const gen &weight=gen(1));
     bool remove_edge(int i,int j);
     void make_cycle(const vecteur &v);
-    bool has_edge(int i, int j) const;
+    bool has_edge(int i,int j) const;
     bool has_edge(ipair p) const { return has_edge(p.first,p.second); }
     ipair make_edge(int i,int j) const;
     ipair make_edge(const vecteur &v) const;
+    bool is_adjacent(int i,int j) const;
     int in_degree(int index) const;
     int out_degree(int index) const;
     int degree(int index) const;
@@ -354,31 +334,30 @@ public:
     bool parse_list_of_edges(const vecteur &v,GIAC_CONTEXT);
     bool parse_matrix(const matrice &m,bool iswei,int mode,GIAC_CONTEXT);
     void parse_trail(const vecteur &v);
-    layout make_layout(double K,gt_layout_style style,const ivector &face=ivector());
+    layout make_layout(double K,gt_layout_style style);
     static void create_random_layout(layout &x,double K,int d);
     static gen point2gen(const point &p,bool vect=false);
     static point layout_center(const layout &x);
     static void scale_layout(layout &x,double diam);
     void tomita(ivectors &cliques) const;
-    void make_sierpinski_graph(int n, int k, bool triangle,GIAC_CONTEXT);
+    void make_sierpinski_graph(int n,int k,bool triangle,GIAC_CONTEXT);
     void make_complete_graph(const vecteur &V);
     void make_complete_multipartite_graph(const ivector &partition_sizes,GIAC_CONTEXT);
-    void make_petersen_graph(int n, int k,GIAC_CONTEXT);
+    void make_petersen_graph(int n,int k,GIAC_CONTEXT);
+    void make_random_tree(int n,GIAC_CONTEXT);
     void connected_components(ivectors &components) const;
     ivector find_cut_vertices() const;
     void find_blocks(std::vector<ipairs> &blocks) const;
     ivector find_cycle() const;
     ivector find_path(int v,int w) const;
-    void collapse_edge(int i, int j);
+    void collapse_edge(int i,int j);
     ipairs incident_edges(const ivector &v);
     bool get_layout(std::vector<point> &positions, int &dim) const;
-    void planar_force_directed(layout &x,const ivector &face,double tol=0.01);
+    void planar_force_directed(const graphe &G_orig,layout &x,ivectors &faces,double tol=0.01);
     bool planar_embedding_connected(ivectors &faces,ipairs &temp_edges);
     bool planar_embedding_block(ivectors &faces) const;
-    int two_dimensional_subdivision(ivectors &faces,int outer);
     void bridges(const std::vector<bool> &embedding,const ivectors &faces,std::vector<graphe> &B) const;
     static ivector range_complement(const ivector &v, int n);
-    bool tree_node_positions(const dpair &topleft, dpair &dim, double sep, int apex=-1);
     bool convex_hull(ivector &ccw_indices, const layout &x) const;
     double subgraph_area(const layout &x,const ivector &v=ivector()) const;
     void draw_edges(vecteur &v,const layout &x) const;

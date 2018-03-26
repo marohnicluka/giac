@@ -913,9 +913,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     }
     int d=2;
     double K=10;
-    graphe::ivector face;
-    //G.get_leading_cycle(face);
-    graphe::layout x=G.make_layout(K,d==2?_GT_STYLE_PLANAR:_GT_STYLE_3D,face);
+    graphe::layout x=G.make_layout(K,d==2?_GT_STYLE_PLANAR:_GT_STYLE_3D);
     vecteur drawing;
     G.draw_edges(drawing,x);
     G.draw_nodes(drawing,x);
@@ -1023,6 +1021,23 @@ gen _petersen_graph(const gen &g,GIAC_CONTEXT) {
 static const char _petersen_graph_s []="petersen_graph";
 static define_unary_function_eval(__petersen_graph,&_petersen_graph,_petersen_graph_s);
 define_unary_function_ptr5(at_petersen_graph,alias_at_petersen_graph,&__petersen_graph,0,true)
+
+/*
+ * Usage:   random_tree(n)
+ *
+ * Returns a random tree graph with n vertices.
+ */
+gen _random_tree(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (!g.is_integer() || g.val<=0)
+        return gentypeerr(contextptr);
+    graphe G;
+    G.make_random_tree(g.val,contextptr);
+    return G.to_gen();
+}
+static const char _random_tree_s []="random_tree";
+static define_unary_function_eval(__random_tree,&_random_tree,_random_tree_s);
+define_unary_function_ptr5(at_random_tree,alias_at_random_tree,&__random_tree,0,true)
 
 /*
  * Usage:   articulation_points(G)

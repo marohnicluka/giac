@@ -84,6 +84,7 @@ gen _weight_matrix(const gen &g,GIAC_CONTEXT);
 gen _hypercube_graph(const gen &g,GIAC_CONTEXT);
 gen _sierpinski_graph(const gen &g,GIAC_CONTEXT);
 gen _petersen_graph(const gen &g,GIAC_CONTEXT);
+gen _random_tree(const gen &g,GIAC_CONTEXT);
 //gen _permute_vertices(const gen &g,GIAC_CONTEXT);
 //gen _relabel_vertices(const gen &g,GIAC_CONTEXT);
 //gen _disjoint_union(const gen &g,GIAC_CONTEXT);

@@ -882,6 +882,17 @@ bool graphe::has_edge(int i,int j) const {
     return attr.find(edge.second)!=attr.end();
 }
 
+/* returns true iff i-th and j-th vertices are adjacent */
+bool graphe::is_adjacent(int i,int j) const {
+    const map<int,attrib> &attri=nodes[i].neighbors;
+    if (attri.find(j)!=attri.end())
+        return true;
+    const map<int,attrib> &attrj=nodes[j].neighbors;
+    if (attrj.find(i)!=attrj.end())
+        return true;
+    return false;
+}
+
 /* add edge {i,j} or arc [i,j], depending on the type (undirected or directed) */
 bool graphe::add_edge(int i, int j, const gen &w) {
     if (i<0 || i>=node_count() || j<0 || j>=node_count() || has_edge(i,j))
@@ -987,6 +998,15 @@ void graphe::remove_nodes(const vecteur &v) {
     for (i=int(isolated_nodes.size())-1;i>=0;--i) {
         remove_isolated_node(isolated_nodes[i]);
     }
+}
+
+/* return vector of node symbols */
+vecteur graphe::get_nodes(const ivector &v) const {
+    vecteur V(v.size());
+    for (ivector_iter it=v.begin();it!=v.end();++it) {
+        V[it-v.begin()]=node(*it);
+    }
+    return V;
 }
 
 /* return index of vertex v */
@@ -1581,8 +1601,19 @@ void graphe::rotate_layout(layout &x, double phi) {
         return;
     int d=x.front().size();
     assert(d==2);
+    // convert layout to polar coordinates and rotate it
+    for (layout::iterator it=x.begin();it!=x.end();++it) {
+        point2polar(*it);
+    }
     for (layout::iterator it=x.begin();it!=x.end();++it) {
         it->at(1)+=phi;
+    }
+    // convert layout back to cartesian coordinates
+    for (layout::iterator it=x.begin();it!=x.end();++it) {
+        point &p=*it;
+        double r=p[0],phi=p[1];
+        p[0]=r*std::cos(phi);
+        p[1]=r*std::sin(phi);
     }
 }
 
@@ -1932,63 +1963,179 @@ void graphe::make_regular_polygon(layout &x,const ivector &face,double R) {
 /* apply force directed algorithm to this graph (must be triconnected) with the specified outer face,
  * using the algorithm described by Bor Plestenjak in the paper "An Algorithm for Drawing Planar Graphs"
  */
-void graphe::planar_force_directed(layout &x,const ivector &face,double tol) {
-    int n=node_count(),count=0;
-    x.resize(n);
-    vector<bool> is_facial(n,false);
-    for (int i=0;i<n;++i) {
-        if (find(face.begin(),face.end(),i)!=face.end())
-            is_facial[i]=true;
-    }
-    // place facial vertices on the unit circle and all other vertices in the origin
-    make_regular_polygon(x,face);
-    vector<point> F(n);
-    for (int i=0;i<n;++i) {
-        F[i].resize(2);
-        if (is_facial[i])
-            continue;
-        point &p=x[i];
-        p.resize(2);
-        p[0]=p[1]=0;
-    }
-    // cool the system down through iterations
-    double d,d0,max_d0,cool,C=std::sqrt(n/M_PI);
-    do {
-        ++count;
-        // compute the resultant force for each non-facial vertex
-        for (int i=0;i<n;++i) {
-            if (is_facial[i])
-                continue;
-            point &f=F[i],&p=x[i];
-            clear_point_coords(f);
-            ivector adj=adjacent_nodes(i);
-            scale_point(f,-adj.size());
-            for (ivector::const_iterator it=adj.begin();it!=adj.end();++it) {
-                point &q=x[*it];
-                point r(2);
-                copy_point(q,r);
-                subtract_point(r,p);
-                scale_point(r,C*point_displacement(r,false));
-                add_point(f,r);
+void graphe::planar_force_directed(const graphe &G_orig,layout &x,ivectors &faces,double tol) {
+    // connect every vertex of degree 2 to the opposite vertex in the respective face
+    int len,f,a;
+    for (int v=0;v<node_count();++v) {
+        if (degree(v)==2) {
+            len=0;
+            ivector::iterator vt;
+            ivectors::iterator lft;
+            for (ivectors::iterator ft=faces.begin();ft!=faces.end();++ft) {
+                if (int(ft->size())<4)
+                    continue;
+                if ((vt=find(ft->begin(),ft->end(),v))!=ft->end()) {
+                    // this face contains the i-th vertex
+                    if (len==0) {
+                        lft=ft;
+                        len=ft->size();
+                        a=vt-ft->begin();
+                    } else {
+                        if (len<int(ft->size())) {
+                            lft=ft;
+                            len=ft->size();
+                            a=vt-ft->begin();
+                        }
+                        break;
+                    }
+                }
+            }
+            if (len>0) {
+                // raise degree of the i-th vertex
+                int b=(a+2)%len,left=a<b?a:b,right=a<b?b:a;
+                add_edge(v,lft->at(b));
+                right=(right+1)%len;
+                a=left<right?left:right;
+                b=left<right?right:left;
+                ivector new_face(lft->begin()+a,lft->begin()+b);
+                lft->erase(lft->begin()+left+1,lft->begin()+right);
+                faces.push_back(new_face);
             }
         }
-        // move each vertex in direction of the force
-        max_d0=0;
-        cool=1.0/(C+std::pow(count,1.5)/C);
+    }
+    vector<bool> face_visited(faces.size(),false);
+    ivectors temp_faces;
+    int fake_edges,cross_edges,fsize,score,max_score;
+    //`bool has_edge_crossings=false;
+    ipairs E;
+    G_orig.get_edges(E);
+    for (int fc=0;fc<int(faces.size());++fc) {
+        // find the outer face with max vertices and min edges
+        max_score=-RAND_MAX;
+        f=-1;
+        for (ivectors_iter ft=faces.begin();ft!=faces.end();++ft) {
+            if (ft->size()<3 || face_visited[ft-faces.begin()])
+                continue;
+            const ivector &face=*ft;
+            fake_edges=cross_edges=0;
+            fsize=ft->size();
+            for (int i=0;i<fsize;++i) {
+                if (!G_orig.is_adjacent(face[i],face[(i+1)%fsize]))
+                    fake_edges++;
+                for (int j=i+2;j<fsize;++j) {
+                    if ((j+1)%fsize==i)
+                        continue;
+                    if (G_orig.is_adjacent(face[i],face[j]))
+                        cross_edges++;
+                }
+            }
+            score=fsize+fake_edges-cross_edges;
+            if (score>max_score) {
+                max_score=score;
+                f=int(ft-faces.begin());
+            }
+        }
+        if (f<0)
+            break;
+        face_visited[f]=true;
+        // copy faces to temp_faces
+        temp_faces.resize(faces.size());
+        for (ivectors_iter ft=faces.begin();ft!=faces.end();++ft) {
+            temp_faces[ft-faces.begin()]=ivector(ft->begin(),ft->end());
+        }
+        // subdivide all inner faces with more than three vertices, making the graph triconnected
+        f=two_dimensional_subdivision(temp_faces,f);
+        ivector &outer_face=temp_faces[f];
+        int n=node_count(),count=0;
+        x.resize(n);
+        vector<bool> is_facial(n,false);
         for (int i=0;i<n;++i) {
+            if (find(outer_face.begin(),outer_face.end(),i)!=outer_face.end())
+                is_facial[i]=true;
+        }
+        // place facial vertices on the unit circle and all other vertices in the origin
+        make_regular_polygon(x,outer_face);
+        vector<point> P(n);
+        for (int i=0;i<n;++i) {
+            P[i].resize(2);
             if (is_facial[i])
                 continue;
-            point &f=F[i],&p=x[i];
-            d=point_displacement(f);
-            if (d==0)
-                continue;
-            d0=std::min(d,cool);
-            scale_point(f,d0/d);
-            add_point(p,f);
-            if (d0>max_d0)
-                max_d0=d0;
+            point &p=x[i];
+            p.resize(2);
+            p[0]=p[1]=0;
         }
-    } while (max_d0>=tol);
+        // cool down the system iteratively
+        double d,d0,max_d0,cool,C=std::sqrt(node_count()/M_PI);
+        do {
+            ++count;
+            // compute the resultant force for each non-facial vertex
+            for (int i=0;i<n;++i) {
+                if (is_facial[i])
+                    continue;
+                point &pt=P[i],&p=x[i];
+                clear_point_coords(pt);
+                ivector adj=adjacent_nodes(i);
+                scale_point(pt,-adj.size());
+                for (ivector_iter it=adj.begin();it!=adj.end();++it) {
+                    point &q=x[*it];
+                    point r(2);
+                    copy_point(q,r);
+                    subtract_point(r,p);
+                    scale_point(r,C*point_displacement(r,false));
+                    add_point(pt,r);
+                }
+            }
+            // move each vertex in the direction of the force
+            max_d0=0;
+            cool=1.0/(C+std::pow(count,1.5)/C);
+            for (int i=0;i<n;++i) {
+                if (is_facial[i])
+                    continue;
+                point &pt=P[i],&p=x[i];
+                d=point_displacement(pt);
+                if (d==0)
+                    continue;
+                d0=std::min(d,cool);
+                scale_point(pt,d0/d);
+                add_point(p,pt);
+                if (d0>max_d0)
+                    max_d0=d0;
+            }
+        } while (max_d0>=tol);
+        break;
+        // check for edge crossings
+        /*
+        point crossing(2),p(2),q(2),r(2),s(2);
+        has_edge_crossings=false;
+        for (ipairs::const_iterator et=E.begin();et!=E.end();++et) {
+            if (is_facial[et->first] && is_facial[et->second])
+                continue;
+            copy_point(x[et->first],p);
+            copy_point(x[et->second],r);
+            subtract_point(r,p);
+            for (ipairs::const_iterator gt=et+1;gt!=E.end();++gt) {
+                if ((is_facial[gt->first] && is_facial[gt->second]) ||
+                        et->first==gt->first || et->second==gt->second ||
+                        et->second==gt->first || et->first==gt->second)
+                    continue;
+                copy_point(x[gt->first],q);
+                copy_point(x[gt->second],s);
+                subtract_point(s,q);
+                if (edge_crossing(p,r,q,s,crossing)) {
+                    has_edge_crossings=true;
+                    break;
+                }
+            }
+            if (has_edge_crossings)
+                break;
+        }
+        if (!has_edge_crossings)
+            break;
+        while (node_count()>G_orig.node_count()) {
+            remove_node(node_count()-1);
+        }
+        */
+    }
 }
 
 /* Tomita recursive algorithm */
@@ -2360,7 +2507,8 @@ int graphe::find_cycle_dfs(int v, stack<int> &path, vector<bool> &visited, ivect
     return -1;
 }
 
-/* return a cycle in this graph using DFS (graph is assumed to be connected) */
+/* return a cycle in this graph using DFS (graph is assumed to be connected),
+ * or an empty list if there is no cycle (i.e. if the graph is a tree) */
 graphe::ivector graphe::find_cycle() const {
     vector<bool> visited(node_count(),false);
     ivector parent(node_count(),-1);
@@ -2582,6 +2730,22 @@ void graphe::bridges(const vector<bool> &embedding,const ivectors &faces,vector<
     }
 }
 
+/* split face with repeating vertices into list of faces */
+void graphe::split_faces(const ivector &face, ivectors &faces) {
+    ivector_iter vt;
+    for (ivector_iter it=face.begin();it!=face.end();++it) {
+        if (it!=face.begin() && (vt=find(face.begin(),it,*it))!=it) {
+            // vertex repetition is discovered
+            ivector face1(vt,it),face2(face.begin(),vt);
+            face2.insert(face2.end(),it,face.end());
+            split_faces(face1,faces);
+            split_faces(face2,faces);
+            return;
+        }
+    }
+    faces.push_back(face);
+}
+
 /* finds planar embedding of a biconnected graph as a list of faces, returns true iff the graph is planar */
 bool graphe::planar_embedding_block(ivectors &faces) const {
     ivector cycle=find_cycle(); // a cycle in the graph
@@ -2658,9 +2822,15 @@ bool graphe::planar_embedding_block(ivectors &faces) const {
             reverse(path.begin(),path.end());
         face.erase(pt,qt+1);
         face.insert(face.begin()+(i<j?i:j),path.begin(),path.end());
+        ivectors new_faces;
+        split_faces(face,new_faces);
+        faces.erase(faces.begin()+f);
+        faces.insert(faces.begin()+f,new_faces.begin(),new_faces.end());
         reverse(face_part.begin(),face_part.end());
         path.insert(path.end(),face_part.begin(),face_part.end());
-        faces.push_back(path);
+        new_faces.clear();
+        split_faces(path,new_faces);
+        faces.insert(faces.end(),new_faces.begin(),new_faces.end());
         // add new bridges to B
         vector<bool> G_embedding(G.node_count(),false);
         n=embedding.size();
@@ -2837,7 +3007,7 @@ bool graphe::planar_embedding_connected(ivectors &faces,ipairs &temp_edges) {
     }
     /* Graph is planar and we have a list of faces for each block.
        Now blocks are embedded into each other, starting from peripheral blocks,
-       by adding temporary edges, which need to be deleted after a layout is obtained. */
+       by adding temporary edges. */
     // make a tree of blocks
     ivectors block_tree(blocks.size());
     for (ivectors::iterator it=block_tree.begin();it!=block_tree.end();++it) {
@@ -2910,421 +3080,148 @@ int graphe::two_dimensional_subdivision(ivectors &faces,int outer) {
 
 /*
  * A NODE-POSITIONING ALGORITHM FOR GENERAL TREES *****************************
+ * complexity: O(n^2)
  */
 
-/* walker class constructor, initialize global variables */
-graphe::walker::walker(graphe *g) {
+/* treeshaper class constructor, allocate the storage */
+graphe::treeshaper::treeshaper(graphe *g) {
     G=g;
     int n=G->node_count();
-    parent=ivector(n);
-    first_child=ivector(n);
-    left_sibling=ivector(n);
-    right_sibling=ivector(n);
-    xcoord=vector<double>(n);
-    ycoord=vector<double>(n);
+    ancestor=ivector(n);
     prelim=vector<double>(n);
     modifier=vector<double>(n);
-    left_neighbor=ivector(n);
-    max_depth=RAND_MAX; // no limit on tree depth
-    level_zero_ptr=NULL;
+    visited=vector<bool>(n);
 }
 
-/* walker class destructor */
-graphe::walker::~walker() {
-    // delete prevnode list
-    prevnode *p=level_zero_ptr;
-    while (p!=NULL) {
-        prevnode *q=p;
-        p=p->next_level;
-        delete q;
-    }
-}
-
-/*
- * This function determines the coordinates for each node in a tree. A pointer
- * to the apex node of the tree is passed as input. This assumes that the x and
- * y coordinates of the apex node are set as desired, since the tree underneath
- * it will be positioned with respect to those coordinates. Returns TRUE if no
- * errors, otherwise returns FALSE.
- */
-bool graphe::walker::position_tree(int node) {
-    if (node!=-1) {
-        // initialize the list of previous nodes at each level
-        init_prev_node_list();
-        // do the preliminary positioning with a postorder walk
-        first_walk(node,0);
-        // determine how to adjust all the nodes with respect to the location of the root
-        x_top_adjustment=xcoord[node]-prelim[node];
-        y_top_adjustment=ycoord[node];
-        // do the final positioning with preorder walk
-        return second_walk(node,0,0);
-    }
-    // the trivial case
-    return true;
-}
-
-/* return true iff the node is a leaf, i.e. if there is no node with it as the parent */
-bool graphe::walker::is_leaf(int node) {
-    return first_child[node]==-1;
-}
-
-/*
- * In this first postorder walk, every node of the tree is assigned a
- * preliminary x-coordinate (held in field PRELIM(Node)). In addition, internal
- * nodes are given modifiers, which will be used to move their offspring to the
- * right (held in field MODIFIER(Node)).
- */
-void graphe::walker::first_walk(int node, int level) {
-    left_neighbor[node]=get_prev_node_at_level(level);
-    set_prev_node_at_level(level,node);
-    modifier[node]=0;
-    int s;
-    if (is_leaf(node) || level==max_depth) {
-        if ((s=left_sibling[node])>=0) {
-            // Determine the preliminary x-coordinate based on:
-            // the prelim x-coordinate of the left sibling, the separation
-            // between sibling nodes and the mean size of the left sibling
-            // and the current node.
-            prelim[node]=prelim[s]+sibling_separation+mean_mode_size(s,node);
-        } else {
-            // no sibling on the left to worry about
-            prelim[node]=0;
-        }
-    } else {
-        // this node is not a leaf, so call this procedure recursively for each of its offsprings
-        int leftmost=first_child[node],rightmost=leftmost;
-        first_walk(leftmost,level+1);
-        while (right_sibling[rightmost]>=0) {
-            rightmost=right_sibling[rightmost];
-            first_walk(rightmost,level+1);
-        }
-        double midpoint=(prelim[leftmost]+prelim[rightmost])/2.0;
-        if ((s=left_sibling[node])>=0) {
-            prelim[node]=prelim[s]+sibling_separation+mean_mode_size(s,node);
-            modifier[node]=prelim[node]-midpoint;
-            apportion(node,level);
-        } else
-            prelim[node]=midpoint;
-    }
-}
-
-/*
- * During a second preorder walk, each node is given a final x-coordinate by
- * summing its preliminary x-coordinate and the modifiers of all the node's
- * ancestors. The y-coordinate depends on the height of the tree. If the actual
- * position of an interior node is right of its preliminary place, the subtree
- * rooted at the node must be moved right to center the sons around the father.
- * Rather than immediately readjust all the nodes in the subtree, each node
- * remembers the distance to the provisional place in a modifier field
- * (MODIFIER(Node)). In this second pass down the tree, modifiers are
- * accumulated and applied to every node. Returns TRUE if no errors, otherwise
- * returns FALSE.
- */
-bool graphe::walker::second_walk(int node, int level, double modsum) {
-    bool result=true;
-    int s;
-    if (level<=max_depth) {
-        double xtemp=x_top_adjustment+prelim[node]+modsum;
-        double ytemp=y_top_adjustment+level*level_separation;
-        if (check_extents_range(xtemp,ytemp)) {
-            xcoord[node]=xtemp;
-            ycoord[node]=ytemp;
-            if (!is_leaf(node)) // apply the modifier value for this node to all its offsprings
-                result=second_walk(first_child[node],level+1,modsum+modifier[node]);
-            if (result && (s=right_sibling[node])>=0)
-                result=second_walk(s,level,modsum);
-        } else // continuing would put the tree outside of the drawable extents range
-            result=false;
-    }
-    return result;
-}
-
-/*
- * This procedure cleans up the positioning of small sibling subtrees, thus
- * fixing the "left-to-right gluing" problem evident in earlier algorithms. When
- * moving a new subtree farther and farther to the right, gaps may open up among
- * smaller subtrees that were previously sandwiched between larger subtrees.
- * Thus, when moving the new, larger subtree to the right, the distance it is
- * moved is also apportioned to smaller, interior subtrees, creating a pleasing
- * aesthetic placement.
- */
-void graphe::walker::apportion(int node, int level) {
-    int leftmost=first_child[node];
-    int neighbor=left_neighbor[leftmost];
-    int compare_depth=1;
-    int depth_to_stop=max_depth-level;
-    while (leftmost>=0 && neighbor>=0 && compare_depth<=depth_to_stop) {
-        // compute the location of leftmost and where it should be w.r.t. neighbor
-        double left_modsum=0,right_modsum=0;
-        int ancestor_leftmost=leftmost,ancestor_neighbor=neighbor;
-        for (int i=0;i<compare_depth;++i) {
-            ancestor_leftmost=parent[ancestor_leftmost];
-            ancestor_neighbor=parent[ancestor_neighbor];
-            right_modsum+=modifier[ancestor_leftmost];
-            left_modsum+=modifier[ancestor_neighbor];
-        }
-        // Find the movedistance and apply it to node's subtree.
-        // Add appropriate portions to smaller interior subtrees.
-        double movedistance=prelim[neighbor]+left_modsum+subtree_separation+
-                mean_mode_size(leftmost,neighbor)-prelim[leftmost]-right_modsum;
-        if (movedistance>0) {
-            // count interior sibling trees in left_siblings
-            int t=node;
-            int left_siblings=0;
-            while (t>=0 && t!=ancestor_neighbor) {
-                left_siblings++;
-                t=left_sibling[t];
-            }
-            if (t>=0) {
-                // apply portions to appropriate left_sibling subtrees
-                double portion=movedistance/left_siblings;
-                t=node;
-                while (t==ancestor_neighbor) {
-                    prelim[t]+=movedistance;
-                    modifier[t]+=movedistance;
-                    movedistance-=portion;
-                    t=left_sibling[t];
+/* set prelim and modifier for each node in V (they are on the same level) */
+void graphe::treeshaper::layout_level(const ivector &V) {
+    int anc=ancestor[V.front()],a,siblings=0,steps;
+    double apos=0,xpos=0,shift=0,q=-1,r=1;
+    ivector_iter it=V.begin();
+    bool leading_leaves=true,leftmost_leaves=true;
+    while (it!=V.end()) {
+        double &p=prelim[*it];
+        if (p<0) {
+            if (q<0) {
+                // find the first node on the right which has prelim>=0
+                ivector_iter jt=it+1;
+                steps=2;
+                for (;jt!=V.end() && (q=prelim[*jt])<0;++jt) ++steps;
+                if (jt==V.end()) {
+                    q=DBL_MAX;
+                    r=1;
+                } else {
+                    if (q+shift-xpos<steps*hsep)
+                        shift=steps*hsep-q+xpos;
+                    else if (ancestor[*jt]==anc) {
+                        if (leading_leaves)
+                            xpos=q+shift-steps*hsep;
+                        else
+                            r=(q+shift-xpos)/(steps*hsep);
+                    } else if (leftmost_leaves)
+                        xpos=q+shift-steps*hsep;
                 }
-            } else {
-                // Don't need to move anything--ancestor_neighbor and ancestor_leftmost
-                // are not siblings of each other.
-                return;
+            }
+            xpos+=hsep*r;
+            p=xpos;
+        } else {
+            p+=shift;
+            modifier[*it]=shift;
+            xpos=p;
+            q=-1;
+            r=1;
+            leading_leaves=false;
+            leftmost_leaves=false;
+        }
+        apos+=p;
+        ++siblings;
+        ++it;
+        if (it==V.end() || (a=ancestor[*it])!=anc) {
+            // done with laying out siblings, center the ancestor above them
+            prelim[anc]=apos/siblings;
+            if (it!=V.end()) {
+                anc=a;
+                apos=0;
+                siblings=0;
+                leading_leaves=true;
+                q=-1;
             }
         }
-        // Determine the leftmost descendant of node at the next lower
-        // level to compare its positioning against that of the neighbor.
-        compare_depth++;
-        if (is_leaf(leftmost))
-            leftmost=get_leftmost(node,0,compare_depth);
-        else
-            leftmost=first_child[leftmost];
     }
 }
 
-/*
- * This function returns the leftmost descendant of a node at a given Depth.
- * This is implemented using a postorder walk of the subtree under Node, down
- * to the level of Depth. Level here is not the absolute tree level used in the
- * two main tree walks; it refers to the level below the node whose leftmost
- * descendant is being found.
- */
-int graphe::walker::get_leftmost(int node, int level, int depth) {
-    if (level>=depth)
-        return node;
-    if (is_leaf(node))
-        return -1;
-    int s,rightmost=first_child[node];
-    int leftmost=get_leftmost(rightmost,level+1,depth);
-    // do a postorder walk of the subtree below node
-    while (leftmost<0 && (s=right_sibling[rightmost])>=0) {
-        leftmost=get_leftmost(s,level+1,depth);
-        rightmost=s;
-    }
-    return leftmost;
-}
-
-/*
- * This function returns the mean size of the two passed nodes. It adds the size
- * of the right half of lefthand node to the left half of righthand node. If all
- * nodes are the same size, this is a trivial calculation.
- */
-double graphe::walker::mean_mode_size(int left_node, int right_node) {
-    double nodesize=0;
-    if (left_node>=0)
-        nodesize+=right_size[left_node];
-    if (right_node>=0)
-        nodesize+=left_size[right_node];
-    return nodesize;
-}
-
-/*
- * This function verifies that the passed x- and y-coordinates are within the
- * coordinate system being used for the drawing.
- */
-bool graphe::walker::check_extents_range(double xvalue, double yvalue) {
-    // for now, make no restrictions
-    return true;
-}
-
-/*
- * Initialize the list of previous nodes at each level. Three list-maintenance
- * procedures, GETPREVNODEATLEVEL, SETPREVNODEATLEVEL and INITPREVNODELIST
- * maintain a singly-linked list. Each entry in the list corresponds to the node
- * previous to the current node at a given level (for example, element 2 in the
- * list corresponds to the node to the left of the current node at level 2). If
- * the maximum tree size is known beforehand, this list can be replaced with a
- * fixed-size array, and these procedures become trivial. Each list element
- * contains two fields: INDEX-the previous node at this level, and
- * NEXTLEVEL-a forward pointer to the next list element. The list is does not
- * need to be cleaned up between calls to POSITIONTREE, for performance.
- */
-void graphe::walker::init_prev_node_list() {
-    // start with the node at level 0 - the apex of the tree
-    prevnode *p=level_zero_ptr;
-    while (p!=NULL) {
-        p->index=-1;
-        p=p->next_level;
-    }
-}
-
-int graphe::walker::get_prev_node_at_level(int level) {
-    // start with the apex of the tree
-    prevnode *p=level_zero_ptr;
-    int i=0;
-    while (p!=NULL) {
-        if (i==level)
-            return p->index;
-        p=p->next_level;
-        ++i;
-    }
-    // there was no node at the specified level
-    return -1;
-}
-
-void graphe::walker::set_prev_node_at_level(int level, int node) {
-    // start with the apex of the tree
-    prevnode *p=level_zero_ptr;
-    int i=0;
-    while (p!=NULL) {
-        if (i==level) {
-            // at this level, replace the existing list element with the passed-in node
-            p->index=node;
-            return;
-        }
-        if (p->next_level==NULL) {
-            // There isn't a lfst element yet at this level, so add one
-            prevnode *elem=new prevnode();
-            elem->index=-1;
-            elem->next_level=NULL;
-            p->next_level=elem;
-        }
-        // prepare to move to the next level, to look again
-        p=p->next_level;
-        ++i;
-    }
-    // should only get here if level_zero_ptr is NULL
-    assert(level_zero_ptr==NULL);
-    level_zero_ptr=new prevnode();
-    level_zero_ptr->index=node;
-    level_zero_ptr->next_level=NULL;
-}
-
-int graphe::walker::tree_depth(int node, int depth, int incumbent_depth, vector<bool> &visited) {
-    if (depth==incumbent_depth)
-        return -1;
-    ivector adj=G->adjacent_nodes(node);
-    int d=depth,dd;
-    visited[node]=true;
+/* traverse the tree from top to bottom using DFS, summing up modifiers along the way */
+void graphe::treeshaper::walk(layout &x,int v,int lev,double modsum) {
+    ivector adj=G->adjacent_nodes(v);
+    point &p=x[v];
+    p.resize(2);
+    p[0]=prelim[v]+modsum;
+    p[1]=-lev*vsep;
+    double m=modifier[v];
+    visited[v]=true;
     for (ivector_iter it=adj.begin();it!=adj.end();++it) {
         if (visited[*it])
             continue;
-        dd=tree_depth(*it,depth+1,incumbent_depth,visited);
-        if (dd<0)
-            return -1;
-        if (dd>d)
-            d=dd;
+        walk(x,*it,lev+1,modsum+m);
     }
-    return d;
 }
 
-/* get a node suitable as an apex of the tree (for which the tree has minimal depth) */
-int graphe::walker::best_apex() {
-    int n=G->node_count();
-    int depth=RAND_MAX,d,apex;
-    vector<bool> visited(n);
-    for (int i=0;i<n;++i) {
-        fill(visited.begin(),visited.end(),false);
-        d=tree_depth(i,0,depth,visited);
-        if (d>=0 && d<depth) {
-            depth=d;
-            apex=i;
-        }
-    }
-    return apex;
-}
-
-/* initialize parent, first_child, left_sibling and right_sibling */
-void graphe::walker::init_structure(int node,vector<bool> &visited) {
-    visited[node]=true;
-    ivector adj=G->adjacent_nodes(node);
-    int &fc=first_child[node];
-    fc=-1;
-    int prev=-1;
+/* initialize ancestors and levels using DFS */
+void graphe::treeshaper::sort_nodes_by_levels(int v,int lev) {
+    visited[v]=true;
+    ivector adj=G->adjacent_nodes(v);
     for (ivector_iter it=adj.begin();it!=adj.end();++it) {
         if (visited[*it])
             continue;
-        if (fc==-1)
-            fc=*it;
-        if (prev>=0) {
-            left_sibling[*it]=prev;
-            right_sibling[prev]=*it;
-        }
-        parent[*it]=node;
-        init_structure(*it,visited);
-        prev=*it;
+        ancestor[*it]=v;
+        sort_nodes_by_levels(*it,lev+1);
     }
+    level[lev].push_back(v);
 }
 
-/* calculate node positions and save them as attributes to graph G */
-bool graphe::walker::calculate_node_positions(double topleft_x, double topleft_y,
-                                              double &width, double &height, double sep, int apex) {
+/* calculate node positions and store them to the specified layout */
+void graphe::treeshaper::make_layout(layout &x,double sep,int apex) {
     int n=G->node_count();
-    if (n==0) // G is empty
-        return true;
-    // obtain an apex node, if none is given
-    int ap=apex<0?best_apex():apex;
-    parent[ap]=-1;
-    fill(left_sibling.begin(),left_sibling.end(),-1);
-    fill(right_sibling.begin(),right_sibling.end(),-1);
-    vector<bool> visited(n,false);
-    init_structure(ap,visited);
-    // set separators
-    sibling_separation=sep;
-    subtree_separation=sep*PLASTIC_NUMBER; // about 4/3 of sep
-    level_separation=sep*std::pow(PLASTIC_NUMBER,2); // about 7/4 of sep
-    uniform_node_size=sep*std::pow(PLASTIC_NUMBER,-5); // about 1/4 of sep
-    // initialize global variables
-    left_size=vector<double>(n,uniform_node_size/2.0);
-    right_size=vector<double>(n,uniform_node_size/2.0);
+    x.resize(n);
+    if (n==0) return;
+    // obtain an apex node (for which the tree is of minimal height), if none is given
+    t=clock();
+    ancestor[apex]=-1;
+    fill(prelim.begin(),prelim.end(),-1);
     fill(modifier.begin(),modifier.end(),0);
-    fill(prelim.begin(),prelim.end(),0);
-    fill(xcoord.begin(),xcoord.end(),0);
-    fill(ycoord.begin(),ycoord.end(),0);
-    ycoord[ap]=topleft_y;
-    // compute node positions, return false on error
-    if (!position_tree(ap))
-        return false;
-    // compute width and height of the drawing
-    double x_min=0,x_max=0;
-    for (vector<double>::const_iterator it=xcoord.begin();it!=xcoord.end();++it) {
-        if (*it<x_min)
-            x_min=*it;
-        if (*it>x_max)
-            x_max=*it;
+    // layout the tree
+    hsep=sep; // the horizontal distance between nodes
+    vsep=sep*PLASTIC_NUMBER; // the distance between consecutive levels
+    make_all_unvisited();
+    sort_nodes_by_levels(apex,0);
+    int last_level=level.size()-1;
+    for (int lev=last_level;lev>0;--lev) {
+        layout_level(level[lev]);
     }
-    width=x_max-x_min;
-    height=0;
-    for (vector<double>::const_iterator it=ycoord.begin();it!=ycoord.end();++it) {
-        if (*it>height)
-            height=*it;
-    }
-    // save each node position as an attribute (vecteur [x,y]) to graph G
-    point p(2);
-    for (int i=0;i<n;++i) {
-        p[0]=topleft_x+xcoord[i]-x_min;
-        p[1]=topleft_y-ycoord[i];
-        G->set_node_attribute(i,_GT_ATTRIB_POSITION,point2gen(p));
-    }
-    return true;
+    make_all_unvisited();
+    walk(x,apex,0,0);
+    t=(clock()-t)/CLOCKS_PER_SEC;
 }
 
 /*
  * END OF NODE-POSITIONING ALGORITHM ******************************************
  */
 
-bool graphe::tree_node_positions(const dpair &topleft, dpair &dim, double sep, int apex) {
-    walker W(this);
-    return W.calculate_node_positions(topleft.first,topleft.second,dim.first,dim.second,sep,apex);
+/* create a random tree with n nodes */
+void graphe::make_random_tree(int n,GIAC_CONTEXT) {
+    vecteur dst;
+    make_default_vertex_labels(dst,n,0,contextptr);
+    add_nodes(dst);
+    dst=*_randperm(dst,contextptr)._VECTptr;
+    vecteur src;
+    src.push_back(dst.pop_back());
+    gen v,w;
+    while (!dst.empty()) {
+        v=_rand(src,contextptr);
+        w=dst.pop_back();
+        add_edge(v,w);
+        src.push_back(w);
+    }
 }
 
 /* sort rectangles by height */
@@ -3561,8 +3458,9 @@ bool graphe::edge_crossing(const point &p,const point &r,const point &q,const po
     return false;
 }
 
-/* return the area enclosed by a convex polygon with vertices v (sorted in counterclockwise order) */
-double graphe::convexpoly_area(const layout &x) {
+/* return the area enclosed by a non self-intersecting polygon
+ * with vertices v (sorted in counterclockwise order) */
+double graphe::polyarea(const layout &x) {
     int n=x.size();
     double a=0;
     for (int i=0;i<n;++i) {
@@ -3582,7 +3480,7 @@ double graphe::subgraph_area(const layout &x,const ivector &v) const {
         for (ivector_iter it=ccw_indices.begin();it!=ccw_indices.end();++it) {
             hull.push_back(x[*it]);
         }
-        return convexpoly_area(hull);
+        return polyarea(hull);
     }
     // v defines a subgraph
     graphe G;
@@ -3831,25 +3729,20 @@ bool graphe::make_planar_layout(layout &x,double K) const {
     ipairs temp_edges;
     if (!G.planar_embedding_connected(faces,temp_edges))
         return false;
-    int lf=-1;
-    for (ivectors_iter it=faces.begin();it!=faces.end();++it) {
-        if (lf==-1 || faces[lf].size()<it->size())
-            lf=int(it-faces.begin());
-    }
     vecteur labels;
     make_default_vertex_labels(labels,node_count(),0,context0);
     G.relabel_nodes(labels);
-    lf=G.two_dimensional_subdivision(faces,lf);
-    G.planar_force_directed(x,faces[lf]);
+    G.planar_force_directed(*this,x,faces);
     x.resize(node_count());
     scale_layout(x,K);
     return true;
 }
 
 /* compute node positions and store them as POSITION attributes (and also return the layout) */
-graphe::layout graphe::make_layout(double K,gt_layout_style style,const ivector &face) {
+graphe::layout graphe::make_layout(double K,gt_layout_style style) {
     int dim=2;
     layout x;
+    bool is_tree=false;
     switch (style) {
     case _GT_STYLE_3D:
         dim=3;
@@ -3857,7 +3750,14 @@ graphe::layout graphe::make_layout(double K,gt_layout_style style,const ivector 
         multilevel_force_directed(x,dim,K);
         break;
     case _GT_STYLE_PLANAR:
-        if (!make_planar_layout(x,K))
+        if (find_cycle().size()==0) {
+            // graph is a tree
+            is_tree=true;
+            treeshaper W(this);
+            W.make_layout(x,K/(double)node_count(),0);
+            //cout << W.seconds_elapsed() << ",";
+        }
+        else if (!make_planar_layout(x,K))
             return layout(0);
         break;
     case _GT_STYLE_CIRCLE:
@@ -3868,18 +3768,14 @@ graphe::layout graphe::make_layout(double K,gt_layout_style style,const ivector 
     point c=layout_center(x);
     scale_point(c,-1);
     translate_layout(x,c);
-    if (dim==2) {
+    // rotate layout to expose symmetry
+    if (!is_tree && dim==2) {
         // Find the best symmetry axis, and rotate the graph
         // to make the symmetry more prominent to a human.
         point axis=axis_of_symmetry(x);
         double a=axis[0],b=axis[1];
         if (a!=0) {
-            double phi=M_PI_2+std::atan(b/a);
-            // convert layout to polar coordinates and rotate it
-            for (layout::iterator it=x.begin();it!=x.end();++it) {
-                point2polar(*it);
-            }
-            rotate_layout(x,phi);
+            rotate_layout(x,M_PI_2+std::atan(b/a));
             // determine the highest and the lowest y coordinate: if yh+yl<0, rotate layout for 180°
             double yh=0,yl=0;
             for (layout::const_iterator it=x.begin();it!=x.end();++it) {
@@ -3891,13 +3787,6 @@ graphe::layout graphe::make_layout(double K,gt_layout_style style,const ivector 
             }
             if (yh+yl<0)
                 rotate_layout(x,M_PI);
-            // convert layout back to cartesian coordinates
-            for (layout::iterator it=x.begin();it!=x.end();++it) {
-                point &p=*it;
-                double r=p[0],phi=p[1];
-                p[0]=r*std::cos(phi);
-                p[1]=r*std::sin(phi);
-            }
         }
     }
     return x;
@@ -3982,12 +3871,22 @@ void graphe::draw_nodes(vecteur &v, const layout &x) const {
  * (minimize collision with the adjacent edges) */
 int graphe::node_label_best_quadrant(const layout &x,const point &center,int i) const {
     ivector adj=adjacent_nodes(i);
-    int n=adj.size();
+    int n=adj.size(),best_quadrant;
     vector<double> adj_phi(n);
     const point &p=x[i];
     for (int j=0;j<n;++j) {
         const point &q=x[adj[j]];
         adj_phi[j]=std::atan2(q[1]-p[1],q[0]-p[0]);
+    }
+    if (adj_phi.size()==1) {
+        double phi=adj_phi.front();
+        if (phi<=-M_PI_2)
+            return _QUADRANT1;
+        if (phi<=0)
+            return _QUADRANT2;
+        if (phi<=M_PI_2)
+            return _QUADRANT3;
+        return _QUADRANT4;
     }
     sort(adj_phi.begin(),adj_phi.end());
     double bisector[]={M_PI/4,3*M_PI/4,-3*M_PI/4,-M_PI/4},score[4];
@@ -4014,7 +3913,6 @@ int graphe::node_label_best_quadrant(const layout &x,const point &center,int i) 
         }
     }
     assert(!candidates.empty());
-    int best_quadrant;
     if (candidates.size()==1)
         best_quadrant=candidates.front();
     else {

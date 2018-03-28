@@ -917,7 +917,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     vecteur drawing;
     G.draw_edges(drawing,x);
     G.draw_nodes(drawing,x);
-    G.draw_labels(drawing,x);
+    //G.draw_labels(drawing,x);
     return drawing;
 }
 static const char _draw_graph_s []="draw_graph";
@@ -1868,6 +1868,63 @@ gen _is_regular(const gen &g,GIAC_CONTEXT) {
 static const char _is_regular_s []="is_regular";
 static define_unary_function_eval(__is_regular,&_is_regular,_is_regular_s);
 define_unary_function_ptr5(at_is_regular,alias_at_is_regular,&__is_regular,0,true)
+
+/* Usage:   isomorphic_copy(G,sigma)
+ *
+ * Returns a new graph H with vertices reordered according to permutation sigma.
+ */
+gen _isomorphic_copy(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()<2)
+        return gensizeerr(contextptr);
+    if (gv[1].type!=_VECT || !is_integer_vecteur(*gv[1]._VECTptr))
+        return gentypeerr(contextptr);
+    graphe G;
+    if (!G.read_gen(*gv.front()._VECTptr,contextptr))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    vecteur &sigma=*gv[1]._VECTptr;
+    graphe::ivector v(sigma.size());
+    for (const_iterateur it=sigma.begin();it!=sigma.end();++it) {
+        v[it-sigma.begin()]=it->val;
+    }
+    graphe H;
+    if (!G.isomorphic_copy(H,v))
+        return gentypeerr(contextptr);
+    return H.to_gen();
+}
+static const char _isomorphic_copy_s []="isomorphic_copy";
+static define_unary_function_eval(__isomorphic_copy,&_isomorphic_copy,_isomorphic_copy_s);
+define_unary_function_ptr5(at_isomorphic_copy,alias_at_isomorphic_copy,&__isomorphic_copy,0,true)
+
+/* Usage:   relabel_vertices(G,V)
+ *
+ * Returns a new graph H with vertex labels changed to those in V.
+ */
+gen _relabel_vertices(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()<2)
+        return gensizeerr(contextptr);
+    if (gv[1].type!=_VECT)
+        return gentypeerr(contextptr);
+    graphe G;
+    if (!G.read_gen(*gv.front()._VECTptr,contextptr))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    vecteur &labels=*gv[1]._VECTptr;
+    if (int(labels.size())!=G.node_count())
+        return gensizeerr(contextptr);
+    if (!G.relabel_nodes(labels))
+        return gentypeerr(contextptr);
+    return G.to_gen();
+}
+static const char _relabel_vertices_s []="relabel_vertices";
+static define_unary_function_eval(__relabel_vertices,&_relabel_vertices,_relabel_vertices_s);
+define_unary_function_ptr5(at_relabel_vertices,alias_at_relabel_vertices,&__relabel_vertices,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

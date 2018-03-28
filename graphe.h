@@ -98,32 +98,58 @@ public:
     typedef std::vector<double> point;
     typedef std::vector<point> layout;
     typedef std::map<int,std::map<int,double> > sparsemat;
-    struct vertex {
-        gen symbol;
-        int subgraph;
-        attrib attributes;
-        std::map<int,attrib> neighbors;
-        vertex(const gen &symb) { symbol=symb; subgraph=-1; }
+    class vertex {
+        gen m_symbol;
+        int m_subgraph;
+        attrib m_attributes;
+        std::map<int,attrib> m_neighbors;
+    public:
+        vertex();
+        vertex(const vertex &v);
+        vertex& operator =(const vertex &other);
+        const gen &symbol() const { return m_symbol; }
+        void set_symbol(const gen &s) { m_symbol=s; }
+        int subgraph() const { return m_subgraph; }
+        void set_subgraph(int s) { m_subgraph=s; }
+        const attrib &attributes() const{ return m_attributes; }
+        attrib &attributes() { return m_attributes; }
+        void set_attribute(int key,const gen &val) { m_attributes[key]=val; }
+        void set_attributes(const attrib &attr) { copy_attributes(attr,m_attributes); }
+        const std::map<int,attrib> &neighbors() const { return m_neighbors; }
+        void add_neighbor(int i,const attrib &attr=attrib()) { copy_attributes(attr,m_neighbors[i]); }
+        attrib &neighbor_attributes(int i);
+        const attrib &neighbor_attributes(int i) const;
+        bool has_neighbor(int i) const { return m_neighbors.find(i)!=m_neighbors.end(); }
+        void remove_neighbor(int i) { m_neighbors.erase(m_neighbors.find(i)); }
+        void clear_neighbors() { m_neighbors.clear(); }
     };
-    typedef std::vector<vertex>::const_iterator node_iter;
-    typedef std::map<int,attrib>::const_iterator neighbor_iter;
-    typedef attrib::const_iterator attrib_iter;
-    typedef std::vector<point>::const_iterator layout_iter;
-    typedef ivector::const_iterator ivector_iter;
-    typedef ivectors::const_iterator ivectors_iter;
-    struct dotgraph {
-        int index;
-        attrib vertex_attributes;
-        attrib edge_attributes;
-        attrib chain_attributes;
-        ivector chain;
+    class dotgraph {
+        int m_index;
+        attrib vertex_attr;
+        attrib edge_attr;
+        attrib chain_attr;
+        ivector m_chain;
         int pos;
-        dotgraph(int i) { index=i; pos=0; chain=ivector(1,0); }
-        void incr() { ++pos; if (int(chain.size())<=pos) chain.resize(pos+1,0); }
-        void set(int i) { chain[pos]=i; }
-        void clear_chain() { pos=0; chain.resize(1); chain.front()=0; chain_attributes.clear(); }
-        bool chain_completed() { return chain.back()!=0; }
-        bool chain_empty() { return pos==0 && chain.front()==0; }
+    public:
+        dotgraph();
+        dotgraph(const dotgraph &other);
+        dotgraph(int i);
+        dotgraph& operator =(const dotgraph &other);
+        int index() const { return m_index; }
+        void set_index(int i) { m_chain[pos]=i; }
+        const attrib &vertex_attributes() const { return vertex_attr; }
+        const attrib &edge_attributes() const { return edge_attr; }
+        const attrib &chain_attributes() const { return chain_attr; }
+        attrib &vertex_attributes() { return vertex_attr; }
+        attrib &edge_attributes() { return edge_attr; }
+        attrib &chain_attributes() { return chain_attr; }
+        const ivector &chain() const { return m_chain; }
+        ivector &chain() { return m_chain; }
+        int position() const { return pos; }
+        void incr() { ++pos; if (int(m_chain.size())<=pos) m_chain.resize(pos+1,0); }
+        void clear_chain() { pos=0; m_chain.resize(1); m_chain.front()=0; chain_attr.clear(); }
+        bool chain_completed() { return m_chain.back()!=0; }
+        bool chain_empty() { return pos==0 && m_chain.front()==0; }
     };
     class edmonds { // implementation of the blossom algorithm
         graphe *G;
@@ -166,13 +192,27 @@ public:
         void make_layout(layout &x,double sep,int apex=0);
         double seconds_elapsed() { return t; }
     };
-    struct rectangle {
-        double x;
-        double y;
-        double width;
-        double height;
-        rectangle(double X,double Y,double W,double H) { x=X; y=Y; width=W; height=H; }
+    class rectangle {
+        double m_x;
+        double m_y;
+        double m_width;
+        double m_height;
+    public:
+        rectangle();
+        rectangle(double X,double Y,double W,double H);
+        rectangle(const rectangle &rect);
+        rectangle& operator =(const rectangle &other);
+        double x() const { return m_x; }
+        double y() const { return m_y; }
+        double width() const { return m_width; }
+        double height() const { return m_height; }
     };
+    typedef std::vector<vertex>::const_iterator node_iter;
+    typedef std::map<int,attrib>::const_iterator neighbor_iter;
+    typedef attrib::const_iterator attrib_iter;
+    typedef std::vector<point>::const_iterator layout_iter;
+    typedef ivector::const_iterator ivector_iter;
+    typedef ivectors::const_iterator ivectors_iter;
     static const gen FAUX;
     static const gen VRAI;
 private:
@@ -188,7 +228,7 @@ private:
     static bool remove_attribute(attrib &attr,int key);
     static bool genmap2attrib(const gen_map &m,attrib &attr);
     static void attrib2genmap(const attrib &attr,gen_map &m);
-    static attrib copy_attributes(const attrib &attr);
+    static void copy_attributes(const attrib &src,attrib &dest);
     void write_attrib(std::ofstream &dotfile,const attrib &attr) const;
     static void add_point(point &a,const point &b);
     static void subtract_point(point &a,const point &b);
@@ -242,11 +282,17 @@ private:
     static void append_segment(vecteur &v,const point &p,const point &q,int color,int width,bool arrow=false);
     static void append_vertex(vecteur &v,const point &p,int color,int width);
     static void append_label(vecteur &v,const point &p,const gen &label,int quadrant);
-    bool make_planar_layout(layout &x,double K) const;
+    bool planar_embedding_block(ivectors &faces) const;
+    int planar_embedding_connected(ivectors &faces,ipairs &temp_edges);
+    void plestenjak_layout(layout &x,ivectors &faces,int f,double tol=0.01);
+    bool planar_layout(layout &x,double K);
     static void find_block_neighbors(int i,ivectors &blocks);
     static int common_element(const ivector &v1,const ivector &v2,int offset=0);
     void embed_children_blocks(int i,ivectors &block_tree,std::vector<ivectors> &blocks_faces,ipairs &temp_edges);
-    int two_dimensional_subdivision(ivectors &faces,int outer);
+    int handle_2deg_nodes(ivectors &faces,int f0,ipairs &temp_edges);
+    int handle_concave_faces(ivectors &faces,int f0,ipairs &temp_edges);
+    int subdivide_faces(ivectors &faces,int f0);
+    void triangulate(ivectors &faces,int i,int v,std::vector<bool> &visited,ipairs &temp_edges);
 
 public:
     graphe();
@@ -278,23 +324,24 @@ public:
     void translate_indices_from(const graphe &G,const ivector &indices,ivector &dest) const;
     vecteur edges(bool include_weights) const;
     int add_node(const gen &v);
-    int add_node(const gen &v,const attrib &attr) { int i=add_node(v); nodes[i].attributes=attr; return i; }
+    int add_node(const gen &v,const attrib &attr) { int i=add_node(v); nodes[i].set_attributes(attr); return i; }
     void add_nodes(const vecteur &v);
     bool remove_node(int i);
     bool remove_node(const gen &v);
     void remove_nodes(const vecteur &v);
-    gen node(int i) const { assert(i>=0 && i<node_count()); return nodes[i].symbol; }
+    const gen &node(int i) const { assert(i>=0 && i<node_count()); return nodes[i].symbol(); }
     vecteur get_nodes(const ivector &v) const;
     int node_index(const gen &v) const;
-    const attrib &node_attributes(int i) const { assert(i>=0 && i<node_count()); return nodes[i].attributes; }
+    const attrib &node_attributes(int i) const { assert(i>=0 && i<node_count()); return nodes[i].attributes(); }
     const attrib &edge_attributes(int i,int j) const;
     attrib &edge_attributes(int i,int j);
-    bool add_edge(int i,int j,const gen &w=gen(1));
-    bool add_edge(int i,int j,const attrib &attr);
-    bool add_edge(const ipair &edge) { return add_edge(edge.first,edge.second); }
-    bool add_edge(const ipair &edge,const attrib &attr) { return add_edge(edge.first,edge.second,attr); }
+    void add_edge(int i,int j,const gen &w=gen(1));
+    void add_edge(int i,int j,const attrib &attr);
+    void add_edge(const ipair &edge) { add_edge(edge.first,edge.second); }
+    void add_edge(const ipair &edge,const attrib &attr) { add_edge(edge.first,edge.second,attr); }
     ipair add_edge(const gen &v,const gen &w,const gen &weight=gen(1));
     bool remove_edge(int i,int j);
+    bool remove_edge(const ipair &p) { return remove_edge(p.first,p.second); }
     void make_cycle(const vecteur &v);
     bool has_edge(int i,int j) const;
     bool has_edge(ipair p) const { return has_edge(p.first,p.second); }
@@ -307,7 +354,7 @@ public:
     matrice adjacency_matrix() const;
     matrice incidence_matrix() const;
     void set_graph_attribute(int key,const gen &val) { attributes[key]=val; }
-    void set_graph_attributes(const attrib &attr) { attributes=copy_attributes(attr); }
+    void set_graph_attributes(const attrib &attr) { copy_attributes(attr,attributes); }
     void set_node_attribute(int index, int key, const gen &val);
     void set_edge_attribute(int i, int j, int key, const gen &val);
     bool get_graph_attribute(int key, gen &val) const;
@@ -322,7 +369,7 @@ public:
     void make_directed();
     void make_unweighted();
     void underlying(graphe &G) const;
-    bool permute_nodes(const vecteur &sigma);
+    bool isomorphic_copy(graphe &G,const ivector &sigma);
     bool relabel_nodes(const vecteur &labels);
     void induce_subgraph(const ivector &vi,graphe &G,bool copy_attrib=true) const;
     ivector maximal_independent_set() const;
@@ -353,9 +400,6 @@ public:
     void collapse_edge(int i,int j);
     ipairs incident_edges(const ivector &v);
     bool get_layout(std::vector<point> &positions, int &dim) const;
-    void planar_force_directed(const graphe &G_orig,layout &x,ivectors &faces,double tol=0.01);
-    bool planar_embedding_connected(ivectors &faces,ipairs &temp_edges);
-    bool planar_embedding_block(ivectors &faces) const;
     void bridges(const std::vector<bool> &embedding,const ivectors &faces,std::vector<graphe> &B) const;
     static ivector range_complement(const ivector &v, int n);
     bool convex_hull(ivector &ccw_indices, const layout &x) const;
@@ -365,7 +409,7 @@ public:
     void draw_labels(vecteur &v,const layout &x) const;
     void get_leading_cycle(ivector &c) const;
 
-    graphe &operator = (const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
+    graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 
 #ifndef NO_NAMESPACE_GIAC

@@ -151,7 +151,7 @@ public:
         bool chain_completed() { return m_chain.back()!=0; }
         bool chain_empty() { return pos==0 && m_chain.front()==0; }
     };
-    class edmonds { // implementation of the blossom algorithm
+    class matching_maximizer {
         graphe *G;
         std::map<int,ivector> blossoms;
         std::map<int,int> forest;
@@ -167,11 +167,11 @@ public:
         ivector adjacent(int v);
         ipair make_edge(int i,int j) { return std::make_pair(i<j?i:j,i<j?j:i); }
     public:
-        edmonds(graphe *gr);
+        matching_maximizer(graphe *gr);
         bool find_augmenting_path(const ipairs &matching,ivector &path);
         void find_maximum_matching(ipairs &matching);
     };
-    class treeshaper {
+    class tree_shaper {
         graphe *G;
         ivector ancestor;
         std::map<int,ivector> level;
@@ -181,14 +181,12 @@ public:
         double hsep;
         double vsep;
         double t;
-        void layout_level(const ivector &V);
-        void walk(layout &x,int v,int lev,double modsum);
-        int max_depth(int node,int depth,int incumbent_depth);
-        int best_apex();
         void make_all_unvisited() { std::fill(visited.begin(),visited.end(),false); }
         void sort_nodes_by_levels(int v,int lev);
+        void layout_level(const ivector &V);
+        void move_subtrees(layout &x,int v,int lev,double modsum);
     public:
-        treeshaper(graphe *g);
+        tree_shaper(graphe *g);
         void make_layout(layout &x,double sep,int apex=0);
         double seconds_elapsed() { return t; }
     };
@@ -234,6 +232,7 @@ private:
     static void subtract_point(point &a,const point &b);
     static void scale_point(point &p,double s);
     static double point_vecprod2d(const point &v,const point &w);
+    static double point_dotprod(const point &p,const point &q);
     static void clear_point_coords(point &p);
     static double point_displacement(const point &p,bool sqroot=true);
     static void copy_point(const point &src,point &dest);
@@ -264,7 +263,8 @@ private:
     static void sort_rectangles(std::vector<rectangle> &rectangles);
     static bool pack_rectangles(const std::vector<rectangle> &rectangles,dpairs &embedding,double ew,double eh);
     static dpairs pack_rectangles_neatly(const std::vector<rectangle> &rectangles);
-    static bool edge_crossing(const point &p,const point &r,const point &q,const point &s, point &crossing);
+    static bool segments_crossing(const point &p,const point &r,const point &q,const point &s,point &crossing);
+    static bool point2segment_projection(const point &p,const point &q,const point &r,point &proj);
     static double ccw(const point &p1, const point &p2, const point &p3);
     static double polyarea(const layout &v);
     void promote_edge_crossings(layout &x);
@@ -273,26 +273,28 @@ private:
     point axis_of_symmetry(layout &x) const;
     static void bisector(int v,int w,const layout &x,point &bsec);
     static double squared_distance(const point &p,const point &line);
-    void force_directed(layout &x,double K,double R,double tol=0.001,bool ac=true);
-    void multilevel_force_directed(layout &x,int d,double K,double tol=0.001);
-    void make_regular_polygon(layout &x,const ivector &face,double R=1.0);
+    void force_directed_placement(layout &x,double K,double R,double tol=0.001,bool ac=true);
+    void force_directed_placement_multilevel(layout &x,int d,double K,double tol=0.001);
     void coarsening_mis(const ivector &V,graphe &G,sparsemat &P) const;
     void coarsening_ec(const ipairs &M, graphe &G, sparsemat &P) const;
     int node_label_best_quadrant(const layout &x,const point &center,int i) const;
     static void append_segment(vecteur &v,const point &p,const point &q,int color,int width,bool arrow=false);
     static void append_vertex(vecteur &v,const point &p,int color,int width);
     static void append_label(vecteur &v,const point &p,const gen &label,int quadrant);
-    bool planar_embedding_block(ivectors &faces) const;
-    int planar_embedding_connected(ivectors &faces,ipairs &temp_edges);
-    void plestenjak_layout(layout &x,ivectors &faces,int f,double tol=0.01);
-    bool planar_layout(layout &x,double K);
+    bool planar_embedding_block(ivectors &faces,bool randomize=false) const;
+    int planar_embedding_connected(ivectors &faces,std::map<int,ivector> &temp_edges,bool randomize=false);
+    static int choose_outer_face(const ivectors &faces,bool randomize=false);
+    static void make_regular_polygon_layout(layout &x,const ivector &face,double R=1.0);
+    void plestenjak_layout(layout &x,const ivector &outer_face,double A=0,double tol=0.001) const;
+    bool planar_layout(layout &x,double K,bool randomize=false);
+    bool is_layout_planar(const layout &x,const ipairs &edge_list) const;
     static void find_block_neighbors(int i,ivectors &blocks);
     static int common_element(const ivector &v1,const ivector &v2,int offset=0);
-    void embed_children_blocks(int i,ivectors &block_tree,std::vector<ivectors> &blocks_faces,ipairs &temp_edges);
-    int handle_2deg_nodes(ivectors &faces,int f0,ipairs &temp_edges);
-    int handle_concave_faces(ivectors &faces,int f0,ipairs &temp_edges);
-    int subdivide_faces(ivectors &faces,int f0);
-    void triangulate(ivectors &faces,int i,int v,std::vector<bool> &visited,ipairs &temp_edges);
+    void embed_children_blocks(int i,ivectors &block_tree,std::vector<ivectors> &blocks_faces,
+                               std::map<int,ivector> &temp_edges);
+    void subdivide_faces(const ivectors &faces,int f0);
+    int handle_2degree_vertices(ivectors &faces,int f0,std::map<int,ivector> &temp_edges);
+    void periphericity(const ivector &outer_face,ivector &p) const;
 
 public:
     graphe();
@@ -395,11 +397,11 @@ public:
     void connected_components(ivectors &components) const;
     ivector find_cut_vertices() const;
     void find_blocks(std::vector<ipairs> &blocks) const;
-    ivector find_cycle() const;
+    ivector find_cycle(bool randomize=false) const;
     ivector find_path(int v,int w) const;
     void collapse_edge(int i,int j);
     ipairs incident_edges(const ivector &v);
-    bool get_layout(std::vector<point> &positions, int &dim) const;
+    bool get_layout(layout &positions, int &dim) const;
     void bridges(const std::vector<bool> &embedding,const ivectors &faces,std::vector<graphe> &B) const;
     static ivector range_complement(const ivector &v, int n);
     bool convex_hull(ivector &ccw_indices, const layout &x) const;

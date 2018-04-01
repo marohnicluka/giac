@@ -101,16 +101,29 @@ public:
     class vertex {
         gen m_symbol;
         int m_subgraph;
+        bool m_visited;
+        int m_parent;
+        double m_prelim;
+        double m_modifier;
         attrib m_attributes;
         std::map<int,attrib> m_neighbors;
     public:
         vertex();
-        vertex(const vertex &v);
+        vertex(const vertex &other);
         vertex& operator =(const vertex &other);
         const gen &symbol() const { return m_symbol; }
         void set_symbol(const gen &s) { m_symbol=s; }
         int subgraph() const { return m_subgraph; }
         void set_subgraph(int s) { m_subgraph=s; }
+        void set_visited(bool yes) { m_visited=yes; }
+        bool is_visited() const { return m_visited; }
+        void set_parent(int i) { m_parent=i; }
+        void unset_parent() { m_parent=-1; }
+        int parent() const { return m_parent; }
+        void set_prelim(double val) { m_prelim=val; }
+        double prelim() const { return m_prelim; }
+        void set_modifier(double val) { m_modifier=val; }
+        double modifier() const { return m_modifier; }
         const attrib &attributes() const{ return m_attributes; }
         attrib &attributes() { return m_attributes; }
         void set_attribute(int key,const gen &val) { m_attributes[key]=val; }
@@ -171,25 +184,6 @@ public:
         bool find_augmenting_path(const ipairs &matching,ivector &path);
         void find_maximum_matching(ipairs &matching);
     };
-    class tree_shaper {
-        graphe *G;
-        ivector ancestor;
-        std::map<int,ivector> level;
-        std::vector<double> modifier;
-        std::vector<double> prelim;
-        std::vector<bool> visited;
-        double hsep;
-        double vsep;
-        double t;
-        void make_all_unvisited() { std::fill(visited.begin(),visited.end(),false); }
-        void sort_nodes_by_levels(int v,int lev);
-        void layout_level(const ivector &V);
-        void move_subtrees(layout &x,int v,int lev,double modsum);
-    public:
-        tree_shaper(graphe *g);
-        void make_layout(layout &x,double sep,int apex=0);
-        double seconds_elapsed() { return t; }
-    };
     class rectangle {
         double m_x;
         double m_y;
@@ -211,6 +205,8 @@ public:
     typedef std::vector<point>::const_iterator layout_iter;
     typedef ivector::const_iterator ivector_iter;
     typedef ivectors::const_iterator ivectors_iter;
+    typedef vertex* vptr;
+    typedef std::vector<vptr> vpointers;
     static const gen FAUX;
     static const gen VRAI;
 private:
@@ -218,6 +214,7 @@ private:
     std::string graph_name;
     attrib attributes;
     std::vector<std::string> user_tags;
+    ivector marked_vertices;
     static std::default_random_engine random_generator;
     static std::normal_distribution<double> normal_distribution;
     static std::uniform_real_distribution<double> uniform_distribution;
@@ -253,13 +250,11 @@ private:
     void tomita_recurse(const ivector &R, const ivector &P_orig, const ivector &X_orig, ivectors &cliques) const;
     void remove_isolated_node(int i);
     void make_connected_component(int i,int ci,std::map<int,int> &indices) const;
-    void find_cut_vertices_dfs(int u,int &t,ivector &disc,ivector &low,std::vector<bool> &ap) const;
+    void find_cut_vertices_dfs(int u,int &t,ivector &disc,ivector &low,std::vector<bool> &ap);
     void find_blocks_dfs(int v,int u,int &t,ivector &dfi,ivector &p,ipairs &stck,std::vector<ipairs> &blocks) const;
-    int find_cycle_dfs(int v,std::stack<int> &path,std::vector<bool> &visited,ivector &parent) const;
-    bool find_path_dfs(int dest, int v, std::stack<int> &path, std::vector<bool> &visited) const;
+    int find_cycle_dfs(int v,std::stack<int> &path);
+    bool find_path_dfs(int dest,int v,std::stack<int> &path);
     void get_edges(ipairs &E) const;
-    void bridge_contact_vertices(const graphe &bridge,const std::vector<bool> &embedding,ivector &cp) const;
-    static void split_faces(const ivector &face,ivectors &faces);
     static void sort_rectangles(std::vector<rectangle> &rectangles);
     static bool pack_rectangles(const std::vector<rectangle> &rectangles,dpairs &embedding,double ew,double eh);
     static dpairs pack_rectangles_neatly(const std::vector<rectangle> &rectangles);
@@ -281,11 +276,12 @@ private:
     static void append_segment(vecteur &v,const point &p,const point &q,int color,int width,bool arrow=false);
     static void append_vertex(vecteur &v,const point &p,int color,int width);
     static void append_label(vecteur &v,const point &p,const gen &label,int quadrant);
-    bool planar_embedding_block(ivectors &faces,bool randomize=false) const;
-    int planar_embedding_connected(ivectors &faces,std::map<int,ivector> &temp_edges,bool randomize=false);
+    static int face_has_edge(const ivector &face,int i,int j);
+    bool demoucron(ivectors &faces,bool randomize=false);
+    int planar_embedding(ivectors &faces,std::map<int,ivector> &temp_edges,bool randomize=false);
     static int choose_outer_face(const ivectors &faces,bool randomize=false);
     static void make_regular_polygon_layout(layout &x,const ivector &face,double R=1.0);
-    void plestenjak_layout(layout &x,const ivector &outer_face,double A=0,double tol=0.001) const;
+    void plestenjak_layout(layout &x,const ivector &outer_face,double A=0,double tol=0.001);
     bool planar_layout(layout &x,double K,bool randomize=false);
     bool is_layout_planar(const layout &x,const ipairs &edge_list) const;
     static void find_block_neighbors(int i,ivectors &blocks);
@@ -293,8 +289,12 @@ private:
     void embed_children_blocks(int i,ivectors &block_tree,std::vector<ivectors> &blocks_faces,
                                std::map<int,ivector> &temp_edges);
     void subdivide_faces(const ivectors &faces,int f0);
+    void flip_wedges(ivectors &faces) const;
     int handle_2degree_vertices(ivectors &faces,int f0,std::map<int,ivector> &temp_edges);
-    void periphericity(const ivector &outer_face,ivector &p) const;
+    void periphericity(const ivector &outer_face,ivector &p);
+    void sort_tree_by_levels(int v,int level,std::map<int,ivector> &levels);
+    void layout_tree_level(const ivector &V,double hsep);
+    void move_subtrees(layout &x,int v,int lev,double modsum,double vsep);
 
 public:
     graphe();
@@ -307,11 +307,21 @@ public:
     static std::string gen2str(const gen &g);
     bool read_gen(const vecteur &v,GIAC_CONTEXT);
     void copy(graphe &G) const;
+    void copy_nodes(const std::vector<vertex> &V) { nodes=std::vector<vertex>(V.begin(),V.end()); }
     void join(const graphe &G);
     int tag2index(const std::string &tag);
     std::string index2tag(int index) const;
     int register_user_tag(const std::string &tag);
     void register_user_tags(const std::vector<std::string> &tags);
+    const ivector &get_marked_vertices() const { return marked_vertices; }
+    void get_marked_vertices(vecteur &V) const;
+    void copy_marked_vertices(const ivector &mv) { marked_vertices=ivector(mv.begin(),mv.end()); }
+    void mark_vertex(int v);
+    void mark_vertex(const gen &v) { mark_vertex(node_index(v)); }
+    bool unmark_vertex(int v);
+    bool unmark_vertex(const gen &v) { return unmark_vertex(node_index(v)); }
+    void clear_marked_vertices() { marked_vertices.clear(); }
+    void sort_marked_vertices() { std::sort(marked_vertices.begin(),marked_vertices.end()); }
     gen to_gen() const;
     bool write_dot(const std::string &filename) const;
     bool read_dot(const std::string &filename);
@@ -321,6 +331,8 @@ public:
     int edge_count() const;
     int node_count() const { return nodes.size(); }
     vecteur vertices() const;
+    void unvisit_all_vertices();
+    void unset_all_ancestors();
     ivector adjacent_nodes(int i) const;
     void translate_indices_to(const graphe &G,const ivector &indices,ivector &dest) const;
     void translate_indices_from(const graphe &G,const ivector &indices,ivector &dest) const;
@@ -384,6 +396,7 @@ public:
     bool parse_matrix(const matrice &m,bool iswei,int mode,GIAC_CONTEXT);
     void parse_trail(const vecteur &v);
     layout make_layout(double K,gt_layout_style style);
+    void make_tree_layout(layout &x,double sep,int apex=0);
     static void create_random_layout(layout &x,double K,int d);
     static gen point2gen(const point &p,bool vect=false);
     static point layout_center(const layout &x);
@@ -395,14 +408,14 @@ public:
     void make_petersen_graph(int n,int k,GIAC_CONTEXT);
     void make_random_tree(int n,GIAC_CONTEXT);
     void connected_components(ivectors &components) const;
-    ivector find_cut_vertices() const;
+    ivector find_cut_vertices();
     void find_blocks(std::vector<ipairs> &blocks) const;
-    ivector find_cycle(bool randomize=false) const;
-    ivector find_path(int v,int w) const;
+    ivector find_cycle(bool randomize=false);
+    ivector find_path(int v,int w);
     void collapse_edge(int i,int j);
     ipairs incident_edges(const ivector &v);
     bool get_layout(layout &positions, int &dim) const;
-    void bridges(const std::vector<bool> &embedding,const ivectors &faces,std::vector<graphe> &B) const;
+    void demoucron_bridges(const std::vector<bool> &embedding,const ivectors &faces,std::vector<graphe> &bridges) const;
     static ivector range_complement(const ivector &v, int n);
     bool convex_hull(ivector &ccw_indices, const layout &x) const;
     double subgraph_area(const layout &x,const ivector &v=ivector()) const;

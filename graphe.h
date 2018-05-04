@@ -38,6 +38,10 @@
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
+enum move_to_dispatch_h {
+    _GT_SPRING = 137 // spring
+};
+
 enum gt_dot_token_type {
     _GT_DOT_TOKEN_TYPE_IDENTIFIER = 1,
     _GT_DOT_TOKEN_TYPE_NUMBER = 2,
@@ -83,7 +87,7 @@ enum gt_error_code {
     _GT_ERR_MATRIX_NOT_SYMMETRIC = 8,
     _GT_ERR_READING_FAILED = 9,
     _GT_ERR_EDGE_NOT_FOUND = 10,
-    _GT_ERR_VERTEX_NOT_FOUND = 11,
+    _GT_ERR_VERTEX_NOT_FOUND = 11
 };
 
 class graphe {
@@ -100,12 +104,16 @@ public:
     typedef std::map<int,std::map<int,double> > sparsemat;
 
     class vertex {
-        gen m_symbol;
+        gen m_label;
         int m_subgraph;
+        // used for DFS
         bool m_visited;
-        int m_parent;
+        int m_low;
+        int m_disc;
+        int m_ancestor;
         // used for drawing trees
         int m_position;
+        int m_gaps;
         double m_prelim;
         double m_modifier;
         bool m_isleaf;
@@ -117,19 +125,25 @@ public:
         vertex();
         vertex(const vertex &other);
         vertex& operator =(const vertex &other);
-        const gen &symbol() const { return m_symbol; }
-        void set_symbol(const gen &s) { m_symbol=s; }
+        const gen &label() const { return m_label; }
+        void set_label(const gen &s) { m_label=s; }
         int subgraph() const { return m_subgraph; }
         void set_subgraph(int s) { m_subgraph=s; }
         void set_visited(bool yes) { m_visited=yes; }
         bool is_visited() const { return m_visited; }
-        void set_parent(int i) { m_parent=i; }
-        void unset_parent() { m_parent=-1; }
-        int parent() const { return m_parent; }
+        void set_low(int l) { m_low=l; }
+        int low() const { return m_low; }
+        void set_disc(int t) { m_disc=t; }
+        int disc() const { return m_disc; }
+        void set_ancestor(int i) { m_ancestor=i; }
+        void unset_ancestor() { m_ancestor=-1; }
+        int ancestor() const { return m_ancestor; }
         void set_is_leaf(bool yes) { m_isleaf=yes; }
         bool is_leaf() const { return m_isleaf; }
         void set_position(int p) { m_position=p; }
         int position() const { return m_position; }
+        void set_gaps(int n) { m_gaps=n; }
+        int gaps() const { return m_gaps; }
         void set_prelim(double val) { m_prelim=val; }
         double prelim() const { return m_prelim; }
         void set_modifier(double val) { m_modifier=val; }
@@ -207,7 +221,7 @@ public:
         void path(int i,int j,const ivector &B,ivector &P);
         void creases(const ivector &B,ipairs &C);
         void zigzag(const ivector &B);
-        void fold(const ivector &B);
+        void fold(const ivector &B,bool triangulate=true);
     public:
         triangulator(graphe *gr,ivectors *Gt);
         void triangulate(int outer_face=-1);
@@ -219,7 +233,8 @@ public:
         double hsep;
         double vsep;
         ivectors levels;
-        ivector counters;
+        ivector node_counters;
+        ivector gap_counters;
         std::queue<int> placed;
         int depth;
         void walk(int i,int pass,int level=0,double modsum=0);
@@ -235,6 +250,11 @@ public:
         double m_width;
         double m_height;
     public:
+        struct comparator {
+            bool operator()(const rectangle &r1,const rectangle &r2) const {
+                return r1.height()<r2.height();
+            }
+        };
         rectangle();
         rectangle(double X,double Y,double W,double H);
         rectangle(const rectangle &rect);
@@ -243,6 +263,30 @@ public:
         double y() const { return m_y; }
         double width() const { return m_width; }
         double height() const { return m_height; }
+    };
+
+    struct convexhull_comparator {
+        const layout *x;
+        const point *lp;
+        convexhull_comparator(const layout *x_orig,const point *lp_orig) {
+            x=x_orig;
+            lp=lp_orig;
+        }
+        bool operator()(int i,int j) const {
+            const point &pt1=x->at(i),&pt2=x->at(j);
+            if (pt1[1]==pt2[1])
+                return pt1[0]<pt2[0];
+            double dx1=pt1[0]-lp->front(),dx2=pt2[0]-lp->front();
+            double dy1=pt1[1]-lp->back(),dy2=pt2[1]-lp->back();
+            double r=std::sqrt((dx2*dx2+dy2*dy2)/(dx1*dx1+dy1*dy1));
+            return dx2<dx1*r;
+        }
+    };
+
+    struct axis_comparator {
+        bool operator()(const std::pair<double,point> &a,const std::pair<double,point> &b) {
+            return a.first<b.first;
+        }
     };
 
     typedef std::vector<vertex>::const_iterator node_iter;
@@ -263,9 +307,6 @@ private:
     attrib attributes;
     std::vector<std::string> user_tags;
     ivector marked_vertices;
-    int rand_integer(int n) const { return giac::giac_rand(ctx)%n; }
-    double rand_uniform() const { return giac::giac_rand(ctx)/(RAND_MAX+1.0); }
-    double rand_normal() const { return giac::randNorm(ctx); }
     void message(const char *str);
     void message(const char *format,int a);
     void message(const char *format,int a,int b);
@@ -292,7 +333,7 @@ private:
     static void rotate_layout(layout &x,double phi);
     static void translate_layout(layout &x,const point &dx);
     static double layout_min(const layout &x,int d);
-    static void point2polar(point &p);
+    static void point2polar(point &p,double &r,double &phi);
     static bool sparse_matrix_element(const sparsemat &A,int i,int j,double &val);
     static void multiply_sparse_matrices(const sparsemat &A,const sparsemat &B,sparsemat &prod);
     static void transpose_sparsemat(const sparsemat &A,sparsemat &transp);
@@ -314,10 +355,9 @@ private:
     static double ccw(const point &p1,const point &p2,const point &p3);
     static double polyarea(const layout &v);
     void promote_edge_crossings(layout &x);
-    double purchase(const layout &x,int v,int w,int orig_node_count,const point &axis,
-                    const ipairs &E,std::vector<double> &sc,double tol) const;
-    point axis_of_symmetry(layout &x) const;
-    static void bisector(int v,int w,const layout &x,point &bsec);
+    double purchase(const layout &x,int orig_node_count,const point &axis,
+                    const ipairs &E, std::vector<double> &sc, double tol) const;
+    static double bisector(int v, int w, const layout &x, point &bsec, const point &p0);
     static double squared_distance(const point &p,const point &line);
     void force_directed_placement(layout &x,double K,double R,double tol=0.001,bool ac=true);
     void force_directed_placement_multilevel(layout &x,int d,double K,double tol=0.001);
@@ -346,6 +386,9 @@ private:
 public:
     graphe(const context *contextptr=context0);
     graphe(const graphe &G);
+    int rand_integer(int n) const { return giac::giac_rand(ctx)%n; }
+    double rand_uniform() const { return giac::giac_rand(ctx)/(RAND_MAX+1.0); }
+    double rand_normal() const { return giac::randNorm(ctx); }
     const context *giac_context() const { return ctx; }
     static gen make_idnt(const char* name,int index=-1,bool intern=true);
     void make_default_vertex_labels(vecteur &labels,int n,int n0) const;
@@ -356,7 +399,7 @@ public:
     bool read_gen(const vecteur &v);
     void copy(graphe &G) const;
     void copy_nodes(const std::vector<vertex> &V) { nodes=std::vector<vertex>(V.begin(),V.end()); }
-    void join(const graphe &G);
+    void join_edges(const graphe &G);
     void clear();
     int tag2index(const std::string &tag);
     std::string index2tag(int index) const;
@@ -395,7 +438,7 @@ public:
     void remove_nodes(const vecteur &v);
     vertex &node(int i) { return nodes[i]; }
     const vertex &node(int i) const { return nodes[i]; }
-    const gen &node_label(int i) const { assert(i>=0 && i<node_count()); return nodes[i].symbol(); }
+    const gen &node_label(int i) const { assert(i>=0 && i<node_count()); return nodes[i].label(); }
     vecteur get_nodes(const ivector &v) const;
     int node_index(const gen &v) const;
     const attrib &node_attributes(int i) const { assert(i>=0 && i<node_count()); return nodes[i].attributes(); }
@@ -461,8 +504,10 @@ public:
     void make_petersen_graph(int n,int k);
     void make_random_tree(int n);
     void make_random_planar(int n);
+    void make_random(bool dir,const vecteur &V,double p);
+    void make_random_bipartite(const vecteur &V,const vecteur &W,double p);
     void triangulator_test();
-    void tree_layout_test();
+    point axis_of_symmetry(layout &x);
     void connected_components(ivectors &components) const;
     ivector find_cut_vertices();
     void find_blocks(std::vector<ipairs> &blocks) const;

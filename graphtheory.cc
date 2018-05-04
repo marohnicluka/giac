@@ -767,7 +767,9 @@ gen _cycle_graph(const gen &g,GIAC_CONTEXT) {
     else if (g.is_integer())
         G.make_default_vertex_labels(V,g.val,0);
     G.make_cycle(V);
-    G.set_name(string("C")+to_string(G.node_count()));
+    stringstream ss;
+    ss << "C" << G.node_count();
+    G.set_name(ss.str());
     return G.to_gen();
 }
 static const char _cycle_graph_s []="cycle_graph";
@@ -849,7 +851,7 @@ define_unary_function_ptr5(at_hypercube_graph,alias_at_hypercube_graph,&__hyperc
 /*
  * Usage:   seidel_switch(G,V)
  *
- * Returns copy of graph G in which edges between vertices in list V and
+ * Returns a copy of graph G in which edges between vertices in list V and
  * vertices not in V are inverted, i.e. replaced with a set of edges from V to
  * other vertices which is not present in G.
  */
@@ -913,11 +915,11 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     }
     int d=2;
     double K=10;
-    graphe::layout x=G.make_layout(K,d==2?_GT_STYLE_PLANAR:_GT_STYLE_3D);
+    graphe::layout x=G.make_layout(K,d==2?_GT_STYLE_SPRING:_GT_STYLE_3D);
     vecteur drawing;
     G.draw_edges(drawing,x);
     G.draw_nodes(drawing,x);
-    G.draw_labels(drawing,x);
+    //G.draw_labels(drawing,x);
     return drawing;
 }
 static const char _draw_graph_s []="draw_graph";
@@ -927,7 +929,7 @@ define_unary_function_ptr5(at_draw_graph,alias_at_draw_graph,&__draw_graph,0,tru
 /*
  * Usage:   sierpinski_graph(n,k,[triangle])
  *
- * Creates Sierpinski (triangle) graph S(n,k) (resp. ST(n,k)) and returns it.
+ * Returns Sierpinski (triangle) graph S(n,k) (resp. ST(n,k)).
  */
 gen _sierpinski_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG &&g.subtype==-1) return g;
@@ -1021,6 +1023,105 @@ gen _petersen_graph(const gen &g,GIAC_CONTEXT) {
 static const char _petersen_graph_s []="petersen_graph";
 static define_unary_function_eval(__petersen_graph,&_petersen_graph,_petersen_graph_s);
 define_unary_function_ptr5(at_petersen_graph,alias_at_petersen_graph,&__petersen_graph,0,true)
+
+gen randomgraph(const vecteur &gv,bool directed,GIAC_CONTEXT) {
+    graphe G(contextptr);
+    vecteur V;
+    if (gv.size()!=2)
+        return gensizeerr(contextptr);
+    if (gv.front().type==_VECT)
+        V=*gv.front()._VECTptr;
+    else if (gv.front().is_integer())
+        G.make_default_vertex_labels(V,gv.front().val,0);
+    else
+        return gentypeerr(contextptr);
+    if (!is_positive(gv.back(),contextptr))
+        return gentypeerr(contextptr);
+    G.make_random(directed,V,gv.back().DOUBLE_val());
+    return G.to_gen();
+}
+
+/*
+ * Usage:   random_graph(n or V,p)
+ *          random_graph(n or V,m)
+ *
+ * Returns a random undirected unweighted graph with n vertices where two
+ * vertices are connected with probability p. Alternatively, m edges are
+ * created at random. Instead of number n of vertices, a list V of vertex
+ * labels may be specified.
+ */
+gen _random_graph(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    return randomgraph(*g._VECTptr,false,contextptr);
+}
+static const char _random_graph_s []="random_graph";
+static define_unary_function_eval(__random_graph,&_random_graph,_random_graph_s);
+define_unary_function_ptr5(at_random_graph,alias_at_random_graph,&__random_graph,0,true)
+
+/*
+ * Usage:   random_digraph(n or V,p)
+ *          random_digraph(n or V,m)
+ *
+ * Returns a random directed unweighted graph with n vertices where two
+ * vertices are connected with probability p. Alternatively, m edges are
+ * created at random. Instead of number n of vertices, a list V of vertex
+ * labels may be specified.
+ */
+gen _random_digraph(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    return randomgraph(*g._VECTptr,true,contextptr);
+}
+static const char _random_digraph_s []="random_digraph";
+static define_unary_function_eval(__random_digraph,&_random_digraph,_random_digraph_s);
+define_unary_function_ptr5(at_random_digraph,alias_at_random_digraph,&__random_digraph,0,true)
+
+/*
+ * Usage:   random_bipartite_graph(n or [a,b],p)
+ *          random_bipartite_graph(n or [a,b],m)
+ *
+ * Returns a random undirected unweighted bipartite graph with n vertices where
+ * each possible edge is present with probability p. Alternatively, m edges are
+ * created at random. Also, when first argument is list [a,b] of integers, two
+ * groups of vertices with sizes a and b are created.
+ */
+gen _random_bipartite_graph(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()!=2)
+        return gensizeerr(contextptr);
+    if (!is_positive(gv.back(),contextptr))
+        return gentypeerr(contextptr);
+    double p=gv.back().DOUBLE_val();
+    int n,a,b;
+    vecteur V,W;
+    graphe G(contextptr);
+    if (gv.front().is_integer()) {
+        n=gv.front().val;
+        if (n<1)
+            return gensizeerr(contextptr);
+        a=G.rand_integer(n-1)+1;
+        b=n-a;
+    } else if (gv.front().type==_VECT && gv.front()._VECTptr->size()==2) {
+        vecteur &ab=*gv.front()._VECTptr;
+        if (!ab.front().is_integer() || !ab.back().is_integer())
+            return gentypeerr(contextptr);
+        a=ab.front().val;
+        b=ab.back().val;
+    }
+    G.make_default_vertex_labels(V,a,0);
+    G.make_default_vertex_labels(W,b,a);
+    G.make_random_bipartite(V,W,p);
+    return G.to_gen();
+}
+static const char _random_bipartite_graph_s []="random_bipartite_graph";
+static define_unary_function_eval(__random_bipartite_graph,&_random_bipartite_graph,_random_bipartite_graph_s);
+define_unary_function_ptr5(at_random_bipartite_graph,alias_at_random_bipartite_graph,&__random_bipartite_graph,0,true)
 
 /*
  * Usage:   random_tree(n)

@@ -41,7 +41,8 @@ static const char *gt_error_messages[] = {
     "weight/adjacency matrix must be symmetric for undirected graphs",  //  8
     "failed to read graph from file",                                   //  9
     "edge not found",                                                   // 10
-    "vertex not found"                                                  // 11
+    "vertex not found",                                                 // 11
+    "graph is not a tree"                                               // 12
 };
 
 void gt_err_display(int code,GIAC_CONTEXT) {
@@ -915,7 +916,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     }
     int d=2;
     double K=10;
-    graphe::layout x=G.make_layout(K,d==2?_GT_STYLE_SPRING:_GT_STYLE_3D);
+    graphe::layout x=G.make_layout(K,d==2?_GT_STYLE_PLANAR:_GT_STYLE_3D);
     vecteur drawing;
     G.draw_edges(drawing,x);
     G.draw_nodes(drawing,x);
@@ -1035,7 +1036,7 @@ gen randomgraph(const vecteur &gv,bool directed,GIAC_CONTEXT) {
         G.make_default_vertex_labels(V,gv.front().val,0);
     else
         return gentypeerr(contextptr);
-    if (!is_positive(gv.back(),contextptr))
+    if (!is_strictly_positive(gv.back(),contextptr))
         return gentypeerr(contextptr);
     G.make_random(directed,V,gv.back().DOUBLE_val());
     return G.to_gen();
@@ -1095,7 +1096,7 @@ gen _random_bipartite_graph(const gen &g,GIAC_CONTEXT) {
     vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
         return gensizeerr(contextptr);
-    if (!is_positive(gv.back(),contextptr))
+    if (!is_strictly_positive(gv.back(),contextptr))
         return gentypeerr(contextptr);
     double p=gv.back().DOUBLE_val();
     int n,a,b;
@@ -1124,21 +1125,176 @@ static define_unary_function_eval(__random_bipartite_graph,&_random_bipartite_gr
 define_unary_function_ptr5(at_random_bipartite_graph,alias_at_random_bipartite_graph,&__random_bipartite_graph,0,true)
 
 /*
- * Usage:   random_tree(n)
+ * Usage:   random_tournament(n)
  *
- * Returns a random tree graph with n vertices.
+ * Returns a random tournament graph with n vertices.
  */
-gen _random_tree(const gen &g,GIAC_CONTEXT) {
+gen _random_tournament(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG &&g.subtype==-1) return g;
     if (!g.is_integer() || g.val<=0)
         return gentypeerr(contextptr);
     graphe G(contextptr);
-    G.make_random_tree(g.val);
+    G.set_directed(true);
+    int n=g.val;
+    for (int i=0;i<n;++i) {
+        for (int j=i+1;j<n;++j) {
+            if (giac_rand(contextptr)%2==0)
+                G.add_edge(i,j);
+            else
+                G.add_edge(j,i);
+        }
+    }
+    return G.to_gen();
+}
+static const char _random_tournament_s []="random_tournament";
+static define_unary_function_eval(__random_tournament,&_random_tournament,_random_tournament_s);
+define_unary_function_ptr5(at_random_tournament,alias_at_random_tournament,&__random_tournament,0,true)
+
+/*
+ * Usage:   random_regular_graph(n,d,[connected])
+ *
+ * Returns a random d-regular graph with n vertices.
+ */
+gen _random_regular_graph(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    graphe G(contextptr);
+    vecteur V;
+    vecteur &gv=*g._VECTptr;
+    if (gv.front().is_integer())
+        G.make_default_vertex_labels(V,gv.front().val,0);
+    else if (gv.front().type==_VECT)
+        V=*gv.front()._VECTptr;
+    else
+        return gentypeerr(contextptr);
+    if (gv.size()<2)
+        return gensizeerr(contextptr);
+    if (!gv[1].is_integer() || !is_strictly_positive(gv[1],contextptr))
+        return gentypeerr(contextptr);
+    int d=gv[1].val;
+    bool connected=false;
+    if (gv.size()>2 && gv[2].is_integer() && gv[2].val==_GT_CONNECTED)
+        connected=true;
+    G.make_random_regular(V,d,connected);
+    return G.to_gen();
+}
+static const char _random_regular_graph_s []="random_regular_graph";
+static define_unary_function_eval(__random_regular_graph,&_random_regular_graph,_random_regular_graph_s);
+define_unary_function_ptr5(at_random_regular_graph,alias_at_random_regular_graph,&__random_regular_graph,0,true)
+
+/*
+ * Usage:   random_tree(n)
+ *          random_tree(n,d)
+ *
+ * Returns a random tree graph with n vertices. Optional parameter d is a
+ * positive integer which represents the upper bound for degree of graph.
+ */
+gen _random_tree(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    int maxd=RAND_MAX,n;
+    vecteur V;
+    graphe G(contextptr);
+    if (g.is_integer()) {
+        n=g.val;
+    } else if (g.type==_VECT) {
+        vecteur &gv=*g._VECTptr;
+        if (g.subtype==_SEQ__VECT) {
+            if (gv.front().is_integer()) {
+                n=gv.front().val;
+            } else if (gv.front().type==_VECT) {
+                V=*gv.front()._VECTptr;
+                n=V.size();
+            } else
+                return gentypeerr(contextptr);
+            if (gv.size()>1 && gv[1].is_integer()) {
+                maxd=gv[1].val;
+                if (maxd<1)
+                    return gensizeerr(contextptr);
+            }
+        } else {
+            V=gv;
+            n=V.size();
+        }
+    }
+    if (n<1)
+        return gensizeerr(contextptr);
+    if (V.empty())
+        G.make_default_vertex_labels(V,n,0);
+    G.make_random_tree(V,maxd);
     return G.to_gen();
 }
 static const char _random_tree_s []="random_tree";
 static define_unary_function_eval(__random_tree,&_random_tree,_random_tree_s);
 define_unary_function_ptr5(at_random_tree,alias_at_random_tree,&__random_tree,0,true)
+
+/*
+ * Usage:   random_planar_graph(n or V)
+ *
+ * Return random biconnected planar graph with n vertices, which can also be
+ * specified as a list V of their labels.
+ */
+gen _random_planar_graph(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    vecteur V;
+    graphe G(contextptr);
+    if (g.type==_VECT)
+        V=*g._VECTptr;
+    else if (g.is_integer()) {
+        int n=g.val;
+        if (n<1)
+            return gensizeerr(contextptr);
+        G.make_default_vertex_labels(V,n,0);
+    } else
+        return gentypeerr(contextptr);
+    G.make_random_planar(V);
+    return G.to_gen();
+}
+static const char _random_planar_graph_s []="random_planar_graph";
+static define_unary_function_eval(__random_planar_graph,&_random_planar_graph,_random_planar_graph_s);
+define_unary_function_ptr5(at_random_planar_graph,alias_at_random_planar_graph,&__random_planar_graph,0,true)
+
+
+/*
+ * Usage:   assign_edge_weights(G,m,n)
+ *          random_edge_weights(G,a..b)
+ *
+ * Assigns random edge weights to the edges of graph G and returns a modified
+ * copy of G. If integers n and m such that n>=m are specified, weights are
+ * integers randomly chosen in [m,n]. If an interval a..b is specified, weights
+ * are uniformly distributed in the interval [a,b).
+ */
+gen _assign_edge_weights(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.front().type!=_VECT)
+        return gentypeerr(contextptr);
+    graphe G(contextptr);
+    if (!G.read_gen(*gv.front()._VECTptr))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (gv.size()==3) {
+        if (!gv[1].is_integer() || !gv[2].is_integer())
+            return gentypeerr(contextptr);
+        int m=gv[1].val,n=gv[2].val;
+        if (m>n)
+            return gensizeerr(contextptr);
+        G.randomize_edge_weights(m,n,true);
+    } else if (gv.size()==2) {
+        if (!gv.back().is_symb_of_sommet(at_interval))
+            return gentypeerr(contextptr);
+        gen a=gv.back()._SYMBptr->feuille._VECTptr->front(),
+                b=gv.back()._SYMBptr->feuille._VECTptr->back();
+        if (_evalf(a,contextptr).type!=_DOUBLE_ || _evalf(b,contextptr).type!=_DOUBLE_)
+            return gentypeerr(contextptr);
+        G.randomize_edge_weights(a.DOUBLE_val(),b.DOUBLE_val(),false);
+    }
+    return G.to_gen();
+}
+static const char _assign_edge_weights_s []="assign_edge_weights";
+static define_unary_function_eval(__assign_edge_weights,&_assign_edge_weights,_assign_edge_weights_s);
+define_unary_function_ptr5(at_assign_edge_weights,alias_at_assign_edge_weights,&__assign_edge_weights,0,true)
 
 /*
  * Usage:   articulation_points(G)
@@ -2026,6 +2182,127 @@ gen _relabel_vertices(const gen &g,GIAC_CONTEXT) {
 static const char _relabel_vertices_s []="relabel_vertices";
 static define_unary_function_eval(__relabel_vertices,&_relabel_vertices,_relabel_vertices_s);
 define_unary_function_ptr5(at_relabel_vertices,alias_at_relabel_vertices,&__relabel_vertices,0,true)
+
+/* Usage:   is_tree(G)
+ *
+ * Returns true iff graph G is a tree, i.e. an undirected connected graph with
+ * exactly n-1 edges, where n is number of nodes.
+ */
+gen _is_tree(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (g.type!=_VECT || !G.read_gen(*g._VECTptr))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    return graphe::boole(G.is_tree());
+}
+static const char _is_tree_s []="is_tree";
+static define_unary_function_eval(__is_tree,&_is_tree,_is_tree_s);
+define_unary_function_ptr5(at_is_tree,alias_at_is_tree,&__is_tree,0,true)
+
+/* Usage:   is_forest(G)
+ *
+ * Returns true iff graph G is a forest, i.e. an undirected graph whose
+ * connected components are all trees.
+ */
+gen _is_forest(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (g.type!=_VECT || !G.read_gen(*g._VECTptr))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    return graphe::boole(G.is_forest());
+}
+static const char _is_forest_s []="is_forest";
+static define_unary_function_eval(__is_forest,&_is_forest,_is_forest_s);
+define_unary_function_ptr5(at_is_forest,alias_at_is_forest,&__is_forest,0,true)
+
+/* Usage:   is_tournament(G)
+ *
+ * Returns true iff graph G is a tournament, i.e. a complete graph with a
+ * direction for each edge.
+ */
+gen _is_forest(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (g.type!=_VECT || !G.read_gen(*g._VECTptr))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    return graphe::boole(G.is_tournament());
+}
+static const char _is_tournament_s []="is_tournament";
+static define_unary_function_eval(__is_tournament,&_is_tournament,_is_tournament_s);
+define_unary_function_ptr5(at_is_tournament,alias_at_is_tournament,&__is_tournament,0,true)
+
+/* Usage:   tree_height(T,r)
+ *
+ * Returns the height of tree T with vertex r as root node.
+ */
+gen _tree_height(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()!=2)
+        return gensizeerr(contextptr);
+    graphe G(contextptr);
+    if (gv.front().type!=_VECT || !G.read_gen(*gv.front()._VECTptr))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (G.node_count()==1)
+        return 0;
+    if (!G.is_tree())
+        return gt_err(_GT_ERR_NOT_A_TREE,contextptr);
+    int root;
+    if ((root=G.node_index(gv.back()))==-1)
+        return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+    return G.tree_height(root);
+}
+static const char _tree_height_s []="tree_height";
+static define_unary_function_eval(__tree_height,&_tree_height,_tree_height_s);
+define_unary_function_ptr5(at_tree_height,alias_at_tree_height,&__tree_height,0,true)
+
+/* Usage:   is_connected(G)
+ *
+ * Returns true iff graph G is connected.
+ */
+gen _is_connected(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (g.type!=_VECT || !G.read_gen(*g._VECTptr))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    return graphe::boole(G.is_connected());
+}
+static const char _is_connected_s []="is_connected";
+static define_unary_function_eval(__is_connected,&_is_connected,_is_connected_s);
+define_unary_function_ptr5(at_is_connected,alias_at_is_connected,&__is_connected,0,true)
+
+/* Usage:   is_biconnected(G)
+ *
+ * Returns true iff graph G is biconnected.
+ */
+gen _is_biconnected(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (g.type!=_VECT || !G.read_gen(*g._VECTptr))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    return graphe::boole(G.is_biconnected());
+}
+static const char _is_biconnected_s []="is_biconnected";
+static define_unary_function_eval(__is_biconnected,&_is_biconnected,_is_biconnected_s);
+define_unary_function_ptr5(at_is_biconnected,alias_at_is_biconnected,&__is_biconnected,0,true)
+
+/* Usage:   is_weighted(G)
+ *
+ * Returns true iff graph G is weighted.
+ */
+gen _is_weighted(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (g.type!=_VECT || !G.read_gen(*g._VECTptr))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    return graphe::boole(G.is_weighted());
+}
+static const char _is_weighted_s []="is_weighted";
+static define_unary_function_eval(__is_weighted,&_is_weighted,_is_weighted_s);
+define_unary_function_ptr5(at_is_weighted,alias_at_is_weighted,&__is_weighted,0,true)
+
 
 #ifndef NO_NAMESPACE_GIAC
 }

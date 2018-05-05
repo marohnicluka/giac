@@ -25,6 +25,22 @@
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
+enum gt_error_code {
+    _GT_ERR_UNKNOWN = 0,
+    _GT_ERR_NOT_A_GRAPH = 1,
+    _GT_ERR_WEIGHTED_GRAPH_REQUIRED = 2,
+    _GT_ERR_UNWEIGHTED_GRAPH_REQUIRED = 3,
+    _GT_ERR_DIRECTED_GRAPH_REQUIRED = 4,
+    _GT_ERR_UNDIRECTED_GRAPH_REQUIRED = 5,
+    _GT_ERR_INVALID_EDGE = 6,
+    _GT_ERR_INVALID_EDGE_ARC_MIX = 7,
+    _GT_ERR_MATRIX_NOT_SYMMETRIC = 8,
+    _GT_ERR_READING_FAILED = 9,
+    _GT_ERR_EDGE_NOT_FOUND = 10,
+    _GT_ERR_VERTEX_NOT_FOUND = 11,
+    _GT_ERR_NOT_A_TREE=12
+};
+
 bool is_graphe(const gen &g,std::string &disp_out,GIAC_CONTEXT);
 
 gen _graph(const gen &g,GIAC_CONTEXT);
@@ -60,6 +76,12 @@ gen _connected_components(const gen &g,GIAC_CONTEXT);
 gen _departures(const gen &g,GIAC_CONTEXT);
 gen _incident_edges(const gen &g,GIAC_CONTEXT);
 gen _is_connected(const gen &g,GIAC_CONTEXT);
+gen _is_biconnected(const gen &g,GIAC_CONTEXT);
+gen _is_weighted(const gen &g,GIAC_CONTEXT);
+gen _is_forest(const gen &g,GIAC_CONTEXT);
+gen _is_tournament(const gen &g,GIAC_CONTEXT);
+gen _is_tree(const gen &g,GIAC_CONTEXT);
+gen _tree_height(const gen &g,GIAC_CONTEXT);
 gen _maximum_matching(const gen &g,GIAC_CONTEXT);
 gen _number_of_edges(const gen &g,GIAC_CONTEXT);
 gen _edges(const gen &g,GIAC_CONTEXT);
@@ -88,9 +110,9 @@ gen _random_graph(const gen &g,GIAC_CONTEXT);
 gen _random_digraph(const gen &g,GIAC_CONTEXT);
 gen _random_regular_graph(const gen &g,GIAC_CONTEXT);
 gen _random_bipartite_graph(const gen &g,GIAC_CONTEXT);
-gen _random_tree(const gen &g,GIAC_CONTEXT);
-gen _random_planar(const gen &g,GIAC_CONTEXT);
 gen _random_tournament(const gen &g,GIAC_CONTEXT);
+gen _random_tree(const gen &g,GIAC_CONTEXT);
+gen _random_planar_graph(const gen &g,GIAC_CONTEXT);
 gen _assign_edge_weights(const gen &g,GIAC_CONTEXT);
 gen _isomorphic_copy(const gen &g,GIAC_CONTEXT);
 gen _relabel_vertices(const gen &g,GIAC_CONTEXT);
@@ -124,12 +146,8 @@ gen _reverse_graph(const gen &g,GIAC_CONTEXT);
 //gen _cycle_basis(const gen &g,GIAC_CONTEXT);
 //gen _graph_diameter(const gen &g,GIAC_CONTEXT);
 gen _graph_equal(const gen &g,GIAC_CONTEXT);
-gen _is_biconnected(const gen &g,GIAC_CONTEXT);
 //gen _is_cut_set(const gen &g,GIAC_CONTEXT);
-gen _is_forest(const gen &g,GIAC_CONTEXT);
 //gen _is_network(const gen &g,GIAC_CONTEXT);
-gen _is_tournament(const gen &g,GIAC_CONTEXT);
-gen _is_weighted(const gen &g,GIAC_CONTEXT);
 //gen _maximum_clique(const gen &g,GIAC_CONTEXT);
 //gen _number_of_spanning_trees(const gen &g,GIAC_CONTEXT);
 //gen _optimal_vertex_coloring(const gen &g,GIAC_CONTEXT);
@@ -155,7 +173,6 @@ gen _sequence_graph(const gen &g,GIAC_CONTEXT);
 gen _is_graphic_sequence(const gen &g,GIAC_CONTEXT);
 //gen _is_hamiltonian(const gen &g,GIAC_CONTEXT);
 gen _is_planar(const gen &g,GIAC_CONTEXT);
-gen _is_tree(const gen &g,GIAC_CONTEXT);
 //gen _is_two_edge_connected(const gen &g,GIAC_CONTEXT);
 gen _is_eulerian(const gen &g,GIAC_CONTEXT);
 //gen _laplacian_matrix(const gen &g,GIAC_CONTEXT);
@@ -163,7 +180,6 @@ gen _is_eulerian(const gen &g,GIAC_CONTEXT);
 //gen _odd_girth(const gen &g,GIAC_CONTEXT);
 //gen _seidel_spectrum(const gen &g,GIAC_CONTEXT);
 //gen _topologic_sort(const gen &g,GIAC_CONTEXT);
-gen _tree_height(const gen &g,GIAC_CONTEXT);
 //gen _dijkstra(const gen &g,GIAC_CONTEXT);
 //gen _kruskal(const gen &g,GIAC_CONTEXT);
 //gen _minimal_spanning_tree(const gen &g,GIAC_CONTEXT);

@@ -39,7 +39,8 @@ namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
 enum move_to_dispatch_h {
-    _GT_SPRING = 137 // spring
+    _GT_SPRING = 137, // spring
+    _GT_CONNECTED = 138 // connected
 };
 
 enum gt_dot_token_type {
@@ -73,21 +74,6 @@ enum gt_layout_style {
     _GT_STYLE_PLANAR,
     _GT_STYLE_3D,
     _GT_STYLE_CIRCLE
-};
-
-enum gt_error_code {
-    _GT_ERR_UNKNOWN = 0,
-    _GT_ERR_NOT_A_GRAPH = 1,
-    _GT_ERR_WEIGHTED_GRAPH_REQUIRED = 2,
-    _GT_ERR_UNWEIGHTED_GRAPH_REQUIRED = 3,
-    _GT_ERR_DIRECTED_GRAPH_REQUIRED = 4,
-    _GT_ERR_UNDIRECTED_GRAPH_REQUIRED = 5,
-    _GT_ERR_INVALID_EDGE = 6,
-    _GT_ERR_INVALID_EDGE_ARC_MIX = 7,
-    _GT_ERR_MATRIX_NOT_SYMMETRIC = 8,
-    _GT_ERR_READING_FAILED = 9,
-    _GT_ERR_EDGE_NOT_FOUND = 10,
-    _GT_ERR_VERTEX_NOT_FOUND = 11
 };
 
 class graphe {
@@ -307,10 +293,15 @@ private:
     attrib attributes;
     std::vector<std::string> user_tags;
     ivector marked_vertices;
+    int disc_time;
+    ivector discovered_nodes;
+    std::stack<ipair> edge_stack;
+    std::stack<int> node_stack;
     void message(const char *str);
     void message(const char *format,int a);
     void message(const char *format,int a,int b);
     void message(const char *format,int a,int b,int c);
+    vertex &node(int i) { return nodes[i]; }
     bool dot_parse_attributes(std::ifstream &dotfile,attrib &attr);
     static bool insert_attribute(attrib &attr,int key,const gen &val,bool overwrite=true);
     static bool remove_attribute(attrib &attr,int key);
@@ -343,10 +334,10 @@ private:
     void tomita_recurse(const ivector &R,const ivector &P_orig,const ivector &X_orig,ivectors &cliques) const;
     void remove_isolated_node(int i);
     void make_connected_component(int i,int ci,std::map<int,int> &indices) const;
-    void find_cut_vertices_dfs(int u,int &t,ivector &disc,ivector &low,std::vector<bool> &ap);
-    void find_blocks_dfs(int v,int u,int &t,ivector &dfi,ivector &p,ipairs &stck,std::vector<ipairs> &blocks) const;
-    int find_cycle_dfs(int v,std::stack<int> &path);
-    bool find_path_dfs(int dest,int v,std::stack<int> &path);
+    void find_cut_vertices_dfs(int i,std::vector<bool> &ap);
+    void find_blocks_dfs(int i,std::vector<ipairs> &blocks);
+    int find_cycle_dfs(int i);
+    bool find_path_dfs(int dest,int i);
     static void sort_rectangles(std::vector<rectangle> &rectangles);
     static bool pack_rectangles(const std::vector<rectangle> &rectangles,dpairs &embedding,double ew,double eh);
     static dpairs pack_rectangles_neatly(const std::vector<rectangle> &rectangles);
@@ -382,6 +373,7 @@ private:
     void subdivide_faces(const ivectors &faces,int f0);
     void periphericity(const ivector &outer_face,ivector &p);
     static void tree_layout2polar(layout &ly);
+    void tree_height_dfs(int i,int level,int &depth);
 
 public:
     graphe(const context *contextptr=context0);
@@ -423,8 +415,13 @@ public:
     int edge_count() const;
     int node_count() const { return nodes.size(); }
     vecteur vertices() const;
-    void unvisit_all_vertices();
+    void unvisit_all_nodes();
     void unset_all_ancestors();
+    void depth_first_search(int root);
+    void breadth_first_search(int root);
+    const ivector &get_discovered_nodes() const { return discovered_nodes; }
+    bool is_connected();
+    bool is_biconnected();
     ivector adjacent_nodes(int i,bool include_temp_edges=true) const;
     void translate_indices_to(const graphe &G,const ivector &indices,ivector &dest) const;
     void translate_indices_from(const graphe &G,const ivector &indices,ivector &dest) const;
@@ -436,7 +433,6 @@ public:
     bool remove_node(int i);
     bool remove_node(const gen &v);
     void remove_nodes(const vecteur &v);
-    vertex &node(int i) { return nodes[i]; }
     const vertex &node(int i) const { return nodes[i]; }
     const gen &node_label(int i) const { assert(i>=0 && i<node_count()); return nodes[i].label(); }
     vecteur get_nodes(const ivector &v) const;
@@ -457,7 +453,7 @@ public:
     bool has_edge(int i,int j) const;
     bool has_edge(ipair p) const { return has_edge(p.first,p.second); }
     ipair make_edge(const vecteur &v) const;
-    bool is_adjacent(int i,int j) const;
+    bool nodes_are_adjacent(int i,int j) const;
     int in_degree(int index,bool count_temp_edges=true) const;
     int out_degree(int index,bool count_temp_edges=true) const;
     int degree(int index,bool count_temp_edges=true) const;
@@ -478,6 +474,8 @@ public:
     void make_weighted(const matrice &m);
     void make_directed() { set_directed(true); }
     void make_unweighted();
+    void randomize_edge_weights(double a,double b,bool integral_weights=false);
+    bool is_regular(int d) const;
     void underlying(graphe &G) const;
     bool isomorphic_copy(graphe &G,const ivector &sigma);
     bool relabel_nodes(const vecteur &labels);
@@ -493,6 +491,10 @@ public:
     void parse_trail(const vecteur &v);
     layout make_layout(double K,gt_layout_style style);
     double make_tree_layout(layout &x,double sep,int apex=0);
+    bool is_tree() { return !is_directed() && is_connected() && edge_count()==node_count()-1; }
+    bool is_forest();
+    bool is_tournament();
+    int tree_height(int root);
     void create_random_layout(layout &x,double K,int d);
     static gen point2gen(const point &p,bool vect=false);
     static point layout_center(const layout &x);
@@ -502,17 +504,17 @@ public:
     void make_complete_graph(const vecteur &V);
     void make_complete_multipartite_graph(const ivector &partition_sizes);
     void make_petersen_graph(int n,int k);
-    void make_random_tree(int n);
-    void make_random_planar(int n);
+    void make_random_tree(const vecteur &V,int maxd);
+    void make_random_planar(const vecteur &V);
     void make_random(bool dir,const vecteur &V,double p);
     void make_random_bipartite(const vecteur &V,const vecteur &W,double p);
-    void triangulator_test();
+    void make_random_regular(const vecteur &V,int d,bool connected);
     point axis_of_symmetry(layout &x);
     void connected_components(ivectors &components) const;
     ivector find_cut_vertices();
-    void find_blocks(std::vector<ipairs> &blocks) const;
+    void find_blocks(std::vector<ipairs> &blocks);
     ivector find_cycle(bool randomize=true);
-    ivector find_path(int v,int w);
+    ivector find_path(int i,int j);
     void collapse_edge(int i,int j);
     ipairs incident_edges(const ivector &v);
     bool get_layout(layout &positions,int &dim) const;

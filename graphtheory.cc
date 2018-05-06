@@ -42,7 +42,14 @@ static const char *gt_error_messages[] = {
     "failed to read graph from file",                                   //  9
     "edge not found",                                                   // 10
     "vertex not found",                                                 // 11
-    "graph is not a tree"                                               // 12
+    "graph is not a tree",                                              // 12
+    "exactly one root node must be specified per connected component",  // 13
+    "invalid root node specification",                                  // 14
+    "graph is not planar",                                              // 15
+    "a connected graph is required",                                    // 16
+    "drawing method specification is invalid",                          // 17
+    "does not specify a cycle in the given graph",                      // 18
+    "no cycle found"                                                    // 19
 };
 
 void gt_err_display(int code,GIAC_CONTEXT) {
@@ -894,33 +901,200 @@ static define_unary_function_eval(__seidel_switch,&_seidel_switch,_seidel_switch
 define_unary_function_ptr5(at_seidel_switch,alias_at_seidel_switch,&__seidel_switch,0,true)
 
 /*
- * Usage:   draw_graph(G,[opts])
+ * Usage:   draw_graph(G,[options])
  *
  * Returns the graphic representation of graph G obtained by using
- * force-directed algorithm (which can optionally be fine tuned by appending a
- * sequence 'opts' of equalities 'option=value' after the first argument).
+ * various algorithms (which can optionally be fine tuned by appending a
+ * sequence of options after the first argument).
+ *
+ * Supported options are:
+ *
+ *  - spring: use force-directed method to draw graph G (the default)
+ *  - tree[=r or [r1,r2,...]]: draw tree or forest G [with optional
+ *    specification of root nodes]
+ *  - plane or planar: draw planar graph G
+ *  - circle[=<cycle>]: draw graph G as circular using the leading cycle,
+ *    otherwise one must be specified
+ *  - plot3d: draw 3D representation of graph G (possible only with the
+ *    spring method)
+ *  - labels=true or false: draw (the default) or suppress node labels and
+ *    weights
+ *
+ * An exception is raised if a method is specified but the corresponding
+ * necessary conditions are not met.
  */
 gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG &&g.subtype==-1) return g;
-    bool has_opts=false;
+    bool has_opts=false,labels=true;
     if (g.type!=_VECT || ((has_opts=g.subtype==_SEQ__VECT) && g._VECTptr->front().type!=_VECT))
         return gentypeerr(contextptr);
-    graphe G(contextptr);
-    if (!G.read_gen(has_opts?*g._VECTptr->front()._VECTptr:*g._VECTptr))
+    graphe G_orig(contextptr);
+    if (!G_orig.read_gen(has_opts?*g._VECTptr->front()._VECTptr:*g._VECTptr))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    vecteur root_nodes,cycle;
+    int method=_GT_STYLE_DEFAULT;
     if (has_opts) {
         // parse options
+        int opt_counter;
         for (const_iterateur it=g._VECTptr->begin()+1;it!=g._VECTptr->end();++it) {
-            ;
+            opt_counter++;
+            const gen &opt=*it;
+            if (opt.is_symb_of_sommet(at_equal)) {
+                gen &lh=opt._SYMBptr->feuille._VECTptr->front();
+                gen &rh=opt._SYMBptr->feuille._VECTptr->back();
+                if (lh.is_integer()) {
+                    switch (lh.val) {
+                    case _GT_TREE:
+                        if (rh.type==_VECT)
+                            root_nodes=*rh._VECTptr;
+                        else
+                            root_nodes.push_back(rh);
+                        method=_GT_STYLE_TREE;
+                        break;
+                    case _LABELS:
+                        if (!rh.is_integer())
+                            return gentypeerr(contextptr);
+                        labels=(bool)rh.val;
+                        opt_counter--;
+                        break;
+                    }
+                } else if (lh==at_cercle) {
+                    if (rh.type!=_VECT)
+                        return gentypeerr(contextptr);
+                    cycle=*rh._VECTptr;
+                    method=_GT_STYLE_CIRCLE;
+                }
+            } else if (opt==at_cercle)
+                method=_GT_STYLE_CIRCLE;
+            else if (opt==at_plan)
+                method=_GT_STYLE_PLANAR;
+            else if (opt==at_plot3d)
+                method=_GT_STYLE_3D;
+            else if (opt.is_integer()) {
+                switch (opt.val) {
+                case _GT_TREE:
+                    method=_GT_STYLE_TREE;
+                    break;
+                case _GT_SPRING:
+                    method=_GT_STYLE_SPRING;
+                    break;
+                case _GT_PLANAR:
+                    method=_GT_STYLE_PLANAR;
+                }
+            }
         }
+        if (opt_counter>1)
+            return gt_err(_GT_ERR_INVALID_DRAWING_METHOD,contextptr);
     }
-    int d=2;
-    double K=10;
-    graphe::layout x=G.make_layout(K,d==2?_GT_STYLE_PLANAR:_GT_STYLE_3D);
+    graphe G(contextptr);
+    G_orig.underlying(G);
+    int n=G.node_count(),i,comp_method=method;
     vecteur drawing;
-    G.draw_edges(drawing,x);
-    G.draw_nodes(drawing,x);
-    //G.draw_labels(drawing,x);
+    graphe::layout main_layout(n);
+    if (method==_GT_STYLE_3D) {
+        G.make_spring_layout(main_layout,3);
+    } else {
+        vecteur V,original_labels=G.vertices();
+        graphe::ivectors components;
+        G.connected_components(components);
+        int nc=components.size();
+        graphe::ivector roots,outerface;
+        if (!root_nodes.empty()) {
+            // get the root nodes for forest drawing
+            if (int(root_nodes.size())!=nc)
+                return gt_err(_GT_ERR_INVALID_NUMBER_OF_ROOTS,contextptr);
+            graphe::ivector indices(nc);
+            roots.resize(nc);
+            for (const_iterateur it=root_nodes.begin();it!=root_nodes.end();++it) {
+                i=G.node_index(*it);
+                if (i==-1)
+                    return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+                indices[it-root_nodes.begin()]=i;
+            }
+            for (int i=0;i<nc;++i) {
+                const graphe::ivector &comp=components[i];
+                graphe::ivector::iterator it=indices.begin();
+                for (;it!=indices.end();++it) {
+                    if (find(comp.begin(),comp.end(),*it)!=comp.end())
+                        break;
+                }
+                if (it==indices.end())
+                    return gt_err(_GT_ERR_INVALID_ROOT,contextptr);
+                roots[i]=*it;
+                indices.erase(it);
+            }
+        }
+        if (!cycle.empty()) {
+            if (nc>1)
+                return gt_err(_GT_ERR_CONNECTED_GRAPH_REQUIRED,contextptr);
+            // get the outer face for circular drawing
+            int m=cycle.size();
+            outerface.resize(m);
+            for (const_iterateur it=cycle.begin();it!=cycle.end();++it) {
+                i=G.node_index(*it);
+                if (i==-1)
+                    return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+                outerface[it-cycle.begin()]=i;
+            }
+            // check if the specification is indeed a cycle
+            for (i=0;i<m;++i) {
+                if (!G.has_edge(outerface[i],outerface[(i+1)%m]))
+                    return gt_err(cycle,_GT_ERR_NOT_A_CYCLE,contextptr);
+            }
+        }
+        G.make_default_vertex_labels(V,n,0);
+        G.relabel_nodes(V);
+        vector<graphe::layout> layouts(nc);
+        vector<graphe::rectangle> bounding_rects(nc);
+        bool check=method!=_GT_STYLE_DEFAULT;
+        double sep=1.0;
+        // draw the components separately
+        for (graphe::ivectors_iter it=components.begin();it!=components.end();++it) {
+            i=it-components.begin();
+            graphe C(contextptr);
+            G.induce_subgraph(*it,C,false);
+            graphe::layout &x=layouts[i];
+            if (method==_GT_STYLE_DEFAULT)
+                comp_method=C.guess_drawing_style();
+            switch (comp_method) {
+            case _GT_STYLE_SPRING:
+                C.make_spring_layout(x,2);
+                break;
+            case _GT_STYLE_TREE:
+                if (check && !C.is_tree())
+                    return gt_err(_GT_ERR_NOT_A_TREE,contextptr);
+                C.make_tree_layout(x,sep,roots.empty()?0:roots[i]);
+                break;
+            case _GT_STYLE_PLANAR:
+                if (!C.make_planar_layout(x))
+                    return gt_err(_GT_ERR_NOT_PLANAR,contextptr);
+                break;
+            case _GT_STYLE_CIRCLE:
+                if (outerface.empty()) {
+                    if (!C.get_leading_cycle(outerface)) {
+                        outerface=C.find_cycle();
+                        if (outerface.empty())
+                            return gt_err(_GT_ERR_CYCLE_NOT_FOUND,contextptr);
+                    }
+                    C.make_circular_layout(x,outerface);
+                    outerface.clear();
+                } else
+                    C.make_circular_layout(x,outerface);
+                break;
+            }
+            if (comp_method!=_GT_STYLE_TREE) {
+                C.layout_best_rotation(x);
+                graphe::scale_layout(x,std::sqrt((double)C.node_count()));
+            }
+        }
+        // combine component layouts
+
+        for ()
+    }
+    G_orig.draw_edges(drawing,main_layout);
+    G_orig.draw_nodes(drawing,main_layout);
+    if (labels)
+        G_orig.draw_labels(drawing,main_layout);
     return drawing;
 }
 static const char _draw_graph_s []="draw_graph";
@@ -1125,9 +1299,10 @@ static define_unary_function_eval(__random_bipartite_graph,&_random_bipartite_gr
 define_unary_function_ptr5(at_random_bipartite_graph,alias_at_random_bipartite_graph,&__random_bipartite_graph,0,true)
 
 /*
- * Usage:   random_tournament(n)
+ * Usage:   random_tournament(n or V)
  *
- * Returns a random tournament graph with n vertices.
+ * Returns a random tournament graph with n vertices, which may be specified as
+ * list V of their labels.
  */
 gen _random_tournament(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG &&g.subtype==-1) return g;
@@ -1151,9 +1326,10 @@ static define_unary_function_eval(__random_tournament,&_random_tournament,_rando
 define_unary_function_ptr5(at_random_tournament,alias_at_random_tournament,&__random_tournament,0,true)
 
 /*
- * Usage:   random_regular_graph(n,d,[connected])
+ * Usage:   random_regular_graph(n or V,d,[connected])
  *
- * Returns a random d-regular graph with n vertices.
+ * Returns a random d-regular graph with n vertices, which may be specified as
+ * list V of their labels.
  */
 gen _random_regular_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG &&g.subtype==-1) return g;
@@ -1184,11 +1360,11 @@ static define_unary_function_eval(__random_regular_graph,&_random_regular_graph,
 define_unary_function_ptr5(at_random_regular_graph,alias_at_random_regular_graph,&__random_regular_graph,0,true)
 
 /*
- * Usage:   random_tree(n)
- *          random_tree(n,d)
+ * Usage:   random_tree(n or V,[d])
  *
- * Returns a random tree graph with n vertices. Optional parameter d is a
- * positive integer which represents the upper bound for degree of graph.
+ * Returns a random tree graph with n vertices, which may be specified as list
+ * V of their labels. Optional parameter d is a positive integer which
+ * represents the upper bound for degree of graph.
  */
 gen _random_tree(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG &&g.subtype==-1) return g;
@@ -2220,7 +2396,7 @@ define_unary_function_ptr5(at_is_forest,alias_at_is_forest,&__is_forest,0,true)
  * Returns true iff graph G is a tournament, i.e. a complete graph with a
  * direction for each edge.
  */
-gen _is_forest(const gen &g,GIAC_CONTEXT) {
+gen _is_tournament(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG &&g.subtype==-1) return g;
     graphe G(contextptr);
     if (g.type!=_VECT || !G.read_gen(*g._VECTptr))
@@ -2302,6 +2478,21 @@ gen _is_weighted(const gen &g,GIAC_CONTEXT) {
 static const char _is_weighted_s []="is_weighted";
 static define_unary_function_eval(__is_weighted,&_is_weighted,_is_weighted_s);
 define_unary_function_ptr5(at_is_weighted,alias_at_is_weighted,&__is_weighted,0,true)
+
+/* Usage:   is_planar(G)
+ *
+ * Returns true iff graph G is planar.
+ */
+gen _is_planar(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (g.type!=_VECT || !G.read_gen(*g._VECTptr))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    return graphe::boole(G.is_planar());
+}
+static const char _is_planar_s []="is_planar";
+static define_unary_function_eval(__is_planar,&_is_planar,_is_planar_s);
+define_unary_function_ptr5(at_is_planar,alias_at_is_planar,&__is_planar,0,true)
 
 
 #ifndef NO_NAMESPACE_GIAC

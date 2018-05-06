@@ -38,7 +38,14 @@ enum gt_error_code {
     _GT_ERR_READING_FAILED = 9,
     _GT_ERR_EDGE_NOT_FOUND = 10,
     _GT_ERR_VERTEX_NOT_FOUND = 11,
-    _GT_ERR_NOT_A_TREE=12
+    _GT_ERR_NOT_A_TREE=12,
+    _GT_ERR_INVALID_NUMBER_OF_ROOTS=13,
+    _GT_ERR_INVALID_ROOT=14,
+    _GT_ERR_NOT_PLANAR=15,
+    _GT_ERR_CONNECTED_GRAPH_REQUIRED=16,
+    _GT_ERR_INVALID_DRAWING_METHOD=17,
+    _GT_ERR_NOT_A_CYCLE=18,
+    _GT_ERR_CYCLE_NOT_FOUND=19
 };
 
 bool is_graphe(const gen &g,std::string &disp_out,GIAC_CONTEXT);
@@ -80,6 +87,7 @@ gen _is_biconnected(const gen &g,GIAC_CONTEXT);
 gen _is_weighted(const gen &g,GIAC_CONTEXT);
 gen _is_forest(const gen &g,GIAC_CONTEXT);
 gen _is_tournament(const gen &g,GIAC_CONTEXT);
+gen _is_planar(const gen &g,GIAC_CONTEXT);
 gen _is_tree(const gen &g,GIAC_CONTEXT);
 gen _tree_height(const gen &g,GIAC_CONTEXT);
 gen _maximum_matching(const gen &g,GIAC_CONTEXT);
@@ -172,7 +180,6 @@ gen _sequence_graph(const gen &g,GIAC_CONTEXT);
 //gen _is_edge_colorable(const gen &g,GIAC_CONTEXT);
 gen _is_graphic_sequence(const gen &g,GIAC_CONTEXT);
 //gen _is_hamiltonian(const gen &g,GIAC_CONTEXT);
-gen _is_planar(const gen &g,GIAC_CONTEXT);
 //gen _is_two_edge_connected(const gen &g,GIAC_CONTEXT);
 gen _is_eulerian(const gen &g,GIAC_CONTEXT);
 //gen _laplacian_matrix(const gen &g,GIAC_CONTEXT);
@@ -187,6 +194,12 @@ gen _is_eulerian(const gen &g,GIAC_CONTEXT);
 //gen _shortest_path(const gen &g,GIAC_CONTEXT);
 //gen _spanning_tree(const gen &g,GIAC_CONTEXT);
 //gen _traveling_salesman(const gen &g,GIAC_CONTEXT);
+gen _highlight_vertices(const gen &g,GIAC_CONTEXT);
+gen _highlight_edges(const gen &g,GIAC_CONTEXT);
+gen _highlight_subgraph(const gen &g,GIAC_CONTEXT);
+gen _highlight_trail(const gen &g,GIAC_CONTEXT);
+gen _highlighted_vertices(const gen &g,GIAC_CONTEXT);
+gen _highlighted_edges(const gen &g,GIAC_CONTEXT);
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

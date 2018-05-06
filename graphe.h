@@ -39,8 +39,10 @@ namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
 enum move_to_dispatch_h {
-    _GT_SPRING = 137, // spring
-    _GT_CONNECTED = 138 // connected
+    _GT_CONNECTED = 137, // connected
+    _GT_SPRING = 138, // spring
+    _GT_TREE = 139, // tree
+    _GT_PLANAR = 140 // planar
 };
 
 enum gt_dot_token_type {
@@ -70,10 +72,12 @@ enum gt_attribute {
 };
 
 enum gt_layout_style {
+    _GT_STYLE_DEFAULT,
     _GT_STYLE_SPRING,
     _GT_STYLE_PLANAR,
     _GT_STYLE_3D,
-    _GT_STYLE_CIRCLE
+    _GT_STYLE_CIRCLE,
+    _GT_STYLE_TREE
 };
 
 class graphe {
@@ -285,6 +289,24 @@ public:
     typedef std::vector<vptr> vpointers;
     static const gen FAUX;
     static const gen VRAI;
+    static bool verbose;
+    // special graphs
+    static const int clebsch_graph[];
+    static const char* coxeter_graph[];
+    static const int dyck_graph[];
+    static const int grinberg_graph[];
+    static const int grotzsch_graph[];
+    static const int heawood_graph[];
+    static const int herschel_graph[];
+    static const int mcgee_graph[];
+    static const int moebius_kantor_graph[];
+    static const int pappus_graph[];
+    static const int robertson_graph[];
+    static const int soccer_ball_graph[];
+    static const int tetrahedron_graph[];
+    static const int octahedron_graph[];
+    static const int icosahedron_graph[];
+    static const int levi_graph[];
 
 private:
     const context *ctx;
@@ -324,6 +346,7 @@ private:
     static void rotate_layout(layout &x,double phi);
     static void translate_layout(layout &x,const point &dx);
     static double layout_min(const layout &x,int d);
+    static rectangle layout_bounding_rect(const layout &x);
     static void point2polar(point &p,double &r,double &phi);
     static bool sparse_matrix_element(const sparsemat &A,int i,int j,double &val);
     static void multiply_sparse_matrices(const sparsemat &A,const sparsemat &B,sparsemat &prod);
@@ -351,7 +374,6 @@ private:
     static double bisector(int v, int w, const layout &x, point &bsec, const point &p0);
     static double squared_distance(const point &p,const point &line);
     void force_directed_placement(layout &x,double K,double R,double tol=0.001,bool ac=true);
-    void force_directed_placement_multilevel(layout &x,int d,double K,double tol=0.001);
     void coarsening_mis(const ivector &V,graphe &G,sparsemat &P) const;
     void coarsening_ec(const ipairs &M,graphe &G,sparsemat &P) const;
     int node_label_best_quadrant(const layout &x,const point &center,int i) const;
@@ -364,8 +386,6 @@ private:
     int choose_embedding_face(const ivectors &faces,int v);
     static int choose_outer_face(const ivectors &faces);
     static void make_regular_polygon_layout(layout &x,const ivector &face,double R=1.0);
-    void plestenjak_layout(layout &x,const ivector &outer_face,double A=0,double tol=0.001);
-    bool planar_layout(layout &x,double K);
     bool has_crossing_edges(const layout &x,const ipairs &E) const;
     static void build_block_tree(int i,ivectors &blocks);
     static int common_element(const ivector &v1,const ivector &v2,int offset=0);
@@ -480,6 +500,7 @@ public:
     bool isomorphic_copy(graphe &G,const ivector &sigma);
     bool relabel_nodes(const vecteur &labels);
     void induce_subgraph(const ivector &vi,graphe &G,bool copy_attrib=true) const;
+    void subgraph(const ipairs &E,graphe &G,bool copy_attrib=true) const;
     ivector maximal_independent_set() const;
     void maximize_matching(ipairs &matching);
     ipairs find_maximal_matching() const;
@@ -489,16 +510,21 @@ public:
     bool parse_list_of_edges(const vecteur &v);
     bool parse_matrix(const matrice &m,bool iswei,int mode);
     void parse_trail(const vecteur &v);
-    layout make_layout(double K,gt_layout_style style);
-    double make_tree_layout(layout &x,double sep,int apex=0);
-    bool is_tree() { return !is_directed() && is_connected() && edge_count()==node_count()-1; }
-    bool is_forest();
-    bool is_tournament();
-    int tree_height(int root);
     void create_random_layout(layout &x,double K,int d);
+    void make_spring_layout(layout &x,int d,double tol=0.001);
+    void make_circular_layout(layout &x,const ivector &outer_face,bool planar=false,double A=0,double tol=0.001);
+    bool make_planar_layout(layout &x);
+    double make_tree_layout(layout &x,double sep,int apex=0);
+    void layout_best_rotation(layout &x);
+    int guess_drawing_style();
     static gen point2gen(const point &p,bool vect=false);
     static point layout_center(const layout &x);
     static void scale_layout(layout &x,double diam);
+    bool is_tree() { return !is_directed() && edge_count()+1==node_count() && is_connected(); }
+    bool is_forest();
+    bool is_tournament();
+    bool is_planar();
+    int tree_height(int root);
     void tomita(ivectors &cliques) const;
     void make_sierpinski_graph(int n,int k,bool triangle);
     void make_complete_graph(const vecteur &V);
@@ -525,7 +551,7 @@ public:
     void draw_edges(vecteur &v,const layout &x) const;
     void draw_nodes(vecteur &v,const layout &x) const;
     void draw_labels(vecteur &v,const layout &x) const;
-    void get_leading_cycle(ivector &c) const;
+    bool get_leading_cycle(ivector &c) const;
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

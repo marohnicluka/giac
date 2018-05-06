@@ -38,6 +38,382 @@ namespace giac {
 
 const gen graphe::VRAI=gen(1).change_subtype(_INT_BOOLEAN);
 const gen graphe::FAUX=gen(0).change_subtype(_INT_BOOLEAN);
+bool graphe::verbose=true;
+// initialize special graphs
+/*
+ * Graphs are initialized with adjacency lists of integers or strings. Each
+ * list starts with the corresponding vertex, followed by its neighbors, and
+ * ends with -1 or an empty string.
+ * The graph specification terminates with -2 (for integers) or NULL (for strings).
+ */
+const int graphe::clebsch_graph[] = {
+    0,      1,2,4,8,15,-1,
+    1,      3,5,9,14,-1,
+    2,      3,6,10,13,-1,
+    3,      7,11,12,-1,
+    4,      6,8,11,12,-1,
+    5,      7,10,13,-1,
+    6,      7,9,14,-1,
+    7,      8,15,-1,
+    8,      9,10,-1,
+    9,      11,13,-1,
+    10,     11,14,-1,
+    11,     15,-1,
+    12,     13,14,-1,
+    13,     15,-1,
+    14,     15,-1,
+    -2
+};
+const char* graphe::coxeter_graph[] = {
+    "a1",       "a2","a7","z1","",
+    "a2",       "a3","z2","",
+    "a3",       "a4","z3","",
+    "a4",       "a5","z4","",
+    "a5",       "a6","z5","",
+    "a6",       "a7","z6","",
+    "a7",       "z7","",
+    "b1",       "b3","b6","z1","",
+    "b2",       "b4","b7","z2","",
+    "b3",       "b5","z3","",
+    "b4",       "b6","z4","",
+    "b5",       "b7","z5","",
+    "b6",       "z6","",
+    "b7",       "z7","",
+    "c1",       "c4","c5","z1","",
+    "c2",       "c5","c6","z2","",
+    "c3",       "c6","c7","z3","",
+    "c4",       "c7","z4","",
+    "c5",       "z5","",
+    "c6",       "z6","",
+    "c7",       "z7","",
+    NULL
+};
+const int graphe::dyck_graph[] = {
+    1,      2,20,32,-1,
+    2,      3,7,-1,
+    3,      4,30,-1,
+    4,      5,17,-1,
+    5,      6,24,-1,
+    6,      7,11,-1,
+    7,      8,-1,
+    8,      9,21,-1,
+    9,      10,28,-1,
+    10,     11,15,-1,
+    11,     12,-1,
+    12,     13,25,-1,
+    13,     14,32,-1,
+    14,     15,19,-1,
+    15,     16,-1,
+    16,     17,29,-1,
+    17,     18,-1,
+    18,     19,23,-1,
+    19,     20,-1,
+    20,     21,-1,
+    21,     22,-1,
+    22,     23,27,-1,
+    23,     24,-1,
+    24,     25,-1,
+    25,     26,-1,
+    26,     27,31,-1,
+    27,     28,-1,
+    28,     29,-1,
+    29,     30,-1,
+    30,     31,-1,
+    31,     32,-1,
+    -2
+};
+const int graphe::grinberg_graph[] = {
+    1,      2,3,4,-1,
+    2,      5,7,-1,
+    3,      6,10,-1,
+    4,      8,9,-1,
+    5,      6,21,-1,
+    6,      22,-1,
+    7,      8,30,-1,
+    8,      29,-1,
+    9,      10,14,-1,
+    10,     13,-1,
+    11,     12,13,14,-1,
+    12,     15,17,-1,
+    13,     16,-1,
+    14,     18,-1,
+    15,     16,39,-1,
+    16,     46,-1,
+    17,     18,40,-1,
+    18,     45,-1,
+    19,     20,21,22,-1,
+    20,     23,25,-1,
+    21,     24,-1,
+    22,     26,-1,
+    23,     24,36,-1,
+    24,     44,-1,
+    25,     26,37,-1,
+    26,     46,-1,
+    27,     28,29,30,-1,
+    28,     31,33,-1,
+    29,     32,-1,
+    30,     34,-1,
+    31,     32,42,-1,
+    32,     45,-1,
+    33,     34,43,-1,
+    34,     44,-1,
+    35,     36,43,44,-1,
+    36,     37,-1,
+    37,     38,-1,
+    38,     39,46,-1,
+    39,     40,-1,
+    40,     41,-1,
+    41,     42,45,-1,
+    42,     43,-1,
+    -2
+};
+const int graphe::grotzsch_graph[] = {
+    1,      2,5,7,10,-1,
+    2,      3,6,8,-1,
+    3,      4,7,9,-1,
+    4,      5,8,10,-1,
+    5,      6,9,-1,
+    6,      11,-1,
+    7,      11,-1,
+    8,      11,-1,
+    9,      11,-1,
+    10,     11,-1,
+    -2
+};
+const int graphe::heawood_graph[] = {
+    1,      2,6,14,-1,
+    2,      3,11,-1,
+    3,      4,8,-1,
+    4,      5,13,-1,
+    5,      6,10,-1,
+    6,      7,-1,
+    7,      8,12,-1,
+    8,      9,-1,
+    9,      10,14,-1,
+    10,     11,-1,
+    11,     12,-1,
+    12,     13,-1,
+    13,     14,-1,
+    -2
+};
+const int graphe::herschel_graph[] = {
+    1,      2,4,5,-1,
+    2,      3,6,7,-1,
+    3,      4,8,-1,
+    4,      9,10,-1,
+    5,      6,10,-1,
+    6,      11,-1,
+    7,      8,11,-1,
+    8,      9,-1,
+    9,      11,-1,
+    10,     11,-1,
+    -2
+};
+const int graphe::mcgee_graph[] = {
+    1,      2,13,24,-1,
+    2,      3,9,-1,
+    3,      4,20,-1,
+    4,      5,16,-1,
+    5,      6,12,-1,
+    6,      7,23,-1,
+    7,      8,19,-1,
+    8,      9,15,-1,
+    9,      10,-1,
+    10,     11,22,-1,
+    11,     12,18,-1,
+    12,     13,-1,
+    13,     14,-1,
+    14,     15,21,-1,
+    15,     16,-1,
+    16,     17,-1,
+    17,     18,24,-1,
+    18,     19,-1,
+    19,     20,-1,
+    20,     21,-1,
+    21,     22,-1,
+    22,     23,-1,
+    23,     24,-1,
+    -2
+};
+const int graphe::moebius_kantor_graph[] = {
+    1,      2,6,16,-1,
+    2,      3,13,-1,
+    3,      4,8,-1,
+    4,      5,15,-1,
+    5,      6,10,-1,
+    6,      7,-1,
+    7,      8,12,-1,
+    8,      9,-1,
+    9,      10,14,-1,
+    10,     11,-1,
+    11,     12,16,-1,
+    12,     13,-1,
+    13,     14,-1,
+    14,     15,-1,
+    15,     16,-1,
+    -2
+};
+const int graphe::pappus_graph[] = {
+    1,      2,6,18,-1,
+    2,      3,9,-1,
+    3,      4,14,-1,
+    4,      5,11,-1,
+    5,      6,16,-1,
+    6,      7,-1,
+    7,      8,12,-1,
+    8,      9,15,-1,
+    9,      10,-1,
+    10,     11,17,-1,
+    11,     12,-1,
+    12,     13,-1,
+    13,     14,18,-1,
+    14,     15,-1,
+    15,     16,-1,
+    16,     17,-1,
+    17,     18,-1,
+    -2
+};
+const int graphe::robertson_graph[] = {
+    1,      2,5,9,19,-1,
+    2,      3,7,13,-1,
+    3,      4,10,15,-1,
+    4,      5,8,18,-1,
+    5,      6,12,-1,
+    6,      7,14,17,-1,
+    7,      8,11,-1,
+    8,      9,16,-1,
+    9,      10,14,-1,
+    10,     11,17,-1,
+    11,     12,19,-1,
+    12,     13,16,-1,
+    13,     14,18,-1,
+    14,     15,-1,
+    15,     16,19,-1,
+    16,     17,-1,
+    17,     18,-1,
+    18,     19,-1,
+    -2
+};
+const int graphe::soccer_ball_graph[] = {
+    1,      2,5,6,-1,
+    2,      3,11,-1,
+    3,      4,16,-1,
+    4,      5,21,-1,
+    5,      26,-1,
+    6,      7,10,-1,
+    7,      8,30,-1,
+    8,      9,49,-1,
+    9,      10,53,-1,
+    10,     12,-1,
+    11,     12,15,-1,
+    12,     13,-1,
+    13,     14,54,-1,
+    14,     15,58,-1,
+    15,     17,-1,
+    16,     17,20,-1,
+    17,     18,-1,
+    18,     19,59,-1,
+    19,     20,38,-1,
+    20,     22,-1,
+    21,     22,25,-1,
+    22,     23,-1,
+    23,     24,39,-1,
+    24,     25,43,-1,
+    25,     27,-1,
+    26,     27,30,-1,
+    27,     28,-1,
+    28,     29,44,-1,
+    29,     30,48,-1,
+    31,     32,35,36,-1,
+    32,     33,41,-1,
+    33,     34,46,-1,
+    34,     35,51,-1,
+    35,     56,-1,
+    36,     37,40,-1,
+    37,     38,60,-1,
+    38,     39,-1,
+    39,     40,-1,
+    40,     42,-1,
+    41,     42,45,-1,
+    42,     43,-1,
+    43,     44,-1,
+    44,     45,-1,
+    45,     47,-1,
+    46,     47,50,-1,
+    47,     48,-1,
+    48,     49,-1,
+    49,     50,-1,
+    50,     52,-1,
+    51,     52,55,-1,
+    52,     53,-1,
+    53,     54,-1,
+    54,     55,-1,
+    55,     57,-1,
+    56,     57,60,-1,
+    57,     58,-1,
+    58,     59,-1,
+    59,     60,-1,
+    -2
+};
+const int graphe::tetrahedron_graph[] = {
+    1,      2,3,4,-1,
+    2,      3,4,-1,
+    3,      4,-1,
+    -2
+};
+const int graphe::octahedron_graph[] = {
+    1,      3,4,5,6,-1,
+    2,      3,4,5,6,-1,
+    3,      5,6,-1,
+    4,      5,-1,
+    -2
+};
+const int graphe::icosahedron_graph[] = {
+    1,      2,3,4,5,9,-1,
+    2,      3,5,6,7,-1,
+    3,      7,8,9,-1,
+    4,      5,9,10,11,-1,
+    5,      6,10,-1,
+    6,      7,10,12,-1,
+    7,      8,12,-1,
+    8,      9,11,12,-1,
+    9,      11,-1,
+    10,     11,12,-1,
+    11,     12,-1,
+    -2
+};
+const int graphe::levi_graph[] = {
+    1,      2,18,30,-1,
+    2,      3,23,-1,
+    3,      4,10,-1,
+    4,      5,27,-1,
+    5,      6,14,-1,
+    6,      7,19,-1,
+    7,      8,24,-1,
+    8,      9,29,-1,
+    9,      10,16,-1,
+    10,     11,-1,
+    11,     12,20,-1,
+    12,     13,25,-1,
+    13,     14,30,-1,
+    14,     15,-1,
+    15,     16,22,-1,
+    16,     17,-1,
+    17,     18,26,-1,
+    18,     19,-1,
+    19,     20,-1,
+    20,     21,-1,
+    21,     22,28,-1,
+    22,     23,-1,
+    23,     24,-1,
+    24,     25,-1,
+    25,     26,-1,
+    26,     27,-1,
+    27,     28,-1,
+    28,     29,-1,
+    29,     30,-1,
+    -2
+};
 
 /* messages */
 
@@ -1363,6 +1739,22 @@ void graphe::induce_subgraph(const ivector &vi,graphe &G,bool copy_attrib) const
     }
 }
 
+/* create a subgraph defined by list of edges E */
+void graphe::subgraph(const ipairs &E,graphe &G,bool copy_attrib) const {
+    G.clear();
+    G.set_directed(is_directed());
+    int i,j;
+    for (ipairs::const_iterator it=E.begin();it!=E.end();++it) {
+        const vertex &v=node(it->first),&w=node(it->second);
+        if (copy_attrib) {
+            i=G.add_node(v.label(),v.attributes());
+            j=G.add_node(w.label(),w.attributes());
+            G.add_edge(i,j,edge_attributes(it->first,it->second));
+        } else
+            G.add_edge(v.label(),w.label());
+    }
+}
+
 /* return sorted list of vertices adjacent to the i-th one */
 graphe::ivector graphe::adjacent_nodes(int i,bool include_temp_edges) const {
     assert(i>=0 && i<node_count());
@@ -2061,6 +2453,31 @@ double graphe::layout_min(const layout &x,int d) {
     return m;
 }
 
+/* return the bounding rectangle of layout x */
+graphe::rectangle graphe::layout_bounding_rect(const layout &x) {
+    dpair topleft,bottomright;
+    topleft.first=DBL_MAX;
+    topleft.second=-DBL_MAX;
+    bottomright.first=-DBL_MAX;
+    bottomright.second=DBL_MAX;
+    double a,b;
+    for (layout::const_iterator it=x.begin();it!=x.end();++it) {
+        const point &p=*it;
+        a=p[0];
+        b=p[1];
+        if (a<topleft.first)
+            topleft.first=a;
+        if (a>bottomright.first)
+            bottomright.first=a;
+        if (b>topleft.second)
+            topleft.second=b;
+        if (b<bottomright.second)
+            bottomright.second=b;
+    }
+    double width=bottomright.first-topleft.first,height=topleft.second-bottomright.second;
+    return rectangle(topleft.first,topleft.second,width,height);
+}
+
 /* compute the center of layout x */
 graphe::point graphe::layout_center(const layout &x) {
     assert(!x.empty());
@@ -2362,12 +2779,12 @@ void graphe::multilevel_recursion(layout &x,graphe &G,int d,double R,double K,do
 }
 
 /* apply multilevel force directed algorithm to layout x */
-void graphe::force_directed_placement_multilevel(layout &x,int d,double K,double tol) {
+void graphe::make_spring_layout(layout &x,int d,double tol) {
     int n=node_count();
     if (n==0)
         return;
     multilevel_mis=false;
-    return multilevel_recursion(x,*this,d,DBL_MAX,K,tol);
+    multilevel_recursion(x,*this,d,DBL_MAX,1.0,tol);
 }
 
 /* layout face as a regular polygon inscribed in circle of radius R */
@@ -2384,7 +2801,7 @@ void graphe::make_regular_polygon_layout(layout &x,const ivector &face,double R)
 
 /* apply force directed algorithm to this graph (must be triconnected), with the specified outer face,
  * using the algorithm by Bor Plestenjak in "An Algorithm for Drawing Planar Graphs" */
-void graphe::plestenjak_layout(layout &x,const ivector &outer_face,double A,double tol) {
+void graphe::make_circular_layout(layout &x,const ivector &outer_face,bool planar,double A,double tol) {
     int n=node_count(),iter_count=0,maxper=0,tries=0;
     vector<bool> is_outer(n,false);
     for (int i=0;i<n;++i) {
@@ -2415,7 +2832,8 @@ void graphe::plestenjak_layout(layout &x,const ivector &outer_face,double A,doub
     // cool down the system iteratively
     double displacement,cool,C=std::sqrt((double)n/M_PI),Ci,eps=tol;
     ipairs E;
-    get_edges_as_pairs(E,false);
+    if (planar)
+        get_edges_as_pairs(E,false);
     while (true) {
         ++iter_count;
         // compute the resultant force for each non-outer vertex
@@ -2451,15 +2869,13 @@ void graphe::plestenjak_layout(layout &x,const ivector &outer_face,double A,doub
             }
         }
         if (cool<eps) {
-            if (!has_crossing_edges(x,E) || ++tries>PLESTENJAK_MAX_TRIES)
+            if (!planar || !has_crossing_edges(x,E) || ++tries>PLESTENJAK_MAX_TRIES)
                 break;
             eps/=2.0;
         }
     }
     if (tries>PLESTENJAK_MAX_TRIES)
         message("Error: failed to obtain planar layout");
-    else
-        message("Layout completed in %d iterations",iter_count);
 }
 
 /* Tomita recursive algorithm */
@@ -3281,8 +3697,6 @@ int graphe::choose_outer_face(const ivectors &faces) {
 /* finds planar embedding of a connected graph as a list of faces,
  * returns the index of the outer face or -1 if the graph is not planar */
 int graphe::planar_embedding(ivectors &faces) {
-    if (edge_count()+6>3*node_count())
-        return -1;
     // split graph to blocks
     vector<ipairs> blocks;
     find_blocks(blocks);
@@ -3297,9 +3711,7 @@ int graphe::planar_embedding(ivectors &faces) {
         for (vector<ipairs>::const_iterator it=blocks.begin();it!=blocks.end();++it) {
             // test each block separately
             graphe G(ctx);
-            for (ipairs::const_iterator jt=it->begin();jt!=it->end();++jt) {
-                G.add_edge(node_label(jt->first),node_label(jt->second));
-            }
+            subgraph(*it,G,false);
             ivectors &block_faces=blocks_faces[i++];
             if (G.node_count()>2) {
                 // block has three or more vertices
@@ -3787,7 +4199,7 @@ void graphe::sort_rectangles(vector<rectangle> &rectangles) {
     sort(rectangles.begin(),rectangles.end(),comp);
 }
 
-/* pack rectangles (sorted by height) into an enclosing rectangle with specified dimensions,
+/* packing rectangles (sorted by height) into an enclosing rectangle with specified dimensions,
  * returns true if embedding has changed */
 bool graphe::pack_rectangles(const vector<rectangle> &rectangles,dpairs &embedding,double ew,double eh) {
     vector<rectangle> blanks;
@@ -3833,7 +4245,7 @@ bool graphe::pack_rectangles(const vector<rectangle> &rectangles,dpairs &embeddi
     return embedding_changed;
 }
 
-/* pack rectangles (sorted by height) to an enclosing rectangle with minimal perimeter and space wasted */
+/* pack rectangles (sorted by height) to an enclosing rectangle with minimal perimeter and wasted space */
 graphe::dpairs graphe::pack_rectangles_neatly(const vector<rectangle> &rectangles) {
     int n=rectangles.size(),i;
     // compute total area occupied by the rectangles
@@ -3851,7 +4263,7 @@ graphe::dpairs graphe::pack_rectangles_neatly(const vector<rectangle> &rectangle
         if (pack_rectangles(rectangles,embedding,ew,eh)) {
             ew=eh=0;
             i=0;
-            // find the smallest enclosing rectangle containing embedding
+            // find the smallest enclosing rectangle containing the embedding
             for (dpairs::const_iterator it=embedding.begin();it!=embedding.end();++it) {
                 if ((d=it->first+rectangles[i].width())>ew)
                     ew=d;
@@ -4325,11 +4737,8 @@ graphe::point graphe::axis_of_symmetry(layout &x) {
 }
 
 /* make planar layout */
-bool graphe::planar_layout(layout &x,double K) {
+bool graphe::make_planar_layout(layout &x) {
     int n=node_count(),m,f,N,v,w,d,dl,dr;
-    vecteur labels,old_labels=vertices();
-    make_default_vertex_labels(labels,n,0);
-    relabel_nodes(labels);
     ivectors faces;
     faces.clear();
     // create the faces (adding temporary edges if necessary),
@@ -4364,86 +4773,72 @@ bool graphe::planar_layout(layout &x,double K) {
     }
     // create the layout
     x.resize(node_count());
-    plestenjak_layout(x,new_outer_face);
+    make_circular_layout(x,new_outer_face,true);
     // remove temporary vertices and edges, if any
     while (node_count()>n) {
         remove_node(node_count()-1);
     }
     remove_temporary_edges();
-    x.resize(n);
-    scale_layout(x,K);
-    relabel_nodes(old_labels);
     return true;
 }
 
-/* compute vertex positions */
-graphe::layout graphe::make_layout(double K,gt_layout_style style) {
-    int dim=2;
-    layout x;
-    bool do_rotation=true;
-    switch (style) {
-    case _GT_STYLE_3D:
-        dim=3;
-        do_rotation=false;
-    case _GT_STYLE_SPRING:
-        force_directed_placement_multilevel(x,dim,K);
-        break;
-    case _GT_STYLE_PLANAR:
-        if (is_forest()) {
-            do_rotation=false;
-            make_tree_layout(x,K/(double)node_count(),0);
-        } else if (!planar_layout(x,K))
-            return layout(0);
-        break;
-    case _GT_STYLE_CIRCLE:
-
-        break;
-    }
-    // center the layout in the origin
+/* rotate layout x such that left to right symmetry is exposed */
+void graphe::layout_best_rotation(layout &x) {
+    // center layout in the origin
     point c=layout_center(x);
     scale_point(c,-1);
     translate_layout(x,c);
-    if (do_rotation) {
-        graphe G(*this);
-        ivector isolated_nodes;
-        while (G.node_count()>50) {
-            ipairs mm=G.find_maximal_matching();
-            isolated_nodes.clear();
-            for (ipairs::const_iterator it=mm.begin();it!=mm.end();++it) {
-                G.collapse_edge(it->first,it->second);
-                isolated_nodes.push_back(it->second);
-            }
-            sort(isolated_nodes.begin(),isolated_nodes.end());
-            for (int i=isolated_nodes.size();i-->0;) {
-                G.remove_isolated_node(isolated_nodes[i]);
-            }
+    // rotate layout around suitable bisector of a pair of vertices
+    graphe G(*this);
+    ivector isolated_nodes;
+    while (G.node_count()>50) {
+        ipairs mm=G.find_maximal_matching();
+        isolated_nodes.clear();
+        for (ipairs::const_iterator it=mm.begin();it!=mm.end();++it) {
+            G.collapse_edge(it->first,it->second);
+            isolated_nodes.push_back(it->second);
         }
-        int n=G.node_count(),index;
-        layout reduced_x(n);
-        for (int i=0;i<n;++i) {
-            point &p=reduced_x[i];
-            p.resize(2);
-            index=node_index(G.node_label(i));
-            copy_point(x[index],p);
-        }
-        point axis=G.axis_of_symmetry(reduced_x);
-        double a=axis[0],b=axis[1];
-        if (a!=0) {
-            rotate_layout(x,M_PI_2+std::atan(b/a));
-            // determine the highest and the lowest y coordinate: if yh+yl<0, rotate layout for 180°
-            double yh=0,yl=0;
-            for (layout::const_iterator it=x.begin();it!=x.end();++it) {
-                double y=it->back();
-                if (y>yh)
-                    yh=y;
-                else if (y<yl)
-                    yl=y;
-            }
-            if (yh+yl<0)
-                rotate_layout(x,M_PI);
+        sort(isolated_nodes.begin(),isolated_nodes.end());
+        for (int i=isolated_nodes.size();i-->0;) {
+            G.remove_isolated_node(isolated_nodes[i]);
         }
     }
-    return x;
+    int n=G.node_count(),index;
+    layout reduced_x(n);
+    for (int i=0;i<n;++i) {
+        point &p=reduced_x[i];
+        p.resize(2);
+        index=node_index(G.node_label(i));
+        copy_point(x[index],p);
+    }
+    point axis=G.axis_of_symmetry(reduced_x);
+    double a=axis[0],b=axis[1];
+    if (a!=0) {
+        rotate_layout(x,M_PI_2+std::atan(b/a));
+        // determine the highest and the lowest y coordinate: if yh+yl<0, rotate layout for 180°
+        double yh=0,yl=0;
+        for (layout::const_iterator it=x.begin();it!=x.end();++it) {
+            double y=it->back();
+            if (y>yh)
+                yh=y;
+            else if (y<yl)
+                yl=y;
+        }
+        if (yh+yl<0)
+            rotate_layout(x,M_PI);
+    }
+}
+
+/* guess the style to be used for drawing when no method is specified */
+int graphe::guess_drawing_style() {
+    ivector cycle;
+    if (get_leading_cycle(cycle) && cycle.size()>4)
+        return _GT_STYLE_CIRCLE;
+    if (is_tree())
+        return _GT_STYLE_TREE;
+    if (is_planar())
+        return _GT_STYLE_PLANAR;
+    return _GT_STYLE_SPRING;
 }
 
 /* customize the Giac display */
@@ -4499,7 +4894,7 @@ void graphe::draw_edges(vecteur &v,const layout &x) const {
 }
 
 /* append points representing vertices of the graph to vecteur v */
-void graphe::draw_nodes(vecteur &v, const layout &x) const {
+void graphe::draw_nodes(vecteur &v,const layout &x) const {
     if (x.empty())
         return;
     int color,width,n=node_count();
@@ -4608,13 +5003,23 @@ void graphe::draw_labels(vecteur &v,const layout &x) const {
     }
 }
 
-/* extract the largest leading cycle from graph (first k vertices) */
-void graphe::get_leading_cycle(ivector &c) const {
-    for (int i=0;i<node_count();++i) {
+/* extract the largest leading cycle from this graph and return true iff it exists */
+bool graphe::get_leading_cycle(ivector &c) const {
+    int n=node_count();
+    for (int i=0;i<n;++i) {
         if (i==0 || has_edge(i,i-1)) {
             c.push_back(i);
         } else break;
     }
+    if (c.size()<3)
+        return false;
+    for (int i=c.size();i-->2;) {
+        if (has_edge(c[i],c.front())) {
+            c.resize(i+1);
+            return true;
+        }
+    }
+    return false;
 }
 
 /* DFS graph traversal with O(n+m) time and O(m) space complexity */
@@ -4738,6 +5143,39 @@ bool graphe::is_tournament() {
     for (int i=0;i<n;++i) {
         for (int j=0;j<n;++j) {
             if (has_edge(i,j)==has_edge(j,i))
+                return false;
+        }
+    }
+    return true;
+}
+
+/* return true iff the graph is planar */
+bool graphe::is_planar() {
+    graphe U(ctx);
+    underlying(U);
+    ivectors components,faces;
+    int m;
+    U.connected_components(components);
+    for (ivectors_iter it=components.begin();it!=components.end();++it) {
+        if (it->size()<5)
+            continue;
+        graphe G(ctx);
+        U.induce_subgraph(*it,G,false);
+        m=G.edge_count();
+        if (m>3*int(it->size())-6)
+            return false;
+        if (m<9)
+            continue;
+        vector<ipairs> blocks;
+        G.find_blocks(blocks);
+        for (vector<ipairs>::const_iterator jt=blocks.begin();jt!=blocks.end();++jt) {
+            if (jt->size()<9)
+                continue;
+            graphe H(ctx);
+            G.subgraph(*jt,H);
+            if (H.node_count()<5)
+                continue;
+            if (!H.demoucron(faces))
                 return false;
         }
     }

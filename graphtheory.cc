@@ -20,7 +20,6 @@
 #include "graphe.h"
 #include "graphtheory.h"
 #include <giac/giac.h>
-#include <bitset>
 
 using namespace std;
 
@@ -49,7 +48,8 @@ static const char *gt_error_messages[] = {
     "a connected graph is required",                                    // 16
     "drawing method specification is invalid",                          // 17
     "does not specify a cycle in the given graph",                      // 18
-    "no cycle found"                                                    // 19
+    "no cycle found",                                                   // 19
+    "graph name not recognized"                                         // 20
 };
 
 void gt_err_display(int code,GIAC_CONTEXT) {
@@ -140,111 +140,211 @@ void graphe::parse_trail(const vecteur &v) {
  *          graph(V,E,[opts])
  *          graph(A,[opts])
  *          graph(V,E,A,[opts])
+ *          graph("name")
  *
  * Create (un)directed (un)weighted graph from list of vertices V, set of edges
- * E, list of neighbors L and/or adjacency matrix A containing edge weights.
- * All parameters are optional.
+ * E, and/or adjacency matrix A containing edge weights. All parameters are
+ * optional.
  *
  * 'opts' is a sequence of options containing gt_weighted=true/false,
  * gt_directed=true/false, gt_vertexcolor=c or gt_vertexpositions=p. Here c is
  * integer or list of integers (color(s) to be assigned to vertices (in order))
  * and p is list of coordinates to assign to vertices (used for drawing).
+ *
+ * A special may be created by specifying its name as a string. Supported names
+ * are: clebsch - coxeter - desargues - dodecahedron - durer - dyck - grinberg
+ * - grotzsch - heawood - herschel - icosahedron - levi - mcgee - mobius-kantor
+ * - nauru - octahedron - pappus - petersen - robertson - soccerball -
+ * tehtrahedron
  */
 gen _graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG &&g.subtype==-1) return g;
     graphe G(contextptr);
-    if (ckmatrix(g)) {
-        // adjacency matrix is given
-        G.parse_matrix(*g._VECTptr,false,0);
-    } else if (g.type==_VECT && g.subtype!=_SEQ__VECT) {
-        // list of vertices or set of edges is given
-        if (g.subtype==_SET__VECT)
-            G.parse_list_of_edges(*g._VECTptr);
-        else
-            G.add_nodes(*g._VECTptr);
-    } else if (g.is_symb_of_sommet(at_of)) {
-        vecteur &h=*g._SYMBptr->feuille._VECTptr;
-        if (h.front().type!=_IDNT || string(h.front()._IDNTptr->id_name)!="Trail")
-            return gentypeerr(contextptr);
-        G.parse_trail(h);
-    }
-    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
-        return gentypeerr(contextptr);
-    vecteur &args=*g._VECTptr;
-    int nargs=args.size(),n=nargs-1;
-    // parse options first
-    bool iswei=false;
-    while(args[n].is_symb_of_sommet(at_equal)) {
-        vecteur &sides=*args[n]._SYMBptr->feuille._VECTptr;
-        if (!sides.front().is_integer())
-            return gentypeerr(contextptr);
-        switch(sides.front().val) {
-        case _GT_OPT_DIRECTED:
-            if (!sides.back().is_integer())
-                return gentypeerr(contextptr);
-            G.set_directed((bool)sides.back().val);
-            break;
-        case _GT_OPT_WEIGHTED:
-            if (!sides.back().is_integer())
-                return gentypeerr(contextptr);
-            if (sides.back().val!=0)
-                iswei=true;
-            break;
-        }
-        n--;
-    }
-    // parse arguments
-    for (int i=0;i<nargs;++i) {
-        if (i<=n && ckmatrix(args[i]) && args[i].subtype!=_SET__VECT) {
-            // adjacency or weight matrix
-            matrice &m=*args[i]._VECTptr;
-            if (!G.is_directed() && m!=mtran(m))
-                return gt_err(_GT_ERR_MATRIX_NOT_SYMMETRIC,contextptr);
-            if (!G.parse_matrix(m,i==2 || iswei,i))
-                return gentypeerr(contextptr);
-        } else if (i<2 && args[i].type==_VECT) {
-            int permu_size;
-            if (args[i].subtype==_SET__VECT) {
-                // set of edges
-                if (!G.parse_list_of_edges(*args[i]._VECTptr))
-                    return gentypeerr(contextptr);
-            } else if (i==1 && _is_permu(args[i],contextptr).val==1 &&
-                       (permu_size=int(args[i]._VECTptr->size()))>0) {
-                // directed cycle
-                G.set_directed(true);
-                if (permu_size!=G.node_count())
-                    return gensizeerr(contextptr);
-                int last_index=args[i]._VECTptr->back().val;
-                for (const_iterateur it=args[i]._VECTptr->begin();it!=args[i]._VECTptr->end();++it) {
-                    int index=it->val-array_start(contextptr);
-                    G.add_edge(last_index,index);
-                    last_index=index;
-                }
-            } else if (i==0) // list of vertices
-                G.add_nodes(*args[i]._VECTptr);
-            else return gentypeerr(contextptr);
-        } else if (i==0 && args[i].is_symb_of_sommet(at_of)) {
-            // trail
-            if (n>0)
-                return gentypeerr(contextptr);
-            vecteur &h=*args[i]._SYMBptr->feuille._VECTptr;
+    if (g.type==_STRNG) {
+        // construct special graph
+        string name=graphe::genstring2str(g);
+        if (name=="clebsch") {
+            for (int i=0;i<16;++i) {
+                G.add_node(i);
+            }
+            G.read_special(graphe::clebsch_graph);
+            vecteur labels;
+            for (int i=0;i<16;++i) {
+                labels.push_back(graphe::to_binary(i,4));
+            }
+            G.relabel_nodes(labels);
+        } else if (name=="coxeter") {
+            stringstream ss;
+            for (int i=1;i<=7;++i) {
+                ss.str("");
+                ss << "a" << i;
+                G.add_node(graphe::str2gen(ss.str(),true));
+            }
+            G.read_special(graphe::coxeter_graph);
+        } else if (name=="desargues") {
+            return _petersen_graph(makesequence(10,3),contextptr);
+        } else if (name=="dodecahedron") {
+            return _petersen_graph(makesequence(10,2),contextptr);
+        } else if (name=="durer") {
+            return _petersen_graph(makesequence(6,2),contextptr);
+        } else if (name=="dyck") {
+            for (int i=1;i<=32;++i) {
+                G.add_node(i);
+            }
+            G.read_special(graphe::dyck_graph);
+        } else if (name=="grinberg") {
+            for (int i=35;i<=43;++i) {
+                G.add_node(i);
+            }
+            G.read_special(graphe::grinberg_graph);
+        } else if (name=="grotzsch") {
+            G.read_special(graphe::grotzsch_graph);
+        } else if (name=="heawood") {
+            G.read_special(graphe::heawood_graph);
+        } else if (name=="herschel") {
+            for (int i=1;i<=4;++i) {
+                G.add_node(i);
+            }
+            G.read_special(graphe::herschel_graph);
+        } else if (name=="icosahedron") {
+            for (int i=1;i<=3;++i) {
+                G.add_node(i);
+            }
+            G.read_special(graphe::icosahedron_graph);
+        } else if (name=="levi") {
+            for (int i=1;i<=30;++i) {
+                G.add_node(i);
+            }
+            G.read_special(graphe::levi_graph);
+        } else if (name=="mcgee") {
+            for (int i=1;i<=24;++i) {
+                G.add_node(i);
+            }
+            G.read_special(graphe::mcgee_graph);
+        } else if (name=="mobius-kantor") {
+            return _petersen_graph(makesequence(8,3),contextptr);
+        } else if (name=="nauru") {
+            return _petersen_graph(makesequence(12,5),contextptr);
+        } else if (name=="octahedron") {
+            G.add_node(1); G.add_node(3); G.add_node(6);
+            G.read_special(graphe::octahedron_graph);
+        } else if (name=="pappus") {
+            for (int i=1;i<=18;++i) {
+                G.add_node(i);
+            }
+            G.read_special(graphe::pappus_graph);
+        } else if (name=="petersen") {
+            return _petersen_graph(makesequence(5,2),contextptr);
+        } else if (name=="robertson") {
+            for (int i=1;i<=19;++i) {
+                G.add_node(i);
+            }
+            G.read_special(graphe::robertson_graph);
+        } else if (name=="soccerball") {
+            for (int i=16;i<=20;++i) {
+                G.add_node(i);
+            }
+            G.read_special(graphe::soccer_ball_graph);
+        } else if (name=="tetrahedron") {
+            for (int i=2;i<=4;++i) {
+                G.add_node(i);
+            }
+            G.read_special(graphe::tetrahedron_graph);
+        } else return gt_err(_GT_ERR_NAME_NOT_RECOGNIZED,contextptr);
+    } else {
+        if (ckmatrix(g)) {
+            // adjacency matrix is given
+            G.parse_matrix(*g._VECTptr,false,0);
+        } else if (g.type==_VECT && g.subtype!=_SEQ__VECT) {
+            // list of vertices or set of edges is given
+            if (g.subtype==_SET__VECT)
+                G.parse_list_of_edges(*g._VECTptr);
+            else
+                G.add_nodes(*g._VECTptr);
+        } else if (g.is_symb_of_sommet(at_of)) {
+            vecteur &h=*g._SYMBptr->feuille._VECTptr;
             if (h.front().type!=_IDNT || string(h.front()._IDNTptr->id_name)!="Trail")
                 return gentypeerr(contextptr);
             G.parse_trail(h);
-        } else if (i>n && args[i].is_symb_of_sommet(at_equal)) {
-            // option
-            vecteur &sides=*args[i]._SYMBptr->feuille._VECTptr;
+        }
+        if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+            return gentypeerr(contextptr);
+        vecteur &args=*g._VECTptr;
+        int nargs=args.size(),n=nargs-1;
+        // parse options first
+        bool iswei=false;
+        while(args[n].is_symb_of_sommet(at_equal)) {
+            vecteur &sides=*args[n]._SYMBptr->feuille._VECTptr;
             if (!sides.front().is_integer())
                 return gentypeerr(contextptr);
             switch(sides.front().val) {
-            case _GT_OPT_VERTEX_COLOR:
-                G.color_nodes(sides.back());
+            case _GT_OPT_DIRECTED:
+                if (!sides.back().is_integer())
+                    return gentypeerr(contextptr);
+                G.set_directed((bool)sides.back().val);
                 break;
-            case _GT_OPT_VERTEX_POSITIONS:
-
+            case _GT_OPT_WEIGHTED:
+                if (!sides.back().is_integer())
+                    return gentypeerr(contextptr);
+                if (sides.back().val!=0)
+                    iswei=true;
                 break;
             }
-        } else return gentypeerr(contextptr);
+            n--;
+        }
+        // parse arguments
+        for (int i=0;i<nargs;++i) {
+            if (i<=n && ckmatrix(args[i]) && args[i].subtype!=_SET__VECT) {
+                // adjacency or weight matrix
+                matrice &m=*args[i]._VECTptr;
+                if (!G.is_directed() && m!=mtran(m))
+                    return gt_err(_GT_ERR_MATRIX_NOT_SYMMETRIC,contextptr);
+                if (!G.parse_matrix(m,i==2 || iswei,i))
+                    return gentypeerr(contextptr);
+            } else if (i<2 && args[i].type==_VECT) {
+                int permu_size;
+                if (args[i].subtype==_SET__VECT) {
+                    // set of edges
+                    if (!G.parse_list_of_edges(*args[i]._VECTptr))
+                        return gentypeerr(contextptr);
+                } else if (i==1 && _is_permu(args[i],contextptr).val==1 &&
+                           (permu_size=int(args[i]._VECTptr->size()))>0) {
+                    // directed cycle
+                    G.set_directed(true);
+                    if (permu_size!=G.node_count())
+                        return gensizeerr(contextptr);
+                    int last_index=args[i]._VECTptr->back().val;
+                    for (const_iterateur it=args[i]._VECTptr->begin();it!=args[i]._VECTptr->end();++it) {
+                        int index=it->val-array_start(contextptr);
+                        G.add_edge(last_index,index);
+                        last_index=index;
+                    }
+                } else if (i==0) // list of vertices
+                    G.add_nodes(*args[i]._VECTptr);
+                else return gentypeerr(contextptr);
+            } else if (i==0 && args[i].is_symb_of_sommet(at_of)) {
+                // trail
+                if (n>0)
+                    return gentypeerr(contextptr);
+                vecteur &h=*args[i]._SYMBptr->feuille._VECTptr;
+                if (h.front().type!=_IDNT || string(h.front()._IDNTptr->id_name)!="Trail")
+                    return gentypeerr(contextptr);
+                G.parse_trail(h);
+            } else if (i>n && args[i].is_symb_of_sommet(at_equal)) {
+                // option
+                vecteur &sides=*args[i]._SYMBptr->feuille._VECTptr;
+                if (!sides.front().is_integer())
+                    return gentypeerr(contextptr);
+                switch(sides.front().val) {
+                case _GT_OPT_VERTEX_COLOR:
+                    G.color_nodes(sides.back());
+                    break;
+                case _GT_OPT_VERTEX_POSITIONS:
+
+                    break;
+                }
+            } else return gentypeerr(contextptr);
+        }
     }
     return G.to_gen();
 }
@@ -842,7 +942,7 @@ gen _hypercube_graph(const gen &g,GIAC_CONTEXT) {
     int n=g.val,N=std::pow(2,n);
     graphe G(contextptr);
     for (int i=0;i<N;++i) {
-        G.add_node(graphe::str2gen(bitset<1024>((unsigned long)i).to_string().substr(1024-n),true));
+        G.add_node(graphe::to_binary(i,n));
     }
     for (int i=0;i<N;++i) {
         for (int j=i+1;j<N;++j) {
@@ -1089,7 +1189,6 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
         }
         // combine component layouts
 
-        for ()
     }
     G_orig.draw_edges(drawing,main_layout);
     G_orig.draw_nodes(drawing,main_layout);

@@ -299,7 +299,6 @@ public:
     static const int heawood_graph[];
     static const int herschel_graph[];
     static const int mcgee_graph[];
-    static const int moebius_kantor_graph[];
     static const int pappus_graph[];
     static const int robertson_graph[];
     static const int soccer_ball_graph[];
@@ -401,6 +400,7 @@ public:
     int rand_integer(int n) const { return giac::giac_rand(ctx)%n; }
     double rand_uniform() const { return giac::giac_rand(ctx)/(RAND_MAX+1.0); }
     double rand_normal() const { return giac::randNorm(ctx); }
+    static gen to_binary(int number,int chars);
     const context *giac_context() const { return ctx; }
     static gen make_idnt(const char* name,int index=-1,bool intern=true);
     void make_default_vertex_labels(vecteur &labels,int n,int n0) const;
@@ -409,6 +409,8 @@ public:
     static std::string genstring2str(const gen &g);
     static std::string gen2str(const gen &g);
     bool read_gen(const vecteur &v);
+    void read_special(const int *special_graph);
+    void read_special(const char **special_graph);
     void copy(graphe &G) const;
     void copy_nodes(const std::vector<vertex> &V) { nodes=std::vector<vertex>(V.begin(),V.end()); }
     void join_edges(const graphe &G);

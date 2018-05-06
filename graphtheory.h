@@ -45,7 +45,8 @@ enum gt_error_code {
     _GT_ERR_CONNECTED_GRAPH_REQUIRED=16,
     _GT_ERR_INVALID_DRAWING_METHOD=17,
     _GT_ERR_NOT_A_CYCLE=18,
-    _GT_ERR_CYCLE_NOT_FOUND=19
+    _GT_ERR_CYCLE_NOT_FOUND=19,
+    _GT_ERR_NAME_NOT_RECOGNIZED=20
 };
 
 bool is_graphe(const gen &g,std::string &disp_out,GIAC_CONTEXT);

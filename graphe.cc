@@ -24,6 +24,7 @@
 #include <math.h>
 #include <ctime>
 #include <set>
+#include <bitset>
 
 using namespace std;
 
@@ -233,24 +234,6 @@ const int graphe::mcgee_graph[] = {
     21,     22,-1,
     22,     23,-1,
     23,     24,-1,
-    -2
-};
-const int graphe::moebius_kantor_graph[] = {
-    1,      2,6,16,-1,
-    2,      3,13,-1,
-    3,      4,8,-1,
-    4,      5,15,-1,
-    5,      6,10,-1,
-    6,      7,-1,
-    7,      8,12,-1,
-    8,      9,-1,
-    9,      10,14,-1,
-    10,     11,-1,
-    11,     12,16,-1,
-    12,     13,-1,
-    13,     14,-1,
-    14,     15,-1,
-    15,     16,-1,
     -2
 };
 const int graphe::pappus_graph[] = {
@@ -581,6 +564,11 @@ graphe::rectangle& graphe::rectangle::operator =(const rectangle &other) {
     m_width=other.width();
     m_height=other.height();
     return *this;
+}
+
+/* convert number to binary format and return it as gen of type string */
+gen graphe::to_binary(int number,int chars) {
+    return str2gen(bitset<1024>((unsigned long)number).to_string().substr(1024-chars),true);
 }
 
 /* returns vector of all nonnegative integers smaller than n and not in v, which must be sorted */
@@ -1450,6 +1438,45 @@ bool graphe::read_gen(const vecteur &v) {
         }
     }
     return true;
+}
+
+/* read special graph from a list of adjacency lists of integers */
+void graphe::read_special(const int *special_graph) {
+    const int *p=special_graph;
+    int state=1;
+    gen v,w;
+    for(;*p!=-2;++p) {
+        if (*p==-1) {
+            state=1;
+        } else if (state==1) {
+            state=2;
+            v=gen(*p);
+        } else if (state==2) {
+            w=gen(*p);
+            add_edge(v,w);
+        }
+    }
+}
+
+/* read special graph from a list of adjacency lists of strings */
+void graphe::read_special(const char **special_graph) {
+    const char **p=special_graph;
+    int state=1;
+    gen v,w;
+    string s;
+    do {
+        s=string(*p);
+        if (s.empty()) {
+            state=1;
+        } else if (state==1) {
+            state=2;
+            v=str2gen(s,true);
+        } else if (state==2) {
+            w=str2gen(s,true);
+            add_edge(v,w);
+        }
+        ++p;
+    } while (*p!=NULL);
 }
 
 /* make a copy of this graph and store it in G */

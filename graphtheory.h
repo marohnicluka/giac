@@ -201,6 +201,19 @@ gen _highlight_subgraph(const gen &g,GIAC_CONTEXT);
 gen _highlight_trail(const gen &g,GIAC_CONTEXT);
 gen _highlighted_vertices(const gen &g,GIAC_CONTEXT);
 gen _highlighted_edges(const gen &g,GIAC_CONTEXT);
+gen _complete_binary_tree(const gen &g,GIAC_CONTEXT);
+gen _complete_kary_tree(const gen &g,GIAC_CONTEXT);
+gen _kneser_graph(const gen &g,GIAC_CONTEXT);
+gen _odd_graph(const gen &g,GIAC_CONTEXT);
+gen _prism_graph(const gen &g,GIAC_CONTEXT);
+gen _star_graph(const gen &g,GIAC_CONTEXT);
+gen _grid_graph(const gen &g,GIAC_CONTEXT);
+gen _torus_grid_graph(const gen &g,GIAC_CONTEXT);
+gen _web_graph(const gen &g,GIAC_CONTEXT);
+gen _wheel_graph(const gen &g,GIAC_CONTEXT);
+gen _cartesian_product(const gen &g,GIAC_CONTEXT);
+gen _tensor_product(const gen &g,GIAC_CONTEXT);
+gen _path_graph(const gen &g,GIAC_CONTEXT);
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

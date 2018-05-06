@@ -874,7 +874,7 @@ gen _cycle_graph(const gen &g,GIAC_CONTEXT) {
         V=*g._VECTptr;
     else if (g.is_integer())
         G.make_default_vertex_labels(V,g.val);
-    G.make_cycle(V);
+    G.make_cycle_graph(V);
     stringstream ss;
     ss << "C" << G.node_count();
     G.set_name(ss.str());
@@ -915,7 +915,7 @@ gen _lcf_graph(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     vecteur V;
     G.make_default_vertex_labels(V,n);
-    G.make_cycle(V);
+    G.make_cycle_graph(V);
     int j=0,k;
     for (int i=0;i<n;++i) {
         k=(i+jumps[j].val)%n;

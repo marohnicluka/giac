@@ -393,6 +393,7 @@ private:
     void periphericity(const ivector &outer_face,ivector &p);
     static void tree_layout2polar(layout &ly);
     void tree_height_dfs(int i,int level,int &depth);
+    void make_product_vertices(const graphe &G,graphe &P) const;
 
 public:
     graphe(const context *contextptr=context0);
@@ -403,7 +404,7 @@ public:
     static gen to_binary(int number,int chars);
     const context *giac_context() const { return ctx; }
     static gen make_idnt(const char* name,int index=-1,bool intern=true);
-    void make_default_vertex_labels(vecteur &labels,int n,int n0) const;
+    void make_default_vertex_labels(vecteur &labels,int n,int n0=0,int offset=-1) const;
     static gen boole(bool b) { return b?VRAI:FAUX; }
     static gen str2gen(const std::string &str,bool isstring=false);
     static std::string genstring2str(const gen &g);
@@ -471,7 +472,6 @@ public:
     void remove_temporary_edges();
     bool remove_edge(int i,int j);
     bool remove_edge(const ipair &p) { return remove_edge(p.first,p.second); }
-    void make_cycle(const vecteur &v);
     bool has_edge(int i,int j) const;
     bool has_edge(ipair p) const { return has_edge(p.first,p.second); }
     ipair make_edge(const vecteur &v) const;
@@ -532,12 +532,21 @@ public:
     void make_complete_graph(const vecteur &V);
     void make_complete_multipartite_graph(const ivector &partition_sizes);
     void make_petersen_graph(int n,int k);
+    void make_kneser_graph(int n,int k);
+    void make_path_graph(const vecteur &V);
+    void make_cycle_graph(const vecteur &V);
+    void make_grid_graph(int n,int m,bool torus=false);
+    void make_web_graph(int n,int m);
+    void make_wheel_graph(int n);
+    void make_complete_kary_tree(int k,int depth);
     void make_random_tree(const vecteur &V,int maxd);
     void make_random_planar(const vecteur &V);
     void make_random(bool dir,const vecteur &V,double p);
     void make_random_bipartite(const vecteur &V,const vecteur &W,double p);
     void make_random_regular(const vecteur &V,int d,bool connected);
     point axis_of_symmetry(layout &x);
+    void cartesian_product(const graphe &G,graphe &P) const;
+    void tensor_product(const graphe &G,graphe &P) const;
     void connected_components(ivectors &components) const;
     ivector find_cut_vertices();
     void find_blocks(std::vector<ipairs> &blocks);

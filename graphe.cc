@@ -620,8 +620,8 @@ bool is_graphe(const gen &g,string &disp_out,GIAC_CONTEXT) {
 }
 
 /* fill the vecteur V with first n integers (0- or 1- based, depending on the mode) */
-void graphe::make_default_vertex_labels(vecteur &labels,int n,int n0) const {
-    int ofs=array_start(ctx);
+void graphe::make_default_vertex_labels(vecteur &labels,int n,int n0,int offset) const {
+    int ofs=offset<0?array_start(ctx):offset;
     labels.resize(n);
     for (int i=0;i<n;++i) {
         labels[i]=i+ofs+n0;
@@ -1664,9 +1664,9 @@ int graphe::node_index(const gen &v) const {
 }
 
 /* make cycle graph with vertices from V */
-void graphe::make_cycle(const vecteur &v) {
-    int n=v.size();
-    add_nodes(v);
+void graphe::make_cycle_graph(const vecteur &V) {
+    int n=V.size();
+    add_nodes(V);
     for (int i=0;i<n;++i) {
         add_edge(i,(i+1)%n);
     }
@@ -3138,6 +3138,64 @@ void graphe::make_petersen_graph(int n, int k) {
         add_edge(i,i+n);
         add_edge(i+n,(i+k)%n+n);
     }
+}
+
+/* create the Kneser graph with parameters n and k */
+void graphe::make_kneser_graph(int n,int k) {
+
+}
+
+/* create path graph with n vertices */
+void graphe::make_path_graph(const vecteur &V) {
+    int n=V.size();
+    add_nodes(V);
+    for (int i=0;i<n-1;++i) {
+        add_edge(i,i+1);
+    }
+}
+
+/* create n times m (torus) grid graph */
+void graphe::make_grid_graph(int n,int m,bool torus) {
+    vecteur V;
+    graphe X(ctx);
+    X.make_default_vertex_labels(V,n);
+    if (torus)
+        X.make_cycle_graph(V);
+    else X.make_path_graph(V);
+    graphe Y(ctx);
+    Y.make_default_vertex_labels(V,m);
+    if (torus)
+        Y.make_cycle_graph(V);
+    else Y.make_path_graph(V);
+    X.cartesian_product(Y,*this);
+}
+
+/* create n times m web graph as the cartesian product of n-cycle and m-path graphs */
+void graphe::make_web_graph(int n,int m) {
+    vecteur V;
+    graphe C(ctx);
+    C.make_default_vertex_labels(V,n);
+    C.make_cycle_graph(V);
+    graphe P(ctx);
+    P.make_default_vertex_labels(V,m);
+    P.make_path_graph(V);
+    C.cartesian_product(P,*this);
+}
+
+/* create wheel graph with n+1 vertices */
+void graphe::make_wheel_graph(int n) {
+    vecteur V;
+    make_default_vertex_labels(V,n,0,1);
+    make_cycle_graph(V);
+    int i=add_node(0);
+    for (int j=0;j<n;++j) {
+        add_edge(i,j);
+    }
+}
+
+/* create complete k-ary tree with the specified depth */
+void graphe::make_complete_kary_tree(int k,int depth) {
+
 }
 
 void graphe::make_connected_component(int i, int ci, map<int,int> &indices) const {
@@ -4730,7 +4788,7 @@ graphe::point graphe::axis_of_symmetry(layout &x) {
     point center=layout_center(x);
     vecteur labels;
     int nc=node_count();
-    make_default_vertex_labels(labels,nc,0);
+    make_default_vertex_labels(labels,nc);
     relabel_nodes(labels);
     promote_edge_crossings(x);
     ipairs E;
@@ -5207,6 +5265,68 @@ bool graphe::is_planar() {
         }
     }
     return true;
+}
+
+/* create set of vertices for product P of this graph and graph G */
+void graphe::make_product_vertices(const graphe &G,graphe &P) const {
+    int n=node_count(),m=G.node_count();
+    stringstream ss;
+    for (int i=0;i<n;++i) {
+        for (int j=0;j<m;++j) {
+            const gen &v=node_label(i),&w=G.node_label(j);
+            ss.str("");
+            if (v.type==_STRNG)
+                ss << genstring2str(v);
+            else ss << v;
+            ss << ":";
+            if (w.type==_STRNG)
+                ss << genstring2str(w);
+            else ss << w;
+            P.add_node(str2gen(ss.str(),true));
+        }
+    }
+}
+
+/* compute the cartesian product of this graph and graph G and store it in P */
+void graphe::cartesian_product(const graphe &G,graphe &P) const {
+    make_product_vertices(G,P);
+    int n=node_count(),m=G.node_count();
+    for (int i=0;i<n;++i) {
+        for (int j=0;j<m;++j) {
+            const vertex &w=G.node(j);
+            for (ivector_iter it=w.neighbors().begin();it!=w.neighbors().end();++it) {
+                if (*it>j)
+                    P.add_edge(i*m+j,i*m+(*it));
+            }
+        }
+    }
+    for (int j=0;j<m;++j) {
+        for (int i=0;i<n;++i) {
+            const vertex &v=node(i);
+            for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
+                if (*it>i)
+                    P.add_edge(i*m+j,(*it)*m+j);
+            }
+        }
+    }
+}
+
+/* compute tensor product of this graph and graph G and store it in P */
+void graphe::tensor_product(const graphe &G,graphe &P) const {
+    make_product_vertices(G,P);
+    int n=node_count(),m=G.node_count();
+    for (int i=0;i<n;++i) {
+        const vertex &v=node(i);
+        for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
+            for (int j=0;j<m;++j) {
+                const vertex &w=node(j);
+                for (ivector_iter jt=w.neighbors().begin();jt!=w.neighbors().end();++jt) {
+                    if (*jt>j)
+                        P.add_edge(i*m+j,(*it)*m+(*jt));
+                }
+            }
+        }
+    }
 }
 
 #ifndef NO_NAMESPACE_GIAC

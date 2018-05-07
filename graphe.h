@@ -355,7 +355,6 @@ private:
     void coarsening(graphe &G,const sparsemat &P,const ivector &V) const;
     void tomita_recurse(const ivector &R,const ivector &P_orig,const ivector &X_orig,ivectors &cliques) const;
     void remove_isolated_node(int i);
-    void make_connected_component(int i,int ci,std::map<int,int> &indices) const;
     void find_cut_vertices_dfs(int i,std::vector<bool> &ap);
     void find_blocks_dfs(int i,std::vector<ipairs> &blocks);
     int find_cycle_dfs(int i);
@@ -404,7 +403,7 @@ public:
     static gen to_binary(int number,int chars);
     const context *giac_context() const { return ctx; }
     static gen make_idnt(const char* name,int index=-1,bool intern=true);
-    void make_default_vertex_labels(vecteur &labels,int n,int n0=0,int offset=-1) const;
+    void make_default_labels(vecteur &labels,int n,int n0=0,int offset=-1) const;
     static gen boole(bool b) { return b?VRAI:FAUX; }
     static gen str2gen(const std::string &str,bool isstring=false);
     static std::string genstring2str(const gen &g);
@@ -440,8 +439,8 @@ public:
     vecteur vertices() const;
     void unvisit_all_nodes();
     void unset_all_ancestors();
-    void depth_first_search(int root);
-    void breadth_first_search(int root);
+    void depth_first_search(int root, bool record=true,bool clear_previous_search=true);
+    void breadth_first_search(int root,bool record=true,bool clear_previous_search=true);
     const ivector &get_discovered_nodes() const { return discovered_nodes; }
     bool is_connected();
     bool is_biconnected();
@@ -538,7 +537,7 @@ public:
     void make_grid_graph(int n,int m,bool torus=false);
     void make_web_graph(int n,int m);
     void make_wheel_graph(int n);
-    void make_complete_kary_tree(int k,int depth);
+    void make_complete_kary_tree(int k,int d);
     void make_random_tree(const vecteur &V,int maxd);
     void make_random_planar(const vecteur &V);
     void make_random(bool dir,const vecteur &V,double p);
@@ -547,7 +546,7 @@ public:
     point axis_of_symmetry(layout &x);
     void cartesian_product(const graphe &G,graphe &P) const;
     void tensor_product(const graphe &G,graphe &P) const;
-    void connected_components(ivectors &components) const;
+    void connected_components(ivectors &components);
     ivector find_cut_vertices();
     void find_blocks(std::vector<ipairs> &blocks);
     ivector find_cycle(bool randomize=true);

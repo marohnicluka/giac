@@ -620,7 +620,7 @@ bool is_graphe(const gen &g,string &disp_out,GIAC_CONTEXT) {
 }
 
 /* fill the vecteur V with first n integers (0- or 1- based, depending on the mode) */
-void graphe::make_default_vertex_labels(vecteur &labels,int n,int n0,int offset) const {
+void graphe::make_default_labels(vecteur &labels,int n,int n0,int offset) const {
     int ofs=offset<0?array_start(ctx):offset;
     labels.resize(n);
     for (int i=0;i<n;++i) {
@@ -3050,7 +3050,7 @@ void graphe::make_sierpinski_graph(int n, int k, bool triangle) {
     ntupk(tuples,n,k,elem,0);
     int N=std::pow(k,n);
     vecteur V;
-    make_default_vertex_labels(V,N,0);
+    make_default_labels(V,N,0);
     add_nodes(V);
     for (int i=0;i<N;++i) {
         ivector &u=tuples[i];
@@ -3103,7 +3103,7 @@ void graphe::make_complete_multipartite_graph(const ivector &partition_sizes) {
     vecteur v;
     for (ivector_iter it=partition_sizes.begin();it!=partition_sizes.end();++it) {
         int n=*it;
-        make_default_vertex_labels(v,n,n0);
+        make_default_labels(v,n,n0);
         add_nodes(v);
         ivector iv(n);
         for (int i=0;i<n;++i) iv[i]=n0+i;
@@ -3126,8 +3126,8 @@ void graphe::make_complete_multipartite_graph(const ivector &partition_sizes) {
 /* create generalized Petersen graph G(n,k) using Watkins' notation */
 void graphe::make_petersen_graph(int n, int k) {
     vecteur u,v;
-    make_default_vertex_labels(u,n,0);
-    make_default_vertex_labels(v,n,n);
+    make_default_labels(u,n,0);
+    make_default_labels(v,n,n);
     add_nodes(mergevecteur(u,v));
     // add the outer cycle first
     for (int i=0;i<n;++i) {
@@ -3158,12 +3158,12 @@ void graphe::make_path_graph(const vecteur &V) {
 void graphe::make_grid_graph(int n,int m,bool torus) {
     vecteur V;
     graphe X(ctx);
-    X.make_default_vertex_labels(V,n);
+    X.make_default_labels(V,n);
     if (torus)
         X.make_cycle_graph(V);
     else X.make_path_graph(V);
     graphe Y(ctx);
-    Y.make_default_vertex_labels(V,m);
+    Y.make_default_labels(V,m);
     if (torus)
         Y.make_cycle_graph(V);
     else Y.make_path_graph(V);
@@ -3174,10 +3174,10 @@ void graphe::make_grid_graph(int n,int m,bool torus) {
 void graphe::make_web_graph(int n,int m) {
     vecteur V;
     graphe C(ctx);
-    C.make_default_vertex_labels(V,n);
+    C.make_default_labels(V,n);
     C.make_cycle_graph(V);
     graphe P(ctx);
-    P.make_default_vertex_labels(V,m);
+    P.make_default_labels(V,m);
     P.make_path_graph(V);
     C.cartesian_product(P,*this);
 }
@@ -3185,7 +3185,7 @@ void graphe::make_web_graph(int n,int m) {
 /* create wheel graph with n+1 vertices */
 void graphe::make_wheel_graph(int n) {
     vecteur V;
-    make_default_vertex_labels(V,n,0,1);
+    make_default_labels(V,n,0,1);
     make_cycle_graph(V);
     int i=add_node(0);
     for (int j=0;j<n;++j) {
@@ -3193,34 +3193,27 @@ void graphe::make_wheel_graph(int n) {
     }
 }
 
-/* create complete k-ary tree with the specified depth */
-void graphe::make_complete_kary_tree(int k,int depth) {
+/* create complete k-ary tree with depth d */
+void graphe::make_complete_kary_tree(int k,int d) {
+    assert(k>=2);
+    int n=((int)std::pow(k,d+1)-1)/(k-1);
+    vecteur V;
+    make_default_labels(V,n);
 
-}
-
-void graphe::make_connected_component(int i, int ci, map<int,int> &indices) const {
-    indices[i]=ci;
-    ivector adj=adjacent_nodes(i);
-    // recurse over unvisited nodes adjacent to i-th node,
-    // visiting all vertices of the component eventually
-    for (ivector_iter it=adj.begin();it!=adj.end();++it) {
-        if (indices[*it]==0)
-            make_connected_component(*it,ci,indices);
-    }
 }
 
 /* find all connected components of an undirected graph and store them */
-void graphe::connected_components(ivectors &components) const {
-    map<int,int> indices;
-    int i=0,ci=0;
-    while (i<node_count()) {
-        if (indices[i]==0)
-            make_connected_component(i,++ci,indices);
-        ++i;
-    }
-    components=ivectors(ci);
-    for (map<int,int>::const_iterator it=indices.begin();it!=indices.end();++it) {
-        components[it->second-1].push_back(it->first);
+void graphe::connected_components(ivectors &components) {
+    unvisit_all_nodes();
+    unset_all_ancestors();
+    disc_time=0;
+    components.clear();
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        if (!it->is_visited()) {
+            depth_first_search(it-nodes.begin(),true,false);
+            components.resize(components.size()+1);
+            components.back()=discovered_nodes;
+        }
     }
 }
 
@@ -4788,7 +4781,7 @@ graphe::point graphe::axis_of_symmetry(layout &x) {
     point center=layout_center(x);
     vecteur labels;
     int nc=node_count();
-    make_default_vertex_labels(labels,nc);
+    make_default_labels(labels,nc);
     relabel_nodes(labels);
     promote_edge_crossings(x);
     ipairs E;
@@ -5108,14 +5101,18 @@ bool graphe::get_leading_cycle(ivector &c) const {
 }
 
 /* DFS graph traversal with O(n+m) time and O(m) space complexity */
-void graphe::depth_first_search(int root) {
-    unvisit_all_nodes();
-    unset_all_ancestors();
+void graphe::depth_first_search(int root,bool record,bool clear_previous_search) {
+    if (clear_previous_search) {
+        unvisit_all_nodes();
+        unset_all_ancestors();
+        disc_time=0;
+    }
+    if (record) {
+        discovered_nodes.clear();
+        discovered_nodes.reserve(node_count());
+    }
     assert(node_stack.empty());
     node_stack.push(root);
-    discovered_nodes.clear();
-    discovered_nodes.reserve(node_count());
-    disc_time=0;
     int i,j;
     while (!node_stack.empty()) {
         i=node_stack.top();
@@ -5123,7 +5120,8 @@ void graphe::depth_first_search(int root) {
         vertex &v=node(i);
         if (!v.is_visited()) {
             v.set_disc(disc_time++);
-            discovered_nodes.push_back(i);
+            if (record)
+                discovered_nodes.push_back(i);
             v.set_visited(true);
             for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
                 j=*it;
@@ -5139,12 +5137,16 @@ void graphe::depth_first_search(int root) {
 }
 
 /* BFS graph traversal with O(n+m) time and O(m) space complexity */
-void graphe::breadth_first_search(int root) {
-    unvisit_all_nodes();
-    unset_all_ancestors();
-    discovered_nodes.clear();
-    discovered_nodes.reserve(node_count());
-    disc_time=0;
+void graphe::breadth_first_search(int root,bool record,bool clear_previous_search) {
+    if (clear_previous_search) {
+        unvisit_all_nodes();
+        unset_all_ancestors();
+        disc_time=0;
+    }
+    if (record) {
+        discovered_nodes.clear();
+        discovered_nodes.reserve(node_count());
+    }
     queue<int> node_queue;
     node_queue.push(root);
     int i,j;
@@ -5154,7 +5156,8 @@ void graphe::breadth_first_search(int root) {
         vertex &v=node(i);
         if (!v.is_visited()) {
             v.set_disc(disc_time++);
-            discovered_nodes.push_back(i);
+            if (record)
+                discovered_nodes.push_back(i);
             v.set_visited(true);
             for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
                 j=*it;

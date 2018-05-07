@@ -873,7 +873,7 @@ gen _cycle_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_VECT)
         V=*g._VECTptr;
     else if (g.is_integer())
-        G.make_default_vertex_labels(V,g.val);
+        G.make_default_labels(V,g.val);
     G.make_cycle_graph(V);
     stringstream ss;
     ss << "C" << G.node_count();
@@ -914,7 +914,7 @@ gen _lcf_graph(const gen &g,GIAC_CONTEXT) {
     int m=jumps.size(),n=m*e.val;
     graphe G(contextptr);
     vecteur V;
-    G.make_default_vertex_labels(V,n);
+    G.make_default_labels(V,n);
     G.make_cycle_graph(V);
     int j=0,k;
     for (int i=0;i<n;++i) {
@@ -1142,7 +1142,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                     return gt_err(cycle,_GT_ERR_NOT_A_CYCLE,contextptr);
             }
         }
-        G.make_default_vertex_labels(V,n);
+        G.make_default_labels(V,n);
         G.relabel_nodes(V);
         vector<graphe::layout> layouts(nc);
         vector<graphe::rectangle> bounding_rects(nc);
@@ -1246,7 +1246,7 @@ gen _complete_graph(const gen &g,GIAC_CONTEXT) {
         G.make_complete_graph(*g._VECTptr);
     } else if (g.is_integer() && g.val>0){
         vecteur V;
-        G.make_default_vertex_labels(V,g.val);
+        G.make_default_labels(V,g.val);
         G.make_complete_graph(V);
     } else if (g.type==_VECT && g.subtype==_SEQ__VECT) {
         // construct multipartite graph
@@ -1306,7 +1306,7 @@ gen randomgraph(const vecteur &gv,bool directed,GIAC_CONTEXT) {
     if (gv.front().type==_VECT)
         V=*gv.front()._VECTptr;
     else if (gv.front().is_integer())
-        G.make_default_vertex_labels(V,gv.front().val);
+        G.make_default_labels(V,gv.front().val);
     else
         return gentypeerr(contextptr);
     if (!is_strictly_positive(gv.back(),contextptr))
@@ -1388,8 +1388,8 @@ gen _random_bipartite_graph(const gen &g,GIAC_CONTEXT) {
         a=ab.front().val;
         b=ab.back().val;
     }
-    G.make_default_vertex_labels(V,a,0);
-    G.make_default_vertex_labels(W,b,a);
+    G.make_default_labels(V,a,0);
+    G.make_default_labels(W,b,a);
     G.make_random_bipartite(V,W,p);
     return G.to_gen();
 }
@@ -1438,7 +1438,7 @@ gen _random_regular_graph(const gen &g,GIAC_CONTEXT) {
     vecteur V;
     vecteur &gv=*g._VECTptr;
     if (gv.front().is_integer())
-        G.make_default_vertex_labels(V,gv.front().val);
+        G.make_default_labels(V,gv.front().val);
     else if (gv.front().type==_VECT)
         V=*gv.front()._VECTptr;
     else
@@ -1495,7 +1495,7 @@ gen _random_tree(const gen &g,GIAC_CONTEXT) {
     if (n<1)
         return gensizeerr(contextptr);
     if (V.empty())
-        G.make_default_vertex_labels(V,n);
+        G.make_default_labels(V,n);
     G.make_random_tree(V,maxd);
     return G.to_gen();
 }
@@ -1519,7 +1519,7 @@ gen _random_planar_graph(const gen &g,GIAC_CONTEXT) {
         int n=g.val;
         if (n<1)
             return gensizeerr(contextptr);
-        G.make_default_vertex_labels(V,n);
+        G.make_default_labels(V,n);
     } else
         return gentypeerr(contextptr);
     G.make_random_planar(V);

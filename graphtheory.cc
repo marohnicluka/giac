@@ -772,7 +772,8 @@ gen _maximal_independent_set(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(*g._VECTptr))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    vector<int> mis=G.maximal_independent_set();
+    graphe::ivector mis;
+    G.maximal_independent_set(mis);
     int n=mis.size();
     vecteur V(n);
     for (int i=0;i<n;++i) {
@@ -1171,11 +1172,8 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 break;
             case _GT_STYLE_CIRCLE:
                 if (outerface.empty()) {
-                    if (!C.get_leading_cycle(outerface)) {
-                        outerface=C.find_cycle();
-                        if (outerface.empty())
-                            return gt_err(_GT_ERR_CYCLE_NOT_FOUND,contextptr);
-                    }
+                    if (!C.get_leading_cycle(outerface) && !C.find_cycle(outerface))
+                        return gt_err(_GT_ERR_CYCLE_NOT_FOUND,contextptr);
                     C.make_circular_layout(x,outerface);
                     outerface.clear();
                 } else
@@ -1583,12 +1581,13 @@ gen _articulation_points(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(*g._VECTptr))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    graphe::ivector V=G.find_cut_vertices();
-    vecteur v;
+    graphe::ivector V;
+    G.find_cut_vertices(V);
+    vecteur res;
     for (graphe::ivector::const_iterator it=V.begin();it!=V.end();++it) {
-        v.push_back(G.node_label(*it));
+        res.push_back(G.node_label(*it));
     }
-    return v;
+    return res;
 }
 static const char _articulation_points_s []="articulation_points";
 static define_unary_function_eval(__articulation_points,&_articulation_points,_articulation_points_s);
@@ -1927,7 +1926,8 @@ gen flights(const gen &g,bool arrive,bool all,GIAC_CONTEXT) {
     }
     vecteur res;
     do {
-        graphe::ivector adj=G.adjacent_nodes(i);
+        graphe::ivector adj;
+        G.adjacent_nodes(i,adj);
         vecteur v;
         for (graphe::ivector::const_iterator it=adj.begin();it!=adj.end();++it) {
             if (G.has_edge(arrive?*it:i,arrive?i:*it))
@@ -2000,7 +2000,8 @@ gen _incident_edges(const gen &g,GIAC_CONTEXT) {
             return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
         indices.push_back(i);
     }
-    vector<graphe::ipair> E=G.incident_edges(indices);
+    graphe::ipairs E;
+    G.incident_edges(indices,E);
     vecteur res;
     for (vector<graphe::ipair>::const_iterator it=E.begin();it!=E.end();++it) {
         res.push_back(makevecteur(G.node_label(it->first),G.node_label(it->second)));
@@ -2315,7 +2316,8 @@ gen _neighbors(const gen &g,GIAC_CONTEXT) {
     int i=G.node_index(v);
     if (i==-1)
         return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
-    graphe::ivector adj=G.adjacent_nodes(i);
+    graphe::ivector adj;
+    G.adjacent_nodes(i,adj);
     vecteur res;
     for (graphe::ivector::const_iterator it=adj.begin();it!=adj.end();++it) {
         res.push_back(G.node_label(*it));

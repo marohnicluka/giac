@@ -426,7 +426,7 @@ public:
     void mark_vertex(const gen &v) { mark_vertex(node_index(v)); }
     bool unmark_vertex(int v);
     bool unmark_vertex(const gen &v) { return unmark_vertex(node_index(v)); }
-    void clear_marked_vertices() { marked_vertices.clear(); }
+    void unmark_all_vertices() { marked_vertices.clear(); }
     void sort_marked_vertices() { std::sort(marked_vertices.begin(),marked_vertices.end()); }
     gen to_gen() const;
     bool write_dot(const std::string &filename) const;
@@ -439,12 +439,12 @@ public:
     vecteur vertices() const;
     void unvisit_all_nodes();
     void unset_all_ancestors();
-    void depth_first_search(int root, bool record=true,bool clear_previous_search=true);
-    void breadth_first_search(int root,bool record=true,bool clear_previous_search=true);
+    void depth_first_search(int root,bool record=true,bool clear_previous_search=true,ivector *D=NULL);
+    void breadth_first_search(int root,bool record=true,bool clear_previous_search=true,ivector *D=NULL);
     const ivector &get_discovered_nodes() const { return discovered_nodes; }
     bool is_connected();
     bool is_biconnected();
-    ivector adjacent_nodes(int i,bool include_temp_edges=true) const;
+    void adjacent_nodes(int i,ivector &adj,bool include_temp_edges=true) const;
     void translate_indices_to(const graphe &G,const ivector &indices,ivector &dest) const;
     void translate_indices_from(const graphe &G,const ivector &indices,ivector &dest) const;
     void get_edges_as_pairs(ipairs &E,bool include_temp_edges=true) const;
@@ -454,7 +454,8 @@ public:
     void add_nodes(const vecteur &v);
     bool remove_node(int i);
     bool remove_node(const gen &v);
-    void remove_nodes(const vecteur &v);
+    void remove_nodes(const ivector &V);
+    void remove_nodes(const vecteur &V);
     const vertex &node(int i) const { return nodes[i]; }
     const gen &node_label(int i) const { assert(i>=0 && i<node_count()); return nodes[i].label(); }
     vecteur get_nodes(const ivector &v) const;
@@ -502,9 +503,9 @@ public:
     bool relabel_nodes(const vecteur &labels);
     void induce_subgraph(const ivector &vi,graphe &G,bool copy_attrib=true) const;
     void subgraph(const ipairs &E,graphe &G,bool copy_attrib=true) const;
-    ivector maximal_independent_set() const;
+    void maximal_independent_set(ivector &ind) const;
     void maximize_matching(ipairs &matching);
-    ipairs find_maximal_matching() const;
+    void find_maximal_matching(ipairs &matching) const;
     bool trail(const vecteur &v);
     void color_node(int index,int c) { set_node_attribute(index,_GT_ATTRIB_COLOR,c); }
     void color_nodes(const gen &c);
@@ -547,12 +548,12 @@ public:
     void cartesian_product(const graphe &G,graphe &P) const;
     void tensor_product(const graphe &G,graphe &P) const;
     void connected_components(ivectors &components);
-    ivector find_cut_vertices();
+    void find_cut_vertices(ivector &articulation_points);
     void find_blocks(std::vector<ipairs> &blocks);
-    ivector find_cycle(bool randomize=true);
-    ivector find_path(int i,int j);
+    bool find_cycle(ivector &cycle,bool randomize=true);
+    bool find_path(int i,int j,ivector &path);
     void collapse_edge(int i,int j);
-    ipairs incident_edges(const ivector &v);
+    void incident_edges(const ivector &V,ipairs &E);
     bool get_layout(layout &positions,int &dim) const;
     void demoucron_bridges(const std::vector<bool> &embedding,const ivectors &faces,std::vector<graphe> &bridges) const;
     static ivector range_complement(const ivector &v,int n);

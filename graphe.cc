@@ -1672,10 +1672,9 @@ int graphe::node_index(const gen &v) const {
     return -1;
 }
 
-/* make cycle graph with vertices from V */
-void graphe::make_cycle_graph(const vecteur &V) {
-    int n=V.size();
-    add_nodes(V);
+/* make cycle graph with n vertices, which must already be added */
+void graphe::make_cycle_graph() {
+    int n=node_count();
     for (int i=0;i<n;++i) {
         add_edge(i,(i+1)%n);
     }
@@ -3046,7 +3045,8 @@ void graphe::incident_edges(const ivector &V,ipairs &E) {
     E.resize(inc.size());
     int i=0;
     for (set<ipair>::const_iterator it=inc.begin();it!=inc.end();++it) {
-        E[i++]=*it;
+        const ipair &e=*it;
+        E[i++]=is_directed()?e:make_pair(std::min(e.first,e.second),std::max(e.first,e.second));
     }
 }
 
@@ -3180,28 +3180,29 @@ void graphe::make_kneser_graph(int n,int k) {
 
 }
 
-/* create path graph with n vertices */
-void graphe::make_path_graph(const vecteur &V) {
-    int n=V.size();
-    add_nodes(V);
+/* create path graph with n vertices, which must already be added */
+void graphe::make_path_graph() {
+    int n=node_count();
     for (int i=0;i<n-1;++i) {
         add_edge(i,i+1);
     }
 }
 
 /* create n times m (torus) grid graph */
-void graphe::make_grid_graph(int n,int m,bool torus) {
+void graphe::make_grid_graph(int m,int n,bool torus) {
     vecteur V;
     graphe X(ctx);
-    X.make_default_labels(V,n);
+    X.make_default_labels(V,m);
+    X.add_nodes(V);
     if (torus)
-        X.make_cycle_graph(V);
-    else X.make_path_graph(V);
+        X.make_cycle_graph();
+    else X.make_path_graph();
     graphe Y(ctx);
-    Y.make_default_labels(V,m);
+    Y.make_default_labels(V,n);
+    Y.add_nodes(V);
     if (torus)
-        Y.make_cycle_graph(V);
-    else Y.make_path_graph(V);
+        Y.make_cycle_graph();
+    else Y.make_path_graph();
     X.cartesian_product(Y,*this);
 }
 
@@ -3210,10 +3211,12 @@ void graphe::make_web_graph(int n,int m) {
     vecteur V;
     graphe C(ctx);
     C.make_default_labels(V,n);
-    C.make_cycle_graph(V);
+    C.add_nodes(V);
+    C.make_cycle_graph();
     graphe P(ctx);
     P.make_default_labels(V,m);
-    P.make_path_graph(V);
+    P.add_nodes(V);
+    P.make_path_graph();
     C.cartesian_product(P,*this);
 }
 
@@ -3221,20 +3224,29 @@ void graphe::make_web_graph(int n,int m) {
 void graphe::make_wheel_graph(int n) {
     vecteur V;
     make_default_labels(V,n,0,1);
-    make_cycle_graph(V);
+    add_nodes(V);
+    make_cycle_graph();
     int i=add_node(0);
     for (int j=0;j<n;++j) {
         add_edge(i,j);
     }
 }
 
-/* create complete k-ary tree with depth d */
+/* create the complete k-ary tree with depth d */
 void graphe::make_complete_kary_tree(int k,int d) {
     assert(k>=2);
-    int n=((int)std::pow(k,d+1)-1)/(k-1);
+    int n=((int)std::pow(k,d+1)-1)/(k-1),v=0,w=1,len;
     vecteur V;
     make_default_labels(V,n);
-
+    for (int i=0;i<d;++i) {
+        len=std::pow(k,i);
+        for (int j=0;j<len;++j) {
+            for (int m=0;m<k;++m) {
+                add_edge(v,w++);
+            }
+            ++v;
+        }
+    }
 }
 
 /* find all connected components of an undirected graph and store them */
@@ -3251,7 +3263,7 @@ void graphe::connected_components(ivectors &components) {
     }
 }
 
-void graphe::find_cut_vertices_dfs(int i,vector<bool> &ap) {
+void graphe::find_cut_vertices_dfs(int i,ivector &ap) {
     vertex &v=node(i);
     v.set_visited(true);
     ++disc_time;
@@ -3261,18 +3273,18 @@ void graphe::find_cut_vertices_dfs(int i,vector<bool> &ap) {
     for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
         int j=*it;
         if (j<0) j=-j-1;
-        vertex &w=nodes[j];
+        vertex &w=node(j);
         if (!w.is_visited()) {
             ++children;
             w.set_ancestor(i);
             find_cut_vertices_dfs(j,ap);
             if (v.ancestor()<0) {
                 if (children==2)
-                    ap[i]=true;
+                    ap.push_back(i);
             } else {
                 v.set_low(std::min(v.low(),w.low()));
                 if (w.low()>=v.disc())
-                    ap[i]=true;
+                    ap.push_back(i);
             }
         } else if (j!=v.ancestor() && w.disc()<v.disc())
             v.set_low(std::min(v.low(),w.disc()));
@@ -3283,18 +3295,13 @@ void graphe::find_cut_vertices_dfs(int i,vector<bool> &ap) {
 void graphe::find_cut_vertices(ivector &articulation_points) {
     unvisit_all_nodes();
     unset_all_ancestors();
-    int n=node_count();
-    vector<bool> ap(n,false);
     disc_time=0;
-    for (int i=0;i<n;++i) {
-        if (!nodes[i].is_visited())
-            find_cut_vertices_dfs(i,ap);
-    }
+    int n=node_count();
     articulation_points.clear();
     articulation_points.reserve(n);
-    for (vector<bool>::const_iterator it=ap.begin();it!=ap.end();++it) {
-        if (*it)
-            articulation_points.push_back(it-ap.begin());
+    for (int i=0;i<n;++i) {
+        if (!node(i).is_visited())
+            find_cut_vertices_dfs(i,articulation_points);
     }
 }
 
@@ -3332,7 +3339,7 @@ void graphe::find_blocks_dfs(int i,vector<ipairs> &blocks) {
     }
 }
 
-/* create list of biconnected components (as lists of edges) of the graph */
+/* create list of all biconnected components (as lists of edges) of the graph */
 void graphe::find_blocks(vector<ipairs> &blocks) {
     unvisit_all_nodes();
     unset_all_ancestors();
@@ -3344,6 +3351,76 @@ void graphe::find_blocks(vector<ipairs> &blocks) {
             find_blocks_dfs(i,blocks);
     }
     while (!edge_stack.empty()) edge_stack.pop();
+}
+
+void graphe::find_bridges_dfs(int i,ipairs &B) {
+    vertex &v=node(i);
+    v.set_visited(true);
+    ++disc_time;
+    v.set_disc(disc_time);
+    v.set_low(disc_time);
+    for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
+        int j=*it;
+        if (j<0) j=-j-1;
+        vertex &w=node(j);
+        if (!w.is_visited()) {
+            w.set_ancestor(i);
+            find_bridges_dfs(j,B);
+            v.set_low(std::min(v.low(),w.low()));
+            if (w.low()>v.disc())
+                B.push_back(make_pair(i<j?i:j,i<j?j:i));
+        } else if (j!=v.ancestor() && w.disc()<v.disc())
+            v.set_low(std::min(v.low(),w.disc()));
+    }
+}
+
+
+/* create list B of all bridges in an undirected graph */
+void graphe::find_bridges(ipairs &B) {
+    assert(!is_directed());
+    unvisit_all_nodes();
+    unset_all_ancestors();
+    disc_time=0;
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        if (!it->is_visited())
+            find_bridges_dfs(it-nodes.begin(),B);
+    }
+}
+
+/* find an eulerian path in this graph using Fleury's algorithm, return true iff it exists */
+bool graphe::find_eulerian_path(ivector &path) const {
+    assert(!is_directed());
+    graphe G(*this);
+    if (!G.is_connected())
+        return false;
+    int n=G.node_count(),count=0,start_node=0;
+    for (int i=0;i<n;++i) {
+        if (G.degree(i)%2!=0) {
+            ++count;
+            start_node=i;
+        }
+    }
+    if (count!=0 && count!=2)
+        return false;
+    int m=G.edge_count(),i=start_node,j;
+    path.resize(m+1);
+    path.back()=i;
+    ipairs bridges;
+    G.find_bridges(bridges);
+    ipair edge;
+    while (m>0) {
+        vertex &v=G.node(i);
+        for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
+            j=*it;
+            edge=make_pair(i<j?i:j,i<j?j:i);
+            if (find(bridges.begin(),bridges.end(),edge)==bridges.end())
+                break;
+        }
+        G.remove_edge(edge);
+        path[--m]=j;
+        i=j;
+    }
+    return true;
 }
 
 int graphe::find_cycle_dfs(int i) {
@@ -4134,13 +4211,11 @@ int graphe::tree_height(int root) {
 }
 
 
-/* create a random biconnected planar graph with n vertices */
-void graphe::make_random_planar(const vecteur &V) {
-    this->clear();
+/* create a random biconnected planar graph with n vertices, which must be already added */
+void graphe::make_random_planar() {
     set_directed(false);
     // start with a random maximal planar graph with n vertices
-    add_nodes(V);
-    int n=V.size();
+    int n=node_count();
     ivectors faces;
     ivector face(3),old_face;
     for (int i=0;i<3;++i) {
@@ -5334,6 +5409,7 @@ void graphe::make_product_vertices(const graphe &G,graphe &P) const {
 
 /* compute the cartesian product of this graph and graph G and store it in P */
 void graphe::cartesian_product(const graphe &G,graphe &P) const {
+    P.clear();
     make_product_vertices(G,P);
     int n=node_count(),m=G.node_count();
     for (int i=0;i<n;++i) {

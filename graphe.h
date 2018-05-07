@@ -530,12 +530,12 @@ public:
     int tree_height(int root);
     void tomita(ivectors &cliques) const;
     void make_sierpinski_graph(int n,int k,bool triangle);
-    void make_complete_graph(const vecteur &V);
+    void make_complete_graph();
     void make_complete_multipartite_graph(const ivector &partition_sizes);
     void make_petersen_graph(int n,int k);
     void make_kneser_graph(int n,int k);
-    void make_path_graph(const vecteur &V);
-    void make_cycle_graph(const vecteur &V);
+    void make_path_graph();
+    void make_cycle_graph();
     void make_grid_graph(int m,int n,bool torus=false);
     void make_web_graph(int n,int m);
     void make_wheel_graph(int n);

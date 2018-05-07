@@ -3120,9 +3120,8 @@ void graphe::make_sierpinski_graph(int n, int k, bool triangle) {
 }
 
 /* create complete graph with vertices from list V */
-void graphe::make_complete_graph(const vecteur &V) {
-    add_nodes(V);
-    int n=V.size();
+void graphe::make_complete_graph() {
+    int n=node_count();
     for (int i=0;i<n;++i) {
         for (int j=i+1;j<n;++j) {
             add_edge(i,j);
@@ -4244,19 +4243,27 @@ void graphe::make_random_planar() {
     ipairs E;
     get_edges_as_pairs(E,false);
     int d1,d2,m;
-    for (ipairs::const_iterator it=E.begin();it!=E.end();++it) {
-        d1=degree(it->first,false);
-        d2=degree(it->second,false);
+    for (int i=E.size();i-->0;) {
+        ipair &e=E[i];
+        d1=degree(e.first,false);
+        d2=degree(e.second,false);
         if (d1<4 || d2<4)
             continue;
         k=giac_rand(ctx);
         m=(d1+d2)/4;
-        if (k%m!=0)
-            remove_edge(*it);
+        if (k%m!=0) {
+            remove_edge(e);
+            E.erase(E.begin()+i);
+        }
     }
     // check that the resulting graph is biconnected; if not, repeat the process
-    if (!is_biconnected())
-        make_random_planar(V);
+    if (!is_biconnected()) {
+        while (!E.empty()) {
+            remove_edge(E.back());
+            E.pop_back();
+        }
+        make_random_planar();
+    }
 }
 
 /* create a random (directed) graph with vertices from V */

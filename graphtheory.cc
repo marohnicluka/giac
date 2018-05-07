@@ -1071,7 +1071,8 @@ gen _lcf_graph(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     vecteur V;
     G.make_default_labels(V,n);
-    G.make_cycle_graph(V);
+    G.add_nodes(V);
+    G.make_cycle_graph();
     int j=0,k;
     for (int i=0;i<n;++i) {
         k=(i+jumps[j].val)%n;
@@ -1377,8 +1378,7 @@ static const char _sierpinski_graph_s []="sierpinski_graph";
 static define_unary_function_eval(__sierpinski_graph,&_sierpinski_graph,_sierpinski_graph_s);
 define_unary_function_ptr5(at_sierpinski_graph,alias_at_sierpinski_graph,&__sierpinski_graph,0,true)
 
-/* Usage:   complete_graph(V)
- *          complete_graph(n)
+/* Usage:   complete_graph(n or V)
  *          complete_graph(m,n)
  *          complete_graph(n1,n2,...,nk)
  *
@@ -1391,11 +1391,13 @@ gen _complete_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG &&g.subtype==-1) return g;
     graphe G(contextptr);
     if (g.type==_VECT && g.subtype!=_SEQ__VECT) {
-        G.make_complete_graph(*g._VECTptr);
+        G.add_nodes(*g._VECTptr);
+        G.make_complete_graph();
     } else if (g.is_integer() && g.val>0){
         vecteur V;
         G.make_default_labels(V,g.val);
-        G.make_complete_graph(V);
+        G.add_nodes(V);
+        G.make_complete_graph();
     } else if (g.type==_VECT && g.subtype==_SEQ__VECT) {
         // construct multipartite graph
         vecteur &partition_sizes_gen=*g._VECTptr;

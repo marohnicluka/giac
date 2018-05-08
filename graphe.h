@@ -42,7 +42,10 @@ enum move_to_dispatch_h {
     _GT_CONNECTED = 137, // connected
     _GT_SPRING = 138, // spring
     _GT_TREE = 139, // tree
-    _GT_PLANAR = 140 // planar
+    _GT_PLANAR = 140, // planar
+    _GT_DIRECTED = 141, // directed
+    _GT_WEIGHTED = 142, // weighted
+    _GT_WEIGHTS = 143 // weights
 };
 
 enum gt_dot_token_type {
@@ -51,14 +54,6 @@ enum gt_dot_token_type {
     _GT_DOT_TOKEN_TYPE_OPERATOR = 3,
     _GT_DOT_TOKEN_TYPE_STRING = 4,
     _GT_DOT_TOKEN_TYPE_DELIMITER = 5
-};
-
-enum gt_creation_option {
-    _GT_OPT_DIRECTED,
-    _GT_OPT_WEIGHTED,
-    _GT_OPT_VERTEX_COLOR,
-    _GT_OPT_VERTEX_POSITIONS,
-    _GT_OPT_WEIGHTS
 };
 
 enum gt_attribute {
@@ -285,6 +280,7 @@ public:
     typedef std::vector<point>::const_iterator layout_iter;
     typedef ivector::const_iterator ivector_iter;
     typedef ivectors::const_iterator ivectors_iter;
+    typedef ipairs::const_iterator ipairs_iter;
     typedef vertex* vptr;
     typedef std::vector<vptr> vpointers;
     static const gen FAUX;
@@ -399,6 +395,7 @@ private:
 public:
     graphe(const context *contextptr=context0);
     graphe(const graphe &G);
+    graphe(const std::string &name,const context *contextptr=context0);
     int rand_integer(int n) const { return giac::giac_rand(ctx)%n; }
     double rand_uniform() const { return giac::giac_rand(ctx)/(RAND_MAX+1.0); }
     double rand_normal() const { return giac::randNorm(ctx); }
@@ -410,7 +407,7 @@ public:
     static gen str2gen(const std::string &str,bool isstring=false);
     static std::string genstring2str(const gen &g);
     static std::string gen2str(const gen &g);
-    bool read_gen(const vecteur &v);
+    bool read_gen(const gen &g);
     void read_special(const int *special_graph);
     void read_special(const char **special_graph);
     void copy(graphe &G) const;
@@ -446,6 +443,7 @@ public:
     const ivector &get_discovered_nodes() const { return discovered_nodes; }
     bool is_connected();
     bool is_biconnected();
+    bool is_triconnected();
     void adjacent_nodes(int i,ivector &adj,bool include_temp_edges=true) const;
     void translate_indices_to(const graphe &G,const ivector &indices,ivector &dest) const;
     void translate_indices_from(const graphe &G,const ivector &indices,ivector &dest) const;
@@ -477,6 +475,7 @@ public:
     bool has_edge(int i,int j) const;
     bool has_edge(ipair p) const { return has_edge(p.first,p.second); }
     ipair make_edge(const vecteur &v) const;
+    bool edges2ipairs(const vecteur &E,ipairs &ev,bool &notfound) const;
     bool nodes_are_adjacent(int i,int j) const;
     int in_degree(int index,bool count_temp_edges=true) const;
     int out_degree(int index,bool count_temp_edges=true) const;
@@ -495,6 +494,7 @@ public:
     bool is_directed() const;
     bool is_weighted() const;
     void set_directed(bool yes) { set_graph_attribute(_GT_ATTRIB_DIRECTED,boole(yes)); }
+    void set_weighted(bool yes) { assert(is_empty()); set_graph_attribute(_GT_ATTRIB_WEIGHTED,boole(yes)); }
     void make_weighted(const matrice &m);
     void make_directed() { set_directed(true); }
     void make_unweighted();
@@ -505,15 +505,11 @@ public:
     bool relabel_nodes(const vecteur &labels);
     void induce_subgraph(const ivector &vi,graphe &G,bool copy_attrib=true) const;
     void subgraph(const ipairs &E,graphe &G,bool copy_attrib=true) const;
+    bool is_subgraph(const graphe &G) const;
     void maximal_independent_set(ivector &ind) const;
     void maximize_matching(ipairs &matching);
     void find_maximal_matching(ipairs &matching) const;
     bool trail(const vecteur &v);
-    void color_node(int index,int c) { set_node_attribute(index,_GT_ATTRIB_COLOR,c); }
-    void color_nodes(const gen &c);
-    bool parse_list_of_edges(const vecteur &v);
-    bool parse_matrix(const matrice &m,bool iswei,int mode);
-    void parse_trail(const vecteur &v);
     void create_random_layout(layout &x,double K,int d);
     void make_spring_layout(layout &x,int d,double tol=0.001);
     void make_circular_layout(layout &x,const ivector &outer_face,bool planar=false,double A=0,double tol=0.001);
@@ -560,13 +556,14 @@ public:
     void incident_edges(const ivector &V,ipairs &E);
     bool get_layout(layout &positions,int &dim) const;
     void demoucron_bridges(const std::vector<bool> &embedding,const ivectors &faces,std::vector<graphe> &bridges) const;
-    static ivector range_complement(const ivector &v,int n);
     bool convex_hull(ivector &ccw_indices,const layout &x) const;
     double subgraph_area(const layout &x,const ivector &v=ivector()) const;
     void draw_edges(vecteur &v,const layout &x) const;
     void draw_nodes(vecteur &v,const layout &x) const;
     void draw_labels(vecteur &v,const layout &x) const;
     bool get_leading_cycle(ivector &c) const;
+    void highlight_edges(const ipairs &E,int color);
+    void highlight_nodes(const ivector &V,int color);
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

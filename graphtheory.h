@@ -46,15 +46,18 @@ enum gt_error_code {
     _GT_ERR_INVALID_DRAWING_METHOD=17,
     _GT_ERR_NOT_A_CYCLE=18,
     _GT_ERR_CYCLE_NOT_FOUND=19,
-    _GT_ERR_NAME_NOT_RECOGNIZED=20
+    _GT_ERR_NAME_NOT_RECOGNIZED=20,
+    _GT_ERR_NOT_A_SUBGRAPH=21
 };
 
 bool is_graphe(const gen &g,std::string &disp_out,GIAC_CONTEXT);
+void identifier_assign(const identificateur &var,const gen &value,GIAC_CONTEXT);
 
 gen _graph(const gen &g,GIAC_CONTEXT);
 gen _digraph(const gen &g,GIAC_CONTEXT);
 gen _export_graph(const gen &g,GIAC_CONTEXT);
 gen _import_graph(const gen &g,GIAC_CONTEXT);
+gen _trail(const gen &g,GIAC_CONTEXT);
 gen _draw_graph(const gen &g,GIAC_CONTEXT);
 gen _graph_complement(const gen &g,GIAC_CONTEXT);
 gen _induced_subgraph(const gen &g,GIAC_CONTEXT);
@@ -86,6 +89,7 @@ gen _departures(const gen &g,GIAC_CONTEXT);
 gen _incident_edges(const gen &g,GIAC_CONTEXT);
 gen _is_connected(const gen &g,GIAC_CONTEXT);
 gen _is_biconnected(const gen &g,GIAC_CONTEXT);
+gen _is_triconnected(const gen &g,GIAC_CONTEXT);
 gen _is_weighted(const gen &g,GIAC_CONTEXT);
 gen _is_forest(const gen &g,GIAC_CONTEXT);
 gen _is_tournament(const gen &g,GIAC_CONTEXT);
@@ -139,16 +143,21 @@ gen _odd_graph(const gen &g,GIAC_CONTEXT);
 gen _cartesian_product(const gen &g,GIAC_CONTEXT);
 gen _tensor_product(const gen &g,GIAC_CONTEXT);
 gen _is_eulerian(const gen &g,GIAC_CONTEXT);
-//gen _disjoint_union(const gen &g,GIAC_CONTEXT);
+gen _highlight_vertex(const gen &g,GIAC_CONTEXT);
+gen _highlight_edges(const gen &g,GIAC_CONTEXT);
+gen _highlight_subgraph(const gen &g,GIAC_CONTEXT);
+gen _highlight_trail(const gen &g,GIAC_CONTEXT);
+gen _disjoint_union(const gen &g,GIAC_CONTEXT);
+gen _graph_union(const gen &g,GIAC_CONTEXT);
 gen _graph_join(const gen &g,GIAC_CONTEXT);
+gen _graph_equal(const gen &g,GIAC_CONTEXT);
+gen _reverse_graph(const gen &g,GIAC_CONTEXT);
 //gen _interval_graph(const gen &g,GIAC_CONTEXT);
 //gen _plane_dual(const gen &g,GIAC_CONTEXT);
 //gen _transitive_closure(const gen &g,GIAC_CONTEXT);
 //gen _fundamental_cycle(const gen &g,GIAC_CONTEXT);
 //gen _graph_power(const gen &g,GIAC_CONTEXT);
 //gen _mycielski(const gen &g,GIAC_CONTEXT);
-gen _graph_union(const gen &g,GIAC_CONTEXT);
-gen _reverse_graph(const gen &g,GIAC_CONTEXT);
 //gen _subdivide(const gen &g,GIAC_CONTEXT);
 //gen _greedy_color(const gen &g,GIAC_CONTEXT);
 //gen _chromatic_index(const gen &g,GIAC_CONTEXT);
@@ -168,7 +177,6 @@ gen _reverse_graph(const gen &g,GIAC_CONTEXT);
 //gen _clique_cover(const gen &g,GIAC_CONTEXT);
 //gen _cycle_basis(const gen &g,GIAC_CONTEXT);
 //gen _graph_diameter(const gen &g,GIAC_CONTEXT);
-gen _graph_equal(const gen &g,GIAC_CONTEXT);
 //gen _is_cut_set(const gen &g,GIAC_CONTEXT);
 //gen _is_network(const gen &g,GIAC_CONTEXT);
 //gen _maximum_clique(const gen &g,GIAC_CONTEXT);
@@ -182,6 +190,7 @@ gen _graph_equal(const gen &g,GIAC_CONTEXT);
 //gen _clique_cover_number(const gen &g,GIAC_CONTEXT);
 //gen _clique_number(const gen &g,GIAC_CONTEXT);
 gen _degree_sequence(const gen &g,GIAC_CONTEXT);
+gen _is_graphic_sequence(const gen &g,GIAC_CONTEXT);
 gen _sequence_graph(const gen &g,GIAC_CONTEXT);
 //gen _graph_distance(const gen &g,GIAC_CONTEXT);
 //gen _edge_chromatic_number(const gen &g,GIAC_CONTEXT);
@@ -193,7 +202,6 @@ gen _sequence_graph(const gen &g,GIAC_CONTEXT);
 //gen _is_bipartite(const gen &g,GIAC_CONTEXT);
 //gen _is_clique(const gen &g,GIAC_CONTEXT);
 //gen _is_edge_colorable(const gen &g,GIAC_CONTEXT);
-gen _is_graphic_sequence(const gen &g,GIAC_CONTEXT);
 //gen _is_hamiltonian(const gen &g,GIAC_CONTEXT);
 //gen _is_two_edge_connected(const gen &g,GIAC_CONTEXT);
 //gen _laplacian_matrix(const gen &g,GIAC_CONTEXT);
@@ -208,12 +216,8 @@ gen _is_graphic_sequence(const gen &g,GIAC_CONTEXT);
 //gen _shortest_path(const gen &g,GIAC_CONTEXT);
 //gen _spanning_tree(const gen &g,GIAC_CONTEXT);
 //gen _traveling_salesman(const gen &g,GIAC_CONTEXT);
-gen _highlight_vertices(const gen &g,GIAC_CONTEXT);
-gen _highlight_edges(const gen &g,GIAC_CONTEXT);
-gen _highlight_subgraph(const gen &g,GIAC_CONTEXT);
-gen _highlight_trail(const gen &g,GIAC_CONTEXT);
-gen _highlighted_vertices(const gen &g,GIAC_CONTEXT);
-gen _highlighted_edges(const gen &g,GIAC_CONTEXT);
+
+extern const unary_function_ptr * const at_trail;
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

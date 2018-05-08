@@ -23,7 +23,6 @@
 #include <ctype.h>
 #include <math.h>
 #include <ctime>
-#include <set>
 #include <bitset>
 
 using namespace std;
@@ -905,6 +904,14 @@ bool graphe::edges2ipairs(const vecteur &E,ipairs &ev,bool &notfound) const {
     return true;
 }
 
+/* convert ipairs to ipairs */
+void graphe::ipairs2edgeset(const ipairs &E,edgeset &Eset) {
+    Eset.clear();
+    for (ipairs_iter it=E.begin();it!=E.end();++it) {
+        Eset.insert(*it);
+    }
+}
+
 /* return total number of edges/arcs */
 int graphe::edge_count() const {
     int count=0;
@@ -1029,8 +1036,9 @@ void graphe::unset_all_ancestors() {
 
 /* fill the list E with edges represented as pairs of vertex indices */
 void graphe::get_edges_as_pairs(ipairs &E,bool include_temp_edges) const {
-    set<ipair> pairs;
-    int i,j;
+    int i,j,k=0,m=edge_count();
+    bool dir=is_directed();
+    E.resize(m);
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         i=it-nodes.begin();
         for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
@@ -1040,14 +1048,12 @@ void graphe::get_edges_as_pairs(ipairs &E,bool include_temp_edges) const {
                     continue;
                 j=-j-1;
             }
-            pairs.insert(is_directed()?make_pair(i,j):make_pair(i<j?i:j,i<j?j:i));
+            if (!dir && j<i)
+                continue;
+            E[k++]=make_pair(i,j);
         }
     }
-    E.resize(pairs.size());
-    i=0;
-    for (set<ipair>::const_iterator it=pairs.begin();it!=pairs.end();++it) {
-        E[i++]=*it;
-    }
+    assert(k==m);
 }
 
 /* return list of edges/arcs */
@@ -1055,10 +1061,11 @@ vecteur graphe::edges(bool include_weights) const {
     ipairs E;
     get_edges_as_pairs(E);
     vecteur edge(2),ret(E.size());
+    int i=0;
     for (ipairs_iter it=E.begin();it!=E.end();++it) {
         edge[0]=nodes[it->first].label();
         edge[1]=nodes[it->second].label();
-        ret[it-E.begin()]=include_weights?makevecteur(edge,weight(it->first,it->second)):edge;
+        ret[i++]=include_weights?makevecteur(edge,weight(it->first,it->second)):edge;
     }
     return ret;
 }
@@ -3147,33 +3154,26 @@ void graphe::collapse_edge(int i,int j) {
     }
 }
 
-/* put all edges incident to nodes in list E */
-void graphe::incident_edges(const ivector &V,ipairs &E) {
-    set<ipair> inc;
+/* put all edges incident to nodes in V to set E */
+void graphe::incident_edges(const ivector &V,edgeset &E) {
     if (is_directed()) {
         ivector adj;
         for (ivector_iter it=V.begin();it!=V.end();++it) {
             adjacent_nodes(*it,adj);
             for (ivector_iter jt=adj.begin();jt!=adj.end();++jt) {
                 if (has_edge(*it,*jt))
-                    inc.insert(make_pair(*it,*jt));
+                    E.insert(make_pair(*it,*jt));
                 if (has_edge(*jt,*it))
-                    inc.insert(make_pair(*jt,*it));
+                    E.insert(make_pair(*jt,*it));
             }
         }
     } else {
         for (ivector_iter it=V.begin();it!=V.end();++it) {
             vertex &v=node(*it);
             for (ivector_iter jt=v.neighbors().begin();jt!=v.neighbors().end();++jt) {
-                inc.insert(make_pair(*it,*jt));
+                E.insert(make_pair(*it,*jt));
             }
         }
-    }
-    E.resize(inc.size());
-    int i=0;
-    for (set<ipair>::const_iterator it=inc.begin();it!=inc.end();++it) {
-        const ipair &e=*it;
-        E[i++]=is_directed()?e:make_pair(std::min(e.first,e.second),std::max(e.first,e.second));
     }
 }
 
@@ -4397,24 +4397,20 @@ void graphe::make_random_planar() {
     ipairs E;
     get_edges_as_pairs(E,false);
     int d1,d2,m;
-    for (int i=E.size();i-->0;) {
-        ipair &e=E[i];
-        d1=degree(e.first,false);
-        d2=degree(e.second,false);
+    for (ipairs_iter it=E.begin();it!=E.end();++it) {
+        d1=degree(it->first,false);
+        d2=degree(it->second,false);
         if (d1<4 || d2<4)
             continue;
         k=giac_rand(ctx);
         m=(d1+d2)/4;
-        if (k%m!=0) {
-            remove_edge(e);
-            E.erase(E.begin()+i);
-        }
+        if (k%m!=0)
+            remove_edge(*it);
     }
     // check that the resulting graph is biconnected; if not, repeat the process
     if (!is_biconnected()) {
-        while (!E.empty()) {
-            remove_edge(E.back());
-            E.pop_back();
+        for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
+            it->clear_neighbors();
         }
         make_random_planar();
     }
@@ -4720,7 +4716,7 @@ bool graphe::get_layout(layout &x,int &dim) const {
     return true;
 }
 
-/* remove every edge from E that is not crossed by some other edge */
+/* check for crossing edges with respect to the layout x */
 bool graphe::has_crossing_edges(const layout &x,const ipairs &E) const {
     point r(2),s(2),crossing(2);
     int i1,j1,i2,j2;
@@ -4877,9 +4873,11 @@ double graphe::subgraph_area(const layout &x,const ivector &v) const {
 
 /* copy this graph to G with edge crossings promoted to vertices (2D layout is required) */
 void graphe::promote_edge_crossings(layout &x) {
+    ipairs Eset;
     ipairs E;
     int i,i1,j1,i2,j2;
-    get_edges_as_pairs(E);
+    get_edges_as_pairs(Eset);
+
     // get the last label (must be an integer)
     const gen &last_node=nodes.back().label();
     assert(last_node.is_integer());

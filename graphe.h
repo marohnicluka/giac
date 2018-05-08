@@ -28,6 +28,7 @@
 #include <fstream>
 #include <queue>
 #include <stack>
+#include <set>
 
 //#define _GLIBCXX_USE_CXX11_ABI 0
 #ifndef DBL_MAX
@@ -87,6 +88,7 @@ public:
     typedef std::vector<double> point;
     typedef std::vector<point> layout;
     typedef std::map<int,std::map<int,double> > sparsemat;
+    typedef std::set<ipair> edgeset;
 
     class vertex {
         gen m_label;
@@ -281,6 +283,7 @@ public:
     typedef ivector::const_iterator ivector_iter;
     typedef ivectors::const_iterator ivectors_iter;
     typedef ipairs::const_iterator ipairs_iter;
+    typedef edgeset::const_iterator edgeset_iter;
     typedef vertex* vptr;
     typedef std::vector<vptr> vpointers;
     static const gen FAUX;
@@ -476,6 +479,7 @@ public:
     bool has_edge(ipair p) const { return has_edge(p.first,p.second); }
     ipair make_edge(const vecteur &v) const;
     bool edges2ipairs(const vecteur &E,ipairs &ev,bool &notfound) const;
+    static void ipairs2edgeset(const ipairs &E,edgeset &Eset);
     bool nodes_are_adjacent(int i,int j) const;
     int in_degree(int index,bool count_temp_edges=true) const;
     int out_degree(int index,bool count_temp_edges=true) const;
@@ -553,7 +557,7 @@ public:
     bool find_path(int i,int j,ivector &path);
     bool find_eulerian_path(ivector &path) const;
     void collapse_edge(int i,int j);
-    void incident_edges(const ivector &V,ipairs &E);
+    void incident_edges(const ivector &V,edgeset &E);
     bool get_layout(layout &positions,int &dim) const;
     void demoucron_bridges(const std::vector<bool> &embedding,const ivectors &faces,std::vector<graphe> &bridges) const;
     bool convex_hull(ivector &ccw_indices,const layout &x) const;

@@ -2001,10 +2001,10 @@ gen _incident_edges(const gen &g,GIAC_CONTEXT) {
             return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
         indices.push_back(i);
     }
-    graphe::ipairs E;
+    graphe::edgeset E;
     G.incident_edges(indices,E);
     vecteur res;
-    for (vector<graphe::ipair>::const_iterator it=E.begin();it!=E.end();++it) {
+    for (graphe::edgeset_iter it=E.begin();it!=E.end();++it) {
         res.push_back(makevecteur(G.node_label(it->first),G.node_label(it->second)));
     }
     return res;

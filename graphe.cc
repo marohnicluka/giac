@@ -3174,9 +3174,36 @@ void graphe::make_petersen_graph(int n, int k) {
     }
 }
 
-/* create the Kneser graph with parameters n and k */
-void graphe::make_kneser_graph(int n,int k) {
-
+/* create Kneser graph with parameters n (<=20) and k */
+bool graphe::make_kneser_graph(int n,int k) {
+    assert(n>1 && n<21 && k>0 && k<n);
+    int nv=comb(n,k).val; // number of vertices
+    if (nv>10000) {
+        message("Error: graph is too large");
+        return false;
+    }
+    vecteur V;
+    make_default_labels(V,nv);
+    add_nodes(V);
+    ulong N=std::pow(2,n);
+    vector<ulong> sets(nv);
+    int i=0;
+    for (ulong m=1;m<N;++m) {
+        bitset<32> b(m);
+        if (b.count()==(size_t)k)
+            sets[i++]=m;
+    }
+    assert(i==nv);
+    ulong a,b;
+    for (i=0;i<nv;++i) {
+        a=sets[i];
+        for (int j=i+1;j<nv;++j) {
+            b=sets[j];
+            if ((a & b)==0)
+                add_edge(i,j);
+        }
+    }
+    return true;
 }
 
 /* create path graph with n vertices, which must already be added */

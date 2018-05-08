@@ -2592,10 +2592,11 @@ gen _complete_kary_tree(const gen &g,GIAC_CONTEXT) {
     vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
         return gensizeerr(contextptr);
-    int n,k;
-    if (!gv.front().is_integer() || !gv.back().is_integer() ||
-            (k=gv.front().val)<2 || (n=gv.back().val)<0)
+    if (!gv.front().is_integer() || !gv.back().is_integer())
         return gentypeerr(contextptr);
+    int k=gv.front().val,n=gv.back().val;
+    if (k<2 || n<1)
+        return gensizeerr(contextptr);
     graphe G(contextptr);
     G.make_complete_kary_tree(k,n);
     return G.to_gen();
@@ -2661,10 +2662,11 @@ gen _grid_graph(const gen &g,GIAC_CONTEXT) {
     vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
         return gensizeerr(contextptr);
-    int m,n;
-    if (!gv.front().is_integer() || !gv.back().is_integer() ||
-            (m=gv.front().val)<2 || (n=gv.back().val)<2)
+    if (!gv.front().is_integer() || !gv.back().is_integer())
         return gentypeerr(contextptr);
+    int m=gv.front().val,n=gv.back().val;
+    if (m<2 || n<2)
+        return gensizeerr(contextptr);
     graphe G(contextptr);
     G.make_grid_graph(m,n);
     return G.to_gen();
@@ -2684,10 +2686,11 @@ gen _torus_grid_graph(const gen &g,GIAC_CONTEXT) {
     vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
         return gensizeerr(contextptr);
-    int m,n;
-    if (!gv.front().is_integer() || !gv.back().is_integer() ||
-            (m=gv.front().val)<3 || (n=gv.back().val)<3)
+    if (!gv.front().is_integer() || !gv.back().is_integer())
         return gentypeerr(contextptr);
+    int m=gv.front().val,n=gv.back().val;
+    if (m<3 || n<3)
+        return gensizeerr(contextptr);
     graphe G(contextptr);
     G.make_grid_graph(m,n,true);
     return G.to_gen();
@@ -2707,10 +2710,11 @@ gen _web_graph(const gen &g,GIAC_CONTEXT) {
     vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
         return gensizeerr(contextptr);
-    int a,b;
-    if (!gv.front().is_integer() || !gv.back().is_integer() ||
-            (a=gv.front().val)<3 || (b=gv.back().val)<2)
+    if (!gv.front().is_integer() || !gv.back().is_integer())
         return gentypeerr(contextptr);
+    int a=gv.front().val,b=gv.back().val;
+    if (a<3 || b<2)
+        return gensizeerr(contextptr);
     graphe G(contextptr);
     G.make_web_graph(a,b);
     return G.to_gen();
@@ -2780,6 +2784,91 @@ gen _path_graph(const gen &g,GIAC_CONTEXT) {
 static const char _path_graph_s []="path_graph";
 static define_unary_function_eval(__path_graph,&_path_graph,_path_graph_s);
 define_unary_function_ptr5(at_path_graph,alias_at_path_graph,&__path_graph,0,true)
+
+/* Usage:   eulerian_path(G,[V])
+ *
+ * Returns true iff graph G is eulerian, i.e. if it has eulerian path. If
+ * identifier V is specified as the second argument, that path is written to it.
+ */
+gen _is_eulerian(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    bool has_path_idnt=g.subtype==_SEQ__VECT;
+    if (has_path_idnt && g._VECTptr->front().type!=_VECT)
+        return gentypeerr(contextptr);
+    graphe G(contextptr);
+    if (!G.read_gen(has_path_idnt?*g._VECTptr->front()._VECTptr:*g._VECTptr))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    graphe::ivector path;
+    if (!G.find_eulerian_path(path))
+        return graphe::boole(false);
+    if (has_path_idnt) {
+        if (g._VECTptr->size()!=2)
+            return gensizeerr(contextptr);
+        // output path as vecteur V
+        gen V=g._VECTptr->back();
+        if (V.type!=_IDNT)
+            return gentypeerr(contextptr);
+        vecteur P(path.size());
+        int i=0;
+        for (graphe::ivector_iter it=path.begin();it!=path.end();++it) {
+            P[i++]=G.node_label(*it);
+        }
+        _eval(symbolic(at_sto,makevecteur(V,P)),contextptr);
+    }
+    return graphe::boole(true);
+}
+static const char _is_eulerian_s []="is_eulerian";
+static define_unary_function_eval(__is_eulerian,&_is_eulerian,_is_eulerian_s);
+define_unary_function_ptr5(at_is_eulerian,alias_at_is_eulerian,&__is_eulerian,0,true)
+
+/* Usage:   kneser_graph(n,k)
+ *
+ * Returns Kneser graph K(n,k) with comb(n,k) vertices. The largest acceptable
+ * value of n is 20. Kneser graphs with more than 10000 vertices will not be
+ * created.
+ */
+gen _kneser_graph(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()!=2)
+        return gensizeerr(contextptr);
+    if (!gv.front().is_integer() || !gv.back().is_integer())
+        return gentypeerr(contextptr);
+    int n=gv.front().val,k=gv.back().val;
+    if (n<2 || n>20 || k<1 || k>=n)
+        return gensizeerr(contextptr);
+    graphe G(contextptr);
+    if (!G.make_kneser_graph(n,k))
+        return gensizeerr(contextptr);
+    return G.to_gen();
+}
+static const char _kneser_graph_s []="kneser_graph";
+static define_unary_function_eval(__kneser_graph,&_kneser_graph,_kneser_graph_s);
+define_unary_function_ptr5(at_kneser_graph,alias_at_kneser_graph,&__kneser_graph,0,true)
+
+/* Usage:   odd_graph(n)
+ *
+ * Returns odd graph of order n as Kneser graph K(2n-1,n-1). The largest
+ * acceptable value of n is 8.
+ */
+gen _odd_graph(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (!g.is_integer())
+        return gentypeerr(contextptr);
+    int n=g.val;
+    if (n<2 || n>8)
+        return gensizeerr(contextptr);
+    graphe G(contextptr);
+    assert(G.make_kneser_graph(2*n-1,n-1));
+    return G.to_gen();
+}
+static const char _odd_graph_s []="odd_graph";
+static define_unary_function_eval(__odd_graph,&_odd_graph,_odd_graph_s);
+define_unary_function_ptr5(at_odd_graph,alias_at_odd_graph,&__odd_graph,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

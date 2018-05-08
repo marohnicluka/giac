@@ -380,6 +380,7 @@ private:
     static void append_vertex(vecteur &v,const point &p,int color,int width);
     static void append_label(vecteur &v,const point &p,const gen &label,int quadrant);
     static int face_has_edge(const ivector &face,int i,int j);
+    static int binomial_coeff(int n,int k);
     bool demoucron(ivectors &faces);
     int planar_embedding(ivectors &faces);
     int choose_embedding_face(const ivectors &faces,int v);
@@ -533,7 +534,7 @@ public:
     void make_complete_graph();
     void make_complete_multipartite_graph(const ivector &partition_sizes);
     void make_petersen_graph(int n,int k);
-    void make_kneser_graph(int n,int k);
+    bool make_kneser_graph(int n,int k);
     void make_path_graph();
     void make_cycle_graph();
     void make_grid_graph(int m,int n,bool torus=false);

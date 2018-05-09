@@ -295,6 +295,8 @@ public:
     static const int dyck_graph[];
     static const int grinberg_graph[];
     static const int grotzsch_graph[];
+    static const int harries_graph_lcf[];
+    static const int harries_wong_graph_lcf[];
     static const int heawood_graph[];
     static const int herschel_graph[];
     static const int mcgee_graph[];
@@ -305,6 +307,7 @@ public:
     static const int octahedron_graph[];
     static const int icosahedron_graph[];
     static const int levi_graph[];
+    static const int ljubljana_graph_lcf[];
 
 private:
     const context *ctx;
@@ -478,13 +481,14 @@ public:
     bool has_edge(int i,int j) const;
     bool has_edge(ipair p) const { return has_edge(p.first,p.second); }
     ipair make_edge(const vecteur &v) const;
+    void reverse_edges();
     bool edges2ipairs(const vecteur &E,ipairs &ev,bool &notfound) const;
     static void ipairs2edgeset(const ipairs &E,edgeset &Eset);
     bool nodes_are_adjacent(int i,int j) const;
     int in_degree(int index,bool count_temp_edges=true) const;
     int out_degree(int index,bool count_temp_edges=true) const;
     int degree(int index,bool count_temp_edges=true) const;
-    matrice adjacency_matrix() const;
+    void adjacency_matrix(matrice &m) const;
     matrice incidence_matrix() const;
     void set_graph_attribute(int key,const gen &val) { attributes[key]=val; }
     void set_graph_attributes(const attrib &attr) { copy_attributes(attr,attributes); }
@@ -504,6 +508,7 @@ public:
     void make_unweighted();
     void randomize_edge_weights(double a,double b,bool integral_weights=false);
     bool is_regular(int d) const;
+    bool is_equal(const graphe &G) const;
     void underlying(graphe &G) const;
     bool isomorphic_copy(graphe &G,const ivector &sigma);
     bool relabel_nodes(const vecteur &labels);
@@ -530,6 +535,8 @@ public:
     bool is_planar();
     int tree_height(int root);
     void tomita(ivectors &cliques) const;
+    void make_lcf_graph(const ivector &jumps,int e);
+    void make_lcf_graph(const int *j,int e);
     void make_sierpinski_graph(int n,int k,bool triangle);
     void make_complete_graph();
     void make_complete_multipartite_graph(const ivector &partition_sizes);
@@ -540,6 +547,7 @@ public:
     void make_grid_graph(int m,int n,bool torus=false);
     void make_web_graph(int n,int m);
     void make_wheel_graph(int n);
+    void make_antiprism_graph(int n);
     void make_complete_kary_tree(int k,int d);
     void make_random_tree(const vecteur &V,int maxd);
     void make_random_planar();
@@ -568,6 +576,7 @@ public:
     bool get_leading_cycle(ivector &c) const;
     void highlight_edges(const ipairs &E,int color);
     void highlight_nodes(const ivector &V,int color);
+    int distance(int i,int j,ivector *shortest_path=NULL);
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

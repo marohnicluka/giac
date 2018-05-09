@@ -396,6 +396,19 @@ const int graphe::levi_graph[] = {
     29,     30,-1,
     -2
 };
+const int graphe::ljubljana_graph_lcf[] = {
+    47,-23,-31,39,25,-21,-31,-41,25,15,29,-41,-19,15,-49,33,39,-35,-21,17,-33,49,41,31,
+    -15,-29,41,31,-15,-25,21,31,-51,-25,23,9,-17,51,35,-29,21,-51,-39,33,-9,-51,51,-47,
+    -33,19,51,-21,29,21,-31,-39,0
+};
+const int graphe::harries_graph_lcf[] = {
+    -35,-27,27,-23,15,-15,-9,-35,23,-27,27,9,15,-15,0
+};
+const int graphe::harries_wong_graph_lcf[] = {
+    9,25,31,-17,17,33,9,-29,-15,-9,9,25,-25,29,17,-9,9,-27,35,-9,9,-17,21,27,-29,-9,-25,13,19,
+    -9,-33,-17,19,-31,27,11,-25,29,-33,13,-13,21,-29,-21,25,9,-11,-19,29,9,-27,-19,-13,-35,-9,
+    9,17,25,-9,9,27,-27,-21,15,-9,29,-29,33,-9,-25,0
+};
 
 /* messages */
 
@@ -704,6 +717,10 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         read_special(grinberg_graph);
     } else if (name=="grotzsch") {
         read_special(grotzsch_graph);
+    } else if (name=="harries") {
+        make_lcf_graph(harries_graph_lcf,5);
+    } else if (name=="harries-wong") {
+        make_lcf_graph(harries_wong_graph_lcf,1);
     } else if (name=="heawood") {
         read_special(heawood_graph);
     } else if (name=="herschel") {
@@ -721,6 +738,8 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
             add_node(i);
         }
         read_special(levi_graph);
+    } else if (name=="ljubljana") {
+        make_lcf_graph(ljubljana_graph_lcf,2);
     } else if (name=="mcgee") {
         for (int i=1;i<=24;++i) {
             add_node(i);
@@ -872,6 +891,20 @@ graphe::ipair graphe::make_edge(const vecteur &v) const {
     return make_pair(i,j);
 }
 
+/* reverse edge directions */
+void graphe::reverse_edges() {
+    if (!is_directed())
+        return;
+    ipairs E;
+    get_edges_as_pairs(E,false);
+    attrib attr;
+    for (ipairs_iter it=E.begin();it!=E.end();++it) {
+        copy_attributes(node(it->first).neighbor_attributes(it->second),attr);
+        remove_edge(*it);
+        add_edge(it->second,it->first,attr);
+    }
+}
+
 /* convert vecteur E to list of ipairs representing edges, return false iff error occurs,
    if edge is not found set notfound=true */
 bool graphe::edges2ipairs(const vecteur &E,ipairs &ev,bool &notfound) const {
@@ -960,9 +993,9 @@ int graphe::degree(int index,bool count_temp_edges) const {
 }
 
 /* return adjacency matrix of this graph */
-matrice graphe::adjacency_matrix() const {
+void graphe::adjacency_matrix(matrice &m) const {
     int n=node_count(),j;
-    matrice m=*_matrix(makesequence(n,n,0),context0)._VECTptr;
+    m=*_matrix(makesequence(n,n),context0)._VECTptr;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
             j=*jt;
@@ -971,7 +1004,6 @@ matrice graphe::adjacency_matrix() const {
             m[it-nodes.begin()]._VECTptr->at(j)=gen(1);
         }
     }
-    return m;
 }
 
 /* return incidence matrix of this graph */
@@ -3000,6 +3032,8 @@ void graphe::make_circular_layout(layout &x,const ivector &outer_face,bool plana
     }
     // place facial vertices on the unit circle and all other vertices in the origin
     make_regular_polygon_layout(x,outer_face);
+    if (node_count()==int(outer_face.size()))
+        return; // there are no vertices to place inside the circle
     layout P(n);
     for (int i=0;i<n;++i) {
         P[i].resize(2);
@@ -3205,6 +3239,34 @@ bool is_sierpinski_match(const graphe::ivector &u,const graphe::ivector &v,int n
     return true;
 }
 
+/* create LCF graph [jumps]^e */
+void graphe::make_lcf_graph(const ivector &jumps,int e) {
+    int m=jumps.size(),n=m*e;
+    vecteur V;
+    make_default_labels(V,n);
+    add_nodes(V);
+    make_cycle_graph();
+    int j=0,k;
+    for (int i=0;i<n;++i) {
+        k=(i+jumps[j])%n;
+        if (k<0)
+            k+=n;
+        add_edge(i,k);
+        j=(j+1)%m;
+    }
+}
+
+/* create LCF graph from int pointer (list must end with 0) */
+void graphe::make_lcf_graph(const int *j,int e) {
+    ivector jumps;
+    const int *it=j;
+    while (*it!=0) {
+        jumps.push_back(*it);
+        ++it;
+    }
+    make_lcf_graph(jumps,e);
+}
+
 /* create Sierpinski (triangle) graph */
 void graphe::make_sierpinski_graph(int n, int k, bool triangle) {
     ivectors tuples;
@@ -3382,6 +3444,21 @@ void graphe::make_wheel_graph(int n) {
     int i=add_node(0);
     for (int j=0;j<n;++j) {
         add_edge(i,j);
+    }
+}
+
+/* create antiprism graph of order n (with 2n vertices and 4n edges) */
+void graphe::make_antiprism_graph(int n) {
+    vecteur V;
+    make_default_labels(V,2*n,0);
+    add_nodes(V);
+    int j;
+    for (int i=0;i<n;++i) {
+        j=(i+1)%n;
+        add_edge(2*i,2*j);
+        add_edge(2*i+1,2*j+1);
+        add_edge(2*j,2*i+1);
+        add_edge(2*j,2*j+1);
     }
 }
 
@@ -4539,6 +4616,30 @@ bool graphe::is_regular(int d) const {
     return true;
 }
 
+/* return true iff this graph is equal to G */
+bool graphe::is_equal(const graphe &G) const {
+    if (is_directed()!=G.is_directed() || is_weighted()!=G.is_weighted())
+        return false;
+    vecteur V1=vertices(),V2=G.vertices();
+    if (V1!=V2)
+        return false;
+    ipairs E1,E2;
+    edgeset edg,edG;
+    get_edges_as_pairs(E1,false);
+    G.get_edges_as_pairs(E2,false);
+    ipairs2edgeset(E1,edg);
+    ipairs2edgeset(E2,edG);
+    if (edg!=edG)
+        return false;
+    if (is_weighted()) {
+        for (edgeset_iter it=edg.begin();it!=edg.end();++it) {
+            if (weight(it->first,it->second)!=G.weight(it->first,it->second))
+                return false;
+        }
+    }
+    return true;
+}
+
 /* sort rectangles by height */
 void graphe::sort_rectangles(vector<rectangle> &rectangles) {
     rectangle::comparator comp;
@@ -5181,10 +5282,12 @@ void graphe::layout_best_rotation(layout &x) {
 /* guess the style to be used for drawing when no method is specified */
 int graphe::guess_drawing_style() {
     ivector cycle;
-    if (get_leading_cycle(cycle) && is_triconnected())
-        return _GT_STYLE_CIRCLE;
     if (is_tree())
         return _GT_STYLE_TREE;
+    if (get_leading_cycle(cycle) &&
+            node_count()<100+int(cycle.size()) &&
+            (node_count()==int(cycle.size()) || is_triconnected()))
+        return _GT_STYLE_CIRCLE;
     return _GT_STYLE_SPRING;
 }
 
@@ -5655,6 +5758,24 @@ void graphe::highlight_nodes(const ivector &V,int color) {
         val=change_subtype(color,_INT_COLOR);
         set_node_attribute(*it,_GT_ATTRIB_COLOR,val);
     }
+}
+
+/* compute the distance between i-th and j-th nodes using BFS
+ * (also output path if shortest_path!=NULL) */
+int graphe::distance(int i,int j,ivector *shortest_path) {
+    breadth_first_search(i,false);
+    int k=j,p,len=0;
+    if (shortest_path!=NULL)
+        shortest_path->push_back(j);
+    while (k!=i) {
+        if ((p=node(k).ancestor())<0)
+            return -1;
+        k=p;
+        if (shortest_path!=NULL)
+            shortest_path->push_back(k);
+        ++len;
+    }
+    return len;
 }
 
 #ifndef NO_NAMESPACE_GIAC

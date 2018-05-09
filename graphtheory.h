@@ -47,11 +47,11 @@ enum gt_error_code {
     _GT_ERR_NOT_A_CYCLE=18,
     _GT_ERR_CYCLE_NOT_FOUND=19,
     _GT_ERR_NAME_NOT_RECOGNIZED=20,
-    _GT_ERR_NOT_A_SUBGRAPH=21
+    _GT_ERR_NOT_A_SUBGRAPH=21,
+    _GT_ERR_INTEGRAL_LABELS_REQUIRED=22
 };
 
 bool is_graphe(const gen &g,std::string &disp_out,GIAC_CONTEXT);
-void identifier_assign(const identificateur &var,const gen &value,GIAC_CONTEXT);
 
 gen _graph(const gen &g,GIAC_CONTEXT);
 gen _digraph(const gen &g,GIAC_CONTEXT);
@@ -133,6 +133,7 @@ gen _assign_edge_weights(const gen &g,GIAC_CONTEXT);
 gen _complete_binary_tree(const gen &g,GIAC_CONTEXT);
 gen _complete_kary_tree(const gen &g,GIAC_CONTEXT);
 gen _prism_graph(const gen &g,GIAC_CONTEXT);
+gen _antiprism_graph(const gen &g,GIAC_CONTEXT);
 gen _star_graph(const gen &g,GIAC_CONTEXT);
 gen _grid_graph(const gen &g,GIAC_CONTEXT);
 gen _torus_grid_graph(const gen &g,GIAC_CONTEXT);
@@ -152,13 +153,17 @@ gen _graph_union(const gen &g,GIAC_CONTEXT);
 gen _graph_join(const gen &g,GIAC_CONTEXT);
 gen _graph_equal(const gen &g,GIAC_CONTEXT);
 gen _reverse_graph(const gen &g,GIAC_CONTEXT);
-//gen _interval_graph(const gen &g,GIAC_CONTEXT);
+gen _interval_graph(const gen &g,GIAC_CONTEXT);
+gen _subdivide_edges(const gen &g,GIAC_CONTEXT);
+gen _graph_power(const gen &g,GIAC_CONTEXT);
+gen _vertex_distance(const gen &g,GIAC_CONTEXT);
+gen _shortest_path(const gen &g,GIAC_CONTEXT);
+gen _allpairs_distance(const gen &g,GIAC_CONTEXT);
+gen _graph_diameter(const gen &g,GIAC_CONTEXT);
 //gen _plane_dual(const gen &g,GIAC_CONTEXT);
 //gen _transitive_closure(const gen &g,GIAC_CONTEXT);
 //gen _fundamental_cycle(const gen &g,GIAC_CONTEXT);
-//gen _graph_power(const gen &g,GIAC_CONTEXT);
 //gen _mycielski(const gen &g,GIAC_CONTEXT);
-//gen _subdivide(const gen &g,GIAC_CONTEXT);
 //gen _greedy_color(const gen &g,GIAC_CONTEXT);
 //gen _chromatic_index(const gen &g,GIAC_CONTEXT);
 //gen _circular_edge_chromatic_number(const gen &g,GIAC_CONTEXT);
@@ -167,16 +172,15 @@ gen _reverse_graph(const gen &g,GIAC_CONTEXT);
 //gen _graph_spectrum(const gen &g,GIAC_CONTEXT);
 //gen _is_arborescence(const gen &g,GIAC_CONTEXT);
 //gen _is_vertex_colorable(const gen &g,GIAC_CONTEXT);
+//gen _is_isomorphic(const gen &g,GIAC_CONTEXT);
 //gen _maxflow(const gen &g,GIAC_CONTEXT);
 //gen _optimal_edge_coloring(const gen &g,GIAC_CONTEXT);
 //gen _spanning_polynomial(const gen &g,GIAC_CONTEXT);
 //gen _two_edge_connected_components_vertex_connectivity(const gen &g,GIAC_CONTEXT);
-//gen _allpairs_distance(const gen &g,GIAC_CONTEXT);
 //gen _bipartite_matching(const gen &g,GIAC_CONTEXT);
 //gen _chromatic_number(const gen &g,GIAC_CONTEXT);
 //gen _clique_cover(const gen &g,GIAC_CONTEXT);
 //gen _cycle_basis(const gen &g,GIAC_CONTEXT);
-//gen _graph_diameter(const gen &g,GIAC_CONTEXT);
 //gen _is_cut_set(const gen &g,GIAC_CONTEXT);
 //gen _is_network(const gen &g,GIAC_CONTEXT);
 //gen _maximum_clique(const gen &g,GIAC_CONTEXT);
@@ -192,7 +196,6 @@ gen _reverse_graph(const gen &g,GIAC_CONTEXT);
 gen _degree_sequence(const gen &g,GIAC_CONTEXT);
 gen _is_graphic_sequence(const gen &g,GIAC_CONTEXT);
 gen _sequence_graph(const gen &g,GIAC_CONTEXT);
-//gen _graph_distance(const gen &g,GIAC_CONTEXT);
 //gen _edge_chromatic_number(const gen &g,GIAC_CONTEXT);
 //gen _girth(const gen &g,GIAC_CONTEXT);
 //gen _graph_polynomial(const gen &g,GIAC_CONTEXT);
@@ -213,7 +216,6 @@ gen _sequence_graph(const gen &g,GIAC_CONTEXT);
 //gen _kruskal(const gen &g,GIAC_CONTEXT);
 //gen _minimal_spanning_tree(const gen &g,GIAC_CONTEXT);
 //gen _prims(const gen &g,GIAC_CONTEXT);
-//gen _shortest_path(const gen &g,GIAC_CONTEXT);
 //gen _spanning_tree(const gen &g,GIAC_CONTEXT);
 //gen _traveling_salesman(const gen &g,GIAC_CONTEXT);
 

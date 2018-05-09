@@ -413,6 +413,7 @@ public:
     static gen str2gen(const std::string &str,bool isstring=false);
     static std::string genstring2str(const gen &g);
     static std::string gen2str(const gen &g);
+    static gen plusinf();
     bool read_gen(const gen &g);
     void read_special(const int *special_graph);
     void read_special(const char **special_graph);
@@ -577,6 +578,8 @@ public:
     void highlight_edges(const ipairs &E,int color);
     void highlight_nodes(const ivector &V,int color);
     int distance(int i,int j,ivector *shortest_path=NULL);
+    void allpairs_distance(matrice &m) const;
+    void dijkstra(int src,const ivector &dest,vecteur &path_weights,ivectors *cheapest_paths=NULL);
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

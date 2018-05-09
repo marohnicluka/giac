@@ -48,7 +48,8 @@ enum gt_error_code {
     _GT_ERR_CYCLE_NOT_FOUND=19,
     _GT_ERR_NAME_NOT_RECOGNIZED=20,
     _GT_ERR_NOT_A_SUBGRAPH=21,
-    _GT_ERR_INTEGRAL_LABELS_REQUIRED=22
+    _GT_ERR_INTEGRAL_LABELS_REQUIRED=22,
+    _GT_ERR_GRAPH_IS_EMPTY=23
 };
 
 bool is_graphe(const gen &g,std::string &disp_out,GIAC_CONTEXT);
@@ -158,6 +159,7 @@ gen _subdivide_edges(const gen &g,GIAC_CONTEXT);
 gen _graph_power(const gen &g,GIAC_CONTEXT);
 gen _vertex_distance(const gen &g,GIAC_CONTEXT);
 gen _shortest_path(const gen &g,GIAC_CONTEXT);
+gen _dijkstra(const gen &g,GIAC_CONTEXT);
 gen _allpairs_distance(const gen &g,GIAC_CONTEXT);
 gen _graph_diameter(const gen &g,GIAC_CONTEXT);
 //gen _plane_dual(const gen &g,GIAC_CONTEXT);
@@ -212,7 +214,6 @@ gen _sequence_graph(const gen &g,GIAC_CONTEXT);
 //gen _odd_girth(const gen &g,GIAC_CONTEXT);
 //gen _seidel_spectrum(const gen &g,GIAC_CONTEXT);
 //gen _topologic_sort(const gen &g,GIAC_CONTEXT);
-//gen _dijkstra(const gen &g,GIAC_CONTEXT);
 //gen _kruskal(const gen &g,GIAC_CONTEXT);
 //gen _minimal_spanning_tree(const gen &g,GIAC_CONTEXT);
 //gen _prims(const gen &g,GIAC_CONTEXT);

@@ -51,7 +51,8 @@ static const char *gt_error_messages[] = {
     "no cycle found",                                                   // 19
     "graph name not recognized",                                        // 20
     "argument is not a subgraph",                                       // 21
-    "all vertex labels are required to be integers"                     // 22
+    "all vertex labels are required to be integers",                    // 22
+    "graph is empty"                                                    // 23
 };
 
 void gt_err_display(int code,GIAC_CONTEXT) {
@@ -3313,7 +3314,7 @@ gen _vertex_distance(const gen &g,GIAC_CONTEXT) {
     if ((i=G.node_index(gv[1]))<0 || (j=G.node_index(gv[2]))<0)
         return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
     int dist=G.distance(i,j);
-    return dist>=0?gen(dist):symbolic(at_plus,_IDNT_infinity());
+    return dist>=0?gen(dist):graphe::plusinf();
 }
 static const char _vertex_distance_s []="vertex_distance";
 static define_unary_function_eval(__vertex_distance,&_vertex_distance,_vertex_distance_s);
@@ -3322,7 +3323,7 @@ define_unary_function_ptr5(at_vertex_distance,alias_at_vertex_distance,&__vertex
 /* Usage:   shortest_path(G,v,w)
  *
  * Returns the shortest path from vertex v to vertex w in graph G. If such path
- * does not exist, return empty list.
+ * does not exist, returns an empty list.
  */
 gen _shortest_path(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -3339,7 +3340,7 @@ gen _shortest_path(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
     graphe::ivector path;
     if (G.distance(i,j,&path)<0)
-        return vecteur(0); // no path between v and w
+        return vecteur(0); // there is no path between v and w
     vecteur shortestpath;
     vector_int2vecteur(path,shortestpath);
     return shortestpath;
@@ -3347,6 +3348,129 @@ gen _shortest_path(const gen &g,GIAC_CONTEXT) {
 static const char _shortest_path_s []="shortest_path";
 static define_unary_function_eval(__shortest_path,&_shortest_path,_shortest_path_s);
 define_unary_function_ptr5(at_shortest_path,alias_at_shortest_path,&__shortest_path,0,true)
+
+/* Usage:   allpairs_distance(G)
+ *
+ * Returns a square matrix D of order n(=number of vertices in G) such that
+ * D[i][j] is the distance between i-th and j-th vertex of (weighted) graph G,
+ * computed by using Floyd-Warshall algorithm. If For some vertex pair no path
+ * exists, the corresponding entry in D is equal to +infinity. Edges may have
+ * positive or negative weights but G shouldn't contain negative cycles.
+ */
+gen _allpairs_distance(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    matrice D;
+    if (!G.is_empty())
+        G.allpairs_distance(D);
+    return D;
+}
+static const char _allpairs_distance_s []="allpairs_distance";
+static define_unary_function_eval(__allpairs_distance,&_allpairs_distance,_allpairs_distance_s);
+define_unary_function_ptr5(at_allpairs_distance,alias_at_allpairs_distance,&__allpairs_distance,0,true)
+
+/* Usage:   graph_diameter(G)
+ *
+ * Returns the diameter of graph G, i.e. the maximum distance between a pair of
+ * vertices in G. If G is disconnected, its diameter is equal to +infinity.
+ */
+gen _graph_diameter(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (G.is_empty())
+        return gt_err(_GT_ERR_GRAPH_IS_EMPTY,contextptr);
+    if (!G.is_connected())
+        return graphe::plusinf();
+    matrice D;
+    G.allpairs_distance(D);
+    int n=G.node_count();
+    gen max_dist(symbolic(at_neg,_IDNT_infinity()));
+    for (int i=0;i<n;++i) {
+        for (int j=0;j<n;++j) {
+            const gen &dist=D[i][j];
+            if (is_inf(dist))
+                continue;
+            max_dist=_max(makesequence(max_dist,dist),contextptr);
+        }
+    }
+    return max_dist;
+}
+static const char _graph_diameter_s []="graph_diameter";
+static define_unary_function_eval(__graph_diameter,&_graph_diameter,_graph_diameter_s);
+define_unary_function_ptr5(at_graph_diameter,alias_at_graph_diameter,&__graph_diameter,0,true)
+
+/* Usage:   dijkstra(G,v,w)
+ *          dijkstra(G,v,W)
+ *          dijkstra(G,v)
+ *
+ * Returns the cheapest weighted path from vertex v to w in graph G. Output is
+ * in form [[v1,v2,...,vk],d] where v1,v2,...,vk are vertices along the path
+ * and d is the weight of the path. If no such path exists, returns
+ * [[],+infinity]. Also, when list W of vertices is specified, a sequence of
+ * cheapest paths to vertices from W is returned. If W is omitted, it is
+ * assumed that W=vertices(G).
+ */
+gen _dijkstra(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()<2)
+        return gensizeerr(contextptr);
+    graphe G(contextptr);
+    if (!G.read_gen(gv.front()))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    int v,i;
+    if ((v=G.node_index(gv[1]))<0)
+        return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+    int n=G.node_count();
+    vecteur V,path_weights,paths;
+    graphe::ivector dest(n);
+    if (gv.size()==2) {
+        V=G.vertices();
+        for (i=0;i<n;++i) {
+            dest[i]=i;
+        }
+    } else {
+        if (gv[2].type==_VECT)
+            V=*gv[2]._VECTptr;
+        else V.push_back(gv[2]);
+        i=0;
+        for (const_iterateur it=V.begin();it!=V.end();++it) {
+            if ((dest[i++]=G.node_index(*it))<0)
+                return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+        }
+    }
+    graphe::ivectors cheapest_paths;
+    G.dijkstra(v,dest,path_weights,&cheapest_paths);
+    paths.resize(dest.size());
+    i=0;
+    for (graphe::ivectors_iter it=cheapest_paths.begin();it!=cheapest_paths.end();++it) {
+        vecteur &path=*(paths[i++]=vecteur(it->size()))._VECTptr;
+        for (graphe::ivector_iter jt=it->begin();jt!=it->end();++jt) {
+            path[jt-it->begin()]=G.node_label(*jt);
+        }
+    }
+    if (gv.size()>2 && gv[2].type!=_VECT) {
+        gen &w=path_weights.front();
+        return makevecteur(is_inf(w)?vecteur(0):paths.front(),w);
+    }
+    vecteur res(dest.size());
+    i=0;
+    for (const_iterateur it=paths.begin();it!=paths.end();++it) {
+        vecteur &path=*(it->_VECTptr);
+        gen &w=path_weights[i];
+        res[i++]=makevecteur(is_inf(w)?vecteur(0):path,w);
+    }
+    return change_subtype(res,_SEQ__VECT);
+}
+static const char _dijkstra_s []="dijkstra";
+static define_unary_function_eval(__dijkstra,&_dijkstra,_dijkstra_s);
+define_unary_function_ptr5(at_dijkstra,alias_at_dijkstra,&__dijkstra,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

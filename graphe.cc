@@ -434,6 +434,10 @@ void graphe::message(const char *format,int a,int b,int c) {
     *logptr(ctx) << buffer << endl;
 }
 
+gen graphe::plusinf() {
+    return symbolic(at_plus,_IDNT_infinity());
+}
+
 /* vertex class implementation */
 graphe::vertex::vertex() {
     m_label=0;
@@ -3367,7 +3371,7 @@ void graphe::make_petersen_graph(int n, int k) {
 bool graphe::make_kneser_graph(int n,int k) {
     assert(n>1 && n<21 && k>0 && k<n);
     int nv=comb(n,k).val; // number of vertices
-    if (nv>10000) {
+    if (nv>100000) {
         message("Error: graph is too large");
         return false;
     }
@@ -5776,6 +5780,99 @@ int graphe::distance(int i,int j,ivector *shortest_path) {
         ++len;
     }
     return len;
+}
+
+/* compute distances between all pairs of vertices using Floyd-Warshall algorithm */
+void graphe::allpairs_distance(matrice &m) const {
+    int n=node_count(),i,j,k;
+    m=*_matrix(makesequence(n,n,plusinf()),giac_context())._VECTptr;
+    attrib_iter ait;
+    gen w(1),s;
+    bool isweighted=is_weighted();
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        i=it-nodes.begin();
+        m[i][i]=0;
+        for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
+            j=*jt;
+            if (isweighted) {
+                const attrib &attr=it->neighbor_attributes(j);
+                ait=attr.find(_GT_ATTRIB_WEIGHT);
+                assert(ait!=attr.end());
+                w=ait->second;
+            }
+            m[i][j]=w;
+        }
+    }
+    for (k=0;k<n;++k) {
+        for (i=0;i<n;++i) {
+            for (j=0;j<n;++j) {
+                s=m[i][k]+m[k][j];
+                if (is_strictly_greater(m[i][j],s,giac_context()))
+                    m[i][j]=s;
+            }
+        }
+    }
+}
+
+/* return the length of the shortest path from src to dest in weighted
+ * graph (Dijkstra's algorithm), also fill shortest_path with the respective vertices */
+void graphe::dijkstra(int src,const ivector &dest,vecteur &path_weights,ivectors *cheapest_paths) {
+    int n=node_count();
+    ivector Q(n),prev(n);
+    vecteur dist(n);
+    bool isweighted=is_weighted();
+    for (int i=0;i<n;++i) {
+        Q[i]=i;
+        dist[i]=i==src?gen(0):plusinf();
+        prev[i]=-1;
+    }
+    unvisit_all_nodes();
+    gen min_dist,alt,w(1);
+    int pos,u;
+    attrib_iter ait;
+    while (!Q.empty()) {
+        min_dist=plusinf();
+        for (ivector_iter it=Q.begin();it!=Q.end();++it) {
+            const gen &d=dist[*it];
+            if (is_strictly_greater(min_dist,d,giac_context())) {
+                min_dist=d;
+                pos=it-Q.begin();
+                u=*it;
+            }
+        }
+        Q.erase(Q.begin()+pos);
+        vertex &v=node(u);
+        v.set_visited(true);
+        for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
+            if (node(*it).is_visited())
+                continue;
+            if (isweighted) {
+                const attrib &attr=v.neighbor_attributes(*it);
+                ait=attr.find(_GT_ATTRIB_WEIGHT);
+                assert(ait!=attr.end());
+                w=ait->second;
+            }
+            alt=dist[u]+w;
+            if (is_strictly_greater(dist[*it],alt,giac_context())) {
+                dist[*it]=alt;
+                prev[*it]=u;
+            }
+        }
+    }
+    if (cheapest_paths!=NULL) {
+        cheapest_paths->resize(dest.size());
+        for (ivector_iter it=dest.begin();it!=dest.end();++it) {
+            ivector &path=cheapest_paths->at(it-dest.begin());
+            path.clear();
+            path.push_back(*it);
+            int p=*it;
+            while ((p=prev[p])>=0) path.push_back(p);
+        }
+    }
+    path_weights.resize(dest.size());
+    for (ivector_iter it=dest.begin();it!=dest.end();++it) {
+        path_weights[it-dest.begin()]=dist[*it];
+    }
 }
 
 #ifndef NO_NAMESPACE_GIAC

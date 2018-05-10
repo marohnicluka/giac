@@ -52,7 +52,8 @@ static const char *gt_error_messages[] = {
     "graph name not recognized",                                        // 20
     "argument is not a subgraph",                                       // 21
     "all vertex labels are required to be integers",                    // 22
-    "graph is empty"                                                    // 23
+    "graph is empty",                                                   // 23
+    "a \"tag\"=value pair expected"                                     // 24
 };
 
 void gt_err_display(int code,GIAC_CONTEXT) {
@@ -80,6 +81,12 @@ void identifier_assign(const identificateur &var,const gen &value,GIAC_CONTEXT) 
 bool is_real_number(const gen &g) {
     gen e=_evalf(g,context0);
     return e.type==_DOUBLE_ || e.type==_FLOAT_;
+}
+
+bool has_suffix(const string &str,const string &suffix)
+{
+    return str.size()>=suffix.size() &&
+            str.compare(str.size()-suffix.size(),suffix.size(),suffix)==0;
 }
 
 bool vertices_from_integer_or_vecteur(const gen &g,graphe &G) {
@@ -407,7 +414,7 @@ int graphunion(graphe &G,const vecteur &gv,bool disjoint) {
 gen _trail(const gen &g,GIAC_CONTEXT) {
     return symbolic(at_trail,g);
 }
-static const char _trail_s []="trail";
+static const char _trail_s[]="trail";
 static define_unary_function_eval(__trail,&_trail,_trail_s);
 define_unary_function_ptr5(at_trail,alias_at_trail,&__trail,0,true)
 
@@ -545,7 +552,7 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
     }
     return G.to_gen();
 }
-static const char _graph_s []="graph";
+static const char _graph_s[]="graph";
 static define_unary_function_eval(__graph,&_graph,_graph_s);
 define_unary_function_ptr5(at_graph,alias_at_graph,&__graph,0,true)
 
@@ -574,7 +581,7 @@ gen _digraph(const gen &g,GIAC_CONTEXT) {
     args.push_back(symbolic(at_equal,makesequence(_GT_DIRECTED,graphe::VRAI)));
     return _graph(args,contextptr);
 }
-static const char _digraph_s []="digraph";
+static const char _digraph_s[]="digraph";
 static define_unary_function_eval(__digraph,&_digraph,_digraph_s);
 define_unary_function_ptr5(at_digraph,alias_at_digraph,&__digraph,0,true)
 
@@ -596,11 +603,11 @@ gen _export_graph(const gen &g,GIAC_CONTEXT) {
     string filename=graphe::genstring2str(name)+".dot";
     return G.write_dot(filename)?1:0;
 }
-static const char _export_graph_s []="export_graph";
+static const char _export_graph_s[]="export_graph";
 static define_unary_function_eval(__export_graph,&_export_graph,_export_graph_s);
 define_unary_function_ptr5(at_export_graph,alias_at_export_graph,&__export_graph,0,true)
 
-/* Usage:   import_graph("path/to/graphname")
+/* Usage:   import_graph("path/to/graphname[.dot]")
  *
  * Returns graph read from file 'graphname.dot' in directory 'path/to' (in dot
  * format). Returns 1 on success and 0 on failure.
@@ -610,14 +617,16 @@ gen _import_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type!=_STRNG)
         return gentypeerr(contextptr);
     graphe G(contextptr);
-    string filename=graphe::genstring2str(g)+".dot";
+    string filename=graphe::genstring2str(g);
+    if (!has_suffix(filename,".dot"))
+        filename=filename+".dot";
     if (!G.read_dot(filename)) {
         gt_err_display(_GT_ERR_READING_FAILED,contextptr);
         return undef;
     }
     return G.to_gen();
 }
-static const char _import_graph_s []="import_graph";
+static const char _import_graph_s[]="import_graph";
 static define_unary_function_eval(__import_graph,&_import_graph,_import_graph_s);
 define_unary_function_ptr5(at_import_graph,alias_at_import_graph,&__import_graph,0,true)
 
@@ -634,7 +643,7 @@ gen _vertices(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     return G.vertices();
 }
-static const char _vertices_s []="vertices";
+static const char _vertices_s[]="vertices";
 static define_unary_function_eval(__vertices,&_vertices,_vertices_s);
 define_unary_function_ptr5(at_vecrtices,alias_at_vertices,&__vertices,0,true)
 
@@ -664,7 +673,7 @@ gen _edges(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_WEIGHTED_GRAPH_REQUIRED,contextptr);
     return G.edges(include_weights);
 }
-static const char _edges_s []="edges";
+static const char _edges_s[]="edges";
 static define_unary_function_eval(__edges,&_edges,_edges_s);
 define_unary_function_ptr5(at_edges,alias_at_edges,&__edges,0,true)
 
@@ -691,7 +700,7 @@ gen _has_edge(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     return graphe::boole(!G.is_directed() && G.has_edge(i,j));
 }
-static const char _has_edge_s []="has_edge";
+static const char _has_edge_s[]="has_edge";
 static define_unary_function_eval(__has_edge,&_has_edge,_has_edge_s);
 define_unary_function_ptr5(at_has_edge,alias_at_has_edge,&__has_edge,0,true)
 
@@ -720,7 +729,7 @@ gen _has_arc(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     return graphe::boole(G.is_directed() && G.has_edge(i,j) && (!undirected || G.has_edge(j,i)));
 }
-static const char _has_arc_s []="has_arc";
+static const char _has_arc_s[]="has_arc";
 static define_unary_function_eval(__has_arc,&_has_arc,_has_arc_s);
 define_unary_function_ptr5(at_has_arc,alias_at_has_arc,&__has_arc,0,true)
 
@@ -743,7 +752,7 @@ gen _adjacency_matrix(const gen &g,GIAC_CONTEXT) {
     G.adjacency_matrix(m);
     return m;
 }
-static const char _adjacency_matrix_s []="adjacency_matrix";
+static const char _adjacency_matrix_s[]="adjacency_matrix";
 static define_unary_function_eval(__adjacency_matrix,&_adjacency_matrix,_adjacency_matrix_s);
 define_unary_function_ptr5(at_adjacency_matrix,alias_at_adjacency_matrix,&__adjacency_matrix,0,true)
 
@@ -766,7 +775,7 @@ gen _incidence_matrix(const gen &g,GIAC_CONTEXT) {
         return vecteur(0);
     return G.incidence_matrix();
 }
-static const char _incidence_matrix_s []="incidence_matrix";
+static const char _incidence_matrix_s[]="incidence_matrix";
 static define_unary_function_eval(__incidence_matrix,&_incidence_matrix,_incidence_matrix_s);
 define_unary_function_ptr5(at_incidence_matrix,alias_at_incidence_matrix,&__incidence_matrix,0,true)
 
@@ -785,7 +794,7 @@ gen _weight_matrix(const gen &g,GIAC_CONTEXT) {
         return vecteur(0);
     return G.weight_matrix();
 }
-static const char _weight_matrix_s []="weight_matrix";
+static const char _weight_matrix_s[]="weight_matrix";
 static define_unary_function_eval(__weight_matrix,&_weight_matrix,_weight_matrix_s);
 define_unary_function_ptr5(at_weight_matrix,alias_at_weight_matrix,&__weight_matrix,0,true)
 
@@ -813,7 +822,7 @@ gen _graph_complement(const gen &g,GIAC_CONTEXT) {
     }
     return C.to_gen();
 }
-static const char _graph_complement_s []="graph_complement";
+static const char _graph_complement_s[]="graph_complement";
 static define_unary_function_eval(__graph_complement,&_graph_complement,_graph_complement_s);
 define_unary_function_ptr5(at_graph_complement,alias_at_graph_complement,&__graph_complement,0,true)
 
@@ -837,7 +846,7 @@ gen _subgraph(const gen &g,GIAC_CONTEXT) {
     G.subgraph(edges,S);
     return S.to_gen();
 }
-static const char _subgraph_s []="subgraph";
+static const char _subgraph_s[]="subgraph";
 static define_unary_function_eval(__subgraph,&_subgraph,_subgraph_s);
 define_unary_function_ptr5(at_subgraph,alias_at_subgraph,&__subgraph,0,true)
 
@@ -857,7 +866,7 @@ gen _vertex_degree(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
     return G.degree(i);
 }
-static const char _vertex_degree_s []="vertex_degree";
+static const char _vertex_degree_s[]="vertex_degree";
 static define_unary_function_eval(__vertex_degree,&_vertex_degree,_vertex_degree_s);
 define_unary_function_ptr5(at_vertex_degree,alias_at_vertex_degree,&__vertex_degree,0,true)
 
@@ -879,7 +888,7 @@ gen _vertex_in_degree(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
     return G.in_degree(i);
 }
-static const char _vertex_in_degree_s []="vertex_in_degree";
+static const char _vertex_in_degree_s[]="vertex_in_degree";
 static define_unary_function_eval(__vertex_in_degree,&_vertex_in_degree,_vertex_in_degree_s);
 define_unary_function_ptr5(at_vertex_in_degree,alias_at_vertex_in_degree,&__vertex_in_degree,0,true)
 
@@ -901,7 +910,7 @@ gen _vertex_out_degree(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
     return G.out_degree(i);
 }
-static const char _vertex_out_degree_s []="vertex_out_degree";
+static const char _vertex_out_degree_s[]="vertex_out_degree";
 static define_unary_function_eval(__vertex_out_degree,&_vertex_out_degree,_vertex_out_degree_s);
 define_unary_function_ptr5(at_vertex_out_degree,alias_at_vertex_out_degree,&__vertex_out_degree,0,true)
 
@@ -930,7 +939,7 @@ gen _induced_subgraph(const gen &g,GIAC_CONTEXT) {
     G.induce_subgraph(vi,S);
     return S.to_gen();
 }
-static const char _induced_subgraph_s []="induced_subgraph";
+static const char _induced_subgraph_s[]="induced_subgraph";
 static define_unary_function_eval(__induced_subgraph,&_induced_subgraph,_induced_subgraph_s);
 define_unary_function_ptr5(at_induced_subgraph,alias_at_induced_subgraph,&__induced_subgraph,0,true)
 
@@ -954,7 +963,7 @@ gen _maximal_independent_set(const gen &g,GIAC_CONTEXT) {
     }
     return V;
 }
-static const char _maximal_independent_set_s []="maximal_independent_set";
+static const char _maximal_independent_set_s[]="maximal_independent_set";
 static define_unary_function_eval(__maximal_independent_set,&_maximal_independent_set,_maximal_independent_set_s);
 define_unary_function_ptr5(at_maximal_independent_set,alias_at_maximal_independent_set,&__maximal_independent_set,0,true)
 
@@ -978,7 +987,7 @@ gen _maximum_matching(const gen &g,GIAC_CONTEXT) {
     }
     return res;
 }
-static const char _maximum_matching_s []="maximum_matching";
+static const char _maximum_matching_s[]="maximum_matching";
 static define_unary_function_eval(__maximum_matching,&_maximum_matching,_maximum_matching_s);
 define_unary_function_ptr5(at_maximum_matching,alias_at_maximum_matching,&__maximum_matching,0,true)
 
@@ -1008,7 +1017,7 @@ gen _make_directed(const gen &g,GIAC_CONTEXT) {
     }
     return G.to_gen();
 }
-static const char _make_directed_s []="make_directed";
+static const char _make_directed_s[]="make_directed";
 static define_unary_function_eval(__make_directed,&_make_directed,_make_directed_s);
 define_unary_function_ptr5(at_make_directed,alias_at_make_directed,&__make_directed,0,true)
 
@@ -1027,7 +1036,7 @@ gen _underlying_graph(const gen &g,GIAC_CONTEXT) {
     G.underlying(U);
     return U.to_gen();
 }
-static const char _underlying_graph_s []="underlying_graph";
+static const char _underlying_graph_s[]="underlying_graph";
 static define_unary_function_eval(__underlying_graph,&_underlying_graph,_underlying_graph_s);
 define_unary_function_ptr5(at_underlying_graph,alias_at_underlying_graph,&__underlying_graph,0,true)
 
@@ -1048,7 +1057,7 @@ gen _cycle_graph(const gen &g,GIAC_CONTEXT) {
     G.set_name(ss.str());
     return G.to_gen();
 }
-static const char _cycle_graph_s []="cycle_graph";
+static const char _cycle_graph_s[]="cycle_graph";
 static define_unary_function_eval(__cycle_graph,&_cycle_graph,_cycle_graph_s);
 define_unary_function_ptr5(at_cycle_graph,alias_at_cycle_graph,&__cycle_graph,0,true)
 
@@ -1084,7 +1093,7 @@ gen _lcf_graph(const gen &g,GIAC_CONTEXT) {
     G.make_lcf_graph(ijumps,e.val);
     return G.to_gen();
 }
-static const char _lcf_graph_s []="lcf_graph";
+static const char _lcf_graph_s[]="lcf_graph";
 static define_unary_function_eval(__lcf_graph,&_lcf_graph,_lcf_graph_s);
 define_unary_function_ptr5(at_lcf_graph,alias_at_lcf_graph,&__lcf_graph,0,true)
 
@@ -1109,7 +1118,7 @@ gen _hypercube_graph(const gen &g,GIAC_CONTEXT) {
     }
     return G.to_gen();
 }
-static const char _hypercube_graph_s []="hypercube_graph";
+static const char _hypercube_graph_s[]="hypercube_graph";
 static define_unary_function_eval(__hypercube_graph,&_hypercube_graph,_hypercube_graph_s);
 define_unary_function_ptr5(at_hypercube_graph,alias_at_hypercube_graph,&__hypercube_graph,0,true)
 
@@ -1152,7 +1161,7 @@ gen _seidel_switch(const gen &g,GIAC_CONTEXT) {
     }
     return H.to_gen();
 }
-static const char _seidel_switch_s []="seidel_switch";
+static const char _seidel_switch_s[]="seidel_switch";
 static define_unary_function_eval(__seidel_switch,&_seidel_switch,_seidel_switch_s);
 define_unary_function_ptr5(at_seidel_switch,alias_at_seidel_switch,&__seidel_switch,0,true)
 
@@ -1348,7 +1357,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
         G_orig.draw_labels(drawing,main_layout);
     return drawing;
 }
-static const char _draw_graph_s []="draw_graph";
+static const char _draw_graph_s[]="draw_graph";
 static define_unary_function_eval(__draw_graph,&_draw_graph,_draw_graph_s);
 define_unary_function_ptr5(at_draw_graph,alias_at_draw_graph,&__draw_graph,0,true)
 
@@ -1375,7 +1384,7 @@ gen _sierpinski_graph(const gen &g,GIAC_CONTEXT) {
     G.make_sierpinski_graph(n,k,trng);
     return G.to_gen();
 }
-static const char _sierpinski_graph_s []="sierpinski_graph";
+static const char _sierpinski_graph_s[]="sierpinski_graph";
 static define_unary_function_eval(__sierpinski_graph,&_sierpinski_graph,_sierpinski_graph_s);
 define_unary_function_ptr5(at_sierpinski_graph,alias_at_sierpinski_graph,&__sierpinski_graph,0,true)
 
@@ -1413,7 +1422,7 @@ gen _complete_graph(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     return G.to_gen();
 }
-static const char _complete_graph_s []="complete_graph";
+static const char _complete_graph_s[]="complete_graph";
 static define_unary_function_eval(__complete_graph,&_complete_graph,_complete_graph_s);
 define_unary_function_ptr5(at_complete_graph,alias_at_complete_graph,&__complete_graph,0,true)
 
@@ -1444,7 +1453,7 @@ gen _petersen_graph(const gen &g,GIAC_CONTEXT) {
     G.make_petersen_graph(n,k);
     return G.to_gen();
 }
-static const char _petersen_graph_s []="petersen_graph";
+static const char _petersen_graph_s[]="petersen_graph";
 static define_unary_function_eval(__petersen_graph,&_petersen_graph,_petersen_graph_s);
 define_unary_function_ptr5(at_petersen_graph,alias_at_petersen_graph,&__petersen_graph,0,true)
 
@@ -1462,7 +1471,7 @@ gen _random_graph(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     return randomgraph(*g._VECTptr,false,contextptr);
 }
-static const char _random_graph_s []="random_graph";
+static const char _random_graph_s[]="random_graph";
 static define_unary_function_eval(__random_graph,&_random_graph,_random_graph_s);
 define_unary_function_ptr5(at_random_graph,alias_at_random_graph,&__random_graph,0,true)
 
@@ -1480,7 +1489,7 @@ gen _random_digraph(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     return randomgraph(*g._VECTptr,true,contextptr);
 }
-static const char _random_digraph_s []="random_digraph";
+static const char _random_digraph_s[]="random_digraph";
 static define_unary_function_eval(__random_digraph,&_random_digraph,_random_digraph_s);
 define_unary_function_ptr5(at_random_digraph,alias_at_random_digraph,&__random_digraph,0,true)
 
@@ -1523,7 +1532,7 @@ gen _random_bipartite_graph(const gen &g,GIAC_CONTEXT) {
     G.make_random_bipartite(V,W,p);
     return G.to_gen();
 }
-static const char _random_bipartite_graph_s []="random_bipartite_graph";
+static const char _random_bipartite_graph_s[]="random_bipartite_graph";
 static define_unary_function_eval(__random_bipartite_graph,&_random_bipartite_graph,_random_bipartite_graph_s);
 define_unary_function_ptr5(at_random_bipartite_graph,alias_at_random_bipartite_graph,&__random_bipartite_graph,0,true)
 
@@ -1551,7 +1560,7 @@ gen _random_tournament(const gen &g,GIAC_CONTEXT) {
     }
     return G.to_gen();
 }
-static const char _random_tournament_s []="random_tournament";
+static const char _random_tournament_s[]="random_tournament";
 static define_unary_function_eval(__random_tournament,&_random_tournament,_random_tournament_s);
 define_unary_function_ptr5(at_random_tournament,alias_at_random_tournament,&__random_tournament,0,true)
 
@@ -1584,7 +1593,7 @@ gen _random_regular_graph(const gen &g,GIAC_CONTEXT) {
     G.make_random_regular(V,d,connected);
     return G.to_gen();
 }
-static const char _random_regular_graph_s []="random_regular_graph";
+static const char _random_regular_graph_s[]="random_regular_graph";
 static define_unary_function_eval(__random_regular_graph,&_random_regular_graph,_random_regular_graph_s);
 define_unary_function_ptr5(at_random_regular_graph,alias_at_random_regular_graph,&__random_regular_graph,0,true)
 
@@ -1628,7 +1637,7 @@ gen _random_tree(const gen &g,GIAC_CONTEXT) {
     G.make_random_tree(V,maxd);
     return G.to_gen();
 }
-static const char _random_tree_s []="random_tree";
+static const char _random_tree_s[]="random_tree";
 static define_unary_function_eval(__random_tree,&_random_tree,_random_tree_s);
 define_unary_function_ptr5(at_random_tree,alias_at_random_tree,&__random_tree,0,true)
 
@@ -1645,7 +1654,7 @@ gen _random_planar_graph(const gen &g,GIAC_CONTEXT) {
     G.make_random_planar();
     return G.to_gen();
 }
-static const char _random_planar_graph_s []="random_planar_graph";
+static const char _random_planar_graph_s[]="random_planar_graph";
 static define_unary_function_eval(__random_planar_graph,&_random_planar_graph,_random_planar_graph_s);
 define_unary_function_ptr5(at_random_planar_graph,alias_at_random_planar_graph,&__random_planar_graph,0,true)
 
@@ -1683,7 +1692,7 @@ gen _assign_edge_weights(const gen &g,GIAC_CONTEXT) {
     }
     return G.to_gen();
 }
-static const char _assign_edge_weights_s []="assign_edge_weights";
+static const char _assign_edge_weights_s[]="assign_edge_weights";
 static define_unary_function_eval(__assign_edge_weights,&_assign_edge_weights,_assign_edge_weights_s);
 define_unary_function_ptr5(at_assign_edge_weights,alias_at_assign_edge_weights,&__assign_edge_weights,0,true)
 
@@ -1704,7 +1713,7 @@ gen _articulation_points(const gen &g,GIAC_CONTEXT) {
     }
     return res;
 }
-static const char _articulation_points_s []="articulation_points";
+static const char _articulation_points_s[]="articulation_points";
 static define_unary_function_eval(__articulation_points,&_articulation_points,_articulation_points_s);
 define_unary_function_ptr5(at_articulation_points,alias_at_articulation_points,&__articulation_points,0,true)
 
@@ -1730,7 +1739,7 @@ gen _biconnected_components(const gen &g,GIAC_CONTEXT) {
     }
     return res;
 }
-static const char _biconnected_components_s []="biconnected_components";
+static const char _biconnected_components_s[]="biconnected_components";
 static define_unary_function_eval(__biconnected_components,&_biconnected_components,_biconnected_components_s);
 define_unary_function_ptr5(at_biconnected_components,alias_at_biconnected_components,&__biconnected_components,0,true)
 
@@ -1757,7 +1766,7 @@ gen _add_arc(const gen &g,GIAC_CONTEXT) {
         return gendimerr(contextptr);
     return G.to_gen();
 }
-static const char _add_arc_s []="add_arc";
+static const char _add_arc_s[]="add_arc";
 static define_unary_function_eval(__add_arc,&_add_arc,_add_arc_s);
 define_unary_function_ptr5(at_add_arc,alias_at_add_arc,&__add_arc,0,true)
 
@@ -1784,7 +1793,7 @@ gen _delete_arc(const gen &g,GIAC_CONTEXT) {
         return gendimerr(contextptr);
     return G.to_gen();
 }
-static const char _delete_arc_s []="delete_arc";
+static const char _delete_arc_s[]="delete_arc";
 static define_unary_function_eval(__delete_arc,&_delete_arc,_delete_arc_s);
 define_unary_function_ptr5(at_delete_arc,alias_at_delete_arc,&__delete_arc,0,true)
 
@@ -1811,7 +1820,7 @@ gen _add_edge(const gen &g,GIAC_CONTEXT) {
         return gendimerr(contextptr);
     return G.to_gen();
 }
-static const char _add_edge_s []="add_edge";
+static const char _add_edge_s[]="add_edge";
 static define_unary_function_eval(__add_edge,&_add_edge,_add_edge_s);
 define_unary_function_ptr5(at_add_edge,alias_at_add_edge,&__add_edge,0,true)
 
@@ -1838,7 +1847,7 @@ gen _delete_edge(const gen &g,GIAC_CONTEXT) {
         return gendimerr(contextptr);
     return G.to_gen();
 }
-static const char _delete_edge_s []="delete_edge";
+static const char _delete_edge_s[]="delete_edge";
 static define_unary_function_eval(__delete_edge,&_delete_edge,_delete_edge_s);
 define_unary_function_ptr5(at_delete_edge,alias_at_delete_edge,&__delete_edge,0,true)
 
@@ -1862,7 +1871,7 @@ gen _add_vertex(const gen &g,GIAC_CONTEXT) {
         G.add_node(V);
     return G.to_gen();
 }
-static const char _add_vertex_s []="add_vertex";
+static const char _add_vertex_s[]="add_vertex";
 static define_unary_function_eval(__add_vertex,&_add_vertex,_add_vertex_s);
 define_unary_function_ptr5(at_add_vertex,alias_at_add_vertex,&__add_vertex,0,true)
 
@@ -1888,7 +1897,7 @@ gen _delete_vertex(const gen &g,GIAC_CONTEXT) {
     }
     return G.to_gen();
 }
-static const char _delete_vertex_s []="delete_vertex";
+static const char _delete_vertex_s[]="delete_vertex";
 static define_unary_function_eval(__delete_vertex,&_delete_vertex,_delete_vertex_s);
 define_unary_function_ptr5(at_delete_vertex,alias_at_delete_vertex,&__delete_vertex,0,true)
 
@@ -1917,7 +1926,7 @@ gen _contract_edge(const gen &g,GIAC_CONTEXT) {
     G.remove_node(j);
     return G.to_gen();
 }
-static const char _contract_edge_s []="contract_edge";
+static const char _contract_edge_s[]="contract_edge";
 static define_unary_function_eval(__contract_edge,&_contract_edge,_contract_edge_s);
 define_unary_function_ptr5(at_contract_edge,alias_at_contract_edge,&__contract_edge,0,true)
 
@@ -1944,7 +1953,7 @@ gen _connected_components(const gen &g,GIAC_CONTEXT) {
     }
     return res;
 }
-static const char _connected_components_s []="connected_components";
+static const char _connected_components_s[]="connected_components";
 static define_unary_function_eval(__connected_components,&_connected_components,_connected_components_s);
 define_unary_function_ptr5(at_connected_components,alias_at_connected_components,&__connected_components,0,true)
 
@@ -1960,7 +1969,7 @@ gen _departures(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     return flights(g,false,g.subtype!=_SEQ__VECT,contextptr);
 }
-static const char _departures_s []="departures";
+static const char _departures_s[]="departures";
 static define_unary_function_eval(__departures,&_departures,_departures_s);
 define_unary_function_ptr5(at_departures,alias_at_departures,&__departures,0,true)
 
@@ -1976,7 +1985,7 @@ gen _arrivals(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     return flights(g,true,g.subtype!=_SEQ__VECT,contextptr);
 }
-static const char _arrivals_s []="arrivals";
+static const char _arrivals_s[]="arrivals";
 static define_unary_function_eval(__arrivals,&_arrivals,_arrivals_s);
 define_unary_function_ptr5(at_arrivals,alias_at_arrivals,&__arrivals,0,true)
 
@@ -2013,7 +2022,7 @@ gen _incident_edges(const gen &g,GIAC_CONTEXT) {
     }
     return res;
 }
-static const char _incident_edges_s []="incident_edges";
+static const char _incident_edges_s[]="incident_edges";
 static define_unary_function_eval(__incident_edges,&_incident_edges,_incident_edges_s);
 define_unary_function_ptr5(at_incident_edges,alias_at_incident_edges,&__incident_edges,0,true)
 
@@ -2043,122 +2052,410 @@ gen _make_weighted(const gen &g,GIAC_CONTEXT) {
     G.make_weighted(m);
     return G.to_gen();
 }
+static const char _make_weighted_s[]="make_weighted";
+static define_unary_function_eval(__make_weighted,&_make_weighted,_make_weighted_s);
+define_unary_function_ptr5(at_make_weighted,alias_at_make_weighted,&__make_weighted,0,true)
 
-/* Usage:   set_graph_attribute(G,[v or e],attr)
+/* Usage:   set_graph_attribute(G,attr1,attr2,...)
  *
- * Stores the attribute attr (or attributes from list attr) in form tag=value,
- * where tag is string, (to vertex v or edge e of graph G) and return G.
+ * Stores the attributes attr1, attr2, ..., each in form tag=value, where tag
+ * is string, and returns the modified copy of G. Attributes may also be
+ * specified in a list or as two lists [tag1,tag2,...] and [value1,value2,...].
  */
 gen _set_graph_attribute(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    gen &v=g._VECTptr->at(1);
+    vecteur &gv=*g._VECTptr,attr;
     graphe G(contextptr);
     if (!G.read_gen(g._VECTptr->front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    int i=-1,j=-1,k=2,key;
-    if (v.type==_VECT) {
-        // edge attribute
-        if (v._VECTptr->size()!=2)
-            return gensizeerr(contextptr);
-        i=G.node_index(v._VECTptr->front());
-        j=G.node_index(v._VECTptr->back());
-        if (i==-1 || j==-1)
-            return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
-        if (!G.has_edge(i,j))
-            return gt_err(_GT_ERR_EDGE_NOT_FOUND,contextptr);
-    } else if (v.is_symb_of_sommet(at_equal)) {
-        // graph attribute
-        k=1;
-    } else {
-        // vertex attribute
-        if ((i=G.node_index(v))==-1)
-            return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
-    }
-    gen_map m;
-    if (!parse_gen_attr(g,m,k,contextptr))
-        return gentypeerr(contextptr);
-    for (gen_map::const_iterator it=m.begin();it!=m.end();++it) {
-        key=G.tag2index(graphe::genstring2str(it->first));
-        if (i<0 && j<0)
-            G.set_graph_attribute(key,it->second);
-        else if (j<0)
-            G.set_node_attribute(i,key,it->second);
-        else
-            G.set_edge_attribute(i,j,key,it->second);
+    if (gv.size()==2 && gv.back().type==_VECT)
+        attr=*gv.back()._VECTptr;
+    else if (gv.size()==3 && gv[1].type==_VECT && gv[2].type==_VECT)
+        attr=*_zip(makesequence(at_equal,gv[1],gv[2]),contextptr)._VECTptr;
+    else attr=vecteur(gv.begin()+1,gv.end());
+    int key;
+    for (const_iterateur it=attr.begin()+1;it!=attr.end();++it) {
+        if (!it->is_symb_of_sommet(at_equal) || it->_SYMBptr->feuille._VECTptr->front().type!=_STRNG)
+            return gt_err(_GT_ERR_TAGVALUE_PAIR_EXPECTED,contextptr);
+        key=G.tag2index(graphe::genstring2str(it->_SYMBptr->feuille._VECTptr->front()));
+        G.set_graph_attribute(key,it->_SYMBptr->feuille._VECTptr->back());
     }
     return G.to_gen();
 }
-static const char _set_graph_attribute_s []="set_graph_attribute";
+static const char _set_graph_attribute_s[]="set_graph_attribute";
 static define_unary_function_eval(__set_graph_attribute,&_set_graph_attribute,_set_graph_attribute_s);
 define_unary_function_ptr5(at_set_graph_attribute,alias_at_set_graph_attribute,&__set_graph_attribute,0,true)
 
-/* Usage:   set_graph_attribute(G,[v or e],attr)
+/* Usage:   set_vertex_attribute(G,v,attr1,attr2,...)
  *
- * Stores the attribute attr (or attributes from list attr) in form tag=value,
- * where tag is string, (to vertex v or edge e of graph G) and returns G.
+ * Stores the attributes attr1, attr2, ..., each in form tag=value, where tag
+ * is string, to vertex v and returns the modified copy of G. Attributes may
+ * also be specified in a list or as two lists [tag1,tag2,...] and
+ * [value1,value2,...].
+ */
+gen _set_vertex_attribute(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr,attr;
+    if (gv.size()<2)
+        return gensizeerr(contextptr);
+    graphe G(contextptr);
+    if (!G.read_gen(g._VECTptr->front()))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    int v,key;
+    if ((v=G.node_index(gv[1]))<0)
+        return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+    if (gv.size()==3 && gv.back().type==_VECT)
+        attr=*gv.back()._VECTptr;
+    else if (gv.size()==4 && gv[2].type==_VECT && gv[3].type==_VECT)
+        attr=*_zip(makesequence(at_equal,gv[2],gv[3]),contextptr)._VECTptr;
+    else attr=vecteur(gv.begin()+2,gv.end());
+    for (const_iterateur it=attr.begin();it!=attr.end();++it) {
+        if (!it->is_symb_of_sommet(at_equal) || it->_SYMBptr->feuille._VECTptr->front().type!=_STRNG)
+            return gt_err(_GT_ERR_TAGVALUE_PAIR_EXPECTED,contextptr);
+        key=G.tag2index(graphe::genstring2str(it->_SYMBptr->feuille._VECTptr->front()));
+        G.set_node_attribute(v,key,it->_SYMBptr->feuille._VECTptr->back());
+    }
+    return G.to_gen();
+}
+static const char _set_vertex_attribute_s[]="set_vertex_attribute";
+static define_unary_function_eval(__set_vertex_attribute,&_set_vertex_attribute,_set_vertex_attribute_s);
+define_unary_function_ptr5(at_set_vertex_attribute,alias_at_set_vertex_attribute,&__set_vertex_attribute,0,true)
+
+/* Usage:   set_edge_attribute(G,e,attr1,attr2,...)
+ *
+ * Stores the attributes attr1, attr2, ..., each in form tag=value, where tag
+ * is string, to edge e and returns the modified copy of G. Attributes may also
+ * be specified in a list or as two lists [tag1,tag2,...] and
+ * [value1,value2,...].
+ */
+gen _set_edge_attribute(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr,attr;
+    if (gv.size()<2)
+        return gensizeerr(contextptr);
+    graphe G(contextptr);
+    if (!G.read_gen(g._VECTptr->front()))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    int i,j,key;
+    if (gv[1].type!=_VECT)
+        return gentypeerr(contextptr);
+    if (gv[1]._VECTptr->size()!=2)
+        return gensizeerr(contextptr);
+    if ((i=G.node_index(gv[1]._VECTptr->front()))<0 || (j=G.node_index(gv[1]._VECTptr->back()))<0)
+        return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+    if (!G.has_edge(i,j))
+        return gt_err(_GT_ERR_EDGE_NOT_FOUND,contextptr);
+    if (gv.size()==3 && gv.back().type==_VECT)
+        attr=*gv.back()._VECTptr;
+    else if (gv.size()==4 && gv[2].type==_VECT && gv[3].type==_VECT)
+        attr=*_zip(makesequence(at_equal,gv[2],gv[3]),contextptr)._VECTptr;
+    else attr=vecteur(gv.begin()+2,gv.end());
+    for (const_iterateur it=attr.begin();it!=attr.end();++it) {
+        if (!it->is_symb_of_sommet(at_equal) || it->_SYMBptr->feuille._VECTptr->front().type!=_STRNG)
+            return gt_err(_GT_ERR_TAGVALUE_PAIR_EXPECTED,contextptr);
+        key=G.tag2index(graphe::genstring2str(it->_SYMBptr->feuille._VECTptr->front()));
+        G.set_edge_attribute(i,j,key,it->_SYMBptr->feuille._VECTptr->back());
+    }
+    return G.to_gen();
+}
+static const char _set_edge_attribute_s[]="set_edge_attribute";
+static define_unary_function_eval(__set_edge_attribute,&_set_edge_attribute,_set_edge_attribute_s);
+define_unary_function_ptr5(at_set_edge_attribute,alias_at_set_edge_attribute,&__set_edge_attribute,0,true)
+
+/* Usage:   get_graph_attribute(G,tag1,tag2,...)
+ *
+ * Get the graph attributes tag1, tag2, ..., i.e. return the sequence of values
+ * corresponding to the given tags, which may also be specified in a list.
  */
 gen _get_graph_attribute(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    gen &attr=g._VECTptr->back();
+    vecteur &gv=*g._VECTptr,tags,values;
     graphe G(contextptr);
-    if (!G.read_gen(g._VECTptr->front()))
+    if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    int i,j;
-    vector<string> tags;
-    if (attr.type==_VECT) {
-        // list of tags
-        for (const_iterateur it=attr._VECTptr->begin();it!=attr._VECTptr->end();++it) {
-            if (it->type!=_STRNG)
-                return gentypeerr(contextptr);
-            tags.push_back(graphe::genstring2str(*it));
-        }
-    } else if (attr.type==_STRNG) {
-        // a single tag
-        tags.push_back(graphe::genstring2str(attr));
-    } else return gentypeerr(contextptr);
-    vecteur res;
+    bool istagvec=gv.size()==2 && gv.back().type==_VECT;
+    if (istagvec)
+        tags=*gv.back()._VECTptr;
+    else tags=vecteur(gv.begin()+1,gv.end());
+    int key;
     gen value;
-    if (g._VECTptr->size()==2) {
-        // get graph attribute(s)
-        for (vector<string>::const_iterator it=tags.begin();it!=tags.end();++it) {
-            G.get_graph_attribute(G.tag2index(*it),value);
-            res.push_back(value);
-        }
-    } else if (g._VECTptr->size()==3) {
-        gen &v=g._VECTptr->at(1);
-        if (v.type==_VECT) {
-            // get edge attribute(s)
-            if (v._VECTptr->size()!=2)
-                return gensizeerr(contextptr);
-            i=G.node_index(v._VECTptr->front());
-            j=G.node_index(v._VECTptr->back());
-            if (i==-1 || j==-1)
-                return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
-            if (!G.has_edge(i,j))
-                return gt_err(_GT_ERR_EDGE_NOT_FOUND,contextptr);
-            for (vector<string>::const_iterator it=tags.begin();it!=tags.end();++it) {
-                G.get_edge_attribute(i,j,G.tag2index(*it),value);
-                res.push_back(value);
-            }
-        } else {
-            i=G.node_index(v);
-            if (i==-1)
-                return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
-            for (vector<string>::const_iterator it=tags.begin();it!=tags.end();++it) {
-                G.get_node_attribute(i,G.tag2index(*it),value);
-                res.push_back(value);
-            }
-        }
+    for (const_iterateur it=tags.begin();it!=tags.end();++it) {
+        if (it->type!=_STRNG)
+            return gentypeerr(contextptr);
+        key=G.tag2index(graphe::genstring2str(*it));
+        G.get_graph_attribute(key,value);
+        values.push_back(value);
     }
-    return res;
+    return istagvec?values:change_subtype(values,_SEQ__VECT);
 }
-static const char _get_graph_attribute_s []="get_graph_attribute";
+static const char _get_graph_attribute_s[]="get_graph_attribute";
 static define_unary_function_eval(__get_graph_attribute,&_get_graph_attribute,_get_graph_attribute_s);
 define_unary_function_ptr5(at_get_graph_attribute,alias_at_get_graph_attribute,&__get_graph_attribute,0,true)
+
+/* Usage:   get_vertex_attribute(G,v,tag1,tag2,...)
+ *
+ * Get the attributes tag1, tag2, ... assigned to vertex v in graph G, i.e.
+ * return the sequence of values corresponding to the given tags, which may
+ * also be specified in a list.
+ */
+gen _get_vertex_attribute(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr,tags,values;
+    if (gv.size()<2)
+        return gensizeerr(contextptr);
+    graphe G(contextptr);
+    if (!G.read_gen(gv.front()))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    int v,key;
+    if ((v=G.node_index(gv[1]))<0)
+        return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+    bool istagvec=gv.size()==3 && gv.back().type==_VECT;
+    if (istagvec)
+        tags=*gv.back()._VECTptr;
+    else tags=vecteur(gv.begin()+2,gv.end());
+    gen value;
+    for (const_iterateur it=tags.begin();it!=tags.end();++it) {
+        if (it->type!=_STRNG)
+            return gentypeerr(contextptr);
+        key=G.tag2index(graphe::genstring2str(*it));
+        G.get_node_attribute(v,key,value);
+        values.push_back(value);
+    }
+    return istagvec?values:change_subtype(values,_SEQ__VECT);
+}
+static const char _get_vertex_attribute_s[]="get_vertex_attribute";
+static define_unary_function_eval(__get_vertex_attribute,&_get_vertex_attribute,_get_vertex_attribute_s);
+define_unary_function_ptr5(at_get_vertex_attribute,alias_at_get_vertex_attribute,&__get_vertex_attribute,0,true)
+
+/* Usage:   get_edge_attribute(G,e,tag1,tag2,...)
+ *
+ * Get the attributes tag1, tag2, ... assigned to edge e in graph G, i.e.
+ * return the sequence of values corresponding to the given tags, which may
+ * also be specified in a list.
+ */
+gen _get_edge_attribute(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr,tags,values;
+    if (gv.size()<2)
+        return gensizeerr(contextptr);
+    graphe G(contextptr);
+    if (!G.read_gen(gv.front()))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (gv[1].type!=_VECT)
+        return gentypeerr(contextptr);
+    if (gv[1]._VECTptr->size()!=2)
+        return gensizeerr(contextptr);
+    int i,j,key;
+    if ((i=G.node_index(gv[1]._VECTptr->front()))<0 || (j=G.node_index(gv[2]._VECTptr->back())))
+        return gt_err(_GT_ERR_EDGE_NOT_FOUND,contextptr);
+    if (!G.has_edge(i,j))
+        return gt_err(_GT_ERR_EDGE_NOT_FOUND,contextptr);
+    bool istagvec=gv.size()==3 && gv.back().type==_VECT;
+    if (istagvec)
+        tags=*gv.back()._VECTptr;
+    else tags=vecteur(gv.begin()+2,gv.end());
+    gen value;
+    for (const_iterateur it=tags.begin();it!=tags.end();++it) {
+        if (it->type!=_STRNG)
+            return gentypeerr(contextptr);
+        key=G.tag2index(graphe::genstring2str(*it));
+        G.get_edge_attribute(i,j,key,value);
+        values.push_back(value);
+    }
+    return istagvec?values:change_subtype(values,_SEQ__VECT);
+}
+static const char _get_edge_attribute_s[]="get_edge_attribute";
+static define_unary_function_eval(__get_edge_attribute,&_get_edge_attribute,_get_edge_attribute_s);
+define_unary_function_ptr5(at_get_edge_attribute,alias_at_get_edge_attribute,&__get_edge_attribute,0,true)
+
+/* Usage:   discard_graph_attribute(G,tag1,tag2,...)
+ *
+ * Discards the graph attributes with tags tag1, tag2, ..., which may also be
+ * specified in a list, and returns the modified copy of G.
+ */
+gen _discard_graph_attribute(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr,tags;
+    graphe G(contextptr);
+    if (!G.read_gen(gv.front()))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (gv.size()==2 && gv.back().type==_VECT)
+        tags=*gv.back()._VECTptr;
+    else tags=vecteur(gv.begin()+1,gv.end());
+    int key;
+    for (const_iterateur it=tags.begin();it!=tags.end();++it) {
+        if (it->type!=_STRNG)
+            return gentypeerr(contextptr);
+        key=G.tag2index(graphe::genstring2str(*it));
+        G.discard_graph_attribute(key);
+    }
+    return G.to_gen();
+}
+static const char _discard_graph_attribute_s[]="discard_graph_attribute";
+static define_unary_function_eval(__discard_graph_attribute,&_discard_graph_attribute,_discard_graph_attribute_s);
+define_unary_function_ptr5(at_discard_graph_attribute,alias_at_discard_graph_attribute,&__discard_graph_attribute,0,true)
+
+/* Usage:   discard_vertex_attribute(G,v,tag1,tag2,...)
+ *
+ * Discards the attributes with tags tag1, tag2, ... assigned to vertex v in
+ * graph G, which may also be specified in a list, and returns the modified
+ * copy of G.
+ */
+gen _discard_vertex_attribute(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr,tags;
+    if (gv.size()<2)
+        return gensizeerr(contextptr);
+    graphe G(contextptr);
+    if (!G.read_gen(gv.front()))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    int v,key;
+    if ((v=G.node_index(gv[1]))<0)
+        return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+    if (gv.size()==3 && gv.back().type==_VECT)
+        tags=*gv.back()._VECTptr;
+    else tags=vecteur(gv.begin()+2,gv.end());
+    for (const_iterateur it=tags.begin();it!=tags.end();++it) {
+        if (it->type!=_STRNG)
+            return gentypeerr(contextptr);
+        key=G.tag2index(graphe::genstring2str(*it));
+        G.discard_node_attribute(v,key);
+    }
+    return G.to_gen();
+}
+static const char _discard_vertex_attribute_s[]="discard_vertex_attribute";
+static define_unary_function_eval(__discard_vertex_attribute,&_discard_vertex_attribute,_discard_vertex_attribute_s);
+define_unary_function_ptr5(at_discard_vertex_attribute,alias_at_discard_vertex_attribute,&__discard_vertex_attribute,0,true)
+
+/* Usage:   discard_edge_attribute(G,e,tag1,tag2,...)
+ *
+ * Discards the attributes with tags tag1, tag2, ... assigned to edge e in
+ * graph G, which may also be specified in a list, and returns the modified
+ * copy of G.
+ */
+gen _discard_edge_attribute(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr,tags;
+    if (gv.size()<2)
+        return gensizeerr(contextptr);
+    graphe G(contextptr);
+    if (!G.read_gen(gv.front()))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (gv[1].type!=_VECT)
+        return gentypeerr(contextptr);
+    if (gv[1]._VECTptr->size()!=2)
+        return gensizeerr(contextptr);
+    int i,j,key;
+    if ((i=G.node_index(gv[1]._VECTptr->front()))<0 || (j=G.node_index(gv[2]._VECTptr->back())))
+        return gt_err(_GT_ERR_EDGE_NOT_FOUND,contextptr);
+    if (!G.has_edge(i,j))
+        return gt_err(_GT_ERR_EDGE_NOT_FOUND,contextptr);
+    if (gv.size()==3 && gv.back().type==_VECT)
+        tags=*gv.back()._VECTptr;
+    else tags=vecteur(gv.begin()+2,gv.end());
+    for (const_iterateur it=tags.begin();it!=tags.end();++it) {
+        if (it->type!=_STRNG)
+            return gentypeerr(contextptr);
+        key=G.tag2index(graphe::genstring2str(*it));
+        G.discard_edge_attribute(i,j,key);
+    }
+    return G.to_gen();
+}
+static const char _discard_edge_attribute_s[]="discard_edge_attribute";
+static define_unary_function_eval(__discard_edge_attribute,&_discard_edge_attribute,_discard_edge_attribute_s);
+define_unary_function_ptr5(at_discard_edge_attribute,alias_at_discard_edge_attribute,&__discard_edge_attribute,0,true)
+
+/* Usage:   list_graph_attributes(G)
+ *
+ * Returns the list of graph attributes in form tag=value.
+ */
+gen _list_graph_attributes(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    vecteur tags,values;
+    G.attrib2vecteurs(G.graph_attributes(),tags,values);
+    return _zip(makesequence(at_equal,tags,values),contextptr);
+}
+static const char _list_graph_attributes_s[]="list_graph_attributes";
+static define_unary_function_eval(__list_graph_attributes,&_list_graph_attributes,_list_graph_attributes_s);
+define_unary_function_ptr5(at_list_graph_attributes,alias_at_list_graph_attributes,&__list_graph_attributes,0,true)
+
+/* Usage:   list_vertex_attributes(G,v)
+ *
+ * Returns the list of attributes assigned to vertex v in form tag=value.
+ */
+gen _list_vertex_attributes(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()!=2)
+        return gensizeerr(contextptr);
+    graphe G(contextptr);
+    if (!G.read_gen(gv.front()))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    int i;
+    if ((i=G.node_index(gv.back()))<0)
+        return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+    vecteur tags,values;
+    G.attrib2vecteurs(G.node_attributes(i),tags,values);
+    return _zip(makesequence(at_equal,tags,values),contextptr);
+}
+static const char _list_vertex_attributes_s[]="list_vertex_attributes";
+static define_unary_function_eval(__list_vertex_attributes,&_list_vertex_attributes,_list_vertex_attributes_s);
+define_unary_function_ptr5(at_list_vertex_attributes,alias_at_list_vertex_attributes,&__list_vertex_attributes,0,true)
+
+/* Usage:   list_edge_attributes(G,e)
+ *
+ * Returns the list of attributes assigned to edge e in form tag=value.
+ */
+gen _list_edge_attributes(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()!=2)
+        return gensizeerr(contextptr);
+    graphe G(contextptr);
+    if (!G.read_gen(gv.front()))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (gv.back().type!=_VECT)
+        return gentypeerr(contextptr);
+    if (gv.back()._VECTptr->size()!=2)
+        return gensizeerr(contextptr);
+    int i,j;
+    if ((i=G.node_index(gv.back()._VECTptr->front()))<0 ||
+            (j=G.node_index(gv.back()._VECTptr->back()))<0)
+        return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+    if (!G.has_edge(i,j))
+        return gt_err(_GT_ERR_EDGE_NOT_FOUND,contextptr);
+    vecteur tags,values;
+    G.attrib2vecteurs(G.edge_attributes(i,j),tags,values);
+    return _zip(makesequence(at_equal,tags,values),contextptr);
+}
+static const char _list_edge_attributes_s[]="list_edge_attributes";
+static define_unary_function_eval(__list_edge_attributes,&_list_edge_attributes,_list_edge_attributes_s);
+define_unary_function_ptr5(at_list_edge_attributes,alias_at_list_edge_attributes,&__list_edge_attributes,0,true)
 
 /* Usage:   number_of_edges(G)
  *
@@ -2171,7 +2468,7 @@ gen _number_of_edges(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     return G.edge_count();
 }
-static const char _number_of_edges_s []="number_of_edges";
+static const char _number_of_edges_s[]="number_of_edges";
 static define_unary_function_eval(__number_of_edges,&_number_of_edges,_number_of_edges_s);
 define_unary_function_ptr5(at_number_of_edges,alias_at_number_of_edges,&__number_of_edges,0,true)
 
@@ -2186,7 +2483,7 @@ gen _number_of_vertices(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     return G.node_count();
 }
-static const char _number_of_vertices_s []="number_of_vertices";
+static const char _number_of_vertices_s[]="number_of_vertices";
 static define_unary_function_eval(__number_of_vertices,&_number_of_vertices,_number_of_vertices_s);
 define_unary_function_ptr5(at_number_of_vertices,alias_at_number_of_vertices,&__number_of_vertices,0,true)
 
@@ -2211,7 +2508,7 @@ gen _get_edge_weight(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_EDGE_NOT_FOUND,contextptr);
     return G.weight(i,j);
 }
-static const char _get_edge_weight_s []="get_edge_weight";
+static const char _get_edge_weight_s[]="get_edge_weight";
 static define_unary_function_eval(__get_edge_weight,&_get_edge_weight,_get_edge_weight_s);
 define_unary_function_ptr5(at_get_edge_weight,alias_at_get_edge_weight,&__get_edge_weight,0,true)
 
@@ -2239,7 +2536,7 @@ gen _set_edge_weight(const gen &g,GIAC_CONTEXT) {
     G.set_edge_attribute(i,j,_GT_ATTRIB_WEIGHT,g._VECTptr->back());
     return oldweight;
 }
-static const char _set_edge_weight_s []="set_edge_weight";
+static const char _set_edge_weight_s[]="set_edge_weight";
 static define_unary_function_eval(__set_edge_weight,&_set_edge_weight,_set_edge_weight_s);
 define_unary_function_ptr5(at_set_edge_weight,alias_at_set_edge_weight,&__set_edge_weight,0,true)
 
@@ -2254,7 +2551,7 @@ gen _is_directed(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     return graphe::boole(G.is_directed());
 }
-static const char _is_directed_s []="is_directed";
+static const char _is_directed_s[]="is_directed";
 static define_unary_function_eval(__is_directed,&_is_directed,_is_directed_s);
 define_unary_function_ptr5(at_is_directed,alias_at_is_directed,&__is_directed,0,true)
 
@@ -2281,7 +2578,7 @@ gen _neighbors(const gen &g,GIAC_CONTEXT) {
     }
     return res;
 }
-static const char _neighbors_s []="neighbors";
+static const char _neighbors_s[]="neighbors";
 static define_unary_function_eval(__neighbors,&_neighbors,_neighbors_s);
 define_unary_function_ptr5(at_neighbors,alias_at_neighbors,&__neighbors,0,true)
 
@@ -2303,7 +2600,7 @@ gen _minimum_degree(const gen &g,GIAC_CONTEXT) {
     }
     return mindeg;
 }
-static const char _minimum_degree_s []="minimum_degree";
+static const char _minimum_degree_s[]="minimum_degree";
 static define_unary_function_eval(__minimum_degree,&_minimum_degree,_minimum_degree_s);
 define_unary_function_ptr5(at_minimum_degree,alias_at_minimum_degree,&__minimum_degree,0,true)
 
@@ -2325,7 +2622,7 @@ gen _maximum_degree(const gen &g,GIAC_CONTEXT) {
     }
     return maxdeg;
 }
-static const char _maximum_degree_s []="maximum_degree";
+static const char _maximum_degree_s[]="maximum_degree";
 static define_unary_function_eval(__maximum_degree,&_maximum_degree,_maximum_degree_s);
 define_unary_function_ptr5(at_maximum_degree,alias_at_maximum_degree,&__maximum_degree,0,true)
 
@@ -2347,7 +2644,7 @@ gen _is_regular(const gen &g,GIAC_CONTEXT) {
     }
     return graphe::boole(true);
 }
-static const char _is_regular_s []="is_regular";
+static const char _is_regular_s[]="is_regular";
 static define_unary_function_eval(__is_regular,&_is_regular,_is_regular_s);
 define_unary_function_ptr5(at_is_regular,alias_at_is_regular,&__is_regular,0,true)
 
@@ -2377,7 +2674,7 @@ gen _isomorphic_copy(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     return H.to_gen();
 }
-static const char _isomorphic_copy_s []="isomorphic_copy";
+static const char _isomorphic_copy_s[]="isomorphic_copy";
 static define_unary_function_eval(__isomorphic_copy,&_isomorphic_copy,_isomorphic_copy_s);
 define_unary_function_ptr5(at_isomorphic_copy,alias_at_isomorphic_copy,&__isomorphic_copy,0,true)
 
@@ -2404,7 +2701,7 @@ gen _relabel_vertices(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     return G.to_gen();
 }
-static const char _relabel_vertices_s []="relabel_vertices";
+static const char _relabel_vertices_s[]="relabel_vertices";
 static define_unary_function_eval(__relabel_vertices,&_relabel_vertices,_relabel_vertices_s);
 define_unary_function_ptr5(at_relabel_vertices,alias_at_relabel_vertices,&__relabel_vertices,0,true)
 
@@ -2420,7 +2717,7 @@ gen _is_tree(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     return graphe::boole(G.is_tree());
 }
-static const char _is_tree_s []="is_tree";
+static const char _is_tree_s[]="is_tree";
 static define_unary_function_eval(__is_tree,&_is_tree,_is_tree_s);
 define_unary_function_ptr5(at_is_tree,alias_at_is_tree,&__is_tree,0,true)
 
@@ -2436,7 +2733,7 @@ gen _is_forest(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     return graphe::boole(G.is_forest());
 }
-static const char _is_forest_s []="is_forest";
+static const char _is_forest_s[]="is_forest";
 static define_unary_function_eval(__is_forest,&_is_forest,_is_forest_s);
 define_unary_function_ptr5(at_is_forest,alias_at_is_forest,&__is_forest,0,true)
 
@@ -2452,7 +2749,7 @@ gen _is_tournament(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     return graphe::boole(G.is_tournament());
 }
-static const char _is_tournament_s []="is_tournament";
+static const char _is_tournament_s[]="is_tournament";
 static define_unary_function_eval(__is_tournament,&_is_tournament,_is_tournament_s);
 define_unary_function_ptr5(at_is_tournament,alias_at_is_tournament,&__is_tournament,0,true)
 
@@ -2479,7 +2776,7 @@ gen _tree_height(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
     return G.tree_height(root);
 }
-static const char _tree_height_s []="tree_height";
+static const char _tree_height_s[]="tree_height";
 static define_unary_function_eval(__tree_height,&_tree_height,_tree_height_s);
 define_unary_function_ptr5(at_tree_height,alias_at_tree_height,&__tree_height,0,true)
 
@@ -2494,7 +2791,7 @@ gen _is_connected(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     return graphe::boole(G.is_connected());
 }
-static const char _is_connected_s []="is_connected";
+static const char _is_connected_s[]="is_connected";
 static define_unary_function_eval(__is_connected,&_is_connected,_is_connected_s);
 define_unary_function_ptr5(at_is_connected,alias_at_is_connected,&__is_connected,0,true)
 
@@ -2509,7 +2806,7 @@ gen _is_biconnected(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     return graphe::boole(G.is_biconnected());
 }
-static const char _is_biconnected_s []="is_biconnected";
+static const char _is_biconnected_s[]="is_biconnected";
 static define_unary_function_eval(__is_biconnected,&_is_biconnected,_is_biconnected_s);
 define_unary_function_ptr5(at_is_biconnected,alias_at_is_biconnected,&__is_biconnected,0,true)
 
@@ -2524,7 +2821,7 @@ gen _is_triconnected(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     return graphe::boole(G.is_triconnected());
 }
-static const char _is_triconnected_s []="is_triconnected";
+static const char _is_triconnected_s[]="is_triconnected";
 static define_unary_function_eval(__is_triconnected,&_is_triconnected,_is_triconnected_s);
 define_unary_function_ptr5(at_is_triconnected,alias_at_is_triconnected,&__is_triconnected,0,true)
 
@@ -2539,7 +2836,7 @@ gen _is_weighted(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     return graphe::boole(G.is_weighted());
 }
-static const char _is_weighted_s []="is_weighted";
+static const char _is_weighted_s[]="is_weighted";
 static define_unary_function_eval(__is_weighted,&_is_weighted,_is_weighted_s);
 define_unary_function_ptr5(at_is_weighted,alias_at_is_weighted,&__is_weighted,0,true)
 
@@ -2554,7 +2851,7 @@ gen _is_planar(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     return graphe::boole(G.is_planar());
 }
-static const char _is_planar_s []="is_planar";
+static const char _is_planar_s[]="is_planar";
 static define_unary_function_eval(__is_planar,&_is_planar,_is_planar_s);
 define_unary_function_ptr5(at_is_planar,alias_at_is_planar,&__is_planar,0,true)
 
@@ -2570,7 +2867,7 @@ gen _complete_binary_tree(const gen &g,GIAC_CONTEXT) {
     G.make_complete_kary_tree(2,g.val);
     return G.to_gen();
 }
-static const char _complete_binary_tree_s []="complete_binary_tree";
+static const char _complete_binary_tree_s[]="complete_binary_tree";
 static define_unary_function_eval(__complete_binary_tree,&_complete_binary_tree,_complete_binary_tree_s);
 define_unary_function_ptr5(at_complete_binary_tree,alias_at_complete_binary_tree,&__complete_binary_tree,0,true)
 
@@ -2594,7 +2891,7 @@ gen _complete_kary_tree(const gen &g,GIAC_CONTEXT) {
     G.make_complete_kary_tree(k,n);
     return G.to_gen();
 }
-static const char _complete_kary_tree_s []="complete_kary_tree";
+static const char _complete_kary_tree_s[]="complete_kary_tree";
 static define_unary_function_eval(__complete_kary_tree,&_complete_kary_tree,_complete_kary_tree_s);
 define_unary_function_ptr5(at_complete_kary_tree,alias_at_complete_kary_tree,&__complete_kary_tree,0,true)
 
@@ -2609,7 +2906,7 @@ gen _prism_graph(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     return _petersen_graph(makesequence(g,1),contextptr);
 }
-static const char _prism_graph_s []="prism_graph";
+static const char _prism_graph_s[]="prism_graph";
 static define_unary_function_eval(__prism_graph,&_prism_graph,_prism_graph_s);
 define_unary_function_ptr5(at_prism_graph,alias_at_prism_graph,&__prism_graph,0,true)
 
@@ -2625,7 +2922,7 @@ gen _antiprism_graph(const gen &g,GIAC_CONTEXT) {
     G.make_antiprism_graph(g.val);
     return G.to_gen();
 }
-static const char _antiprism_graph_s []="antiprism_graph";
+static const char _antiprism_graph_s[]="antiprism_graph";
 static define_unary_function_eval(__antiprism_graph,&_antiprism_graph,_antiprism_graph_s);
 define_unary_function_ptr5(at_antiprism_graph,alias_at_antiprism_graph,&__antiprism_graph,0,true)
 
@@ -2640,7 +2937,7 @@ gen _star_graph(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     return _complete_graph(makesequence(1,g),contextptr);
 }
-static const char _star_graph_s []="star_graph";
+static const char _star_graph_s[]="star_graph";
 static define_unary_function_eval(__star_graph,&_star_graph,_star_graph_s);
 define_unary_function_ptr5(at_star_graph,alias_at_star_graph,&__star_graph,0,true)
 
@@ -2656,7 +2953,7 @@ gen _wheel_graph(const gen &g,GIAC_CONTEXT) {
     G.make_wheel_graph(g.val);
     return G.to_gen();
 }
-static const char _wheel_graph_s []="wheel_graph";
+static const char _wheel_graph_s[]="wheel_graph";
 static define_unary_function_eval(__wheel_graph,&_wheel_graph,_wheel_graph_s);
 define_unary_function_ptr5(at_wheel_graph,alias_at_wheel_graph,&__wheel_graph,0,true)
 
@@ -2680,7 +2977,7 @@ gen _grid_graph(const gen &g,GIAC_CONTEXT) {
     G.make_grid_graph(m,n);
     return G.to_gen();
 }
-static const char _grid_graph_s []="grid_graph";
+static const char _grid_graph_s[]="grid_graph";
 static define_unary_function_eval(__grid_graph,&_grid_graph,_grid_graph_s);
 define_unary_function_ptr5(at_grid_graph,alias_at_grid_graph,&__grid_graph,0,true)
 
@@ -2704,7 +3001,7 @@ gen _torus_grid_graph(const gen &g,GIAC_CONTEXT) {
     G.make_grid_graph(m,n,true);
     return G.to_gen();
 }
-static const char _torus_grid_graph_s []="torus_grid_graph";
+static const char _torus_grid_graph_s[]="torus_grid_graph";
 static define_unary_function_eval(__torus_grid_graph,&_torus_grid_graph,_torus_grid_graph_s);
 define_unary_function_ptr5(at_torus_grid_graph,alias_at_torus_grid_graph,&__torus_grid_graph,0,true)
 
@@ -2728,7 +3025,7 @@ gen _web_graph(const gen &g,GIAC_CONTEXT) {
     G.make_web_graph(a,b);
     return G.to_gen();
 }
-static const char _web_graph_s []="web_graph";
+static const char _web_graph_s[]="web_graph";
 static define_unary_function_eval(__web_graph,&_web_graph,_web_graph_s);
 define_unary_function_ptr5(at_web_graph,alias_at_web_graph,&__web_graph,0,true)
 
@@ -2748,7 +3045,7 @@ gen _cartesian_product(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     return P.to_gen();
 }
-static const char _cartesian_product_s []="cartesian_product";
+static const char _cartesian_product_s[]="cartesian_product";
 static define_unary_function_eval(__cartesian_product,&_cartesian_product,_cartesian_product_s);
 define_unary_function_ptr5(at_cartesian_product,alias_at_cartesian_product,&__cartesian_product,0,true)
 
@@ -2768,7 +3065,7 @@ gen _tensor_product(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     return P.to_gen();
 }
-static const char _tensor_product_s []="tensor_product";
+static const char _tensor_product_s[]="tensor_product";
 static define_unary_function_eval(__tensor_product,&_tensor_product,_tensor_product_s);
 define_unary_function_ptr5(at_tensor_product,alias_at_tensor_product,&__tensor_product,0,true)
 
@@ -2790,7 +3087,7 @@ gen _path_graph(const gen &g,GIAC_CONTEXT) {
     }
     return G.to_gen();
 }
-static const char _path_graph_s []="path_graph";
+static const char _path_graph_s[]="path_graph";
 static define_unary_function_eval(__path_graph,&_path_graph,_path_graph_s);
 define_unary_function_ptr5(at_path_graph,alias_at_path_graph,&__path_graph,0,true)
 
@@ -2826,7 +3123,7 @@ gen _is_eulerian(const gen &g,GIAC_CONTEXT) {
     }
     return graphe::boole(true);
 }
-static const char _is_eulerian_s []="is_eulerian";
+static const char _is_eulerian_s[]="is_eulerian";
 static define_unary_function_eval(__is_eulerian,&_is_eulerian,_is_eulerian_s);
 define_unary_function_ptr5(at_is_eulerian,alias_at_is_eulerian,&__is_eulerian,0,true)
 
@@ -2853,7 +3150,7 @@ gen _kneser_graph(const gen &g,GIAC_CONTEXT) {
         return gensizeerr(contextptr);
     return G.to_gen();
 }
-static const char _kneser_graph_s []="kneser_graph";
+static const char _kneser_graph_s[]="kneser_graph";
 static define_unary_function_eval(__kneser_graph,&_kneser_graph,_kneser_graph_s);
 define_unary_function_ptr5(at_kneser_graph,alias_at_kneser_graph,&__kneser_graph,0,true)
 
@@ -2873,7 +3170,7 @@ gen _odd_graph(const gen &g,GIAC_CONTEXT) {
     assert(G.make_kneser_graph(2*n-1,n-1));
     return G.to_gen();
 }
-static const char _odd_graph_s []="odd_graph";
+static const char _odd_graph_s[]="odd_graph";
 static define_unary_function_eval(__odd_graph,&_odd_graph,_odd_graph_s);
 define_unary_function_ptr5(at_odd_graph,alias_at_odd_graph,&__odd_graph,0,true)
 
@@ -2910,7 +3207,7 @@ gen _highlight_vertex(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     return G.to_gen();
 }
-static const char _highlight_vertex_s []="highlight_vertex";
+static const char _highlight_vertex_s[]="highlight_vertex";
 static define_unary_function_eval(__highlight_vertex,&_highlight_vertex,_highlight_vertex_s);
 define_unary_function_ptr5(at_highlight_vertex,alias_at_highlight_vertex,&__highlight_vertex,0,true)
 
@@ -2942,7 +3239,7 @@ gen _highlight_edges(const gen &g,GIAC_CONTEXT) {
     }
     return G.to_gen();
 }
-static const char _highlight_edges_s []="highlight_edges";
+static const char _highlight_edges_s[]="highlight_edges";
 static define_unary_function_eval(__highlight_edges,&_highlight_edges,_highlight_edges_s);
 define_unary_function_ptr5(at_highlight_edges,alias_at_highlight_edges,&__highlight_edges,0,true)
 
@@ -2985,7 +3282,7 @@ gen _highlight_subgraph(const gen &g,GIAC_CONTEXT) {
     modG=_highlight_edges(makesequence(G.to_gen(),E,C1),contextptr);
     return _highlight_vertex(makesequence(modG,V,C2),contextptr);
 }
-static const char _highlight_subgraph_s []="highlight_subgraph";
+static const char _highlight_subgraph_s[]="highlight_subgraph";
 static define_unary_function_eval(__highlight_subgraph,&_highlight_subgraph,_highlight_subgraph_s);
 define_unary_function_ptr5(at_highlight_subgraph,alias_at_highlight_subgraph,&__highlight_subgraph,0,true)
 
@@ -3018,7 +3315,7 @@ gen _highlight_trail(const gen &g,GIAC_CONTEXT) {
     }
     return G.to_gen();
 }
-static const char _highlight_trail_s []="highlight_trail";
+static const char _highlight_trail_s[]="highlight_trail";
 static define_unary_function_eval(__highlight_trail,&_highlight_trail,_highlight_trail_s);
 define_unary_function_ptr5(at_highlight_trail,alias_at_highlight_trail,&__highlight_trail,0,true)
 
@@ -3038,7 +3335,7 @@ gen _disjoint_union(const gen &g,GIAC_CONTEXT) {
         return gt_err(err,contextptr);
     return G.to_gen();
 }
-static const char _disjoint_union_s []="disjoint_union";
+static const char _disjoint_union_s[]="disjoint_union";
 static define_unary_function_eval(__disjoint_union,&_disjoint_union,_disjoint_union_s);
 define_unary_function_ptr5(at_disjoint_union,alias_at_disjoint_union,&__disjoint_union,0,true)
 
@@ -3060,7 +3357,7 @@ gen _graph_union(const gen &g,GIAC_CONTEXT) {
         return gt_err(err,contextptr);
     return G.to_gen();
 }
-static const char _graph_union_s []="graph_union";
+static const char _graph_union_s[]="graph_union";
 static define_unary_function_eval(__graph_union,&_graph_union,_graph_union_s);
 define_unary_function_ptr5(at_graph_union,alias_at_graph_union,&__graph_union,0,true)
 
@@ -3100,7 +3397,7 @@ gen _graph_join(const gen &g,GIAC_CONTEXT) {
     }
     return G.to_gen();
 }
-static const char _graph_join_s []="graph_join";
+static const char _graph_join_s[]="graph_join";
 static define_unary_function_eval(__graph_join,&_graph_join,_graph_join_s);
 define_unary_function_ptr5(at_graph_join,alias_at_graph_join,&__graph_join,0,true)
 
@@ -3124,7 +3421,7 @@ gen _graph_equal(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     return graphe::boole(G1.is_equal(G2));
 }
-static const char _graph_equal_s []="graph_equal";
+static const char _graph_equal_s[]="graph_equal";
 static define_unary_function_eval(__graph_equal,&_graph_equal,_graph_equal_s);
 define_unary_function_ptr5(at_graph_equal,alias_at_graph_equal,&__graph_equal,0,true)
 
@@ -3142,7 +3439,7 @@ gen _reverse_graph(const gen &g,GIAC_CONTEXT) {
     R.reverse_edges();
     return R.to_gen();
 }
-static const char _reverse_graph_s []="reverse_graph";
+static const char _reverse_graph_s[]="reverse_graph";
 static define_unary_function_eval(__reverse_graph,&_reverse_graph,_reverse_graph_s);
 define_unary_function_ptr5(at_reverse_graph,alias_at_reverse_graph,&__reverse_graph,0,true)
 
@@ -3189,7 +3486,7 @@ gen _interval_graph(const gen &g,GIAC_CONTEXT) {
     }
     return G.to_gen();
 }
-static const char _interval_graph_s []="interval_graph";
+static const char _interval_graph_s[]="interval_graph";
 static define_unary_function_eval(__interval_graph,&_interval_graph,_interval_graph_s);
 define_unary_function_ptr5(at_interval_graph,alias_at_interval_graph,&__interval_graph,0,true)
 
@@ -3254,7 +3551,7 @@ gen _subdivide_edges(const gen &g,GIAC_CONTEXT) {
     }
     return G.to_gen();
 }
-static const char _subdivide_edges_s []="subdivide_edges";
+static const char _subdivide_edges_s[]="subdivide_edges";
 static define_unary_function_eval(__subdivide_edges,&_subdivide_edges,_subdivide_edges_s);
 define_unary_function_ptr5(at_subdivide_edges,alias_at_subdivide_edges,&__subdivide_edges,0,true)
 
@@ -3291,7 +3588,7 @@ gen _graph_power(const gen &g,GIAC_CONTEXT) {
     gen opt=symbolic(at_equal,makesequence(_GT_DIRECTED,graphe::boole(G.is_directed())));
     return _graph(makesequence(G.vertices(),mpow,opt),contextptr);
 }
-static const char _graph_power_s []="graph_power";
+static const char _graph_power_s[]="graph_power";
 static define_unary_function_eval(__graph_power,&_graph_power,_graph_power_s);
 define_unary_function_ptr5(at_graph_power,alias_at_graph_power,&__graph_power,0,true)
 
@@ -3316,7 +3613,7 @@ gen _vertex_distance(const gen &g,GIAC_CONTEXT) {
     int dist=G.distance(i,j);
     return dist>=0?gen(dist):graphe::plusinf();
 }
-static const char _vertex_distance_s []="vertex_distance";
+static const char _vertex_distance_s[]="vertex_distance";
 static define_unary_function_eval(__vertex_distance,&_vertex_distance,_vertex_distance_s);
 define_unary_function_ptr5(at_vertex_distance,alias_at_vertex_distance,&__vertex_distance,0,true)
 
@@ -3345,7 +3642,7 @@ gen _shortest_path(const gen &g,GIAC_CONTEXT) {
     vector_int2vecteur(path,shortestpath);
     return shortestpath;
 }
-static const char _shortest_path_s []="shortest_path";
+static const char _shortest_path_s[]="shortest_path";
 static define_unary_function_eval(__shortest_path,&_shortest_path,_shortest_path_s);
 define_unary_function_ptr5(at_shortest_path,alias_at_shortest_path,&__shortest_path,0,true)
 
@@ -3367,7 +3664,7 @@ gen _allpairs_distance(const gen &g,GIAC_CONTEXT) {
         G.allpairs_distance(D);
     return D;
 }
-static const char _allpairs_distance_s []="allpairs_distance";
+static const char _allpairs_distance_s[]="allpairs_distance";
 static define_unary_function_eval(__allpairs_distance,&_allpairs_distance,_allpairs_distance_s);
 define_unary_function_ptr5(at_allpairs_distance,alias_at_allpairs_distance,&__allpairs_distance,0,true)
 
@@ -3399,7 +3696,7 @@ gen _graph_diameter(const gen &g,GIAC_CONTEXT) {
     }
     return max_dist;
 }
-static const char _graph_diameter_s []="graph_diameter";
+static const char _graph_diameter_s[]="graph_diameter";
 static define_unary_function_eval(__graph_diameter,&_graph_diameter,_graph_diameter_s);
 define_unary_function_ptr5(at_graph_diameter,alias_at_graph_diameter,&__graph_diameter,0,true)
 
@@ -3468,7 +3765,7 @@ gen _dijkstra(const gen &g,GIAC_CONTEXT) {
     }
     return change_subtype(res,_SEQ__VECT);
 }
-static const char _dijkstra_s []="dijkstra";
+static const char _dijkstra_s[]="dijkstra";
 static define_unary_function_eval(__dijkstra,&_dijkstra,_dijkstra_s);
 define_unary_function_ptr5(at_dijkstra,alias_at_dijkstra,&__dijkstra,0,true)
 

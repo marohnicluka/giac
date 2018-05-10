@@ -1659,16 +1659,26 @@ bool graphe::nodes_are_adjacent(int i,int j) const {
     return nodes[i].has_neighbor(j) || nodes[j].has_neighbor(i);
 }
 
+/* return const reference to the attributes assigned to edge [i,j] */
 const graphe::attrib &graphe::edge_attributes(int i, int j) const {
     if (is_directed())
         return nodes[i].neighbor_attributes(j);
     return nodes[i<j?i:j].neighbor_attributes(i<j?j:i);
 }
 
+/* return the modifiable reference to the attributes assigned to edge [i,j] */
 graphe::attrib &graphe::edge_attributes(int i, int j) {
     if (is_directed())
         return nodes[i].neighbor_attributes(j);
     return nodes[i<j?i:j].neighbor_attributes(i<j?j:i);
+}
+
+/* convert attrib to pair of vecteurs */
+void graphe::attrib2vecteurs(const attrib &attr,vecteur &tags,vecteur &values) const {
+    for (attrib_iter it=attr.begin();it!=attr.end();++it) {
+        tags.push_back(str2gen(index2tag(it->first),true));
+        values.push_back(it->second);
+    }
 }
 
 /* add edge {i,j} or arc [i,j], depending on the type (undirected or directed) */
@@ -1851,9 +1861,10 @@ void graphe::set_edge_attribute(int i,int j,int key,const gen &val) {
     attr[key]=val;
 }
 
+/* return the value corresponding to the graph attribute specified by key */
 bool graphe::get_graph_attribute(int key,gen &val) const {
-    attrib_iter it;
-    if ((it=attributes.find(key))==attributes.end()) {
+    attrib_iter it=attributes.find(key);
+    if (it==attributes.end()) {
         val=undef;
         return false;
     }
@@ -1861,11 +1872,12 @@ bool graphe::get_graph_attribute(int key,gen &val) const {
     return true;
 }
 
-bool graphe::get_node_attribute(int index,int key,gen &val) const {
-    assert (index>=0 && index<node_count());
-    attrib_iter it;
-    const attrib &attr=nodes[index].attributes();
-    if ((it=attr.find(key))==attr.end()) {
+/* return the value corresponding to the i-th node attribute specified by key */
+bool graphe::get_node_attribute(int i,int key,gen &val) const {
+    assert (i>=0 && i<node_count());
+    const attrib &attr=node(i).attributes();
+    attrib_iter it=attr.find(key);
+    if (it==attr.end()) {
         val=undef;
         return false;
     }
@@ -1873,15 +1885,39 @@ bool graphe::get_node_attribute(int index,int key,gen &val) const {
     return true;
 }
 
+/* return the value corresponding to the attribute assigned to edge [i,j] and specified by key */
 bool graphe::get_edge_attribute(int i,int j,int key,gen &val) const {
     const attrib &attr=edge_attributes(i,j);
-    attrib_iter it;
-    if ((it=attr.find(key))==attr.end()) {
+    attrib_iter it=attr.find(key);
+    if (it==attr.end()) {
         val=undef;
         return false;
     }
     val=it->second;
     return true;
+}
+
+/* discard the graph attribute specified by key */
+void graphe::discard_graph_attribute(int key) {
+    attrib::iterator it=attributes.find(key);
+    if (it!=attributes.end())
+        attributes.erase(it);
+}
+
+/* discard the attribute assigned to i-th node and specified by key */
+void graphe::discard_node_attribute(int i,int key) {
+    attrib &attr=node(i).attributes();
+    attrib::iterator it=attr.find(key);
+    if (it!=attr.end())
+        attr.erase(it);
+}
+
+/* discard the attribute assigned to edge [i,j] and specified by key */
+void graphe::discard_edge_attribute(int i,int j,int key) {
+    attrib &attr=edge_attributes(i,j);
+    attrib::iterator it=attr.find(key);
+    if (it!=attr.end())
+        attr.erase(it);
 }
 
 /* return true iff the graph is directed */
@@ -2749,18 +2785,34 @@ void graphe::create_random_layout(layout &x,double K,int d) {
     }
 }
 
+/* add the force applying to p because of being repulsed by q */
+void graphe::accumulate_repulsive_force(const point &p,const point &q,double R,double D,double eps,point &force) {
+    assert(p.size()==q.size() && p.size()==force.size());
+    point f(p.size());
+    copy_point(p,f);
+    subtract_point(f,q);
+    double norm_squared=point_displacement(f,false);
+    if (norm_squared>R*R)
+        return;
+    if (norm_squared==0)
+        rand_point(f,norm_squared=eps);
+    scale_point(f,D/norm_squared);
+    add_point(force,f);
+}
+
 /* lay out the graph using a force-directed algorithm with spring-electrical model */
 void graphe::force_directed_placement(layout &x,double K,double R,double tol,bool ac) {
     double step_length=K,shrinking_factor=0.9;
     double energy=DBL_MAX,energy0;
-    double C=0.01,D=C*K*K,R_squared=R*R,eps=K*tol;
-    double norm,norm_squared,displacement,max_displacement;
+    double C=0.01,D=C*K*K,eps=K*tol;
+    double norm,displacement,max_displacement;
     int progress=0,n=x.size(),i,j;
     if (n==0)
         return;
     assert (n==node_count());
     int d=x.front().size();
     point force(d),p(d);
+    // keep updating the positions until the system freezes
     do {
         energy0=energy;
         energy=0;
@@ -2779,17 +2831,8 @@ void graphe::force_directed_placement(layout &x,double K,double R,double tol,boo
             }
             // compute repulsive forces for all vertices j!=i which are not too far from the i-th vertex
             for (j=0;j<n;++j) {
-                if (i==j)
-                    continue;
-                copy_point(xi,p);
-                subtract_point(p,x[j]);
-                norm_squared=point_displacement(p,false);
-                if (R_squared>0 && norm_squared>R_squared)
-                    continue;
-                if (norm_squared==0)
-                    rand_point(p,norm_squared=shrinking_factor*eps);
-                scale_point(p,D/norm_squared);
-                add_point(force,p);
+                if (i!=j)
+                    accumulate_repulsive_force(xi,x[j],R,D,shrinking_factor*eps,force);
             }
             // move the location of the i-th vertex in the direction of the force f
             norm=point_displacement(force);
@@ -2797,7 +2840,7 @@ void graphe::force_directed_placement(layout &x,double K,double R,double tol,boo
                 continue;
             if (step_length<norm)
                 scale_point(force,step_length/norm);
-            add_point(x[i],force);
+            add_point(xi,force);
             displacement=std::min(norm,step_length);
             if (displacement>max_displacement)
                 max_displacement=displacement;
@@ -2817,9 +2860,74 @@ void graphe::force_directed_placement(layout &x,double K,double R,double tol,boo
                 step_length*=shrinking_factor;
             }
         } else step_length*=shrinking_factor; // simple cooling scheme
-    } while (max_displacement>=eps);
+    } while (max_displacement>eps);
 }
 
+/* compute optimal positions of edge labels and store them as "position" attributes of the respective edges */
+void graphe::edge_labels_placement(layout &x,int dim,double K,double tol) {
+    ipairs E;
+    get_edges_as_pairs(E,false);
+    int n=E.size(),k;
+    layout y(n),dir(n);
+    vector<double> d(n);
+    point force(dim),f(dim);
+    double C=0.01,D=C*K*K,step_length=K,shrinking_factor=0.9,eps=K*tol;
+    double displacement,max_displacement,norm;
+    // generate an initial placement of edge labels and store edge directions
+    for (int i=0;i<n;++i) {
+        ipair &edge=E[i];
+        point &p1=x[edge.first],&p2=x[edge.second],&p=y[i],&u=dir[i];
+        p.resize(dim,0);
+        copy_point(p1,p);
+        add_point(p,p2);
+        scale_point(p,0.5);
+        copy_point(p2,u);
+        subtract_point(u,p1);
+        if ((norm=point_displacement(u))==0)
+            continue;
+        d[i]=norm;
+        scale_point(u,1/norm);
+    }
+    // keep updating the positions until the system freezes
+    do {
+        // recompute positions of all edge labels by applying repulsive forces
+        max_displacement=0;
+        for (ipairs_iter it=E.begin();it!=E.end();++it) {
+            k=it-E.begin();
+            const point &p1=x[it->first],&p2=x[it->second],&u=dir[k];
+            point &p=y[k];
+            clear_point_coords(force);
+            // compute the resultant force applying to p
+            for (int i=0;i<n;++i) {
+                if (i!=k)
+                    accumulate_repulsive_force(p,y[i],K,D,shrinking_factor*eps,force);
+            }
+            accumulate_repulsive_force(p,p1,K,D,shrinking_factor*eps,force);
+            accumulate_repulsive_force(p,p2,K,D,shrinking_factor*eps,force);
+            norm=point_displacement(force);
+            if (norm==0)
+                continue;
+            norm=point_dotprod(force,u);
+            copy_point(u,force);
+            scale_point(force,norm);
+            // update the position of p
+            if (step_length<norm)
+                scale_point(force,step_length/norm);
+            add_point(p,force);
+            displacement=std::min(norm,step_length);
+            if (displacement>max_displacement)
+                max_displacement=displacement;
+        }
+        step_length*=shrinking_factor; // simple cooling scheme
+    } while (max_displacement>eps);
+    // store edge label positions as edge attributes
+    for (layout_iter it=y.begin();it!=y.end();++it) {
+        ipair &edge=E[it-y.begin()];
+        set_edge_attribute(edge.first,edge.second,_GT_ATTRIB_POSITION,point2vecteur(*it));
+    }
+}
+
+/* retrieve element in A at position (i,j) and store it in val, return true iff there is such element */
 bool graphe::sparse_matrix_element(const sparsemat &A, int i, int j, double &val) {
     sparsemat::const_iterator it;
     map<int,double>::const_iterator jt;
@@ -2829,6 +2937,7 @@ bool graphe::sparse_matrix_element(const sparsemat &A, int i, int j, double &val
     return true;
 }
 
+/* compute the product A*B and store it in prod */
 void graphe::multiply_sparse_matrices(const sparsemat &A, const sparsemat &B, sparsemat &prod) {
     int i,nc=0;
     double val;
@@ -2851,6 +2960,7 @@ void graphe::multiply_sparse_matrices(const sparsemat &A, const sparsemat &B, sp
     }
 }
 
+/* store the transposition of A in transp */
 void graphe::transpose_sparsemat(const sparsemat &A, sparsemat &transp) {
     for (sparsemat::const_iterator it=A.begin();it!=A.end();++it) {
         for(map<int,double>::const_iterator jt=it->second.begin();jt!=it->second.end();++jt) {
@@ -3000,7 +3110,7 @@ void graphe::make_spring_layout(layout &x,int d,double tol) {
     if (n==0)
         return;
     multilevel_mis=false;
-    multilevel_recursion(x,*this,d,DBL_MAX,1.0,tol);
+    multilevel_recursion(x,*this,d,DBL_MAX,10.0,tol);
 }
 
 /* layout face as a regular polygon inscribed in circle of radius R */
@@ -5027,6 +5137,15 @@ void graphe::point_reflection(const point &src,const point &axis,point &dest) {
     dest.resize(2);
     dest[0]=(p*s-2*b*(a*q+c))/r;
     dest[1]=-(q*s+2*a*(b*p+c))/r;
+}
+
+/* convert point to vecteur */
+vecteur graphe::point2vecteur(const point &p) {
+    vecteur res;
+    for (point::const_iterator it=p.begin();it!=p.end();++it) {
+        res.push_back(*it);
+    }
+    return res;
 }
 
 /* return true iff the points p and q coincide with each other within the given tolerance radius */

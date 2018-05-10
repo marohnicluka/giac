@@ -342,6 +342,7 @@ private:
     static void copy_point(const point &src,point &dest);
     void rand_point(point &p,double radius=1.0);
     static void point_reflection(const point &src,const point &axis,point &dest);
+    static vecteur point2vecteur(const point &p);
     static bool points_coincide(const point &p,const point &q,double tol);
     static void copy_layout(const layout &src,layout &dest);
     static void rotate_layout(layout &x,double phi);
@@ -374,7 +375,9 @@ private:
                     const ipairs &E, std::vector<double> &sc, double tol) const;
     static double bisector(int v, int w, const layout &x, point &bsec, const point &p0);
     static double squared_distance(const point &p,const point &line);
+    void accumulate_repulsive_force(const point &p,const point &q,double R,double D,double eps,point &force);
     void force_directed_placement(layout &x,double K,double R,double tol=0.001,bool ac=true);
+    void edge_labels_placement(layout &x,int dim,double K,double tol=0.001);
     void coarsening_mis(const ivector &V,graphe &G,sparsemat &P) const;
     void coarsening_ec(const ipairs &M,graphe &G,sparsemat &P) const;
     int node_label_best_quadrant(const layout &x,const point &center,int i) const;
@@ -467,9 +470,11 @@ public:
     const gen &node_label(int i) const { assert(i>=0 && i<node_count()); return nodes[i].label(); }
     vecteur get_nodes(const ivector &v) const;
     int node_index(const gen &v) const;
-    const attrib &node_attributes(int i) const { assert(i>=0 && i<node_count()); return nodes[i].attributes(); }
+    const attrib &graph_attributes() const { return attributes; }
+    const attrib &node_attributes(int i) const { assert(i>=0 && i<node_count()); return node(i).attributes(); }
     const attrib &edge_attributes(int i,int j) const;
     attrib &edge_attributes(int i,int j);
+    void attrib2vecteurs(const attrib &attr,vecteur &tags,vecteur &values) const;
     void add_edge(int i,int j,const gen &w=gen(1));
     void add_edge(int i,int j,const attrib &attr);
     void add_edge(const ipair &edge) { add_edge(edge.first,edge.second); }
@@ -496,8 +501,11 @@ public:
     void set_node_attribute(int index,int key,const gen &val);
     void set_edge_attribute(int i,int j,int key,const gen &val);
     bool get_graph_attribute(int key,gen &val) const;
-    bool get_node_attribute(int index,int key,gen &val) const;
+    bool get_node_attribute(int i,int key,gen &val) const;
     bool get_edge_attribute(int i,int j,int key,gen &val) const;
+    void discard_graph_attribute(int key);
+    void discard_node_attribute(int i,int key);
+    void discard_edge_attribute(int i,int j,int key);
     void set_name(const std::string &str) { graph_name=str; }
     std::string name() const { return graph_name; }
     bool is_directed() const;

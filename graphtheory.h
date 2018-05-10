@@ -49,7 +49,8 @@ enum gt_error_code {
     _GT_ERR_NAME_NOT_RECOGNIZED=20,
     _GT_ERR_NOT_A_SUBGRAPH=21,
     _GT_ERR_INTEGRAL_LABELS_REQUIRED=22,
-    _GT_ERR_GRAPH_IS_EMPTY=23
+    _GT_ERR_GRAPH_IS_EMPTY=23,
+    _GT_ERR_TAGVALUE_PAIR_EXPECTED=24
 };
 
 bool is_graphe(const gen &g,std::string &disp_out,GIAC_CONTEXT);
@@ -82,6 +83,14 @@ gen _set_graph_attribute(const gen &g,GIAC_CONTEXT);
 gen _get_graph_attribute(const gen &g,GIAC_CONTEXT);
 gen _discard_graph_attribute(const gen &g,GIAC_CONTEXT);
 gen _list_graph_attributes(const gen &g,GIAC_CONTEXT);
+gen _set_vertex_attribute(const gen &g,GIAC_CONTEXT);
+gen _get_vertex_attribute(const gen &g,GIAC_CONTEXT);
+gen _discard_vertex_attribute(const gen &g,GIAC_CONTEXT);
+gen _list_vertex_attributes(const gen &g,GIAC_CONTEXT);
+gen _set_node_attribute(const gen &g,GIAC_CONTEXT);
+gen _get_node_attribute(const gen &g,GIAC_CONTEXT);
+gen _discard_node_attribute(const gen &g,GIAC_CONTEXT);
+gen _list_edge_attributes(const gen &g,GIAC_CONTEXT);
 gen _adjacency_matrix(const gen &g,GIAC_CONTEXT);
 gen _incidence_matrix(const gen &g,GIAC_CONTEXT);
 gen _biconnected_components(const gen &g,GIAC_CONTEXT);

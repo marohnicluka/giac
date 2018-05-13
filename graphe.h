@@ -93,7 +93,7 @@ public:
     class vertex {
         gen m_label;
         int m_subgraph;
-        // used for DFS
+        // used for traversing
         bool m_visited;
         int m_low;
         int m_disc;
@@ -104,6 +104,8 @@ public:
         double m_prelim;
         double m_modifier;
         bool m_isleaf;
+        // used for planar embedding
+        bool m_embedded;
         // *
         attrib m_attributes;
         std::map<int,attrib> m_neighbor_attributes;
@@ -112,10 +114,13 @@ public:
         vertex();
         vertex(const vertex &other);
         vertex& operator =(const vertex &other);
+        void assign(const vertex &other);
         const gen &label() const { return m_label; }
         void set_label(const gen &s) { m_label=s; }
-        int subgraph() const { return m_subgraph; }
         void set_subgraph(int s) { m_subgraph=s; }
+        int subgraph() const { return m_subgraph; }
+        void set_embedded(bool yes) { m_embedded=yes; }
+        bool is_embedded() const { return m_embedded; }
         void set_visited(bool yes) { m_visited=yes; }
         bool is_visited() const { return m_visited; }
         void set_low(int l) { m_low=l; }
@@ -160,6 +165,7 @@ public:
         dotgraph(const dotgraph &other);
         dotgraph(int i);
         dotgraph& operator =(const dotgraph &other);
+        void assign(const dotgraph &other);
         int index() const { return m_index; }
         void set_index(int i) { m_chain[pos]=i; }
         const attrib &vertex_attributes() const { return vertex_attr; }
@@ -246,6 +252,7 @@ public:
         rectangle(double X,double Y,double W,double H);
         rectangle(const rectangle &rect);
         rectangle& operator =(const rectangle &other);
+        void assign(const rectangle &other);
         double x() const { return m_x; }
         double y() const { return m_y; }
         double width() const { return m_width; }
@@ -315,7 +322,7 @@ private:
     std::string graph_name;
     attrib attributes;
     std::vector<std::string> user_tags;
-    ivector marked_vertices;
+    ivector marked_nodes;
     int disc_time;
     ivector discovered_nodes;
     std::stack<ipair> edge_stack;
@@ -348,7 +355,6 @@ private:
     static void rotate_layout(layout &x,double phi);
     static void translate_layout(layout &x,const point &dx);
     static double layout_min(const layout &x,int d);
-    static rectangle layout_bounding_rect(const layout &x);
     static void point2polar(point &p,double &r,double &phi);
     static bool sparse_matrix_element(const sparsemat &A,int i,int j,double &val);
     static void multiply_sparse_matrices(const sparsemat &A,const sparsemat &B,sparsemat &prod);
@@ -362,10 +368,9 @@ private:
     void find_blocks_dfs(int i,std::vector<ipairs> &blocks);
     void find_bridges_dfs(int i,ipairs &B);
     int find_cycle_dfs(int i);
-    bool find_path_dfs(int dest,int i);
+    bool find_path_dfs(int dest,int i,int subgraph,bool skip_embedded);
     static void sort_rectangles(std::vector<rectangle> &rectangles);
     static bool pack_rectangles(const std::vector<rectangle> &rectangles,dpairs &embedding,double ew,double eh);
-    static dpairs pack_rectangles_neatly(const std::vector<rectangle> &rectangles);
     static bool segments_crossing(const point &p,const point &r,const point &q,const point &s,point &crossing);
     static bool point2segment_projection(const point &p,const point &q,const point &r,point &proj);
     static double ccw(const point &p1,const point &p2,const point &p3);
@@ -377,15 +382,19 @@ private:
     static double squared_distance(const point &p,const point &line);
     void accumulate_repulsive_force(const point &p,const point &q,double R,double D,double eps,point &force);
     void force_directed_placement(layout &x,double K,double R,double tol=0.001,bool ac=true);
-    void edge_labels_placement(layout &x,int dim,double K,double tol=0.001);
+    void edge_labels_placement(layout &y,const layout &x,int dim,double K,double tol=0.001);
+    static bool get_position(const attrib &attr,point &p);
     void coarsening_mis(const ivector &V,graphe &G,sparsemat &P) const;
     void coarsening_ec(const ipairs &M,graphe &G,sparsemat &P) const;
     int node_label_best_quadrant(const layout &x,const point &center,int i) const;
-    static void append_segment(vecteur &v,const point &p,const point &q,int color,int width,bool arrow=false);
-    static void append_vertex(vecteur &v,const point &p,int color,int width);
-    static void append_label(vecteur &v,const point &p,const gen &label,int quadrant);
+    static void append_segment(vecteur &drawing,const point &p,const point &q,int color,int width,bool arrow=false);
+    static void append_vertex(vecteur &drawing,const point &p,int color,int width);
+    static void append_label(vecteur &drawing,const point &p,const gen &label,int quadrant);
     static int face_has_edge(const ivector &face,int i,int j);
     static int binomial_coeff(int n,int k);
+    void set_nodes_embedded(const ivector &v,bool yes=true);
+    void clear_embedding();
+    int first_neighbor_from_subgraph(const vertex &v,int s,bool skip_embedded=false) const;
     bool demoucron(ivectors &faces);
     int planar_embedding(ivectors &faces);
     int choose_embedding_face(const ivectors &faces,int v);
@@ -399,7 +408,8 @@ private:
     void periphericity(const ivector &outer_face,ivector &p);
     static void tree_layout2polar(layout &ly);
     void tree_height_dfs(int i,int level,int &depth);
-    void make_product_vertices(const graphe &G,graphe &P) const;
+    void make_product_nodes(const graphe &G,graphe &P) const;
+    static void extract_path_from_cycle(const ivector &cycle,int i,int j,ivector &path);
 
 public:
     graphe(const context *contextptr=context0);
@@ -408,6 +418,7 @@ public:
     int rand_integer(int n) const { return giac::giac_rand(ctx)%n; }
     double rand_uniform() const { return giac::giac_rand(ctx)/(RAND_MAX+1.0); }
     double rand_normal() const { return giac::randNorm(ctx); }
+    static bool is_real_number(const gen &g);
     static gen to_binary(int number,int chars);
     const context *giac_context() const { return ctx; }
     static gen make_idnt(const char* name,int index=-1,bool intern=true);
@@ -428,15 +439,16 @@ public:
     std::string index2tag(int index) const;
     int register_user_tag(const std::string &tag);
     void register_user_tags(const std::vector<std::string> &tags);
-    const ivector &get_marked_vertices() const { return marked_vertices; }
-    void get_marked_vertices(vecteur &V) const;
-    void copy_marked_vertices(const ivector &mv) { marked_vertices=ivector(mv.begin(),mv.end()); }
-    void mark_vertex(int v);
-    void mark_vertex(const gen &v) { mark_vertex(node_index(v)); }
-    bool unmark_vertex(int v);
-    bool unmark_vertex(const gen &v) { return unmark_vertex(node_index(v)); }
-    void unmark_all_vertices() { marked_vertices.clear(); }
-    void sort_marked_vertices() { std::sort(marked_vertices.begin(),marked_vertices.end()); }
+    const ivector &get_marked_nodes() const { return marked_nodes; }
+    void get_marked_nodes(vecteur &V) const;
+    void get_marked_nodes_in_subgraph(int s,ivector &m) const;
+    void copy_marked_nodes(const ivector &mv) { marked_nodes=ivector(mv.begin(),mv.end()); }
+    void mark_node(int v);
+    void mark_node(const gen &v) { mark_node(node_index(v)); }
+    bool unmark_node(int v);
+    bool unmark_node(const gen &v) { return unmark_node(node_index(v)); }
+    void unmark_all_nodes() { marked_nodes.clear(); }
+    void sort_marked_nodes() { std::sort(marked_nodes.begin(),marked_nodes.end()); }
     gen to_gen() const;
     bool write_dot(const std::string &filename) const;
     bool read_dot(const std::string &filename);
@@ -445,11 +457,11 @@ public:
     gen weight(int i,int j) const;
     int edge_count() const;
     int node_count() const { return nodes.size(); }
-    vecteur vertices() const;
-    void unvisit_all_nodes();
-    void unset_all_ancestors();
-    void depth_first_search(int root,bool record=true,bool clear_previous_search=true,ivector *D=NULL);
-    void breadth_first_search(int root,bool record=true,bool clear_previous_search=true,ivector *D=NULL);
+    vecteur vertices(int subgraph=-1) const;
+    void unvisit_all_nodes(int subgraph=-1);
+    void unset_all_ancestors(int subgraph=-1);
+    void dfs(int root,bool rec=true,bool clr=true,ivector *D=NULL,int subgraph=-1,bool skip_embedded=false);
+    void bfs(int root,bool rec=true,bool clr=true,ivector *D=NULL,int subgraph=-1,bool skip_embedded=false);
     const ivector &get_discovered_nodes() const { return discovered_nodes; }
     bool is_connected();
     bool is_biconnected();
@@ -457,8 +469,8 @@ public:
     void adjacent_nodes(int i,ivector &adj,bool include_temp_edges=true) const;
     void translate_indices_to(const graphe &G,const ivector &indices,ivector &dest) const;
     void translate_indices_from(const graphe &G,const ivector &indices,ivector &dest) const;
-    void get_edges_as_pairs(ipairs &E,bool include_temp_edges=true) const;
-    vecteur edges(bool include_weights) const;
+    void get_edges_as_pairs(ipairs &E, bool include_temp_edges=true,int subgraph=-1) const;
+    vecteur edges(bool include_weights,int subgraph=-1) const;
     int add_node(const gen &v);
     int add_node(const gen &v,const attrib &attr) { int i=add_node(v); nodes[i].set_attributes(attr); return i; }
     void add_nodes(const vecteur &v);
@@ -470,6 +482,8 @@ public:
     const gen &node_label(int i) const { assert(i>=0 && i<node_count()); return nodes[i].label(); }
     vecteur get_nodes(const ivector &v) const;
     int node_index(const gen &v) const;
+    void set_subgraph(const ivector &v,int s);
+    void merge_subgraphs(int s,int t);
     const attrib &graph_attributes() const { return attributes; }
     const attrib &node_attributes(int i) const { assert(i>=0 && i<node_count()); return node(i).attributes(); }
     const attrib &edge_attributes(int i,int j) const;
@@ -534,6 +548,8 @@ public:
     bool make_planar_layout(layout &x);
     double make_tree_layout(layout &x,double sep,int apex=0);
     void layout_best_rotation(layout &x);
+    static rectangle layout_bounding_rect(const layout &x,double padding=0);
+    static void pack_rectangles_neatly(const std::vector<rectangle> &rectangles,dpairs &best_embedding);
     int guess_drawing_style();
     static gen point2gen(const point &p,bool vect=false);
     static point layout_center(const layout &x);
@@ -566,21 +582,19 @@ public:
     point axis_of_symmetry(layout &x);
     void cartesian_product(const graphe &G,graphe &P) const;
     void tensor_product(const graphe &G,graphe &P) const;
-    void connected_components(ivectors &components);
+    void connected_components(ivectors &components,int subgraph=-1,bool skip_embedded=false,int *count=NULL);
     void find_cut_vertices(ivector &articulation_points);
     void find_blocks(std::vector<ipairs> &blocks);
     void find_bridges(ipairs &B);
     bool find_cycle(ivector &cycle,bool randomize=true);
-    bool find_path(int i,int j,ivector &path);
+    bool find_path(int i,int j,ivector &path,int subgraph=-1,bool skip_embedded=false);
     bool find_eulerian_path(ivector &path) const;
     void collapse_edge(int i,int j);
     void incident_edges(const ivector &V,edgeset &E);
-    bool get_layout(layout &positions,int &dim) const;
-    void demoucron_bridges(const std::vector<bool> &embedding,const ivectors &faces,std::vector<graphe> &bridges) const;
     bool convex_hull(ivector &ccw_indices,const layout &x) const;
     double subgraph_area(const layout &x,const ivector &v=ivector()) const;
-    void draw_edges(vecteur &v,const layout &x) const;
-    void draw_nodes(vecteur &v,const layout &x) const;
+    void draw_edges(vecteur &drawing,const layout &x) const;
+    void draw_nodes(vecteur &drawing,const layout &x) const;
     void draw_labels(vecteur &v,const layout &x) const;
     bool get_leading_cycle(ivector &c) const;
     void highlight_edges(const ipairs &E,int color);

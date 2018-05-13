@@ -61,7 +61,7 @@ void gt_err_display(int code,GIAC_CONTEXT) {
 }
 
 void gt_err_display(const gen &g,int code,GIAC_CONTEXT) {
-    *logptr(contextptr) << "Error: " << g << " " << gt_error_messages[code] << endl;
+    *logptr(contextptr) << "Error: " << g << ": " << gt_error_messages[code] << endl;
 }
 
 gen gt_err(int code,GIAC_CONTEXT) {
@@ -76,11 +76,6 @@ gen gt_err(const gen &g,int code,GIAC_CONTEXT) {
 
 void identifier_assign(const identificateur &var,const gen &value,GIAC_CONTEXT) {
     _eval(symbolic(at_sto,makevecteur(var,value)),contextptr);
-}
-
-bool is_real_number(const gen &g) {
-    gen e=_evalf(g,context0);
-    return e.type==_DOUBLE_ || e.type==_FLOAT_;
 }
 
 bool has_suffix(const string &str,const string &suffix)
@@ -1189,18 +1184,19 @@ define_unary_function_ptr5(at_seidel_switch,alias_at_seidel_switch,&__seidel_swi
  */
 gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    bool has_opts=false,labels=true;
     if (g.type!=_VECT)
         return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    bool labels=true,has_opts=g.subtype==_SEQ__VECT;
     graphe G_orig(contextptr);
-    if (!G_orig.read_gen(has_opts?g._VECTptr->front():g))
+    if (!G_orig.read_gen(has_opts?gv.front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     vecteur root_nodes,cycle;
     int method=_GT_STYLE_DEFAULT;
     if (has_opts) {
         // parse options
         int opt_counter;
-        for (const_iterateur it=g._VECTptr->begin()+1;it!=g._VECTptr->end();++it) {
+        for (const_iterateur it=gv.begin()+1;it!=gv.end();++it) {
             opt_counter++;
             const gen &opt=*it;
             if (opt.is_symb_of_sommet(at_equal)) {
@@ -1253,10 +1249,13 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     G_orig.underlying(G);
     int n=G.node_count(),i,comp_method=method;
+    vector<graphe> Cv;
+    vector<graphe::layout> layouts;
     vecteur drawing;
-    graphe::layout main_layout(n);
     if (method==_GT_STYLE_3D) {
-        G.make_spring_layout(main_layout,3);
+        layouts.resize(1);
+        G.make_spring_layout(layouts.front(),3);
+        Cv.push_back(G);
     } else {
         vecteur V,original_labels=G.vertices();
         graphe::ivectors components;
@@ -1272,7 +1271,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
             for (const_iterateur it=root_nodes.begin();it!=root_nodes.end();++it) {
                 i=G.node_index(*it);
                 if (i==-1)
-                    return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+                    return gt_err(*it,_GT_ERR_VERTEX_NOT_FOUND,contextptr);
                 indices[it-root_nodes.begin()]=i;
             }
             for (int i=0;i<nc;++i) {
@@ -1308,7 +1307,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
         }
         G.make_default_labels(V,n);
         G.relabel_nodes(V);
-        vector<graphe::layout> layouts(nc);
+        layouts.resize(nc);
         vector<graphe::rectangle> bounding_rects(nc);
         bool check=method!=_GT_STYLE_DEFAULT;
         double sep=1.0;
@@ -1337,7 +1336,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 if (outerface.empty()) {
                     if (!C.get_leading_cycle(outerface) && !C.find_cycle(outerface))
                         return gt_err(_GT_ERR_CYCLE_NOT_FOUND,contextptr);
-                    C.make_circular_layout(x,outerface);
+                    C.make_circular_layout(x,outerface,false,2.5);
                     outerface.clear();
                 } else
                     C.make_circular_layout(x,outerface);
@@ -1347,14 +1346,18 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 C.layout_best_rotation(x);
                 graphe::scale_layout(x,std::sqrt((double)C.node_count()));
             }
+            Cv.push_back(C);
         }
         // combine component layouts
-
+        double padding=sep/4.0;
+        for (int i=0;i<nc;++i) {
+            bounding_rects[i]=graphe::layout_bounding_rect(layouts[i],padding);
+        }
+        graphe::rectangle::comparator comp;
+        sort(bounding_rects.begin(),bounding_rects.end(),comp);
+        graphe::dpairs embedding;
+        graphe::pack_rectangles_neatly(bounding_rects,embedding);
     }
-    G_orig.draw_edges(drawing,main_layout);
-    G_orig.draw_nodes(drawing,main_layout);
-    if (labels)
-        G_orig.draw_labels(drawing,main_layout);
     return drawing;
 }
 static const char _draw_graph_s[]="draw_graph";
@@ -1686,7 +1689,7 @@ gen _assign_edge_weights(const gen &g,GIAC_CONTEXT) {
             return gentypeerr(contextptr);
         gen a=gv.back()._SYMBptr->feuille._VECTptr->front(),
                 b=gv.back()._SYMBptr->feuille._VECTptr->back();
-        if (!is_real_number(a) || !is_real_number(b))
+        if (!graphe::is_real_number(a) || !graphe::is_real_number(b))
             return gentypeerr(contextptr);
         G.randomize_edge_weights(a.DOUBLE_val(),b.DOUBLE_val(),false);
     }
@@ -3466,7 +3469,7 @@ gen _interval_graph(const gen &g,GIAC_CONTEXT) {
             return gentypeerr(contextptr);
         a=it->_SYMBptr->feuille._VECTptr->front();
         b=it->_SYMBptr->feuille._VECTptr->back();
-        if (!is_real_number(a) || !is_real_number(b))
+        if (!graphe::is_real_number(a) || !graphe::is_real_number(b))
             return gentypeerr(contextptr);
         m[k][0]=a;
         m[k][1]=b;

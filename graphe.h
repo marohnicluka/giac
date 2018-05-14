@@ -368,7 +368,7 @@ private:
     void find_blocks_dfs(int i,std::vector<ipairs> &blocks);
     void find_bridges_dfs(int i,ipairs &B);
     int find_cycle_dfs(int i);
-    bool find_path_dfs(int dest,int i,int subgraph,bool skip_embedded);
+    bool find_path_dfs(int dest,int i,int sg,bool skip_embedded);
     static void sort_rectangles(std::vector<rectangle> &rectangles);
     static bool pack_rectangles(const std::vector<rectangle> &rectangles,dpairs &embedding,double ew,double eh);
     static bool segments_crossing(const point &p,const point &r,const point &q,const point &s,point &crossing);
@@ -394,7 +394,7 @@ private:
     static int binomial_coeff(int n,int k);
     void set_nodes_embedded(const ivector &v,bool yes=true);
     void clear_embedding();
-    int first_neighbor_from_subgraph(const vertex &v,int s,bool skip_embedded=false) const;
+    int first_neighbor_from_subgraph(const vertex &v,int sg) const;
     bool demoucron(ivectors &faces);
     int planar_embedding(ivectors &faces);
     int choose_embedding_face(const ivectors &faces,int v);
@@ -457,11 +457,11 @@ public:
     gen weight(int i,int j) const;
     int edge_count() const;
     int node_count() const { return nodes.size(); }
-    vecteur vertices(int subgraph=-1) const;
-    void unvisit_all_nodes(int subgraph=-1);
-    void unset_all_ancestors(int subgraph=-1);
-    void dfs(int root,bool rec=true,bool clr=true,ivector *D=NULL,int subgraph=-1,bool skip_embedded=false);
-    void bfs(int root,bool rec=true,bool clr=true,ivector *D=NULL,int subgraph=-1,bool skip_embedded=false);
+    vecteur vertices(int sg=-1) const;
+    void unvisit_all_nodes(int sg=-1);
+    void unset_all_ancestors(int sg=-1);
+    void dfs(int root,bool rec=true,bool clr=true,ivector *D=NULL,int sg=-1,bool skip_embedded=false);
+    void bfs(int root,bool rec=true,bool clr=true,ivector *D=NULL,int sg=-1,bool skip_embedded=false);
     const ivector &get_discovered_nodes() const { return discovered_nodes; }
     bool is_connected();
     bool is_biconnected();
@@ -469,8 +469,8 @@ public:
     void adjacent_nodes(int i,ivector &adj,bool include_temp_edges=true) const;
     void translate_indices_to(const graphe &G,const ivector &indices,ivector &dest) const;
     void translate_indices_from(const graphe &G,const ivector &indices,ivector &dest) const;
-    void get_edges_as_pairs(ipairs &E, bool include_temp_edges=true,int subgraph=-1) const;
-    vecteur edges(bool include_weights,int subgraph=-1) const;
+    void get_edges_as_pairs(ipairs &E, bool include_temp_edges=true,int sg=-1) const;
+    vecteur edges(bool include_weights,int sg=-1) const;
     int add_node(const gen &v);
     int add_node(const gen &v,const attrib &attr) { int i=add_node(v); nodes[i].set_attributes(attr); return i; }
     void add_nodes(const vecteur &v);
@@ -582,12 +582,12 @@ public:
     point axis_of_symmetry(layout &x);
     void cartesian_product(const graphe &G,graphe &P) const;
     void tensor_product(const graphe &G,graphe &P) const;
-    void connected_components(ivectors &components,int subgraph=-1,bool skip_embedded=false,int *count=NULL);
+    void connected_components(ivectors &components,int sg=-1,bool skip_embedded=false,int *count=NULL);
     void find_cut_vertices(ivector &articulation_points);
     void find_blocks(std::vector<ipairs> &blocks);
     void find_bridges(ipairs &B);
     bool find_cycle(ivector &cycle,bool randomize=true);
-    bool find_path(int i,int j,ivector &path,int subgraph=-1,bool skip_embedded=false);
+    bool find_path(int i,int j,ivector &path,int sg=-1,bool skip_embedded=false);
     bool find_eulerian_path(ivector &path) const;
     void collapse_edge(int i,int j);
     void incident_edges(const ivector &V,edgeset &E);

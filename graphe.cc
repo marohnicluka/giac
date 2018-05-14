@@ -521,10 +521,9 @@ void graphe::vertex::remove_neighbor(int i) {
     }
 }
 
-int graphe::first_neighbor_from_subgraph(const vertex &v,int s,bool skip_embedded) const {
+int graphe::first_neighbor_from_subgraph(const vertex &v,int sg) const {
     for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
-        const vertex &w=node(*it);
-        if ((!skip_embedded || !w.is_embedded()) && w.subgraph()==s)
+        if (node(*it).subgraph()==sg)
             return *it;
     }
     return -1;
@@ -1070,43 +1069,43 @@ matrice graphe::weight_matrix() const {
 }
 
 /* return list of vertices (in the given subgraph) */
-vecteur graphe::vertices(int subgraph) const {
+vecteur graphe::vertices(int sg) const {
     vecteur V;
     V.reserve(node_count());
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
-        if (subgraph<0 || it->subgraph()==subgraph)
+        if (sg<0 || it->subgraph()==sg)
             V.push_back(it->label());
     }
     return V;
 }
 
 /* make all vertices (in the given subgraph) unvisited */
-void graphe::unvisit_all_nodes(int subgraph) {
+void graphe::unvisit_all_nodes(int sg) {
     for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
-        if (subgraph<0 || it->subgraph()==subgraph)
+        if (sg<0 || it->subgraph()==sg)
             it->set_visited(false);
     }
 }
 
 /* unset ancestors for all vertices (in the given subgraph) */
-void graphe::unset_all_ancestors(int subgraph) {
+void graphe::unset_all_ancestors(int sg) {
     for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
-        if (subgraph<0 || it->subgraph()==subgraph)
+        if (sg<0 || it->subgraph()==sg)
             it->unset_ancestor();
     }
 }
 
 /* fill the list E with edges (in the given subgraph) represented as pairs of vertex indices */
-void graphe::get_edges_as_pairs(ipairs &E,bool include_temp_edges,int subgraph) const {
+void graphe::get_edges_as_pairs(ipairs &E,bool include_temp_edges,int sg) const {
     int i,j,k=0,m=edge_count();
     bool dir=is_directed();
     E.resize(m);
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
-        if (subgraph>=0 && it->subgraph()!=subgraph)
+        if (sg>=0 && it->subgraph()!=sg)
             continue;
         i=it-nodes.begin();
         for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
-            if (subgraph>=0 && node(*jt).subgraph()!=subgraph)
+            if (sg>=0 && node(*jt).subgraph()!=sg)
                 continue;
             j=*jt;
             if (j<0) {
@@ -1123,9 +1122,9 @@ void graphe::get_edges_as_pairs(ipairs &E,bool include_temp_edges,int subgraph) 
 }
 
 /* return list of edges/arcs (in the given subgraph) */
-vecteur graphe::edges(bool include_weights,int subgraph) const {
+vecteur graphe::edges(bool include_weights,int sg) const {
     ipairs E;
-    get_edges_as_pairs(E,subgraph);
+    get_edges_as_pairs(E,sg);
     vecteur edge(2),ret(E.size());
     int i=0;
     for (ipairs_iter it=E.begin();it!=E.end();++it) {
@@ -3664,19 +3663,16 @@ void graphe::make_complete_kary_tree(int k,int d) {
 }
 
 /* find all connected components of an undirected graph and store them */
-void graphe::connected_components(ivectors &components,int subgraph,bool skip_embedded,int *count) {
-    unvisit_all_nodes(subgraph);
-    unset_all_ancestors(subgraph);
+void graphe::connected_components(ivectors &components,int sg,bool skip_embedded,int *count) {
+    unvisit_all_nodes(sg);
+    unset_all_ancestors(sg);
     disc_time=0;
     if (count==NULL)
         components.resize(node_count());
     int c=0;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
-        if ((subgraph>=0 && it->subgraph()!=subgraph) || (skip_embedded && it->is_embedded()))
-            continue;
-        if (!it->is_visited()) {
-            dfs(it-nodes.begin(),true,false,&components[c++],subgraph,skip_embedded);
-        }
+        if ((sg<0 || it->subgraph()==sg) && (!skip_embedded || !it->is_embedded()) && !it->is_visited())
+            dfs(it-nodes.begin(),true,false,&components[c++],sg,skip_embedded);
     }
     if (count==NULL)
         components.resize(c);
@@ -3874,6 +3870,7 @@ bool graphe::find_cycle(ivector &cycle,bool randomize) {
     unset_all_ancestors();
     assert(node_stack.empty());
     cycle.clear();
+    cycle.reserve(node_count());
     int n=node_count(),initial_vertex=randomize?rand_integer(n):0,i,j;
     if (n>0) {
         i=find_cycle_dfs(initial_vertex);
@@ -3890,7 +3887,7 @@ bool graphe::find_cycle(ivector &cycle,bool randomize) {
     return false;
 }
 
-bool graphe::find_path_dfs(int dest,int i,int subgraph,bool skip_embedded) {
+bool graphe::find_path_dfs(int dest,int i,int sg,bool skip_embedded) {
     node_stack.push(i);
     if (i==dest)
         return true;
@@ -3901,9 +3898,9 @@ bool graphe::find_path_dfs(int dest,int i,int subgraph,bool skip_embedded) {
         j=*it;
         if (j<0) j=-j-1;
         vertex &w=node(j);
-        if ((skip_embedded && w.is_embedded()) || w.subgraph()!=subgraph || w.is_visited())
+        if ((skip_embedded && w.is_embedded()) || w.subgraph()!=sg || w.is_visited())
             continue;
-        if (find_path_dfs(dest,j,subgraph,skip_embedded))
+        if (find_path_dfs(dest,j,sg,skip_embedded))
             return true;
     }
     node_stack.pop();
@@ -3911,10 +3908,10 @@ bool graphe::find_path_dfs(int dest,int i,int subgraph,bool skip_embedded) {
 }
 
 /* return a path from i-th to j-th vertex using DFS (graph is assumed to be connected) */
-bool graphe::find_path(int i,int j,ivector &path,int subgraph,bool skip_embedded) {
-    unvisit_all_nodes(subgraph);
+bool graphe::find_path(int i,int j,ivector &path,int sg,bool skip_embedded) {
+    unvisit_all_nodes(sg);
     assert(node_stack.empty());
-    if (find_path_dfs(i,j,subgraph,skip_embedded)) {
+    if (find_path_dfs(i,j,sg,skip_embedded)) {
         path.resize(node_stack.size());
         while (!node_stack.empty()) {
             path[node_stack.size()-1]=node_stack.top();
@@ -4013,6 +4010,8 @@ bool graphe::demoucron(ivectors &faces) {
     ipairs admissible_faces;
     int i,j,k,n,f,s=-1,vc=node_count(),ec=edge_count(),fc=ec-vc+2,bc=0,cnt;
     ivectors_iter ft;
+    ivector_iter ct;
+    set<int> contact_nodes;
     clear_embedding();
     // adding two initial faces, obtained by finding a cycle in graph
     assert(find_cycle(cycle));
@@ -4021,70 +4020,63 @@ bool graphe::demoucron(ivectors &faces) {
     faces.reserve(fc);
     faces.push_back(ivector(cycle.begin(),cycle.end()));
     faces.push_back(ivector(cycle.rbegin(),cycle.rend()));
-    bool find_new_bridges=true;
     while (true) {
-        if (find_new_bridges) {
-            for (node_iter it=nodes.begin();it!=nodes.end();++it) {
-                if (!it->is_embedded() || (s>=0 && it->subgraph()!=s))
+        for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+            const vertex &v=*it;
+            if (!v.is_embedded() || (s>=0 && v.subgraph()!=s))
+                continue;
+            i=it-nodes.begin();
+            for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
+                const vertex &w=node(j=*jt);
+                if (!w.is_embedded() || (w.subgraph()==s && j<i))
                     continue;
-                i=it-nodes.begin();
-                for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
-                    if ((j=*jt)<i || !node(j).is_embedded())
-                        continue;
-                    for (ft=faces.begin();ft!=faces.end();++ft) {
-                        if (face_has_edge(*ft,i,j)>=0)
-                            break;
-                    }
-                    if (ft==faces.end()) {
-                        // create a bridge consisting only of edge (i,j)
-                        ivector bridge(4);
-                        bridge.front()=++bc; // subgraph index
-                        bridge[1]=0; // bridge size
-                        bridge[2]=i; // contact vertex 1
-                        bridge[3]=j; // contact vertex 2
-                        bridges.push_back(bridge);
-                    }
+                for (ft=faces.begin();ft!=faces.end();++ft) {
+                    if (face_has_edge(*ft,i,j)>=0)
+                        break;
+                }
+                if (ft==faces.end()) {
+                    // create a bridge consisting only of edge (i,j)
+                    ivector bridge(4);
+                    bridge.front()=++bc; // subgraph index
+                    bridge[1]=0; // bridge size
+                    bridge[2]=i; // contact vertex 1
+                    bridge[3]=j; // contact vertex 2
+                    bridges.push_back(bridge);
                 }
             }
-            n=bridges.size();
-            connected_components(components,s,true,&cnt);
-            bridges.resize(n+cnt);
-            cout << "Components: ";
-            for (k=0;k<cnt;++k) {
-                ivector comp=components[k];
-                cout << comp << ",";
-                ivector &bridge=bridges[n++];
-                bridge.clear();
-                bridge.push_back(++bc);
-                bridge.push_back(comp.size());
-                unvisit_all_nodes();
-                for (ivector_iter it=comp.begin();it!=comp.end();++it) {
-                    vertex &v=node(*it);
-                    v.set_subgraph(bc);
-                    for (ivector_iter jt=v.neighbors().begin();jt!=v.neighbors().end();++jt) {
-                        vertex &w=node(*jt);
-                        if (w.is_embedded() && !w.is_visited()) {
-                            bridge.push_back(*jt); // store contact vertex
-                            w.set_visited(true);
-                        }
-                    }
+        }
+        n=bridges.size();
+        connected_components(components,s,true,&cnt);
+        bridges.resize(n+cnt);
+        for (k=0;k<cnt;++k) {
+            ivector comp=components[k];
+            ivector &bridge=bridges[n++];
+            bridge.clear();
+            bridge.push_back(++bc);
+            bridge.push_back(comp.size());
+            contact_nodes.clear();
+            for (ivector_iter it=comp.begin();it!=comp.end();++it) {
+                vertex &v=node(*it);
+                v.set_subgraph(bc);
+                for (ivector_iter jt=v.neighbors().begin();jt!=v.neighbors().end();++jt) {
+                    if (node(*jt).is_embedded())
+                        contact_nodes.insert(*jt);
                 }
-
             }
-            cout << endl;
+            bridge.resize(2+contact_nodes.size());
+            i=2;
+            for (set<int>::const_iterator it=contact_nodes.begin();it!=contact_nodes.end();++it) {
+                bridge[i++]=*it;
+            }
         }
         if (bridges.empty())
             break;
-        cout << "BRIDGES: " << bridges << endl;
-        cout << "FACES: " << faces << endl;
         // for each bridge, find all faces in which it can
         // be drawn (these faces are called 'admissible')
         admissible_faces.resize(bridges.size());
         for (ivectors_iter it=bridges.begin();it!=bridges.end();++it) {
             ipair &admissible=admissible_faces[it-bridges.begin()];
-            s=it->front();
             admissible.first=0;
-            ivector_iter ct;
             for (ivectors_iter ft=faces.begin();ft!=faces.end();++ft) {
                 for (ct=it->begin()+2;ct!=it->end();++ct) {
                     if (find(ft->begin(),ft->end(),*ct)==ft->end())
@@ -4112,17 +4104,17 @@ bool graphe::demoucron(ivectors &faces) {
         // to the admissible face, splitting it
         s=bridge.front(); // subgraph index
         if ((n=bridge[1])>0) {
-            i=first_neighbor_from_subgraph(node(bridge[2]),s,true);
-            j=first_neighbor_from_subgraph(node(bridge[3]),s,true);
+            i=first_neighbor_from_subgraph(node(bridge[2]),s);
+            j=first_neighbor_from_subgraph(node(bridge[3]),s);
             assert(i>=0 && j>=0 && find_path(i,j,path,s,true));
             set_nodes_embedded(path);
-        }
+        } else path.clear();
         f=admissible_faces[k].second;
         ivector &face=faces[f];
         i=find(face.begin(),face.end(),bridge[2])-face.begin();
         j=find(face.begin(),face.end(),bridge[3])-face.begin();
-        extract_path_from_cycle(face,j,i,face1);
-        extract_path_from_cycle(face,i,j,face2);
+        extract_path_from_cycle(face,i,j,face1);
+        extract_path_from_cycle(face,j,i,face2);
         if (path.size()>0) {
             face1.insert(face1.end(),path.begin(),path.end());
             face2.insert(face2.end(),path.rbegin(),path.rend());
@@ -4131,11 +4123,9 @@ bool graphe::demoucron(ivectors &faces) {
         faces.push_back(face1);
         faces.push_back(face2);
         bridges.erase(bridges.begin()+k); // we're done with this bridge
-        admissible_faces.erase(admissible_faces.begin()+k);
-        find_new_bridges=n!=0;
     }
-    // in the end we need to have exactly ec-nc+2 faces by Euler's theorem
-    assert(int(faces.size())==ec-vc+2);
+    // we shuld have had found exactly ec-nc+2 faces (by Euler's theorem)
+    assert(int(faces.size())==fc);
     return true;
 }
 
@@ -4625,8 +4615,8 @@ void graphe::make_random_planar() {
         if (k%m!=0)
             remove_edge(*it);
     }
-    // check that the resulting graph is biconnected; if not, repeat the process
-    if (!is_biconnected()) {
+    // check that the resulting graph is connected; if not, repeat the process
+    if (!is_connected()) {
         for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
             it->clear_neighbors();
         }
@@ -5600,10 +5590,10 @@ bool graphe::get_leading_cycle(ivector &c) const {
 }
 
 /* depth-first graph traversal with O(n+m) time and O(m) space complexity */
-void graphe::dfs(int root,bool rec,bool clr,ivector *D,int subgraph,bool skip_embedded) {
+void graphe::dfs(int root,bool rec,bool clr,ivector *D,int sg,bool skip_embedded) {
     if (clr) {
-        unvisit_all_nodes(subgraph);
-        unset_all_ancestors(subgraph);
+        unvisit_all_nodes(sg);
+        unset_all_ancestors(sg);
         disc_time=0;
     }
     ivector &d=D!=NULL?*D:discovered_nodes;
@@ -5627,7 +5617,7 @@ void graphe::dfs(int root,bool rec,bool clr,ivector *D,int subgraph,bool skip_em
                 j=*it;
                 if (j<0) j=-j-1;
                 vertex &w=node(j);
-                if ((subgraph>=0 && w.subgraph()!=subgraph) || (skip_embedded && w.is_embedded()))
+                if ((sg>=0 && w.subgraph()!=sg) || (skip_embedded && w.is_embedded()))
                     continue;
                 if (!w.is_visited()) {
                     w.set_ancestor(i);
@@ -5639,10 +5629,10 @@ void graphe::dfs(int root,bool rec,bool clr,ivector *D,int subgraph,bool skip_em
 }
 
 /* breadth-first graph traversal with O(n+m) time and O(m) space complexity */
-void graphe::bfs(int root,bool rec,bool clr,ivector *D,int subgraph,bool skip_embedded) {
+void graphe::bfs(int root,bool rec,bool clr,ivector *D,int sg,bool skip_embedded) {
     if (clr) {
-        unvisit_all_nodes(subgraph);
-        unset_all_ancestors(subgraph);
+        unvisit_all_nodes(sg);
+        unset_all_ancestors(sg);
         disc_time=0;
     }
     ivector &d=D!=NULL?*D:discovered_nodes;
@@ -5666,7 +5656,7 @@ void graphe::bfs(int root,bool rec,bool clr,ivector *D,int subgraph,bool skip_em
                 j=*it;
                 if (j<0) j=-j-1;
                 vertex &w=node(j);
-                if ((subgraph>=0 && w.subgraph()!=subgraph) || (skip_embedded && w.is_embedded()))
+                if ((sg>=0 && w.subgraph()!=sg) || (skip_embedded && w.is_embedded()))
                     continue;
                 if (!w.is_visited()) {
                     w.set_ancestor(i);

@@ -242,14 +242,15 @@ public:
         double m_y;
         double m_width;
         double m_height;
+        layout *L;
     public:
         struct comparator {
             bool operator()(const rectangle &r1,const rectangle &r2) const {
-                return r1.height()<r2.height();
+                return r1.height()>r2.height();
             }
         };
         rectangle();
-        rectangle(double X,double Y,double W,double H);
+        rectangle(double X,double Y,double W,double H,layout *ly=NULL);
         rectangle(const rectangle &rect);
         rectangle& operator =(const rectangle &other);
         void assign(const rectangle &other);
@@ -257,6 +258,7 @@ public:
         double y() const { return m_y; }
         double width() const { return m_width; }
         double height() const { return m_height; }
+        layout *get_layout() const { return L; }
     };
 
     struct convexhull_comparator {
@@ -353,7 +355,6 @@ private:
     static bool points_coincide(const point &p,const point &q,double tol);
     static void copy_layout(const layout &src,layout &dest);
     static void rotate_layout(layout &x,double phi);
-    static void translate_layout(layout &x,const point &dx);
     static double layout_min(const layout &x,int d);
     static void point2polar(point &p,double &r,double &phi);
     static bool sparse_matrix_element(const sparsemat &A,int i,int j,double &val);
@@ -370,7 +371,7 @@ private:
     int find_cycle_dfs(int i);
     bool find_path_dfs(int dest,int i,int sg,bool skip_embedded);
     static void sort_rectangles(std::vector<rectangle> &rectangles);
-    static bool pack_rectangles(const std::vector<rectangle> &rectangles,dpairs &embedding,double ew,double eh);
+    static bool pack_rectangles(const std::vector<rectangle> &rectangles,dpairs &embedding,double ew,double eh,double eps);
     static bool segments_crossing(const point &p,const point &r,const point &q,const point &s,point &crossing);
     static bool point2segment_projection(const point &p,const point &q,const point &r,point &proj);
     static double ccw(const point &p1,const point &p2,const point &p3);
@@ -548,7 +549,7 @@ public:
     bool make_planar_layout(layout &x);
     double make_tree_layout(layout &x,double sep,int apex=0);
     void layout_best_rotation(layout &x);
-    static rectangle layout_bounding_rect(const layout &x,double padding=0);
+    static rectangle layout_bounding_rect(layout &ly,double padding=0);
     static void pack_rectangles_neatly(const std::vector<rectangle> &rectangles,dpairs &best_embedding);
     int guess_drawing_style();
     static gen point2gen(const point &p,bool vect=false);
@@ -580,6 +581,7 @@ public:
     void make_random_bipartite(const vecteur &V,const vecteur &W,double p);
     void make_random_regular(const vecteur &V,int d,bool connected);
     point axis_of_symmetry(layout &x);
+    static void translate_layout(layout &x,const point &dx);
     void cartesian_product(const graphe &G,graphe &P) const;
     void tensor_product(const graphe &G,graphe &P) const;
     void connected_components(ivectors &components,int sg=-1,bool skip_embedded=false,int *count=NULL);
@@ -595,7 +597,7 @@ public:
     double subgraph_area(const layout &x,const ivector &v=ivector()) const;
     void draw_edges(vecteur &drawing,const layout &x) const;
     void draw_nodes(vecteur &drawing,const layout &x) const;
-    void draw_labels(vecteur &v,const layout &x) const;
+    void draw_labels(vecteur &drawing,const layout &x) const;
     bool get_leading_cycle(ivector &c) const;
     void highlight_edges(const ipairs &E,int color);
     void highlight_nodes(const ivector &V,int color);

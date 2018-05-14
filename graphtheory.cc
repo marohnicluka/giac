@@ -1195,7 +1195,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     int method=_GT_STYLE_DEFAULT;
     if (has_opts) {
         // parse options
-        int opt_counter;
+        int opt_counter=0;
         for (const_iterateur it=gv.begin()+1;it!=gv.end();++it) {
             opt_counter++;
             const gen &opt=*it;
@@ -1251,13 +1251,13 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     int n=G.node_count(),i,comp_method=method;
     vector<graphe> Cv;
     vector<graphe::layout> layouts;
+    graphe::layout main_layout(G.node_count());
     vecteur drawing;
     if (method==_GT_STYLE_3D) {
         layouts.resize(1);
         G.make_spring_layout(layouts.front(),3);
         Cv.push_back(G);
     } else {
-        vecteur V,original_labels=G.vertices();
         graphe::ivectors components;
         G.connected_components(components);
         int nc=components.size();
@@ -1305,16 +1305,17 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                     return gt_err(cycle,_GT_ERR_NOT_A_CYCLE,contextptr);
             }
         }
-        G.make_default_labels(V,n);
-        G.relabel_nodes(V);
         layouts.resize(nc);
         vector<graphe::rectangle> bounding_rects(nc);
         bool check=method!=_GT_STYLE_DEFAULT;
         double sep=1.0;
         // draw the components separately
-        for (graphe::ivectors_iter it=components.begin();it!=components.end();++it) {
+        vecteur V,old_labels;
+        for (graphe::ivectors::iterator it=components.begin();it!=components.end();++it) {
             i=it-components.begin();
-            graphe C(contextptr);
+            sort(it->begin(),it->end());
+            Cv.resize(Cv.size()+1);
+            graphe &C=Cv.back();
             G.induce_subgraph(*it,C,false);
             graphe::layout &x=layouts[i];
             if (method==_GT_STYLE_DEFAULT)
@@ -1329,8 +1330,12 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 C.make_tree_layout(x,sep,roots.empty()?0:roots[i]);
                 break;
             case _GT_STYLE_PLANAR:
+                old_labels=C.vertices();
+                C.make_default_labels(V,n);
+                C.relabel_nodes(V);
                 if (!C.make_planar_layout(x))
                     return gt_err(_GT_ERR_NOT_PLANAR,contextptr);
+                C.relabel_nodes(old_labels);
                 break;
             case _GT_STYLE_CIRCLE:
                 if (outerface.empty()) {
@@ -1344,20 +1349,36 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
             }
             if (comp_method!=_GT_STYLE_TREE) {
                 C.layout_best_rotation(x);
-                graphe::scale_layout(x,std::sqrt((double)C.node_count()));
+                graphe::scale_layout(x,sep*std::sqrt((double)C.node_count()));
             }
-            Cv.push_back(C);
         }
         // combine component layouts
-        double padding=sep/4.0;
         for (int i=0;i<nc;++i) {
-            bounding_rects[i]=graphe::layout_bounding_rect(layouts[i],padding);
+            bounding_rects[i]=graphe::layout_bounding_rect(layouts[i],sep/4.0);
         }
         graphe::rectangle::comparator comp;
         sort(bounding_rects.begin(),bounding_rects.end(),comp);
         graphe::dpairs embedding;
         graphe::pack_rectangles_neatly(bounding_rects,embedding);
+        graphe::point dx(2);
+        for (graphe::dpairs::const_iterator it=embedding.begin();it!=embedding.end();++it) {
+            graphe::rectangle &brect=bounding_rects[it-embedding.begin()];
+            dx.front()=it->first-brect.x();
+            dx.back()=it->second-brect.y();
+            graphe::translate_layout(*brect.get_layout(),dx);
+        }
+        for (vector<graphe>::const_iterator it=Cv.begin();it!=Cv.end();++it) {
+            V=it->vertices();
+            graphe::layout &x=layouts[it-Cv.begin()];
+            for (const_iterateur vt=V.begin();vt!=V.end();++vt) {
+                main_layout[G.node_index(*vt)]=x[vt-V.begin()];
+            }
+        }
     }
+    G_orig.draw_edges(drawing,main_layout);
+    G_orig.draw_nodes(drawing,main_layout);
+    if (labels)
+        G_orig.draw_labels(drawing,main_layout);
     return drawing;
 }
 static const char _draw_graph_s[]="draw_graph";

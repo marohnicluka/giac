@@ -32,8 +32,11 @@ namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
 #define PLASTIC_NUMBER 1.32471795724474602596090885
+#define MARGIN_FACTOR 0.139680581996
+#define NEGLIGIBILITY_FACTOR 0.0195106649868
 #define PLESTENJAK_MAX_TRIES 6
 #define PURCHASE_TIMEOUT 2.5
+#define PACKING_ASPECT_RATIO 3.08
 #define _GRAPH__VECT 30
 
 const gen graphe::VRAI=gen(1).change_subtype(_INT_BOOLEAN);
@@ -413,25 +416,29 @@ const int graphe::harries_wong_graph_lcf[] = {
 /* messages */
 
 void graphe::message(const char *str) {
-    *logptr(ctx) << str << endl;
+    if (verbose)
+        *logptr(ctx) << str << endl;
 }
 
 void graphe::message(const char *format,int a) {
     char buffer[256];
     sprintf(buffer,format,a);
-    *logptr(ctx) << buffer << endl;
+    if (verbose)
+        *logptr(ctx) << buffer << endl;
 }
 
 void graphe::message(const char *format,int a,int b) {
     char buffer[256];
     sprintf(buffer,format,a,b);
-    *logptr(ctx) << buffer << endl;
+    if (verbose)
+        *logptr(ctx) << buffer << endl;
 }
 
 void graphe::message(const char *format,int a,int b,int c) {
     char buffer[256];
     sprintf(buffer,format,a,b,c);
-    *logptr(ctx) << buffer << endl;
+    if (verbose)
+        *logptr(ctx) << buffer << endl;
 }
 
 gen graphe::plusinf() {
@@ -485,7 +492,7 @@ graphe::vertex& graphe::vertex::operator =(const vertex &other) {
     return *this;
 }
 
-void graphe::vertex::add_neighbor(int i, const attrib &attr) {
+void graphe::vertex::add_neighbor(int i,const attrib &attr) {
     m_neighbors.push_back(i);
     copy_attributes(attr,m_neighbor_attributes[i]);
 }
@@ -563,13 +570,15 @@ graphe::dotgraph& graphe::dotgraph::operator =(const dotgraph &other) {
 /* rectangle class implementation */
 graphe::rectangle::rectangle() {
     m_x=m_y=m_width=m_height=0;
+    L=NULL;
 }
 
-graphe::rectangle::rectangle(double X,double Y,double W,double H) {
+graphe::rectangle::rectangle(double X,double Y,double W,double H,layout *ly) {
     m_x=X;
     m_y=Y;
     m_width=W;
     m_height=H;
+    L=ly;
 }
 
 void graphe::rectangle::assign(const rectangle &other) {
@@ -577,6 +586,7 @@ void graphe::rectangle::assign(const rectangle &other) {
     m_y=other.y();
     m_width=other.width();
     m_height=other.height();
+    L=other.get_layout();
 }
 
 graphe::rectangle::rectangle(const rectangle &rect) {
@@ -804,12 +814,12 @@ gen graphe::to_gen() const {
         uattr_ids.push_back(str2gen(*it,true));
     }
     gv.push_back(uattr_ids);
-    int n;
+    int n,j;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         n=it->neighbors().size();
         attrib2genmap(it->attributes(),attr);
         vecteur v=makevecteur(it->label(),attr,vecteur(n));
-        int j=0;
+        j=0;
         for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
             attrib2genmap(it->neighbor_attributes(*jt),attr);
             v.back()._VECTptr->at(j++)=makevecteur(*jt,attr);
@@ -1097,28 +1107,25 @@ void graphe::unset_all_ancestors(int sg) {
 
 /* fill the list E with edges (in the given subgraph) represented as pairs of vertex indices */
 void graphe::get_edges_as_pairs(ipairs &E,bool include_temp_edges,int sg) const {
-    int i,j,k=0,m=edge_count();
+    int i,j;
     bool dir=is_directed();
-    E.resize(m);
+    E.clear();
+    E.reserve(edge_count());
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         if (sg>=0 && it->subgraph()!=sg)
             continue;
         i=it-nodes.begin();
         for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
-            if (sg>=0 && node(*jt).subgraph()!=sg)
-                continue;
-            j=*jt;
-            if (j<0) {
+            if ((j=*jt)<0) {
                 if (!include_temp_edges)
                     continue;
                 j=-j-1;
             }
-            if (!dir && j<i)
+            if ((!dir && j<i) || (sg>=0 && node(j).subgraph()!=sg))
                 continue;
-            E[k++]=make_pair(i,j);
+            E.push_back(make_pair(i,j));
         }
     }
-    assert(k==m);
 }
 
 /* return list of edges/arcs (in the given subgraph) */
@@ -1607,12 +1614,10 @@ bool graphe::read_gen(const gen &g) {
             return false;
         register_user_tag(genstring2str(*it));
     }
-    int index;
     for (const_iterateur it=gv.begin()+2;it!=gv.end();++it) {
         if (it->type!=_VECT || int(it->_VECTptr->size())<3)
             return false;
-        index=add_node(it->_VECTptr->front());
-        vertex &vt=nodes[index];
+        vertex &vt=nodes[add_node(it->_VECTptr->front())];
         if (it->_VECTptr->at(1).type!=_MAP || it->_VECTptr->at(2).type!=_VECT)
             return false;
         genmap2attrib(*it->_VECTptr->at(1)._MAPptr,vt.attributes());
@@ -1630,15 +1635,14 @@ bool graphe::read_gen(const gen &g) {
 
 /* read special graph from a list of adjacency lists of integers */
 void graphe::read_special(const int *special_graph) {
-    const int *p=special_graph;
     int state=1;
     gen v,w;
-    for(;*p!=-2;++p) {
+    for(const int *p=special_graph;*p!=-2;++p) {
         if (*p==-1) {
             state=1;
         } else if (state==1) {
-            state=2;
             v=gen(*p);
+            state=2;
         } else if (state==2) {
             w=gen(*p);
             add_edge(v,w);
@@ -1723,7 +1727,7 @@ void graphe::add_edge(int i,int j,const gen &w) {
 }
 
 /* add edge {i,j} or arc [i,j] with attributes */
-void graphe::add_edge(int i, int j,const attrib &attr) {
+void graphe::add_edge(int i,int j,const attrib &attr) {
     assert(i>=0 && i<node_count() && j>=0 && j<node_count());
     if (has_edge(i,j))
         return;
@@ -1980,7 +1984,7 @@ bool graphe::is_weighted() const {
 
 /* create the subgraph defined by vertices from 'vi' and store it in G */
 void graphe::induce_subgraph(const ivector &vi,graphe &G,bool copy_attrib) const {
-    int i,j;
+    int i;
     G.clear();
     for (ivector_iter it=vi.begin();it!=vi.end();++it) {
         gen v_label=node_label(*it);
@@ -1989,17 +1993,14 @@ void graphe::induce_subgraph(const ivector &vi,graphe &G,bool copy_attrib) const
             i=G.add_node(v_label,attri);
         else
             G.add_node(v_label);
+    }
+    ivector_iter kt;
+    for (ivector_iter it=vi.begin();it!=vi.end();++it) {
         const vertex &v=node(*it);
         for (ivector_iter jt=v.neighbors().begin();jt!=v.neighbors().end();++jt) {
-            if (find(vi.begin(),vi.end(),*jt)==vi.end())
+            if ((kt=find(vi.begin(),vi.end(),*jt))==vi.end())
                 continue;
-            gen w_label=node_label(*jt);
-            if (copy_attrib) {
-                const attrib &attrj=nodes[*jt].attributes();
-                j=G.add_node(w_label,attrj);
-                G.add_edge(i,j,edge_attributes(i,j));
-            } else
-                G.add_edge(v_label,w_label);
+            G.add_edge(it-vi.begin(),kt-vi.begin());
         }
     }
 }
@@ -2751,29 +2752,21 @@ double graphe::layout_min(const layout &x,int d) {
 }
 
 /* return the bounding rectangle of layout x */
-graphe::rectangle graphe::layout_bounding_rect(const layout &x,double padding) {
-    dpair topleft,bottomright;
-    topleft.first=DBL_MAX;
-    topleft.second=-DBL_MAX;
-    bottomright.first=-DBL_MAX;
-    bottomright.second=DBL_MAX;
-    double a,b;
-    for (layout::const_iterator it=x.begin();it!=x.end();++it) {
-        const point &p=*it;
-        a=p[0];
-        b=p[1];
-        if (a<topleft.first)
-            topleft.first=a;
-        if (a>bottomright.first)
-            bottomright.first=a;
-        if (b>topleft.second)
-            topleft.second=b;
-        if (b<bottomright.second)
-            bottomright.second=b;
+graphe::rectangle graphe::layout_bounding_rect(layout &ly,double padding) {
+    double xmin=DBL_MAX,xmax=-DBL_MAX,ymin=DBL_MAX,ymax=-DBL_MAX,x,y;
+    for (layout_iter it=ly.begin();it!=ly.end();++it) {
+        x=it->front();
+        y=it->at(1);
+        if (x<xmin)
+            xmin=x;
+        if (x>xmax)
+            xmax=x;
+        if (y<ymin)
+            ymin=y;
+        if (y>ymax)
+            ymax=y;
     }
-    double width=bottomright.first-topleft.first+padding;
-    double height=topleft.second-bottomright.second+padding;
-    return rectangle(topleft.first-padding,topleft.second+padding,width,height);
+    return rectangle(xmin-padding,ymin-padding,xmax-xmin+2*padding,ymax-ymin+2*padding,&ly);
 }
 
 /* compute the center of layout x */
@@ -2794,7 +2787,6 @@ void graphe::scale_layout(layout &x,double diam) {
     if (x.empty())
         return;
     int d=x.front().size();
-    assert(d==2 || d==3);
     point M(d,-DBL_MAX),m(d,DBL_MAX);
     for (layout_iter it=x.begin();it!=x.end();++it) {
         const point &p=*it;
@@ -3197,8 +3189,9 @@ void graphe::make_regular_polygon_layout(layout &x,const ivector &face,double R)
 /* apply force directed algorithm to this graph (must be triconnected), with the specified outer face,
  * using the algorithm by Bor Plestenjak in "An Algorithm for Drawing Planar Graphs" */
 void graphe::make_circular_layout(layout &x,const ivector &outer_face,bool planar,double A,double tol) {
-    int n=node_count(),iter_count=0,maxper=0,tries=0;
+    int n=node_count(),iter_count=0,maxper=0,tries=0,j;
     vector<bool> is_outer(n,false);
+    x.resize(n);
     for (int i=0;i<n;++i) {
         if (find(outer_face.begin(),outer_face.end(),i)!=outer_face.end())
             is_outer[i]=true;
@@ -3241,13 +3234,15 @@ void graphe::make_circular_layout(layout &x,const ivector &outer_face,bool plana
             clear_point_coords(pt);
             vertex &v=node(i);
             for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
-                point &q=x[*it];
+                j=*it;
+                if (j<0) j=-j-1;
+                point &q=x[j];
                 point r(2);
                 copy_point(q,r);
                 subtract_point(r,p);
                 Ci=C;
                 if (A>0)
-                    Ci*=std::exp(A*(2.0*maxper-per[i]-per[*it])/(double)maxper);
+                    Ci*=std::exp(A*(2.0*maxper-per[i]-per[j])/(double)maxper);
                 displacement=Ci*point_displacement(r,false);
                 scale_point(r,displacement);
                 add_point(pt,r);
@@ -3531,10 +3526,9 @@ void graphe::make_complete_multipartite_graph(const ivector &partition_sizes) {
 
 /* create generalized Petersen graph G(n,k) using Watkins' notation */
 void graphe::make_petersen_graph(int n, int k) {
-    vecteur u,v;
-    make_default_labels(u,n,0);
-    make_default_labels(v,n,n);
-    add_nodes(mergevecteur(u,v));
+    vecteur V;
+    make_default_labels(V,2*n);
+    add_nodes(V);
     // add the outer cycle first
     for (int i=0;i<n;++i) {
         add_edge(i,(i+1)%n);
@@ -4779,21 +4773,21 @@ void graphe::sort_rectangles(vector<rectangle> &rectangles) {
 
 /* packing rectangles (sorted by height) into an enclosing rectangle with specified dimensions,
  * returns true if embedding has changed */
-bool graphe::pack_rectangles(const vector<rectangle> &rectangles,dpairs &embedding,double ew,double eh) {
+bool graphe::pack_rectangles(const vector<rectangle> &rectangles,dpairs &embedding,double ew,double eh,double eps) {
     vector<rectangle> blanks;
     blanks.push_back(rectangle(0,0,ew,eh));
-    vector<rectangle>::const_iterator it;
-    double xpos,ypos,w,h,dw,dh;
+    double xpos,ypos,w,h;
     int k;
     bool embedding_changed=false;
-    while (it!=rectangles.end()) {
+    for (vector<rectangle>::const_iterator it=rectangles.begin();it!=rectangles.end();++it) {
         // find the leftmost blank which can hold the rectangle
         k=-1;
-        for (int i=0;i<int(blanks.size());++i) {
-            if (blanks[i].width()>=it->width() && blanks[i].height()>=it->height() &&
-                    (k==-1 || blanks[i].x()<xpos)) {
-                k=i;
-                xpos=blanks[k].x();
+        for (vector<rectangle>::const_iterator jt=blanks.begin();jt!=blanks.end();++jt) {
+            if (jt->width()-it->width()>-eps &&
+                    jt->height()-it->height()>-eps &&
+                    (k<0 || jt->x()<xpos)) {
+                k=jt-blanks.begin();
+                xpos=jt->x();
             }
         }
         assert(k>=0);
@@ -4803,55 +4797,54 @@ bool graphe::pack_rectangles(const vector<rectangle> &rectangles,dpairs &embeddi
         w=blank.width();
         h=blank.height();
         blanks.erase(blanks.begin()+k); // delete blank in which the rectangle is inserted
-        // insert the rectangle (breaking the deleted blank into two or four pieces)
         dpair newpos=make_pair(xpos,ypos);
-        dpair &oldpos=embedding[it-rectangles.begin()];
-        if (newpos!=oldpos) {
-            oldpos=newpos;
+        dpair &pos=embedding[it-rectangles.begin()];
+        if (newpos!=pos) {
+            pos=newpos;
             embedding_changed=true;
         }
         // add new (smaller) blanks obtained by splitting the deleted blank
-        if ((dw=w-it->width())>0)
-            blanks.push_back(rectangle(xpos+it->width(),ypos,dw,it->height()));
-        if ((dh=h-it->height())>0)
-            blanks.push_back(rectangle(xpos,ypos+it->height(),it->width(),dh));
-        if (dw>0 && dh>0)
-            blanks.push_back(rectangle(xpos+it->width(),ypos+it->height(),dw,dh));
+        blanks.push_back(rectangle(xpos+it->width(),ypos,w-it->width(),it->height()));
+        blanks.push_back(rectangle(xpos,ypos+it->height(),w,h-it->height()));
         // move iterator to the next rectangle and start over
-        ++it;
     }
     return embedding_changed;
 }
 
 /* pack rectangles (sorted by height) to an enclosing rectangle with minimal perimeter and wasted space */
 void graphe::pack_rectangles_neatly(const vector<rectangle> &rectangles,dpairs &best_embedding) {
-    int n=rectangles.size(),i;
+    int n=rectangles.size();
     // compute total area occupied by the rectangles
     double total_area=0;
     for (vector<rectangle>::const_iterator it=rectangles.begin();it!=rectangles.end();++it) {
         total_area+=it->width()*it->height();
     }
     // step = the length of a negligible part of the shorter side of the smallest rectangle
-    const rectangle &smallest=rectangles.back(),&largest=rectangles.front();
-    double step=std::min(smallest.width(),smallest.height())*std::pow(PLASTIC_NUMBER,-14);
-    double ew=DBL_MAX,eh=largest.height(); // initial enclosing rectangle has an "unlimited" width
-    double perimeter,best_perimeter=DBL_MAX,d;
+    double maxwidth=0,minwidth=DBL_MAX,minheight=rectangles.back().height();
+    for (vector<rectangle>::const_iterator it=rectangles.begin();it!=rectangles.end();++it) {
+        if (it->width()>maxwidth)
+            maxwidth=it->width();
+        if (it->width()<minwidth)
+            minwidth=it->width();
+    }
+    double step=std::min(minwidth,minheight)*NEGLIGIBILITY_FACTOR;
+    double ew=DBL_MAX,eh=rectangles.front().height(); // initial enclosing rectangle has an "unlimited" width
+    double perim,best_perim=DBL_MAX,d;
     dpairs embedding(n,make_pair(-1,-1));
-    while (ew>largest.width()) { // loop breaks after a stacked embedding is obtained
-        if (pack_rectangles(rectangles,embedding,ew,eh)) {
+    while (ew>maxwidth+step) { // loop breaks after a stacked embedding is obtained
+        if (pack_rectangles(rectangles,embedding,ew,eh,step*MARGIN_FACTOR)) {
             ew=eh=0;
-            i=0;
             // find the smallest enclosing rectangle containing the embedding
             for (dpairs::const_iterator it=embedding.begin();it!=embedding.end();++it) {
-                if ((d=it->first+rectangles[i].width())>ew)
+                const rectangle &rect=rectangles[it-embedding.begin()];
+                if ((d=it->first+rect.width())>ew)
                     ew=d;
-                if ((d=it->second+rectangles[i].height())>eh)
+                if ((d=it->second+rect.height())>eh)
                     eh=d;
-                ++i;
             }
-            // find teh embedding with the smaller perimeter (when scaled by the wasted ratio)
-            if ((perimeter=(ew+eh)*ew*eh/total_area)<best_perimeter) {
-                best_perimeter=perimeter;
+            // find the embedding with the smaller perimeter (when scaled by the wasted ratio)
+            if ((perim=(ew+PACKING_ASPECT_RATIO*eh)*ew*PACKING_ASPECT_RATIO*eh/total_area)<best_perim) {
+                best_perim=perim;
                 best_embedding=embedding;
             }
         }
@@ -5240,7 +5233,7 @@ graphe::point graphe::axis_of_symmetry(layout &x) {
         }
     }
     diam=std::sqrt(diam);
-    double tol=diam*std::pow(PLASTIC_NUMBER,-14); // max negligible node displacement
+    double tol=diam*NEGLIGIBILITY_FACTOR; // max negligible node displacement
     point center=layout_center(x);
     vecteur labels;
     int nc=node_count();
@@ -5292,7 +5285,7 @@ bool graphe::make_planar_layout(layout &x) {
     T.triangulate(f);
     // create a fake outer face
     ivector &outer_face=faces[f];
-    N=node_label(node_count()-1).val;
+    N=_max(vertices(),giac_context()).val;
     m=outer_face.size();
     ivector new_outer_face(m),degrees(m);
     for (int i=0;i<m;++i) {
@@ -5313,13 +5306,13 @@ bool graphe::make_planar_layout(layout &x) {
             add_edge(outer_face[i],new_outer_face[w]);
     }
     // create the layout
-    x.resize(node_count());
     make_circular_layout(x,new_outer_face,true);
     // remove temporary vertices and edges, if any
     while (node_count()>n) {
         remove_node(node_count()-1);
     }
     remove_temporary_edges();
+    x.resize(n);
     return true;
 }
 
@@ -5374,12 +5367,15 @@ void graphe::layout_best_rotation(layout &x) {
 /* guess the style to be used for drawing when no method is specified */
 int graphe::guess_drawing_style() {
     ivector cycle;
-    if (is_tree())
+    if (is_tree()) {
         return _GT_STYLE_TREE;
-    if (get_leading_cycle(cycle) &&
+    } else if (get_leading_cycle(cycle) &&
             node_count()<100+int(cycle.size()) &&
-            (node_count()==int(cycle.size()) || is_triconnected()))
+            (node_count()==int(cycle.size()) || is_triconnected())) {
         return _GT_STYLE_CIRCLE;
+    } else if (node_count()<300 && is_planar()) {
+        return _GT_STYLE_PLANAR;
+    }
     return _GT_STYLE_SPRING;
 }
 
@@ -5468,11 +5464,11 @@ void graphe::draw_edges(vecteur &drawing,const layout &x) const {
 /* append points representing vertices of the graph to vecteur v */
 void graphe::draw_nodes(vecteur &drawing,const layout &x) const {
     int color,width,n=node_count();
-    if (n<=15)
+    if (n<=30)
         width=_POINT_WIDTH_4;
-    else if (n<=40)
+    else if (n<=130)
         width=_POINT_WIDTH_3;
-    else if (n<=107)
+    else if (n<=330)
         width=_POINT_WIDTH_2;
     else
         width=_POINT_WIDTH_1;
@@ -5560,18 +5556,19 @@ int graphe::node_label_best_quadrant(const layout &x,const point &center,int i) 
 }
 
 /* append labels of the nodes of this graph to vecteur v */
-void graphe::draw_labels(vecteur &v,const layout &x) const {
+void graphe::draw_labels(vecteur &drawing,const layout &x) const {
     int quadrant;
     point center=layout_center(x);
     for (int i=0;i<node_count();++i) {
         const point &p=x[i];
         quadrant=node_label_best_quadrant(x,center,i);
-        append_label(v,p,nodes[i].label(),quadrant);
+        append_label(drawing,p,nodes[i].label(),quadrant);
     }
 }
 
 /* extract the largest leading cycle from this graph and return true iff it exists */
 bool graphe::get_leading_cycle(ivector &c) const {
+    c.clear();
     int n=node_count();
     for (int i=0;i<n;++i) {
         if (i==0 || has_edge(i,i-1)) {
@@ -5708,22 +5705,23 @@ bool graphe::is_triconnected() {
     }
     if (!G.is_connected() || !G.is_biconnected())
         return false;
-    vecteur V=G.vertices(),neighbors;
+    vecteur V=G.vertices(),adj;
     int i,k;
     for (const_iterateur it=V.begin();it!=V.end();++it) {
         i=G.node_index(*it);
         const vertex &v=G.node(i);
-        neighbors.resize(v.neighbors().size());
+        adj.resize(v.neighbors().size());
+        ivector ngh(v.neighbors());
         k=0;
-        for (ivector_iter jt=v.neighbors().begin();jt!=v.neighbors().end();++jt) {
-            neighbors[k++]=G.node_label(*jt);
+        for (ivector_iter jt=ngh.begin();jt!=ngh.end();++jt) {
+            adj[k++]=G.node_label(*jt);
             G.remove_edge(i,*jt);
         }
         G.remove_isolated_node(i);
         if (!G.is_biconnected())
             return false;
         G.add_node(*it);
-        for (const_iterateur nt=neighbors.begin();nt!=neighbors.end();++nt) {
+        for (const_iterateur nt=adj.begin();nt!=adj.end();++nt) {
             G.add_edge(*it,*nt);
         }
     }

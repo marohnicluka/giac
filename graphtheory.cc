@@ -1191,6 +1191,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     graphe G_orig(contextptr);
     if (!G_orig.read_gen(has_opts?gv.front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    bool isdir=G_orig.is_directed();
     vecteur root_nodes,cycle;
     int method=_GT_STYLE_DEFAULT;
     if (has_opts) {
@@ -1351,7 +1352,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 C.layout_best_rotation(x);
                 graphe::scale_layout(x,sep*std::sqrt((double)C.node_count()));
             }
-        }
+       }
         // combine component layouts
         for (int i=0;i<nc;++i) {
             bounding_rects[i]=graphe::layout_bounding_rect(layouts[i],sep/4.0);
@@ -1359,7 +1360,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
         graphe::rectangle::comparator comp;
         sort(bounding_rects.begin(),bounding_rects.end(),comp);
         graphe::dpairs embedding;
-        graphe::pack_rectangles_neatly(bounding_rects,embedding);
+        graphe::pack_rectangles(bounding_rects,embedding);
         graphe::point dx(2);
         for (graphe::dpairs::const_iterator it=embedding.begin();it!=embedding.end();++it) {
             graphe::rectangle &brect=bounding_rects[it-embedding.begin()];
@@ -1367,14 +1368,25 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
             dx.back()=it->second-brect.y();
             graphe::translate_layout(*brect.get_layout(),dx);
         }
+        int i,j;
         for (vector<graphe>::const_iterator it=Cv.begin();it!=Cv.end();++it) {
-            V=it->vertices();
             graphe::layout &x=layouts[it-Cv.begin()];
-            for (const_iterateur vt=V.begin();vt!=V.end();++vt) {
-                main_layout[G.node_index(*vt)]=x[vt-V.begin()];
+            for (graphe::layout_iter jt=x.begin();jt!=x.end();++jt) {
+                const graphe::vertex &v=it->node(jt-x.begin());
+                i=G_orig.node_index(v.label());
+                main_layout[i]=*jt;
+                if (isdir) {
+                    for (graphe::ivector_iter nt=v.neighbors().begin();nt!=v.neighbors().end();++nt) {
+                        j=G_orig.node_index(it->node(*nt).label());
+                        const graphe::attrib &attr=v.neighbor_attributes(*nt);
+                        if (G_orig.has_edge(i,j))
+                            G_orig.set_edge_attribute(i,j,_GT_ATTRIB_POSITION,attr.find(_GT_ATTRIB_POSITION)->second);
+                    }
+                }
             }
         }
     }
+    G_orig.edge_labels_placement(main_layout);
     G_orig.draw_edges(drawing,main_layout);
     G_orig.draw_nodes(drawing,main_layout);
     if (labels)

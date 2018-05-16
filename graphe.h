@@ -348,6 +348,8 @@ private:
     static double point_dotprod(const point &p,const point &q);
     static void clear_point_coords(point &p);
     static double point_displacement(const point &p,bool sqroot=true);
+    static double point_distance(const point &p,const point &q,point &pq);
+    static void point_lincomb(const point &p,const point &q,double d1,double d2,point &res);
     static void copy_point(const point &src,point &dest);
     void rand_point(point &p,double radius=1.0);
     static void point_reflection(const point &src,const point &axis,point &dest);
@@ -365,13 +367,13 @@ private:
     void coarsening(graphe &G,const sparsemat &P,const ivector &V) const;
     void tomita_recurse(const ivector &R,const ivector &P_orig,const ivector &X_orig,ivectors &cliques) const;
     void remove_isolated_node(int i);
-    void find_cut_vertices_dfs(int i,ivector &ap);
-    void find_blocks_dfs(int i,std::vector<ipairs> &blocks);
-    void find_bridges_dfs(int i,ipairs &B);
-    int find_cycle_dfs(int i);
+    void find_cut_vertices_dfs(int i,ivector &ap,int sg);
+    void find_blocks_dfs(int i,std::vector<ipairs> &blocks,int sg);
+    void find_bridges_dfs(int i,ipairs &B,int sg);
+    int find_cycle_dfs(int i,int sg);
     bool find_path_dfs(int dest,int i,int sg,bool skip_embedded);
     static void sort_rectangles(std::vector<rectangle> &rectangles);
-    static bool pack_rectangles(const std::vector<rectangle> &rectangles,dpairs &embedding,double ew,double eh,double eps);
+    static bool embed_rectangles(const std::vector<rectangle> &rectangles,dpairs &embedding,double ew,double eh,double eps);
     static bool segments_crossing(const point &p,const point &r,const point &q,const point &s,point &crossing);
     static bool point2segment_projection(const point &p,const point &q,const point &r,point &proj);
     static double ccw(const point &p1,const point &p2,const point &p3);
@@ -383,7 +385,6 @@ private:
     static double squared_distance(const point &p,const point &line);
     void accumulate_repulsive_force(const point &p,const point &q,double R,double D,double eps,point &force);
     void force_directed_placement(layout &x,double K,double R,double tol=0.001,bool ac=true);
-    void edge_labels_placement(layout &y,const layout &x,int dim,double K,double tol=0.001);
     static bool get_position(const attrib &attr,point &p);
     void coarsening_mis(const ivector &V,graphe &G,sparsemat &P) const;
     void coarsening_ec(const ipairs &M,graphe &G,sparsemat &P) const;
@@ -401,6 +402,7 @@ private:
     int choose_embedding_face(const ivectors &faces,int v);
     static int choose_outer_face(const ivectors &faces);
     static void make_regular_polygon_layout(layout &x,const ivector &face,double R=1.0);
+    bool edges_crossing(const ipair &e1,const ipair &e2,const layout &x,point &crossing);
     bool has_crossing_edges(const layout &x,const ipairs &E) const;
     static void build_block_tree(int i,ivectors &blocks);
     static int common_element(const ivector &v1,const ivector &v2,int offset=0);
@@ -411,6 +413,7 @@ private:
     void tree_height_dfs(int i,int level,int &depth);
     void make_product_nodes(const graphe &G,graphe &P) const;
     static void extract_path_from_cycle(const ivector &cycle,int i,int j,ivector &path);
+    int largest_integer_label_value() const;
 
 public:
     graphe(const context *contextptr=context0);
@@ -464,9 +467,9 @@ public:
     void dfs(int root,bool rec=true,bool clr=true,ivector *D=NULL,int sg=-1,bool skip_embedded=false);
     void bfs(int root,bool rec=true,bool clr=true,ivector *D=NULL,int sg=-1,bool skip_embedded=false);
     const ivector &get_discovered_nodes() const { return discovered_nodes; }
-    bool is_connected();
-    bool is_biconnected();
-    bool is_triconnected();
+    bool is_connected(int sg=-1);
+    bool is_biconnected(int sg=-1);
+    bool is_triconnected(int sg=-1);
     void adjacent_nodes(int i,ivector &adj,bool include_temp_edges=true) const;
     void translate_indices_to(const graphe &G,const ivector &indices,ivector &dest) const;
     void translate_indices_from(const graphe &G,const ivector &indices,ivector &dest) const;
@@ -485,6 +488,7 @@ public:
     int node_index(const gen &v) const;
     void set_subgraph(const ivector &v,int s);
     void merge_subgraphs(int s,int t);
+    int max_subgraph_index() const;
     const attrib &graph_attributes() const { return attributes; }
     const attrib &node_attributes(int i) const { assert(i>=0 && i<node_count()); return node(i).attributes(); }
     const attrib &edge_attributes(int i,int j) const;
@@ -550,7 +554,7 @@ public:
     double make_tree_layout(layout &x,double sep,int apex=0);
     void layout_best_rotation(layout &x);
     static rectangle layout_bounding_rect(layout &ly,double padding=0);
-    static void pack_rectangles_neatly(const std::vector<rectangle> &rectangles,dpairs &best_embedding);
+    static void pack_rectangles(const std::vector<rectangle> &rectangles,dpairs &best_embedding);
     int guess_drawing_style();
     static gen point2gen(const point &p,bool vect=false);
     static point layout_center(const layout &x);
@@ -585,17 +589,20 @@ public:
     void cartesian_product(const graphe &G,graphe &P) const;
     void tensor_product(const graphe &G,graphe &P) const;
     void connected_components(ivectors &components,int sg=-1,bool skip_embedded=false,int *count=NULL);
-    void find_cut_vertices(ivector &articulation_points);
-    void find_blocks(std::vector<ipairs> &blocks);
-    void find_bridges(ipairs &B);
-    bool find_cycle(ivector &cycle,bool randomize=true);
+    bool has_cut_vertex(int sg=-1,int i=0);
+    void find_cut_vertices(ivector &articulation_points,int sg=-1);
+    void find_blocks(std::vector<ipairs> &blocks,int sg=-1);
+    void find_bridges(ipairs &B,int sg=-1);
+    bool find_cycle(ivector &cycle,int sg=-1);
     bool find_path(int i,int j,ivector &path,int sg=-1,bool skip_embedded=false);
     bool find_eulerian_path(ivector &path) const;
     void collapse_edge(int i,int j);
     void incident_edges(const ivector &V,edgeset &E);
-    bool convex_hull(ivector &ccw_indices,const layout &x) const;
-    double subgraph_area(const layout &x,const ivector &v=ivector()) const;
-    void draw_edges(vecteur &drawing,const layout &x) const;
+    static void convex_hull(ivector &hull,const layout &x,const ivector &v);
+    double subgraph_area(const layout &x,const ivector &v) const;
+    double graph_area(const layout &x) const;
+    void edge_labels_placement(const layout &x,double K=1.0,double tol=0.001);
+    void draw_edges(vecteur &drawing,const layout &x);
     void draw_nodes(vecteur &drawing,const layout &x) const;
     void draw_labels(vecteur &drawing,const layout &x) const;
     bool get_leading_cycle(ivector &c) const;

@@ -1889,6 +1889,16 @@ void graphe::merge_subgraphs(int s,int t) {
     }
 }
 
+/* return maximal subgraph index in this graph */
+int graphe::max_subgraph_index() const {
+    int mi=-2;
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        if (it->subgraph()>mi)
+            mi=it->subgraph();
+    }
+    return mi;
+}
+
 /* make cycle graph with n vertices */
 void graphe::make_cycle_graph() {
     int n=node_count();
@@ -1984,13 +1994,12 @@ bool graphe::is_weighted() const {
 
 /* create the subgraph defined by vertices from 'vi' and store it in G */
 void graphe::induce_subgraph(const ivector &vi,graphe &G,bool copy_attrib) const {
-    int i;
     G.clear();
     for (ivector_iter it=vi.begin();it!=vi.end();++it) {
         gen v_label=node_label(*it);
         const attrib &attri=nodes[*it].attributes();
         if (copy_attrib)
-            i=G.add_node(v_label,attri);
+            G.add_node(v_label,attri);
         else
             G.add_node(v_label);
     }
@@ -2681,6 +2690,23 @@ double graphe::point_displacement(const point &p,bool sqroot) {
     return sqroot?std::sqrt(norm):norm;
 }
 
+/* return the distance between points p and q */
+double graphe::point_distance(const point &p,const point &q,point &pq) {
+    copy_point(q,pq);
+    subtract_point(pq,p);
+    return point_displacement(pq);
+}
+
+/* write d1*p+d2*q to res */
+void graphe::point_lincomb(const point &p,const point &q,double d1,double d2,point &res) {
+    point tmp(q.size());
+    copy_point(q,tmp);
+    scale_point(tmp,d2);
+    copy_point(p,res);
+    scale_point(res,d1);
+    add_point(res,tmp);
+}
+
 /* copy layout src to dest (both must be initialized first) */
 void graphe::copy_layout(const layout &src,layout &dest) {
     layout_iter st=src.begin();
@@ -2826,14 +2852,12 @@ void graphe::create_random_layout(layout &x,double K,int d) {
 void graphe::accumulate_repulsive_force(const point &p,const point &q,double R,double D,double eps,point &force) {
     assert(p.size()==q.size() && p.size()==force.size());
     point f(p.size());
-    copy_point(p,f);
-    subtract_point(f,q);
-    double norm_squared=point_displacement(f,false);
-    if (norm_squared>R*R)
+    double norm=point_distance(q,p,f);
+    if (norm>R)
         return;
-    if (norm_squared==0)
-        rand_point(f,norm_squared=eps);
-    scale_point(f,D/norm_squared);
+    if (norm==0)
+        rand_point(f,norm=eps);
+    scale_point(f,D/(norm*norm));
     add_point(force,f);
 }
 
@@ -2860,11 +2884,8 @@ void graphe::force_directed_placement(layout &x,double K,double R,double tol,boo
             // compute attractive forces between vertices adjacent to the i-th vertex
             vertex &v=node(i);
             for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
-                j=*it;
-                copy_point(xi,p);
-                subtract_point(p,x[j]);
-                scale_point(p,point_displacement(p)/K);
-                subtract_point(force,p);
+                scale_point(p,point_distance(xi,x[*it],p)/K);
+                add_point(force,p);
             }
             // compute repulsive forces for all vertices j!=i which are not too far from the i-th vertex
             for (j=0;j<n;++j) {
@@ -2903,36 +2924,30 @@ void graphe::force_directed_placement(layout &x,double K,double R,double tol,boo
 }
 
 /* compute optimal positions of edge labels and store them as "position" attributes of the respective edges */
-void graphe::edge_labels_placement(layout &y,const layout &x,int dim,double K,double tol) {
+void graphe::edge_labels_placement(const layout &x,double K,double tol) {
+    if (x.empty())
+        return;
+    int dim=x.front().size();
     ipairs E;
     get_edges_as_pairs(E,false);
     int n=E.size(),k;
-    y.resize(n);
-    layout dir(n);
-    point force(dim),f(dim),v(dim);
-    double C=0.01,D=C*K*K,step_length=K,shrinking_factor=0.9,eps=K*tol;
+    layout y(n),dir(n);
+    point force(dim),v(dim);
+    double C=0.01,D=C*K*K,step_length=K,shrinking_factor=0.1,eps=K*tol;
     double max_displacement,norm,maxnorm;
-    bool isdir=is_directed();
     // generate an initial placement of edge labels and store edge directions
     for (int i=0;i<n;++i) {
         ipair &edge=E[i];
         const point &p1=x[edge.first],&p2=x[edge.second];
         point &p=y[i],&u=dir[i];
-        p.resize(dim,0);
-        copy_point(p2,u);
-        subtract_point(u,p1);
-        if ((norm=point_displacement(u))==0)
+        p.resize(dim);
+        u.resize(dim);
+        if ((norm=point_distance(p1,p2,u))==0)
             continue;
         scale_point(u,1.0/norm);
-        if (isdir) {
-            copy_point(p1,p);
-            scale_point(u,norm/3.0);
-            add_point(p,u);
-        } else {
-            copy_point(p1,p);
-            add_point(p,p2);
-            scale_point(p,0.5);
-        }
+        copy_point(p1,p);
+        add_point(p,p2);
+        scale_point(p,0.5);
     }
     // keep updating the positions until the system freezes
     do {
@@ -2946,10 +2961,12 @@ void graphe::edge_labels_placement(layout &y,const layout &x,int dim,double K,do
             // compute the resultant force applying to p
             for (int i=0;i<n;++i) {
                 if (i!=k)
-                    accumulate_repulsive_force(p,y[i],K,D,shrinking_factor*eps,force);
+                    accumulate_repulsive_force(p,y[i],DBL_MAX,K*K,shrinking_factor*eps,force);
             }
-            accumulate_repulsive_force(p,p1,K,D,shrinking_factor*eps,force);
-            accumulate_repulsive_force(p,p2,K,D,shrinking_factor*eps,force);
+            accumulate_repulsive_force(p,p1,DBL_MAX,K*K,shrinking_factor*eps,force);
+            accumulate_repulsive_force(p,p2,DBL_MAX,K*K,shrinking_factor*eps,force);
+            scale_point(v,point_distance(p,p1,v)/K);
+            add_point(force,v);
             // compute projection of the resultant force onto the vector u
             norm=point_displacement(force);
             if (norm==0)
@@ -2957,21 +2974,19 @@ void graphe::edge_labels_placement(layout &y,const layout &x,int dim,double K,do
             norm=point_dotprod(force,u);
             copy_point(u,force);
             scale_point(force,norm);
-            // update the position of p, ensuring that it stays between p1 and p2
+            norm=std::abs(norm);
+            // update the position of p, assuring that it stays between p1 and p2
             if (step_length<norm) {
                 scale_point(force,step_length/norm);
                 norm=step_length;
             }
             for (int i=0;i<2;++i) {
-                copy_point(i==0?p1:p2,v);
-                subtract_point(v,p);
-                if (point_dotprod(v,force)>0) {
-                    maxnorm=point_displacement(v)*shrinking_factor;
+                maxnorm=point_distance(p,i==0?p1:p2,v)*shrinking_factor;
+                if (point_dotprod(force,v)>0) {
                     if (norm>maxnorm) {
                         scale_point(force,maxnorm/norm);
                         norm=maxnorm;
                     }
-                    break;
                 }
             }
             add_point(p,force);
@@ -2982,9 +2997,13 @@ void graphe::edge_labels_placement(layout &y,const layout &x,int dim,double K,do
         step_length*=shrinking_factor; // simple cooling scheme
     } while (max_displacement>eps);
     // store edge label positions as edge attributes
+    double d1,d2;
     for (layout_iter it=y.begin();it!=y.end();++it) {
-        ipair &edge=E[it-y.begin()];
-        set_edge_attribute(edge.first,edge.second,_GT_ATTRIB_POSITION,point2vecteur(*it));
+        const ipair &edge=E[it-y.begin()];
+        const point &p=x[edge.first],&q=x[edge.second];
+        d1=point_distance(p,*it,v);
+        d2=point_distance(q,*it,v);
+        set_edge_attribute(edge.first,edge.second,_GT_ATTRIB_POSITION,d2/(d1+d2));
     }
 }
 
@@ -3042,7 +3061,7 @@ int graphe::mdeg(const ivector &V, int i) const {
     return d;
 }
 
-/* coarsening of the graph with respect to prolongation matrix P */
+/* coarsening of the graph with respect to the prolongation matrix P */
 void graphe::coarsening(graphe &G,const sparsemat &P,const ivector &V) const {
     sparsemat Q,I,R,IG;
     int m=V.size(),n=node_count();
@@ -3674,7 +3693,46 @@ void graphe::connected_components(ivectors &components,int sg,bool skip_embedded
         *count=c;
 }
 
-void graphe::find_cut_vertices_dfs(int i,ivector &ap) {
+bool graphe::has_cut_vertex(int sg,int i) {
+    vertex &v=node(i);
+    if (i==0) {
+        unvisit_all_nodes();
+        unset_all_ancestors();
+        disc_time=0;
+    }
+    if (sg>=0 && v.subgraph()!=sg)
+        return i==node_count()-1?false:has_cut_vertex(sg,i+1);
+    v.set_visited(true);
+    ++disc_time;
+    v.set_disc(disc_time);
+    v.set_low(disc_time);
+    int children=0;
+    for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
+        int j=*it;
+        if (j<0) j=-j-1;
+        vertex &w=node(j);
+        if (sg>=0 && w.subgraph()!=sg)
+            continue;
+        if (!w.is_visited()) {
+            ++children;
+            w.set_ancestor(i);
+            if (has_cut_vertex(sg,j))
+                return true;
+            if (v.ancestor()<0) {
+                if (children==2)
+                    return true;
+            } else {
+                v.set_low(std::min(v.low(),w.low()));
+                if (w.low()>=v.disc())
+                    return true;
+            }
+        } else if (j!=v.ancestor() && w.disc()<v.disc())
+            v.set_low(std::min(v.low(),w.disc()));
+    }
+    return false;
+}
+
+void graphe::find_cut_vertices_dfs(int i,ivector &ap,int sg) {
     vertex &v=node(i);
     v.set_visited(true);
     ++disc_time;
@@ -3685,10 +3743,12 @@ void graphe::find_cut_vertices_dfs(int i,ivector &ap) {
         int j=*it;
         if (j<0) j=-j-1;
         vertex &w=node(j);
+        if (sg>=0 && w.subgraph()!=sg)
+            continue;
         if (!w.is_visited()) {
             ++children;
             w.set_ancestor(i);
-            find_cut_vertices_dfs(j,ap);
+            find_cut_vertices_dfs(j,ap,sg);
             if (v.ancestor()<0) {
                 if (children==2)
                     ap.push_back(i);
@@ -3702,21 +3762,20 @@ void graphe::find_cut_vertices_dfs(int i,ivector &ap) {
     }
 }
 
-/* return list of cut vertices obtained by using depth-first search, complexity O(V+E) */
-void graphe::find_cut_vertices(ivector &articulation_points) {
+/* return list of cut vertices obtained by using depth-first search, time complexity O(n+m) */
+void graphe::find_cut_vertices(ivector &articulation_points,int sg) {
     unvisit_all_nodes();
     unset_all_ancestors();
     disc_time=0;
-    int n=node_count();
     articulation_points.clear();
-    articulation_points.reserve(n);
-    for (int i=0;i<n;++i) {
-        if (!node(i).is_visited())
-            find_cut_vertices_dfs(i,articulation_points);
+    articulation_points.reserve(node_count());
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        if ((sg<0 || it->subgraph()==sg) && !it->is_visited())
+            find_cut_vertices_dfs(it-nodes.begin(),articulation_points,sg);
     }
 }
 
-void graphe::find_blocks_dfs(int i,vector<ipairs> &blocks) {
+void graphe::find_blocks_dfs(int i,vector<ipairs> &blocks,int sg) {
     ++disc_time;
     vertex &v=node(i);
     v.set_disc(disc_time);
@@ -3728,11 +3787,13 @@ void graphe::find_blocks_dfs(int i,vector<ipairs> &blocks) {
         j=*it;
         if (j<0) j=-j-1;
         vertex &w=node(j);
+        if (sg>=0 && w.subgraph()!=sg)
+            continue;
         edge=make_pair(i<j?i:j,i<j?j:i);
         if (!w.is_visited()) {
             w.set_ancestor(i);
             edge_stack.push(edge);
-            find_blocks_dfs(j,blocks);
+            find_blocks_dfs(j,blocks,sg);
             v.set_low(std::min(v.low(),w.low()));
             if (w.low()>=v.disc()) {
                 // output biconnected component to 'blocks'
@@ -3751,20 +3812,19 @@ void graphe::find_blocks_dfs(int i,vector<ipairs> &blocks) {
 }
 
 /* create list of all biconnected components (as lists of edges) of the graph */
-void graphe::find_blocks(vector<ipairs> &blocks) {
-    unvisit_all_nodes();
-    unset_all_ancestors();
+void graphe::find_blocks(vector<ipairs> &blocks,int sg) {
+    unvisit_all_nodes(sg);
+    unset_all_ancestors(sg);
     disc_time=0;
     assert(edge_stack.empty());
-    int n=node_count();
-    for (int i=0;i<n;++i) {
-        if (!node(i).is_visited())
-            find_blocks_dfs(i,blocks);
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        if ((sg<0 || it->subgraph()==sg) && !it->is_visited())
+            find_blocks_dfs(it-nodes.begin(),blocks,sg);
     }
     while (!edge_stack.empty()) edge_stack.pop();
 }
 
-void graphe::find_bridges_dfs(int i,ipairs &B) {
+void graphe::find_bridges_dfs(int i,ipairs &B,int sg) {
     vertex &v=node(i);
     v.set_visited(true);
     ++disc_time;
@@ -3774,9 +3834,11 @@ void graphe::find_bridges_dfs(int i,ipairs &B) {
         int j=*it;
         if (j<0) j=-j-1;
         vertex &w=node(j);
+        if (sg>=0 && w.subgraph()!=sg)
+            continue;
         if (!w.is_visited()) {
             w.set_ancestor(i);
-            find_bridges_dfs(j,B);
+            find_bridges_dfs(j,B,sg);
             v.set_low(std::min(v.low(),w.low()));
             if (w.low()>v.disc())
                 B.push_back(make_pair(i<j?i:j,i<j?j:i));
@@ -3787,14 +3849,14 @@ void graphe::find_bridges_dfs(int i,ipairs &B) {
 
 
 /* create list B of all bridges in an undirected graph */
-void graphe::find_bridges(ipairs &B) {
+void graphe::find_bridges(ipairs &B,int sg) {
     assert(!is_directed());
-    unvisit_all_nodes();
-    unset_all_ancestors();
+    unvisit_all_nodes(sg);
+    unset_all_ancestors(sg);
     disc_time=0;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
-        if (!it->is_visited())
-            find_bridges_dfs(it-nodes.begin(),B);
+        if ((sg<0 || it->subgraph()==sg) && !it->is_visited())
+            find_bridges_dfs(it-nodes.begin(),B,sg);
     }
 }
 
@@ -3834,7 +3896,7 @@ bool graphe::find_eulerian_path(ivector &path) const {
     return true;
 }
 
-int graphe::find_cycle_dfs(int i) {
+int graphe::find_cycle_dfs(int i,int sg) {
     vertex &v=node(i);
     v.set_visited(true);
     node_stack.push(i);
@@ -3843,13 +3905,15 @@ int graphe::find_cycle_dfs(int i) {
         j=*it;
         if (j<0) j=-j-1;
         vertex &w=node(j);
+        if (sg>=0 && w.subgraph()!=sg)
+            continue;
         if (w.is_visited()) {
             if (v.ancestor()!=j)
                 return j;
             continue;
         }
         w.set_ancestor(i);
-        k=find_cycle_dfs(j);
+        k=find_cycle_dfs(j,sg);
         if (k>=0)
             return k;
     }
@@ -3859,24 +3923,27 @@ int graphe::find_cycle_dfs(int i) {
 
 /* return a cycle in this graph using DFS (graph is assumed to be connected),
  * or an empty list if there is no cycle (i.e. if the graph is a tree) */
-bool graphe::find_cycle(ivector &cycle,bool randomize) {
-    unvisit_all_nodes();
-    unset_all_ancestors();
+bool graphe::find_cycle(ivector &cycle,int sg) {
     assert(node_stack.empty());
+    if (is_empty())
+        return false;
+    int n=node_count(),initv,i;
+    unvisit_all_nodes(sg);
+    unset_all_ancestors(sg);
     cycle.clear();
-    cycle.reserve(node_count());
-    int n=node_count(),initial_vertex=randomize?rand_integer(n):0,i,j;
-    if (n>0) {
-        i=find_cycle_dfs(initial_vertex);
-        if (i>=0) {
-            do {
-                j=node_stack.top();
-                cycle.push_back(j);
-                node_stack.pop();
-            } while (j!=i);
-            while (!node_stack.empty()) node_stack.pop();
-            return true;
-        }
+    cycle.reserve(n);
+    if (sg>=0) {
+        for (initv=0;initv<n && node(initv).subgraph()!=sg;++initv);
+        if (initv==n)
+            return false;
+    } else initv=rand_integer(n);
+    if ((i=find_cycle_dfs(initv,sg))>=0) {
+        do {
+            cycle.push_back(node_stack.top());
+            node_stack.pop();
+        } while (cycle.back()!=i);
+        while (!node_stack.empty()) node_stack.pop();
+        return true;
     }
     return false;
 }
@@ -4773,7 +4840,7 @@ void graphe::sort_rectangles(vector<rectangle> &rectangles) {
 
 /* packing rectangles (sorted by height) into an enclosing rectangle with specified dimensions,
  * returns true if embedding has changed */
-bool graphe::pack_rectangles(const vector<rectangle> &rectangles,dpairs &embedding,double ew,double eh,double eps) {
+bool graphe::embed_rectangles(const vector<rectangle> &rectangles,dpairs &embedding,double ew,double eh,double eps) {
     vector<rectangle> blanks;
     blanks.push_back(rectangle(0,0,ew,eh));
     double xpos,ypos,w,h;
@@ -4812,7 +4879,7 @@ bool graphe::pack_rectangles(const vector<rectangle> &rectangles,dpairs &embeddi
 }
 
 /* pack rectangles (sorted by height) to an enclosing rectangle with minimal perimeter and wasted space */
-void graphe::pack_rectangles_neatly(const vector<rectangle> &rectangles,dpairs &best_embedding) {
+void graphe::pack_rectangles(const vector<rectangle> &rectangles,dpairs &best_embedding) {
     int n=rectangles.size();
     // compute total area occupied by the rectangles
     double total_area=0;
@@ -4832,7 +4899,7 @@ void graphe::pack_rectangles_neatly(const vector<rectangle> &rectangles,dpairs &
     double perim,best_perim=DBL_MAX,d;
     dpairs embedding(n,make_pair(-1,-1));
     while (ew>maxwidth+step) { // loop breaks after a stacked embedding is obtained
-        if (pack_rectangles(rectangles,embedding,ew,eh,step*MARGIN_FACTOR)) {
+        if (embed_rectangles(rectangles,embedding,ew,eh,step*MARGIN_FACTOR)) {
             ew=eh=0;
             // find the smallest enclosing rectangle containing the embedding
             for (dpairs::const_iterator it=embedding.begin();it!=embedding.end();++it) {
@@ -4923,48 +4990,41 @@ double graphe::ccw(const point &p1, const point &p2, const point &p3) {
     return (p2[0]-p1[0])*(p3[1]-p1[1])-(p2[1]-p1[1])*(p3[0]-p1[0]);
 }
 
-/* return true iff the graph is laid out and fill ccw_indices with convex hull vertices
- * in counterclockwise order (Graham scan is used, works only in 2D) */
-bool graphe::convex_hull(ivector &ccw_indices,const layout &x) const {
-    int N=node_count(),i,j;
-    if (N<3)
-        return false;
-    ivector vp(N);
-    i=0;
-    for (ivector::iterator it=vp.begin();it!=vp.end();++it) {
-        *it=i++;
-    }
+/* fill ccw_indices with convex hull vertices from v, in counterclockwise order
+ * (Graham scan is used, works only in 2D) */
+void graphe::convex_hull(ivector &hull,const layout &x,const ivector &v) {
+    int N=v.size(),i,j,n;
+    assert(N>=3);
     // find the point with the lowest y coordinate (or with the lowest x between those with lowest y)
-    double ymin=DBL_MAX;
-    int i_ymin=-1,n;
-    i=0;
-    for (layout_iter it=x.begin();it!=x.end();++it) {
-        if (it->at(1)==ymin) {
-            assert(i_ymin>=0);
-            if (it->at(0)<x[i_ymin][0])
-                i_ymin=i;
-        } else if (it->at(1)<ymin) {
-            ymin=it->at(1);
-            i_ymin=i;
+    double ymin=DBL_MAX,xmin;
+    i=-1;
+    for (ivector_iter it=v.begin();it!=v.end();++it) {
+        const point &p=x[*it];
+        if (p.back()==ymin) {
+            if (p.front()<xmin) {
+                xmin=p.front();
+                i=*it;
+            }
+        } else if (p.back()<ymin) {
+            xmin=p.front();
+            ymin=p.back();
+            i=*it;
         }
-        ++i;
     }
     // sort points by angle
-    convexhull_comparator comp(&x,&x[i_ymin]);
-    sort(vp.begin(),vp.end(),comp);
+    convexhull_comparator comp(&x,&x[i]);
+    ivector w(v);
+    sort(w.begin(),w.end(),comp);
     // determine the vertices of the convex hull
-    ccw_indices.push_back(vp[0]);
-    ccw_indices.push_back(vp[1]);
-    i=2;
-    while (i<=N) {
-        n=ccw_indices.size();
-        j=vp[i%N];
-        if (ccw(x[ccw_indices[n-2]],x[ccw_indices[n-1]],x[j])<=0)
-            ccw_indices.pop_back();
-        ccw_indices.push_back(j);
-        ++i;
+    hull.push_back(w[0]);
+    hull.push_back(w[1]);
+    for (i=2;i<=N;++i) {
+        n=hull.size();
+        j=w[i%N];
+        if (ccw(x[hull[n-2]],x[hull[n-1]],x[j])<=0)
+            hull.pop_back();
+        hull.push_back(j);
     }
-    return true;
 }
 
 /* return true iff the segments from p to p+r and from q to q+s intersect (compute the intersection point) */
@@ -5018,73 +5078,75 @@ bool graphe::point2segment_projection(const point &p,const point &q,const point 
     return true;
 }
 
-/* return the area enclosed by a non self-intersecting polygon
- * with vertices v (sorted in counterclockwise order) */
-double graphe::polyarea(const layout &x) {
-    int n=x.size();
-    double a=0;
-    for (int i=0;i<n;++i) {
-        a+=x[i][0]*x[(i+1)%n][1]-x[i][1]*x[(i+1)%n][0];
-    }
-    return a/2;
-}
-
 /* return the area of subgraph induced by a list of vertices v (layout is required) */
 double graphe::subgraph_area(const layout &x,const ivector &v) const {
-    ivector ccw_indices;
-    layout hull;
-    if (v.empty()) {
-        // compute the area of the whole graph
-        if (!convex_hull(ccw_indices,x))
-            return 0;
-        for (ivector_iter it=ccw_indices.begin();it!=ccw_indices.end();++it) {
-            hull.push_back(x[*it]);
-        }
-        return polyarea(hull);
+    ivector hull;
+    int n;
+    double area=0;
+    if (v.size()<3)
+        return 0;
+    convex_hull(hull,x,v);
+    n=hull.size();
+    for (int k=0;k<n;++k) {
+        const point &p=x[hull[k]],&q=x[hull[(k+1)%n]];
+        area+=p.front()*q.back()-p.back()*q.front();
     }
-    // v defines a subgraph
-    graphe G(ctx);
-    induce_subgraph(v,G,false);
-    return G.subgraph_area(x);
+    return area/2;
 }
 
-/* copy this graph to G with edge crossings promoted to vertices (2D layout is required) */
+/* return the area covered by this graph */
+double graphe::graph_area(const layout &x) const {
+    if (x.size()<3)
+        return 0;
+    ivector v(x.size());
+    for (int i=x.size();i-->0;) {
+        v[i]=i;
+    }
+    return subgraph_area(x,v);
+}
+
+/* return the value of the largest integer node label */
+int graphe::largest_integer_label_value() const {
+    int n,m=-1;
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        if (it->label().is_integer() && (n=it->label().val)>m)
+            m=n;
+    }
+    return m;
+}
+
+/* return true iff two edges cross each other (also compute the crossing point) */
+bool graphe::edges_crossing(const ipair &e1,const ipair &e2,const layout &x,point &crossing) {
+    int i1=e1.first,j1=e1.second,i2=e2.first,j2=e2.second;
+    if (i1==i2 || j1==j2 || i1==j2 || j1==i2)
+        return false;
+    point p(2),q(2),r(2),s(2);
+    copy_point(x[i1],p);
+    copy_point(x[i2],q);
+    copy_point(x[j1],r);
+    copy_point(x[j2],s);
+    subtract_point(r,p);
+    subtract_point(s,q);
+    return segments_crossing(p,r,q,s,crossing);
+}
+
+/* promote all edge crossings to vertices (2D layout is required) */
 void graphe::promote_edge_crossings(layout &x) {
     ipairs Eset;
     ipairs E;
-    int i,i1,j1,i2,j2;
     get_edges_as_pairs(Eset);
-
-    // get the last label (must be an integer)
-    const gen &last_node=nodes.back().label();
-    assert(last_node.is_integer());
-    int N=last_node.val;
-    // find edge crossings
+    int n=largest_integer_label_value(),i;
     point crossing;
     for (ipairs_iter it=E.begin();it!=E.end();++it) {
         for (ipairs_iter jt=it+1;jt!=E.end();++jt) {
-            i1=it->first;
-            j1=it->second;
-            i2=jt->first;
-            j2=jt->second;
-            if (i1==i2 || j1==j2 || i1==j2 || j1==i2)
-                continue;
-            point p(2),q(2),r(2),s(2);
-            copy_point(x[i1],p);
-            copy_point(x[i2],q);
-            copy_point(x[j1],r);
-            copy_point(x[j2],s);
-            subtract_point(r,p);
-            subtract_point(s,q);
-            if (segments_crossing(p,r,q,s,crossing)) {
-                // promote edge crossing to a vertex and update x
-                remove_edge(i1,j1);
-                remove_edge(i2,j2);
-                i=add_node(++N);
-                add_edge(i1,i);
-                add_edge(j1,i);
-                add_edge(i2,i);
-                add_edge(j2,i);
+            if (edges_crossing(*it,*jt,x,crossing)) {
+                remove_edge(it->first,it->second);
+                remove_edge(jt->first,jt->second);
+                i=add_node(++n);
+                add_edge(it->first,i);
+                add_edge(it->second,i);
+                add_edge(jt->first,i);
+                add_edge(jt->second,i);
                 set_node_attribute(i,_GT_ATTRIB_POSITION,point2gen(crossing));
                 x.push_back(crossing);
             }
@@ -5114,9 +5176,7 @@ vecteur graphe::point2vecteur(const point &p) {
 bool graphe::points_coincide(const point &p,const point &q,double tol) {
     assert(q.size()==p.size());
     point r(p.size());
-    copy_point(p,r);
-    subtract_point(r,q);
-    return point_displacement(r)<=tol;
+    return point_distance(p,q,r)<=tol;
 }
 
 /* obtain Purchase measure of symmetry for this graph when axis goes between vertices v and w */
@@ -5127,14 +5187,14 @@ double graphe::purchase(const layout &x,int orig_node_count,const point &axis,
     double s1,s2;
     point ip1,jp1;
     fill(sc.begin(),sc.end(),-1);
-    for (ipairs_iter et=E.begin();et!=E.end();++et) {
-        i1=et->first;
-        j1=et->second;
+    for (ipairs_iter it=E.begin();it!=E.end();++it) {
+        i1=it->first;
+        j1=it->second;
         point_reflection(x[i1],axis,ip1);
         point_reflection(x[j1],axis,jp1);
-        for (ipairs_iter it=et+1;it!=E.end();++it) {
-            i2=it->first;
-            j2=it->second;
+        for (ipairs_iter jt=it+1;jt!=E.end();++jt) {
+            i2=jt->first;
+            j2=jt->second;
             const point &ip2=x[i2];
             const point &jp2=x[j2];
             s1=s2=0;
@@ -5152,24 +5212,23 @@ double graphe::purchase(const layout &x,int orig_node_count,const point &axis,
                 break;
             }
         }
-        sc[et-E.begin()]=s1*s2;
+        sc[it-E.begin()]=s1*s2;
     }
     if (cnt<3)
         return 0;
     // construct symmetric subgraph
     graphe G(ctx);
     map<ipair,double> edge_score;
-    int k=0,i,j;
+    int i,j;
     for (vector<double>::const_iterator it=sc.begin();it!=sc.end();++it) {
         if (*it>0) {
-            const ipair &e=E[k];
-            const vertex &V=nodes[e.first],&W=nodes[e.second];
-            i=G.add_node(V.label(),V.attributes());
-            j=G.add_node(W.label(),W.attributes());
+            const ipair &e=E[it-sc.begin()];
+            const vertex &v=nodes[e.first],&w=nodes[e.second];
+            i=G.add_node(v.label(),v.attributes());
+            j=G.add_node(w.label(),w.attributes());
             G.add_edge(i,j);
             edge_score[make_pair(i<j?i:j,i<j?j:i)]=*it;
         }
-        ++k;
     }
     // obtain connected components and their average scores
     ivectors components;
@@ -5196,7 +5255,7 @@ double graphe::purchase(const layout &x,int orig_node_count,const point &axis,
     for (vector<double>::const_iterator it=area.begin();it!=area.end();++it) {
         total_area+=*it;
     }
-    return score/std::max(total_area,subgraph_area(x));
+    return score/std::max(total_area,graph_area(x));
 }
 
 /* obtain perpendicular bisector of the vertices v and w and return its distance from point p0 */
@@ -5435,10 +5494,13 @@ bool graphe::get_position(const attrib &attr,point &p) {
 }
 
 /* append line segments representing edges (arcs) of the graph to vecteur v */
-void graphe::draw_edges(vecteur &drawing,const layout &x) const {
+void graphe::draw_edges(vecteur &drawing,const layout &x) {
+    if (x.empty())
+        return;
     int i,color,width=_LINE_WIDTH_2;
     bool isdir=is_directed();
-    point r;
+    double d;
+    point r(x.front().size());
     attrib_iter ait;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         i=it-nodes.begin();
@@ -5452,7 +5514,9 @@ void graphe::draw_edges(vecteur &drawing,const layout &x) const {
             if ((ait=attr.find(_GT_ATTRIB_COLOR))!=attr.end())
                 color=ait->second.val;
             if (isdir) {
-                assert(get_position(attr,r));
+                assert((ait=attr.find(_GT_ATTRIB_POSITION))!=attr.end());
+                d=ait->second.DOUBLE_val();
+                point_lincomb(p,q,d,1-d,r);
                 append_segment(drawing,p,r,color,width,true);
                 append_segment(drawing,r,q,color,width,false);
             } else
@@ -5665,80 +5729,48 @@ void graphe::bfs(int root,bool rec,bool clr,ivector *D,int sg,bool skip_embedded
 }
 
 /* return true iff the graph is connected */
-bool graphe::is_connected() {
-    switch (node_count()) {
-    case 0:
-        message("Error: graph is empty");
-        return false;
-    case 1:
-        return true;
-    }
-    dfs(0);
-    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
-        if (!it->is_visited())
+bool graphe::is_connected(int sg) {
+    assert(!is_empty() && !is_directed());
+    node_iter it=nodes.begin();
+    if (sg>=0)
+        for (;it->subgraph()!=sg && it!=nodes.end();++it);
+    assert(it!=nodes.end());
+    dfs(it-nodes.begin(),false,true,NULL,sg);
+    for (;it!=nodes.end();++it) {
+        if ((sg<0 || it->subgraph()==sg) && !it->is_visited())
             return false;
     }
     return true;
 }
 
 /* return true iff the graph is biconnected */
-bool graphe::is_biconnected() {
-    switch (node_count()) {
-    case 0:
-        message("Error: graph is empty");
-        return false;
-    case 1:
-        return true;
-    }
-    ivector ap;
-    find_cut_vertices(ap);
-    return ap.empty();
+bool graphe::is_biconnected(int sg) {
+    assert(!is_empty() && !is_directed());
+    return is_connected(sg) && !has_cut_vertex(sg);
 }
 
 /* return true iff the graph is triconnected, using a simple O(n*(n+m)) algorithm */
-bool graphe::is_triconnected() {
-    graphe G(this->giac_context());
-    underlying(G);
-    for (int i=G.node_count();i-->0;) {
-        if (G.degree(i)<3)
+bool graphe::is_triconnected(int sg) {
+    assert(!is_empty() && !is_directed());
+    for (int i=node_count();i-->0;) {
+        if ((sg<0 || node(i).subgraph()==sg) && degree(i)<3)
             return false;
     }
-    if (!G.is_connected() || !G.is_biconnected())
-        return false;
-    vecteur V=G.vertices(),adj;
-    int i,k;
-    for (const_iterateur it=V.begin();it!=V.end();++it) {
-        i=G.node_index(*it);
-        const vertex &v=G.node(i);
-        adj.resize(v.neighbors().size());
-        ivector ngh(v.neighbors());
-        k=0;
-        for (ivector_iter jt=ngh.begin();jt!=ngh.end();++jt) {
-            adj[k++]=G.node_label(*jt);
-            G.remove_edge(i,*jt);
-        }
-        G.remove_isolated_node(i);
-        if (!G.is_biconnected())
+    int color=max_subgraph_index()+1;
+    for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
+        if (sg>=0 && it->subgraph()!=sg)
+            continue;
+        it->set_subgraph(color);
+        if (!is_biconnected(sg))
             return false;
-        G.add_node(*it);
-        for (const_iterateur nt=adj.begin();nt!=adj.end();++nt) {
-            G.add_edge(*it,*nt);
-        }
+        it->set_subgraph(sg);
     }
     return true;
 }
 
 /* return true iff the graph is a forest (check that the connected components are all trees) */
 bool graphe::is_forest() {
-    if (is_directed())
-        return false;
-    switch (node_count()) {
-    case 0:
-        message("Error: graph is empty");
-        return false;
-    case 1:
-        return true;
-    }
+    assert(!is_empty() && !is_directed());
     ivectors components;
     connected_components(components);
     graphe G(ctx);

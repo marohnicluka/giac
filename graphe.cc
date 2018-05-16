@@ -4962,23 +4962,10 @@ bool graphe::relabel_nodes(const vecteur &labels) {
 
 /* check for crossing edges with respect to the layout x */
 bool graphe::has_crossing_edges(const layout &x,const ipairs &E) const {
-    point r(2),s(2),crossing(2);
-    int i1,j1,i2,j2;
+    point crossing(2);
     for (ipairs_iter it=E.begin();it!=E.end();++it) {
-        i1=it->first;
-        j1=it->second;
         for (ipairs_iter jt=it+1;jt!=E.end();++jt) {
-            i2=jt->first;
-            j2=jt->second;
-            if (i1==i2 || j1==j2 || i1==j2 || i2==j1)
-                continue;
-            const point &p=x[i1];
-            const point &q=x[i2];
-            copy_point(x[j1],r);
-            copy_point(x[j2],s);
-            subtract_point(r,p);
-            subtract_point(s,q);
-            if (segments_crossing(p,r,q,s,crossing))
+            if (edges_crossing(*it,*jt,x,crossing))
                 return true;
         }
     }
@@ -5116,7 +5103,7 @@ int graphe::largest_integer_label_value() const {
 }
 
 /* return true iff two edges cross each other (also compute the crossing point) */
-bool graphe::edges_crossing(const ipair &e1,const ipair &e2,const layout &x,point &crossing) {
+bool graphe::edges_crossing(const ipair &e1,const ipair &e2,const layout &x,point &crossing) const {
     int i1=e1.first,j1=e1.second,i2=e2.first,j2=e2.second;
     if (i1==i2 || j1==j2 || i1==j2 || j1==i2)
         return false;
@@ -5230,6 +5217,11 @@ double graphe::purchase(const layout &x,int orig_node_count,const point &axis,
             edge_score[make_pair(i<j?i:j,i<j?j:i)]=*it;
         }
     }
+    vecteur V=G.vertices();
+    layout xG(V.size());
+    for (const_iterateur it=V.begin();it!=V.end();++it) {
+        xG[it-V.begin()]=x[node_index(*it)];
+    }
     // obtain connected components and their average scores
     ivectors components;
     G.connected_components(components);
@@ -5248,7 +5240,7 @@ double graphe::purchase(const layout &x,int orig_node_count,const point &axis,
                 ++n;
             }
         }
-        score+=(area[it-components.begin()]=G.subgraph_area(x,*it))*avg_score/n;
+        score+=(area[it-components.begin()]=G.subgraph_area(xG,*it))*avg_score/n;
     }
     // compute and return Purchase score
     double total_area=0;

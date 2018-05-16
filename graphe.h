@@ -377,7 +377,6 @@ private:
     static bool segments_crossing(const point &p,const point &r,const point &q,const point &s,point &crossing);
     static bool point2segment_projection(const point &p,const point &q,const point &r,point &proj);
     static double ccw(const point &p1,const point &p2,const point &p3);
-    static double polyarea(const layout &v);
     void promote_edge_crossings(layout &x);
     double purchase(const layout &x,int orig_node_count,const point &axis,
                     const ipairs &E, std::vector<double> &sc, double tol) const;
@@ -402,7 +401,7 @@ private:
     int choose_embedding_face(const ivectors &faces,int v);
     static int choose_outer_face(const ivectors &faces);
     static void make_regular_polygon_layout(layout &x,const ivector &face,double R=1.0);
-    bool edges_crossing(const ipair &e1,const ipair &e2,const layout &x,point &crossing);
+    bool edges_crossing(const ipair &e1,const ipair &e2,const layout &x,point &crossing) const;
     bool has_crossing_edges(const layout &x,const ipairs &E) const;
     static void build_block_tree(int i,ivectors &blocks);
     static int common_element(const ivector &v1,const ivector &v2,int offset=0);

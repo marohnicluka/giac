@@ -185,6 +185,7 @@ gen _chromatic_number(const gen &g,GIAC_CONTEXT);
 gen _maximum_independent_set(const gen &g,GIAC_CONTEXT);
 gen _independence_number(const gen &g,GIAC_CONTEXT);
 gen _strongly_connected_components(const gen &g,GIAC_CONTEXT);
+gen _is_strongly_connected(const gen &g,GIAC_CONTEXT);
 gen _degree_sequence(const gen &g,GIAC_CONTEXT);
 gen _is_graphic_sequence(const gen &g,GIAC_CONTEXT);
 gen _sequence_graph(const gen &g,GIAC_CONTEXT);
@@ -250,6 +251,9 @@ void biconnected_components_demo(GIAC_CONTEXT);
 void connected_components_demo(GIAC_CONTEXT);
 void weight_matrix_demo(GIAC_CONTEXT);
 void dijkstra_demo(GIAC_CONTEXT);
+void graph_complement_demo(GIAC_CONTEXT);
+void maximum_clique_demo(GIAC_CONTEXT);
+void strongly_connected_components_demo(GIAC_CONTEXT);
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

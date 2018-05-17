@@ -97,6 +97,7 @@ public:
         int m_subgraph;
         // used for traversing
         bool m_visited;
+        bool m_on_stack;
         int m_low;
         int m_disc;
         int m_ancestor;
@@ -125,6 +126,8 @@ public:
         bool is_embedded() const { return m_embedded; }
         void set_visited(bool yes) { m_visited=yes; }
         bool is_visited() const { return m_visited; }
+        bool is_on_stack() const { return m_on_stack; }
+        void set_on_stack(bool yes) { m_on_stack=yes; }
         void set_low(int l) { m_low=l; }
         int low() const { return m_low; }
         void set_disc(int t) { m_disc=t; }
@@ -427,6 +430,7 @@ private:
     int largest_integer_label_value() const;
     static void generate_nk_sets(int n,int k,std::vector<ulong> &v);
     bool has_k_clique_cover(int k,const ivectors &maximal_cliques,ivector &cv) const;
+    void strongconnect_dfs(ivectors &components,int i,int sg);
 
 public:
     graphe(const context *contextptr=context0);
@@ -611,6 +615,7 @@ public:
     void cartesian_product(const graphe &G,graphe &P) const;
     void tensor_product(const graphe &G,graphe &P) const;
     void connected_components(ivectors &components,int sg=-1,bool skip_embedded=false,int *count=NULL);
+    void strongly_connected_components(ivectors &components,int sg=-1);
     bool has_cut_vertex(int sg=-1,int i=0);
     void find_cut_vertices(ivector &articulation_points,int sg=-1);
     void find_blocks(std::vector<ipairs> &blocks,int sg=-1);

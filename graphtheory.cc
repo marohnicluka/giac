@@ -89,7 +89,7 @@ bool is_graphe(const gen &g,string &disp_out,GIAC_CONTEXT) {
     if (g.type!=_VECT || g.subtype!=_GRAPH__VECT)
         return false;
     graphe G(contextptr);
-    if (!G.read_gen(*g._VECTptr))
+    if (!G.read_gen(g))
         return false;
     int nv=G.node_count(),ne=G.edge_count();
     stringstream ss;
@@ -240,7 +240,7 @@ bool parse_edge_with_weight(graphe &G,const vecteur &E) {
 bool parse_edges(graphe &G,const vecteur &E,bool is_set) {
     if (E.size()<2)
         return false;
-    if (E[0].type==_VECT && E[1].type==_VECT) {
+    if (is_set) {
         for (const_iterateur it=E.begin();it!=E.end();++it) {
             if (it->type!=_VECT || it->_VECTptr->size()!=2)
                 return false;
@@ -252,8 +252,6 @@ bool parse_edges(graphe &G,const vecteur &E,bool is_set) {
             }
         }
     } else {
-        if (is_set)
-            return false;
         int n=E.size();
         if (n<2)
             return false;
@@ -614,9 +612,7 @@ define_unary_function_ptr5(at_graph,alias_at_graph,&__graph,0,true)
 gen _digraph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     vecteur args;
-    if (g.type!=_VECT)
-        return gentypeerr(contextptr);
-    if (g.subtype==_SEQ__VECT)
+    if (g.type==_VECT && g.subtype==_SEQ__VECT)
         args=*g._VECTptr;
     else args.push_back(g);
     args.push_back(symbolic(at_equal,makesequence(_GT_DIRECTED,graphe::VRAI)));
@@ -847,10 +843,8 @@ define_unary_function_ptr5(at_weight_matrix,alias_at_weight_matrix,&__weight_mat
  */
 gen _graph_complement(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type!=_VECT)
-        return gentypeerr(contextptr);
     graphe G(contextptr),C(contextptr);
-    if (!G.read_gen(*g._VECTptr))
+    if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     G.complement(C);
     return C.to_gen();
@@ -2628,8 +2622,10 @@ define_unary_function_ptr5(at_is_directed,alias_at_is_directed,&__is_directed,0,
  */
 gen _neighbors(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type!=_VECT || g.subtype!=_SEQ__VECT || g._VECTptr->size()!=2)
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
+    if (g._VECTptr->size()!=2)
+        return gensizeerr(contextptr);
     graphe G(contextptr);
     if (!G.read_gen(g._VECTptr->front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
@@ -2639,11 +2635,7 @@ gen _neighbors(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
     graphe::ivector adj;
     G.adjacent_nodes(i,adj);
-    vecteur res;
-    for (graphe::ivector::const_iterator it=adj.begin();it!=adj.end();++it) {
-        res.push_back(G.node_label(*it));
-    }
-    return res;
+    return G.get_nodes(adj);
 }
 static const char _neighbors_s[]="neighbors";
 static define_unary_function_eval(__neighbors,&_neighbors,_neighbors_s);
@@ -4022,6 +4014,46 @@ static const char _independence_number_s[]="independence_number";
 static define_unary_function_eval(__independence_number,&_independence_number,_independence_number_s);
 define_unary_function_ptr5(at_independence_number,alias_at_independence_number,&__independence_number,0,true)
 
+/* USAGE:   strongly_connected_components(G)
+ *
+ * Return the list of strongly connected components of directed graph G.
+ */
+gen _strongly_connected_components(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (!G.is_directed())
+        return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED,contextptr);
+    graphe::ivectors components;
+    G.strongly_connected_components(components);
+    vecteur res;
+    G.ivectors2vecteur(components,res);
+    return res;
+}
+static const char _strongly_connected_components_s[]="strongly_connected_components";
+static define_unary_function_eval(__strongly_connected_components,&_strongly_connected_components,_strongly_connected_components_s);
+define_unary_function_ptr5(at_strongly_connected_components,alias_at_strongly_connected_components,&__strongly_connected_components,0,true)
+
+/* USAGE:   is_strongly_connected(G)
+ *
+ * Return true iff the directed graph G is strongly connected.
+ */
+gen _is_strongly_connected(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (!G.is_directed())
+        return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED,contextptr);
+    graphe::ivectors components;
+    G.strongly_connected_components(components);
+    return graphe::boole(components.size()==1);
+}
+static const char _is_strongly_connected_s[]="is_strongly_connected";
+static define_unary_function_eval(__is_strongly_connected,&_is_strongly_connected,_is_strongly_connected_s);
+define_unary_function_ptr5(at_is_strongly_connected,alias_at_is_strongly_connected,&__is_strongly_connected,0,true)
+
 // *******************************************************************************
 //
 // DEMO SECTION
@@ -4164,23 +4196,60 @@ void dijkstra_demo(GIAC_CONTEXT) {
 
 void graph_complement_demo(GIAC_CONTEXT) {
     print_demo_title(_graph_complement_s);
-    cout << "INPUT: C:="
-         << _cycle_graph_s << "(5); G:="
-         << _graph_complement_s << "(C); "
-         << _draw_graph_s << "(G)" << endl;
+    cout << "INPUT: G:="
+         << _graph_s << "(\"petersen\"); C:="
+         << _graph_complement_s << "(G); "
+         << _draw_graph_s << "(C)" << endl;
     string disp;
-    gen c=_cycle_graph(5,contextptr);
-    assert(is_graphe(c,disp,contextptr));
-    cout << "OUTPUT:" << endl;
-    cout << "C: " << disp << endl;
-    gen g=_graph_complement(c,contextptr);
+    gen g=_graph(graphe::str2gen("petersen",true),contextptr);
     assert(is_graphe(g,disp,contextptr));
+    cout << "OUTPUT:" << endl;
     cout << "G: " << disp << endl;
-    cout << _draw_graph(g,contextptr) << endl;
+    gen c=_graph_complement(g,contextptr);
+    assert(is_graphe(c,disp,contextptr));
+    cout << "C: " << disp << endl;
+    cout << _draw_graph(c,contextptr) << endl;
 }
 
 void maximum_clique_demo(GIAC_CONTEXT) {
     print_demo_title(_maximum_clique_s);
+}
+
+void strongly_connected_components_demo(GIAC_CONTEXT) {
+    print_demo_title(_strongly_connected_components_s);
+    const char *gspec1="seq[[1,2,3],%{[1,2],[1,3],[2,3],[3,2]%}]";
+    const char *gspec2="%{[1,2],[2,3],[3,4]%}";
+    gen tr1=_trail(makesequence(1,2,3,4,5),contextptr);
+    gen tr2=_trail(makesequence(1,2,3,4,5,1),contextptr);
+    vecteur tr=makevecteur(tr1,tr2);
+    cout << "INPUT: T:=" << _digraph_s << "(" << gspec1 << "); "
+         << _strongly_connected_components_s << "(T)" << endl;
+    gen g=gt_command(_digraph,gspec1,contextptr);
+    string disp;
+    assert(is_graphe(g,disp,contextptr));
+    cout << "OUTPUT:" << endl;
+    cout << "T: " << disp << endl;
+    cout << _strongly_connected_components(g,contextptr) << endl;
+    for (const_iterateur it=tr.begin();it!=tr.end();++it) {
+        cout << "INPUT: " << _is_strongly_connected_s << "(" << _digraph_s << "(" << _trail_s << "("
+             << *it << ")))" << endl;
+        g=_digraph(*it,contextptr);
+        assert(is_graphe(g,disp,contextptr));
+        cout << "OUTPUT: " << _is_strongly_connected(g,contextptr) << endl;
+    }
+    cout << "INPUT: G:=" << _digraph_s << "(" << gspec2 << "); "
+         << _strongly_connected_components_s << "(G)" << endl;
+    g=gt_command(_digraph,gspec2,contextptr);
+    assert(is_graphe(g,disp,contextptr));
+    cout << "OUTPUT:" << endl;
+    cout << "G: " << disp << endl;
+    cout << _strongly_connected_components(g,contextptr) << endl;
+    cout << "INPUT: G:=" << _add_arc_s << "(G,[4,3]); " << _strongly_connected_components_s << "(G)" << endl;
+    cout << "OUTPUT:" << endl;
+    g=_add_arc(makesequence(g,makevecteur(4,3)),contextptr);
+    assert(is_graphe(g,disp,contextptr));
+    cout << "G: " << disp << endl;
+    cout << _strongly_connected_components(g,contextptr) << endl;
 }
 
 

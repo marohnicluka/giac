@@ -485,6 +485,7 @@ graphe::vertex::vertex() {
     m_label=0;
     m_subgraph=-1;
     m_visited=false;
+    m_on_stack=false;
     m_ancestor=-1;
     m_low=-1;
     m_disc=-1;
@@ -500,6 +501,7 @@ void graphe::vertex::assign(const vertex &other) {
     m_label=other.label();
     m_subgraph=other.subgraph();
     m_visited=other.is_visited();
+    m_on_stack=other.is_on_stack();
     m_ancestor=other.ancestor();
     m_low=other.low();
     m_disc=other.disc();
@@ -1668,7 +1670,7 @@ void graphe::attrib2genmap(const attrib &attr, gen_map &m) {
 
 /* initialize graph from Giac gen object */
 bool graphe::read_gen(const gen &g) {
-    if (g.type!=_VECT)
+    if (g.type!=_VECT || g.subtype!=_GRAPH__VECT)
         return false;
     this->clear();
     vecteur &gv=*g._VECTptr;
@@ -2496,6 +2498,8 @@ void graphe::triangulator::creases(const ivector &B,ipairs &C) {
         if (degrees[B[k]]>2)
             D.push_back(k);
     }
+    if (D.empty())
+        return;
     int m=D.size(),k=0,i,j,k_next,l,v,w,r;
     while (true) {
         i=D[k];
@@ -3887,6 +3891,47 @@ void graphe::connected_components(ivectors &components,int sg,bool skip_embedded
         *count=c;
 }
 
+void graphe::strongconnect_dfs(ivectors &components,int i,int sg) {
+    vertex &v=node(i);
+    v.set_visited(true);
+    v.set_disc(disc_time++);
+    v.set_low(v.disc());
+    node_stack.push(i);
+    v.set_on_stack(true);
+    for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
+        vertex &w=node(*it);
+        if (sg>=0 && w.subgraph()!=sg)
+            continue;
+        if (!w.is_visited()) {
+            strongconnect_dfs(components,*it,sg);
+            v.set_low(std::min(v.low(),w.low()));
+        } else if (w.is_on_stack())
+            v.set_low(std::min(v.low(),w.disc()));
+    }
+    if (v.low()==v.disc()) {
+        // output a strongly connected component
+        components.resize(components.size()+1);
+        ivector &component=components.back();
+        do {
+            component.push_back(node_stack.top());
+            node_stack.pop();
+            v.set_on_stack(false);
+        } while (component.back()!=i);
+    }
+}
+
+/* find all strongly connected components in directed graph using Tarjan's algorithm */
+void graphe::strongly_connected_components(ivectors &components,int sg) {
+    unvisit_all_nodes(sg);
+    disc_time=0;
+    assert(node_stack.empty());
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        if ((sg<0 || it->subgraph()==sg) && !it->is_visited())
+            strongconnect_dfs(components,it-nodes.begin(),sg);
+    }
+}
+
+/* return true iff the connected graph is not biconnected (i.e. has an articulation point) */
 bool graphe::has_cut_vertex(int sg,int i) {
     vertex &v=node(i);
     if (i==0) {

@@ -39,6 +39,8 @@
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
+#define _GRAPH__VECT 30
+
 enum move_to_dispatch_h {
     _GT_CONNECTED = 137, // connected
     _GT_SPRING = 138, // spring
@@ -298,6 +300,12 @@ public:
     static const gen FAUX;
     static const gen VRAI;
     static bool verbose;
+    static int default_vertex_color;
+    static int default_edge_color;
+    static int default_vertex_label_color;
+    static int default_highlighted_edge_color;
+    static int default_highlighted_vertex_color;
+    static int default_edge_width;
     // special graphs
     static const int clebsch_graph[];
     static const char* coxeter_graph[];
@@ -341,6 +349,9 @@ private:
     static void attrib2genmap(const attrib &attr,gen_map &m);
     static void copy_attributes(const attrib &src,attrib &dest);
     void write_attrib(std::ofstream &dotfile,const attrib &attr) const;
+    static void sets_union(const ivector &A,const ivector &B,ivector &U);
+    static void sets_intersection(const ivector &A,const ivector &B,ivector &I);
+    static void sets_difference(const ivector &A,const ivector &B,ivector &D);
     static void add_point(point &a,const point &b);
     static void subtract_point(point &a,const point &b);
     static void scale_point(point &p,double s);
@@ -360,8 +371,8 @@ private:
     static double layout_min(const layout &x,int d);
     static void point2polar(point &p,double &r,double &phi);
     static bool sparse_matrix_element(const sparsemat &A,int i,int j,double &val);
-    static void multiply_sparse_matrices(const sparsemat &A,const sparsemat &B,sparsemat &prod);
-    static void transpose_sparsemat(const sparsemat &A,sparsemat &transp);
+    static void multiply_sparse_matrices(const sparsemat &A,const sparsemat &B,sparsemat &P,int ncols,bool symmetric=false);
+    static void transpose_sparsemat(const sparsemat &A,sparsemat &T);
     void multilevel_recursion(layout &x,graphe &G,int d,double R,double K,double tol,int depth=0);
     int mdeg(const ivector &V,int i) const;
     void coarsening(graphe &G,const sparsemat &P,const ivector &V) const;
@@ -382,15 +393,15 @@ private:
                     const ipairs &E, std::vector<double> &sc, double tol) const;
     static double bisector(int v, int w, const layout &x, point &bsec, const point &p0);
     static double squared_distance(const point &p,const point &line);
-    void accumulate_repulsive_force(const point &p,const point &q,double R,double D,double eps,point &force);
+    void accumulate_repulsive_force(const point &p,const point &q,double R,double K,double eps,point &force,bool sq_dist=false);
     void force_directed_placement(layout &x,double K,double R,double tol=0.001,bool ac=true);
     static bool get_position(const attrib &attr,point &p);
     void coarsening_mis(const ivector &V,graphe &G,sparsemat &P) const;
     void coarsening_ec(const ipairs &M,graphe &G,sparsemat &P) const;
-    int node_label_best_quadrant(const layout &x,const point &center,int i) const;
+    static int best_quadrant(const point &p,const layout &x,const point &center);
     static void append_segment(vecteur &drawing,const point &p,const point &q,int color,int width,bool arrow=false);
     static void append_vertex(vecteur &drawing,const point &p,int color,int width);
-    static void append_label(vecteur &drawing,const point &p,const gen &label,int quadrant);
+    static void append_label(vecteur &drawing,const point &p,const gen &label,int quadrant,int color=_BLACK);
     static int face_has_edge(const ivector &face,int i,int j);
     static int binomial_coeff(int n,int k);
     void set_nodes_embedded(const ivector &v,bool yes=true);
@@ -413,6 +424,8 @@ private:
     void make_product_nodes(const graphe &G,graphe &P) const;
     static void extract_path_from_cycle(const ivector &cycle,int i,int j,ivector &path);
     int largest_integer_label_value() const;
+    static void generate_nk_sets(int n,int k,std::vector<ulong> &v);
+    bool has_k_clique_cover(int k,const ivectors &maximal_cliques,ivector &clique_indices) const;
 
 public:
     graphe(const context *contextptr=context0);
@@ -513,6 +526,7 @@ public:
     int out_degree(int index,bool count_temp_edges=true) const;
     int degree(int index,bool count_temp_edges=true) const;
     void adjacency_matrix(matrice &m) const;
+    void adjacency_sparse_matrix(sparsemat &sm) const;
     matrice incidence_matrix() const;
     void set_graph_attribute(int key,const gen &val) { attributes[key]=val; }
     void set_graph_attributes(const attrib &attr) { copy_attributes(attr,attributes); }
@@ -529,7 +543,7 @@ public:
     bool is_directed() const;
     bool is_weighted() const;
     void set_directed(bool yes) { set_graph_attribute(_GT_ATTRIB_DIRECTED,boole(yes)); }
-    void set_weighted(bool yes) { assert(is_empty()); set_graph_attribute(_GT_ATTRIB_WEIGHTED,boole(yes)); }
+    void set_weighted(bool yes) { set_graph_attribute(_GT_ATTRIB_WEIGHTED,boole(yes)); }
     void make_weighted(const matrice &m);
     void make_directed() { set_directed(true); }
     void make_unweighted();
@@ -537,6 +551,7 @@ public:
     bool is_regular(int d) const;
     bool is_equal(const graphe &G) const;
     void underlying(graphe &G) const;
+    void complement(graphe &G) const;
     bool isomorphic_copy(graphe &G,const ivector &sigma);
     bool relabel_nodes(const vecteur &labels);
     void induce_subgraph(const ivector &vi,graphe &G,bool copy_attrib=true) const;
@@ -562,8 +577,14 @@ public:
     bool is_forest();
     bool is_tournament();
     bool is_planar();
+    bool is_clique() const;
+    bool is_triangle_free() const;
     int tree_height(int root);
-    void tomita(ivectors &cliques) const;
+    void tomita(ivectors &maximal_cliques) const;
+    int maximum_clique(ivector &clique) const;
+    int clique_cover(ivectors &cover) const;
+    int chromatic_number() const;
+    int maximum_independent_set(ivector &v) const;
     void make_lcf_graph(const ivector &jumps,int e);
     void make_lcf_graph(const int *j,int e);
     void make_sierpinski_graph(int n,int k,bool triangle);
@@ -597,10 +618,11 @@ public:
     bool find_eulerian_path(ivector &path) const;
     void collapse_edge(int i,int j);
     void incident_edges(const ivector &V,edgeset &E);
+    static bool edges_incident(const ipair &e1,const ipair &e2);
     static void convex_hull(ivector &hull,const layout &x,const ivector &v);
     double subgraph_area(const layout &x,const ivector &v) const;
     double graph_area(const layout &x) const;
-    void edge_labels_placement(const layout &x,double K=1.0,double tol=0.001);
+    void edge_labels_placement(const layout &x,double tol=0.001);
     void draw_edges(vecteur &drawing,const layout &x);
     void draw_nodes(vecteur &drawing,const layout &x) const;
     void draw_labels(vecteur &drawing,const layout &x) const;

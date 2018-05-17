@@ -84,6 +84,37 @@ bool has_suffix(const string &str,const string &suffix)
             str.compare(str.size()-suffix.size(),suffix.size(),suffix)==0;
 }
 
+/* returns true iff g is a graph and writes the basic info to 'display_str' */
+bool is_graphe(const gen &g,string &disp_out,GIAC_CONTEXT) {
+    if (g.type!=_VECT || g.subtype!=_GRAPH__VECT)
+        return false;
+    graphe G(contextptr);
+    if (!G.read_gen(*g._VECTptr))
+        return false;
+    int nv=G.node_count(),ne=G.edge_count();
+    stringstream ss;
+    ss << nv;
+    string nvert(ss.str());
+    ss.str("");
+    ss << ne;
+    string nedg(ss.str());
+    string dir_spec=G.is_directed()?"directed":"undirected";
+    string weight_spec=G.is_weighted()?"weighted":"unweighted";
+    nvert=nvert+(nv==1?" vertex":" vertices");
+    nedg=nedg+(G.is_directed()?(ne==1?" arc":" arcs"):(ne==1?" edge":" edges"));
+    disp_out.clear();
+    string name=G.name();
+    if (!name.empty())
+        disp_out=name+": ";
+    disp_out=disp_out+"an "+dir_spec+" "+weight_spec+" graph with "+nvert+" and "+nedg;
+    return true;
+}
+
+/* evaluates the given command with the given inputs and returns the result */
+gen gt_command(gen (*gtfunc)(const gen &,const context *),const char *args,GIAC_CONTEXT) {
+    return (*gtfunc)(graphe::str2gen(args),contextptr);
+}
+
 bool vertices_from_integer_or_vecteur(const gen &g,graphe &G) {
     vecteur V;
     int n;
@@ -169,20 +200,26 @@ bool parse_matrix(graphe &G,const matrice &m,bool is_weight_matrix,int mode,bool
     }
     if (!has_num_coeff(_evalf(m,context0)))
         return false;
+    bool isdir=G.is_directed() || m!=mtran(m),isweighted=is_weight_matrix;
     if (mode==0) {
         vecteur V;
         G.make_default_labels(V,n);
         G.add_nodes(V);
-    } else if (mode==1) {
+    }
+    if (mode<2) {
+        G.set_directed(isdir);
         for (int i=0;i<n;++i) {
-            for (int j=0;j<n;++j) {
+            for (int j=isdir?0:i+1;j<n;++j) {
                 const gen &w=m[i][j];
-                if (!is_zero(w))
+                if (!is_zero(w)) {
                     G.add_edge(i,j);
+                    if (!is_one(w))
+                        isweighted=true;
+                }
             }
         }
     }
-    if (is_weight_matrix)
+    if (isweighted)
         G.make_weighted(m);
     return true;
 }
@@ -194,15 +231,19 @@ bool parse_edge_with_weight(graphe &G,const vecteur &E) {
     const gen &w=E.back();
     if (e.size()!=2)
         return false;
+    if (!G.is_weighted())
+        G.set_weighted(true);
     G.add_edge(e.front(),e.back(),w);
     return true;
 }
 
 bool parse_edges(graphe &G,const vecteur &E,bool is_set) {
-    if (ckmatrix(E,true)) {
-        if (E.front()._VECTptr->size()!=2)
-            return false;
+    if (E.size()<2)
+        return false;
+    if (E[0].type==_VECT && E[1].type==_VECT) {
         for (const_iterateur it=E.begin();it!=E.end();++it) {
+            if (it->type!=_VECT || it->_VECTptr->size()!=2)
+                return false;
             if (it->_VECTptr->front().type!=_VECT)
                 G.add_edge(it->_VECTptr->front(),it->_VECTptr->back());
             else {
@@ -397,11 +438,15 @@ int graphunion(graphe &G,const vecteur &gv,bool disjoint) {
     return -1;
 }
 
+void print_demo_title(const char *command_name) {
+    cout << "*** Command usage demonstration: " << command_name << endl;
+}
+
 // +--------------------------------------------------------------------------+
 // |                             GIAC COMMANDS                                |
 // +--------------------------------------------------------------------------+
 
-/* Usage:   trail(V)
+/* USAGE:   trail(V)
  *
  * Returns a trail of vertices from sequence V (this is a dummy command, it
  * returns itself).
@@ -413,7 +458,7 @@ static const char _trail_s[]="trail";
 static define_unary_function_eval(__trail,&_trail,_trail_s);
 define_unary_function_ptr5(at_trail,alias_at_trail,&__trail,0,true)
 
-/* Usage:   graph(V,[opts])
+/* USAGE:   graph(V,[opts])
  *          graph(V,E,[opts])
  *          graph(V,E,A,[opts])
  *          graph(V,A,[opts])
@@ -434,7 +479,7 @@ define_unary_function_ptr5(at_trail,alias_at_trail,&__trail,0,true)
  * - grotzsch - harries - harries-wong - heawood - herschel - icosahedron -
  * levi - ljubljana - mcgee - mobius-kantor - nauru - octahedron - pappus -
  * petersen - robertson - soccerball - tehtrahedron
- */
+*/
 gen _graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type==_STRNG) {
@@ -446,7 +491,7 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
         return G.to_gen();
     }
     graphe G(contextptr);
-    if (ckmatrix(g)) {
+    if (is_squarematrix(g) && g._VECTptr->size()>2) {
         // adjacency matrix is given
         bool size_err;
         if (!parse_matrix(G,*g._VECTptr,false,0,size_err))
@@ -460,90 +505,91 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
     } else if (g.is_symb_of_sommet(at_trail)) {
         // a trail is given
         parse_trail(G,g);
-    }
-    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
-        return gentypeerr(contextptr);
-    vecteur &args=*g._VECTptr;
-    int nargs=args.size(),n=nargs-1;
-    // parse options first
-    bool weighted=false,size_err;
-    while(args[n].is_symb_of_sommet(at_equal)) {
-        vecteur &sides=*args[n]._SYMBptr->feuille._VECTptr;
-        if (!sides.front().is_integer())
+    } else {
+        if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
             return gentypeerr(contextptr);
-        switch(sides.front().val) {
-        case _GT_DIRECTED:
-            if (!sides.back().is_integer())
+        vecteur &args=*g._VECTptr;
+        int nargs=args.size(),n=nargs-1;
+        // parse options first
+        bool weighted=false,size_err;
+        while(args[n].is_symb_of_sommet(at_equal)) {
+            vecteur &sides=*args[n]._SYMBptr->feuille._VECTptr;
+            if (!sides.front().is_integer())
                 return gentypeerr(contextptr);
-            G.set_directed((bool)sides.back().val);
-            break;
-        case _GT_WEIGHTED:
-            if (!sides.back().is_integer())
-                return gentypeerr(contextptr);
-            weighted=(bool)sides.back().val;
-            break;
-        }
-        n--;
-    }
-    // parse other arguments
-    for (int i=0;i<nargs;++i) {
-        const gen &arg=args[i];
-        if (i<=n && ckmatrix(arg) && arg.subtype!=_SET__VECT) {
-            // adjacency or weight matrix
-            matrice &m=*arg._VECTptr;
-            if (!G.is_directed() && m!=mtran(m))
-                return gt_err(_GT_ERR_MATRIX_NOT_SYMMETRIC,contextptr);
-            if (!parse_matrix(G,m,i==2 || weighted,i,size_err))
-                return size_err?gendimerr(contextptr):gentypeerr(contextptr);
-        } else if (i<2 && arg.type==_VECT) {
-            int permu_size;
-            const vecteur &argv=*arg._VECTptr;
-            if (arg.subtype==_SET__VECT) {
-                // set of edges
-                if (!parse_edges(G,argv,true))
+            switch(sides.front().val) {
+            case _GT_DIRECTED:
+                if (!sides.back().is_integer())
                     return gentypeerr(contextptr);
-            } else if (i==1 && _is_permu(arg,contextptr).val==1 &&
-                       (permu_size=argv.size())>0) {
-                if (G.node_count()!=int(argv.size()))
-                    return gensizeerr(contextptr);
-                // directed cycle
-                G.set_directed(true);
-                if (permu_size!=G.node_count())
-                    return gensizeerr(contextptr);
-                for (const_iterateur it=argv.begin();it!=argv.end()-1;++it) {
-                    G.add_edge(*it,*(it+1));
-                }
-            } else if (i==0) // list of vertices
-                G.add_nodes(argv);
-            else return gentypeerr(contextptr);
-        } else if (i==0 && arg.is_symb_of_sommet(at_trail)) {
-            // trail
-            parse_trail(G,arg);
-        } else if (i>n && arg.is_symb_of_sommet(at_equal)) {
-            // option
-            gen &lh=arg._SYMBptr->feuille._VECTptr->front();
-            gen &rh=arg._SYMBptr->feuille._VECTptr->back();
-            if (lh.is_integer()) {
-                switch(lh.val) {
-                case _COLOR:
-                    // vertex colors are given
-                    if (rh.type==_VECT || int(rh._VECTptr->size())!=G.node_count())
-                        return gensizeerr(contextptr);
-                    if (!parse_vertex_colors(G,rh))
-                        return gentypeerr(contextptr);
-                    break;
-                }
-            } else if (lh==at_coordonnees) {
-                // vertex coordinates are given
-                if (rh.type!=_VECT)
+                G.set_directed((bool)sides.back().val);
+                break;
+            case _GT_WEIGHTED:
+                if (!sides.back().is_integer())
                     return gentypeerr(contextptr);
-                if (int(rh._VECTptr->size())!=G.node_count())
-                    return gensizeerr(contextptr);
-                bool size_error=false;
-                if (!parse_vertex_coordinates(G,*rh._VECTptr,size_error))
-                    return size_error?gensizeerr(contextptr):gentypeerr(contextptr);
+                weighted=(bool)sides.back().val;
+                break;
             }
-        } else return gentypeerr(contextptr);
+            n--;
+        }
+        // parse other arguments
+        for (int i=0;i<nargs;++i) {
+            const gen &arg=args[i];
+            if (i<=n && ckmatrix(arg) && arg.subtype!=_SET__VECT) {
+                // adjacency or weight matrix
+                matrice &m=*arg._VECTptr;
+                if (!G.is_directed() && m!=mtran(m))
+                    return gt_err(_GT_ERR_MATRIX_NOT_SYMMETRIC,contextptr);
+                if (!parse_matrix(G,m,i==2 || weighted,i,size_err))
+                    return size_err?gendimerr(contextptr):gentypeerr(contextptr);
+            } else if (i<2 && arg.type==_VECT) {
+                int permu_size;
+                const vecteur &argv=*arg._VECTptr;
+                if (arg.subtype==_SET__VECT) {
+                    // set of edges
+                    if (!parse_edges(G,argv,true))
+                        return gentypeerr(contextptr);
+                } else if (i==1 && _is_permu(arg,contextptr).val==1 &&
+                           (permu_size=argv.size())>0) {
+                    if (G.node_count()!=int(argv.size()))
+                        return gensizeerr(contextptr);
+                    // directed cycle
+                    G.set_directed(true);
+                    if (permu_size!=G.node_count())
+                        return gensizeerr(contextptr);
+                    for (const_iterateur it=argv.begin();it!=argv.end()-1;++it) {
+                        G.add_edge(*it,*(it+1));
+                    }
+                } else if (i==0) // list of vertices
+                    G.add_nodes(argv);
+                else return gentypeerr(contextptr);
+            } else if (arg.is_symb_of_sommet(at_trail)) {
+                // trail
+                parse_trail(G,arg);
+            } else if (i>n && arg.is_symb_of_sommet(at_equal)) {
+                // option
+                gen &lh=arg._SYMBptr->feuille._VECTptr->front();
+                gen &rh=arg._SYMBptr->feuille._VECTptr->back();
+                if (lh.is_integer()) {
+                    switch(lh.val) {
+                    case _COLOR:
+                        // vertex colors are given
+                        if (rh.type==_VECT || int(rh._VECTptr->size())!=G.node_count())
+                            return gensizeerr(contextptr);
+                        if (!parse_vertex_colors(G,rh))
+                            return gentypeerr(contextptr);
+                        break;
+                    }
+                } else if (lh==at_coordonnees) {
+                    // vertex coordinates are given
+                    if (rh.type!=_VECT)
+                        return gentypeerr(contextptr);
+                    if (int(rh._VECTptr->size())!=G.node_count())
+                        return gensizeerr(contextptr);
+                    bool size_error=false;
+                    if (!parse_vertex_coordinates(G,*rh._VECTptr,size_error))
+                        return size_error?gensizeerr(contextptr):gentypeerr(contextptr);
+                }
+            } else return gentypeerr(contextptr);
+        }
     }
     return G.to_gen();
 }
@@ -551,7 +597,7 @@ static const char _graph_s[]="graph";
 static define_unary_function_eval(__graph,&_graph,_graph_s);
 define_unary_function_ptr5(at_graph,alias_at_graph,&__graph,0,true)
 
-/* Usage:   digraph(V,[opts])
+/* USAGE:   digraph(V,[opts])
  *          digraph(V,E,[opts])
  *          digraph(A,[opts])
  *          digraph(V,E,A,[opts])
@@ -574,13 +620,13 @@ gen _digraph(const gen &g,GIAC_CONTEXT) {
         args=*g._VECTptr;
     else args.push_back(g);
     args.push_back(symbolic(at_equal,makesequence(_GT_DIRECTED,graphe::VRAI)));
-    return _graph(args,contextptr);
+    return _graph(change_subtype(args,_SEQ__VECT),contextptr);
 }
 static const char _digraph_s[]="digraph";
 static define_unary_function_eval(__digraph,&_digraph,_digraph_s);
 define_unary_function_ptr5(at_digraph,alias_at_digraph,&__digraph,0,true)
 
-/* Usage:   export_graph(G,"path/to/graphname")
+/* USAGE:   export_graph(G,"path/to/graphname")
  *
  * Writes graph G to the file 'graphname.dot' in directory 'path/to' using dot
  * format. Returns 1 on success and 0 on failure.
@@ -602,7 +648,7 @@ static const char _export_graph_s[]="export_graph";
 static define_unary_function_eval(__export_graph,&_export_graph,_export_graph_s);
 define_unary_function_ptr5(at_export_graph,alias_at_export_graph,&__export_graph,0,true)
 
-/* Usage:   import_graph("path/to/graphname[.dot]")
+/* USAGE:   import_graph("path/to/graphname[.dot]")
  *
  * Returns graph read from file 'graphname.dot' in directory 'path/to' (in dot
  * format). Returns 1 on success and 0 on failure.
@@ -625,7 +671,7 @@ static const char _import_graph_s[]="import_graph";
 static define_unary_function_eval(__import_graph,&_import_graph,_import_graph_s);
 define_unary_function_ptr5(at_import_graph,alias_at_import_graph,&__import_graph,0,true)
 
-/* Usage:   vertices(G)
+/* USAGE:   vertices(G)
  *
  * Return list of vertices of graph G.
  */
@@ -642,7 +688,7 @@ static const char _vertices_s[]="vertices";
 static define_unary_function_eval(__vertices,&_vertices,_vertices_s);
 define_unary_function_ptr5(at_vecrtices,alias_at_vertices,&__vertices,0,true)
 
-/* Usage:   edges(G,[weights])
+/* USAGE:   edges(G,[weights])
  *
  * Return list of edges of graph G. If second argument is the option 'weights',
  * edge weights are also returned.
@@ -672,7 +718,7 @@ static const char _edges_s[]="edges";
 static define_unary_function_eval(__edges,&_edges,_edges_s);
 define_unary_function_ptr5(at_edges,alias_at_edges,&__edges,0,true)
 
-/* Usage:   has_edge(G,e)
+/* USAGE:   has_edge(G,e)
  *
  * Returns true iff edge e={i,j} is contained in undirected graph G.
  */
@@ -699,7 +745,7 @@ static const char _has_edge_s[]="has_edge";
 static define_unary_function_eval(__has_edge,&_has_edge,_has_edge_s);
 define_unary_function_ptr5(at_has_edge,alias_at_has_edge,&__has_edge,0,true)
 
-/* Usage:   has_arc(G,e)
+/* USAGE:   has_arc(G,e)
  *
  * Returns true iff arc e=[i,j] is contained in directed graph G. If e={i,j},
  * true is returned if directed graph G has both edges [i,j] and [j,i].
@@ -728,7 +774,7 @@ static const char _has_arc_s[]="has_arc";
 static define_unary_function_eval(__has_arc,&_has_arc,_has_arc_s);
 define_unary_function_ptr5(at_has_arc,alias_at_has_arc,&__has_arc,0,true)
 
-/* Usage:   adjacency_matrix(G)
+/* USAGE:   adjacency_matrix(G)
  *
  * Returns the adjacency matrix of a graph G whose rows and columns are indexed
  * by the vertices. The entry [i,j] of this matrix is 1 if there is an edge
@@ -751,7 +797,7 @@ static const char _adjacency_matrix_s[]="adjacency_matrix";
 static define_unary_function_eval(__adjacency_matrix,&_adjacency_matrix,_adjacency_matrix_s);
 define_unary_function_ptr5(at_adjacency_matrix,alias_at_adjacency_matrix,&__adjacency_matrix,0,true)
 
-/* Usage:   incidence_matrix(G)
+/* USAGE:   incidence_matrix(G)
  *
  * Returns the incidence matrix of a graph G whose rows are indexed by the
  * vertices and columns by the edges (in order defined by the command 'edges').
@@ -774,7 +820,7 @@ static const char _incidence_matrix_s[]="incidence_matrix";
 static define_unary_function_eval(__incidence_matrix,&_incidence_matrix,_incidence_matrix_s);
 define_unary_function_ptr5(at_incidence_matrix,alias_at_incidence_matrix,&__incidence_matrix,0,true)
 
-/* Usage:   weight_matrix(G)
+/* USAGE:   weight_matrix(G)
  *
  * Returns the weight matrix of graph G.
  */
@@ -793,7 +839,7 @@ static const char _weight_matrix_s[]="weight_matrix";
 static define_unary_function_eval(__weight_matrix,&_weight_matrix,_weight_matrix_s);
 define_unary_function_ptr5(at_weight_matrix,alias_at_weight_matrix,&__weight_matrix,0,true)
 
-/* Usage:   graph_complement(G)
+/* USAGE:   graph_complement(G)
  *
  * Return the complement of graph G, that is the graph with the same vertex set
  * as G, but whose edge (arc) set consists of the edges (arcs) not present in
@@ -806,22 +852,14 @@ gen _graph_complement(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr),C(contextptr);
     if (!G.read_gen(*g._VECTptr))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    int n=G.node_count();
-    C.add_nodes(G.vertices());
-    C.set_directed(G.is_directed());
-    for (int i=0;i<n;++i) {
-        for (int j=0;j<G.is_directed()?n:i;++j) {
-            if (!G.has_edge(i,j))
-                C.add_edge(i,j);
-        }
-    }
+    G.complement(C);
     return C.to_gen();
 }
 static const char _graph_complement_s[]="graph_complement";
 static define_unary_function_eval(__graph_complement,&_graph_complement,_graph_complement_s);
 define_unary_function_ptr5(at_graph_complement,alias_at_graph_complement,&__graph_complement,0,true)
 
-/* Usage:   subgraph(G,E)
+/* USAGE:   subgraph(G,E)
  *
  * Returns the subgraph of G defined by edges in list E.
  */
@@ -845,7 +883,7 @@ static const char _subgraph_s[]="subgraph";
 static define_unary_function_eval(__subgraph,&_subgraph,_subgraph_s);
 define_unary_function_ptr5(at_subgraph,alias_at_subgraph,&__subgraph,0,true)
 
-/* Usage:   vertex_degree(G,v)
+/* USAGE:   vertex_degree(G,v)
  *
  * Returns the degree of vertex v in graph G (number of edges incident to v).
  */
@@ -865,7 +903,7 @@ static const char _vertex_degree_s[]="vertex_degree";
 static define_unary_function_eval(__vertex_degree,&_vertex_degree,_vertex_degree_s);
 define_unary_function_ptr5(at_vertex_degree,alias_at_vertex_degree,&__vertex_degree,0,true)
 
-/* Usage:   vertex_in_degree(G,v)
+/* USAGE:   vertex_in_degree(G,v)
  *
  * Returns number of arcs ending in vertex v of graph G.
  */
@@ -887,7 +925,7 @@ static const char _vertex_in_degree_s[]="vertex_in_degree";
 static define_unary_function_eval(__vertex_in_degree,&_vertex_in_degree,_vertex_in_degree_s);
 define_unary_function_ptr5(at_vertex_in_degree,alias_at_vertex_in_degree,&__vertex_in_degree,0,true)
 
-/* Usage:   vertex_out_degree(G,v)
+/* USAGE:   vertex_out_degree(G,v)
  *
  * Returns number of arcs starting in vertex v of graph G.
  */
@@ -909,7 +947,7 @@ static const char _vertex_out_degree_s[]="vertex_out_degree";
 static define_unary_function_eval(__vertex_out_degree,&_vertex_out_degree,_vertex_out_degree_s);
 define_unary_function_ptr5(at_vertex_out_degree,alias_at_vertex_out_degree,&__vertex_out_degree,0,true)
 
-/* Usage:   induced_subgraph(G,V)
+/* USAGE:   induced_subgraph(G,V)
  *
  * Returns the subgraph of G induced by vertices in list V.
  */
@@ -938,7 +976,7 @@ static const char _induced_subgraph_s[]="induced_subgraph";
 static define_unary_function_eval(__induced_subgraph,&_induced_subgraph,_induced_subgraph_s);
 define_unary_function_ptr5(at_induced_subgraph,alias_at_induced_subgraph,&__induced_subgraph,0,true)
 
-/* Usage:   maximal_independent_set(G)
+/* USAGE:   maximal_independent_set(G)
  *
  * Returns a maximal set of mutually independent (non-adjacent) vertices of
  * graph G. Using a method by Y.Hu (based on that of Ruge and Stuben), see
@@ -962,7 +1000,7 @@ static const char _maximal_independent_set_s[]="maximal_independent_set";
 static define_unary_function_eval(__maximal_independent_set,&_maximal_independent_set,_maximal_independent_set_s);
 define_unary_function_ptr5(at_maximal_independent_set,alias_at_maximal_independent_set,&__maximal_independent_set,0,true)
 
-/* Usage:   maximum_matching(G)
+/* USAGE:   maximum_matching(G)
  *
  * Returns a list of edges representing maximum matching for graph G. Jack
  * Edmonds' blossom algorithm is used.
@@ -986,7 +1024,7 @@ static const char _maximum_matching_s[]="maximum_matching";
 static define_unary_function_eval(__maximum_matching,&_maximum_matching,_maximum_matching_s);
 define_unary_function_ptr5(at_maximum_matching,alias_at_maximum_matching,&__maximum_matching,0,true)
 
-/* Usage:   make_directed(G,[A])
+/* USAGE:   make_directed(G,[A])
  *
  * Returns directed graph made from G by converting every edge to pair of arcs
  * [with weights specified by matrix A].
@@ -1016,7 +1054,7 @@ static const char _make_directed_s[]="make_directed";
 static define_unary_function_eval(__make_directed,&_make_directed,_make_directed_s);
 define_unary_function_ptr5(at_make_directed,alias_at_make_directed,&__make_directed,0,true)
 
-/* Usage:   underlying_graph(G)
+/* USAGE:   underlying_graph(G)
  *
  * Returns underlying graph of G, i.e. the graph obtained by stripping
  * directions and weights from arcs (pairs of arcs connecting the same vertices
@@ -1035,7 +1073,7 @@ static const char _underlying_graph_s[]="underlying_graph";
 static define_unary_function_eval(__underlying_graph,&_underlying_graph,_underlying_graph_s);
 define_unary_function_ptr5(at_underlying_graph,alias_at_underlying_graph,&__underlying_graph,0,true)
 
-/* Usage:   cycle_graph(n or V)
+/* USAGE:   cycle_graph(n or V)
  *
  * Returns cyclic graph with n vertices (or with vertices from list V).
  */
@@ -1056,7 +1094,7 @@ static const char _cycle_graph_s[]="cycle_graph";
 static define_unary_function_eval(__cycle_graph,&_cycle_graph,_cycle_graph_s);
 define_unary_function_ptr5(at_cycle_graph,alias_at_cycle_graph,&__cycle_graph,0,true)
 
-/* Usage:   lcf_graph(jumps,[exp])
+/* USAGE:   lcf_graph(jumps,[exp])
  *
  * Returns the graph constructed specified LCF notation jumps[^exp]. Arguments
  * are list of integers 'jumps' [and a positive integer 'exp', by default 1].
@@ -1092,7 +1130,7 @@ static const char _lcf_graph_s[]="lcf_graph";
 static define_unary_function_eval(__lcf_graph,&_lcf_graph,_lcf_graph_s);
 define_unary_function_ptr5(at_lcf_graph,alias_at_lcf_graph,&__lcf_graph,0,true)
 
-/* Usage:   hypercube_graph(n)
+/* USAGE:   hypercube_graph(n)
  *
  * Constructs and returns the hypercube graph in dimension n (with 2^n vertices).
  */
@@ -1117,7 +1155,7 @@ static const char _hypercube_graph_s[]="hypercube_graph";
 static define_unary_function_eval(__hypercube_graph,&_hypercube_graph,_hypercube_graph_s);
 define_unary_function_ptr5(at_hypercube_graph,alias_at_hypercube_graph,&__hypercube_graph,0,true)
 
-/* Usage:   seidel_switch(G,V)
+/* USAGE:   seidel_switch(G,V)
  *
  * Returns a copy of graph G in which edges between vertices in list V and
  * vertices not in V are inverted, i.e. replaced with a set of edges from V to
@@ -1160,7 +1198,7 @@ static const char _seidel_switch_s[]="seidel_switch";
 static define_unary_function_eval(__seidel_switch,&_seidel_switch,_seidel_switch_s);
 define_unary_function_ptr5(at_seidel_switch,alias_at_seidel_switch,&__seidel_switch,0,true)
 
-/* Usage:   draw_graph(G,[options])
+/* USAGE:   draw_graph(G,[options])
  *
  * Returns the graphic representation of graph G obtained by using
  * various algorithms (which can optionally be fine tuned by appending a
@@ -1397,7 +1435,7 @@ static const char _draw_graph_s[]="draw_graph";
 static define_unary_function_eval(__draw_graph,&_draw_graph,_draw_graph_s);
 define_unary_function_ptr5(at_draw_graph,alias_at_draw_graph,&__draw_graph,0,true)
 
-/* Usage:   sierpinski_graph(n,k,[triangle])
+/* USAGE:   sierpinski_graph(n,k,[triangle])
  *
  * Returns Sierpinski (triangle) graph S(n,k) (resp. ST(n,k)).
  */
@@ -1424,7 +1462,7 @@ static const char _sierpinski_graph_s[]="sierpinski_graph";
 static define_unary_function_eval(__sierpinski_graph,&_sierpinski_graph,_sierpinski_graph_s);
 define_unary_function_ptr5(at_sierpinski_graph,alias_at_sierpinski_graph,&__sierpinski_graph,0,true)
 
-/* Usage:   complete_graph(n or V)
+/* USAGE:   complete_graph(n or V)
  *          complete_graph(m,n)
  *          complete_graph(n1,n2,...,nk)
  *
@@ -1462,10 +1500,10 @@ static const char _complete_graph_s[]="complete_graph";
 static define_unary_function_eval(__complete_graph,&_complete_graph,_complete_graph_s);
 define_unary_function_ptr5(at_complete_graph,alias_at_complete_graph,&__complete_graph,0,true)
 
-/* Usage:   petersen_graph([n],[k])
+/* USAGE:   petersen_graph([n],k)
  *
  * Returns the generalized Petersen graph G(n,k), where n and k are positive
- * integers. Parameter k defaults to 2 and n defaults to 5.
+ * integers. Parameter k defaults to 2.
  */
 gen _petersen_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -1474,9 +1512,8 @@ gen _petersen_graph(const gen &g,GIAC_CONTEXT) {
         n=g.val;
         if (n<=0)
             return gentypeerr(contextptr);
-    }
-    if (g.type==_VECT && g.subtype==_SEQ__VECT) {
-        if ((g._VECTptr->size())<2)
+    } else if (g.type==_VECT && g.subtype==_SEQ__VECT) {
+        if ((g._VECTptr->size())!=2)
             return gensizeerr(contextptr);
         if (!g._VECTptr->front().is_integer() || !g._VECTptr->at(1).is_integer())
             return gentypeerr(contextptr);
@@ -1493,7 +1530,7 @@ static const char _petersen_graph_s[]="petersen_graph";
 static define_unary_function_eval(__petersen_graph,&_petersen_graph,_petersen_graph_s);
 define_unary_function_ptr5(at_petersen_graph,alias_at_petersen_graph,&__petersen_graph,0,true)
 
-/* Usage:   random_graph(n or V,p)
+/* USAGE:   random_graph(n or V,p)
  *          random_graph(n or V,m)
  *
  * Returns a random undirected unweighted graph with n vertices where two
@@ -1511,7 +1548,7 @@ static const char _random_graph_s[]="random_graph";
 static define_unary_function_eval(__random_graph,&_random_graph,_random_graph_s);
 define_unary_function_ptr5(at_random_graph,alias_at_random_graph,&__random_graph,0,true)
 
-/* Usage:   random_digraph(n or V,p)
+/* USAGE:   random_digraph(n or V,p)
  *          random_digraph(n or V,m)
  *
  * Returns a random directed unweighted graph with n vertices where two
@@ -1529,7 +1566,7 @@ static const char _random_digraph_s[]="random_digraph";
 static define_unary_function_eval(__random_digraph,&_random_digraph,_random_digraph_s);
 define_unary_function_ptr5(at_random_digraph,alias_at_random_digraph,&__random_digraph,0,true)
 
-/* Usage:   random_bipartite_graph(n or [a,b],p)
+/* USAGE:   random_bipartite_graph(n or [a,b],p)
  *          random_bipartite_graph(n or [a,b],m)
  *
  * Returns a random undirected unweighted bipartite graph with n vertices where
@@ -1572,7 +1609,7 @@ static const char _random_bipartite_graph_s[]="random_bipartite_graph";
 static define_unary_function_eval(__random_bipartite_graph,&_random_bipartite_graph,_random_bipartite_graph_s);
 define_unary_function_ptr5(at_random_bipartite_graph,alias_at_random_bipartite_graph,&__random_bipartite_graph,0,true)
 
-/* Usage:   random_tournament(n or V)
+/* USAGE:   random_tournament(n or V)
  *
  * Returns a random tournament graph with n vertices, which may be specified as
  * list V of their labels.
@@ -1600,7 +1637,7 @@ static const char _random_tournament_s[]="random_tournament";
 static define_unary_function_eval(__random_tournament,&_random_tournament,_random_tournament_s);
 define_unary_function_ptr5(at_random_tournament,alias_at_random_tournament,&__random_tournament,0,true)
 
-/* Usage:   random_regular_graph(n or V,d,[connected])
+/* USAGE:   random_regular_graph(n or V,d,[connected])
  *
  * Returns a random d-regular graph with n vertices, which may be specified as
  * list V of their labels.
@@ -1633,7 +1670,7 @@ static const char _random_regular_graph_s[]="random_regular_graph";
 static define_unary_function_eval(__random_regular_graph,&_random_regular_graph,_random_regular_graph_s);
 define_unary_function_ptr5(at_random_regular_graph,alias_at_random_regular_graph,&__random_regular_graph,0,true)
 
-/* Usage:   random_tree(n or V,[d])
+/* USAGE:   random_tree(n or V,[d])
  *
  * Returns a random tree graph with n vertices, which may be specified as list
  * V of their labels. Optional parameter d is a positive integer which
@@ -1677,7 +1714,7 @@ static const char _random_tree_s[]="random_tree";
 static define_unary_function_eval(__random_tree,&_random_tree,_random_tree_s);
 define_unary_function_ptr5(at_random_tree,alias_at_random_tree,&__random_tree,0,true)
 
-/* Usage:   random_planar_graph(n or V)
+/* USAGE:   random_planar_graph(n or V)
  *
  * Return random biconnected planar graph with n vertices, which can also be
  * specified as a list V of their labels.
@@ -1694,7 +1731,7 @@ static const char _random_planar_graph_s[]="random_planar_graph";
 static define_unary_function_eval(__random_planar_graph,&_random_planar_graph,_random_planar_graph_s);
 define_unary_function_ptr5(at_random_planar_graph,alias_at_random_planar_graph,&__random_planar_graph,0,true)
 
-/* Usage:   assign_edge_weights(G,m,n)
+/* USAGE:   assign_edge_weights(G,m,n)
  *          random_edge_weights(G,a..b)
  *
  * Assigns random edge weights to the edges of graph G and returns a modified
@@ -1710,6 +1747,7 @@ gen _assign_edge_weights(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    G.set_weighted(true);
     if (gv.size()==3) {
         if (!gv[1].is_integer() || !gv[2].is_integer())
             return gentypeerr(contextptr);
@@ -1732,7 +1770,7 @@ static const char _assign_edge_weights_s[]="assign_edge_weights";
 static define_unary_function_eval(__assign_edge_weights,&_assign_edge_weights,_assign_edge_weights_s);
 define_unary_function_ptr5(at_assign_edge_weights,alias_at_assign_edge_weights,&__assign_edge_weights,0,true)
 
-/* Usage:   articulation_points(G)
+/* USAGE:   articulation_points(G)
  *
  * Returns the list of articulation points (i.e. cut vertices) of graph G.
  */
@@ -1753,25 +1791,22 @@ static const char _articulation_points_s[]="articulation_points";
 static define_unary_function_eval(__articulation_points,&_articulation_points,_articulation_points_s);
 define_unary_function_ptr5(at_articulation_points,alias_at_articulation_points,&__articulation_points,0,true)
 
-/* Usage:   biconnected_components(G)
+/* USAGE:   biconnected_components(G)
  *
  * Returns the list of biconnected components of graph G. Every component is
- * given as a list of edges of G belonging to that component.
+ * given as a list of vertices belonging to that component.
  */
 gen _biconnected_components(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    graphe G(contextptr);
+    graphe G(contextptr),H(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     vector<vector<graphe::ipair> > blocks;
     G.find_blocks(blocks);
     vecteur res;
     for (vector<vector<graphe::ipair> >::const_iterator it=blocks.begin();it!=blocks.end();++it) {
-        vecteur v;
-        for (vector<graphe::ipair>::const_iterator jt=it->begin();jt!=it->end();++jt) {
-            v.push_back(makevecteur(G.node_label(jt->first),G.node_label(jt->second)));
-        }
-        res.push_back(v);
+        G.subgraph(*it,H,false);
+        res.push_back(H.vertices());
     }
     return res;
 }
@@ -1779,7 +1814,7 @@ static const char _biconnected_components_s[]="biconnected_components";
 static define_unary_function_eval(__biconnected_components,&_biconnected_components,_biconnected_components_s);
 define_unary_function_ptr5(at_biconnected_components,alias_at_biconnected_components,&__biconnected_components,0,true)
 
-/* Usage:   add_arc(G,e)
+/* USAGE:   add_arc(G,e)
  *
  * Returns graph G (which must be directed) with added arc e (or trail or list
  * of arcs).
@@ -1806,7 +1841,7 @@ static const char _add_arc_s[]="add_arc";
 static define_unary_function_eval(__add_arc,&_add_arc,_add_arc_s);
 define_unary_function_ptr5(at_add_arc,alias_at_add_arc,&__add_arc,0,true)
 
-/* Usage:   delete_arc(G,e)
+/* USAGE:   delete_arc(G,e)
  *
  * Returns graph G (which must be directed) with arc e (or trail or list of
  * arcs) removed.
@@ -1833,7 +1868,7 @@ static const char _delete_arc_s[]="delete_arc";
 static define_unary_function_eval(__delete_arc,&_delete_arc,_delete_arc_s);
 define_unary_function_ptr5(at_delete_arc,alias_at_delete_arc,&__delete_arc,0,true)
 
-/* Usage:   add_edge(G,e)
+/* USAGE:   add_edge(G,e)
  *
  * Returns graph G (which must be undirected) with added edge e (or trail or
  * list of edges).
@@ -1860,7 +1895,7 @@ static const char _add_edge_s[]="add_edge";
 static define_unary_function_eval(__add_edge,&_add_edge,_add_edge_s);
 define_unary_function_ptr5(at_add_edge,alias_at_add_edge,&__add_edge,0,true)
 
-/* Usage:   delete_edge(G,e)
+/* USAGE:   delete_edge(G,e)
  *
  * Returns graph G (which must be undirected) with edge e (or trail or list of
  * edges) removed.
@@ -1887,7 +1922,7 @@ static const char _delete_edge_s[]="delete_edge";
 static define_unary_function_eval(__delete_edge,&_delete_edge,_delete_edge_s);
 define_unary_function_ptr5(at_delete_edge,alias_at_delete_edge,&__delete_edge,0,true)
 
-/* Usage:   add_vertex(G,v)
+/* USAGE:   add_vertex(G,v)
  *
  * Returns graph G with added vertex v (or vertices from v if v is a list).
  */
@@ -1911,7 +1946,7 @@ static const char _add_vertex_s[]="add_vertex";
 static define_unary_function_eval(__add_vertex,&_add_vertex,_add_vertex_s);
 define_unary_function_ptr5(at_add_vertex,alias_at_add_vertex,&__add_vertex,0,true)
 
-/* Usage:   delete_vertex(G,v)
+/* USAGE:   delete_vertex(G,v)
  *
  * Returns graph G with vertex v (or vertices from v if v is a list) removed.
  */
@@ -1937,7 +1972,7 @@ static const char _delete_vertex_s[]="delete_vertex";
 static define_unary_function_eval(__delete_vertex,&_delete_vertex,_delete_vertex_s);
 define_unary_function_ptr5(at_delete_vertex,alias_at_delete_vertex,&__delete_vertex,0,true)
 
-/* Usage:   contract_edge(G,e)
+/* USAGE:   contract_edge(G,e)
  *
  * Returns graph G with edge e contracted (collapsed).
  */
@@ -1966,7 +2001,7 @@ static const char _contract_edge_s[]="contract_edge";
 static define_unary_function_eval(__contract_edge,&_contract_edge,_contract_edge_s);
 define_unary_function_ptr5(at_contract_edge,alias_at_contract_edge,&__contract_edge,0,true)
 
-/* Usage:   connected_components(G)
+/* USAGE:   connected_components(G)
  *
  * Returns list of lists of vertices, each sublist representing a connected
  * component of graph G. Individual components can be made available as
@@ -1977,15 +2012,11 @@ gen _connected_components(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    vector<graphe::ivector> components;
+    graphe::ivectors components;
     G.connected_components(components);
     vecteur res;
-    for (vector<graphe::ivector>::const_iterator it=components.begin();it!=components.end();++it) {
-        vecteur component;
-        for (graphe::ivector::const_iterator jt=it->begin();jt!=it->end();++jt) {
-            component.push_back(G.node_label(*jt));
-        }
-        res.push_back(component);
+    for (graphe::ivectors_iter it=components.begin();it!=components.end();++it) {
+        res.push_back(G.get_nodes(*it));
     }
     return res;
 }
@@ -1993,7 +2024,7 @@ static const char _connected_components_s[]="connected_components";
 static define_unary_function_eval(__connected_components,&_connected_components,_connected_components_s);
 define_unary_function_ptr5(at_connected_components,alias_at_connected_components,&__connected_components,0,true)
 
-/* Usage:   departures(G,[v])
+/* USAGE:   departures(G,[v])
  *
  * Returns list of vertices of directed graph G which are connected by v with
  * arcs such that tails are in v. If v is omitted, list of departures is
@@ -2009,7 +2040,7 @@ static const char _departures_s[]="departures";
 static define_unary_function_eval(__departures,&_departures,_departures_s);
 define_unary_function_ptr5(at_departures,alias_at_departures,&__departures,0,true)
 
-/* Usage:   arrivals(G,[v])
+/* USAGE:   arrivals(G,[v])
  *
  * Returns list of vertices of directed graph G which are connected by v with
  * arcs such that heads are in v. If v is omitted, list of departures is
@@ -2025,7 +2056,7 @@ static const char _arrivals_s[]="arrivals";
 static define_unary_function_eval(__arrivals,&_arrivals,_arrivals_s);
 define_unary_function_ptr5(at_arrivals,alias_at_arrivals,&__arrivals,0,true)
 
-/* Usage:   incident_edges(G,v)
+/* USAGE:   incident_edges(G,v)
  *
  * Returns list of all edges incident to vertex v (or vertices in the list v).
  */
@@ -2062,7 +2093,7 @@ static const char _incident_edges_s[]="incident_edges";
 static define_unary_function_eval(__incident_edges,&_incident_edges,_incident_edges_s);
 define_unary_function_ptr5(at_incident_edges,alias_at_incident_edges,&__incident_edges,0,true)
 
-/* Usage:   make_weighted(G,[M])
+/* USAGE:   make_weighted(G,[M])
  *
  * Returns graph G with edge/arc weights set as specified by matrix M. If M is
  * omitted, a suqare matrix of ones is used. If G is undirected, M is assumed
@@ -2092,7 +2123,7 @@ static const char _make_weighted_s[]="make_weighted";
 static define_unary_function_eval(__make_weighted,&_make_weighted,_make_weighted_s);
 define_unary_function_ptr5(at_make_weighted,alias_at_make_weighted,&__make_weighted,0,true)
 
-/* Usage:   set_graph_attribute(G,attr1,attr2,...)
+/* USAGE:   set_graph_attribute(G,attr1,attr2,...)
  *
  * Stores the attributes attr1, attr2, ..., each in form tag=value, where tag
  * is string, and returns the modified copy of G. Attributes may also be
@@ -2124,7 +2155,7 @@ static const char _set_graph_attribute_s[]="set_graph_attribute";
 static define_unary_function_eval(__set_graph_attribute,&_set_graph_attribute,_set_graph_attribute_s);
 define_unary_function_ptr5(at_set_graph_attribute,alias_at_set_graph_attribute,&__set_graph_attribute,0,true)
 
-/* Usage:   set_vertex_attribute(G,v,attr1,attr2,...)
+/* USAGE:   set_vertex_attribute(G,v,attr1,attr2,...)
  *
  * Stores the attributes attr1, attr2, ..., each in form tag=value, where tag
  * is string, to vertex v and returns the modified copy of G. Attributes may
@@ -2161,7 +2192,7 @@ static const char _set_vertex_attribute_s[]="set_vertex_attribute";
 static define_unary_function_eval(__set_vertex_attribute,&_set_vertex_attribute,_set_vertex_attribute_s);
 define_unary_function_ptr5(at_set_vertex_attribute,alias_at_set_vertex_attribute,&__set_vertex_attribute,0,true)
 
-/* Usage:   set_edge_attribute(G,e,attr1,attr2,...)
+/* USAGE:   set_edge_attribute(G,e,attr1,attr2,...)
  *
  * Stores the attributes attr1, attr2, ..., each in form tag=value, where tag
  * is string, to edge e and returns the modified copy of G. Attributes may also
@@ -2204,7 +2235,7 @@ static const char _set_edge_attribute_s[]="set_edge_attribute";
 static define_unary_function_eval(__set_edge_attribute,&_set_edge_attribute,_set_edge_attribute_s);
 define_unary_function_ptr5(at_set_edge_attribute,alias_at_set_edge_attribute,&__set_edge_attribute,0,true)
 
-/* Usage:   get_graph_attribute(G,tag1,tag2,...)
+/* USAGE:   get_graph_attribute(G,tag1,tag2,...)
  *
  * Get the graph attributes tag1, tag2, ..., i.e. return the sequence of values
  * corresponding to the given tags, which may also be specified in a list.
@@ -2236,7 +2267,7 @@ static const char _get_graph_attribute_s[]="get_graph_attribute";
 static define_unary_function_eval(__get_graph_attribute,&_get_graph_attribute,_get_graph_attribute_s);
 define_unary_function_ptr5(at_get_graph_attribute,alias_at_get_graph_attribute,&__get_graph_attribute,0,true)
 
-/* Usage:   get_vertex_attribute(G,v,tag1,tag2,...)
+/* USAGE:   get_vertex_attribute(G,v,tag1,tag2,...)
  *
  * Get the attributes tag1, tag2, ... assigned to vertex v in graph G, i.e.
  * return the sequence of values corresponding to the given tags, which may
@@ -2273,7 +2304,7 @@ static const char _get_vertex_attribute_s[]="get_vertex_attribute";
 static define_unary_function_eval(__get_vertex_attribute,&_get_vertex_attribute,_get_vertex_attribute_s);
 define_unary_function_ptr5(at_get_vertex_attribute,alias_at_get_vertex_attribute,&__get_vertex_attribute,0,true)
 
-/* Usage:   get_edge_attribute(G,e,tag1,tag2,...)
+/* USAGE:   get_edge_attribute(G,e,tag1,tag2,...)
  *
  * Get the attributes tag1, tag2, ... assigned to edge e in graph G, i.e.
  * return the sequence of values corresponding to the given tags, which may
@@ -2316,7 +2347,7 @@ static const char _get_edge_attribute_s[]="get_edge_attribute";
 static define_unary_function_eval(__get_edge_attribute,&_get_edge_attribute,_get_edge_attribute_s);
 define_unary_function_ptr5(at_get_edge_attribute,alias_at_get_edge_attribute,&__get_edge_attribute,0,true)
 
-/* Usage:   discard_graph_attribute(G,tag1,tag2,...)
+/* USAGE:   discard_graph_attribute(G,tag1,tag2,...)
  *
  * Discards the graph attributes with tags tag1, tag2, ..., which may also be
  * specified in a list, and returns the modified copy of G.
@@ -2345,7 +2376,7 @@ static const char _discard_graph_attribute_s[]="discard_graph_attribute";
 static define_unary_function_eval(__discard_graph_attribute,&_discard_graph_attribute,_discard_graph_attribute_s);
 define_unary_function_ptr5(at_discard_graph_attribute,alias_at_discard_graph_attribute,&__discard_graph_attribute,0,true)
 
-/* Usage:   discard_vertex_attribute(G,v,tag1,tag2,...)
+/* USAGE:   discard_vertex_attribute(G,v,tag1,tag2,...)
  *
  * Discards the attributes with tags tag1, tag2, ... assigned to vertex v in
  * graph G, which may also be specified in a list, and returns the modified
@@ -2379,7 +2410,7 @@ static const char _discard_vertex_attribute_s[]="discard_vertex_attribute";
 static define_unary_function_eval(__discard_vertex_attribute,&_discard_vertex_attribute,_discard_vertex_attribute_s);
 define_unary_function_ptr5(at_discard_vertex_attribute,alias_at_discard_vertex_attribute,&__discard_vertex_attribute,0,true)
 
-/* Usage:   discard_edge_attribute(G,e,tag1,tag2,...)
+/* USAGE:   discard_edge_attribute(G,e,tag1,tag2,...)
  *
  * Discards the attributes with tags tag1, tag2, ... assigned to edge e in
  * graph G, which may also be specified in a list, and returns the modified
@@ -2419,7 +2450,7 @@ static const char _discard_edge_attribute_s[]="discard_edge_attribute";
 static define_unary_function_eval(__discard_edge_attribute,&_discard_edge_attribute,_discard_edge_attribute_s);
 define_unary_function_ptr5(at_discard_edge_attribute,alias_at_discard_edge_attribute,&__discard_edge_attribute,0,true)
 
-/* Usage:   list_graph_attributes(G)
+/* USAGE:   list_graph_attributes(G)
  *
  * Returns the list of graph attributes in form tag=value.
  */
@@ -2436,7 +2467,7 @@ static const char _list_graph_attributes_s[]="list_graph_attributes";
 static define_unary_function_eval(__list_graph_attributes,&_list_graph_attributes,_list_graph_attributes_s);
 define_unary_function_ptr5(at_list_graph_attributes,alias_at_list_graph_attributes,&__list_graph_attributes,0,true)
 
-/* Usage:   list_vertex_attributes(G,v)
+/* USAGE:   list_vertex_attributes(G,v)
  *
  * Returns the list of attributes assigned to vertex v in form tag=value.
  */
@@ -2461,7 +2492,7 @@ static const char _list_vertex_attributes_s[]="list_vertex_attributes";
 static define_unary_function_eval(__list_vertex_attributes,&_list_vertex_attributes,_list_vertex_attributes_s);
 define_unary_function_ptr5(at_list_vertex_attributes,alias_at_list_vertex_attributes,&__list_vertex_attributes,0,true)
 
-/* Usage:   list_edge_attributes(G,e)
+/* USAGE:   list_edge_attributes(G,e)
  *
  * Returns the list of attributes assigned to edge e in form tag=value.
  */
@@ -2493,7 +2524,7 @@ static const char _list_edge_attributes_s[]="list_edge_attributes";
 static define_unary_function_eval(__list_edge_attributes,&_list_edge_attributes,_list_edge_attributes_s);
 define_unary_function_ptr5(at_list_edge_attributes,alias_at_list_edge_attributes,&__list_edge_attributes,0,true)
 
-/* Usage:   number_of_edges(G)
+/* USAGE:   number_of_edges(G)
  *
  * Returns number of edges/arcs of graph G.
  */
@@ -2508,7 +2539,7 @@ static const char _number_of_edges_s[]="number_of_edges";
 static define_unary_function_eval(__number_of_edges,&_number_of_edges,_number_of_edges_s);
 define_unary_function_ptr5(at_number_of_edges,alias_at_number_of_edges,&__number_of_edges,0,true)
 
-/* Usage:   number_of_vertices(G)
+/* USAGE:   number_of_vertices(G)
  *
  * Returns number of vertices of graph G.
  */
@@ -2523,7 +2554,7 @@ static const char _number_of_vertices_s[]="number_of_vertices";
 static define_unary_function_eval(__number_of_vertices,&_number_of_vertices,_number_of_vertices_s);
 define_unary_function_ptr5(at_number_of_vertices,alias_at_number_of_vertices,&__number_of_vertices,0,true)
 
-/* Usage:   get_edge_weight(G,e)
+/* USAGE:   get_edge_weight(G,e)
  *
  * Returns weight of edge e in graph G, which must be weighted.
  */
@@ -2548,7 +2579,7 @@ static const char _get_edge_weight_s[]="get_edge_weight";
 static define_unary_function_eval(__get_edge_weight,&_get_edge_weight,_get_edge_weight_s);
 define_unary_function_ptr5(at_get_edge_weight,alias_at_get_edge_weight,&__get_edge_weight,0,true)
 
-/* Usage:   set_edge_weight(G,e,w)
+/* USAGE:   set_edge_weight(G,e,w)
  *
  * Sets weight of edge e in graph G (must be weighted) to w and returns the old
  * weight.
@@ -2576,7 +2607,7 @@ static const char _set_edge_weight_s[]="set_edge_weight";
 static define_unary_function_eval(__set_edge_weight,&_set_edge_weight,_set_edge_weight_s);
 define_unary_function_ptr5(at_set_edge_weight,alias_at_set_edge_weight,&__set_edge_weight,0,true)
 
-/* Usage:   is_directed(G)
+/* USAGE:   is_directed(G)
  *
  * Returns true if G is a directed graph, else returns false.
  */
@@ -2591,7 +2622,7 @@ static const char _is_directed_s[]="is_directed";
 static define_unary_function_eval(__is_directed,&_is_directed,_is_directed_s);
 define_unary_function_ptr5(at_is_directed,alias_at_is_directed,&__is_directed,0,true)
 
-/* Usage:   neighbors(G,v)
+/* USAGE:   neighbors(G,v)
  *
  * Returns list of adjacent vertices of vertex v.
  */
@@ -2618,7 +2649,7 @@ static const char _neighbors_s[]="neighbors";
 static define_unary_function_eval(__neighbors,&_neighbors,_neighbors_s);
 define_unary_function_ptr5(at_neighbors,alias_at_neighbors,&__neighbors,0,true)
 
-/* Usage:   minimum_degree(G)
+/* USAGE:   minimum_degree(G)
  *
  * Returns the smallest degree among vertices in graph G.
  */
@@ -2640,7 +2671,7 @@ static const char _minimum_degree_s[]="minimum_degree";
 static define_unary_function_eval(__minimum_degree,&_minimum_degree,_minimum_degree_s);
 define_unary_function_ptr5(at_minimum_degree,alias_at_minimum_degree,&__minimum_degree,0,true)
 
-/* Usage:   maximum_degree(G)
+/* USAGE:   maximum_degree(G)
  *
  * Returns the largest degree among vertices in graph G.
  */
@@ -2662,7 +2693,7 @@ static const char _maximum_degree_s[]="maximum_degree";
 static define_unary_function_eval(__maximum_degree,&_maximum_degree,_maximum_degree_s);
 define_unary_function_ptr5(at_maximum_degree,alias_at_maximum_degree,&__maximum_degree,0,true)
 
-/* Usage:   is_regular(G)
+/* USAGE:   is_regular(G)
  *
  * Returns true if max and min degrees of graph G are equal, else returns false.
  */
@@ -2684,7 +2715,7 @@ static const char _is_regular_s[]="is_regular";
 static define_unary_function_eval(__is_regular,&_is_regular,_is_regular_s);
 define_unary_function_ptr5(at_is_regular,alias_at_is_regular,&__is_regular,0,true)
 
-/* Usage:   isomorphic_copy(G,sigma)
+/* USAGE:   isomorphic_copy(G,sigma)
  *
  * Returns a new graph H with vertices reordered according to permutation sigma.
  */
@@ -2714,7 +2745,7 @@ static const char _isomorphic_copy_s[]="isomorphic_copy";
 static define_unary_function_eval(__isomorphic_copy,&_isomorphic_copy,_isomorphic_copy_s);
 define_unary_function_ptr5(at_isomorphic_copy,alias_at_isomorphic_copy,&__isomorphic_copy,0,true)
 
-/* Usage:   relabel_vertices(G,V)
+/* USAGE:   relabel_vertices(G,V)
  *
  * Returns a new graph H with vertex labels changed to those in V.
  */
@@ -2741,7 +2772,7 @@ static const char _relabel_vertices_s[]="relabel_vertices";
 static define_unary_function_eval(__relabel_vertices,&_relabel_vertices,_relabel_vertices_s);
 define_unary_function_ptr5(at_relabel_vertices,alias_at_relabel_vertices,&__relabel_vertices,0,true)
 
-/* Usage:   is_tree(G)
+/* USAGE:   is_tree(G)
  *
  * Returns true iff graph G is a tree, i.e. an undirected connected graph with
  * exactly n-1 edges, where n is number of nodes.
@@ -2757,7 +2788,7 @@ static const char _is_tree_s[]="is_tree";
 static define_unary_function_eval(__is_tree,&_is_tree,_is_tree_s);
 define_unary_function_ptr5(at_is_tree,alias_at_is_tree,&__is_tree,0,true)
 
-/* Usage:   is_forest(G)
+/* USAGE:   is_forest(G)
  *
  * Returns true iff graph G is a forest, i.e. an undirected graph whose
  * connected components are all trees.
@@ -2773,7 +2804,7 @@ static const char _is_forest_s[]="is_forest";
 static define_unary_function_eval(__is_forest,&_is_forest,_is_forest_s);
 define_unary_function_ptr5(at_is_forest,alias_at_is_forest,&__is_forest,0,true)
 
-/* Usage:   is_tournament(G)
+/* USAGE:   is_tournament(G)
  *
  * Returns true iff graph G is a tournament, i.e. a complete graph with a
  * direction for each edge.
@@ -2789,7 +2820,7 @@ static const char _is_tournament_s[]="is_tournament";
 static define_unary_function_eval(__is_tournament,&_is_tournament,_is_tournament_s);
 define_unary_function_ptr5(at_is_tournament,alias_at_is_tournament,&__is_tournament,0,true)
 
-/* Usage:   tree_height(T,r)
+/* USAGE:   tree_height(T,r)
  *
  * Returns the height of tree T with vertex r as root node.
  */
@@ -2816,7 +2847,22 @@ static const char _tree_height_s[]="tree_height";
 static define_unary_function_eval(__tree_height,&_tree_height,_tree_height_s);
 define_unary_function_ptr5(at_tree_height,alias_at_tree_height,&__tree_height,0,true)
 
-/* Usage:   is_connected(G)
+/* USAGE:   is_triangle_free(G)
+ *
+ * Returns true iff undirected graph G is triangle-free, i.e. contains no 3-cliques.
+ */
+gen _is_triangle_free(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    return graphe::boole(G.is_triangle_free());
+}
+static const char _is_triangle_free_s[]="is_triangle_free";
+static define_unary_function_eval(__is_triangle_free,&_is_triangle_free,_is_triangle_free_s);
+define_unary_function_ptr5(at_is_triangle_free,alias_at_is_triangle_free,&__is_triangle_free,0,true)
+
+/* USAGE:   is_connected(G)
  *
  * Returns true iff graph G is connected.
  */
@@ -2831,7 +2877,7 @@ static const char _is_connected_s[]="is_connected";
 static define_unary_function_eval(__is_connected,&_is_connected,_is_connected_s);
 define_unary_function_ptr5(at_is_connected,alias_at_is_connected,&__is_connected,0,true)
 
-/* Usage:   is_biconnected(G)
+/* USAGE:   is_biconnected(G)
  *
  * Returns true iff graph G is biconnected. Running time is O(n+m).
  */
@@ -2846,7 +2892,7 @@ static const char _is_biconnected_s[]="is_biconnected";
 static define_unary_function_eval(__is_biconnected,&_is_biconnected,_is_biconnected_s);
 define_unary_function_ptr5(at_is_biconnected,alias_at_is_biconnected,&__is_biconnected,0,true)
 
-/* Usage:   is_triconnected(G)
+/* USAGE:   is_triconnected(G)
  *
  * Returns true iff graph G is triconnected. Running time is O(n*(n+m)).
  */
@@ -2861,7 +2907,7 @@ static const char _is_triconnected_s[]="is_triconnected";
 static define_unary_function_eval(__is_triconnected,&_is_triconnected,_is_triconnected_s);
 define_unary_function_ptr5(at_is_triconnected,alias_at_is_triconnected,&__is_triconnected,0,true)
 
-/* Usage:   is_weighted(G)
+/* USAGE:   is_weighted(G)
  *
  * Returns true iff graph G is weighted.
  */
@@ -2876,7 +2922,7 @@ static const char _is_weighted_s[]="is_weighted";
 static define_unary_function_eval(__is_weighted,&_is_weighted,_is_weighted_s);
 define_unary_function_ptr5(at_is_weighted,alias_at_is_weighted,&__is_weighted,0,true)
 
-/* Usage:   is_planar(G)
+/* USAGE:   is_planar(G)
  *
  * Returns true iff graph G is planar.
  */
@@ -2891,7 +2937,7 @@ static const char _is_planar_s[]="is_planar";
 static define_unary_function_eval(__is_planar,&_is_planar,_is_planar_s);
 define_unary_function_ptr5(at_is_planar,alias_at_is_planar,&__is_planar,0,true)
 
-/* Usage:   complete_binary_tree(n)
+/* USAGE:   complete_binary_tree(n)
  *
  * Returns the complete binary tree with depth equal to n.
  */
@@ -2907,7 +2953,7 @@ static const char _complete_binary_tree_s[]="complete_binary_tree";
 static define_unary_function_eval(__complete_binary_tree,&_complete_binary_tree,_complete_binary_tree_s);
 define_unary_function_ptr5(at_complete_binary_tree,alias_at_complete_binary_tree,&__complete_binary_tree,0,true)
 
-/* Usage:   complete_kary_tree(k,n)
+/* USAGE:   complete_kary_tree(k,n)
  *
  * Returns the complete k-ary tree with depth equal to n.
  */
@@ -2931,7 +2977,7 @@ static const char _complete_kary_tree_s[]="complete_kary_tree";
 static define_unary_function_eval(__complete_kary_tree,&_complete_kary_tree,_complete_kary_tree_s);
 define_unary_function_ptr5(at_complete_kary_tree,alias_at_complete_kary_tree,&__complete_kary_tree,0,true)
 
-/* Usage:   prism_graph(n)
+/* USAGE:   prism_graph(n)
  *
  * Returns the prism graph of order n, i.e. the generalized Petersen graph
  * GP(n,1).
@@ -2946,7 +2992,7 @@ static const char _prism_graph_s[]="prism_graph";
 static define_unary_function_eval(__prism_graph,&_prism_graph,_prism_graph_s);
 define_unary_function_ptr5(at_prism_graph,alias_at_prism_graph,&__prism_graph,0,true)
 
-/* Usage:   antiprism_graph(n)
+/* USAGE:   antiprism_graph(n)
  *
  * Returns the antiprism graph of order n.
  */
@@ -2962,7 +3008,7 @@ static const char _antiprism_graph_s[]="antiprism_graph";
 static define_unary_function_eval(__antiprism_graph,&_antiprism_graph,_antiprism_graph_s);
 define_unary_function_ptr5(at_antiprism_graph,alias_at_antiprism_graph,&__antiprism_graph,0,true)
 
-/* Usage:   star_graph(n)
+/* USAGE:   star_graph(n)
  *
  * Returns the star graph with n+1 vertices, i.e. the complete bipartite graph
  * complete_graph(1,n).
@@ -2977,7 +3023,7 @@ static const char _star_graph_s[]="star_graph";
 static define_unary_function_eval(__star_graph,&_star_graph,_star_graph_s);
 define_unary_function_ptr5(at_star_graph,alias_at_star_graph,&__star_graph,0,true)
 
-/* Usage:   wheel_graph(n)
+/* USAGE:   wheel_graph(n)
  *
  * Returns the wheel graph with n+1 vertices.
  */
@@ -2993,7 +3039,7 @@ static const char _wheel_graph_s[]="wheel_graph";
 static define_unary_function_eval(__wheel_graph,&_wheel_graph,_wheel_graph_s);
 define_unary_function_ptr5(at_wheel_graph,alias_at_wheel_graph,&__wheel_graph,0,true)
 
-/* Usage:   grid_graph(m,n)
+/* USAGE:   grid_graph(m,n)
  *
  * Returns the grid graph on m*n vertices, where m,n>=2.
  */
@@ -3017,7 +3063,7 @@ static const char _grid_graph_s[]="grid_graph";
 static define_unary_function_eval(__grid_graph,&_grid_graph,_grid_graph_s);
 define_unary_function_ptr5(at_grid_graph,alias_at_grid_graph,&__grid_graph,0,true)
 
-/* Usage:   torus_grid_graph(m,n)
+/* USAGE:   torus_grid_graph(m,n)
  *
  * Returns the torus grid graph on m*n vertices, where m,n>=3.
  */
@@ -3041,7 +3087,7 @@ static const char _torus_grid_graph_s[]="torus_grid_graph";
 static define_unary_function_eval(__torus_grid_graph,&_torus_grid_graph,_torus_grid_graph_s);
 define_unary_function_ptr5(at_torus_grid_graph,alias_at_torus_grid_graph,&__torus_grid_graph,0,true)
 
-/* Usage:   web_graph(a,b)
+/* USAGE:   web_graph(a,b)
  *
  * Returns the web graph on a*b vertices, where a>=3 and b>=2.
  */
@@ -3065,7 +3111,7 @@ static const char _web_graph_s[]="web_graph";
 static define_unary_function_eval(__web_graph,&_web_graph,_web_graph_s);
 define_unary_function_ptr5(at_web_graph,alias_at_web_graph,&__web_graph,0,true)
 
-/* Usage:   cartesian_product(G1,G2,...)
+/* USAGE:   cartesian_product(G1,G2,...)
  *
  * Returns Cartesian product of graphs G1, G2, ... Vertices in the resulting
  * graph are labelled as "u:v:..." where u, v, ... are vertices from G1, G2,
@@ -3085,7 +3131,7 @@ static const char _cartesian_product_s[]="cartesian_product";
 static define_unary_function_eval(__cartesian_product,&_cartesian_product,_cartesian_product_s);
 define_unary_function_ptr5(at_cartesian_product,alias_at_cartesian_product,&__cartesian_product,0,true)
 
-/* Usage:   tensor_product(G1,G2,...)
+/* USAGE:   tensor_product(G1,G2,...)
  *
  * Returns tensor product of graphs G1, G2, ... Vertices in the resulting graph
  * are labelled as "u:v:..." where u, v, ... are vertices from G1, G2, ...,
@@ -3105,7 +3151,7 @@ static const char _tensor_product_s[]="tensor_product";
 static define_unary_function_eval(__tensor_product,&_tensor_product,_tensor_product_s);
 define_unary_function_ptr5(at_tensor_product,alias_at_tensor_product,&__tensor_product,0,true)
 
-/* Usage:   path_graph(n or V)
+/* USAGE:   path_graph(n or V)
  *
  * Returns a path graph with n vertices, which can also be specified as list of
  * their labels.
@@ -3127,7 +3173,7 @@ static const char _path_graph_s[]="path_graph";
 static define_unary_function_eval(__path_graph,&_path_graph,_path_graph_s);
 define_unary_function_ptr5(at_path_graph,alias_at_path_graph,&__path_graph,0,true)
 
-/* Usage:   eulerian_path(G,[V])
+/* USAGE:   eulerian_path(G,[V])
  *
  * Returns true iff graph G is eulerian, i.e. if it has eulerian path. If
  * identifier V is specified as the second argument, that path is written to it.
@@ -3163,7 +3209,7 @@ static const char _is_eulerian_s[]="is_eulerian";
 static define_unary_function_eval(__is_eulerian,&_is_eulerian,_is_eulerian_s);
 define_unary_function_ptr5(at_is_eulerian,alias_at_is_eulerian,&__is_eulerian,0,true)
 
-/* Usage:   kneser_graph(n,k)
+/* USAGE:   kneser_graph(n,k)
  *
  * Returns Kneser graph K(n,k) with comb(n,k) vertices. The largest acceptable
  * value of n is 20. Kneser graphs with more than 10000 vertices will not be
@@ -3190,7 +3236,7 @@ static const char _kneser_graph_s[]="kneser_graph";
 static define_unary_function_eval(__kneser_graph,&_kneser_graph,_kneser_graph_s);
 define_unary_function_ptr5(at_kneser_graph,alias_at_kneser_graph,&__kneser_graph,0,true)
 
-/* Usage:   odd_graph(n)
+/* USAGE:   odd_graph(n)
  *
  * Returns odd graph of order n as Kneser graph K(2n-1,n-1). The largest
  * acceptable value of n is 8.
@@ -3210,7 +3256,7 @@ static const char _odd_graph_s[]="odd_graph";
 static define_unary_function_eval(__odd_graph,&_odd_graph,_odd_graph_s);
 define_unary_function_ptr5(at_odd_graph,alias_at_odd_graph,&__odd_graph,0,true)
 
-/* Usage:   highlight_vertex(G,V,[C])
+/* USAGE:   highlight_vertex(G,V,[C])
  *
  * Change color of vertex or list of vertices V in graph G to C (or green, if C
  * is not specified) and return the modified graph.
@@ -3238,7 +3284,7 @@ gen _highlight_vertex(const gen &g,GIAC_CONTEXT) {
             return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
         indices.push_back(index);
     }
-    gen C=gv.size()==3?gv.back():_GREEN;
+    gen C=gv.size()==3?gv.back():graphe::default_highlighted_vertex_color;
     if (!parse_vertex_colors(G,C,indices))
         return gentypeerr(contextptr);
     return G.to_gen();
@@ -3247,7 +3293,7 @@ static const char _highlight_vertex_s[]="highlight_vertex";
 static define_unary_function_eval(__highlight_vertex,&_highlight_vertex,_highlight_vertex_s);
 define_unary_function_ptr5(at_highlight_vertex,alias_at_highlight_vertex,&__highlight_vertex,0,true)
 
-/* Usage:   highlight_edges(G,E,[C])
+/* USAGE:   highlight_edges(G,E,[C])
  *
  * Change color of edge or list of edges E in graph V to C (or red, if C is not
  * specified) and return the modified graph.
@@ -3269,7 +3315,7 @@ gen _highlight_edges(const gen &g,GIAC_CONTEXT) {
     bool notfound=false;
     if (!G.edges2ipairs(E,edges,notfound))
         return notfound?gt_err(_GT_ERR_EDGE_NOT_FOUND,contextptr):gensizeerr(contextptr);
-    gen C=gv.size()==3?gv.back():_RED;
+    gen C=gv.size()==3?gv.back():graphe::default_highlighted_edge_color;
     for (graphe::ipairs_iter it=edges.begin();it!=edges.end();++it) {
         G.set_edge_attribute(it->first,it->second,_GT_ATTRIB_COLOR,C);
     }
@@ -3279,7 +3325,7 @@ static const char _highlight_edges_s[]="highlight_edges";
 static define_unary_function_eval(__highlight_edges,&_highlight_edges,_highlight_edges_s);
 define_unary_function_ptr5(at_highlight_edges,alias_at_highlight_edges,&__highlight_edges,0,true)
 
-/* Usage:   highlight_subgraph(G,S,[C1,C2])
+/* USAGE:   highlight_subgraph(G,S,[C1,C2])
  *
  * Change color of edges and vertices from S (which is a subgraph of G or a
  * list of subgraphs of G) to C1 and C2, respectively (by default, C1=red and
@@ -3294,7 +3340,7 @@ gen _highlight_subgraph(const gen &g,GIAC_CONTEXT) {
         return gensizeerr(contextptr);
     if (gv[1].type!=_VECT)
         return gentypeerr(contextptr);
-    int C1=_RED,C2=_GREEN;
+    int C1=graphe::default_highlighted_edge_color,C2=graphe::default_highlighted_vertex_color;
     if (gv.size()==4) {
         if (!gv[2].is_integer() || !gv[3].is_integer())
             return gentypeerr(contextptr);
@@ -3322,7 +3368,7 @@ static const char _highlight_subgraph_s[]="highlight_subgraph";
 static define_unary_function_eval(__highlight_subgraph,&_highlight_subgraph,_highlight_subgraph_s);
 define_unary_function_ptr5(at_highlight_subgraph,alias_at_highlight_subgraph,&__highlight_subgraph,0,true)
 
-/* Usage:   highlight_trail(G,T,[C])
+/* USAGE:   highlight_trail(G,T,[C])
  *
  * Change color of edges in G which lie along the trail T to C (or red, if C is
  * not specified).
@@ -3355,7 +3401,7 @@ static const char _highlight_trail_s[]="highlight_trail";
 static define_unary_function_eval(__highlight_trail,&_highlight_trail,_highlight_trail_s);
 define_unary_function_ptr5(at_highlight_trail,alias_at_highlight_trail,&__highlight_trail,0,true)
 
-/* Usage:   disjoint_union(G1,G2,...)
+/* USAGE:   disjoint_union(G1,G2,...)
  *
  * Returns the disjoint union of the input graphs. Vertices in the resulting
  * graph are labelled with "k:v", where k is index of the corresponding k-th
@@ -3375,7 +3421,7 @@ static const char _disjoint_union_s[]="disjoint_union";
 static define_unary_function_eval(__disjoint_union,&_disjoint_union,_disjoint_union_s);
 define_unary_function_ptr5(at_disjoint_union,alias_at_disjoint_union,&__disjoint_union,0,true)
 
-/* Usage:   graph_union(G1,G2,...)
+/* USAGE:   graph_union(G1,G2,...)
  *
  * Returns the union of the input graphs. Set of vertices of the resulting
  * graph is the union of the sets of vertices of the input graphs and the set
@@ -3397,7 +3443,7 @@ static const char _graph_union_s[]="graph_union";
 static define_unary_function_eval(__graph_union,&_graph_union,_graph_union_s);
 define_unary_function_ptr5(at_graph_union,alias_at_graph_union,&__graph_union,0,true)
 
-/* Usage:   graph_join(G,H)
+/* USAGE:   graph_join(G,H)
  *
  * Returns the graph obtained by connecting every vertex from G with every
  * vertex from H. The vertex labels in the resulting graph are strings of form
@@ -3437,7 +3483,7 @@ static const char _graph_join_s[]="graph_join";
 static define_unary_function_eval(__graph_join,&_graph_join,_graph_join_s);
 define_unary_function_ptr5(at_graph_join,alias_at_graph_join,&__graph_join,0,true)
 
-/* Usage:   graph_equal(G1,G2)
+/* USAGE:   graph_equal(G1,G2)
  *
  * Returns true iff G1 is equal to G2, that is when the sets of vertices and
  * edges of G1 and G2, as well as the orderings of vertices in both graphs,
@@ -3461,7 +3507,7 @@ static const char _graph_equal_s[]="graph_equal";
 static define_unary_function_eval(__graph_equal,&_graph_equal,_graph_equal_s);
 define_unary_function_ptr5(at_graph_equal,alias_at_graph_equal,&__graph_equal,0,true)
 
-/* Usage:   reverse_graph(G)
+/* USAGE:   reverse_graph(G)
  *
  * Returns reverse graph of G, i.e. the graph G with the directions of all edges
  * reversed.
@@ -3479,7 +3525,7 @@ static const char _reverse_graph_s[]="reverse_graph";
 static define_unary_function_eval(__reverse_graph,&_reverse_graph,_reverse_graph_s);
 define_unary_function_ptr5(at_reverse_graph,alias_at_reverse_graph,&__reverse_graph,0,true)
 
-/* Usage:   interval_graph(a..b,c..d,...)
+/* USAGE:   interval_graph(a..b,c..d,...)
  *          interval_graph([a..b,c..d,...])
  *
  * Returns the interval graph with respect to intervals a..b, c..d, ... on the
@@ -3526,7 +3572,7 @@ static const char _interval_graph_s[]="interval_graph";
 static define_unary_function_eval(__interval_graph,&_interval_graph,_interval_graph_s);
 define_unary_function_ptr5(at_interval_graph,alias_at_interval_graph,&__interval_graph,0,true)
 
-/* Usage:   subdivide_edges(G,E,r)
+/* USAGE:   subdivide_edges(G,E,r)
  *
  * Inserts r new vertices to each edge/arc from G contained in the list E
  * (which may be a single edge/arc) and returns a modified copy of G.
@@ -3591,7 +3637,7 @@ static const char _subdivide_edges_s[]="subdivide_edges";
 static define_unary_function_eval(__subdivide_edges,&_subdivide_edges,_subdivide_edges_s);
 define_unary_function_ptr5(at_subdivide_edges,alias_at_subdivide_edges,&__subdivide_edges,0,true)
 
-/* Usage:   graph_power(G,k)
+/* USAGE:   graph_power(G,k)
  *
  * Returns the k-th power of graph G, where two vertices are connected iff there
  * exists a path of length at most k in the original graph.
@@ -3628,7 +3674,7 @@ static const char _graph_power_s[]="graph_power";
 static define_unary_function_eval(__graph_power,&_graph_power,_graph_power_s);
 define_unary_function_ptr5(at_graph_power,alias_at_graph_power,&__graph_power,0,true)
 
-/* Usage:   vertex_distance(G,s,t)
+/* USAGE:   vertex_distance(G,s,t)
  *
  * Returns the number of edges in the shortest path from vertex s to vertex t in
  * graph G. If such path does not exist, returns +infinity.
@@ -3653,7 +3699,7 @@ static const char _vertex_distance_s[]="vertex_distance";
 static define_unary_function_eval(__vertex_distance,&_vertex_distance,_vertex_distance_s);
 define_unary_function_ptr5(at_vertex_distance,alias_at_vertex_distance,&__vertex_distance,0,true)
 
-/* Usage:   shortest_path(G,v,w)
+/* USAGE:   shortest_path(G,v,w)
  *
  * Returns the shortest path from vertex v to vertex w in graph G. If such path
  * does not exist, returns an empty list.
@@ -3682,7 +3728,7 @@ static const char _shortest_path_s[]="shortest_path";
 static define_unary_function_eval(__shortest_path,&_shortest_path,_shortest_path_s);
 define_unary_function_ptr5(at_shortest_path,alias_at_shortest_path,&__shortest_path,0,true)
 
-/* Usage:   allpairs_distance(G)
+/* USAGE:   allpairs_distance(G)
  *
  * Returns a square matrix D of order n(=number of vertices in G) such that
  * D[i][j] is the distance between i-th and j-th vertex of (weighted) graph G,
@@ -3704,7 +3750,7 @@ static const char _allpairs_distance_s[]="allpairs_distance";
 static define_unary_function_eval(__allpairs_distance,&_allpairs_distance,_allpairs_distance_s);
 define_unary_function_ptr5(at_allpairs_distance,alias_at_allpairs_distance,&__allpairs_distance,0,true)
 
-/* Usage:   graph_diameter(G)
+/* USAGE:   graph_diameter(G)
  *
  * Returns the diameter of graph G, i.e. the maximum distance between a pair of
  * vertices in G. If G is disconnected, its diameter is equal to +infinity.
@@ -3736,7 +3782,7 @@ static const char _graph_diameter_s[]="graph_diameter";
 static define_unary_function_eval(__graph_diameter,&_graph_diameter,_graph_diameter_s);
 define_unary_function_ptr5(at_graph_diameter,alias_at_graph_diameter,&__graph_diameter,0,true)
 
-/* Usage:   dijkstra(G,v,w)
+/* USAGE:   dijkstra(G,v,w)
  *          dijkstra(G,v,W)
  *          dijkstra(G,v)
  *
@@ -3804,6 +3850,165 @@ gen _dijkstra(const gen &g,GIAC_CONTEXT) {
 static const char _dijkstra_s[]="dijkstra";
 static define_unary_function_eval(__dijkstra,&_dijkstra,_dijkstra_s);
 define_unary_function_ptr5(at_dijkstra,alias_at_dijkstra,&__dijkstra,0,true)
+
+// *******************************************************************************
+//
+// EXAMPLES
+//
+// *******************************************************************************
+
+void graph_demo(GIAC_CONTEXT) {
+    const char *inputs[]={
+        "%{[a,b],[b,c],[c,a]%}",
+        "set[[[a,b],2],[[b,c],2.3],[[c,a],3/2]]",
+        "[[0,1,1,0],[1,0,0,1],[1,0,0,0],[0,1,0,0]]",
+        "[[0,1.0,2.3,0],[4,0,0,3.1],[0,0,0,0],[0,0,0,0]]"
+    };
+    string disp;
+    print_demo_title(_graph_s);
+    for (int k=0;k<4;++k) {
+        cout << "INPUT: " << _graph_s << "(" << *(inputs+k) << ")" << endl;
+        assert(is_graphe(gt_command(_graph,*(inputs+k),contextptr),disp,contextptr));
+        cout << "OUTPUT: " << disp << endl;
+    }
+}
+
+void digraph_demo(GIAC_CONTEXT) {
+    const char *inputs[]={
+        "%{[a,b],[b,c],[c,a]%}",
+        "set[[[a,b],2],[[b,c],2.3],[[c,a],3/2]]",
+        "[[0,1,1,0],[1,0,0,1],[1,0,0,0],[0,1,0,0]]",
+        "[[0,1.0,2.3,0],[4,0,0,3.1],[0,0,0,0],[0,0,0,0]]"
+    };
+    string disp;
+    print_demo_title(_digraph_s);
+    for (int k=0;k<4;++k) {
+        cout << "INPUT: " << _digraph_s << "(" << *(inputs+k) << ")" << endl;
+        assert(is_graphe(gt_command(_digraph,*(inputs+k),contextptr),disp,contextptr));
+        cout << "OUTPUT: " << disp << endl;
+    }
+}
+
+void incidence_matrix_demo(GIAC_CONTEXT) {
+    print_demo_title(_incidence_matrix_s);
+    gen seq1=makesequence(1,2,3,4,5,3),seq2=makesequence(1,5,2,4,1);
+    cout << "INPUT: G:=" << _digraph_s << "(" << _trail_s << "(" << seq1 << ")," << _trail_s << "(" << seq2 << ")); "
+         << _edges_s << "(G); " << _incidence_matrix_s << "(G)" << endl;
+    string disp;
+    gen g=_digraph(makesequence(_trail(seq1,contextptr),_trail(seq2,contextptr)),contextptr);
+    assert(is_graphe(g,disp,contextptr));
+    cout << "OUTPUT:" << endl;
+    cout << "G: " << disp << endl;
+    cout << _edges(g,contextptr) << endl;
+    cout << _incidence_matrix(g,contextptr) << endl;
+}
+
+void weight_matrix_demo(GIAC_CONTEXT) {
+    print_demo_title(_weight_matrix_s);
+    const char *edges="%{[[1,2],2],[[2,3],1]%}";
+    cout << "INPUT: G:=" << _graph_s << "(" << edges << "); "
+         << _weight_matrix_s << "(G)" << endl;
+    gen g=gt_command(_graph,edges,contextptr);
+    cout << "OUTPUT:" << endl;
+    string disp;
+    assert(is_graphe(g,disp,contextptr));
+    cout << "G: " << disp << endl;
+    cout << _weight_matrix(g,contextptr) << endl;
+}
+
+void subgraph_demo(GIAC_CONTEXT) {
+    print_demo_title(_subgraph_s);
+    gen E=graphe::str2gen("[[1,2],[2,3],[3,4],[4,1]]");
+    cout << "INPUT: K5:=" << _complete_graph_s << "(5); E:=" << E
+         << "; H:=" << _subgraph_s << "(K5,E); K5:=" << _highlight_subgraph_s << "(K5,H); "
+         << _draw_graph_s << "(K5)" << endl;
+    gen g=_complete_graph(5,contextptr);
+    string disp;
+    assert(is_graphe(g,disp,contextptr));
+    cout << "OUTPUT:" << endl;
+    cout << "K5: " << disp << endl;
+    gen h=_subgraph(makesequence(g,E),contextptr);
+    assert(is_graphe(h,disp,contextptr));
+    cout << "H: " << disp << endl;
+    g=_highlight_subgraph(makesequence(g,h),contextptr);
+    cout << _draw_graph(g,contextptr) << endl;
+}
+
+void induced_subgraph_demo(GIAC_CONTEXT) {
+    print_demo_title(_induced_subgraph_s);
+    vecteur v=makevecteur(1,2,3,6,7,9);
+    cout << "INPUT: G:=" << _graph_s << "(\"petersen\"); H:=" << _induced_subgraph_s << "(G," << v << "); "
+         << _draw_graph_s << "(H)" << endl;
+    string disp;
+    gen g=gt_command(_graph,"\"petersen\"",contextptr);
+    assert(is_graphe(g,disp,contextptr));
+    cout << "OUTPUT:" << endl;
+    cout << "G: " << disp << endl;
+    gen h=_induced_subgraph(makesequence(g,v),contextptr);
+    assert(is_graphe(h,disp,contextptr));
+    cout << "H: " << disp << endl;
+    cout << _draw_graph(h,contextptr) << endl;
+}
+
+void biconnected_components_demo(GIAC_CONTEXT) {
+    print_demo_title(_biconnected_components_s);
+    gen seq1=makesequence(1,2,3,4,2),seq2=makesequence(4,5,6,7,5);
+    cout << "INPUT: G:=" << _graph_s << "(" << _trail_s << "(" << seq1 << ")," << _trail_s << "(" << seq2 << ")); "
+         << _draw_graph_s << "(G); " << _is_biconnected_s << "(G); " << _biconnected_components_s << "(G); "
+         << _articulation_points_s << "(G)" << endl;
+    gen T1=_trail(seq1,contextptr);
+    gen T2=_trail(seq2,contextptr);
+    gen g=_graph(makesequence(T1,T2),contextptr);
+    string disp;
+    assert(is_graphe(g,disp,contextptr));
+    cout << "OUTPUT:" << endl;
+    cout << "G: " << disp << endl;
+    cout << _draw_graph(g,contextptr) << endl;
+    cout << _is_biconnected(g,contextptr) << endl;
+    cout << _biconnected_components(g,contextptr) << endl;
+    cout << _articulation_points(g,contextptr) << endl;
+}
+
+void connected_components_demo(GIAC_CONTEXT) {
+    print_demo_title(_connected_components_s);
+    const char *gspec="seq[[1,2,3,4,5,6],%{[1,2],[2,3],[4,5]%}]";
+    cout << "INPUT: G:=" << _graph_s << "(" << gspec << "); " << _is_connected_s << "(G); "
+         << _connected_components_s << "(G)" << endl;
+    string disp;
+    gen g=gt_command(_graph,gspec,contextptr);
+    assert(is_graphe(g,disp,contextptr));
+    cout << "OUTPUT:" << endl;
+    cout << "G: " << disp << endl;
+    cout << _is_connected(g,contextptr) << endl;
+    cout << _connected_components(g,contextptr) << endl;
+}
+
+void dijkstra_demo(GIAC_CONTEXT) {
+    print_demo_title(_dijkstra_s);
+    const char *edges="%{[[1,2],1],[[2,3],3],[[3,4],7],[[4,5],3],[[5,6],3],[[1,6],3]%}";
+    cout << "INPUT: G:=" << _graph_s << "(" << edges << "); " << _dijkstra_s << "(G,1,4)" << endl;
+    gen g=gt_command(_graph,edges,contextptr);
+    cout << "OUTPUT: " << _dijkstra(makesequence(g,1,4),contextptr) << endl;
+}
+
+void graph_complement_demo(GIAC_CONTEXT) {
+    print_demo_title(_graph_complement_s);
+    cout << "INPUT: C:="
+         << _cycle_graph_s << "(5); G:="
+         << _graph_complement_s << "(C); "
+         << _draw_graph_s << "(G)" << endl;
+    string disp;
+    gen c=_cycle_graph(5,contextptr);
+    assert(is_graphe(c,disp,contextptr));
+    cout << "OUTPUT:" << endl;
+    cout << "C: " << disp << endl;
+    gen g=_graph_complement(c,contextptr);
+    assert(is_graphe(g,disp,contextptr));
+    cout << "G: " << disp << endl;
+    cout << _draw_graph(g,contextptr) << endl;
+}
+
+
 
 #ifndef NO_NAMESPACE_GIAC
 }

@@ -309,6 +309,7 @@ public:
     // special graphs
     static const int clebsch_graph[];
     static const char* coxeter_graph[];
+    static const int dodecahedron_graph[];
     static const int dyck_graph[];
     static const int grinberg_graph[];
     static const int grotzsch_graph[];
@@ -349,9 +350,9 @@ private:
     static void attrib2genmap(const attrib &attr,gen_map &m);
     static void copy_attributes(const attrib &src,attrib &dest);
     void write_attrib(std::ofstream &dotfile,const attrib &attr) const;
-    static void sets_union(const ivector &A,const ivector &B,ivector &U);
-    static void sets_intersection(const ivector &A,const ivector &B,ivector &I);
-    static void sets_difference(const ivector &A,const ivector &B,ivector &D);
+    static int sets_union(const ivector &A,const ivector &B,ivector &U);
+    static int sets_intersection(const ivector &A,const ivector &B,ivector &I);
+    static int sets_difference(const ivector &A,const ivector &B,ivector &D);
     static void add_point(point &a,const point &b);
     static void subtract_point(point &a,const point &b);
     static void scale_point(point &p,double s);
@@ -425,7 +426,7 @@ private:
     static void extract_path_from_cycle(const ivector &cycle,int i,int j,ivector &path);
     int largest_integer_label_value() const;
     static void generate_nk_sets(int n,int k,std::vector<ulong> &v);
-    bool has_k_clique_cover(int k,const ivectors &maximal_cliques,ivector &clique_indices) const;
+    bool has_k_clique_cover(int k,const ivectors &maximal_cliques,ivector &cv) const;
 
 public:
     graphe(const context *contextptr=context0);
@@ -444,6 +445,7 @@ public:
     static std::string genstring2str(const gen &g);
     static std::string gen2str(const gen &g);
     static gen plusinf();
+    void ivectors2vecteur(const ivectors &v,vecteur &res) const;
     bool read_gen(const gen &g);
     void read_special(const int *special_graph);
     void read_special(const char **special_graph);
@@ -563,7 +565,7 @@ public:
     bool trail(const vecteur &v);
     void create_random_layout(layout &x,double K,int d);
     void make_spring_layout(layout &x,int d,double tol=0.001);
-    void make_circular_layout(layout &x,const ivector &outer_face,bool planar=false,double A=0,double tol=0.001);
+    void make_circular_layout(layout &x,const ivector &outer_face,bool planar=false,double tol=0.001);
     bool make_planar_layout(layout &x);
     double make_tree_layout(layout &x,double sep,int apex=0);
     void layout_best_rotation(layout &x);
@@ -582,7 +584,7 @@ public:
     int tree_height(int root);
     void tomita(ivectors &maximal_cliques) const;
     int maximum_clique(ivector &clique) const;
-    int clique_cover(ivectors &cover) const;
+    bool clique_cover(ivectors &cover,int k=0);
     int chromatic_number() const;
     int maximum_independent_set(ivector &v) const;
     void make_lcf_graph(const ivector &jumps,int e);

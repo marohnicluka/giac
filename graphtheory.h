@@ -56,6 +56,8 @@ enum gt_error_code {
 bool is_graphe(const gen &g,std::string &disp_out,GIAC_CONTEXT);
 gen gt_command(gen (*gtfunc)(const gen &,const context *),const char *args,GIAC_CONTEXT);
 
+// GIAC COMMANDS
+
 gen _graph(const gen &g,GIAC_CONTEXT);
 gen _digraph(const gen &g,GIAC_CONTEXT);
 gen _export_graph(const gen &g,GIAC_CONTEXT);
@@ -173,7 +175,9 @@ gen _shortest_path(const gen &g,GIAC_CONTEXT);
 gen _dijkstra(const gen &g,GIAC_CONTEXT);
 gen _allpairs_distance(const gen &g,GIAC_CONTEXT);
 gen _graph_diameter(const gen &g,GIAC_CONTEXT);
+gen _is_clique(const gen &g,GIAC_CONTEXT);
 gen _maximum_clique(const gen &g,GIAC_CONTEXT);
+gen _maximal_cliques(const gen &g,GIAC_CONTEXT);
 gen _clique_number(const gen &g,GIAC_CONTEXT);
 gen _clique_cover(const gen &g,GIAC_CONTEXT);
 gen _clique_cover_number(const gen &g,GIAC_CONTEXT);
@@ -217,7 +221,6 @@ gen _sequence_graph(const gen &g,GIAC_CONTEXT);
 //gen _graph_rank(const gen &g,GIAC_CONTEXT);
 //gen _is_acyclic(const gen &g,GIAC_CONTEXT);
 //gen _is_bipartite(const gen &g,GIAC_CONTEXT);
-//gen _is_clique(const gen &g,GIAC_CONTEXT);
 //gen _is_edge_colorable(const gen &g,GIAC_CONTEXT);
 //gen _is_hamiltonian(const gen &g,GIAC_CONTEXT);
 //gen _is_two_edge_connected(const gen &g,GIAC_CONTEXT);
@@ -232,9 +235,11 @@ gen _sequence_graph(const gen &g,GIAC_CONTEXT);
 //gen _spanning_tree(const gen &g,GIAC_CONTEXT);
 //gen _traveling_salesman(const gen &g,GIAC_CONTEXT);
 
+// FUNCTION POINTERS
+
 extern const unary_function_ptr * const at_trail;
 
-// EXAMPLES
+// DEMO FUNCTIONS
 
 void graph_demo(GIAC_CONTEXT);
 void digraph_demo(GIAC_CONTEXT);

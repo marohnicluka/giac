@@ -1380,7 +1380,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 if (outerface.empty()) {
                     if (!C.get_leading_cycle(outerface) && !C.find_cycle(outerface))
                         return gt_err(_GT_ERR_CYCLE_NOT_FOUND,contextptr);
-                    C.make_circular_layout(x,outerface,false,2.5);
+                    C.make_circular_layout(x,outerface,false);
                     outerface.clear();
                 } else
                     C.make_circular_layout(x,outerface);
@@ -3851,9 +3851,180 @@ static const char _dijkstra_s[]="dijkstra";
 static define_unary_function_eval(__dijkstra,&_dijkstra,_dijkstra_s);
 define_unary_function_ptr5(at_dijkstra,alias_at_dijkstra,&__dijkstra,0,true)
 
+/* USAGE:   is_clique(G)
+ *
+ * Return true iff graph G is a clique (i.e. a complete graph).
+ */
+gen _is_clique(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    return graphe::boole(G.is_clique());
+}
+static const char _is_clique_s[]="is_clique";
+static define_unary_function_eval(__is_clique,&_is_clique,_is_clique_s);
+define_unary_function_ptr5(at_is_clique,alias_at_is_clique,&__is_clique,0,true)
+
+/* USAGE:   maximum_clique(G)
+ *
+ * Return maximum clique of graph G, represented as a list of vertices.
+ */
+gen _maximum_clique(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    graphe::ivector clique;
+    G.maximum_clique(clique);
+    return G.get_nodes(clique);
+}
+static const char _maximum_clique_s[]="maximum_clique";
+static define_unary_function_eval(__maximum_clique,&_maximum_clique,_maximum_clique_s);
+define_unary_function_ptr5(at_maximum_clique,alias_at_maximum_clique,&__maximum_clique,0,true)
+
+/* USAGE:   maximal_cliques(G)
+ *
+ * Return list of maximal cliques in graph G. Every clique is returned as a list
+ * of vertices.
+ */
+gen _maximal_cliques(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    graphe::ivectors cliques;
+    G.tomita(cliques);
+    vecteur res;
+    G.ivectors2vecteur(cliques,res);
+    return res;
+}
+static const char _maximal_cliques_s[]="maximal_cliques";
+static define_unary_function_eval(__maximal_cliques,&_maximal_cliques,_maximal_cliques_s);
+define_unary_function_ptr5(at_maximal_cliques,alias_at_maximal_cliques,&__maximal_cliques,0,true)
+
+/* USAGE:   clique_number(G)
+ *
+ * Return the clique number of graph G, which is equal to the size of maximum
+ * clique.
+ */
+gen _clique_number(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    graphe::ivector clique;
+    return G.maximum_clique(clique);
+}
+static const char _clique_number_s[]="clique_number";
+static define_unary_function_eval(__clique_number,&_clique_number,_clique_number_s);
+define_unary_function_ptr5(at_clique_number,alias_at_clique_number,&__clique_number,0,true)
+
+/* USAGE:   clique_cover(G,[k])
+ *
+ * Return a clique vertex cover of graph G [containing at most k cliques].
+ */
+gen _clique_cover(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    int k=0;
+    if (g.type==_VECT && g.subtype==_SEQ__VECT) {
+        if (g._VECTptr->size()!=2)
+            return gensizeerr(contextptr);
+        if (!g._VECTptr->back().is_integer())
+            return gentypeerr(contextptr);
+        k=g._VECTptr->back().val;
+    }
+    graphe G(contextptr);
+    if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    graphe::ivectors cover;
+    if (!G.clique_cover(cover,k))
+        return vecteur(0);
+    vecteur res;
+    G.ivectors2vecteur(cover,res);
+    return res;
+}
+static const char _clique_cover_s[]="clique_cover";
+static define_unary_function_eval(__clique_cover,&_clique_cover,_clique_cover_s);
+define_unary_function_ptr5(at_clique_cover,alias_at_clique_cover,&__clique_cover,0,true)
+
+/* USAGE:   clique_cover_number(G)
+ *
+ * Return the clique cover number of graph G (i.e. the chromatic number of the
+ * graph complement of G).
+ */
+gen _clique_cover_number(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    graphe::ivectors cover;
+    assert(G.clique_cover(cover));
+    return cover.size();
+}
+static const char _clique_cover_number_s[]="clique_cover_number";
+static define_unary_function_eval(__clique_cover_number,&_clique_cover_number,_clique_cover_number_s);
+define_unary_function_ptr5(at_clique_cover_number,alias_at_clique_cover_number,&__clique_cover_number,0,true)
+
+/* USAGE:   chromatic_number(G)
+ *
+ * Return the chromatic number of graph G (i.e. the clique number of the
+ * graph complement of G).
+ */
+gen _chromatic_number(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr),C(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    G.complement(C);
+    graphe::ivectors cover;
+    assert(C.clique_cover(cover));
+    return cover.size();
+}
+static const char _chromatic_number_s[]="chromatic_number";
+static define_unary_function_eval(__chromatic_number,&_chromatic_number,_chromatic_number_s);
+define_unary_function_ptr5(at_chromatic_number,alias_at_chromatic_number,&__chromatic_number,0,true)
+
+/* USAGE:   maximum_independent_set(G)
+ *
+ * Return the chromatic number of graph G (i.e. the clique number of the
+ * graph complement of G).
+ */
+gen _maximum_independent_set(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr),C(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    G.complement(C);
+    graphe::ivector clique;
+    C.maximum_clique(clique);
+    return C.get_nodes(clique);
+}
+static const char _maximum_independent_set_s[]="maximum_independent_set";
+static define_unary_function_eval(__maximum_independent_set,&_maximum_independent_set,_maximum_independent_set_s);
+define_unary_function_ptr5(at_maximum_independent_set,alias_at_maximum_independent_set,&__maximum_independent_set,0,true)
+
+/* USAGE:   independence_number(G)
+ *
+ * Return the independence number of graph G (i.e. the size of maximum
+ * independent set).
+ */
+gen _independence_number(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr),C(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    G.complement(C);
+    graphe::ivector clique;
+    return C.maximum_clique(clique);
+}
+static const char _independence_number_s[]="independence_number";
+static define_unary_function_eval(__independence_number,&_independence_number,_independence_number_s);
+define_unary_function_ptr5(at_independence_number,alias_at_independence_number,&__independence_number,0,true)
+
 // *******************************************************************************
 //
-// EXAMPLES
+// DEMO SECTION
 //
 // *******************************************************************************
 
@@ -4008,6 +4179,9 @@ void graph_complement_demo(GIAC_CONTEXT) {
     cout << _draw_graph(g,contextptr) << endl;
 }
 
+void maximum_clique_demo(GIAC_CONTEXT) {
+    print_demo_title(_maximum_clique_s);
+}
 
 
 #ifndef NO_NAMESPACE_GIAC

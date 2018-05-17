@@ -352,10 +352,32 @@ const int graphe::tetrahedron_graph[] = {
     -2
 };
 const int graphe::octahedron_graph[] = {
-    1,      3,4,5,6,-1,
+    1,      3,6,5,4,-1,
     2,      3,4,5,6,-1,
     3,      5,6,-1,
-    4,      5,-1,
+    4,      5,6,-1,
+    -2
+};
+const int graphe::dodecahedron_graph[] = {
+    1,      2,5,6,-1,
+    2,      3,7,-1,
+    3,      4,8,-1,
+    4,      5,9,-1,
+    5,      10,-1,
+    6,      11,15,-1,
+    7,      11,12,-1,
+    8,      12,13,-1,
+    9,      13,14,-1,
+    10,     14,15,-1,
+    11,     16,-1,
+    12,     17,-1,
+    13,     18,-1,
+    14,     19,-1,
+    15,     20,-1,
+    16,     17,20,-1,
+    17,     18,-1,
+    18,     19,-1,
+    19,     20,-1,
     -2
 };
 const int graphe::icosahedron_graph[] = {
@@ -448,6 +470,14 @@ void graphe::message(const char *format,int a,int b,int c) {
 
 gen graphe::plusinf() {
     return symbolic(at_plus,_IDNT_infinity());
+}
+
+/* convert list of lists of integers into vecteur of vecteurs */
+void graphe::ivectors2vecteur(const ivectors &v,vecteur &res) const {
+    res.resize(v.size());
+    for (ivectors_iter it=v.begin();it!=v.end();++it) {
+        res[it-v.begin()]=get_nodes(*it);
+    }
 }
 
 /* vertex class implementation */
@@ -668,24 +698,27 @@ string graphe::gen2str(const gen &g) {
 }
 
 /* compute the union of A and B and store it in U */
-void graphe::sets_union(const ivector &A,const ivector &B,ivector &U) {
+int graphe::sets_union(const ivector &A,const ivector &B,ivector &U) {
     U.resize(A.size()+B.size());
     ivector_iter it=set_union(A.begin(),A.end(),B.begin(),B.end(),U.begin());
     U.resize(it-U.begin());
+    return U.size();
 }
 
 /* compute the intersection of A and B and store it in I */
-void graphe::sets_intersection(const ivector &A,const ivector &B,ivector &I) {
+int graphe::sets_intersection(const ivector &A,const ivector &B,ivector &I) {
     I.resize(std::max(A.size(),B.size()));
     ivector_iter it=set_intersection(A.begin(),A.end(),B.begin(),B.end(),I.begin());
     I.resize(it-I.begin());
+    return I.size();
 }
 
 /* compute the set difference of A and B and store it in D */
-void graphe::sets_difference(const ivector &A,const ivector &B,ivector &D) {
+int graphe::sets_difference(const ivector &A,const ivector &B,ivector &D) {
     D.resize(A.size());
     ivector_iter it=set_difference(A.begin(),A.end(),B.begin(),B.end(),D.begin());
     D.resize(it-D.begin());
+    return D.size();
 }
 
 /* graphe default constructor */
@@ -729,7 +762,10 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
     } else if (name=="desargues") {
         make_petersen_graph(10,3);
     } else if (name=="dodecahedron") {
-        make_petersen_graph(10,2);
+        for (int i=1;i<=5;++i) {
+            add_node(i);
+        }
+        read_special(dodecahedron_graph);
     } else if (name=="durer") {
         make_petersen_graph(6,2);
     } else if (name=="dyck") {
@@ -3239,7 +3275,7 @@ void graphe::make_regular_polygon_layout(layout &x,const ivector &face,double R)
 
 /* apply force directed algorithm to this graph (must be triconnected), with the specified outer face,
  * using the algorithm by Bor Plestenjak in "An Algorithm for Drawing Planar Graphs" */
-void graphe::make_circular_layout(layout &x,const ivector &outer_face,bool planar,double A,double tol) {
+void graphe::make_circular_layout(layout &x,const ivector &outer_face,bool planar,double tol) {
     int n=node_count(),iter_count=0,maxper=0,tries=0,j;
     vector<bool> is_outer(n,false);
     x.resize(n);
@@ -3248,15 +3284,14 @@ void graphe::make_circular_layout(layout &x,const ivector &outer_face,bool plana
             is_outer[i]=true;
     }
     ivector per;
-    if (A>0) {
-        // compute vertex periphericity
-        per.resize(n);
-        periphericity(outer_face,per);
-        for (ivector_iter pt=per.begin();pt!=per.end();++pt) {
-            if (*pt>maxper)
-                maxper=*pt;
-        }
+    // compute vertex periphericity
+    per.resize(n);
+    periphericity(outer_face,per);
+    for (ivector_iter pt=per.begin();pt!=per.end();++pt) {
+        if (*pt>maxper)
+            maxper=*pt;
     }
+    double A=std::log((double)maxper);
     // place facial vertices on the unit circle and all other vertices in the origin
     make_regular_polygon_layout(x,outer_face);
     if (node_count()==int(outer_face.size()))
@@ -3387,38 +3422,76 @@ int graphe::maximum_clique(ivector &clique) const {
 
 /* return true iff the graph can be covered with exactly k maximal cliques
  * (also provide indices of those cliques) */
-bool graphe::has_k_clique_cover(int k,const ivectors &maximal_cliques,ivector &clique_indices) const {
+bool graphe::has_k_clique_cover(int k,const ivectors &maximal_cliques,ivector &cv) const {
     int n=maximal_cliques.size(),nv=node_count();
     int nchoosek=comb(n,k).val;
     vector<ulong> nk_sets(nchoosek);
     generate_nk_sets(n,k,nk_sets);
     ivector U,V;
-    int cnt;
-    clique_indices.resize(k);
+    int cnt,ncov;
+    cv.resize(k);
     for (vector<ulong>::const_iterator it=nk_sets.begin();it!=nk_sets.end();++it) {
         cnt=0;
         for (int i=0,m=1;i<n;++i,m*=2) {
-            if ((*it & m)!=0) {
-                clique_indices[cnt++]=i;
-            }
+            if ((*it & m)!=0)
+                cv[cnt++]=i;
         }
-        for (ivector_iter jt=clique_indices.begin();jt!=clique_indices.end();++jt) {
-            if (int(jt-clique_indices.begin())%2==0)
-                sets_union(U,maximal_cliques[*jt],V);
-            else
-                sets_union(V,maximal_cliques[*jt],U);
-            if (int(U.size())==nv || int(V.size())==nv)
+        for (ivector_iter jt=cv.begin();jt!=cv.end();++jt) {
+            const ivector &clique=maximal_cliques[*jt];
+            if ((ncov=(jt-cv.begin())%2==0?sets_union(U,clique,V):sets_union(V,clique,U))==nv)
                 return true;
+            for (ivector_iter kt=jt+1;kt!=cv.end();++kt) {
+                ncov+=maximal_cliques[*kt].size();
+            }
+            if (ncov<nv)
+                break;
         }
     }
     return false;
 }
 
-/* find a minimal vertex clique cover and return the corresponding clique cover number */
-int graphe::clique_cover(ivectors &cover) const {
-
+/* returns true iff there is a clique cover of order not larger than k and finds that cover */
+bool graphe::clique_cover(ivectors &cover,int k) {
+    if (is_triangle_free()) {
+        // clique cover consists of matched edges and singleton vertex sets
+        ipairs matching;
+        matching_maximizer maximizer(this);
+        maximizer.find_maximum_matching(matching);
+        int m=matching.size(),n=node_count(),i=0;
+        if (k>0 && n-m>k)
+            return false;
+        vector<bool> matched(n);
+        cover.resize(n-m);
+        for (ipairs_iter it=matching.begin();it!=matching.end();++it) {
+            ivector &clique=cover[i++];
+            clique.resize(2);
+            matched[(clique.front()=it->first)]=true;
+            matched[(clique.back()=it->second)]=true;
+        }
+        for (vector<bool>::const_iterator it=matched.begin();it!=matched.end();++it) {
+            if (*it) {
+                ivector &clique=cover[i++];
+                clique.resize(1);
+                clique.front()=it-matched.begin();
+            }
+        }
+        return true;
+    }
+    // a naive algorithn for clique cover
     ivectors maximal_cliques;
+    ivector indices;
     tomita(maximal_cliques);
+    int mcsize=maximal_cliques.size();
+    for (int i=1;i<=(k==0?mcsize:k);++i) {
+        if (has_k_clique_cover(i,maximal_cliques,indices)) {
+            cover.resize(i);
+            for (ivector_iter it=indices.begin();it!=indices.end();++it) {
+                cover[it-indices.begin()]=maximal_cliques[*it];
+            }
+            return true;
+        }
+    }
+    return false;
 }
 
 /* return true iff the graph is complete (i.e., a clique) */

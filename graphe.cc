@@ -3630,7 +3630,42 @@ bool is_sierpinski_match(const graphe::ivector &u,const graphe::ivector &v,int n
     return true;
 }
 
-/* create LCF graph [jumps]^e */
+/* create a graph from decreasing degree sequence L by using Havel-Hakimi algorithm,
+ * return false iff L is not a graphic sequence */
+bool graphe::hakimi(const ivector &L) {
+    this->clear();
+    int n=L.size(),d,i,z;
+    if (n==0)
+        return true;
+    vecteur V;
+    make_default_labels(V,n);
+    add_nodes(V);
+    ipairs D(n);
+    for (int i=0;i<n;++i) {
+        D[i]=make_pair(i,L[i]);
+    }
+    ipairs_comparator comp;
+    do {
+        sort(D.begin(),D.end(),comp);
+        i=D.back().first;
+        d=D.back().second;
+        D.pop_back();
+        for (int k=0;k<d;++k) {
+            ipair &p=*(D.rbegin()+k);
+            if (--p.second<0)
+                return false;
+            add_edge(i,p.first);
+        }
+        z=0;
+        for (ipairs_iter it=D.begin();it!=D.end();++it) {
+            if (it->second==0)
+                ++z;
+        }
+    } while (z<int(D.size()));
+    return true;
+}
+
+/* create a graph from LCF notation [jumps]^e */
 void graphe::make_lcf_graph(const ivector &jumps,int e) {
     int m=jumps.size(),n=m*e;
     vecteur V;
@@ -4642,8 +4677,8 @@ void graphe::subdivide_faces(const ivectors &faces,int f0) {
     }
 }
 
-/* compute periphericity of the vertices with respect to
- * the outer face using BFS starting in each of outer vertices */
+/* compute the periphericity of the vertices with respect to
+ * the outer face by applying BFS (starting in each of the outer vertices) */
 void graphe::periphericity(const ivector &outer_face,ivector &p) {
     queue<int> q;
     int level,i,j;
@@ -4660,6 +4695,7 @@ void graphe::periphericity(const ivector &outer_face,ivector &p) {
             vertex &v=node(i);
             for (ivector_iter jt=v.neighbors().begin();jt!=v.neighbors().end();++jt) {
                 j=*jt;
+                if (j<0) j=-j-1;
                 vertex &w=node(j);
                 if (w.is_visited() || p[j]==0) // skip the outer vertices
                     continue;
@@ -6146,6 +6182,7 @@ void graphe::cartesian_product(const graphe &G,graphe &P) const {
 
 /* compute tensor product of this graph and graph G and store it in P */
 void graphe::tensor_product(const graphe &G,graphe &P) const {
+    P.clear();
     make_product_nodes(G,P);
     int n=node_count(),m=G.node_count();
     for (int i=0;i<n;++i) {

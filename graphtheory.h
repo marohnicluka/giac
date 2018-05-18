@@ -50,7 +50,8 @@ enum gt_error_code {
     _GT_ERR_NOT_A_SUBGRAPH=21,
     _GT_ERR_INTEGRAL_LABELS_REQUIRED=22,
     _GT_ERR_GRAPH_IS_EMPTY=23,
-    _GT_ERR_TAGVALUE_PAIR_EXPECTED=24
+    _GT_ERR_TAGVALUE_PAIR_EXPECTED=24,
+    _GT_ERR_NOT_A_GRAPHIC_SEQUENCE=25
 };
 
 bool is_graphe(const gen &g,std::string &disp_out,GIAC_CONTEXT);
@@ -254,6 +255,9 @@ void dijkstra_demo(GIAC_CONTEXT);
 void graph_complement_demo(GIAC_CONTEXT);
 void maximum_clique_demo(GIAC_CONTEXT);
 void strongly_connected_components_demo(GIAC_CONTEXT);
+void sequence_graph_demo(GIAC_CONTEXT);
+void graph_product_demo(GIAC_CONTEXT);
+void neighbors_demo(GIAC_CONTEXT);
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

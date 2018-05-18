@@ -53,7 +53,8 @@ static const char *gt_error_messages[] = {
     "argument is not a subgraph",                                       // 21
     "all vertex labels are required to be integers",                    // 22
     "graph is empty",                                                   // 23
-    "a \"tag\"=value pair expected"                                     // 24
+    "a \"tag\"=value pair expected",                                    // 24
+    "the given list is not a valid graphic sequence"                    // 25
 };
 
 void gt_err_display(int code,GIAC_CONTEXT) {
@@ -238,8 +239,6 @@ bool parse_edge_with_weight(graphe &G,const vecteur &E) {
 }
 
 bool parse_edges(graphe &G,const vecteur &E,bool is_set) {
-    if (E.size()<2)
-        return false;
     if (is_set) {
         for (const_iterateur it=E.begin();it!=E.end();++it) {
             if (it->type!=_VECT || it->_VECTptr->size()!=2)
@@ -292,7 +291,7 @@ gen flights(const gen &g,bool arrive,bool all,GIAC_CONTEXT) {
     if (!all && g._VECTptr->front().type!=_VECT)
         return gentypeerr(contextptr);
     graphe G(contextptr);
-    if (!G.read_gen(all?*g._VECTptr:*g._VECTptr->front()._VECTptr))
+    if (!G.read_gen(all?g:g._VECTptr->front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     if (!G.is_directed())
         return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED,contextptr);
@@ -313,8 +312,8 @@ gen flights(const gen &g,bool arrive,bool all,GIAC_CONTEXT) {
         }
         if (!all)
             return v;
-        res.push_back(v);
-    } while (i++<G.node_count());
+        res.push_back(_sort(v,contextptr));
+    } while (++i<G.node_count());
     return res;
 }
 
@@ -373,7 +372,7 @@ bool compute_product_of_graphs(const vecteur &gv,graphe &P,bool cartesian,GIAC_C
     stack<graphe> Gs;
     for (const_iterateur it=gv.begin();it!=gv.end();++it) {
         graphe G(contextptr);
-        if (it->type!=_VECT || !G.read_gen(*it->_VECTptr))
+        if (!G.read_gen(*it))
             return false;
         Gs.push(G);
     }
@@ -489,7 +488,11 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
         return G.to_gen();
     }
     graphe G(contextptr);
-    if (is_squarematrix(g) && g._VECTptr->size()>2) {
+    if (g.is_integer() && g.val>=0) {
+        vecteur V;
+        G.make_default_labels(V,g.val);
+        G.add_nodes(V);
+    } else if (is_squarematrix(g) && g._VECTptr->size()>2) {
         // adjacency matrix is given
         bool size_err;
         if (!parse_matrix(G,*g._VECTptr,false,0,size_err))
@@ -538,6 +541,13 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
                     return gt_err(_GT_ERR_MATRIX_NOT_SYMMETRIC,contextptr);
                 if (!parse_matrix(G,m,i==2 || weighted,i,size_err))
                     return size_err?gendimerr(contextptr):gentypeerr(contextptr);
+            } else if (i==0 && arg.is_integer()) {
+                int nv=arg.val;
+                if (nv<0)
+                    return gensizeerr(contextptr);
+                vecteur V;
+                G.make_default_labels(V,nv);
+                G.add_nodes(V);
             } else if (i<2 && arg.type==_VECT) {
                 int permu_size;
                 const vecteur &argv=*arg._VECTptr;
@@ -545,16 +555,15 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
                     // set of edges
                     if (!parse_edges(G,argv,true))
                         return gentypeerr(contextptr);
-                } else if (i==1 && _is_permu(arg,contextptr).val==1 &&
+                } else if (i==1 && !is_zero(_is_permu(arg,contextptr)) &&
                            (permu_size=argv.size())>0) {
-                    if (G.node_count()!=int(argv.size()))
+                    if (permu_size!=G.node_count())
                         return gensizeerr(contextptr);
                     // directed cycle
                     G.set_directed(true);
-                    if (permu_size!=G.node_count())
-                        return gensizeerr(contextptr);
+                    int offset=array_start(contextptr);
                     for (const_iterateur it=argv.begin();it!=argv.end()-1;++it) {
-                        G.add_edge(*it,*(it+1));
+                        G.add_edge(it->val-offset,(it+1)->val-offset);
                     }
                 } else if (i==0) // list of vertices
                     G.add_nodes(argv);
@@ -633,9 +642,9 @@ gen _export_graph(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     gen &gr=g._VECTptr->front(),&name=g._VECTptr->back();
     graphe G(contextptr);
-    if (gr.type!=_VECT || name.type!=_STRNG)
+    if (name.type!=_STRNG)
         return gentypeerr(contextptr);
-    if (!G.read_gen(*gr._VECTptr))
+    if (!G.read_gen(gr))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     string filename=graphe::genstring2str(name)+".dot";
     return G.write_dot(filename)?1:0;
@@ -673,10 +682,8 @@ define_unary_function_ptr5(at_import_graph,alias_at_import_graph,&__import_graph
  */
 gen _vertices(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type!=_VECT)
-        return gentypeerr(contextptr);
     graphe G(contextptr);
-    if (!G.read_gen(*g._VECTptr))
+    if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     return G.vertices();
 }
@@ -702,9 +709,9 @@ gen _edges(const gen &g,GIAC_CONTEXT) {
             return gentypeerr(contextptr);
         if (g._VECTptr->back().is_integer() && g._VECTptr->back().val==_GT_WEIGHTS)
             include_weights=true;
-        if (!G.read_gen(*g._VECTptr->front()._VECTptr))
+        if (!G.read_gen(g._VECTptr->front()))
             return gentypeerr(contextptr);
-    } else if (!G.read_gen(*g._VECTptr))
+    } else if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     if (include_weights && !G.is_weighted())
         return gt_err(_GT_ERR_WEIGHTED_GRAPH_REQUIRED,contextptr);
@@ -733,7 +740,7 @@ gen _has_edge(const gen &g,GIAC_CONTEXT) {
     int ofs=array_start(contextptr);
     int i=e.front().val-ofs,j=e.back().val-ofs;
     graphe G(contextptr);
-    if (gv.front().type!=_VECT || !G.read_gen(*gv.front()._VECTptr))
+    if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     return graphe::boole(!G.is_directed() && G.has_edge(i,j));
 }
@@ -762,7 +769,7 @@ gen _has_arc(const gen &g,GIAC_CONTEXT) {
     int ofs=array_start(contextptr);
     int i=e.front().val-ofs,j=e.back().val-ofs;
     graphe G(contextptr);
-    if (gv.front().type!=_VECT || !G.read_gen(*gv.front()._VECTptr))
+    if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     return graphe::boole(G.is_directed() && G.has_edge(i,j) && (!undirected || G.has_edge(j,i)));
 }
@@ -778,10 +785,8 @@ define_unary_function_ptr5(at_has_arc,alias_at_has_arc,&__has_arc,0,true)
  */
 gen _adjacency_matrix(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type!=_VECT)
-        return gentypeerr(contextptr);
     graphe G(contextptr);
-    if (!G.read_gen(*g._VECTptr))
+    if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     if (G.node_count()==0)
         return vecteur(0);
@@ -803,10 +808,8 @@ define_unary_function_ptr5(at_adjacency_matrix,alias_at_adjacency_matrix,&__adja
  */
 gen _incidence_matrix(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type!=_VECT)
-        return gentypeerr(contextptr);
     graphe G(contextptr);
-    if (!G.read_gen(*g._VECTptr))
+    if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     if (G.node_count()==0)
         return vecteur(0);
@@ -822,10 +825,8 @@ define_unary_function_ptr5(at_incidence_matrix,alias_at_incidence_matrix,&__inci
  */
 gen _weight_matrix(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type!=_VECT)
-        return gentypeerr(contextptr);
     graphe G(contextptr);
-    if (!G.read_gen(*g._VECTptr) || !G.is_weighted())
+    if (!G.read_gen(g) || !G.is_weighted())
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     if (G.node_count()==0)
         return vecteur(0);
@@ -1032,7 +1033,7 @@ gen _make_directed(const gen &g,GIAC_CONTEXT) {
     if (hasweights && gv.size()!=2)
         return gensizeerr(contextptr);
     graphe G(contextptr);
-    if (!G.read_gen(hasweights?gv.front():gv))
+    if (!G.read_gen(hasweights?gv.front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
@@ -2616,26 +2617,39 @@ static const char _is_directed_s[]="is_directed";
 static define_unary_function_eval(__is_directed,&_is_directed,_is_directed_s);
 define_unary_function_ptr5(at_is_directed,alias_at_is_directed,&__is_directed,0,true)
 
-/* USAGE:   neighbors(G,v)
+/* USAGE:   neighbors(G,[v])
  *
- * Returns list of adjacent vertices of vertex v.
+ * Returns list of adjacent vertices of vertex v. If v is omitted, a list of
+ * adjacency lists of all vertices in G is returned.
  */
 gen _neighbors(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+    if (g.type!=_VECT)
         return gentypeerr(contextptr);
-    if (g._VECTptr->size()!=2)
+    if (g.subtype==_SEQ__VECT && g._VECTptr->size()!=2) {
         return gensizeerr(contextptr);
+    }
     graphe G(contextptr);
-    if (!G.read_gen(g._VECTptr->front()))
+    if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    gen &v=g._VECTptr->back();
-    int i=G.node_index(v);
-    if (i==-1)
-        return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
-    graphe::ivector adj;
-    G.adjacent_nodes(i,adj);
-    return G.get_nodes(adj);
+    vecteur res;
+    if (g.subtype==_SEQ__VECT) {
+        gen &v=g._VECTptr->back();
+        int i=G.node_index(v);
+        if (i==-1)
+            return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+        graphe::ivector adj;
+        G.adjacent_nodes(i,adj);
+        res=G.get_nodes(adj);
+    } else {
+        int n=G.node_count();
+        graphe::ivector adj;
+        for (int i=0;i<n;++i) {
+            G.adjacent_nodes(i,adj,false);
+            res.push_back(_sort(G.get_nodes(adj),contextptr));
+        }
+    }
+    return res;
 }
 static const char _neighbors_s[]="neighbors";
 static define_unary_function_eval(__neighbors,&_neighbors,_neighbors_s);
@@ -3845,7 +3859,7 @@ define_unary_function_ptr5(at_dijkstra,alias_at_dijkstra,&__dijkstra,0,true)
 
 /* USAGE:   is_clique(G)
  *
- * Return true iff graph G is a clique (i.e. a complete graph).
+ * Returns true iff graph G is a clique (i.e. a complete graph).
  */
 gen _is_clique(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -3860,7 +3874,7 @@ define_unary_function_ptr5(at_is_clique,alias_at_is_clique,&__is_clique,0,true)
 
 /* USAGE:   maximum_clique(G)
  *
- * Return maximum clique of graph G, represented as a list of vertices.
+ * Returns maximum clique of graph G, represented as a list of vertices.
  */
 gen _maximum_clique(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -3877,8 +3891,8 @@ define_unary_function_ptr5(at_maximum_clique,alias_at_maximum_clique,&__maximum_
 
 /* USAGE:   maximal_cliques(G)
  *
- * Return list of maximal cliques in graph G. Every clique is returned as a list
- * of vertices.
+ * Returns the list of maximal cliques in graph G. Every clique is returned as
+ * a list of vertices.
  */
 gen _maximal_cliques(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -3897,7 +3911,7 @@ define_unary_function_ptr5(at_maximal_cliques,alias_at_maximal_cliques,&__maxima
 
 /* USAGE:   clique_number(G)
  *
- * Return the clique number of graph G, which is equal to the size of maximum
+ * Returns the clique number of graph G, which is equal to the size of maximum
  * clique.
  */
 gen _clique_number(const gen &g,GIAC_CONTEXT) {
@@ -3914,7 +3928,7 @@ define_unary_function_ptr5(at_clique_number,alias_at_clique_number,&__clique_num
 
 /* USAGE:   clique_cover(G,[k])
  *
- * Return a clique vertex cover of graph G [containing at most k cliques].
+ * Returns a clique vertex cover of graph G [containing at most k cliques].
  */
 gen _clique_cover(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -3942,7 +3956,7 @@ define_unary_function_ptr5(at_clique_cover,alias_at_clique_cover,&__clique_cover
 
 /* USAGE:   clique_cover_number(G)
  *
- * Return the clique cover number of graph G (i.e. the chromatic number of the
+ * Returns the clique cover number of graph G (i.e. the chromatic number of the
  * graph complement of G).
  */
 gen _clique_cover_number(const gen &g,GIAC_CONTEXT) {
@@ -3960,7 +3974,7 @@ define_unary_function_ptr5(at_clique_cover_number,alias_at_clique_cover_number,&
 
 /* USAGE:   chromatic_number(G)
  *
- * Return the chromatic number of graph G (i.e. the clique number of the
+ * Returns the chromatic number of graph G (i.e. the clique cover number of the
  * graph complement of G).
  */
 gen _chromatic_number(const gen &g,GIAC_CONTEXT) {
@@ -3979,8 +3993,8 @@ define_unary_function_ptr5(at_chromatic_number,alias_at_chromatic_number,&__chro
 
 /* USAGE:   maximum_independent_set(G)
  *
- * Return the chromatic number of graph G (i.e. the clique number of the
- * graph complement of G).
+ * Returns the maximum independent vertex set of graph G (i.e. maximum clique of
+ * the graph complement of G).
  */
 gen _maximum_independent_set(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -3998,7 +4012,7 @@ define_unary_function_ptr5(at_maximum_independent_set,alias_at_maximum_independe
 
 /* USAGE:   independence_number(G)
  *
- * Return the independence number of graph G (i.e. the size of maximum
+ * Returns the independence number of graph G (i.e. the size of maximum
  * independent set).
  */
 gen _independence_number(const gen &g,GIAC_CONTEXT) {
@@ -4016,7 +4030,7 @@ define_unary_function_ptr5(at_independence_number,alias_at_independence_number,&
 
 /* USAGE:   strongly_connected_components(G)
  *
- * Return the list of strongly connected components of directed graph G.
+ * Returns the list of strongly connected components of directed graph G.
  */
 gen _strongly_connected_components(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -4037,7 +4051,7 @@ define_unary_function_ptr5(at_strongly_connected_components,alias_at_strongly_co
 
 /* USAGE:   is_strongly_connected(G)
  *
- * Return true iff the directed graph G is strongly connected.
+ * Returns true iff the directed graph G is strongly connected.
  */
 gen _is_strongly_connected(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -4054,6 +4068,85 @@ static const char _is_strongly_connected_s[]="is_strongly_connected";
 static define_unary_function_eval(__is_strongly_connected,&_is_strongly_connected,_is_strongly_connected_s);
 define_unary_function_ptr5(at_is_strongly_connected,alias_at_is_strongly_connected,&__is_strongly_connected,0,true)
 
+/* USAGE:   degree_sequence(G)
+ *
+ * Returns the list of degrees of vertices of graph G (arc directions are
+ * ignored).
+ */
+gen _degree_sequence(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    int n=G.node_count();
+    vecteur deg(n);
+    for (int i=0;i<n;++i) {
+        deg[i]=G.degree(i,false);
+    }
+    return deg;
+}
+static const char _degree_sequence_s[]="degree_sequence";
+static define_unary_function_eval(__degree_sequence,&_degree_sequence,_degree_sequence_s);
+define_unary_function_ptr5(at_degree_sequence,alias_at_degree_sequence,&__degree_sequence,0,true)
+
+/* USAGE:   is_graphic_sequence(L)
+ *
+ * Returns true iff there exists a graph with degree sequence equal to the list
+ * L. The algorithm is based on Erdos-Gallai theorem.
+ */
+gen _is_graphic_sequence(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    int n=g._VECTptr->size(),k=1;
+    for (const_iterateur it=g._VECTptr->begin();it!=g._VECTptr->end();++it) {
+        if (!it->is_integer() || !is_positive(*it,contextptr) || !is_strictly_greater(n,*it,contextptr))
+            return graphe::FAUX;
+    }
+    vecteur deg=*_SortD(g,contextptr)._VECTptr;
+    if (is_zero(_even(_sum(deg,contextptr),contextptr)))
+        return graphe::FAUX;
+    gen S(0),M;
+    for (const_iterateur it=deg.begin();it!=deg.end();++it,++k) {
+        S+=*it;
+        M=0;
+        for (int i=k;i<n;++i) {
+            M+=_min(makesequence(deg[i],k),contextptr);
+        }
+        if (is_strictly_greater(S,gen(k*(k-1))+M,contextptr))
+            return graphe::FAUX;
+    }
+    return graphe::VRAI;
+}
+static const char _is_graphic_sequence_s[]="is_graphic_sequence";
+static define_unary_function_eval(__is_graphic_sequence,&_is_graphic_sequence,_is_graphic_sequence_s);
+define_unary_function_ptr5(at_is_graphic_sequence,alias_at_is_graphic_sequence,&__is_graphic_sequence,0,true)
+
+/* USAGE:   sequence_graph(L)
+ *
+ * Returns an undirected graph with the degree sequence equal to the list L, as
+ * constructed by Havel-Hakimi algorithm.
+ */
+gen _sequence_graph(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    int n=g._VECTptr->size();
+    graphe::ivector deg(n);
+    for (const_iterateur it=g._VECTptr->begin();it!=g._VECTptr->end();++it) {
+        if (!it->is_integer() || !is_positive(*it,contextptr) || !is_strictly_greater(n,*it,contextptr))
+            return gt_err(_GT_ERR_NOT_A_GRAPHIC_SEQUENCE,contextptr);
+        deg[it-g._VECTptr->begin()]=it->val;
+    }
+    graphe G(contextptr);
+    if (!G.hakimi(deg))
+        return gt_err(_GT_ERR_NOT_A_GRAPHIC_SEQUENCE,contextptr);
+    return G.to_gen();
+}
+static const char _sequence_graph_s[]="sequence_graph";
+static define_unary_function_eval(__sequence_graph,&_sequence_graph,_sequence_graph_s);
+define_unary_function_ptr5(at_sequence_graph,alias_at_sequence_graph,&__sequence_graph,0,true)
+
 // *******************************************************************************
 //
 // DEMO SECTION
@@ -4062,14 +4155,16 @@ define_unary_function_ptr5(at_is_strongly_connected,alias_at_is_strongly_connect
 
 void graph_demo(GIAC_CONTEXT) {
     const char *inputs[]={
+        "5",
         "%{[a,b],[b,c],[c,a]%}",
         "set[[[a,b],2],[[b,c],2.3],[[c,a],3/2]]",
+        "seq[[a,b,c,d,e,f],[3,2,5,1,4,6]]",
         "[[0,1,1,0],[1,0,0,1],[1,0,0,0],[0,1,0,0]]",
         "[[0,1.0,2.3,0],[4,0,0,3.1],[0,0,0,0],[0,0,0,0]]"
     };
     string disp;
     print_demo_title(_graph_s);
-    for (int k=0;k<4;++k) {
+    for (int k=0;k<6;++k) {
         cout << "INPUT: " << _graph_s << "(" << *(inputs+k) << ")" << endl;
         assert(is_graphe(gt_command(_graph,*(inputs+k),contextptr),disp,contextptr));
         cout << "OUTPUT: " << disp << endl;
@@ -4250,6 +4345,70 @@ void strongly_connected_components_demo(GIAC_CONTEXT) {
     assert(is_graphe(g,disp,contextptr));
     cout << "G: " << disp << endl;
     cout << _strongly_connected_components(g,contextptr) << endl;
+}
+
+void sequence_graph_demo(GIAC_CONTEXT) {
+    print_demo_title(_sequence_graph_s);
+    vecteur L=makevecteur(3,2,4,2,3,4,5,7);
+    cout << "Input: L:=" << L << endl;
+    cout << "Input: " << _is_graphic_sequence_s << "(L)" << endl;
+    cout << "Output:" << _is_graphic_sequence(L,contextptr) << endl;
+    cout << "Input: " << "G:=" << _sequence_graph_s << "(L)" << endl;
+    gen g=_sequence_graph(L,contextptr);
+    string disp;
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _degree_sequence_s << "(G)" << endl;
+    cout << "Output: " << _degree_sequence(g,contextptr) << endl;
+    cout << "Input: " << _draw_graph_s << "(G)" << endl;
+    cout << "Output: " << endl << _draw_graph(g,contextptr) << endl;
+}
+
+void graph_product_demo(GIAC_CONTEXT) {
+    print_demo_title(_cartesian_product_s);
+    cout << "Input: G:=" << _graph_s << "(%{[0,1]%})" << endl;
+    string disp;
+    gen g=gt_command(_graph,"%{[0,1]%}",contextptr);
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: H:=" << _cartesian_product_s << "(G,G)" << endl;
+    gen h=_cartesian_product(makesequence(g,g),contextptr);
+    assert(is_graphe(h,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _edges_s << "(H)" << endl;
+    cout << "Output: " << _edges(h,contextptr) << endl;
+    cout << "Input: T:=" << _tensor_product_s << "(G,G)" << endl;
+    gen t=_tensor_product(makesequence(g,g),contextptr);
+    assert(is_graphe(t,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _edges_s << "(T)" << endl;
+    cout << "Output: " << _edges(t,contextptr) << endl;
+}
+
+void neighbors_demo(GIAC_CONTEXT) {
+    print_demo_title(_neighbors_s);
+    gen L=makesequence(1,2,3,4,5,6,4,7,8);
+    L._VECTptr->push_back(2);
+    gen T=_trail(L,contextptr);
+    cout << "Input: G:=" << _digraph_s << "(" << _trail_s << "(" << L << "))" << endl;
+    gen g=_digraph(T,contextptr);
+    string disp;
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _draw_graph_s << "(G)" << endl;
+    cout << _draw_graph(g,contextptr) << endl;
+    cout << "Input: " << _neighbors_s << "(G,4)" << endl;
+    cout << "Output: " << _neighbors(makesequence(g,4),contextptr) << endl;
+    cout << "Input: " << _arrivals_s << "(G,4)" << endl;
+    cout << "Output: " << _arrivals(makesequence(g,4),contextptr) << endl;
+    cout << "Input: " << _departures_s << "(G,4)" << endl;
+    cout << "Output: " << _departures(makesequence(g,4),contextptr) << endl;
+    cout << "Input: " << _neighbors_s << "(G)" << endl;
+    cout << "Output: " << _neighbors(g,contextptr) << endl;
+    cout << "Input: " << _arrivals_s << "(G)" << endl;
+    cout << "Output: " << _arrivals(g,contextptr) << endl;
+    cout << "Input: " << _departures_s << "(G)" << endl;
+    cout << "Output: " << _departures(g,contextptr) << endl;
 }
 
 

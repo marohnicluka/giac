@@ -290,6 +290,12 @@ public:
         }
     };
 
+    struct ipairs_comparator {
+        bool operator()(const ipair &a,const ipair &b) {
+            return a.second<b.second;
+        }
+    };
+
     typedef std::vector<vertex>::const_iterator node_iter;
     typedef std::map<int,attrib>::const_iterator neighbor_iter;
     typedef attrib::const_iterator attrib_iter;
@@ -591,6 +597,7 @@ public:
     bool clique_cover(ivectors &cover,int k=0);
     int chromatic_number() const;
     int maximum_independent_set(ivector &v) const;
+    bool hakimi(const ivector &L);
     void make_lcf_graph(const ivector &jumps,int e);
     void make_lcf_graph(const int *j,int e);
     void make_sierpinski_graph(int n,int k,bool triangle);

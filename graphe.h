@@ -347,6 +347,7 @@ private:
     ivector discovered_nodes;
     std::stack<ipair> edge_stack;
     std::stack<int> node_stack;
+    void clear_node_stack();
     void message(const char *str);
     void message(const char *format,int a);
     void message(const char *format,int a,int b);
@@ -383,7 +384,7 @@ private:
     static bool sparse_matrix_element(const sparsemat &A,int i,int j,double &val);
     static void multiply_sparse_matrices(const sparsemat &A,const sparsemat &B,sparsemat &P,int ncols,bool symmetric=false);
     static void transpose_sparsemat(const sparsemat &A,sparsemat &T);
-    void multilevel_recursion(layout &x,graphe &G,int d,double R,double K,double tol,int depth=0);
+    void multilevel_recursion(layout &x,int d,double R,double K,double tol,int depth=0);
     int mdeg(const ivector &V,int i) const;
     void coarsening(graphe &G,const sparsemat &P,const ivector &V) const;
     void tomita_recurse(const ivector &R,const ivector &P_orig,const ivector &X_orig,ivectors &cliques) const;
@@ -400,7 +401,7 @@ private:
     static double ccw(const point &p1,const point &p2,const point &p3);
     void promote_edge_crossings(layout &x);
     double purchase(const layout &x,int orig_node_count,const point &axis,
-                    const ipairs &E, std::vector<double> &sc, double tol) const;
+                    const ipairs &E,std::vector<double> &sc,double graph_area,double tol) const;
     static double bisector(int v, int w, const layout &x, point &bsec, const point &p0);
     static double squared_distance(const point &p,const point &line);
     void accumulate_repulsive_force(const point &p,const point &q,double R,double K,double eps,point &force,bool sq_dist=false);
@@ -437,6 +438,7 @@ private:
     static void generate_nk_sets(int n,int k,std::vector<ulong> &v);
     bool has_k_clique_cover(int k,const ivectors &maximal_cliques,ivector &cv) const;
     void strongconnect_dfs(ivectors &components,int i,int sg);
+    bool degrees_equal(const ivector &v) const;
 
 public:
     graphe(const context *contextptr=context0);
@@ -451,6 +453,7 @@ public:
     static gen make_idnt(const char* name,int index=-1,bool intern=true);
     void make_default_labels(vecteur &labels,int n,int n0=0,int offset=-1) const;
     static gen boole(bool b) { return b?VRAI:FAUX; }
+    static gen word2gen(const std::string &word);
     static gen str2gen(const std::string &str,bool isstring=false);
     static std::string genstring2str(const gen &g);
     static std::string gen2str(const gen &g);
@@ -573,7 +576,7 @@ public:
     void maximize_matching(ipairs &matching);
     void find_maximal_matching(ipairs &matching) const;
     bool trail(const vecteur &v);
-    void create_random_layout(layout &x,double K,int d);
+    void create_random_layout(layout &x,int dim);
     void make_spring_layout(layout &x,int d,double tol=0.001);
     void make_circular_layout(layout &x,const ivector &outer_face,bool planar=false,double tol=0.001);
     bool make_planar_layout(layout &x);
@@ -597,6 +600,7 @@ public:
     bool clique_cover(ivectors &cover,int k=0);
     int chromatic_number() const;
     int maximum_independent_set(ivector &v) const;
+    int girth(bool odd=false,int sg=-1);
     bool hakimi(const ivector &L);
     void make_lcf_graph(const ivector &jumps,int e);
     void make_lcf_graph(const int *j,int e);
@@ -635,7 +639,6 @@ public:
     static bool edges_incident(const ipair &e1,const ipair &e2);
     static void convex_hull(ivector &hull,const layout &x,const ivector &v);
     double subgraph_area(const layout &x,const ivector &v) const;
-    double graph_area(const layout &x) const;
     void edge_labels_placement(const layout &x,double tol=0.001);
     void draw_edges(vecteur &drawing,const layout &x);
     void draw_nodes(vecteur &drawing,const layout &x) const;

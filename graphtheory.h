@@ -190,6 +190,8 @@ gen _is_strongly_connected(const gen &g,GIAC_CONTEXT);
 gen _degree_sequence(const gen &g,GIAC_CONTEXT);
 gen _is_graphic_sequence(const gen &g,GIAC_CONTEXT);
 gen _sequence_graph(const gen &g,GIAC_CONTEXT);
+gen _girth(const gen &g,GIAC_CONTEXT);
+gen _odd_girth(const gen &g,GIAC_CONTEXT);
 //gen _plane_dual(const gen &g,GIAC_CONTEXT);
 //gen _transitive_closure(const gen &g,GIAC_CONTEXT);
 //gen _fundamental_cycle(const gen &g,GIAC_CONTEXT);
@@ -218,7 +220,6 @@ gen _sequence_graph(const gen &g,GIAC_CONTEXT);
 //gen _circular_chromatic_index(const gen &g,GIAC_CONTEXT);
 //gen _circular_chromatic_number(const gen &g,GIAC_CONTEXT);
 //gen _edge_chromatic_number(const gen &g,GIAC_CONTEXT);
-//gen _girth(const gen &g,GIAC_CONTEXT);
 //gen _graph_polynomial(const gen &g,GIAC_CONTEXT);
 //gen _graph_rank(const gen &g,GIAC_CONTEXT);
 //gen _is_acyclic(const gen &g,GIAC_CONTEXT);
@@ -228,7 +229,6 @@ gen _sequence_graph(const gen &g,GIAC_CONTEXT);
 //gen _is_two_edge_connected(const gen &g,GIAC_CONTEXT);
 //gen _laplacian_matrix(const gen &g,GIAC_CONTEXT);
 //gen _local_clustering_coefficient(const gen &g,GIAC_CONTEXT);
-//gen _odd_girth(const gen &g,GIAC_CONTEXT);
 //gen _seidel_spectrum(const gen &g,GIAC_CONTEXT);
 //gen _topologic_sort(const gen &g,GIAC_CONTEXT);
 //gen _kruskal(const gen &g,GIAC_CONTEXT);
@@ -258,6 +258,10 @@ void strongly_connected_components_demo(GIAC_CONTEXT);
 void sequence_graph_demo(GIAC_CONTEXT);
 void graph_product_demo(GIAC_CONTEXT);
 void neighbors_demo(GIAC_CONTEXT);
+void attributes_demo(GIAC_CONTEXT);
+void adjacency_matrix_demo(GIAC_CONTEXT);
+void graph_templates_demo(GIAC_CONTEXT);
+void girth_demo(GIAC_CONTEXT);
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

@@ -573,6 +573,12 @@ int graphe::first_neighbor_from_subgraph(const vertex &v,int sg) const {
     return -1;
 }
 
+/* just a safety measure, the stack should be empty before calling this function */
+void graphe::clear_node_stack() {
+    while (!node_stack.empty())
+        node_stack.pop();
+}
+
 /* dotgraph class implementation */
 graphe::dotgraph::dotgraph() {
     m_index=0;
@@ -674,13 +680,34 @@ gen graphe::make_idnt(const char* name,int index,bool intern) {
     return identificateur(ss.str().c_str());
 }
 
-/* convert string to gen */
-gen graphe::str2gen(const string &str,bool isstring) {
+/* convert word to gen of type string */
+gen graphe::word2gen(const string &word) {
     stringstream ss;
     gen g;
-    if (isstring) ss << "\"";
-    ss << str;
-    if (isstring) ss << "\"";
+    ss << "\"" << word << "\"";
+    ss >> g;
+    return g;
+}
+
+/* convert string to gen */
+gen graphe::str2gen(const string &str,bool isstring) {
+    stringstream ss(str);
+    if (isstring) {
+        string buf;
+        vector<string> words;
+        gen space=_char(32,context0);
+        while (ss >> buf) {
+            words.push_back(buf);
+        }
+        vecteur res;
+        for (vector<string>::const_iterator it=words.begin();it!=words.end();++it) {
+            res.push_back(word2gen(*it));
+            if (it+1!=words.end())
+                res.push_back(space);
+        }
+        return _cat(change_subtype(res,_SEQ__VECT),context0);
+    }
+    gen g;
     ss >> g;
     return g;
 }
@@ -2148,15 +2175,15 @@ void graphe::adjacent_nodes(int i,ivector &adj,bool include_temp_edges) const {
 
 /* return a maximal independent set of vertices in undirected graph */
 void graphe::maximal_independent_set(ivector &ind) const {
-    ivector V(node_count()),gain(node_count());
-    int i;
-    for (i=0;i<node_count();++i) {
+    int n=node_count(),i;
+    ivector V(n),gain(n);
+    for (i=0;i<n;++i) {
         V[i]=i;
         gain[i]=degree(i);
     }
     ivector::iterator pos;
     ind.clear();
-    ind.reserve(node_count());
+    ind.reserve(n);
     while (!V.empty()) {
         i=V.front();
         pos=V.begin();
@@ -2806,7 +2833,7 @@ void graphe::rand_point(point &p,double radius) {
             R+=std::pow(*it,2.0);
         }
     } while (R==0);
-    scale_point(p,radius/std::pow(R,0.5));
+    scale_point(p,radius/std::sqrt(R));
 }
 
 /* convert point from cartesian to polar representation (2d only) */
@@ -2908,14 +2935,13 @@ void graphe::scale_layout(layout &x,double diam) {
 }
 
 /* randomize layout x using a Gaussian random variable generator */
-void graphe::create_random_layout(layout &x,double K,int d) {
-    point p(d);
+void graphe::create_random_layout(layout &x,int dim) {
     for (layout::iterator it=x.begin();it!=x.end();++it) {
-        p[0]=rand_uniform();
-        p[1]=rand_uniform();
-        if (d==3)
-            p[2]=rand_uniform();
-        *it=p;
+        it->resize(dim);
+        it->at(0)=rand_uniform();
+        it->at(1)=rand_uniform();
+        if (dim==3)
+            it->at(2)=rand_uniform();
     }
 }
 
@@ -3206,36 +3232,36 @@ void graphe::coarsening_ec(const ipairs &M,graphe &G,sparsemat &P) const {
 static int multilevel_depth;
 static bool multilevel_mis;
 
-void graphe::multilevel_recursion(layout &x,graphe &G,int d,double R,double K,double tol,int depth) {
+void graphe::multilevel_recursion(layout &x,int d,double R,double K,double tol,int depth) {
     ivector mis;
     ipairs M;
     if (multilevel_mis)
-        G.maximal_independent_set(mis);
+        maximal_independent_set(mis);
     else
-        G.find_maximal_matching(M);
-    int n=G.node_count(),m=multilevel_mis?mis.size():n-int(M.size());
+        find_maximal_matching(M);
+    int n=node_count(),m=multilevel_mis?mis.size():n-int(M.size());
     x.resize(n);
     if (m>0.75*n) {
         // coarsening is slow, switch from EC to MIS method since it's faster
         multilevel_mis=true;
-        multilevel_recursion(x,G,d,R,K,tol,depth);
+        multilevel_recursion(x,d,R,K,tol,depth);
         return;
     }
     if (m<2) {
         // the coarsest level, apply force directed algorithm on a random initial layout
         multilevel_depth=depth;
-        create_random_layout(x,K,d);
-        G.force_directed_placement(x,K,R*(depth+1)*K,tol,false);
+        create_random_layout(x,d);
+        force_directed_placement(x,K,R*(depth+1)*K,tol,false);
     } else {
         // create coarser graph H and lay it out
-        graphe H(G.giac_context());
+        graphe G(ctx);
         sparsemat P; // prolongation matrix
         if (multilevel_mis)
-            G.coarsening_mis(mis,H,P);
+            coarsening_mis(mis,G,P);
         else
-            G.coarsening_ec(M,H,P);
+            coarsening_ec(M,G,P);
         layout y;
-        multilevel_recursion(y,H,d,R,K,tol,depth+1);
+        G.multilevel_recursion(y,d,R,K,tol,depth+1);
         // compute x=P*y (layout lifting)
         double pij;
         point yj(d);
@@ -3250,9 +3276,9 @@ void graphe::multilevel_recursion(layout &x,graphe &G,int d,double R,double K,do
             }
         }
         // make the natural spring length K shorter with respect to
-        // the current depth level and subsequently refine layout x
+        // the current depth level and subsequently refine x
         double L=K*std::pow(PLASTIC_NUMBER,depth-multilevel_depth);
-        G.force_directed_placement(x,L,R*(depth+1)*L,tol,false);
+        force_directed_placement(x,L,R*(depth+1)*L,tol,false);
     }
 }
 
@@ -3262,7 +3288,7 @@ void graphe::make_spring_layout(layout &x,int d,double tol) {
     if (n==0)
         return;
     multilevel_mis=false;
-    multilevel_recursion(x,*this,d,DBL_MAX,10.0,tol);
+    multilevel_recursion(x,d,DBL_MAX,10.0,tol);
 }
 
 /* layout face as a regular polygon inscribed in circle of radius R */
@@ -3665,6 +3691,46 @@ bool graphe::hakimi(const ivector &L) {
     return true;
 }
 
+/* return the (odd) girth of this graph (the length of the shortest (odd) cycle),
+ * return -1 if there are no cycles */
+int graphe::girth(bool odd,int sg) {
+    clear_node_stack();
+    int g=-1,h,i,j;
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        unvisit_all_nodes(sg);
+        i=it-nodes.begin();
+        vertex &v=node(i);
+        if (sg>=0 && v.subgraph()!=sg)
+            continue;
+        node_stack.push(i);
+        v.unset_ancestor();
+        v.set_disc(0);
+        while (!node_stack.empty()) {
+            j=node_stack.top();
+            node_stack.pop();
+            vertex &w=node(j);
+            w.set_visited(true);
+            for (ivector_iter jt=w.neighbors().begin();jt!=w.neighbors().end();++jt) {
+                if (*jt==w.ancestor())
+                    continue;
+                vertex &u=node(*jt);
+                if (sg>=0 && u.subgraph()!=sg)
+                    continue;
+                if (!u.is_visited()) {
+                    u.set_ancestor(j);
+                    u.set_disc(w.disc()+1);
+                    node_stack.push(*jt);
+                } else {
+                    h=w.disc()+u.disc()+1;
+                    if (!odd || h%2!=0)
+                        g=g<0?h:std::min(g,h);
+                }
+            }
+        }
+    }
+    return g;
+}
+
 /* create a graph from LCF notation [jumps]^e */
 void graphe::make_lcf_graph(const ivector &jumps,int e) {
     int m=jumps.size(),n=m*e;
@@ -3897,6 +3963,7 @@ void graphe::make_complete_kary_tree(int k,int d) {
     int n=((int)std::pow(k,d+1)-1)/(k-1),v=0,w=1,len=1;
     vecteur V;
     make_default_labels(V,n);
+    add_nodes(V);
     for (int i=0;i<d;++i) {
         for (int j=0;j<len;++j) {
             for (int m=0;m<k;++m) {
@@ -3959,7 +4026,7 @@ void graphe::strongconnect_dfs(ivectors &components,int i,int sg) {
 void graphe::strongly_connected_components(ivectors &components,int sg) {
     unvisit_all_nodes(sg);
     disc_time=0;
-    assert(node_stack.empty());
+    clear_node_stack();
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         if ((sg<0 || it->subgraph()==sg) && !it->is_visited())
             strongconnect_dfs(components,it-nodes.begin(),sg);
@@ -4198,7 +4265,7 @@ int graphe::find_cycle_dfs(int i,int sg) {
 /* return a cycle in this graph using DFS (graph is assumed to be connected),
  * or an empty list if there is no cycle (i.e. if the graph is a tree) */
 bool graphe::find_cycle(ivector &cycle,int sg) {
-    assert(node_stack.empty());
+    clear_node_stack();
     if (is_empty())
         return false;
     int n=node_count(),initv,i;
@@ -4245,7 +4312,7 @@ bool graphe::find_path_dfs(int dest,int i,int sg,bool skip_embedded) {
 /* return a path from i-th to j-th vertex using DFS (graph is assumed to be connected) */
 bool graphe::find_path(int i,int j,ivector &path,int sg,bool skip_embedded) {
     unvisit_all_nodes(sg);
-    assert(node_stack.empty());
+    clear_node_stack();
     if (find_path_dfs(i,j,sg,skip_embedded)) {
         path.resize(node_stack.size());
         while (!node_stack.empty()) {
@@ -5356,17 +5423,6 @@ double graphe::subgraph_area(const layout &x,const ivector &v) const {
     return area/2;
 }
 
-/* return the area covered by this graph */
-double graphe::graph_area(const layout &x) const {
-    if (x.size()<3)
-        return 0;
-    ivector v(x.size());
-    for (int i=x.size();i-->0;) {
-        v[i]=i;
-    }
-    return subgraph_area(x,v);
-}
-
 /* return the value of the largest integer node label */
 int graphe::largest_integer_label_value() const {
     int n,m=-1;
@@ -5398,9 +5454,8 @@ bool graphe::edges_crossing(const ipair &e1,const ipair &e2,const layout &x,poin
 
 /* promote all edge crossings to vertices (2D layout is required) */
 void graphe::promote_edge_crossings(layout &x) {
-    ipairs Eset;
     ipairs E;
-    get_edges_as_pairs(Eset);
+    get_edges_as_pairs(E);
     int n=largest_integer_label_value(),i;
     point crossing;
     for (ipairs_iter it=E.begin();it!=E.end();++it) {
@@ -5447,7 +5502,7 @@ bool graphe::points_coincide(const point &p,const point &q,double tol) {
 
 /* obtain Purchase measure of symmetry for this graph when axis goes between vertices v and w */
 double graphe::purchase(const layout &x,int orig_node_count,const point &axis,
-                        const ipairs &E,vector<double> &sc,double tol) const {
+                        const ipairs &E,vector<double> &sc,double graph_area,double tol) const {
     // compute edge scores
     int i1,j1,i2,j2,cnt=0;
     double s1,s2;
@@ -5458,7 +5513,7 @@ double graphe::purchase(const layout &x,int orig_node_count,const point &axis,
         j1=it->second;
         point_reflection(x[i1],axis,ip1);
         point_reflection(x[j1],axis,jp1);
-        for (ipairs_iter jt=it+1;jt!=E.end();++jt) {
+        for (ipairs_iter jt=it;jt!=E.end();++jt) {
             i2=jt->first;
             j2=jt->second;
             const point &ip2=x[i2];
@@ -5489,11 +5544,7 @@ double graphe::purchase(const layout &x,int orig_node_count,const point &axis,
     for (vector<double>::const_iterator it=sc.begin();it!=sc.end();++it) {
         if (*it>0) {
             const ipair &e=E[it-sc.begin()];
-            const vertex &v=nodes[e.first],&w=nodes[e.second];
-            i=G.add_node(v.label(),v.attributes());
-            j=G.add_node(w.label(),w.attributes());
-            G.add_edge(i,j);
-            edge_score[make_pair(i<j?i:j,i<j?j:i)]=*it;
+            edge_score[G.add_edge(nodes[e.first].label(),nodes[e.second].label())]=*it;
         }
     }
     vecteur V=G.vertices();
@@ -5504,8 +5555,7 @@ double graphe::purchase(const layout &x,int orig_node_count,const point &axis,
     // obtain connected components and their average scores
     ivectors components;
     G.connected_components(components);
-    vector<double> area(components.size());
-    double score=0;
+    double score=0,area,total_area=0;
     for (ivectors_iter it=components.begin();it!=components.end();++it) {
         double avg_score=0;
         int n=0;
@@ -5519,14 +5569,10 @@ double graphe::purchase(const layout &x,int orig_node_count,const point &axis,
                 ++n;
             }
         }
-        score+=(area[it-components.begin()]=G.subgraph_area(xG,*it))*avg_score/n;
+        total_area+=(area=G.subgraph_area(xG,*it));
+        score+=area*avg_score/n;
     }
-    // compute and return Purchase score
-    double total_area=0;
-    for (vector<double>::const_iterator it=area.begin();it!=area.end();++it) {
-        total_area+=*it;
-    }
-    return score/std::max(total_area,graph_area(x));
+    return score/std::max(total_area,graph_area);
 }
 
 /* obtain perpendicular bisector of the vertices v and w and return its distance from point p0 */
@@ -5550,7 +5596,7 @@ double graphe::squared_distance(const point &p, const point &line) {
 
 /* return the best axis of symmetry for this graph (layout is required) */
 graphe::point graphe::axis_of_symmetry(layout &x) {
-    // find graph diameter
+    // find layout diameter
     point p(2);
     double diam=0,d;
     for (layout_iter it=x.begin();it!=x.end();++it) {
@@ -5583,12 +5629,17 @@ graphe::point graphe::axis_of_symmetry(layout &x) {
     axis_comparator comp;
     sort(axes.begin(),axes.end(),comp);
     point best_axis(3,0);
+    ivector all(node_count());
+    for (ivector::iterator it=all.begin();it!=all.end();++it) {
+        *it=it-all.begin();
+    }
+    double graph_area=subgraph_area(x,all);
     vector<double> sc(E.size());
     double best_score=-1,score;
     clock_t start=clock();
     for (vector<pair<double,point> >::const_iterator it=axes.begin();it!=axes.end();++it) {
         const point &axis=it->second;
-        score=purchase(x,nc,axis,E,sc,tol);
+        score=purchase(x,nc,axis,E,sc,graph_area,tol);
         if (score>best_score) {
             best_score=score;
             copy_point(axis,best_axis);
@@ -5696,16 +5747,29 @@ void graphe::layout_best_rotation(layout &x) {
     }
 }
 
+/* return true iff the degrees of vertices in v all coincide */
+bool graphe::degrees_equal(const ivector &v) const {
+    int deg=0,d;
+    for (ivector_iter it=v.begin();it!=v.end();++it) {
+        d=degree(*it);
+        if (deg==0)
+            deg=d;
+        else if (d!=deg)
+            return false;
+    }
+    return true;
+}
+
 /* guess the style to be used for drawing when no method is specified */
 int graphe::guess_drawing_style() {
     ivector cycle;
     if (is_tree()) {
         return _GT_STYLE_TREE;
     } else if (get_leading_cycle(cycle) &&
-            node_count()<100+int(cycle.size()) &&
+            node_count()<100+int(cycle.size()) && degrees_equal(cycle) &&
             (node_count()==int(cycle.size()) || is_triconnected())) {
         return _GT_STYLE_CIRCLE;
-    } else if (node_count()<300 && is_planar()) {
+    } else if (node_count()<100 && is_planar()) {
         return _GT_STYLE_PLANAR;
     }
     return _GT_STYLE_SPRING;
@@ -5901,7 +5965,7 @@ void graphe::draw_labels(vecteur &drawing,const layout &x) const {
     int color,n=node_count();
     point r(x.front().size());
     bool isdir=is_directed(),isweighted=is_weighted();
-    if (isweighted) {
+    if (isweighted && x.front().size()==2) {
         // draw weight labels
         for (int i=0;i<n;++i) {
             const point &p=x[i];
@@ -5968,7 +6032,7 @@ void graphe::dfs(int root,bool rec,bool clr,ivector *D,int sg,bool skip_embedded
         d.clear();
         d.reserve(node_count());
     }
-    assert(node_stack.empty());
+    clear_node_stack();
     node_stack.push(root);
     int i,j;
     while (!node_stack.empty()) {
@@ -6189,7 +6253,7 @@ void graphe::tensor_product(const graphe &G,graphe &P) const {
         const vertex &v=node(i);
         for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
             for (int j=0;j<m;++j) {
-                const vertex &w=node(j);
+                const vertex &w=G.node(j);
                 for (ivector_iter jt=w.neighbors().begin();jt!=w.neighbors().end();++jt) {
                     if (*jt>j)
                         P.add_edge(i*m+j,(*it)*m+(*jt));

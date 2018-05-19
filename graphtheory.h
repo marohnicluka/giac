@@ -48,10 +48,9 @@ enum gt_error_code {
     _GT_ERR_CYCLE_NOT_FOUND=19,
     _GT_ERR_NAME_NOT_RECOGNIZED=20,
     _GT_ERR_NOT_A_SUBGRAPH=21,
-    _GT_ERR_INTEGRAL_LABELS_REQUIRED=22,
-    _GT_ERR_GRAPH_IS_EMPTY=23,
-    _GT_ERR_TAGVALUE_PAIR_EXPECTED=24,
-    _GT_ERR_NOT_A_GRAPHIC_SEQUENCE=25
+    _GT_ERR_GRAPH_IS_EMPTY=22,
+    _GT_ERR_TAGVALUE_PAIR_EXPECTED=23,
+    _GT_ERR_NOT_A_GRAPHIC_SEQUENCE=24
 };
 
 bool is_graphe(const gen &g,std::string &disp_out,GIAC_CONTEXT);
@@ -262,6 +261,9 @@ void attributes_demo(GIAC_CONTEXT);
 void adjacency_matrix_demo(GIAC_CONTEXT);
 void graph_templates_demo(GIAC_CONTEXT);
 void girth_demo(GIAC_CONTEXT);
+void allpairs_distance_demo(GIAC_CONTEXT);
+void shortest_path_demo(GIAC_CONTEXT);
+void subdivide_edges_demo(GIAC_CONTEXT);
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

@@ -51,10 +51,9 @@ static const char *gt_error_messages[] = {
     "no cycle found",                                                   // 19
     "graph name not recognized",                                        // 20
     "argument is not a subgraph",                                       // 21
-    "all vertex labels are required to be integers",                    // 22
-    "graph is empty",                                                   // 23
-    "a \"tag\"=value pair expected",                                    // 24
-    "the given list is not a valid graphic sequence"                    // 25
+    "graph is empty",                                                   // 22
+    "a \"tag\"=value pair expected",                                    // 23
+    "the given list is not a valid graphic sequence"                    // 24
 };
 
 void gt_err_display(int code,GIAC_CONTEXT) {
@@ -3590,31 +3589,36 @@ static const char _interval_graph_s[]="interval_graph";
 static define_unary_function_eval(__interval_graph,&_interval_graph,_interval_graph_s);
 define_unary_function_ptr5(at_interval_graph,alias_at_interval_graph,&__interval_graph,0,true)
 
-/* USAGE:   subdivide_edges(G,E,r)
+/* USAGE:   subdivide_edges(G,E,[r])
  *
- * Inserts r new vertices to each edge/arc from G contained in the list E
- * (which may be a single edge/arc) and returns a modified copy of G.
+ * Inserts r (by default 1) new vertices to each edge/arc from G contained in
+ * the list E (which may be a single edge/arc) and returns a modified copy of
+ * G. New vertices are labelled with smallest available integers.
  */
 gen _subdivide_edges(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
     vecteur &gv=*g._VECTptr;
-    if (gv.size()!=3)
-        return gensizeerr(contextptr);
-    if (gv[1].type!=_VECT || !gv[2].is_integer())
+    if (gv[1].type!=_VECT)
         return gentypeerr(contextptr);
-    if (gv[2].val<1)
-        return gensizeerr(contextptr);
-    int r=gv[2].val;
+    int r=1;
+    if (gv.size()==3) {
+        if(!gv[2].is_integer())
+            return gentypeerr(contextptr);
+        if ((r=gv[2].val)<1)
+            return gensizeerr(contextptr);
+    }
     vecteur &E=*gv[1]._VECTptr;
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     vecteur V=G.vertices();
-    if (!is_integer_vecteur(V,true))
-        return gt_err(_GT_ERR_INTEGRAL_LABELS_REQUIRED,contextptr);
-    int l=_max(V,contextptr).val;
+    int l=array_start(contextptr)-1;
+    for (const_iterateur it=V.begin();it!=V.end();++it) {
+        if (it->is_integer())
+            l=std::max(l,it->val);
+    }
     graphe::ipairs edges;
     if (ckmatrix(E)) {
         // a list of edges/arcs is given
@@ -3626,15 +3630,13 @@ gen _subdivide_edges(const gen &g,GIAC_CONTEXT) {
             const vecteur &e=*(it->_VECTptr);
             if (!is_integer_vecteur(e,true))
                 return gt_err(_GT_ERR_INVALID_EDGE,contextptr);
-            edges[k++]=make_pair(e.front().val,e.back().val);
+            edges[k++]=make_pair(G.node_index(e.front()),G.node_index(e.back()));
         }
     } else {
         // a single edge/arc is given
         if (E.size()!=2)
             return gensizeerr(contextptr);
-        if (!is_integer_vecteur(E,true))
-            return gt_err(_GT_ERR_INVALID_EDGE,contextptr);
-        edges.push_back(make_pair(E.front().val,E.back().val));
+        edges.push_back(make_pair(G.node_index(E.front()),G.node_index(E.back())));
     }
     int v,w;
     for (graphe::ipairs_iter it=edges.begin();it!=edges.end();++it) {
@@ -3693,9 +3695,11 @@ static define_unary_function_eval(__graph_power,&_graph_power,_graph_power_s);
 define_unary_function_ptr5(at_graph_power,alias_at_graph_power,&__graph_power,0,true)
 
 /* USAGE:   vertex_distance(G,s,t)
+ *          vertex_distance(G,s,T)
  *
- * Returns the number of edges in the shortest path from vertex s to vertex t in
- * graph G. If such path does not exist, returns +infinity.
+ * Returns the number of edges in the shortest path from vertex s to vertex t
+ * in graph G. If such path does not exist, returns +infinity. For vector T of
+ * vertices from G returns the list of distances from s to each vertex t in T.
  */
 gen _vertex_distance(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -3708,19 +3712,39 @@ gen _vertex_distance(const gen &g,GIAC_CONTEXT) {
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     int i,j;
-    if ((i=G.node_index(gv[1]))<0 || (j=G.node_index(gv[2]))<0)
+    if ((i=G.node_index(gv[1]))<0)
         return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
-    int dist=G.distance(i,j);
-    return dist>=0?gen(dist):graphe::plusinf();
+    vecteur T;
+    bool single=false;
+    if (gv[2].type==_VECT)
+        T=*gv[2]._VECTptr;
+    else {
+        T.push_back(gv[2]);
+        single=true;
+    }
+    graphe::ivector J(T.size()),dist;
+    for (const_iterateur it=T.begin();it!=T.end();++it) {
+        if ((j=G.node_index(*it))<0)
+            return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+        J[it-T.begin()]=j;
+    }
+    G.distance(i,J,dist);
+    vecteur res(T.size());
+    for (graphe::ivector_iter it=dist.begin();it!=dist.end();++it) {
+        res[it-dist.begin()]=*it>=0?gen(*it):graphe::plusinf();
+    }
+    return single?res.front():res;
 }
 static const char _vertex_distance_s[]="vertex_distance";
 static define_unary_function_eval(__vertex_distance,&_vertex_distance,_vertex_distance_s);
 define_unary_function_ptr5(at_vertex_distance,alias_at_vertex_distance,&__vertex_distance,0,true)
 
-/* USAGE:   shortest_path(G,v,w)
+/* USAGE:   shortest_path(G,s,t)
+ *          shortest_path(G,s,T)
  *
- * Returns the shortest path from vertex v to vertex w in graph G. If such path
- * does not exist, returns an empty list.
+ * Returns the shortest path from vertex s to vertex t in graph G. If such path
+ * does not exist, returns an empty list. If vector T of vertices from G is
+ * given, the list of shortest paths from s to each t int T is returned.
  */
 gen _shortest_path(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -3733,14 +3757,30 @@ gen _shortest_path(const gen &g,GIAC_CONTEXT) {
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     int i,j;
-    if ((i=G.node_index(gv[1]))<0 || (j=G.node_index(gv[2]))<0)
+    if ((i=G.node_index(gv[1]))<0)
         return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
-    graphe::ivector path;
-    if (G.distance(i,j,&path)<0)
-        return vecteur(0); // there is no path between v and w
-    vecteur shortestpath;
-    vector_int2vecteur(path,shortestpath);
-    return shortestpath;
+    vecteur T;
+    bool single=false;
+    if (gv[2].type==_VECT)
+        T=*gv[2]._VECTptr;
+    else {
+        T.push_back(gv[2]);
+        single=true;
+    }
+    graphe::ivector J(T.size()),dist;
+    for (const_iterateur it=T.begin();it!=T.end();++it) {
+        if ((j=G.node_index(*it))<0)
+            return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+        J[it-T.begin()]=j;
+    }
+    graphe::ivectors shortest_paths;
+    G.distance(i,J,dist,&shortest_paths);
+    vecteur res(T.size());
+    for (graphe::ivectors_iter it=shortest_paths.begin();it!=shortest_paths.end();++it) {
+        i=it-shortest_paths.begin();
+        res[it-shortest_paths.begin()]=dist[i]>=0?G.get_nodes(*it):vecteur(0);
+    }
+    return single?res.front():res;
 }
 static const char _shortest_path_s[]="shortest_path";
 static define_unary_function_eval(__shortest_path,&_shortest_path,_shortest_path_s);
@@ -3759,10 +3799,10 @@ gen _allpairs_distance(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    matrice D;
+    matrice dist;
     if (!G.is_empty())
-        G.allpairs_distance(D);
-    return D;
+        G.allpairs_distance(dist);
+    return dist;
 }
 static const char _allpairs_distance_s[]="allpairs_distance";
 static define_unary_function_eval(__allpairs_distance,&_allpairs_distance,_allpairs_distance_s);
@@ -4608,6 +4648,82 @@ void girth_demo(GIAC_CONTEXT) {
     cout << "Output: " << disp << endl;
     cout << "Input: " << _girth_s << "(P)" << endl;
     cout << "Output: " << _girth(p,contextptr) << endl;
+}
+
+void allpairs_distance_demo(GIAC_CONTEXT) {
+    print_demo_title(_allpairs_distance_s);
+    const char *gspec="seq[[1,2,3,4,5],%{[1,2],[1,3],[1,4],[1,5],[2,3],[3,4],[4,5],[5,2]%}]";
+    const char *hspec="%{seq([1,i],i=2..5)%}";
+    gen tr=makesequence(2,3,4,5,2);
+    cout << "Input: G:=" << _graph_s << "(" << gspec << ")" << endl;
+    gen g=gt_command(_graph,gspec,contextptr);
+    string disp;
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _allpairs_distance_s << "(G)" << endl;
+    cout << "Output: " << _allpairs_distance(g,contextptr) << endl;
+    cout << "Input: " << _graph_diameter_s << "(G)" << endl;
+    cout << "Output: " << _graph_diameter(g,contextptr) << endl;
+    cout << "Input: H:=" << _digraph_s << "(" << hspec << "," << _trail_s << "(" << tr << "))" << endl;
+    gen hs=_eval(graphe::str2gen(hspec),contextptr);
+    gen h=_digraph(makesequence(hs,_trail(tr,contextptr)),contextptr);
+    assert(is_graphe(h,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _allpairs_distance_s << "(H)" << endl;
+    cout << "Output: " << _allpairs_distance(h,contextptr) << endl;
+    cout << "Input: " << _draw_graph_s << "(H)" << endl;
+    cout << "Output:" << endl << _draw_graph(h,contextptr) << endl;
+}
+
+void shortest_path_demo(GIAC_CONTEXT) {
+    print_demo_title(_shortest_path_s);
+    gen tr1=makesequence(1,2,3,4,5,6,3);
+    gen tr2=makesequence(2,6,7,8,6,9,10,1);
+    cout << "Input: G:=" << _digraph_s << "(trail(" << tr1 << "),trail(" << tr2 << "))" << endl;
+    string disp;
+    gen g=_digraph(makesequence(_trail(tr1,contextptr),_trail(tr2,contextptr)),contextptr);
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _shortest_path_s << "(G,7,[2,5])" << endl;
+    cout << "Output: " << _shortest_path(makesequence(g,7,makevecteur(2,5)),contextptr) << endl;
+    cout << "Input: H:=" << _underlying_graph_s << "(G)" << endl;
+    gen h=_underlying_graph(g,contextptr);
+    assert(is_graphe(h,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _shortest_path_s << "(H,4,10)" << endl;
+    cout << "Output: " << _shortest_path(makesequence(h,4,10),contextptr) << endl;
+    cout << _draw_graph(h,contextptr) << endl;
+}
+
+void subdivide_edges_demo(GIAC_CONTEXT) {
+    print_demo_title(_subdivide_edges_s);
+    cout << "Input: G:=" << _complete_graph_s << "(2,3)" << endl;
+    gen g=_complete_graph(makesequence(2,3),contextptr);
+    string disp;
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _edges_s << "(G)" << endl;
+    cout << "Output: " << _edges(g,contextptr) << endl;
+    vecteur v=makevecteur(makevecteur(1,5),makevecteur(2,4));
+    cout << "Input: SG:=" << _subdivide_edges_s << "(G," << v << ")" << endl;
+    gen sg=_subdivide_edges(makesequence(g,v),contextptr);
+    assert(is_graphe(sg,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _edges_s << "(SG)" << endl;
+    cout << "Output: " << _edges(sg,contextptr) << endl;
+    gen a=identificateur("a"),b=identificateur("b"),c=identificateur("c");
+    v=makevecteur(a,b,c);
+    gen e=graphe::str2gen("%{[a,b],[a,c]%}");
+    cout << "Input: DG:=" << _digraph_s << "(" << v << "," << e << ")" << endl;
+    gen dg=_digraph(makesequence(v,e),contextptr);
+    assert(is_graphe(dg,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: SDG:=" << _subdivide_edges_s << "(DG,[a,b],2)" << endl;
+    gen sdg=_subdivide_edges(makesequence(dg,makevecteur(a,b),2),contextptr);
+    assert(is_graphe(sdg,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _edges_s << "(SDG)" << endl;
+    cout << "Output: " << _edges(sdg,contextptr) << endl;
 }
 
 #ifndef NO_NAMESPACE_GIAC

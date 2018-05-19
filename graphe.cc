@@ -5507,13 +5507,18 @@ double graphe::purchase(const layout &x,int orig_node_count,const point &axis,
     int i1,j1,i2,j2,cnt=0;
     double s1,s2;
     point ip1,jp1;
-    fill(sc.begin(),sc.end(),-1);
+    fill(sc.begin(),sc.end(),0);
+    ipairs_iter jt;
     for (ipairs_iter it=E.begin();it!=E.end();++it) {
         i1=it->first;
         j1=it->second;
         point_reflection(x[i1],axis,ip1);
         point_reflection(x[j1],axis,jp1);
-        for (ipairs_iter jt=it;jt!=E.end();++jt) {
+        if (sc[it-E.begin()]>0)
+            continue;
+        for (jt=it;jt!=E.end();++jt) {
+            if (sc[jt-E.begin()]>0)
+                continue;
             i2=jt->first;
             j2=jt->second;
             const point &ip2=x[i2];
@@ -5533,7 +5538,8 @@ double graphe::purchase(const layout &x,int orig_node_count,const point &axis,
                 break;
             }
         }
-        sc[it-E.begin()]=s1*s2;
+        if (s1*s2>0)
+            sc[it-E.begin()]=sc[jt-E.begin()]=s1*s2;
     }
     if (cnt<3)
         return 0;
@@ -6090,7 +6096,8 @@ void graphe::bfs(int root,bool rec,bool clr,ivector *D,int sg,bool skip_embedded
                 if ((sg>=0 && w.subgraph()!=sg) || (skip_embedded && w.is_embedded()))
                     continue;
                 if (!w.is_visited()) {
-                    w.set_ancestor(i);
+                    if (w.ancestor()<0)
+                        w.set_ancestor(i);
                     node_queue.push(j);
                 }
             }
@@ -6281,44 +6288,64 @@ void graphe::highlight_nodes(const ivector &V,int color) {
     }
 }
 
-/* compute the distance between i-th and j-th nodes using BFS
- * (also output path if shortest_path!=NULL) */
-int graphe::distance(int i,int j,ivector *shortest_path) {
+/* compute the distance between i-th and J nodes using BFS and store them to dist
+ * (also output paths if shortest_paths!=NULL) */
+void graphe::distance(int i,const ivector &J,ivector &dist,ivectors *shortest_paths) {
     bfs(i,false);
-    int k=j,p,len=0;
-    if (shortest_path!=NULL)
-        shortest_path->push_back(j);
-    while (k!=i) {
-        if ((p=node(k).ancestor())<0)
-            return -1;
-        k=p;
-        if (shortest_path!=NULL)
-            shortest_path->push_back(k);
-        ++len;
+    int k,p,len;
+    if (shortest_paths!=NULL) {
+        shortest_paths->resize(J.size());
     }
-    return len;
+    dist.resize(J.size());
+    ivector *shortest_path=NULL;
+    for (ivector_iter it=J.begin();it!=J.end();++it) {
+        k=*it;
+        len=0;
+        if (shortest_paths!=NULL) {
+            shortest_path=&shortest_paths->at(it-J.begin());
+            shortest_path->clear();
+            shortest_path->push_back(*it);
+        }
+        while (k!=i) {
+            if ((p=node(k).ancestor())<0) {
+                len=-1;
+                break;
+            }
+            k=p;
+            if (shortest_path!=NULL)
+                shortest_path->push_back(k);
+            ++len;
+        }
+        reverse(shortest_path->begin(),shortest_path->end());
+        dist[it-J.begin()]=len;
+    }
 }
 
-/* compute distances between all pairs of vertices using Floyd-Warshall algorithm */
+/* compute the distances between all pairs of vertices using Floyd-Warshall algorithm */
 void graphe::allpairs_distance(matrice &m) const {
     int n=node_count(),i,j,k;
-    m=*_matrix(makesequence(n,n,plusinf()),ctx)._VECTptr;
+    m.reserve(n);
+    for (i=0;i<n;++i) {
+        m.push_back(vecteur(n,plusinf()));
+    }
     gen s;
     bool isweighted=is_weighted();
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         i=it-nodes.begin();
-        m[i][i]=0;
+        m[i]._VECTptr->at(i)=0;
         for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
             j=*jt;
-            m[i][j]=isweighted?weight(i,j):gen(1);
+            m[i]._VECTptr->at(j)=isweighted?weight(i,j):gen(1);
         }
     }
     for (k=0;k<n;++k) {
         for (i=0;i<n;++i) {
+            const gen &mik=m[i][k];
             for (j=0;j<n;++j) {
-                s=m[i][k]+m[k][j];
-                if (is_strictly_greater(m[i][j],s,ctx))
-                    m[i][j]=s;
+                s=mik+m[k][j];
+                gen &mij=m[i]._VECTptr->at(j);
+                if (is_strictly_greater(mij,s,ctx))
+                    mij=s;
             }
         }
     }

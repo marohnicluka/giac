@@ -266,6 +266,37 @@ public:
         layout *get_layout() const { return L; }
     };
 
+    class axis {
+        // coefficients for a*x+b*y+c=0
+        double m_a;
+        double m_b;
+        double m_c;
+        // vertex indices
+        int m_v;
+        int m_w;
+        // displacement from the center of the corresponding layout
+        double m_d;
+    public:
+        struct comparator {
+            bool operator()(const axis &a,const axis &b) {
+                return a.d()<b.d();
+            }
+        };
+        axis() { }
+        axis(const layout &x,int i,int j,const point &center);
+        axis(const axis &other);
+        axis& operator =(const axis &other);
+        void assign(const axis &other);
+        void mirror(const point &src,point &dest) const;
+        double distance(const point &p) const;
+        double a() const { return m_a; }
+        double b() const { return m_b; }
+        double c() const { return m_c; }
+        int d() const { return m_d; }
+        int v() const { return m_v; }
+        int w() const { return m_w; }
+    };
+
     struct convexhull_comparator {
         const layout *x;
         const point *lp;
@@ -281,12 +312,6 @@ public:
             double dy1=pt1[1]-lp->back(),dy2=pt2[1]-lp->back();
             double r=std::sqrt((dx2*dx2+dy2*dy2)/(dx1*dx1+dy1*dy1));
             return dx2<dx1*r;
-        }
-    };
-
-    struct axis_comparator {
-        bool operator()(const std::pair<double,point> &a,const std::pair<double,point> &b) {
-            return a.first<b.first;
         }
     };
 
@@ -374,12 +399,12 @@ private:
     static void point_lincomb(const point &p,const point &q,double d1,double d2,point &res);
     static void copy_point(const point &src,point &dest);
     void rand_point(point &p,double radius=1.0);
-    static void point_reflection(const point &src,const point &axis,point &dest);
     static vecteur point2vecteur(const point &p);
     static bool points_coincide(const point &p,const point &q,double tol);
     static void copy_layout(const layout &src,layout &dest);
     static void rotate_layout(layout &x,double phi);
     static double layout_min(const layout &x,int d);
+    static double layout_diam(const layout &x);
     static void point2polar(point &p,double &r,double &phi);
     static bool sparse_matrix_element(const sparsemat &A,int i,int j,double &val);
     static void multiply_sparse_matrices(const sparsemat &A,const sparsemat &B,sparsemat &P,int ncols,bool symmetric=false);
@@ -398,14 +423,8 @@ private:
     static bool embed_rectangles(const std::vector<rectangle> &rectangles,dpairs &embedding,double ew,double eh,double eps);
     static bool segments_crossing(const point &p,const point &r,const point &q,const point &s,point &crossing);
     static bool point2segment_projection(const point &p,const point &q,const point &r,point &proj);
-    static double ccw(const point &p1,const point &p2,const point &p3);
-    void promote_edge_crossings(layout &x);
-    double purchase(const layout &x,int orig_node_count,const point &axis,
-                    const ipairs &E,std::vector<double> &sc,double graph_area,double tol) const;
-    static double bisector(int v, int w, const layout &x, point &bsec, const point &p0);
-    static double squared_distance(const point &p,const point &line);
     void accumulate_repulsive_force(const point &p,const point &q,double R,double K,double eps,point &force,bool sq_dist=false);
-    void force_directed_placement(layout &x,double K,double R,double tol=0.001,bool ac=true);
+    void force_directed_placement(layout &x,double K,double R=DBL_MAX,double tol=0.001,bool ac=true);
     static bool get_position(const attrib &attr,point &p);
     void coarsening_mis(const ivector &V,graphe &G,sparsemat &P) const;
     void coarsening_ec(const ipairs &M,graphe &G,sparsemat &P) const;
@@ -425,6 +444,7 @@ private:
     static void make_regular_polygon_layout(layout &x,const ivector &face,double R=1.0);
     bool edges_crossing(const ipair &e1,const ipair &e2,const layout &x,point &crossing) const;
     bool has_crossing_edges(const layout &x,const ipairs &E) const;
+    void promote_edge_crossings(layout &x);
     static void build_block_tree(int i,ivectors &blocks);
     static int common_element(const ivector &v1,const ivector &v2,int offset=0);
     void embed_children_blocks(int i,ivectors &block_tree,std::vector<ivectors> &blocks_faces);
@@ -438,7 +458,7 @@ private:
     static void generate_nk_sets(int n,int k,std::vector<ulong> &v);
     bool has_k_clique_cover(int k,const ivectors &maximal_cliques,ivector &cv) const;
     void strongconnect_dfs(ivectors &components,int i,int sg);
-    bool degrees_equal(const ivector &v) const;
+    bool degrees_equal(const ivector &v,int deg=0) const;
 
 public:
     graphe(const context *contextptr=context0);
@@ -621,7 +641,7 @@ public:
     void make_random(bool dir,const vecteur &V,double p);
     void make_random_bipartite(const vecteur &V,const vecteur &W,double p);
     void make_random_regular(const vecteur &V,int d,bool connected);
-    point axis_of_symmetry(layout &x);
+    axis axis_of_symmetry(layout &x,const point &center,bool promote_crossings=false);
     static void translate_layout(layout &x,const point &dx);
     void cartesian_product(const graphe &G,graphe &P) const;
     void tensor_product(const graphe &G,graphe &P) const;
@@ -638,7 +658,6 @@ public:
     void incident_edges(const ivector &V,edgeset &E);
     static bool edges_incident(const ipair &e1,const ipair &e2);
     static void convex_hull(ivector &hull,const layout &x,const ivector &v);
-    double subgraph_area(const layout &x,const ivector &v) const;
     void edge_labels_placement(const layout &x,double tol=0.001);
     void draw_edges(vecteur &drawing,const layout &x);
     void draw_nodes(vecteur &drawing,const layout &x) const;

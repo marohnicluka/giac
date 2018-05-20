@@ -35,7 +35,7 @@ namespace giac {
 #define MARGIN_FACTOR 0.139680581996
 #define NEGLIGIBILITY_FACTOR 0.0195106649868
 #define PLESTENJAK_MAX_TRIES 6
-#define PURCHASE_TIMEOUT 2.5
+#define SYMMETRY_DETECTION_TIMEOUT 0.6
 #define PACKING_ASPECT_RATIO 3.08
 
 const gen graphe::VRAI=gen(1).change_subtype(_INT_BOOLEAN);
@@ -2875,6 +2875,22 @@ double graphe::layout_min(const layout &x,int d) {
     return m;
 }
 
+/* determine the diameter of the layout (distance between the pair of farthest vertices) */
+double graphe::layout_diam(const layout &x) {
+    point p(2);
+    double diam=0,d;
+    for (layout_iter it=x.begin();it!=x.end();++it) {
+        for (layout_iter jt=it+1;jt!=x.end();++jt) {
+            copy_point(*it,p);
+            subtract_point(p,*jt);
+            d=point_displacement(p,false);
+            if (d>diam)
+                diam=d;
+        }
+    }
+    return std::sqrt(diam);
+}
+
 /* return the bounding rectangle of layout x */
 graphe::rectangle graphe::layout_bounding_rect(layout &ly,double padding) {
     double xmin=DBL_MAX,xmax=-DBL_MAX,ymin=DBL_MAX,ymax=-DBL_MAX,x,y;
@@ -2965,7 +2981,7 @@ void graphe::force_directed_placement(layout &x,double K,double R,double tol,boo
     int progress=0,n=x.size(),i,j;
     if (n==0)
         return;
-    assert (n==node_count());
+    assert (n==node_count() && n>0);
     int d=x.front().size();
     point force(d),p(d);
     // keep updating the positions until the system freezes
@@ -2979,7 +2995,9 @@ void graphe::force_directed_placement(layout &x,double K,double R,double tol,boo
             // compute attractive forces between vertices adjacent to the i-th vertex
             vertex &v=node(i);
             for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
-                scale_point(p,point_distance(xi,x[*it],p)/K);
+                j=*it;
+                if (j<0) j=-j-1;
+                scale_point(p,point_distance(xi,x[j],p)/K);
                 add_point(force,p);
             }
             // compute repulsive forces for all vertices j!=i which are not too far from the i-th vertex
@@ -3321,7 +3339,6 @@ void graphe::make_circular_layout(layout &x,const ivector &outer_face,bool plana
         if (*pt>maxper)
             maxper=*pt;
     }
-    double A=std::log((double)maxper);
     // place facial vertices on the unit circle and all other vertices in the origin
     make_regular_polygon_layout(x,outer_face);
     if (node_count()==int(outer_face.size()))
@@ -3336,7 +3353,7 @@ void graphe::make_circular_layout(layout &x,const ivector &outer_face,bool plana
         p[0]=p[1]=0;
     }
     // cool down the system iteratively
-    double displacement,cool,C=std::sqrt((double)n/M_PI),Ci,eps=tol;
+    double A=2.0,d,cool,C=std::sqrt((double)n/M_PI),eps=tol;
     ipairs E;
     if (planar)
         get_edges_as_pairs(E,false);
@@ -3356,11 +3373,8 @@ void graphe::make_circular_layout(layout &x,const ivector &outer_face,bool plana
                 point r(2);
                 copy_point(q,r);
                 subtract_point(r,p);
-                Ci=C;
-                if (A>0)
-                    Ci*=std::exp(A*(2.0*maxper-per[i]-per[j])/(double)maxper);
-                displacement=Ci*point_displacement(r,false);
-                scale_point(r,displacement);
+                d=C*std::exp(A*(2.0*maxper-per[i]-per[j])/(double)maxper)*point_displacement(r,false);
+                scale_point(r,d);
                 add_point(pt,r);
             }
         }
@@ -3370,9 +3384,9 @@ void graphe::make_circular_layout(layout &x,const ivector &outer_face,bool plana
             if (is_outer[i])
                 continue;
             point &pt=P[i],&p=x[i];
-            displacement=point_displacement(pt);
-            if (displacement>0) {
-                scale_point(pt,std::min(displacement,cool)/displacement);
+            d=point_displacement(pt);
+            if (d>0) {
+                scale_point(pt,std::min(d,cool)/d);
                 add_point(p,pt);
             }
         }
@@ -4195,13 +4209,15 @@ void graphe::find_bridges(ipairs &B,int sg) {
     unvisit_all_nodes(sg);
     unset_all_ancestors(sg);
     disc_time=0;
+    B.clear();
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         if ((sg<0 || it->subgraph()==sg) && !it->is_visited())
             find_bridges_dfs(it-nodes.begin(),B,sg);
     }
 }
 
-/* find an eulerian path in this graph using Fleury's algorithm, return true iff it exists */
+/* attempt to find an eulerian path in this graph using Fleury's algorithm,
+ * return true iff one exists */
 bool graphe::find_eulerian_path(ivector &path) const {
     assert(!is_directed());
     graphe G(*this);
@@ -4220,10 +4236,10 @@ bool graphe::find_eulerian_path(ivector &path) const {
     path.resize(m+1);
     path.back()=i;
     ipairs bridges;
-    G.find_bridges(bridges);
     ipair edge;
     while (m>0) {
         vertex &v=G.node(i);
+        G.find_bridges(bridges);
         for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
             j=*it;
             edge=make_pair(i<j?i:j,i<j?j:i);
@@ -4733,11 +4749,11 @@ int graphe::planar_embedding(ivectors &faces) {
 /* triangulate faces by adding a vertex in the center of each face and
  * connecting it with the other vertices of the face */
 void graphe::subdivide_faces(const ivectors &faces,int f0) {
-    int v,N=node_label(node_count()-1).val;
+    int v,n=largest_integer_label_value();
     for (ivectors_iter ft=faces.begin();ft!=faces.end();++ft) {
         if (f0==int(ft-faces.begin()))
             continue;
-        v=add_node(++N);
+        v=add_node(++n);
         for (ivector_iter it=ft->begin();it!=ft->end();++it) {
             add_edge(v,*it);
         }
@@ -5314,48 +5330,6 @@ bool graphe::has_crossing_edges(const layout &x,const ipairs &E) const {
     return false;
 }
 
-/* return positive for counter-clockwise, negative for clockwise and zero for collinear points p1,p2,p3 */
-double graphe::ccw(const point &p1, const point &p2, const point &p3) {
-    return (p2[0]-p1[0])*(p3[1]-p1[1])-(p2[1]-p1[1])*(p3[0]-p1[0]);
-}
-
-/* fill ccw_indices with convex hull vertices from v, in counterclockwise order
- * (Graham scan is used, works only in 2D) */
-void graphe::convex_hull(ivector &hull,const layout &x,const ivector &v) {
-    int N=v.size(),i,j,n;
-    assert(N>=3);
-    // find the point with the lowest y coordinate (or with the lowest x between those with lowest y)
-    double ymin=DBL_MAX,xmin;
-    i=-1;
-    for (ivector_iter it=v.begin();it!=v.end();++it) {
-        const point &p=x[*it];
-        if (p.back()==ymin) {
-            if (p.front()<xmin) {
-                xmin=p.front();
-                i=*it;
-            }
-        } else if (p.back()<ymin) {
-            xmin=p.front();
-            ymin=p.back();
-            i=*it;
-        }
-    }
-    // sort points by angle
-    convexhull_comparator comp(&x,&x[i]);
-    ivector w(v);
-    sort(w.begin(),w.end(),comp);
-    // determine the vertices of the convex hull
-    hull.push_back(w[0]);
-    hull.push_back(w[1]);
-    for (i=2;i<=N;++i) {
-        n=hull.size();
-        j=w[i%N];
-        if (ccw(x[hull[n-2]],x[hull[n-1]],x[j])<=0)
-            hull.pop_back();
-        hull.push_back(j);
-    }
-}
-
 /* return true iff the segments from p to p+r and from q to q+s intersect (compute the intersection point) */
 bool graphe::segments_crossing(const point &p,const point &r,const point &q,const point &s,point &crossing) {
     point qq(2),pp(2),rr(2);
@@ -5407,22 +5381,6 @@ bool graphe::point2segment_projection(const point &p,const point &q,const point 
     return true;
 }
 
-/* return the area of subgraph induced by a list of vertices v (layout is required) */
-double graphe::subgraph_area(const layout &x,const ivector &v) const {
-    ivector hull;
-    int n;
-    double area=0;
-    if (v.size()<3)
-        return 0;
-    convex_hull(hull,x,v);
-    n=hull.size();
-    for (int k=0;k<n;++k) {
-        const point &p=x[hull[k]],&q=x[hull[(k+1)%n]];
-        area+=p.front()*q.back()-p.back()*q.front();
-    }
-    return area/2;
-}
-
 /* return the value of the largest integer node label */
 int graphe::largest_integer_label_value() const {
     int n,m=-1;
@@ -5452,6 +5410,75 @@ bool graphe::edges_crossing(const ipair &e1,const ipair &e2,const layout &x,poin
     return segments_crossing(p,r,q,s,crossing);
 }
 
+/* convert point to vecteur */
+vecteur graphe::point2vecteur(const point &p) {
+    vecteur res;
+    for (point::const_iterator it=p.begin();it!=p.end();++it) {
+        res.push_back(*it);
+    }
+    return res;
+}
+
+/* return true iff the points p and q coincide with each other within the given tolerance radius */
+bool graphe::points_coincide(const point &p,const point &q,double tol) {
+    assert(q.size()==p.size());
+    point r(p.size());
+    return point_distance(p,q,r)<=tol;
+}
+
+/*
+ * IMPLEMENTATION OF PURCHASE_AXIS CLASS
+ */
+
+graphe::axis::axis(const layout &x,int i,int j,const point &center) {
+    m_v=i;
+    m_w=j;
+    const point &p=x[i],&q=x[j];
+    double x1=p[0],x2=q[0],y1=p[1],y2=q[1],x0=center[0],y0=center[1];
+    m_a=2*(y2-y1);
+    m_b=2*(x2-x1);
+    m_c=x1*x1+y1*y1-(x2*x2+y2*y2);
+    m_d=std::abs(x0*(y2-y1)-y0*(x2-x1)+x2*y1-y2*x1)/
+            std::sqrt(std::pow(y2-y1,2)+std::pow(x2-x1,2));
+}
+
+graphe::axis::axis(const axis &other) {
+    assign(other);
+}
+
+graphe::axis& graphe::axis::operator =(const axis &other) {
+    assign(other);
+    return *this;
+}
+
+void graphe::axis::assign(const axis &other) {
+    m_a=other.a();
+    m_b=other.b();
+    m_c=other.c();
+    m_d=other.d();
+    m_v=other.v();
+    m_w=other.w();
+}
+
+void graphe::axis::mirror(const point &src,point &dest) const {
+    assert(src.size()==2);
+    double p=src[0],q=src[1],a2=a()*a(),b2=b()*b(),r=a2+b2,s=a2-b2;
+    dest.resize(2);
+    dest[0]=(p*s-2*b()*(a()*q+c()))/r;
+    dest[1]=-(q*s+2*a()*(b()*p+c()))/r;
+}
+
+double graphe::axis::distance(const point &p) const {
+    assert(p.size()==2);
+    double num=a()*p.front()+b()*p.back()+c();
+    double den=a()*a()+b()*b();
+    return std::sqrt(num*num/den);
+}
+
+/*
+ * END OF PURCHASE_AXIS CLASS
+ */
+
 /* promote all edge crossings to vertices (2D layout is required) */
 void graphe::promote_edge_crossings(layout &x) {
     ipairs E;
@@ -5475,182 +5502,57 @@ void graphe::promote_edge_crossings(layout &x) {
     }
 }
 
-/* reflect src around axis ay+bx+c=0 and write the result in dest */
-void graphe::point_reflection(const point &src,const point &axis,point &dest) {
-    assert(src.size()==2 && axis.size()==3);
-    double p=src[0],q=src[1],a=axis[0],b=axis[1],c=axis[2],a2=a*a,b2=b*b,r=a2+b2,s=a2-b2;
-    dest.resize(2);
-    dest[0]=(p*s-2*b*(a*q+c))/r;
-    dest[1]=-(q*s+2*a*(b*p+c))/r;
-}
-
-/* convert point to vecteur */
-vecteur graphe::point2vecteur(const point &p) {
-    vecteur res;
-    for (point::const_iterator it=p.begin();it!=p.end();++it) {
-        res.push_back(*it);
-    }
-    return res;
-}
-
-/* return true iff the points p and q coincide with each other within the given tolerance radius */
-bool graphe::points_coincide(const point &p,const point &q,double tol) {
-    assert(q.size()==p.size());
-    point r(p.size());
-    return point_distance(p,q,r)<=tol;
-}
-
-/* obtain Purchase measure of symmetry for this graph when axis goes between vertices v and w */
-double graphe::purchase(const layout &x,int orig_node_count,const point &axis,
-                        const ipairs &E,vector<double> &sc,double graph_area,double tol) const {
-    // compute edge scores
-    int i1,j1,i2,j2,cnt=0;
-    double s1,s2;
-    point ip1,jp1;
-    fill(sc.begin(),sc.end(),0);
-    ipairs_iter jt;
-    for (ipairs_iter it=E.begin();it!=E.end();++it) {
-        i1=it->first;
-        j1=it->second;
-        point_reflection(x[i1],axis,ip1);
-        point_reflection(x[j1],axis,jp1);
-        if (sc[it-E.begin()]>0)
-            continue;
-        for (jt=it;jt!=E.end();++jt) {
-            if (sc[jt-E.begin()]>0)
-                continue;
-            i2=jt->first;
-            j2=jt->second;
-            const point &ip2=x[i2];
-            const point &jp2=x[j2];
-            s1=s2=0;
-            if (points_coincide(ip1,ip2,tol)) {
-                s1=(i1<orig_node_count)==(i2<orig_node_count)?1.0:0.5;
-                if (points_coincide(jp1,jp2,tol))
-                    s2=(j1<orig_node_count)==(j2<orig_node_count)?1.0:0.5;
-            } else if (points_coincide(ip1,jp2,tol)) {
-                s1=(i1<orig_node_count)==(j2<orig_node_count)?1.0:0.5;
-                if (points_coincide(ip2,jp1,tol))
-                    s2=(i2<orig_node_count)==(j1<orig_node_count)?1.0:0.5;
-            }
-            if (s1*s2>0) {
-                ++cnt;
-                break;
-            }
-        }
-        if (s1*s2>0)
-            sc[it-E.begin()]=sc[jt-E.begin()]=s1*s2;
-    }
-    if (cnt<3)
-        return 0;
-    // construct symmetric subgraph
-    graphe G(ctx);
-    map<ipair,double> edge_score;
-    int i,j;
-    for (vector<double>::const_iterator it=sc.begin();it!=sc.end();++it) {
-        if (*it>0) {
-            const ipair &e=E[it-sc.begin()];
-            edge_score[G.add_edge(nodes[e.first].label(),nodes[e.second].label())]=*it;
-        }
-    }
-    vecteur V=G.vertices();
-    layout xG(V.size());
-    for (const_iterateur it=V.begin();it!=V.end();++it) {
-        xG[it-V.begin()]=x[node_index(*it)];
-    }
-    // obtain connected components and their average scores
-    ivectors components;
-    G.connected_components(components);
-    double score=0,area,total_area=0;
-    for (ivectors_iter it=components.begin();it!=components.end();++it) {
-        double avg_score=0;
-        int n=0;
-        for (ivector_iter ct=it->begin();ct!=it->end();++ct) {
-            i=*ct;
-            for (ivector_iter dt=ct+1;dt!=it->end();++dt) {
-                j=*dt;
-                if (!G.has_edge(i,j))
-                    continue;
-                avg_score+=edge_score[make_pair(i<j?i:j,i<j?j:i)];
-                ++n;
-            }
-        }
-        total_area+=(area=G.subgraph_area(xG,*it));
-        score+=area*avg_score/n;
-    }
-    return score/std::max(total_area,graph_area);
-}
-
-/* obtain perpendicular bisector of the vertices v and w and return its distance from point p0 */
-double graphe::bisector(int v,int w,const layout &x,point &bsec,const point &p0) {
-    const point &vp=x[v],&wp=x[w];
-    double x1=vp[0],x2=wp[0],y1=vp[1],y2=wp[1],x0=p0[0],y0=p0[1];
-    bsec[0]=2*(y2-y1);
-    bsec[1]=2*(x2-x1);
-    bsec[2]=x1*x1+y1*y1-(x2*x2+y2*y2);
-    return std::abs(x0*(y2-y1)-y0*(x2-x1)+x2*y1-y2*x1)/
-            std::sqrt(std::pow(y2-y1,2)+std::pow(x2-x1,2));
-}
-
-/* return squared distance between point p=(x0,y0) and line ay+bx+c=0 */
-double graphe::squared_distance(const point &p, const point &line) {
-    assert(p.size()==2 && line.size()==3);
-    double num=line[0]*p[0]+line[1]*p[1]+line[2];
-    double den=line[0]*line[0]+line[1]*line[1];
-    return num*num/den;
-}
-
 /* return the best axis of symmetry for this graph (layout is required) */
-graphe::point graphe::axis_of_symmetry(layout &x) {
-    // find layout diameter
-    point p(2);
-    double diam=0,d;
-    for (layout_iter it=x.begin();it!=x.end();++it) {
-        for (layout_iter jt=it+1;jt!=x.end();++jt) {
-            copy_point(*it,p);
-            subtract_point(p,*jt);
-            d=point_displacement(p,false);
-            if (d>diam)
-                diam=d;
-        }
-    }
-    diam=std::sqrt(diam);
-    double tol=diam*NEGLIGIBILITY_FACTOR; // max negligible node displacement
-    point center=layout_center(x);
-    vecteur labels;
+graphe::axis graphe::axis_of_symmetry(layout &x,const point &center,bool promote_crossings) {
     int nc=node_count();
-    make_default_labels(labels,nc);
-    relabel_nodes(labels);
-    promote_edge_crossings(x);
-    ipairs E;
-    get_edges_as_pairs(E);
-    vector<pair<double,point> > axes;
+    assert(nc>1);
+    // find layout diameter
+    double diam=layout_diam(x),tol=diam*std::sqrt(M_PI/nc)*MARGIN_FACTOR;
+    double axtol=diam*MARGIN_FACTOR/2.0;
+    if (promote_crossings)
+        promote_edge_crossings(x);
+    vector<axis> axes;
     for (int v=0;v<nc;++v) {
         for (int w=v+1;w<nc;++w) {
-            point axis(3);
-            d=bisector(v,w,x,axis,center);
-            axes.push_back(make_pair(d,axis));
+            axis ax(x,v,w,center);
+            if (axes.empty() || ax.d()<axtol)
+                axes.push_back(ax);
         }
     }
-    axis_comparator comp;
+    axis::comparator comp;
     sort(axes.begin(),axes.end(),comp);
-    point best_axis(3,0);
-    ivector all(node_count());
-    for (ivector::iterator it=all.begin();it!=all.end();++it) {
-        *it=it-all.begin();
-    }
-    double graph_area=subgraph_area(x,all);
-    vector<double> sc(E.size());
+    axis best_axis;
     double best_score=-1,score;
     clock_t start=clock();
-    for (vector<pair<double,point> >::const_iterator it=axes.begin();it!=axes.end();++it) {
-        const point &axis=it->second;
-        score=purchase(x,nc,axis,E,sc,graph_area,tol);
+    point p1(2),p2(2),r(2);
+    ipairs E;
+    get_edges_as_pairs(E);
+    vector<bool> visited(E.size());
+    for (vector<axis>::const_iterator it=axes.begin();it!=axes.end();++it) {
+        score=0;
+        fill(visited.begin(),visited.end(),false);
+        for (ipairs_iter et=E.begin();et!=E.end();++et) {
+            if (visited[et-E.begin()])
+                continue;
+            it->mirror(x[et->first],p1);
+            it->mirror(x[et->second],p2);
+            for (ipairs_iter ft=et;ft!=E.end();++ft) {
+                if (visited[ft-E.begin()])
+                    continue;
+                const point &q1=x[ft->first];
+                const point &q2=x[ft->second];
+                if ((points_coincide(p1,q1,tol) && points_coincide(p2,q2,tol)) ||
+                        (points_coincide(p1,q2,tol) && points_coincide(q1,p2,tol))) {
+                    score+=(point_distance(p1,p2,r)+point_distance(q1,q2,r))/2.0;
+                    visited[ft-E.begin()]=true;
+                }
+            }
+        }
         if (score>best_score) {
             best_score=score;
-            copy_point(axis,best_axis);
+            best_axis=*it;
         }
-        if (double(clock()-start)/CLOCKS_PER_SEC>PURCHASE_TIMEOUT)
+        if (double(clock()-start)/CLOCKS_PER_SEC>SYMMETRY_DETECTION_TIMEOUT)
             break;
     }
     x.resize(nc);
@@ -5669,14 +5571,14 @@ bool graphe::make_planar_layout(layout &x) {
         return false; // the graph is not planar
     ivector &outer_face=faces[f];
     m=outer_face.size();
-    if (!is_triconnected()) {
+    if (n>100 || !is_triconnected()) {
         //subdivide_faces(faces,f);
         triangulator T(this,&faces);
         T.triangulate(f);
     }
     // create a fake outer face
     ivector new_outer_face(m),degrees(m);
-    N=_max(vertices(),ctx).val;
+    N=largest_integer_label_value();
     for (int i=0;i<m;++i) {
         v=add_node(++N);
         w=outer_face[i];
@@ -5696,12 +5598,12 @@ bool graphe::make_planar_layout(layout &x) {
     }
     // create the layout
     make_circular_layout(x,new_outer_face,true);
-    // remove temporary vertices and edges, if any
+    // remove temporary vertices
     while (node_count()>n) {
         remove_node(node_count()-1);
     }
-    remove_temporary_edges();
     x.resize(n);
+    //remove_temporary_edges();
     return true;
 }
 
@@ -5712,55 +5614,30 @@ void graphe::layout_best_rotation(layout &x) {
     scale_point(c,-1);
     translate_layout(x,c);
     // rotate layout around suitable bisector of a pair of vertices
-    graphe G(*this);
-    ivector isolated_nodes;
-    ipairs matching;
-    while (G.node_count()>50) {
-        G.find_maximal_matching(matching);
-        isolated_nodes.clear();
-        for (ipairs_iter it=matching.begin();it!=matching.end();++it) {
-            G.collapse_edge(it->first,it->second);
-            isolated_nodes.push_back(it->second);
-        }
-        sort(isolated_nodes.begin(),isolated_nodes.end());
-        for (int i=isolated_nodes.size();i-->0;) {
-            G.remove_isolated_node(isolated_nodes[i]);
-        }
+    axis ax=axis_of_symmetry(x,c);
+    if (ax.a()!=0)
+        rotate_layout(x,M_PI_2+std::atan(ax.b()/ax.a()));
+    // determine the highest and the lowest y coordinate: if yh+yl<0, rotate layout for 180°
+    double yh=0,yl=0;
+    for (layout::const_iterator it=x.begin();it!=x.end();++it) {
+        double y=it->back();
+        if (y>yh)
+            yh=y;
+        else if (y<yl)
+            yl=y;
     }
-    int n=G.node_count(),index;
-    layout reduced_x(n);
-    for (int i=0;i<n;++i) {
-        point &p=reduced_x[i];
-        p.resize(2);
-        index=node_index(G.node_label(i));
-        copy_point(x[index],p);
-    }
-    point axis=G.axis_of_symmetry(reduced_x);
-    double a=axis[0],b=axis[1];
-    if (a!=0) {
-        rotate_layout(x,M_PI_2+std::atan(b/a));
-        // determine the highest and the lowest y coordinate: if yh+yl<0, rotate layout for 180°
-        double yh=0,yl=0;
-        for (layout::const_iterator it=x.begin();it!=x.end();++it) {
-            double y=it->back();
-            if (y>yh)
-                yh=y;
-            else if (y<yl)
-                yl=y;
-        }
-        if (yh+yl<0)
-            rotate_layout(x,M_PI);
-    }
+    if (yh+yl<0)
+        rotate_layout(x,M_PI);
 }
 
 /* return true iff the degrees of vertices in v all coincide */
-bool graphe::degrees_equal(const ivector &v) const {
-    int deg=0,d;
+bool graphe::degrees_equal(const ivector &v,int deg) const {
+    int D=deg,d;
     for (ivector_iter it=v.begin();it!=v.end();++it) {
         d=degree(*it);
-        if (deg==0)
-            deg=d;
-        else if (d!=deg)
+        if (D==0)
+            D=d;
+        else if (d!=D)
             return false;
     }
     return true;
@@ -5772,7 +5649,7 @@ int graphe::guess_drawing_style() {
     if (is_tree()) {
         return _GT_STYLE_TREE;
     } else if (get_leading_cycle(cycle) &&
-            node_count()<100+int(cycle.size()) && degrees_equal(cycle) &&
+            node_count()<100+int(cycle.size()) && degrees_equal(cycle,3) &&
             (node_count()==int(cycle.size()) || is_triconnected())) {
         return _GT_STYLE_CIRCLE;
     } else if (node_count()<100 && is_planar()) {
@@ -5840,7 +5717,7 @@ bool graphe::get_position(const attrib &attr,point &p) {
 void graphe::draw_edges(vecteur &drawing,const layout &x) {
     if (x.empty())
         return;
-    int i,color,width=default_edge_width;
+    int i,j,color,width=default_edge_width;
     bool isdir=is_directed();
     double d;
     point r(x.front().size());
@@ -5849,10 +5726,12 @@ void graphe::draw_edges(vecteur &drawing,const layout &x) {
         i=it-nodes.begin();
         const point &p=x[i];
         for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
-            if (!isdir && *jt<i)
+            j=*jt;
+            if (j<0) j=-j-1;
+            if (!isdir && j<i)
                 continue;
-            const point &q=x[*jt];
-            const attrib &attr=it->neighbor_attributes(*jt);
+            const point &q=x[j];
+            const attrib &attr=it->neighbor_attributes(j);
             color=default_edge_color;
             if ((ait=attr.find(_GT_ATTRIB_COLOR))!=attr.end())
                 color=ait->second.val;
@@ -6129,18 +6008,22 @@ bool graphe::is_biconnected(int sg) {
 /* return true iff the graph is triconnected, using a simple O(n*(n+m)) algorithm */
 bool graphe::is_triconnected(int sg) {
     assert(!is_empty() && !is_directed());
-    for (int i=node_count();i-->0;) {
-        if ((sg<0 || node(i).subgraph()==sg) && degree(i)<3)
-            return false;
-    }
     int color=max_subgraph_index()+1;
-    for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
-        if (sg>=0 && it->subgraph()!=sg)
+    for (int i=node_count();i-->0;) {
+        vertex &v=node(i);
+        if (sg>=0 && v.subgraph()!=sg)
             continue;
-        it->set_subgraph(color);
-        if (!is_biconnected(sg))
+        if (degree(i)<3)
             return false;
-        it->set_subgraph(sg);
+        v.set_subgraph(color);
+    }
+    for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
+        if (it->subgraph()!=color)
+            continue;
+        it->set_subgraph(color+1);
+        if (!is_biconnected(color))
+            return false;
+        it->set_subgraph(color);
     }
     return true;
 }
@@ -6316,7 +6199,8 @@ void graphe::distance(int i,const ivector &J,ivector &dist,ivectors *shortest_pa
                 shortest_path->push_back(k);
             ++len;
         }
-        reverse(shortest_path->begin(),shortest_path->end());
+        if (shortest_path!=NULL)
+            reverse(shortest_path->begin(),shortest_path->end());
         dist[it-J.begin()]=len;
     }
 }

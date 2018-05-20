@@ -75,7 +75,7 @@ gen gt_err(const gen &g,int code,GIAC_CONTEXT) {
 }
 
 void identifier_assign(const identificateur &var,const gen &value,GIAC_CONTEXT) {
-    _eval(symbolic(at_sto,makevecteur(var,value)),contextptr);
+    _eval(symbolic(at_sto,makesequence(value,var)),contextptr);
 }
 
 bool has_suffix(const string &str,const string &suffix)
@@ -1281,7 +1281,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     }
     graphe G(contextptr);
     G_orig.underlying(G);
-    int n=G.node_count(),i,comp_method=method;
+    int i,comp_method=method;
     vector<graphe> Cv;
     vector<graphe::layout> layouts;
     graphe::layout main_layout;
@@ -1344,7 +1344,6 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
         bool check=method!=_GT_STYLE_DEFAULT;
         double sep=1.0;
         // draw the components separately
-        vecteur V,old_labels;
         for (graphe::ivectors::iterator it=components.begin();it!=components.end();++it) {
             i=it-components.begin();
             sort(it->begin(),it->end());
@@ -1364,12 +1363,8 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 C.make_tree_layout(x,sep,roots.empty()?0:roots[i]);
                 break;
             case _GT_STYLE_PLANAR:
-                old_labels=C.vertices();
-                C.make_default_labels(V,n);
-                C.relabel_nodes(V);
                 if (!C.make_planar_layout(x))
                     return gt_err(_GT_ERR_NOT_PLANAR,contextptr);
-                C.relabel_nodes(old_labels);
                 break;
             case _GT_STYLE_CIRCLE:
                 if (outerface.empty()) {
@@ -1883,7 +1878,7 @@ gen _add_edge(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
-    if (!parse_edges(G,E,false))
+    if (!parse_edges(G,E,ckmatrix(g._VECTptr->back())))
         return gendimerr(contextptr);
     return G.to_gen();
 }
@@ -2734,7 +2729,7 @@ define_unary_function_ptr5(at_is_regular,alias_at_is_regular,&__is_regular,0,tru
 
 /* USAGE:   isomorphic_copy(G,sigma)
  *
- * Returns a new graph H with vertices reordered according to permutation sigma.
+ * Returns a new graph H with vertices reordered according to the permutation sigma.
  */
 gen _isomorphic_copy(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -2750,8 +2745,9 @@ gen _isomorphic_copy(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     vecteur &sigma=*gv[1]._VECTptr;
     graphe::ivector v(sigma.size());
+    int offset=array_start(contextptr);
     for (const_iterateur it=sigma.begin();it!=sigma.end();++it) {
-        v[it-sigma.begin()]=it->val;
+        v[it-sigma.begin()]=it->val-offset;
     }
     graphe H;
     if (!G.isomorphic_copy(H,v))
@@ -3203,6 +3199,8 @@ gen _is_eulerian(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(has_path_idnt?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
     graphe::ivector path;
     if (!G.find_eulerian_path(path))
         return graphe::boole(false);
@@ -3557,9 +3555,8 @@ gen _interval_graph(const gen &g,GIAC_CONTEXT) {
     gen a,b;
     stringstream ss;
     int n=gv.size();
-    vecteur V(n);
-    matrice m=*_matrix(makesequence(n,2),contextptr)._VECTptr;
-    int k=0;
+    vecteur V;
+    V.reserve(n);
     for (const_iterateur it=gv.begin();it!=gv.end();++it) {
         if (!it->is_symb_of_sommet(at_interval))
             return gentypeerr(contextptr);
@@ -3567,20 +3564,20 @@ gen _interval_graph(const gen &g,GIAC_CONTEXT) {
         b=it->_SYMBptr->feuille._VECTptr->back();
         if (!graphe::is_real_number(a) || !graphe::is_real_number(b))
             return gentypeerr(contextptr);
-        m[k][0]=a;
-        m[k][1]=b;
         ss.str("");
         ss << a << " .. " << b;
-        V[k++]=graphe::str2gen(ss.str(),true);
+        V.push_back(graphe::str2gen(ss.str(),true));
     }
     graphe G(contextptr);
     G.add_nodes(V);
-    for (int i=0;i<n;++i) {
-        const gen &a1=m[i][0],&b1=m[i][1];
-        for (int j=i+1;j<n;++j) {
-            const gen &a2=m[j][0],&b2=m[j][1];
-            if (is_greater(a1,b2,contextptr) && is_greater(b1,a2,contextptr))
-                G.add_edge(i,j);
+    for (const_iterateur it=gv.begin();it!=gv.end();++it) {
+        const gen &a1=it->_SYMBptr->feuille._VECTptr->front();
+        const gen &b1=it->_SYMBptr->feuille._VECTptr->back();
+        for (const_iterateur jt=it+1;jt!=gv.end();++jt) {
+            const gen &a2=jt->_SYMBptr->feuille._VECTptr->front();
+            const gen &b2=jt->_SYMBptr->feuille._VECTptr->back();
+            if (is_greater(b2,a1,contextptr) && is_greater(b1,a2,contextptr))
+                G.add_edge(it-gv.begin(),jt-gv.begin());
         }
     }
     return G.to_gen();
@@ -4581,7 +4578,7 @@ void graph_templates_demo(GIAC_CONTEXT) {
     print_demo_title("graph temmplates");
     string disp;
     gen g;
-    for (int i=0;i<10;++i) {
+    for (int i=0;i<18;++i) {
         switch (i) {
         case 0:
             cout << "Input: G:=" << _complete_graph_s << "(5)" << endl;
@@ -4623,11 +4620,43 @@ void graph_templates_demo(GIAC_CONTEXT) {
             cout << "Input: G:=" << _grid_graph_s << "(5,8)" << endl;
             g=_grid_graph(makesequence(5,8),contextptr);
             break;
+        case 10:
+            cout << "Input: G:=" << _torus_grid_graph_s << "(5,3)" << endl;
+            g=_torus_grid_graph(makesequence(5,3),contextptr);
+            break;
+        case 11:
+            cout << "Input: G:=" << _web_graph_s << "(7,3)" << endl;
+            g=_web_graph(makesequence(7,3),contextptr);
+            break;
+        case 12:
+            cout << "Input: G:=" << _hypercube_graph_s << "(4)" << endl;
+            g=_hypercube_graph(4,contextptr);
+            break;
+        case 13:
+            cout << "Input: G:=" << _kneser_graph_s << "(6,2)" << endl;
+            g=_kneser_graph(makesequence(6,2),contextptr);
+            break;
+        case 14:
+            cout << "Input: G:=" << _odd_graph_s << "(3)" << endl;
+            g=_odd_graph(3,contextptr);
+            break;
+        case 15:
+            cout << "Input: G:=" << _sierpinski_graph_s << "(3,3,triangle)" << endl;
+            g=_sierpinski_graph(makesequence(3,3,at_triangle),contextptr);
+            break;
+        case 16:
+            cout << "Input: G:=" << _petersen_graph_s << "(6,3)" << endl;
+            g=_petersen_graph(makesequence(6,3),contextptr);
+            break;
+        case 17:
+            cout << "Input: G:=" << _lcf_graph_s << "([-3,3],4)" << endl;
+            g=_lcf_graph(makesequence(makevecteur(-3,3),4),contextptr);
+            break;
         }
         assert(is_graphe(g,disp,contextptr));
         cout << "Output: " << disp << endl;
         cout << "Input: " << _draw_graph_s << "(G)" << endl;
-        cout << "Output: " << _draw_graph(g,contextptr) << endl;
+        cout << "Output: " << _draw_graph(makesequence(g,symbolic(at_equal,_LABELS,graphe::FAUX)),contextptr) << endl;
     }
 }
 
@@ -4686,6 +4715,8 @@ void shortest_path_demo(GIAC_CONTEXT) {
     cout << "Output: " << disp << endl;
     cout << "Input: " << _shortest_path_s << "(G,7,[2,5])" << endl;
     cout << "Output: " << _shortest_path(makesequence(g,7,makevecteur(2,5)),contextptr) << endl;
+    cout << "Input: " << _vertex_distance_s << "(G,7,[2,5])" << endl;
+    cout << "Output: " << _vertex_distance(makesequence(g,7,makevecteur(2,5)),contextptr) << endl;
     cout << "Input: H:=" << _underlying_graph_s << "(G)" << endl;
     gen h=_underlying_graph(g,contextptr);
     assert(is_graphe(h,disp,contextptr));
@@ -4724,6 +4755,125 @@ void subdivide_edges_demo(GIAC_CONTEXT) {
     cout << "Output: " << disp << endl;
     cout << "Input: " << _edges_s << "(SDG)" << endl;
     cout << "Output: " << _edges(sdg,contextptr) << endl;
+}
+
+void highlighting_demo(GIAC_CONTEXT) {
+    print_demo_title("highlighting");
+    cout << "Input: K33:=" <<_complete_graph_s << "(3,3)" << endl;
+    gen g=_complete_graph(makesequence(3,3),contextptr);
+    string disp;
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output: " << disp;
+    cout << "Input: G:=" << _highlight_vertex_s << "(G,1)" << endl;
+    g=_highlight_vertex(makesequence(g,1),contextptr);
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _draw_graph_s << "(G)" << endl;
+    cout << "Output:" << endl << _draw_graph(g,contextptr) << endl;
+    cout << "Input: M:=" << _maximum_matching_s << "(G)" << endl;
+    gen m=_maximum_matching(g,contextptr);
+    cout << "Output: " << m << endl;
+    cout << "Input: G:=" << _highlight_edges_s << "(G,M)" << endl;
+    g=_highlight_edges(makesequence(g,m),contextptr);
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _draw_graph_s << "(G)" << endl;
+    cout << "Output:" << endl << _draw_graph(g,contextptr) << endl;
+    gen edges=graphe::str2gen("%{[1,2],[2,3],[3,1],[3,4],[4,5],[5,6],[6,4]%}");
+    cout << "Input: G:=" << _graph_s << "(" << edges << ")" << endl;
+    g=_graph(edges,contextptr);
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: A:=" << _articulation_points_s << "(G)" << endl;
+    gen a=_articulation_points(g,contextptr);
+    cout << "Output: " << a << endl;
+    cout << "Input: G:=" << _highlight_vertex_s << "(G,A,magenta)" << endl;
+    g=_highlight_vertex(makesequence(g,a,_MAGENTA),contextptr);
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _draw_graph_s << "(G)" << endl;
+    cout << "Output:" << endl << _draw_graph(g,contextptr) << endl;
+    cout << "Input: B:=" << _biconnected_components_s << "(G)" << endl;
+    gen b=_biconnected_components(g,contextptr);
+    cout << "Input: C:=" << _induced_subgraph_s << "(G,B[0])" << endl;
+    gen c=_induced_subgraph(makesequence(g,b._VECTptr->front()),contextptr);
+    assert(is_graphe(c,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: G:=" << _highlight_subgraph_s << "(G,C)" << endl;
+    g=_highlight_subgraph(makesequence(g,c),contextptr);
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _draw_graph_s << "(G,spring)" << endl;
+    cout << "Output:" << endl << _draw_graph(makesequence(g,_GT_SPRING),contextptr) << endl;
+    cout << "Input: K5:=" << _complete_graph_s << "(5)" << endl;
+    gen k5=_complete_graph(5,contextptr);
+    assert(is_graphe(k5,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    gen tr=makevecteur(1,2,3,4,5,1);
+    cout << "Input: T:=" << tr << endl;
+    cout << "Input: K5:=" << _highlight_trail_s << "(K5,T,cyan)" << endl;
+    k5=_highlight_trail(makesequence(k5,tr,_CYAN),contextptr);
+    assert(is_graphe(k5,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _draw_graph_s << "(K5)" << endl;
+    cout << "Output:" << endl << _draw_graph(k5,contextptr) << endl;
+}
+
+void eulerian_demo(GIAC_CONTEXT) {
+    print_demo_title(_is_eulerian_s);
+    cout << "Input: " << _is_eulerian_s << "(" << _complete_graph_s << "(4))" << endl;
+    cout << "Output: " << _is_eulerian(_complete_graph(4,contextptr),contextptr) << endl;
+    identificateur T("T");
+    cout << "Input: " << _is_eulerian_s << "(" << _complete_graph_s << "(5)," << T << ")" << endl;
+    cout << "Output: " << _is_eulerian(makesequence(_complete_graph(5,contextptr),T),contextptr) << endl;
+    cout << "Input: T" << endl;
+    cout << "Output: " << _eval(T,contextptr) << endl;
+    cout << "Input: S:=" << _sierpinski_graph_s << "(6,3,triangle)" << endl;
+    gen s=_sierpinski_graph(makesequence(6,3,at_triangle),contextptr);
+    string disp;
+    assert(is_graphe(s,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _is_eulerian_s << "(S)" << endl;
+    cout << "Output: " << _is_eulerian(s,contextptr) << endl;
+}
+
+void interval_graph_demo(GIAC_CONTEXT) {
+    print_demo_title(_interval_graph_s);
+    gen spec=graphe::str2gen("[0..8,1..pi,exp(1)..20,7..18,11..14,17..24,23..25]");
+    cout << "Input: G:=" << _interval_graph_s << "(" << spec << ")" << endl;
+    gen g=_interval_graph(spec,contextptr);
+    string disp;
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _draw_graph_s << "(G)" << endl;
+    cout << "Output:" << endl << _draw_graph(g,contextptr) << endl;
+}
+
+void vertex_connectivity_demo(GIAC_CONTEXT) {
+    print_demo_title("vertex connectivity");
+    cout << "Input: G:=" << _sierpinski_graph_s << "(3,3,triangle)" << endl;
+    gen g=_sierpinski_graph(makesequence(3,3,at_triangle),contextptr);
+    string disp;
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _draw_graph_s << "(G,spring)" << endl;
+    cout << "Output:" << endl << _draw_graph(makesequence(g,_GT_SPRING),contextptr) << endl;
+    cout << "Input: " << _is_triconnected_s << "(G)" << endl;
+    cout << "Output: " << _is_triconnected(g,contextptr) << endl;
+    cout << "Input: H:=" << _add_edge_s << "(G,[1,14,27])" << endl;
+    gen h=_add_edge(makesequence(g,makevecteur(1,14,27)),contextptr);
+    assert(is_graphe(h,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _is_triconnected_s << "(H)" << endl;
+    cout << "Output: " << _is_triconnected(h,contextptr) << endl;
+    cout << "Input: " << _is_biconnected_s << "(G)" << endl;
+    cout << "Output: " << _is_biconnected(g,contextptr) << endl;
+    cout << "Input: G:=" << _delete_vertex_s << "(G,5)" << endl;
+    g=_delete_vertex(makesequence(g,5),contextptr);
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _is_biconnected_s << "(G)" << endl;
+    cout << "Output: " << _is_biconnected(g,contextptr) << endl;
 }
 
 #ifndef NO_NAMESPACE_GIAC

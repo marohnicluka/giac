@@ -264,6 +264,10 @@ void girth_demo(GIAC_CONTEXT);
 void allpairs_distance_demo(GIAC_CONTEXT);
 void shortest_path_demo(GIAC_CONTEXT);
 void subdivide_edges_demo(GIAC_CONTEXT);
+void highlighting_demo(GIAC_CONTEXT);
+void eulerian_demo(GIAC_CONTEXT);
+void interval_graph_demo(GIAC_CONTEXT);
+void vertex_connectivity_demo(GIAC_CONTEXT);
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

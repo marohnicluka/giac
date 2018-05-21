@@ -1,0 +1,12 @@
+graph {
+a -- b -- c -- d -- e -- f -- g -- h -- i -- j -- k -- l -- m -- n -- o -- p -- q -- r -- s -- a;
+f -- l;
+g -- k;
+b -- s;
+t -- { s r };
+u -- { m q v w };
+v -- m;
+w -- { f r x y };
+x -- { d y };
+y -- z -- c;
+}

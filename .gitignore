@@ -6,6 +6,3 @@
 *.files
 *.o
 *.includes
-*.dot
-test.cc
-Makefile

@@ -1,0 +1,8 @@
+graph {
+a -- b -- c -- d -- e -- f -- a;
+f -- { b c d g h };
+b -- g -- i -- h -- g;
+i -- j -- l -- k -- j;
+k -- i -- l -- m -- n -- o -- p -- l -- n -- r -- m -- p;
+l -- o -- q -- n;
+}

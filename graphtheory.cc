@@ -461,7 +461,7 @@ define_unary_function_ptr5(at_trail,alias_at_trail,&__trail,0,true)
  *          graph(A,[opts])
  *          graph("name")
  *
- * Create (un)directed (un)weighted graph from list of vertices V, set of edges
+ * Create an (un)directed (un)weighted graph from list of vertices V, set of edges
  * E, and/or adjacency matrix A containing edge weights. All parameters are
  * optional.
  *
@@ -608,7 +608,7 @@ define_unary_function_ptr5(at_graph,alias_at_graph,&__graph,0,true)
  *          digraph(A,[opts])
  *          digraph(V,E,A,[opts])
  *
- * Create directed (un)weighted graph from list of vertices V, set of edges E
+ * Create a directed (un)weighted graph from list of vertices V, set of edges E
  * and/or adjacency matrix A containing edge weights. All parameters are
  * optional.
  *
@@ -632,8 +632,8 @@ define_unary_function_ptr5(at_digraph,alias_at_digraph,&__digraph,0,true)
 
 /* USAGE:   export_graph(G,"path/to/graphname")
  *
- * Writes graph G to the file 'graphname.dot' in directory 'path/to' using dot
- * format. Returns 1 on success and 0 on failure.
+ * Writes the graph G to the file 'graphname.dot' in directory 'path/to' using
+ * dot format. Returns 1 on success and 0 on failure.
  */
 gen _export_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -654,8 +654,9 @@ define_unary_function_ptr5(at_export_graph,alias_at_export_graph,&__export_graph
 
 /* USAGE:   import_graph("path/to/graphname[.dot]")
  *
- * Returns graph read from file 'graphname.dot' in directory 'path/to' (in dot
- * format). Returns 1 on success and 0 on failure.
+ * Returns the graph constructed from instructions in the file
+ * 'path/to/graphname.dot' (in dot format). Returns 1 on success and 0 on
+ * failure.
  */
 gen _import_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -722,7 +723,7 @@ define_unary_function_ptr5(at_edges,alias_at_edges,&__edges,0,true)
 
 /* USAGE:   has_edge(G,e)
  *
- * Returns true iff edge e={i,j} is contained in undirected graph G.
+ * Returns true iff the edge e={i,j} is contained in undirected graph G.
  */
 gen _has_edge(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -749,8 +750,9 @@ define_unary_function_ptr5(at_has_edge,alias_at_has_edge,&__has_edge,0,true)
 
 /* USAGE:   has_arc(G,e)
  *
- * Returns true iff arc e=[i,j] is contained in directed graph G. If e={i,j},
- * true is returned if directed graph G has both edges [i,j] and [j,i].
+ * Returns true iff the arc e=[i,j] is contained in directed graph G. If
+ * e={i,j}, true is returned if directed graph G has both edges [i,j] and
+ * [j,i].
  */
 gen _has_arc(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -837,7 +839,7 @@ define_unary_function_ptr5(at_weight_matrix,alias_at_weight_matrix,&__weight_mat
 
 /* USAGE:   graph_complement(G)
  *
- * Return the complement of graph G, that is the graph with the same vertex set
+ * Return the complement of graph G, i.e. the graph with the same vertex set
  * as G, but whose edge (arc) set consists of the edges (arcs) not present in
  * G.
  */
@@ -855,7 +857,7 @@ define_unary_function_ptr5(at_graph_complement,alias_at_graph_complement,&__grap
 
 /* USAGE:   subgraph(G,E)
  *
- * Returns the subgraph of G defined by edges in list E.
+ * Returns the subgraph of G defined by the edges in list E.
  */
 gen _subgraph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -879,7 +881,7 @@ define_unary_function_ptr5(at_subgraph,alias_at_subgraph,&__subgraph,0,true)
 
 /* USAGE:   vertex_degree(G,v)
  *
- * Returns the degree of vertex v in graph G (number of edges incident to v).
+ * Returns the degree of the vertex v in graph G (number of edges incident to v).
  */
 gen _vertex_degree(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -899,7 +901,7 @@ define_unary_function_ptr5(at_vertex_degree,alias_at_vertex_degree,&__vertex_deg
 
 /* USAGE:   vertex_in_degree(G,v)
  *
- * Returns number of arcs ending in vertex v of graph G.
+ * Returns the number of arcs ending in the vertex v of graph G.
  */
 gen _vertex_in_degree(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -921,7 +923,7 @@ define_unary_function_ptr5(at_vertex_in_degree,alias_at_vertex_in_degree,&__vert
 
 /* USAGE:   vertex_out_degree(G,v)
  *
- * Returns number of arcs starting in vertex v of graph G.
+ * Returns the number of arcs starting in the vertex v of graph G.
  */
 gen _vertex_out_degree(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -943,7 +945,7 @@ define_unary_function_ptr5(at_vertex_out_degree,alias_at_vertex_out_degree,&__ve
 
 /* USAGE:   induced_subgraph(G,V)
  *
- * Returns the subgraph of G induced by vertices in list V.
+ * Returns the subgraph of G induced by the vertices in list V.
  */
 gen _induced_subgraph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -996,7 +998,7 @@ define_unary_function_ptr5(at_maximal_independent_set,alias_at_maximal_independe
 
 /* USAGE:   maximum_matching(G)
  *
- * Returns a list of edges representing maximum matching for graph G. Jack
+ * Returns the list of edges representing maximum matching for graph G. Jack
  * Edmonds' blossom algorithm is used.
  */
 gen _maximum_matching(const gen &g,GIAC_CONTEXT) {
@@ -1020,8 +1022,8 @@ define_unary_function_ptr5(at_maximum_matching,alias_at_maximum_matching,&__maxi
 
 /* USAGE:   make_directed(G,[A])
  *
- * Returns directed graph made from G by converting every edge to pair of arcs
- * [with weights specified by matrix A].
+ * Returns the copy of an undirected graph G in which every edge is converted
+ * to a pair of arcs [and with weights specified by matrix A].
  */
 gen _make_directed(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -1050,7 +1052,7 @@ define_unary_function_ptr5(at_make_directed,alias_at_make_directed,&__make_direc
 
 /* USAGE:   underlying_graph(G)
  *
- * Returns underlying graph of G, i.e. the graph obtained by stripping
+ * Returns the underlying graph of G, i.e. the graph obtained by stripping
  * directions and weights from arcs (pairs of arcs connecting the same vertices
  * are merged to a single edge).
  */
@@ -1069,7 +1071,7 @@ define_unary_function_ptr5(at_underlying_graph,alias_at_underlying_graph,&__unde
 
 /* USAGE:   cycle_graph(n or V)
  *
- * Returns cyclic graph with n vertices (or with vertices from list V).
+ * Returns the cyclic graph with n vertices (or with vertices from list V).
  */
 gen _cycle_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -1090,8 +1092,8 @@ define_unary_function_ptr5(at_cycle_graph,alias_at_cycle_graph,&__cycle_graph,0,
 
 /* USAGE:   lcf_graph(jumps,[exp])
  *
- * Returns the graph constructed specified LCF notation jumps[^exp]. Arguments
- * are list of integers 'jumps' [and a positive integer 'exp', by default 1].
+ * Returns the graph constructed from LCF notation jumps[^exp]. Arguments are
+ * list of integers 'jumps' [and a positive integer 'exp', by default 1].
  */
 gen _lcf_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -1180,7 +1182,7 @@ gen _seidel_switch(const gen &g,GIAC_CONTEXT) {
     for (int i=0;i<n;++i) {
         for (int j=i+1;j<n;++j) {
             bool b=G.has_edge(i,j);
-            if (vb[i] != vb[j])
+            if (vb[i]!=vb[j])
                 b=!b;
             if (b)
                 H.add_edge(i,j);
@@ -2017,8 +2019,8 @@ define_unary_function_ptr5(at_connected_components,alias_at_connected_components
 
 /* USAGE:   departures(G,[v])
  *
- * Returns list of vertices of directed graph G which are connected by v with
- * arcs such that tails are in v. If v is omitted, list of departures is
+ * Returns the list of vertices of directed graph G which are connected by v
+ * with arcs such that tails are in v. If v is omitted, list of departures is
  * computed for every vertex and a list of lists is returned.
  */
 gen _departures(const gen &g,GIAC_CONTEXT) {
@@ -2033,8 +2035,8 @@ define_unary_function_ptr5(at_departures,alias_at_departures,&__departures,0,tru
 
 /* USAGE:   arrivals(G,[v])
  *
- * Returns list of vertices of directed graph G which are connected by v with
- * arcs such that heads are in v. If v is omitted, list of departures is
+ * Returns the list of vertices of directed graph G which are connected by v
+ * with arcs such that heads are in v. If v is omitted, list of departures is
  * computed for every vertex and a list of lists is returned.
  */
 gen _arrivals(const gen &g,GIAC_CONTEXT) {
@@ -2049,7 +2051,8 @@ define_unary_function_ptr5(at_arrivals,alias_at_arrivals,&__arrivals,0,true)
 
 /* USAGE:   incident_edges(G,v)
  *
- * Returns list of all edges incident to vertex v (or vertices in the list v).
+ * Returns the list of all edges incident to the vertex v (or to the vertices in
+ * the list v).
  */
 gen _incident_edges(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -2086,9 +2089,9 @@ define_unary_function_ptr5(at_incident_edges,alias_at_incident_edges,&__incident
 
 /* USAGE:   make_weighted(G,[M])
  *
- * Returns graph G with edge/arc weights set as specified by matrix M. If M is
- * omitted, a suqare matrix of ones is used. If G is undirected, M is assumed
- * to be symmetric.
+ * Returns the copy of graph G with edge/arc weights set as specified by matrix
+ * M. If M is omitted, a suqare matrix of ones is used. If G is undirected, M
+ * is assumed to be symmetric.
  */
 gen _make_weighted(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -2527,7 +2530,7 @@ define_unary_function_ptr5(at_list_edge_attributes,alias_at_list_edge_attributes
 
 /* USAGE:   number_of_edges(G)
  *
- * Returns number of edges/arcs of graph G.
+ * Returns the number of edges/arcs of graph G.
  */
 gen _number_of_edges(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -2542,7 +2545,7 @@ define_unary_function_ptr5(at_number_of_edges,alias_at_number_of_edges,&__number
 
 /* USAGE:   number_of_vertices(G)
  *
- * Returns number of vertices of graph G.
+ * Returns the number of vertices of graph G.
  */
 gen _number_of_vertices(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -2557,7 +2560,7 @@ define_unary_function_ptr5(at_number_of_vertices,alias_at_number_of_vertices,&__
 
 /* USAGE:   get_edge_weight(G,e)
  *
- * Returns weight of edge e in graph G, which must be weighted.
+ * Returns the weight of the edge e in graph G (which must be weighted).
  */
 gen _get_edge_weight(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -2582,8 +2585,8 @@ define_unary_function_ptr5(at_get_edge_weight,alias_at_get_edge_weight,&__get_ed
 
 /* USAGE:   set_edge_weight(G,e,w)
  *
- * Sets weight of edge e in graph G (must be weighted) to w and returns the old
- * weight.
+ * Sets weight of the edge e in graph G (which must be weighted) to w and
+ * returns the old weight.
  */
 gen _set_edge_weight(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -2610,7 +2613,7 @@ define_unary_function_ptr5(at_set_edge_weight,alias_at_set_edge_weight,&__set_ed
 
 /* USAGE:   is_directed(G)
  *
- * Returns true if G is a directed graph, else returns false.
+ * Returns true iff G is a directed graph.
  */
 gen _is_directed(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -2625,7 +2628,7 @@ define_unary_function_ptr5(at_is_directed,alias_at_is_directed,&__is_directed,0,
 
 /* USAGE:   neighbors(G,[v])
  *
- * Returns list of adjacent vertices of vertex v. If v is omitted, a list of
+ * Returns the list of vertices adjacent to v. If v is omitted, a list of
  * adjacency lists of all vertices in G is returned.
  */
 gen _neighbors(const gen &g,GIAC_CONTEXT) {
@@ -2707,7 +2710,7 @@ define_unary_function_ptr5(at_maximum_degree,alias_at_maximum_degree,&__maximum_
 
 /* USAGE:   is_regular(G)
  *
- * Returns true if max and min degrees of graph G are equal, else returns false.
+ * Returns true iff max and min degrees of graph G are equal.
  */
 gen _is_regular(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -2787,8 +2790,8 @@ define_unary_function_ptr5(at_relabel_vertices,alias_at_relabel_vertices,&__rela
 
 /* USAGE:   is_tree(G)
  *
- * Returns true iff graph G is a tree, i.e. an undirected connected graph with
- * exactly n-1 edges, where n is number of nodes.
+ * Returns true iff the graph G is a tree, i.e. an undirected connected graph with
+ * exactly n-1 edges, where n is the number of nodes of G.
  */
 gen _is_tree(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -2803,7 +2806,7 @@ define_unary_function_ptr5(at_is_tree,alias_at_is_tree,&__is_tree,0,true)
 
 /* USAGE:   is_forest(G)
  *
- * Returns true iff graph G is a forest, i.e. an undirected graph whose
+ * Returns true iff the graph G is a forest, i.e. an undirected graph whose
  * connected components are all trees.
  */
 gen _is_forest(const gen &g,GIAC_CONTEXT) {
@@ -2819,7 +2822,7 @@ define_unary_function_ptr5(at_is_forest,alias_at_is_forest,&__is_forest,0,true)
 
 /* USAGE:   is_tournament(G)
  *
- * Returns true iff graph G is a tournament, i.e. a complete graph with a
+ * Returns true iff the graph G is a tournament, i.e. a complete graph with a
  * direction for each edge.
  */
 gen _is_tournament(const gen &g,GIAC_CONTEXT) {
@@ -2835,7 +2838,7 @@ define_unary_function_ptr5(at_is_tournament,alias_at_is_tournament,&__is_tournam
 
 /* USAGE:   tree_height(T,r)
  *
- * Returns the height of tree T with vertex r as root node.
+ * Returns the height of the tree T with r as the root node.
  */
 gen _tree_height(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -2862,7 +2865,8 @@ define_unary_function_ptr5(at_tree_height,alias_at_tree_height,&__tree_height,0,
 
 /* USAGE:   is_triangle_free(G)
  *
- * Returns true iff undirected graph G is triangle-free, i.e. contains no 3-cliques.
+ *Returns true iff undirected graph G is triangle-free, i.e. contains no
+ *3-cliques.
  */
 gen _is_triangle_free(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -3786,10 +3790,11 @@ define_unary_function_ptr5(at_shortest_path,alias_at_shortest_path,&__shortest_p
 /* USAGE:   allpairs_distance(G)
  *
  * Returns a square matrix D of order n(=number of vertices in G) such that
- * D[i][j] is the distance between i-th and j-th vertex of (weighted) graph G,
- * computed by using Floyd-Warshall algorithm. If For some vertex pair no path
- * exists, the corresponding entry in D is equal to +infinity. Edges may have
- * positive or negative weights but G shouldn't contain negative cycles.
+ * D(i,j) is the distance between i-th and j-th vertex of (weighted) graph G,
+ * computed by using Floyd-Warshall algorithm with complexity O(n^3). If For
+ * some vertex pair no path exists, the corresponding entry in D is equal to
+ * +infinity. Edges may have positive or negative weights but G shouldn't
+ * contain negative cycles.
  */
 gen _allpairs_distance(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -4874,6 +4879,45 @@ void vertex_connectivity_demo(GIAC_CONTEXT) {
     cout << "Output: " << disp << endl;
     cout << "Input: " << _is_biconnected_s << "(G)" << endl;
     cout << "Output: " << _is_biconnected(g,contextptr) << endl;
+}
+
+void import_export_demo(GIAC_CONTEXT) {
+    print_demo_title("import and export");
+    cout << "Input: G:=" << _import_graph_s << "(\"dot/philosophers\")" << endl;
+    gen g=_import_graph(graphe::str2gen("dot/philosophers",true),contextptr);
+    string disp;
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _draw_graph_s << "(G,spring)" << endl;
+    cout << "Output:" << endl << _draw_graph(makesequence(g,_GT_SPRING),contextptr) << endl;
+    cout << "Input: H:=" << _import_graph_s << "(\"dot/tree2.dot\")" << endl;
+    gen h=_import_graph(graphe::str2gen("dot/tree2.dot",true),contextptr);
+    assert(is_graphe(h,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _draw_graph_s << "(H)" << endl;
+    cout << "Output:" << endl << _draw_graph(h,contextptr) << endl;
+    cout << "Input: P:=" << _import_graph_s << "(\"dot/planar5\")" << endl;
+    gen p=_import_graph(graphe::str2gen("dot/planar5",true),contextptr);
+    assert(is_graphe(p,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _draw_graph_s << "(P)" << endl;
+    cout << "Output:" << endl << _draw_graph(p,contextptr) << endl;
+    cout << "Input: T:=" << _random_tournament_s << "(5)" << endl;
+    gen t=_random_tournament(5,contextptr);
+    assert(is_graphe(t,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: T:=" << _assign_edge_weights_s << "(T,1,99)" << endl;
+    t=_assign_edge_weights(makesequence(t,1,99),contextptr);
+    assert(is_graphe(t,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _export_graph_s << "(T,\"dot/tournament\")" << endl;
+    cout << "Output: " << _export_graph(makesequence(t,graphe::str2gen("dot/tournament",true)),contextptr) << endl;
+    cout << "Contents of the file \"dot/tournament.dot\":" << endl;
+    freopen("dot/tournament.dot","rb",stdin);
+    string line;
+    while (getline(cin,line)) {
+        cout << line << endl;
+    }
 }
 
 #ifndef NO_NAMESPACE_GIAC

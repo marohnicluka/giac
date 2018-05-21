@@ -1366,8 +1366,12 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 break;
             case _GT_STYLE_CIRCLE:
                 if (outerface.empty()) {
-                    if (!C.get_leading_cycle(outerface) && !C.find_cycle(outerface))
-                        return gt_err(_GT_ERR_CYCLE_NOT_FOUND,contextptr);
+                    if (!C.get_leading_cycle(outerface) && !C.find_cycle(outerface)) {
+                        outerface.resize(G.node_count());
+                        for (int cnt=G.node_count();cnt-->0;) {
+                            outerface[cnt]=cnt;
+                        }
+                    }
                     C.make_circular_layout(x,outerface,false);
                     outerface.clear();
                 } else
@@ -5117,7 +5121,7 @@ void graph_power_demo(GIAC_CONTEXT) {
     cout << "Output:\t-- " << disp << endl;
     cout << "Input:\t" << _edges_s << "(P)" << endl;
     cout << "Output:\t-- " << _edges(p,contextptr) << endl;
-    cout << "Input:\t" << _draw_graph_s << "(P,circle=[1,2,3,4,5])" << endl;
+    cout << "Input:\t" << _draw_graph_s << "(P,circle)" << endl;
     vecteur v=makevecteur(1,2,3,4,5);
     cout << "Output:" << endl << _draw_graph(makesequence(p,symbolic(at_equal,makesequence(at_cercle,v))),contextptr) << endl;
     cout << "Input:\tP2:=" << _graph_power_s << "(P,2)" << endl;
@@ -5126,7 +5130,7 @@ void graph_power_demo(GIAC_CONTEXT) {
     cout << "Output:\t-- " << disp << endl;
     cout << "Input:\t" << _edges_s << "(P2)" << endl;
     cout << "Output:\t-- " << _edges(p2,contextptr) << endl;
-    cout << "Input:\t" << _draw_graph_s << "(P2,circle=[1,2,3,4,5])" << endl;
+    cout << "Input:\t" << _draw_graph_s << "(P2,circle)" << endl;
     cout << "Output:" << endl << _draw_graph(makesequence(p2,symbolic(at_equal,makesequence(at_cercle,v))),contextptr) << endl;
     cout << "Input:\tP3:=" << _graph_power_s << "(P,3)" << endl;
     gen p3=_graph_power(makesequence(p,3),contextptr);
@@ -5134,7 +5138,7 @@ void graph_power_demo(GIAC_CONTEXT) {
     cout << "Output:\t-- " << disp << endl;
     cout << "Input:\t" << _edges_s << "(P3)" << endl;
     cout << "Output:\t-- " << _edges(p3,contextptr) << endl;
-    cout << "Input:\t" << _draw_graph_s << "(P3,circle=[1,2,3,4,5])" << endl;
+    cout << "Input:\t" << _draw_graph_s << "(P3,circle)" << endl;
     cout << "Output:" << endl << _draw_graph(makesequence(p3,symbolic(at_equal,makesequence(at_cercle,v))),contextptr) << endl;
 }
 

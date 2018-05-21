@@ -131,6 +131,7 @@ gen _neighbors(const gen &g,GIAC_CONTEXT);
 gen _number_of_vertices(const gen &g,GIAC_CONTEXT);
 gen _vertices(const gen &g,GIAC_CONTEXT);
 gen _relabel_vertices(const gen &g,GIAC_CONTEXT);
+gen _permute_vertices(const gen &g,GIAC_CONTEXT);
 gen _isomorphic_copy(const gen &g,GIAC_CONTEXT);
 gen _weight_matrix(const gen &g,GIAC_CONTEXT);
 gen _hypercube_graph(const gen &g,GIAC_CONTEXT);
@@ -279,6 +280,7 @@ void make_directed_demo(GIAC_CONTEXT);
 void contract_edge_demo(GIAC_CONTEXT);
 void graph_power_demo(GIAC_CONTEXT);
 void graph_union_demo(GIAC_CONTEXT);
+void graph_equal_demo(GIAC_CONTEXT);
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

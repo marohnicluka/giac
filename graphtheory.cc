@@ -2759,6 +2759,46 @@ static const char _isomorphic_copy_s[]="isomorphic_copy";
 static define_unary_function_eval(__isomorphic_copy,&_isomorphic_copy,_isomorphic_copy_s);
 define_unary_function_ptr5(at_isomorphic_copy,alias_at_isomorphic_copy,&__isomorphic_copy,0,true)
 
+/* USAGE:   permute_vertices(G,V)
+ *
+ * Returns a copy of graph G with vertices reordered according to the order in
+ * the list of vertices V.
+ */
+gen _permute_vertices(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()<2)
+        return gensizeerr(contextptr);
+    if (gv[1].type!=_VECT)
+        return gentypeerr(contextptr);
+    graphe G(contextptr);
+    if (!G.read_gen(gv.front()))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    vecteur &sigma=*gv[1]._VECTptr,V=G.vertices();
+    if (sigma.size()!=V.size())
+        return gensizeerr(contextptr);
+    graphe::ivector v(sigma.size(),-1);
+    const_iterateur jt;
+    int i;
+    for (const_iterateur it=sigma.begin();it!=sigma.end();++it) {
+        if ((jt=find(V.begin(),V.end(),*it))==V.end())
+            return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+        i=jt-V.begin();
+        if (find(v.begin(),v.end(),i)!=v.end())
+            return gentypeerr(contextptr);
+        v[it-sigma.begin()]=i;
+    }
+    graphe H;
+    if (!G.isomorphic_copy(H,v))
+        return gentypeerr(contextptr);
+    return H.to_gen();
+}
+static const char _permute_vertices_s[]="permute_vertices";
+static define_unary_function_eval(__permute_vertices,&_permute_vertices,_permute_vertices_s);
+define_unary_function_ptr5(at_permute_vertices,alias_at_permute_vertices,&__permute_vertices,0,true)
+
 /* USAGE:   relabel_vertices(G,V)
  *
  * Returns a new graph H with vertex labels changed to those in V.
@@ -5155,6 +5195,48 @@ void graph_union_demo(GIAC_CONTEXT) {
     cout << "Output:\t-- " << _vertices(g,contextptr) << endl;
     cout << "Input:\t" << _edges_s << "(G)" << endl;
     cout << "Output:\t-- " << _edges(g,contextptr) << endl;
+}
+
+void graph_equal_demo(GIAC_CONTEXT) {
+    print_demo_title(_graph_equal_s);
+    identificateur a("a"),b("b"),c("c");
+    vecteur v1=makevecteur(1,2,3),v2=makevecteur(a,b,c);
+    vecteur e1=makevecteur(1,2),e2=makevecteur(2,3),e3=makevecteur(1,3),e4=makevecteur(a,b),e5=makevecteur(b,c);
+    cout << "Input:\tG:=" << _graph_s << "(" << v1 << ",%{" << e1 << "," << e2 << "%})" << endl;
+    gen g=_graph(makesequence(v1,change_subtype(makevecteur(e1,e2),_SET__VECT)),contextptr);
+    string disp;
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output:\t-- " << disp << endl;
+    cout << "Input:\tH:=" << _graph_s << "(" << v1 << ",%{" << e1 << "," << e3 << "%})" << endl;
+    gen h=_graph(makesequence(v1,change_subtype(makevecteur(e1,e3),_SET__VECT)),contextptr);
+    assert(is_graphe(h,disp,contextptr));
+    cout << "Output:\t-- " << disp << endl;
+    cout << "Input:\t" << _vertices_s << "(G)," << _edges_s << "(G)" << endl;
+    cout << "Output:\t-- " << _vertices(g,contextptr) << "," << _edges(g,contextptr) << endl;
+    cout << "Input:\t" << _vertices_s << "(H)," << _edges_s << "(H)" << endl;
+    cout << "Output:\t-- " << _vertices(h,contextptr) << "," << _edges(h,contextptr) << endl;
+    cout << "Input:\t" << _graph_equal_s << "(G,H)" << endl;
+    cout << "Output:\t-- " << _graph_equal(makesequence(g,h),contextptr) << endl;
+    cout << "Input:\tH:=" << _graph_s << "(" << _trail_s << "(1,2,3))" << endl;
+    h=_graph(_trail(change_subtype(v1,_SEQ__VECT),contextptr),contextptr);
+    assert(is_graphe(h,disp,contextptr));
+    cout << "Output:\t-- " << disp << endl;
+    cout << "Input:\t" << _graph_equal_s << "(G,H)" << endl;
+    cout << "Output:\t-- " << _graph_equal(makesequence(g,h),contextptr) << endl;
+    cout << "Input:\tG:=" << _graph_s << "(" << v2 << ",%{" << e4 << "," << e5 << "%})" << endl;
+    g=_graph(makesequence(v2,change_subtype(makevecteur(e4,e5),_SET__VECT)),contextptr);
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output:\t-- " << disp << endl;
+    cout << "Input:\tH:=" << _permute_vertices_s << "(G,[a,c,b])" << endl;
+    h=_permute_vertices(makesequence(g,makevecteur(a,c,b)),contextptr);
+    assert(is_graphe(h,disp,contextptr));
+    cout << "Output:\t-- " << disp << endl;
+    cout << "Input:\t" << _vertices_s << "(G)," << _edges_s << "(G)" << endl;
+    cout << "Output:\t-- " << _vertices(g,contextptr) << "," << _edges(g,contextptr) << endl;
+    cout << "Input:\t" << _vertices_s << "(H)," << _edges_s << "(H)" << endl;
+    cout << "Output:\t-- " << _vertices(h,contextptr) << "," << _edges(h,contextptr) << endl;
+    cout << "Input:\t" << _graph_equal_s << "(G,H)" << endl;
+    cout << "Output:\t-- " << _graph_equal(makesequence(g,h),contextptr) << endl;
 }
 
 #ifndef NO_NAMESPACE_GIAC

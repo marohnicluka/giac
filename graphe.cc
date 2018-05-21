@@ -1216,9 +1216,12 @@ vecteur graphe::edges(bool include_weights,int sg) const {
     get_edges_as_pairs(E,sg);
     vecteur edge(2),ret(E.size());
     int i=0;
+    bool isdir=is_directed();
     for (ipairs_iter it=E.begin();it!=E.end();++it) {
         edge[0]=nodes[it->first].label();
         edge[1]=nodes[it->second].label();
+        if (!isdir)
+            edge=*_sort(edge,ctx)._VECTptr;
         ret[i++]=include_weights?makevecteur(edge,weight(it->first,it->second)):edge;
     }
     return ret;

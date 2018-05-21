@@ -56,7 +56,7 @@ enum gt_error_code {
 bool is_graphe(const gen &g,std::string &disp_out,GIAC_CONTEXT);
 gen gt_command(gen (*gtfunc)(const gen &,const context *),const char *args,GIAC_CONTEXT);
 
-// GIAC COMMANDS
+// GRAPH THEORY GIAC COMMANDS
 
 gen _graph(const gen &g,GIAC_CONTEXT);
 gen _digraph(const gen &g,GIAC_CONTEXT);
@@ -236,12 +236,18 @@ gen _odd_girth(const gen &g,GIAC_CONTEXT);
 //gen _spanning_tree(const gen &g,GIAC_CONTEXT);
 //gen _traveling_salesman(const gen &g,GIAC_CONTEXT);
 
+// GENERAL GIAC COMMANDS
+
+gen _foldl(const gen &g,GIAC_CONTEXT);
+gen _foldr(const gen &g,GIAC_CONTEXT);
+
 // FUNCTION POINTERS
 
 extern const unary_function_ptr * const at_trail;
 
 // DEMO FUNCTIONS
 
+void fold_demo(GIAC_CONTEXT);
 void graph_demo(GIAC_CONTEXT);
 void digraph_demo(GIAC_CONTEXT);
 void induced_subgraph_demo(GIAC_CONTEXT);
@@ -269,6 +275,8 @@ void eulerian_demo(GIAC_CONTEXT);
 void interval_graph_demo(GIAC_CONTEXT);
 void vertex_connectivity_demo(GIAC_CONTEXT);
 void import_export_demo(GIAC_CONTEXT);
+void make_directed_demo(GIAC_CONTEXT);
+void contract_edge_demo(GIAC_CONTEXT);
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

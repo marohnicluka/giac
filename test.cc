@@ -12,6 +12,6 @@ int main(){
   ss << "maple_mode(1)";
   ss >> g;
   _eval(g,&ct);
-  maximum_clique_demo(&ct);
+  contract_edge_demo(&ct);
   return 0;
 }

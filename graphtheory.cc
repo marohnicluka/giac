@@ -436,7 +436,7 @@ int graphunion(graphe &G,const vecteur &gv,bool disjoint) {
 }
 
 void print_demo_title(const char *command_name) {
-    cout << "*** Command usage demonstration: " << command_name << endl;
+    cout << endl << " --- Command usage demonstration: " << command_name << endl << endl;
 }
 
 // +--------------------------------------------------------------------------+
@@ -2104,6 +2104,8 @@ gen _make_weighted(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(has_matrix?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (G.is_weighted())
+        return gt_err(_GT_ERR_UNWEIGHTED_GRAPH_REQUIRED,contextptr);
     int n=G.node_count();
     matrice m=*_matrix(makesequence(n,n,1),contextptr)._VECTptr;
     if (has_matrix) {
@@ -4246,13 +4248,77 @@ static const char _odd_girth_s[]="odd_girth";
 static define_unary_function_eval(__odd_girth,&_odd_girth,_odd_girth_s);
 define_unary_function_ptr5(at_odd_girth,alias_at_odd_girth,&__odd_girth,0,true)
 
+// GENERAL COMMMANDS
+
+/* USAGE:   foldl(op,id,r1,r2,...)
+ *
+ * Returns the composition of the binary operator or function op, with identity
+ * or initial value id onto its arguments r1, r2, ..., associating from the
+ * left. For example, given three arguments a, b and c and an initial value id,
+ * foldl(op,id,a,b,c) is equivalent to op(op(op(id,a),b),c).
+ */
+gen _foldl(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT  || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()<3)
+        return gensizeerr(contextptr);
+    gen &op=gv.front();
+    gen arg=gv[1];
+    for (const_iterateur it=gv.begin()+2;it!=gv.end();++it) {
+        arg=symbolic(at_of,makesequence(op,makesequence(arg,*it)));
+    }
+    return _eval(arg,contextptr);
+}
+static const char _foldl_s[]="foldl";
+static define_unary_function_eval(__foldl,&_foldl,_foldl_s);
+define_unary_function_ptr5(at_foldl,alias_at_foldl,&__foldl,0,true)
+
+/* USAGE:   foldr(op,id,r1,r2,...)
+ *
+ * Returns the composition of the binary operator or function op, with identity
+ * or initial value id onto its arguments r1, r2, ..., associating from the
+ * right. For example, given three arguments a, b and c and an initial value id,
+ * foldl(op,id,a,b,c) is equivalent to op(a,op(b,op(c,id))).
+ */
+gen _foldr(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT  || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()<3)
+        return gensizeerr(contextptr);
+    gen &op=gv.front();
+    gen arg=gv[1];
+    for (int i=gv.size();i-->2;) {
+        arg=symbolic(at_of,makesequence(op,makesequence(gv[i],arg)));
+    }
+    return _eval(arg,contextptr);
+}
+static const char _foldr_s[]="foldr";
+static define_unary_function_eval(__foldr,&_foldr,_foldr_s);
+define_unary_function_ptr5(at_foldr,alias_at_foldr,&__foldr,0,true)
+
 // *******************************************************************************
 //
 // DEMO SECTION
 //
 // *******************************************************************************
 
+void fold_demo(GIAC_CONTEXT) {
+    print_demo_title("folding");
+    identificateur F("F"),idt("idt"),a("a"),b("b"),c("c");
+    cout << "Input: " << _foldl_s << "(" << F << "," << idt << "," << a << "," << b << "," << c << ")" << endl;
+    cout << "Output: " << _foldl(makesequence(F,idt,a,b,c),contextptr) << endl;
+    cout << "Input: " << _foldr_s << "(" << F << "," << idt << "," << a << "," << b << "," << c << ")" << endl;
+    cout << "Output: " << _foldr(makesequence(F,idt,a,b,c),contextptr) << endl;
+    cout << "Input: " << _foldl_s << "(`+`,0," << a << "," << b << "," << c << ")" << endl;
+    cout << "Output: " << _foldl(makesequence(at_plus,0,a,b,c),contextptr) << endl;
+}
+
 void graph_demo(GIAC_CONTEXT) {
+    print_demo_title(_graph_s);
     const char *inputs[]={
         "5",
         "%{[a,b],[b,c],[c,a]%}",
@@ -4262,7 +4328,6 @@ void graph_demo(GIAC_CONTEXT) {
         "[[0,1.0,2.3,0],[4,0,0,3.1],[0,0,0,0],[0,0,0,0]]"
     };
     string disp;
-    print_demo_title(_graph_s);
     for (int k=0;k<6;++k) {
         cout << "Input: " << _graph_s << "(" << *(inputs+k) << ")" << endl;
         assert(is_graphe(gt_command(_graph,*(inputs+k),contextptr),disp,contextptr));
@@ -4271,6 +4336,7 @@ void graph_demo(GIAC_CONTEXT) {
 }
 
 void digraph_demo(GIAC_CONTEXT) {
+    print_demo_title(_digraph_s);
     const char *inputs[]={
         "%{[a,b],[b,c],[c,a]%}",
         "set[[[a,b],2],[[b,c],2.3],[[c,a],3/2]]",
@@ -4278,7 +4344,6 @@ void digraph_demo(GIAC_CONTEXT) {
         "[[0,1.0,2.3,0],[4,0,0,3.1],[0,0,0,0],[0,0,0,0]]"
     };
     string disp;
-    print_demo_title(_digraph_s);
     for (int k=0;k<4;++k) {
         cout << "Input: " << _digraph_s << "(" << *(inputs+k) << ")" << endl;
         assert(is_graphe(gt_command(_digraph,*(inputs+k),contextptr),disp,contextptr));
@@ -4322,8 +4387,7 @@ void subgraph_demo(GIAC_CONTEXT) {
     gen g=_complete_graph(5,contextptr);
     string disp;
     assert(is_graphe(g,disp,contextptr));
-    cout << "Output:" << endl;
-    cout << "K5: " << disp << endl;
+    cout << "Output: " << disp << endl;
     gen h=_subgraph(makesequence(g,E),contextptr);
     assert(is_graphe(h,disp,contextptr));
     cout << "H: " << disp << endl;
@@ -4943,6 +5007,66 @@ void import_export_demo(GIAC_CONTEXT) {
         cout << line << endl;
     }
     cout << "** End of file \"dot/tournament.dot\"" << endl;
+}
+
+void make_directed_demo(GIAC_CONTEXT) {
+    print_demo_title(_make_directed_s);
+    cout << "Input: G:=" << _make_directed_s << "(" << _cycle_graph_s << "(4))" << endl;
+    gen g=_make_directed(_cycle_graph(4,contextptr),contextptr);
+    string disp;
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _edges_s << "(G)" << endl;
+    cout << "Output: " << _edges(g,contextptr) << endl;
+    cout << "Input: G:=" << _make_weighted_s << "(G)" << endl;
+    g=_make_weighted(g,contextptr);
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _adjacency_matrix_s << "(G)==" << _weight_matrix_s << "(G)" << endl;
+    cout << "Output: " << _eval(symbolic(at_same,makesequence(_adjacency_matrix(g,contextptr),_weight_matrix(g,contextptr))),contextptr) << endl;
+    gen M=graphe::str2gen("[[0,0,0,1],[2,0,1,3],[0,1,0,4],[5,0,4,0]]");
+    cout << "Input: G:=" << _make_directed_s << "(" << _cycle_graph_s << "(4)," << M << ")" << endl;
+    g=_make_directed(makesequence(_cycle_graph(4,contextptr),M),contextptr);
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _draw_graph_s << "(G)" << endl;
+    cout << "Output:" << endl << _draw_graph(g,contextptr) << endl;
+    cout << "Input: H:=" << _underlying_graph_s << "(G)" << endl;
+    gen h=_underlying_graph(g,contextptr);
+    assert(is_graphe(h,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _is_directed_s << "(H)" << endl;
+    cout << "Output: " << _is_directed(h,contextptr) << endl;
+    cout << "Input: " << _is_weighted_s << "(H)" << endl;
+    cout << "Output: " << _is_weighted(h,contextptr) << endl;
+}
+
+void contract_edge_demo(GIAC_CONTEXT) {
+    print_demo_title(_contract_edge_s);
+    cout << "Input: G:=" << _complete_graph_s << "(4)" << endl;
+    gen g=_complete_graph(4,contextptr);
+    string disp;
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _contract_edge_s << "(G,[1,3])" << endl;
+    gen res=_contract_edge(makesequence(g,makevecteur(1,3)),contextptr);
+    assert(is_graphe(res,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: P:=" << _graph_s << "(\"petersen\")" << endl;
+    gen p=_graph(graphe::str2gen("petersen",true),contextptr);
+    assert(is_graphe(p,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _draw_graph_s << "(P)" << endl;
+    cout << "Output:" << endl << _draw_graph(p,contextptr) << endl;
+    vecteur e1=makevecteur(1,6),e2=makevecteur(2,7),e3=makevecteur(3,8),
+            e4=makevecteur(4,9),e5=makevecteur(5,10);
+    cout << "Input: G:=" << _foldl_s << "(contract_edge,P,"
+         << e1 << "," << e2 << "," << e3 << "," << e4 << "," << e5 << ")" << endl;
+    g=_foldl(makesequence(at_contract_edge,p,e1,e2,e3,e4,e5),contextptr);
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _is_clique_s << "(G)" << endl;
+    cout << "Output: " << _is_clique(g,contextptr) << endl;
 }
 
 #ifndef NO_NAMESPACE_GIAC

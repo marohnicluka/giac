@@ -97,16 +97,17 @@ bool is_graphe(const gen &g,string &disp_out,GIAC_CONTEXT) {
     string nvert(ss.str());
     ss.str("");
     ss << ne;
+    bool isdir=G.is_directed();
     string nedg(ss.str());
-    string dir_spec=G.is_directed()?"directed":"undirected";
+    string dir_spec=isdir?"directed":"undirected";
     string weight_spec=G.is_weighted()?"weighted":"unweighted";
     nvert=nvert+(nv==1?" vertex":" vertices");
-    nedg=nedg+(G.is_directed()?(ne==1?" arc":" arcs"):(ne==1?" edge":" edges"));
+    nedg=nedg+(isdir?(ne==1?" arc":" arcs"):(ne==1?" edge":" edges"));
     disp_out.clear();
     string name=G.name();
     if (!name.empty())
         disp_out=name+": ";
-    disp_out=disp_out+"an "+dir_spec+" "+weight_spec+" graph with "+nvert+" and "+nedg;
+    disp_out=disp_out+(isdir?"a ":"an ")+dir_spec+" "+weight_spec+" graph with "+nvert+" and "+nedg;
     return true;
 }
 
@@ -4661,7 +4662,7 @@ void graph_templates_demo(GIAC_CONTEXT) {
         assert(is_graphe(g,disp,contextptr));
         cout << "Output: " << disp << endl;
         cout << "Input: " << _draw_graph_s << "(G)" << endl;
-        cout << "Output: " << _draw_graph(makesequence(g,symbolic(at_equal,_LABELS,graphe::FAUX)),contextptr) << endl;
+        cout << "Output: " << _draw_graph(makesequence(g,symbolic(at_equal,_LABELS,0)),contextptr) << endl;
     }
 }
 
@@ -4883,21 +4884,25 @@ void vertex_connectivity_demo(GIAC_CONTEXT) {
 
 void import_export_demo(GIAC_CONTEXT) {
     print_demo_title("import and export");
-    cout << "Input: G:=" << _import_graph_s << "(\"dot/philosophers\")" << endl;
-    gen g=_import_graph(graphe::str2gen("dot/philosophers",true),contextptr);
+    gen filename1=graphe::str2gen("dot/philosophers",true);
+    gen filename2=graphe::str2gen("dot/tree2.dot",true);
+    gen filename3=graphe::str2gen("dot/planar5",true);
+    gen filename4=graphe::str2gen("dot/tournament",true);
+    cout << "Input: G:=" << _import_graph_s << "(" << filename1 << ")" << endl;
+    gen g=_import_graph(filename1,contextptr);
     string disp;
     assert(is_graphe(g,disp,contextptr));
     cout << "Output: " << disp << endl;
     cout << "Input: " << _draw_graph_s << "(G,spring)" << endl;
     cout << "Output:" << endl << _draw_graph(makesequence(g,_GT_SPRING),contextptr) << endl;
-    cout << "Input: H:=" << _import_graph_s << "(\"dot/tree2.dot\")" << endl;
-    gen h=_import_graph(graphe::str2gen("dot/tree2.dot",true),contextptr);
+    cout << "Input: H:=" << _import_graph_s << "(" << filename2 << ")" << endl;
+    gen h=_import_graph(filename2,contextptr);
     assert(is_graphe(h,disp,contextptr));
     cout << "Output: " << disp << endl;
     cout << "Input: " << _draw_graph_s << "(H)" << endl;
     cout << "Output:" << endl << _draw_graph(h,contextptr) << endl;
-    cout << "Input: P:=" << _import_graph_s << "(\"dot/planar5\")" << endl;
-    gen p=_import_graph(graphe::str2gen("dot/planar5",true),contextptr);
+    cout << "Input: P:=" << _import_graph_s << "(" << filename3 << ")" << endl;
+    gen p=_import_graph(filename3,contextptr);
     assert(is_graphe(p,disp,contextptr));
     cout << "Output: " << disp << endl;
     cout << "Input: " << _draw_graph_s << "(P)" << endl;
@@ -4910,14 +4915,15 @@ void import_export_demo(GIAC_CONTEXT) {
     t=_assign_edge_weights(makesequence(t,1,99),contextptr);
     assert(is_graphe(t,disp,contextptr));
     cout << "Output: " << disp << endl;
-    cout << "Input: " << _export_graph_s << "(T,\"dot/tournament\")" << endl;
-    cout << "Output: " << _export_graph(makesequence(t,graphe::str2gen("dot/tournament",true)),contextptr) << endl;
-    cout << "Contents of the file \"dot/tournament.dot\":" << endl;
+    cout << "Input: " << _export_graph_s << "(T," << filename4 << ")" << endl;
+    cout << "Output: " << _export_graph(makesequence(t,filename4),contextptr) << endl;
+    cout << "** The contents of the file \"dot/tournament.dot\":" << endl;
     freopen("dot/tournament.dot","rb",stdin);
     string line;
     while (getline(cin,line)) {
         cout << line << endl;
     }
+    cout << "** End of file \"dot/tournament.dot\"" << endl;
 }
 
 #ifndef NO_NAMESPACE_GIAC

@@ -12,6 +12,6 @@ int main(){
   ss << "maple_mode(1)";
   ss >> g;
   _eval(g,&ct);
-  import_export_demo(&ct);
+  digraph_demo(&ct);
   return 0;
 }

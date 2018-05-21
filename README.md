@@ -12,4 +12,6 @@ See the comment sections in *graphtheory.cc* for the details of command usage.
 
 To test the library, open the file *test.cc* in a text editor and enable some demos listed at the bottom of the file *graphtheory.h*. Then type "make" in the command-line, followed by "./a.out".
 
+Each demo contains several commands, which are printed on the screen and executed (displaying the results) when the corresponding function is called. If a long vector of geometric objects such as points and segments is obtained as the result of running a command, it represents a drawing. To view it, you must copy it to an active Xcas session.
+
 To test custom commands, you need to code them in the procedure main in *test.cc* (see the Demo section at the bottom of *graphtheory.cc* for a practical reference).

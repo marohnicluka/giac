@@ -6284,6 +6284,7 @@ void graphe::dijkstra(int src,const ivector &dest,vecteur &path_weights,ivectors
             path.push_back(*it);
             int p=*it;
             while ((p=prev[p])>=0) path.push_back(p);
+            reverse(path.begin(),path.end());
         }
     }
     path_weights.resize(dest.size());

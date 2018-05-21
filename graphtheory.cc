@@ -3869,9 +3869,10 @@ gen _dijkstra(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
     int n=G.node_count();
     vecteur V,path_weights,paths;
-    graphe::ivector dest(n);
+    graphe::ivector dest;
     if (gv.size()==2) {
         V=G.vertices();
+        dest.resize(n);
         for (i=0;i<n;++i) {
             dest[i]=i;
         }
@@ -3879,6 +3880,7 @@ gen _dijkstra(const gen &g,GIAC_CONTEXT) {
         if (gv[2].type==_VECT)
             V=*gv[2]._VECTptr;
         else V.push_back(gv[2]);
+        dest.resize(V.size());
         i=0;
         for (const_iterateur it=V.begin();it!=V.end();++it) {
             if ((dest[i++]=G.node_index(*it))<0)
@@ -4262,9 +4264,9 @@ void graph_demo(GIAC_CONTEXT) {
     string disp;
     print_demo_title(_graph_s);
     for (int k=0;k<6;++k) {
-        cout << "INPUT: " << _graph_s << "(" << *(inputs+k) << ")" << endl;
+        cout << "Input: " << _graph_s << "(" << *(inputs+k) << ")" << endl;
         assert(is_graphe(gt_command(_graph,*(inputs+k),contextptr),disp,contextptr));
-        cout << "OUTPUT: " << disp << endl;
+        cout << "Output: " << disp << endl;
     }
 }
 
@@ -4278,21 +4280,21 @@ void digraph_demo(GIAC_CONTEXT) {
     string disp;
     print_demo_title(_digraph_s);
     for (int k=0;k<4;++k) {
-        cout << "INPUT: " << _digraph_s << "(" << *(inputs+k) << ")" << endl;
+        cout << "Input: " << _digraph_s << "(" << *(inputs+k) << ")" << endl;
         assert(is_graphe(gt_command(_digraph,*(inputs+k),contextptr),disp,contextptr));
-        cout << "OUTPUT: " << disp << endl;
+        cout << "Output: " << disp << endl;
     }
 }
 
 void incidence_matrix_demo(GIAC_CONTEXT) {
     print_demo_title(_incidence_matrix_s);
     gen seq1=makesequence(1,2,3,4,5,3),seq2=makesequence(1,5,2,4,1);
-    cout << "INPUT: G:=" << _digraph_s << "(" << _trail_s << "(" << seq1 << ")," << _trail_s << "(" << seq2 << ")); "
+    cout << "Input: G:=" << _digraph_s << "(" << _trail_s << "(" << seq1 << ")," << _trail_s << "(" << seq2 << ")); "
          << _edges_s << "(G); " << _incidence_matrix_s << "(G)" << endl;
     string disp;
     gen g=_digraph(makesequence(_trail(seq1,contextptr),_trail(seq2,contextptr)),contextptr);
     assert(is_graphe(g,disp,contextptr));
-    cout << "OUTPUT:" << endl;
+    cout << "Output:" << endl;
     cout << "G: " << disp << endl;
     cout << _edges(g,contextptr) << endl;
     cout << _incidence_matrix(g,contextptr) << endl;
@@ -4301,10 +4303,10 @@ void incidence_matrix_demo(GIAC_CONTEXT) {
 void weight_matrix_demo(GIAC_CONTEXT) {
     print_demo_title(_weight_matrix_s);
     const char *edges="%{[[1,2],2],[[2,3],1]%}";
-    cout << "INPUT: G:=" << _graph_s << "(" << edges << "); "
+    cout << "Input: G:=" << _graph_s << "(" << edges << "); "
          << _weight_matrix_s << "(G)" << endl;
     gen g=gt_command(_graph,edges,contextptr);
-    cout << "OUTPUT:" << endl;
+    cout << "Output:" << endl;
     string disp;
     assert(is_graphe(g,disp,contextptr));
     cout << "G: " << disp << endl;
@@ -4314,13 +4316,13 @@ void weight_matrix_demo(GIAC_CONTEXT) {
 void subgraph_demo(GIAC_CONTEXT) {
     print_demo_title(_subgraph_s);
     gen E=graphe::str2gen("[[1,2],[2,3],[3,4],[4,1]]");
-    cout << "INPUT: K5:=" << _complete_graph_s << "(5); E:=" << E
+    cout << "Input: K5:=" << _complete_graph_s << "(5); E:=" << E
          << "; H:=" << _subgraph_s << "(K5,E); K5:=" << _highlight_subgraph_s << "(K5,H); "
          << _draw_graph_s << "(K5)" << endl;
     gen g=_complete_graph(5,contextptr);
     string disp;
     assert(is_graphe(g,disp,contextptr));
-    cout << "OUTPUT:" << endl;
+    cout << "Output:" << endl;
     cout << "K5: " << disp << endl;
     gen h=_subgraph(makesequence(g,E),contextptr);
     assert(is_graphe(h,disp,contextptr));
@@ -4332,12 +4334,12 @@ void subgraph_demo(GIAC_CONTEXT) {
 void induced_subgraph_demo(GIAC_CONTEXT) {
     print_demo_title(_induced_subgraph_s);
     vecteur v=makevecteur(1,2,3,6,7,9);
-    cout << "INPUT: G:=" << _graph_s << "(\"petersen\"); H:=" << _induced_subgraph_s << "(G," << v << "); "
+    cout << "Input: G:=" << _graph_s << "(\"petersen\"); H:=" << _induced_subgraph_s << "(G," << v << "); "
          << _draw_graph_s << "(H)" << endl;
     string disp;
     gen g=gt_command(_graph,"\"petersen\"",contextptr);
     assert(is_graphe(g,disp,contextptr));
-    cout << "OUTPUT:" << endl;
+    cout << "Output:" << endl;
     cout << "G: " << disp << endl;
     gen h=_induced_subgraph(makesequence(g,v),contextptr);
     assert(is_graphe(h,disp,contextptr));
@@ -4348,7 +4350,7 @@ void induced_subgraph_demo(GIAC_CONTEXT) {
 void biconnected_components_demo(GIAC_CONTEXT) {
     print_demo_title(_biconnected_components_s);
     gen seq1=makesequence(1,2,3,4,2),seq2=makesequence(4,5,6,7,5);
-    cout << "INPUT: G:=" << _graph_s << "(" << _trail_s << "(" << seq1 << ")," << _trail_s << "(" << seq2 << ")); "
+    cout << "Input: G:=" << _graph_s << "(" << _trail_s << "(" << seq1 << ")," << _trail_s << "(" << seq2 << ")); "
          << _draw_graph_s << "(G); " << _is_biconnected_s << "(G); " << _biconnected_components_s << "(G); "
          << _articulation_points_s << "(G)" << endl;
     gen T1=_trail(seq1,contextptr);
@@ -4356,7 +4358,7 @@ void biconnected_components_demo(GIAC_CONTEXT) {
     gen g=_graph(makesequence(T1,T2),contextptr);
     string disp;
     assert(is_graphe(g,disp,contextptr));
-    cout << "OUTPUT:" << endl;
+    cout << "Output:" << endl;
     cout << "G: " << disp << endl;
     cout << _draw_graph(g,contextptr) << endl;
     cout << _is_biconnected(g,contextptr) << endl;
@@ -4367,12 +4369,12 @@ void biconnected_components_demo(GIAC_CONTEXT) {
 void connected_components_demo(GIAC_CONTEXT) {
     print_demo_title(_connected_components_s);
     const char *gspec="seq[[1,2,3,4,5,6],%{[1,2],[2,3],[4,5]%}]";
-    cout << "INPUT: G:=" << _graph_s << "(" << gspec << "); " << _is_connected_s << "(G); "
+    cout << "Input: G:=" << _graph_s << "(" << gspec << "); " << _is_connected_s << "(G); "
          << _connected_components_s << "(G)" << endl;
     string disp;
     gen g=gt_command(_graph,gspec,contextptr);
     assert(is_graphe(g,disp,contextptr));
-    cout << "OUTPUT:" << endl;
+    cout << "Output:" << endl;
     cout << "G: " << disp << endl;
     cout << _is_connected(g,contextptr) << endl;
     cout << _connected_components(g,contextptr) << endl;
@@ -4381,21 +4383,23 @@ void connected_components_demo(GIAC_CONTEXT) {
 void dijkstra_demo(GIAC_CONTEXT) {
     print_demo_title(_dijkstra_s);
     const char *edges="%{[[1,2],1],[[2,3],3],[[3,4],7],[[4,5],3],[[5,6],3],[[1,6],3]%}";
-    cout << "INPUT: G:=" << _graph_s << "(" << edges << "); " << _dijkstra_s << "(G,1,4)" << endl;
+    cout << "Input: G:=" << _graph_s << "(" << edges << "); " << _dijkstra_s << "(G,1,4)" << endl;
     gen g=gt_command(_graph,edges,contextptr);
-    cout << "OUTPUT: " << _dijkstra(makesequence(g,1,4),contextptr) << endl;
+    cout << "Output: " << _dijkstra(makesequence(g,1,4),contextptr) << endl;
+    cout << "Input: " << _dijkstra_s << "(G,1,[4,6])" << endl;
+    cout << "Output: " << _dijkstra(makesequence(g,1,makevecteur(4,6)),contextptr) << endl;
 }
 
 void graph_complement_demo(GIAC_CONTEXT) {
     print_demo_title(_graph_complement_s);
-    cout << "INPUT: G:="
+    cout << "Input: G:="
          << _graph_s << "(\"petersen\"); C:="
          << _graph_complement_s << "(G); "
          << _draw_graph_s << "(C)" << endl;
     string disp;
     gen g=_graph(graphe::str2gen("petersen",true),contextptr);
     assert(is_graphe(g,disp,contextptr));
-    cout << "OUTPUT:" << endl;
+    cout << "Output:" << endl;
     cout << "G: " << disp << endl;
     gen c=_graph_complement(g,contextptr);
     assert(is_graphe(c,disp,contextptr));
@@ -4405,6 +4409,21 @@ void graph_complement_demo(GIAC_CONTEXT) {
 
 void maximum_clique_demo(GIAC_CONTEXT) {
     print_demo_title(_maximum_clique_s);
+    cout << "Input: G:=" << _complete_graph_s << "(3,4)" << endl;
+    gen g=_complete_graph(makesequence(3,4),contextptr);
+    string disp;
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: G:=" << _graph_complement_s << "(G)" << endl;
+    g=_graph_complement(g,contextptr);
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output: " << disp << endl;
+    cout << "Input: " << _draw_graph_s << "(G)" << endl;
+    cout << "Output:" << endl << _draw_graph(g,contextptr) << endl;
+    cout << "Input: " << _clique_number_s << "(G)" << endl;
+    cout << "Output: " << _clique_number(g,contextptr) << endl;
+    cout << "Input: " << _maximum_clique_s << "(G)" << endl;
+    cout << "Output: " << _maximum_clique(g,contextptr) << endl;
 }
 
 void strongly_connected_components_demo(GIAC_CONTEXT) {
@@ -4414,30 +4433,30 @@ void strongly_connected_components_demo(GIAC_CONTEXT) {
     gen tr1=_trail(makesequence(1,2,3,4,5),contextptr);
     gen tr2=_trail(makesequence(1,2,3,4,5,1),contextptr);
     vecteur tr=makevecteur(tr1,tr2);
-    cout << "INPUT: T:=" << _digraph_s << "(" << gspec1 << "); "
+    cout << "Input: T:=" << _digraph_s << "(" << gspec1 << "); "
          << _strongly_connected_components_s << "(T)" << endl;
     gen g=gt_command(_digraph,gspec1,contextptr);
     string disp;
     assert(is_graphe(g,disp,contextptr));
-    cout << "OUTPUT:" << endl;
+    cout << "Output:" << endl;
     cout << "T: " << disp << endl;
     cout << _strongly_connected_components(g,contextptr) << endl;
     for (const_iterateur it=tr.begin();it!=tr.end();++it) {
-        cout << "INPUT: " << _is_strongly_connected_s << "(" << _digraph_s << "(" << _trail_s << "("
+        cout << "Input: " << _is_strongly_connected_s << "(" << _digraph_s << "(" << _trail_s << "("
              << *it << ")))" << endl;
         g=_digraph(*it,contextptr);
         assert(is_graphe(g,disp,contextptr));
-        cout << "OUTPUT: " << _is_strongly_connected(g,contextptr) << endl;
+        cout << "Output: " << _is_strongly_connected(g,contextptr) << endl;
     }
-    cout << "INPUT: G:=" << _digraph_s << "(" << gspec2 << "); "
+    cout << "Input: G:=" << _digraph_s << "(" << gspec2 << "); "
          << _strongly_connected_components_s << "(G)" << endl;
     g=gt_command(_digraph,gspec2,contextptr);
     assert(is_graphe(g,disp,contextptr));
-    cout << "OUTPUT:" << endl;
+    cout << "Output:" << endl;
     cout << "G: " << disp << endl;
     cout << _strongly_connected_components(g,contextptr) << endl;
-    cout << "INPUT: G:=" << _add_arc_s << "(G,[4,3]); " << _strongly_connected_components_s << "(G)" << endl;
-    cout << "OUTPUT:" << endl;
+    cout << "Input: G:=" << _add_arc_s << "(G,[4,3]); " << _strongly_connected_components_s << "(G)" << endl;
+    cout << "Output:" << endl;
     g=_add_arc(makesequence(g,makevecteur(4,3)),contextptr);
     assert(is_graphe(g,disp,contextptr));
     cout << "G: " << disp << endl;

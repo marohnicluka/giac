@@ -277,6 +277,8 @@ void vertex_connectivity_demo(GIAC_CONTEXT);
 void import_export_demo(GIAC_CONTEXT);
 void make_directed_demo(GIAC_CONTEXT);
 void contract_edge_demo(GIAC_CONTEXT);
+void graph_power_demo(GIAC_CONTEXT);
+void graph_union_demo(GIAC_CONTEXT);
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

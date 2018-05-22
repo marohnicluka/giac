@@ -53,7 +53,8 @@ static const char *gt_error_messages[] = {
     "argument is not a subgraph",                                       // 21
     "graph is empty",                                                   // 22
     "a \"tag\"=value pair expected",                                    // 23
-    "the given list is not a valid graphic sequence"                    // 24
+    "the given list is not a valid graphic sequence",                   // 24
+    "graph is not acyclic"
 };
 
 void gt_err_display(int code,GIAC_CONTEXT) {
@@ -4291,7 +4292,52 @@ static const char _odd_girth_s[]="odd_girth";
 static define_unary_function_eval(__odd_girth,&_odd_girth,_odd_girth_s);
 define_unary_function_ptr5(at_odd_girth,alias_at_odd_girth,&__odd_girth,0,true)
 
-// GENERAL COMMMANDS
+/* USAGE:   topologic_sort(G)
+ *
+ * Returns the list of vertices sorted according to the topological ordering in
+ * a directed acyclic graph G.
+ */
+gen _topologic_sort(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (!G.is_directed())
+        return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED,contextptr);
+    graphe::ivector ordering;
+    if (!G.topologic_sort(ordering))
+        return gt_err(_GT_ERR_NOT_ACYCLIC_GRAPH,contextptr);
+    vecteur res(ordering.size());
+    for (graphe::ivector_iter it=ordering.begin();it!=ordering.end();++it) {
+        res[it-ordering.begin()]=G.node_label(*it);
+    }
+    return res;
+}
+static const char _topologic_sort_s[]="topologic_sort";
+static define_unary_function_eval(__topologic_sort,&_topologic_sort,_topologic_sort_s);
+define_unary_function_ptr5(at_topologic_sort,alias_at_topologic_sort,&__topologic_sort,0,true)
+
+/* USAGE:   is_acyclic(G)
+ *
+ * Returns true iff directed graph G is acyclic.
+ */
+gen _is_acyclic(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (!G.is_directed())
+        return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED,contextptr);
+    graphe::ivector ordering;
+    return graphe::boole(G.topologic_sort(ordering));
+}
+static const char _is_acyclic_s[]="is_acyclic";
+static define_unary_function_eval(__is_acyclic,&_is_acyclic,_is_acyclic_s);
+define_unary_function_ptr5(at_is_acyclic,alias_at_is_acyclic,&__is_acyclic,0,true)
+
+//
+// GENERAL COMMMANDS ***********************************************************
+//
 
 /* USAGE:   foldl(op,id,r1,r2,...)
  *
@@ -5241,6 +5287,20 @@ void graph_equal_demo(GIAC_CONTEXT) {
     cout << "Output:\t-- " << _vertices(h,contextptr) << "," << _edges(h,contextptr) << endl;
     cout << "Input:\t" << _graph_equal_s << "(G,H)" << endl;
     cout << "Output:\t-- " << _graph_equal(makesequence(g,h),contextptr) << endl;
+}
+
+void topologic_sort_demo(GIAC_CONTEXT) {
+    print_demo_title(_topologic_sort_s);
+    const char *spec="%{[c,a],[c,b],[c,d],[a,d],[b,d],[a,b]%}";
+    cout << "Input:\tG:=" << _digraph_s << "(" << spec << ")" << endl;
+    gen g=gt_command(_digraph,spec,contextptr);
+    string disp;
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output:\t-- " << disp << endl;
+    cout << "Input:\t" << _is_acyclic_s << "(G)" << endl;
+    cout << "Output:\t-- " << _is_acyclic(g,contextptr) << endl;
+    cout << "Input:\t" << _topologic_sort_s << "(G)" << endl;
+    cout << "Output:\t-- " << _topologic_sort(g,contextptr) << endl;
 }
 
 #ifndef NO_NAMESPACE_GIAC

@@ -6296,6 +6296,32 @@ void graphe::dijkstra(int src,const ivector &dest,vecteur &path_weights,ivectors
     }
 }
 
+/* return true iff the graph has a topological ordering and output the indices
+ * of thus sorted vertices in list v, use Kahn's algorithm with time complexity O(n+m) */
+bool graphe::topologic_sort(ivector &ordering) {
+    assert(is_directed() && node_stack.empty());
+    int n=node_count(),v;
+    ordering.clear();
+    ordering.reserve(n);
+    for (int i=0;i<n;++i) {
+        if (in_degree(i)==0)
+            node_stack.push(i);
+    }
+    graphe G(*this);
+    while (!node_stack.empty()) {
+        v=node_stack.top();
+        node_stack.pop();
+        ordering.push_back(v);
+        vertex &vert=G.node(v);
+        for (ivector_iter it=vert.neighbors().begin();it!=vert.neighbors().end();++it) {
+            if (G.in_degree(*it)==1)
+                node_stack.push(*it);
+        }
+        vert.clear_neighbors();
+    }
+    return G.edge_count()==0;
+}
+
 #ifndef NO_NAMESPACE_GIAC
 }
 #endif // ndef NO_NAMESPACE_GIAC

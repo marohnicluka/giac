@@ -12,6 +12,6 @@ int main(){
   ss << "maple_mode(1)";
   ss >> g;
   _eval(g,&ct);
-  graph_power_demo(&ct);
+  topologic_sort_demo(&ct);
   return 0;
 }

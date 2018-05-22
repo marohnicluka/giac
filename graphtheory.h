@@ -50,7 +50,8 @@ enum gt_error_code {
     _GT_ERR_NOT_A_SUBGRAPH=21,
     _GT_ERR_GRAPH_IS_EMPTY=22,
     _GT_ERR_TAGVALUE_PAIR_EXPECTED=23,
-    _GT_ERR_NOT_A_GRAPHIC_SEQUENCE=24
+    _GT_ERR_NOT_A_GRAPHIC_SEQUENCE=24,
+    _GT_ERR_NOT_ACYCLIC_GRAPH=25
 };
 
 bool is_graphe(const gen &g,std::string &disp_out,GIAC_CONTEXT);
@@ -192,6 +193,9 @@ gen _is_graphic_sequence(const gen &g,GIAC_CONTEXT);
 gen _sequence_graph(const gen &g,GIAC_CONTEXT);
 gen _girth(const gen &g,GIAC_CONTEXT);
 gen _odd_girth(const gen &g,GIAC_CONTEXT);
+gen _topologic_sort(const gen &g,GIAC_CONTEXT);
+gen _is_acyclic(const gen &g,GIAC_CONTEXT);
+gen _is_arborescence(const gen &g,GIAC_CONTEXT);
 //gen _plane_dual(const gen &g,GIAC_CONTEXT);
 //gen _transitive_closure(const gen &g,GIAC_CONTEXT);
 //gen _fundamental_cycle(const gen &g,GIAC_CONTEXT);
@@ -202,7 +206,6 @@ gen _odd_girth(const gen &g,GIAC_CONTEXT);
 //gen _edge_connectivity(const gen &g,GIAC_CONTEXT);
 //gen _global_clustering_coefficient(const gen &g,GIAC_CONTEXT);
 //gen _graph_spectrum(const gen &g,GIAC_CONTEXT);
-//gen _is_arborescence(const gen &g,GIAC_CONTEXT);
 //gen _is_vertex_colorable(const gen &g,GIAC_CONTEXT);
 //gen _is_isomorphic(const gen &g,GIAC_CONTEXT);
 //gen _maxflow(const gen &g,GIAC_CONTEXT);
@@ -222,7 +225,6 @@ gen _odd_girth(const gen &g,GIAC_CONTEXT);
 //gen _edge_chromatic_number(const gen &g,GIAC_CONTEXT);
 //gen _graph_polynomial(const gen &g,GIAC_CONTEXT);
 //gen _graph_rank(const gen &g,GIAC_CONTEXT);
-//gen _is_acyclic(const gen &g,GIAC_CONTEXT);
 //gen _is_bipartite(const gen &g,GIAC_CONTEXT);
 //gen _is_edge_colorable(const gen &g,GIAC_CONTEXT);
 //gen _is_hamiltonian(const gen &g,GIAC_CONTEXT);
@@ -230,7 +232,6 @@ gen _odd_girth(const gen &g,GIAC_CONTEXT);
 //gen _laplacian_matrix(const gen &g,GIAC_CONTEXT);
 //gen _local_clustering_coefficient(const gen &g,GIAC_CONTEXT);
 //gen _seidel_spectrum(const gen &g,GIAC_CONTEXT);
-//gen _topologic_sort(const gen &g,GIAC_CONTEXT);
 //gen _kruskal(const gen &g,GIAC_CONTEXT);
 //gen _minimal_spanning_tree(const gen &g,GIAC_CONTEXT);
 //gen _prims(const gen &g,GIAC_CONTEXT);
@@ -281,6 +282,7 @@ void contract_edge_demo(GIAC_CONTEXT);
 void graph_power_demo(GIAC_CONTEXT);
 void graph_union_demo(GIAC_CONTEXT);
 void graph_equal_demo(GIAC_CONTEXT);
+void topologic_sort_demo(GIAC_CONTEXT);
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

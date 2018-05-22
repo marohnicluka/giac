@@ -668,6 +668,7 @@ public:
     void distance(int i,const ivector &J,ivector &dist,ivectors *shortest_paths=NULL);
     void allpairs_distance(matrice &m) const;
     void dijkstra(int src,const ivector &dest,vecteur &path_weights,ivectors *cheapest_paths=NULL);
+    bool topologic_sort(ivector &ordering);
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

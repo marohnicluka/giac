@@ -54,7 +54,7 @@ static const char *gt_error_messages[] = {
     "graph is empty",                                                   // 22
     "a \"tag\"=value pair expected",                                    // 23
     "the given list is not a valid graphic sequence",                   // 24
-    "graph is not acyclic"
+    "graph is not acyclic"                                              // 25
 };
 
 void gt_err_display(int code,GIAC_CONTEXT) {
@@ -3576,12 +3576,13 @@ define_unary_function_ptr5(at_graph_equal,alias_at_graph_equal,&__graph_equal,0,
  */
 gen _reverse_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    graphe G(contextptr);
+    graphe G(contextptr),H(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    graphe R(G);
-    R.reverse_edges();
-    return R.to_gen();
+    if (!G.is_directed())
+        return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED,contextptr);
+    G.reverse(H);
+    return H.to_gen();
 }
 static const char _reverse_graph_s[]="reverse_graph";
 static define_unary_function_eval(__reverse_graph,&_reverse_graph,_reverse_graph_s);
@@ -3960,6 +3961,49 @@ static const char _dijkstra_s[]="dijkstra";
 static define_unary_function_eval(__dijkstra,&_dijkstra,_dijkstra_s);
 define_unary_function_ptr5(at_dijkstra,alias_at_dijkstra,&__dijkstra,0,true)
 
+/* USAGE:   topologic_sort(G)
+ *
+ * Returns the list of vertices sorted according to the topological ordering in
+ * a directed acyclic graph G.
+ */
+gen _topologic_sort(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (!G.is_directed())
+        return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED,contextptr);
+    graphe::ivector ordering;
+    if (!G.topologic_sort(ordering))
+        return gt_err(_GT_ERR_NOT_ACYCLIC_GRAPH,contextptr);
+    vecteur res(ordering.size());
+    for (graphe::ivector_iter it=ordering.begin();it!=ordering.end();++it) {
+        res[it-ordering.begin()]=G.node_label(*it);
+    }
+    return res;
+}
+static const char _topologic_sort_s[]="topologic_sort";
+static define_unary_function_eval(__topologic_sort,&_topologic_sort,_topologic_sort_s);
+define_unary_function_ptr5(at_topologic_sort,alias_at_topologic_sort,&__topologic_sort,0,true)
+
+/* USAGE:   is_acyclic(G)
+ *
+ * Returns true iff the directed graph G is acyclic.
+ */
+gen _is_acyclic(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (!G.is_directed())
+        return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED,contextptr);
+    graphe::ivector ordering;
+    return graphe::boole(G.topologic_sort(ordering));
+}
+static const char _is_acyclic_s[]="is_acyclic";
+static define_unary_function_eval(__is_acyclic,&_is_acyclic,_is_acyclic_s);
+define_unary_function_ptr5(at_is_acyclic,alias_at_is_acyclic,&__is_acyclic,0,true)
+
 /* USAGE:   is_clique(G)
  *
  * Returns true iff graph G is a clique (i.e. a complete graph).
@@ -4292,48 +4336,21 @@ static const char _odd_girth_s[]="odd_girth";
 static define_unary_function_eval(__odd_girth,&_odd_girth,_odd_girth_s);
 define_unary_function_ptr5(at_odd_girth,alias_at_odd_girth,&__odd_girth,0,true)
 
-/* USAGE:   topologic_sort(G)
+/* USAGE:   is_arborescence(G)
  *
- * Returns the list of vertices sorted according to the topological ordering in
- * a directed acyclic graph G.
+ * Returns the length of the shortest odd cycle in undirected and unweighted
+ * graph G.
  */
-gen _topologic_sort(const gen &g,GIAC_CONTEXT) {
+gen _is_arborescence(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    if (!G.is_directed())
-        return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED,contextptr);
-    graphe::ivector ordering;
-    if (!G.topologic_sort(ordering))
-        return gt_err(_GT_ERR_NOT_ACYCLIC_GRAPH,contextptr);
-    vecteur res(ordering.size());
-    for (graphe::ivector_iter it=ordering.begin();it!=ordering.end();++it) {
-        res[it-ordering.begin()]=G.node_label(*it);
-    }
-    return res;
+    return graphe::boole(G.is_arborescence());
 }
-static const char _topologic_sort_s[]="topologic_sort";
-static define_unary_function_eval(__topologic_sort,&_topologic_sort,_topologic_sort_s);
-define_unary_function_ptr5(at_topologic_sort,alias_at_topologic_sort,&__topologic_sort,0,true)
-
-/* USAGE:   is_acyclic(G)
- *
- * Returns true iff directed graph G is acyclic.
- */
-gen _is_acyclic(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    graphe G(contextptr);
-    if (!G.read_gen(g))
-        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    if (!G.is_directed())
-        return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED,contextptr);
-    graphe::ivector ordering;
-    return graphe::boole(G.topologic_sort(ordering));
-}
-static const char _is_acyclic_s[]="is_acyclic";
-static define_unary_function_eval(__is_acyclic,&_is_acyclic,_is_acyclic_s);
-define_unary_function_ptr5(at_is_acyclic,alias_at_is_acyclic,&__is_acyclic,0,true)
+static const char _is_arborescence_s[]="is_arborescence";
+static define_unary_function_eval(__is_arborescence,&_is_arborescence,_is_arborescence_s);
+define_unary_function_ptr5(at_is_arborescence,alias_at_is_arborescence,&__is_arborescence,0,true)
 
 //
 // GENERAL COMMMANDS ***********************************************************
@@ -5301,6 +5318,33 @@ void topologic_sort_demo(GIAC_CONTEXT) {
     cout << "Output:\t-- " << _is_acyclic(g,contextptr) << endl;
     cout << "Input:\t" << _topologic_sort_s << "(G)" << endl;
     cout << "Output:\t-- " << _topologic_sort(g,contextptr) << endl;
+}
+
+void arborescence_demo(GIAC_CONTEXT) {
+    print_demo_title(_is_arborescence_s);
+    gen tr1=_trail(makesequence(1,2,5,9),contextptr);
+    gen tr2=_trail(makesequence(1,4,8),contextptr);
+    gen tr3=_trail(makesequence(1,3,6),contextptr);
+    gen tr4=_trail(makesequence(3,7,11),contextptr);
+    gen tr5=_trail(makesequence(7,10,12),contextptr);
+    cout << "Input:\tG:=" << _digraph_s << "("
+         << tr1 << "," << tr2 << ", " << tr3 << "," << tr4 << "," << tr5 << ")" << endl;
+    gen g=_digraph(makesequence(tr1,tr2,tr3,tr4,tr5),contextptr);
+    string disp;
+    assert(is_graphe(g,disp,contextptr));
+    cout << "Output\t-- " << disp << endl;
+    cout << "Input:\t" << _draw_graph_s << "(G)" << endl;
+    cout << "Output:" << endl << _draw_graph(g,contextptr) << endl;
+    cout << "Input:\t" << _is_arborescence_s << "(G)" << endl;
+    cout << "Output:\t-- " << _is_arborescence(g,contextptr) << endl;
+    cout << "Input:\tRG:=" << _reverse_graph_s << "(G)" << endl;
+    gen rg=_reverse_graph(g,contextptr);
+    assert(is_graphe(rg,disp,contextptr));
+    cout << "Output:\t-- " << disp << endl;
+    cout << "Input:\t" << _draw_graph_s << "(RG)" << endl;
+    cout << "Output:" << endl << _draw_graph(rg,contextptr) << endl;
+    cout << "Input:\t" <<_is_arborescence_s << "(RG)" << endl;
+    cout << "Output:\t-- " << _is_arborescence(rg,contextptr) << endl;
 }
 
 #ifndef NO_NAMESPACE_GIAC

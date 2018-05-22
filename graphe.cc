@@ -993,20 +993,6 @@ graphe::ipair graphe::make_edge(const vecteur &v) const {
     return make_pair(i,j);
 }
 
-/* reverse edge directions */
-void graphe::reverse_edges() {
-    if (!is_directed())
-        return;
-    ipairs E;
-    get_edges_as_pairs(E,false);
-    attrib attr;
-    for (ipairs_iter it=E.begin();it!=E.end();++it) {
-        copy_attributes(node(it->first).neighbor_attributes(it->second),attr);
-        remove_edge(*it);
-        add_edge(it->second,it->first,attr);
-    }
-}
-
 /* convert vecteur E to list of ipairs representing edges, return false iff error occurs,
    if edge is not found set notfound=true */
 bool graphe::edges2ipairs(const vecteur &E,ipairs &ev,bool &notfound) const {
@@ -2294,7 +2280,7 @@ bool graphe::matching_maximizer::tree_path(int v, int w, ivector &path) {
             break;
         it=forest.find(it->second);
     }
-    reverse(path.begin(),path.end());
+    std::reverse(path.begin(),path.end());
     if ((it=forest.find(v))==forest.end())
         return false;
     while (true) {
@@ -2414,7 +2400,7 @@ bool graphe::matching_maximizer::find_augmenting_path(const ipairs &matching, iv
                     bit->second.push_back(k);
                     assert((k=forest[k])>=0);
                 }
-                reverse(bit->second.begin(),bit->second.end());
+                std::reverse(bit->second.begin(),bit->second.end());
                 // find augmenting path with blossom contracted
                 ivector short_path;
                 if (!find_augmenting_path(matching,short_path))
@@ -2431,7 +2417,7 @@ bool graphe::matching_maximizer::find_augmenting_path(const ipairs &matching, iv
                 else {
                     // unfold the blossom
                     if (sit!=short_path.begin() && prev!=forest[*sit])
-                        reverse(short_path.begin(),short_path.end());
+                        std::reverse(short_path.begin(),short_path.end());
                     for (sit=short_path.begin();sit!=short_path.end();++sit) {
                         path.push_back(*sit);
                         if (*sit==b) {
@@ -4652,7 +4638,7 @@ void graphe::embed_children_blocks(int i,ivectors &block_tree,vector<ivectors> &
             if (wt==child_face.end())
                 wt=child_face.begin();
         }
-        reverse(path.begin(),path.end());
+        std::reverse(path.begin(),path.end());
         parent_face.insert(vt,path.begin(),path.end());
     }
 }
@@ -5010,7 +4996,7 @@ void graphe::make_random_planar() {
     }
     faces.push_back(face);
     ivector outer_face(face.begin(),face.end());
-    reverse(outer_face.begin(),outer_face.end());
+    std::reverse(outer_face.begin(),outer_face.end());
     faces.push_back(outer_face);
     int k;
     for (int i=3;i<n;++i) {
@@ -6206,7 +6192,7 @@ void graphe::distance(int i,const ivector &J,ivector &dist,ivectors *shortest_pa
             ++len;
         }
         if (shortest_path!=NULL)
-            reverse(shortest_path->begin(),shortest_path->end());
+            std::reverse(shortest_path->begin(),shortest_path->end());
         dist[it-J.begin()]=len;
     }
 }
@@ -6287,7 +6273,7 @@ void graphe::dijkstra(int src,const ivector &dest,vecteur &path_weights,ivectors
             path.push_back(*it);
             int p=*it;
             while ((p=prev[p])>=0) path.push_back(p);
-            reverse(path.begin(),path.end());
+            std::reverse(path.begin(),path.end());
         }
     }
     path_weights.resize(dest.size());
@@ -6320,6 +6306,47 @@ bool graphe::topologic_sort(ivector &ordering) {
         vert.clear_neighbors();
     }
     return G.edge_count()==0;
+}
+
+/* return true iff the graph is an arborescence, i.e. a directed tree */
+bool graphe::is_arborescence() const {
+    assert(is_directed());
+    bool has_root=false;
+    ivector deg(node_count(),0);
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
+            ++deg[*jt];
+        }
+    }
+    for (ivector_iter it=deg.begin();it!=deg.end();++it) {
+        if (*it==0) {
+            if (has_root)
+                return false;
+            has_root=true;
+         } else if (*it>1)
+            return false;
+    }
+    return has_root;
+}
+
+/* write this (directed) graph with arc directions reversed to G */
+void graphe::reverse(graphe &G) const {
+    assert(is_directed());
+    G.set_directed(true);
+    G.set_graph_attributes(attributes);
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        G.add_node(it->label(),it->attributes());
+    }
+    int i,j;
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        i=it-nodes.begin();
+        const vertex &v=node(i);
+        for (ivector_iter jt=v.neighbors().begin();jt!=v.neighbors().end();++jt) {
+            j=*jt;
+            if (j<0) j=-j-1;
+            G.add_edge(j,i,v.neighbor_attributes(j));
+        }
+    }
 }
 
 #ifndef NO_NAMESPACE_GIAC

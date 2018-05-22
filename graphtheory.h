@@ -283,6 +283,7 @@ void graph_power_demo(GIAC_CONTEXT);
 void graph_union_demo(GIAC_CONTEXT);
 void graph_equal_demo(GIAC_CONTEXT);
 void topologic_sort_demo(GIAC_CONTEXT);
+void arborescence_demo(GIAC_CONTEXT);
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

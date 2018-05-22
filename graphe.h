@@ -553,7 +553,6 @@ public:
     bool has_edge(int i,int j) const;
     bool has_edge(ipair p) const { return has_edge(p.first,p.second); }
     ipair make_edge(const vecteur &v) const;
-    void reverse_edges();
     bool edges2ipairs(const vecteur &E,ipairs &ev,bool &notfound) const;
     static void ipairs2edgeset(const ipairs &E,edgeset &Eset);
     bool nodes_are_adjacent(int i,int j) const;
@@ -669,6 +668,8 @@ public:
     void allpairs_distance(matrice &m) const;
     void dijkstra(int src,const ivector &dest,vecteur &path_weights,ivectors *cheapest_paths=NULL);
     bool topologic_sort(ivector &ordering);
+    bool is_arborescence() const;
+    void reverse(graphe &G) const;
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

@@ -23,7 +23,6 @@
 #include "gen.h"
 #include "unary.h"
 #include "moyal.h"
-#include "lpsolve.h"
 #include <string>
 #include <iostream>
 #include <fstream>

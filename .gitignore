@@ -5,8 +5,8 @@
 *.creator.user*
 *.files
 *.pro
+*.pro.user
 *.o
 *.includes
 *.autosave
 main.cpp
-.*

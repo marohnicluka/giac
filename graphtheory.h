@@ -248,44 +248,6 @@ gen _foldr(const gen &g,GIAC_CONTEXT);
 
 extern const unary_function_ptr * const at_trail;
 
-// DEMO FUNCTIONS
-
-void fold_demo(GIAC_CONTEXT);
-void graph_demo(GIAC_CONTEXT);
-void digraph_demo(GIAC_CONTEXT);
-void induced_subgraph_demo(GIAC_CONTEXT);
-void subgraph_demo(GIAC_CONTEXT);
-void incidence_matrix_demo(GIAC_CONTEXT);
-void biconnected_components_demo(GIAC_CONTEXT);
-void connected_components_demo(GIAC_CONTEXT);
-void weight_matrix_demo(GIAC_CONTEXT);
-void dijkstra_demo(GIAC_CONTEXT);
-void graph_complement_demo(GIAC_CONTEXT);
-void maximum_clique_demo(GIAC_CONTEXT);
-void strongly_connected_components_demo(GIAC_CONTEXT);
-void sequence_graph_demo(GIAC_CONTEXT);
-void graph_product_demo(GIAC_CONTEXT);
-void neighbors_demo(GIAC_CONTEXT);
-void attributes_demo(GIAC_CONTEXT);
-void adjacency_matrix_demo(GIAC_CONTEXT);
-void graph_templates_demo(GIAC_CONTEXT);
-void girth_demo(GIAC_CONTEXT);
-void allpairs_distance_demo(GIAC_CONTEXT);
-void shortest_path_demo(GIAC_CONTEXT);
-void subdivide_edges_demo(GIAC_CONTEXT);
-void highlighting_demo(GIAC_CONTEXT);
-void eulerian_demo(GIAC_CONTEXT);
-void interval_graph_demo(GIAC_CONTEXT);
-void vertex_connectivity_demo(GIAC_CONTEXT);
-void import_export_demo(GIAC_CONTEXT);
-void make_directed_demo(GIAC_CONTEXT);
-void contract_edge_demo(GIAC_CONTEXT);
-void graph_power_demo(GIAC_CONTEXT);
-void graph_union_demo(GIAC_CONTEXT);
-void graph_equal_demo(GIAC_CONTEXT);
-void topologic_sort_demo(GIAC_CONTEXT);
-void arborescence_demo(GIAC_CONTEXT);
-
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac
 #endif // ndef NO_NAMESPACE_GIAC

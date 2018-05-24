@@ -19,11 +19,11 @@
 
 #ifndef __GRAPHE_H
 #define __GRAPHE_H
-#include <giac/config.h>
-#include <giac/gen.h>
-#include <giac/unary.h>
-#include <giac/moyal.h>
-#include <giac/lpsolve.h>
+#include "config.h"
+#include "gen.h"
+#include "unary.h"
+#include "moyal.h"
+#include "lpsolve.h"
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -31,7 +31,6 @@
 #include <stack>
 #include <set>
 
-//#define _GLIBCXX_USE_CXX11_ABI 0
 #ifndef DBL_MAX
 #define DBL_MAX 1.79769313486e+308
 #endif
@@ -40,17 +39,7 @@
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
-#define _GRAPH__VECT 30
-
-enum move_to_dispatch_h {
-    _GT_CONNECTED = 137, // connected
-    _GT_SPRING = 138, // spring
-    _GT_TREE = 139, // tree
-    _GT_PLANAR = 140, // planar
-    _GT_DIRECTED = 141, // directed
-    _GT_WEIGHTED = 142, // weighted
-    _GT_WEIGHTS = 143 // weights
-};
+typedef unsigned long ulong;
 
 enum gt_dot_token_type {
     _GT_DOT_TOKEN_TYPE_IDENTIFIER = 1,
@@ -479,7 +468,7 @@ public:
     static std::string genstring2str(const gen &g);
     static std::string gen2str(const gen &g);
     static gen plusinf();
-    void ivectors2vecteur(const ivectors &v,vecteur &res) const;
+    void ivectors2vecteur(const ivectors &v,vecteur &res,bool sort_all=false) const;
     bool read_gen(const gen &g);
     void read_special(const int *special_graph);
     void read_special(const char **special_graph);

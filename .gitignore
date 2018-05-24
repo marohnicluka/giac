@@ -4,5 +4,9 @@
 *.creator.user
 *.creator.user*
 *.files
+*.pro
 *.o
 *.includes
+*.autosave
+main.cpp
+.*

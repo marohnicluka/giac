@@ -682,16 +682,16 @@ define_unary_function_ptr5(at_import_graph,alias_at_import_graph,&__import_graph
  *
  * Return list of vertices of graph G.
  */
-gen _vertices(const gen &g,GIAC_CONTEXT) {
+gen _graph_vertices(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     return G.vertices();
 }
-static const char _vertices_s[]="vertices";
-static define_unary_function_eval(__vertices,&_vertices,_vertices_s);
-define_unary_function_ptr5(at_vecrtices,alias_at_vertices,&__vertices,0,true)
+static const char _graph_vertices_s[]="graph_vertices";
+static define_unary_function_eval(__graph_vertices,&_graph_vertices,_graph_vertices_s);
+define_unary_function_ptr5(at_graph_vertices,alias_at_graph_vertices,&__graph_vertices,0,true)
 
 /* USAGE:   edges(G,[weights])
  *
@@ -744,7 +744,9 @@ gen _has_edge(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    return graphe::boole(!G.is_directed() && G.has_edge(i,j));
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
+    return graphe::boole(G.has_edge(i,j));
 }
 static const char _has_edge_s[]="has_edge";
 static define_unary_function_eval(__has_edge,&_has_edge,_has_edge_s);
@@ -774,7 +776,9 @@ gen _has_arc(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    return graphe::boole(G.is_directed() && G.has_edge(i,j) && (!undirected || G.has_edge(j,i)));
+    if (!G.is_directed())
+        return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED,contextptr);
+    return graphe::boole(G.has_edge(i,j) && (!undirected || G.has_edge(j,i)));
 }
 static const char _has_arc_s[]="has_arc";
 static define_unary_function_eval(__has_arc,&_has_arc,_has_arc_s);
@@ -1010,10 +1014,10 @@ gen _maximum_matching(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
-    vector<graphe::ipair> M;
-    G.maximize_matching(M);
+    graphe::ipairs matching;
+    G.maximize_matching(matching);
     vecteur res;
-    for (vector<graphe::ipair>::const_iterator it=M.begin();it!=M.end();++it) {
+    for (graphe::ipairs_iter it=matching.begin();it!=matching.end();++it) {
         res.push_back(makevecteur(G.node_label(it->first),G.node_label(it->second)));
     }
     return res;
@@ -1209,7 +1213,7 @@ define_unary_function_ptr5(at_seidel_switch,alias_at_seidel_switch,&__seidel_swi
  *    specification of root nodes]
  *  - plane or planar: draw planar graph G
  *  - circle[=<cycle>]: draw graph G as circular using the leading cycle,
- *    otherwise one must be specified
+ *    otherwise one must be specified or all vertices are placed on a circle
  *  - plot3d: draw 3D representation of graph G (possible only with the
  *    spring method and with G connected)
  *  - labels=true or false: draw (the default) or suppress node labels and
@@ -1726,7 +1730,7 @@ static define_unary_function_eval(__random_planar_graph,&_random_planar_graph,_r
 define_unary_function_ptr5(at_random_planar_graph,alias_at_random_planar_graph,&__random_planar_graph,0,true)
 
 /* USAGE:   assign_edge_weights(G,m,n)
- *          random_edge_weights(G,a..b)
+ *          assign_edge_weights(G,a..b)
  *
  * Assigns random edge weights to the edges of graph G and returns a modified
  * copy of G. If integers n and m such that n>=m are specified, weights are
@@ -2037,7 +2041,7 @@ define_unary_function_ptr5(at_departures,alias_at_departures,&__departures,0,tru
 /* USAGE:   arrivals(G,[v])
  *
  * Returns the list of vertices of directed graph G which are connected by v
- * with arcs such that heads are in v. If v is omitted, list of departures is
+ * with arcs such that heads are in v. If v is omitted, list of arrivals is
  * computed for every vertex and a list of lists is returned.
  */
 gen _arrivals(const gen &g,GIAC_CONTEXT) {
@@ -2908,8 +2912,8 @@ define_unary_function_ptr5(at_tree_height,alias_at_tree_height,&__tree_height,0,
 
 /* USAGE:   is_triangle_free(G)
  *
- *Returns true iff undirected graph G is triangle-free, i.e. contains no
- *3-cliques.
+ * Returns true iff undirected graph G is triangle-free, i.e. contains no
+ * 3-cliques.
  */
 gen _is_triangle_free(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -3593,7 +3597,7 @@ define_unary_function_ptr5(at_reverse_graph,alias_at_reverse_graph,&__reverse_gr
  *
  * Returns the interval graph with respect to intervals a..b, c..d, ... on the
  * real line. It has one vertex per interval and two vertices are connected iff
- * the corresponding intervals intersect,
+ * the corresponding intervals intersect.
  */
 gen _interval_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -3986,9 +3990,17 @@ static const char _topologic_sort_s[]="topologic_sort";
 static define_unary_function_eval(__topologic_sort,&_topologic_sort,_topologic_sort_s);
 define_unary_function_ptr5(at_topologic_sort,alias_at_topologic_sort,&__topologic_sort,0,true)
 
+gen _topological_sort(const gen &g,GIAC_CONTEXT) {
+    return _topologic_sort(g,contextptr);
+}
+static const char _topological_sort_s[]="topological_sort";
+static define_unary_function_eval(__topological_sort,&_topological_sort,_topological_sort_s);
+define_unary_function_ptr5(at_topological_sort,alias_at_topological_sort,&__topological_sort,0,true)
+
 /* USAGE:   is_acyclic(G)
  *
- * Returns true iff the directed graph G is acyclic.
+ * Returns true iff the directed graph G is acyclic, i.e. has no topological
+ * ordering.
  */
 gen _is_acyclic(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -4013,6 +4025,8 @@ gen _is_clique(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
     return graphe::boole(G.is_clique());
 }
 static const char _is_clique_s[]="is_clique";
@@ -4021,13 +4035,15 @@ define_unary_function_ptr5(at_is_clique,alias_at_is_clique,&__is_clique,0,true)
 
 /* USAGE:   maximum_clique(G)
  *
- * Returns maximum clique of graph G, represented as a list of vertices.
+ * Returns maximum clique of undirected graph G as a list of vertices.
  */
 gen _maximum_clique(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
     graphe::ivector clique;
     G.maximum_clique(clique);
     return G.get_nodes(clique);
@@ -4046,6 +4062,8 @@ gen _maximal_cliques(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
     graphe::ivectors cliques;
     G.tomita(cliques);
     vecteur res;
@@ -4066,6 +4084,8 @@ gen _clique_number(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
     graphe::ivector clique;
     return G.maximum_clique(clique);
 }
@@ -4090,6 +4110,8 @@ gen _clique_cover(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
     graphe::ivectors cover;
     if (!G.clique_cover(cover,k))
         return vecteur(0);
@@ -4189,7 +4211,7 @@ gen _strongly_connected_components(const gen &g,GIAC_CONTEXT) {
     graphe::ivectors components;
     G.strongly_connected_components(components);
     vecteur res;
-    G.ivectors2vecteur(components,res);
+    G.ivectors2vecteur(components,res,true);
     return res;
 }
 static const char _strongly_connected_components_s[]="strongly_connected_components";
@@ -4338,8 +4360,7 @@ define_unary_function_ptr5(at_odd_girth,alias_at_odd_girth,&__odd_girth,0,true)
 
 /* USAGE:   is_arborescence(G)
  *
- * Returns the length of the shortest odd cycle in undirected and unweighted
- * graph G.
+ * Returns true iff directed and unweighted graph G is an arborescence.
  */
 gen _is_arborescence(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -5222,7 +5243,7 @@ void graph_union_demo(GIAC_CONTEXT) {
     assert(is_graphe(g,disp,contextptr));
     cout << "Output:\t-- " << disp << endl;
     cout << "Input:\t" << _vertices_s << "(G)" << endl;
-    cout << "Output:\t-- " << _vertices(g,contextptr) << endl;
+    cout << "Output:\t-- " << _graph_vertices(g,contextptr) << endl;
     cout << "Input:\t" << _edges_s << "(G)" << endl;
     cout << "Output:\t-- " << _edges(g,contextptr) << endl;
     identificateur a("a"),b("b"),c("c");
@@ -5240,7 +5261,7 @@ void graph_union_demo(GIAC_CONTEXT) {
     assert(is_graphe(g,disp,contextptr));
     cout << "Output:\t-- " << disp << endl;
     cout << "Input:\t" << _vertices_s << "(G)" << endl;
-    cout << "Output:\t-- " << _vertices(g,contextptr) << endl;
+    cout << "Output:\t-- " << _graph_vertices(g,contextptr) << endl;
     cout << "Input:\t" << _edges_s << "(G)" << endl;
     cout << "Output:\t-- " << _edges(g,contextptr) << endl;
     cout << "Input:\t" << _weight_matrix_s << "(G1)," << _weight_matrix_s << "(G2)," << _weight_matrix_s << "(G)" << endl;
@@ -5251,7 +5272,7 @@ void graph_union_demo(GIAC_CONTEXT) {
     assert(is_graphe(g,disp,contextptr));
     cout << "Output:\t-- " << disp << endl;
     cout << "Input:\t" << _vertices_s << "(G)" << endl;
-    cout << "Output:\t-- " << _vertices(g,contextptr) << endl;
+    cout << "Output:\t-- " << _graph_vertices(g,contextptr) << endl;
     cout << "Input:\t" << _degree_sequence_s << "(G)" << endl;
     cout << "Output:\t-- " << _degree_sequence(g,contextptr) << endl;
     cout << "Input:\tG:=" << _graph_join_s << "(" << _path_graph_s << "(2)," << _graph_s << "(3))" << endl;
@@ -5259,7 +5280,7 @@ void graph_union_demo(GIAC_CONTEXT) {
     assert(is_graphe(g,disp,contextptr));
     cout << "Output:\t-- " << disp << endl;
     cout << "Input:\t" << _vertices_s << "(G)" << endl;
-    cout << "Output:\t-- " << _vertices(g,contextptr) << endl;
+    cout << "Output:\t-- " << _graph_vertices(g,contextptr) << endl;
     cout << "Input:\t" << _edges_s << "(G)" << endl;
     cout << "Output:\t-- " << _edges(g,contextptr) << endl;
 }
@@ -5279,9 +5300,9 @@ void graph_equal_demo(GIAC_CONTEXT) {
     assert(is_graphe(h,disp,contextptr));
     cout << "Output:\t-- " << disp << endl;
     cout << "Input:\t" << _vertices_s << "(G)," << _edges_s << "(G)" << endl;
-    cout << "Output:\t-- " << _vertices(g,contextptr) << "," << _edges(g,contextptr) << endl;
+    cout << "Output:\t-- " << _graph_vertices(g,contextptr) << "," << _edges(g,contextptr) << endl;
     cout << "Input:\t" << _vertices_s << "(H)," << _edges_s << "(H)" << endl;
-    cout << "Output:\t-- " << _vertices(h,contextptr) << "," << _edges(h,contextptr) << endl;
+    cout << "Output:\t-- " << _graph_vertices(h,contextptr) << "," << _edges(h,contextptr) << endl;
     cout << "Input:\t" << _graph_equal_s << "(G,H)" << endl;
     cout << "Output:\t-- " << _graph_equal(makesequence(g,h),contextptr) << endl;
     cout << "Input:\tH:=" << _graph_s << "(" << _trail_s << "(1,2,3))" << endl;
@@ -5299,9 +5320,9 @@ void graph_equal_demo(GIAC_CONTEXT) {
     assert(is_graphe(h,disp,contextptr));
     cout << "Output:\t-- " << disp << endl;
     cout << "Input:\t" << _vertices_s << "(G)," << _edges_s << "(G)" << endl;
-    cout << "Output:\t-- " << _vertices(g,contextptr) << "," << _edges(g,contextptr) << endl;
+    cout << "Output:\t-- " << _graph_vertices(g,contextptr) << "," << _edges(g,contextptr) << endl;
     cout << "Input:\t" << _vertices_s << "(H)," << _edges_s << "(H)" << endl;
-    cout << "Output:\t-- " << _vertices(h,contextptr) << "," << _edges(h,contextptr) << endl;
+    cout << "Output:\t-- " << _graph_vertices(h,contextptr) << "," << _edges(h,contextptr) << endl;
     cout << "Input:\t" << _graph_equal_s << "(G,H)" << endl;
     cout << "Output:\t-- " << _graph_equal(makesequence(g,h),contextptr) << endl;
 }

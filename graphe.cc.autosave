@@ -473,10 +473,10 @@ gen graphe::plusinf() {
 }
 
 /* convert list of lists of integers into vecteur of vecteurs */
-void graphe::ivectors2vecteur(const ivectors &v,vecteur &res) const {
+void graphe::ivectors2vecteur(const ivectors &v,vecteur &res,bool sort_all) const {
     res.resize(v.size());
     for (ivectors_iter it=v.begin();it!=v.end();++it) {
-        res[it-v.begin()]=_sort(get_nodes(*it),ctx);
+        res[it-v.begin()]=sort_all?_sort(get_nodes(*it),ctx):get_nodes(*it);
     }
 }
 

@@ -479,7 +479,7 @@ public:
     static std::string genstring2str(const gen &g);
     static std::string gen2str(const gen &g);
     static gen plusinf();
-    void ivectors2vecteur(const ivectors &v,vecteur &res) const;
+    void ivectors2vecteur(const ivectors &v,vecteur &res,bool sort_all=false) const;
     bool read_gen(const gen &g);
     void read_special(const int *special_graph);
     void read_special(const char **special_graph);

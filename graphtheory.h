@@ -19,6 +19,10 @@
 
 #ifndef GRAPHTHEORY_H
 #define GRAPHTHEORY_H
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include "first.h"
 #include "graphe.h"
 
 #ifndef NO_NAMESPACE_GIAC
@@ -138,14 +142,6 @@ gen _weight_matrix(const gen &g,GIAC_CONTEXT);
 gen _hypercube_graph(const gen &g,GIAC_CONTEXT);
 gen _sierpinski_graph(const gen &g,GIAC_CONTEXT);
 gen _petersen_graph(const gen &g,GIAC_CONTEXT);
-gen _random_graph(const gen &g,GIAC_CONTEXT);
-gen _random_digraph(const gen &g,GIAC_CONTEXT);
-gen _random_regular_graph(const gen &g,GIAC_CONTEXT);
-gen _random_bipartite_graph(const gen &g,GIAC_CONTEXT);
-gen _random_tournament(const gen &g,GIAC_CONTEXT);
-gen _random_tree(const gen &g,GIAC_CONTEXT);
-gen _random_planar_graph(const gen &g,GIAC_CONTEXT);
-gen _assign_edge_weights(const gen &g,GIAC_CONTEXT);
 gen _complete_binary_tree(const gen &g,GIAC_CONTEXT);
 gen _complete_kary_tree(const gen &g,GIAC_CONTEXT);
 gen _prism_graph(const gen &g,GIAC_CONTEXT);
@@ -157,6 +153,14 @@ gen _web_graph(const gen &g,GIAC_CONTEXT);
 gen _wheel_graph(const gen &g,GIAC_CONTEXT);
 gen _kneser_graph(const gen &g,GIAC_CONTEXT);
 gen _odd_graph(const gen &g,GIAC_CONTEXT);
+gen _random_graph(const gen &g,GIAC_CONTEXT);
+gen _random_digraph(const gen &g,GIAC_CONTEXT);
+gen _random_regular_graph(const gen &g,GIAC_CONTEXT);
+gen _random_bipartite_graph(const gen &g,GIAC_CONTEXT);
+gen _random_tournament(const gen &g,GIAC_CONTEXT);
+gen _random_tree(const gen &g,GIAC_CONTEXT);
+gen _random_planar_graph(const gen &g,GIAC_CONTEXT);
+gen _assign_edge_weights(const gen &g,GIAC_CONTEXT);
 gen _cartesian_product(const gen &g,GIAC_CONTEXT);
 gen _tensor_product(const gen &g,GIAC_CONTEXT);
 gen _is_eulerian(const gen &g,GIAC_CONTEXT);

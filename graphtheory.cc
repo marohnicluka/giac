@@ -17,10 +17,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "giacPCH.h"
+#include "giac.h"
 #include "graphe.h"
 #include "graphtheory.h"
-#include "giac.h"
-#include "giacPCH.h"
 
 using namespace std;
 
@@ -212,6 +212,8 @@ bool parse_matrix(graphe &G,const matrice &m,bool is_weight_matrix,int mode,bool
     if (mode<2) {
         G.set_directed(isdir);
         for (int i=0;i<n;++i) {
+            if (!is_zero(m[i][i]))
+                return false;
             for (int j=isdir?0:i+1;j<n;++j) {
                 const gen &w=m[i][j];
                 if (!is_zero(w)) {
@@ -317,40 +319,6 @@ gen flights(const gen &g,bool arrive,bool all,GIAC_CONTEXT) {
         res.push_back(_sort(v,contextptr));
     } while (++i<G.node_count());
     return res;
-}
-
-bool parse_attribute(const gen &g,gen_map &m) {
-    assert(g.type==_SYMB);
-    vecteur &f=*g._SYMBptr->feuille._VECTptr;
-    gen tag;
-    if (f.size()!=2 || (tag=f.front()).type!=_STRNG)
-        return false;
-    m[tag]=f.back();
-    return true;
-}
-
-bool parse_attributes(const gen &g,gen_map &m,GIAC_CONTEXT) {
-    if (g.is_symb_of_sommet(at_equal))
-        return parse_attribute(g,m);
-    if (g.type==_VECT) {
-        for (const_iterateur it=g._VECTptr->begin();it!=g._VECTptr->end();++it) {
-            if (!parse_attribute(*it,m))
-                return false;
-        }
-        return true;
-    }
-    return false;
-}
-
-bool parse_gen_attr(const gen &g,gen_map &m,int k,GIAC_CONTEXT) {
-    if (g._VECTptr->at(2).type==_VECT) {
-        if (!parse_attributes(g._VECTptr->at(k),m,contextptr))
-            return false;
-    } else for (const_iterateur it=g._VECTptr->begin()+k;it!=g._VECTptr->end();++it) {
-        if (!parse_attribute(*it,m))
-            return false;
-    }
-    return true;
 }
 
 gen randomgraph(const vecteur &gv,bool directed,GIAC_CONTEXT) {

@@ -17,9 +17,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "graphe.h"
 #include "giacPCH.h"
 #include "giac.h"
+#include "graphe.h"
 #include <sstream>
 #include <ctype.h>
 #include <math.h>
@@ -5668,8 +5668,8 @@ gen customize_display(int options) {
 
 /* append the line segment [p,q] to vecteur v */
 void graphe::append_segment(vecteur &drawing,const point &p,const point &q,int color,int width,bool arrow) {
-    gen P=point2gen(p),Q=point2gen(q);
-    drawing.push_back(symbolic(arrow?at_vector:at_segment,makesequence(P,Q,customize_display(color | width))));
+    gen P=point2gen(p),Q=point2gen(q),args=makesequence(P,Q,customize_display(color | width));
+    drawing.push_back(arrow?_vector(args,context0):_segment(args,context0));
 }
 
 /* append the vertex (as a circle) to vecteur v */

@@ -16,3 +16,4 @@
 *.toc
 *.synctex.gz
 main.cpp
+lexer_tab_int.h

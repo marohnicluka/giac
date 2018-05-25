@@ -19,7 +19,10 @@
 
 #ifndef __GRAPHE_H
 #define __GRAPHE_H
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+#include "first.h"
 #include "gen.h"
 #include "unary.h"
 #include "moyal.h"

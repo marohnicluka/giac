@@ -41,7 +41,7 @@
 \newcommand{\includeimage}[1]
 {\includegraphics[width=0.75\textwidth]{#1}}
 
-\title{Graph theory package for { \tt Giac}/{\tt Xcas}}
+\title{Graph theory package for Giac/Xcas}
 \author{Luka Marohnić}
 
 \begin{document}
@@ -50,23 +50,219 @@
 
 \section{Introduction}
 
+This document contains an overview of the graph theory commands built in the Giac/Xcas software.
+
+The commands are divided into the following six sections: \emph{Constructing graphs}, \emph{Modifying graphs}, \emph{Import and export}, \emph{Graph properties}, \emph{Traversing graphs} and \emph{Visualizing graphs}.
+
 \section{Constructing graphs}
 
-\subsection{From scratch}
+\subsection{Creating graphs from scratch : {\tt graph}, {\tt digraph}}
 
-\subsection{Special graphs}
+The command {\tt graph} accepts between one and three mandatory arguments, each of them being one of the following structural elements of the resulting graph :
+\begin{itemize}
+  \item the number or list of vertices (a vertex may be any atomary object, such as an integer, a symbol or a string); it must be the first argument if used,
+  \item the set of edges (each edge is a list containing two vertices), a permutation, a trail of edges or a sequence of trails; it can be either the first or the second argument if used,
+  \item the adjacency or weight matrix.
+\end{itemize}
+Additionally, some of the following options may be appended to the sequence of arguments :
+\begin{itemize}
+  \item {\tt directed = true} or {\tt false},
+  \item {\tt weighted = true} or {\tt false},
+  \item {\tt color = }an integer or a list of integers representing color(s) of the vertices,
+  \item {\tt coordinates = }a list of vertex 2D or 3D coordinates.
+\end{itemize}
+The {\tt graph} command may also be called by passing a string, representing the name of a special graph, as its only argument. In that case the corresponding graph will be constructed and returned. The supported graphs and their names are listed below.
+\begin{itemize}
+  \item Clebsch graph : {\tt clebsch}
+  \item Coxeter graph : {\tt coxeter}
+  \item Desargues graph : {\tt desargues}
+  \item Dodecahedron graph : {\tt dodecahedron}
+  \item D\"urer graph : {\tt durer}
+  \item Dyck graph : {\tt dyck}
+  \item Grinberg graph : {\tt grinberg}
+  \item Grotzsch graph : {\tt grotzsch}
+  \item Harries graph : {\tt harries}
+  \item Harries--Wong graph : {\tt harries-wong}
+  \item Heawood graph : {\tt heawood}
+  \item Herschel graph : {\tt herschel}
+  \item Icosahedron graph : {\tt icosahedron}
+  \item Levi graph : {\tt levi}
+  \item Ljubljana graph : {\tt ljubljana}
+  \item McGee graph : {\tt mcgee}
+  \item M\"obius--Kantor graph : {\tt mobius-kantor}
+  \item Nauru graph : {\tt nauru}
+  \item Octahedron graph : {\tt octahedron}
+  \item Pappus graph : {\tt pappus}
+  \item Petersen graph : {\tt petersen}
+  \item Robertson graph : {\tt robertson}
+  \item Soccer ball graph : {\tt soccerball}
+  \item Tetrahedron graph : {\tt tehtrahedron}
+\end{itemize}
 
-\subsection{Random graphs}
+The {\tt digraph} command is used for creating directed graphs, although it is also possible with the {\tt graph} command by specifying the option {\tt directed=true}. Actually, calling {\tt digraph} is the same as calling {\tt graph} with that option appended to the sequence of arguments. However, creating special graphs is not supported by {\tt digraph} since they are all undirected. Edges in directed graphs are called \emph{arcs}. Edges and arcs are different structures: an edge is represented by a two-element set containing its endpoints, while an arc is represented by the ordered pairs of its endpoints.
+
+The following series of examples demostrates the various possibilities when using {\tt graph} and {\tt digraph} commands.
+
+\paragraph{Creating vertices.}
+A graph consisting only of vertices and no edges can be created simply by providing the number of vertices or the list of vertex labels.\\
+Input :
+\begin{center}
+  \tt graph(5)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 5 vertices and 0 edges
+\end{center}
+Input :
+\begin{center}
+  \tt graph([a,b,c])
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 3 vertices and 0 edges
+\end{center}
+
+\paragraph{Creating single edges and arcs.}
+Edges/arcs must be specified inside a set so that it can be distinguished from a (adjacency or weight) matrix. If only a set of edges/arcs is specified, the vertices needed to establish these will be created automatically. Note that, when constructing a directed graph, the order of the vertices in an arc matters; in undirected graphs it is not meaningful.\\
+Input :
+\begin{center}
+  \tt graph(\%\{[a,b],[b,c],[a,c]\%\})
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 3 vertices and 3 edges
+\end{center}
+Edge weights may also be specified.\\
+Input :
+\begin{center}
+  \tt graph(\%\{[[a,b],2],[[b,c],2.3],[[c,a],3/2]\%\})
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected weighted graph with 3 vertices and 3 edges
+\end{center}
+If the graph contains isolated vertices (not connected to any other vertex) or a particular order of vertices is desired, the list of vertices has to be specified first.\\
+Input :
+\begin{center}
+  \tt graph([d,b,c,a],\%\{[a,b],[b,c],[a,c]\%\})
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 4 vertices and 3 edges
+\end{center}
+
+\paragraph{Creating paths and trails.}
+A directed graph can also be created from a list of $ n $ vertices and a permutation of order $ n $. The resulting graph consists of a single directed path with the vertices ordered according to the permutation.\\
+Input :
+\begin{center}
+  \tt graph([a,b,c,d],[1,2,3,0])
+\end{center}
+Output :
+\begin{center}
+  \tt a directed unweighted graph with 4 vertices and 3 arcs
+\end{center}
+Alternatively, one may specify edges as a trail.\\
+Input :
+\begin{center}
+  \tt digraph([a,b,c,d],trail(b,c,d,a))
+\end{center}
+Output :
+\begin{center}
+  \tt a directed unweighted graph with 4 vertices and 3 arcs
+\end{center}
+Using trails is also possible when creating undirected graphs. Also, some vertices in a trail may be repeated.\\
+Input :
+\begin{center}
+  \tt graph([a,b,c,d],trail(b,c,d,a,c))
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 4 vertices and 3 edges
+\end{center}
+There is also the possibility of specifying several trails in a sequence, which is useful for designing more complex graphs.\\
+Input :
+\begin{center}
+  \tt graph(trail(1,2,3,4,2),trail(3,5,6,7,5,4))
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 7 vertices and 9 edges
+\end{center}
+
+\paragraph{Specifying adjacency or weight matrix.}
+A graph can be created from a single square matrix $ A=[a_{ij}]_n $ of order $ n $. If it contains only ones and zeros and has zeros on its diagonal, it is assumed to be the adjacency matrix for the desired graph. Otherwise, if an element outside the set $ \{0,1\} $ is encountered, it is assumed that the matrix of edge weights is passed as input, causing the resulting graph to be weighted accordingly. In each case, exactly $ n $ vertices will be created and $ i $-th and $ j $-th vertex will be connected iff $ a_{ij}\neq 0 $. If the matrix is symmetric, the resulting graph will be undirected, otherwise it will be directed.\\
+Input :
+\begin{center}
+  \tt graph([[0,1,1,0],[1,0,0,1],[1,0,0,0],[0,1,0,0]])
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 4 vertices and 3 edges
+\end{center}
+Input :
+\begin{center}
+  \tt graph([[0,1.0,2.3,0],[4,0,0,3.1],[0,0,0,0],[0,0,0,0]])
+\end{center}
+Output :
+\begin{center}
+  \tt a directed weighted graph with 4 vertices and 4 arcs
+\end{center}
+
+\subsection{Promoting to directed and/or weighted graphs : {\tt make\_directed}, {\tt make\_weighted}}
+
+\subsection{Cycle graphs : {\tt cycle\_graph}}
+
+\subsection{Path graphs : {\tt path\_graph}}
+
+\subsection{Trail of edges : {\tt trail}}
+
+\subsection{Complete graphs : {\tt complete\_graph}, {\tt complete\_binary\_tree}, {\tt complete\_kary\_tree}}
+
+\subsection{Creating graph from a graphic sequence : {\tt is\_graphic\_sequence}, {\tt sequence\_graph}}
+
+\subsection{Interval graphs : {\tt interval\_graph}}
+
+\subsection{Star graphs : {\tt star\_graph}}
+
+\subsection{Wheel graphs : {\tt wheel\_graph}}
+
+\subsection{Web graphs : {\tt web\_graph}}
+
+\subsection{Prism graphs : {\tt prism\_graph}}
+
+\subsection{Antiprism graphs : {\tt antiprism\_graph}}
+
+\subsection{Grid graphs : {\tt grid\_graph}, {\tt torus\_grid\_graphs}}
+
+\subsection{Kneser graphs : {\tt kneser\_graph}, {\tt odd\_graph}}
+
+\subsection{Sierpinski graphs : {\tt sierpinski\_graph}}
+
+\subsection{Generalized Petersen graphs : {\tt petersen\_graph}}
+
+\subsection{Isomorphic copy of a graph : {\tt isomorphic\_copy}, {\tt permute\_vertices}, {\tt relabel\_vertices}}
+
+\subsection{Extracting subgraphs of a graph : {\tt subgraph}, {\tt induced\_subgraph}}
+
+\subsection{Graph complement : {\tt graph\_complement}}
+
+\subsection{Union of graphs : {\tt graph\_union}, {\tt disjoint\_union}}
+
+\subsection{Joining two graphs : {\tt graph\_join}}
+
+\subsection{Graph power : {\tt graph\_power}}
+
+\subsection{Underlying graph : {\tt underlying\_graph}}
+
+\subsection{Reversing arc directions in a digraph : {\tt reverse\_graph}}
+
+\subsection{Graph product : {\tt cartesian\_product}, {\tt tensor\_product}}
+
+\subsection{Seidel switch : {\tt seidel\_switch}}
 
 \section{Modifying graphs}
 
 \section{Import and export}
-
-\subsection{Saving graph to a file}
-
-\subsection{Loading graphs from files}
-
-\subsection{The {\tt dot} file format}
 
 \section{Graph properties}
 

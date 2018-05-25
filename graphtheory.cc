@@ -1562,7 +1562,7 @@ gen _random_bipartite_graph(const gen &g,GIAC_CONTEXT) {
             return gentypeerr(contextptr);
         a=ab.front().val;
         b=ab.back().val;
-    }
+    } else return gentypeerr(contextptr);
     G.make_default_labels(V,a,0);
     G.make_default_labels(W,b,a);
     G.make_random_bipartite(V,W,p);
@@ -1665,7 +1665,7 @@ gen _random_tree(const gen &g,GIAC_CONTEXT) {
             V=gv;
             n=V.size();
         }
-    }
+    } else return gentypeerr(contextptr);
     if (n<1)
         return gensizeerr(contextptr);
     if (V.empty())

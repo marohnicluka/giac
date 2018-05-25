@@ -421,9 +421,9 @@ private:
     void coarsening_mis(const ivector &V,graphe &G,sparsemat &P) const;
     void coarsening_ec(const ipairs &M,graphe &G,sparsemat &P) const;
     static int best_quadrant(const point &p,const layout &x,const point &center);
-    static void append_segment(vecteur &drawing,const point &p,const point &q,int color,int width,bool arrow=false);
-    static void append_vertex(vecteur &drawing,const point &p,int color,int width);
-    static void append_label(vecteur &drawing,const point &p,const gen &label,int quadrant,int color=_BLACK);
+    void append_segment(vecteur &drawing,const point &p,const point &q,int color,int width,bool arrow=false) const;
+    void append_vertex(vecteur &drawing,const point &p,int color,int width) const;
+    void append_label(vecteur &drawing,const point &p,const gen &label,int quadrant,int color=_BLACK) const;
     static int face_has_edge(const ivector &face,int i,int j);
     static int binomial_coeff(int n,int k);
     void set_nodes_embedded(const ivector &v,bool yes=true);

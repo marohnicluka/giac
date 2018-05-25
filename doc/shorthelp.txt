@@ -40,13 +40,13 @@ digraph([a,b,c,d],%{[[a,b],1.0],[[a,c],2.3],[[b,d],3.1],[[c,d],4]%})
 0 export_graph(G,"path/to/graphname")
 2 Writes the graph G to the file 'graphname.dot' in directory 'path/to' using dot format. Returns 1 on success and 0 on failure.
 -1 import_graph
-export_graph(G,"mygraph")
+export_graph(complete_graph(5),"K5")
 
 # import_graph
 0 import_graph("path/to/graphname[.dot]")
 2 Returns the graph constructed from instructions in the file 'path/to/graphname.dot' (in dot format). Returns 1 on success and 0 on failure.
 -1 export_graph
-G:=import_graph("mygraph")
+import_graph("K5.dot")
 
 # graph_vertices
 0 graph_vertices(G)
@@ -127,7 +127,7 @@ edges(graph_complement(cycle_graph(5)))
 -1 delete_edge
 -2 highlight_subgraph
 -3 induced_subgraph
-G:=subgraph(complete_graph(5),[[1,2],[2,3],[3,4],[4,1]]); graph_vertices(G)
+graph_vertices(subgraph(complete_graph(5),[[1,2],[2,3],[3,4],[4,1]]))
 
 # vertex_degree
 0 vertex_degree(G,v)
@@ -173,7 +173,7 @@ vertex_out_degree(digraph(trail(1,2,3,4,2)),2)
 2 Returns the subgraph of the input graph G induced by the vertices in list V.
 -1 delete_vertex
 -2 subgraph
-G:=induced_subgraph(cycle_graph(6),[1,2,6]); edges(G)
+edges(induced_subgraph(cycle_graph(6),[1,2,6]))
 
 # maximal_independent_set
 0 maximal_independent_set(G)
@@ -202,7 +202,7 @@ make_directed(cycle_graph(4),[[0,0,0,1],[2,0,1,3],[0,1,0,4],[5,0,4,0]])
 -2 is_weighted
 -3 make_directed
 -4 make_weighted
-G:=underlying_graph(digraph(trail(1,2,3,4,1))); is_directed(G)
+is_directed(underlying_graph(digraph(trail(1,2,3,4,1))))
 
 # cycle_graph
 0 cycle_graph(n or V)
@@ -217,19 +217,19 @@ edges(cycle_graph(4))
 0 lcf_graph(jumps,[exp])
 2 Returns the graph constructed from LCF notation jumps[^exp]. Arguments are list of integers 'jumps' [and a positive integer 'exp', by default 1].
 -1 graph
-G:=lcf_graph([-3,3],4); draw_graph(G)
+draw_graph(lcf_graph([-3,3],4))
 
 # hypercube_graph
 0 hypercube_graph(n)
 2 Constructs and returns the hypercube graph in dimension n (with 2^n vertices).
 -1 graph
-H:=hypercube_graph(3); draw_graph(H)
+draw_graph(hypercube_graph(3))
 
 # seidel_switch
 0 seidel_switch(G,V)
 2 Returns a copy of the input graph G in which edges between vertices in list V and vertices not in V are inverted, i.e. replaced with a set of edges from V to other vertices which is not present in G.
 -1 neighbors
-G:=seidel_switch(cycle_graph(5),[1,2]); draw_graph(G)
+draw_graph(seidel_switch(cycle_graph(5),[1,2]))
 
 # draw_graph
 0 draw_graph(G,[options])
@@ -442,7 +442,7 @@ contract_edge(complete_graph(4),[1,3])
 
 # connected_components
 0 connected_components(G)
-2 Returns a list of lists of vertices, each sublist representing a connected component of graph G.
+2 Returns a list of lists of vertices, each sublist representing a connected component of the input graph G.
 -1 articulation_points
 -2 is_biconnected
 -3 is_strongly_connected
@@ -596,7 +596,7 @@ number_of_vertices(graph("petersen"))
 -2 make_weighted
 -3 set_edge_weight
 -4 weight_matrix
-G:=graph(%{[[1,2],5],[[2,3],6]%}); get_edge_weight(G,[1,2])
+get_edge_weight(graph(%{[[1,2],5],[[2,3],6]%}),[1,2])
 
 # set_edge_weight
 0 set_edge_weight(G,e,w)
@@ -605,7 +605,7 @@ G:=graph(%{[[1,2],5],[[2,3],6]%}); get_edge_weight(G,[1,2])
 -2 get_edge_weight
 -3 make_weighted
 -4 weight_matrix
-G:=graph(%{[1,2],[2,3]%}); get_edge_weight(G,[1,2],5)
+get_edge_weight(graph(%{[1,2],[2,3]%}),[1,2],5)
 
 # is_directed
 0 is_directed(G)
@@ -622,21 +622,21 @@ is_directed(digraph(3))
 -2 vertex_degree
 -3 in_degree
 -3 out_degree
-G:=digraph(trail(1,2,3,4,5,6,4,7,8,2)); neighbors(G,4)
+neighbors(digraph(trail(1,2,3,4,5,6,4,7,8,2)),4)
 
 # minimum_degree
 0 minimum_degree(G)
 2 Returns the smallest degree among the vertices of the input graph G.
 -1 maximum_degree
 -2 vertex_degree
-G:=digraph(trail(1,2,3,4,5,6,4,7,8,2)); minimum_degree(G)
+minimum_degree(digraph(trail(1,2,3,4,5,6,4,7,8,2)))
 
 # maximum_degree
 0 maximum_degree(G)
 2 Returns the larges degree among the vertices of the input graph G.
 -1 minimum_degree
 -2 vertex_degree
-G:=digraph(trail(1,2,3,4,5,6,4,7,8,2)); maximum_degree(G)
+maximum_degree(digraph(trail(1,2,3,4,5,6,4,7,8,2)))
 
 # is_regular
 0 is_regular(G)
@@ -654,7 +654,7 @@ is_regular(complete_graph(5))
 -1 graph_vertices
 -2 permute_vertices
 -3 relabel_vertices
-G:=isomorphic_copy(cycle_graph(5),randperm(5)); graph_vertices(G)
+graph_vertices(isomorphic_copy(cycle_graph(5),randperm(5)))
 
 # permute_vertices
 0 permute_vertices(G,V)
@@ -662,7 +662,7 @@ G:=isomorphic_copy(cycle_graph(5),randperm(5)); graph_vertices(G)
 -1 graph_vertices
 -2 isomorphic_copy
 -3 relabel_vertices
-G:=permute_vertices(graph([a,b,c]),[a,c,b]); graph_vertices(G)
+graph_vertices(permute_vertices(graph([a,b,c]),[a,c,b]))
 
 # relabel_vertices
 0 relabel_vertices(G,L)
@@ -670,7 +670,7 @@ G:=permute_vertices(graph([a,b,c]),[a,c,b]); graph_vertices(G)
 -1 graph_vertices
 -2 isomorphic_copy
 -3 permute_vertices
-G:=relabel_vertices(graph([a,b,c]),["first","second","third"]); graph_vertices(G)
+graph_vertices(relabel_vertices(graph([a,b,c]),["first","second","third"]))
 
 # is_tree
 0 is_tree(G)
@@ -686,7 +686,7 @@ is_tree(cycle_graph(5))
 0 is_forest(G)
 2 Returns true iff the input graph G is a forest, i.e. an undirected graph whose connected components are all trees.
 -1 is_tree
-G:=graph(trail(1,2,3,4),trail(5,2,6,7),trail(8,9,10)); is_forest(G)
+is_forest(graph(trail(1,2,3,4),trail(5,2,6,7),trail(8,9,10)))
 
 # is_tournament
 0 is_tournament(G)
@@ -700,7 +700,7 @@ is_tournament(digraph(%{[1,2],[2,3],[3,1]%}))
 2 Returns the height of the tree T with r as the root node.
 -1 is_tree
 -2 random_tree
-T:=graph(%{[1,2],[2,3],[2,4],[4,5]%}); tree_height(T,1)
+tree_height(graph(%{[1,2],[2,3],[2,4],[4,5]%}),1)
 
 # is_triangle_free
 0 is_triangle_free(G)
@@ -717,7 +717,7 @@ is_triangle_free(graph("soccerball"))
 -3 is_triconnected
 is_connected(path_graph(5))
 is_connected(cycle_graph(5))
-G:=graph_complement(complete_graph(3,4)); is_connected(G)
+is_connected(graph_complement(complete_graph(3,4)))
 
 # is_biconnected
 0 is_biconnected(G)

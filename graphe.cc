@@ -2205,10 +2205,9 @@ void graphe::maximal_independent_set(ivector &ind) const {
 }
 
 /*
- * EDMONDS' BLOSSOM ALGORITHM FOR MAXIMUM MATCHING ****************************
+ * matching_maximizer class implementation ****************************
  */
 
-/* construct edmonds class */
 graphe::matching_maximizer::matching_maximizer(graphe *gr) {
     G=gr;
 }
@@ -2464,7 +2463,7 @@ void graphe::matching_maximizer::find_maximum_matching(ipairs &matching) {
 }
 
 /*
- * END OF BLOSSOM ALGORITHM IMPLEMENTATION ************************************
+ * end of matching_maximizer class implementation ************************************
  */
 
 /*
@@ -4392,7 +4391,7 @@ int graphe::face_has_edge(const ivector &face,int i,int j) {
 /* set 'embedded' field of all given nodes to 'true' */
 void graphe::set_nodes_embedded(const ivector &v,bool yes) {
     for (ivector_iter it=v.begin();it!=v.end();++it) {
-        node(*it).set_embedded(true);
+        node(*it).set_embedded(yes);
     }
 }
 

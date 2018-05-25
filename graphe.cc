@@ -5776,6 +5776,8 @@ void graphe::draw_nodes(vecteur &drawing,const layout &x) const {
  * (minimize the collision with the adjacent edges) */
 int graphe::best_quadrant(const point &p,const layout &adj,const point &center) {
     int bestq,n=adj.size();
+    if (n==0)
+        return _QUADRANT1;
     vector<double> adj_phi(n);
     for (layout_iter it=adj.begin();it!=adj.end();++it) {
         adj_phi[it-adj.begin()]=std::atan2(it->at(1)-p[1],it->at(0)-p[0]);

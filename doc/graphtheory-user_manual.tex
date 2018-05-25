@@ -1,0 +1,77 @@
+\documentclass[a4paper,11pt]{article}
+%\textwidth 11,8 cm
+%\textheight 17 cm
+\textheight 23 cm
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{stmaryrd}
+\usepackage{makeidx}
+\usepackage{times}
+\usepackage{hevea}
+%\usepackage{mathptmx}
+%Uncomment next line for pdflatex and use includegraphics with eps file
+% for latex2html don't use the option [width=\textwidth]
+% check that xfig files are exported magnif 100%
+%\usepackage[francais]{babel}
+\usepackage{ifpdf}
+\ifpdf
+ \usepackage[pdftex,colorlinks]{hyperref}
+\else
+ \usepackage[ps2pdf,breaklinks=true,colorlinks=true,linkcolor=red,citecolor=green]{hyperref}
+ \usepackage{pst-plot}
+\fi
+
+%\def\@evenhead{\thepage\hfill{\footnotesize\textit{\leftmark}}}
+%\def\@oddhead{\footnotesize{\textit{\rightmark}}\hfill\thepage}
+%\usepackage{hp}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+%\usepackage[francais]{babel}
+\usepackage{latexsym}
+
+% Inline commands; use \texttt
+% Displayed commands and output, use this
+\newenvironment{giaccmd}
+{\begin{quote}\ttfamily}
+{\end{quote}}
+
+% For graphics
+\newcommand{\includeimage}[1]
+{\includegraphics[width=0.75\textwidth]{#1}}
+
+\title{Graph theory package for { \tt Giac}/{\tt Xcas}}
+\author{Luka Marohnić}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\section{Introduction}
+
+\section{Constructing graphs}
+
+\subsection{From scratch}
+
+\subsection{Special graphs}
+
+\subsection{Random graphs}
+
+\section{Modifying graphs}
+
+\section{Import and export}
+
+\subsection{Saving graph to a file}
+
+\subsection{Loading graphs from files}
+
+\subsection{The {\tt dot} file format}
+
+\section{Graph properties}
+
+\section{Traversing graphs}
+
+\section{Visualizing graphs}
+
+\end{document}

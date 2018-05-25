@@ -9,4 +9,10 @@
 *.o
 *.includes
 *.autosave
+*.log
+*.aux
+*.fls
+*.fdb_latexmk
+*.toc
+*.synctex.gz
 main.cpp

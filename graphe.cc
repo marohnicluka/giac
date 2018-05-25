@@ -2789,12 +2789,14 @@ double graphe::point_distance(const point &p,const point &q,point &pq) {
 
 /* write d1*p+d2*q to res */
 void graphe::point_lincomb(const point &p,const point &q,double d1,double d2,point &res) {
-    point tmp(q.size());
-    copy_point(q,tmp);
-    scale_point(tmp,d2);
     copy_point(p,res);
-    scale_point(res,d1);
-    add_point(res,tmp);
+    if (d2==0)
+        scale_point(res,d1);
+    else  {
+        scale_point(res,d1/d2);
+        add_point(res,q);
+        scale_point(res,d2);
+    }
 }
 
 /* copy layout src to dest (both must be initialized first) */
@@ -2981,21 +2983,22 @@ void graphe::force_directed_placement(layout &x,double K,double R,double tol,boo
         energy0=energy;
         energy=0;
         max_displacement=0;
-        for (i=0;i<n;++i) {
+        for (node_iter nt=nodes.begin();nt!=nodes.end();++nt) {
+            i=nt-nodes.begin();
             point &xi=x[i];
             clear_point_coords(force);
             // compute attractive forces between vertices adjacent to the i-th vertex
-            vertex &v=node(i);
-            for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
+            for (ivector_iter it=nt->neighbors().begin();it!=nt->neighbors().end();++it) {
                 j=*it;
                 if (j<0) j=-j-1;
                 scale_point(p,point_distance(xi,x[j],p)/K);
                 add_point(force,p);
             }
             // compute repulsive forces for all vertices j!=i which are not too far from the i-th vertex
-            for (j=0;j<n;++j) {
+            for (layout_iter it=x.begin();it!=x.end();++it) {
+                j=it-x.begin();
                 if (i!=j)
-                    accumulate_repulsive_force(xi,x[j],R,K,shrinking_factor*eps,force);
+                    accumulate_repulsive_force(xi,*it,R,K,shrinking_factor*eps,force);
             }
             // move the location of the i-th vertex in the direction of the force f
             norm=point_displacement(force);
@@ -3172,29 +3175,30 @@ int graphe::mdeg(const ivector &V, int i) const {
 /* coarsening of the graph with respect to the prolongation matrix P */
 void graphe::coarsening(graphe &G,const sparsemat &P,const ivector &V) const {
     sparsemat Q,I,R,IG;
-    int m=V.size(),n=node_count();
+    int n=node_count();
     transpose_sparsemat(P,Q);
     // create sparse symmetric incidence matrix I of this graph
-    for (int i=0;i<n;++i) {
-        for (int j=i+1;j<n;++j) {
-            if (has_edge(i,j)) {
-                I[i][j]=1;
-                I[j][i]=1;
-            }
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        const ivector &ngh=it->neighbors();
+        if (ngh.empty())
+            continue;
+        map<int,double> &row=I[it-nodes.begin()];
+        for (ivector_iter jt=ngh.begin();jt!=ngh.end();++jt) {
+            row[*jt]=1;
         }
     }
     // use Galerkin product Q*I*P as the incidence matrix IG for graph G
     multiply_sparse_matrices(Q,I,R,n);
     multiply_sparse_matrices(R,P,IG,n);
-    // create vertices of G
-    double val;
     for (ivector_iter it=V.begin();it!=V.end();++it) {
         G.add_node(node_label(*it));
     }
-    // create edges of G
-    for (int i=0;i<m;++i) {
-        for (int j=i+1;j<m;++j) {
-            if (i!=j && sparse_matrix_element(IG,i,j,val) && val!=0)
+    int i=0,j;
+    for (sparsemat::const_iterator it=IG.begin();it!=IG.end();++it) {
+        i=it->first;
+        for (map<int,double>::const_iterator jt=it->second.begin();jt!=it->second.end();++jt) {
+            j=jt->first;
+            if (i<j && jt->second!=0)
                 G.add_edge(i,j);
         }
     }

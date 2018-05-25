@@ -413,7 +413,7 @@ private:
     static bool segments_crossing(const point &p,const point &r,const point &q,const point &s,point &crossing);
     static bool point2segment_projection(const point &p,const point &q,const point &r,point &proj);
     void accumulate_repulsive_force(const point &p,const point &q,double R,double K,double eps,point &force,bool sq_dist=false);
-    void force_directed_placement(layout &x,double K,double R=DBL_MAX,double tol=0.001,bool ac=true);
+    void force_directed_placement(layout &x,double K,double R=DBL_MAX,double tol=0.01,bool ac=true);
     static bool get_position(const attrib &attr,point &p);
     void coarsening_mis(const ivector &V,graphe &G,sparsemat &P) const;
     void coarsening_ec(const ipairs &M,graphe &G,sparsemat &P) const;

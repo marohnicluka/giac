@@ -3135,19 +3135,27 @@ bool graphe::sparse_matrix_element(const sparsemat &A,int i,int j,double &val) {
 /* compute the product A*B and store it in P (ncols is equal to the number of columns of A),
  * if A*B=B*A and A and B are symmetric then enabling 'symmetric=true' speeds up the computation */
 void graphe::multiply_sparse_matrices(const sparsemat &A,const sparsemat &B,sparsemat &P,int ncols,bool symmetric) {
-    int i;
-    double val;
+    int i,isempty;
+    double val,p;
     for (sparsemat::const_iterator it=A.begin();it!=A.end();++it) {
         i=it->first;
+        map<int,double> &row=P[i];
+        isempty=true;
         for (int j=symmetric?i:0;j<ncols;++j) {
-            double &p=P[i][j];
+            p=0;
             for (map<int,double>::const_iterator jt=it->second.begin();jt!=it->second.end();++jt) {
                 if (sparse_matrix_element(B,jt->first,j,val))
                     p+=jt->second*val;
             }
-            if (symmetric)
-                P[j][i]=p;
+            if (p!=0) {
+                isempty=false;
+                row[j]=p;
+                if (symmetric)
+                    P[j][i]=p;
+            }
         }
+        if (isempty)
+            P.erase(P.find(i));
     }
 }
 

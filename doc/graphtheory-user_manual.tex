@@ -41,7 +41,7 @@
 \newcommand{\includeimage}[1]
 {\includegraphics[width=0.75\textwidth]{#1}}
 
-\title{Graph theory package for Giac/Xcas}
+\title{\textbf{Graph theory package for Giac/Xcas}\\User manual}
 \author{Luka Marohnić}
 
 \begin{document}
@@ -50,7 +50,7 @@
 
 \section{Introduction}
 
-This document contains an overview of the graph theory commands built in the Giac/Xcas software.
+This document contains an overview of the graph theory commands built in the Giac/Xcas software, including the syntax, the detailed description and practical examples for each command.
 
 The commands are divided into the following six sections: \emph{Constructing graphs}, \emph{Modifying graphs}, \emph{Import and export}, \emph{Graph properties}, \emph{Traversing graphs} and \emph{Visualizing graphs}.
 
@@ -60,7 +60,7 @@ The commands are divided into the following six sections: \emph{Constructing gra
 
 The command {\tt graph} accepts between one and three mandatory arguments, each of them being one of the following structural elements of the resulting graph :
 \begin{itemize}
-  \item the number or list of vertices (a vertex may be any atomary object, such as an integer, a symbol or a string); it must be the first argument if used,
+  \item the number or list of vertices (a vertex may be any atomic object, such as an integer, a symbol or a string); it must be the first argument if used,
   \item the set of edges (each edge is a list containing two vertices), a permutation, a trail of edges or a sequence of trails; it can be either the first or the second argument if used,
   \item the adjacency or weight matrix.
 \end{itemize}
@@ -170,7 +170,7 @@ Output :
 \begin{center}
   \tt a directed unweighted graph with 4 vertices and 3 arcs
 \end{center}
-Using trails is also possible when creating undirected graphs. Also, some vertices in a trail may be repeated.\\
+Using trails is also possible when creating undirected graphs. Also, some vertices in a trail may be repeated, which is not allowed in a path.\\
 Input :
 \begin{center}
   \tt graph([a,b,c,d],trail(b,c,d,a,c))
@@ -207,58 +207,554 @@ Output :
 \begin{center}
   \tt a directed weighted graph with 4 vertices and 4 arcs
 \end{center}
+List of vertex labels can be specified before the matrix.\\
+Input :
+\begin{center}
+  \tt graph([a,b,c,d],[[0,1,1,0],[1,0,0,1],[1,0,0,0],[0,1,0,0]])
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 4 vertices and 3 edges
+\end{center}
+When creating a weighted graph, one can first specify the list of $ n $ vertices and the set of edges, followed by a square matrix $ A $ of order $ n $. Then for every edge $ \{i,j\} $ or arc $ (i,j) $ the element $ a_{ij} $ of $ A $ is assigned as its weight. Other elements of $ A $ are ignored.\\
+Input :
+\begin{center}
+  \tt digraph([a,b,c],\%\{[a,b],[b,c],[a,c]\%\}, [[0,1,2],[3,0,4],[5,6,0]])
+\end{center}
+Output :
+\begin{center}
+  \tt a directed weighted graph with 3 vertices and 3 arcs
+\end{center}
+
+When a special graph is desired, one just needs to pass its name to the {\tt graph} command. An undirected unweighted graph will be returned.\\
+Input :
+\begin{center}
+  \tt graph("petersen")
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 10 vertices and 15 edges
+\end{center}
 
 \subsection{Promoting to directed and/or weighted graphs : {\tt make\_directed}, {\tt make\_weighted}}
 
+The command {\tt make\_directed} is called with one or two arguments, an undirected graph $ G(V,E) $ and optionally a square matrix of order $ |V| $. Every edge $ \{i,j\}\in E $ is replaced with the pair of arcs $ (i,j) $ and $ (j,i) $. If matrix $ A $ is specified, $ a_{ij} $ and $ a_{ji} $ are assigned as weights of these arcs, respectively. Thus a directed (and possibly weighted) graph is created and returned.\\
+Input :
+\begin{center}
+  \tt make\_directed(cycle\_graph(4))
+\end{center}
+Output :
+\begin{center}
+  \tt a directed unweighted graph with 4 vertices and 8 arcs
+\end{center}
+Input :
+\begin{center}
+   \tt make\_directed(cycle\_graph(4), [[0,0,0,1],[2,0,1,3],[0,1,0,4],[5,0,4,0]])
+\end{center}
+Output :
+\begin{center}
+  \tt a directed weighted graph with 4 vertices and 8 arcs
+\end{center}
+
+The command {\tt make\_weighted} accepts one or two arguments, an unweighted graph $ G(V,E) $ and optionally a square matrix $ A $ of order $ |V| $. If the matrix specification is omitted, a square matrix of ones is assumed. Then a copy of $ G $ is returned where each edge/arc $ (i,j)\in E $ gets $ a_{ij} $ assigned as its weight. If $ G $ is an undirected graph, it is assumed that $ A $ is symmetric.\\
+Input :
+\begin{center}
+  \tt make\_weighted(graph(\%\{[1,2],[2,3],[3,1]\%\}), [[0,2,3],[2,0,1],[3,1,0]])
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected weighted graph with 3 vertices and 3 edges
+\end{center}
+
 \subsection{Cycle graphs : {\tt cycle\_graph}}
+
+The command {\tt cycle\_graph} accepts a positive integer $ n $ or a list of distinct vertices as its only argument and returns a graph consisting of a single cycle through the specified vertices in the given order. If $ n $ is specified it is assumed to be the desired number of vertices, in which case they will be created and labeled with the first $ n $ integers (starting from 0 in Xcas mode and from 1 in Maple mode).\\
+Input :
+\begin{center}
+  \tt cycle\_graph(5)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 5 vertices and 5 edges
+\end{center}
+Input :
+\begin{center}
+  \tt cycle\_graph(["a","b","c","d","e"])
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 5 vertices and 5 edges
+\end{center}
 
 \subsection{Path graphs : {\tt path\_graph}}
 
+The command {\tt path\_graph} accepts a positive integer $ n $ or a list of distinct vertices as its only argument and returns a graph consisting of a single path through the specified vertices in the given order. If $ n $ is specified it is assumed to be the desired number of vertices, in which case they will be created and labeled with the first $ n $ integers (starting from 0 in Xcas mode and from 1 in Maple mode).\\
+Input :
+\begin{center}
+  \tt path\_graph(5)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 5 vertices and 4 edges
+\end{center}
+Input :
+\begin{center}
+  \tt path\_graph(["a","b","c","d","e"])
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 5 vertices and 4 edges
+\end{center}
+
 \subsection{Trail of edges : {\tt trail}}
+
+The command {\tt trail} is called with a sequence of vertices as arguments. The symbolic expression representing the trail of edges through the specified vertices is returned, which is recognizable by {\tt graph} and {\tt digraph} commands. Note that a trail may cross itself (some vertices may be repeated in the given sequence).\\
+Input :
+\begin{center}
+  \tt T:=trail(1,2,3,4,2); graph(T)
+\end{center}
+Output :
+\begin{center}
+  \tt trail(1,2,3,4,2), an undirected unweighted graph with 4 vertices and 4 edges 
+\end{center}
 
 \subsection{Complete graphs : {\tt complete\_graph}, {\tt complete\_binary\_tree}, {\tt complete\_kary\_tree}}
 
+The command {\tt complete\_graph} creates complete (multipartite) graphs. It can be called with a single argument, a positive integer $ n $ or a list of distinct vertices, in which case the complete graph with the specified vertices will be returned. If integer $ n $ is specified, it is assumed that it is the desired number of vertices and they will be created and labeled with the first $ n $ integers (starting from 0 in Xcas mode and from 1 in Maple mode). Alternatively, a sequence of positive integers $ n_1,n_2,\dots,n_k $ may be passed as arguments, in which case the complete multipartite graph with partitions of size $ n_1,n_2,\dots,n_k $ will be returned.\\
+Input :
+\begin{center}
+  \tt complete\_graph(5)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 5 vertices and 10 edges
+\end{center}
+Input :
+\begin{center}
+  \tt complete\_graph([a,b,c])
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 3 vertices and 3 edges
+\end{center}
+Input :
+\begin{center}
+  \tt complete\_graph(2,3)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 5 vertices and 6 edges
+\end{center}
+
+The command {\tt complete\_binary\_tree} accepts a single positive integer $ n $ as its argument and constructs a complete binary tree of depth $ n $.\\
+Input :
+\begin{center}
+  \tt complete\_binary\_tree(2)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 7 vertices and 6 edges
+\end{center}
+
+The command {\tt complete\_kary\_tree} accepts two positive integers $ k $ and $ n $ as its arguments and constructs a complete $ k $-ary tree of depth $ n $.\\
+For example, to get a ternary tree with two levels, input :
+\begin{center}
+  \tt complete\_kary\_tree(3,2)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 13 vertices and 12 edges
+\end{center}
+
 \subsection{Creating graph from a graphic sequence : {\tt is\_graphic\_sequence}, {\tt sequence\_graph}}
+
+The command {\tt is\_graphic\_sequence} accepts a list $ L $ of positive integers as its only argument and returns {\tt true} if there exists a graph $ G(V,E) $ with degree sequence $ \{\deg v:v\in V\} $ equal to $ L $, else it returns {\tt false}. The algorithm is based on Erdős--Gallai theorem and has the complexity $ O(|L|^2) $.\\ 
+Input :
+\begin{center}
+   \tt is\_graphic\_sequence([3,2,4,2,3,4,5,7])
+\end{center}
+Output :
+\begin{center}
+  \tt true
+\end{center}
+
+The command {\tt sequence\_graph} accepts a list $ L $ of positive integers as its only argument. If the list represents a graphic sequence, the corresponding graph is constructed by using Havel--Hakimi algorithm with complexity $ O(|L|^2\,\log |L|) $. If the argument is not a graphic sequence, an error is returned.\\
+Input :
+\begin{center}
+  \tt sequence\_graph([3,2,4,2,3,4,5,7])
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 8 vertices and 15 edges
+\end{center}
 
 \subsection{Interval graphs : {\tt interval\_graph}}
 
+The command {\tt interval\_graph} takes as its argument a sequence or list of real-line intervals and returns an undirected unweighted graph with these intervals as vertices (the string representations of the intervals are used as labels), each two of them being connected with an edge if and only if the corresponding intervals intersect.\\
+Input :
+\begin{center}
+  \tt interval\_graph(0..8, 1..pi, exp(1)..20, 7..18, 11..14, 17..24, 23..25)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 7 vertices and 10 edges
+\end{center}
+
 \subsection{Star graphs : {\tt star\_graph}}
+
+The command {\tt star\_graph} accepts a positive integer $ n $ as its only argument and returns the star graph with $ n+1 $ vertices, which is equal to the complete bipartite graph {\tt complete\_graph(1,n)} i.e.~a $ n $-ary tree with one level.\\
+Input :
+\begin{center}
+  \tt star\_graph(5)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 6 vertices and 5 edges
+\end{center}
 
 \subsection{Wheel graphs : {\tt wheel\_graph}}
 
+The command {\tt wheel\_graph} accepts a positive integer $ n $ as its only argument and returns the wheel graph with $ n+1 $ vertices.\\
+Input :
+\begin{center}
+  \tt wheel\_graph(5)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 6 vertices and 10 edges
+\end{center}
+
 \subsection{Web graphs : {\tt web\_graph}}
+
+The command {\tt web\_graph} accepts two positive integers $ a $ and $ b $ as its arguments and returns the web graph with parameters $ a $ and $ b $, namely the Cartesian product of {\tt cycle\_graph(a)} and {\tt path\_graph(b)}.\\
+Input :
+\begin{center}
+  \tt web\_graph(7,3)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 21 vertices and 35 edges
+\end{center}
 
 \subsection{Prism graphs : {\tt prism\_graph}}
 
+The command {\tt prism\_graph} accepts a positive integer $ n $ as its only argument and returns the prism graph with parameter $ n $, namely {\tt web\_graph(n,2)}.\\
+Input :
+\begin{center}
+  \tt prism\_graph(5)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 10 vertices and 15 edges
+\end{center}
+
 \subsection{Antiprism graphs : {\tt antiprism\_graph}}
 
-\subsection{Grid graphs : {\tt grid\_graph}, {\tt torus\_grid\_graphs}}
+The command {\tt antiprism\_graph} accepts a positive integer $ n $ as its only argument and returns the antiprism graph with parameter $ n $, which is constructed from two concentric cycles of $ n $ vertices by joining each vertex of the inner to two adjacent nodes of the outer cycle.\\
+Input :
+\begin{center}
+  \tt antiprism\_graph(5)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 10 vertices and 20 edges
+\end{center}
+
+\subsection{Grid graphs : {\tt grid\_graph}, {\tt torus\_grid\_graph}}
+
+The command {\tt grid\_graph} accepts two positive integers $ m $ and $ n $ as its arguments and returns the $ m $ by $ n $ grid on $ m\cdot n $ vertices, namely the Cartesian product of {\tt path\_graph(m)} and {\tt path\_graph(n)}.\\
+Input :
+\begin{center}
+  \tt grid\_graph(5,3)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 15 vertices and 22 edges
+\end{center}
+
+The command {\tt grid\_graph} accepts two positive integers $ m $ and $ n $ as its arguments and returns the $ m $ by $ n $ torus grid on $ m\cdot n $ vertices, namely the Cartesian product of {\tt cycle\_graph(m)} and {\tt cycle\_graph(n)}.\\
+Input :
+\begin{center}
+  \tt torus\_grid\_graph(5,3)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 15 vertices and 30 edges
+\end{center}
 
 \subsection{Kneser graphs : {\tt kneser\_graph}, {\tt odd\_graph}}
 
-\subsection{Sierpinski graphs : {\tt sierpinski\_graph}}
+The command {\tt kneser\_graph} accepts two positive integers $ n\leq 20 $ and $ k $ as its arguments and returns the Kneser graph with parameters $ n $, $ k $. It is obtained by setting all $ k $-subsets of a set of $ n $ elements as vertices and connecting each two of them if and only if the corresponding sets are disjoint. The Kneser graphs can get exceedingly complex even for relatively small values of $ n $ and $ k $ : note that the number of vertices is equal to $ \binom{n}{k} $.\\
+Input :
+\begin{center}
+  \tt kneser\_graph(5,2)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 10 vertices and 15 edges
+\end{center}
+
+The command {\tt odd\_graph} accepts a positive integer $ d\leq 8 $ as its only argument and returns the Kneser graph with parameters $ n=2\,d+1 $ and $ k=d $.\\
+Input :
+\begin{center}
+  \tt odd\_graph(3)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 10 vertices and 15 edges
+\end{center}
+
+\subsection{Sierpiński graphs : {\tt sierpinski\_graph}}
+
+The command {\tt sierpinski\_graph} accepts two or three arguments. Calling the command with two positive integers $ n $ and $ k $ produces the Sierpiński graph\footnote{For the definition see the paper ``A survey and classification of Sierpiński-type
+graphs'' by Andreas M.~Hinz et al.} $ S_k^n $. In particular, for $ k=2 $ a path with $ 2^n $ vertices is returned, and for $ k=3 $ one obtains the Sierpiński sieve graph of order $ n $. If the symbol {\tt triangle} is passed as the optional third argument, a Sierpiński triangle graph $ ST_k^n $ is returned. It is obtained by contracting all non-clique edges from $ S_k^n $.\\
+Input :
+\begin{center}
+  \tt sierpinski\_graph(4,3)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 81 vertices and 120 edges
+\end{center}
+Input :
+\begin{center}
+  \tt sierpinski\_graph(4,3,triangle)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 42 vertices and 81 edges
+\end{center}
 
 \subsection{Generalized Petersen graphs : {\tt petersen\_graph}}
 
+The command {\tt petersen\_graph} accepts one or two arguments : a positive integer $ n $ and optionally a positive integer $ k $ (which defaults to 2). The command returns generalized Petersen graph $ P(n,k) $ which is a connected cubic graph consisting of an inner star polygon $ {n,k} $ and an outer regular polygon $ {n} $ such that the corresponding vertices in inner and outer polygons are connected with edges. If $ k=1 $, the prism graph of order $ n $ is obtained.\\
+For example, to obtain the dodecahedral graph $ P(10,2) $ one may input :
+\begin{center}
+  \tt petersen\_graph(10)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 20 vertices and 30 edges
+\end{center}
+To obtain M\"obius--Kantor graph, input :
+\begin{center}
+  \tt petersen\_graph(8,3)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 16 vertices and 24 edges
+\end{center}
+Note that Desargues, D\"urer and Nauru graphs are also generalized Petersen graphs, respectively $ P(10,3) $, $ P(6,2) $ and $ P(12,5) $.
+
 \subsection{Isomorphic copy of a graph : {\tt isomorphic\_copy}, {\tt permute\_vertices}, {\tt relabel\_vertices}}
+
+The three commands presented in this section are used to obtain isomorphic copies of an existing graph. 
+
+The command {\tt isomorphic\_copy} accepts two arguments, a graph $ G(V,E) $ and a permutation $ \sigma $ of order $ |V| $, and returns the copy of graph $ G $ with vertices rearranged according to $ \sigma $.\\
+Input :
+\begin{center}
+  \tt isomorphic\_copy(path\_graph(5),randperm(5))
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 5 vertices and 4 edges
+\end{center}
+
+The command {\tt permute\_vertices} accepts two arguments, a graph $ G(V,E) $ and a list $ L $ of length $ |V| $ containing all vertices from $ V $ in a certain order, and returns a copy of $ G $ with vertices rearranged as specified by $ L $.\\
+Input :
+\begin{center}
+  \tt permute\_vertices(path\_graph([a,b,c,d]),[b,d,a,c])
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 4 vertices and 3 edges
+\end{center}
+
+The command {\tt relabel\_vertices} accepts two arguments, a graph $ G(V,E) $ and a list $ L $ of vertex labels, and returns the copy of $ G $ with vertices relabeled with labels from $ L $.\\
+Input :
+\begin{center}
+  \tt relabel\_vertices(path\_graph(4),[a,b,c,d])
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 4 vertices and 3 edges
+\end{center}
 
 \subsection{Extracting subgraphs of a graph : {\tt subgraph}, {\tt induced\_subgraph}}
 
-\subsection{Graph complement : {\tt graph\_complement}}
+The command {\tt subgraph} accepts two arguments, a graph $ G(V,E) $ and a list of edges $ L\subset E $, and returns the subgraph of $ G $ formed by edges from $ L $.\\
+Input :
+\begin{center}
+  \tt subgraph(complete\_graph(5),[[1,2],[2,3],[3,4],[4,1]])
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 4 vertices and 4 edges
+\end{center}
 
-\subsection{Union of graphs : {\tt graph\_union}, {\tt disjoint\_union}}
-
-\subsection{Joining two graphs : {\tt graph\_join}}
-
-\subsection{Graph power : {\tt graph\_power}}
+The command {\tt induced\_subgraph} accepts two arguments, a graph $ G(V,E) $ and a list of vertices $ L\subset V $, and returns the subgraph of $ G $ formed by all edges in $ E $ which have endpoints in $ L $.\\
+Input :
+\begin{center}
+  \tt induced\_subgraph(petersen\_graph(5),[1,2,3,6,7,9])
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 6 vertices and 6 edges
+\end{center}
 
 \subsection{Underlying graph : {\tt underlying\_graph}}
 
-\subsection{Reversing arc directions in a digraph : {\tt reverse\_graph}}
+The command {\tt underlying\_graph} accepts a graph $ G $ as its only argument and returns the underlying graph of $ G $ obtained by dropping the directions of arcs and weights of edges/arcs.\\
+Input :
+\begin{center}
+  \tt G:=digraph(\%\{[[1,2],6],[[2,3],4],[[3,1],5]\%\})
+\end{center}
+Output :
+\begin{center}
+  \tt a directed weighted graph with 3 vertices and 3 arcs
+\end{center}
+Input :
+\begin{center}
+  \tt underlying\_graph(G)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 3 vertices and 3 edges
+\end{center}
+
+\subsection{Reversing the edge directions : {\tt reverse\_graph}}
+
+The command {\tt reverse\_graph} accepts a graph $ G(V,E) $ as its only argument and returns the reverse graph $ G^T(V,E') $ of $ G $ where $ E'=\{(j,i):(i,j)\in E\} $, i.e.~returns the copy of $ G $ with the directions of all edges reversed. It is defined for both directed and undirected graphs, but gives meaningful results only for directed graphs. $ G^T $ is also called the \emph{transpose graph} of $ G $ because adjacency matrices of $ G $ and $ G^T $ are transposes of each other.\\
+Input :
+\begin{center}
+  \tt G:=digraph(6, \%\{[1,2],[2,3],[2,4],[4,5]\%\}):; GT:=reverse\_graph(G):; edges(GT)
+\end{center}
+Output :
+\begin{center}
+  \tt Done, Done, [[2,1],[3,2],[4,2],[5,4]]
+\end{center}
+
+\subsection{Graph complement : {\tt graph\_complement}}
+
+The command {\tt graph\_complement} accepts a graph $ G(V,E) $ as its only argument and returns the complement $ GC(V,EC) $ of $ G $, where $ EC $ is the largest set containing only edges/arcs not present in $ G $.\\
+Input :
+\begin{center}
+  \tt graph\_complement(cycle\_graph(5))
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 5 vertices and 5 edges
+\end{center}
+
+\subsection{Union of graphs : {\tt graph\_union}, {\tt disjoint\_union}}
+
+The command {\tt graph\_union} accepts a sequence of graphs $ G_k(V_k,E_k) $ for $ k=1,2,\dots,n $ as its argument and returns their union $ G(V,E) $, where $ V=V_1\cup V_2\cup\cdots\cup V_k $ and $ E=E_1\cup E_2\cup\cdots\cup E_k $.\\
+Input :
+\begin{center}
+  \tt G1:=graph([1,2,3],\%\{[1,2],[2,3]\%\}):; G2:=graph([1,2,3],\%\{[3,1],[2,3]\%\}):; graph\_union(G1,G2)
+\end{center}
+Output :
+\begin{center}
+  \tt Done, Done, an undirected unweighted graph with 3 vertices and 3 edges
+\end{center}
+
+The command {\tt disjoint\_union} accepts a sequence of graphs $ G_k(V_k,E_k) $ for $ k=1,2,\dots,n $ as its argument and returns their disjoint union $ G(V,E) $, obtained by labeling all vertices with strings "$ k $:$ v $" where $ v\in V_k $ and all edges with strings "$ k $:$ e $" where $ e\in E_k $ and calling the {\tt graph\_union} command subsequently. As all vertices and edges are labeled differently, it follows $ |V|=\sum_{k=1}^n|V_k| $ and $ |E|=\sum_{k=1}^n|E_k| $.\\
+Input :
+\begin{center}
+  \tt disjoint\_union(cycle\_graph(3),path\_graph(3))
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 6 vertices and 5 edges
+\end{center}
+
+\subsection{Joining two graphs : {\tt graph\_join}}
+
+The command {\tt graph\_join} accepts two graphs $ G $ and $ H $ as its arguments and returns the graph which is obtained by connecting all the vertices of $ G $ to all vertices of $ H $. The vertex labels in the resulting graph are strings of the form "$ 1 $:$ u $" and "$ 2 $:$ v $" where $ u $ is a vertex in $ G $ and $ v $ is a vertex in $ H $.\\
+Input :
+\begin{center}
+  \tt graph\_join(path\_graph(2),graph(3))
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 5 vertices and 7 edges
+\end{center}
+
+\subsection{Graph power : {\tt graph\_power}}
+
+The command {\tt graph\_power} accepts two arguments, a graph $ G(V,E) $ and a positive integer $ k $, and returns the $ k $-th power $ G^k $ of $ G $ with vertices $ V $ such that $ v,w,\in V $ are connected if and only if there exists a path of length at most $ k $ in $ G $. The adjacency matrix $ A_k $ of $ G^k $ is obtained by adding powers of the adjacency matrix $ A $ of $ G $ together :
+\[ A_k=\sum_{i=1}^k A^k. \]
+The above sum is obtained by assigning $ A_k\leftarrow A $ and repeating $ k-1 $ times the instruction $ A_k\leftarrow (A_k+I)\,A $, so exactly $ k $ matrix multiplications and $ k $ additions are required.\\
+Input :
+\begin{center}
+  \tt graph\_power(path\_graph(5),2)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 5 vertices and 7 edges
+\end{center}
+Input :
+\begin{center}
+  \tt graph\_power(path\_graph(5),3)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 5 vertices and 9 edges
+\end{center}
+
+\subsection{Reversing the edge directions : {\tt reverse\_graph}}
+
+The command {\tt reverse\_graph} accepts a graph $ G(V,E) $ as its only argument and returns the reverse graph $ G^T(V,E') $ of $ G $ where $ E'=\{(j,i):(i,j)\in E\} $, i.e.~returns the copy of $ G $ with the directions of all edges reversed. It is defined for both directed and undirected graphs, but gives meaningful results only for directed graphs. $ G^T $ is also called the \emph{transpose graph} of $ G $ because adjacency matrices of $ G $ and $ G^T $ are transposes of each other.\\
+Input :
+\begin{center}
+  \tt G:=digraph(6, \%\{[1,2],[2,3],[2,4],[4,5]\%\}):; GT:=reverse\_graph(G):; edges(GT)
+\end{center}
+Output :
+\begin{center}
+  \tt Done, Done, [[2,1],[3,2],[4,2],[5,4]]
+\end{center}
 
 \subsection{Graph product : {\tt cartesian\_product}, {\tt tensor\_product}}
 
+The command {\tt cartesian\_product} accepts a sequence of graphs $ G_k(V_k,E_k) $ for $ k=1,2,\dots,n $ as its argument and returns the Cartesian product $ G_1\times G_2\times\cdots\times G_n $ of the input graphs. The Cartesian product $ G(V,E)=G_1\times G_2 $ is the graph with list of vertices $ V=V_1\times V_2 $, labeled with strings "$ v_1 $:$ v_2 $" where $ v_1\in V_1 $ and $ v_2\in V_2 $, such that ("$ u_1 $:$ v_1 $","$ u_2 $:$ v_2 $") is in $ E $ if and only if $ u_1 $ is adjacent to $ u_2 $ and $ v_1=v_2 $ \textbf{or} $ u_1=u_2 $ and $ v_1 $ is adjacent to $ v_2 $.\\
+Input :
+\begin{center}
+  \tt G1:=graph(trail(1,2,3,4,1,5)):; G2:=star\_graph(3):;
+\end{center}
+Output :
+\begin{center}
+  \tt Done, Done
+\end{center}
+Input :
+\begin{center}
+  \tt cartesian\_product(G1,G2)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 20 vertices and 35 edges
+\end{center}
+
+The command {\tt tensor\_product} accepts a sequence of graphs $ G_k(V_k,E_k) $ for $ k=1,2,\dots,n $ as its argument and returns the tensor product $ G_1\times G_2\times\cdots\times G_n $ of the input graphs. The tensor product $ G(V,E)=G_1\times G_2 $ is the graph with list of vertices $ V=V_1\times V_2 $, labeled with strings "$ v_1 $:$ v_2 $" where $ v_1\in V_1 $ and $ v_2\in V_2 $, such that ("$ u_1 $:$ v_1 $","$ u_2 $:$ v_2 $") is in $ E $ if and only if $ u_1 $ is adjacent to $ u_2 $ \textbf{and} $ v_1 $ is adjacent to $ v_2 $.\\
+Input :
+\begin{center}
+  \tt tensor\_product(G1,G2)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 20 vertices and 30 edges
+\end{center}
+
 \subsection{Seidel switch : {\tt seidel\_switch}}
+
+The command {\tt seidel\_switch} accepts two arguments, an undirected and unweighted graph $ G(V,E) $ and a list of vertices $ L\subset V $, and returns the copy of $ G $ in which, for each vertex $ v\in L $, its neighbors become its non-neighbors and vice versa.\\
+Input :
+\begin{center}
+  \tt seidel\_switch(cycle\_graph(5),[1,2])
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 5 vertices and 7 edges
+\end{center}
 
 \section{Modifying graphs}
 

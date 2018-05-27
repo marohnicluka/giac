@@ -212,9 +212,9 @@ bool parse_matrix(graphe &G,const matrice &m,bool is_weight_matrix,int mode,bool
     if (mode<2) {
         G.set_directed(isdir);
         for (int i=0;i<n;++i) {
-            if (!is_zero(m[i][i]))
-                return false;
             for (int j=isdir?0:i+1;j<n;++j) {
+                if (i==j)
+                    continue;
                 const gen &w=m[i][j];
                 if (!is_zero(w)) {
                     G.add_edge(i,j);
@@ -1463,7 +1463,7 @@ static const char _complete_graph_s[]="complete_graph";
 static define_unary_function_eval(__complete_graph,&_complete_graph,_complete_graph_s);
 define_unary_function_ptr5(at_complete_graph,alias_at_complete_graph,&__complete_graph,0,true)
 
-/* USAGE:   petersen_graph([n],k)
+/* USAGE:   petersen_graph(n,[k])
  *
  * Returns the generalized Petersen graph G(n,k), where n and k are positive
  * integers. Parameter k defaults to 2.
@@ -3549,7 +3549,7 @@ gen _reverse_graph(const gen &g,GIAC_CONTEXT) {
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     if (!G.is_directed())
-        return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED,contextptr);
+        return G.to_gen();
     G.reverse(H);
     return H.to_gen();
 }
@@ -3705,7 +3705,7 @@ gen _graph_power(const gen &g,GIAC_CONTEXT) {
                 mij=1;
         }
     }
-    gen opt=symbolic(at_equal,makesequence(_GT_DIRECTED,graphe::boole(G.is_directed())));
+    gen opt=symbolic(at_equal,makesequence(_GT_DIRECTED,G.is_directed()));
     return _graph(makesequence(G.vertices(),mpow,opt),contextptr);
 }
 static const char _graph_power_s[]="graph_power";

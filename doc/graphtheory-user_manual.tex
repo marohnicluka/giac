@@ -760,6 +760,65 @@ Output :
 
 \section{Import and export}
 
+\subsection{Loading graphs from {\sf dot} files : {\tt import\_graph}}
+
+The command {\tt import\_graph} accepts a string {\tt filename} as its only argument and returns the graph constructed from instructions written in the file {\tt filename} or {\tt undef} on failure. The passed string should contain the path to a file in the {\sf dot} format. The file extension {\tt .dot} may be omitted in the {\tt filename} since {\sf dot} is the only supported format. If a relative path to the file is specified, i.e.~if it does not contain a leading forward slash, the current working directory (which can be obtained by calling the {\tt pwd} command) will be used as the reference. The working directory can be changed by using the command {\tt cd}.
+
+For the details about the {\sf dot} format see Section~\ref{sec:dotformat}.
+
+For example, assume that a file {\tt "philosophers.dot"} is saved in the directory {\tt dot/}, containing the graph describing the famous ``dining philosophers'' problem. To import it, input :
+\begin{center}
+  \tt G:=import\_graph("dot/philosophers.dot"
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 21 vertices and 27 edges
+\end{center}
+
+\subsection{Saving graphs to {\sf dot} files : {\tt export\_graph}}
+
+The command {\tt export\_graph} accepts two arguments, a graph $ G $ and a string {\tt filename}, and writes $ G $ to the file specified by {\tt filename} using the {\sf dot} language. {\tt filename} must be a path to the file, either relative or absolute; in the former case the current working directory will be used as the reference. The name of the file should be specified at the end of the path, with or without {\tt .dot} extension. The command returns 1 on success and 0 on failure.\\
+Input :
+\begin{center}
+  \tt export\_graph(G,"dot/copy\_of\_philosophers")
+\end{center}
+Output :
+\begin{center}
+  \tt 1
+\end{center}
+
+\subsection{The {\sf dot} file format overview}\label{sec:dotformat}
+
+Giac has the basic support for the {\sf dot} language. Each file is used to hold exactly one graph and should look like this :
+\begin{verbatim}
+strict? (graph | digraph) name? {
+  ...
+}
+\end{verbatim}
+The keyword {\tt strict} may be omitted, as well as the {\tt name} of the graph. For specifying undirected graphs the keyword {\tt graph} is used, while the {\tt digraph} keyword is used for undirected graphs.
+
+The {\tt graph}/{\tt digraph} environment contains a series of instructions describing how the graph should be built. Each instruction ends with the semicolon {\tt ;} and has one of the following forms.
+\begin{itemize}
+  \item Creating isolated vertices : {\tt vertex\_name [attributes]?}
+  \item Creating edges and trails : {\tt V1 <edgeop> V2 <edgeop> ... <edgeop> Vk [attributes]?}
+  \item Setting graph attributes : {\tt graph [atributes]}
+\end{itemize}
+
+Here, {\tt attributes} is a comma-separated list of tag-value pairs in form {\tt tag=value}, {\tt <edgeop>} is \verb|--| for undirected and {\tt ->} for directed graphs. Each of {\tt V1}, {\tt V2} etc.~is either a vertex name or a set of vertex names in form {\tt \{vertex\_name1 vertex\_name2 ...\}}. In the case a set is specified, each vertex from that set is connected to the neighbor operands. Every specified vertex will be created if it does not exist yet.
+
+Any line beginning with {\tt \#} is ignored. The {\sf dot} format supports C-like comments as well.
+
+Using the {\sf dot} syntax it is easy to specify a graph with adjacency lists. For example, the following is the contents of a file which defines the octahedral graph.
+\begin{verbatim}
+# octahedral graph
+graph "octahedron" {
+  1 -- {3 6 5 4};
+  2 -- {3 4 5 6};
+  3 -- {5 6};
+  4 -- {5 6};
+}
+\end{verbatim}
+
 \section{Graph properties}
 
 \section{Traversing graphs}

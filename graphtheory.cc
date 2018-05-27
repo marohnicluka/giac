@@ -86,6 +86,47 @@ bool has_suffix(const string &str,const string &suffix)
             str.compare(str.size()-suffix.size(),suffix.size(),suffix)==0;
 }
 
+string strip_string(const string &str) {
+    string res(str);
+    int i=0;
+    for (;res[i]==' ';++i);
+    res=res.substr(i);
+    while (res.back()==' ') {
+        res.pop_back();
+    }
+    return res;
+}
+
+string make_absolute_file_path(const string &relative_path) {
+    string path=string(get_current_dir_name())+"/"+relative_path;
+    vector<string> tokens;
+    size_t lastpos=0,pos;
+    while ((pos=path.find_first_of('/',lastpos))!=string::npos) {
+        tokens.push_back(path.substr(lastpos,pos-lastpos));
+        lastpos=pos+1;
+    }
+    tokens.push_back(path.substr(lastpos));
+    vector<string>::iterator it;
+    for (it=tokens.begin();it!=tokens.end();++it) {
+        *it=strip_string(*it);
+    }
+    int i;
+    while ((it=find(tokens.begin(),tokens.end(),string("..")))!=tokens.end()) {
+        if (it==tokens.begin())
+            return path;
+        i=it-tokens.begin()-1;
+        tokens.erase(it);
+        tokens.erase(tokens.begin()+i);
+    }
+    string res;
+    for (it=tokens.begin();it!=tokens.end();++it) {
+        res=res+*it;
+        if (it+1!=tokens.end())
+            res=res+"/";
+    }
+    return res;
+}
+
 /* returns true iff g is a graph and writes the basic info to 'display_str' */
 bool is_graphe(const gen &g,string &disp_out,GIAC_CONTEXT) {
     if (g.type!=_VECT || g.subtype!=_GRAPH__VECT)
@@ -612,7 +653,11 @@ gen _export_graph(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     if (!G.read_gen(gr))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    string filename=graphe::genstring2str(name)+".dot";
+    string filename=graphe::genstring2str(name);
+    if (!has_suffix(filename,".dot"))
+        filename=filename+".dot";
+    if (filename.front()!='/')
+        filename=make_absolute_file_path(filename);
     return G.write_dot(filename)?1:0;
 }
 static const char _export_graph_s[]="export_graph";
@@ -622,8 +667,7 @@ define_unary_function_ptr5(at_export_graph,alias_at_export_graph,&__export_graph
 /* USAGE:   import_graph("path/to/graphname[.dot]")
  *
  * Returns the graph constructed from instructions in the file
- * 'path/to/graphname.dot' (in dot format). Returns 1 on success and 0 on
- * failure.
+ * 'path/to/graphname.dot' (in dot format) or undef on failure.
  */
 gen _import_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -631,8 +675,12 @@ gen _import_graph(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     graphe G(contextptr);
     string filename=graphe::genstring2str(g);
+    if (filename.empty())
+        return undef;
     if (!has_suffix(filename,".dot"))
         filename=filename+".dot";
+    if (filename.front()!='/')
+        filename=make_absolute_file_path(filename);
     if (!G.read_dot(filename)) {
         gt_err_display(_GT_ERR_READING_FAILED,contextptr);
         return undef;

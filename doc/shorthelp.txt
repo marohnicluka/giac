@@ -44,7 +44,7 @@ export_graph(complete_graph(5),"K5")
 
 # import_graph
 0 import_graph("path/to/graphname[.dot]")
-2 Returns the graph constructed from instructions in the file 'path/to/graphname.dot' (in dot format). Returns 1 on success and 0 on failure.
+2 Returns the graph constructed from instructions in the file 'path/to/graphname.dot' (in dot format) or undef on failure.
 -1 export_graph
 import_graph("K5.dot")
 

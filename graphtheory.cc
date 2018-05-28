@@ -4542,6 +4542,57 @@ static const char _is_integer_graph_s[]="is_integer_graph";
 static define_unary_function_eval(__is_integer_graph,&_is_integer_graph,_is_integer_graph_s);
 define_unary_function_ptr5(at_is_integer_graph,alias_at_is_integer_graph,&__is_integer_graph,0,true)
 
+/* USAGE:   spanning_tree(G,[r])
+ *
+ * Returns a spanning tree of the undirected graph G, containing all vertices
+ * of G [with vertex r as the root node].
+ */
+gen _spanning_tree(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    gen root(undef);
+    graphe G(contextptr),T(contextptr);
+    if (g.subtype==_SEQ__VECT) {
+        if (g._VECTptr->size()!=2)
+            return gensizeerr(contextptr);
+        root=g._VECTptr->back();
+    }
+    if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
+    int i=is_undef(root)?0:G.node_index(root);
+    if (i<0)
+        return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+    G.spanning_tree(i,T);
+    return T.to_gen();
+}
+static const char _spanning_tree_s[]="spanning_tree";
+static define_unary_function_eval(__spanning_tree,&_spanning_tree,_spanning_tree_s);
+define_unary_function_ptr5(at_spanning_tree,alias_at_spanning_tree,&__spanning_tree,0,true)
+
+/* USAGE:   minimal_spanning_tree(G)
+ *
+ * Returns the minimal spanning tree of the undirected graph G.
+ */
+gen _minimal_spanning_tree(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr),T(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
+    if (!G.is_weighted())
+        G.spanning_tree(0,T);
+    else
+        G.minimal_spanning_tree(T);
+    return T.to_gen();
+}
+static const char _minimal_spanning_tree_s[]="minimal_spanning_tree";
+static define_unary_function_eval(__minimal_spanning_tree,&_minimal_spanning_tree,_minimal_spanning_tree_s);
+define_unary_function_ptr5(at_minimal_spanning_tree,alias_at_minimal_spanning_tree,&__minimal_spanning_tree,0,true)
+
 #ifndef NO_NAMESPACE_GIAC
 }
 #endif // ndef NO_NAMESPACE_GIAC

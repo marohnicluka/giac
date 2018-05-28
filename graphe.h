@@ -289,28 +289,36 @@ public:
         int w() const { return m_w; }
     };
 
-    struct convexhull_comparator {
-        const layout *x;
-        const point *lp;
-        convexhull_comparator(const layout *x_orig,const point *lp_orig) {
-            x=x_orig;
-            lp=lp_orig;
-        }
-        bool operator()(int i,int j) const {
-            const point &pt1=x->at(i),&pt2=x->at(j);
-            if (pt1[1]==pt2[1])
-                return pt1[0]<pt2[0];
-            double dx1=pt1[0]-lp->front(),dx2=pt2[0]-lp->front();
-            double dy1=pt1[1]-lp->back(),dy2=pt2[1]-lp->back();
-            double r=std::sqrt((dx2*dx2+dy2*dy2)/(dx1*dx1+dy1*dy1));
-            return dx2<dx1*r;
-        }
+    class disjoint_set {
+        struct element {
+            int id;
+            int parent;
+            int rank;
+            int size;
+            element() { id=-1; }
+        };
+        std::vector<element> elements;
+        void merge(element &x,element &y);
+    public:
+        disjoint_set(int n) { elements.resize(n); }
+        void make_set(int id);
+        bool is_stored(int id);
+        int find(int id);
+        void unite(int id1,int id2,bool by_rank=true);
     };
 
     struct ipairs_comparator {
         bool operator()(const ipair &a,const ipair &b) {
             return a.second<b.second;
         }
+    };
+
+    struct edges_comparator {
+        graphe *G;
+        bool operator()(const ipair &a,const ipair &b) {
+            return G->weight(a)<G->weight(b);
+        }
+        edges_comparator(graphe *gr) { G=gr; }
     };
 
     typedef std::vector<vertex>::const_iterator node_iter;
@@ -498,12 +506,13 @@ public:
     bool is_empty() const { return nodes.empty(); }
     matrice weight_matrix() const;
     gen weight(int i,int j) const;
+    gen weight(const ipair &edge) const { return weight(edge.first,edge.second); }
     int edge_count() const;
     int node_count() const { return nodes.size(); }
     vecteur vertices(int sg=-1) const;
     void unvisit_all_nodes(int sg=-1);
     void unset_all_ancestors(int sg=-1);
-    void dfs(int root, bool rec=true,bool clr=true,ivector *D=NULL,int sg=-1,bool skip_embedded=false,int sink=-1);
+    void dfs(int root,bool rec=true,bool clr=true,ivector *D=NULL,int sg=-1,bool skip_embedded=false);
     void bfs(int root,bool rec=true,bool clr=true,ivector *D=NULL,int sg=-1,bool skip_embedded=false);
     const ivector &get_discovered_nodes() const { return discovered_nodes; }
     bool is_connected(int sg=-1);
@@ -664,6 +673,8 @@ public:
     bool topologic_sort(ivector &ordering);
     bool is_arborescence() const;
     void reverse(graphe &G) const;
+    void spanning_tree(int i,graphe &T,int sg=-1);
+    void minimal_spanning_tree(graphe &T,int sg=-1);
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

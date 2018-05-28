@@ -36,7 +36,7 @@ namespace giac {
 #define MARGIN_FACTOR 0.139680581996
 #define NEGLIGIBILITY_FACTOR 0.0195106649868
 #define PLESTENJAK_MAX_TRIES 6
-#define SYMMETRY_DETECTION_TIMEOUT 0.6
+#define SYMMETRY_DETECTION_TIMEOUT 1.5
 #define PACKING_ASPECT_RATIO 3.08
 
 const gen graphe::VRAI=gen(1).change_subtype(_INT_BOOLEAN);
@@ -1211,7 +1211,7 @@ vecteur graphe::edges(bool include_weights,int sg) const {
         edge[1]=nodes[it->second].label();
         if (!isdir)
             edge=*_sort(edge,ctx)._VECTptr;
-        ret[i++]=include_weights?makevecteur(edge,weight(it->first,it->second)):edge;
+        ret[i++]=include_weights?makevecteur(edge,weight(*it)):edge;
     }
     return ret;
 }
@@ -3061,58 +3061,60 @@ void graphe::edge_labels_placement(const layout &x,double tol) {
         scale_point(p,d/3);
         add_point(p,p1);
     }
-    // keep updating the positions until the system freezes
-    do {
-        // recompute positions of all edge labels by applying the repulsive forces
-        max_displacement=0;
-        for (ipairs_iter it=E.begin();it!=E.end();++it) {
-            k=it-E.begin();
-            const point &p1=x[it->first],&p2=x[it->second],&u=dir[k];
-            point &p=y[k];
-            K=D[k];
-            clear_point_coords(force);
-            // compute the repulsive forces applying to p
-            for (int i=0;i<n;++i) {
-                if (i!=k)
-                    accumulate_repulsive_force(p,y[i],DBL_MAX,K,shrinking_factor*tol,force,true);
-            }
-            accumulate_repulsive_force(p,p1,DBL_MAX,K,shrinking_factor*tol,force);
-            accumulate_repulsive_force(p,p2,DBL_MAX,K,shrinking_factor*tol,force);
-            // compute the attractive forces applying to p
-            scale_point(v,point_distance(p,p1,v)/K);
-            add_point(force,v);
-            scale_point(v,point_distance(p,p2,v)/K);
-            add_point(force,v);
-            // compute projection of the resultant force onto the vector u
-            norm=point_displacement(force);
-            if (norm==0)
-                continue;
-            norm=point_dotprod(force,u);
-            copy_point(u,force);
-            scale_point(force,norm);
-            norm=std::abs(norm);
-            // update the position of p, assuring that it stays between p1 and p2
-            if (step_length*K<norm) {
-                scale_point(force,step_length*K/norm);
-                norm=step_length*K;
-            }
-            for (int i=0;i<2;++i) {
-                maxnorm=point_distance(p,i==0?p1:p2,v)*shrinking_factor;
-                if (point_dotprod(force,v)>0) {
-                    if (norm>maxnorm) {
-                        scale_point(force,maxnorm/norm);
-                        norm=maxnorm;
+    if (n<300) {
+        // keep updating the positions until the system freezes
+        do {
+            // recompute positions of all edge labels by applying the repulsive forces
+            max_displacement=0;
+            for (ipairs_iter it=E.begin();it!=E.end();++it) {
+                k=it-E.begin();
+                const point &p1=x[it->first],&p2=x[it->second],&u=dir[k];
+                point &p=y[k];
+                K=D[k];
+                clear_point_coords(force);
+                // compute the repulsive forces applying to p
+                for (int i=0;i<n;++i) {
+                    if (i!=k)
+                        accumulate_repulsive_force(p,y[i],DBL_MAX,K,shrinking_factor*tol,force,true);
+                }
+                accumulate_repulsive_force(p,p1,DBL_MAX,K,shrinking_factor*tol,force);
+                accumulate_repulsive_force(p,p2,DBL_MAX,K,shrinking_factor*tol,force);
+                // compute the attractive forces applying to p
+                scale_point(v,point_distance(p,p1,v)/K);
+                add_point(force,v);
+                scale_point(v,point_distance(p,p2,v)/K);
+                add_point(force,v);
+                // compute projection of the resultant force onto the vector u
+                norm=point_displacement(force);
+                if (norm==0)
+                    continue;
+                norm=point_dotprod(force,u);
+                copy_point(u,force);
+                scale_point(force,norm);
+                norm=std::abs(norm);
+                // update the position of p, assuring that it stays between p1 and p2
+                if (step_length*K<norm) {
+                    scale_point(force,step_length*K/norm);
+                    norm=step_length*K;
+                }
+                for (int i=0;i<2;++i) {
+                    maxnorm=point_distance(p,i==0?p1:p2,v)*shrinking_factor;
+                    if (point_dotprod(force,v)>0) {
+                        if (norm>maxnorm) {
+                            scale_point(force,maxnorm/norm);
+                            norm=maxnorm;
+                        }
                     }
                 }
+                add_point(p,force);
+                // update the maximal displacement for this iteration
+                norm/=K;
+                if (norm>max_displacement)
+                    max_displacement=norm;
             }
-            add_point(p,force);
-            // update the maximal displacement for this iteration
-            norm/=K;
-            if (norm>max_displacement)
-                max_displacement=norm;
-        }
-        step_length*=shrinking_factor; // simple cooling scheme
-    } while (max_displacement>tol);
+            step_length*=shrinking_factor; // simple cooling scheme
+        } while (max_displacement>tol);
+    }
     // store edge label positions as edge attributes
     double d1,d2;
     for (layout_iter it=y.begin();it!=y.end();++it) {
@@ -4375,17 +4377,17 @@ bool graphe::find_path(int i,int j,ivector &path,int sg,bool skip_embedded) {
 void graphe::join_edges(const graphe &G) {
     bool weighted=G.is_weighted() && this->is_weighted();
     vecteur E=G.edges(weighted);
-    gen v,w,weight(1);
+    gen v,w,wgh(1);
     for (const_iterateur it=E.begin();it!=E.end();++it) {
         if (weighted) {
             v=it->_VECTptr->front()._VECTptr->front();
             w=it->_VECTptr->front()._VECTptr->back();
-            weight=it->_VECTptr->back();
+            wgh=it->_VECTptr->back();
         } else {
             v=it->_VECTptr->front();
             w=it->_VECTptr->back();
         }
-        add_edge(v,w,weight);
+        add_edge(v,w,wgh);
     }
 }
 
@@ -5221,7 +5223,7 @@ bool graphe::is_equal(const graphe &G) const {
         return false;
     if (is_weighted()) {
         for (edgeset_iter it=edg.begin();it!=edg.end();++it) {
-            if (weight(it->first,it->second)!=G.weight(it->first,it->second))
+            if (weight(*it)!=G.weight(*it))
                 return false;
         }
     }
@@ -5465,7 +5467,7 @@ bool graphe::points_coincide(const point &p,const point &q,double tol) {
 }
 
 /*
- * IMPLEMENTATION OF PURCHASE_AXIS CLASS
+ * IMPLEMENTATION OF AXIS CLASS
  */
 
 graphe::axis::axis(const layout &x,int i,int j,const point &center) {
@@ -5514,7 +5516,62 @@ double graphe::axis::distance(const point &p) const {
 }
 
 /*
- * END OF PURCHASE_AXIS CLASS
+ * END OF AXIS CLASS
+ */
+
+/*
+ * IMPLEMENTATION OF THE DISJOINT SET DATA STRUCTURE
+ */
+
+bool graphe::disjoint_set::is_stored(int id) {
+    assert(id>=0 && id<int(elements.size()));
+    for (vector<element>::const_iterator it=elements.begin();it!=elements.end();++it) {
+        if (it->id==id)
+            return true;
+    }
+    return false;
+}
+
+void graphe::disjoint_set::make_set(int id) {
+    if (is_stored(id))
+        return;
+    element &e=elements[id];
+    e.id=id;
+    e.parent=id;
+    e.rank=0;
+    e.size=1;
+}
+
+int graphe::disjoint_set::find(int id) {
+    assert(id>=0 && id<int(elements.size()));
+    element &e=elements[id];
+    assert(e.id>=0);
+    if (e.parent!=id)
+        e.parent=find(e.parent);
+    return e.parent;
+}
+
+void graphe::disjoint_set::unite(int id1,int id2,bool by_rank) {
+    int p1=find(id1),p2=find(id2);
+    if (p1==p2)
+        return;
+    element &x=elements[p1],&y=elements[p2];
+    if ((by_rank && x.rank<y.rank) || (!by_rank && x.size<y.size))
+        merge(y,x);
+    else
+        merge(x,y);
+}
+
+void graphe::disjoint_set::merge(element &x,element &y) {
+   // merge y into x
+   y.parent=x.id;
+   x.size+=y.size;
+   if (x.rank==y.rank)
+       ++x.rank;
+}
+
+/*
+ * END OF DISJOINT_SET CLASS
  */
 
 /* promote all edge crossings to vertices (2D layout is required) */
@@ -5946,7 +6003,7 @@ bool graphe::get_leading_cycle(ivector &c) const {
 }
 
 /* depth-first graph traversal with O(n+m) time and O(m) space complexity */
-void graphe::dfs(int root,bool rec,bool clr,ivector *D,int sg,bool skip_embedded,int sink) {
+void graphe::dfs(int root,bool rec,bool clr,ivector *D,int sg,bool skip_embedded) {
     if (clr) {
         unvisit_all_nodes(sg);
         unset_all_ancestors(sg);
@@ -5969,8 +6026,6 @@ void graphe::dfs(int root,bool rec,bool clr,ivector *D,int sg,bool skip_embedded
             if (rec)
                 d.push_back(i);
             v.set_visited(true);
-            if (sink>=0 && i==sink)
-                continue;
             oldsize=node_stack.size();
             for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
                 j=*it;
@@ -6399,6 +6454,57 @@ void graphe::reverse(graphe &G) const {
             G.add_edge(j,i,v.neighbor_attributes(j));
         }
     }
+}
+
+/* write a spanning tree of this graph with i-th node as root to T, time complexity O(n+m) */
+void graphe::spanning_tree(int i,graphe &T,int sg) {
+    T.clear();
+    vecteur V=vertices(sg);
+    T.add_nodes(V);
+    ivector indices(V.size());
+    int v,p;
+    if (sg>=0) {
+        for (const_iterateur it=V.begin();it!=V.end();++it) {
+            v=it-V.begin();
+            indices[v]=node_index(*it);
+        }
+    }
+    dfs(i,false,true,NULL,sg);
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        if (sg>=0 && it->subgraph()!=sg)
+            continue;
+        if ((p=it->ancestor())>=0) {
+            if (sg>=0)
+                T.add_edge(indices[it-nodes.begin()],indices[p]);
+            else
+                T.add_edge(it-nodes.begin(),p);
+        }
+    }
+}
+
+/* write the minimal spanning tree of this graph to T,
+ * use Kruskal's algorithm with time complexity O(m*log(n)) */
+void graphe::minimal_spanning_tree(graphe &T,int sg) {
+    assert(!is_directed() && is_weighted());
+    ipairs E,res;
+    get_edges_as_pairs(E,false,sg);
+    edges_comparator comp(this);
+    sort(E.begin(),E.end(),comp);
+    int v,u;
+    disjoint_set ds(node_count());
+    for (ipairs_iter it=E.begin();it!=E.end();++it) {
+        ds.make_set(it->first);
+        ds.make_set(it->second);
+    }
+    for (ipairs_iter it=E.begin();it!=E.end();++it) {
+        u=it->first;
+        v=it->second;
+        if (ds.find(u)!=ds.find(v)) {
+            res.push_back(*it);
+            ds.unite(u,v);
+        }
+    }
+    subgraph(res,T,false);
 }
 
 #ifndef NO_NAMESPACE_GIAC

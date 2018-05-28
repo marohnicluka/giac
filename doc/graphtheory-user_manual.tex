@@ -809,7 +809,7 @@ The {\tt graph}/{\tt digraph} environment contains a series of instructions desc
 
 Here, {\tt attributes} is a comma-separated list of tag-value pairs in form {\tt tag=value}, {\tt <edgeop>} is \verb|--| for undirected and {\tt ->} for directed graphs. Each of {\tt V1}, {\tt V2} etc.~is either a vertex name or a set of vertex names in form {\tt \{vertex\_name1 vertex\_name2 ...\}}. In the case a set is specified, each vertex from that set is connected to the neighbor operands. Every specified vertex will be created if it does not exist yet.
 
-Any line beginning with {\tt \#} is ignored. The {\sf dot} format supports C-like comments as well.
+Any line beginning with {\tt \#} is ignored. C-like line and block comments are skipped as well.
 
 Using the {\sf dot} syntax it is easy to specify a graph with adjacency lists. For example, the following is the contents of a file which defines the octahedral graph with 6 vertices and 12 edges.
 \begin{verbatim}

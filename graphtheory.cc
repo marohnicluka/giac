@@ -482,7 +482,7 @@ define_unary_function_ptr5(at_trail,alias_at_trail,&__trail,0,true)
  * are: clebsch - coxeter - desargues - dodecahedron - durer - dyck - grinberg
  * - grotzsch - harries - harries-wong - heawood - herschel - icosahedron -
  * levi - ljubljana - mcgee - mobius-kantor - nauru - octahedron - pappus -
- * petersen - robertson - soccerball - tehtrahedron
+ * petersen - robertson - soccerball - shrikhande - tehtrahedron
 */
 gen _graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -4439,6 +4439,108 @@ gen _foldr(const gen &g,GIAC_CONTEXT) {
 static const char _foldr_s[]="foldr";
 static define_unary_function_eval(__foldr,&_foldr,_foldr_s);
 define_unary_function_ptr5(at_foldr,alias_at_foldr,&__foldr,0,true)
+
+/* UASGE:   graph_spectrum(G)
+ *
+ * Returns the graph spectrum of G. The return value is a list of lists with two
+ * elements, each containing an eigenvalue and its multiplicity.
+ */
+gen _graph_spectrum(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    matrice A,res;
+    G.adjacency_matrix(A);
+    vecteur ev=*_eigenvals(A,contextptr)._VECTptr;
+    gen_map ev_map;
+    for (const_iterateur it=ev.begin();it!=ev.end();++it) {
+        ev_map[*it]+=1;
+    }
+    for (gen_map::const_iterator it=ev_map.begin();it!=ev_map.end();++it) {
+        res.push_back(makevecteur(it->first,it->second));
+    }
+    return res;
+}
+static const char _graph_spectrum_s[]="graph_spectrum";
+static define_unary_function_eval(__graph_spectrum,&_graph_spectrum,_graph_spectrum_s);
+define_unary_function_ptr5(at_graph_spectrum,alias_at_graph_spectrum,&__graph_spectrum,0,true)
+
+/* UASGE:   seidel_spectrum(G)
+ *
+ * Returns the Seidel spectrum of G. The return value is a list of lists with two
+ * elements, each containing an eigenvalue and its multiplicity.
+ */
+gen _seidel_spectrum(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    int n=G.node_count();
+    matrice A,I,J,res;
+    G.adjacency_matrix(A);
+    I=*_idn(n,contextptr)._VECTptr;
+    J=*_matrix(makesequence(n,n,1),contextptr)._VECTptr;
+    vecteur ev=*_eigenvals(J-I-A-A,contextptr)._VECTptr;
+    gen_map ev_map;
+    for (const_iterateur it=ev.begin();it!=ev.end();++it) {
+        ev_map[*it]+=1;
+    }
+    for (gen_map::const_iterator it=ev_map.begin();it!=ev_map.end();++it) {
+        res.push_back(makevecteur(it->first,it->second));
+    }
+    return res;
+}
+static const char _seidel_spectrum_s[]="seidel_spectrum";
+static define_unary_function_eval(__seidel_spectrum,&_seidel_spectrum,_seidel_spectrum_s);
+define_unary_function_ptr5(at_seidel_spectrum,alias_at_seidel_spectrum,&__seidel_spectrum,0,true)
+
+/* USAGE:   graph_charpoly(G,[x])
+ *
+ * Returns the value p(x) of the characteristic polynomial p of graph G. If x is
+ * omitted, a list of coefficients of p is returned.
+ */
+gen _graph_charpoly(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    identificateur x(" x");
+    gen val(undef);
+    graphe G(contextptr);
+    if (g.subtype==_SEQ__VECT) {
+        if (g._VECTptr->size()!=2)
+            return gensizeerr(contextptr);
+        val=g._VECTptr->back();
+    }
+    if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    matrice A;
+    G.adjacency_matrix(A);
+    if (is_undef(val))
+        return _eval(symbolic(at_charpoly,A),contextptr);
+    gen p=_eval(symbolic(at_charpoly,makesequence(A,x)),contextptr);
+    return _subs(makesequence(p,x,val),contextptr);
+}
+static const char _graph_charpoly_s[]="graph_charpoly";
+static define_unary_function_eval(__graph_charpoly,&_graph_charpoly,_graph_charpoly_s);
+define_unary_function_ptr5(at_graph_charpoly,alias_at_graph_charpoly,&__graph_charpoly,0,true)
+
+/* UASGE:   is_integer_graph(G)
+ *
+ * Returns true iff the spectrum of graph G consists only of integers.
+ */
+gen _is_integer_graph(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    matrice A;
+    G.adjacency_matrix(A);
+    return graphe::boole(is_integer_vecteur(*_eigenvals(A,contextptr)._VECTptr,true));
+}
+static const char _is_integer_graph_s[]="is_integer_graph";
+static define_unary_function_eval(__is_integer_graph,&_is_integer_graph,_is_integer_graph_s);
+define_unary_function_ptr5(at_is_integer_graph,alias_at_is_integer_graph,&__is_integer_graph,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

@@ -1145,3 +1145,31 @@ foldl(F,init,a,b,c)
 -2 foldl
 -3 map
 foldr(F,init,a,b,c)
+
+# graph_spectrum
+0 graph_spectrum(G)
+2 Returns the graph spectrum of G as a list of lists with two elements, each containing an eigenvalue and its multiplicity.
+-1 graph_charpoly
+-2 seidel_spectrum
+-3 is_integer_graph
+graph_spectrum(cycle_graph(5))
+
+# seidel_spectrum
+0 seidel_spectrum(G)
+2 Returns the Seidel spectrum of graph G as a list of lists with two elements, each containing an eigenvalue and its multiplicity.
+-1 graph_spectrum
+seidel_spectrum(graph("clebsch"))
+
+# graph_charpoly
+0 graph_charpoly(G,[x])
+2 Returns the value p(x) of the characteristic polynomial p of graph G. If x is omitted, a list of coefficients of p is returned.
+-1 graph_spectrum
+-2 charpoly
+graph_charpoly(graph(%{[1,2],[2,3]%}))
+graph_charpoly(graph("shrikhande"))
+
+# is_integer_graph
+0 is_integer_graph(G)
+2 Returns true iff the spectrum of graph G consists only of integers.
+-1 graph_spectrum
+is_integer_graph(graph("levi"))

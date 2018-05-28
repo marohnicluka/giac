@@ -616,6 +616,7 @@ public:
     void make_lcf_graph(const ivector &jumps,int e);
     void make_lcf_graph(const int *j,int e);
     void make_sierpinski_graph(int n,int k,bool triangle);
+    void make_shrikhande_graph();
     void make_complete_graph();
     void make_complete_multipartite_graph(const ivector &partition_sizes);
     void make_petersen_graph(int n,int k);

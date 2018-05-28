@@ -76,7 +76,7 @@ The {\tt graph} command may also be called by passing a string, representing the
   \item Clebsch graph : {\tt clebsch}
   \item Coxeter graph : {\tt coxeter}
   \item Desargues graph : {\tt desargues}
-  \item Dodecahedron graph : {\tt dodecahedron}
+  \item Dodecahedral graph : {\tt dodecahedron}
   \item D\"urer graph : {\tt durer}
   \item Dyck graph : {\tt dyck}
   \item Grinberg graph : {\tt grinberg}
@@ -85,18 +85,19 @@ The {\tt graph} command may also be called by passing a string, representing the
   \item Harries--Wong graph : {\tt harries-wong}
   \item Heawood graph : {\tt heawood}
   \item Herschel graph : {\tt herschel}
-  \item Icosahedron graph : {\tt icosahedron}
+  \item Icosahedral graph : {\tt icosahedron}
   \item Levi graph : {\tt levi}
   \item Ljubljana graph : {\tt ljubljana}
   \item McGee graph : {\tt mcgee}
   \item M\"obius--Kantor graph : {\tt mobius-kantor}
   \item Nauru graph : {\tt nauru}
-  \item Octahedron graph : {\tt octahedron}
+  \item Octahedral graph : {\tt octahedron}
   \item Pappus graph : {\tt pappus}
   \item Petersen graph : {\tt petersen}
   \item Robertson graph : {\tt robertson}
   \item Soccer ball graph : {\tt soccerball}
-  \item Tetrahedron graph : {\tt tehtrahedron}
+  \item Shrikhande graph : {\tt shrikhande}
+  \item Tetrahedral graph : {\tt tehtrahedron}
 \end{itemize}
 
 The {\tt digraph} command is used for creating directed graphs, although it is also possible with the {\tt graph} command by specifying the option {\tt directed=true}. Actually, calling {\tt digraph} is the same as calling {\tt graph} with that option appended to the sequence of arguments. However, creating special graphs is not supported by {\tt digraph} since they are all undirected. Edges in directed graphs are called \emph{arcs}. Edges and arcs are different structures: an edge is represented by a two-element set containing its endpoints, while an arc is represented by the ordered pairs of its endpoints.
@@ -506,8 +507,8 @@ Output :
 
 \subsection{Sierpiński graphs : {\tt sierpinski\_graph}}
 
-The command {\tt sierpinski\_graph} accepts two or three arguments. Calling the command with two positive integers $ n $ and $ k $ produces the Sierpiński graph\footnote{For the definition see the paper ``A survey and classification of Sierpiński-type
-graphs'' by Andreas M.~Hinz et al.} $ S_k^n $. In particular, for $ k=2 $ a path with $ 2^n $ vertices is returned, and for $ k=3 $ one obtains the Sierpiński sieve graph of order $ n $. If the symbol {\tt triangle} is passed as the optional third argument, a Sierpiński triangle graph $ ST_k^n $ is returned. It is obtained by contracting all non-clique edges from $ S_k^n $.\\
+The command {\tt sierpinski\_graph} accepts two or three arguments. Calling the command with two positive integers $ n $ and $ k $ produces the Sierpiński graph\footnote{For the complete definition and properties see the paper ``A survey and classification of Sierpiński-type
+graphs'' by Andreas M.~Hinz et al.} $ S_k^n $. If the symbol {\tt triangle} is passed as the optional third argument, a Sierpiński triangle graph $ ST_k^n $ is returned. It is obtained by contracting all non-clique edges from $ S_k^n $. In particular, $ ST_3^n $ is the well-known Sierpiński sieve graph of order $ n $.\\
 Input :
 \begin{center}
   \tt sierpinski\_graph(4,3)
@@ -527,7 +528,7 @@ Output :
 
 \subsection{Generalized Petersen graphs : {\tt petersen\_graph}}
 
-The command {\tt petersen\_graph} accepts one or two arguments : a positive integer $ n $ and optionally a positive integer $ k $ (which defaults to 2). The command returns generalized Petersen graph $ P(n,k) $ which is a connected cubic graph consisting of an inner star polygon $ {n,k} $ and an outer regular polygon $ {n} $ such that the corresponding vertices in inner and outer polygons are connected with edges. If $ k=1 $, the prism graph of order $ n $ is obtained.\\
+The command {\tt petersen\_graph} accepts one or two arguments : a positive integer $ n $ and optionally a positive integer $ k $ (which defaults to 2). The command returns generalized Petersen graph $ P(n,k) $ which is a connected cubic graph consisting of, in Schl\"afli notation, an inner star polygon $ \{n,k\} $ and an outer regular polygon $ \{n\} $ such that the $ n  $ pairs of corresponding vertices in inner and outer polygons are connected with edges. If $ k=1 $, the prism graph of order $ n $ is obtained.\\
 For example, to obtain the dodecahedral graph $ P(10,2) $ one may input :
 \begin{center}
   \tt petersen\_graph(10)
@@ -789,13 +790,15 @@ Output :
 
 \subsection{The {\sf dot} file format overview}\label{sec:dotformat}
 
-Giac has the basic support for the {\sf dot} language. Each file is used to hold exactly one graph and should look like this :
+Giac has the basic support for the {\sf dot} language\footnote{For the complete syntax definition see \url{https://www.graphviz.org/doc/info/lang.html}}. Each file is used to hold exactly one graph and should look like this :
 \begin{verbatim}
 strict? (graph | digraph) name? {
   ...
 }
 \end{verbatim}
-The keyword {\tt strict} may be omitted, as well as the {\tt name} of the graph. For specifying undirected graphs the keyword {\tt graph} is used, while the {\tt digraph} keyword is used for undirected graphs.
+The keyword {\tt strict} may be omitted, as well as the {\tt name} of the graph, as indicated by the question marks. The former is used to differentiate between simple graphs (strict) and multigraphs (non-strict). Since this package supports only simple graphs, {\tt strict} is redundant.
+
+For specifying undirected graphs the keyword {\tt graph} is used, while the {\tt digraph} keyword is used for undirected graphs.
 
 The {\tt graph}/{\tt digraph} environment contains a series of instructions describing how the graph should be built. Each instruction ends with the semicolon {\tt ;} and has one of the following forms.
 \begin{itemize}
@@ -808,7 +811,7 @@ Here, {\tt attributes} is a comma-separated list of tag-value pairs in form {\tt
 
 Any line beginning with {\tt \#} is ignored. The {\sf dot} format supports C-like comments as well.
 
-Using the {\sf dot} syntax it is easy to specify a graph with adjacency lists. For example, the following is the contents of a file which defines the octahedral graph.
+Using the {\sf dot} syntax it is easy to specify a graph with adjacency lists. For example, the following is the contents of a file which defines the octahedral graph with 6 vertices and 12 edges.
 \begin{verbatim}
 # octahedral graph
 graph "octahedron" {
@@ -822,6 +825,10 @@ graph "octahedron" {
 \section{Graph properties}
 
 \section{Traversing graphs}
+
+\subsection{Shortest path in weighted graphs : {\tt dijkstra}}
+
+\subsection{Shortest path in unweighted graphs : {\tt shortest\_path}}
 
 \section{Visualizing graphs}
 

@@ -60,11 +60,11 @@ const int graphe::clebsch_graph[] = {
     1,      3,5,9,14,-1,
     2,      3,6,10,13,-1,
     3,      7,11,12,-1,
-    4,      6,8,11,12,-1,
+    4,      5,6,11,12,-1,
     5,      7,10,13,-1,
     6,      7,9,14,-1,
     7,      8,15,-1,
-    8,      9,10,-1,
+    8,      9,10,12,-1,
     9,      11,13,-1,
     10,     11,14,-1,
     11,     15,-1,
@@ -862,6 +862,8 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
             add_node(i);
         }
         read_special(soccer_ball_graph);
+    } else if (name=="shrikhande") {
+        make_shrikhande_graph();
     } else if (name=="tetrahedron") {
         for (int i=2;i<=4;++i) {
             add_node(i);
@@ -3814,6 +3816,31 @@ void graphe::make_sierpinski_graph(int n, int k, bool triangle) {
         sort(isolated_nodes.begin(),isolated_nodes.end());
         for (unsigned i=isolated_nodes.size();i-->0;) {
             remove_isolated_node(isolated_nodes[i]);
+        }
+    }
+}
+
+/* create the Shrikhande graph */
+void graphe::make_shrikhande_graph() {
+    this->clear();
+    vecteur V;
+    make_default_labels(V,16);
+    add_nodes(V);
+    ipairs v(16);
+    int k=0,m,n;
+    for (int i=0;i<4;++i) {
+        for (int j=0;j<4;++j) {
+            v[k++]=make_pair(i,j);
+        }
+    }
+    for (int i=0;i<16;++i) {
+        const ipair &vi=v[i];
+        for (int j=i+1;j<16;++j) {
+            const ipair &vj=v[j];
+            m=(vi.first-vj.first+4)%4;
+            n=(vi.second-vj.second+4)%4;
+            if ((m*n==0 && (m+n)%2!=0) || (m==n && (m*n)%2!=0))
+                add_edge(i,j);
         }
     }
 }

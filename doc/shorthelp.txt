@@ -1182,6 +1182,13 @@ is_integer_graph(graph("levi"))
 spanning_tree(graph("petersen"))
 spanning_tree(graph("petersen"),5)
 
+# number_of_spanning_trees
+0 number_of_spanning_trees(G)
+2 Returns the number of spanning trees in the undirected graph G.
+-1 spanning_tree
+number_of_spanning_trees(complete_graph(4))
+number_of_spanning_trees(graph(trail(1,2,3,4,1,3)))
+
 # minimal_spanning_tree
 0 minimal_spanning_tree(G)
 2 Returns the minimal spanning tree of the undirected graph G.

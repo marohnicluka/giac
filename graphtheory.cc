@@ -4260,12 +4260,7 @@ gen _degree_sequence(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    int n=G.node_count();
-    vecteur deg(n);
-    for (int i=0;i<n;++i) {
-        deg[i]=G.degree(i,false);
-    }
-    return deg;
+    return G.degree_sequence();
 }
 static const char _degree_sequence_s[]="degree_sequence";
 static define_unary_function_eval(__degree_sequence,&_degree_sequence,_degree_sequence_s);
@@ -4544,8 +4539,8 @@ define_unary_function_ptr5(at_is_integer_graph,alias_at_is_integer_graph,&__is_i
 
 /* USAGE:   spanning_tree(G,[r])
  *
- * Returns a spanning tree of the undirected graph G, containing all vertices
- * of G [with vertex r as the root node].
+ * Returns a spanning tree of the undirected graph G [with the vertex r as the
+ * root node].
  */
 gen _spanning_tree(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -4573,6 +4568,33 @@ gen _spanning_tree(const gen &g,GIAC_CONTEXT) {
 static const char _spanning_tree_s[]="spanning_tree";
 static define_unary_function_eval(__spanning_tree,&_spanning_tree,_spanning_tree_s);
 define_unary_function_ptr5(at_spanning_tree,alias_at_spanning_tree,&__spanning_tree,0,true)
+
+/* USAGE:   number_of_spanning_trees(G)
+ *
+ * Returns the number of spanning trees in the undirected graph G.
+ */
+gen _number_of_spanning_trees(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
+    if (!G.is_connected())
+        return 0;
+    matrice A;
+    G.adjacency_matrix(A);
+    vecteur d=G.degree_sequence();
+    matrice D=*_diag(d,contextptr)._VECTptr;
+    D=D-A;
+    D.pop_back();
+    D=mtran(D);
+    D.pop_back();
+    return _det(D,contextptr);
+}
+static const char _number_of_spanning_trees_s[]="number_of_spanning_trees";
+static define_unary_function_eval(__number_of_spanning_trees,&_number_of_spanning_trees,_number_of_spanning_trees_s);
+define_unary_function_ptr5(at_number_of_spanning_trees,alias_at_number_of_spanning_trees,&__number_of_spanning_trees,0,true)
 
 /* USAGE:   minimal_spanning_tree(G)
  *

@@ -560,6 +560,7 @@ public:
     int in_degree(int index,bool count_temp_edges=true) const;
     int out_degree(int index,bool count_temp_edges=true) const;
     int degree(int index,bool count_temp_edges=true) const;
+    vecteur degree_sequence(int sg=-1) const;
     void adjacency_matrix(matrice &m) const;
     void adjacency_sparse_matrix(sparsemat &sm) const;
     matrice incidence_matrix() const;

@@ -1083,6 +1083,17 @@ int graphe::degree(int index,bool count_temp_edges) const {
     return nodes[index].neighbors().size();
 }
 
+/* return the degree sequence of this graph */
+vecteur graphe::degree_sequence(int sg) const {
+    vecteur res;
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        if (sg>=0 && it->subgraph()!=sg)
+            continue;
+        res.push_back(degree(it-nodes.begin()));
+    }
+    return res;
+}
+
 /* create the adjacency matrix of this graph */
 void graphe::adjacency_matrix(matrice &m) const {
     int n=node_count(),i,j;

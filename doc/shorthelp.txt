@@ -1173,3 +1173,25 @@ graph_charpoly(graph("shrikhande"))
 2 Returns true iff the spectrum of graph G consists only of integers.
 -1 graph_spectrum
 is_integer_graph(graph("levi"))
+
+# spanning_tree
+0 spanning_tree(G,[r])
+2 Returns a spanning tree of the undirected graph G [with the vertex r as the root node].
+-1 minimal_spanning_tree
+-2 number_of_spanning_trees
+spanning_tree(graph("petersen"))
+spanning_tree(graph("petersen"),5)
+
+# minimal_spanning_tree
+0 minimal_spanning_tree(G)
+2 Returns the minimal spanning tree of the undirected graph G.
+-1 spanning_tree
+minimal_spanning_tree(graph([[0,1,0,4,0,0],[1,0,1,0,4,0],[0,1,0,3,0,1],[4,0,3,0,1,0],[0,4,0,1,0,4],[0,0,1,0,4,0]]))
+
+# graph_rank
+0 graph_rank(G,[E])
+2 Returns the graph rank of G. If optional set E of edges is given, rank of the spanning subgraph of G with edge set E is returned.
+-1 connected_components
+-2 number_of_vertices
+graph_rank(graph(%{[1,2],[3,4],[4,5]%}))
+graph_rank(graph(%{[1,2],[3,4],[4,5]%}),[[1,2],[3,4])

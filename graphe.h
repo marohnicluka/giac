@@ -648,6 +648,7 @@ public:
     void cartesian_product(const graphe &G,graphe &P) const;
     void tensor_product(const graphe &G,graphe &P) const;
     void connected_components(ivectors &components,int sg=-1,bool skip_embedded=false,int *count=NULL);
+    int connected_components_count(int sg=-1);
     void strongly_connected_components(ivectors &components,int sg=-1);
     bool has_cut_vertex(int sg=-1,int i=0);
     void find_cut_vertices(ivector &articulation_points,int sg=-1);

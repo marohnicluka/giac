@@ -4040,6 +4040,21 @@ void graphe::connected_components(ivectors &components,int sg,bool skip_embedded
         *count=c;
 }
 
+/* return the number of connected components in this graph */
+int graphe::connected_components_count(int sg) {
+    unvisit_all_nodes(sg);
+    unset_all_ancestors(sg);
+    disc_time=0;
+    int count=0;
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        if ((sg<0 || it->subgraph()==sg) && !it->is_visited()) {
+            dfs(it-nodes.begin(),false,false,NULL,sg);
+            ++count;
+        }
+    }
+    return count;
+}
+
 void graphe::strongconnect_dfs(ivectors &components,int i,int sg) {
     vertex &v=node(i);
     v.set_visited(true);

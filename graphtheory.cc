@@ -4562,6 +4562,8 @@ gen _spanning_tree(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
+    if (!G.is_connected())
+        return gt_err(_GT_ERR_CONNECTED_GRAPH_REQUIRED,contextptr);
     int i=is_undef(root)?0:G.node_index(root);
     if (i<0)
         return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
@@ -4583,6 +4585,8 @@ gen _minimal_spanning_tree(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
+    if (!G.is_connected())
+        return gt_err(_GT_ERR_CONNECTED_GRAPH_REQUIRED,contextptr);
     if (!G.is_weighted())
         G.spanning_tree(0,T);
     else
@@ -4592,6 +4596,42 @@ gen _minimal_spanning_tree(const gen &g,GIAC_CONTEXT) {
 static const char _minimal_spanning_tree_s[]="minimal_spanning_tree";
 static define_unary_function_eval(__minimal_spanning_tree,&_minimal_spanning_tree,_minimal_spanning_tree_s);
 define_unary_function_ptr5(at_minimal_spanning_tree,alias_at_minimal_spanning_tree,&__minimal_spanning_tree,0,true)
+
+/* USAGE:   graph_rank(G,[E])
+ *
+ * Returns the graph rank of G. If optional set E of edges is given, rank of the
+ * spanning subgraph of G with edge set E is returned.
+ */
+gen _graph_rank(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    vecteur E;
+    if (g.subtype==_SEQ__VECT) {
+        if (g._VECTptr->size()!=2)
+            return gensizeerr(contextptr);
+        if (g._VECTptr->back().type!=_VECT)
+            return gentypeerr(contextptr);
+        E=*g._VECTptr->back()._VECTptr;
+    }
+    graphe G(contextptr),H(contextptr);
+    if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (E.empty())
+        return G.node_count()-G.connected_components_count();
+    else {
+        graphe::ipairs ev;
+        bool notfound=false;
+        if (!G.edges2ipairs(E,ev,notfound))
+            return notfound?gt_err(_GT_ERR_EDGE_NOT_FOUND,contextptr):gentypeerr(contextptr);
+        G.subgraph(ev,H,false);
+        H.add_nodes(G.vertices());
+        return G.node_count()-H.connected_components_count();
+    }
+}
+static const char _graph_rank_s[]="graph_rank";
+static define_unary_function_eval(__graph_rank,&_graph_rank,_graph_rank_s);
+define_unary_function_ptr5(at_graph_rank,alias_at_graph_rank,&__graph_rank,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

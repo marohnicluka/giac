@@ -6,4 +6,4 @@ The commands are listed in the file "graphtheory.h". The implementation of the c
 
 This library is written in C++ from scratch and has no mandatory dependencies save the Giac itself. Although the focus is on simplicity, the implemented algorithms are reasonably fast.
 
-See the "shorthelp.txt" file for the details of command usage.
+See the "shorthelp.txt" and "graphtheory-user_manual.pdf" files for the details of command usage.

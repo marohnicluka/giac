@@ -3266,7 +3266,9 @@ gen _is_eulerian(const gen &g,GIAC_CONTEXT) {
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
     graphe::ivector path;
-    if (!G.find_eulerian_path(path))
+    bool iscycle; // dummy
+    if ((has_path_idnt && !G.find_eulerian_path(path)) ||
+            (!has_path_idnt && !G.eulerian_path_start(iscycle)))
         return graphe::boole(false);
     if (has_path_idnt) {
         if (g._VECTptr->size()!=2)
@@ -4650,6 +4652,59 @@ gen _graph_rank(const gen &g,GIAC_CONTEXT) {
 static const char _graph_rank_s[]="graph_rank";
 static define_unary_function_eval(__graph_rank,&_graph_rank,_graph_rank_s);
 define_unary_function_ptr5(at_graph_rank,alias_at_graph_rank,&__graph_rank,0,true)
+
+/* USAGE:   lowest_common_ancestor(T,r,u,v)
+ *          lowest_common_ancestor(T,r,L)
+ *
+ * Returns the lowest common ancestor of the nodes u,v in the tree T with
+ * respect to the root node r. If a list L of node pairs is given, common
+ * ancestors of all pairs are returned in a list. Tarjan's offline algorithm is
+ * used.
+ */
+gen _lowest_common_ancestor(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()<3)
+        return gensizeerr(contextptr);
+    graphe G(contextptr);
+    if (!G.read_gen(gv.front()))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (!G.is_tree())
+        return gt_err(_GT_ERR_NOT_A_TREE,contextptr);
+    int r=G.node_index(gv[1]);
+    if (r<0)
+        return gt_err(gv[1],_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+    if (gv.size()==4) {
+        int i=G.node_index(gv[2]),j=G.node_index(gv[3]);
+        if (i<0 || j<0)
+            return gt_err(i<0?gv[1]:gv[2],_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+        return G.node_label(G.lowest_common_ancestor(i,j,r));
+    } else if (gv.size()==3) {
+        if (!ckmatrix(gv.back()))
+            return gentypeerr(contextptr);
+        if (gv.back()._VECTptr->front()._VECTptr->size()!=2)
+            return gendimerr(contextptr);
+        graphe::ipairs p;
+        matrice &m=*gv.back()._VECTptr;
+        int n=m.size(),i,j;
+        for (int k=0;k<n;++k) {
+            vecteur &row=*m[k]._VECTptr;
+            i=G.node_index(row.front());
+            j=G.node_index(row.back());
+            if (i<0 || j<0)
+                return gt_err(i<0?row.front():row.back(),_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+            p.push_back(make_pair(i,j));
+        }
+        graphe::ivector lca;
+        G.lowest_common_ancestors(r,p,lca);
+        return G.get_nodes(lca);
+    } else return gensizeerr(contextptr);
+}
+static const char _lowest_common_ancestor_s[]="lowest_common_ancestor";
+static define_unary_function_eval(__lowest_common_ancestor,&_lowest_common_ancestor,_lowest_common_ancestor_s);
+define_unary_function_ptr5(at_lowest_common_ancestor,alias_at_lowest_common_ancestor,&__lowest_common_ancestor,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

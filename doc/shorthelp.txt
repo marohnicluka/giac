@@ -815,6 +815,7 @@ edges(path_graph(5))
 -2 trail
 is_eulerian(complete_graph(4))
 is_eulerian(complete_graph(5))
+is_eulerian(graph(trail(1,2,3,1,4,3,5,4)),T)
 
 # kneser_graph
 0 n,k

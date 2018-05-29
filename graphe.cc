@@ -4285,40 +4285,99 @@ void graphe::find_bridges(ipairs &B,int sg) {
     }
 }
 
-/* attempt to find an eulerian path in this graph using Fleury's algorithm,
- * return true iff one exists */
-bool graphe::find_eulerian_path(ivector &path) const {
-    assert(!is_directed());
-    graphe G(*this);
-    if (!G.is_connected())
-        return false;
-    int n=G.node_count(),count=0,start_node=0;
-    for (int i=0;i<n;++i) {
-        if (G.degree(i)%2!=0) {
-            ++count;
-            start_node=i;
-        }
-    }
-    if (count!=0 && count!=2)
-        return false;
-    int m=G.edge_count(),i=start_node,j;
+/* return true iff the graph is (semi-)eulerian */
+
+
+/* Fleury's algorithm for eulerian trail, time complexity O(m^2) */
+bool graphe::fleury(int start,ivector &path) {
+    // assuming that the graph is undirected and (semi-)eulerian
+    int m=edge_count(),i=start,j;
     path.resize(m+1);
     path.back()=i;
     ipairs bridges;
     ipair edge;
     while (m>0) {
-        vertex &v=G.node(i);
-        G.find_bridges(bridges);
+        vertex &v=node(i);
+        find_bridges(bridges);
         for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
             j=*it;
             edge=make_pair(i<j?i:j,i<j?j:i);
             if (find(bridges.begin(),bridges.end(),edge)==bridges.end())
                 break;
         }
-        G.remove_edge(edge);
+        remove_edge(edge);
         path[--m]=j;
         i=j;
     }
+    return true;
+}
+
+/* Hierholzer algorithm for eulerian cycle, time complexity O(m) */
+void graphe::hierholzer(ivector &path) {
+    // assuming that the graph is eulerian
+    int i,j,k,pos=path.size();
+    while (pos>0) {
+        --pos;
+        // find a closed trail starting in path[pos]
+        j=i=path[pos];
+        if (degree(i)==0)
+            continue;
+        do {
+            k=node(j).neighbors().front();
+            path.insert(path.begin()+(++pos),k);
+            remove_edge(j,k);
+            j=k;
+        } while (i!=j);
+    }
+}
+
+/* return the node in which an eulerian trail may begin, or -1 if the graph has no such trail */
+int graphe::eulerian_path_start(bool &iscycle) const {
+    // assuming that the graph is connected
+    int n=node_count(),count=0,start_node=0;
+    for (int i=0;i<n;++i) {
+        if (degree(i)%2!=0) {
+            ++count;
+            start_node=i;
+        }
+    }
+    if (count!=0 && count!=2)
+        return -1;
+    iscycle=count==0;
+    return start_node;
+}
+
+/* attempt to find an eulerian trail in this graph, return true iff one exists */
+bool graphe::find_eulerian_path(ivector &path) const {
+    graphe G(*this);
+    int start;
+    bool iscycle;
+    if (!G.is_connected() || (start=eulerian_path_start(iscycle))<0)
+        return false;
+    // use Hierholzer's algorithm
+    path.clear();
+    path.reserve(edge_count()+1);
+    if (!iscycle) {
+        // find a path between two odd-degree nodes and delete it
+        G.dfs(start,false);
+        int j,k=-1;
+        for (int i=G.node_count();i-->0;) {
+            if (i!=start && G.degree(i)%2!=0) {
+                k=i;
+                break;
+            }
+        }
+        assert(k>=0);
+        while (k!=start) {
+            path.push_back(k);
+            const vertex &v=G.node(k);
+            j=v.ancestor();
+            G.remove_edge(j,k);
+            k=j;
+        }
+    }
+    path.push_back(start);
+    G.hierholzer(path);
     return true;
 }
 
@@ -5574,8 +5633,7 @@ void graphe::disjoint_set::make_set(int id) {
     element &e=elements[id];
     e.id=id;
     e.parent=id;
-    e.rank=0;
-    e.size=1;
+    e.rank=1;
 }
 
 int graphe::disjoint_set::find(int id) {
@@ -5587,23 +5645,17 @@ int graphe::disjoint_set::find(int id) {
     return e.parent;
 }
 
-void graphe::disjoint_set::unite(int id1,int id2,bool by_rank) {
+void graphe::disjoint_set::unite(int id1,int id2) {
     int p1=find(id1),p2=find(id2);
-    if (p1==p2)
-        return;
     element &x=elements[p1],&y=elements[p2];
-    if ((by_rank && x.rank<y.rank) || (!by_rank && x.size<y.size))
-        merge(y,x);
-    else
-        merge(x,y);
-}
-
-void graphe::disjoint_set::merge(element &x,element &y) {
-   // merge y into x
-   y.parent=x.id;
-   x.size+=y.size;
-   if (x.rank==y.rank)
-       ++x.rank;
+    if (x.rank>y.rank)
+        y.parent=x.id;
+    else if (x.rank<y.rank)
+        x.parent=y.id;
+    else {
+        y.parent=x.id;
+        ++x.rank;
+    }
 }
 
 /*
@@ -6544,27 +6596,30 @@ void graphe::minimal_spanning_tree(graphe &T,int sg) {
 }
 
 /* Tarjan's offline algorithm for the lowest common ancestor */
-void graphe::lca(int u,const ipairs &p,ivector &anc,disjoint_set &ds) {
+void graphe::lca_recursion(int u,const ipairs &p,ivector &lca,disjoint_set &ds) {
     ds.make_set(u);
-    node(ds.find(u)).set_ancestor(u);
     vertex &U=node(u);
+    U.set_ancestor(u);
+    U.set_visited(true);
     int v;
     for (ivector_iter it=U.neighbors().begin();it!=U.neighbors().end();++it) {
         v=*it;
         vertex &V=node(v);
         if (V.is_visited())
             continue;
-        lca(v,p,anc,ds);
+        lca_recursion(v,p,lca,ds);
         ds.unite(u,v);
         node(ds.find(u)).set_ancestor(u);
     }
     U.set_color(1); // black
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         v=it-nodes.begin();
+        if (u==v)
+            continue;
         for (ipairs_iter jt=p.begin();jt!=p.end();++jt) {
             if ((jt->first==u && jt->second==v) || (jt->first==v && jt->second==u)) {
                 if (it->color()==1)
-                    anc[jt-p.begin()]=node(ds.find(v)).ancestor();
+                    lca[jt-p.begin()]=node(ds.find(v)).ancestor();
                 break;
             }
         }
@@ -6572,21 +6627,23 @@ void graphe::lca(int u,const ipairs &p,ivector &anc,disjoint_set &ds) {
 }
 
 /* find the lowest common ancestors for all pairs of vertices in p (this must be a tree) */
-void graphe::lowest_common_ancestors(int root,const ipairs &p,ivector &anc) {
+void graphe::lowest_common_ancestors(int root,const ipairs &p,ivector &lca) {
+    unvisit_all_nodes();
     unset_all_ancestors();
     uncolor_all_vertices();
-    anc.resize(p.size());
+    lca.resize(p.size(),-1);
     disjoint_set ds(node_count());
-    lca(root,p,anc,ds);
+    lca_recursion(root,p,lca,ds);
+    assert(find(lca.begin(),lca.end(),-1)==lca.end());
 }
 
 /* return the lowest common ancestor of i-th node and j-th node of this tree */
 int graphe::lowest_common_ancestor(int i,int j,int root) {
     ipairs p;
     p.push_back(make_pair(i,j));
-    ivector anc;
-    lowest_common_ancestors(root,p,anc);
-    return anc.front();
+    ivector lca;
+    lowest_common_ancestors(root,p,lca);
+    return lca.front();
 }
 
 #ifndef NO_NAMESPACE_GIAC

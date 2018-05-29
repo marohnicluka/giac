@@ -209,6 +209,7 @@ gen _spanning_tree(const gen &g,GIAC_CONTEXT);
 gen _number_of_spanning_trees(const gen &g,GIAC_CONTEXT);
 gen _minimal_spanning_tree(const gen &g,GIAC_CONTEXT);
 gen _graph_rank(const gen &g,GIAC_CONTEXT);
+gen _lowest_common_ancestor(const gen &g,GIAC_CONTEXT);
 //gen _spanning_polynomial(const gen &g,GIAC_CONTEXT);
 //gen _plane_dual(const gen &g,GIAC_CONTEXT);
 //gen _transitive_closure(const gen &g,GIAC_CONTEXT);

@@ -297,17 +297,15 @@ public:
             int id;
             int parent;
             int rank;
-            int size;
             element() { id=-1; }
         };
         std::vector<element> elements;
-        void merge(element &x,element &y);
     public:
         disjoint_set(int n) { elements.resize(n); }
         void make_set(int id);
         bool is_stored(int id);
         int find(int id);
-        void unite(int id1,int id2,bool by_rank=true);
+        void unite(int id1,int id2);
     };
 
     struct ipairs_comparator {
@@ -462,7 +460,7 @@ private:
     bool has_k_clique_cover(int k,const ivectors &maximal_cliques,ivector &cv) const;
     void strongconnect_dfs(ivectors &components,int i,int sg);
     bool degrees_equal(const ivector &v,int deg=0) const;
-    void lca(int u,const ipairs &p,ivector &anc,disjoint_set &ds);
+    void lca_recursion(int u,const ipairs &p,ivector &lca_recursion,disjoint_set &ds);
 
 public:
     graphe(const context *contextptr=context0);
@@ -663,6 +661,9 @@ public:
     bool find_cycle(ivector &cycle,int sg=-1);
     bool find_path(int i,int j,ivector &path,int sg=-1,bool skip_embedded=false);
     bool find_eulerian_path(ivector &path) const;
+    int eulerian_path_start(bool &iscycle) const;
+    bool fleury(int start,ivector &path);
+    void hierholzer(ivector &path);
     void collapse_edge(int i,int j);
     void incident_edges(const ivector &V,edgeset &E);
     static bool edges_incident(const ipair &e1,const ipair &e2);
@@ -682,7 +683,7 @@ public:
     void reverse(graphe &G) const;
     void spanning_tree(int i,graphe &T,int sg=-1);
     void minimal_spanning_tree(graphe &T,int sg=-1);
-    void lowest_common_ancestors(int root,const ipairs &p,ivector &anc);
+    void lowest_common_ancestors(int root,const ipairs &p,ivector &lca_recursion);
     int lowest_common_ancestor(int i,int j,int root);
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };

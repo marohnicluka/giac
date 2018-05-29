@@ -490,6 +490,7 @@ graphe::vertex::vertex() {
     m_ancestor=-1;
     m_low=-1;
     m_disc=-1;
+    m_color=0; // white
     m_prelim=0;
     m_modifier=0;
     m_isleaf=false;
@@ -506,6 +507,7 @@ void graphe::vertex::assign(const vertex &other) {
     m_ancestor=other.ancestor();
     m_low=other.low();
     m_disc=other.disc();
+    m_color=other.color();
     m_prelim=other.prelim();
     m_modifier=other.modifier();
     m_isleaf=other.is_leaf();
@@ -1184,6 +1186,14 @@ void graphe::unset_all_ancestors(int sg) {
     for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
         if (sg<0 || it->subgraph()==sg)
             it->unset_ancestor();
+    }
+}
+
+/* turn the color of each vertex to white */
+void graphe::uncolor_all_vertices(int sg) {
+    for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
+        if (sg<0 || it->subgraph()==sg)
+            it->set_color(0);
     }
 }
 
@@ -6531,6 +6541,52 @@ void graphe::minimal_spanning_tree(graphe &T,int sg) {
         }
     }
     subgraph(res,T,false);
+}
+
+/* Tarjan's offline algorithm for the lowest common ancestor */
+void graphe::lca(int u,const ipairs &p,ivector &anc,disjoint_set &ds) {
+    ds.make_set(u);
+    node(ds.find(u)).set_ancestor(u);
+    vertex &U=node(u);
+    int v;
+    for (ivector_iter it=U.neighbors().begin();it!=U.neighbors().end();++it) {
+        v=*it;
+        vertex &V=node(v);
+        if (V.is_visited())
+            continue;
+        lca(v,p,anc,ds);
+        ds.unite(u,v);
+        node(ds.find(u)).set_ancestor(u);
+    }
+    U.set_color(1); // black
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        v=it-nodes.begin();
+        for (ipairs_iter jt=p.begin();jt!=p.end();++jt) {
+            if ((jt->first==u && jt->second==v) || (jt->first==v && jt->second==u)) {
+                if (it->color()==1)
+                    anc[jt-p.begin()]=node(ds.find(v)).ancestor();
+                break;
+            }
+        }
+    }
+}
+
+/* find the lowest common ancestors for all pairs of vertices in p (this must be a tree) */
+void graphe::lowest_common_ancestors(int root,const ipairs &p,ivector &anc) {
+    unset_all_ancestors();
+    uncolor_all_vertices();
+    anc.resize(p.size());
+    disjoint_set ds(node_count());
+    lca(root,p,anc,ds);
+}
+
+/* return the lowest common ancestor of i-th node and j-th node of this tree */
+int graphe::lowest_common_ancestor(int i,int j,int root) {
+    ipairs p;
+    p.push_back(make_pair(i,j));
+    ivector anc;
+    lowest_common_ancestors(root,p,anc);
+    return anc.front();
 }
 
 #ifndef NO_NAMESPACE_GIAC

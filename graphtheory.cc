@@ -4557,8 +4557,6 @@ gen _spanning_tree(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
-    if (!G.is_connected())
-        return gt_err(_GT_ERR_CONNECTED_GRAPH_REQUIRED,contextptr);
     int i=is_undef(root)?0:G.node_index(root);
     if (i<0)
         return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
@@ -4607,8 +4605,6 @@ gen _minimal_spanning_tree(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
-    if (!G.is_connected())
-        return gt_err(_GT_ERR_CONNECTED_GRAPH_REQUIRED,contextptr);
     if (!G.is_weighted())
         G.spanning_tree(0,T);
     else

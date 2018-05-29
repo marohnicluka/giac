@@ -93,6 +93,7 @@ public:
         int m_low;
         int m_disc;
         int m_ancestor;
+        int m_color;
         // used for drawing trees
         int m_position;
         int m_gaps;
@@ -127,6 +128,8 @@ public:
         void set_ancestor(int i) { m_ancestor=i; }
         void unset_ancestor() { m_ancestor=-1; }
         int ancestor() const { return m_ancestor; }
+        void set_color(int c) { m_color=c; }
+        int color() const { return m_color; }
         void set_is_leaf(bool yes) { m_isleaf=yes; }
         bool is_leaf() const { return m_isleaf; }
         void set_position(int p) { m_position=p; }
@@ -459,6 +462,7 @@ private:
     bool has_k_clique_cover(int k,const ivectors &maximal_cliques,ivector &cv) const;
     void strongconnect_dfs(ivectors &components,int i,int sg);
     bool degrees_equal(const ivector &v,int deg=0) const;
+    void lca(int u,const ipairs &p,ivector &anc,disjoint_set &ds);
 
 public:
     graphe(const context *contextptr=context0);
@@ -512,6 +516,7 @@ public:
     vecteur vertices(int sg=-1) const;
     void unvisit_all_nodes(int sg=-1);
     void unset_all_ancestors(int sg=-1);
+    void uncolor_all_vertices(int sg=-1);
     void dfs(int root,bool rec=true,bool clr=true,ivector *D=NULL,int sg=-1,bool skip_embedded=false);
     void bfs(int root,bool rec=true,bool clr=true,ivector *D=NULL,int sg=-1,bool skip_embedded=false);
     const ivector &get_discovered_nodes() const { return discovered_nodes; }
@@ -677,6 +682,8 @@ public:
     void reverse(graphe &G) const;
     void spanning_tree(int i,graphe &T,int sg=-1);
     void minimal_spanning_tree(graphe &T,int sg=-1);
+    void lowest_common_ancestors(int root,const ipairs &p,ivector &anc);
+    int lowest_common_ancestor(int i,int j,int root);
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

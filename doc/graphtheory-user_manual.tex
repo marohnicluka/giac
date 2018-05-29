@@ -685,7 +685,7 @@ Output :
 
 The command {\tt graph\_power} accepts two arguments, a graph $ G(V,E) $ and a positive integer $ k $, and returns the $ k $-th power $ G^k $ of $ G $ with vertices $ V $ such that $ v,w,\in V $ are connected if and only if there exists a path of length at most $ k $ in $ G $. The adjacency matrix $ A_k $ of $ G^k $ is obtained by adding powers of the adjacency matrix $ A $ of $ G $ together :
 \[ A_k=\sum_{i=1}^k A^k. \]
-The above sum is obtained by assigning $ A_k\leftarrow A $ and repeating $ k-1 $ times the instruction $ A_k\leftarrow (A_k+I)\,A $, so exactly $ k $ matrix multiplications and $ k $ additions are required.\\
+The above sum is obtained by assigning $ A_k\leftarrow A $ and repeating $ k-1 $ times the instruction $ A_k\leftarrow (A_k+I)\,A $, so exactly $ k $ matrix multiplications are required.\\
 Input :
 \begin{center}
   \tt graph\_power(path\_graph(5),2)

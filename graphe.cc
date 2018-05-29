@@ -5120,10 +5120,17 @@ int graphe::tree_height(int root) {
 
 
 /* create a random biconnected planar graph with n vertices */
-void graphe::make_random_planar(bool biconnected) {
+void graphe::make_random_planar(double p,int connectivity) {
+    assert(p>=0 && p<1 && connectivity>=0 && connectivity<4);
     set_directed(false);
     // start with a random maximal planar graph with n vertices
     int n=node_count();
+    if (n==1)
+        return;
+    if (n==2) {
+        add_edge(0,1);
+        return;
+    }
     ivectors faces;
     ivector face(3),old_face;
     for (int i=0;i<3;++i) {
@@ -5135,6 +5142,7 @@ void graphe::make_random_planar(bool biconnected) {
     std::reverse(outer_face.begin(),outer_face.end());
     faces.push_back(outer_face);
     int k;
+    // make random triangulated graph with n vertices
     for (int i=3;i<n;++i) {
         k=rand_integer(faces.size());
         ivector &face_k=faces[k];
@@ -5148,26 +5156,37 @@ void graphe::make_random_planar(bool biconnected) {
         }
         faces.erase(faces.begin()+k);
     }
-    // remove each edge with a certain probability
+    if (p==0)
+        return;
+    int mindeg=std::max(2,connectivity+1);
     ipairs E;
     get_edges_as_pairs(E,false);
-    int d1,d2,m;
-    for (ipairs_iter it=E.begin();it!=E.end();++it) {
-        d1=degree(it->first,false);
-        d2=degree(it->second,false);
-        if (d1<4 || d2<4)
+    ivector indices=vecteur_2_vector_int(*_randperm(E.size(),ctx)._VECTptr);
+    // try to remove each edge with probability 0<p<1
+    for (ivector_iter it=indices.begin();it!=indices.end();++it) {
+        ipair &e=E[*it];
+        if (degree(e.first,false)<mindeg || degree(e.second,false)<mindeg)
             continue;
-        k=giac_rand(ctx);
-        m=(d1+d2)/4;
-        if (k%m!=0)
-            remove_edge(*it);
-    }
-    // check that the resulting graph is connected; if not, repeat the process
-    if ((biconnected && !is_biconnected()) || !is_connected()) {
-        for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
-            it->clear_neighbors();
+        if (rand_uniform()<p)
+            remove_edge(e);
+        switch (connectivity) {
+        case 0:
+            break;
+        case 1:
+            if (!is_connected())
+                add_edge(e);
+            break;
+        case 2:
+            if (!is_biconnected())
+                add_edge(e);
+            break;
+        case 3:
+            if (!is_triconnected())
+                add_edge(e);
+            break;
+        default:
+            assert(false); // unreachable
         }
-        make_random_planar();
     }
 }
 
@@ -5298,7 +5317,6 @@ bool graphe::is_regular(int d) const {
 void graphe::make_random_flow_network(const vecteur &V,int capacity) {
     assert(!V.empty());
     add_nodes(V);
-    make_random_planar(true);
 }
 
 /* return true iff this graph is equal to G */

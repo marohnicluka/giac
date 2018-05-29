@@ -1732,10 +1732,31 @@ define_unary_function_ptr5(at_random_tree,alias_at_random_tree,&__random_tree,0,
  */
 gen _random_planar_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
+    double p=0.5;
+    int connectivity=1;
+    gen spec;
+    if (g.is_integer() || (g.type==_VECT && g.subtype!=_SEQ__VECT))
+        spec=g;
+    else if (g.type==_VECT && g.subtype==_SEQ__VECT) {
+        vecteur &gv=*g._VECTptr;
+        if (gv.size()>1 && gv.size()<=3) {
+            spec=gv.front();
+            if (_evalf(gv[1],contextptr).type!=_DOUBLE_)
+                return gentypeerr(contextptr);
+            p=gv[1].DOUBLE_val();
+            if (p<0 || p>=1)
+                return gentypeerr(contextptr);
+            if (gv.size()==3) {
+                if (!gv.back().is_integer() || gv.back().val<0 || gv.back().val>3)
+                    return gentypeerr(contextptr);
+                connectivity=gv.back().val;
+            }
+        } else return gensizeerr(contextptr);
+    } else return gentypeerr(contextptr);
     graphe G(contextptr);
-    if (!vertices_from_integer_or_vecteur(g,G))
+    if (!vertices_from_integer_or_vecteur(spec,G))
         return gentypeerr(contextptr);
-    G.make_random_planar();
+    G.make_random_planar(p,connectivity);
     return G.to_gen();
 }
 static const char _random_planar_graph_s[]="random_planar_graph";
@@ -3742,11 +3763,14 @@ gen _graph_power(const gen &g,GIAC_CONTEXT) {
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     int n=G.node_count();
-    matrice m,mpow,I=*_idn(n,contextptr)._VECTptr;
+    matrice m,mpow;
     G.adjacency_matrix(m);
     mpow=m;
     for (int i=1;i<k;++i) {
-        mpow=mmult(mpow+I,m);
+        for (int j=0;j<n;++j) {
+            mpow[j]._VECTptr->at(j)+=1;
+        }
+        mpow=mmult(mpow,m);
     }
     for (int i=0;i<n;++i) {
         for (int j=0;j<n;++j) {

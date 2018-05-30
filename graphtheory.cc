@@ -91,9 +91,18 @@ string strip_string(const string &str) {
     int i=0;
     for (;res[i]==' ';++i);
     res=res.substr(i);
+#if 1
+    i=int(res.size())-1;
+    for (;i>=0;--i){
+      if (res[i]!=' ')
+   break;
+    }
+    res=res.substr(0,i+1);
+#else
     while (res.back()==' ') {
         res.pop_back();
     }
+#endif
     return res;
 }
 
@@ -656,7 +665,7 @@ gen _export_graph(const gen &g,GIAC_CONTEXT) {
     string filename=graphe::genstring2str(name);
     if (!has_suffix(filename,".dot"))
         filename=filename+".dot";
-    if (filename.front()!='/')
+    if (filename[0]!='/')
         filename=make_absolute_file_path(filename);
     return G.write_dot(filename)?1:0;
 }
@@ -679,7 +688,7 @@ gen _import_graph(const gen &g,GIAC_CONTEXT) {
         return undef;
     if (!has_suffix(filename,".dot"))
         filename=filename+".dot";
-    if (filename.front()!='/')
+    if (filename[0]!='/')
         filename=make_absolute_file_path(filename);
     if (!G.read_dot(filename)) {
         gt_err_display(_GT_ERR_READING_FAILED,contextptr);

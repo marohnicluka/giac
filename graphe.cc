@@ -6655,7 +6655,7 @@ void graphe::minimal_spanning_tree(graphe &T,int sg) {
     subgraph(res,T,false);
 }
 
-/* Tarjan's offline algorithm for the lowest common ancestor */
+/* Tarjan's offline algorithm for the lowest common ancestor, time complexity O(n) */
 void graphe::lca_recursion(int u,const ipairs &p,ivector &lca,disjoint_set &ds) {
     ds.make_set(u);
     vertex &U=node(u);
@@ -6731,33 +6731,20 @@ void graphe::pathfinder(int i,ivector &path) {
     if (j<0)
         return;
     vertex &w=node(j);
-    path.push_back(i);
-    path.push_back(j);
+    int mode=0;
     if (v.ancestor()!=j && w.ancestor()!=i) {
         if (is_descendant(i,j))
-            set_edge_visited(i,j);
-        else if (is_descendant(j,i)) {
-            set_edge_visited(i,j);
-            while (true) {
-                vertex &u=node(j);
-                if (u.is_visited())
-                    break;
-                k=-1;
-                for (ivector_iter it=u.neighbors().begin();it!=u.neighbors().end();++it) {
-                    if (!is_edge_visited(j,*it) && u.ancestor()==*it) {
-                        k=*it;
-                        break;
-                    }
-                }
-                assert(k>=0);
-                u.set_visited(true);
-                set_edge_visited(j,k);
-                path.push_back(k);
-                j=k;
-            }
-        }
-    } else if (w.ancestor()==i) {
+            mode=1;
+        else if (is_descendant(j,i))
+            mode=2;
+    } else if (w.ancestor()==i)
+        mode=3;
+    if (mode>0) {
         set_edge_visited(i,j);
+        path.push_back(i);
+        path.push_back(j);
+    }
+    if (mode>1) {
         while (true) {
             vertex &u=node(j);
             if (u.is_visited())
@@ -6765,7 +6752,8 @@ void graphe::pathfinder(int i,ivector &path) {
             k=-1;
             for (ivector_iter it=u.neighbors().begin();it!=u.neighbors().end();++it) {
                 vertex &t=node(*it);
-                if (!is_edge_visited(j,*it) && (t.disc()==u.low() || t.low()==u.low())) {
+                if (!is_edge_visited(j,*it) && ((mode==2 && u.ancestor()==*it) ||
+                                                (mode==3 && (t.disc()==u.low() || t.low()==u.low())))) {
                     k=*it;
                     break;
                 }
@@ -6776,10 +6764,10 @@ void graphe::pathfinder(int i,ivector &path) {
             path.push_back(k);
             j=k;
         }
-    } else path.clear();
+    }
 }
 
-/* compute the ST numbering for this graph using Even-Tarjan algorithm */
+/* compute the ST numbering for this graph using Even-Tarjan algorithm, time complexity O(n+m) */
 void graphe::compute_st_numbering(int s,int t) {
     // assuming that the graph is biconnected
     assert(has_edge(s,t) && node_stack.empty());
@@ -6800,9 +6788,9 @@ void graphe::compute_st_numbering(int s,int t) {
         vertex &u=node(i);
         node_stack.pop();
         pathfinder(i,path);
-        if (path.empty())
+        if (path.empty()) {
             u.set_number(++n);
-        else {
+        } else {
             path.pop_back();
             while (!path.empty()) {
                 node_stack.push(path.back());

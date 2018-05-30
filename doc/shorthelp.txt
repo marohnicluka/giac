@@ -304,8 +304,8 @@ random_regular_graph(100,80,connected)
 -6 random_tournament
 
 # random_planar_graph
-0 n or V
-2 Return random biconnected planar graph with n vertices, which can also be specified as a list V of their labels.
+0 n or V,p,[c]
+2 Return random planar graph with n vertices, which can also be specified as a list V of their labels, obtained by trying to remove each edge of a random triangulated graph with probability 0<=p<1 [c is connectivity level : 0 - any, 1 - connected, 2 - biconnected, 3 - triconnected (by default, c=1)]
 -1 random_bipartite_graph
 -2 random_digraph
 -3 random_graph
@@ -1173,3 +1173,11 @@ minimal_spanning_tree(graph([[0,1,0,4,0,0],[1,0,1,0,4,0],[0,1,0,3,0,1],[4,0,3,0,
 -2 number_of_vertices
 graph_rank(graph(%{[1,2],[3,4],[4,5]%}))
 graph_rank(graph(%{[1,2],[3,4],[4,5]%}),[[1,2],[3,4])
+
+# lowest_common_ancestor
+0 T,r,(u,v) || [[u1,v1],[u2,v2],...]
+2 Returns the lowest common ancestor of nodes u and v in the tree T with root r, or the list of lowest common ancestors of all pairs [uk,vk].
+-1 is_tree
+-2 tree_height
+T:=random_tree(30); lowest_common_ancestor(T,15,10,20)
+T:=random_tree(30); lowest_common_ancestor(T,15,[[10,20],[11,19]])

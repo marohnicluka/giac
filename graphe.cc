@@ -493,7 +493,7 @@ graphe::vertex::vertex() {
     m_color=0; // white
     m_prelim=0;
     m_modifier=0;
-    m_isleaf=false;
+    m_children=0;
     m_position=0;
     m_gaps=0;
     m_embedded=false;
@@ -510,7 +510,7 @@ void graphe::vertex::assign(const vertex &other) {
     m_color=other.color();
     m_prelim=other.prelim();
     m_modifier=other.modifier();
-    m_isleaf=other.is_leaf();
+    m_children=other.children();
     m_position=other.position();
     m_gaps=other.gaps();
     m_embedded=other.is_embedded();
@@ -989,6 +989,29 @@ bool graphe::unmark_node(int v) {
         return true;
     }
     return false;
+}
+
+/* set edge {i,j} visited */
+void graphe::set_edge_visited(int i,int j) {
+    if (visited_edges.empty())
+        visited_edges.resize(node_count());
+    ivector &ngh=visited_edges[i<j?i:j];
+    int k=i<j?j:i;
+    if (ngh.empty())
+        ngh.push_back(k);
+    else {
+        ivector::iterator it=ngh.begin();
+        while (it!=ngh.end() && *it<k) ++it;
+        ngh.insert(it,k);
+    }
+}
+
+/* return true iff edge {i,j} is visited */
+bool graphe::is_edge_visited(int i,int j) const {
+    if (visited_edges.empty())
+        return false;
+    const ivector &ngh=visited_edges[i<j?i:j];
+    return binary_search(ngh.begin(),ngh.end(),i<j?j:i);
 }
 
 /* return edge as pair of vertex indices */
@@ -1871,15 +1894,15 @@ void graphe::add_temporary_edge(int i,int j) {
 
 /* remove all temporary edges */
 void graphe::remove_temporary_edges() {
-    stack<int> to_remove;
+    assert(node_stack.empty());
     for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
         for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
             if (*jt<0)
-                to_remove.push(*jt);
+                node_stack.push(*jt);
         }
-        while (!to_remove.empty()) {
-            it->remove_neighbor(to_remove.top());
-            to_remove.pop();
+        while (!node_stack.empty()) {
+            it->remove_neighbor(node_stack.top());
+            node_stack.pop();
         }
     }
 }
@@ -3382,7 +3405,7 @@ void graphe::make_circular_layout(layout &x,const ivector &outer_face,bool plana
         p[0]=p[1]=0;
     }
     // cool down the system iteratively
-    double A=2.0,d,cool,C=std::sqrt((double)n/M_PI),eps=tol;
+    double A=2.0,d,cool,C=std::sqrt((double)n/M_PI),eps=tol/std::sqrt((double)n);
     ipairs E;
     if (planar)
         get_edges_as_pairs(E,false);
@@ -3610,23 +3633,23 @@ bool graphe::is_triangle_free() const {
 
 /* remove i-th node which is assumed to be isolated */
 void graphe::remove_isolated_node(int i) {
+    assert(node_stack.empty());
     nodes.erase(nodes.begin()+i);
     int j;
-    stack<int> adj;
     stack<attrib> attr;
     for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
         for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
             j=*jt;
             if (j<0)
-                adj.push(-j-1>i?j+1:j);
+                node_stack.push(-j-1>i?j+1:j);
             else
-                adj.push(j>i?j-1:j);
+                node_stack.push(j>i?j-1:j);
             attr.push(it->neighbor_attributes(j));
         }
         it->clear_neighbors();
-        while (!adj.empty()) {
-            it->add_neighbor(adj.top(),attr.top());
-            adj.pop();
+        while (!node_stack.empty()) {
+            it->add_neighbor(node_stack.top(),attr.top());
+            node_stack.pop();
             attr.pop();
         }
     }
@@ -3737,7 +3760,7 @@ bool graphe::hakimi(const ivector &L) {
 /* return the (odd) girth of this graph (the length of the shortest (odd) cycle),
  * return -1 if there are no cycles */
 int graphe::girth(bool odd,int sg) {
-    clear_node_stack();
+    assert(node_stack.empty());
     int g=-1,h,i,j;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         unvisit_all_nodes(sg);
@@ -4077,6 +4100,7 @@ int graphe::connected_components_count(int sg) {
 }
 
 void graphe::strongconnect_dfs(ivectors &components,int i,int sg) {
+    clear_node_stack();
     vertex &v=node(i);
     v.set_visited(true);
     v.set_disc(disc_time++);
@@ -4107,9 +4131,9 @@ void graphe::strongconnect_dfs(ivectors &components,int i,int sg) {
 
 /* find all strongly connected components in directed graph using Tarjan's algorithm */
 void graphe::strongly_connected_components(ivectors &components,int sg) {
+    assert(node_stack.empty());
     unvisit_all_nodes(sg);
     disc_time=0;
-    clear_node_stack();
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         if ((sg<0 || it->subgraph()==sg) && !it->is_visited())
             strongconnect_dfs(components,it-nodes.begin(),sg);
@@ -4315,18 +4339,23 @@ bool graphe::fleury(int start,ivector &path) {
 /* Hierholzer algorithm for eulerian cycle, time complexity O(m) */
 void graphe::hierholzer(ivector &path) {
     // assuming that the graph is eulerian
-    int i,j,k,pos=path.size();
+    int i,j,pos=path.size();
+    ivector_iter it;
     while (pos>0) {
         --pos;
         // find a closed trail starting in path[pos]
         j=i=path[pos];
-        if (degree(i)==0)
-            continue;
         do {
-            k=node(j).neighbors().front();
-            path.insert(path.begin()+(++pos),k);
-            remove_edge(j,k);
-            j=k;
+            vertex &v=node(j);
+            for (it=v.neighbors().begin();it!=v.neighbors().end();++it) {
+                if (!is_edge_visited(j,*it))
+                    break;
+            }
+            if (it==v.neighbors().end())
+                break;
+            path.insert(path.begin()+(++pos),*it);
+            set_edge_visited(j,*it);
+            j=*it;
         } while (i!=j);
     }
 }
@@ -4348,21 +4377,21 @@ int graphe::eulerian_path_start(bool &iscycle) const {
 }
 
 /* attempt to find an eulerian trail in this graph, return true iff one exists */
-bool graphe::find_eulerian_path(ivector &path) const {
-    graphe G(*this);
+bool graphe::find_eulerian_path(ivector &path) {
     int start;
     bool iscycle;
-    if (!G.is_connected() || (start=eulerian_path_start(iscycle))<0)
+    if (!is_connected() || (start=eulerian_path_start(iscycle))<0)
         return false;
     // use Hierholzer's algorithm
+    assert(visited_edges.empty());
     path.clear();
     path.reserve(edge_count()+1);
     if (!iscycle) {
         // find a path between two odd-degree nodes and delete it
-        G.dfs(start,false);
+        dfs(start,false);
         int j,k=-1;
-        for (int i=G.node_count();i-->0;) {
-            if (i!=start && G.degree(i)%2!=0) {
+        for (int i=node_count();i-->0;) {
+            if (i!=start && degree(i)%2!=0) {
                 k=i;
                 break;
             }
@@ -4370,14 +4399,15 @@ bool graphe::find_eulerian_path(ivector &path) const {
         assert(k>=0);
         while (k!=start) {
             path.push_back(k);
-            const vertex &v=G.node(k);
+            const vertex &v=node(k);
             j=v.ancestor();
-            G.remove_edge(j,k);
+            set_edge_visited(j,k);
             k=j;
         }
     }
     path.push_back(start);
-    G.hierholzer(path);
+    hierholzer(path);
+    unvisit_all_edges();
     return true;
 }
 
@@ -4409,7 +4439,7 @@ int graphe::find_cycle_dfs(int i,int sg) {
 /* return a cycle in this graph using DFS (graph is assumed to be connected),
  * or an empty list if there is no cycle (i.e. if the graph is a tree) */
 bool graphe::find_cycle(ivector &cycle,int sg) {
-    clear_node_stack();
+    assert(node_stack.empty());
     if (is_empty())
         return false;
     int n=node_count(),initv,i;
@@ -4427,7 +4457,7 @@ bool graphe::find_cycle(ivector &cycle,int sg) {
             cycle.push_back(node_stack.top());
             node_stack.pop();
         } while (cycle.back()!=i);
-        while (!node_stack.empty()) node_stack.pop();
+        clear_node_stack();
         return true;
     }
     return false;
@@ -4455,8 +4485,8 @@ bool graphe::find_path_dfs(int dest,int i,int sg,bool skip_embedded) {
 
 /* return a path from i-th to j-th vertex using DFS (graph is assumed to be connected) */
 bool graphe::find_path(int i,int j,ivector &path,int sg,bool skip_embedded) {
+    assert(node_stack.empty());
     unvisit_all_nodes(sg);
-    clear_node_stack();
     if (find_path_dfs(i,j,sg,skip_embedded)) {
         path.resize(node_stack.size());
         while (!node_stack.empty()) {
@@ -4465,6 +4495,7 @@ bool graphe::find_path(int i,int j,ivector &path,int sg,bool skip_embedded) {
         }
         return true;
     }
+    clear_node_stack();
     return false;
 }
 
@@ -4929,6 +4960,8 @@ void graphe::periphericity(const ivector &outer_face,ivector &p) {
 void graphe::tree_node_positioner::walk(int i,int pass,int level,double modsum) {
     vertex &v=G->node(i);
     v.set_visited(true);
+    if (pass==1)
+        v.clear_children();
     double m=0;
     if (pass==3) {
         point &p=x->at(i);
@@ -4938,20 +4971,19 @@ void graphe::tree_node_positioner::walk(int i,int pass,int level,double modsum) 
         m=v.modifier();
     }
     int j;
-    bool isleaf=true;
     for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
         j=*it;
         if (j<0) j=-j-1;
         vertex &w=G->node(j);
         if (w.is_visited())
             continue;
-        if (pass==1)
+        if (pass==1) {
             w.set_ancestor(i);
+            v.inc_children();
+        }
         walk(j,pass,level+1,modsum+m);
-        isleaf=false;
     }
     if (pass==1) {
-        v.set_is_leaf(isleaf);
         ++node_counters[level];
         depth=std::max(depth,level+1);
     } else if (pass==2) {
@@ -4959,7 +4991,7 @@ void graphe::tree_node_positioner::walk(int i,int pass,int level,double modsum) 
             ++gap_counters[level];
         v.set_position(node_counters[level]++);
         levels[level][v.position()]=i;
-        if (!isleaf) {
+        if (!v.is_leaf()) {
             v.set_gaps(gap_counters[level]);
             gap_counters[level]=0;
         }
@@ -5121,6 +5153,7 @@ int graphe::tree_height(int root) {
 
 /* create a random biconnected planar graph with n vertices */
 void graphe::make_random_planar(double p,int connectivity) {
+    // connectivity is 0 (any), 1 (connected), 2 (biconnected) or 3 (triconnected)
     assert(p>=0 && p<1 && connectivity>=0 && connectivity<4);
     set_directed(false);
     // start with a random maximal planar graph with n vertices
@@ -6108,6 +6141,31 @@ bool graphe::get_leading_cycle(ivector &c) const {
     return false;
 }
 
+void graphe::rdfs(int i,ivector &d,bool rec,int sg,bool skip_embedded) {
+    vertex &v=node(i);
+    v.set_visited(true);
+    v.set_disc(++disc_time);
+    v.set_low(v.disc());
+    v.clear_children();
+    if (rec)
+        d.push_back(i);
+    int j;
+    for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
+        j=*it;
+        if (j<0) j=-j-1;
+        vertex &w=node(j);
+        if ((sg>=0 && w.subgraph()!=sg) || (skip_embedded && w.is_embedded()))
+            continue;
+        if (!w.is_visited()) {
+            w.set_ancestor(i);
+            v.inc_children();
+            rdfs(j,d,rec,sg,skip_embedded);
+            v.set_low(std::min(v.low(),w.low()));
+        } else if (j!=v.ancestor())
+            v.set_low(std::min(v.low(),w.disc()));
+    }
+}
+
 /* depth-first graph traversal with O(n+m) time and O(m) space complexity */
 void graphe::dfs(int root,bool rec,bool clr,ivector *D,int sg,bool skip_embedded) {
     if (clr) {
@@ -6120,33 +6178,8 @@ void graphe::dfs(int root,bool rec,bool clr,ivector *D,int sg,bool skip_embedded
         d.clear();
         d.reserve(node_count());
     }
-    clear_node_stack();
-    node_stack.push(root);
-    int i,j,oldsize;
-    while (!node_stack.empty()) {
-        i=node_stack.top();
-        node_stack.pop();
-        vertex &v=node(i);
-        if (!v.is_visited()) {
-            v.set_disc(disc_time++);
-            if (rec)
-                d.push_back(i);
-            v.set_visited(true);
-            oldsize=node_stack.size();
-            for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
-                j=*it;
-                if (j<0) j=-j-1;
-                vertex &w=node(j);
-                if ((sg>=0 && w.subgraph()!=sg) || (skip_embedded && w.is_embedded()))
-                    continue;
-                if (!w.is_visited()) {
-                    w.set_ancestor(i);
-                    node_stack.push(j);
-                }
-            }
-            v.set_is_leaf(int(node_stack.size())==oldsize);
-        }
-    }
+    assert(sg<0 || node(root).subgraph()==sg);
+    rdfs(root,d,rec,sg,skip_embedded);
 }
 
 /* breadth-first graph traversal with O(n+m) time and O(m) space complexity */
@@ -6662,6 +6695,11 @@ int graphe::lowest_common_ancestor(int i,int j,int root) {
     ivector lca;
     lowest_common_ancestors(root,p,lca);
     return lca.front();
+}
+
+/* find a path from v to other visited vertex w along unvisited edges */
+void graphe::pathfinder(int v,ivector &path) {
+
 }
 
 #ifndef NO_NAMESPACE_GIAC

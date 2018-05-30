@@ -99,9 +99,10 @@ public:
         int m_gaps;
         double m_prelim;
         double m_modifier;
-        bool m_isleaf;
+        int m_children;
         // used for planar embedding
         bool m_embedded;
+        bool m_number;
         // *
         attrib m_attributes;
         std::map<int,attrib> m_neighbor_attributes;
@@ -117,6 +118,8 @@ public:
         int subgraph() const { return m_subgraph; }
         void set_embedded(bool yes) { m_embedded=yes; }
         bool is_embedded() const { return m_embedded; }
+        void set_number(int n) { m_number=n; }
+        int number() const { return m_number; }
         void set_visited(bool yes) { m_visited=yes; }
         bool is_visited() const { return m_visited; }
         bool is_on_stack() const { return m_on_stack; }
@@ -130,8 +133,10 @@ public:
         int ancestor() const { return m_ancestor; }
         void set_color(int c) { m_color=c; }
         int color() const { return m_color; }
-        void set_is_leaf(bool yes) { m_isleaf=yes; }
-        bool is_leaf() const { return m_isleaf; }
+        void inc_children() { ++m_children; }
+        void clear_children() { m_children=0; }
+        int children() const { return m_children; }
+        bool is_leaf() const { return m_children==0; }
         void set_position(int p) { m_position=p; }
         int position() const { return m_position; }
         void set_gaps(int n) { m_gaps=n; }
@@ -373,6 +378,7 @@ private:
     ivector discovered_nodes;
     std::stack<ipair> edge_stack;
     std::stack<int> node_stack;
+    ivectors visited_edges;
     void clear_node_stack();
     void message(const char *str);
     void message(const char *format,int a);
@@ -461,6 +467,8 @@ private:
     void strongconnect_dfs(ivectors &components,int i,int sg);
     bool degrees_equal(const ivector &v,int deg=0) const;
     void lca_recursion(int u,const ipairs &p,ivector &lca_recursion,disjoint_set &ds);
+    void pathfinder(int v,ivector &path);
+    void rdfs(int i,ivector &d,bool rec,int sg,bool skip_embedded);
 
 public:
     graphe(const context *contextptr=context0);
@@ -502,6 +510,11 @@ public:
     bool unmark_node(const gen &v) { return unmark_node(node_index(v)); }
     void unmark_all_nodes() { marked_nodes.clear(); }
     void sort_marked_nodes() { std::sort(marked_nodes.begin(),marked_nodes.end()); }
+    void set_edge_visited(int i,int j);
+    void set_edge_visited(const ipair &e) { set_edge_visited(e.first,e.second); }
+    bool is_edge_visited(int i,int j) const;
+    bool is_edge_visited(const ipair &e) const { return is_edge_visited(e.first,e.second); }
+    void unvisit_all_edges() { visited_edges.clear(); }
     gen to_gen() const;
     bool write_dot(const std::string &filename) const;
     bool read_dot(const std::string &filename);
@@ -602,7 +615,7 @@ public:
     bool trail(const vecteur &v);
     void create_random_layout(layout &x,int dim);
     void make_spring_layout(layout &x,int d,double tol=0.001);
-    void make_circular_layout(layout &x,const ivector &outer_face,bool planar=false,double tol=0.001);
+    void make_circular_layout(layout &x,const ivector &outer_face,bool planar=false,double tol=0.01);
     bool make_planar_layout(layout &x);
     double make_tree_layout(layout &x,double sep,int apex=0);
     void layout_best_rotation(layout &x);
@@ -660,7 +673,7 @@ public:
     void find_bridges(ipairs &B,int sg=-1);
     bool find_cycle(ivector &cycle,int sg=-1);
     bool find_path(int i,int j,ivector &path,int sg=-1,bool skip_embedded=false);
-    bool find_eulerian_path(ivector &path) const;
+    bool find_eulerian_path(ivector &path);
     int eulerian_path_start(bool &iscycle) const;
     bool fleury(int start,ivector &path);
     void hierholzer(ivector &path);
@@ -685,6 +698,7 @@ public:
     void minimal_spanning_tree(graphe &T,int sg=-1);
     void lowest_common_ancestors(int root,const ipairs &p,ivector &lca_recursion);
     int lowest_common_ancestor(int i,int j,int root);
+    void st_numbering(int s,int t);
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

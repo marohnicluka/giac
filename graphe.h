@@ -467,8 +467,9 @@ private:
     void strongconnect_dfs(ivectors &components,int i,int sg);
     bool degrees_equal(const ivector &v,int deg=0) const;
     void lca_recursion(int u,const ipairs &p,ivector &lca_recursion,disjoint_set &ds);
-    void pathfinder(int v,ivector &path);
+    void pathfinder(int i,ivector &path);
     void rdfs(int i,ivector &d,bool rec,int sg,bool skip_embedded);
+    bool is_descendant(int v,int anc) const;
 
 public:
     graphe(const context *contextptr=context0);

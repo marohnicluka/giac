@@ -7,7 +7,7 @@ trail(1,2,3,4,1)
 
 # graph
 0 [V],[E],[A],[options]
-2 Create an (un)directed (un)weighted graph from list of vertices V, set of edges E, and/or adjacency or weight matrix A. All parameters are optional.
+2 Create an (un)directed (un)weighted graph from list of vertices V, set of edges E, and/or adjacency or weight matrix A (all parameters are optional).
 -1 digraph
 -2 trail
 graph(5)
@@ -20,7 +20,7 @@ graph([[0,1,1,0],[1,0,0,1],[1,0,0,0],[0,1,0,0]])
 
 # digraph
 0 [V],[E],[A],[options]
-2 Create a directed (un)weighted graph from list of vertices V, set of edges E and/or adjacency or weight matrix A. All parameters are optional.
+2 Create a directed (un)weighted graph from list of vertices V, set of edges E and/or adjacency or weight matrix A (all parameters are optional).
 -1 graph
 -2 trail
 digraph(%{[1,2],[2,3],[3,4],[4,1]%})
@@ -28,7 +28,7 @@ digraph([a,b,c,d],%{[[a,b],1.0],[[a,c],2.3],[[b,d],3.1],[[c,d],4]%})
 
 # export_graph
 0 G,"path/to/graphname"
-2 Writes the graph G to the file 'graphname.dot' in directory 'path/to' using dot format. Returns 1 on success and 0 on failure.
+2 Writes the graph G to the file 'graphname.dot' in directory 'path/to' using dot format, returns 1 on success and 0 on failure.
 -1 import_graph
 export_graph(complete_graph(5),"K5")
 
@@ -66,7 +66,7 @@ has_edge(graph(trail(1,2,3,4,1)),[2,4])
 
 # has_arc
 0 G,e
-2 Returns true iff the arc e=[i,j] is contained in the directed graph G. If e={i,j} is a set, true is returned iff G has both edges [i,j] and [j,i].
+2 Returns true iff the arc e=[i,j] is contained in the directed graph G or, if e={i,j} is a set, iff G has both edges [i,j] and [j,i].
 -1 edges
 -2 has_edge
 has_arc(digraph(trail(1,2,3,4,1)),[4,2])
@@ -79,7 +79,7 @@ adjacency_matrix(graph(trail(1,2,3,4,2,5,1,3)))
 
 # incidence_matrix
 0 G
-2 Returns the incidence matrix of the input graph G whose rows are indexed by the vertices and columns by the edges (in order defined by the command 'edges'). The entry [i,j] of this matrix is 1 if the i-th vertex is incident with the j-th edge (for directed graphs, -1 if vertex is the tail and 1 if it is the head of an arc).
+2 Returns the incidence matrix of the input graph G whose rows are indexed by the vertices and columns by the edges (in order defined by the command 'edges').
 -1 incident_edges
 incidence_matrix(graph("tetrahedron"))
 
@@ -95,7 +95,7 @@ weight_matrix(graph(%{[[1,2],2],[[2,3],1]%})
 
 # graph_complement
 0 G
-2 Return the complement of the input graph G, i.e. the graph with the same vertex set as G, but whose edge (arc) set consists of the edges (arcs) not present in G.
+2 Return the graph with the same vertex set as G, but whose edge (arc) set consists of the edges (arcs) not present in G.
 -1 edges
 edges(graph_complement(cycle_graph(5)))
 
@@ -167,7 +167,7 @@ make_directed(cycle_graph(4),[[0,0,0,1],[2,0,1,3],[0,1,0,4],[5,0,4,0]])
 
 # underlying_graph
 0 G
-2 Returns the underlying graph of the input graph G, i.e. the graph obtained by stripping directions and weights from arcs (pairs of arcs connecting the same vertices are merged to a single edge).
+2 Returns the graph obtained by stripping directions and weights from arcs (pairs of arcs connecting the same vertices are merged to a single edge).
 -1 is_directed
 -2 is_weighted
 -3 make_directed
@@ -183,19 +183,19 @@ edges(cycle_graph(4))
 
 # lcf_graph
 0 jumps,[exp]
-2 Returns the graph constructed from LCF notation jumps[^exp]. Arguments are list of integers 'jumps' [and a positive integer 'exp', by default 1].
+2 Returns the graph constructed from LCF notation jumps[^exp] given the list of integers 'jumps' [and a positive integer 'exp', by default 1].
 -1 graph
 draw_graph(lcf_graph([-3,3],4))
 
 # hypercube_graph
 0 n
-2 Constructs and returns the hypercube graph in dimension n (with 2^n vertices).
+2 Returns the hypercube graph in dimension n (with 2^n vertices).
 -1 graph
 draw_graph(hypercube_graph(3))
 
 # seidel_switch
 0 G,V
-2 Returns a copy of the input graph G in which edges between vertices in list V and vertices not in V are inverted, i.e. replaced with a set of edges from V to other vertices which is not present in G.
+2 Returns a copy of the input graph G in which edges between vertices in list V and vertices not in V are inverted (replaced with a set of edges from V to other vertices which is not present in G).
 -1 neighbors
 -2 graph_complement
 draw_graph(seidel_switch(cycle_graph(5),[1,2]))
@@ -222,8 +222,8 @@ draw_graph(graph("soccerball"))
 draw_graph(sierpinski_graph(3,3,at_triangle),spring)
 
 # complete_graph
-0 n or V || m,n || n1,n2,...,nk
-2 Returns a complete graph with vertices from list V or enumerated with first n integers. When two positive integers m and n are given, a complete bipartite graph is returned (or complete k-partite graph if k integers n1,n2,...,nk are given).
+0 n or V || n1,n2,...,nk
+2 Returns a complete graph with vertices from list V or enumerated with first n integers or, when two or more positive integers n1,n2,...,nk are given, a complete k-partite graph with partition sizes n1,n2,...,nk.
 -1 edges
 draw_graph(complete_graph(4))
 
@@ -237,7 +237,7 @@ petersen_graph(10,2)
 
 # random_graph
 0 n or V,p or m
-2 Returns a random undirected unweighted graph with n vertices where two vertices are connected with probability p. Alternatively, m edges are created at random. Instead of number n of vertices, a list V of vertex labels may be specified.
+2 Returns a random undirected unweighted graph with n vertices (list V of labels may me specified) where two vertices are connected with probability p or where m edges are created at random.
 -1 random_bipartite_graph
 -2 random_digraph
 -3 random_planar_graph
@@ -249,7 +249,7 @@ random_graph(8,10)
 
 # random_digraph
 0 n or V,p or m
-2 Returns a random directed unweighted graph with n vertices where two vertices are connected with probability p. Alternatively, m edges are created at random. Instead of number n of vertices, a list V of vertex labels may be specified.
+2 Returns a random directed unweighted graph with n vertices (list V of labels may me specified) where two vertices are connected with probability p or where m edges are created at random.
 -1 random_bipartite_graph
 -2 random_graph
 -3 random_planar_graph
@@ -261,7 +261,7 @@ random_digraph(8,10)
 
 # random_bipartite_graph
 0 n or [a,b],p or m
-2 Returns a random undirected unweighted bipartite graph with n vertices where each possible edge is present with probability p. Alternatively, m edges are created at random. Also, when first argument is list [a,b] of integers, two groups of vertices with sizes a and b are created.
+2 Returns a random undirected unweighted bipartite graph with n vertices where each possible edge is present with probability p or where m edges are created at random. When the first argument is list [a,b] of integers, two groups of vertices with sizes a and b are created.
 -1 random_digraph
 -2 random_graph
 -3 random_planar_graph
@@ -295,7 +295,7 @@ random_regular_graph(100,80,connected)
 
 # random_tree
 0 n or V,[d]
-2 Returns a random tree graph with n vertices, which may be specified as list V of their labels. Optional parameter d is a positive integer which represents the upper bound for degree of graph.
+2 Returns a random tree graph with n vertices, which may be specified as list V of their labels [with the upper bound d (positive integer) for the degree of graph].
 -1 random_bipartite_graph
 -2 random_digraph
 -3 random_graph
@@ -305,7 +305,7 @@ random_regular_graph(100,80,connected)
 
 # random_planar_graph
 0 n or V,p,[c]
-2 Return random planar graph with n vertices, which can also be specified as a list V of their labels, obtained by trying to remove each edge of a random triangulated graph with probability 0<=p<1 [c is connectivity level : 0 - any, 1 - connected, 2 - biconnected, 3 - triconnected (by default, c=1)]
+2 Return random planar graph with n vertices, which can also be specified as a list V of their labels, obtained by trying to remove each edge of a random triangulated graph with probability 0<=p<1 [c is connectivity level : 0 - any, 1 - connected, 2 - biconnected, 3 - triconnected (by default, c=1)].
 -1 random_bipartite_graph
 -2 random_digraph
 -3 random_graph
@@ -326,7 +326,7 @@ assign_edge_weights(digraph(trail(1,2,3,4,1)),0..1)
 
 # articulation_points
 0 G
-2 Returns the list of articulation points (i.e. cut vertices) of the input graph G.
+2 Returns the list of articulation points (cut vertices) of the input graph G.
 -1 biconnected_components
 -2 is_biconnected
 -3 is_connected
@@ -336,7 +336,7 @@ articulation_points(cycle_graph(5))
 
 # biconnected_components
 0 G
-2 Returns the list of biconnected components of the input graph G. Every component is given as a list of vertices belonging to that component.
+2 Returns the biconnected components of the input graph G as a list of lists of vertices.
 -1 articulation_points
 -2 is_biconnected
 -3 is_connected
@@ -356,7 +356,7 @@ add_arc(graph(trail(1,2,3,4,5,1)),[[1,3],[2,4]])
 
 # delete_arc
 0 G,e
-2 Returns a modified copy of the directed graph G with arc e (or trail or list of arcs) removed.
+2 Returns a modified copy of the directed graph G with arc e (or trail or list of arcs). removed.
 -1 add_arc
 -2 delete_edge
 -3 digraph
@@ -404,7 +404,7 @@ delete_vertex(cycle_graph(5),[1,4])
 
 # contract_edge
 0 G
-2 Returns a modified copy of the input graph G with edge e contracted (collapsed). To contract more edges use the foldl command.
+2 Returns a modified copy of the input graph G with edge e contracted (to contract more edges apply the foldl command).
 -1 delete_edge
 -2 delete_vertex
 -3 foldl
@@ -462,7 +462,7 @@ set_graph_attribute(cycle_graph(3),"name"="cycle graph")
 
 # get_graph_attribute
 0 G,attr1,attr2,...
-2 Get the graph attributes tag1, tag2, ..., i.e. return the sequence of values corresponding to the given tags, which may also be specified in a list.
+2 Return the graph attributes tag1, tag2, ..., as a sequence of the corresponding values (tags may also be specified in a list).
 -1 discard_graph_attribute
 -2 set_graph_attribute
 -3 list_graph_attributes
@@ -486,7 +486,7 @@ set_vertex_attribute(cycle_graph(3),1,"supply"=27)
 
 # get_vertex_attribute
 0 G,v,attr1,attr2,...
-2 Get the attributes tag1, tag2, ... assigned to vertex v in the input graph G, i.e. return the sequence of values corresponding to the given tags, which may also be specified in a list.
+2 Return the attributes tag1, tag2, ... assigned to vertex v in the input graph G as a sequence of the corresponding values (tags may also be specified in a list).
 -1 discard_vertex_attribute
 -2 set_vertex_attribute
 -3 list_vertex_attributes
@@ -510,7 +510,7 @@ set_edge_attribute(cycle_graph(3),[1,2],"cost"=12.4)
 
 # get_edge_attribute
 0 G,e,attr1,attr2,...
-2 Get the attributes tag1, tag2, ... assigned to edge e in the input graph G, i.e. return the sequence of values corresponding to the given tags, which may also be specified in a list.
+2 Return the attributes tag1, tag2, ... assigned to edge e in the input graph G as a sequence of the corresponding values (tags may also be specified in a list).
 -1 discard_edge_attribute
 -2 set_edge_attribute
 -3 list_edge_attributes
@@ -644,7 +644,7 @@ graph_vertices(relabel_vertices(graph([a,b,c]),["first","second","third"]))
 
 # is_tree
 0 G
-2 Returns true iff the input graph G is a tree, i.e. an undirected connected graph with exactly n-1 edges, where n is the number of nodes of G.
+2 Returns true iff the input graph G is a tree.
 -1 is_forest
 -2 random_tree
 -3 tree_height
@@ -654,13 +654,13 @@ is_tree(cycle_graph(5))
 
 # is_forest
 0 G
-2 Returns true iff the input graph G is a forest, i.e. an undirected graph whose connected components are all trees.
+2 Returns true iff the input graph G is a forest (disjoint union of trees).
 -1 is_tree
 is_forest(graph(trail(1,2,3,4),trail(5,2,6,7),trail(8,9,10)))
 
 # is_tournament
 0 G
-2 Returns true iff the input graph G is a tournament, i.e. a complete graph with a direction for each edge.
+2 Returns true iff the input graph G is a tournament.
 -1 has_edge
 -2 random_tournament
 is_tournament(digraph(%{[1,2],[2,3],[3,1]%}))
@@ -674,7 +674,7 @@ tree_height(graph(%{[1,2],[2,3],[2,4],[4,5]%}),1)
 
 # is_triangle_free
 0 G
-2 Returns true iff the undirected graph G is triangle-free, i.e. contains no cliques of order three.
+2 Returns true iff the undirected graph G contains no cliques of order three.
 -1 is_clique
 -2 maximal_clique
 is_triangle_free(graph("soccerball"))
@@ -720,7 +720,7 @@ is_weighted(graph(%{[[a,b],2],[[b,c],3]%})
 
 # is_planar
 0 G
-2 Returns true iff the input graph G is planar, i.e. if it can be drawn into plane without edge crossings.
+2 Returns true iff the input graph G is planar.
 -1 draw_graph
 -2 random_planar
 is_planar(complete_graph(4))
@@ -744,7 +744,7 @@ draw_graph(complete_kary_tree(3,3))
 
 # prism_graph
 0 n
-2 Returns the prism graph of order n, i.e. the generalized Petersen graph GP(n,1).
+2 Returns the generalized Petersen graph GP(n,1).
 -1 antiprism_graph
 -2 web_graph
 draw_graph(prism_graph(5))
@@ -757,7 +757,7 @@ draw_graph(antiprism_graph(5))
 
 # star_graph
 0 n
-2 Returns the star graph with n+1 vertices, i.e. the complete bipartite graph complete_graph(1,n).
+2 Returns the complete bipartite graph complete_graph(1,n).
 -1 complete_graph
 -2 wheel_graph
 draw_graph(star_graph(5),circle=[1,2,3,4,5])
@@ -808,9 +808,9 @@ draw_graph(tensor_product(graph(trail(1,2,3,4,5,2)),star_graph(3)),spring)
 -3 trail
 edges(path_graph(5))
 
-# eulerian_path
-0 G
-2 Returns true iff the input graph G is eulerian, i.e. if it has eulerian path. If identifier V is specified as the second argument, that path is written to it.
+# is_eulerian
+0 G,[T]
+2 Return true iff the input graph G is eulerian [and write the corresponding eulerian trail to T].
 -1 path_graph
 -2 trail
 is_eulerian(complete_graph(4))
@@ -890,7 +890,7 @@ edges(graph_join(cycle_graph(3),graph(2)))
 
 # reverse_graph
 0 G
-2 Returns the reverse graph of the directed graph G, i.e. the copy of G with the directions of all edges reversed.
+2 Returns the copy of G with the directions of all edges reversed.
 -1 digraph
 reverse_graph(digraph(%{[1,2],[1,3],[2,3]%}))
 
@@ -942,7 +942,7 @@ allpairs_distance(graph(%{[1,2],[1,3],[1,4],[1,5],[2,3],[3,4],[4,5],[5,2]%}))
 
 # graph_diameter
 0 G
-2 Returns the diameter of the input graph G, i.e. the maximum distance between a pair of vertices in G. If G is disconnected, its diameter is equal to +infinity.
+2 Returns the maximum distance between a pair of vertices in G or +infinity if G is disconnected.
 -1 allpairs_distance
 -2 dijkstra
 -3 shortest_path
@@ -965,14 +965,14 @@ topologic_sort(digraph(%{[c,a],[c,b],[c,d],[a,d],[b,d],[a,b]%}))
 
 # is_acyclic
 0 G
-2 Returns true iff the directed graph G is acyclic, i.e. has no topological ordering.
+2 Returns true iff the directed graph G has no topological ordering.
 -1 topologic_sort
 -2 topological_sort
 is_acyclic(digraph(%{[c,a],[c,b],[c,d],[a,d],[b,d],[a,b]%}))
 
 # is_clique
 0 G
-2 Returns true iff the undirected graph G is a clique (i.e. a complete graph).
+2 Returns true iff the undirected graph G is a clique (a complete graph).
 -1 clique_number
 -2 induced_subgraph
 -3 maximum_clique
@@ -1009,7 +1009,7 @@ clique_cover(graph_complement(complete_graph(3,4)))
 
 # clique_cover_number
 0 G
-2 Returns the clique cover number of the input graph G (i.e. the chromatic number of the graph complement of G).
+2 Returns the clique cover number of the input graph G.
 -1 clique_cover
 -3 maximal_cliques
 clique_cover_number(graph("petersen"))
@@ -1018,12 +1018,12 @@ clique_cover_number(graph_complement(complete_graph(3,4)))
 
 # chromatic_number
 0 G
-2 Returns the chromatic number of the input graph G (i.e. the clique cover number of the graph complement of G).
+2 Returns the chromatic number of the input graph G.
 chromatic_number(graph("petersen"))
 
 # maximum_independent_set
 0 G
-2 Returns the maximum independent vertex set of the input graph G (i.e. maximum clique of the graph complement of G).
+2 Returns the maximum independent vertex set of the input graph G.
 -1 clique_number
 -2 graph_complement
 -3 independence_number
@@ -1032,7 +1032,7 @@ maximum_independent_set(complete_graph(3,4))
 
 # independence_number
 0 G
-2 Returns the independence number of the input graph G (i.e. the size of maximum independent set).
+2 Returns the independence number of the input graph G.
 -1 clique_number
 -2 graph_complement
 -3 maximum_clique
@@ -1080,7 +1080,7 @@ degree_sequence(sequence_graph([3,2,4,2,3,4,5,7]))
 
 # girth
 0 G
-2 Returns the girth of the undirected and unweighted graph G (i.e. the length of the shortest cycle in G).
+2 Returns the length of the shortest cycle in the undirected and unweighted graph G.
 -1 odd_girth
 girth(graph("petersen"))
 girth(hypercube_graph(3))

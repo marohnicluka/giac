@@ -6697,9 +6697,78 @@ int graphe::lowest_common_ancestor(int i,int j,int root) {
     return lca.front();
 }
 
-/* find a path from v to other visited vertex w along unvisited edges */
-void graphe::pathfinder(int v,ivector &path) {
+/* return true iff v is a descendant of anc wrt the last dfs traversal */
+bool graphe::is_descendant(int v,int anc) const {
+    int i=v;
+    while ((i=node(i).ancestor())>=0) {
+        if (i==anc)
+            return true;
+    }
+    return false;
+}
 
+/* find a path from v to other visited vertex w along unvisited edges */
+void graphe::pathfinder(int i,ivector &path) {
+    const vertex &v=node(i);
+    path.clear();
+    // find an unvisited edge from v
+    int j=-1,k;
+    for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
+        if (!is_edge_visited(i,*it)) {
+            j=*it;
+            break;
+        }
+    }
+    if (j<0)
+        return;
+    vertex &w=node(j);
+    path.push_back(i);
+    path.push_back(j);
+    if (v.ancestor()!=j && w.ancestor()!=i) {
+        if (is_descendant(i,j))
+            set_edge_visited(i,j);
+        else if (is_descendant(j,i)) {
+            set_edge_visited(i,j);
+            while (true) {
+                vertex &u=node(j);
+                if (u.is_visited())
+                    break;
+                k=-1;
+                for (ivector_iter it=u.neighbors().begin();it!=u.neighbors().end();++it) {
+                    vertex &t=node(*it);
+                    if (t.disc()==u.low() || t.low()==u.low()) {
+                        k=*it;
+                        break;
+                    }
+                }
+                assert(k>=0);
+                u.set_visited(true);
+                set_edge_visited(j,k);
+                path.push_back(k);
+                j=k;
+            }
+        }
+    } else if (w.ancestor()==i) {
+        set_edge_visited(i,j);
+        while (true) {
+            vertex &u=node(j);
+            if (u.is_visited())
+                break;
+            k=-1;
+            for (ivector_iter it=u.neighbors().begin();it!=u.neighbors().end();++it) {
+                vertex &t=node(*it);
+                if (t.disc()==u.low() || t.low()==u.low()) {
+                    k=*it;
+                    break;
+                }
+            }
+            assert(k>=0);
+            u.set_visited(true);
+            set_edge_visited(j,k);
+            path.push_back(k);
+            j=k;
+        }
+    } else path.clear();
 }
 
 #ifndef NO_NAMESPACE_GIAC

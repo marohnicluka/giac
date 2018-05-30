@@ -6736,7 +6736,7 @@ void graphe::pathfinder(int i,ivector &path) {
                 k=-1;
                 for (ivector_iter it=u.neighbors().begin();it!=u.neighbors().end();++it) {
                     vertex &t=node(*it);
-                    if (t.disc()==u.low() || t.low()==u.low()) {
+                    if (!is_edge_visited(j,*it) && (t.disc()==u.low() || t.low()==u.low())) {
                         k=*it;
                         break;
                     }
@@ -6756,8 +6756,7 @@ void graphe::pathfinder(int i,ivector &path) {
                 break;
             k=-1;
             for (ivector_iter it=u.neighbors().begin();it!=u.neighbors().end();++it) {
-                vertex &t=node(*it);
-                if (t.disc()==u.low() || t.low()==u.low()) {
+                if (!is_edge_visited(j,*it) && u.ancestor()==*it) {
                     k=*it;
                     break;
                 }

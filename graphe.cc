@@ -568,6 +568,15 @@ void graphe::vertex::remove_neighbor(int i) {
     }
 }
 
+void graphe::vertex::move_neighbor_to_front(int i) {
+    ivector::iterator it=find(m_neighbors.begin(),m_neighbors.end(),i);
+    if (it!=m_neighbors.end()) {
+        int j=*it;
+        m_neighbors.erase(it);
+        m_neighbors.insert(m_neighbors.begin(),j);
+    }
+}
+
 int graphe::first_neighbor_from_subgraph(const vertex &v,int sg) const {
     for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
         if (node(*it).subgraph()==sg)
@@ -6735,8 +6744,7 @@ void graphe::pathfinder(int i,ivector &path) {
                     break;
                 k=-1;
                 for (ivector_iter it=u.neighbors().begin();it!=u.neighbors().end();++it) {
-                    vertex &t=node(*it);
-                    if (!is_edge_visited(j,*it) && (t.disc()==u.low() || t.low()==u.low())) {
+                    if (!is_edge_visited(j,*it) && u.ancestor()==*it) {
                         k=*it;
                         break;
                     }
@@ -6756,7 +6764,8 @@ void graphe::pathfinder(int i,ivector &path) {
                 break;
             k=-1;
             for (ivector_iter it=u.neighbors().begin();it!=u.neighbors().end();++it) {
-                if (!is_edge_visited(j,*it) && u.ancestor()==*it) {
+                vertex &t=node(*it);
+                if (!is_edge_visited(j,*it) && (t.disc()==u.low() || t.low()==u.low())) {
                     k=*it;
                     break;
                 }
@@ -6769,6 +6778,40 @@ void graphe::pathfinder(int i,ivector &path) {
         }
     } else path.clear();
 }
+
+/* compute the ST numbering for this graph using Even-Tarjan algorithm */
+void graphe::compute_st_numbering(int s,int t) {
+    // assuming that the graph is biconnected
+    assert(has_edge(s,t) && node_stack.empty());
+    vertex &v=node(s),&w=node(t);
+    v.move_neighbor_to_front(t);
+    dfs(s,false);
+    unvisit_all_nodes();
+    unvisit_all_edges();
+    v.set_visited(true);
+    w.set_visited(true);
+    set_edge_visited(make_pair(s,t));
+    node_stack.push(t);
+    node_stack.push(s);
+    int n=0,i;
+    ivector path;
+    while (!node_stack.empty()) {
+        i=node_stack.top();
+        vertex &u=node(i);
+        node_stack.pop();
+        pathfinder(i,path);
+        if (path.empty())
+            u.set_number(++n);
+        else {
+            path.pop_back();
+            while (!path.empty()) {
+                node_stack.push(path.back());
+                path.pop_back();
+            }
+        }
+    }
+}
+
 
 #ifndef NO_NAMESPACE_GIAC
 }

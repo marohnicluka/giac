@@ -102,7 +102,7 @@ public:
         int m_children;
         // used for planar embedding
         bool m_embedded;
-        bool m_number;
+        int m_number;
         // *
         attrib m_attributes;
         std::map<int,attrib> m_neighbor_attributes;
@@ -155,6 +155,7 @@ public:
         const attrib &neighbor_attributes(int i) const;
         bool has_neighbor(int i,bool include_temp_edges=true) const;
         void remove_neighbor(int i);
+        void move_neighbor_to_front(int i);
         void clear_neighbors() { m_neighbors.clear(); m_neighbor_attributes.clear(); }
     };
 
@@ -699,7 +700,7 @@ public:
     void minimal_spanning_tree(graphe &T,int sg=-1);
     void lowest_common_ancestors(int root,const ipairs &p,ivector &lca_recursion);
     int lowest_common_ancestor(int i,int j,int root);
-    void st_numbering(int s,int t);
+    void compute_st_numbering(int s,int t);
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

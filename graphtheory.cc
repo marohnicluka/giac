@@ -55,7 +55,8 @@ static const char *gt_error_messages[] = {
     "graph is empty",                                                   // 22
     "a \"tag\"=value pair expected",                                    // 23
     "the given list is not a valid graphic sequence",                   // 24
-    "graph is not acyclic"                                              // 25
+    "graph is not acyclic",                                             // 25
+    "a biconnected graph is required"                                   // 26
 };
 
 void gt_err_display(int code,GIAC_CONTEXT) {
@@ -2057,7 +2058,7 @@ gen _connected_components(const gen &g,GIAC_CONTEXT) {
     G.connected_components(components);
     vecteur res;
     for (graphe::ivectors_iter it=components.begin();it!=components.end();++it) {
-        res.push_back(G.get_nodes(*it));
+        res.push_back(G.get_node_labels(*it));
     }
     return res;
 }
@@ -2699,13 +2700,13 @@ gen _neighbors(const gen &g,GIAC_CONTEXT) {
             return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
         graphe::ivector adj;
         G.adjacent_nodes(i,adj);
-        res=G.get_nodes(adj);
+        res=G.get_node_labels(adj);
     } else {
         int n=G.node_count();
         graphe::ivector adj;
         for (int i=0;i<n;++i) {
             G.adjacent_nodes(i,adj,false);
-            res.push_back(_sort(G.get_nodes(adj),contextptr));
+            res.push_back(_sort(G.get_node_labels(adj),contextptr));
         }
     }
     return res;
@@ -3879,7 +3880,7 @@ gen _shortest_path(const gen &g,GIAC_CONTEXT) {
     vecteur res(T.size());
     for (graphe::ivectors_iter it=shortest_paths.begin();it!=shortest_paths.end();++it) {
         i=it-shortest_paths.begin();
-        res[it-shortest_paths.begin()]=dist[i]>=0?G.get_nodes(*it):vecteur(0);
+        res[it-shortest_paths.begin()]=dist[i]>=0?G.get_node_labels(*it):vecteur(0);
     }
     return single?res.front():res;
 }
@@ -4094,7 +4095,7 @@ gen _maximum_clique(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
     graphe::ivector clique;
     G.maximum_clique(clique);
-    return G.get_nodes(clique);
+    return G.get_node_labels(clique);
 }
 static const char _maximum_clique_s[]="maximum_clique";
 static define_unary_function_eval(__maximum_clique,&_maximum_clique,_maximum_clique_s);
@@ -4221,7 +4222,7 @@ gen _maximum_independent_set(const gen &g,GIAC_CONTEXT) {
     G.complement(C);
     graphe::ivector clique;
     C.maximum_clique(clique);
-    return C.get_nodes(clique);
+    return C.get_node_labels(clique);
 }
 static const char _maximum_independent_set_s[]="maximum_independent_set";
 static define_unary_function_eval(__maximum_independent_set,&_maximum_independent_set,_maximum_independent_set_s);
@@ -4732,12 +4733,40 @@ gen _lowest_common_ancestor(const gen &g,GIAC_CONTEXT) {
         }
         graphe::ivector lca;
         G.lowest_common_ancestors(r,p,lca);
-        return G.get_nodes(lca);
+        return G.get_node_labels(lca);
     } else return gensizeerr(contextptr);
 }
 static const char _lowest_common_ancestor_s[]="lowest_common_ancestor";
 static define_unary_function_eval(__lowest_common_ancestor,&_lowest_common_ancestor,_lowest_common_ancestor_s);
 define_unary_function_ptr5(at_lowest_common_ancestor,alias_at_lowest_common_ancestor,&__lowest_common_ancestor,0,true)
+
+/* USAGE:   st_ordering(G,s,t)
+ *
+ * Returns ST numbering for the biconnected graph G with source s and sink (target) t.
+ */
+gen _st_ordering(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()!=3)
+        return gensizeerr(contextptr);
+    graphe G(contextptr);
+    if (!G.read_gen(gv.front()))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (!G.is_biconnected())
+        return gt_err(_GT_ERR_BICONNECTED_GRAPH_REQUIRED,contextptr);
+    int s=G.node_index(gv[1]),t=G.node_index(gv[2]);
+    if (s<0 || t<0)
+        return gt_err(s<0?gv[1]:gv[2],_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+    if (!G.has_edge(s,t))
+        return gt_err(makevecteur(gv[1],gv[2]),_GT_ERR_EDGE_NOT_FOUND,contextptr);
+    G.compute_st_numbering(s,t);
+    return G.get_st_numbering();
+}
+static const char _st_ordering_s[]="st_ordering";
+static define_unary_function_eval(__st_ordering,&_st_ordering,_st_ordering_s);
+define_unary_function_ptr5(at_st_ordering,alias_at_st_ordering,&__st_ordering,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

@@ -477,7 +477,7 @@ gen graphe::plusinf() {
 void graphe::ivectors2vecteur(const ivectors &v,vecteur &res,bool sort_all) const {
     res.resize(v.size());
     for (ivectors_iter it=v.begin();it!=v.end();++it) {
-        res[it-v.begin()]=sort_all?_sort(get_nodes(*it),ctx):get_nodes(*it);
+        res[it-v.begin()]=sort_all?_sort(get_node_labels(*it),ctx):get_node_labels(*it);
     }
 }
 
@@ -568,13 +568,15 @@ void graphe::vertex::remove_neighbor(int i) {
     }
 }
 
-void graphe::vertex::move_neighbor_to_front(int i) {
+void graphe::vertex::move_neighbor(int i,int j,bool after) {
     ivector::iterator it=find(m_neighbors.begin(),m_neighbors.end(),i);
-    if (it!=m_neighbors.end()) {
-        int j=*it;
-        m_neighbors.erase(it);
-        m_neighbors.insert(m_neighbors.begin(),j);
-    }
+    assert(it!=m_neighbors.end());
+    m_neighbors.erase(it);
+    it=j<0?m_neighbors.begin():find(m_neighbors.begin(),m_neighbors.end(),j);
+    assert(it!=m_neighbors.end());
+    if (after && j>=0)
+        ++it;
+    m_neighbors.insert(it,i);
 }
 
 int graphe::first_neighbor_from_subgraph(const vertex &v,int sg) const {
@@ -1021,6 +1023,11 @@ bool graphe::is_edge_visited(int i,int j) const {
         return false;
     const ivector &ngh=visited_edges[i<j?i:j];
     return binary_search(ngh.begin(),ngh.end(),i<j?j:i);
+}
+
+/* move neighbor w of v right before (or after) ref */
+void graphe::move_neighbor(int v,int w,int ref,bool after) {
+    node(v).move_neighbor(w,ref,after);
 }
 
 /* return edge as pair of vertex indices */
@@ -2001,7 +2008,7 @@ void graphe::remove_nodes(const vecteur &V) {
 }
 
 /* return vector of node labels */
-vecteur graphe::get_nodes(const ivector &v) const {
+vecteur graphe::get_node_labels(const ivector &v) const {
     vecteur V(v.size());
     for (ivector_iter it=v.begin();it!=v.end();++it) {
         V[it-v.begin()]=node_label(*it);
@@ -3357,7 +3364,7 @@ void graphe::multilevel_recursion(layout &x,int d,double R,double K,double tol,i
         // make the natural spring length K shorter with respect to
         // the current depth level and subsequently refine x
         double L=K*std::pow(PLASTIC_NUMBER,depth-multilevel_depth);
-        force_directed_placement(x,L,R*(depth+1)*L,tol,false);
+        force_directed_placement(x,L,R*(depth+1)*L,K*tol/L,false);
     }
 }
 
@@ -3969,10 +3976,6 @@ void graphe::generate_nk_sets(int n,int k,vector<ulong> &v) {
 bool graphe::make_kneser_graph(int n,int k) {
     assert(n>1 && n<21 && k>0 && k<n);
     int nchoosek=comb(n,k).val; // number of vertices
-    if (nchoosek>100000) {
-        message("Error: graph too large");
-        return false;
-    }
     vecteur V;
     make_default_labels(V,nchoosek);
     add_nodes(V);
@@ -6772,7 +6775,7 @@ void graphe::compute_st_numbering(int s,int t) {
     // assuming that the graph is biconnected
     assert(has_edge(s,t) && node_stack.empty());
     vertex &v=node(s),&w=node(t);
-    v.move_neighbor_to_front(t);
+    v.move_neighbor(t,-1);
     dfs(s,false);
     unvisit_all_nodes();
     unvisit_all_edges();
@@ -6800,6 +6803,15 @@ void graphe::compute_st_numbering(int s,int t) {
     }
 }
 
+/* return st numbering in form of vecteur */
+vecteur graphe::get_st_numbering() const {
+    // assuming that st numbering has been computed
+    vecteur st(node_count());
+    for (iterateur it=st.begin();it!=st.end();++it) {
+        *it=node(it-st.begin()).number();
+    }
+    return st;
+}
 
 #ifndef NO_NAMESPACE_GIAC
 }

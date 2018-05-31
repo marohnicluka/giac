@@ -83,6 +83,7 @@ public:
     typedef std::vector<point> layout;
     typedef std::map<int,std::map<int,double> > sparsemat;
     typedef std::set<ipair> edgeset;
+    typedef std::vector<std::map<int,int> > edgemap;
 
     class vertex {
         gen m_label;
@@ -154,8 +155,10 @@ public:
         attrib &neighbor_attributes(int i);
         const attrib &neighbor_attributes(int i) const;
         bool has_neighbor(int i,bool include_temp_edges=true) const;
+        void move_neighbor(int i,int j,bool after=true);
         void remove_neighbor(int i);
-        void move_neighbor_to_front(int i);
+        template<class Compare>
+        void sort_neighbors(Compare comp) { sort(m_neighbors.begin(),m_neighbors.end(),comp); }
         void clear_neighbors() { m_neighbors.clear(); m_neighbor_attributes.clear(); }
     };
 
@@ -336,6 +339,7 @@ public:
     typedef ivectors::const_iterator ivectors_iter;
     typedef ipairs::const_iterator ipairs_iter;
     typedef edgeset::const_iterator edgeset_iter;
+    typedef edgemap::const_iterator edgemap_iter;
     typedef vertex* vptr;
     typedef std::vector<vptr> vpointers;
     static const gen FAUX;
@@ -517,6 +521,9 @@ public:
     bool is_edge_visited(int i,int j) const;
     bool is_edge_visited(const ipair &e) const { return is_edge_visited(e.first,e.second); }
     void unvisit_all_edges() { visited_edges.clear(); }
+    void move_neighbor(int v,int w,int ref=-1,bool after=true);
+    template<class Compare>
+    void sort_neighbors(int v,Compare comp) { node(v).sort_neighbors(comp); }
     gen to_gen() const;
     bool write_dot(const std::string &filename) const;
     bool read_dot(const std::string &filename);
@@ -550,7 +557,7 @@ public:
     void remove_nodes(const vecteur &V);
     const vertex &node(int i) const { return nodes[i]; }
     const gen &node_label(int i) const { assert(i>=0 && i<node_count()); return nodes[i].label(); }
-    vecteur get_nodes(const ivector &v) const;
+    vecteur get_node_labels(const ivector &v) const;
     int node_index(const gen &v) const;
     void set_subgraph(const ivector &v,int s);
     void merge_subgraphs(int s,int t);
@@ -701,6 +708,7 @@ public:
     void lowest_common_ancestors(int root,const ipairs &p,ivector &lca_recursion);
     int lowest_common_ancestor(int i,int j,int root);
     void compute_st_numbering(int s,int t);
+    vecteur get_st_numbering() const;
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

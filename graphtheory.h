@@ -55,7 +55,8 @@ enum gt_error_code {
     _GT_ERR_GRAPH_IS_EMPTY=22,
     _GT_ERR_TAGVALUE_PAIR_EXPECTED=23,
     _GT_ERR_NOT_A_GRAPHIC_SEQUENCE=24,
-    _GT_ERR_NOT_ACYCLIC_GRAPH=25
+    _GT_ERR_NOT_ACYCLIC_GRAPH=25,
+    _GT_ERR_BICONNECTED_GRAPH_REQUIRED=26
 };
 
 bool is_graphe(const gen &g,std::string &disp_out,GIAC_CONTEXT);
@@ -210,6 +211,7 @@ gen _number_of_spanning_trees(const gen &g,GIAC_CONTEXT);
 gen _minimal_spanning_tree(const gen &g,GIAC_CONTEXT);
 gen _graph_rank(const gen &g,GIAC_CONTEXT);
 gen _lowest_common_ancestor(const gen &g,GIAC_CONTEXT);
+gen _st_ordering(const gen &g,GIAC_CONTEXT);
 //gen _spanning_polynomial(const gen &g,GIAC_CONTEXT);
 //gen _plane_dual(const gen &g,GIAC_CONTEXT);
 //gen _transitive_closure(const gen &g,GIAC_CONTEXT);

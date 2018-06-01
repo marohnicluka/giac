@@ -921,6 +921,12 @@ Output :
 
 \subsection{Graph attributes : {\tt set\_graph\_attribute}, {\tt get\_graph\_attribute}, {\tt discard\_graph\_attribute}, {\tt list\_graph\_attributes}}
 
+The command {\tt set\_graph\_attribute} accepts two arguments, a graph $ G $ and a sequence or list of graph attributes in form {\tt tag=value} where {\tt tag} is any string. Alternatively, attributes may be specified as a sequence of two lists {\tt [tag1,tag2,...]} and {\tt [value1,value2,...]}. The command sets the specified values to the indicated attribute slots, which are meant to represent some global properties of the graph $ G $, and returns the modified copy of $ G $. Two tags are predefined and used by the CAS commands: {\tt "directed"} and {\tt "weighted"}, so it is not advisable to overwrite their values using this command. Instead, use {\tt make\_directed}, {\tt make\_weighted} and {\tt underlying\_graph} commands.
+
+The previously set graph attribute values can be fetched with the command {\tt get\_graph\_attribute} which accepts two arguments: a graph $ G $ and a sequence or list of tags. The corresponding values will be returned in a sequence or list, respectively. If some attribute is not set, {\tt undef} is returned as its value.
+
+To discard a graph attribute set by the user call the {\tt discard\_graph\_attribute} command, which accepts two arguments: a graph $ G $ and a sequence or list of tags, and returns the modified copy of $ G $.
+
 \subsection{Vertex attributes : {\tt set\_vertex\_attribute}, {\tt get\_vertex\_attribute}, {\tt discard\_vertex\_attribute}, {\tt list\_vertex\_attributes}}
 
 \subsection{Edge attributes : {\tt set\_edge\_attribute}, {\tt get\_edge\_attribute}, {\tt discard\_edge\_attribute}, {\tt list\_edge\_attributes}}

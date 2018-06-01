@@ -2637,7 +2637,7 @@ define_unary_function_ptr5(at_get_edge_weight,alias_at_get_edge_weight,&__get_ed
 /* USAGE:   set_edge_weight(G,e,w)
  *
  * Sets weight of the edge e in graph G (which must be weighted) to w and
- * returns the old weight.
+ * returns the modified copy of G.
  */
 gen _set_edge_weight(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -2654,9 +2654,8 @@ gen _set_edge_weight(const gen &g,GIAC_CONTEXT) {
     int i=G.node_index(E._VECTptr->front()),j=G.node_index(E._VECTptr->back());
     if (i==-1 || j==-1)
         return gt_err(_GT_ERR_EDGE_NOT_FOUND,contextptr);
-    gen oldweight=G.weight(i,j);
     G.set_edge_attribute(i,j,_GT_ATTRIB_WEIGHT,g._VECTptr->back());
-    return oldweight;
+    return G.to_gen();
 }
 static const char _set_edge_weight_s[]="set_edge_weight";
 static define_unary_function_eval(__set_edge_weight,&_set_edge_weight,_set_edge_weight_s);

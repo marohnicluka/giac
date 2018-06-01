@@ -685,7 +685,7 @@ Output :
 
 The command {\tt graph\_power} accepts two arguments, a graph $ G(V,E) $ and a positive integer $ k $, and returns the $ k $-th power $ G^k $ of $ G $ with vertices $ V $ such that $ v,w,\in V $ are connected if and only if there exists a path of length at most $ k $ in $ G $. The adjacency matrix $ A_k $ of $ G^k $ is obtained by adding powers of the adjacency matrix $ A $ of $ G $ together :
 \[ A_k=\sum_{i=1}^k A^k. \]
-The above sum is obtained by assigning $ A_k\leftarrow A $ and repeating $ k-1 $ times the instruction $ A_k\leftarrow (A_k+I)\,A $, so exactly $ k $ matrix multiplications and $ k $ additions are required.\\
+The above sum is obtained by assigning $ A_k\leftarrow A $ and repeating $ k-1 $ times the instruction $ A_k\leftarrow (A_k+I)\,A $, so exactly $ k $ matrix multiplications are required.\\
 Input :
 \begin{center}
   \tt graph\_power(path\_graph(5),2)
@@ -759,6 +759,22 @@ Output :
 
 \section{Modifying graphs}
 
+\subsection{Adding and removing vertices : {\tt add\_vertex}, {\tt delete\_vertex}}
+
+\subsection{Adding and removing edges/arcs : {\tt add\_edge}, {\tt add\_arc}, {\tt delete\_edge}, {\tt delete\_arc}}
+
+\subsection{Contracting edges : {\tt contract\_edges}}
+
+\subsection{Subdividing edges : {\tt subdivide\_edges}}
+
+\subsection{Edge weights : {\tt set\_edge\_weight}, {\tt get\_edge\_weight}}
+
+\subsection{Graph attributes : {\tt set\_graph\_attribute}, {\tt get\_graph\_attribute}, {\tt discard\_graph\_attribute}, {\tt list\_graph\_attributes}}
+
+\subsection{Vertex attributes : {\tt set\_vertex\_attribute}, {\tt get\_vertex\_attribute}, {\tt discard\_vertex\_attribute}, {\tt list\_vertex\_attributes}}
+
+\subsection{Edge attributes : {\tt set\_edge\_attribute}, {\tt get\_edge\_attribute}, {\tt discard\_edge\_attribute}, {\tt list\_edge\_attributes}}
+
 \section{Import and export}
 
 \subsection{Loading graphs from {\sf dot} files : {\tt import\_graph}}
@@ -830,6 +846,14 @@ graph "octahedron" {
 
 \subsection{Shortest path in unweighted graphs : {\tt shortest\_path}}
 
+\subsection{Spanning trees : {\tt spanning\_tree}, {\tt minimal\_spanning\_tree}}
+
 \section{Visualizing graphs}
+
+\subsection{Drawing graphs using various algorithms : {\tt draw\_graph}}
+
+\subsection{Setting custom vertex positions : {\tt set\_vertex\_positions}, {\tt get\_vertex\_positions}}
+
+\subsection{Highlighting parts of a graph : {\tt highlight\_vertex}, {\tt highlight\_edges}, {\tt highlight\_trail}, {\tt highlight\_subgraph}}
 
 \end{document}

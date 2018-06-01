@@ -760,8 +760,73 @@ Output :
 \section{Modifying graphs}
 
 \subsection{Adding and removing vertices : {\tt add\_vertex}, {\tt delete\_vertex}}
+The command {\tt add\_vertex} accepts two arguments, a graph $ G(V,E) $ and a single label $ v $ or a list of labels $ L $, and returns the graph $ G'(V\cup\{v\},E) $ or $ G''(V\cup L,E) $ if a list $ L $ is given.\\
+Input :
+\begin{center}
+  \tt add\_vertex(complete\_graph(5),6)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 6 vertices and 10 edges
+\end{center}
+Input :
+\begin{center}
+  \tt add\_vertex(complete\_graph(5),[a,b,c])
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 8 vertices and 10 edges
+\end{center}
+Note that vertices already present in $ G $ won't be added. For example, input :
+\begin{center}
+  \tt add\_vertex(complete\_graph([1,2,3,4,5]),[4,5,6])
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 6 vertices and 10 edges
+\end{center}
+
+Any vertex can be removed with the command {\tt delete\_vertex}. It accepts two arguments, a graph $ G(V,E) $ and a single label $ v $ or a list of labels $ L $, and returns the graph \[ G'(V\setminus\{v\},\{e\in E:e \text{ is not incident to } v\}) \] or, if a list $ L $ is given, \[ G''(V\setminus L,\{e\in E:e \text{ is not incident to any } v\in L\}). \]
+If any of the specified vertices does not belong to $ G $, an error is returned.\\
+Input :
+\begin{center}
+  \tt delete\_vertex(complete\_graph(5),2)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 4 vertices and 6 edges
+\end{center}
+Note that vertex removal implies deletion of incident edges.\\
+Input :
+\begin{center}
+  \tt delete\_vertex(complete\_graph(5),[2,3])
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 3 vertices and 3 edges
+\end{center}
 
 \subsection{Adding and removing edges/arcs : {\tt add\_edge}, {\tt add\_arc}, {\tt delete\_edge}, {\tt delete\_arc}}
+
+The command {\tt add\_edge} accepts two arguments, an undirected graph $ G(V,E) $ and an edge or a list of edges or a trail of edges (entered as a list of vertices), and returns the copy of $ G $ with the specified edges inserted. Edge insertion implies creation of its endpoints if they are not already present.\\
+Input :
+\begin{center}
+  \tt add\_edge(cycle\_graph(4),[1,3])
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 4 vertices and 5 edges
+\end{center}
+
+The command {\tt add\_arc} works similarly to {\tt add\_edge} but applies only to directed graphs. Note that the order of endpoints in an arc matters.\\
+Input :
+\begin{center}
+  \tt add\_arc(digraph(trail(a,b,c,d,a)),[[a,c],[b,d]])
+\end{center}
+Output :
+\begin{center}
+  \tt a directed unweighted graph with 4 vertices and 6 arcs
+\end{center}
 
 \subsection{Contracting edges : {\tt contract\_edges}}
 

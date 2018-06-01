@@ -1875,7 +1875,7 @@ gen _add_arc(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     if (!G.is_directed())
         return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED,contextptr);
-    if (!parse_edges(G,E,false))
+    if (!parse_edges(G,E,ckmatrix(g._VECTptr->back())))
         return gendimerr(contextptr);
     return G.to_gen();
 }

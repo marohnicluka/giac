@@ -57,6 +57,7 @@ enum gt_attribute {
     _GT_ATTRIB_DIRECTED,
     _GT_ATTRIB_WEIGHTED,
     _GT_ATTRIB_POSITION,
+    _GT_ATTRIB_NAME,
     //add more here
     _GT_ATTRIB_USER  // this one must be the last
 };
@@ -375,7 +376,6 @@ public:
 private:
     const context *ctx;
     std::vector<vertex> nodes;
-    std::string graph_name;
     attrib attributes;
     std::vector<std::string> user_tags;
     ivector marked_nodes;
@@ -599,8 +599,8 @@ public:
     void discard_graph_attribute(int key);
     void discard_node_attribute(int i,int key);
     void discard_edge_attribute(int i,int j,int key);
-    void set_name(const std::string &str) { graph_name=str; }
-    std::string name() const { return graph_name; }
+    void set_name(const std::string &str) { set_graph_attribute(_GT_ATTRIB_NAME,str2gen(str,true)); }
+    std::string name() const { gen s; if (get_graph_attribute(_GT_ATTRIB_NAME,s)) return genstring2str(s); else return ""; }
     bool is_directed() const;
     bool is_weighted() const;
     void set_directed(bool yes) { set_graph_attribute(_GT_ATTRIB_DIRECTED,boole(yes)); }

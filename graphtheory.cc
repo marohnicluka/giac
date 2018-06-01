@@ -2188,7 +2188,7 @@ gen _set_graph_attribute(const gen &g,GIAC_CONTEXT) {
         attr=*_zip(makesequence(at_equal,gv[1],gv[2]),contextptr)._VECTptr;
     else attr=vecteur(gv.begin()+1,gv.end());
     int key;
-    for (const_iterateur it=attr.begin()+1;it!=attr.end();++it) {
+    for (const_iterateur it=attr.begin();it!=attr.end();++it) {
         if (!it->is_symb_of_sommet(at_equal) || it->_SYMBptr->feuille._VECTptr->front().type!=_STRNG)
             return gt_err(_GT_ERR_TAGVALUE_PAIR_EXPECTED,contextptr);
         key=G.tag2index(graphe::genstring2str(it->_SYMBptr->feuille._VECTptr->front()));
@@ -3687,7 +3687,7 @@ define_unary_function_ptr5(at_interval_graph,alias_at_interval_graph,&__interval
  *
  * Inserts r (by default 1) new vertices to each edge/arc from G contained in
  * the list E (which may be a single edge/arc) and returns a modified copy of
- * G. New vertices are labelled with smallest available integers.
+ * G. New vertices are labeled with the smallest available integers.
  */
 gen _subdivide_edges(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -3733,8 +3733,6 @@ gen _subdivide_edges(const gen &g,GIAC_CONTEXT) {
     }
     int v,w;
     for (graphe::ipairs_iter it=edges.begin();it!=edges.end();++it) {
-        if (!G.has_edge(*it))
-            return gt_err(_GT_ERR_EDGE_NOT_FOUND,contextptr);
         G.remove_edge(*it);
         v=it->first;
         for (int k=0;k<r;++k) {

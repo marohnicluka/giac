@@ -923,6 +923,8 @@ int graphe::tag2index(const string &tag) {
         return _GT_ATTRIB_COLOR;
     if (tag=="pos")
         return _GT_ATTRIB_POSITION;
+    if (tag=="name")
+        return _GT_ATTRIB_NAME;
     return register_user_tag(tag);
 }
 
@@ -940,6 +942,8 @@ string graphe::index2tag(int index) const {
         return "weight";
     case _GT_ATTRIB_POSITION:
         return "pos";
+    case _GT_ATTRIB_NAME:
+        return "name";
     case _GT_ATTRIB_USER:
     default:
         len=index-_GT_ATTRIB_USER;
@@ -951,7 +955,7 @@ string graphe::index2tag(int index) const {
 /* register custom user attribute tag */
 int graphe::register_user_tag(const string &tag) {
     int i=_GT_ATTRIB_USER;
-    vector<string>::iterator it=user_tags.begin();
+    vector<string>::const_iterator it=user_tags.begin();
     for (;it!=user_tags.end();++it) {
         if (*it==tag)
             return i;
@@ -1298,6 +1302,7 @@ bool graphe::write_dot(const string &filename) const {
     ivector u,v;
     string indent("  "),edgeop(is_directed()?" -> ":" -- ");
     dotfile << (is_directed()?"digraph ":"graph ");
+    string graph_name=name();
     if (graph_name.empty())
         dotfile << "{" << endl;
     else
@@ -1554,7 +1559,7 @@ bool graphe::read_dot(const string &filename) {
                 if (dot_token_type!=_GT_DOT_TOKEN_TYPE_DELIMITER) {
                     if (!dot_token_is_id()) { error_raised=true; break; }
                     if (gtype!=2)
-                        graph_name=token;
+                        set_name(token);
                     if (dot_read_token(dotfile,token)!=1 ||
                             dot_token_type!=_GT_DOT_TOKEN_TYPE_DELIMITER) { error_raised=true; break; }
                 } else if (token=="[") {
@@ -1824,7 +1829,7 @@ void graphe::read_special(const char **special_graph) {
 
 /* make a copy of this graph and store it in G */
 void graphe::copy(graphe &G) const {
-    G.set_name(graph_name);
+    G.set_name(name());
     G.register_user_tags(user_tags);
     G.set_graph_attributes(attributes);
     G.copy_nodes(nodes);
@@ -5480,7 +5485,7 @@ void graphe::pack_rectangles(const vector<rectangle> &rectangles,dpairs &best_em
 bool graphe::isomorphic_copy(graphe &G,const ivector &sigma) {
     if (int(sigma.size())!=node_count())
         return false;
-    G.set_name(graph_name);
+    G.set_name(name());
     G.register_user_tags(user_tags);
     G.set_graph_attributes(attributes);
     // add vertices

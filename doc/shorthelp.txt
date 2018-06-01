@@ -575,7 +575,7 @@ get_edge_weight(graph(%{[[1,2],5],[[2,3],6]%}),[1,2])
 -2 get_edge_weight
 -3 make_weighted
 -4 weight_matrix
-get_edge_weight(graph(%{[1,2],[2,3]%}),[1,2],5)
+set_edge_weight(graph(%{[1,2],[2,3]%}),[1,2],5)
 
 # is_directed
 0 G

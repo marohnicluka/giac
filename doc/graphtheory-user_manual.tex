@@ -504,6 +504,7 @@ Output :
 \begin{center}
   \tt an undirected unweighted graph with 10 vertices and 15 edges
 \end{center}
+The both examples above return the Petersen graph.
 
 \subsection{Sierpiński graphs : {\tt sierpinski\_graph}}
 
@@ -846,35 +847,77 @@ Output :
   \tt an undirected weighted graph with 4 vertices and 3 edges
 \end{center}
 
-\subsection{Edge weights : {\tt set\_edge\_weight}, {\tt get\_edge\_weight}, {\tt weight\_matrix}}
+\subsection{Setting edge weights : {\tt set\_edge\_weight}, {\tt get\_edge\_weight}}
 
 The command {\tt set\_edge\_weight} changes the weight of an edge/arc in a weighted graph. It accepts three arguments: a weighted graph $ G(V,E) $, edge/arc $ e\in E $ and the new weight $ w $, which may be any number. The old weight is returned.
 
-The command {\tt get\_edge\_weight} accepts two arguments, a weighted graph $ G(V,E) $ and an edge or arc $ e\in E $, and returns the weight of $ e $.
+The command {\tt get\_edge\_weight} accepts two arguments, a weighted graph $ G(V,E) $ and an edge or arc $ e\in E $. It returns the weight of $ e $.
 
 For example, input :
 \begin{center}
-  \tt G:=graph(\%\{[[1,2],4],[[2,3],5]\%\})
+  \tt G:=set\_edge\_weight(graph(\%\{[[1,2],4],[[2,3],5]\%\}), [1,2],6)
 \end{center}
 Output :
 \begin{center}
   \tt an undirected weighted graph with 3 vertices and 2 edges
 \end{center}
+Input :
 \begin{center}
-  \tt set\_edge\_weight(G,[1,2],6)
+  \tt get\_edge\_weight(G,[1,2])
 \end{center}
 Output :
 \begin{center}
-  \tt 4
+  \tt 6
+\end{center}
+
+\subsection{Contracting edges : {\tt contract\_edge}}
+
+The command {\tt contract\_edge} accepts two arguments, a graph $ G(V,E) $ and an edge/arc $ e=(v,w)\in E $, and contracts $ e $ by merging the vertices $ w $ and $ v $ into a single vertex. The resulting vertex inherits the label of $ v $. The command returns the modified graph $ G'(V\setminus\{w\},E') $.\\
+Input :
+\begin{center}
+  \tt contract\_edge(complete\_graph(5),[1,2])
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 4 vertices and 6 edges
+\end{center}
+
+To contract a set $ \{e_1,e_2,\dots,e_k\}\subset E $ of edges in $ G $, none two of which are incident (i.e.~when the given set is a matching in $ G $), one needs to use the {\tt foldl} command. For example, if $ G $ is the complete graph $ K_5 $ and $ k=2 $, $ e_1=\{1,2\} $ and $ e_2=\{3,4\} $, input :
+\begin{center}
+  \tt K5:=complete\_graph(5)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 5 vertices and 10 edges
 \end{center}
 Input :
 \begin{center}
-  \tt 
+  \tt foldl(contract\_edge,K5,[1,2],[3,4])
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 3 vertices and 3 edges
 \end{center}
 
-\subsection{Contracting edges : {\tt contract\_edges}}
-
 \subsection{Subdividing edges : {\tt subdivide\_edges}}
+
+The command {\tt subdivide\_edges} accepts two or three arguments, a graph $ G(V,E) $, a single edge/arc or a list of edges/arcs in $ E $ and optionally a positive integer $ r $ (which defaults to 1). Each of the specified edges/arcs will be subdivided with exactly $ r $ new vertices, labeled with the smallest available integers. The resulting graph, which is homeomorphic to $ G $, is returned.\\
+Input :
+\begin{center}
+  \tt subdivide\_edges(complete\_graph(2,3),[[1,5],[2,4]])
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 7 vertices and 8 edges
+\end{center}
+Input :
+\begin{center}
+  \tt subdivide\_edges(complete\_graph(2,3),[1,5],3)
+\end{center}
+Output :
+\begin{center}
+  \tt an undirected unweighted graph with 8 vertices and 9 edges
+\end{center}
 
 \subsection{Graph attributes : {\tt set\_graph\_attribute}, {\tt get\_graph\_attribute}, {\tt discard\_graph\_attribute}, {\tt list\_graph\_attributes}}
 

@@ -4920,7 +4920,7 @@ int graphe::planar_embedding(ivectors &faces) {
 /* triangulate faces by adding a vertex in the center of each face and
  * connecting it with the other vertices of the face */
 void graphe::subdivide_faces(const ivectors &faces,int f0) {
-    int v,n=largest_integer_label_value();
+    int v,n=largest_integer_label();
     for (ivectors_iter ft=faces.begin();ft!=faces.end();++ft) {
         if (f0==int(ft-faces.begin()))
             continue;
@@ -5580,8 +5580,8 @@ bool graphe::point2segment_projection(const point &p,const point &q,const point 
 }
 
 /* return the value of the largest integer node label */
-int graphe::largest_integer_label_value() const {
-    int n,m=-1;
+int graphe::largest_integer_label() const {
+    int n,m=array_start(ctx)-1;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         if (it->label().is_integer() && (n=it->label().val)>m)
             m=n;
@@ -5729,7 +5729,7 @@ void graphe::disjoint_set::unite(int id1,int id2) {
 void graphe::promote_edge_crossings(layout &x) {
     ipairs E;
     get_edges_as_pairs(E);
-    int n=largest_integer_label_value(),i;
+    int n=largest_integer_label(),i;
     point crossing;
     for (ipairs_iter it=E.begin();it!=E.end();++it) {
         for (ipairs_iter jt=it+1;jt!=E.end();++jt) {
@@ -5824,7 +5824,7 @@ bool graphe::make_planar_layout(layout &x) {
     }
     // create a fake outer face
     ivector new_outer_face(m),degrees(m);
-    N=largest_integer_label_value();
+    N=largest_integer_label();
     for (int i=0;i<m;++i) {
         v=add_node(++N);
         w=outer_face[i];

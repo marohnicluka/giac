@@ -466,7 +466,6 @@ private:
     void tree_height_dfs(int i,int level,int &depth);
     void make_product_nodes(const graphe &G,graphe &P) const;
     static void extract_path_from_cycle(const ivector &cycle,int i,int j,ivector &path);
-    int largest_integer_label_value() const;
     static void generate_nk_sets(int n,int k,std::vector<ulong> &v);
     bool has_k_clique_cover(int k,const ivectors &maximal_cliques,ivector &cv) const;
     void strongconnect_dfs(ivectors &components,int i,int sg);
@@ -559,6 +558,7 @@ public:
     const gen &node_label(int i) const { assert(i>=0 && i<node_count()); return nodes[i].label(); }
     vecteur get_node_labels(const ivector &v) const;
     int node_index(const gen &v) const;
+    int largest_integer_label() const;
     void set_subgraph(const ivector &v,int s);
     void merge_subgraphs(int s,int t);
     int max_subgraph_index() const;

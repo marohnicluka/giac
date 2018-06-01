@@ -3707,12 +3707,7 @@ gen _subdivide_edges(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    vecteur V=G.vertices();
-    int l=array_start(contextptr)-1;
-    for (const_iterateur it=V.begin();it!=V.end();++it) {
-        if (it->is_integer())
-            l=std::max(l,it->val);
-    }
+    int i,j,l=G.largest_integer_label();
     graphe::ipairs edges;
     if (ckmatrix(E)) {
         // a list of edges/arcs is given
@@ -3722,9 +3717,13 @@ gen _subdivide_edges(const gen &g,GIAC_CONTEXT) {
         int k=0;
         for (const_iterateur it=E.begin();it!=E.end();++it) {
             const vecteur &e=*(it->_VECTptr);
-            if (!is_integer_vecteur(e,true))
-                return gt_err(_GT_ERR_INVALID_EDGE,contextptr);
-            edges[k++]=make_pair(G.node_index(e.front()),G.node_index(e.back()));
+            i=G.node_index(e.front());
+            j=G.node_index(e.back());
+            if (i<0 || j<0)
+                return gt_err(i<0?e.front():e.back(),_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+            if (!G.has_edge(i,j))
+                return gt_err(e,_GT_ERR_EDGE_NOT_FOUND,contextptr);
+            edges[k++]=make_pair(i,j);
         }
     } else {
         // a single edge/arc is given

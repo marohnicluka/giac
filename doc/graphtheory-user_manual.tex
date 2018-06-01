@@ -8,7 +8,7 @@
 \usepackage{amssymb}
 \usepackage{stmaryrd}
 \usepackage{makeidx}
-\usepackage{times}
+%\usepackage{times}
 \usepackage{hevea}
 %\usepackage{mathptmx}
 %Uncomment next line for pdflatex and use includegraphics with eps file
@@ -925,7 +925,58 @@ The command {\tt set\_graph\_attribute} accepts two arguments, a graph $ G $ and
 
 The previously set graph attribute values can be fetched with the command {\tt get\_graph\_attribute} which accepts two arguments: a graph $ G $ and a sequence or list of tags. The corresponding values will be returned in a sequence or list, respectively. If some attribute is not set, {\tt undef} is returned as its value.
 
+To list all graph attributes of $ G $ for which the values are set, use the {\tt list\_graph\_attributes} command which takes $ G $ as its only argument.
+
 To discard a graph attribute set by the user call the {\tt discard\_graph\_attribute} command, which accepts two arguments: a graph $ G $ and a sequence or list of tags, and returns the modified copy of $ G $.
+
+For example, input :
+\begin{center}
+  \tt G:=digraph(trail(1,2,3,1))
+\end{center}
+Output :
+\begin{center}
+  \tt a directed unweighted graph with 3 vertices and 3 arcs
+\end{center}
+Input :
+\begin{center}
+  \tt G:=set\_graph\_attribute(G,"name"="C3","shape"=triangle)
+\end{center}
+Output :
+\begin{center}
+  \tt a directed unweighted graph with 3 vertices and 3 arcs
+\end{center}
+Input :
+\begin{center}
+  \tt get\_graph\_attribute(G,"name")
+\end{center}
+Output :
+\begin{center}
+  \tt "C3"
+\end{center}
+Input :
+\begin{center}
+  \tt list\_graph\_attributes(G)
+\end{center}
+Output :
+\begin{center}
+  \tt ["directed"=true,"weighted"=false,"name"="C3", "shape"='triangle']
+\end{center}
+Input :
+\begin{center}
+  \tt G:=discard\_graph\_attribute(G,"shape")
+\end{center}
+Output :
+\begin{center}
+  \tt a directed unweighted graph with 3 vertices and 3 arcs
+\end{center}
+Input :
+\begin{center}
+  \tt list\_graph\_attributes(G)
+\end{center}
+Output :
+\begin{center}
+  \tt ["directed"=true,"weighted"=false,"name"="C3"]
+\end{center}
 
 \subsection{Vertex attributes : {\tt set\_vertex\_attribute}, {\tt get\_vertex\_attribute}, {\tt discard\_vertex\_attribute}, {\tt list\_vertex\_attributes}}
 

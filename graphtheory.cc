@@ -3058,7 +3058,7 @@ gen _is_planar(const gen &g,GIAC_CONTEXT) {
             return gt_err(_GT_ERR_BICONNECTED_GRAPH_REQUIRED,contextptr);
         vecteur res;
         for (graphe::ivectors_iter it=faces.begin();it!=faces.end();++it) {
-            res.push_back(_sort(G.get_node_labels(*it),contextptr));
+            res.push_back(G.get_node_labels(*it));
         }
         _eval(symbolic(at_sto,res,F),contextptr);
     }

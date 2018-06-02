@@ -483,6 +483,7 @@ void graphe::ivectors2vecteur(const ivectors &v,vecteur &res,bool sort_all) cons
 
 /* vertex class implementation */
 graphe::vertex::vertex() {
+    m_sorted=false;
     m_label=0;
     m_subgraph=-1;
     m_visited=false;
@@ -496,10 +497,15 @@ graphe::vertex::vertex() {
     m_children=0;
     m_position=0;
     m_gaps=0;
+    m_left=-1;
+    m_right=-1;
+    m_x_offset=0;
+    m_y=0;
     m_embedded=false;
 }
 
 void graphe::vertex::assign(const vertex &other) {
+    m_sorted=other.sorted();
     m_label=other.label();
     m_subgraph=other.subgraph();
     m_visited=other.is_visited();
@@ -513,6 +519,10 @@ void graphe::vertex::assign(const vertex &other) {
     m_children=other.children();
     m_position=other.position();
     m_gaps=other.gaps();
+    m_left=other.left();
+    m_right=other.right();
+    m_x_offset=other.x_offset();
+    m_y=other.y();
     m_embedded=other.is_embedded();
     set_attributes(other.attributes());
     m_neighbors.resize(other.neighbors().size());
@@ -535,6 +545,7 @@ graphe::vertex& graphe::vertex::operator =(const vertex &other) {
 void graphe::vertex::add_neighbor(int i,const attrib &attr) {
     m_neighbors.push_back(i);
     copy_attributes(attr,m_neighbor_attributes[i]);
+    m_sorted=false;
 }
 
 graphe::attrib &graphe::vertex::neighbor_attributes(int i) {
@@ -554,6 +565,8 @@ const graphe::attrib &graphe::vertex::neighbor_attributes(int i) const {
 }
 
 bool graphe::vertex::has_neighbor(int i,bool include_temp_edges) const {
+    if (m_sorted)
+        return binary_search(m_neighbors.begin(),m_neighbors.end(),i);
     return m_neighbor_attributes.find(i)!=m_neighbor_attributes.end() ||
             (include_temp_edges && m_neighbor_attributes.find(-i-1)!=m_neighbor_attributes.end());
 }
@@ -566,6 +579,7 @@ void graphe::vertex::remove_neighbor(int i) {
         assert (jt!=m_neighbor_attributes.end());
         m_neighbor_attributes.erase(jt);
     }
+    m_sorted=false;
 }
 
 void graphe::vertex::move_neighbor(int i,int j,bool after) {
@@ -577,6 +591,7 @@ void graphe::vertex::move_neighbor(int i,int j,bool after) {
     if (after && j>=0)
         ++it;
     m_neighbors.insert(it,i);
+    m_sorted=false;
 }
 
 int graphe::first_neighbor_from_subgraph(const vertex &v,int sg) const {
@@ -3473,68 +3488,219 @@ void graphe::make_circular_layout(layout &x,const ivector &outer_face,bool plana
         message("Error: failed to obtain planar layout");
 }
 
-/* Tomita recursive algorithm */
-void graphe::tomita_recurse(const ivector &R,const ivector &P_orig,const ivector &X_orig,ivectors &cliques) const {
-    if (P_orig.empty() && X_orig.empty())
-        cliques.push_back(R);
-    else {
-        ivector P(P_orig),X(X_orig);
+/* Tomita recursive algorithm (a variant of Bron-Kerbosch) for maximal cliques */
+void graphe::tomita_recurse(ivector &R,ivector &P,ivector &X,ivectors &res,bool store_all) const {
+    if (P.empty() && X.empty()) {
+        if (store_all)
+            res.push_back(R);
+        else if (res.empty() || res.front().size()<R.size()) {
+            res.clear();
+            res.push_back(R);
+        }
+    } else {
         // choose as the pivot element the node with the highest number of neighbors in P, say i-th
-        ivector PUX;
+        ivector PUX,PP,XX;
         ivector_iter it,jt;
         sets_union(P,X,PUX);
         int i=PUX.front(),mn=0,n,v;
-        ivector adj,S;
+        ivector S;
         for (it=PUX.begin();it!=PUX.end();++it) {
-            adjacent_nodes(*it,adj);
-            S.resize(std::max(adj.size(),P.size()));
-            jt=set_intersection(adj.begin(),adj.end(),P.begin(),P.end(),S.begin());
+            const vertex &w=node(*it);
+            S.resize(std::max(w.neighbors().size(),P.size()));
+            jt=set_intersection(w.neighbors().begin(),w.neighbors().end(),P.begin(),P.end(),S.begin());
             if ((n=int(jt-S.begin()))>mn) {
                 mn=n;
                 i=*it;
             }
         }
+        PUX.clear(); // not needed any more
         // for each vertex in P\N(i) do recursion
-        adjacent_nodes(i,adj);
-        sets_difference(P,adj,S);
-        ivector RUv,PP,XX;
-        for (jt=S.begin();jt!=S.end();++jt) {
-            v=*jt;
-            RUv=R;
-            RUv.push_back(v);
-            sort(RUv.begin(),RUv.end());
-            adjacent_nodes(v,adj);
-            sets_intersection(P,adj,PP);
-            sets_intersection(X,adj,XX);
-            tomita_recurse(RUv,PP,XX,cliques);
+        sets_difference(P,node(i).neighbors(),S);
+        for (it=S.begin();it!=S.end();++it) {
+            v=*it;
+            const vertex &w=node(v);
+            for (jt=R.begin();jt!=R.end();++jt) {
+                if (*jt>v) break;
+            }
+            R.insert(jt,v);
+            sets_intersection(P,w.neighbors(),PP);
+            sets_intersection(X,w.neighbors(),XX);
+            tomita_recurse(R,PP,XX,res,store_all);
+            R.erase(find(R.begin(),R.end(),v));
             P.erase(find(P.begin(),P.end(),v));
-            X.push_back(v);
-            sort(X.begin(),X.end());
+            for (jt=X.begin();jt!=X.end();++jt) {
+                if (*jt>v) break;
+            }
+            X.insert(jt,v);
         }
     }
 }
 
 /* a modified version of the Bron-Kerbosch algorithm for listing all maximal cliques,
  * developed by Tomita et al. */
-void graphe::tomita(ivectors &maximal_cliques) const {
+void graphe::tomita(ivectors &res,bool store_all) {
     ivector R,X,P(node_count());
-    for (int i=0;i<node_count();++i) P[i]=i;
-    tomita_recurse(R,P,X,maximal_cliques);
+    for (int i=0;i<node_count();++i) {
+        P[i]=i;
+        node(i).sort_neighbors();
+    }
+    tomita_recurse(R,P,X,res,store_all);
 }
 
-/* find maximum clique in this graph and return its size */
-int graphe::maximum_clique(ivector &clique) const {
-    ivectors maximal_cliques;
-    tomita(maximal_cliques);
-    int k=-1,maxsize=0;
-    for (ivectors_iter it=maximal_cliques.begin();it!=maximal_cliques.end();++it) {
-        if (int(it->size())>maxsize) {
-            maxsize=it->size();
-            k=it-maximal_cliques.begin();
+/* CP recursive subroutine */
+void graphe::cp_recurse(ivector &C,ivector &P,ivector &incumbent) {
+    if (C.size()>incumbent.size())
+        incumbent=C;
+    if (C.size()+P.size()>incumbent.size()) {
+        int p,k;
+        ivector Q,Cup;
+        while (!P.empty()) {
+            p=P.back();
+            P.pop_back();
+            Cup=C;
+            if (find(Cup.begin(),Cup.end(),p)==Cup.end())
+                Cup.push_back(p);
+            const vertex &v=node(p);
+            Q.clear();
+            Q.resize(std::min(P.size(),v.neighbors().size()));
+            k=0;
+            for (ivector_iter it=P.begin();it!=P.end();++it) {
+                if (v.has_neighbor(*it))
+                    Q[k++]=*it;
+            }
+            Q.resize(k);
+            cp_recurse(Cup,Q,incumbent);
         }
     }
-    clique=maximal_cliques[k];
-    return maxsize;
+}
+
+/* Carraghan-Pardalos algorithm for finding maximum clique in a sparse graph */
+int graphe::cp_maxclique(ivector &clique) {
+    int n=node_count();
+    ivector P(n),C;
+    // initialize P and sort all adjacency lists
+    for (int i=0;i<n;++i) {
+        P[i]=i;
+        node(i).sort_neighbors();
+    }
+    // sort vertices by degree in descending order
+    degree_comparator comp(this);
+    sort(P.begin(),P.end(),comp);
+    std::reverse(P.begin(),P.end());
+    // recurse
+    cp_recurse(C,P,clique);
+    return clique.size();
+}
+
+/*
+ * Östergård class for finding maximum clique
+ */
+
+graphe::ostergard::ostergard(graphe *gr) {
+    G=gr;
+}
+
+void graphe::ostergard::recurse(ivector &U, int size) {
+    if (U.empty()) {
+        if (size>maxsize) {
+            maxsize=size;
+            incumbent=stck;
+            found=true;
+        }
+        return;
+    }
+    int i,j,minpos,p;
+    ivector_iter it;
+    ivector V;
+    while (!U.empty()) {
+        if (size+int(U.size())<=maxsize)
+            break;
+        i=U.front();
+        it=U.begin();
+        minpos=-1;
+        for (ivector_iter jt=U.begin();jt!=U.end();++jt) {
+            j=*jt;
+            p=G->node(j).position();
+            if (minpos<0 || p<minpos) {
+                minpos=p;
+                i=j;
+                it=jt;
+            }
+        }
+        const vertex &v=G->node(i);
+        assert(v.low()>0);
+        if (size+v.low()<=maxsize)
+            break;
+        U.erase(it);
+        V.resize(std::min(U.size(),v.neighbors().size()));
+        j=0;
+        for (it=U.begin();it!=U.end();++it) {
+            if (*it<v.neighbors().front() || *it>v.neighbors().back())
+                continue;
+            if (v.has_neighbor(*it))
+                V[j++]=*it;
+        }
+        V.resize(j);
+        stck.push_back(i);
+        recurse(V,size+1);
+        stck.pop_back();
+        if (found)
+            break;
+    }
+}
+
+/* return the size of maximum clique */
+int graphe::ostergard::maxclique(ivector &clique) {
+    int n=G->node_count();
+    ivector S(n),U;
+    for (int i=0;i<n;++i) {
+        S[i]=i;
+        vertex &v=G->node(i);
+        v.sort_neighbors();
+        v.set_low(0);
+    }
+    //degree_comparator comp(G);
+    //sort(S.begin(),S.end(),comp);
+    G->greedy_vertex_coloring(S);
+    std::reverse(S.begin(),S.end());
+    G->node(S.back()).set_low(1);
+    for (ivector_iter it=S.begin();it!=S.end();++it) {
+        G->node(*it).set_position(it-S.begin());
+    }
+    // find maximum clique
+    maxsize=0;
+    stck.clear();
+    int k;
+    for (int i=n;i-->0;) {
+        found=false;
+        k=S[i];
+        vertex &v=G->node(k);
+        U.clear();
+        for (ivector_iter it=S.begin()+i;it!=S.end();++it) {
+            if (v.has_neighbor(*it))
+                U.push_back(*it);
+        }
+        stck.push_back(k);
+        recurse(U,1);
+        stck.pop_back();
+        v.set_low(maxsize);
+    }
+    clique=incumbent;
+    return clique.size();
+}
+
+/*
+ * End of ostergard class
+ */
+
+/* find maximum clique in this graph and return its size */
+int graphe::maximum_clique(ivector &clique) {
+    assert(!is_directed());
+    int n=node_count(),m=edge_count();
+    if (20*m<=n*(n-1)) // edge density smaller than or equal to 0.1
+        return cp_maxclique(clique);
+    ostergard ost(this);
+    return ost.maxclique(clique);
 }
 
 /* return true iff the graph can be covered with exactly k maximal cliques
@@ -5686,7 +5852,7 @@ double graphe::axis::distance(const point &p) const {
  * IMPLEMENTATION OF THE DISJOINT SET DATA STRUCTURE
  */
 
-bool graphe::disjoint_set::is_stored(int id) {
+bool graphe::union_find::is_stored(int id) {
     assert(id>=0 && id<int(elements.size()));
     for (vector<element>::const_iterator it=elements.begin();it!=elements.end();++it) {
         if (it->id==id)
@@ -5695,7 +5861,7 @@ bool graphe::disjoint_set::is_stored(int id) {
     return false;
 }
 
-void graphe::disjoint_set::make_set(int id) {
+void graphe::union_find::make_set(int id) {
     if (is_stored(id))
         return;
     element &e=elements[id];
@@ -5704,7 +5870,7 @@ void graphe::disjoint_set::make_set(int id) {
     e.rank=1;
 }
 
-int graphe::disjoint_set::find(int id) {
+int graphe::union_find::find(int id) {
     assert(id>=0 && id<int(elements.size()));
     element &e=elements[id];
     assert(e.id>=0);
@@ -5713,7 +5879,7 @@ int graphe::disjoint_set::find(int id) {
     return e.parent;
 }
 
-void graphe::disjoint_set::unite(int id1,int id2) {
+void graphe::union_find::unite(int id1,int id2) {
     int p1=find(id1),p2=find(id2);
     element &x=elements[p1],&y=elements[p2];
     if (x.rank>y.rank)
@@ -5856,6 +6022,55 @@ bool graphe::make_planar_layout(layout &x) {
     x.resize(n);
     //remove_temporary_edges();
     return true;
+}
+
+/* return the next vertex in the canonical order and update contour */
+int graphe::canonical_order_next(ivector &contour,ivector &adj_path) {
+    int i,j;
+    ipairs ip;
+    ipairs_comparator comp;
+    for (ivector_iter it=discovered_nodes.begin();it!=discovered_nodes.end();++it) {
+        i=*it;
+        vertex &v=node(i);
+        for (ivector_iter jt=v.neighbors().begin();jt!=v.neighbors().end();++jt) {
+            j=*jt;
+            if (j<0) j=-j-1;
+            const vertex &w=node(j);
+            if (w.is_visited())
+                ip.push_back(make_pair(j,0));
+        }
+        if (ip.size()<2)
+            ip.clear();
+        else {
+            for (ipairs::iterator jt=ip.begin();jt!=ip.end();++jt) {
+
+            }
+        }
+    }
+    // unreachable
+    assert(false);
+}
+
+/* embed triangulated planar graph into a (2n-4)x(n-2) grid using canonical ordering
+ * (Chrobak-Payne algorithm), time complexity O(n) */
+void graphe::make_planar_grid_layout(int i1,int i2,int i3) {
+    vertex &v1=node(i1),&v2=node(i2),&v3=node(i3);
+    v1.set_x_offset(0); v2.set_x_offset(2); v3.set_x_offset(1);
+    v1.set_y(0); v2.set_y(0); v3.set_y(1);
+    v1.set_right(i3); v3.set_right(i2);
+    v1.set_visited(true); v2.set_visited(true); v3.set_visited(true);
+    int n=node_count();
+    ivector c; // contour
+    c.push_back(i1); c.push_back(i3); c.push_back(i2);
+    bfs(i1);
+    for (int i=discovered_nodes.size();i-->0;) {
+        if (node(discovered_nodes[i]).is_visited())
+            discovered_nodes.erase(discovered_nodes.begin()+i);
+    }
+    for (int k=3;k<n;++k) {
+        // find vk
+
+    }
 }
 
 /* rotate layout x such that left to right symmetry is exposed */
@@ -6647,7 +6862,7 @@ void graphe::minimal_spanning_tree(graphe &T,int sg) {
     edges_comparator comp(this);
     sort(E.begin(),E.end(),comp);
     int v,u;
-    disjoint_set ds(node_count());
+    union_find ds(node_count());
     for (ipairs_iter it=E.begin();it!=E.end();++it) {
         ds.make_set(it->first);
         ds.make_set(it->second);
@@ -6664,7 +6879,7 @@ void graphe::minimal_spanning_tree(graphe &T,int sg) {
 }
 
 /* Tarjan's offline algorithm for the lowest common ancestor, time complexity O(n) */
-void graphe::lca_recursion(int u,const ipairs &p,ivector &lca,disjoint_set &ds) {
+void graphe::lca_recursion(int u,const ipairs &p,ivector &lca,union_find &ds) {
     ds.make_set(u);
     vertex &U=node(u);
     U.set_ancestor(u);
@@ -6700,7 +6915,7 @@ void graphe::lowest_common_ancestors(int root,const ipairs &p,ivector &lca) {
     unset_all_ancestors();
     uncolor_all_vertices();
     lca.resize(p.size(),-1);
-    disjoint_set ds(node_count());
+    union_find ds(node_count());
     lca_recursion(root,p,lca,ds);
     assert(find(lca.begin(),lca.end(),-1)==lca.end());
 }
@@ -6816,6 +7031,37 @@ vecteur graphe::get_st_numbering() const {
         *it=node(it-st.begin()).number();
     }
     return st;
+}
+
+/* greedy vertex coloring algorithm due to Biggs, also records vertex inclusion time */
+void graphe::greedy_vertex_coloring(ivector &ordering) {
+    uncolor_all_vertices();
+    int n=node_count(),k=0,i,maxdeg,d,col=0;
+    ordering.resize(n);
+    ivector_iter jt;
+    while (k<n) {
+        ++col;
+        do {
+            maxdeg=-1;
+            i=-1;
+            for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+                if (it->color()>0)
+                    continue;
+                for (jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
+                    if (node(*jt).color()==col)
+                        break;
+                }
+                if (jt==it->neighbors().end() && (maxdeg<0 || (d=it->neighbors().size())>maxdeg)) {
+                    maxdeg=d;
+                    i=it-nodes.begin();
+                }
+            }
+            if (i>=0) {
+                node(i).set_color(col);
+                ordering[k++]=i;
+            }
+        } while (i>=0);
+    }
 }
 
 #ifndef NO_NAMESPACE_GIAC

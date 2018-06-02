@@ -89,6 +89,7 @@ public:
     class vertex {
         gen m_label;
         int m_subgraph;
+        bool m_sorted;
         // used for traversing
         bool m_visited;
         bool m_on_stack;
@@ -105,6 +106,11 @@ public:
         // used for planar embedding
         bool m_embedded;
         int m_number;
+        // used for grid drawing
+        int m_left;
+        int m_right;
+        int m_x_offset;
+        int m_y;
         // *
         attrib m_attributes;
         std::map<int,attrib> m_neighbor_attributes;
@@ -114,6 +120,7 @@ public:
         vertex(const vertex &other);
         vertex& operator =(const vertex &other);
         void assign(const vertex &other);
+        bool sorted() const { return m_sorted; }
         const gen &label() const { return m_label; }
         void set_label(const gen &s) { m_label=s; }
         void set_subgraph(int s) { m_subgraph=s; }
@@ -147,6 +154,14 @@ public:
         double prelim() const { return m_prelim; }
         void set_modifier(double val) { m_modifier=val; }
         double modifier() const { return m_modifier; }
+        void set_left(int l) { m_left=l; }
+        int left() const { return m_left; }
+        void set_right(int r) { m_right=r; }
+        int right() const { return m_right; }
+        void set_x_offset(int dx) { m_x_offset=dx; }
+        int x_offset() const { return m_x_offset; }
+        void set_y(int y) { m_y=y; }
+        int y() const { return m_y; }
         const attrib &attributes() const { return m_attributes; }
         attrib &attributes() { return m_attributes; }
         void set_attribute(int key,const gen &val) { m_attributes[key]=val; }
@@ -159,8 +174,9 @@ public:
         void move_neighbor(int i,int j,bool after=true);
         void remove_neighbor(int i);
         template<class Compare>
-        void sort_neighbors(Compare comp) { sort(m_neighbors.begin(),m_neighbors.end(),comp); }
-        void clear_neighbors() { m_neighbors.clear(); m_neighbor_attributes.clear(); }
+        void sort_neighbors(Compare comp) { sort(m_neighbors.begin(),m_neighbors.end(),comp); m_sorted=true; }
+        void sort_neighbors() { sort(m_neighbors.begin(),m_neighbors.end()); m_sorted=true; }
+        void clear_neighbors() { m_neighbors.clear(); m_neighbor_attributes.clear(); m_sorted=false; }
     };
 
     class dotgraph {
@@ -302,7 +318,7 @@ public:
         int w() const { return m_w; }
     };
 
-    class disjoint_set {
+    class union_find {
         struct element {
             int id;
             int parent;
@@ -311,11 +327,24 @@ public:
         };
         std::vector<element> elements;
     public:
-        disjoint_set(int n) { elements.resize(n); }
+        union_find(int n) { elements.resize(n); }
         void make_set(int id);
         bool is_stored(int id);
         int find(int id);
         void unite(int id1,int id2);
+    };
+
+    class ostergard {
+        graphe *G;
+        int maxsize;
+        bool found;
+        ivector c;
+        ivector incumbent;
+        ivector stck;
+        void recurse(ivector &U,int size);
+    public:
+        ostergard(graphe *gr);
+        int maxclique(ivector &clique);
     };
 
     struct ipairs_comparator {
@@ -330,6 +359,14 @@ public:
             return G->weight(a)<G->weight(b);
         }
         edges_comparator(graphe *gr) { G=gr; }
+    };
+
+    struct degree_comparator {
+        graphe *G;
+        bool operator()(int v,int w) {
+            return G->degree(v)<G->degree(w);
+        }
+        degree_comparator(graphe *gr) { G=gr; }
     };
 
     typedef std::vector<vertex>::const_iterator node_iter;
@@ -424,7 +461,12 @@ private:
     void multilevel_recursion(layout &x,int d,double R,double K,double tol,int depth=0);
     int mdeg(const ivector &V,int i) const;
     void coarsening(graphe &G,const sparsemat &P,const ivector &V) const;
-    void tomita_recurse(const ivector &R,const ivector &P_orig,const ivector &X_orig,ivectors &cliques) const;
+    void tomita_recurse(ivector &R,ivector &P,ivector &X,ivectors &res,bool store_all) const;
+    int cp_maxclique(ivector &clique);
+    void cp_recurse(ivector &C,ivector &P,ivector &incumbent);
+    int ost_maxclique(ivector &clique);
+    void ost_recursive(ivector &U,int size,int &maxsize,ivector &incumbent,bool &found);
+    bool has_k_clique_cover(int k,const ivectors &maximal_cliques,ivector &cv) const;
     void remove_isolated_node(int i);
     void find_cut_vertices_dfs(int i,ivector &ap,int sg);
     void find_blocks_dfs(int i,std::vector<ipairs> &blocks,int sg);
@@ -467,13 +509,13 @@ private:
     void make_product_nodes(const graphe &G,graphe &P) const;
     static void extract_path_from_cycle(const ivector &cycle,int i,int j,ivector &path);
     static void generate_nk_sets(int n,int k,std::vector<ulong> &v);
-    bool has_k_clique_cover(int k,const ivectors &maximal_cliques,ivector &cv) const;
     void strongconnect_dfs(ivectors &components,int i,int sg);
     bool degrees_equal(const ivector &v,int deg=0) const;
-    void lca_recursion(int u,const ipairs &p,ivector &lca_recursion,disjoint_set &ds);
+    void lca_recursion(int u,const ipairs &p,ivector &lca_recursion,union_find &ds);
     void pathfinder(int i,ivector &path);
     void rdfs(int i,ivector &d,bool rec,int sg,bool skip_embedded);
     bool is_descendant(int v,int anc) const;
+    int canonical_order_next(ivector &contour,ivector &adj_path);
 
 public:
     graphe(const context *contextptr=context0);
@@ -626,6 +668,7 @@ public:
     void make_spring_layout(layout &x,int d,double tol=0.001);
     void make_circular_layout(layout &x,const ivector &outer_face,bool planar=false,double tol=0.01);
     bool make_planar_layout(layout &x);
+    void make_planar_grid_layout(int i1,int i2,int i3);
     double make_tree_layout(layout &x,double sep,int apex=0);
     void layout_best_rotation(layout &x);
     static rectangle layout_bounding_rect(layout &ly,double padding=0);
@@ -641,8 +684,8 @@ public:
     bool is_clique() const;
     bool is_triangle_free() const;
     int tree_height(int root);
-    void tomita(ivectors &maximal_cliques) const;
-    int maximum_clique(ivector &clique) const;
+    void tomita(ivectors &res,bool store_all=true);
+    int maximum_clique(ivector &clique);
     bool clique_cover(ivectors &cover,int k=0);
     int chromatic_number() const;
     int maximum_independent_set(ivector &v) const;
@@ -709,6 +752,7 @@ public:
     int lowest_common_ancestor(int i,int j,int root);
     void compute_st_numbering(int s,int t);
     vecteur get_st_numbering() const;
+    void greedy_vertex_coloring(ivector &ordering);
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

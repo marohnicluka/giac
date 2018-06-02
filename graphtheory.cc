@@ -3029,16 +3029,40 @@ static const char _is_weighted_s[]="is_weighted";
 static define_unary_function_eval(__is_weighted,&_is_weighted,_is_weighted_s);
 define_unary_function_ptr5(at_is_weighted,alias_at_is_weighted,&__is_weighted,0,true)
 
-/* USAGE:   is_planar(G)
+/* USAGE:   is_planar(G,[F])
  *
- * Returns true iff graph G is planar.
+ * Returns true iff graph G is planar [and store the list of its faces to F if G
+ * is biconnected].
  */
 gen _is_planar(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    graphe G(contextptr);
-    if (!G.read_gen(g))
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    gen F=undef;
+    if (g.subtype==_SEQ__VECT) {
+        if (g._VECTptr->size()!=2)
+            return gensizeerr(contextptr);
+        if (g._VECTptr->back().type!=_IDNT)
+            return gentypeerr(contextptr);
+        F=g._VECTptr->back();
+    }
+    graphe G(contextptr),U(contextptr);
+    if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    return graphe::boole(G.is_planar());
+    graphe::ivectors faces;
+    G.underlying(U);
+    if (!U.is_planar(faces))
+        return G.boole(false);
+    if (!is_undef(F)) {
+        if (!U.is_biconnected())
+            return gt_err(_GT_ERR_BICONNECTED_GRAPH_REQUIRED,contextptr);
+        vecteur res;
+        for (graphe::ivectors_iter it=faces.begin();it!=faces.end();++it) {
+            res.push_back(_sort(G.get_node_labels(*it),contextptr));
+        }
+        _eval(symbolic(at_sto,res,F),contextptr);
+    }
+    return G.boole(true);
 }
 static const char _is_planar_s[]="is_planar";
 static define_unary_function_eval(__is_planar,&_is_planar,_is_planar_s);
@@ -4097,28 +4121,6 @@ static const char _maximum_clique_s[]="maximum_clique";
 static define_unary_function_eval(__maximum_clique,&_maximum_clique,_maximum_clique_s);
 define_unary_function_ptr5(at_maximum_clique,alias_at_maximum_clique,&__maximum_clique,0,true)
 
-/* USAGE:   maximal_cliques(G)
- *
- * Returns the list of maximal cliques in graph G. Every clique is returned as
- * a list of vertices.
- */
-gen _maximal_cliques(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    graphe G(contextptr);
-    if (!G.read_gen(g))
-        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    if (G.is_directed())
-        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
-    graphe::ivectors cliques;
-    G.tomita(cliques);
-    vecteur res;
-    G.ivectors2vecteur(cliques,res);
-    return res;
-}
-static const char _maximal_cliques_s[]="maximal_cliques";
-static define_unary_function_eval(__maximal_cliques,&_maximal_cliques,_maximal_cliques_s);
-define_unary_function_ptr5(at_maximal_cliques,alias_at_maximal_cliques,&__maximal_cliques,0,true)
-
 /* USAGE:   clique_number(G)
  *
  * Returns the clique number of graph G, which is equal to the size of maximum
@@ -4763,6 +4765,123 @@ gen _st_ordering(const gen &g,GIAC_CONTEXT) {
 static const char _st_ordering_s[]="st_ordering";
 static define_unary_function_eval(__st_ordering,&_st_ordering,_st_ordering_s);
 define_unary_function_ptr5(at_st_ordering,alias_at_st_ordering,&__st_ordering,0,true)
+
+/* USAGE:   greedy_color(G,[p])
+ *
+ * Returns the list of vertex colors (positive integers) obtained by coloring
+ * vertices one at a time, assigning to it the smallest available color. If a
+ * permutation p is given, vertices will be colored in the order it specifies.
+ */
+gen _greedy_color(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    graphe::ivector p,colors;
+    if (g.subtype==_SEQ__VECT) {
+        if (g._VECTptr->size()!=2)
+            return gensizeerr(contextptr);
+        if (is_zero(_is_permu(g._VECTptr->back(),contextptr)))
+            return gentypeerr(contextptr);
+        p=vecteur_2_vector_int(*g._VECTptr->back()._VECTptr);
+        int offset=array_start(contextptr);
+        for (graphe::ivector::iterator it=p.begin();it!=p.end();++it) {
+            *it-=offset;
+        }
+    }
+    graphe G(contextptr);
+    if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (p.empty()) { // construct the identity permutation
+        p.resize(G.node_count());
+        for (graphe::ivector::iterator it=p.begin();it!=p.end();++it) {
+            *it=it-p.begin();
+        }
+    } else if (G.node_count()!=int(p.size()))
+        return gensizeerr(contextptr);
+    G.greedy_vertex_coloring(p);
+    G.get_vertex_colors(colors);
+    return vector_int_2_vecteur(colors);
+}
+static const char _greedy_color_s[]="greedy_color";
+static define_unary_function_eval(__greedy_color,&_greedy_color,_greedy_color_s);
+define_unary_function_ptr5(at_greedy_color,alias_at_greedy_color,&__greedy_color,0,true)
+
+/* USAGE:   is_bipartite(G,[P])
+ *
+ * Returns true iff the graph G is bipartite [and assign to P the list of partitions
+ * represented as lists of vertices].
+ */
+gen _is_bipartite(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    gen P=undef;
+    if (g.subtype==_SEQ__VECT) {
+        if (g._VECTptr->size()!=2)
+            return gensizeerr(contextptr);
+        if ((P=g._VECTptr->back()).type!=_IDNT)
+            return gentypeerr(contextptr);
+    }
+    graphe G(contextptr),U(contextptr);
+    if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    G.underlying(U);
+    graphe::ivector V1,V2;
+    if (!U.is_bipartite(V1,V2))
+        return G.boole(false);
+    if (!is_undef(P)) {
+        _eval(symbolic(at_sto,makevecteur(_sort(G.get_node_labels(V1),contextptr),
+                                          _sort(G.get_node_labels(V2),contextptr)),
+                       P),contextptr);
+    }
+    return G.boole(true);
+}
+static const char _is_bipartite_s[]="is_bipartite";
+static define_unary_function_eval(__is_bipartite,&_is_bipartite,_is_bipartite_s);
+define_unary_function_ptr5(at_is_bipartite,alias_at_is_bipartite,&__is_bipartite,0,true)
+
+/* USAGE:   plane_dual(G)
+ *          plane_dual(F)
+ *
+ * Returns the plane dual of a biconnected planar graph G or constructed from
+ * the list of faces F.
+ */
+gen _plane_dual(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype==_SEQ__VECT)
+        return gentypeerr(contextptr);
+    graphe::ivectors faces;
+    graphe D(contextptr);
+    if (g.subtype==_GRAPH__VECT) {
+        graphe G(contextptr);
+        if (!G.read_gen(g))
+            return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+        if (!G.is_biconnected())
+            return gt_err(_GT_ERR_BICONNECTED_GRAPH_REQUIRED,contextptr);
+        if (!G.demoucron(faces))
+            return gt_err(_GT_ERR_NOT_PLANAR,contextptr);
+    } else {
+        gen_map m;
+        int k=0;
+        vecteur &gv=*g._VECTptr;
+        for (const_iterateur it=gv.begin();it!=gv.end();++it) {
+            if (it->type!=_VECT)
+                return gentypeerr(contextptr);
+            graphe::ivector face;
+            for (const_iterateur jt=it->_VECTptr->begin();jt!=it->_VECTptr->end();++jt) {
+                if (is_zero(m[*jt]))
+                    m[*jt]=++k;
+                face.push_back(m[*jt].val-1);
+            }
+            faces.push_back(face);
+        }
+    }
+    D.make_plane_dual(faces);
+    return D.to_gen();
+}
+static const char _plane_dual_s[]="plane_dual";
+static define_unary_function_eval(__plane_dual,&_plane_dual,_plane_dual_s);
+define_unary_function_ptr5(at_plane_dual,alias_at_plane_dual,&__plane_dual,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

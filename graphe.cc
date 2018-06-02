@@ -1248,10 +1248,10 @@ void graphe::unset_all_ancestors(int sg) {
 }
 
 /* turn the color of each vertex to white */
-void graphe::uncolor_all_vertices(int sg) {
+void graphe::uncolor_all_vertices(int base_color,int sg) {
     for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
         if (sg<0 || it->subgraph()==sg)
-            it->set_color(0);
+            it->set_color(base_color);
     }
 }
 
@@ -1598,7 +1598,7 @@ bool graphe::read_dot(const string &filename) {
             }
         case _GT_DOT_TOKEN_TYPE_NUMBER:
         case _GT_DOT_TOKEN_TYPE_STRING:
-            index=add_node(str2gen(token,true));
+            index=add_node(str2gen(token,dot_token_type!=_GT_DOT_TOKEN_TYPE_NUMBER));
             if (subgraphs.empty()) { error_raised=true; break; }
             nodes[index].set_subgraph(subgraphs.back().index());
             subgraphs.back().set_index(index+1);
@@ -1666,7 +1666,7 @@ bool graphe::read_dot(const string &filename) {
             }
             break;
         default:
-            cout << "Unknown token: " << token << endl;
+            message((string("Error: unknown token '")+token+"'").c_str());
             break;
         }
         if (error_raised || strict)
@@ -3594,17 +3594,16 @@ int graphe::cp_maxclique(ivector &clique) {
 
 /*
  * Östergård class for finding maximum clique
+ *
+ * implemented as described in "A fast algorithm for the maximum clique problem",
+ * Discrete Applied Mathematics 120 (2002) 197–207
  */
-
-graphe::ostergard::ostergard(graphe *gr) {
-    G=gr;
-}
 
 void graphe::ostergard::recurse(ivector &U, int size) {
     if (U.empty()) {
         if (size>maxsize) {
             maxsize=size;
-            incumbent=stck;
+            incumbent=clique_nodes;
             found=true;
         }
         return;
@@ -3641,9 +3640,9 @@ void graphe::ostergard::recurse(ivector &U, int size) {
                 V[j++]=*it;
         }
         V.resize(j);
-        stck.push_back(i);
+        clique_nodes.push_back(i);
         recurse(V,size+1);
-        stck.pop_back();
+        clique_nodes.pop_back();
         if (found)
             break;
     }
@@ -3661,7 +3660,7 @@ int graphe::ostergard::maxclique(ivector &clique) {
     }
     //degree_comparator comp(G);
     //sort(S.begin(),S.end(),comp);
-    G->greedy_vertex_coloring(S);
+    G->greedy_vertex_coloring_biggs(S);
     std::reverse(S.begin(),S.end());
     G->node(S.back()).set_low(1);
     for (ivector_iter it=S.begin();it!=S.end();++it) {
@@ -3669,7 +3668,7 @@ int graphe::ostergard::maxclique(ivector &clique) {
     }
     // find maximum clique
     maxsize=0;
-    stck.clear();
+    clique_nodes.clear();
     int k;
     for (int i=n;i-->0;) {
         found=false;
@@ -3680,9 +3679,9 @@ int graphe::ostergard::maxclique(ivector &clique) {
             if (v.has_neighbor(*it))
                 U.push_back(*it);
         }
-        stck.push_back(k);
+        clique_nodes.push_back(k);
         recurse(U,1);
-        stck.pop_back();
+        clique_nodes.pop_back();
         v.set_low(maxsize);
     }
     clique=incumbent;
@@ -3765,6 +3764,9 @@ bool graphe::clique_cover(ivectors &cover,int k) {
     ivector indices;
     tomita(maximal_cliques);
     int mcsize=maximal_cliques.size();
+    for (ivectors::iterator it=maximal_cliques.begin();it!=maximal_cliques.end();++it) {
+        sort(it->begin(),it->end());
+    }
     for (int i=1;i<=(k==0?mcsize:k);++i) {
         if (has_k_clique_cover(i,maximal_cliques,indices)) {
             cover.resize(i);
@@ -6118,8 +6120,6 @@ int graphe::guess_drawing_style() {
             node_count()<100+int(cycle.size()) && degrees_equal(cycle,3) &&
             (node_count()==int(cycle.size()) || is_triconnected())) {
         return _GT_STYLE_CIRCLE;
-    } else if (node_count()<100 && is_planar()) {
-        return _GT_STYLE_PLANAR;
     }
     return _GT_STYLE_SPRING;
 }
@@ -6527,17 +6527,15 @@ bool graphe::is_tournament() {
 }
 
 /* return true iff the graph is planar */
-bool graphe::is_planar() {
-    graphe U(ctx);
-    underlying(U);
-    ivectors components,faces;
+bool graphe::is_planar(ivectors &faces) {
+    ivectors components;
     int m;
-    U.connected_components(components);
+    connected_components(components);
     for (ivectors_iter it=components.begin();it!=components.end();++it) {
         if (it->size()<5)
             continue;
         graphe G(ctx);
-        U.induce_subgraph(*it,G,false);
+        induce_subgraph(*it,G,false);
         m=G.edge_count();
         if (m>3*int(it->size())-6)
             return false;
@@ -7034,7 +7032,7 @@ vecteur graphe::get_st_numbering() const {
 }
 
 /* greedy vertex coloring algorithm due to Biggs, also records vertex inclusion time */
-void graphe::greedy_vertex_coloring(ivector &ordering) {
+void graphe::greedy_vertex_coloring_biggs(ivector &ordering) {
     uncolor_all_vertices();
     int n=node_count(),k=0,i,maxdeg,d,col=0;
     ordering.resize(n);
@@ -7061,6 +7059,120 @@ void graphe::greedy_vertex_coloring(ivector &ordering) {
                 ordering[k++]=i;
             }
         } while (i>=0);
+    }
+}
+
+/* classical greedy vertex coloring algorithm, time complexity O(n+m) */
+void graphe::greedy_vertex_coloring(const ivector &p) {
+    assert(!is_directed());
+    uncolor_all_vertices();
+    int c=0,k;
+    set<int> used;
+    for (ivector_iter it=p.begin();it!=p.end();++it) {
+        vertex &v=node(*it);
+        if (c==0) {
+            v.set_color(++c);
+            continue;
+        }
+        used.clear();
+        for (ivector_iter jt=v.neighbors().begin();jt!=v.neighbors().end();++jt) {
+            vertex &v=node(*jt);
+            if (v.color()>0)
+                used.insert(v.color());
+        }
+        k=1;
+        for (set<int>::const_iterator jt=used.begin();jt!=used.end();++jt) {
+            if (*jt>k)
+                break;
+            ++k;
+        }
+        v.set_color(k);
+        if (k>c)
+            c=k;
+    }
+}
+
+/* extract colors of the vertices and return them in order */
+void graphe::get_vertex_colors(ivector &colors) {
+    colors.resize(node_count());
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        colors[it-nodes.begin()]=it->color();
+    }
+}
+
+/* return true iff the graph is bipartite, time complexity O(n+m) */
+bool graphe::is_bipartite(ivector &V1,ivector &V2,int sg) {
+    assert(!is_directed());
+    uncolor_all_vertices(-1,sg);
+    node(0).set_color(1);
+    queue<int> q;
+    node_iter nt=nodes.begin();
+    for (;nt!=nodes.end();++nt) {
+        if (sg<0 || nt->subgraph()==sg)
+            break;
+    }
+    assert(nt!=nodes.end());
+    q.push(nt-nodes.begin());
+    int i;
+    while (!q.empty()) {
+        i=q.front();
+        q.pop();
+        vertex &v=node(i);
+        for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
+            vertex &w=node(*it);
+            if (sg>=0 && w.subgraph()!=sg)
+                continue;
+            if (w.color()==-1) {
+                w.set_color(1-v.color());
+                q.push(*it);
+            } else if (w.color()==v.color())
+                return false;
+        }
+    }
+    V1.clear();
+    V2.clear();
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        if (sg>=0 && it->subgraph()!=sg)
+            continue;
+        if (it->color()==1)
+            V1.push_back(it-nodes.begin());
+        else V2.push_back(it-nodes.begin());
+    }
+    return true;
+}
+
+/* construct the plane dual of a planar graph with the given faces (time complexity O(n)),
+ * each face must be a list of vertex indices */
+void graphe::make_plane_dual(const ivectors &faces) {
+    this->clear();
+    set_directed(false);
+    vecteur labels;
+    make_default_labels(labels,faces.size());
+    add_nodes(labels);
+    int nc=0;
+    for (ivectors_iter it=faces.begin();it!=faces.end();++it) {
+        for (ivector_iter jt=it->begin();jt!=it->end();++jt) {
+            if (*jt>nc)
+                nc=*jt;
+        }
+    }
+    edgemap emap(++nc);
+    map<int,int>::const_iterator et;
+    int i,j,v,w,f,n;
+    for (ivectors_iter it=faces.begin();it!=faces.end();++it) {
+        f=it-faces.begin();
+        const ivector &face=*it;
+        n=face.size();
+        for (int k=0;k<n;++k) {
+            i=face[k];
+            j=face[(k+1)%n];
+            v=i<j?i:j;
+            w=i<j?j:i;
+            map<int,int> &m=emap[v];
+            if ((et=m.find(w))==m.end())
+                m[w]=f;
+            else add_edge(f,et->second);
+        }
     }
 }
 

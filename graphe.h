@@ -340,10 +340,10 @@ public:
         bool found;
         ivector c;
         ivector incumbent;
-        ivector stck;
+        ivector clique_nodes;
         void recurse(ivector &U,int size);
     public:
-        ostergard(graphe *gr);
+        ostergard(graphe *gr) { G=gr; }
         int maxclique(ivector &clique);
     };
 
@@ -491,7 +491,6 @@ private:
     void set_nodes_embedded(const ivector &v,bool yes=true);
     void clear_embedding();
     int first_neighbor_from_subgraph(const vertex &v,int sg) const;
-    bool demoucron(ivectors &faces);
     int planar_embedding(ivectors &faces);
     int choose_embedding_face(const ivectors &faces,int v);
     static int choose_outer_face(const ivectors &faces);
@@ -577,7 +576,7 @@ public:
     vecteur vertices(int sg=-1) const;
     void unvisit_all_nodes(int sg=-1);
     void unset_all_ancestors(int sg=-1);
-    void uncolor_all_vertices(int sg=-1);
+    void uncolor_all_vertices(int base_color=0,int sg=-1);
     void dfs(int root,bool rec=true,bool clr=true,ivector *D=NULL,int sg=-1,bool skip_embedded=false);
     void bfs(int root,bool rec=true,bool clr=true,ivector *D=NULL,int sg=-1,bool skip_embedded=false);
     const ivector &get_discovered_nodes() const { return discovered_nodes; }
@@ -664,6 +663,7 @@ public:
     void maximize_matching(ipairs &matching);
     void find_maximal_matching(ipairs &matching) const;
     bool trail(const vecteur &v);
+    bool demoucron(ivectors &faces);
     void create_random_layout(layout &x,int dim);
     void make_spring_layout(layout &x,int d,double tol=0.001);
     void make_circular_layout(layout &x,const ivector &outer_face,bool planar=false,double tol=0.01);
@@ -680,7 +680,7 @@ public:
     bool is_tree() { return !is_directed() && edge_count()+1==node_count() && is_connected(); }
     bool is_forest();
     bool is_tournament();
-    bool is_planar();
+    bool is_planar(ivectors &faces);
     bool is_clique() const;
     bool is_triangle_free() const;
     int tree_height(int root);
@@ -691,6 +691,7 @@ public:
     int maximum_independent_set(ivector &v) const;
     int girth(bool odd=false,int sg=-1);
     bool hakimi(const ivector &L);
+    void make_plane_dual(const ivectors &faces);
     void make_lcf_graph(const ivector &jumps,int e);
     void make_lcf_graph(const int *j,int e);
     void make_sierpinski_graph(int n,int k,bool triangle);
@@ -752,7 +753,10 @@ public:
     int lowest_common_ancestor(int i,int j,int root);
     void compute_st_numbering(int s,int t);
     vecteur get_st_numbering() const;
-    void greedy_vertex_coloring(ivector &ordering);
+    void greedy_vertex_coloring_biggs(ivector &ordering);
+    void greedy_vertex_coloring(const ivector &p);
+    void get_vertex_colors(ivector &colors);
+    bool is_bipartite(ivector &V1,ivector &V2,int sg=-1);
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

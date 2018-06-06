@@ -6023,9 +6023,11 @@ gen customize_display(int options) {
 
 /* append the line segment [p,q] to vecteur v */
 void graphe::append_segment(vecteur &drawing,const point &p,const point &q,int color,int width,bool arrow) const {
-    gen P=point2gen(p),Q=point2gen(q),args=makesequence(P,Q,customize_display(color | width));
-    drawing.push_back(arrow?_vector(args,ctx):_segment(args,ctx));
-    //drawing.push_back(symbolic(arrow?at_vector:at_segment,args));
+    vecteur attributs(1,color | width);
+    vecteur seg=p.size()==2?
+                makevecteur(makecomplex(p[0],p[1]),makecomplex(q[0],q[1]))
+            : makevecteur(gen(makevecteur(p[0],p[1],p[2]),_POINT__VECT),gen(makevecteur(q[0],q[1],q[2]),_POINT__VECT));
+    drawing.push_back(pnt_attrib(gen(seg,arrow?_VECTOR__VECT:_GROUP__VECT),attributs,ctx));
 }
 
 /* append the vertex (as a circle) to vecteur v */

@@ -1104,7 +1104,13 @@ The command {\tt minimal\_spanning\_tree} accepts an undirected graph $ G(V,E) $
 
 \subsection{Drawing graphs using various algorithms: {\tt draw\_graph}}
 
-The command {\tt draw\_graph} accepts from one to three arguments, the mandatory first one being a graph $ G(V,E) $. This command assigns 2D or 3D coordinates to each vertex $ v\in V $ and produces a visual representation of $ G $ based on these coordinates. The second (optional) argument is an identifier $ P $ which, if given, will hold the list of coordinates after the command returns (since $ G $ is never modified, it is the only way to access the coordinates). The third (optional) argument is a sequence of options.
+The command {\tt draw\_graph} accepts from one to three arguments, the mandatory first one being a graph $ G(V,E) $. This command assigns 2D or 3D coordinates to each vertex $ v\in V $ and produces a visual representation of $ G $ based on these coordinates. The second (optional) argument is an identifier $ P $ which, if given, will hold the list of coordinates after the command returns (since $ G $ is never modified, it is the only way to access the coordinates). The third (optional) argument is a sequence of options. Each option is one of the following:
+\begin{itemize}
+  \item {\tt labels=true} or {\tt false}: draw or suppress vertex labels and edge weights (by default {\tt true})
+  \item {\tt spring}: draw the graph $ G $ using a spring-electrical model
+  \item {\tt tree[=r} or {\tt [r1,r2,...]]}: draw tree or forest $ G $, optionally specifying root nodes for each tree
+  \item {\tt circle[=L]}: draw the graph $ G $ by setting the {\it hull vertices} from list $ L\subset V $ (assuming $ L=V $ by default) on the unit circle and all other vertices in origin, subsequently applying a force-directed vertex placement algorithm to generate the layout while keeping the hull vertices fixed
+\end{itemize}
 
 \subsection{Setting custom vertex positions: {\tt set\_vertex\_positions}, {\tt get\_vertex\_positions}}
 

@@ -6024,22 +6024,22 @@ gen customize_display(int options) {
 /* append the line segment [p,q] to vecteur v */
 void graphe::append_segment(vecteur &drawing,const point &p,const point &q,int color,int width,bool arrow) const {
     gen P=point2gen(p),Q=point2gen(q),args=makesequence(P,Q,customize_display(color | width));
-    //drawing.push_back(arrow?_vector(args,ctx):_segment(args,ctx));
-    drawing.push_back(symbolic(arrow?at_vector:at_segment,args));
+    drawing.push_back(arrow?_vector(args,ctx):_segment(args,ctx));
+    //drawing.push_back(symbolic(arrow?at_vector:at_segment,args));
 }
 
 /* append the vertex (as a circle) to vecteur v */
 void graphe::append_vertex(vecteur &drawing,const point &p,int color,int width) const {
     gen P=point2gen(p,true),args=makesequence(P,customize_display(color | width | _POINT_POINT));
-    //drawing.push_back(_point(args,ctx));
-    drawing.push_back(symbolic(at_point,args));
+    drawing.push_back(_point(args,ctx));
+    //drawing.push_back(symbolic(at_point,args));
 }
 
 /* append label to vecteur v at the specified quadrant */
 void graphe::append_label(vecteur &drawing,const point &p,const gen &label,int quadrant,int color) const {
     gen P=point2gen(p),args=makesequence(P,label,customize_display(quadrant | color));
-    //drawing.push_back(_legende(args,ctx));
-    drawing.push_back(symbolic(at_legende,args));
+    drawing.push_back(_legende(args,ctx));
+    //drawing.push_back(symbolic(at_legende,args));
 }
 
 /* extract position attribute from attr */

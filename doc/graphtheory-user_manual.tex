@@ -1104,6 +1104,8 @@ The command {\tt minimal\_spanning\_tree} accepts an undirected graph $ G(V,E) $
 
 \subsection{Drawing graphs using various algorithms: {\tt draw\_graph}}
 
+The command {\tt draw\_graph} accepts from one to three arguments, the mandatory first one being a graph $ G(V,E) $. This command assigns 2D or 3D coordinates to each vertex $ v\in V $ and produces a visual representation of $ G $ based on these coordinates. The second (optional) argument is an identifier $ P $ which, if given, will hold the list of coordinates after the command returns (since $ G $ is never modified, it is the only way to access the coordinates). The third (optional) argument is a sequence of options.
+
 \subsection{Setting custom vertex positions: {\tt set\_vertex\_positions}, {\tt get\_vertex\_positions}}
 
 \subsection{Highlighting parts of a graph: {\tt highlight\_vertex}, {\tt highlight\_edges}, {\tt highlight\_trail}, {\tt highlight\_subgraph}}

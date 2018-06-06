@@ -1377,8 +1377,9 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
             graphe &C=Cv.back();
             G.induce_subgraph(*it,C,false);
             graphe::layout &x=layouts[i];
-            if (method==_GT_STYLE_DEFAULT)
-                comp_method=C.guess_drawing_style();
+            if (it->size()<3)
+                comp_method=_GT_STYLE_SPRING;
+            //else if (method==_GT_STYLE_DEFAULT)
             switch (comp_method) {
             case _GT_STYLE_SPRING:
                 C.make_spring_layout(x,2);
@@ -1412,19 +1413,21 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
             }
        }
         // combine component layouts
+        graphe::point dx(2);
         for (int i=0;i<nc;++i) {
-            bounding_rects[i]=graphe::layout_bounding_rect(layouts[i],sep/4.0);
+            graphe::rectangle &rect=bounding_rects[i];
+            rect=graphe::layout_bounding_rect(layouts[i],sep/3.08);
+            dx.front()=-rect.x();
+            dx.back()=-rect.y();
+            graphe::translate_layout(layouts[i],dx);
         }
         graphe::rectangle::comparator comp;
         sort(bounding_rects.begin(),bounding_rects.end(),comp);
-        graphe::dpairs embedding;
-        graphe::pack_rectangles(bounding_rects,embedding);
-        graphe::point dx(2);
-        for (graphe::dpairs::const_iterator it=embedding.begin();it!=embedding.end();++it) {
-            graphe::rectangle &brect=bounding_rects[it-embedding.begin()];
-            dx.front()=it->first-brect.x();
-            dx.back()=it->second-brect.y();
-            graphe::translate_layout(*brect.get_layout(),dx);
+        graphe::pack_rectangles(bounding_rects);
+        for (vector<graphe::rectangle>::const_iterator it=bounding_rects.begin();it!=bounding_rects.end();++it) {
+            dx.front()=it->x();
+            dx.back()=it->y();
+            graphe::translate_layout(*(it->get_layout()),dx);
         }
         int i,j;
         main_layout.resize(G.node_count());

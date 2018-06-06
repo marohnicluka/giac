@@ -106,6 +106,7 @@ public:
         // used for planar embedding
         bool m_embedded;
         int m_number;
+        std::map<int,int> m_edge_faces;
         // used for grid drawing
         int m_left;
         int m_right;
@@ -177,6 +178,10 @@ public:
         void sort_neighbors(Compare comp) { sort(m_neighbors.begin(),m_neighbors.end(),comp); m_sorted=true; }
         void sort_neighbors() { sort(m_neighbors.begin(),m_neighbors.end()); m_sorted=true; }
         void clear_neighbors() { m_neighbors.clear(); m_neighbor_attributes.clear(); m_sorted=false; }
+        void incident_faces(ivector &F) const;
+        void add_edge_face(int nb,int f) { assert(m_edge_faces.find(nb)==m_edge_faces.end()); m_edge_faces[nb]=f+1; }
+        void clear_edge_faces() { m_edge_faces.clear(); }
+        int edge_face(int nb) { return m_edge_faces[nb]-1; }
     };
 
     class dotgraph {
@@ -230,22 +235,6 @@ public:
         void find_maximum_matching(ipairs &matching);
     };
 
-    class triangulator {
-        graphe *G;
-        ivectors *embedding;
-        ivector degrees;
-        int predecessor(int i,int n);
-        int successor(int i,int n);
-        void addedge(int v,int w);
-        void path(int i,int j,const ivector &B,ivector &P);
-        void creases(const ivector &B,ipairs &C);
-        void zigzag(const ivector &B);
-        void fold(const ivector &B,bool triangulate=true);
-    public:
-        triangulator(graphe *gr,ivectors *Gt);
-        void triangulate(int outer_face=-1);
-    };
-
     class tree_node_positioner {
         graphe *G;
         layout *x;
@@ -280,10 +269,14 @@ public:
         rectangle(const rectangle &rect);
         rectangle& operator =(const rectangle &other);
         void assign(const rectangle &other);
+        void set_anchor(double x,double y) { m_x=x; m_y=y; }
         double x() const { return m_x; }
         double y() const { return m_y; }
         double width() const { return m_width; }
         double height() const { return m_height; }
+        bool intersects(const rectangle &other) const;
+        bool intersects(const std::vector<rectangle> &rectangles) const;
+        bool intersects(std::vector<rectangle>::const_iterator first,std::vector<rectangle>::const_iterator last) const;
         layout *get_layout() const { return L; }
     };
 
@@ -313,7 +306,7 @@ public:
         double a() const { return m_a; }
         double b() const { return m_b; }
         double c() const { return m_c; }
-        int d() const { return m_d; }
+        double d() const { return m_d; }
         int v() const { return m_v; }
         int w() const { return m_w; }
     };
@@ -363,10 +356,27 @@ public:
 
     struct degree_comparator {
         graphe *G;
+        bool asc;
         bool operator()(int v,int w) {
-            return G->degree(v)<G->degree(w);
+            return (asc && G->degree(v)<G->degree(w)) ||
+                    (!asc && G->degree(v)>G->degree(w));
         }
-        degree_comparator(graphe *gr) { G=gr; }
+        degree_comparator(graphe *gr,bool ascending=true) { G=gr; asc=ascending; }
+    };
+
+    struct ivectors_degree_comparator {
+        graphe *G;
+        bool operator()(const ivector &a,const ivector &b) {
+            int deg_a,deg_b;
+            for (ivector_iter it=a.begin();it!=a.end();++it) {
+                deg_a+=G->degree(*it);
+            }
+            for (ivector_iter it=b.begin();it!=b.end();++it) {
+                deg_b+=G->degree(*it);
+            }
+            return deg_a*b.size()>=deg_b*a.size();
+        }
+        ivectors_degree_comparator(graphe *gr) { G=gr; }
     };
 
     typedef std::vector<vertex>::const_iterator node_iter;
@@ -474,7 +484,7 @@ private:
     int find_cycle_dfs(int i,int sg);
     bool find_path_dfs(int dest,int i,int sg,bool skip_embedded);
     static void sort_rectangles(std::vector<rectangle> &rectangles);
-    static bool embed_rectangles(const std::vector<rectangle> &rectangles,dpairs &embedding,double ew,double eh,double eps);
+    static bool embed_rectangles(std::vector<rectangle> &rectangles,double maxheight);
     static bool segments_crossing(const point &p,const point &r,const point &q,const point &s,point &crossing);
     static bool point2segment_projection(const point &p,const point &q,const point &r,point &proj);
     void accumulate_repulsive_force(const point &p,const point &q,double R,double K,double eps,point &force,bool sq_dist=false);
@@ -488,20 +498,20 @@ private:
     void append_label(vecteur &drawing,const point &p,const gen &label,int quadrant,int color=_BLACK) const;
     static int face_has_edge(const ivector &face,int i,int j);
     static int binomial_coeff(int n,int k);
-    void set_nodes_embedded(const ivector &v,bool yes=true);
-    void clear_embedding();
     int first_neighbor_from_subgraph(const vertex &v,int sg) const;
+    void set_nodes_embedded(const ivector &v,bool yes=true);
+    void unembed_all_nodes();
     int planar_embedding(ivectors &faces);
+    void set_embedding(const ivectors &faces);
+    void clear_embedding() { for (std::vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) it->clear_edge_faces(); }
     int choose_embedding_face(const ivectors &faces,int v);
-    static int choose_outer_face(const ivectors &faces);
+    int choose_outer_face(const ivectors &faces);
     static void make_regular_polygon_layout(layout &x,const ivector &face,double R=1.0);
     bool edges_crossing(const ipair &e1,const ipair &e2,const layout &x,point &crossing) const;
-    bool has_crossing_edges(const layout &x,const ipairs &E) const;
     void promote_edge_crossings(layout &x);
     static void build_block_tree(int i,ivectors &blocks);
     static int common_element(const ivector &v1,const ivector &v2,int offset=0);
     void embed_children_blocks(int i,ivectors &block_tree,std::vector<ivectors> &blocks_faces);
-    void subdivide_faces(const ivectors &faces,int f0);
     void periphericity(const ivector &outer_face,ivector &p);
     static void tree_layout2polar(layout &ly);
     void tree_height_dfs(int i,int level,int &depth);
@@ -514,7 +524,12 @@ private:
     void pathfinder(int i,ivector &path);
     void rdfs(int i,ivector &d,bool rec,int sg,bool skip_embedded);
     bool is_descendant(int v,int anc) const;
-    int canonical_order_next(ivector &contour,ivector &adj_path);
+    static int pred(int i,int n);
+    static int succ(int i,int n);
+    static void arc_path(int i,int j,const ivector &cycle,ivector &path);
+    void fold_face(const ivector &face, bool subdivide,int &label);
+    void find_chords(const ivector &face,ipairs &chords);
+    void augment(const ivectors &faces,int outer_face,bool subdivide=false);
 
 public:
     graphe(const context *contextptr=context0);
@@ -666,14 +681,13 @@ public:
     bool demoucron(ivectors &faces);
     void create_random_layout(layout &x,int dim);
     void make_spring_layout(layout &x,int d,double tol=0.001);
-    void make_circular_layout(layout &x,const ivector &outer_face,bool planar=false,double tol=0.01);
+    void make_circular_layout(layout &x,const ivector &outer_face,double A=0,double tol=0.005);
+    void make_tutte_layout(layout &x,const ivector &outer_face);
     bool make_planar_layout(layout &x);
-    void make_planar_grid_layout(int i1,int i2,int i3);
     double make_tree_layout(layout &x,double sep,int apex=0);
     void layout_best_rotation(layout &x);
     static rectangle layout_bounding_rect(layout &ly,double padding=0);
-    static void pack_rectangles(const std::vector<rectangle> &rectangles,dpairs &best_embedding);
-    int guess_drawing_style();
+    static void pack_rectangles(std::vector<rectangle> &rectangles);
     static gen point2gen(const point &p,bool vect=false);
     static point layout_center(const layout &x);
     static void scale_layout(layout &x,double diam);
@@ -734,7 +748,7 @@ public:
     void incident_edges(const ivector &V,edgeset &E);
     static bool edges_incident(const ipair &e1,const ipair &e2);
     static void convex_hull(ivector &hull,const layout &x,const ivector &v);
-    void edge_labels_placement(const layout &x,double tol=0.001);
+    void edge_labels_placement(const layout &x);
     void draw_edges(vecteur &drawing,const layout &x);
     void draw_nodes(vecteur &drawing,const layout &x) const;
     void draw_labels(vecteur &drawing,const layout &x) const;

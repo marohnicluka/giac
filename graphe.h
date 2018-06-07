@@ -68,7 +68,8 @@ enum gt_layout_style {
     _GT_STYLE_PLANAR,
     _GT_STYLE_3D,
     _GT_STYLE_CIRCLE,
-    _GT_STYLE_TREE
+    _GT_STYLE_TREE,
+    _GT_STYLE_BIPARTITE
 };
 
 class graphe {
@@ -249,7 +250,7 @@ public:
         void process_level(int i);
     public:
         tree_node_positioner(graphe *gr,layout *ly,double hs,double vs);
-        double positioning(int apex);
+        void positioning(int apex);
     };
 
     class rectangle {
@@ -278,37 +279,6 @@ public:
         bool intersects(const std::vector<rectangle> &rectangles) const;
         bool intersects(std::vector<rectangle>::const_iterator first,std::vector<rectangle>::const_iterator last) const;
         layout *get_layout() const { return L; }
-    };
-
-    class axis {
-        // coefficients for a*x+b*y+c=0
-        double m_a;
-        double m_b;
-        double m_c;
-        // vertex indices
-        int m_v;
-        int m_w;
-        // displacement from the center of the corresponding layout
-        double m_d;
-    public:
-        struct comparator {
-            bool operator()(const axis &a,const axis &b) {
-                return a.d()<b.d();
-            }
-        };
-        axis() { }
-        axis(const layout &x,int i,int j,const point &center);
-        axis(const axis &other);
-        axis& operator =(const axis &other);
-        void assign(const axis &other);
-        void mirror(const point &src,point &dest) const;
-        double distance(const point &p) const;
-        double a() const { return m_a; }
-        double b() const { return m_b; }
-        double c() const { return m_c; }
-        double d() const { return m_d; }
-        int v() const { return m_v; }
-        int w() const { return m_w; }
     };
 
     class union_find {
@@ -455,6 +425,7 @@ private:
     static void clear_point_coords(point &p);
     static double point_displacement(const point &p,bool sqroot=true);
     static double point_distance(const point &p,const point &q,point &pq);
+    static void point_mirror(double a,double b,double c,const point &src,point &dest);
     static void point_lincomb(const point &p,const point &q,double d1,double d2,point &res);
     static void copy_point(const point &src,point &dest);
     void rand_point(point &p,double radius=1.0);
@@ -487,12 +458,11 @@ private:
     static bool embed_rectangles(std::vector<rectangle> &rectangles,double maxheight);
     static bool segments_crossing(const point &p,const point &r,const point &q,const point &s,point &crossing);
     static bool point2segment_projection(const point &p,const point &q,const point &r,point &proj);
-    void accumulate_repulsive_force(const point &p,const point &q,double R,double K,double eps,point &force,bool sq_dist=false);
     void force_directed_placement(layout &x,double K,double R=DBL_MAX,double tol=0.01,bool ac=true);
     static bool get_position(const attrib &attr,point &p);
     void coarsening_mis(const ivector &V,graphe &G,sparsemat &P) const;
     void coarsening_ec(const ipairs &M,graphe &G,sparsemat &P) const;
-    static int best_quadrant(const point &p,const layout &x,const point &center);
+    int best_quadrant(const point &p,const layout &x) const;
     void append_segment(vecteur &drawing,const point &p,const point &q,int color,int width,bool arrow=false) const;
     void append_vertex(vecteur &drawing,const point &p,int color,int width) const;
     void append_label(vecteur &drawing,const point &p,const gen &label,int quadrant,int color=_BLACK) const;
@@ -506,9 +476,8 @@ private:
     void clear_embedding() { for (std::vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) it->clear_edge_faces(); }
     int choose_embedding_face(const ivectors &faces,int v);
     int choose_outer_face(const ivectors &faces);
-    static void make_regular_polygon_layout(layout &x,const ivector &face,double R=1.0);
+    static void make_regular_polygon_layout(layout &x,const ivector &v,double R=1.0);
     bool edges_crossing(const ipair &e1,const ipair &e2,const layout &x,point &crossing) const;
-    void promote_edge_crossings(layout &x);
     static void build_block_tree(int i,ivectors &blocks);
     static int common_element(const ivector &v1,const ivector &v2,int offset=0);
     void embed_children_blocks(int i,ivectors &block_tree,std::vector<ivectors> &blocks_faces);
@@ -530,6 +499,8 @@ private:
     void fold_face(const ivector &face, bool subdivide,int &label);
     void find_chords(const ivector &face,ipairs &chords);
     void augment(const ivectors &faces,int outer_face,bool subdivide=false);
+    const point make_vector(double x,double y) const { point p(2,x); p.back()=y; return p; }
+    const point make_vector(double x,double y,double z) const { point p(3,x); p[1]=y; p.back()=z; return p; }
 
 public:
     graphe(const context *contextptr=context0);
@@ -681,10 +652,11 @@ public:
     bool demoucron(ivectors &faces);
     void create_random_layout(layout &x,int dim);
     void make_spring_layout(layout &x,int d,double tol=0.001);
-    void make_circular_layout(layout &x,const ivector &outer_face,double A=0,double tol=0.005);
+    void make_circular_layout(layout &x,const ivector &hull,double A=0,double tol=0.005);
     void make_tutte_layout(layout &x,const ivector &outer_face);
     bool make_planar_layout(layout &x);
-    double make_tree_layout(layout &x,double sep,int apex=0);
+    void make_tree_layout(layout &x,double sep,int apex=0);
+    void make_bipartite_layout(layout &x,const ivector &p1,const ivector &p2);
     void layout_best_rotation(layout &x);
     static rectangle layout_bounding_rect(layout &ly,double padding=0);
     static void pack_rectangles(std::vector<rectangle> &rectangles);
@@ -727,7 +699,6 @@ public:
     void make_random_bipartite(const vecteur &V,const vecteur &W,double p);
     void make_random_regular(const vecteur &V,int d,bool connected);
     void make_random_flow_network(const vecteur &V,int capacity);
-    axis axis_of_symmetry(layout &x,const point &center,bool promote_crossings=false);
     static void translate_layout(layout &x,const point &dx);
     void cartesian_product(const graphe &G,graphe &P) const;
     void tensor_product(const graphe &G,graphe &P) const;
@@ -747,12 +718,11 @@ public:
     void collapse_edge(int i,int j);
     void incident_edges(const ivector &V,edgeset &E);
     static bool edges_incident(const ipair &e1,const ipair &e2);
-    static void convex_hull(ivector &hull,const layout &x,const ivector &v);
+    void convex_hull(const layout &x,layout &hull);
     void edge_labels_placement(const layout &x);
     void draw_edges(vecteur &drawing,const layout &x);
     void draw_nodes(vecteur &drawing,const layout &x) const;
     void draw_labels(vecteur &drawing,const layout &x) const;
-    bool get_leading_cycle(ivector &c) const;
     void highlight_edges(const ipairs &E,int color);
     void highlight_nodes(const ivector &V,int color);
     void distance(int i,const ivector &J,ivector &dist,ivectors *shortest_paths=NULL);

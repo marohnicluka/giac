@@ -32,11 +32,11 @@ using namespace std;
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
-#define PLASTIC_NUMBER 1.32471795724474602596090885
-#define MARGIN_FACTOR 0.139680581996
-#define NEGLIGIBILITY_FACTOR 0.0195106649868
-#define SYMMETRY_DETECTION_TIMEOUT 1.0
-#define PACKING_ASPECT_RATIO 2.32471795724474602596090885
+#define PLASTIC_NUMBER 1.32471795724
+#define PLASTIC_NUMBER_SQUARED 1.75487766625
+#define PLASTIC_NUMBER_CUBED 2.32471795724
+#define MARGIN_FACTOR 0.139680581996 // pow(PLASTIC_NUMBER,-7)
+#define NEGLIGIBILITY_FACTOR 0.0195106649868 // MARGIN_FACTOR^2
 
 const gen graphe::VRAI=gen(1).change_subtype(_INT_BOOLEAN);
 const gen graphe::FAUX=gen(0).change_subtype(_INT_BOOLEAN);
@@ -2872,6 +2872,14 @@ double graphe::point_distance(const point &p,const point &q,point &pq) {
     return point_displacement(pq);
 }
 
+/* compute the point dest which is a reflection of src wrt. the line ax+by+c=0 */
+void graphe::point_mirror(double a,double b,double c,const point &src,point &dest) {
+    double p=src[0],q=src[1],a2=a*a,b2=b*b,r=a2+b2,s=a2-b2;
+    dest.resize(2);
+    dest[0]=(p*s-2*b*(a*q+c))/r;
+    dest[1]=-(q*s+2*a*(b*p+c))/r;
+}
+
 /* write d1*p+d2*q to res */
 void graphe::point_lincomb(const point &p,const point &q,double d1,double d2,point &res) {
     copy_point(p,res);
@@ -3040,29 +3048,16 @@ void graphe::create_random_layout(layout &x,int dim) {
     }
 }
 
-/* add the force applying to p because of being repulsed by q */
-void graphe::accumulate_repulsive_force(const point &p,const point &q,double R,double K,double eps,point &force,bool sq_dist) {
-    assert(p.size()==q.size() && p.size()==force.size());
-    point f(p.size());
-    double norm=point_distance(q,p,f),C=0.01;
-    if (norm>R)
-        return;
-    if (norm==0)
-        rand_point(f,norm=eps);
-    scale_point(f,C*K*K/(norm*norm*(sq_dist?norm:1.0)));
-    add_point(force,f);
-}
-
 /* lay out the graph using a force-directed algorithm with spring-electrical model */
 void graphe::force_directed_placement(layout &x,double K,double R,double tol,bool ac) {
-    double step_length=K,shrinking_factor=0.9,eps=K*tol;
+    double step_length=K,shrinking_factor=0.9,eps=K*tol,C=0.01,D=C*K*K;
     double energy=DBL_MAX,energy0,norm,max_displacement;
     int progress=0,n=x.size(),i,j;
     if (n==0)
         return;
     assert (n==node_count() && n>0);
     int d=x.front().size();
-    point force(d),p(d);
+    point force(d),p(d),f(d);
     // keep updating the positions until the system freezes
     do {
         energy0=energy;
@@ -3072,18 +3067,25 @@ void graphe::force_directed_placement(layout &x,double K,double R,double tol,boo
             i=nt-nodes.begin();
             point &xi=x[i];
             clear_point_coords(force);
-            // compute attractive forces between vertices adjacent to the i-th vertex
+            // compute the attractive forces between vertices adjacent to the i-th vertex
             for (ivector_iter it=nt->neighbors().begin();it!=nt->neighbors().end();++it) {
                 j=*it;
                 if (j<0) j=-j-1;
                 scale_point(p,point_distance(xi,x[j],p)/K);
                 add_point(force,p);
             }
-            // compute repulsive forces for all vertices j!=i which are not too far from the i-th vertex
+            // compute the repulsive forces for all vertices j!=i which are not too far from the i-th vertex
             for (layout_iter it=x.begin();it!=x.end();++it) {
                 j=it-x.begin();
-                if (i!=j)
-                    accumulate_repulsive_force(xi,*it,R,K,shrinking_factor*eps,force);
+                if (i!=j) {
+                    norm=point_distance(*it,xi,f);
+                    if (norm>R)
+                        continue;
+                    if (norm==0)
+                        rand_point(f,norm=shrinking_factor*eps);
+                    scale_point(f,D/(norm*norm));
+                    add_point(force,f);
+                }
             }
             // move the location of the i-th vertex in the direction of the force f
             norm=point_displacement(force);
@@ -3369,33 +3371,35 @@ void graphe::make_spring_layout(layout &x,int d,double tol) {
 }
 
 /* layout face as a regular polygon inscribed in circle of radius R */
-void graphe::make_regular_polygon_layout(layout &x,const ivector &face,double R) {
-    int n=face.size(),v;
+void graphe::make_regular_polygon_layout(layout &x,const ivector &v,double R) {
+    int n=v.size(),i;
+    double step=2.0*M_PI/(double)n,phi=(n%2)==0?M_PI_2*(1-2.0/n):M_PI_2;
     for (int k=0;k<n;++k) {
-        v=face[k];
-        point &p=x[v];
+        i=v[k];
+        point &p=x[i];
         p.resize(2);
-        p[0]=R*std::cos(2*k*M_PI/n);
-        p[1]=R*std::sin(2*k*M_PI/n);
+        p[0]=R*std::cos(phi);
+        p[1]=R*std::sin(phi);
+        phi-=step;
     }
 }
 
-/* apply force directed algorithm to this graph (must be triconnected), with the specified outer face,
+/* apply force directed algorithm to this graph (must be triconnected), with the specified outer hull,
  * using the algorithm by Bor Plestenjak in "An Algorithm for Drawing Planar Graphs" */
-void graphe::make_circular_layout(layout &x,const ivector &outer_face,double A,double tol) {
+void graphe::make_circular_layout(layout &x,const ivector &hull,double A,double tol) {
     int n=node_count(),iter_count=0,maxper=0,j;
     // place facial vertices on the unit circle and all other vertices in the origin
     x.resize(n);
-    make_regular_polygon_layout(x,outer_face);
-    if (n==int(outer_face.size()))
+    make_regular_polygon_layout(x,hull);
+    if (n==int(hull.size()))
         return; // there are no vertices to place inside the circle
-    vector<bool> is_outer(n,false);
-    for (ivector_iter it=outer_face.begin();it!=outer_face.end();++it) {
-        is_outer[*it]=true;
+    vector<bool> is_hull_vertex(n,false);
+    for (ivector_iter it=hull.begin();it!=hull.end();++it) {
+        is_hull_vertex[*it]=true;
     }
     // compute vertex periphericity
     ivector per(n);
-    periphericity(outer_face,per);
+    periphericity(hull,per);
     for (ivector_iter pt=per.begin();pt!=per.end();++pt) {
         if (*pt>maxper)
             maxper=*pt;
@@ -3403,11 +3407,10 @@ void graphe::make_circular_layout(layout &x,const ivector &outer_face,double A,d
     layout force(n);
     for (int i=0;i<n;++i) {
         force[i].resize(2);
-        if (is_outer[i])
+        if (is_hull_vertex[i])
             continue;
         point &p=x[i];
-        p.resize(2);
-        p[0]=p[1]=0;
+        p.resize(2,0.0);
     }
     // cool down the system iteratively
     double d,cool,C=std::sqrt((double)n/M_PI),eps=tol/std::sqrt((double)n);
@@ -3415,7 +3418,7 @@ void graphe::make_circular_layout(layout &x,const ivector &outer_face,double A,d
         ++iter_count;
         // compute the resultant force for each non-outer vertex
         for (int i=0;i<n;++i) {
-            if (is_outer[i])
+            if (is_hull_vertex[i])
                 continue;
             vertex &v=node(i);
             point &f=force[i],&p=x[i];
@@ -3435,7 +3438,7 @@ void graphe::make_circular_layout(layout &x,const ivector &outer_face,double A,d
         // move each vertex in the direction of the force
         cool=1.0/(C+std::pow(iter_count,1.5)/C);
         for (int i=0;i<n;++i) {
-            if (is_outer[i])
+            if (is_hull_vertex[i])
                 continue;
             point &f=force[i],&p=x[i];
             d=point_displacement(f);
@@ -5215,18 +5218,15 @@ void graphe::tree_node_positioner::process_level(int i) {
 }
 
 /* node positioning procedure */
-double graphe::tree_node_positioner::positioning(int apex) {
-    clock_t start=clock();
+void graphe::tree_node_positioner::positioning(int apex) {
     walk(apex,1); // first walk: determine tree depth and set node ancestors
     // allocate memory for level lists
-    clock_t alloc_start=clock();
     levels.resize(depth);
     gap_counters.resize(depth,0);
     for (int i=0;i<depth;++i) {
         levels[i].resize(node_counters[i]);
         node_counters[i]=0;
     }
-    double alloc_time=double(clock()-alloc_start)/CLOCKS_PER_SEC;
     G->unvisit_all_nodes();
     walk(apex,2); // second walk: create levels
     // do node positioning for each level (except the top one) in a single sweep
@@ -5235,7 +5235,6 @@ double graphe::tree_node_positioner::positioning(int apex) {
     }
     G->unvisit_all_nodes();
     walk(apex,3); // third walk: sum up the modifiers (i.e. move subtrees)
-    return double(clock()-start)/CLOCKS_PER_SEC-alloc_time;
 }
 
 graphe::tree_node_positioner::tree_node_positioner(graphe *gr,layout *ly,double hs,double vs) {
@@ -5253,10 +5252,10 @@ graphe::tree_node_positioner::tree_node_positioner(graphe *gr,layout *ly,double 
  */
 
 /* calculate node positions and store them to the specified layout */
-double graphe::make_tree_layout(layout &x,double sep,int apex) {
+void graphe::make_tree_layout(layout &x,double sep,int apex) {
     int n=node_count();
     x.resize(n);
-    if (n==0) return 0;
+    if (n==0) return;
     unset_all_ancestors();
     unvisit_all_nodes();
     for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
@@ -5266,7 +5265,7 @@ double graphe::make_tree_layout(layout &x,double sep,int apex) {
     // layout the tree
     double hsep=sep,vsep=sep*std::pow(PLASTIC_NUMBER,2);
     tree_node_positioner P(this,&x,hsep,vsep);
-    return P.positioning(apex);
+    P.positioning(apex);
 }
 
 /* create a random tree with n vertices and degree not larger than maxd */
@@ -5613,7 +5612,7 @@ void graphe::pack_rectangles(vector<rectangle> &rectangles) {
                     bh=d;
             }
             // find the embedding with the smaller perimeter (when scaled by the wasted ratio)
-            if ((perim=(bw+PACKING_ASPECT_RATIO*bh)*bw*PACKING_ASPECT_RATIO*bh/total_area)<best_perim) {
+            if ((perim=(bw+PLASTIC_NUMBER_CUBED*bh)*bw*PLASTIC_NUMBER_CUBED*bh/total_area)<best_perim) {
                 best_perim=perim;
                 for (vector<rectangle>::const_iterator it=rectangles.begin();it!=rectangles.end();++it) {
                     dpair &p=best_embedding[it-rectangles.begin()];
@@ -5769,59 +5768,6 @@ bool graphe::points_coincide(const point &p,const point &q,double tol) {
 }
 
 /*
- * IMPLEMENTATION OF AXIS CLASS
- */
-
-graphe::axis::axis(const layout &x,int i,int j,const point &center) {
-    m_v=i;
-    m_w=j;
-    const point &p=x[i],&q=x[j];
-    double x1=p[0],x2=q[0],y1=p[1],y2=q[1],x0=center[0],y0=center[1];
-    m_a=2*(y2-y1);
-    m_b=2*(x2-x1);
-    m_c=x1*x1+y1*y1-(x2*x2+y2*y2);
-    m_d=std::abs(x0*(y2-y1)-y0*(x2-x1)+x2*y1-y2*x1)/
-            std::sqrt(std::pow(y2-y1,2)+std::pow(x2-x1,2));
-}
-
-graphe::axis::axis(const axis &other) {
-    assign(other);
-}
-
-graphe::axis& graphe::axis::operator =(const axis &other) {
-    assign(other);
-    return *this;
-}
-
-void graphe::axis::assign(const axis &other) {
-    m_a=other.a();
-    m_b=other.b();
-    m_c=other.c();
-    m_d=other.d();
-    m_v=other.v();
-    m_w=other.w();
-}
-
-void graphe::axis::mirror(const point &src,point &dest) const {
-    assert(src.size()==2);
-    double p=src[0],q=src[1],a2=a()*a(),b2=b()*b(),r=a2+b2,s=a2-b2;
-    dest.resize(2);
-    dest[0]=(p*s-2*b()*(a()*q+c()))/r;
-    dest[1]=-(q*s+2*a()*(b()*p+c()))/r;
-}
-
-double graphe::axis::distance(const point &p) const {
-    assert(p.size()==2);
-    double num=a()*p.front()+b()*p.back()+c();
-    double den=a()*a()+b()*b();
-    return std::sqrt(num*num/den);
-}
-
-/*
- * END OF AXIS CLASS
- */
-
-/*
  * IMPLEMENTATION OF THE DISJOINT SET DATA STRUCTURE
  */
 
@@ -5869,86 +5815,6 @@ void graphe::union_find::unite(int id1,int id2) {
  * END OF DISJOINT_SET CLASS
  */
 
-/* promote all edge crossings to vertices (2D layout is required) */
-void graphe::promote_edge_crossings(layout &x) {
-    ipairs E;
-    get_edges_as_pairs(E);
-    int n=largest_integer_label(),i;
-    point crossing;
-    for (ipairs_iter it=E.begin();it!=E.end();++it) {
-        for (ipairs_iter jt=it+1;jt!=E.end();++jt) {
-            if (edges_crossing(*it,*jt,x,crossing)) {
-                remove_edge(it->first,it->second);
-                remove_edge(jt->first,jt->second);
-                i=add_node(++n);
-                add_edge(it->first,i);
-                add_edge(it->second,i);
-                add_edge(jt->first,i);
-                add_edge(jt->second,i);
-                set_node_attribute(i,_GT_ATTRIB_POSITION,point2gen(crossing));
-                x.push_back(crossing);
-            }
-        }
-    }
-}
-
-/* return the best axis of symmetry for this graph (layout is required) */
-graphe::axis graphe::axis_of_symmetry(layout &x,const point &center,bool promote_crossings) {
-    int nc=node_count();
-    assert(nc>1);
-    // find layout diameter
-    double diam=layout_diam(x),tol=diam*std::sqrt(M_PI/nc)*MARGIN_FACTOR;
-    double axtol=diam*MARGIN_FACTOR/2.0;
-    if (promote_crossings)
-        promote_edge_crossings(x);
-    vector<axis> axes;
-    for (int v=0;v<nc;++v) {
-        for (int w=v+1;w<nc;++w) {
-            axis ax(x,v,w,center);
-            if (axes.empty() || ax.d()<axtol)
-                axes.push_back(ax);
-        }
-    }
-    axis::comparator comp;
-    sort(axes.begin(),axes.end(),comp);
-    axis best_axis;
-    double best_score=-1,score;
-    clock_t start=clock();
-    point p1(2),p2(2),r(2);
-    ipairs E;
-    get_edges_as_pairs(E);
-    vector<bool> visited(E.size());
-    for (vector<axis>::const_iterator it=axes.begin();it!=axes.end();++it) {
-        score=0;
-        fill(visited.begin(),visited.end(),false);
-        for (ipairs_iter et=E.begin();et!=E.end();++et) {
-            if (visited[et-E.begin()])
-                continue;
-            it->mirror(x[et->first],p1);
-            it->mirror(x[et->second],p2);
-            for (ipairs_iter ft=et;ft!=E.end();++ft) {
-                if (visited[ft-E.begin()])
-                    continue;
-                const point &q1=x[ft->first];
-                const point &q2=x[ft->second];
-                if ((points_coincide(p1,q1,tol) && points_coincide(p2,q2,tol)) ||
-                        (points_coincide(p1,q2,tol) && points_coincide(q1,p2,tol))) {
-                    score+=(point_distance(p1,p2,r)+point_distance(q1,q2,r))/2.0;
-                    visited[ft-E.begin()]=true;
-                }
-            }
-        }
-        if (score>best_score) {
-            best_score=score;
-            best_axis=*it;
-        }
-        if (double(clock()-start)/CLOCKS_PER_SEC>SYMMETRY_DETECTION_TIMEOUT)
-            break;
-    }
-    x.resize(nc);
-    return best_axis;
-}
-
 /* make planar layout */
 bool graphe::make_planar_layout(layout &x) {
     int n=node_count(),maxf,m;
@@ -5980,26 +5846,95 @@ bool graphe::make_planar_layout(layout &x) {
     return true;
 }
 
+/* get the convex hull of 2D graph layout */
+void graphe::convex_hull(const layout &x,layout &hull) {
+    vecteur v(x.size());
+    for (iterateur it=v.begin();it!=v.end();++it) {
+        const point &p=x[it-v.begin()];
+        *it=makecomplex(p.front(),p.back());
+    }
+    vecteur h=*_convexhull(v,ctx)._VECTptr;
+    hull.resize(h.size());
+    for (const_iterateur it=h.begin();it!=h.end();++it) {
+        point &p=hull[it-h.begin()];
+        p.resize(2);
+        p.front()=it->_CPLXptr->DOUBLE_val();
+        p.back()=(it->_CPLXptr+1)->DOUBLE_val();
+    }
+}
+
 /* rotate layout x such that left to right symmetry is exposed */
 void graphe::layout_best_rotation(layout &x) {
     // center layout in the origin
-    point c=layout_center(x);
-    scale_point(c,-1);
-    translate_layout(x,c);
-    // rotate layout around suitable bisector of a pair of vertices
-    axis ax=axis_of_symmetry(x,c);
-    if (ax.a()!=0)
-        rotate_layout(x,M_PI_2+std::atan(ax.b()/ax.a()));
-    // determine the highest and the lowest y coordinate: if yh+yl<0, rotate layout for 180°
-    double yh=0,yl=0;
-    for (layout::const_iterator it=x.begin();it!=x.end();++it) {
-        double y=it->back();
-        if (y>yh)
-            yh=y;
-        else if (y<yl)
-            yl=y;
+    point center=layout_center(x);
+    scale_point(center,-1);
+    translate_layout(x,center);
+    layout hull;
+    convex_hull(x,hull);
+    int n=hull.size();
+    // compute the hull perimeter
+    double perim=0,score,maxscore=0;
+    point tmp(2),mp(2),rp(2),rq(2),origin(2,0.0),proj(2);
+    for (int i=0;i<n;++i) {
+        const point &p=hull[i],&q=hull[(i+1)%n];
+        perim+=point_distance(p,q,tmp);
     }
-    if (yh+yl<0)
+    double a,b,c,d,tol,angle=0,half_perim=perim/2.0;
+    vector<bool> matched(hull.size());
+    for (int i=0;i<n;++i) {
+        const point &p=hull[i];
+        for (int j=i+1;j<n;++j) {
+            const point &q=hull[j];
+            if (!point2segment_projection(origin,p,q,proj))
+                continue;
+            // obtain the perpendicular bisector ax+by+c=0 of the segment pq
+            copy_point(p,mp);
+            add_point(mp,q);
+            scale_point(mp,0.5);
+            if (p.front()==q.front()) {
+                a=1;
+                c=-mp.front();
+                b=0;
+            } else {
+                a=(p.back()-q.back())/(p.front()-q.front());
+                b=-1;
+                c=mp.back()-a*mp.front();
+            }
+            // try to match hull edges that are reflections of each other
+            score=0;
+            std::fill(matched.begin(),matched.end(),false);
+            for (layout_iter it=hull.begin();it!=hull.end();++it) {
+                if (matched[it-hull.begin()])
+                    continue;
+                const point &p1=*it,&q1=it+1==hull.end()?hull.front():*(it+1);
+                tol=(d=point_distance(p1,q1,tmp))*MARGIN_FACTOR/2.0;
+                point_mirror(a,b,c,p1,rp);
+                point_mirror(a,b,c,q1,rq);
+                for (layout_iter jt=it;jt!=hull.end();++jt) {
+                    if (matched[jt-hull.begin()])
+                        continue;
+                    const point &p2=*jt,&q2=jt+1==hull.end()?hull.front():*(jt+1);
+                    if ((points_coincide(rp,p2,tol) && points_coincide(rq,q2,tol)) ||
+                            (points_coincide(rp,q2,tol) && points_coincide(rq,p2,tol))) {
+                        score+=d;
+                        matched[it-hull.begin()]=true;
+                        matched[jt-hull.begin()]=true;
+                    }
+                }
+            }
+            score/=half_perim;
+            score*=4.08;
+            score+=1.0-point_distance(proj,mp,tmp)/point_distance(p,q,tmp);
+            score/=5.08;
+            if (score>maxscore) {
+                maxscore=score;
+                angle=std::atan(b/a);
+            }
+        }
+    }
+    rotate_layout(x,M_PI_2-angle);
+    rectangle rect=layout_bounding_rect(x);
+    if (rect.y()+rect.height()/2.0<0)
         rotate_layout(x,M_PI);
 }
 
@@ -6013,6 +5948,7 @@ bool graphe::degrees_equal(const ivector &v,int deg) const {
         else if (d!=D)
             return false;
     }
+
     return true;
 }
 
@@ -6023,6 +5959,10 @@ gen customize_display(int options) {
 
 /* append the line segment [p,q] to vecteur v */
 void graphe::append_segment(vecteur &drawing,const point &p,const point &q,int color,int width,bool arrow) const {
+    /*
+    gen P=point2gen(p),Q=point2gen(q),args=makesequence(P,Q,customize_display(color | width));
+    drawing.push_back(symbolic(at_segment,args));
+    */
     vecteur attributs(1,color | width);
     vecteur seg=p.size()==2?
                 makevecteur(makecomplex(p[0],p[1]),makecomplex(q[0],q[1]))
@@ -6134,61 +6074,34 @@ void graphe::draw_nodes(vecteur &drawing,const layout &x) const {
 
 /* return the best quadrant for the placement of the i-th vertex label
  * (minimize the collision with the adjacent edges) */
-int graphe::best_quadrant(const point &p,const layout &adj,const point &center) {
+int graphe::best_quadrant(const point &p,const layout &adj) const {
     int bestq,n=adj.size();
-    if (n==0)
+    if (n==0 || p.size()!=2)
         return _QUADRANT1;
-    vector<double> adj_phi(n);
-    for (layout_iter it=adj.begin();it!=adj.end();++it) {
-        adj_phi[it-adj.begin()]=std::atan2(it->at(1)-p[1],it->at(0)-p[0]);
-    }
-    if (adj_phi.size()==1) {
-        double phi=adj_phi.front();
-        if (phi<=-M_PI_2)
-            return _QUADRANT1;
-        if (phi<=0)
-            return _QUADRANT2;
-        if (phi<=M_PI_2)
-            return _QUADRANT3;
-        return _QUADRANT4;
-    }
-    sort(adj_phi.begin(),adj_phi.end());
-    double bisector[]={M_PI/4,3*M_PI/4,-3*M_PI/4,-M_PI/4},score[4];
-    for (int quadrant=0;quadrant<4;++quadrant) {
-        double b=bisector[quadrant];
-        int j=0;
-        for (;j<n;++j) {
-            if (adj_phi[j]>b)
-                break;
-        }
-        double phi1=adj_phi[j==0?n-1:j-1],phi2=adj_phi[j%n];
-        score[quadrant]=std::min(std::min(std::abs(b-phi1),std::abs(b-phi2)),M_PI/4);
-    }
-    ivector candidates;
-    double best_score=-1,s;
-    for (int quadrant=0;quadrant<4;++quadrant) {
-        s=score[quadrant];
-        if (s>=best_score) {
-            if (s>best_score) {
-                best_score=s;
-                candidates.clear();
-            }
-            candidates.push_back(quadrant);
+    layout quad(4);
+    quad[0]=make_vector(0.7071,0.7071);
+    quad[1]=make_vector(-0.7071,0.7071);
+    quad[2]=make_vector(-0.7071,-0.7071);
+    quad[3]=make_vector(0.7071,-0.7071);
+    vector<double> min_angular_dist(4,M_PI);
+    point u(2);
+    double a;
+    for (int i=0;i<4;++i) {
+        const point &q=quad[i];
+        double &mindist=min_angular_dist[i];
+        for (layout_iter it=adj.begin();it!=adj.end();++it) {
+            scale_point(u,1/point_distance(p,*it,u));
+            a=std::acos(point_dotprod(u,q));
+            if (a<mindist)
+                mindist=a;
         }
     }
-    assert(!candidates.empty());
-    if (candidates.size()==1)
-        bestq=candidates.front();
-    else {
-        double dist=0,d;
-        double phi0=std::atan2(center[1]-p[1],center[0]-p[0]);
-        for (ivector::const_iterator it=candidates.begin();it!=candidates.end();++it) {
-            int phi=bisector[*it];
-            d=std::min(std::abs(phi-phi0),std::abs(std::abs(phi-phi0)-2*M_PI));
-            if (d>dist) {
-                dist=d;
-                bestq=*it;
-            }
+    a=-1;
+    for (int i=0;i<4;++i) {
+        const double &dist=min_angular_dist[i];
+        if (a<0 || dist>a) {
+            a=dist;
+            bestq=i;
         }
     }
     switch (bestq) {
@@ -6207,7 +6120,6 @@ void graphe::draw_labels(vecteur &drawing,const layout &x) const {
     if (is_empty())
         return;
     assert(!x.empty());
-    point center=layout_center(x);
     ivector adjv;
     layout adj(2);
     attrib_iter ait;
@@ -6234,7 +6146,7 @@ void graphe::draw_labels(vecteur &drawing,const layout &x) const {
                 adj.front()=p;
                 adj.back()=q;
                 assert((ait=attr.find(_GT_ATTRIB_WEIGHT))!=attr.end());
-                append_label(drawing,r,ait->second,best_quadrant(r,adj,center),color);
+                append_label(drawing,r,ait->second,best_quadrant(r,adj),color);
             }
         }
     }
@@ -6246,28 +6158,8 @@ void graphe::draw_labels(vecteur &drawing,const layout &x) const {
         for (ivector_iter it=adjv.begin();it!=adjv.end();++it) {
             adj[it-adjv.begin()]=x[*it];
         }
-        append_label(drawing,p,nodes[i].label(),best_quadrant(p,adj,center));
+        append_label(drawing,p,nodes[i].label(),best_quadrant(p,adj));
     }
-}
-
-/* extract the largest leading cycle from this graph and return true iff it exists */
-bool graphe::get_leading_cycle(ivector &c) const {
-    c.clear();
-    int n=node_count();
-    for (int i=0;i<n;++i) {
-        if (i==0 || has_edge(i,i-1)) {
-            c.push_back(i);
-        } else break;
-    }
-    if (c.size()<3)
-        return false;
-    for (int i=c.size();i-->2;) {
-        if (has_edge(c[i],c.front())) {
-            c.resize(i+1);
-            return true;
-        }
-    }
-    return false;
 }
 
 void graphe::rdfs(int i,ivector &d,bool rec,int sg,bool skip_embedded) {
@@ -7036,6 +6928,38 @@ bool graphe::is_bipartite(ivector &V1,ivector &V2,int sg) {
         else V2.push_back(it-nodes.begin());
     }
     return true;
+}
+
+/* place vertices from partitions v1 and v2 on two parallel lines */
+void graphe::make_bipartite_layout(layout &x,const ivector &p1,const ivector &p2) {
+    double aspect_ratio;
+    int n1=p1.size(),n2=p2.size(),n=std::max(n1,n2);
+    assert(n1>1 && n2>1);
+    if (n<3)
+        aspect_ratio=1.0;
+    else if (n<5)
+        aspect_ratio=PLASTIC_NUMBER;
+    else if (n<8)
+        aspect_ratio=PLASTIC_NUMBER_SQUARED;
+    else
+        aspect_ratio=PLASTIC_NUMBER_CUBED;
+    double step1=aspect_ratio/(double)(n1-1),step2=aspect_ratio/(double)(n2-1),xpos=0.0,ypos=1.0;
+    x.resize(node_count());
+    for (ivector_iter it=p1.begin();it!=p1.end();++it) {
+        point &p=x[*it];
+        p.resize(2);
+        p.front()=xpos;
+        p.back()=ypos;
+        xpos+=step1;
+    }
+    xpos=ypos=0.0;
+    for (ivector_iter it=p2.begin();it!=p2.end();++it) {
+        point &p=x[*it];
+        p.resize(2);
+        p.front()=xpos;
+        p.back()=ypos;
+        xpos+=step2;
+    }
 }
 
 /* construct the plane dual of a planar graph with the given faces with time complexity O(n),

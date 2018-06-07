@@ -1255,7 +1255,8 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     if (!G_orig.read_gen(has_opts?gv.front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     bool isdir=G_orig.is_directed();
-    vecteur root_nodes,cycle;
+    vecteur root_nodes,outer_vertices;
+    gen coords_dest=undef;
     int method=_GT_STYLE_DEFAULT;
     if (has_opts) {
         // parse options
@@ -1263,7 +1264,10 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
         for (const_iterateur it=gv.begin()+1;it!=gv.end();++it) {
             opt_counter++;
             const gen &opt=*it;
-            if (opt.is_symb_of_sommet(at_equal)) {
+            if (opt.type==_IDNT) {
+                coords_dest=opt;
+                opt_counter--;
+            } else if (opt.is_symb_of_sommet(at_equal)) {
                 gen &lh=opt._SYMBptr->feuille._VECTptr->front();
                 gen &rh=opt._SYMBptr->feuille._VECTptr->back();
                 if (lh.is_integer()) {
@@ -1282,13 +1286,13 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                         opt_counter--;
                         break;
                     }
-                } else if (lh==at_cercle) {
+                } else if (lh==at_cercle || lh==at_convexhull) {
                     if (rh.type!=_VECT)
                         return gentypeerr(contextptr);
-                    cycle=*rh._VECTptr;
+                    outer_vertices=*rh._VECTptr;
                     method=_GT_STYLE_CIRCLE;
                 }
-            } else if (opt==at_cercle)
+            } else if (opt==at_cercle || opt==at_convexhull)
                 method=_GT_STYLE_CIRCLE;
             else if (opt==at_plan)
                 method=_GT_STYLE_PLANAR;
@@ -1316,17 +1320,15 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     vector<graphe> Cv;
     vector<graphe::layout> layouts;
     graphe::layout main_layout;
-    vecteur drawing;
     if (method==_GT_STYLE_3D) {
         if (!G.is_connected())
             return gt_err(_GT_ERR_CONNECTED_GRAPH_REQUIRED,contextptr);
         G.make_spring_layout(main_layout,3);
-        Cv.push_back(G);
     } else {
         graphe::ivectors components;
         G.connected_components(components);
         int nc=components.size();
-        graphe::ivector roots,outerface;
+        graphe::ivector roots,hull;
         if (!root_nodes.empty()) {
             // get the root nodes for forest drawing
             if (int(root_nodes.size())!=nc)
@@ -1352,17 +1354,17 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 indices.erase(it);
             }
         }
-        if (!cycle.empty()) {
+        if (!outer_vertices.empty()) {
             if (nc>1)
                 return gt_err(_GT_ERR_CONNECTED_GRAPH_REQUIRED,contextptr);
             // get the outer face for circular drawing
-            int m=cycle.size();
-            outerface.resize(m);
-            for (const_iterateur it=cycle.begin();it!=cycle.end();++it) {
+            int m=outer_vertices.size();
+            hull.resize(m);
+            for (const_iterateur it=outer_vertices.begin();it!=outer_vertices.end();++it) {
                 i=G.node_index(*it);
                 if (i==-1)
                     return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
-                outerface[it-cycle.begin()]=i;
+                hull[it-outer_vertices.begin()]=i;
             }
         }
         layouts.resize(nc);
@@ -1377,9 +1379,15 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
             graphe &C=Cv.back();
             G.induce_subgraph(*it,C,false);
             graphe::layout &x=layouts[i];
+            graphe::ivector partition1,partition2;
             if (it->size()<3)
                 comp_method=_GT_STYLE_SPRING;
-            //else if (method==_GT_STYLE_DEFAULT)
+            else if (method==_GT_STYLE_DEFAULT) {
+                if (C.is_bipartite(partition1,partition2) && partition1.size()>1 && partition2.size()>1)
+                    comp_method=_GT_STYLE_BIPARTITE;
+                else
+                    comp_method=_GT_STYLE_CIRCLE;
+            }
             switch (comp_method) {
             case _GT_STYLE_SPRING:
                 C.make_spring_layout(x,2);
@@ -1394,20 +1402,19 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                     return gt_err(_GT_ERR_NOT_PLANAR,contextptr);
                 break;
             case _GT_STYLE_CIRCLE:
-                if (outerface.empty()) {
-                    if (!C.get_leading_cycle(outerface) && !C.find_cycle(outerface)) {
-                        outerface.resize(G.node_count());
-                        for (int cnt=G.node_count();cnt-->0;) {
-                            outerface[cnt]=cnt;
-                        }
+                if (hull.empty()) {
+                    hull.resize(C.node_count());
+                    for (graphe::ivector::iterator ht=hull.begin();ht!=hull.end();++ht) {
+                        *ht=ht-hull.begin();
                     }
-                    C.make_circular_layout(x,outerface,false);
-                    outerface.clear();
-                } else
-                    C.make_circular_layout(x,outerface);
+                }
+                C.make_circular_layout(x,hull,2.5);
+                break;
+            case _GT_STYLE_BIPARTITE:
+                C.make_bipartite_layout(x,partition1,partition2);
                 break;
             }
-            if (comp_method!=_GT_STYLE_TREE) {
+            if (comp_method==_GT_STYLE_PLANAR || comp_method==_GT_STYLE_SPRING) {
                 C.layout_best_rotation(x);
                 graphe::scale_layout(x,sep*std::sqrt((double)C.node_count()));
             }
@@ -1448,7 +1455,19 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
             }
         }
     }
-    G_orig.edge_labels_placement(main_layout);
+    vecteur drawing,coords;
+    if (!is_undef(coords_dest)) {
+        // store vertex coordinates to coords_dest
+        coords.resize(main_layout.size());
+        for (graphe::layout_iter it=main_layout.begin();it!=main_layout.end();++it) {
+            coords[it-main_layout.begin()]=method==_GT_STYLE_3D?
+                        makevecteur(it->at(0),it->at(1),it->at(2)) :
+                        makecomplex(it->front(),it->back());
+        }
+        _eval(symbolic(at_sto,makesequence(coords,gen(coords_dest,_LIST__VECT))),contextptr);
+    }
+    if (isdir || G_orig.is_weighted())
+        G_orig.edge_labels_placement(main_layout);
     G_orig.draw_edges(drawing,main_layout);
     G_orig.draw_nodes(drawing,main_layout);
     if (labels)

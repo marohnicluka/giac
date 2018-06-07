@@ -1464,7 +1464,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                         makevecteur(it->at(0),it->at(1),it->at(2)) :
                         makecomplex(it->front(),it->back());
         }
-        _eval(symbolic(at_sto,makesequence(coords,gen(coords_dest,_LIST__VECT))),contextptr);
+        _eval(symbolic(at_sto,makesequence(gen(coords,_LIST__VECT),coords_dest)),contextptr);
     }
     if (isdir || G_orig.is_weighted())
         G_orig.edge_labels_placement(main_layout);

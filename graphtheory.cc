@@ -1234,6 +1234,7 @@ define_unary_function_ptr5(at_seidel_switch,alias_at_seidel_switch,&__seidel_swi
  *  - spring: use force-directed method to draw graph G (the default)
  *  - tree[=r or [r1,r2,...]]: draw tree or forest G [with optional
  *    specification of root nodes]
+ *  - bipartite: draw the bipartite graph G keeping the partitions separated
  *  - plane or planar: draw planar graph G
  *  - circle[=<cycle>]: draw graph G as circular using the leading cycle,
  *    otherwise one must be specified or all vertices are placed on a circle
@@ -1257,10 +1258,9 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     bool labels=G_orig.node_count()<=60,isdir=G_orig.is_directed();
     vecteur root_nodes,outer_vertices;
     gen coords_dest=undef;
-    int method=_GT_STYLE_DEFAULT;
+    int method=_GT_STYLE_DEFAULT,opt_counter=0;
     if (has_opts) {
         // parse options
-        int opt_counter=0;
         for (const_iterateur it=gv.begin()+1;it!=gv.end();++it) {
             opt_counter++;
             const gen &opt=*it;
@@ -1303,6 +1303,9 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 case _GT_TREE:
                     method=_GT_STYLE_TREE;
                     break;
+                case _GT_BIPARTITE:
+                    method=_GT_STYLE_BIPARTITE;
+                    break;
                 case _GT_SPRING:
                     method=_GT_STYLE_SPRING;
                     break;
@@ -1320,7 +1323,9 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     vector<graphe> Cv;
     vector<graphe::layout> layouts;
     graphe::layout main_layout;
-    if (method==_GT_STYLE_3D) {
+    if (opt_counter==0 && G_orig.has_stored_layout(main_layout)) {
+        ; // the graph G already has a layout, display it
+    } else if (method==_GT_STYLE_3D) {
         if (!G.is_connected())
             return gt_err(_GT_ERR_CONNECTED_GRAPH_REQUIRED,contextptr);
         G.make_spring_layout(main_layout,3);
@@ -1416,16 +1421,16 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 C.make_bipartite_layout(x,partition1,partition2);
                 break;
             }
-            if (comp_method==_GT_STYLE_PLANAR || comp_method==_GT_STYLE_SPRING) {
+            if (comp_method==_GT_STYLE_PLANAR || comp_method==_GT_STYLE_SPRING)
                 C.layout_best_rotation(x);
+            if (comp_method!=_GT_TREE)
                 graphe::scale_layout(x,sep*std::sqrt((double)C.node_count()));
-            }
-       }
+        }
         // combine component layouts
         graphe::point dx(2);
         for (int i=0;i<nc;++i) {
             graphe::rectangle &rect=bounding_rects[i];
-            rect=graphe::layout_bounding_rect(layouts[i],sep/3.08);
+            rect=graphe::layout_bounding_rect(layouts[i],sep/PLASTIC_NUMBER_CUBED);
             dx.front()=-rect.x();
             dx.back()=-rect.y();
             graphe::translate_layout(layouts[i],dx);
@@ -4812,8 +4817,8 @@ define_unary_function_ptr5(at_st_ordering,alias_at_st_ordering,&__st_ordering,0,
 /* USAGE:   greedy_color(G,[p])
  *
  * Returns the list of vertex colors (positive integers) obtained by coloring
- * vertices one at a time, assigning to it the smallest available color. If a
- * permutation p is given, vertices will be colored in the order it specifies.
+ * vertices one at a time [in the order given by permutation p], assigning to
+ * it the smallest available color.
  */
 gen _greedy_color(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -4842,7 +4847,7 @@ gen _greedy_color(const gen &g,GIAC_CONTEXT) {
     } else if (G.node_count()!=int(p.size()))
         return gensizeerr(contextptr);
     G.greedy_vertex_coloring(p);
-    G.get_vertex_colors(colors);
+    G.get_node_colors(colors);
     return vector_int_2_vecteur(colors);
 }
 static const char _greedy_color_s[]="greedy_color";
@@ -4933,7 +4938,7 @@ define_unary_function_ptr5(at_plane_dual,alias_at_plane_dual,&__plane_dual,0,tru
  */
 gen _is_vertex_colorable(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type!=_VECT || g.subtype==_SEQ__VECT)
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
     vecteur &gv=*g._VECTptr;
     if (gv.size()<2 || gv.size()>3)
@@ -4955,7 +4960,7 @@ gen _is_vertex_colorable(const gen &g,GIAC_CONTEXT) {
     if (!is_undef(colors_dest)) {
         // store vertex colors to colors_dest
         graphe::ivector colors;
-        G.get_vertex_colors(colors);
+        G.get_node_colors(colors);
         vecteur cols=vector_int_2_vecteur(colors);
         _eval(symbolic(at_sto,makesequence(cols,colors_dest)),contextptr);
     }
@@ -4964,6 +4969,42 @@ gen _is_vertex_colorable(const gen &g,GIAC_CONTEXT) {
 static const char _is_vertex_colorable_s[]="is_vertex_colorable";
 static define_unary_function_eval(__is_vertex_colorable,&_is_vertex_colorable,_is_vertex_colorable_s);
 define_unary_function_ptr5(at_is_vertex_colorable,alias_at_is_vertex_colorable,&__is_vertex_colorable,0,true)
+
+/* USAGE:   set_vertex_positions(G,vp)
+ *
+ * Sets the coordinates, given in the list vp, to the vertices of graph G and
+ * return the modified copy of G.
+ */
+gen _set_vertex_positions(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()!=2)
+        return gensizeerr(contextptr);
+    if (gv.back().type!=_VECT)
+        return gentypeerr(contextptr);
+    vecteur vp=*_evalf(gv.back(),contextptr)._VECTptr;
+    graphe G(contextptr);
+    if (!G.read_gen(gv.front()))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    int n,d=0;
+    if ((n=vp.size())!=G.node_count())
+        return gensizeerr(contextptr);
+    graphe::layout x(n);
+    for (int i=0;i<n;++i) {
+        graphe::gen2point(vp[i],x[i]);
+        if (d==0)
+            d=x[i].size();
+        else if (int(x[i].size())!=d)
+            return gendimerr(contextptr);
+    }
+    G.store_layout(x);
+    return G.to_gen();
+}
+static const char _set_vertex_positions_s[]="set_vertex_positions";
+static define_unary_function_eval(__set_vertex_positions,&_set_vertex_positions,_set_vertex_positions_s);
+define_unary_function_ptr5(at_set_vertex_positions,alias_at_set_vertex_positions,&__set_vertex_positions,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

@@ -32,12 +32,6 @@ using namespace std;
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
-#define PLASTIC_NUMBER 1.32471795724
-#define PLASTIC_NUMBER_SQUARED 1.75487766625
-#define PLASTIC_NUMBER_CUBED 2.32471795724
-#define MARGIN_FACTOR 0.139680581996 // pow(PLASTIC_NUMBER,-7)
-#define NEGLIGIBILITY_FACTOR 0.0195106649868 // MARGIN_FACTOR^2
-
 const gen graphe::VRAI=gen(1).change_subtype(_INT_BOOLEAN);
 const gen graphe::FAUX=gen(0).change_subtype(_INT_BOOLEAN);
 bool graphe::verbose=true;
@@ -442,26 +436,26 @@ const int graphe::harries_wong_graph_lcf[] = {
 
 /* messages */
 
-void graphe::message(const char *str) {
+void graphe::message(const char *str) const {
     if (verbose)
         *logptr(ctx) << str << endl;
 }
 
-void graphe::message(const char *format,int a) {
+void graphe::message(const char *format,int a) const {
     char buffer[256];
     sprintf(buffer,format,a);
     if (verbose)
         *logptr(ctx) << buffer << endl;
 }
 
-void graphe::message(const char *format,int a,int b) {
+void graphe::message(const char *format,int a,int b) const {
     char buffer[256];
     sprintf(buffer,format,a,b);
     if (verbose)
         *logptr(ctx) << buffer << endl;
 }
 
-void graphe::message(const char *format,int a,int b,int c) {
+void graphe::message(const char *format,int a,int b,int c) const {
     char buffer[256];
     sprintf(buffer,format,a,b,c);
     if (verbose)
@@ -613,6 +607,13 @@ void graphe::set_embedding(const ivectors &faces) {
             vertex &v=node(face[i]);
             v.add_edge_face(face[(i+1)%n],f);
         }
+    }
+}
+
+/* clear the previously set embedding */
+void graphe::clear_embedding() {
+    for (std::vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
+        it->clear_edge_faces();
     }
 }
 
@@ -847,6 +848,8 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
     ctx=contextptr;
     set_graph_attribute(_GT_ATTRIB_DIRECTED,FAUX);
     set_graph_attribute(_GT_ATTRIB_WEIGHTED,FAUX);
+    ivector hull;
+    layout x;
     if (name=="clebsch") {
         for (int i=0;i<16;++i) {
             add_node(i);
@@ -858,93 +861,99 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         }
         relabel_nodes(labels);
     } else if (name=="coxeter") {
+        read_special(coxeter_graph);
         stringstream ss;
         for (int i=1;i<=7;++i) {
             ss.str("");
             ss << "a" << i;
-            add_node(str2gen(ss.str(),true));
+            hull.push_back(node_index(str2gen(ss.str(),true)));
         }
-        read_special(coxeter_graph);
+        make_circular_layout(x,hull,3.5);
     } else if (name=="desargues") {
-        make_petersen_graph(10,3);
+        make_petersen_graph(10,3,&x);
     } else if (name=="dodecahedron") {
-        for (int i=1;i<=5;++i) {
-            add_node(i);
-        }
         read_special(dodecahedron_graph);
+        for (int i=1;i<=5;++i) hull.push_back(node_index(i));
+        make_circular_layout(x,hull,2.5);
     } else if (name=="durer") {
-        make_petersen_graph(6,2);
+        make_petersen_graph(6,2,&x);
     } else if (name=="dyck") {
-        for (int i=1;i<=32;++i) {
-            add_node(i);
-        }
         read_special(dyck_graph);
+        for (int i=1;i<=node_count();++i) hull.push_back(node_index(i));
+        make_circular_layout(x,hull);
     } else if (name=="grinberg") {
-        for (int i=35;i<=43;++i) {
-            add_node(i);
-        }
         read_special(grinberg_graph);
+        make_planar_layout(x);
+        layout_best_rotation(x);
     } else if (name=="grotzsch") {
         read_special(grotzsch_graph);
+        for (int i=1;i<=5;++i) hull.push_back(node_index(i));
+        make_circular_layout(x,hull,2.5);
     } else if (name=="harries") {
         make_lcf_graph(harries_graph_lcf,5);
+        for (int i=1;i<=node_count();++i) hull.push_back(node_index(i));
+        make_circular_layout(x,hull);
     } else if (name=="harries-wong") {
         make_lcf_graph(harries_wong_graph_lcf,1);
+        for (int i=1;i<=node_count();++i) hull.push_back(node_index(i));
+        make_circular_layout(x,hull);
     } else if (name=="heawood") {
         read_special(heawood_graph);
     } else if (name=="herschel") {
-        for (int i=1;i<=4;++i) {
-            add_node(i);
-        }
         read_special(herschel_graph);
+        make_planar_layout(x);
+        layout_best_rotation(x);
     } else if (name=="icosahedron") {
-        for (int i=1;i<=3;++i) {
-            add_node(i);
-        }
         read_special(icosahedron_graph);
+        make_planar_layout(x);
+        layout_best_rotation(x);
     } else if (name=="levi") {
-        for (int i=1;i<=30;++i) {
-            add_node(i);
-        }
         read_special(levi_graph);
+        for (int i=1;i<=node_count();++i) hull.push_back(node_index(i));
+        make_circular_layout(x,hull);
     } else if (name=="ljubljana") {
         make_lcf_graph(ljubljana_graph_lcf,2);
     } else if (name=="mcgee") {
-        for (int i=1;i<=24;++i) {
-            add_node(i);
-        }
         read_special(mcgee_graph);
+        for (int i=1;i<=node_count();++i) hull.push_back(node_index(i));
+        make_circular_layout(x,hull);
     } else if (name=="mobius-kantor") {
-        make_petersen_graph(8,3);
+        make_petersen_graph(8,3,&x);
     } else if (name=="nauru") {
-        make_petersen_graph(12,5);
+        make_petersen_graph(12,5,&x);
     } else if (name=="octahedron") {
-        add_node(1); add_node(3); add_node(6);
         read_special(octahedron_graph);
+        make_planar_layout(x);
+        layout_best_rotation(x);
     } else if (name=="pappus") {
-        for (int i=1;i<=18;++i) {
-            add_node(i);
-        }
         read_special(pappus_graph);
+        for (int i=1;i<=node_count();++i) hull.push_back(node_index(i));
+        make_circular_layout(x,hull);
     } else if (name=="petersen") {
-        make_petersen_graph(5,2);
+        make_petersen_graph(5,2,&x);
     } else if (name=="robertson") {
-        for (int i=1;i<=19;++i) {
-            add_node(i);
-        }
         read_special(robertson_graph);
+        for (int i=1;i<=node_count();++i) hull.push_back(node_index(i));
+        make_circular_layout(x,hull);
     } else if (name=="soccerball") {
-        for (int i=16;i<=20;++i) {
-            add_node(i);
-        }
         read_special(soccer_ball_graph);
+        for (int i=16;i<=20;++i) hull.push_back(node_index(i));
+        make_circular_layout(x,hull,2.5);
     } else if (name=="shrikhande") {
         make_shrikhande_graph();
+        for (int i=0;i<4;++i) hull.push_back(i);
+        make_circular_layout(x,hull,2.5);
     } else if (name=="tetrahedron") {
-        for (int i=2;i<=4;++i) {
-            add_node(i);
-        }
         read_special(tetrahedron_graph);
+        make_planar_layout(x);
+        layout_best_rotation(x);
+    }
+    if (!x.empty()) {
+        double sep=1.0;
+        scale_layout(x,sep*std::sqrt((double)node_count()));
+        rectangle rect=layout_bounding_rect(x,sep/PLASTIC_NUMBER_CUBED);
+        translate_layout(x,make_point(-rect.x(),-rect.y()));
+        store_layout(x);
     }
 }
 
@@ -3373,7 +3382,7 @@ void graphe::make_spring_layout(layout &x,int d,double tol) {
 /* layout face as a regular polygon inscribed in circle of radius R */
 void graphe::make_regular_polygon_layout(layout &x,const ivector &v,double R) {
     int n=v.size(),i;
-    double step=2.0*M_PI/(double)n,phi=(n%2)==0?M_PI_2*(1-2.0/n):M_PI_2;
+    double step=2.0*M_PI/(double)n,phi=(n%2)==0?M_PI_2*(1+2.0/n):M_PI_2;
     for (int k=0;k<n;++k) {
         i=v[k];
         point &p=x[i];
@@ -3714,9 +3723,9 @@ bool graphe::has_k_clique_cover(int k,const ivectors &maximal_cliques,ivector &c
     int n=maximal_cliques.size(),nv=node_count(),nchoosek=comb(n,k).val,cnt,csum,ncov,i,m;
     vector<ulong> nk_sets(nchoosek);
     generate_nk_sets(n,k,nk_sets);
-    ivector U,V;
     cv.resize(k);
     ivector csums(k);
+    vector<bool> covered(nv);
     for (vector<ulong>::const_iterator it=nk_sets.begin();it!=nk_sets.end();++it) {
         cnt=csum=0;
         for (i=0,m=1;i<n;++i,m*=2) {
@@ -3731,14 +3740,20 @@ bool graphe::has_k_clique_cover(int k,const ivectors &maximal_cliques,ivector &c
         if (csum<nv)
             continue;
         // check if the union of cliques from the k-subset covers the graph
+        std::fill(covered.begin(),covered.end(),false);
+        ncov=0;
         for (ivector_iter jt=cv.begin();jt!=cv.end();++jt) {
-            const ivector &clique=maximal_cliques[*jt];
-            i=jt-cv.begin();
-            if ((ncov=(i%2)==0?sets_union(U,clique,V):sets_union(V,clique,U))==nv)
-                return true;
             // check of the remaining cliques can cover the rest of the graph
-            if (i+1<k && ncov+csums[i+1]<nv)
+            if (ncov+csums[jt-cv.begin()]<nv)
                 break;
+            const ivector &clique=maximal_cliques[*jt];
+            for (ivector_iter kt=clique.begin();kt!=clique.end();++kt) {
+                if (!covered[*kt])
+                    ++ncov;
+                covered[*kt]=true;
+            }
+            if (ncov==nv)
+                return true;
         }
     }
     return false;
@@ -3776,7 +3791,14 @@ bool graphe::clique_cover(ivectors &cover,int k,int lb) {
     ivectors maximal_cliques;
     ivector indices;
     tomita(maximal_cliques);
-    int mcsize=maximal_cliques.size();
+    int mcsize=maximal_cliques.size(),nchecks=0;
+    for (int i=lb;i<=k;++i) {
+        nchecks+=comb(mcsize,i).val;
+    }
+    if (nchecks>1e6) {
+        message("Error: the number of clique combinations to be tested is too large: %d, aborting search",nchecks);
+        return false;
+    }
     for (ivectors::iterator it=maximal_cliques.begin();it!=maximal_cliques.end();++it) {
         sort(it->begin(),it->end());
     }
@@ -3870,6 +3892,15 @@ void graphe::contract_edge(int i,int j) {
             if (*it!=i)
                 add_edge(i,*it);
         }
+    }
+    vertex &v=node(i),&w=node(j);
+    point p,q,r;
+    if (get_node_position(v.attributes(),p) && get_node_position(w.attributes(),q) && p.size()==q.size()) {
+        r.resize(p.size());
+        copy_point(p,r);
+        add_point(r,q);
+        scale_point(r,0.5);
+        v.set_attribute(_GT_ATTRIB_POSITION,point2gen(r));
     }
 }
 
@@ -4132,7 +4163,7 @@ void graphe::make_complete_multipartite_graph(const ivector &partition_sizes) {
 }
 
 /* create generalized Petersen graph G(n,k) using Watkins' notation */
-void graphe::make_petersen_graph(int n, int k) {
+void graphe::make_petersen_graph(int n,int k,layout *x) {
     vecteur V;
     make_default_labels(V,2*n);
     add_nodes(V);
@@ -4144,6 +4175,12 @@ void graphe::make_petersen_graph(int n, int k) {
     for (int i=0;i<n;++i) {
         add_edge(i,i+n);
         add_edge(i+n,(i+k)%n+n);
+    }
+    if (x!=NULL) {
+        // layout the graph
+        ivector hull(n);
+        for (int i=0;i<n;++i) hull[i]=i;
+        make_circular_layout(*x,hull,2.5);
     }
 }
 
@@ -5608,8 +5645,9 @@ void graphe::pack_rectangles(vector<rectangle> &rectangles) {
     }
     if (rectangles.size()<2)
         return;
+    bool firstpass=true;
     while (bw>maxwidth+step) { // loop breaks after a stacked embedding is obtained
-        if (embed_rectangles(rectangles,bh)) {
+        if (firstpass || embed_rectangles(rectangles,bh)) {
             bw=bh=0;
             // find the smallest enclosing rectangle containing the embedding
             for (vector<rectangle>::const_iterator it=rectangles.begin();it!=rectangles.end();++it) {
@@ -5630,6 +5668,7 @@ void graphe::pack_rectangles(vector<rectangle> &rectangles) {
         }
         // increase enclosing rectangle height (rectangles will end up stacked eventually)
         bh+=step;
+        firstpass=false;
     }
     for (vector<rectangle>::iterator it=rectangles.begin();it!=rectangles.end();++it) {
         dpair &p=best_embedding[it-rectangles.begin()];
@@ -5929,9 +5968,10 @@ void graphe::layout_best_rotation(layout &x) {
                 }
             }
             score/=half_perim;
-            score*=4.08;
+            double bigpart=std::pow(PLASTIC_NUMBER,5.0); // hull symmetry is more important
+            score*=bigpart;
             score+=1.0-point_distance(proj,mp,tmp)/point_distance(p,q,tmp);
-            score/=5.08;
+            score/=bigpart+1;
             if (score>maxscore) {
                 maxscore=score;
                 angle=std::atan(b/a);
@@ -5990,14 +6030,10 @@ void graphe::append_label(vecteur &drawing,const point &p,const gen &label,int q
     //drawing.push_back(symbolic(at_legende,args));
 }
 
-/* extract position attribute from attr */
-bool graphe::get_position(const attrib &attr,point &p) {
-    attrib_iter it=attr.find(_GT_ATTRIB_POSITION);
-    if (it==attr.end())
-        return false;
-    const gen &pos=it->second;
-    if (pos.type==_VECT || pos.is_symb_of_sommet(at_point)) {
-        vecteur &v=pos.type==_VECT?*pos._VECTptr:*pos._SYMBptr->feuille._VECTptr;
+/* convert gen to point coordinates */
+bool graphe::gen2point(const gen &g,point &p) {
+    if (g.type==_VECT || g.is_symb_of_sommet(at_point)) {
+        vecteur &v=g.type==_VECT?*g._VECTptr:*g._SYMBptr->feuille._VECTptr;
         p.resize(v.size());
         for (const_iterateur it=v.begin();it!=v.end();++it) {
             if (!is_real_number(*it))
@@ -6006,20 +6042,28 @@ bool graphe::get_position(const attrib &attr,point &p) {
         }
     } else { // assuming that pos is a complex number
         p.resize(2);
-        if (pos.type==_CPLX) {
-            gen &real=*pos._CPLXptr,&imag=*(pos._CPLXptr+1);
+        if (g.type==_CPLX) {
+            gen &real=*g._CPLXptr,&imag=*(g._CPLXptr+1);
             if (!is_real_number(real) || !is_real_number(imag))
                 return false;
             p.front()=real.DOUBLE_val();
             p.back()=imag.DOUBLE_val();
         } else {
-            if (!is_real_number(pos))
+            if (!is_real_number(g))
                 return false;
-            p.front()=pos.DOUBLE_val();
+            p.front()=g.DOUBLE_val();
             p.back()=0;
         }
     }
     return true;
+}
+
+/* extract position attribute from attr */
+bool graphe::get_node_position(const attrib &attr,point &p) {
+    attrib_iter it=attr.find(_GT_ATTRIB_POSITION);
+    if (it==attr.end())
+        return false;
+    return gen2point(it->second,p);
 }
 
 /* append line segments representing edges (arcs) of the graph to vecteur v */
@@ -6892,7 +6936,7 @@ int graphe::greedy_vertex_coloring(const ivector &p) {
 }
 
 /* extract colors of the vertices and return them in order */
-void graphe::get_vertex_colors(ivector &colors) {
+void graphe::get_node_colors(ivector &colors) {
     colors.resize(node_count());
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         colors[it-nodes.begin()]=it->color();
@@ -7091,7 +7135,7 @@ bool graphe::is_vertex_colorable(int k) {
     int lb=maximum_clique(clique);
     if (lb>k)
         return false;
-    // finally resort to brute force search, it will do only for small graphs
+    // finally resort to brute force search, which works for smaller graphs
     graphe C(ctx);
     complement(C);
     ivectors cover;
@@ -7116,6 +7160,32 @@ graphe::ipair graphe::chromatic_number_bounds() {
     // the upper bound is given by heuristic dsatur algorithm
     int ub=dsatur();
     return make_pair(lb,ub);
+}
+
+/* store custom vertex coordinates */
+void graphe::store_layout(const layout &x) {
+    assert(int(x.size())>=node_count());
+    for (layout_iter it=x.begin();it!=x.end();++it) {
+        vertex &v=node(it-x.begin());
+        v.set_attribute(_GT_ATTRIB_POSITION,point2gen(*it));
+    }
+}
+
+/* retrieve the previously stored layout, return true iff successful */
+bool graphe::has_stored_layout(layout &x) const {
+    x.resize(node_count());
+    attrib_iter ait;
+    int dim=0;
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        const attrib &attr=it->attributes();
+        point &p=x[it-nodes.begin()];
+        if ((ait=attr.find(_GT_ATTRIB_POSITION))==attr.end() ||
+                !gen2point(ait->second,p) || (dim>0 && int(p.size())!=dim))
+            return false;
+        if (dim==0)
+            dim=p.size();
+    }
+    return true;
 }
 
 #ifndef NO_NAMESPACE_GIAC

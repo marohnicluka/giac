@@ -36,6 +36,11 @@
 #ifndef DBL_MAX
 #define DBL_MAX 1.79769313486e+308
 #endif
+#define PLASTIC_NUMBER 1.32471795724
+#define PLASTIC_NUMBER_SQUARED 1.75487766625
+#define PLASTIC_NUMBER_CUBED 2.32471795724
+#define MARGIN_FACTOR 0.139680581996 // pow(PLASTIC_NUMBER,-7)
+#define NEGLIGIBILITY_FACTOR 0.0195106649868 // MARGIN_FACTOR^2
 
 #ifndef NO_NAMESPACE_GIAC
 namespace giac {
@@ -122,53 +127,53 @@ public:
         vertex(const vertex &other);
         vertex& operator =(const vertex &other);
         void assign(const vertex &other);
-        bool sorted() const { return m_sorted; }
-        const gen &label() const { return m_label; }
-        void set_label(const gen &s) { m_label=s; }
-        void set_subgraph(int s) { m_subgraph=s; }
-        int subgraph() const { return m_subgraph; }
-        void set_embedded(bool yes) { m_embedded=yes; }
-        bool is_embedded() const { return m_embedded; }
-        void set_number(int n) { m_number=n; }
-        int number() const { return m_number; }
-        void set_visited(bool yes) { m_visited=yes; }
-        bool is_visited() const { return m_visited; }
-        bool is_on_stack() const { return m_on_stack; }
-        void set_on_stack(bool yes) { m_on_stack=yes; }
-        void set_low(int l) { m_low=l; }
-        int low() const { return m_low; }
-        void set_disc(int t) { m_disc=t; }
-        int disc() const { return m_disc; }
-        void set_ancestor(int i) { m_ancestor=i; }
-        void unset_ancestor() { m_ancestor=-1; }
-        int ancestor() const { return m_ancestor; }
-        void set_color(int c) { m_color=c; }
-        int color() const { return m_color; }
-        void inc_children() { ++m_children; }
-        void clear_children() { m_children=0; }
-        int children() const { return m_children; }
-        bool is_leaf() const { return m_children==0; }
-        void set_position(int p) { m_position=p; }
-        int position() const { return m_position; }
-        void set_gaps(int n) { m_gaps=n; }
-        int gaps() const { return m_gaps; }
-        void set_prelim(double val) { m_prelim=val; }
-        double prelim() const { return m_prelim; }
-        void set_modifier(double val) { m_modifier=val; }
-        double modifier() const { return m_modifier; }
-        void set_left(int l) { m_left=l; }
-        int left() const { return m_left; }
-        void set_right(int r) { m_right=r; }
-        int right() const { return m_right; }
-        void set_x_offset(int dx) { m_x_offset=dx; }
+        inline bool sorted() const { return m_sorted; }
+        inline const gen &label() const { return m_label; }
+        inline void set_label(const gen &s) { m_label=s; }
+        inline void set_subgraph(int s) { m_subgraph=s; }
+        inline int subgraph() const { return m_subgraph; }
+        inline void set_embedded(bool yes) { m_embedded=yes; }
+        inline bool is_embedded() const { return m_embedded; }
+        inline void set_number(int n) { m_number=n; }
+        inline int number() const { return m_number; }
+        inline void set_visited(bool yes) { m_visited=yes; }
+        inline bool is_visited() const { return m_visited; }
+        inline bool is_on_stack() const { return m_on_stack; }
+        inline void set_on_stack(bool yes) { m_on_stack=yes; }
+        inline void set_low(int l) { m_low=l; }
+        inline int low() const { return m_low; }
+        inline void set_disc(int t) { m_disc=t; }
+        inline int disc() const { return m_disc; }
+        inline void set_ancestor(int i) { m_ancestor=i; }
+        inline void unset_ancestor() { m_ancestor=-1; }
+        inline int ancestor() const { return m_ancestor; }
+        inline void set_color(int c) { m_color=c; }
+        inline int color() const { return m_color; }
+        inline void inc_children() { ++m_children; }
+        inline void clear_children() { m_children=0; }
+        inline int children() const { return m_children; }
+        inline bool is_leaf() const { return m_children==0; }
+        inline void set_position(int p) { m_position=p; }
+        inline int position() const { return m_position; }
+        inline void set_gaps(int n) { m_gaps=n; }
+        inline int gaps() const { return m_gaps; }
+        inline void set_prelim(double val) { m_prelim=val; }
+        inline double prelim() const { return m_prelim; }
+        inline void set_modifier(double val) { m_modifier=val; }
+        inline double modifier() const { return m_modifier; }
+        inline void set_left(int l) { m_left=l; }
+        inline int left() const { return m_left; }
+        inline void set_right(int r) { m_right=r; }
+        inline int right() const { return m_right; }
+        inline void set_x_offset(int dx) { m_x_offset=dx; }
         int x_offset() const { return m_x_offset; }
-        void set_y(int y) { m_y=y; }
-        int y() const { return m_y; }
-        const attrib &attributes() const { return m_attributes; }
-        attrib &attributes() { return m_attributes; }
-        void set_attribute(int key,const gen &val) { m_attributes[key]=val; }
-        void set_attributes(const attrib &attr) { copy_attributes(attr,m_attributes); }
-        const ivector &neighbors() const { return m_neighbors; }
+        inline void set_y(int y) { m_y=y; }
+        inline int y() const { return m_y; }
+        inline const attrib &attributes() const { return m_attributes; }
+        inline attrib &attributes() { return m_attributes; }
+        inline void set_attribute(int key,const gen &val) { m_attributes[key]=val; }
+        inline void set_attributes(const attrib &attr) { copy_attributes(attr,m_attributes); }
+        inline const ivector &neighbors() const { return m_neighbors; }
         void add_neighbor(int i,const attrib &attr=attrib());
         attrib &neighbor_attributes(int i);
         const attrib &neighbor_attributes(int i) const;
@@ -176,13 +181,13 @@ public:
         void move_neighbor(int i,int j,bool after=true);
         void remove_neighbor(int i);
         template<class Compare>
-        void sort_neighbors(Compare comp) { sort(m_neighbors.begin(),m_neighbors.end(),comp); m_sorted=true; }
-        void sort_neighbors() { sort(m_neighbors.begin(),m_neighbors.end()); m_sorted=true; }
-        void clear_neighbors() { m_neighbors.clear(); m_neighbor_attributes.clear(); m_sorted=false; }
+        inline void sort_neighbors(Compare comp) { sort(m_neighbors.begin(),m_neighbors.end(),comp); m_sorted=true; }
+        inline void sort_neighbors() { sort(m_neighbors.begin(),m_neighbors.end()); m_sorted=true; }
+        inline void clear_neighbors() { m_neighbors.clear(); m_neighbor_attributes.clear(); m_sorted=false; }
         void incident_faces(ivector &F) const;
-        void add_edge_face(int nb,int f) { assert(m_edge_faces.find(nb)==m_edge_faces.end()); m_edge_faces[nb]=f+1; }
-        void clear_edge_faces() { m_edge_faces.clear(); }
-        int edge_face(int nb) { return m_edge_faces[nb]-1; }
+        inline void add_edge_face(int nb,int f) { assert(m_edge_faces.find(nb)==m_edge_faces.end()); m_edge_faces[nb]=f+1; }
+        inline void clear_edge_faces() { m_edge_faces.clear(); }
+        inline int edge_face(int nb) { return m_edge_faces[nb]-1; }
     };
 
     class dotgraph {
@@ -198,21 +203,21 @@ public:
         dotgraph(int i);
         dotgraph& operator =(const dotgraph &other);
         void assign(const dotgraph &other);
-        int index() const { return m_index; }
-        void set_index(int i) { m_chain[pos]=i; }
-        const attrib &vertex_attributes() const { return vertex_attr; }
-        const attrib &edge_attributes() const { return edge_attr; }
-        const attrib &chain_attributes() const { return chain_attr; }
-        attrib &vertex_attributes() { return vertex_attr; }
-        attrib &edge_attributes() { return edge_attr; }
-        attrib &chain_attributes() { return chain_attr; }
-        const ivector &chain() const { return m_chain; }
-        ivector &chain() { return m_chain; }
-        int position() const { return pos; }
-        void incr() { ++pos; if (int(m_chain.size())<=pos) m_chain.resize(pos+1,0); }
-        void clear_chain() { pos=0; m_chain.resize(1); m_chain.front()=0; chain_attr.clear(); }
-        bool chain_completed() { return m_chain.back()!=0; }
-        bool chain_empty() { return pos==0 && m_chain.front()==0; }
+        inline int index() const { return m_index; }
+        inline void set_index(int i) { m_chain[pos]=i; }
+        inline const attrib &vertex_attributes() const { return vertex_attr; }
+        inline const attrib &edge_attributes() const { return edge_attr; }
+        inline const attrib &chain_attributes() const { return chain_attr; }
+        inline attrib &vertex_attributes() { return vertex_attr; }
+        inline attrib &edge_attributes() { return edge_attr; }
+        inline attrib &chain_attributes() { return chain_attr; }
+        inline const ivector &chain() const { return m_chain; }
+        inline ivector &chain() { return m_chain; }
+        inline int position() const { return pos; }
+        inline void incr() { ++pos; if (int(m_chain.size())<=pos) m_chain.resize(pos+1,0); }
+        inline void clear_chain() { pos=0; m_chain.resize(1); m_chain.front()=0; chain_attr.clear(); }
+        inline bool chain_completed() { return m_chain.back()!=0; }
+        inline bool chain_empty() { return pos==0 && m_chain.front()==0; }
     };
 
     class matching_maximizer {
@@ -229,7 +234,7 @@ public:
         std::map<int,ivector>::iterator is_blossom_base(int v);
         void append_non_blossom_adjacents(int v,std::map<int,ivector>::const_iterator bit,ivector &lst);
         ivector adjacent(int v);
-        ipair make_edge(int i,int j) { return std::make_pair(i<j?i:j,i<j?j:i); }
+        inline ipair make_edge(int i,int j) { return std::make_pair(i<j?i:j,i<j?j:i); }
     public:
         matching_maximizer(graphe *gr);
         bool find_augmenting_path(const ipairs &matching,ivector &path);
@@ -270,11 +275,11 @@ public:
         rectangle(const rectangle &rect);
         rectangle& operator =(const rectangle &other);
         void assign(const rectangle &other);
-        void set_anchor(double x,double y) { m_x=x; m_y=y; }
-        double x() const { return m_x; }
-        double y() const { return m_y; }
-        double width() const { return m_width; }
-        double height() const { return m_height; }
+        inline void set_anchor(double x,double y) { m_x=x; m_y=y; }
+        inline double x() const { return m_x; }
+        inline double y() const { return m_y; }
+        inline double width() const { return m_width; }
+        inline double height() const { return m_height; }
         bool intersects(const rectangle &other) const;
         bool intersects(const std::vector<rectangle> &rectangles) const;
         bool intersects(std::vector<rectangle>::const_iterator first,std::vector<rectangle>::const_iterator last) const;
@@ -402,11 +407,11 @@ private:
     std::stack<int> node_stack;
     ivectors visited_edges;
     void clear_node_stack();
-    void message(const char *str);
-    void message(const char *format,int a);
-    void message(const char *format,int a,int b);
-    void message(const char *format,int a,int b,int c);
-    vertex &node(int i) { return nodes[i]; }
+    void message(const char *str) const;
+    void message(const char *format,int a) const;
+    void message(const char *format,int a,int b) const;
+    void message(const char *format,int a,int b,int c) const;
+    inline vertex &node(int i) { return nodes[i]; }
     bool dot_parse_attributes(std::ifstream &dotfile,attrib &attr);
     static bool insert_attribute(attrib &attr,int key,const gen &val,bool overwrite=true);
     static bool remove_attribute(attrib &attr,int key);
@@ -461,7 +466,7 @@ private:
     static bool segments_crossing(const point &p,const point &r,const point &q,const point &s,point &crossing);
     static bool point2segment_projection(const point &p,const point &q,const point &r,point &proj);
     void force_directed_placement(layout &x,double K,double R=DBL_MAX,double tol=0.01,bool ac=true);
-    static bool get_position(const attrib &attr,point &p);
+    static bool get_node_position(const attrib &attr,point &p);
     void coarsening_mis(const ivector &V,graphe &G,sparsemat &P) const;
     void coarsening_ec(const ipairs &M,graphe &G,sparsemat &P) const;
     int best_quadrant(const point &p,const layout &x) const;
@@ -469,13 +474,12 @@ private:
     void append_vertex(vecteur &drawing,const point &p,int color,int width) const;
     void append_label(vecteur &drawing,const point &p,const gen &label,int quadrant,int color=_BLACK) const;
     static int face_has_edge(const ivector &face,int i,int j);
-    static int binomial_coeff(int n,int k);
     int first_neighbor_from_subgraph(const vertex &v,int sg) const;
     void set_nodes_embedded(const ivector &v,bool yes=true);
     void unembed_all_nodes();
     int planar_embedding(ivectors &faces);
     void set_embedding(const ivectors &faces);
-    void clear_embedding() { for (std::vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) it->clear_edge_faces(); }
+    void clear_embedding();
     int choose_embedding_face(const ivectors &faces,int v);
     int choose_outer_face(const ivectors &faces);
     static void make_regular_polygon_layout(layout &x,const ivector &v,double R=1.0);
@@ -508,12 +512,12 @@ public:
     graphe(const context *contextptr=context0);
     graphe(const graphe &G);
     graphe(const std::string &name,const context *contextptr=context0);
-    int rand_integer(int n) const { return giac::giac_rand(ctx)%n; }
-    double rand_uniform() const { return giac::giac_rand(ctx)/(RAND_MAX+1.0); }
-    double rand_normal() const { return giac::randNorm(ctx); }
+    inline int rand_integer(int n) const { return giac::giac_rand(ctx)%n; }
+    inline double rand_uniform() const { return giac::giac_rand(ctx)/(RAND_MAX+1.0); }
+    inline double rand_normal() const { return giac::randNorm(ctx); }
     static bool is_real_number(const gen &g);
     static gen to_binary(int number,int chars);
-    const context *giac_context() const { return ctx; }
+    inline const context *giac_context() const { return ctx; }
     static gen make_idnt(const char* name,int index=-1,bool intern=true);
     void make_default_labels(vecteur &labels,int n,int n0=0,int offset=-1) const;
     static gen boole(bool b) { return b?VRAI:FAUX; }
@@ -527,47 +531,47 @@ public:
     void read_special(const int *special_graph);
     void read_special(const char **special_graph);
     void copy(graphe &G) const;
-    void copy_nodes(const std::vector<vertex> &V) { nodes=std::vector<vertex>(V.begin(),V.end()); }
+    inline void copy_nodes(const std::vector<vertex> &V) { nodes=std::vector<vertex>(V.begin(),V.end()); }
     void join_edges(const graphe &G);
     void clear();
     int tag2index(const std::string &tag);
     std::string index2tag(int index) const;
     int register_user_tag(const std::string &tag);
     void register_user_tags(const std::vector<std::string> &tags);
-    const ivector &get_marked_nodes() const { return marked_nodes; }
+    inline const ivector &get_marked_nodes() const { return marked_nodes; }
     void get_marked_nodes(vecteur &V) const;
     void get_marked_nodes_in_subgraph(int s,ivector &m) const;
-    void copy_marked_nodes(const ivector &mv) { marked_nodes=ivector(mv.begin(),mv.end()); }
+    inline void copy_marked_nodes(const ivector &mv) { marked_nodes=ivector(mv.begin(),mv.end()); }
     void mark_node(int v);
     void mark_node(const gen &v) { mark_node(node_index(v)); }
     bool unmark_node(int v);
-    bool unmark_node(const gen &v) { return unmark_node(node_index(v)); }
-    void unmark_all_nodes() { marked_nodes.clear(); }
-    void sort_marked_nodes() { std::sort(marked_nodes.begin(),marked_nodes.end()); }
+    inline bool unmark_node(const gen &v) { return unmark_node(node_index(v)); }
+    inline void unmark_all_nodes() { marked_nodes.clear(); }
+    inline void sort_marked_nodes() { std::sort(marked_nodes.begin(),marked_nodes.end()); }
     void set_edge_visited(int i,int j);
-    void set_edge_visited(const ipair &e) { set_edge_visited(e.first,e.second); }
+    inline void set_edge_visited(const ipair &e) { set_edge_visited(e.first,e.second); }
     bool is_edge_visited(int i,int j) const;
-    bool is_edge_visited(const ipair &e) const { return is_edge_visited(e.first,e.second); }
-    void unvisit_all_edges() { visited_edges.clear(); }
+    inline bool is_edge_visited(const ipair &e) const { return is_edge_visited(e.first,e.second); }
+    inline void unvisit_all_edges() { visited_edges.clear(); }
     void move_neighbor(int v,int w,int ref=-1,bool after=true);
     template<class Compare>
-    void sort_neighbors(int v,Compare comp) { node(v).sort_neighbors(comp); }
+    inline void sort_neighbors(int v,Compare comp) { node(v).sort_neighbors(comp); }
     gen to_gen() const;
     bool write_dot(const std::string &filename) const;
     bool read_dot(const std::string &filename);
-    bool is_empty() const { return nodes.empty(); }
+    inline bool is_empty() const { return nodes.empty(); }
     matrice weight_matrix() const;
     gen weight(int i,int j) const;
-    gen weight(const ipair &edge) const { return weight(edge.first,edge.second); }
+    inline gen weight(const ipair &edge) const { return weight(edge.first,edge.second); }
     int edge_count() const;
-    int node_count() const { return nodes.size(); }
+    inline int node_count() const { return nodes.size(); }
     vecteur vertices(int sg=-1) const;
     void unvisit_all_nodes(int sg=-1);
     void unset_all_ancestors(int sg=-1);
     void uncolor_all_nodes(int base_color=0,int sg=-1);
     void dfs(int root,bool rec=true,bool clr=true,ivector *D=NULL,int sg=-1,bool skip_embedded=false);
     void bfs(int root,bool rec=true,bool clr=true,ivector *D=NULL,int sg=-1,bool skip_embedded=false);
-    const ivector &get_discovered_nodes() const { return discovered_nodes; }
+    inline const ivector &get_discovered_nodes() const { return discovered_nodes; }
     bool is_connected(int sg=-1);
     bool is_biconnected(int sg=-1);
     bool is_triconnected(int sg=-1);
@@ -577,36 +581,36 @@ public:
     void get_edges_as_pairs(ipairs &E, bool include_temp_edges=true,int sg=-1) const;
     vecteur edges(bool include_weights,int sg=-1) const;
     int add_node(const gen &v);
-    int add_node(const gen &v,const attrib &attr) { int i=add_node(v); nodes[i].set_attributes(attr); return i; }
+    inline int add_node(const gen &v,const attrib &attr) { int i=add_node(v); nodes[i].set_attributes(attr); return i; }
     void add_nodes(const vecteur &v);
     bool remove_node(int i);
     bool remove_node(const gen &v);
     void remove_nodes(const ivector &V);
     void remove_nodes(const vecteur &V);
-    const vertex &node(int i) const { return nodes[i]; }
-    const gen &node_label(int i) const { assert(i>=0 && i<node_count()); return nodes[i].label(); }
+    inline const vertex &node(int i) const { return nodes[i]; }
+    inline const gen &node_label(int i) const { assert(i>=0 && i<node_count()); return nodes[i].label(); }
     vecteur get_node_labels(const ivector &v) const;
     int node_index(const gen &v) const;
     int largest_integer_label() const;
     void set_subgraph(const ivector &v,int s);
     void merge_subgraphs(int s,int t);
     int max_subgraph_index() const;
-    const attrib &graph_attributes() const { return attributes; }
-    const attrib &node_attributes(int i) const { assert(i>=0 && i<node_count()); return node(i).attributes(); }
+    inline const attrib &graph_attributes() const { return attributes; }
+    inline const attrib &node_attributes(int i) const { assert(i>=0 && i<node_count()); return node(i).attributes(); }
     const attrib &edge_attributes(int i,int j) const;
     attrib &edge_attributes(int i,int j);
     void attrib2vecteurs(const attrib &attr,vecteur &tags,vecteur &values) const;
     void add_edge(int i,int j,const gen &w=gen(1));
     void add_edge(int i,int j,const attrib &attr);
-    void add_edge(const ipair &edge) { add_edge(edge.first,edge.second); }
-    void add_edge(const ipair &edge,const attrib &attr) { add_edge(edge.first,edge.second,attr); }
+    inline void add_edge(const ipair &edge) { add_edge(edge.first,edge.second); }
+    inline void add_edge(const ipair &edge,const attrib &attr) { add_edge(edge.first,edge.second,attr); }
     ipair add_edge(const gen &v,const gen &w,const gen &weight=gen(1));
     void add_temporary_edge(int i,int j);
     void remove_temporary_edges();
     bool remove_edge(int i,int j);
-    bool remove_edge(const ipair &p) { return remove_edge(p.first,p.second); }
+    inline bool remove_edge(const ipair &p) { return remove_edge(p.first,p.second); }
     bool has_edge(int i,int j) const;
-    bool has_edge(ipair p) const { return has_edge(p.first,p.second); }
+    inline bool has_edge(ipair p) const { return has_edge(p.first,p.second); }
     ipair make_edge(const vecteur &v) const;
     bool edges2ipairs(const vecteur &E,ipairs &ev,bool &notfound) const;
     static void ipairs2edgeset(const ipairs &E,edgeset &Eset);
@@ -618,8 +622,8 @@ public:
     void adjacency_matrix(matrice &m) const;
     void adjacency_sparse_matrix(sparsemat &sm) const;
     matrice incidence_matrix() const;
-    void set_graph_attribute(int key,const gen &val) { attributes[key]=val; }
-    void set_graph_attributes(const attrib &attr) { copy_attributes(attr,attributes); }
+    inline void set_graph_attribute(int key,const gen &val) { attributes[key]=val; }
+    inline void set_graph_attributes(const attrib &attr) { copy_attributes(attr,attributes); }
     void set_node_attribute(int index,int key,const gen &val);
     void set_edge_attribute(int i,int j,int key,const gen &val);
     bool get_graph_attribute(int key,gen &val) const;
@@ -628,12 +632,12 @@ public:
     void discard_graph_attribute(int key);
     void discard_node_attribute(int i,int key);
     void discard_edge_attribute(int i,int j,int key);
-    void set_name(const std::string &str) { set_graph_attribute(_GT_ATTRIB_NAME,str2gen(str,true)); }
-    std::string name() const { gen s; if (get_graph_attribute(_GT_ATTRIB_NAME,s)) return genstring2str(s); else return ""; }
+    inline void set_name(const std::string &str) { set_graph_attribute(_GT_ATTRIB_NAME,str2gen(str,true)); }
+    inline std::string name() const { gen s; if (get_graph_attribute(_GT_ATTRIB_NAME,s)) return genstring2str(s); else return ""; }
     bool is_directed() const;
     bool is_weighted() const;
-    void set_directed(bool yes) { set_graph_attribute(_GT_ATTRIB_DIRECTED,boole(yes)); }
-    void set_weighted(bool yes) { set_graph_attribute(_GT_ATTRIB_WEIGHTED,boole(yes)); }
+    inline void set_directed(bool yes) { set_graph_attribute(_GT_ATTRIB_DIRECTED,boole(yes)); }
+    inline void set_weighted(bool yes) { set_graph_attribute(_GT_ATTRIB_WEIGHTED,boole(yes)); }
     void make_weighted(const matrice &m);
     void make_directed() { set_directed(true); }
     void make_unweighted();
@@ -663,9 +667,10 @@ public:
     static rectangle layout_bounding_rect(layout &ly,double padding=0);
     static void pack_rectangles(std::vector<rectangle> &rectangles);
     static gen point2gen(const point &p,bool vect=false);
+    static bool gen2point(const gen &g,point &p);
     static point layout_center(const layout &x);
     static void scale_layout(layout &x,double diam);
-    bool is_tree() { return !is_directed() && edge_count()+1==node_count() && is_connected(); }
+    inline bool is_tree() { return !is_directed() && edge_count()+1==node_count() && is_connected(); }
     bool is_forest();
     bool is_tournament();
     bool is_planar(ivectors &faces);
@@ -686,7 +691,7 @@ public:
     void make_shrikhande_graph();
     void make_complete_graph();
     void make_complete_multipartite_graph(const ivector &partition_sizes);
-    void make_petersen_graph(int n,int k);
+    void make_petersen_graph(int n,int k,layout *x=NULL);
     bool make_kneser_graph(int n,int k);
     void make_path_graph();
     void make_cycle_graph();
@@ -741,10 +746,12 @@ public:
     vecteur get_st_numbering() const;
     void greedy_vertex_coloring_biggs(ivector &ordering);
     int greedy_vertex_coloring(const ivector &p);
-    void get_vertex_colors(ivector &colors);
+    void get_node_colors(ivector &colors);
     bool is_bipartite(ivector &V1,ivector &V2,int sg=-1);
     bool is_vertex_colorable(int k);
     ipair chromatic_number_bounds();
+    void store_layout(const layout &x);
+    bool has_stored_layout(layout &x) const;
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

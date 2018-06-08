@@ -1296,7 +1296,7 @@ void graphe::unset_all_ancestors(int sg) {
 }
 
 /* turn the color of each vertex to white */
-void graphe::uncolor_all_vertices(int base_color,int sg) {
+void graphe::uncolor_all_nodes(int base_color,int sg) {
     for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
         if (sg<0 || it->subgraph()==sg)
             it->set_color(base_color);
@@ -3711,35 +3711,42 @@ int graphe::maximum_clique(ivector &clique) {
 /* return true iff the graph can be covered with exactly k maximal cliques
  * (also provide indices of those cliques) */
 bool graphe::has_k_clique_cover(int k,const ivectors &maximal_cliques,ivector &cv) const {
-    int n=maximal_cliques.size(),nv=node_count();
-    int nchoosek=comb(n,k).val;
+    int n=maximal_cliques.size(),nv=node_count(),nchoosek=comb(n,k).val,cnt,csum,ncov,i,m;
     vector<ulong> nk_sets(nchoosek);
     generate_nk_sets(n,k,nk_sets);
     ivector U,V;
-    int cnt,ncov;
     cv.resize(k);
+    ivector csums(k);
     for (vector<ulong>::const_iterator it=nk_sets.begin();it!=nk_sets.end();++it) {
-        cnt=0;
-        for (int i=0,m=1;i<n;++i,m*=2) {
+        cnt=csum=0;
+        for (i=0,m=1;i<n;++i,m*=2) {
             if ((*it & m)!=0)
                 cv[cnt++]=i;
         }
+        // skip each k-subset of maximal cliques that cannot cover all vertices
+        for (i=k;i-->0;) {
+            csum+=maximal_cliques[cv[i]].size();
+            csums[i]=csum;
+        }
+        if (csum<nv)
+            continue;
+        // check if the union of cliques from the k-subset covers the graph
         for (ivector_iter jt=cv.begin();jt!=cv.end();++jt) {
             const ivector &clique=maximal_cliques[*jt];
-            if ((ncov=(jt-cv.begin())%2==0?sets_union(U,clique,V):sets_union(V,clique,U))==nv)
+            i=jt-cv.begin();
+            if ((ncov=(i%2)==0?sets_union(U,clique,V):sets_union(V,clique,U))==nv)
                 return true;
-            for (ivector_iter kt=jt+1;kt!=cv.end();++kt) {
-                ncov+=maximal_cliques[*kt].size();
-            }
-            if (ncov<nv)
+            // check of the remaining cliques can cover the rest of the graph
+            if (i+1<k && ncov+csums[i+1]<nv)
                 break;
         }
     }
     return false;
 }
 
-/* returns true iff there is a clique cover of order not larger than k and finds that cover */
-bool graphe::clique_cover(ivectors &cover,int k) {
+/* returns true iff there is a clique cover of order not larger than k but
+ * no less than lb and finds that cover */
+bool graphe::clique_cover(ivectors &cover,int k,int lb) {
     if (is_triangle_free()) {
         // clique cover consists of matched edges and singleton vertex sets
         ipairs matching;
@@ -3773,7 +3780,7 @@ bool graphe::clique_cover(ivectors &cover,int k) {
     for (ivectors::iterator it=maximal_cliques.begin();it!=maximal_cliques.end();++it) {
         sort(it->begin(),it->end());
     }
-    for (int i=1;i<=(k==0?mcsize:k);++i) {
+    for (int i=lb;i<=(k==0?mcsize:k);++i) {
         if (has_k_clique_cover(i,maximal_cliques,indices)) {
             cover.resize(i);
             for (ivector_iter it=indices.begin();it!=indices.end();++it) {
@@ -3850,8 +3857,8 @@ void graphe::remove_isolated_node(int i) {
     }
 }
 
-/* collapse edge {i,j}, leaving j-th node isolated (not connected to any other node) */
-void graphe::collapse_edge(int i,int j) {
+/* contract the edge {i,j}, leaving j-th node isolated (not connected to any other node) */
+void graphe::contract_edge(int i,int j) {
     ivector adj;
     adjacent_nodes(j,adj);
     for (ivector_iter it=adj.begin();it!=adj.end();++it) {
@@ -4050,7 +4057,7 @@ void graphe::make_sierpinski_graph(int n, int k, bool triangle) {
         for (ivectors_iter it=cliques.begin();it!=cliques.end();++it) {
             if (it->size()==2) {
                 int v=it->front(),w=it->back();
-                collapse_edge(v,w);
+                contract_edge(v,w);
                 isolated_nodes.push_back(w);
             }
         }
@@ -5248,7 +5255,7 @@ graphe::tree_node_positioner::tree_node_positioner(graphe *gr,layout *ly,double 
 }
 
 /*
- * END OF TREE NODE POSITIONING ALGORITHM IMPLEMENTATION
+ * END OF TREE NODE POSITIONING ALGORITHM
  */
 
 /* calculate node positions and store them to the specified layout */
@@ -5611,8 +5618,8 @@ void graphe::pack_rectangles(vector<rectangle> &rectangles) {
                 if ((d=it->y()+it->height())>bh)
                     bh=d;
             }
-            // find the embedding with the smaller perimeter (when scaled by the wasted ratio)
-            if ((perim=(bw+PLASTIC_NUMBER_CUBED*bh)*bw*PLASTIC_NUMBER_CUBED*bh/total_area)<best_perim) {
+            // find the embedding with the smallest perimeter (when scaled by the wasted ratio)
+            if ((perim=(bw+PLASTIC_NUMBER_CUBED*bh)*std::sqrt(bw*bh/total_area))<best_perim) {
                 best_perim=perim;
                 for (vector<rectangle>::const_iterator it=rectangles.begin();it!=rectangles.end();++it) {
                     dpair &p=best_embedding[it-rectangles.begin()];
@@ -5623,7 +5630,6 @@ void graphe::pack_rectangles(vector<rectangle> &rectangles) {
         }
         // increase enclosing rectangle height (rectangles will end up stacked eventually)
         bh+=step;
-        cout << bw << "," << bh << endl;
     }
     for (vector<rectangle>::iterator it=rectangles.begin();it!=rectangles.end();++it) {
         dpair &p=best_embedding[it-rectangles.begin()];
@@ -6066,8 +6072,11 @@ void graphe::draw_nodes(vecteur &drawing,const layout &x) const {
         const attrib &attr=it->attributes();
         const point &p=x[it-nodes.begin()];
         color=default_vertex_color;
-        if ((ait=attr.find(_GT_ATTRIB_COLOR))!=attr.end())
+        if ((ait=attr.find(_GT_ATTRIB_COLOR))!=attr.end()) {
             color=ait->second.val;
+            if (color==7)
+                color=0; // draw white (invisible) nodes as black
+        }
         append_vertex(drawing,p,color,width);
     }
 }
@@ -6079,10 +6088,10 @@ int graphe::best_quadrant(const point &p,const layout &adj) const {
     if (n==0 || p.size()!=2)
         return _QUADRANT1;
     layout quad(4);
-    quad[0]=make_vector(0.7071,0.7071);
-    quad[1]=make_vector(-0.7071,0.7071);
-    quad[2]=make_vector(-0.7071,-0.7071);
-    quad[3]=make_vector(0.7071,-0.7071);
+    quad[0]=make_point(0.7071,0.7071);
+    quad[1]=make_point(-0.7071,0.7071);
+    quad[2]=make_point(-0.7071,-0.7071);
+    quad[3]=make_point(0.7071,-0.7071);
     vector<double> min_angular_dist(4,M_PI);
     point u(2);
     double a;
@@ -6700,7 +6709,7 @@ void graphe::lca_recursion(int u,const ipairs &p,ivector &lca,union_find &ds) {
 void graphe::lowest_common_ancestors(int root,const ipairs &p,ivector &lca) {
     unvisit_all_nodes();
     unset_all_ancestors();
-    uncolor_all_vertices();
+    uncolor_all_nodes();
     lca.resize(p.size(),-1);
     union_find ds(node_count());
     lca_recursion(root,p,lca,ds);
@@ -6822,7 +6831,7 @@ vecteur graphe::get_st_numbering() const {
 
 /* greedy vertex coloring algorithm due to Biggs, also records vertex inclusion time */
 void graphe::greedy_vertex_coloring_biggs(ivector &ordering) {
-    uncolor_all_vertices();
+    uncolor_all_nodes();
     int n=node_count(),k=0,i,maxdeg,d,col=0;
     ordering.resize(n);
     ivector_iter jt;
@@ -6852,9 +6861,9 @@ void graphe::greedy_vertex_coloring_biggs(ivector &ordering) {
 }
 
 /* classical greedy vertex coloring algorithm, time complexity O(n+m) */
-void graphe::greedy_vertex_coloring(const ivector &p) {
+int graphe::greedy_vertex_coloring(const ivector &p) {
     assert(!is_directed());
-    uncolor_all_vertices();
+    uncolor_all_nodes();
     int c=0,k;
     set<int> used;
     for (ivector_iter it=p.begin();it!=p.end();++it) {
@@ -6879,6 +6888,7 @@ void graphe::greedy_vertex_coloring(const ivector &p) {
         if (k>c)
             c=k;
     }
+    return c;
 }
 
 /* extract colors of the vertices and return them in order */
@@ -6892,7 +6902,7 @@ void graphe::get_vertex_colors(ivector &colors) {
 /* return true iff the graph is bipartite, time complexity O(n+m) */
 bool graphe::is_bipartite(ivector &V1,ivector &V2,int sg) {
     assert(!is_directed());
-    uncolor_all_vertices(-1,sg);
+    uncolor_all_nodes(-1,sg);
     node(0).set_color(1);
     queue<int> q;
     node_iter nt=nodes.begin();
@@ -6995,6 +7005,117 @@ void graphe::make_plane_dual(const ivectors &faces) {
             else add_edge(f,et->second);
         }
     }
+}
+
+/* return the number of different colors adjacent to the i-th vertex in a partially colored graph */
+int graphe::saturation_degree(const vertex &v,set<int> &colors) const {
+    int i,c;
+    colors.clear();
+    for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
+        i=*it;
+        if (i<0) i=-i-1;
+        const vertex &w=node(i);
+        if ((c=w.color())>0)
+            colors.insert(c);
+    }
+    return colors.size();
+}
+
+/* a heuristic algorithm by D.Bre1az for nearly optimal vertex coloring (time complexity O(n^2)),
+ * returns the number of colors */
+int graphe::dsatur() {
+    if (is_empty())
+        return 0;
+    int n=node_count();
+    ivector indices(n);
+    for (int i=n;i-->0;) {
+        indices[i]=i;
+    }
+    degree_comparator comp(this);
+    sort(indices.begin(),indices.end(),comp);
+    uncolor_all_nodes();
+    unvisit_all_nodes();
+    int col=1,maxcol=0,i=indices.back(),sat,maxsat;
+    set<int> colors,maxcolors;
+    do {
+        vertex &v=node(i);
+        v.set_color(col);
+        v.set_visited(true);
+        maxsat=0;
+        i=-1;
+        for (ivector_iter it=indices.begin();it!=indices.end();++it) {
+            const vertex &w=node(*it);
+            if (w.is_visited())
+                continue;
+            if ((sat=saturation_degree(w,colors))>=maxsat) {
+                maxsat=sat;
+                maxcolors=colors;
+                i=*it;
+            }
+        }
+        if (i>=0) {
+            col=1;
+            for (set<int>::const_iterator it=maxcolors.begin();it!=maxcolors.end();++it) {
+                if (*it==col)
+                    ++col;
+                else break;
+            }
+        }
+        if (col>maxcol)
+            maxcol=col;
+    } while (i>=0);
+    return maxcol;
+}
+
+/* return true iff the vertices can be colored using at most k different colors,
+ * the vertices will be colored after the function returns */
+bool graphe::is_vertex_colorable(int k) {
+    assert(k>=0);
+    if (k==0) {
+        uncolor_all_nodes();
+        return true;
+    }
+    if (k>node_count()) {
+        message("Warning: trere are more colors than vertices");
+        return false;
+    }
+    // try greedy coloring first (linear time), use random order of vertices
+    ivector sigma=vecteur_2_vector_int(*_randperm(node_count(),ctx)._VECTptr);
+    if (greedy_vertex_coloring(sigma)<=k)
+        return true;
+    // next try dsatur algorithm (quadratic time)
+    if (dsatur()<=k)
+        return true;
+    // compare the lower bound (the size of maximum clique)
+    ivector clique;
+    int lb=maximum_clique(clique);
+    if (lb>k)
+        return false;
+    // finally resort to brute force search, it will do only for small graphs
+    graphe C(ctx);
+    complement(C);
+    ivectors cover;
+    if (C.clique_cover(cover,k,lb)) {
+        int col=1;
+        for (ivectors_iter it=cover.begin();it!=cover.end();++it) {
+            for (ivector_iter jt=it->begin();jt!=it->end();++jt) {
+                node(*jt).set_color(col);
+            }
+            ++col;
+        }
+        return true;
+    }
+    return false;
+}
+
+/* return the lower and the upper bound for chromatic number (inclusive) */
+graphe::ipair graphe::chromatic_number_bounds() {
+    // the lower bound is the size of maximum clique
+    ivector clique;
+    int lb=maximum_clique(clique);
+    // the upper bound is given by heuristic dsatur algorithm
+    int ub=dsatur();
+    return make_pair(lb,ub);
 }
 
 #ifndef NO_NAMESPACE_GIAC

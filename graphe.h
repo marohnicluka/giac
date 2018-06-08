@@ -417,6 +417,8 @@ private:
     static int sets_union(const ivector &A,const ivector &B,ivector &U);
     static int sets_intersection(const ivector &A,const ivector &B,ivector &I);
     static int sets_difference(const ivector &A,const ivector &B,ivector &D);
+    static point make_point(double x,double y) { point p(2,x); p.back()=y; return p; }
+    static point make_point(double x,double y,double z) { point p(3,x); p[1]=y; p.back()=z; return p; }
     static void add_point(point &a,const point &b);
     static void subtract_point(point &a,const point &b);
     static void scale_point(point &p,double s);
@@ -499,8 +501,8 @@ private:
     void fold_face(const ivector &face, bool subdivide,int &label);
     void find_chords(const ivector &face,ipairs &chords);
     void augment(const ivectors &faces,int outer_face,bool subdivide=false);
-    const point make_vector(double x,double y) const { point p(2,x); p.back()=y; return p; }
-    const point make_vector(double x,double y,double z) const { point p(3,x); p[1]=y; p.back()=z; return p; }
+    int saturation_degree(const vertex &v,std::set<int> &colors) const;
+    int dsatur();
 
 public:
     graphe(const context *contextptr=context0);
@@ -562,7 +564,7 @@ public:
     vecteur vertices(int sg=-1) const;
     void unvisit_all_nodes(int sg=-1);
     void unset_all_ancestors(int sg=-1);
-    void uncolor_all_vertices(int base_color=0,int sg=-1);
+    void uncolor_all_nodes(int base_color=0,int sg=-1);
     void dfs(int root,bool rec=true,bool clr=true,ivector *D=NULL,int sg=-1,bool skip_embedded=false);
     void bfs(int root,bool rec=true,bool clr=true,ivector *D=NULL,int sg=-1,bool skip_embedded=false);
     const ivector &get_discovered_nodes() const { return discovered_nodes; }
@@ -672,7 +674,7 @@ public:
     int tree_height(int root);
     void tomita(ivectors &res,bool store_all=true);
     int maximum_clique(ivector &clique);
-    bool clique_cover(ivectors &cover,int k=0);
+    bool clique_cover(ivectors &cover,int k=0,int lb=1);
     int chromatic_number() const;
     int maximum_independent_set(ivector &v) const;
     int girth(bool odd=false,int sg=-1);
@@ -715,7 +717,7 @@ public:
     int eulerian_path_start(bool &iscycle) const;
     bool fleury(int start,ivector &path);
     void hierholzer(ivector &path);
-    void collapse_edge(int i,int j);
+    void contract_edge(int i,int j);
     void incident_edges(const ivector &V,edgeset &E);
     static bool edges_incident(const ipair &e1,const ipair &e2);
     void convex_hull(const layout &x,layout &hull);
@@ -738,9 +740,11 @@ public:
     void compute_st_numbering(int s,int t);
     vecteur get_st_numbering() const;
     void greedy_vertex_coloring_biggs(ivector &ordering);
-    void greedy_vertex_coloring(const ivector &p);
+    int greedy_vertex_coloring(const ivector &p);
     void get_vertex_colors(ivector &colors);
     bool is_bipartite(ivector &V1,ivector &V2,int sg=-1);
+    bool is_vertex_colorable(int k);
+    ipair chromatic_number_bounds();
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

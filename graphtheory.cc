@@ -1250,11 +1250,11 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type!=_VECT)
         return gentypeerr(contextptr);
     vecteur &gv=*g._VECTptr;
-    bool labels=true,has_opts=g.subtype==_SEQ__VECT;
+    bool has_opts=g.subtype==_SEQ__VECT;
     graphe G_orig(contextptr);
     if (!G_orig.read_gen(has_opts?gv.front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    bool isdir=G_orig.is_directed();
+    bool labels=G_orig.node_count()<=60,isdir=G_orig.is_directed();
     vecteur root_nodes,outer_vertices;
     gen coords_dest=undef;
     int method=_GT_STYLE_DEFAULT;
@@ -1383,7 +1383,9 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
             if (it->size()<3)
                 comp_method=_GT_STYLE_SPRING;
             else if (method==_GT_STYLE_DEFAULT) {
-                if (C.is_bipartite(partition1,partition2) && partition1.size()>1 && partition2.size()>1)
+                if (C.is_tree())
+                    comp_method=_GT_STYLE_TREE;
+                else if (C.is_bipartite(partition1,partition2) && partition1.size()>1 && partition2.size()>1)
                     comp_method=_GT_STYLE_BIPARTITE;
                 else
                     comp_method=_GT_STYLE_CIRCLE;
@@ -2057,7 +2059,7 @@ gen _contract_edge(const gen &g,GIAC_CONTEXT) {
     int i=G.node_index(E.front()),j=G.node_index(E.back());
     if (i<0 || j<0 || !G.has_edge(i,j))
         return gt_err(_GT_ERR_EDGE_NOT_FOUND,contextptr);
-    G.collapse_edge(i,j);
+    G.contract_edge(i,j);
     G.remove_node(j);
     return G.to_gen();
 }
@@ -4199,30 +4201,49 @@ define_unary_function_ptr5(at_clique_cover,alias_at_clique_cover,&__clique_cover
  */
 gen _clique_cover_number(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    graphe G(contextptr);
+    graphe G(contextptr),C(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    G.complement(C);
+    graphe::ipair bounds=C.chromatic_number_bounds();
     graphe::ivectors cover;
-    assert(G.clique_cover(cover));
+    assert(G.clique_cover(cover,bounds.second,bounds.first));
     return cover.size();
 }
 static const char _clique_cover_number_s[]="clique_cover_number";
 static define_unary_function_eval(__clique_cover_number,&_clique_cover_number,_clique_cover_number_s);
 define_unary_function_ptr5(at_clique_cover_number,alias_at_clique_cover_number,&__clique_cover_number,0,true)
 
-/* USAGE:   chromatic_number(G)
+/* USAGE:   chromatic_number(G,[interval or approx])
  *
  * Returns the chromatic number of graph G (i.e. the clique cover number of the
- * graph complement of G).
+ * graph complement of G). If the optional parameter is given, the bounds are
+ * returned as an interval.
  */
 gen _chromatic_number(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    bool only_provide_bounds=false;
+    if (g.subtype==_SEQ__VECT) {
+        if (g._VECTptr->size()!=2)
+            return gensizeerr(contextptr);
+        gen &opt=g._VECTptr->back();
+        if (opt==at_interval || opt==at_approx)
+            only_provide_bounds=true;
+        else return gentypeerr(contextptr);
+    }
     graphe G(contextptr),C(contextptr);
-    if (!G.read_gen(g))
+    if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    graphe::ipair bounds=G.chromatic_number_bounds();
+    if (only_provide_bounds)
+        return symbolic(at_interval,makesequence(bounds.first,bounds.second));
+    if (bounds.first==bounds.second)
+        return bounds.first;
     G.complement(C);
     graphe::ivectors cover;
-    assert(C.clique_cover(cover));
+    assert(C.clique_cover(cover,bounds.second,bounds.first));
     return cover.size();
 }
 static const char _chromatic_number_s[]="chromatic_number";
@@ -4904,6 +4925,45 @@ gen _plane_dual(const gen &g,GIAC_CONTEXT) {
 static const char _plane_dual_s[]="plane_dual";
 static define_unary_function_eval(__plane_dual,&_plane_dual,_plane_dual_s);
 define_unary_function_ptr5(at_plane_dual,alias_at_plane_dual,&__plane_dual,0,true)
+
+/* USAGE:   is_vertex_colorable(G,k,[col])
+ *
+ * Returns true iff the vertices of graph G can be colored by using at most k colors. If true is returned and an identifier col is given,
+ * the colors of the vertices are stored in it.
+ */
+gen _is_vertex_colorable(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype==_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()<2 || gv.size()>3)
+        return gensizeerr(contextptr);
+    int k;
+    if (!gv[1].is_integer() || (k=gv[1].val)<0)
+        return gentypeerr(contextptr);
+    gen colors_dest=undef;
+    if (gv.size()>2) {
+        if (gv.back().type!=_IDNT)
+            return gentypeerr(contextptr);
+        colors_dest=gv.back();
+    }
+    graphe G(contextptr);
+    if (!G.read_gen(gv.front()))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (!G.is_vertex_colorable(k))
+        return graphe::boole(false);
+    if (!is_undef(colors_dest)) {
+        // store vertex colors to colors_dest
+        graphe::ivector colors;
+        G.get_vertex_colors(colors);
+        vecteur cols=vector_int_2_vecteur(colors);
+        _eval(symbolic(at_sto,makesequence(cols,colors_dest)),contextptr);
+    }
+    return graphe::boole(true);
+}
+static const char _is_vertex_colorable_s[]="is_vertex_colorable";
+static define_unary_function_eval(__is_vertex_colorable,&_is_vertex_colorable,_is_vertex_colorable_s);
+define_unary_function_ptr5(at_is_vertex_colorable,alias_at_is_vertex_colorable,&__is_vertex_colorable,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

@@ -941,8 +941,16 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         make_circular_layout(x,hull,2.5);
     } else if (name=="shrikhande") {
         make_shrikhande_graph();
-        for (int i=0;i<4;++i) hull.push_back(i);
-        make_circular_layout(x,hull,2.5);
+        for (int i=0;i<4;++i) {
+            add_temporary_edge(i,i+8);
+            hull.push_back(i);
+        }
+        add_temporary_edge(8,10);
+        add_temporary_edge(9,11);
+        add_temporary_edge(4,6);
+        add_temporary_edge(5,7);
+        make_circular_layout(x,hull);
+        remove_temporary_edges();
     } else if (name=="tetrahedron") {
         read_special(tetrahedron_graph);
         make_planar_layout(x);

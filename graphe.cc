@@ -3993,41 +3993,42 @@ bool graphe::hakimi(const ivector &L) {
 /* return the (odd) girth of this graph (the length of the shortest (odd) cycle),
  * return -1 if there are no cycles */
 int graphe::girth(bool odd,int sg) {
-    assert(node_stack.empty());
-    int g=-1,h,i,j;
+    assert(node_queue.empty());
+    int g=RAND_MAX,h,i,j;
+    bool hascycle=false;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         unvisit_all_nodes(sg);
         i=it-nodes.begin();
         vertex &v=node(i);
         if (sg>=0 && v.subgraph()!=sg)
             continue;
-        node_stack.push(i);
         v.unset_ancestor();
         v.set_disc(0);
-        while (!node_stack.empty()) {
-            j=node_stack.top();
-            node_stack.pop();
+        node_queue.push(i);
+        while (!node_queue.empty()) {
+            j=node_queue.front();
+            node_queue.pop();
             vertex &w=node(j);
             w.set_visited(true);
             for (ivector_iter jt=w.neighbors().begin();jt!=w.neighbors().end();++jt) {
-                if (*jt==w.ancestor())
-                    continue;
                 vertex &u=node(*jt);
-                if (sg>=0 && u.subgraph()!=sg)
+                if (*jt==w.ancestor() || (sg>=0 && u.subgraph()!=sg))
                     continue;
                 if (!u.is_visited()) {
                     u.set_ancestor(j);
                     u.set_disc(w.disc()+1);
-                    node_stack.push(*jt);
+                    node_queue.push(*jt);
                 } else {
                     h=w.disc()+u.disc()+1;
-                    if (!odd || h%2!=0)
-                        g=g<0?h:std::min(g,h);
+                    if (h<g && (!odd || h%2!=0)) {
+                        hascycle=true;
+                        g=h;
+                    }
                 }
             }
         }
     }
-    return g;
+    return hascycle?g:-1;
 }
 
 /* create a graph from LCF notation [jumps]^e */
@@ -5134,7 +5135,7 @@ int graphe::planar_embedding(ivectors &faces) {
 /* compute the periphericity of the vertices with respect to
  * the outer face by applying BFS (starting in each of the outer vertices) */
 void graphe::periphericity(const ivector &outer_face,ivector &p) {
-    queue<int> q;
+    assert(node_queue.empty());
     int level,i,j;
     std::fill(p.begin(),p.end(),RAND_MAX);
     for (ivector_iter jt=outer_face.begin();jt!=outer_face.end();++jt) {
@@ -5142,10 +5143,10 @@ void graphe::periphericity(const ivector &outer_face,ivector &p) {
     }
     for (ivector_iter it=outer_face.begin();it!=outer_face.end();++it) {
         unvisit_all_nodes();
-        q.push(*it);
+        node_queue.push(*it);
         level=1;
-        while (!q.empty()) {
-            i=q.front();
+        while (!node_queue.empty()) {
+            i=node_queue.front();
             vertex &v=node(i);
             for (ivector_iter jt=v.neighbors().begin();jt!=v.neighbors().end();++jt) {
                 j=*jt;
@@ -5155,11 +5156,11 @@ void graphe::periphericity(const ivector &outer_face,ivector &p) {
                     continue;
                 if (level<p[j])
                     p[j]=level;
-                q.push(j);
+                node_queue.push(j);
                 w.set_visited(true);
             }
             ++level;
-            q.pop();
+            node_queue.pop();
         }
     }
 }
@@ -6268,7 +6269,7 @@ void graphe::bfs(int root,bool rec,bool clr,ivector *D,int sg,bool skip_embedded
         d.clear();
         d.reserve(node_count());
     }
-    queue<int> node_queue;
+    assert(node_queue.empty());
     node_queue.push(root);
     int i,j;
     while (!node_queue.empty()) {
@@ -6945,21 +6946,20 @@ void graphe::get_node_colors(ivector &colors) {
 
 /* return true iff the graph is bipartite, time complexity O(n+m) */
 bool graphe::is_bipartite(ivector &V1,ivector &V2,int sg) {
-    assert(!is_directed());
+    assert(!is_directed() && node_queue.empty());
     uncolor_all_nodes(-1,sg);
     node(0).set_color(1);
-    queue<int> q;
     node_iter nt=nodes.begin();
     for (;nt!=nodes.end();++nt) {
         if (sg<0 || nt->subgraph()==sg)
             break;
     }
     assert(nt!=nodes.end());
-    q.push(nt-nodes.begin());
+    node_queue.push(nt-nodes.begin());
     int i;
-    while (!q.empty()) {
-        i=q.front();
-        q.pop();
+    while (!node_queue.empty()) {
+        i=node_queue.front();
+        node_queue.pop();
         vertex &v=node(i);
         for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
             vertex &w=node(*it);
@@ -6967,7 +6967,7 @@ bool graphe::is_bipartite(ivector &V1,ivector &V2,int sg) {
                 continue;
             if (w.color()==-1) {
                 w.set_color(1-v.color());
-                q.push(*it);
+                node_queue.push(*it);
             } else if (w.color()==v.color())
                 return false;
         }

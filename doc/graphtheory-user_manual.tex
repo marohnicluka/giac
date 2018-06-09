@@ -1008,7 +1008,7 @@ For the details about the {\sf dot} format see Section~\ref{sec:dotformat}.
 
 For example, assume that the file {\tt "philosophers.dot"} is saved in the directory {\tt dot/}, containing the graph describing the famous ``dining philosophers'' problem. To import it, input:
 \begin{center}
-  \tt G:=import\_graph("dot/philosophers.dot"
+  \tt G:=import\_graph("dot/philosophers.dot")
 \end{center}
 Output:
 \begin{center}
@@ -1092,7 +1092,7 @@ Output:
 
 The command {\tt dijkstra} accepts two or three arguments: a weighted graph $ G(V,E) $ with nonnegative weights, a vertex $ s\in V $ and optionally a vertex $ t\in V $ or list $ T $ of vertices in $ V $. It returns the cheapest path from $ s $ to $ t $ or, if more target vertices are given, the list of such paths to each target vertex $ t\in T $, computed by Dijkstra's algorithm in $ O(|V|^2) $ time. If no target vertex is specified, all vertices in $ V\setminus\{s\} $ are assumed to be targets.
 
-A cheapest path from $ s $ to $ t $ is represented with a list {\tt [[v1,v2,...,vk],c]} where the first element consists of path vertices with $ v_1=s $ and $ v_k=t $, while the second element $ c $ is the weight (cost) of that path, equal to the sum of weights of edges along the path, which is required to be minimal.
+A cheapest path from $ s $ to $ t $ is represented with a list {\tt [[v1,v2,...,vk],c]} where the first element consists of path vertices with $ v_1=s $ and $ v_k=t $, while the second element $ c $ is the weight (cost) of that path, equal to the sum of weights of its edges.
 
 \subsection{Spanning trees: {\tt spanning\_tree}, {\tt minimal\_spanning\_tree}}
 
@@ -1119,9 +1119,7 @@ The style options {\tt spring}, {\tt tree}, {\tt circle}, {\tt planar} and {\tt 
 
 When no style option is specified, the algorithm first checks if the graph $ G $ is bipartite or a tree, in which case it is drawn accordingly. Else the graph is drawn as if the option {\tt circle} was specified.
 
-Graph drawings in the plane, when force-directed methods are used (i.e.~when specifying {\tt spring} or {\tt planar} style), will often reflect axial symmetry if present in the graph. To make it more prominent in a drawing, rotation of the layout is performed in order for the corresponding axis to become vertical. This is done separately for every connected component of~$ G $.
-
-Tree and circle drawings can be obtained in linear time with a very small overhead, allowing graphs to be drawn quickly no matter the size. The force-directed algorithms are more expensive and operating in the time which is quadratic in the number of vertices. Their performance is, nevertheless, practically instantaneous for graphs with several hundreds of vertices (or less).
+Tree, circle and bipartite drawings can be obtained in linear time with a very small overhead, allowing graphs to be drawn quickly no matter the size. The force-directed algorithms are more expensive and operating in the time which is quadratic in the number of vertices. Their performance is, nevertheless, practically instantaneous for graphs with several hundreds of vertices (or less).
 
 \subsection{Setting custom vertex positions: {\tt set\_vertex\_positions}, {\tt get\_vertex\_positions}}
 

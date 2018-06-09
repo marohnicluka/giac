@@ -405,6 +405,7 @@ private:
     ivector discovered_nodes;
     std::stack<ipair> edge_stack;
     std::stack<int> node_stack;
+    std::queue<int> node_queue;
     ivectors visited_edges;
     void clear_node_stack();
     void message(const char *str) const;

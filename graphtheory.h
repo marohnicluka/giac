@@ -216,6 +216,7 @@ gen _greedy_color(const gen &g,GIAC_CONTEXT);
 gen _is_vertex_colorable(const gen &g,GIAC_CONTEXT);
 gen _plane_dual(const gen &g,GIAC_CONTEXT);
 gen _set_vertex_positions(const gen &g,GIAC_CONTEXT);
+gen _clique_stats(const gen &g,GIAC_CONTEXT);
 //gen _spanning_polynomial(const gen &g,GIAC_CONTEXT);
 //gen _transitive_closure(const gen &g,GIAC_CONTEXT);
 //gen _fundamental_cycle(const gen &g,GIAC_CONTEXT);

@@ -3512,14 +3512,12 @@ void graphe::make_tutte_layout(layout &x,const ivector &outer_face) {
 }
 
 /* Tomita recursive algorithm (a variant of Bron-Kerbosch) for maximal cliques */
-void graphe::tomita_recurse(ivector &R,ivector &P,ivector &X,ivectors &res,bool store_all) const {
+void graphe::tomita(ivector &R,ivector &P,ivector &X,map<int,int> &m,bool store_matching) const {
     if (P.empty() && X.empty()) {
-        if (store_all)
-            res.push_back(R);
-        else if (res.empty() || res.front().size()<R.size()) {
-            res.clear();
-            res.push_back(R);
-        }
+        if (store_matching) {
+            if (R.size()==2)
+                m[R.front()]=R.back();
+        } else ++m[R.size()];
     } else {
         // choose as the pivot element the node with the highest number of neighbors in P, say i-th
         ivector PUX,PP,XX;
@@ -3537,7 +3535,6 @@ void graphe::tomita_recurse(ivector &R,ivector &P,ivector &X,ivectors &res,bool 
             }
         }
         PUX.clear(); // not needed any more
-        // for each vertex in P\N(i) do recursion
         sets_difference(P,node(i).neighbors(),S);
         for (it=S.begin();it!=S.end();++it) {
             v=*it;
@@ -3548,7 +3545,7 @@ void graphe::tomita_recurse(ivector &R,ivector &P,ivector &X,ivectors &res,bool 
             R.insert(jt,v);
             sets_intersection(P,w.neighbors(),PP);
             sets_intersection(X,w.neighbors(),XX);
-            tomita_recurse(R,PP,XX,res,store_all);
+            tomita(R,PP,XX,m,store_matching);
             R.erase(find(R.begin(),R.end(),v));
             P.erase(find(P.begin(),P.end(),v));
             for (jt=X.begin();jt!=X.end();++jt) {
@@ -3560,14 +3557,15 @@ void graphe::tomita_recurse(ivector &R,ivector &P,ivector &X,ivectors &res,bool 
 }
 
 /* a modified version of the Bron-Kerbosch algorithm for listing all maximal cliques,
- * developed by Tomita et al. */
-void graphe::tomita(ivectors &res,bool store_all) {
+ * developed by Tomita et al. Number of k-cliques will be stored to m[k] for each k.
+ * If store_matching is true, store 2-cliques (v,w) as m[v]=w. */
+void graphe::clique_stats(map<int,int> &m,bool store_matching) {
     ivector R,X,P(node_count());
     for (int i=0;i<node_count();++i) {
         P[i]=i;
         node(i).sort_neighbors();
     }
-    tomita_recurse(R,P,X,res,store_all);
+    tomita(R,P,X,m,store_matching);
 }
 
 /* CP recursive subroutine */
@@ -3631,6 +3629,10 @@ void graphe::ostergard::recurse(ivector &U, int size) {
         }
         return;
     }
+    if (timeout>0 && double(clock()-start)/CLOCKS_PER_SEC>timeout && !incumbent.empty()) {
+        timed_out=true;
+        return;
+    }
     int i,j,minpos,p;
     ivector::iterator it;
     ivector V;
@@ -3666,7 +3668,7 @@ void graphe::ostergard::recurse(ivector &U, int size) {
         clique_nodes.push_back(i);
         recurse(V,size+1);
         clique_nodes.pop_back();
-        if (found)
+        if (found || timed_out)
             break;
     }
 }
@@ -3681,18 +3683,17 @@ int graphe::ostergard::maxclique(ivector &clique) {
         v.sort_neighbors();
         v.set_low(0);
     }
-    //degree_comparator comp(G);
-    //sort(S.begin(),S.end(),comp);
     G->greedy_vertex_coloring_biggs(S);
     std::reverse(S.begin(),S.end());
     G->node(S.back()).set_low(1);
     for (ivector_iter it=S.begin();it!=S.end();++it) {
         G->node(*it).set_position(it-S.begin());
     }
-    // find maximum clique
     maxsize=0;
     clique_nodes.clear();
     int k;
+    start=clock();
+    timed_out=false;
     for (int i=n;i-->0;) {
         found=false;
         k=S[i];
@@ -3704,6 +3705,8 @@ int graphe::ostergard::maxclique(ivector &clique) {
         }
         clique_nodes.push_back(k);
         recurse(U,1);
+        if (timed_out)
+            break;
         clique_nodes.pop_back();
         v.set_low(maxsize);
     }
@@ -3725,51 +3728,274 @@ int graphe::maximum_clique(ivector &clique) {
     return ost.maxclique(clique);
 }
 
-/* return true iff the graph can be covered with exactly k maximal cliques
- * (also provide indices of those cliques) */
-bool graphe::has_k_clique_cover(int k,const ivectors &maximal_cliques,ivector &cv) const {
-    int n=maximal_cliques.size(),nv=node_count(),nchoosek=comb(n,k).val,cnt,csum,ncov,i,m;
-    vector<ulong> nk_sets(nchoosek);
-    generate_nk_sets(n,k,nk_sets);
-    cv.resize(k);
-    ivector csums(k);
-    vector<bool> covered(nv);
-    for (vector<ulong>::const_iterator it=nk_sets.begin();it!=nk_sets.end();++it) {
-        cnt=csum=0;
-        for (i=0,m=1;i<n;++i,m*=2) {
-            if ((*it & m)!=0)
-                cv[cnt++]=i;
-        }
-        // skip each k-subset of maximal cliques that cannot cover all vertices
-        for (i=k;i-->0;) {
-            csum+=maximal_cliques[cv[i]].size();
-            csums[i]=csum;
-        }
-        if (csum<nv)
-            continue;
-        // check if the union of cliques from the k-subset covers the graph
-        std::fill(covered.begin(),covered.end(),false);
-        ncov=0;
-        for (ivector_iter jt=cv.begin();jt!=cv.end();++jt) {
-            // check of the remaining cliques can cover the rest of the graph
-            if (ncov+csums[jt-cv.begin()]<nv)
-                break;
-            const ivector &clique=maximal_cliques[*jt];
-            for (ivector_iter kt=clique.begin();kt!=clique.end();++kt) {
-                if (!covered[*kt])
-                    ++ncov;
-                covered[*kt]=true;
+/* remove a maximal clique from vertex set V using a fast greedy algorithm
+ * (Johnson, J. Comp. Syst. Sci. 1974) */
+void graphe::remove_maximal_clique(ivector &V) const {
+    ivector U=V,W,tmp;
+    int s,smax,i;
+    do {
+        smax=i=0;
+        W.clear();
+        for (ivector_iter it=U.begin();it!=U.end();++it) {
+            if ((s=sets_intersection(U,node(*it).neighbors(),tmp))>smax) {
+                smax=s;
+                W=tmp;
+                i=it-U.begin();
             }
-            if (ncov==nv)
-                return true;
         }
-    }
-    return false;
+        V.erase(find(V.begin(),V.end(),U[i]));
+    } while (!(U=W).empty());
 }
 
-/* returns true iff there is a clique cover of order not larger than k but
- * no less than lb and finds that cover */
-bool graphe::clique_cover(ivectors &cover,int k,int lb) {
+/* approximate neighborhood clique cover number for every vertex */
+void graphe::greedy_neighborhood_clique_cover_numbers(ivector &cover_numbers) {
+    int n=node_count();
+    cover_numbers.resize(n,0);
+    for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
+        it->sort_neighbors();
+    }
+    ivector V;
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        V=it->neighbors();
+        int &cn=cover_numbers[it-nodes.begin()];
+        while (!V.empty()) {
+            remove_maximal_clique(V);
+            ++cn;
+        }
+    }
+}
+
+/* find optimal vertex coloring using an exact algorithm, requires GLPK */
+int graphe::exact_vertex_coloring(int max_colors) {
+    int ncolors=0;
+#ifndef HAVE_LIBGLPK
+    message("Error: GLPK library is required");
+#else
+    uncolor_all_nodes();
+    ivector cover_number;
+    greedy_neighborhood_clique_cover_numbers(cover_number);
+    ivector max_clique;
+    ostergard ost(this,5.0); // stop searching after 5 seconds
+    int lb=ost.maxclique(max_clique); // lower bound for number of colors
+    int ub=max_colors==0?dsatur():max_colors; // upper bound for number of colors
+    int res=0,status=GLP_OPT;
+    if (ub<lb)
+        return 0;
+    glp_prob *lp;
+    int n=node_count(),nonzeros=0,cnt=0,rightside,cn,i,j,k,val;
+    vector<bool> is_clique_vertex(n,false);
+    ivectors values(n);
+    for (ivector_iter it=max_clique.begin();it!=max_clique.end();++it) {
+        is_clique_vertex[*it]=true;
+    }
+    for (ivectors::iterator it=values.begin();it!=values.end();++it) {
+        it->resize(ub,is_clique_vertex[it-values.begin()]?0:-1);
+    }
+    for (ivector_iter it=max_clique.begin();it!=max_clique.end();++it) {
+        j=it-max_clique.begin();
+        values[*it][j]=1;
+        const vertex &v=node(*it);
+        for (ivector_iter jt=v.neighbors().begin();jt!=v.neighbors().end();++jt) {
+            values[*jt][j]=0;
+        }
+    }
+    lp=glp_create_prob();
+    glp_set_obj_dir(lp,GLP_MAX);
+    // create row variables
+    int nrows=n*(ub+2)-3*lb;
+    glp_add_rows(lp,nrows);
+    for (i=0;i<n;++i) {
+        if (!is_clique_vertex[i]) {
+            glp_set_row_bnds(lp,++cnt,GLP_FX,1.0,1.0);
+            ivector &vals=values[i];
+            for (ivector_iter it=vals.begin();it!=vals.end();++it) {
+                if (*it<0)
+                    ++nonzeros;
+            }
+        }
+    }
+    for (k=0;k<n;++k) {
+        cn=cover_number[k];
+        const vertex &v=node(k);
+        for (j=0;j<ub;++j) {
+            if (j<lb && k==max_clique[j])
+                continue;
+            nonzeros+=2;
+            rightside=j<lb?cn:0;
+            for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
+                i=*it;
+                if ((val=values[*it][j])<0)
+                    ++nonzeros;
+                else rightside-=val;
+            }
+            glp_set_row_bnds(lp,++cnt,GLP_UP,0.0,rightside);
+        }
+    }
+    for (i=0;i<n;++i) {
+        if (!is_clique_vertex[i]) {
+            glp_set_row_bnds(lp,++cnt,GLP_UP,0.0,lb);
+            nonzeros+=ub-lb;
+            ivector &vals=values[i];
+            for (ivector_iter it=vals.begin();it!=vals.end();++it) {
+                if (*it<0)
+                    ++nonzeros;
+            }
+        }
+    }
+    assert(cnt==nrows);
+    // create column variables
+    int ncols=0;
+    for (ivectors_iter it=values.begin();it!=values.end();++it) {
+        for (ivector_iter jt=it->begin();jt!=it->end();++jt) {
+            if (*jt<0)
+                ++ncols;
+        }
+    }
+    int ncols_v=ncols;
+    ncols+=ub-lb;
+    if (ncols>0) {
+        // solve the coloring problem as MIP
+        glp_add_cols(lp,ncols);
+        for (i=0;i<ncols;++i) {
+            glp_set_col_kind(lp,i+1,GLP_BV);
+            if (i>=ncols_v)
+                glp_set_obj_coef(lp,i+1,1.0);
+        }
+        // create constraint matrix (only nonzero entries)
+        int *ia=new int[nonzeros+1],*ja=new int[nonzeros+1];
+        double *ar=new double[nonzeros+1];
+        cnt=0;
+        int col,row=0;
+        for (i=0;i<n;++i) {
+            if (is_clique_vertex[i])
+                continue;
+            ++row;
+            col=0;
+            for (ivectors_iter it=values.begin();it!=values.end();++it) {
+                k=it-values.begin();
+                for (ivector_iter jt=it->begin();jt!=it->end();++jt) {
+                    j=jt-it->begin();
+                    if (*jt<0) {
+                        ++col;
+                        if (i==k) {
+                            ia[++cnt]=row;
+                            ja[cnt]=col;
+                            ar[cnt]=1.0;
+                        }
+                    }
+                }
+            }
+        }
+        bool hn;
+        for (k=0;k<n;++k) {
+            cn=cover_number[k];
+            const vertex &v=node(k);
+            for (j=0;j<ub;++j) {
+                if (j<lb && k==max_clique[j])
+                    continue;
+                ++row;
+                col=0;
+                for (ivectors_iter it=values.begin();it!=values.end();++it) {
+                    hn=v.has_neighbor(i=it-values.begin());
+                    for (ivector_iter jt=it->begin();jt!=it->end();++jt) {
+                        if (*jt<0) {
+                            ++col;
+                            if (j==int(jt-it->begin()) && (hn || i==k)) {
+                                ia[++cnt]=row;
+                                ja[cnt]=col;
+                                ar[cnt]=(i==k?cn:1.0);
+                            }
+                        }
+                    }
+                }
+                assert(col==ncols_v);
+                if (j>=lb) {
+                    col+=1+j-lb;
+                    ia[++cnt]=row;
+                    ja[cnt]=col;
+                    ar[cnt]=-cn;
+                }
+            }
+        }
+        for (i=0;i<n;++i) {
+            if (is_clique_vertex[i])
+                continue;
+            ++row;
+            col=0;
+            for (ivectors_iter it=values.begin();it!=values.end();++it) {
+                k=it-values.begin();
+                for (ivector_iter jt=it->begin();jt!=it->end();++jt) {
+                    j=jt-it->begin();
+                    if (*jt<0) {
+                        ++col;
+                        if (i==k) {
+                            ia[++cnt]=row;
+                            ja[cnt]=col;
+                            ar[cnt]=j+1;
+                        }
+                    }
+                }
+            }
+            assert(col==ncols_v);
+            while (col<ncols) {
+                ++col;
+                ia[++cnt]=row;
+                ja[cnt]=col;
+                ar[cnt]=-1.0;
+            }
+        }
+        assert(cnt<=nonzeros && row==nrows);
+        glp_load_matrix(lp,cnt,ia,ja,ar);
+        glp_iocp parm;
+        glp_init_iocp(&parm);
+        parm.msg_lev=GLP_MSG_ERR; // report GLPK errors
+        parm.br_tech=GLP_BR_MFV; // branch on most fractional variable
+        parm.gmi_cuts=GLP_ON;
+        parm.mir_cuts=GLP_ON;
+        parm.clq_cuts=GLP_ON;
+        parm.cov_cuts=GLP_ON;
+        parm.presolve=GLP_ON;
+        res=glp_intopt(lp,&parm);
+        delete[] ia;
+        delete[] ja;
+        delete[] ar;
+    }
+    ivector color(ub,0);
+    int col=0,c=0;
+    if (res==0) {
+        switch (status) {
+        case GLP_FEAS:
+            message("Warning: the coloring is not optimal");
+        case GLP_OPT:
+            ncolors=glp_mip_obj_val(lp)+lb;
+            for (ivectors_iter it=values.begin();it!=values.end();++it) {
+                i=it-values.begin();
+                for (ivector_iter jt=it->begin();jt!=it->end();++jt) {
+                    j=jt-it->begin();
+                    if (*jt!=0) {
+                        if (*jt<0) ++col;
+                        if (*jt==1 || glp_get_col_prim(lp,col)!=0) {
+                            if (color[j]==0)
+                                color[j]=++c;
+                            node(i).set_color(color[j]);
+                        }
+                    }
+                }
+            }
+            break;
+        case GLP_UNDEF:
+            message("Warning: MIP solution undefined");
+        case GLP_NOFEAS:
+            return 0;
+        }
+    } else message("Error: MIP solver failure");
+    glp_delete_prob(lp);
+#endif
+    return ncolors;
+}
+
+/* returns true iff there is a clique cover of order not larger than k and finds that cover */
+bool graphe::clique_cover(ivectors &cover,int k) {
     if (is_triangle_free()) {
         // clique cover consists of matched edges and singleton vertex sets
         ipairs matching;
@@ -3795,31 +4021,18 @@ bool graphe::clique_cover(ivectors &cover,int k,int lb) {
         }
         return true;
     }
-    // a naive algorithn for clique cover
-    ivectors maximal_cliques;
-    ivector indices;
-    tomita(maximal_cliques);
-    int mcsize=maximal_cliques.size(),nchecks=0;
-    for (int i=lb;i<=k;++i) {
-        nchecks+=comb(mcsize,i).val;
-    }
-    if (nchecks>1e6) {
-        message("Error: the number of clique combinations to be tested is too large: %d, aborting search",nchecks);
+    graphe C(ctx);
+    complement(C);
+    int ncliques=C.exact_vertex_coloring();
+    if (ncliques==0 || (k>0 && ncliques>k))
         return false;
+    cover.clear();
+    cover.resize(ncliques);
+    for (int i=node_count();i-->0;) {
+        const vertex &v=C.node(i);
+        cover[v.color()-1].push_back(i);
     }
-    for (ivectors::iterator it=maximal_cliques.begin();it!=maximal_cliques.end();++it) {
-        sort(it->begin(),it->end());
-    }
-    for (int i=lb;i<=(k==0?mcsize:k);++i) {
-        if (has_k_clique_cover(i,maximal_cliques,indices)) {
-            cover.resize(i);
-            for (ivector_iter it=indices.begin();it!=indices.end();++it) {
-                cover[it-indices.begin()]=maximal_cliques[*it];
-            }
-            return true;
-        }
-    }
-    return false;
+    return true;
 }
 
 /* return true iff the graph is complete (i.e., a clique) */
@@ -4091,15 +4304,13 @@ void graphe::make_sierpinski_graph(int n, int k, bool triangle) {
     }
     if (triangle) {
         // remove all non-clique edges to obtain Sierpinski triangle graph
-        ivectors cliques;
-        tomita(cliques);
+        map<int,int> m;
+        clique_stats(m,true);
         ivector isolated_nodes;
-        for (ivectors_iter it=cliques.begin();it!=cliques.end();++it) {
-            if (it->size()==2) {
-                int v=it->front(),w=it->back();
+        for (map<int,int>::const_iterator it=m.begin();it!=m.end();++it) {
+                int v=it->first,w=it->second;
                 contract_edge(v,w);
                 isolated_nodes.push_back(w);
-            }
         }
         sort(isolated_nodes.begin(),isolated_nodes.end());
         for (unsigned i=isolated_nodes.size();i-->0;) {
@@ -7138,33 +7349,16 @@ bool graphe::is_vertex_colorable(int k) {
     // next try dsatur algorithm (quadratic time)
     if (dsatur()<=k)
         return true;
-    // compare the lower bound (the size of maximum clique)
-    ivector clique;
-    int lb=maximum_clique(clique);
-    if (lb>k)
-        return false;
-    // finally resort to brute force search, which works for smaller graphs
-    graphe C(ctx);
-    complement(C);
-    ivectors cover;
-    if (C.clique_cover(cover,k,lb)) {
-        int col=1;
-        for (ivectors_iter it=cover.begin();it!=cover.end();++it) {
-            for (ivector_iter jt=it->begin();jt!=it->end();++jt) {
-                node(*jt).set_color(col);
-            }
-            ++col;
-        }
-        return true;
-    }
-    return false;
+    // finally resort to solving MIP problem
+    return exact_vertex_coloring(k)!=0;
 }
 
 /* return the lower and the upper bound for chromatic number (inclusive) */
 graphe::ipair graphe::chromatic_number_bounds() {
     // the lower bound is the size of maximum clique
     ivector clique;
-    int lb=maximum_clique(clique);
+    ostergard ost(this,3.0); // with timeout
+    int lb=ost.maxclique(clique);
     // the upper bound is given by heuristic dsatur algorithm
     int ub=dsatur();
     return make_pair(lb,ub);

@@ -32,6 +32,9 @@
 #include <queue>
 #include <stack>
 #include <set>
+#ifdef HAVE_LIBGLPK
+#include <glpk.h>
+#endif
 
 #ifndef DBL_MAX
 #define DBL_MAX 1.79769313486e+308
@@ -306,12 +309,15 @@ public:
         graphe *G;
         int maxsize;
         bool found;
+        double timeout; // in seconds
         ivector c;
         ivector incumbent;
         ivector clique_nodes;
+        clock_t start;
+        bool timed_out;
         void recurse(ivector &U,int size);
     public:
-        ostergard(graphe *gr) { G=gr; }
+        ostergard(graphe *gr,double max_time=0) { G=gr; timeout=max_time; }
         int maxclique(ivector &clique);
     };
 
@@ -450,12 +456,11 @@ private:
     void multilevel_recursion(layout &x,int d,double R,double K,double tol,int depth=0);
     int mdeg(const ivector &V,int i) const;
     void coarsening(graphe &G,const sparsemat &P,const ivector &V) const;
-    void tomita_recurse(ivector &R,ivector &P,ivector &X,ivectors &res,bool store_all) const;
+    void tomita(ivector &R,ivector &P,ivector &X,std::map<int,int> &m,bool store_matching) const;
     int cp_maxclique(ivector &clique);
     void cp_recurse(ivector &C,ivector &P,ivector &incumbent);
     int ost_maxclique(ivector &clique);
     void ost_recursive(ivector &U,int size,int &maxsize,ivector &incumbent,bool &found);
-    bool has_k_clique_cover(int k,const ivectors &maximal_cliques,ivector &cv) const;
     void remove_isolated_node(int i);
     void find_cut_vertices_dfs(int i,ivector &ap,int sg);
     void find_blocks_dfs(int i,std::vector<ipairs> &blocks,int sg);
@@ -508,6 +513,7 @@ private:
     void augment(const ivectors &faces,int outer_face,bool subdivide=false);
     int saturation_degree(const vertex &v,std::set<int> &colors) const;
     int dsatur();
+    void remove_maximal_clique(ivector &V) const;
 
 public:
     graphe(const context *contextptr=context0);
@@ -678,10 +684,10 @@ public:
     bool is_clique() const;
     bool is_triangle_free() const;
     int tree_height(int root);
-    void tomita(ivectors &res,bool store_all=true);
+    void clique_stats(std::map<int,int> &m,bool store_matching=false);
     int maximum_clique(ivector &clique);
-    bool clique_cover(ivectors &cover,int k=0,int lb=1);
-    int chromatic_number() const;
+    void greedy_neighborhood_clique_cover_numbers(ivector &cover_numbers);
+    bool clique_cover(ivectors &cover,int k=0);
     int maximum_independent_set(ivector &v) const;
     int girth(bool odd=false,int sg=-1);
     bool hakimi(const ivector &L);
@@ -747,6 +753,7 @@ public:
     vecteur get_st_numbering() const;
     void greedy_vertex_coloring_biggs(ivector &ordering);
     int greedy_vertex_coloring(const ivector &p);
+    int exact_vertex_coloring(int max_colors=0);
     void get_node_colors(ivector &colors);
     bool is_bipartite(ivector &V1,ivector &V2,int sg=-1);
     bool is_vertex_colorable(int k);

@@ -4210,46 +4210,59 @@ gen _clique_cover_number(const gen &g,GIAC_CONTEXT) {
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     G.complement(C);
-    graphe::ipair bounds=C.chromatic_number_bounds();
-    graphe::ivectors cover;
-    assert(G.clique_cover(cover,bounds.second,bounds.first));
-    return cover.size();
+    int ncov=C.exact_vertex_coloring();
+    if (ncov==0)
+        return undef;
+    return ncov;
 }
 static const char _clique_cover_number_s[]="clique_cover_number";
 static define_unary_function_eval(__clique_cover_number,&_clique_cover_number,_clique_cover_number_s);
 define_unary_function_ptr5(at_clique_cover_number,alias_at_clique_cover_number,&__clique_cover_number,0,true)
 
-/* USAGE:   chromatic_number(G,[interval or approx])
+/* USAGE:   chromatic_number(G,[interval or approx],[cols])
  *
- * Returns the chromatic number of graph G (i.e. the clique cover number of the
- * graph complement of G). If the optional parameter is given, the bounds are
- * returned as an interval.
+ * Returns the chromatic number of graph G. If "interval" or "approx" parameter
+ * is given, the bounds are returned as an interval. If identifier cols is
+ * given, the coloring will be stored to it.
  */
 gen _chromatic_number(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT)
         return gentypeerr(contextptr);
+    gen colors_dest=undef;
     bool only_provide_bounds=false;
     if (g.subtype==_SEQ__VECT) {
-        if (g._VECTptr->size()!=2)
+        vecteur &gv=*g._VECTptr;
+        if (gv.size()<2 || gv.size()>3)
             return gensizeerr(contextptr);
-        gen &opt=g._VECTptr->back();
+        gen &opt=g._VECTptr->at(1);
         if (opt==at_interval || opt==at_approx)
             only_provide_bounds=true;
+        else if (gv.size()==2 && opt.type==_IDNT)
+            colors_dest=opt;
         else return gentypeerr(contextptr);
+        if (gv.size()==3) {
+            if (gv.back().type!=_IDNT)
+                return gentypeerr(contextptr);
+            colors_dest=gv.back();
+        }
     }
-    graphe G(contextptr),C(contextptr);
+    graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    graphe::ipair bounds=G.chromatic_number_bounds();
-    if (only_provide_bounds)
+    if (only_provide_bounds) {
+        graphe::ipair bounds=G.chromatic_number_bounds();
         return symbolic(at_interval,makesequence(bounds.first,bounds.second));
-    if (bounds.first==bounds.second)
-        return bounds.first;
-    G.complement(C);
-    graphe::ivectors cover;
-    assert(C.clique_cover(cover,bounds.second,bounds.first));
-    return cover.size();
+    }
+    int ncolors=G.exact_vertex_coloring();
+    if (ncolors==0)
+        return undef;
+    if (!is_undef(colors_dest)) { // store the coloring
+        graphe::ivector colors;
+        G.get_node_colors(colors);
+        _eval(symbolic(at_sto,makesequence(vector_int_2_vecteur(colors),colors_dest)),contextptr);
+    }
+    return ncolors;
 }
 static const char _chromatic_number_s[]="chromatic_number";
 static define_unary_function_eval(__chromatic_number,&_chromatic_number,_chromatic_number_s);
@@ -4257,8 +4270,8 @@ define_unary_function_ptr5(at_chromatic_number,alias_at_chromatic_number,&__chro
 
 /* USAGE:   maximum_independent_set(G)
  *
- * Returns the maximum independent vertex set of graph G (i.e. maximum clique of
- * the graph complement of G).
+ * Returns the maximum independent vertex set of graph G (i.e. maximum clique
+ * of the graph complement of G).
  */
 gen _maximum_independent_set(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -5005,6 +5018,54 @@ gen _set_vertex_positions(const gen &g,GIAC_CONTEXT) {
 static const char _set_vertex_positions_s[]="set_vertex_positions";
 static define_unary_function_eval(__set_vertex_positions,&_set_vertex_positions,_set_vertex_positions_s);
 define_unary_function_ptr5(at_set_vertex_positions,alias_at_set_vertex_positions,&__set_vertex_positions,0,true)
+
+/* USAGE:   clique_stats(G,[k or m..n])
+ *
+ * Returns the list of numbers of maximal cliques of size s in the graph G for
+ * each s. If parameter k is given, the number of k-cliques is returned. If an
+ * interval m..n is given, only cliques with size between m and n (inclusive)
+ * are counted (m also may be +infinity).
+ */
+gen _clique_stats(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    int lb=0,ub=RAND_MAX;
+    if (g.subtype==_SEQ__VECT) {
+        if (g._VECTptr->size()!=2)
+            return gensizeerr(contextptr);
+        gen &opt=g._VECTptr->back();
+        if (opt.is_integer() && (lb=opt.val)>0)
+            ub=opt.val;
+        else if (opt.is_symb_of_sommet(at_interval)) {
+            vecteur &bnds=*opt._SYMBptr->feuille._VECTptr;
+            if (!bnds.front().is_integer() ||
+                    !(bnds.back().is_integer() ||
+                      (is_inf(bnds.back()) && is_positive(bnds.back(),contextptr))))
+                return gentypeerr(contextptr);
+            lb=bnds.front().val;
+            ub=is_inf(bnds.back())?RAND_MAX:bnds.back().val;
+            if (lb<0 || ub<0 || lb>ub)
+                return gensizeerr(contextptr);
+        } else return gentypeerr(contextptr);
+    }
+    graphe G(contextptr);
+    if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    map<int,int> stats;
+    G.clique_stats(stats);
+    if (lb==ub)
+        return stats[lb];
+    vecteur res;
+    for (map<int,int>::const_iterator it=stats.begin();it!=stats.end();++it) {
+        if (it->first<=ub && it->first>=lb)
+            res.push_back(makevecteur(it->first,it->second));
+    }
+    return res;
+}
+static const char _clique_stats_s[]="clique_stats";
+static define_unary_function_eval(__clique_stats,&_clique_stats,_clique_stats_s);
+define_unary_function_ptr5(at_clique_stats,alias_at_clique_stats,&__clique_stats,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

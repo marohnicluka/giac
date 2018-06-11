@@ -3769,7 +3769,7 @@ void graphe::greedy_neighborhood_clique_cover_numbers(ivector &cover_numbers) {
 int graphe::exact_vertex_coloring(int max_colors) {
     int ncolors=0;
 #ifndef HAVE_LIBGLPK
-    message("Error: GLPK library is required");
+    message("Error: GLPK library is required for exact graph coloring");
 #else
     uncolor_all_nodes();
     ivector cover_number;
@@ -3824,7 +3824,7 @@ int graphe::exact_vertex_coloring(int max_colors) {
             rightside=j<lb?cn:0;
             for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
                 i=*it;
-                if ((val=values[*it][j])<0)
+                if ((val=values[i][j])<0)
                     ++nonzeros;
                 else rightside-=val;
             }
@@ -3974,7 +3974,7 @@ int graphe::exact_vertex_coloring(int max_colors) {
                     j=jt-it->begin();
                     if (*jt!=0) {
                         if (*jt<0) ++col;
-                        if (*jt==1 || glp_get_col_prim(lp,col)!=0) {
+                        if (*jt==1 || glp_mip_col_val(lp,col)!=0) {
                             if (color[j]==0)
                                 color[j]=++c;
                             node(i).set_color(color[j]);

@@ -6589,8 +6589,8 @@ bool graphe::is_tournament() {
 }
 
 /* return true iff the graph is planar */
-bool graphe::is_planar(ivectors &faces) {
-    ivectors components;
+bool graphe::is_planar() {
+    ivectors components,faces;
     int m;
     connected_components(components);
     for (ivectors_iter it=components.begin();it!=components.end();++it) {
@@ -7339,7 +7339,7 @@ bool graphe::is_vertex_colorable(int k) {
         return true;
     }
     if (k>node_count()) {
-        message("Warning: trere are more colors than vertices");
+        message("Warning: there are more colors than vertices");
         return false;
     }
     // try greedy coloring first (linear time), use random order of vertices

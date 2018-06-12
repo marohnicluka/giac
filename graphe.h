@@ -680,7 +680,7 @@ public:
     inline bool is_tree() { return !is_directed() && edge_count()+1==node_count() && is_connected(); }
     bool is_forest();
     bool is_tournament();
-    bool is_planar(ivectors &faces);
+    bool is_planar();
     bool is_clique() const;
     bool is_triangle_free() const;
     int tree_height(int root);

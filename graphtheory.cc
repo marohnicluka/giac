@@ -1471,7 +1471,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                         makevecteur(it->at(0),it->at(1),it->at(2)) :
                         makecomplex(it->front(),it->back());
         }
-        _eval(symbolic(at_sto,makesequence(gen(coords,_LIST__VECT),coords_dest)),contextptr);
+        identifier_assign(*coords_dest._IDNTptr,gen(coords,_LIST__VECT),contextptr);
     }
     if (isdir || G_orig.is_weighted())
         G_orig.edge_labels_placement(main_layout);
@@ -3078,20 +3078,20 @@ gen _is_planar(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr),U(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    graphe::ivectors faces;
     G.underlying(U);
-    if (!U.is_planar(faces))
-        return G.boole(false);
     if (!is_undef(F)) {
         if (!U.is_biconnected())
             return gt_err(_GT_ERR_BICONNECTED_GRAPH_REQUIRED,contextptr);
+        graphe::ivectors faces;
+        if (!U.demoucron(faces))
+            return G.boole(false);
         vecteur res;
         for (graphe::ivectors_iter it=faces.begin();it!=faces.end();++it) {
             res.push_back(G.get_node_labels(*it));
         }
-        _eval(symbolic(at_sto,res,F),contextptr);
+        identifier_assign(*F._IDNTptr,res,contextptr);
     }
-    return G.boole(true);
+    return G.boole(U.is_planar());
 }
 static const char _is_planar_s[]="is_planar";
 static define_unary_function_eval(__is_planar,&_is_planar,_is_planar_s);
@@ -4260,7 +4260,7 @@ gen _chromatic_number(const gen &g,GIAC_CONTEXT) {
     if (!is_undef(colors_dest)) { // store the coloring
         graphe::ivector colors;
         G.get_node_colors(colors);
-        _eval(symbolic(at_sto,makesequence(vector_int_2_vecteur(colors),colors_dest)),contextptr);
+        identifier_assign(*colors_dest._IDNTptr,vector_int_2_vecteur(colors),contextptr);
     }
     return ncolors;
 }
@@ -4891,9 +4891,10 @@ gen _is_bipartite(const gen &g,GIAC_CONTEXT) {
     if (!U.is_bipartite(V1,V2))
         return G.boole(false);
     if (!is_undef(P)) {
-        _eval(symbolic(at_sto,makevecteur(_sort(G.get_node_labels(V1),contextptr),
-                                          _sort(G.get_node_labels(V2),contextptr)),
-                       P),contextptr);
+        identifier_assign(*P._IDNTptr,
+                          makevecteur(_sort(G.get_node_labels(V1),contextptr),
+                                      _sort(G.get_node_labels(V2),contextptr)),
+                          contextptr);
     }
     return G.boole(true);
 }
@@ -4975,7 +4976,7 @@ gen _is_vertex_colorable(const gen &g,GIAC_CONTEXT) {
         graphe::ivector colors;
         G.get_node_colors(colors);
         vecteur cols=vector_int_2_vecteur(colors);
-        _eval(symbolic(at_sto,makesequence(cols,colors_dest)),contextptr);
+        identifier_assign(*colors_dest._IDNTptr,cols,contextptr);
     }
     return graphe::boole(true);
 }
@@ -5066,6 +5067,39 @@ gen _clique_stats(const gen &g,GIAC_CONTEXT) {
 static const char _clique_stats_s[]="clique_stats";
 static define_unary_function_eval(__clique_stats,&_clique_stats,_clique_stats_s);
 define_unary_function_ptr5(at_clique_stats,alias_at_clique_stats,&__clique_stats,0,true)
+
+/* USAGE:   minimal_vertex_coloring(G,[sto])
+ *
+ * Computes minimal vertex coloring for graph G and returns the colors in order
+ * of vertices. If optional parameter "sto" is given, the colors are assigned
+ * to vertices and the modified copy of G is returned.
+ */
+gen _minimal_vertex_coloring(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    bool store=false;
+    if (g.subtype==_SEQ__VECT) {
+        if (g._VECTptr->size()!=2)
+            return gensizeerr(contextptr);
+        if (g._VECTptr->back()!=at_sto)
+            return gentypeerr(contextptr);
+        store=true;
+    }
+    graphe G(contextptr);
+    if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    G.exact_vertex_coloring();
+    graphe::ivector colors;
+    G.get_node_colors(colors);
+    vecteur cols=vector_int_2_vecteur(colors);
+    if (store)
+        return _highlight_vertex(makesequence(g._VECTptr->front(),G.vertices(),cols),contextptr);
+    return cols;
+}
+static const char _minimal_vertex_coloring_s[]="minimal_vertex_coloring";
+static define_unary_function_eval(__minimal_vertex_coloring,&_minimal_vertex_coloring,_minimal_vertex_coloring_s);
+define_unary_function_ptr5(at_minimal_vertex_coloring,alias_at_minimal_vertex_coloring,&__minimal_vertex_coloring,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

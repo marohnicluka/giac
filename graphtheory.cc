@@ -648,26 +648,53 @@ static const char _digraph_s[]="digraph";
 static define_unary_function_eval(__digraph,&_digraph,_digraph_s);
 define_unary_function_ptr5(at_digraph,alias_at_digraph,&__digraph,0,true)
 
-/* USAGE:   export_graph(G,"path/to/graphname")
+/* USAGE:   export_graph(G,"path/to/graphname",[latex[=params]])
  *
  * Writes the graph G to the file 'graphname.dot' in directory 'path/to' using
- * dot format. Returns 1 on success and 0 on failure.
+ * dot format or store the drawing of G in latex format if third argument is
+ * given, where params is an option or a list of options to be passed to
+ * the draw_graph command. Returns 1 on success and 0 on failure.
  */
 gen _export_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type!=_VECT || g.subtype!=_SEQ__VECT || int(g._VECTptr->size())!=2)
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    gen &gr=g._VECTptr->front(),&name=g._VECTptr->back();
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()<2 || gv.size()>3)
+        return gensizeerr(contextptr);
+    gen &gr=gv.front(),&name=gv[1];
+    bool to_latex=false;
+    gen args=undef;
+    if (gv.size()==3) {
+        if (gv.back()==at_latex)
+            to_latex=true;
+        else if (gv.back().is_symb_of_sommet(at_equal)) {
+            if (gv.back()._SYMBptr->feuille._VECTptr->front()!=at_latex)
+                return gentypeerr(contextptr);
+            to_latex=true;
+            args=gv.back()._SYMBptr->feuille._VECTptr->back();
+        } else return gentypeerr(contextptr);
+    }
     graphe G(contextptr);
-    if (name.type!=_STRNG)
-        return gentypeerr(contextptr);
     if (!G.read_gen(gr))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (name.type!=_STRNG)
+        return gentypeerr(contextptr);
     string filename=graphe::genstring2str(name);
-    if (!has_suffix(filename,".dot"))
-        filename=filename+".dot";
     if (filename[0]!='/')
         filename=make_absolute_file_path(filename);
+    if (to_latex) {
+        if (!has_suffix(filename,".tex"))
+            filename=filename+".tex";
+        if (args.type==_VECT)
+            args._VECTptr->insert(args._VECTptr->begin(),gr);
+        else if (!is_undef(args))
+            args=vecteur(1,args);
+        gen drawing=_draw_graph(args.type==_VECT?change_subtype(args,_SEQ__VECT):gr,contextptr);
+        return G.write_latex(filename,drawing);
+    }
+    if (!has_suffix(filename,".dot"))
+        filename=filename+".dot";
     return G.write_dot(filename)?1:0;
 }
 static const char _export_graph_s[]="export_graph";
@@ -740,7 +767,7 @@ gen _edges(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     if (include_weights && !G.is_weighted())
         return gt_err(_GT_ERR_WEIGHTED_GRAPH_REQUIRED,contextptr);
-    return G.edges(include_weights);
+    return change_subtype(G.edges(include_weights),_LIST__VECT);
 }
 static const char _edges_s[]="edges";
 static define_unary_function_eval(__edges,&_edges,_edges_s);

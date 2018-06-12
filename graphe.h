@@ -418,6 +418,7 @@ private:
     void message(const char *format,int a) const;
     void message(const char *format,int a,int b) const;
     void message(const char *format,int a,int b,int c) const;
+    std::string giac_version() const;
     inline vertex &node(int i) { return nodes[i]; }
     bool dot_parse_attributes(std::ifstream &dotfile,attrib &attr);
     static bool insert_attribute(attrib &attr,int key,const gen &val,bool overwrite=true);
@@ -564,6 +565,7 @@ public:
     template<class Compare>
     inline void sort_neighbors(int v,Compare comp) { node(v).sort_neighbors(comp); }
     gen to_gen() const;
+    bool write_latex(const std::string &filename,const gen &drawing) const;
     bool write_dot(const std::string &filename) const;
     bool read_dot(const std::string &filename);
     inline bool is_empty() const { return nodes.empty(); }

@@ -19,6 +19,7 @@
 *.ps
 *.tm
 *.bib
+*.eps
 *~
 main.cpp
 lexer_tab_int.h

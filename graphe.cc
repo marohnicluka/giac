@@ -566,8 +566,8 @@ const graphe::attrib &graphe::vertex::neighbor_attributes(int i) const {
 bool graphe::vertex::has_neighbor(int i,bool include_temp_edges) const {
     if (m_sorted)
         return binary_search(m_neighbors.begin(),m_neighbors.end(),i);
-    return m_neighbor_attributes.find(i)!=m_neighbor_attributes.end() ||
-            (include_temp_edges && m_neighbor_attributes.find(-i-1)!=m_neighbor_attributes.end());
+    return find(m_neighbors.begin(),m_neighbors.end(),i)!=m_neighbors.end() ||
+            (include_temp_edges && find(m_neighbors.begin(),m_neighbors.end(),-i-1)!=m_neighbors.end());
 }
 
 void graphe::vertex::remove_neighbor(int i) {
@@ -1181,13 +1181,10 @@ int graphe::edge_count() const {
 /* return number of arcs going in the vertex with the specified index (when directed) */
 int graphe::in_degree(int index,bool count_temp_edges) const {
     assert(index>=0 && index<node_count());
-    int i=0,count=0;
+    int count=0;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
-        if (i==index)
-            continue;
         if (it->has_neighbor(index,count_temp_edges))
             count++;
-        ++i;
     }
     return count;
 }
@@ -3794,6 +3791,19 @@ void graphe::greedy_neighborhood_clique_cover_numbers(ivector &cover_numbers) {
     }
 }
 
+/* return total number of different colors adjacent to the i-th vertex */
+int graphe::adjacent_color_count(int i) const {
+    set<int> colors;
+    int c;
+    const vertex &v=node(i);
+    for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
+        c=node(*it).color();
+        if (c>0)
+            colors.insert(c);
+    }
+    return colors.size();
+}
+
 /*
  * painter class implementation
  */
@@ -3966,12 +3976,12 @@ void graphe::painter::mip_callback(glp_tree *tree,void *info) {
     switch (glp_ios_reason(tree)) {
     case GLP_IBRANCH:
         // select the branching variable
-        j=pt->select_branching_variable();
-        glp_ios_branch_upon(tree,j,GLP_DN_BRNCH);
+        j=pt->select_branching_variable(tree);
+        //glp_ios_branch_upon(tree,j,GLP_DN_BRNCH);
         break;
     case GLP_IHEUR:
-        pt->heuristic_solution(x);
-        glp_ios_heur_sol(tree,x);
+        // TODO
+        // the idea is to use dsatur as heuristic
         break;
     default:
         /* ignore call for other reasons */
@@ -3979,12 +3989,40 @@ void graphe::painter::mip_callback(glp_tree *tree,void *info) {
     }
 }
 
-int graphe::painter::select_branching_variable() {
-
-}
-
-void graphe::painter::heuristic_solution(double *x) {
-
+int graphe::painter::select_branching_variable(glp_tree *tree) {
+    glp_prob *sp=glp_ios_get_prob(tree); // current subproblem LP
+    int c=glp_ios_curr_node(tree); // current node
+    int p=glp_ios_up_node(tree,c); // parent node
+    int *current_node_data=(int*)glp_ios_node_data(tree,p);
+    std::fill(branch_candidates.begin(),branch_candidates.end(),-1);
+    G->uncolor_all_nodes();
+    for (ivector_iter it=m_maxclique.begin();it!=m_maxclique.end();++it) {
+        G->set_node_color(*it,int(it-m_maxclique.begin())+1);
+    }
+    for (int j=0;j<nxcols;++j) {
+        ipair &ij=m_col2ij[j];
+        if (glp_ios_can_branch(tree,j+1)) {
+            branch_candidates[ij.first]=ij.second;
+        } else if (std::round(glp_get_col_prim(sp,j+1))==1)
+            G->set_node_color(ij.first,lb+ij.second+1);
+    }
+    int prev=-1,i,j,cols,maxcols=-1;
+    if (p>0)
+        prev=*(int*)glp_ios_node_data(tree,p);
+    for (ivector_iter it=branch_candidates.begin();it!=branch_candidates.end();++it) {
+        if (*it<0)
+            continue;
+        i=it-branch_candidates.begin();
+        if (i+1==prev) {
+            *current_node_data=i+1;
+            return *it;
+        }
+        cols=G->adjacent_color_count(i);
+        if (cols>maxcols) {
+            maxcols=cols;
+            j=*it;
+        }
+    }
 }
 
 int graphe::painter::color_vertices(ivector &colors,int max_colors) {
@@ -3996,7 +4034,8 @@ int graphe::painter::color_vertices(ivector &colors,int max_colors) {
     glp_iocp parm;
     glp_init_iocp(&parm);
     parm.msg_lev=GLP_MSG_ERR;
-    parm.br_tech=GLP_BR_FFV;
+    //parm.br_tech=GLP_BR_FFV;
+    parm.bt_tech=GLP_BT_DFS;
     parm.gmi_cuts=GLP_ON;
     parm.mir_cuts=GLP_ON;
     parm.clq_cuts=GLP_ON;
@@ -4007,6 +4046,7 @@ int graphe::painter::color_vertices(ivector &colors,int max_colors) {
     parm.cb_info=(void*)this;
     int ncolors,res=glp_intopt(mip,&parm);
     colors.resize(ub,0);
+    branch_candidates.resize(G->node_count());
     if (res==0) {
         switch (glp_get_status(mip)) {
         case GLP_FEAS:
@@ -4039,9 +4079,11 @@ int graphe::painter::color_vertices(ivector &colors,int max_colors) {
 int graphe::exact_vertex_coloring(int max_colors) {
     int ncolors=0;
 #ifndef HAVE_LIBGLPK
-    message("Error: GLPK library is required for exact graph coloring");
+    message("Error: GLPK library is required for exact minimal graph coloring");
 #else
-
+    painter pt(this);
+    ivector colors;
+    ncolors=pt.color_vertices(colors);
 #endif
     return ncolors;
 }
@@ -7365,7 +7407,8 @@ void graphe::dsatur() {
         if (it->color()==0)
             indices.push_back(it-nodes.begin());
     }
-    assert(!indices.empty());
+    if (indices.empty())
+        return;
     ivector_iter pos;
     do {
         maxsat=0;

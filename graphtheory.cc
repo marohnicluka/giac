@@ -1071,7 +1071,7 @@ gen _bipartite_matching(const gen &g,GIAC_CONTEXT) {
     if (!G.is_bipartite(p1,p2))
         return gt_err(_GT_ERR_NOT_BIPARTITE,contextptr);
     graphe::ipairs matching;
-    G.bipartite_matching(matching);
+    //G.bipartite_matching(matching);
     vecteur res;
     for (graphe::ipairs_iter it=matching.begin();it!=matching.end();++it) {
         res.push_back(makevecteur(G.node_label(it->first),G.node_label(it->second)));
@@ -1510,6 +1510,8 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     }
     if (isdir || G_orig.is_weighted())
         G_orig.edge_labels_placement(main_layout);
+    drawing.push_back(symb_equal(change_subtype(gen(_AXES),_INT_PLOT),0));
+    drawing.push_back(symb_equal(change_subtype(gen(_GL_ORTHO),_INT_PLOT),1));
     G_orig.draw_edges(drawing,main_layout);
     G_orig.draw_nodes(drawing,main_layout);
     if (labels)

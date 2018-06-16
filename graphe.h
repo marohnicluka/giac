@@ -268,6 +268,7 @@ public:
         ivector m_cover_number;
         ivector m_maxclique;
         ipairs m_col2ij;
+        ivector branch_candidates;
         int lb;
         int ub;
         int nxcols;
@@ -280,8 +281,7 @@ public:
     public:
         painter(graphe *gr,double tm=5.0) { G=gr; timeout=tm; }
         int color_vertices(ivector &colors,int max_colors=0);
-        int select_branching_variable();
-        void heuristic_solution(double *x);
+        int select_branching_variable(glp_tree *tree);
     };
 #endif
 
@@ -787,6 +787,7 @@ public:
     bool is_vertex_colorable(int k);
     void dsatur();
     int color_count() const;
+    int adjacent_color_count(int i) const;
     ipair chromatic_number_bounds();
     void store_layout(const layout &x);
     bool has_stored_layout(layout &x) const;

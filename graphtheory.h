@@ -56,7 +56,8 @@ enum gt_error_code {
     _GT_ERR_TAGVALUE_PAIR_EXPECTED=23,
     _GT_ERR_NOT_A_GRAPHIC_SEQUENCE=24,
     _GT_ERR_NOT_ACYCLIC_GRAPH=25,
-    _GT_ERR_BICONNECTED_GRAPH_REQUIRED=26
+    _GT_ERR_BICONNECTED_GRAPH_REQUIRED=26,
+    _GT_ERR_NOT_BIPARTITE=27
 };
 
 bool is_graphe(const gen &g,std::string &disp_out,GIAC_CONTEXT);
@@ -117,6 +118,7 @@ gen _is_planar(const gen &g,GIAC_CONTEXT);
 gen _is_tree(const gen &g,GIAC_CONTEXT);
 gen _tree_height(const gen &g,GIAC_CONTEXT);
 gen _maximum_matching(const gen &g,GIAC_CONTEXT);
+gen _bipartite_matching(const gen &g,GIAC_CONTEXT);
 gen _number_of_edges(const gen &g,GIAC_CONTEXT);
 gen _edges(const gen &g,GIAC_CONTEXT);
 gen _has_arc(const gen &g,GIAC_CONTEXT);
@@ -132,7 +134,6 @@ gen _is_directed(const gen &g,GIAC_CONTEXT);
 gen _minimum_degree(const gen &g,GIAC_CONTEXT);
 gen _maximum_degree(const gen &g,GIAC_CONTEXT);
 gen _is_regular(const gen &g,GIAC_CONTEXT);
-gen _maximal_independent_set(const gen &g,GIAC_CONTEXT);
 gen _neighbors(const gen &g,GIAC_CONTEXT);
 gen _number_of_vertices(const gen &g,GIAC_CONTEXT);
 gen _graph_vertices(const gen &g,GIAC_CONTEXT);
@@ -235,7 +236,6 @@ gen _minimal_edge_coloring(const gen &g,GIAC_CONTEXT);
 //gen _is_isomorphic(const gen &g,GIAC_CONTEXT);
 //gen _maxflow(const gen &g,GIAC_CONTEXT);
 //gen _two_edge_connected_components(const gen &g,GIAC_CONTEXT);
-//gen _bipartite_matching(const gen &g,GIAC_CONTEXT);
 //gen _cycle_basis(const gen &g,GIAC_CONTEXT);
 //gen _is_cut_set(const gen &g,GIAC_CONTEXT);
 //gen _is_network(const gen &g,GIAC_CONTEXT);

@@ -17,7 +17,6 @@
 *.synctex.gz
 *.dvi
 *.ps
-*.tm
 *.bib
 *.eps
 *~

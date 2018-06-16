@@ -56,7 +56,8 @@ static const char *gt_error_messages[] = {
     "a \"tag\"=value pair expected",                                    // 23
     "the given list is not a valid graphic sequence",                   // 24
     "graph is not acyclic",                                             // 25
-    "a biconnected graph is required"                                   // 26
+    "a biconnected graph is required",                                  // 26
+    "graph is not bipartite"                                            // 27
 };
 
 void gt_err_display(int code,GIAC_CONTEXT) {
@@ -1028,30 +1029,6 @@ static const char _induced_subgraph_s[]="induced_subgraph";
 static define_unary_function_eval(__induced_subgraph,&_induced_subgraph,_induced_subgraph_s);
 define_unary_function_ptr5(at_induced_subgraph,alias_at_induced_subgraph,&__induced_subgraph,0,true)
 
-/* USAGE:   maximal_independent_set(G)
- *
- * Returns a maximal set of mutually independent (non-adjacent) vertices of
- * graph G. Using a method by Y.Hu (based on that of Ruge and Stuben), see
- * http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.38.2239&rep=rep1&type=pdf.
- */
-gen _maximal_independent_set(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    graphe G(contextptr);
-    if (!G.read_gen(g))
-        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    graphe::ivector mis;
-    G.maximal_independent_set(mis);
-    int n=mis.size();
-    vecteur V(n);
-    for (int i=0;i<n;++i) {
-        V[i]=G.node_label(mis[i]);
-    }
-    return V;
-}
-static const char _maximal_independent_set_s[]="maximal_independent_set";
-static define_unary_function_eval(__maximal_independent_set,&_maximal_independent_set,_maximal_independent_set_s);
-define_unary_function_ptr5(at_maximal_independent_set,alias_at_maximal_independent_set,&__maximal_independent_set,0,true)
-
 /* USAGE:   maximum_matching(G)
  *
  * Returns the list of edges representing maximum matching for graph G. Jack
@@ -1075,6 +1052,35 @@ gen _maximum_matching(const gen &g,GIAC_CONTEXT) {
 static const char _maximum_matching_s[]="maximum_matching";
 static define_unary_function_eval(__maximum_matching,&_maximum_matching,_maximum_matching_s);
 define_unary_function_ptr5(at_maximum_matching,alias_at_maximum_matching,&__maximum_matching,0,true)
+
+/* USAGE:   bipartite_matching(G)
+ *
+ * Returns the sequence containing the size of maximum matching of a bipartite
+ * graph G and the list of edges of the matching.
+ */
+gen _bipartite_matching(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
+    if (G.is_weighted())
+        return gt_err(_GT_ERR_UNWEIGHTED_GRAPH_REQUIRED,contextptr);
+    graphe::ivector p1,p2;
+    if (!G.is_bipartite(p1,p2))
+        return gt_err(_GT_ERR_NOT_BIPARTITE,contextptr);
+    graphe::ipairs matching;
+    G.bipartite_matching(matching);
+    vecteur res;
+    for (graphe::ipairs_iter it=matching.begin();it!=matching.end();++it) {
+        res.push_back(makevecteur(G.node_label(it->first),G.node_label(it->second)));
+    }
+    return change_subtype(makevecteur(res.size(),change_subtype(res,_LIST__VECT)),_SEQ__VECT);
+}
+static const char _bipartite_matching_s[]="bipartite_matching";
+static define_unary_function_eval(__bipartite_matching,&_bipartite_matching,_bipartite_matching_s);
+define_unary_function_ptr5(at_bipartite_matching,alias_at_bipartite_matching,&__bipartite_matching,0,true)
 
 /* USAGE:   make_directed(G,[A])
  *
@@ -1445,10 +1451,12 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 C.make_circular_layout(x,hull,2.5);
                 break;
             case _GT_STYLE_BIPARTITE:
+                if (check && !C.is_bipartite(partition1,partition2))
+                    return gt_err(_GT_ERR_NOT_BIPARTITE,contextptr);
                 C.make_bipartite_layout(x,partition1,partition2);
                 break;
             }
-            if (comp_method==_GT_STYLE_PLANAR || comp_method==_GT_STYLE_SPRING)
+            if (C.node_count()>2 && (comp_method==_GT_STYLE_PLANAR || comp_method==_GT_STYLE_SPRING))
                 C.layout_best_rotation(x);
             if (comp_method!=_GT_TREE)
                 graphe::scale_layout(x,sep*std::sqrt((double)C.node_count()));
@@ -1883,7 +1891,7 @@ gen _articulation_points(const gen &g,GIAC_CONTEXT) {
     for (graphe::ivector::const_iterator it=V.begin();it!=V.end();++it) {
         res.push_back(G.node_label(*it));
     }
-    return res;
+    return _sort(res,contextptr);
 }
 static const char _articulation_points_s[]="articulation_points";
 static define_unary_function_eval(__articulation_points,&_articulation_points,_articulation_points_s);

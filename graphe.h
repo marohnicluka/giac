@@ -261,6 +261,30 @@ public:
         void positioning(int apex);
     };
 
+#ifdef HAVE_LIBGLPK
+    class painter {
+        graphe *G;
+        ivectors m_values;
+        ivector m_cover_number;
+        ivector m_maxclique;
+        ipairs m_col2ij;
+        int lb;
+        int ub;
+        int nxcols;
+        glp_prob *mip;
+        double timeout;
+        void compute_bounds(int max_colors);
+        void make_values();
+        void formulate_mip();
+        static void mip_callback(glp_tree *tree,void *info);
+    public:
+        painter(graphe *gr,double tm=5.0) { G=gr; timeout=tm; }
+        int color_vertices(ivector &colors,int max_colors=0);
+        int select_branching_variable();
+        void heuristic_solution(double *x);
+    };
+#endif
+
     class rectangle {
         double m_x;
         double m_y;
@@ -513,7 +537,8 @@ private:
     void find_chords(const ivector &face,ipairs &chords);
     void augment(const ivectors &faces,int outer_face,bool subdivide=false);
     int saturation_degree(const vertex &v,std::set<int> &colors) const;
-    int dsatur();
+    int uncolored_degree(const vertex &v) const;
+    bool is_partially_colored() const;
     void remove_maximal_clique(ivector &V) const;
 
 public:
@@ -578,6 +603,7 @@ public:
     void unvisit_all_nodes(int sg=-1);
     void unset_all_ancestors(int sg=-1);
     void uncolor_all_nodes(int base_color=0,int sg=-1);
+    void set_node_color(int i,int c) { node(i).set_color(c); }
     void dfs(int root,bool rec=true,bool clr=true,ivector *D=NULL,int sg=-1,bool skip_embedded=false);
     void bfs(int root,bool rec=true,bool clr=true,ivector *D=NULL,int sg=-1,bool skip_embedded=false);
     inline const ivector &get_discovered_nodes() const { return discovered_nodes; }
@@ -759,6 +785,8 @@ public:
     void get_node_colors(ivector &colors);
     bool is_bipartite(ivector &V1,ivector &V2,int sg=-1);
     bool is_vertex_colorable(int k);
+    void dsatur();
+    int color_count() const;
     ipair chromatic_number_bounds();
     void store_layout(const layout &x);
     bool has_stored_layout(layout &x) const;

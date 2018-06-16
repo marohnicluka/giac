@@ -2810,7 +2810,7 @@
   </shell-code>
 
   The drawing produced in our example is shown in
-  Figure<nbsp><reference|st53>.<float|float|thb|<big-figure|<image|st53.eps|160pt|138pt||>|<label|st53>drawing
+  Figure<nbsp><reference|st53>.<float|float|thb|<big-figure|<image|images/st53.eps|160pt|138pt||>|<label|st53>drawing
   of the Sierpi«ski graph <math|S T<rsub|3><rsup|5>> using <LaTeX> and
   PSTricks>>
 
@@ -3505,8 +3505,8 @@
   </session>
 
   The output is shown in Figure<nbsp><reference|sparse>.<\float|float|tbh>
-    <big-figure|<image|sparse.eps|0.75par|||>|<label|sparse>components of a
-    sparse random planar graph>
+    <big-figure|<image|images/sparse.eps|0.75par|||>|<label|sparse>components
+    of a sparse random planar graph>
   </float>
 
   <subsection|Spring method>
@@ -3613,7 +3613,7 @@
   </session>
 
   The output is shown in Figure<nbsp><reference|tensorprod>.<\float|float|tbh>
-    <big-figure|<image|tensorproduct.eps|0.57par|||>|<label|tensorprod>graph
+    <big-figure|<image|images/tensorproduct.eps|0.57par|||>|<label|tensorprod>graph
     drawing obtained by force-directed algorithm>
   </float> Note that the product graph <math|G> consists of two connected
   components; each of them is drawn saparately.
@@ -3645,7 +3645,7 @@
   labels are automatically suppressed because of the large number of
   vertices. On our system, the algorithm took less than 2 seconds to produce
   the layout.<\float|float|tbh>
-    <big-figure|<image|sg54.eps|0.57par|||>|<label|sg54>drawing of the
+    <big-figure|<image|images/sg54.eps|0.57par|||>|<label|sg54>drawing of the
     Sierpi«ski graph <math|S<rsub|4><rsup|5>> obtained by force-directed
     algorithm>
   </float>
@@ -3710,8 +3710,8 @@
   </session>
 
   The output is shown in Figure<nbsp><reference|tree>.<\float|float|tbh>
-    <big-figure|<image|tree.eps|0.57par|||>|<label|tree>drawing of a random
-    tree on 100 nodes>
+    <big-figure|<image|images/tree.eps|0.57par|||>|<label|tree>drawing of a
+    random tree on 100 nodes>
   </float>
 
   <subsection|Drawing planar graphs>
@@ -3797,8 +3797,8 @@
   </session>
 
   The output is shown in Figure<nbsp><reference|planar1>.<\float|float|tbh>
-    <big-figure|<image|planar1.eps|0.57par|||>|<label|planar1>drawing of a
-    non-triconnected graph obtained by barycentric method>
+    <big-figure|<image|images/planar1.eps|0.57par|||>|<label|planar1>drawing
+    of a non-triconnected graph obtained by barycentric method>
   </float> Note that the inner diamond shape would end up flattened\Vmaking
   the two triangular faces invisible\Vif the input graph was not augmented.
   It is so because the vertices with labels 11 and 12 are \Pattracted\Q to
@@ -3840,8 +3840,8 @@
   </session>
 
   The output is shown in Figure<nbsp><reference|planar2>.<\float|float|thb>
-    <big-figure|<image|planar2.eps|0.57par|||>|<label|planar2>planar drawing
-    of a graph with 3 biconnected components>
+    <big-figure|<image|images/planar2.eps|0.57par|||>|<label|planar2>planar
+    drawing of a graph with 3 biconnected components>
   </float> Note that several redraws were required to obtain a good planar
   embedding.
 
@@ -3894,8 +3894,8 @@
   </session>
 
   The output is shown in Figure<nbsp><reference|sg24>.<\float|float|thb>
-    <big-figure|<image|sg24.eps|0.57par|||>|<label|sg24>circular drawing of
-    the Sierpi«ski graph <math|S<rsub|4><rsup|2>>>
+    <big-figure|<image|images/sg24.eps|0.57par|||>|<label|sg24>circular
+    drawing of the Sierpi«ski graph <math|S<rsub|4><rsup|2>>>
   </float>
 
   <section|Custom vertex positions>
@@ -3958,8 +3958,8 @@
   </session>
 
   The output is shown in Figure<nbsp><reference|digraph2>.<\float|float|tbh>
-    <center|<small-figure|<image|digraph1.eps|0.39par|||>|<label|digraph1>circular
-    drawing of a digraph><small-figure|<image|digraph2.eps|0.39par|||>|<label|digraph2>drawing
+    <center|<small-figure|<image|images/digraph1.eps|0.39par|||>|<label|digraph1>circular
+    drawing of a digraph><small-figure|<image|images/digraph2.eps|0.39par|||>|<label|digraph2>drawing
     with the custom positions>>
 
     <subsection|Generating vertex positions>
@@ -4030,8 +4030,8 @@
   </session>
 
   The output is shown in Figure<nbsp><reference|oct2>.<\float|float|tbh>
-    <center|<small-figure|<image|oct2.eps|0.39par|||>|<label|oct1>octahedral
-    graph: the default drawing><small-figure|<image|oct1.eps|0.39par|||>|<label|oct2>octahedral
+    <center|<small-figure|<image|images/oct2.eps|0.39par|||>|<label|oct1>octahedral
+    graph: the default drawing><small-figure|<image|images/oct1.eps|0.39par|||>|<label|oct2>octahedral
     graph: custom drawing>>
   </float>
 
@@ -4085,8 +4085,8 @@
   </session>
 
   The output is shown in Figure<nbsp><reference|dh1>.<\float|float|tbh>
-    <big-figure|<image|dh1.eps|0.57par|||>|<label|dh1>maximum independent set
-    in the dodecahedral graph>
+    <big-figure|<image|images/dh1.eps|0.57par|||>|<label|dh1>maximum
+    independent set in the dodecahedral graph>
   </float>
 
   <subsection|Highlighting edges and trails>
@@ -4160,9 +4160,10 @@
   </session>
 
   The output is shown in Figure<nbsp><reference|dh4>.<\float|float|tbh>
-    <center|<small-figure|<image|dh2.eps|0.23par|||>|<label|dh2>maximum
-    matching><small-figure|<image|dh3.eps|0.23par|||>|<label|dh3>spanning
-    tree><small-figure|<image|dh4.eps|0.23par|||>|<label|dh4>cyclic path>>
+    <center|<small-figure|<image|images/dh2.eps|0.23par|||>|<label|dh2>maximum
+    matching><small-figure|<image|images/dh3.eps|0.23par|||>|<label|dh3>spanning
+    tree><small-figure|<image|images/dh4.eps|0.23par|||>|<label|dh4>cyclic
+    path>>
   </float>
 
   <subsection|Highlighting subgraphs>
@@ -4235,9 +4236,9 @@
   </session>
 
   The output is shown in Figure<nbsp><reference|sg2>.<\float|float|tbh>
-    <center|<small-figure|<image|sg1.eps|0.39par|||>|<label|sg1>articulation
-    points><small-figure|<image|sg2.eps|0.39par|||>|<label|sg2>a biconnected
-    component>>
+    <center|<small-figure|<image|images/sg1.eps|0.39par|||>|<label|sg1>articulation
+    points><small-figure|<image|images/sg2.eps|0.39par|||>|<label|sg2>a
+    biconnected component>>
   </float>
 
   \;
@@ -5045,14 +5046,14 @@
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-101>>
 
-      <with|par-left|<quote|1tab>|5.4.2.<space|2spc>Bipartite matching
-      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <with|par-left|<quote|1tab>|5.4.2.<space|2spc>Maximum matching in
+      bipartite graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-102>>
 
       5.5.<space|2spc>Cycles and paths <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-103>
 
-      <with|par-left|<quote|1tab>|5.5.1.<space|2spc>Computing girth of a
+      <with|par-left|<quote|1tab>|5.5.1.<space|2spc>Computing the girth of a
       graph <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-104>>
 
@@ -5071,11 +5072,11 @@
       5.6.<space|2spc>Trees <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-108>
 
-      <with|par-left|<quote|1tab>|5.6.1.<space|2spc>Checking if a graph is a
+      <with|par-left|<quote|1tab>|5.6.1.<space|2spc>Checking if graph is a
       tree <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-109>>
 
-      <with|par-left|<quote|1tab>|5.6.2.<space|2spc>Checking if a graph is a
+      <with|par-left|<quote|1tab>|5.6.2.<space|2spc>Checking if graph is a
       forest <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-110>>
 
@@ -5086,8 +5087,8 @@
       5.7.<space|2spc>Cliques <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-112>
 
-      <with|par-left|<quote|1tab>|5.7.1.<space|2spc>Checking if the graph is
-      a clique <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <with|par-left|<quote|1tab>|5.7.1.<space|2spc>Checking if graph is a
+      clique <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-113>>
 
       <with|par-left|<quote|1tab>|5.7.2.<space|2spc>Counting maximal cliques

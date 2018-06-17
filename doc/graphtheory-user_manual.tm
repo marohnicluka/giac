@@ -1822,7 +1822,7 @@
   <with|font-family|tt|graph_union> accepts a sequence of graphs
   <math|G<rsub|k><around|(|V<rsub|k>,E<rsub|k>|)>> for
   <math|k=1,2,\<ldots\>,n> as its argument and returns the graph
-  <math|G<around|(|V,E|)>> with <math|V=V<rsub|1>\<cup\>V<rsub|2>\<cup\>\<cdots\>\<cup\>V<rsub|k>>
+  <math|G<around|(|V,E|)>> where <math|V=V<rsub|1>\<cup\>V<rsub|2>\<cup\>\<cdots\>\<cup\>V<rsub|k>>
   and <math|E=E<rsub|1>\<cup\>E<rsub|2>\<cup\>\<cdots\>\<cup\>E<rsub|k>>.
 
   <\session|giac|default>
@@ -3654,8 +3654,9 @@
   When the input graph has two or more connected components, each component
   is drawn separately and the drawings are subsequently arranged such that
   the bounding box of the whole drawing has the smallest perimeter under
-  condition that as little space as possible is wasted inside the box. For
-  example, the command lines below draw a sparse random planar graph.
+  condition that as little space as possible is wasted inside the box.
+
+  For example, the command lines below draw a sparse random planar graph.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -4146,7 +4147,7 @@
     <\input>
       \<gtr\>\ 
     <|input>
-      draw_graph(G,P,spring)
+      draw_graph(G,P,spring):;
     </input>
   </session>
 
@@ -4342,10 +4343,20 @@
       </equation*>
     </unfolded-io>
 
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      H:=highlight_vertex(G,A,magenta)
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 6 vertices and 7 edges>
+      </equation*>
+    </unfolded-io>
+
     <\input>
       \<gtr\>\ 
     <|input>
-      draw_graph(highlight_vertex(G,A,magenta))
+      draw_graph(H)
     </input>
   </session>
 
@@ -4362,10 +4373,20 @@
       </equation*>
     </unfolded-io>
 
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      H:=highlight_subgraph(G,S)
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 6 vertices and 7 edges>
+      </equation*>
+    </unfolded-io>
+
     <\input>
       \<gtr\>\ 
     <|input>
-      draw_graph(highlight_subgraph(G,S),spring)
+      draw_graph(H,spring)
     </input>
   </session>
 

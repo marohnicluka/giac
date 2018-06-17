@@ -638,6 +638,12 @@ void graphe::clear_node_stack() {
         node_stack.pop();
 }
 
+/* clear the node queue */
+void graphe::clear_node_queue() {
+    while (!node_queue.empty())
+        node_queue.pop();
+}
+
 /* dotgraph class implementation */
 graphe::dotgraph::dotgraph() {
     m_index=0;
@@ -3792,17 +3798,18 @@ void graphe::greedy_neighborhood_clique_cover_numbers(ivector &cover_numbers) {
     }
 }
 
-/* return total number of different colors adjacent to the i-th vertex */
-int graphe::adjacent_color_count(int i) const {
+/* return the number of differently colored and uncolored vertices adjacent to the i-th vertex */
+graphe::ipair graphe::adjacent_color_count(int i) const {
     set<int> colors;
-    int c;
+    int c,unc=0;
     const vertex &v=node(i);
     for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
         c=node(*it).color();
         if (c>0)
             colors.insert(c);
+        else ++unc;
     }
-    return colors.size();
+    return make_pair(colors.size(),unc);
 }
 
 /*
@@ -3811,13 +3818,13 @@ int graphe::adjacent_color_count(int i) const {
 
 #ifdef HAVE_LIBGLPK
 void graphe::painter::compute_bounds(int max_colors) {
-    G->greedy_neighborhood_clique_cover_numbers(m_cover_number);
+    G->greedy_neighborhood_clique_cover_numbers(cover_number);
     G->uncolor_all_nodes();
     ostergard ost(G,timeout);
-    lb=ost.maxclique(m_maxclique); // lower bound for number of colors
+    lb=ost.maxclique(clique); // lower bound for number of colors
     if (max_colors==0) {
-        for (ivector_iter it=m_maxclique.begin();it!=m_maxclique.end();++it) {
-           G->set_node_color(*it,it-m_maxclique.begin()+1);
+        for (ivector_iter it=clique.begin();it!=clique.end();++it) {
+           G->set_node_color(*it,it-clique.begin()+1);
         }
         G->dsatur();
     }
@@ -3827,18 +3834,20 @@ void graphe::painter::compute_bounds(int max_colors) {
 void graphe::painter::make_values() {
     int n=G->node_count(),col=0,k;
     ivector_iter pos;
-    m_values.resize(n);
+    values.resize(n);
     for (int i=0;i<n;++i) {
-        ivector &x=m_values[i];
+        ivector &x=values[i];
         x.resize(ub);
-        pos=find(m_maxclique.begin(),m_maxclique.end(),i);
-        k=pos==m_maxclique.end()?-1:int(pos-m_maxclique.begin());
+        pos=find(clique.begin(),clique.end(),i);
+        k=pos==clique.end()?-1:int(pos-clique.begin());
         for (int j=0;j<ub;++j) {
-            if (j<lb && G->node(m_maxclique[j]).has_neighbor(i))
-                x[j]=-2;
-            else if (k<0) {
-                x[j]=++col;
-                m_col2ij.push_back(make_pair(i,j));
+            if (k<0) {
+                if (j<lb && G->node(clique[j]).has_neighbor(i))
+                    x[j]=-2;
+                else {
+                    x[j]=++col;
+                    col2ij.push_back(make_pair(i,j));
+                }
             } else
                 x[j]=j==k?-1:-2;
         }
@@ -3851,7 +3860,7 @@ void graphe::painter::formulate_mip() {
     glp_set_obj_dir(mip,GLP_MIN);
     int n=G->node_count(),i,j,k;
     vector<bool> iscliq(n,false);
-    for (ivector_iter it=m_maxclique.begin();it!=m_maxclique.end();++it) {
+    for (ivector_iter it=clique.begin();it!=clique.end();++it) {
         iscliq[*it]=true;
     }
     // create row variables and count the nonzero entries in constraint matrix
@@ -3861,7 +3870,7 @@ void graphe::painter::formulate_mip() {
     for (i=0;i<n;++i) {
         if (!iscliq[i]) {
             glp_set_row_bnds(mip,++cnt,GLP_FX,1.0,1.0);
-            ivector &vals=m_values[i];
+            ivector &vals=values[i];
             for (ivector_iter it=vals.begin();it!=vals.end();++it) {
                 if (*it>0)
                     ++nonzeros;
@@ -3869,16 +3878,16 @@ void graphe::painter::formulate_mip() {
         }
     }
     for (k=0;k<n;++k) {
-        cn=m_cover_number[k];
+        cn=cover_number[k];
         const vertex &v=G->node(k);
         for (j=0;j<ub;++j) {
-            if (j<lb && k==m_maxclique[j])
+            if (j<lb && k==clique[j])
                 continue;
             nonzeros+=2;
             rs=j<lb?cn:0;
             for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
                 i=*it;
-                if ((val=m_values[i][j])>0)
+                if ((val=values[i][j])>0)
                     ++nonzeros;
                 else rs-=val+2;
             }
@@ -3889,7 +3898,7 @@ void graphe::painter::formulate_mip() {
         if (!iscliq[i]) {
             glp_set_row_bnds(mip,++cnt,GLP_UP,0.0,lb);
             nonzeros+=ub-lb;
-            ivector &vals=m_values[i];
+            ivector &vals=values[i];
             for (ivector_iter it=vals.begin();it!=vals.end();++it) {
                 if (*it>0)
                     ++nonzeros;
@@ -3906,37 +3915,42 @@ void graphe::painter::formulate_mip() {
             glp_set_obj_coef(mip,i+1,1.0);
     }
     // create the constraint matrix
-    int *ia=new int[nonzeros+1],*ja=new int[nonzeros+1];
+    int *ia=new int[nonzeros+1];
+    int *ja=new int[nonzeros+1];
     double *ar=new double[nonzeros+1];
     int row=0,col;
+    bool ok;
     cnt=0;
     for (i=0;i<n;++i) {
         if (iscliq[i])
             continue;
         ++row;
-        ivector &vals=m_values[i];
+        ivector &vals=values[i];
+        ok=false;
         for (ivector_iter it=vals.begin();it!=vals.end();++it) {
             if ((col=*it)>0) {
                 ia[++cnt]=row; ja[cnt]=col;
                 ar[cnt]=1.0;
-            }
+                ok=true;
+            } else assert(col==-2);
         }
+        assert(ok);
     }
     for (k=0;k<n;++k) {
-        cn=m_cover_number[k];
+        cn=cover_number[k];
         const vertex &v=G->node(k);
         for (j=0;j<ub;++j) {
-            if (j<lb && k==m_maxclique[j])
+            if (j<lb && k==clique[j])
                 continue;
             ++row;
             for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
-                col=m_values[*it][j];
+                col=values[*it][j];
                 if (col>0) {
                     ia[++cnt]=row; ja[cnt]=col;
                     ar[cnt]=1.0;
                 }
             }
-            if ((col=m_values[k][j])>0) {
+            if ((col=values[k][j])>0) {
                 ia[++cnt]=row; ja[cnt]=col;
                 ar[cnt]=cn;
             }
@@ -3951,7 +3965,7 @@ void graphe::painter::formulate_mip() {
         if (iscliq[i])
             continue;
         ++row;
-        ivector &vals=m_values[i];
+        ivector &vals=values[i];
         for (ivector_iter it=vals.begin();it!=vals.end();++it) {
             j=it-vals.begin();
             if ((col=*it)>0) {
@@ -3973,16 +3987,14 @@ void graphe::painter::formulate_mip() {
 void graphe::painter::mip_callback(glp_tree *tree,void *info) {
     painter *pt=(painter*)info;
     int j;
-    double *x;
     switch (glp_ios_reason(tree)) {
     case GLP_IBRANCH:
         // select the branching variable
-        j=pt->select_branching_variable(tree);
-        //glp_ios_branch_upon(tree,j,GLP_DN_BRNCH);
+        if ((j=pt->select_branching_variable(tree))>0)
+            glp_ios_branch_upon(tree,j,GLP_DN_BRNCH);
         break;
     case GLP_IHEUR:
         // TODO
-        // the idea is to use dsatur as heuristic
         break;
     default:
         /* ignore call for other reasons */
@@ -3994,20 +4006,21 @@ int graphe::painter::select_branching_variable(glp_tree *tree) {
     glp_prob *sp=glp_ios_get_prob(tree); // current subproblem LP
     int c=glp_ios_curr_node(tree); // current node
     int p=glp_ios_up_node(tree,c); // parent node
-    int *current_node_data=(int*)glp_ios_node_data(tree,p);
+    int *current_node_data=(int*)glp_ios_node_data(tree,c);
     std::fill(branch_candidates.begin(),branch_candidates.end(),-1);
     G->uncolor_all_nodes();
-    for (ivector_iter it=m_maxclique.begin();it!=m_maxclique.end();++it) {
-        G->set_node_color(*it,int(it-m_maxclique.begin())+1);
+    for (ivector_iter it=clique.begin();it!=clique.end();++it) {
+        G->set_node_color(*it,int(it-clique.begin())+1);
     }
     for (int j=0;j<nxcols;++j) {
-        ipair &ij=m_col2ij[j];
+        ipair &ij=col2ij[j];
         if (glp_ios_can_branch(tree,j+1)) {
             branch_candidates[ij.first]=ij.second;
-        } else if (std::round(glp_get_col_prim(sp,j+1))==1)
+        } else if (glp_get_col_prim(sp,j+1)==1)
             G->set_node_color(ij.first,lb+ij.second+1);
     }
-    int prev=-1,i,j,cols,maxcols=-1;
+    int prev=0,i,j=0;
+    ipair nc,nc_max=make_pair(-1,-1);
     if (p>0)
         prev=*(int*)glp_ios_node_data(tree,p);
     for (ivector_iter it=branch_candidates.begin();it!=branch_candidates.end();++it) {
@@ -4016,14 +4029,16 @@ int graphe::painter::select_branching_variable(glp_tree *tree) {
         i=it-branch_candidates.begin();
         if (i+1==prev) {
             *current_node_data=i+1;
-            return *it;
+            return values[i][*it];
         }
-        cols=G->adjacent_color_count(i);
-        if (cols>maxcols) {
-            maxcols=cols;
-            j=*it;
+        nc=G->adjacent_color_count(i);
+        if (nc>nc_max) {
+            nc_max=nc;
+            j=values[i][*it];
+            *current_node_data=i+1;
         }
     }
+    return j;
 }
 
 int graphe::painter::color_vertices(ivector &colors,int max_colors) {
@@ -4036,8 +4051,8 @@ int graphe::painter::color_vertices(ivector &colors,int max_colors) {
     glp_init_iocp(&parm);
     parm.msg_lev=GLP_MSG_ERR;
     //parm.br_tech=GLP_BR_FFV;
-    parm.bt_tech=GLP_BT_DFS;
-    parm.gmi_cuts=GLP_ON;
+    //parm.bt_tech=GLP_BT_DFS;
+    //parm.gmi_cuts=GLP_ON;
     parm.mir_cuts=GLP_ON;
     parm.clq_cuts=GLP_ON;
     parm.cov_cuts=GLP_ON;
@@ -4045,26 +4060,26 @@ int graphe::painter::color_vertices(ivector &colors,int max_colors) {
     parm.cb_size=sizeof(int);
     parm.cb_func=&mip_callback;
     parm.cb_info=(void*)this;
-    int ncolors,res=glp_intopt(mip,&parm);
-    colors.resize(ub,0);
     branch_candidates.resize(G->node_count());
+    int ncolors,res=glp_intopt(mip,&parm);
     if (res==0) {
         switch (glp_get_status(mip)) {
         case GLP_FEAS:
             G->message("Warning: optimality of the coloring not guaranteed");
+        case GLP_UNDEF: // why does GLPK label optimal solution as undefined?
         case GLP_OPT:
-            ncolors=lb+glp_get_obj_val(mip);
+            ncolors=lb+glp_mip_obj_val(mip);
             // color the vertices
             for (int k=0;k<nxcols;++k) {
-                ipair &p=m_col2ij[k];
-                if (glp_get_col_prim(mip,k+1)>0)
+                ipair &p=col2ij[k];
+                if (glp_mip_col_val(mip,k+1)>0)
                     G->set_node_color(p.first,p.second+1);
             }
+            G->get_node_colors(colors);
             break;
-        case GLP_UNDEF:
-            G->message("Error: MIP solution undefined");
         case GLP_NOFEAS:
-            return 0;
+            ncolors=0;
+            break;
         }
     } else G->message("Error: MIP solver failure");
     glp_delete_prob(mip);
@@ -4084,7 +4099,7 @@ int graphe::exact_vertex_coloring(int max_colors) {
 #else
     painter pt(this);
     ivector colors;
-    ncolors=pt.color_vertices(colors);
+    ncolors=pt.color_vertices(colors,max_colors);
 #endif
     return ncolors;
 }
@@ -4650,7 +4665,7 @@ int graphe::connected_components_count(int sg) {
 }
 
 void graphe::strongconnect_dfs(ivectors &components,int i,int sg) {
-    clear_node_stack();
+    assert(node_stack.empty());
     vertex &v=node(i);
     v.set_visited(true);
     v.set_disc(disc_time++);
@@ -4677,11 +4692,11 @@ void graphe::strongconnect_dfs(ivectors &components,int i,int sg) {
             v.set_on_stack(false);
         } while (component.back()!=i);
     }
+    clear_node_stack();
 }
 
 /* find all strongly connected components in directed graph using Tarjan's algorithm */
 void graphe::strongly_connected_components(ivectors &components,int sg) {
-    assert(node_stack.empty());
     unvisit_all_nodes(sg);
     disc_time=0;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
@@ -7282,8 +7297,10 @@ bool graphe::is_bipartite(ivector &V1,ivector &V2,int sg) {
             if (w.color()==-1) {
                 w.set_color(1-v.color());
                 node_queue.push(*it);
-            } else if (w.color()==v.color())
+            } else if (w.color()==v.color()) {
+                clear_node_queue();
                 return false;
+            }
         }
     }
     V1.clear();
@@ -7513,6 +7530,93 @@ bool graphe::has_stored_layout(layout &x) const {
             dim=p.size();
     }
     return true;
+}
+
+bool graphe::bipartite_matching_bfs(ivector &dist) {
+    assert(node_queue.empty());
+    int u,v;
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        if (it->color()!=1)
+            continue;
+        u=it-nodes.begin();
+        if (it->number()==0) {
+            dist[u+1]=0;
+            node_queue.push(u);
+        } else dist[u+1]=RAND_MAX;
+    }
+    dist.front()=RAND_MAX;
+    while (!node_queue.empty()) {
+        u=node_queue.front();
+        node_queue.pop();
+        if (dist[u+1]<dist.front()) {
+            vertex &U=node(u);
+            for (ivector_iter it=U.neighbors().begin();it!=U.neighbors().end();++it) {
+                v=*it;
+                vertex &V=node(v);
+                if (dist[V.number()]==RAND_MAX) {
+                    dist[V.number()]=dist[u+1]+1;
+                    node_queue.push(V.number()-1);
+                }
+            }
+        }
+    }
+    return dist.front()!=RAND_MAX;
+}
+
+bool graphe::bipartite_matching_dfs(int u,ivector &dist) {
+    if (u>0) {
+        int v;
+        vertex &U=node(u-1);
+        for (ivector_iter it=U.neighbors().begin();it!=U.neighbors().end();++it) {
+            v=*it;
+            vertex &V=node(v);
+            if (dist[V.number()]==dist[u]+1) {
+                if (bipartite_matching_dfs(V.number(),dist)) {
+                    V.set_number(u);
+                    U.set_number(v+1);
+                    return true;
+                }
+            }
+        }
+        dist[u]=RAND_MAX;
+        return false;
+    }
+    return true;
+}
+
+/* obtain maximum matching in bipartite graph using Hopcroft-Karp algorithm */
+int graphe::bipartite_matching(const ivector &p1,const ivector &p2,ipairs &matching) {
+    for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
+        it->set_number(0);
+    }
+    for (ivector_iter it=p1.begin();it!=p1.end();++it) {
+        set_node_color(*it,1);
+    }
+    for (ivector_iter it=p2.begin();it!=p2.end();++it) {
+        set_node_color(*it,2);
+    }
+    ivector dist(node_count()+1);
+    int count=0,u,v;
+    while (bipartite_matching_bfs(dist)) {
+        for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+            if (it->color()!=1)
+                continue;
+            u=it-nodes.begin();
+            if (it->number()==0 && bipartite_matching_dfs(u+1,dist))
+                ++count;
+        }
+    }
+    // extract matching
+    matching.clear();
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        if (it->color()!=1)
+            continue;
+        u=it-nodes.begin();
+        v=it->number();
+        if (v>0)
+            matching.push_back(make_pair(std::min(u,v-1),std::max(u,v-1)));
+    }
+    return count;
 }
 
 #ifndef NO_NAMESPACE_GIAC

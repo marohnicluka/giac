@@ -1071,12 +1071,12 @@ gen _bipartite_matching(const gen &g,GIAC_CONTEXT) {
     if (!G.is_bipartite(p1,p2))
         return gt_err(_GT_ERR_NOT_BIPARTITE,contextptr);
     graphe::ipairs matching;
-    //G.bipartite_matching(matching);
+    int count=G.bipartite_matching(p1,p2,matching);
     vecteur res;
     for (graphe::ipairs_iter it=matching.begin();it!=matching.end();++it) {
         res.push_back(makevecteur(G.node_label(it->first),G.node_label(it->second)));
     }
-    return change_subtype(makevecteur(res.size(),change_subtype(res,_LIST__VECT)),_SEQ__VECT);
+    return change_subtype(makevecteur(count,change_subtype(res,_LIST__VECT)),_SEQ__VECT);
 }
 static const char _bipartite_matching_s[]="bipartite_matching";
 static define_unary_function_eval(__bipartite_matching,&_bipartite_matching,_bipartite_matching_s);
@@ -1449,6 +1449,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                     }
                 }
                 C.make_circular_layout(x,hull,2.5);
+                hull.clear();
                 break;
             case _GT_STYLE_BIPARTITE:
                 if (check && !C.is_bipartite(partition1,partition2))

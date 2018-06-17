@@ -264,10 +264,10 @@ public:
 #ifdef HAVE_LIBGLPK
     class painter {
         graphe *G;
-        ivectors m_values;
-        ivector m_cover_number;
-        ivector m_maxclique;
-        ipairs m_col2ij;
+        ivectors values;
+        ivector cover_number;
+        ivector clique;
+        ipairs col2ij;
         ivector branch_candidates;
         int lb;
         int ub;
@@ -438,6 +438,7 @@ private:
     std::queue<int> node_queue;
     ivectors visited_edges;
     void clear_node_stack();
+    void clear_node_queue();
     void message(const char *str) const;
     void message(const char *format,int a) const;
     void message(const char *format,int a,int b) const;
@@ -540,6 +541,8 @@ private:
     int uncolored_degree(const vertex &v) const;
     bool is_partially_colored() const;
     void remove_maximal_clique(ivector &V) const;
+    bool bipartite_matching_bfs(ivector &dist);
+    bool bipartite_matching_dfs(int u,ivector &dist);
 
 public:
     graphe(const context *contextptr=context0);
@@ -787,10 +790,11 @@ public:
     bool is_vertex_colorable(int k);
     void dsatur();
     int color_count() const;
-    int adjacent_color_count(int i) const;
+    ipair adjacent_color_count(int i) const;
     ipair chromatic_number_bounds();
     void store_layout(const layout &x);
     bool has_stored_layout(layout &x) const;
+    int bipartite_matching(const ivector &p1,const ivector &p2,ipairs &matching);
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

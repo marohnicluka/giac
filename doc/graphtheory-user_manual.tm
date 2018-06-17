@@ -2741,11 +2741,13 @@
   </session>
 
   The <LaTeX> file obtained by exporting a graph is easily converted into an
-  <abbr|EPS> file, which can subsequently be inserted in a paper, report or
-  some other document. A Linux user simply needs to launch a terminal
-  emulator, navigate to the directory in which the exported file, in this
-  case <with|font-family|tt|st53.tex>, is stored and enter the following
-  command:
+  <abbr|EPS> file, which can subsequently be inserted<\footnote>
+    Alternatively, a PSTricks picture from the body of the <verbatim|.tex>
+    file can be copied to some other <LaTeX> document.
+  </footnote> in a paper, report or some other document. A Linux user simply
+  needs to launch a terminal emulator, navigate to the directory in which the
+  exported file, in this case <with|font-family|tt|st53.tex>, is stored and
+  enter the following command:
 
   <\shell-code>
     latex st53.tex && dvips st53.dvi && ps2eps st53.ps
@@ -2931,14 +2933,16 @@
       </equation*>
     </unfolded-io>
 
-    <\unfolded-io>
+    <\input>
       \<gtr\>\ 
-    <|unfolded-io>
+    <|input>
       draw_graph(T)
-    <|unfolded-io>
-      <image|images/tournament.eps|0.57par||0.215par|>
-    </unfolded-io>
+    </input>
+  </session>
 
+  <center|<image|images/tournament.eps|40%|||>>
+
+  <\session|giac|default>
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
@@ -3663,14 +3667,14 @@
       </equation*>
     </unfolded-io>
 
-    <\unfolded-io>
+    <\input>
       \<gtr\>\ 
-    <|unfolded-io>
+    <|input>
       draw_graph(G,planar)
-    <|unfolded-io>
-      <image|images/sparse.eps|0.57par||0.215par|>
-    </unfolded-io>
+    </input>
   </session>
+
+  <center|<image|images/sparse.eps|35%|||>>
 
   <subsection|Spring method>
 
@@ -3768,14 +3772,14 @@
       </equation*>
     </unfolded-io>
 
-    <\unfolded-io>
+    <\input>
       \<gtr\>\ 
-    <|unfolded-io>
+    <|input>
       draw_graph(G,spring,labels=false)
-    <|unfolded-io>
-      <image|images/tensorproduct.eps|0.57par||0.215par|>
-    </unfolded-io>
+    </input>
   </session>
+
+  <center|<image|images/tensorproduct.eps|40%|||>>
 
   The following command lines demostrate drawing of a much larger graph.
 
@@ -3791,14 +3795,14 @@
       </equation*>
     </unfolded-io>
 
-    <\unfolded-io>
+    <\input>
       \<gtr\>\ 
-    <|unfolded-io>
+    <|input>
       draw_graph(S,spring)
-    <|unfolded-io>
-      <image|images/sg54.eps|0.57par||0.215par|>
-    </unfolded-io>
+    </input>
   </session>
+
+  <center|<image|images/sg54.eps|40%|||>>
 
   Note that vertex labels are automatically suppressed because of the large
   number of vertices. On our system, the algorithm took less than 2 seconds
@@ -3856,14 +3860,14 @@
       </equation*>
     </unfolded-io>
 
-    <\unfolded-io>
+    <\input>
       \<gtr\>\ 
-    <|unfolded-io>
+    <|input>
       draw_graph(T)
-    <|unfolded-io>
-      <image|images/tree.eps|0.57par||0.215par|>
-    </unfolded-io>
+    </input>
   </session>
+
+  <center|<image|images/tree.eps|40%|||>>
 
   <subsection|Drawing planar graphs>
 
@@ -3944,14 +3948,14 @@
       </equation*>
     </unfolded-io>
 
-    <\unfolded-io>
+    <\input>
       \<gtr\>\ 
-    <|unfolded-io>
+    <|input>
       draw_graph(G,planar)
-    <|unfolded-io>
-      <image|images/planar1.eps|0.57par||0.215par|>
-    </unfolded-io>
+    </input>
   </session>
+
+  <center|<image|images/planar1.eps|40%|||>>
 
   Note that the inner diamond-like shape in the above drawing would end up
   flattened\Vmaking the two triangular faces invisible\Vif the input graph
@@ -3986,14 +3990,14 @@
       </equation*>
     </unfolded-io>
 
-    <\unfolded-io>
+    <\input>
       \<gtr\>\ 
-    <|unfolded-io>
+    <|input>
       draw_graph(G,planar,labels=false)
-    <|unfolded-io>
-      <image|images/planar2.eps|0.57par||0.215par|>
-    </unfolded-io>
+    </input>
   </session>
+
+  <center|<image|images/planar2.eps|40%|||>>
 
   In the above example, several redraws were required to obtain a good planar
   embedding.
@@ -4010,9 +4014,9 @@
   algorithm<nbsp><cite|plestenjak>, similar to <name|Tutte>'s barycentric
   method, is applied to obtain the final layout.
 
-  This approach produces pleasant drawings of symmetric graphs, such as
-  generalized Petersen graphs. In addition, if the input graph is planar, the
-  drawing will also be planar (there is a possibility, however, that some
+  This approach produces pleasant drawings of round, symmetrical graphs, such
+  as generalized Petersen graphs. In addition, if the input graph is planar,
+  the drawing will also be planar (there is a possibility, however, that some
   very short edges may cross each other).
 
   In the following example the Sierpi«ski graph <math|S<rsub|4><rsup|2>> is
@@ -4030,14 +4034,14 @@
       </equation*>
     </unfolded-io>
 
-    <\unfolded-io>
+    <\input>
       \<gtr\>\ 
-    <|unfolded-io>
+    <|input>
       draw_graph(G,circle=[0,1,4,5,7,13,15,14,11,10,8,2])
-    <|unfolded-io>
-      <image|images/sg24.eps|0.57par||0.215par|>
-    </unfolded-io>
+    </input>
   </session>
+
+  <center|<image|images/sg24.eps|40%|||>>
 
   <section|Custom vertex positions>
 
@@ -4071,14 +4075,16 @@
       </equation*>
     </unfolded-io>
 
-    <\unfolded-io>
+    <\input>
       \<gtr\>\ 
-    <|unfolded-io>
+    <|input>
       draw_graph(G,circle)
-    <|unfolded-io>
-      <image|images/digraph1.eps|0.57par||0.215par|>
-    </unfolded-io>
+    </input>
+  </session>
 
+  <center|<image|images/digraph1.eps|40%|||>>
+
+  <\session|giac|default>
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
@@ -4089,14 +4095,14 @@
       </equation*>
     </unfolded-io>
 
-    <\unfolded-io>
+    <\input>
       \<gtr\>\ 
-    <|unfolded-io>
+    <|input>
       draw_graph(H)
-    <|unfolded-io>
-      <image|images/digraph2.eps|0.57par||0.215par|>
-    </unfolded-io>
+    </input>
   </session>
+
+  <center|<image|images/digraph2.eps|40%|||>>
 
   <subsection|Generating vertex positions>
 
@@ -4126,14 +4132,16 @@
       </equation*>
     </unfolded-io>
 
-    <\unfolded-io>
+    <\input>
       \<gtr\>\ 
-    <|unfolded-io>
+    <|input>
       draw_graph(G)
-    <|unfolded-io>
-      <image|images/oct2.eps|0.57par||0.215par|>
-    </unfolded-io>
+    </input>
+  </session>
 
+  <center|<image|images/oct2.eps|40%|||>>
+
+  <\session|giac|default>
     <\input>
       \<gtr\>\ 
     <|input>
@@ -4155,14 +4163,14 @@
       </equation*>
     </unfolded-io>
 
-    <\unfolded-io>
+    <\input>
       \<gtr\>\ 
-    <|unfolded-io>
+    <|input>
       draw_graph(G)
-    <|unfolded-io>
-      <image|images/oct1.eps|0.57par||0.215par|>
-    </unfolded-io>
+    </input>
   </session>
+
+  <center|<image|images/oct1.eps|40%|||>>
 
   It should be noted that, after a particular layout is fixed, it stays valid
   when some edges or vertices are removed or when an edge is contracted. In
@@ -4206,14 +4214,14 @@
       </equation*>
     </unfolded-io>
 
-    <\unfolded-io>
+    <\input>
       \<gtr\>\ 
-    <|unfolded-io>
+    <|input>
       draw_graph(highlight_vertex(G,L))
-    <|unfolded-io>
-      <image|images/dh1.eps|0.57par||0.215par|>
-    </unfolded-io>
+    </input>
   </session>
+
+  <center|<image|images/dh1.eps|40%|||>>
 
   <subsection|Highlighting edges and trails>
 
@@ -4286,10 +4294,9 @@
   </session>
 
   The output is shown in Figure<nbsp><reference|dh4>.<\float|float|tbh>
-    <center|<small-figure|<image|images/dh2.eps|0.23par|||>|<label|dh2>maximum
-    matching><small-figure|<image|images/dh3.eps|0.23par|||>|<label|dh3>spanning
-    tree><small-figure|<image|images/dh4.eps|0.23par|||>|<label|dh4>cyclic
-    path>>
+    <center|<small-figure|<image|images/dh2.eps|40%|||>|<label|dh2>maximum
+    matching><small-figure|<image|images/dh3.eps|40%|||>|<label|dh3>spanning
+    tree><small-figure|<image|images/dh4.eps|40%|||>|<label|dh4>cyclic path>>
   </float>
 
   <subsection|Highlighting subgraphs>
@@ -4334,14 +4341,16 @@
       </equation*>
     </unfolded-io>
 
-    <\unfolded-io>
+    <\input>
       \<gtr\>\ 
-    <|unfolded-io>
+    <|input>
       draw_graph(highlight_vertex(G,A,magenta))
-    <|unfolded-io>
-      <image|images/sg1.eps|0.57par||0.215par|>
-    </unfolded-io>
+    </input>
+  </session>
 
+  <center|<image|images/sg1.eps|40%|||>>
+
+  <\session|giac|default>
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
@@ -4352,14 +4361,14 @@
       </equation*>
     </unfolded-io>
 
-    <\unfolded-io>
+    <\input>
       \<gtr\>\ 
-    <|unfolded-io>
+    <|input>
       draw_graph(highlight_subgraph(G,S),spring)
-    <|unfolded-io>
-      <image|images/sg2.eps|0.57par||0.215par|>
-    </unfolded-io>
+    </input>
   </session>
+
+  <center|<image|images/sg2.eps|40%|||>>
 
   <\bibliography|bib|tm-plain|graphtheory>
     <\bib-list|16>
@@ -4634,7 +4643,9 @@
     <associate|dh3|<tuple|7.5|50>>
     <associate|dh4|<tuple|7.6|50>>
     <associate|footnote-4.1|<tuple|4.1|29>>
+    <associate|footnote-4.2|<tuple|4.2|?>>
     <associate|footnr-4.1|<tuple|4.1|29>>
+    <associate|footnr-4.2|<tuple|4.2|?>>
     <associate|sec:dotformat|<tuple|4.1.2|29>>
     <associate|st53|<tuple|4.1|31>>
     <associate|touchface|<tuple|7.3|45>>

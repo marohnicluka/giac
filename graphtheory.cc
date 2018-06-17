@@ -1510,8 +1510,10 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     }
     if (isdir || G_orig.is_weighted())
         G_orig.edge_labels_placement(main_layout);
-    drawing.push_back(symb_equal(change_subtype(gen(_AXES),_INT_PLOT),0));
-    drawing.push_back(symb_equal(change_subtype(gen(_GL_ORTHO),_INT_PLOT),1));
+    if (method!=_GT_STYLE_3D) {
+        drawing.push_back(symb_equal(change_subtype(gen(_AXES),_INT_PLOT),0));
+        drawing.push_back(symb_equal(change_subtype(gen(_GL_ORTHO),_INT_PLOT),1));
+    }
     G_orig.draw_edges(drawing,main_layout);
     G_orig.draw_nodes(drawing,main_layout);
     if (labels)

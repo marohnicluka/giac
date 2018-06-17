@@ -9,13 +9,14 @@
     <assign|figure-text|<macro|<localize|Fig.>>>
   </hide-preamble>
 
-  <doc-data|<doc-title|Graph Theory Package for
-  Giac/Xcas>|<doc-subtitle|Reference Manual>|<doc-date|DRAFT June
-  2018>|<doc-misc|>|<\doc-note>
-    <copyright> Luka Marohni¢, 2018
-  </doc-note>|<\doc-note>
-    <with-TeXmacs-text>
-  </doc-note>>
+  <\doc-data|<doc-title|Graph theory package for
+  Giac/Xcas>|<doc-subtitle|Reference manual>|<\doc-date>
+    DRAFT, June 2018
+  </doc-date>||<doc-running-author|Luka Marohni¢>>
+    \;
+  <|doc-data>
+    \;
+  </doc-data>
 
   <\table-of-contents|toc>
     <vspace*|1fn><with|font-series|bold|math-font-series|bold|font-shape|small-caps|1.<space|2spc>Introduction>
@@ -4470,65 +4471,65 @@
 
 <\references>
   <\collection>
-    <associate|a3|<tuple|A3|44>>
+    <associate|a3|<tuple|A3|45>>
     <associate|auto-1|<tuple|1|7>>
     <associate|auto-10|<tuple|2.2|12>>
-    <associate|auto-100|<tuple|5.4|33>>
-    <associate|auto-101|<tuple|5.4.1|33>>
-    <associate|auto-102|<tuple|5.4.2|34>>
-    <associate|auto-103|<tuple|5.4.3|34>>
-    <associate|auto-104|<tuple|5.5|34>>
-    <associate|auto-105|<tuple|5.5.1|34>>
-    <associate|auto-106|<tuple|5.5.2|34>>
-    <associate|auto-107|<tuple|5.5.3|34>>
-    <associate|auto-108|<tuple|5.5.4|34>>
-    <associate|auto-109|<tuple|5.6|34>>
+    <associate|auto-100|<tuple|5.4|35>>
+    <associate|auto-101|<tuple|5.4.1|35>>
+    <associate|auto-102|<tuple|5.4.2|35>>
+    <associate|auto-103|<tuple|5.4.3|35>>
+    <associate|auto-104|<tuple|5.5|35>>
+    <associate|auto-105|<tuple|5.5.1|35>>
+    <associate|auto-106|<tuple|5.5.2|35>>
+    <associate|auto-107|<tuple|5.5.3|35>>
+    <associate|auto-108|<tuple|5.5.4|35>>
+    <associate|auto-109|<tuple|5.6|35>>
     <associate|auto-11|<tuple|2.2.1|12>>
-    <associate|auto-110|<tuple|5.6.1|34>>
-    <associate|auto-111|<tuple|5.7|34>>
-    <associate|auto-112|<tuple|5.7.1|34>>
-    <associate|auto-113|<tuple|5.7.2|34>>
-    <associate|auto-114|<tuple|5.7.3|35>>
-    <associate|auto-115|<tuple|5.7.4|36>>
-    <associate|auto-116|<tuple|5.8|36>>
-    <associate|auto-117|<tuple|5.8.1|37>>
-    <associate|auto-118|<tuple|5.8.2|37>>
-    <associate|auto-119|<tuple|5.9|37>>
+    <associate|auto-110|<tuple|5.6.1|35>>
+    <associate|auto-111|<tuple|5.7|35>>
+    <associate|auto-112|<tuple|5.7.1|35>>
+    <associate|auto-113|<tuple|5.7.2|36>>
+    <associate|auto-114|<tuple|5.7.3|37>>
+    <associate|auto-115|<tuple|5.7.4|37>>
+    <associate|auto-116|<tuple|5.8|38>>
+    <associate|auto-117|<tuple|5.8.1|38>>
+    <associate|auto-118|<tuple|5.8.2|39>>
+    <associate|auto-119|<tuple|5.9|39>>
     <associate|auto-12|<tuple|2.2.2|12>>
-    <associate|auto-120|<tuple|5.10|38>>
-    <associate|auto-121|<tuple|6|38>>
-    <associate|auto-122|<tuple|6.1|39>>
-    <associate|auto-123|<tuple|6.1.1|39>>
-    <associate|auto-124|<tuple|6.1.2|39>>
-    <associate|auto-125|<tuple|6.1.3|39>>
-    <associate|auto-126|<tuple|6.2|39>>
-    <associate|auto-127|<tuple|6.2.1|39>>
-    <associate|auto-128|<tuple|6.2.2|39>>
-    <associate|auto-129|<tuple|7|39>>
+    <associate|auto-120|<tuple|5.10|39>>
+    <associate|auto-121|<tuple|6|41>>
+    <associate|auto-122|<tuple|6.1|41>>
+    <associate|auto-123|<tuple|6.1.1|41>>
+    <associate|auto-124|<tuple|6.1.2|41>>
+    <associate|auto-125|<tuple|6.1.3|41>>
+    <associate|auto-126|<tuple|6.2|41>>
+    <associate|auto-127|<tuple|6.2.1|41>>
+    <associate|auto-128|<tuple|6.2.2|41>>
+    <associate|auto-129|<tuple|7|43>>
     <associate|auto-13|<tuple|2.3|12>>
-    <associate|auto-130|<tuple|7.1|41>>
-    <associate|auto-131|<tuple|7.1.1|41>>
-    <associate|auto-132|<tuple|7.1.2|41>>
-    <associate|auto-133|<tuple|7.1.3|41>>
-    <associate|auto-134|<tuple|7.1.4|42>>
-    <associate|auto-135|<tuple|7.1.5|43>>
-    <associate|auto-136|<tuple|7.1|44>>
-    <associate|auto-137|<tuple|7.2|45>>
-    <associate|auto-138|<tuple|7.3|45>>
-    <associate|auto-139|<tuple|7.1.6|45>>
+    <associate|auto-130|<tuple|7.1|43>>
+    <associate|auto-131|<tuple|7.1.1|43>>
+    <associate|auto-132|<tuple|7.1.2|43>>
+    <associate|auto-133|<tuple|7.1.3|44>>
+    <associate|auto-134|<tuple|7.1.4|45>>
+    <associate|auto-135|<tuple|7.1.5|46>>
+    <associate|auto-136|<tuple|7.1|47>>
+    <associate|auto-137|<tuple|7.2|47>>
+    <associate|auto-138|<tuple|7.3|47>>
+    <associate|auto-139|<tuple|7.1.6|48>>
     <associate|auto-14|<tuple|2.3.1|12>>
-    <associate|auto-140|<tuple|7.2|46>>
-    <associate|auto-141|<tuple|7.2.1|46>>
-    <associate|auto-142|<tuple|7.2.2|46>>
-    <associate|auto-143|<tuple|7.3|47>>
-    <associate|auto-144|<tuple|7.3.1|48>>
-    <associate|auto-145|<tuple|7.3.2|48>>
-    <associate|auto-146|<tuple|7.4|49>>
-    <associate|auto-147|<tuple|7.5|50>>
-    <associate|auto-148|<tuple|7.6|50>>
-    <associate|auto-149|<tuple|7.3.3|50>>
+    <associate|auto-140|<tuple|7.2|48>>
+    <associate|auto-141|<tuple|7.2.1|48>>
+    <associate|auto-142|<tuple|7.2.2|49>>
+    <associate|auto-143|<tuple|7.3|50>>
+    <associate|auto-144|<tuple|7.3.1|50>>
+    <associate|auto-145|<tuple|7.3.2|50>>
+    <associate|auto-146|<tuple|7.4|51>>
+    <associate|auto-147|<tuple|7.5|51>>
+    <associate|auto-148|<tuple|7.6|51>>
+    <associate|auto-149|<tuple|7.3.3|51>>
     <associate|auto-15|<tuple|2.3.2|13>>
-    <associate|auto-150|<tuple|7.3.3|49>>
+    <associate|auto-150|<tuple|7.3.3|53>>
     <associate|auto-16|<tuple|2.3.3|13>>
     <associate|auto-17|<tuple|2.4|13>>
     <associate|auto-18|<tuple|2.4.1|13>>
@@ -4609,46 +4610,46 @@
     <associate|auto-86|<tuple|5.1|33>>
     <associate|auto-87|<tuple|5.1.1|33>>
     <associate|auto-88|<tuple|5.1.2|33>>
-    <associate|auto-89|<tuple|5.1.3|33>>
+    <associate|auto-89|<tuple|5.1.3|34>>
     <associate|auto-9|<tuple|2.1.6|11>>
-    <associate|auto-90|<tuple|5.1.4|33>>
-    <associate|auto-91|<tuple|5.2|33>>
-    <associate|auto-92|<tuple|5.3|33>>
-    <associate|auto-93|<tuple|5.3.1|33>>
-    <associate|auto-94|<tuple|5.3.2|33>>
-    <associate|auto-95|<tuple|5.3.3|33>>
-    <associate|auto-96|<tuple|5.3.4|33>>
-    <associate|auto-97|<tuple|5.3.5|33>>
-    <associate|auto-98|<tuple|5.3.6|33>>
-    <associate|auto-99|<tuple|5.3.7|33>>
-    <associate|bib-buchheim|<tuple|1|51>>
-    <associate|bib-diaz|<tuple|2|51>>
-    <associate|bib-edmonds|<tuple|3|51>>
-    <associate|bib-fruchterman|<tuple|4|51>>
-    <associate|bib-gibbons|<tuple|5|51>>
-    <associate|bib-hinz|<tuple|6|51>>
-    <associate|bib-hopcroft|<tuple|7|51>>
-    <associate|bib-hu|<tuple|8|51>>
-    <associate|bib-hu2|<tuple|9|51>>
-    <associate|bib-myrwold|<tuple|10|51>>
-    <associate|bib-ostergard|<tuple|11|51>>
-    <associate|bib-plestenjak|<tuple|12|51>>
-    <associate|bib-tomita|<tuple|13|51>>
-    <associate|bib-tutte|<tuple|14|51>>
-    <associate|bib-walker|<tuple|15|51>>
-    <associate|bib-welch|<tuple|16|51>>
-    <associate|blockjoin|<tuple|7.1|45>>
-    <associate|chordface|<tuple|7.2|45>>
-    <associate|dh2|<tuple|7.4|50>>
-    <associate|dh3|<tuple|7.5|50>>
-    <associate|dh4|<tuple|7.6|50>>
+    <associate|auto-90|<tuple|5.1.4|34>>
+    <associate|auto-91|<tuple|5.2|34>>
+    <associate|auto-92|<tuple|5.3|34>>
+    <associate|auto-93|<tuple|5.3.1|34>>
+    <associate|auto-94|<tuple|5.3.2|34>>
+    <associate|auto-95|<tuple|5.3.3|34>>
+    <associate|auto-96|<tuple|5.3.4|34>>
+    <associate|auto-97|<tuple|5.3.5|34>>
+    <associate|auto-98|<tuple|5.3.6|34>>
+    <associate|auto-99|<tuple|5.3.7|34>>
+    <associate|bib-buchheim|<tuple|1|53>>
+    <associate|bib-diaz|<tuple|2|53>>
+    <associate|bib-edmonds|<tuple|3|53>>
+    <associate|bib-fruchterman|<tuple|4|53>>
+    <associate|bib-gibbons|<tuple|5|53>>
+    <associate|bib-hinz|<tuple|6|53>>
+    <associate|bib-hopcroft|<tuple|7|53>>
+    <associate|bib-hu|<tuple|8|53>>
+    <associate|bib-hu2|<tuple|9|53>>
+    <associate|bib-myrwold|<tuple|10|53>>
+    <associate|bib-ostergard|<tuple|11|53>>
+    <associate|bib-plestenjak|<tuple|12|53>>
+    <associate|bib-tomita|<tuple|13|53>>
+    <associate|bib-tutte|<tuple|14|53>>
+    <associate|bib-walker|<tuple|15|53>>
+    <associate|bib-welch|<tuple|16|53>>
+    <associate|blockjoin|<tuple|7.1|47>>
+    <associate|chordface|<tuple|7.2|47>>
+    <associate|dh2|<tuple|7.4|51>>
+    <associate|dh3|<tuple|7.5|51>>
+    <associate|dh4|<tuple|7.6|51>>
     <associate|footnote-4.1|<tuple|4.1|29>>
-    <associate|footnote-4.2|<tuple|4.2|?>>
+    <associate|footnote-4.2|<tuple|4.2|30>>
     <associate|footnr-4.1|<tuple|4.1|29>>
-    <associate|footnr-4.2|<tuple|4.2|?>>
+    <associate|footnr-4.2|<tuple|4.2|30>>
     <associate|sec:dotformat|<tuple|4.1.2|29>>
     <associate|st53|<tuple|4.1|31>>
-    <associate|touchface|<tuple|7.3|45>>
+    <associate|touchface|<tuple|7.3|47>>
   </collection>
 </references>
 

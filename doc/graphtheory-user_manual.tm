@@ -3076,7 +3076,7 @@
 
   Giac has some basic support for the <with|font-family|ss|dot>
   language<footnote|For the complete syntax definition see
-  <slink|https://www.graphviz.org/doc/info/lang.html>>. Each <kbd|.dot> file
+  <slink|https://www.graphviz.org/doc/info/lang.html>.>. Each <kbd|.dot> file
   is used to hold exactly one graph and should consist of a single instance
   of the following environment:
 
@@ -4013,7 +4013,7 @@
       L:=greedy_color(G,randperm(10))
     <|unfolded-io>
       <\equation*>
-        <around|[|2,1,2,4,1,1,2,4,3,3|]>
+        <around|[|1,2,1,4,3,4,1,3,2,2|]>
       </equation*>
     </unfolded-io>
   </session>
@@ -4025,7 +4025,7 @@
     <\input>
       \<gtr\>\ 
     <|input>
-      draw_graph(highlight_vertex(G,vertices(G),L))
+      draw_graph(highlight_vertex(G,vertices(G),L),labels=false)
     </input>
   </session>
 
@@ -4057,9 +4057,9 @@
   general. Note that <abbr|MVCP> is a <abbr|NP>-hard problem, which means
   that no polyomial (i.e.<nbsp>efficient) algorithm is known.
 
-  In the following example, the Grotzsch graph is colored by first finding
-  the colors and then assigning them to the graph by using the
-  <verbatim|highlight_vertex> command.
+  In the following example, the Grotzsch graph is colored with minimal number
+  of colors by first finding the coloring and then assigning it to the graph
+  by using the <verbatim|highlight_vertex> command.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -4085,7 +4085,7 @@
     <\input>
       \<gtr\>\ 
     <|input>
-      draw_graph(highlight_vertex(G,vertices(G),coloring))
+      draw_graph(highlight_vertex(G,vertices(G),coloring),labels=false)
     </input>
   </session>
 

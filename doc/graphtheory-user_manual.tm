@@ -4031,6 +4031,11 @@
 
   <center|<image|images/color1.eps|40%|||>>
 
+  The first six positive integers are always mapped to the standard Giac
+  colors, as indicated in the table below.
+
+  <center|<tabular|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|1|1|-1|cell-tborder|0ln>|<cwith|1|1|1|-1|cell-bborder|1ln>|<cwith|2|2|1|-1|cell-tborder|1ln>|<cwith|1|1|1|1|cell-lborder|0ln>|<cwith|1|1|2|2|cell-rborder|0ln>|<table|<row|<cell|<em|value>>|<cell|<em|color>>>|<row|<cell|1>|<cell|red>>|<row|<cell|2>|<cell|green>>|<row|<cell|3>|<cell|yellow>>|<row|<cell|4>|<cell|blue>>|<row|<cell|5>|<cell|magenta>>|<row|<cell|6>|<cell|cyan>>>>>>
+
   <subsection|Minimal coloring>
 
   The vertex coloring of <math|G> is <em|minimal> (or <em|optimal>) if the
@@ -5298,13 +5303,13 @@
     <associate|footnote-4.1|<tuple|4.1|35>>
     <associate|footnote-4.2|<tuple|4.2|36>>
     <associate|footnote-5.1|<tuple|5.1|42>>
-    <associate|footnote-5.2|<tuple|5.2|46>>
+    <associate|footnote-5.2|<tuple|5.2|47>>
     <associate|footnr-2.1|<tuple|2.1|18>>
     <associate|footnr-2.2|<tuple|2.2|26>>
     <associate|footnr-4.1|<tuple|4.1|35>>
     <associate|footnr-4.2|<tuple|4.2|36>>
     <associate|footnr-5.1|<tuple|5.1|42>>
-    <associate|footnr-5.2|<tuple|5.2|46>>
+    <associate|footnr-5.2|<tuple|5.2|47>>
     <associate|sec:dotformat|<tuple|4.1.2|35>>
     <associate|st53|<tuple|4.1|37>>
     <associate|touchface|<tuple|7.3|55>>

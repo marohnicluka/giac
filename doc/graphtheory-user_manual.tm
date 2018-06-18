@@ -4031,10 +4031,10 @@
 
   <center|<image|images/color1.eps|40%|||>>
 
-  The first six positive integers are always mapped to the standard Giac
+  The first seven positive integers are always mapped to the standard Giac
   colors, as indicated in the table below.
 
-  <center|<tabular|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|1|1|-1|cell-tborder|0ln>|<cwith|1|1|1|-1|cell-bborder|1ln>|<cwith|2|2|1|-1|cell-tborder|1ln>|<cwith|1|1|1|1|cell-lborder|0ln>|<cwith|1|1|2|2|cell-rborder|0ln>|<table|<row|<cell|<em|value>>|<cell|<em|color>>>|<row|<cell|1>|<cell|red>>|<row|<cell|2>|<cell|green>>|<row|<cell|3>|<cell|yellow>>|<row|<cell|4>|<cell|blue>>|<row|<cell|5>|<cell|magenta>>|<row|<cell|6>|<cell|cyan>>>>>>
+  <center|<tabular|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|1|1|-1|cell-tborder|0ln>|<cwith|1|1|1|-1|cell-bborder|1ln>|<cwith|2|2|1|-1|cell-tborder|1ln>|<cwith|1|1|1|1|cell-lborder|0ln>|<cwith|1|1|2|2|cell-rborder|0ln>|<table|<row|<cell|<em|value>>|<cell|<em|color>>>|<row|<cell|1>|<cell|red>>|<row|<cell|2>|<cell|green>>|<row|<cell|3>|<cell|yellow>>|<row|<cell|4>|<cell|blue>>|<row|<cell|5>|<cell|magenta>>|<row|<cell|6>|<cell|cyan>>|<row|<cell|7>|<cell|black>>>>>>
 
   <subsection|Minimal coloring>
 
@@ -4059,8 +4059,11 @@
   colors), respectively.
 
   The algorithm is fast for graphs up to 50 vertices and for sparse graphs in
-  general. Note that <abbr|MVCP> is a <abbr|NP>-hard problem, which means
-  that no polyomial (i.e.<nbsp>efficient) algorithm is known.
+  general. For larger semi-dense graphs (with edge density around 0.5, which
+  are the most difficult ones) one may have to wait for several minutes, even
+  hours, and sometimes for a practically infinite time. Note that <abbr|MVCP>
+  is a <abbr|NP>-hard problem, which means that no polyomial
+  (i.e.<nbsp>efficient) algorithm is known.
 
   In the following example, the Grotzsch graph is colored with minimal number
   of colors by first finding the coloring and then assigning it to the graph
@@ -4095,6 +4098,64 @@
   </session>
 
   <center|<image|images/grotzsch.eps|40%|||>>
+
+  The combinatorial explosion which characterizes <abbr|MVCP> can be
+  illustrated with the following example. Note that finding an optimal
+  coloring in <math|G> is equivalent to finding the minimal clique cover in
+  its complement <math|G<rsup|c>>. A random graph with 30 vertices and edge
+  density 0.5 is generated and its maximal cliques counted using the command
+  <verbatim|clique_stats>. Then the number of all sets of 5 maximal cliques
+  is computed, which is the maximal number of combinations that must be
+  tested in order to find whether the graph <math|G> can be colored by
+  exactly 5 colors.
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      G:=random_graph(30,0.5)
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 30 vertices and 198 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      S:=clique_stats(G)
+    <|unfolded-io>
+      <\equation*>
+        <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|2|2|cell-rborder|0ln>|<table|<row|<cell|3>|<cell|31>>|<row|<cell|4>|<cell|100>>|<row|<cell|5>|<cell|17>>>>>|)>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      n:=sum(col(S,1))
+    <|unfolded-io>
+      <\equation*>
+        148
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      comb(n,5)
+    <|unfolded-io>
+      <\equation*>
+        552689424
+      </equation*>
+    </unfolded-io>
+  </session>
+
+  Therefore, to determine if the relatively small graph generated in the
+  above example can be colored by 5 colors, roughly 550 million combinations
+  must be checked by a brute-force algorithm. Note that this just finds a
+  possible 5-coloring; shuch an algorithm should also check for 4, 6, 7
+  colors etc.
 
   <subsection|<math|k>-coloring>
 

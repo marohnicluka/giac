@@ -710,7 +710,7 @@ public:
     static void scale_layout(layout &x,double diam);
     inline bool is_tree() { return !is_directed() && edge_count()+1==node_count() && is_connected(); }
     bool is_forest();
-    bool is_tournament();
+    bool is_tournament() const;
     bool is_planar();
     bool is_clique() const;
     bool is_triangle_free() const;
@@ -795,6 +795,8 @@ public:
     void store_layout(const layout &x);
     bool has_stored_layout(layout &x) const;
     int bipartite_matching(const ivector &p1,const ivector &p2,ipairs &matching);
+    void line_graph(graphe &G) const;
+    void transitive_closure(graphe &G,bool weighted=false);
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

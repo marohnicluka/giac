@@ -1055,8 +1055,9 @@ define_unary_function_ptr5(at_maximum_matching,alias_at_maximum_matching,&__maxi
 
 /* USAGE:   bipartite_matching(G)
  *
- * Returns the sequence containing the size of maximum matching of a bipartite
- * graph G and the list of edges of the matching.
+ * Returns the sequence containing the size of maximum matching of the
+ * undirected unweighted bipartite graph G and the list of edges of the
+ * matching.
  */
 gen _bipartite_matching(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -1873,7 +1874,7 @@ gen _assign_edge_weights(const gen &g,GIAC_CONTEXT) {
                 b=gv.back()._SYMBptr->feuille._VECTptr->back();
         if (!graphe::is_real_number(a) || !graphe::is_real_number(b))
             return gentypeerr(contextptr);
-        G.randomize_edge_weights(a.DOUBLE_val(),b.DOUBLE_val(),false);
+        G.randomize_edge_weights(_evalf(a,contextptr).DOUBLE_val(),_evalf(b,contextptr).DOUBLE_val(),false);
     }
     return G.to_gen();
 }
@@ -3521,7 +3522,7 @@ gen _highlight_edges(const gen &g,GIAC_CONTEXT) {
         return notfound?gt_err(_GT_ERR_EDGE_NOT_FOUND,contextptr):gensizeerr(contextptr);
     gen C=gv.size()==3?gv.back():graphe::default_highlighted_edge_color;
     for (graphe::ipairs_iter it=edges.begin();it!=edges.end();++it) {
-        G.set_edge_attribute(it->first,it->second,_GT_ATTRIB_COLOR,C);
+        G.set_edge_attribute(it->first,it->second,_GT_ATTRIB_COLOR,C.type==_VECT?C._VECTptr->at(it-edges.begin()):C);
     }
     return G.to_gen();
 }
@@ -4516,10 +4517,6 @@ static const char _is_arborescence_s[]="is_arborescence";
 static define_unary_function_eval(__is_arborescence,&_is_arborescence,_is_arborescence_s);
 define_unary_function_ptr5(at_is_arborescence,alias_at_is_arborescence,&__is_arborescence,0,true)
 
-//
-// GENERAL COMMMANDS ***********************************************************
-//
-
 /* USAGE:   foldl(op,id,r1,r2,...)
  *
  * Returns the composition of the binary operator or function op, with identity
@@ -4987,8 +4984,9 @@ define_unary_function_ptr5(at_plane_dual,alias_at_plane_dual,&__plane_dual,0,tru
 
 /* USAGE:   is_vertex_colorable(G,k,[col])
  *
- * Returns true iff the vertices of graph G can be colored by using at most k colors. If true is returned and an identifier col is given,
- * the colors of the vertices are stored in it.
+ * Returns true iff the vertices of graph G can be colored by using at most k
+ * colors. If true is returned and an identifier col is given, the colors of
+ * the vertices are stored in it.
  */
 gen _is_vertex_colorable(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -5140,6 +5138,59 @@ gen _minimal_vertex_coloring(const gen &g,GIAC_CONTEXT) {
 static const char _minimal_vertex_coloring_s[]="minimal_vertex_coloring";
 static define_unary_function_eval(__minimal_vertex_coloring,&_minimal_vertex_coloring,_minimal_vertex_coloring_s);
 define_unary_function_ptr5(at_minimal_vertex_coloring,alias_at_minimal_vertex_coloring,&__minimal_vertex_coloring,0,true)
+
+/* USAGE:   line_graph(G)
+ *
+ * Returns the line graph of the undirected input graph G.
+ */
+gen _line_graph(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr),L(contextptr);
+    if (!G.read_gen(g))
+        gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED,contextptr);
+    G.line_graph(L);
+    return L.to_gen();
+}
+static const char _line_graph_s[]="line_graph";
+static define_unary_function_eval(__line_graph,&_line_graph,_line_graph_s);
+define_unary_function_ptr5(at_line_graph,alias_at_line_graph,&__line_graph,0,true)
+
+/* USAGE:   transitive_closure(G,[weighted[=true or false]])
+ *
+ * Returns the [weighted, by default false] transitive closure of the input
+ * graph G.
+ */
+gen _transitive_closure(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    bool weighted=false;
+    if (g.subtype==_SEQ__VECT) {
+        if (g._VECTptr->size()!=2)
+            return gensizeerr(contextptr);
+        gen &opt=g._VECTptr->back();
+        if (opt.is_integer() && opt.val==_GT_WEIGHTED)
+            weighted=true;
+        else if (opt.is_symb_of_sommet(at_equal)) {
+            vecteur &args=*opt._SYMBptr->feuille._VECTptr;
+            if (!args.front().is_integer() ||
+                    args.front().val!=_GT_WEIGHTED ||
+                    !args.back().is_integer())
+                return gentypeerr(contextptr);
+            weighted=(bool)args.back().val;
+        }
+    }
+    graphe G(contextptr),C(contextptr);
+    if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
+    G.transitive_closure(C,weighted);
+    return C.to_gen();
+}
+static const char _transitive_closure_s[]="transitive_closure";
+static define_unary_function_eval(__transitive_closure,&_transitive_closure,_transitive_closure_s);
+define_unary_function_ptr5(at_transitive_closure,alias_at_transitive_closure,&__transitive_closure,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

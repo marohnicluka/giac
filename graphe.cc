@@ -3863,7 +3863,7 @@ void graphe::painter::formulate_mip() {
     for (ivector_iter it=clique.begin();it!=clique.end();++it) {
         iscliq[*it]=true;
     }
-    // create row variables and count the nonzero entries in constraint matrix
+    // create row variables and count nonzero entries in the constraint matrix
     int nonzeros=0,cnt=0,rs,cn,val;
     int nrows=n*(ub+2)-3*lb;
     glp_add_rows(mip,nrows);
@@ -3979,6 +3979,7 @@ void graphe::painter::formulate_mip() {
         }
     }
     assert(cnt<=nonzeros && row==nrows);
+    // assign the constraint matrix to the MIP
     glp_load_matrix(mip,cnt,ia,ja,ar);
     delete[] ia; delete[] ja;
     delete[] ar;
@@ -4012,7 +4013,7 @@ int graphe::painter::select_branching_variable(glp_tree *tree) {
     for (ivector_iter it=clique.begin();it!=clique.end();++it) {
         G->set_node_color(*it,int(it-clique.begin())+1);
     }
-    for (int j=0;j<nxcols;++j) {
+    for (int j=nxcols;j-->0;) {
         ipair &ij=col2ij[j];
         if (glp_ios_can_branch(tree,j+1)) {
             branch_candidates[ij.first]=ij.second;
@@ -4051,7 +4052,7 @@ int graphe::painter::color_vertices(ivector &colors,int max_colors) {
     glp_init_iocp(&parm);
     parm.msg_lev=GLP_MSG_ERR;
     //parm.br_tech=GLP_BR_FFV;
-    //parm.bt_tech=GLP_BT_DFS;
+    parm.bt_tech=GLP_BT_BFS;
     //parm.gmi_cuts=GLP_ON;
     parm.mir_cuts=GLP_ON;
     parm.clq_cuts=GLP_ON;
@@ -6685,7 +6686,7 @@ bool graphe::is_forest() {
 }
 
 /* return true iff the graph is a tournament */
-bool graphe::is_tournament() {
+bool graphe::is_tournament() const {
     int n=node_count();
     if (!is_directed() || edge_count()!=n*(n-1)/2)
         return false;
@@ -7616,7 +7617,75 @@ int graphe::bipartite_matching(const ivector &p1,const ivector &p2,ipairs &match
         if (v>0)
             matching.push_back(make_pair(std::min(u,v-1),std::max(u,v-1)));
     }
-    return count;
+    return count; // size of the matching
+}
+
+/* construct the line graph of this graph */
+void graphe::line_graph(graphe &G) const {
+    ipairs E;
+    get_edges_as_pairs(E);
+    G.clear();
+    vecteur labels;
+    gen label;
+    for (ipairs_iter it=E.begin();it!=E.end();++it) {
+        label=_cat(makesequence(node_label(it->first),str2gen("-",true),node_label(it->second)),ctx);
+        labels.push_back(label);
+    }
+    G.add_nodes(labels);
+    int i,j;
+    for (ipairs_iter it=E.begin();it!=E.end();++it) {
+        i=it-E.begin();
+        for (ipairs_iter jt=it+1;jt!=E.end();++jt) {
+            j=jt-E.begin();
+            if (edges_incident(*it,*jt))
+                G.add_edge(i,j);
+        }
+    }
+}
+
+/* construct the transitive closure of this graph */
+void graphe::transitive_closure(graphe &G,bool weighted) {
+    int n=node_count();
+    bool isdir=is_directed(),iswei=is_weighted();
+    G.clear();
+    G.set_directed(isdir);
+    G.set_weighted(weighted);
+    G.add_nodes(vertices());
+    if (weighted) {
+        matrice m;
+        gen wgh;
+        ivector dist,J(n-1);
+        int cnt;
+        if (iswei)
+            allpairs_distance(m);
+        for (int i=0;i<n;++i) {
+            if (!iswei) {
+                cnt=0;
+                for (int k=0;k<n;++k) {
+                    if (k!=i)
+                        J[cnt++]=k;
+                }
+                distance(i,J,dist);
+            }
+            for (int j=isdir?0:i+1;j<n;++j) {
+                if (i==j)
+                    continue;
+                if ((iswei && !is_inf(wgh=m[i][j])) ||
+                        (!iswei && is_positive(wgh=dist[j<i?j:j-1],ctx)))
+                    G.add_edge(i,j,wgh);
+            }
+        }
+    } else {
+        for (int i=0;i<n;++i) {
+            dfs(i,false);
+            for (int j=isdir?0:i+1;j<n;++j) {
+                if (i==j)
+                    continue;
+                if (node(j).is_visited())
+                    G.add_edge(i,j);
+            }
+        }
+    }
 }
 
 #ifndef NO_NAMESPACE_GIAC

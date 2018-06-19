@@ -4490,7 +4490,7 @@ void graphe::make_complete_graph() {
 }
 
 /* create complete k-partite graph with given partition sizes */
-void graphe::make_complete_multipartite_graph(const ivector &partition_sizes) {
+void graphe::make_complete_multipartite_graph(const ivector &partition_sizes,layout *x) {
     int k=partition_sizes.size();
     ivectors partitions;
     int n0=0;
@@ -4514,6 +4514,13 @@ void graphe::make_complete_multipartite_graph(const ivector &partition_sizes) {
                 }
             }
         }
+    }
+    if (x!=NULL && partition_sizes.size()==2 && partition_sizes.front()==1 && partition_sizes.back()>2) {
+        // create the star layout
+        int n=partition_sizes.back();
+        ivector hull(n);
+        for (int i=0;i<n;++i) hull[i]=i+1;
+        make_circular_layout(*x,hull);
     }
 }
 
@@ -4598,7 +4605,7 @@ void graphe::make_grid_graph(int m,int n,bool torus) {
 }
 
 /* create n times m web graph as the cartesian product of n-cycle and m-path graphs */
-void graphe::make_web_graph(int n,int m) {
+void graphe::make_web_graph(int n,int m,layout *x) {
     vecteur V;
     graphe C(ctx);
     C.make_default_labels(V,n);
@@ -4609,10 +4616,16 @@ void graphe::make_web_graph(int n,int m) {
     P.add_nodes(V);
     P.make_path_graph();
     C.cartesian_product(P,*this);
+    if (x!=NULL) {
+        // layout the graph
+        ivector hull(n);
+        for (int i=0;i<n;++i) hull[i]=m*i;
+        make_circular_layout(*x,hull);
+    }
 }
 
 /* create wheel graph with n+1 vertices */
-void graphe::make_wheel_graph(int n) {
+void graphe::make_wheel_graph(int n,layout *x) {
     vecteur V;
     make_default_labels(V,n,0,1);
     add_nodes(V);
@@ -4621,10 +4634,16 @@ void graphe::make_wheel_graph(int n) {
     for (int j=0;j<n;++j) {
         add_edge(i,j);
     }
+    if (x!=NULL) {
+        // layout the graph
+        ivector hull(n);
+        for (int i=0;i<n;++i) hull[i]=i;
+        make_circular_layout(*x,hull);
+    }
 }
 
 /* create antiprism graph of order n (with 2n vertices and 4n edges) */
-void graphe::make_antiprism_graph(int n) {
+void graphe::make_antiprism_graph(int n,layout *x) {
     vecteur V;
     make_default_labels(V,2*n,0);
     add_nodes(V);
@@ -4635,6 +4654,12 @@ void graphe::make_antiprism_graph(int n) {
         add_edge(2*i+1,2*j+1);
         add_edge(2*j,2*i+1);
         add_edge(2*j,2*j+1);
+    }
+    if (x!=NULL) {
+        // layout the graph
+        ivector hull(n);
+        for (int i=0;i<n;++i) hull[i]=2*i;
+        make_circular_layout(*x,hull,-1.0);
     }
 }
 
@@ -6005,6 +6030,7 @@ void graphe::pack_rectangles(vector<rectangle> &rectangles) {
     if (rectangles.size()<2)
         return;
     bool firstpass=true;
+    clock_t start=clock();
     while (bw>maxwidth+step) { // loop breaks after a stacked embedding is obtained
         if (firstpass || embed_rectangles(rectangles,bh)) {
             bw=bh=0;
@@ -6028,6 +6054,8 @@ void graphe::pack_rectangles(vector<rectangle> &rectangles) {
         // increase enclosing rectangle height (rectangles will end up stacked eventually)
         bh+=step;
         firstpass=false;
+        if (double(clock()-start)/CLOCKS_PER_SEC>1.5)
+            break;
     }
     for (vector<rectangle>::iterator it=rectangles.begin();it!=rectangles.end();++it) {
         dpair &p=best_embedding[it-rectangles.begin()];

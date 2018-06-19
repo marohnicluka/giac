@@ -1580,7 +1580,10 @@ gen _complete_graph(const gen &g,GIAC_CONTEXT) {
                 return gentypeerr(contextptr);
             partition_sizes.push_back(it->val);
         }
-        G.make_complete_multipartite_graph(partition_sizes);
+        graphe::layout x;
+        G.make_complete_multipartite_graph(partition_sizes,&x);
+        if (!x.empty())
+            G.store_layout(x);
     } else
         return gentypeerr(contextptr);
     return G.to_gen();
@@ -1612,7 +1615,9 @@ gen _petersen_graph(const gen &g,GIAC_CONTEXT) {
             return gentypeerr(contextptr);
     }
     graphe G(contextptr);
-    G.make_petersen_graph(n,k);
+    graphe::layout x;
+    G.make_petersen_graph(n,k,&x);
+    G.store_layout(x);
     return G.to_gen();
 }
 static const char _petersen_graph_s[]="petersen_graph";
@@ -3204,7 +3209,9 @@ gen _antiprism_graph(const gen &g,GIAC_CONTEXT) {
     if (!g.is_integer() || g.val<3)
         return gentypeerr(contextptr);
     graphe G(contextptr);
-    G.make_antiprism_graph(g.val);
+    graphe::layout x;
+    G.make_antiprism_graph(g.val,&x);
+    G.store_layout(x);
     return G.to_gen();
 }
 static const char _antiprism_graph_s[]="antiprism_graph";
@@ -3235,7 +3242,9 @@ gen _wheel_graph(const gen &g,GIAC_CONTEXT) {
     if (!g.is_integer() || g.val<3)
         return gentypeerr(contextptr);
     graphe G(contextptr);
-    G.make_wheel_graph(g.val);
+    graphe::layout x;
+    G.make_wheel_graph(g.val,&x);
+    G.store_layout(x);
     return G.to_gen();
 }
 static const char _wheel_graph_s[]="wheel_graph";
@@ -3307,7 +3316,9 @@ gen _web_graph(const gen &g,GIAC_CONTEXT) {
     if (a<3 || b<2)
         return gensizeerr(contextptr);
     graphe G(contextptr);
-    G.make_web_graph(a,b);
+    graphe::layout x;
+    G.make_web_graph(a,b,&x);
+    G.store_layout(x);
     return G.to_gen();
 }
 static const char _web_graph_s[]="web_graph";

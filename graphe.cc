@@ -891,7 +891,7 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         make_petersen_graph(6,2,&x);
     } else if (name=="dyck") {
         read_special(dyck_graph);
-        for (int i=1;i<=node_count();++i) hull.push_back(node_index(i));
+        for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
     } else if (name=="grinberg") {
         read_special(grinberg_graph);
@@ -903,11 +903,11 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         make_circular_layout(x,hull,2.5);
     } else if (name=="harries") {
         make_lcf_graph(harries_graph_lcf,5);
-        for (int i=1;i<=node_count();++i) hull.push_back(node_index(i));
+        for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
     } else if (name=="harries-wong") {
         make_lcf_graph(harries_wong_graph_lcf,1);
-        for (int i=1;i<=node_count();++i) hull.push_back(node_index(i));
+        for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
     } else if (name=="heawood") {
         read_special(heawood_graph);
@@ -921,13 +921,13 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         layout_best_rotation(x);
     } else if (name=="levi") {
         read_special(levi_graph);
-        for (int i=1;i<=node_count();++i) hull.push_back(node_index(i));
+        for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
     } else if (name=="ljubljana") {
         make_lcf_graph(ljubljana_graph_lcf,2);
     } else if (name=="mcgee") {
         read_special(mcgee_graph);
-        for (int i=1;i<=node_count();++i) hull.push_back(node_index(i));
+        for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
     } else if (name=="mobius-kantor") {
         make_petersen_graph(8,3,&x);
@@ -939,13 +939,13 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         layout_best_rotation(x);
     } else if (name=="pappus") {
         read_special(pappus_graph);
-        for (int i=1;i<=node_count();++i) hull.push_back(node_index(i));
+        for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
     } else if (name=="petersen") {
         make_petersen_graph(5,2,&x);
     } else if (name=="robertson") {
         read_special(robertson_graph);
-        for (int i=1;i<=node_count();++i) hull.push_back(node_index(i));
+        for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
     } else if (name=="soccerball") {
         read_special(soccer_ball_graph);
@@ -2009,6 +2009,15 @@ graphe::ipair graphe::add_edge(const gen &v,const gen &w,const gen &weight) {
     return make_pair(i<j?i:j,i<j?j:i);
 }
 
+/* add edge {v,w} or arc [v,w], adding vertices v and/or w if necessary */
+graphe::ipair graphe::add_edge(const gen &v,const gen &w,const attrib &attr) {
+    int i=add_node(v),j=add_node(w);
+    add_edge(i,j,attr);
+    if (is_directed())
+        return make_pair(i,j);
+    return make_pair(i<j?i:j,i<j?j:i);
+}
+
 /* add temporary edge from i-th to j-th vertex */
 void graphe::add_temporary_edge(int i,int j) {
     assert(!has_edge(i,j));
@@ -3004,7 +3013,7 @@ double graphe::layout_min(const layout &x,int d) {
 }
 
 /* determine the diameter of the layout (distance between the pair of farthest vertices) */
-double graphe::layout_diam(const layout &x) {
+double graphe::layout_diameter(const layout &x) {
     point p(2);
     double diam=0,d;
     for (layout_iter it=x.begin();it!=x.end();++it) {
@@ -3078,7 +3087,7 @@ void graphe::scale_layout(layout &x,double diam) {
     }
 }
 
-/* randomize layout x using a Gaussian random variable generator */
+/* randomize layout x using a Gaussian random generator */
 void graphe::create_random_layout(layout &x,int dim) {
     for (layout::iterator it=x.begin();it!=x.end();++it) {
         it->resize(dim);
@@ -3170,11 +3179,12 @@ void graphe::edge_labels_placement(const layout &x) {
     vector<double> D(n);
     bool initialize=n>300;
     point pq(dim);
+    bool isdir=is_directed();
     for (int i=0;i<n;++i) {
         ipair &edge=E[i];
         D[i]=point_distance(x[edge.first],x[edge.second],pq);
         if (initialize || D[i]==0)
-            set_edge_attribute(edge.first,edge.second,_GT_ATTRIB_POSITION,0.6);
+            set_edge_attribute(edge.first,edge.second,_GT_ATTRIB_POSITION,isdir?0.6:0.5);
     }
     if (!initialize) {
         vector<double> dist;
@@ -3215,7 +3225,7 @@ void graphe::edge_labels_placement(const layout &x) {
                 }
             }
             assert(k0>=0);
-            set_edge_attribute(it->first,it->second,_GT_ATTRIB_POSITION,1.0-(dist[k0]+maxs*0.4));
+            set_edge_attribute(it->first,it->second,_GT_ATTRIB_POSITION,1.0-(dist[k0]+maxs*isdir?0.4:0.5));
         }
     }
 }
@@ -3417,6 +3427,20 @@ void graphe::make_spring_layout(layout &x,int d,double tol) {
     } else {
         multilevel_mis=false;
         multilevel_recursion(x,d,DBL_MAX,10.0,tol);
+    }
+    if (d==3) {
+        // z-center the layout
+        double minz=DBL_MAX,maxz=-DBL_MAX;
+        for (layout_iter it=x.begin();it!=x.end();++it) {
+            if (it->back()>maxz)
+                maxz=it->back();
+            if (it->back()<minz)
+                minz=it->back();
+        }
+        double dz=-(minz+maxz)/2.0;
+        for (layout::iterator it=x.begin();it!=x.end();++it) {
+            it->back()+=dz;
+        }
     }
 }
 
@@ -4746,7 +4770,7 @@ bool graphe::has_cut_vertex(int sg,int i) {
     return false;
 }
 
-void graphe::find_cut_vertices_dfs(int i,ivector &ap,int sg) {
+void graphe::find_cut_vertices_dfs(int i,set<int> &ap,int sg) {
     vertex &v=node(i);
     v.set_visited(true);
     ++disc_time;
@@ -4765,11 +4789,11 @@ void graphe::find_cut_vertices_dfs(int i,ivector &ap,int sg) {
             find_cut_vertices_dfs(j,ap,sg);
             if (v.ancestor()<0) {
                 if (children==2)
-                    ap.push_back(i);
+                    ap.insert(i);
             } else {
                 v.set_low(std::min(v.low(),w.low()));
                 if (w.low()>=v.disc())
-                    ap.push_back(i);
+                    ap.insert(i);
             }
         } else if (j!=v.ancestor() && w.disc()<v.disc())
             v.set_low(std::min(v.low(),w.disc()));
@@ -4781,11 +4805,13 @@ void graphe::find_cut_vertices(ivector &articulation_points,int sg) {
     unvisit_all_nodes();
     unset_all_ancestors();
     disc_time=0;
-    articulation_points.clear();
-    articulation_points.reserve(node_count());
+    set<int> ap;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         if ((sg<0 || it->subgraph()==sg) && !it->is_visited())
-            find_cut_vertices_dfs(it-nodes.begin(),articulation_points,sg);
+            find_cut_vertices_dfs(it-nodes.begin(),ap,sg);
+    }
+    for (set<int>::const_iterator it=ap.begin();it!=ap.end();++it) {
+        articulation_points.push_back(*it);
     }
 }
 
@@ -5856,10 +5882,12 @@ void graphe::make_random_regular(const vecteur &V,int d,bool connected) {
             }
             r=rand_uniform()*prob_total;
             k=0;
-            for (ivector_iter it=prob.begin();it!=prob.end();++it) {
-                if (r<*it)
-                    break;
-                ++k;
+            if (prob_total>0) {
+                for (ivector_iter it=prob.begin();it!=prob.end();++it) {
+                    if (r<*it)
+                        break;
+                    ++k;
+                }
             }
             edge=E[k];
             E.erase(E.begin()+k);
@@ -6348,7 +6376,7 @@ void graphe::append_segment(vecteur &drawing,const point &p,const point &q,int c
 }
 
 /* append the vertex (as a circle) to vecteur v */
-void graphe::append_vertex(vecteur &drawing,const point &p,int color,int width) const {
+void graphe::append_node(vecteur &drawing,const point &p,int color,int width) const {
     gen P=point2gen(p,true),args=makesequence(P,customize_display(color | width | _POINT_POINT));
     drawing.push_back(_point(args,ctx));
     //drawing.push_back(symbolic(at_point,args));
@@ -6417,8 +6445,11 @@ void graphe::draw_edges(vecteur &drawing,const layout &x) {
             const point &q=x[j];
             const attrib &attr=it->neighbor_attributes(j);
             color=default_edge_color;
-            if ((ait=attr.find(_GT_ATTRIB_COLOR))!=attr.end())
+            if ((ait=attr.find(_GT_ATTRIB_COLOR))!=attr.end()) {
                 color=ait->second.val;
+                if (color==7)
+                    color=0; // draw white (invisible) edges as black
+            }
             if (isdir) {
                 assert((ait=attr.find(_GT_ATTRIB_POSITION))!=attr.end());
                 d=ait->second.DOUBLE_val();
@@ -6433,6 +6464,8 @@ void graphe::draw_edges(vecteur &drawing,const layout &x) {
 
 /* append points representing vertices of the graph to vecteur v */
 void graphe::draw_nodes(vecteur &drawing,const layout &x) const {
+    if (x.empty())
+        return;
     int color,width,n=node_count();
     if (n<=30)
         width=_POINT_WIDTH_4;
@@ -6452,7 +6485,7 @@ void graphe::draw_nodes(vecteur &drawing,const layout &x) const {
             if (color==7)
                 color=0; // draw white (invisible) nodes as black
         }
-        append_vertex(drawing,p,color,width);
+        append_node(drawing,p,color,width);
     }
 }
 
@@ -6692,6 +6725,8 @@ bool graphe::is_tournament() const {
         return false;
     for (int i=0;i<n;++i) {
         for (int j=0;j<n;++j) {
+            if (i==j)
+                continue;
             if (has_edge(i,j)==has_edge(j,i))
                 return false;
         }
@@ -7428,11 +7463,11 @@ void graphe::dsatur() {
     }
     if (indices.empty())
         return;
-    ivector_iter pos;
+    ivector::iterator pos;
     do {
         maxsat=0;
         i=-1;
-        for (ivector_iter it=indices.begin();it!=indices.end();++it) {
+        for (ivector::iterator it=indices.begin();it!=indices.end();++it) {
             const vertex &v=node(*it);
             if ((sat=saturation_degree(v,colors))>maxsat ||
                     (sat==maxsat && (deg=uncolored_degree(v))>maxdeg)) {

@@ -474,7 +474,7 @@ private:
     static void copy_layout(const layout &src,layout &dest);
     static void rotate_layout(layout &x,double phi);
     static double layout_min(const layout &x,int d);
-    static double layout_diam(const layout &x);
+    static double layout_diameter(const layout &x);
     static void point2polar(point &p,double &r,double &phi);
     static bool sparse_matrix_element(const sparsemat &A,int i,int j,double &val);
     static void multiply_sparse_matrices(const sparsemat &A,const sparsemat &B,sparsemat &P,int ncols,bool symmetric=false);
@@ -488,7 +488,7 @@ private:
     int ost_maxclique(ivector &clique);
     void ost_recursive(ivector &U,int size,int &maxsize,ivector &incumbent,bool &found);
     void remove_isolated_node(int i);
-    void find_cut_vertices_dfs(int i,ivector &ap,int sg);
+    void find_cut_vertices_dfs(int i,std::set<int> &ap,int sg);
     void find_blocks_dfs(int i,std::vector<ipairs> &blocks,int sg);
     void find_bridges_dfs(int i,ipairs &B,int sg);
     int find_cycle_dfs(int i,int sg);
@@ -503,7 +503,7 @@ private:
     void coarsening_ec(const ipairs &M,graphe &G,sparsemat &P) const;
     int best_quadrant(const point &p,const layout &x) const;
     void append_segment(vecteur &drawing,const point &p,const point &q,int color,int width,bool arrow=false) const;
-    void append_vertex(vecteur &drawing,const point &p,int color,int width) const;
+    void append_node(vecteur &drawing,const point &p,int color,int width) const;
     void append_label(vecteur &drawing,const point &p,const gen &label,int quadrant,int color=_BLACK) const;
     static int face_has_edge(const ivector &face,int i,int j);
     int first_neighbor_from_subgraph(const vertex &v,int sg) const;
@@ -643,6 +643,7 @@ public:
     inline void add_edge(const ipair &edge) { add_edge(edge.first,edge.second); }
     inline void add_edge(const ipair &edge,const attrib &attr) { add_edge(edge.first,edge.second,attr); }
     ipair add_edge(const gen &v,const gen &w,const gen &weight=gen(1));
+    ipair add_edge(const gen &v,const gen &w,const attrib &attr);
     void add_temporary_edge(int i,int j);
     void remove_temporary_edges();
     bool remove_edge(int i,int j);

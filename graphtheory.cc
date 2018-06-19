@@ -386,7 +386,7 @@ gen randomgraph(const vecteur &gv,bool directed,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     if (!is_strictly_positive(gv.back(),contextptr))
         return gentypeerr(contextptr);
-    G.make_random(directed,V,gv.back().DOUBLE_val());
+    G.make_random(directed,V,_evalf(gv.back(),contextptr).DOUBLE_val());
     return G.to_gen();
 }
 
@@ -423,6 +423,7 @@ int graphunion(graphe &G,const vecteur &gv,bool disjoint) {
     graphe::ipairs E;
     stringstream ss;
     gen weight;
+    graphe::ipair e;
     for (const_iterateur it=gv.begin();it!=gv.end();++it) {
         ++k;
         graphe Gk(G.giac_context());
@@ -451,7 +452,8 @@ int graphunion(graphe &G,const vecteur &gv,bool disjoint) {
             if (!disjoint && G.is_weighted() && (i=G.node_index(v))>=0 &&
                     (j=G.node_index(w))>=0 && G.has_edge(i,j))
                 G.set_edge_attribute(i,j,_GT_ATTRIB_WEIGHT,G.weight(i,j)+weight);
-            G.add_edge(v,w,weight);
+            e=G.add_edge(v,w,Gk.edge_attributes(it->first,it->second));
+            G.set_edge_attribute(e.first,e.second,_GT_ATTRIB_WEIGHT,weight);
         }
     }
     return -1;
@@ -1357,12 +1359,9 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     vector<graphe> Cv;
     vector<graphe::layout> layouts;
     graphe::layout main_layout;
+    graphe::ivector partition1,partition2;
     if (opt_counter==0 && G_orig.has_stored_layout(main_layout)) {
         ; // the graph G already has a layout, display it
-    } else if (method==_GT_STYLE_3D) {
-        if (!G.is_connected())
-            return gt_err(_GT_ERR_CONNECTED_GRAPH_REQUIRED,contextptr);
-        G.make_spring_layout(main_layout,3);
     } else {
         graphe::ivectors components;
         G.connected_components(components);
@@ -1418,7 +1417,6 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
             graphe &C=Cv.back();
             G.induce_subgraph(*it,C,false);
             graphe::layout &x=layouts[i];
-            graphe::ivector partition1,partition2;
             if (it->size()<3)
                 comp_method=_GT_STYLE_SPRING;
             else if (method==_GT_STYLE_DEFAULT) {
@@ -1432,6 +1430,9 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
             switch (comp_method) {
             case _GT_STYLE_SPRING:
                 C.make_spring_layout(x,2);
+                break;
+            case _GT_STYLE_3D:
+                C.make_spring_layout(x,3);
                 break;
             case _GT_STYLE_TREE:
                 if (check && !C.is_tree())
@@ -1453,8 +1454,6 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 hull.clear();
                 break;
             case _GT_STYLE_BIPARTITE:
-                if (check && !C.is_bipartite(partition1,partition2))
-                    return gt_err(_GT_ERR_NOT_BIPARTITE,contextptr);
                 C.make_bipartite_layout(x,partition1,partition2);
                 break;
             }
@@ -1464,20 +1463,20 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 graphe::scale_layout(x,sep*std::sqrt((double)C.node_count()));
         }
         // combine component layouts
-        graphe::point dx(2);
+        graphe::point dx(method==_GT_STYLE_3D?3:2,0.0);
         for (int i=0;i<nc;++i) {
             graphe::rectangle &rect=bounding_rects[i];
             rect=graphe::layout_bounding_rect(layouts[i],sep/PLASTIC_NUMBER_CUBED);
-            dx.front()=-rect.x();
-            dx.back()=-rect.y();
+            dx[0]=-rect.x();
+            dx[1]=-rect.y();
             graphe::translate_layout(layouts[i],dx);
         }
         graphe::rectangle::comparator comp;
         sort(bounding_rects.begin(),bounding_rects.end(),comp);
         graphe::pack_rectangles(bounding_rects);
         for (vector<graphe::rectangle>::const_iterator it=bounding_rects.begin();it!=bounding_rects.end();++it) {
-            dx.front()=it->x();
-            dx.back()=it->y();
+            dx[0]=it->x();
+            dx[1]=it->y();
             graphe::translate_layout(*(it->get_layout()),dx);
         }
         int i,j;
@@ -1512,10 +1511,9 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     }
     if (isdir || G_orig.is_weighted())
         G_orig.edge_labels_placement(main_layout);
-    if (method!=_GT_STYLE_3D) {
+    if (method!=_GT_STYLE_3D)
         drawing.push_back(symb_equal(change_subtype(gen(_AXES),_INT_PLOT),0));
-        drawing.push_back(symb_equal(change_subtype(gen(_GL_ORTHO),_INT_PLOT),1));
-    }
+    drawing.push_back(symb_equal(change_subtype(gen(_GL_ORTHO),_INT_PLOT),1));
     G_orig.draw_edges(drawing,main_layout);
     G_orig.draw_nodes(drawing,main_layout);
     if (labels)
@@ -1674,7 +1672,6 @@ gen _random_bipartite_graph(const gen &g,GIAC_CONTEXT) {
         return gensizeerr(contextptr);
     if (!is_strictly_positive(gv.back(),contextptr))
         return gentypeerr(contextptr);
-    double p=gv.back().DOUBLE_val();
     int n,a,b;
     vecteur V,W;
     graphe G(contextptr);
@@ -1691,6 +1688,15 @@ gen _random_bipartite_graph(const gen &g,GIAC_CONTEXT) {
         a=ab.front().val;
         b=ab.back().val;
     } else return gentypeerr(contextptr);
+    int m=0;
+    double p;
+    if (gv.back().is_integer()) {
+        if ((m=gv.back().val)<1)
+            return gentypeerr(contextptr);
+        if (m>a*b)
+            return gensizeerr("Too many edges");
+        p=m;
+    } else p=gv.back().DOUBLE_val();
     G.make_default_labels(V,a,0);
     G.make_default_labels(W,b,a);
     G.make_random_bipartite(V,W,p);
@@ -1891,13 +1897,9 @@ gen _articulation_points(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    graphe::ivector V;
-    G.find_cut_vertices(V);
-    vecteur res;
-    for (graphe::ivector::const_iterator it=V.begin();it!=V.end();++it) {
-        res.push_back(G.node_label(*it));
-    }
-    return _sort(res,contextptr);
+    graphe::ivector v;
+    G.find_cut_vertices(v);
+    return G.get_node_labels(v);
 }
 static const char _articulation_points_s[]="articulation_points";
 static define_unary_function_eval(__articulation_points,&_articulation_points,_articulation_points_s);

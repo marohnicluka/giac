@@ -4053,6 +4053,9 @@ void graphe::painter::mip_callback(glp_tree *tree,void *info) {
     }
 }
 
+/* the custom branching rule for MVCP (Brelaz): a fractionable vertex with
+ * the largest number of different adjacent colors is chosen, ties are broken by
+ * choosing the vertex with the maximal degree in the uncolored subgraph */
 int graphe::painter::select_branching_variable(glp_tree *tree) {
     glp_prob *sp=glp_ios_get_prob(tree); // current subproblem LP
     int c=glp_ios_curr_node(tree); // current node
@@ -4102,6 +4105,9 @@ int graphe::painter::color_vertices(ivector &colors,int max_colors) {
     glp_init_iocp(&parm);
     parm.msg_lev=GLP_MSG_ERR;
     //parm.br_tech=GLP_BR_FFV;
+    /* it seems that BFS backtrack works best with the custom branching rule,
+     * the rule from the original paper could not be implemented as it includes
+     * branching to more than 2 subproblems. */
     parm.bt_tech=GLP_BT_BFS;
     //parm.gmi_cuts=GLP_ON;
     parm.mir_cuts=GLP_ON;
@@ -5721,9 +5727,11 @@ void graphe::make_tree_layout(layout &x,double sep,int apex) {
 }
 
 /* create a random tree with n vertices and degree not larger than maxd */
-void graphe::make_random_tree(const vecteur &V, int maxd) {
-    this->clear();
-    add_nodes(V);
+void graphe::make_random_tree(const vecteur &V,int maxd,bool addnodes) {
+    if (addnodes) {
+        this->clear();
+        add_nodes(V);
+    }
     vecteur src,labels=*_randperm(V,ctx)._VECTptr;
     src.push_back(labels.pop_back());
     gen v,w;
@@ -5900,24 +5908,24 @@ void graphe::make_random_regular(const vecteur &V,int d,bool connected) {
     E.reserve(n*n);
     ivector prob,degrees(n);
     prob.reserve(n*n);
-    int prob_total,maxd=0,k,dd;
+    int prob_total,k,dd;
     double r;
     ipair edge;
+    add_nodes(V);
     do {
         if (connected)
             make_random_tree(V,d);
         else {
-            this->clear();
-            add_nodes(V);
+            for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
+                it->clear_neighbors();
+            }
         }
         for (int i=0;i<n;++i) {
             degrees[i]=degree(i);
         }
         E.clear();
         for (int i=0;i<n;++i) {
-            if ((dd=degrees[i])>maxd)
-                maxd=dd;
-            if (dd<d) {
+            if ((dd=degrees[i])<d) {
                 for (int j=i+1;j<n;++j) {
                     if (!nodes_are_adjacent(i,j) && degrees[j]<d)
                         E.push_back(make_pair(i,j));
@@ -5928,22 +5936,22 @@ void graphe::make_random_regular(const vecteur &V,int d,bool connected) {
             prob.resize(E.size());
             prob_total=0;
             for (ipairs_iter it=E.begin();it!=E.end();++it) {
-                prob_total+=(maxd-degrees[it->first])*(maxd-degrees[it->second]);
+                prob_total+=(d-degrees[it->first])*(d-degrees[it->second]);
                 prob[it-E.begin()]=prob_total;
             }
-            r=rand_uniform()*prob_total;
             k=0;
             if (prob_total>0) {
+                r=rand_uniform()*prob_total;
                 for (ivector_iter it=prob.begin();it!=prob.end();++it) {
-                    if (r<*it)
+                    if (r<=*it)
                         break;
                     ++k;
                 }
             }
             edge=E[k];
             E.erase(E.begin()+k);
-            if (++degrees[edge.first]>maxd || ++degrees[edge.second]>maxd)
-                ++maxd;
+            ++degrees[edge.first];
+            ++degrees[edge.second];
             add_edge(edge);
             for (k=E.size();k-->0;) {
                 ipair &e=E[k];

@@ -1,4 +1,4 @@
-graph "example" {
+graph "Example graph" {
   a [label="Foo"];
   b [shape=box,color=red];
   a -- b [style=bold];

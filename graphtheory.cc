@@ -114,7 +114,7 @@ string make_absolute_file_path(const string &relative_path) {
 #ifdef HAVE_NO_CWD
     string path="/"+relative_path;
 #else
-    string path=string(get_current_dir_name())+"/"+relative_path;
+    string path=string(getcwd(0,0))+"/"+relative_path;
 #endif
     vector<string> tokens;
     size_t lastpos=0,pos;

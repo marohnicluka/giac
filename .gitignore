@@ -17,7 +17,6 @@
 *.synctex.gz
 *.dvi
 *.ps
-*.bib
 *~
 main.cpp
 lexer_tab_int.h

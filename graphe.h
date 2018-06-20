@@ -748,7 +748,7 @@ public:
     void make_wheel_graph(int n,layout *x=NULL);
     void make_antiprism_graph(int n,layout *x=NULL);
     void make_complete_kary_tree(int k,int d);
-    void make_random_tree(const vecteur &V,int maxd);
+    void make_random_tree(const vecteur &V,int maxd,bool addnodes=true);
     void make_random_planar(double p,int connectivity);
     void make_random(bool dir,const vecteur &V,double p);
     void make_random_bipartite(const vecteur &V,const vecteur &W,double p);

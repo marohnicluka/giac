@@ -60,6 +60,7 @@ enum gt_dot_token_type {
 };
 
 enum gt_attribute {
+    _GT_ATTRIB_LABEL,
     _GT_ATTRIB_WEIGHT,
     _GT_ATTRIB_COLOR,
     _GT_ATTRIB_DIRECTED,
@@ -96,7 +97,6 @@ public:
     typedef std::vector<std::map<int,int> > edgemap;
 
     class vertex {
-        gen m_label;
         int m_subgraph;
         bool m_sorted;
         // used for traversing
@@ -131,8 +131,8 @@ public:
         vertex& operator =(const vertex &other);
         void assign(const vertex &other);
         inline bool sorted() const { return m_sorted; }
-        inline const gen &label() const { return m_label; }
-        inline void set_label(const gen &s) { m_label=s; }
+        gen label() const;
+        inline void set_label(const gen &s) { m_attributes[_GT_ATTRIB_LABEL]=s; }
         inline void set_subgraph(int s) { m_subgraph=s; }
         inline int subgraph() const { return m_subgraph; }
         inline void set_embedded(bool yes) { m_embedded=yes; }
@@ -169,7 +169,7 @@ public:
         inline void set_right(int r) { m_right=r; }
         inline int right() const { return m_right; }
         inline void set_x_offset(int dx) { m_x_offset=dx; }
-        int x_offset() const { return m_x_offset; }
+        inline int x_offset() const { return m_x_offset; }
         inline void set_y(int y) { m_y=y; }
         inline int y() const { return m_y; }
         inline const attrib &attributes() const { return m_attributes; }
@@ -626,7 +626,7 @@ public:
     void remove_nodes(const ivector &V);
     void remove_nodes(const vecteur &V);
     inline const vertex &node(int i) const { return nodes[i]; }
-    inline const gen &node_label(int i) const { assert(i>=0 && i<node_count()); return nodes[i].label(); }
+    inline const gen node_label(int i) const { assert(i>=0 && i<node_count()); return nodes[i].label(); }
     vecteur get_node_labels(const ivector &v) const;
     int node_index(const gen &v) const;
     int largest_integer_label() const;

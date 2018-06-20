@@ -481,7 +481,6 @@ void graphe::ivectors2vecteur(const ivectors &v,vecteur &res,bool sort_all) cons
 /* vertex class implementation */
 graphe::vertex::vertex() {
     m_sorted=false;
-    m_label=0;
     m_subgraph=-1;
     m_visited=false;
     m_on_stack=false;
@@ -504,7 +503,6 @@ graphe::vertex::vertex() {
 
 void graphe::vertex::assign(const vertex &other) {
     m_sorted=other.sorted();
-    m_label=other.label();
     m_subgraph=other.subgraph();
     m_visited=other.is_visited();
     m_on_stack=other.is_on_stack();
@@ -530,6 +528,13 @@ void graphe::vertex::assign(const vertex &other) {
         m_neighbors[it-other.neighbors().begin()]=*it;
         copy_attributes(other.neighbor_attributes(*it),m_neighbor_attributes[*it]);
     }
+}
+
+gen graphe::vertex::label() const {
+    map<int,gen>::const_iterator it=m_attributes.find(_GT_ATTRIB_LABEL);
+    if (it==m_attributes.end())
+        return undef;
+    return it->second;
 }
 
 graphe::vertex::vertex(const vertex &other) {
@@ -1005,6 +1010,8 @@ gen graphe::to_gen() const {
 
 /* return index associated with the specified attribute tag */
 int graphe::tag2index(const string &tag) {
+    if (tag=="label")
+        return _GT_ATTRIB_LABEL;
     if (tag=="directed")
         return _GT_ATTRIB_DIRECTED;
     if (tag=="weighted")
@@ -1024,6 +1031,8 @@ int graphe::tag2index(const string &tag) {
 string graphe::index2tag(int index) const {
     int len;
     switch (index) {
+    case _GT_ATTRIB_LABEL:
+        return "label";
     case _GT_ATTRIB_DIRECTED:
         return "directed";
     case _GT_ATTRIB_WEIGHTED:

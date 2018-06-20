@@ -3484,11 +3484,11 @@
   values to the indicated attribute slots, which are meant to represent some
   global properties of the graph <math|G>, and returns the modified copy of
   <math|G>. Two tags are predefined and used by the <abbr|CAS> commands:
-  <with|font-family|tt|"directed"> and <with|font-family|tt|"weighted">, so
-  it is not advisable to overwrite their values using this command. Instead,
-  use <with|font-family|tt|make_directed>,
-  <with|font-family|tt|make_weighted> and
-  <with|font-family|tt|underlying_graph> commands.
+  <samp|directed> and <samp|weighted>, so it is not advisable to overwrite
+  their values using this command. Instead, use
+  <with|font-family|tt|make_directed>, <with|font-family|tt|make_weighted>
+  and <with|font-family|tt|underlying_graph> commands. Another attribute used
+  internally is <samp|name>, which holds the name of the respective graph.
 
   The previously set graph attribute values can be fetched with the command
   <with|font-family|tt|get_graph_attribute> which accepts two arguments: a
@@ -3511,9 +3511,7 @@
       G:=digraph(trail(1,2,3,1))
     <|unfolded-io>
       <\equation*>
-        <\text>
-          a directed unweighted graph
-        </text>
+        <text|a directed unweighted graph with 3 vertices and 3 arcs>
       </equation*>
     </unfolded-io>
 
@@ -3599,12 +3597,84 @@
   arguments: <math|G>, <math|v> and a sequence or list of tags to be cleared,
   and returns the modified copy of <math|G>.
 
+  The attributes <samp|label>, <samp|color> and <samp|pos> are also used
+  internally. These hold the vertex label, color and coordinates in a
+  drawing, respectively.
+
+  The following example shows how to change individual labels and colors.
+
   <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      T:=complete_binary_tree(3)
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 15 vertices and 14 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      T:=set_vertex_attribute(T,5,"label"="root","color"=red)
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 15 vertices and 14 edges>
+      </equation*>
+    </unfolded-io>
+
     <\input>
       \<gtr\>\ 
     <|input>
-      \;
+      draw_graph(T,tree="root")
     </input>
+  </session>
+
+  <center|<image|images/rooted.eps|40%|||>>
+
+  A vertex may also hold custom attributes.
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      T:=set_vertex_attribute(T,"root","depth"=3)
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 15 vertices and 14 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      list_vertex_attributes(T,"root")
+    <|unfolded-io>
+      <\equation*>
+        <around|[|<math-up|label>=<math-up|root>,<math-up|color>=r*e*d,<math-up|depth>=3|]>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      T:=discard_vertex_attribute(T,"root","color")
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 15 vertices and 14 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      list_vertex_attributes(T,"root")
+    <|unfolded-io>
+      <\equation*>
+        <around|[|<math-up|label>=<math-up|root>,<math-up|depth>=3|]>
+      </equation*>
+    </unfolded-io>
   </session>
 
   <subsection|Edge attributes>
@@ -3638,15 +3708,63 @@
   arguments: <math|G>, <math|e> and a sequence or list of tags to be cleared,
   and returns the modified copy of <math|G>.
 
-  <\session|giac|default>
-    <\input>
-      \<gtr\>\ 
-    <|input>
-      \;
-    </input>
-  </session>
+  The attributes <samp|weight>, <samp|color> and <samp|pos> are also used
+  internally. They hold the edge weight, its color and the coordinates of the
+  weight label anchor (and also the coordinates of the arrow) in a drawing.
 
-  \;
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      T:=complete_binary_tree(3)
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 15 vertices and 14 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      T:=set_edge_attribute(T,[1,4],"cost"=12.8,"message"="this is some
+      text")
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 15 vertices and 14 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      list_edge_attributes(T,[1,4])
+    <|unfolded-io>
+      <\equation*>
+        <around|[|<math-up|cost>=12.8,<math-up|message>=<with|math-font-family|rm|this
+        is some text>|]>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      T:=discard_edge_attribute(T,[1,4],"message")
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 15 vertices and 14 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      list_edge_attributes(T,[1,4])
+    <|unfolded-io>
+      <\equation*>
+        <around|[|<math-up|cost>=12.8|]>
+      </equation*>
+    </unfolded-io>
+  </session>
 
   <chapter|Import and export>
 
@@ -4618,9 +4736,9 @@
 
   To <em|color> vertices of a graph <math|G<around*|(|V,E|)>> means to assign
   to each vertex <math|v\<in\>V> a positive integer. Each integer represents
-  a different color. The only requirement is that the colors of adjacent
-  vertices must differ from one another. Two different colorings of <math|G>
-  may use different number of colors.
+  a distinct color. The key property of a graph coloring is that the colors
+  of adjacent vertices must differ from one another. Two different colorings
+  of <math|G> may use different number of colors.
 
   <subsection|Greedy coloring>
 
@@ -5259,7 +5377,7 @@
   simple node positioning algorithm inspired by the well-known algorithm of
   <name|Walker> <cite|walker>, using the first vertex (or the vertex
   <math|r>) as the root node. When drawing a rooted tree, one usually
-  requires the following aesthetic properties <cite|buchheim>:
+  requires the following aesthetic properties <cite|buchheim>.
 
   <\description-aligned>
     <item*|A1>The layout displays the hierarchical structure of the tree,
@@ -5346,7 +5464,9 @@
   Figure<nbsp><reference|blockjoin> shows the outer faces of two blocks
   <math|B<rsub|1>> and <math|B<rsub|2>>, connected by an articulation point
   (cut vertex). The temporary edge (shown in blue) is added to join
-  <math|B<rsub|1>> and <math|B<rsub|2>> into a single block.
+  <math|B<rsub|1>> and <math|B<rsub|2>> into a single block. After \Pfolding
+  up\Q the tree of blocks, the algorithm picks the largest face in the
+  resulting biconnected graph to be the outer face of the planar embedding.
 
   The second part of the augmentation process consists of recursively
   decomposing each non-convex inner face into several convex polygons by
@@ -5372,13 +5492,13 @@
 
   This method of drawing planar graphs operates in
   <math|O<around*|(|<around*|\||V|\|><rsup|2>|)>> time. Nevertheless, it is
-  very fast for graphs up to 1000 vertices, producing results in less than a
-  second. The drawback of this method is that it sometimes creates clusters
-  of vertices which are very close to each other, resulting in a very high
-  ratio of the area of the largest inner face to the area of the smallest
-  inner face. However, if the result is not satisfactory, one should simply
-  redraw the graph and repeat the process until a better layout is found. The
-  planar embedding will in general be different each time.
+  quite fast for graphs up to 1000 vertices, usually producing results in
+  less than a second. The drawback of this method is that it sometimes
+  creates clusters of vertices which are very close to each other, resulting
+  in a very high ratio of the area of the largest inner face to the area of
+  the smallest inner face. However, if the result is not satisfactory, one
+  should simply redraw the graph and repeat the process until a better layout
+  is found. The planar embedding will in general be different each time.
 
   Another drawback of this method is that sparse planar graphs are sometimes
   drawn poorly.
@@ -6026,47 +6146,47 @@
     <associate|auto-28|<tuple|2.7|16>>
     <associate|auto-29|<tuple|2.7.1|16>>
     <associate|auto-3|<tuple|1.2|7>>
-    <associate|auto-30|<tuple|2.7.2|16>>
+    <associate|auto-30|<tuple|2.7.2|17>>
     <associate|auto-31|<tuple|2.7.3|17>>
     <associate|auto-32|<tuple|2.7.4|17>>
-    <associate|auto-33|<tuple|2.7.5|17>>
+    <associate|auto-33|<tuple|2.7.5|18>>
     <associate|auto-34|<tuple|2.7.6|18>>
     <associate|auto-35|<tuple|2.7.7|18>>
     <associate|auto-36|<tuple|2.7.8|19>>
-    <associate|auto-37|<tuple|2.7.9|19>>
+    <associate|auto-37|<tuple|2.7.9|20>>
     <associate|auto-38|<tuple|2.7.10|20>>
     <associate|auto-39|<tuple|2.8|21>>
     <associate|auto-4|<tuple|2|9>>
     <associate|auto-40|<tuple|2.8.1|21>>
     <associate|auto-41|<tuple|2.8.2|21>>
     <associate|auto-42|<tuple|2.8.3|21>>
-    <associate|auto-43|<tuple|2.9|21>>
-    <associate|auto-44|<tuple|2.9.1|21>>
+    <associate|auto-43|<tuple|2.9|22>>
+    <associate|auto-44|<tuple|2.9.1|22>>
     <associate|auto-45|<tuple|2.9.2|22>>
     <associate|auto-46|<tuple|2.9.3|22>>
-    <associate|auto-47|<tuple|2.10|22>>
-    <associate|auto-48|<tuple|2.10.1|22>>
+    <associate|auto-47|<tuple|2.10|23>>
+    <associate|auto-48|<tuple|2.10.1|23>>
     <associate|auto-49|<tuple|2.10.2|23>>
     <associate|auto-5|<tuple|2.1|9>>
     <associate|auto-50|<tuple|2.10.3|23>>
-    <associate|auto-51|<tuple|2.10.4|23>>
+    <associate|auto-51|<tuple|2.10.4|24>>
     <associate|auto-52|<tuple|2.10.5|24>>
-    <associate|auto-53|<tuple|2.10.6|24>>
-    <associate|auto-54|<tuple|2.10.7|24>>
-    <associate|auto-55|<tuple|2.10.8|25>>
-    <associate|auto-56|<tuple|2.10.9|26>>
+    <associate|auto-53|<tuple|2.10.6|25>>
+    <associate|auto-54|<tuple|2.10.7|25>>
+    <associate|auto-55|<tuple|2.10.8|26>>
+    <associate|auto-56|<tuple|2.10.9|27>>
     <associate|auto-57|<tuple|2.10.10|28>>
-    <associate|auto-58|<tuple|2.10.11|28>>
-    <associate|auto-59|<tuple|2.11|29>>
+    <associate|auto-58|<tuple|2.10.11|29>>
+    <associate|auto-59|<tuple|2.11|30>>
     <associate|auto-6|<tuple|2.1.1|9>>
-    <associate|auto-60|<tuple|2.11.1|29>>
-    <associate|auto-61|<tuple|2.11.2|30>>
-    <associate|auto-62|<tuple|2.11.3|30>>
-    <associate|auto-63|<tuple|2.11.4|31>>
-    <associate|auto-64|<tuple|2.11.5|32>>
+    <associate|auto-60|<tuple|2.11.1|30>>
+    <associate|auto-61|<tuple|2.11.2|31>>
+    <associate|auto-62|<tuple|2.11.3|31>>
+    <associate|auto-63|<tuple|2.11.4|32>>
+    <associate|auto-64|<tuple|2.11.5|33>>
     <associate|auto-65|<tuple|2.11.6|33>>
-    <associate|auto-66|<tuple|2.11.7|33>>
-    <associate|auto-67|<tuple|2.11.8|33>>
+    <associate|auto-66|<tuple|2.11.7|34>>
+    <associate|auto-67|<tuple|2.11.8|34>>
     <associate|auto-68|<tuple|3|35>>
     <associate|auto-69|<tuple|3.1|35>>
     <associate|auto-7|<tuple|2.1.2|10>>
@@ -6123,15 +6243,15 @@
     <associate|blockjoin|<tuple|7.1|62>>
     <associate|chordface|<tuple|7.2|62>>
     <associate|footnote-2.1|<tuple|2.1|20>>
-    <associate|footnote-2.2|<tuple|2.2|28>>
-    <associate|footnote-2.3|<tuple|2.3|32>>
+    <associate|footnote-2.2|<tuple|2.2|29>>
+    <associate|footnote-2.3|<tuple|2.3|33>>
     <associate|footnote-4.1|<tuple|4.1|41>>
     <associate|footnote-4.2|<tuple|4.2|42>>
     <associate|footnote-5.1|<tuple|5.1|48>>
     <associate|footnote-5.2|<tuple|5.2|53>>
     <associate|footnr-2.1|<tuple|2.1|20>>
-    <associate|footnr-2.2|<tuple|2.2|28>>
-    <associate|footnr-2.3|<tuple|2.3|32>>
+    <associate|footnr-2.2|<tuple|2.2|29>>
+    <associate|footnr-2.3|<tuple|2.3|33>>
     <associate|footnr-4.1|<tuple|4.1|41>>
     <associate|footnr-4.2|<tuple|4.2|42>>
     <associate|footnr-5.1|<tuple|5.1|48>>

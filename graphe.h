@@ -63,6 +63,8 @@ enum gt_attribute {
     _GT_ATTRIB_LABEL,
     _GT_ATTRIB_WEIGHT,
     _GT_ATTRIB_COLOR,
+    _GT_ATTRIB_SHAPE,
+    _GT_ATTRIB_STYLE,
     _GT_ATTRIB_DIRECTED,
     _GT_ATTRIB_WEIGHTED,
     _GT_ATTRIB_POSITION,
@@ -290,6 +292,8 @@ public:
         double m_y;
         double m_width;
         double m_height;
+        bool m_locked_above;
+        bool m_locked_right;
         layout *L;
     public:
         struct comparator {
@@ -307,6 +311,10 @@ public:
         inline double y() const { return m_y; }
         inline double width() const { return m_width; }
         inline double height() const { return m_height; }
+        inline void set_locked_above(bool yes) { m_locked_above=yes; }
+        inline void set_locked_right(bool yes) { m_locked_right=yes; }
+        inline bool is_locked_above() const { return m_locked_above; }
+        inline bool is_locked_right() const { return m_locked_right; }
         bool intersects(const rectangle &other) const;
         bool intersects(const std::vector<rectangle> &rectangles) const;
         bool intersects(std::vector<rectangle>::const_iterator first,std::vector<rectangle>::const_iterator last) const;
@@ -404,6 +412,7 @@ public:
     static int default_highlighted_edge_color;
     static int default_highlighted_vertex_color;
     static int default_edge_width;
+    static int bold_edge_width;
     // special graphs
     static const int clebsch_graph[];
     static const char* coxeter_graph[];
@@ -502,8 +511,8 @@ private:
     void coarsening_mis(const ivector &V,graphe &G,sparsemat &P) const;
     void coarsening_ec(const ipairs &M,graphe &G,sparsemat &P) const;
     int best_quadrant(const point &p,const layout &x) const;
-    void append_segment(vecteur &drawing,const point &p,const point &q,int color,int width,bool arrow=false) const;
-    void append_node(vecteur &drawing,const point &p,int color,int width) const;
+    void append_segment(vecteur &drawing, const point &p,const point &q,int color,int width,int style,bool arrow=false) const;
+    void append_node(vecteur &drawing,const point &p,int color,int width,int shape) const;
     void append_label(vecteur &drawing,const point &p,const gen &label,int quadrant,int color=_BLACK) const;
     static int face_has_edge(const ivector &face,int i,int j);
     int first_neighbor_from_subgraph(const vertex &v,int sg) const;

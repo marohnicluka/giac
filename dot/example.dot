@@ -1,0 +1,7 @@
+graph "example" {
+  a [label="Foo"];
+  b [shape=box,color=red];
+  a -- b [style=bold];
+  b -- c [color=green];
+  b -- d [style=dotted];
+}

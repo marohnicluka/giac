@@ -37,6 +37,7 @@ const gen graphe::FAUX=gen(0).change_subtype(_INT_BOOLEAN);
 bool graphe::verbose=true;
 int graphe::default_edge_color=_BLUE;
 int graphe::default_edge_width=_LINE_WIDTH_2;
+int graphe::bold_edge_width=_LINE_WIDTH_4;
 int graphe::default_highlighted_edge_color=_RED;
 int graphe::default_highlighted_vertex_color=_GREEN;
 int graphe::default_vertex_color=_YELLOW;
@@ -1020,6 +1021,10 @@ int graphe::tag2index(const string &tag) {
         return _GT_ATTRIB_WEIGHT;
     if (tag=="color")
         return _GT_ATTRIB_COLOR;
+    if (tag=="style")
+        return _GT_ATTRIB_STYLE;
+    if (tag=="shape")
+        return _GT_ATTRIB_SHAPE;
     if (tag=="pos")
         return _GT_ATTRIB_POSITION;
     if (tag=="name")
@@ -1039,6 +1044,10 @@ string graphe::index2tag(int index) const {
         return "weighted";
     case _GT_ATTRIB_COLOR:
         return "color";
+    case _GT_ATTRIB_STYLE:
+        return "style";
+    case _GT_ATTRIB_SHAPE:
+        return "shape";
     case _GT_ATTRIB_WEIGHT:
         return "weight";
     case _GT_ATTRIB_POSITION:
@@ -1646,6 +1655,7 @@ bool graphe::read_dot(const string &filename) {
     dot_reading_value=false;
     dot_comment_type=0;
     dot_newline_count=0;
+    map<int,attrib> delayed_attributes;
     string token;
     int res,gtype,subgraph_count=0,index;
     bool strict=false,error_raised=false,has_root_graph=false;
@@ -1710,7 +1720,7 @@ bool graphe::read_dot(const string &filename) {
                 attrib &attr=subgraphs.back().chain_attributes();
                 if (subgraphs.back().position()==0) {
                     if (ch.front()<=0) { error_raised=true; break; }
-                    nodes[ch.front()-1].set_attributes(subgraphs.back().chain_attributes());
+                    delayed_attributes[ch.front()-1]=subgraphs.back().chain_attributes();
                 }
                 int lh,rh;
                 for (int i=0;i<=subgraphs.back().position()-1;++i) {
@@ -1773,6 +1783,13 @@ bool graphe::read_dot(const string &filename) {
     dotfile.close();
     if (dot_subgraph_level!=0 || strict || dot_reading_value || dot_reading_attributes)
         error_raised=true;
+    // set delayed attributes to nodes
+    for (map<int,attrib>::const_iterator it=delayed_attributes.begin();it!=delayed_attributes.end();++it) {
+        vertex &v=nodes[it->first];
+        for (attrib_iter ait=it->second.begin();ait!=it->second.end();++ait) {
+            v.set_attribute(ait->first,ait->second);
+        }
+    }
     return !error_raised;
 }
 
@@ -5985,28 +6002,58 @@ void graphe::sort_rectangles(vector<rectangle> &rectangles) {
 
 /* packing rectangles (sorted by height) into an enclosing rectangle with specified dimensions,
  * returns true if embedding has changed */
-bool graphe::embed_rectangles(std::vector<rectangle> &rectangles,double maxheight) {
+bool graphe::embed_rectangles(vector<rectangle> &rectangles,double maxheight) {
     bool embedding_changed=false;
     double old_x,old_y;
+    dpair old_anchor;
+    rectangle *old_rect;
+    int lock_type;
     for (vector<rectangle>::iterator it=rectangles.begin()+1;it!=rectangles.end();++it) {
-        old_x=it->x();
-        old_y=it->y();
-        it->set_anchor(DBL_MAX,-1);
-        for (vector<rectangle>::const_iterator jt=rectangles.begin();jt!=it;++jt) {
-            if (jt->x()>it->x())
+        rectangle &r=*it;
+        old_x=r.x();
+        old_y=r.y();
+        r.set_anchor(DBL_MAX,-1);
+        old_rect=NULL;
+        for (vector<rectangle>::iterator jt=rectangles.begin();jt!=it;++jt) {
+            rectangle &s=*jt;
+            if (s.x()>r.x())
                 continue;
-            rectangle r(*it);
-            r.set_anchor(jt->x(),jt->y()+jt->height());
-            if (r.y()+r.height()<=maxheight && !r.intersects(rectangles.begin(),it))
-                it->set_anchor(r.x(),r.y());
-            else {
-                r.set_anchor(jt->x()+jt->width(),jt->y());
-                if (r.x()<it->x() && r.y()+r.height()<=maxheight && !r.intersects(rectangles.begin(),it))
-                    it->set_anchor(r.x(),r.y());
+            old_anchor.first=r.x();
+            old_anchor.second=r.y();
+            if (!s.is_locked_above()) {
+                r.set_anchor(s.x(),s.y()+s.height());
+                if (r.y()+r.height()<=maxheight && !r.intersects(rectangles.begin(),it)) {
+                    s.set_locked_above(true);
+                    if (old_rect!=NULL) {
+                        if (lock_type==1)
+                            old_rect->set_locked_above(false);
+                        else if (lock_type==2)
+                            old_rect->set_locked_right(false);
+                    }
+                    old_rect=&s;
+                    lock_type=1;
+                    continue;
+                }
             }
+            if (!s.is_locked_right()) {
+                r.set_anchor(s.x()+s.width(),s.y());
+                if (r.x()<old_anchor.first && r.y()+r.height()<=maxheight && !r.intersects(rectangles.begin(),it)) {
+                    s.set_locked_right(true);
+                    if (old_rect!=NULL) {
+                        if (lock_type==1)
+                            old_rect->set_locked_above(false);
+                        else if (lock_type==2)
+                            old_rect->set_locked_right(false);
+                    }
+                    old_rect=&s;
+                    lock_type=2;
+                    continue;
+                }
+            }
+            r.set_anchor(old_anchor.first,old_anchor.second);
         }
-        assert(it->y()>=0);
-        if (old_x!=it->x() || old_y!=it->y())
+        assert(r.y()>=0);
+        if (old_x!=r.x() || old_y!=r.y())
             embedding_changed=true;
     }
     return embedding_changed;
@@ -6027,7 +6074,7 @@ void graphe::pack_rectangles(vector<rectangle> &rectangles) {
         if (it->width()<minwidth)
             minwidth=it->width();
     }
-    double step=std::min(minwidth,minheight)*NEGLIGIBILITY_FACTOR;
+    double step=std::min(minwidth,minheight)*MARGIN_FACTOR;
     double bw=DBL_MAX,bh=rectangles.front().height(); // initial enclosing rectangle has an "unlimited" width
     double perim,best_perim=DBL_MAX,d;
     double xpos=0;
@@ -6041,6 +6088,10 @@ void graphe::pack_rectangles(vector<rectangle> &rectangles) {
     bool firstpass=true;
     clock_t start=clock();
     while (bw>maxwidth+step) { // loop breaks after a stacked embedding is obtained
+        for (vector<rectangle>::iterator it=rectangles.begin();it!=rectangles.end();++it) {
+            it->set_locked_above(false);
+            it->set_locked_right(false);
+        }
         if (firstpass || embed_rectangles(rectangles,bh)) {
             bw=bh=0;
             // find the smallest enclosing rectangle containing the embedding
@@ -6400,12 +6451,8 @@ gen customize_display(int options) {
 }
 
 /* append the line segment [p,q] to vecteur v */
-void graphe::append_segment(vecteur &drawing,const point &p,const point &q,int color,int width,bool arrow) const {
-    /*
-    gen P=point2gen(p),Q=point2gen(q),args=makesequence(P,Q,customize_display(color | width));
-    drawing.push_back(symbolic(at_segment,args));
-    */
-    vecteur attributs(1,color | width);
+void graphe::append_segment(vecteur &drawing,const point &p,const point &q,int color,int width,int style,bool arrow) const {
+    vecteur attributs(1,color | width | style);
     vecteur seg=p.size()==2?
                 makevecteur(makecomplex(p[0],p[1]),makecomplex(q[0],q[1]))
             : makevecteur(gen(makevecteur(p[0],p[1],p[2]),_POINT__VECT),gen(makevecteur(q[0],q[1],q[2]),_POINT__VECT));
@@ -6413,17 +6460,24 @@ void graphe::append_segment(vecteur &drawing,const point &p,const point &q,int c
 }
 
 /* append the vertex (as a circle) to vecteur v */
-void graphe::append_node(vecteur &drawing,const point &p,int color,int width) const {
-    gen P=point2gen(p,true),args=makesequence(P,customize_display(color | width | _POINT_POINT));
-    drawing.push_back(_point(args,ctx));
-    //drawing.push_back(symbolic(at_point,args));
+void graphe::append_node(vecteur &drawing,const point &p,int color,int width,int shape) const {
+    gen P=point2gen(p,true),args;
+    int i=0,w=_POINT_WIDTH_1,sh=_POINT_POINT;
+    while (true) {
+        args=makesequence(P,customize_display(color | w | sh));
+        drawing.push_back(_point(args,ctx));
+        if (w==width)
+            break;
+        ++i;
+        w=i << 19;
+        sh=shape;
+    }
 }
 
 /* append label to vecteur v at the specified quadrant */
 void graphe::append_label(vecteur &drawing,const point &p,const gen &label,int quadrant,int color) const {
     gen P=point2gen(p),args=makesequence(P,label,customize_display(quadrant | color));
     drawing.push_back(_legende(args,ctx));
-    //drawing.push_back(symbolic(at_legende,args));
 }
 
 /* convert gen to point coordinates */
@@ -6466,7 +6520,7 @@ bool graphe::get_node_position(const attrib &attr,point &p) {
 void graphe::draw_edges(vecteur &drawing,const layout &x) {
     if (x.empty())
         return;
-    int i,j,color,width=default_edge_width;
+    int i,j,color,width,style;
     bool isdir=is_directed();
     double d;
     point r(x.front().size());
@@ -6482,19 +6536,31 @@ void graphe::draw_edges(vecteur &drawing,const layout &x) {
             const point &q=x[j];
             const attrib &attr=it->neighbor_attributes(j);
             color=default_edge_color;
-            if ((ait=attr.find(_GT_ATTRIB_COLOR))!=attr.end()) {
+            if ((ait=attr.find(_GT_ATTRIB_COLOR))!=attr.end() && ait->second.is_integer()) {
                 color=ait->second.val;
                 if (color==7)
                     color=0; // draw white (invisible) edges as black
+            }
+            style=0;
+            width=default_edge_width;
+            if ((ait=attr.find(_GT_ATTRIB_STYLE))!=attr.end()) {
+                const gen &val=ait->second;
+                string s=val.type==_STRNG?genstring2str(val):gen2str(val);
+                if (s=="dashed")
+                    style=_DASH_LINE;
+                else if (s=="dotted")
+                    style=_DOT_LINE;
+                else if (s=="bold")
+                    width=bold_edge_width;
             }
             if (isdir) {
                 assert((ait=attr.find(_GT_ATTRIB_POSITION))!=attr.end());
                 d=ait->second.DOUBLE_val();
                 point_lincomb(p,q,d,1-d,r);
-                append_segment(drawing,p,r,color,width,true);
-                append_segment(drawing,r,q,color,width,false);
+                append_segment(drawing,p,r,color,width,style,true);
+                append_segment(drawing,r,q,color,width,style,false);
             } else
-                append_segment(drawing,p,q,color,width);
+                append_segment(drawing,p,q,color,style,width);
         }
     }
 }
@@ -6512,17 +6578,33 @@ void graphe::draw_nodes(vecteur &drawing,const layout &x) const {
         width=_POINT_WIDTH_2;
     else
         width=_POINT_WIDTH_1;
+    int shape;
     attrib_iter ait;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         const attrib &attr=it->attributes();
         const point &p=x[it-nodes.begin()];
         color=default_vertex_color;
-        if ((ait=attr.find(_GT_ATTRIB_COLOR))!=attr.end()) {
+        if ((ait=attr.find(_GT_ATTRIB_COLOR))!=attr.end() && ait->second.is_integer()) {
             color=ait->second.val;
             if (color==7)
                 color=0; // draw white (invisible) nodes as black
         }
-        append_node(drawing,p,color,width);
+        shape=_POINT_POINT;
+        if ((ait=attr.find(_GT_ATTRIB_SHAPE))!=attr.end()) {
+            const gen &val=ait->second;
+            string s=val.type==_STRNG?genstring2str(val):gen2str(val);
+            if (s=="box" || s=="square")
+                shape=_POINT_CARRE;
+            else if (s=="triangle")
+                shape=_POINT_TRIANGLE;
+            else if (s=="diamond")
+                shape=_POINT_LOSANGE;
+            else if (s=="star")
+                shape=_POINT_ETOILE;
+            else if (s=="plus")
+                shape=_POINT_PLUS;
+        }
+        append_node(drawing,p,color,width,shape);
     }
 }
 

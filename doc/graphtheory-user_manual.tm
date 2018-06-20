@@ -2994,7 +2994,7 @@
   The command <verbatim|random_regular_graph> is used for generating random
   <math|d>-regular graphs on a certain set of vertices, using an algorithm
   presented in<nbsp><cite|steger><\footnote>
-    Algorithm<nbsp>2 on page<nbsp>2
+    See Algorithm<nbsp>2 on page<nbsp>2.
   </footnote>.
 
   <verbatim|random_regular_graph> accepts two mandatory arguments, a positive
@@ -3005,14 +3005,18 @@
   <math|n> vertices (using elements of <math|L> as vertex labels) and returns
   a random <math|d>-regular (connected) graph on these vertices.
 
+  Note that a <math|d>-regular graph on <math|n> vertices exists if and only
+  if <math|n\<gtr\>d+1> and <math|n*d> is even. If these conditions are not
+  met, <verbatim|random_regular_graph> returns an error.
+
   <\session|giac|default>
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      G:=random_regular_graph(20,3)
+      G:=random_regular_graph(16,3)
     <|unfolded-io>
       <\equation*>
-        <text|an undirected unweighted graph with 20 vertices and 30 edges>
+        <text|an undirected unweighted graph with 16 vertices and 24 edges>
       </equation*>
     </unfolded-io>
 
@@ -3032,10 +3036,18 @@
       degree_sequence(G)
     <|unfolded-io>
       <\equation*>
-        <around|[|3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3|]>
+        <around|[|3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3|]>
       </equation*>
     </unfolded-io>
+
+    <\input>
+      \<gtr\>\ 
+    <|input>
+      draw_graph(G,spring)
+    </input>
   </session>
+
+  <center|<image|images/regular.eps|40%|||>>
 
   <subsection|Random tournaments>
 
@@ -3597,9 +3609,15 @@
   arguments: <math|G>, <math|v> and a sequence or list of tags to be cleared,
   and returns the modified copy of <math|G>.
 
-  The attributes <samp|label>, <samp|color> and <samp|pos> are also used
-  internally. These hold the vertex label, color and coordinates in a
-  drawing, respectively.
+  The attributes <samp|label>, <samp|color>, <samp|shape> and <samp|pos> are
+  also used internally. These hold the vertex label, color, shape and
+  coordinates in a drawing, respectively. If the color is not set for a
+  vertex, the latter is drawn in yellow.
+
+  The <samp|shape> attribute may have one of the following values:
+  <samp|square>, <samp|triangle>, <samp|diamond>, <samp|star> or <samp|plus>.
+  If the <samp|shape> attribute is not set or has a different value, the
+  circled shape is applied when drawing the vertex.
 
   The following example shows how to change individual labels and colors.
 
@@ -3639,7 +3657,7 @@
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      T:=set_vertex_attribute(T,"root","depth"=3)
+      T:=set_vertex_attribute(T,"root","depth"=3,"shape"="square")
     <|unfolded-io>
       <\equation*>
         <text|an undirected unweighted graph with 15 vertices and 14 edges>
@@ -3652,7 +3670,7 @@
       list_vertex_attributes(T,"root")
     <|unfolded-io>
       <\equation*>
-        <around|[|<math-up|label>=<math-up|root>,<math-up|color>=r*e*d,<math-up|depth>=3|]>
+        <around|[|<math-up|label>=<math-up|root>,<math-up|color>=r*e*d,<math-up|shape>=<math-up|square>,<math-up|depth>=3|]>
       </equation*>
     </unfolded-io>
 
@@ -3672,7 +3690,7 @@
       list_vertex_attributes(T,"root")
     <|unfolded-io>
       <\equation*>
-        <around|[|<math-up|label>=<math-up|root>,<math-up|depth>=3|]>
+        <around|[|<math-up|label>=<math-up|root>,<math-up|shape>=<math-up|square>,<math-up|depth>=3|]>
       </equation*>
     </unfolded-io>
   </session>
@@ -3708,9 +3726,16 @@
   arguments: <math|G>, <math|e> and a sequence or list of tags to be cleared,
   and returns the modified copy of <math|G>.
 
-  The attributes <samp|weight>, <samp|color> and <samp|pos> are also used
-  internally. They hold the edge weight, its color and the coordinates of the
-  weight label anchor (and also the coordinates of the arrow) in a drawing.
+  The attributes <samp|weight>, <samp|color>, <samp|style> and <samp|pos> are
+  also used internally. They hold the edge weight, color, line style and the
+  coordinates of the weight label anchor (and also the coordinates of the
+  arrow) in a drawing. If the color attribute is not set for an edge, the
+  latter is drawn in blue.
+
+  The <samp|style> attribute may have one of the following values:
+  <samp|dashed>, <samp|dotted> or <samp|bold>. If the <samp|style> attribute
+  is not set or has a different value, the solid line style is applied when
+  drawing the edge.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -3758,13 +3783,31 @@
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
+      T:=set_edge_attribute(T,[1,4],"style"="dotted","color"=magenta)
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 15 vertices and 14 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
       list_edge_attributes(T,[1,4])
     <|unfolded-io>
       <\equation*>
-        <around|[|<math-up|cost>=12.8|]>
+        <around|[|<math-up|color>=m*a*g*e*n*t*a,<math-up|style>=<math-up|dotted>,<math-up|cost>=12.8|]>
       </equation*>
     </unfolded-io>
+
+    <\input>
+      \<gtr\>\ 
+    <|input>
+      draw_graph(T)
+    </input>
   </session>
+
+  <center|<image|images/dashed.eps|40%|||>>
 
   <chapter|Import and export>
 
@@ -3772,56 +3815,86 @@
 
   <subsection|Loading graphs from <with|font-family|ss|dot> files>
 
-  The command <with|font-family|tt|import_graph> accepts a string
+  The command <verbatim|import_graph> is used for importing a graph from text
+  file in <samp|dot> format<\footnote>
+    <hlink|https://en.wikipedia.org/wiki/DOT_(graph_description_language)|>
+  </footnote>.
+
+  <with|font-family|tt|import_graph> accepts a string
   <with|font-family|tt|filename> as its only argument and returns the graph
   constructed from instructions written in the file
   <with|font-family|tt|filename> or <with|font-family|tt|undef> on failure.
-  The passed string should contain the path to a file in the
+  The passed string should contain the path to a file in
   <with|font-family|ss|dot> format. The file extension
   <with|font-family|tt|.dot> may be omitted in the
   <with|font-family|tt|filename> since <with|font-family|ss|dot> is the only
-  supported format. If a relative path to the file is specified, i.e.<nbsp>if
-  it does not contain a leading forward slash, the current working directory
-  (which can be obtained by calling the <with|font-family|tt|pwd> command)
-  will be used as the reference. The working directory can be changed by
-  using the command <with|font-family|tt|cd>.
+  supported format. The alternative extension is <verbatim|.gv>, which must
+  be explicitly specified.
 
-  For the details about the <with|font-family|ss|dot> format see
-  Section<nbsp><reference|sec:dotformat>.
+  If a relative path to the file is specified, i.e.<nbsp>if it does not
+  contain a leading forward slash, the current working directory (which can
+  be obtained by calling the <with|font-family|tt|pwd> command) will be used
+  as the reference. The working directory can be changed by using the command
+  <with|font-family|tt|cd>.
 
-  For example, assume that the file <with|font-family|tt|philosophers.dot> is
-  saved in the directory <with|font-family|tt|Documents/dot/>, containing the
-  graph describing the famous \Pdining philosophers\Q problem. To import it,
-  input:
+  For example, assume that the file <with|font-family|tt|example.dot> is
+  saved in the directory <with|font-family|tt|Documents/dot/> with the
+  following contents:
+
+  <\verbatim-code>
+    graph "Example graph" {
+
+    \ \ a [label="Foo"];
+
+    \ \ b [shape=diamond,color=red];
+
+    \ \ a -- b [style=bold];
+
+    \ \ b -- c [color=green];
+
+    \ \ b -- d [style=dotted];
+
+    }
+  </verbatim-code>
+
+  To import the graph, input:
 
   <\session|giac|default>
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      G:=import_graph("Documents/dot/philosophers.dot")
+      G:=import_graph("Documents/dot/example.dot")
     <|unfolded-io>
       <\equation*>
-        <text|an undirected unweighted graph with 21 vertices and 27 edges>
+        <text|Example graph: an undirected unweighted graph with 4 vertices
+        and 3 edges>
       </equation*>
     </unfolded-io>
+
+    <\input>
+      \<gtr\>\ 
+    <|input>
+      draw_graph(G)
+    </input>
   </session>
 
-  <subsection|The <with|font-family|ss|dot> file format
-  overview><label|sec:dotformat>
+  <center|<image|images/ex.eps|40%|||>>
 
-  Giac has some basic support for the <with|font-family|ss|dot>
+  <subsection|The <with|font-family|ss|dot> file format overview>
+
+  Giac has some basic support for <with|font-family|ss|dot>
   language<footnote|For the complete syntax definition see
-  <slink|https://www.graphviz.org/doc/info/lang.html>.>. Each <kbd|.dot> file
+  <slink|https://www.graphviz.org/doc/info/lang.html>.>. Each <samp|dot> file
   is used to hold exactly one graph and should consist of a single instance
   of the following environment:
 
-  <\shell-code>
+  <\verbatim-code>
     strict? (graph \| digraph) name? {
 
     \ \ \ \ ...
 
     }
-  </shell-code>
+  </verbatim-code>
 
   The keyword <with|font-family|tt|strict> may be omitted, as well as the
   <with|font-family|tt|name> of the graph, as indicated by the question
@@ -3861,7 +3934,7 @@
   with adjacency lists. For example, the following is the contents of a file
   which defines the octahedral graph with 6 vertices and 12 edges.
 
-  <\shell-code>
+  <\verbatim-code>
     # octahedral graph
 
     graph "octahedron" {
@@ -3875,7 +3948,7 @@
     \ \ 4 -- {5 6};
 
     }
-  </shell-code>
+  </verbatim-code>
 
   <section|Exporting graphs>
 
@@ -6064,72 +6137,72 @@
 
 <\references>
   <\collection>
-    <associate|a3|<tuple|A3|60>>
+    <associate|a3|<tuple|A3|62>>
     <associate|auto-1|<tuple|1|7>>
     <associate|auto-10|<tuple|2.1.5|11>>
-    <associate|auto-100|<tuple|5.3.5|47>>
-    <associate|auto-101|<tuple|5.3.6|47>>
-    <associate|auto-102|<tuple|5.4|47>>
-    <associate|auto-103|<tuple|5.4.1|47>>
-    <associate|auto-104|<tuple|5.4.2|47>>
-    <associate|auto-105|<tuple|5.4.3|47>>
-    <associate|auto-106|<tuple|5.5|47>>
-    <associate|auto-107|<tuple|5.5.1|47>>
-    <associate|auto-108|<tuple|5.5.2|47>>
-    <associate|auto-109|<tuple|5.5.3|47>>
+    <associate|auto-100|<tuple|5.3.5|49>>
+    <associate|auto-101|<tuple|5.3.6|49>>
+    <associate|auto-102|<tuple|5.4|49>>
+    <associate|auto-103|<tuple|5.4.1|49>>
+    <associate|auto-104|<tuple|5.4.2|49>>
+    <associate|auto-105|<tuple|5.4.3|49>>
+    <associate|auto-106|<tuple|5.5|49>>
+    <associate|auto-107|<tuple|5.5.1|49>>
+    <associate|auto-108|<tuple|5.5.2|49>>
+    <associate|auto-109|<tuple|5.5.3|49>>
     <associate|auto-11|<tuple|2.1.6|11>>
-    <associate|auto-110|<tuple|5.5.4|47>>
-    <associate|auto-111|<tuple|5.6|47>>
-    <associate|auto-112|<tuple|5.6.1|47>>
-    <associate|auto-113|<tuple|5.6.2|48>>
-    <associate|auto-114|<tuple|5.7|49>>
-    <associate|auto-115|<tuple|5.7.1|49>>
-    <associate|auto-116|<tuple|5.7.2|49>>
-    <associate|auto-117|<tuple|5.7.3|49>>
-    <associate|auto-118|<tuple|5.7.4|50>>
-    <associate|auto-119|<tuple|5.7.5|51>>
+    <associate|auto-110|<tuple|5.5.4|49>>
+    <associate|auto-111|<tuple|5.6|49>>
+    <associate|auto-112|<tuple|5.6.1|49>>
+    <associate|auto-113|<tuple|5.6.2|50>>
+    <associate|auto-114|<tuple|5.7|51>>
+    <associate|auto-115|<tuple|5.7.1|51>>
+    <associate|auto-116|<tuple|5.7.2|51>>
+    <associate|auto-117|<tuple|5.7.3|51>>
+    <associate|auto-118|<tuple|5.7.4|52>>
+    <associate|auto-119|<tuple|5.7.5|53>>
     <associate|auto-12|<tuple|2.2|12>>
-    <associate|auto-120|<tuple|5.8|52>>
-    <associate|auto-121|<tuple|5.8.1|52>>
-    <associate|auto-122|<tuple|5.1|54>>
-    <associate|auto-123|<tuple|5.8.2|53>>
-    <associate|auto-124|<tuple|5.8.3|54>>
-    <associate|auto-125|<tuple|5.8.4|54>>
-    <associate|auto-126|<tuple|5.9|54>>
-    <associate|auto-127|<tuple|5.10|54>>
-    <associate|auto-128|<tuple|5.10.1|54>>
-    <associate|auto-129|<tuple|5.10.2|54>>
+    <associate|auto-120|<tuple|5.8|54>>
+    <associate|auto-121|<tuple|5.8.1|54>>
+    <associate|auto-122|<tuple|5.1|56>>
+    <associate|auto-123|<tuple|5.8.2|55>>
+    <associate|auto-124|<tuple|5.8.3|56>>
+    <associate|auto-125|<tuple|5.8.4|56>>
+    <associate|auto-126|<tuple|5.9|56>>
+    <associate|auto-127|<tuple|5.10|56>>
+    <associate|auto-128|<tuple|5.10.1|56>>
+    <associate|auto-129|<tuple|5.10.2|56>>
     <associate|auto-13|<tuple|2.2.1|12>>
-    <associate|auto-130|<tuple|6|55>>
-    <associate|auto-131|<tuple|6.1|55>>
-    <associate|auto-132|<tuple|6.1.1|55>>
-    <associate|auto-133|<tuple|6.1.2|55>>
-    <associate|auto-134|<tuple|6.1.3|55>>
-    <associate|auto-135|<tuple|6.2|55>>
-    <associate|auto-136|<tuple|6.2.1|55>>
-    <associate|auto-137|<tuple|6.2.2|55>>
-    <associate|auto-138|<tuple|6.2.3|55>>
-    <associate|auto-139|<tuple|7|57>>
+    <associate|auto-130|<tuple|6|57>>
+    <associate|auto-131|<tuple|6.1|57>>
+    <associate|auto-132|<tuple|6.1.1|57>>
+    <associate|auto-133|<tuple|6.1.2|57>>
+    <associate|auto-134|<tuple|6.1.3|57>>
+    <associate|auto-135|<tuple|6.2|57>>
+    <associate|auto-136|<tuple|6.2.1|57>>
+    <associate|auto-137|<tuple|6.2.2|57>>
+    <associate|auto-138|<tuple|6.2.3|57>>
+    <associate|auto-139|<tuple|7|59>>
     <associate|auto-14|<tuple|2.2.2|12>>
-    <associate|auto-140|<tuple|7.1|57>>
-    <associate|auto-141|<tuple|7.1.1|57>>
-    <associate|auto-142|<tuple|7.1.2|57>>
-    <associate|auto-143|<tuple|7.1.3|58>>
-    <associate|auto-144|<tuple|7.1.4|60>>
-    <associate|auto-145|<tuple|7.1.5|61>>
-    <associate|auto-146|<tuple|7.1|62>>
-    <associate|auto-147|<tuple|7.2|62>>
-    <associate|auto-148|<tuple|7.3|62>>
-    <associate|auto-149|<tuple|7.1.6|62>>
+    <associate|auto-140|<tuple|7.1|59>>
+    <associate|auto-141|<tuple|7.1.1|59>>
+    <associate|auto-142|<tuple|7.1.2|59>>
+    <associate|auto-143|<tuple|7.1.3|60>>
+    <associate|auto-144|<tuple|7.1.4|62>>
+    <associate|auto-145|<tuple|7.1.5|63>>
+    <associate|auto-146|<tuple|7.1|64>>
+    <associate|auto-147|<tuple|7.2|64>>
+    <associate|auto-148|<tuple|7.3|64>>
+    <associate|auto-149|<tuple|7.1.6|64>>
     <associate|auto-15|<tuple|2.3|12>>
-    <associate|auto-150|<tuple|7.2|63>>
-    <associate|auto-151|<tuple|7.2.1|63>>
-    <associate|auto-152|<tuple|7.2.2|64>>
-    <associate|auto-153|<tuple|7.3|64>>
-    <associate|auto-154|<tuple|7.3.1|64>>
-    <associate|auto-155|<tuple|7.3.2|65>>
-    <associate|auto-156|<tuple|7.3.3|66>>
-    <associate|auto-157|<tuple|7.3.3|67>>
+    <associate|auto-150|<tuple|7.2|65>>
+    <associate|auto-151|<tuple|7.2.1|65>>
+    <associate|auto-152|<tuple|7.2.2|66>>
+    <associate|auto-153|<tuple|7.3|66>>
+    <associate|auto-154|<tuple|7.3.1|66>>
+    <associate|auto-155|<tuple|7.3.2|67>>
+    <associate|auto-156|<tuple|7.3.3|68>>
+    <associate|auto-157|<tuple|7.3.3|69>>
     <associate|auto-16|<tuple|2.3.1|12>>
     <associate|auto-17|<tuple|2.3.2|13>>
     <associate|auto-18|<tuple|2.3.3|13>>
@@ -6184,82 +6257,83 @@
     <associate|auto-62|<tuple|2.11.3|31>>
     <associate|auto-63|<tuple|2.11.4|32>>
     <associate|auto-64|<tuple|2.11.5|33>>
-    <associate|auto-65|<tuple|2.11.6|33>>
+    <associate|auto-65|<tuple|2.11.6|34>>
     <associate|auto-66|<tuple|2.11.7|34>>
     <associate|auto-67|<tuple|2.11.8|34>>
-    <associate|auto-68|<tuple|3|35>>
-    <associate|auto-69|<tuple|3.1|35>>
+    <associate|auto-68|<tuple|3|37>>
+    <associate|auto-69|<tuple|3.1|37>>
     <associate|auto-7|<tuple|2.1.2|10>>
-    <associate|auto-70|<tuple|3.1.1|35>>
-    <associate|auto-71|<tuple|3.2|35>>
-    <associate|auto-72|<tuple|3.2.1|35>>
-    <associate|auto-73|<tuple|3.2.2|36>>
-    <associate|auto-74|<tuple|3.2.3|36>>
-    <associate|auto-75|<tuple|3.2.4|37>>
-    <associate|auto-76|<tuple|3.3|37>>
-    <associate|auto-77|<tuple|3.3.1|37>>
-    <associate|auto-78|<tuple|3.3.2|38>>
-    <associate|auto-79|<tuple|3.3.3|38>>
+    <associate|auto-70|<tuple|3.1.1|37>>
+    <associate|auto-71|<tuple|3.2|37>>
+    <associate|auto-72|<tuple|3.2.1|37>>
+    <associate|auto-73|<tuple|3.2.2|38>>
+    <associate|auto-74|<tuple|3.2.3|38>>
+    <associate|auto-75|<tuple|3.2.4|39>>
+    <associate|auto-76|<tuple|3.3|39>>
+    <associate|auto-77|<tuple|3.3.1|39>>
+    <associate|auto-78|<tuple|3.3.2|40>>
+    <associate|auto-79|<tuple|3.3.3|41>>
     <associate|auto-8|<tuple|2.1.3|10>>
-    <associate|auto-80|<tuple|4|41>>
-    <associate|auto-81|<tuple|4.1|41>>
-    <associate|auto-82|<tuple|4.1.1|41>>
-    <associate|auto-83|<tuple|4.1.2|41>>
-    <associate|auto-84|<tuple|4.2|42>>
-    <associate|auto-85|<tuple|4.2.1|42>>
-    <associate|auto-86|<tuple|4.2.2|42>>
-    <associate|auto-87|<tuple|4.1|43>>
-    <associate|auto-88|<tuple|5|45>>
-    <associate|auto-89|<tuple|5.1|45>>
+    <associate|auto-80|<tuple|4|43>>
+    <associate|auto-81|<tuple|4.1|43>>
+    <associate|auto-82|<tuple|4.1.1|43>>
+    <associate|auto-83|<tuple|4.1.2|43>>
+    <associate|auto-84|<tuple|4.2|44>>
+    <associate|auto-85|<tuple|4.2.1|44>>
+    <associate|auto-86|<tuple|4.2.2|44>>
+    <associate|auto-87|<tuple|4.1|45>>
+    <associate|auto-88|<tuple|5|47>>
+    <associate|auto-89|<tuple|5.1|47>>
     <associate|auto-9|<tuple|2.1.4|10>>
-    <associate|auto-90|<tuple|5.1.1|45>>
-    <associate|auto-91|<tuple|5.1.2|45>>
-    <associate|auto-92|<tuple|5.1.3|46>>
-    <associate|auto-93|<tuple|5.1.4|47>>
-    <associate|auto-94|<tuple|5.2|47>>
-    <associate|auto-95|<tuple|5.3|47>>
-    <associate|auto-96|<tuple|5.3.1|47>>
-    <associate|auto-97|<tuple|5.3.2|47>>
-    <associate|auto-98|<tuple|5.3.3|47>>
-    <associate|auto-99|<tuple|5.3.4|47>>
-    <associate|bib-brelaz|<tuple|1|67>>
-    <associate|bib-buchheim|<tuple|2|67>>
-    <associate|bib-diaz|<tuple|3|67>>
-    <associate|bib-edmonds|<tuple|4|67>>
-    <associate|bib-fruchterman|<tuple|5|67>>
-    <associate|bib-gibbons|<tuple|6|67>>
-    <associate|bib-hinz|<tuple|7|67>>
-    <associate|bib-hopcroft|<tuple|8|67>>
-    <associate|bib-hu|<tuple|9|67>>
-    <associate|bib-hu2|<tuple|10|67>>
-    <associate|bib-myrwold|<tuple|11|67>>
-    <associate|bib-ostergard|<tuple|12|67>>
-    <associate|bib-plestenjak|<tuple|13|67>>
-    <associate|bib-steger|<tuple|14|67>>
-    <associate|bib-tomita|<tuple|15|67>>
-    <associate|bib-tutte|<tuple|16|67>>
-    <associate|bib-walker|<tuple|17|67>>
-    <associate|bib-welch|<tuple|18|67>>
-    <associate|blockjoin|<tuple|7.1|62>>
-    <associate|chordface|<tuple|7.2|62>>
+    <associate|auto-90|<tuple|5.1.1|47>>
+    <associate|auto-91|<tuple|5.1.2|47>>
+    <associate|auto-92|<tuple|5.1.3|48>>
+    <associate|auto-93|<tuple|5.1.4|49>>
+    <associate|auto-94|<tuple|5.2|49>>
+    <associate|auto-95|<tuple|5.3|49>>
+    <associate|auto-96|<tuple|5.3.1|49>>
+    <associate|auto-97|<tuple|5.3.2|49>>
+    <associate|auto-98|<tuple|5.3.3|49>>
+    <associate|auto-99|<tuple|5.3.4|49>>
+    <associate|bib-brelaz|<tuple|1|69>>
+    <associate|bib-buchheim|<tuple|2|69>>
+    <associate|bib-diaz|<tuple|3|69>>
+    <associate|bib-edmonds|<tuple|4|69>>
+    <associate|bib-fruchterman|<tuple|5|69>>
+    <associate|bib-gibbons|<tuple|6|69>>
+    <associate|bib-hinz|<tuple|7|69>>
+    <associate|bib-hopcroft|<tuple|8|69>>
+    <associate|bib-hu|<tuple|9|69>>
+    <associate|bib-hu2|<tuple|10|69>>
+    <associate|bib-myrwold|<tuple|11|69>>
+    <associate|bib-ostergard|<tuple|12|69>>
+    <associate|bib-plestenjak|<tuple|13|69>>
+    <associate|bib-steger|<tuple|14|69>>
+    <associate|bib-tomita|<tuple|15|69>>
+    <associate|bib-tutte|<tuple|16|69>>
+    <associate|bib-walker|<tuple|17|69>>
+    <associate|bib-welch|<tuple|18|69>>
+    <associate|blockjoin|<tuple|7.1|64>>
+    <associate|chordface|<tuple|7.2|64>>
     <associate|footnote-2.1|<tuple|2.1|20>>
     <associate|footnote-2.2|<tuple|2.2|29>>
     <associate|footnote-2.3|<tuple|2.3|33>>
-    <associate|footnote-4.1|<tuple|4.1|41>>
-    <associate|footnote-4.2|<tuple|4.2|42>>
-    <associate|footnote-5.1|<tuple|5.1|48>>
-    <associate|footnote-5.2|<tuple|5.2|53>>
+    <associate|footnote-4.1|<tuple|4.1|43>>
+    <associate|footnote-4.2|<tuple|4.2|43>>
+    <associate|footnote-4.3|<tuple|4.3|45>>
+    <associate|footnote-5.1|<tuple|5.1|50>>
+    <associate|footnote-5.2|<tuple|5.2|55>>
     <associate|footnr-2.1|<tuple|2.1|20>>
     <associate|footnr-2.2|<tuple|2.2|29>>
     <associate|footnr-2.3|<tuple|2.3|33>>
-    <associate|footnr-4.1|<tuple|4.1|41>>
-    <associate|footnr-4.2|<tuple|4.2|42>>
-    <associate|footnr-5.1|<tuple|5.1|48>>
-    <associate|footnr-5.2|<tuple|5.2|53>>
-    <associate|sec:dotformat|<tuple|4.1.2|41>>
-    <associate|st53|<tuple|4.1|43>>
-    <associate|tab:colors|<tuple|5.1|54>>
-    <associate|touchface|<tuple|7.3|62>>
+    <associate|footnr-4.1|<tuple|4.1|43>>
+    <associate|footnr-4.2|<tuple|4.2|43>>
+    <associate|footnr-4.3|<tuple|4.3|45>>
+    <associate|footnr-5.1|<tuple|5.1|50>>
+    <associate|footnr-5.2|<tuple|5.2|55>>
+    <associate|st53|<tuple|4.1|45>>
+    <associate|tab:colors|<tuple|5.1|56>>
+    <associate|touchface|<tuple|7.3|64>>
   </collection>
 </references>
 

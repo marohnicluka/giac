@@ -109,7 +109,13 @@ string strip_string(const string &str) {
 }
 
 string make_absolute_file_path(const string &relative_path) {
+    if (relative_path[0]=='/')
+        return relative_path;
+#ifdef HAVE_NO_CWD
+    string path="/"+relative_path;
+#else
     string path=string(get_current_dir_name())+"/"+relative_path;
+#endif
     vector<string> tokens;
     size_t lastpos=0,pos;
     while ((pos=path.find_first_of('/',lastpos))!=string::npos) {
@@ -684,8 +690,7 @@ gen _export_graph(const gen &g,GIAC_CONTEXT) {
     if (name.type!=_STRNG)
         return gentypeerr(contextptr);
     string filename=graphe::genstring2str(name);
-    if (filename[0]!='/')
-        filename=make_absolute_file_path(filename);
+    filename=make_absolute_file_path(filename);
     if (to_latex) {
         if (!has_suffix(filename,".tex"))
             filename=filename+".tex";
@@ -696,7 +701,7 @@ gen _export_graph(const gen &g,GIAC_CONTEXT) {
         gen drawing=_draw_graph(args.type==_VECT?change_subtype(args,_SEQ__VECT):gr,contextptr);
         return G.write_latex(filename,drawing);
     }
-    if (!has_suffix(filename,".dot"))
+    if (!has_suffix(filename,".dot") && !has_suffix(filename,".gv"))
         filename=filename+".dot";
     return G.write_dot(filename)?1:0;
 }
@@ -704,7 +709,7 @@ static const char _export_graph_s[]="export_graph";
 static define_unary_function_eval(__export_graph,&_export_graph,_export_graph_s);
 define_unary_function_ptr5(at_export_graph,alias_at_export_graph,&__export_graph,0,true)
 
-/* USAGE:   import_graph("path/to/graphname[.dot]")
+/* USAGE:   import_graph("path/to/graphname[.dot or .gv]")
  *
  * Returns the graph constructed from instructions in the file
  * 'path/to/graphname.dot' (in dot format) or undef on failure.
@@ -717,10 +722,9 @@ gen _import_graph(const gen &g,GIAC_CONTEXT) {
     string filename=graphe::genstring2str(g);
     if (filename.empty())
         return undef;
-    if (!has_suffix(filename,".dot"))
+    if (!has_suffix(filename,".dot") && !has_suffix(filename,".gv"))
         filename=filename+".dot";
-    if (filename[0]!='/')
-        filename=make_absolute_file_path(filename);
+    filename=make_absolute_file_path(filename);
     if (!G.read_dot(filename)) {
         gt_err_display(_GT_ERR_READING_FAILED,contextptr);
         return undef;
@@ -1765,6 +1769,9 @@ gen _random_regular_graph(const gen &g,GIAC_CONTEXT) {
     bool connected=false;
     if (gv.size()>2 && gv[2].is_integer() && gv[2].val==_GT_CONNECTED)
         connected=true;
+    int n=V.size();
+    if (n<=d+1 || (n*d)%2!=0) // check the necessary condition
+        return gensizeerr("The graph does not exist.");
     G.make_random_regular(V,d,connected);
     return G.to_gen();
 }

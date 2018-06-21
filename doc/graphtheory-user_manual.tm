@@ -1314,8 +1314,8 @@
   <with|font-family|tt|is_graphic_sequence> accepts a list <math|L> of
   positive integers as its only argument and returns
   <with|font-family|tt|true> if there exists a graph <math|G<around|(|V,E|)>>
-  with degree sequence <math|<around|{|deg v:v\<in\>V|}>> equal to <math|L>,
-  else it returns <with|font-family|tt|false>. The algorithm, which has the
+  with degree sequence <math|<around|{|deg v:v\<in\>V|}>> equal to <math|L>
+  and <with|font-family|tt|false> otherwise. The algorithm, which has the
   complexity <math|O<around|(|<around|\||L|\|><rsup|2>|)>>, is based on the
   theorem of <name|Erd®s> and <name|Gallai>.
 
@@ -4421,15 +4421,198 @@
 
   <subsection|Vertex adjacency>
 
+  The command <verbatim|has_edge> is used for checking if two vertices in an
+  undirected graph are adjacent or not.
+
+  <verbatim|has_edge> accepts two arguments, the input graph
+  <math|G<around*|(|V,E|)>> and a list <verbatim|[u,v]> where
+  <math|u,v\<in\>V>. The command returns <verbatim|true> if <math|u v\<in\>E>
+  and <verbatim|false> otherwise.
+
+  For digraphs, there is the similar command <verbatim|has_arc> with the same
+  input syntax. Note, however, that the order of vertices <math|u> and
+  <math|v> matters this time.
+
   <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      G:=graph(trail(1,2,3,4,5,2))
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 5 vertices and 5 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      has_edge(G,[1,2])
+    <|unfolded-io>
+      <\equation*>
+        <text|true>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      has_edge(G,[2,1])
+    <|unfolded-io>
+      <\equation*>
+        <text|true>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      has_edge(G,[1,3])
+    <|unfolded-io>
+      <\equation*>
+        <text|false>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      D:=digraph(trail(1,2,3,4,5,2))
+    <|unfolded-io>
+      <\equation*>
+        <text|a directed unweighted graph with 5 vertices and 5 arcs>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      has_arc(D,[1,2])
+    <|unfolded-io>
+      <\equation*>
+        <text|true>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      has_arc(D,[2,1])
+    <|unfolded-io>
+      <\equation*>
+        <text|false>
+      </equation*>
+    </unfolded-io>
+  </session>
+
+  The command <verbatim|neighbors> is used for obtaining the list of vertices
+  in a graph that are adjacent to the particular vertex or the complete
+  adjacency structure of the graph, in sparse form.
+
+  <verbatim|neighbors> accepts one or two arguments. The first, mandatory
+  argument is the input graph <math|G<around*|(|V,E|)>>. The second, optional
+  argument is a vertex <math|v\<in\>V>. The command returns the list of
+  neighbors of <math|v> in <math|G> if <math|v> is given and the list of
+  lists of neighbors for all vertices in <math|V>, in order of
+  <verbatim|vertices(G)>, otherwise.
+
+  Note that <verbatim|neighbors> works for undirected as well as for directed
+  graphs, but ignores edge directions in the latter case.
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      neighbors(G,3)
+    <|unfolded-io>
+      <\equation*>
+        <around|[|2,4|]>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      neighbors(G)
+    <|unfolded-io>
+      <\equation*>
+        <around|[|<around|[|2|]>,<around|[|1,3,5|]>,<around|[|2,4|]>,<around|[|3,5|]>,<around|[|2,4|]>|]>
+      </equation*>
+    </unfolded-io>
+  </session>
+
+  The command <verbatim|departures> resp.<nbsp><verbatim|arrivals> is used
+  for determining all neighbors of a vertex <math|v> in a digraph which are
+  the heads resp.<nbsp>the tails of the corresponding arcs.
+
+  <verbatim|departures> resp.<nbsp><verbatim|arrivals> accepts one or two
+  arguments, the input digraph <math|G<around*|(|V,E|)>> and optionally a
+  vertex <math|v\<in\>V>, and returns the list <math|L<rsub|v>> containing
+  all vertices <math|w\<in\>V> for which <math|v w\<in\>E> resp.<nbsp><math|w
+  v\<in\>E>. If <math|v> is omitted, the list of lists <math|L<rsub|v>> for
+  every <math|v\<in\>V> is returned.
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      G:=digraph(trail(1,2,3,4,2,5,1,6,7,8,4))
+    <|unfolded-io>
+      <\equation*>
+        <text|a directed unweighted graph with 8 vertices and 10 arcs>
+      </equation*>
+    </unfolded-io>
+
     <\input>
       \<gtr\>\ 
     <|input>
-      \;
+      draw_graph(G,spring)
     </input>
   </session>
 
-  \;
+  <center|<image|images/digraph7.eps|40%|||>>
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      departures(G,2)
+    <|unfolded-io>
+      <\equation*>
+        <around|[|3,5|]>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      arrivals(G,2)
+    <|unfolded-io>
+      <\equation*>
+        <around|[|1,4|]>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      departures(G,1)
+    <|unfolded-io>
+      <\equation*>
+        <around|[|2,6|]>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      arrivals(G,1)
+    <|unfolded-io>
+      <\equation*>
+        <around|[|5|]>
+      </equation*>
+    </unfolded-io>
+  </session>
 
   <subsection|Edge incidence>
 
@@ -4512,7 +4695,8 @@
   trees.
 
   <verbatim|is_forest> accepts the input graph <math|G> as its only argument
-  and returns true if <math|G> is a forest and false otherwise.
+  and returns <verbatim|true> if <math|G> is a forest and <verbatim|false>
+  otherwise.
 
   The only expensive step in the algorithm is the decomposition of <math|G>
   to connected components. Therefore the algorithm runs in
@@ -4863,8 +5047,10 @@
   cardinality greater than two.
 
   <verbatim|triangle_free> accepts the input graph <math|G> as its only
-  argument and returns true if and only if <math|G> is triangle-free. The
-  strategy is to check whether <math|tr <around*|(|A<rsup|3>|)>=0>, where
+  argument and returns <verbatim|true> if <math|G> is triangle-free and
+  <verbatim|false> otherwise.
+
+  The strategy is to check whether <math|tr <around*|(|A<rsup|3>|)>=0>, where
   <math|A> is the adjacency matrix of <math|G>. If the last equality holds,
   the graph is triangle-free. This method is very fast as just one matrix
   multiplication needs to be carried out completely. Additionally, the matrix
@@ -6592,82 +6778,82 @@
 
 <\references>
   <\collection>
-    <associate|a3|<tuple|A3|64>>
+    <associate|a3|<tuple|A3|66>>
     <associate|auto-1|<tuple|1|7>>
     <associate|auto-10|<tuple|2.1.5|11>>
-    <associate|auto-100|<tuple|5.2.6|49>>
-    <associate|auto-101|<tuple|5.2.7|49>>
-    <associate|auto-102|<tuple|5.3|49>>
-    <associate|auto-103|<tuple|5.3.1|49>>
-    <associate|auto-104|<tuple|5.3.2|49>>
-    <associate|auto-105|<tuple|5.3.3|49>>
-    <associate|auto-106|<tuple|5.3.4|49>>
-    <associate|auto-107|<tuple|5.3.5|49>>
-    <associate|auto-108|<tuple|5.3.6|49>>
-    <associate|auto-109|<tuple|5.3.7|49>>
+    <associate|auto-100|<tuple|5.2.6|50>>
+    <associate|auto-101|<tuple|5.2.7|50>>
+    <associate|auto-102|<tuple|5.3|50>>
+    <associate|auto-103|<tuple|5.3.1|50>>
+    <associate|auto-104|<tuple|5.3.2|50>>
+    <associate|auto-105|<tuple|5.3.3|50>>
+    <associate|auto-106|<tuple|5.3.4|50>>
+    <associate|auto-107|<tuple|5.3.5|50>>
+    <associate|auto-108|<tuple|5.3.6|50>>
+    <associate|auto-109|<tuple|5.3.7|50>>
     <associate|auto-11|<tuple|2.1.6|11>>
-    <associate|auto-110|<tuple|5.4|49>>
-    <associate|auto-111|<tuple|5.4.1|49>>
-    <associate|auto-112|<tuple|5.4.2|50>>
-    <associate|auto-113|<tuple|5.4.3|50>>
-    <associate|auto-114|<tuple|5.4.4|50>>
-    <associate|auto-115|<tuple|5.5|51>>
-    <associate|auto-116|<tuple|5.5.1|51>>
-    <associate|auto-117|<tuple|5.5.2|51>>
-    <associate|auto-118|<tuple|5.5.3|51>>
-    <associate|auto-119|<tuple|5.5.4|51>>
+    <associate|auto-110|<tuple|5.4|50>>
+    <associate|auto-111|<tuple|5.4.1|50>>
+    <associate|auto-112|<tuple|5.4.2|51>>
+    <associate|auto-113|<tuple|5.4.3|51>>
+    <associate|auto-114|<tuple|5.4.4|52>>
+    <associate|auto-115|<tuple|5.5|52>>
+    <associate|auto-116|<tuple|5.5.1|52>>
+    <associate|auto-117|<tuple|5.5.2|52>>
+    <associate|auto-118|<tuple|5.5.3|52>>
+    <associate|auto-119|<tuple|5.5.4|52>>
     <associate|auto-12|<tuple|2.2|12>>
-    <associate|auto-120|<tuple|5.6|51>>
-    <associate|auto-121|<tuple|5.6.1|51>>
-    <associate|auto-122|<tuple|5.6.2|52>>
-    <associate|auto-123|<tuple|5.7|53>>
-    <associate|auto-124|<tuple|5.7.1|53>>
-    <associate|auto-125|<tuple|5.7.2|53>>
-    <associate|auto-126|<tuple|5.7.3|53>>
-    <associate|auto-127|<tuple|5.7.4|54>>
-    <associate|auto-128|<tuple|5.7.5|55>>
-    <associate|auto-129|<tuple|5.8|56>>
+    <associate|auto-120|<tuple|5.6|52>>
+    <associate|auto-121|<tuple|5.6.1|52>>
+    <associate|auto-122|<tuple|5.6.2|53>>
+    <associate|auto-123|<tuple|5.7|54>>
+    <associate|auto-124|<tuple|5.7.1|54>>
+    <associate|auto-125|<tuple|5.7.2|54>>
+    <associate|auto-126|<tuple|5.7.3|54>>
+    <associate|auto-127|<tuple|5.7.4|55>>
+    <associate|auto-128|<tuple|5.7.5|56>>
+    <associate|auto-129|<tuple|5.8|57>>
     <associate|auto-13|<tuple|2.2.1|12>>
-    <associate|auto-130|<tuple|5.8.1|56>>
-    <associate|auto-131|<tuple|5.1|57>>
-    <associate|auto-132|<tuple|5.8.2|57>>
-    <associate|auto-133|<tuple|5.8.3|58>>
-    <associate|auto-134|<tuple|5.8.4|58>>
-    <associate|auto-135|<tuple|5.9|58>>
-    <associate|auto-136|<tuple|5.10|58>>
-    <associate|auto-137|<tuple|5.10.1|58>>
-    <associate|auto-138|<tuple|5.10.2|58>>
-    <associate|auto-139|<tuple|6|59>>
+    <associate|auto-130|<tuple|5.8.1|57>>
+    <associate|auto-131|<tuple|5.1|59>>
+    <associate|auto-132|<tuple|5.8.2|58>>
+    <associate|auto-133|<tuple|5.8.3|59>>
+    <associate|auto-134|<tuple|5.8.4|59>>
+    <associate|auto-135|<tuple|5.9|59>>
+    <associate|auto-136|<tuple|5.10|59>>
+    <associate|auto-137|<tuple|5.10.1|59>>
+    <associate|auto-138|<tuple|5.10.2|59>>
+    <associate|auto-139|<tuple|6|61>>
     <associate|auto-14|<tuple|2.2.2|12>>
-    <associate|auto-140|<tuple|6.1|59>>
-    <associate|auto-141|<tuple|6.1.1|59>>
-    <associate|auto-142|<tuple|6.1.2|59>>
-    <associate|auto-143|<tuple|6.1.3|60>>
-    <associate|auto-144|<tuple|6.2|60>>
-    <associate|auto-145|<tuple|6.2.1|60>>
-    <associate|auto-146|<tuple|6.2.2|60>>
-    <associate|auto-147|<tuple|6.2.3|60>>
-    <associate|auto-148|<tuple|7|61>>
-    <associate|auto-149|<tuple|7.1|61>>
+    <associate|auto-140|<tuple|6.1|61>>
+    <associate|auto-141|<tuple|6.1.1|61>>
+    <associate|auto-142|<tuple|6.1.2|61>>
+    <associate|auto-143|<tuple|6.1.3|62>>
+    <associate|auto-144|<tuple|6.2|62>>
+    <associate|auto-145|<tuple|6.2.1|62>>
+    <associate|auto-146|<tuple|6.2.2|62>>
+    <associate|auto-147|<tuple|6.2.3|62>>
+    <associate|auto-148|<tuple|7|63>>
+    <associate|auto-149|<tuple|7.1|63>>
     <associate|auto-15|<tuple|2.3|12>>
-    <associate|auto-150|<tuple|7.1.1|61>>
-    <associate|auto-151|<tuple|7.1.2|61>>
-    <associate|auto-152|<tuple|7.1.3|62>>
-    <associate|auto-153|<tuple|7.1.4|64>>
-    <associate|auto-154|<tuple|7.1.5|65>>
-    <associate|auto-155|<tuple|7.1|66>>
-    <associate|auto-156|<tuple|7.2|66>>
-    <associate|auto-157|<tuple|7.3|66>>
-    <associate|auto-158|<tuple|7.1.6|66>>
-    <associate|auto-159|<tuple|7.2|67>>
+    <associate|auto-150|<tuple|7.1.1|63>>
+    <associate|auto-151|<tuple|7.1.2|63>>
+    <associate|auto-152|<tuple|7.1.3|64>>
+    <associate|auto-153|<tuple|7.1.4|66>>
+    <associate|auto-154|<tuple|7.1.5|67>>
+    <associate|auto-155|<tuple|7.1|68>>
+    <associate|auto-156|<tuple|7.2|68>>
+    <associate|auto-157|<tuple|7.3|68>>
+    <associate|auto-158|<tuple|7.1.6|68>>
+    <associate|auto-159|<tuple|7.2|69>>
     <associate|auto-16|<tuple|2.3.1|12>>
-    <associate|auto-160|<tuple|7.2.1|67>>
-    <associate|auto-161|<tuple|7.2.2|68>>
-    <associate|auto-162|<tuple|7.3|68>>
-    <associate|auto-163|<tuple|7.3.1|68>>
-    <associate|auto-164|<tuple|7.3.2|69>>
-    <associate|auto-165|<tuple|7.3.3|70>>
-    <associate|auto-166|<tuple|7.3.3|71>>
+    <associate|auto-160|<tuple|7.2.1|69>>
+    <associate|auto-161|<tuple|7.2.2|70>>
+    <associate|auto-162|<tuple|7.3|70>>
+    <associate|auto-163|<tuple|7.3.1|70>>
+    <associate|auto-164|<tuple|7.3.2|71>>
+    <associate|auto-165|<tuple|7.3.3|72>>
+    <associate|auto-166|<tuple|7.3.3|73>>
     <associate|auto-17|<tuple|2.3.2|13>>
     <associate|auto-18|<tuple|2.3.3|13>>
     <associate|auto-19|<tuple|2.4|13>>
@@ -6752,35 +6938,35 @@
     <associate|auto-90|<tuple|5.1.1|47>>
     <associate|auto-91|<tuple|5.1.2|47>>
     <associate|auto-92|<tuple|5.1.3|48>>
-    <associate|auto-93|<tuple|5.1.4|49>>
-    <associate|auto-94|<tuple|5.2|49>>
-    <associate|auto-95|<tuple|5.2.1|49>>
-    <associate|auto-96|<tuple|5.2.2|49>>
-    <associate|auto-97|<tuple|5.2.3|49>>
-    <associate|auto-98|<tuple|5.2.4|49>>
-    <associate|auto-99|<tuple|5.2.5|49>>
-    <associate|bib-brelaz|<tuple|1|71>>
-    <associate|bib-buchheim|<tuple|2|71>>
-    <associate|bib-diaz|<tuple|3|71>>
-    <associate|bib-edmonds|<tuple|4|71>>
-    <associate|bib-fruchterman|<tuple|5|71>>
-    <associate|bib-gibbons|<tuple|6|71>>
-    <associate|bib-hinz|<tuple|7|71>>
-    <associate|bib-hopcroft|<tuple|8|71>>
-    <associate|bib-hu|<tuple|9|71>>
-    <associate|bib-hu2|<tuple|10|71>>
-    <associate|bib-lca|<tuple|15|71>>
-    <associate|bib-myrwold|<tuple|11|71>>
-    <associate|bib-ostergard|<tuple|12|71>>
-    <associate|bib-plestenjak|<tuple|13|71>>
-    <associate|bib-steger|<tuple|14|71>>
-    <associate|bib-tomita|<tuple|16|71>>
-    <associate|bib-tutte|<tuple|17|71>>
-    <associate|bib-walker|<tuple|18|71>>
-    <associate|bib-welch|<tuple|19|71>>
-    <associate|bib-west|<tuple|20|71>>
-    <associate|blockjoin|<tuple|7.1|66>>
-    <associate|chordface|<tuple|7.2|66>>
+    <associate|auto-93|<tuple|5.1.4|50>>
+    <associate|auto-94|<tuple|5.2|50>>
+    <associate|auto-95|<tuple|5.2.1|50>>
+    <associate|auto-96|<tuple|5.2.2|50>>
+    <associate|auto-97|<tuple|5.2.3|50>>
+    <associate|auto-98|<tuple|5.2.4|50>>
+    <associate|auto-99|<tuple|5.2.5|50>>
+    <associate|bib-brelaz|<tuple|1|73>>
+    <associate|bib-buchheim|<tuple|2|73>>
+    <associate|bib-diaz|<tuple|3|73>>
+    <associate|bib-edmonds|<tuple|4|73>>
+    <associate|bib-fruchterman|<tuple|5|73>>
+    <associate|bib-gibbons|<tuple|6|73>>
+    <associate|bib-hinz|<tuple|7|73>>
+    <associate|bib-hopcroft|<tuple|8|73>>
+    <associate|bib-hu|<tuple|9|73>>
+    <associate|bib-hu2|<tuple|10|73>>
+    <associate|bib-lca|<tuple|15|73>>
+    <associate|bib-myrwold|<tuple|11|73>>
+    <associate|bib-ostergard|<tuple|12|73>>
+    <associate|bib-plestenjak|<tuple|13|73>>
+    <associate|bib-steger|<tuple|14|73>>
+    <associate|bib-tomita|<tuple|16|73>>
+    <associate|bib-tutte|<tuple|17|73>>
+    <associate|bib-walker|<tuple|18|73>>
+    <associate|bib-welch|<tuple|19|73>>
+    <associate|bib-west|<tuple|20|73>>
+    <associate|blockjoin|<tuple|7.1|68>>
+    <associate|chordface|<tuple|7.2|68>>
     <associate|footnote-2.1|<tuple|2.1|21>>
     <associate|footnote-2.2|<tuple|2.2|30>>
     <associate|footnote-2.3|<tuple|2.3|34>>
@@ -6788,8 +6974,8 @@
     <associate|footnote-4.2|<tuple|4.2|43>>
     <associate|footnote-4.3|<tuple|4.3|43>>
     <associate|footnote-4.4|<tuple|4.4|45>>
-    <associate|footnote-5.1|<tuple|5.1|51>>
-    <associate|footnote-5.2|<tuple|5.2|57>>
+    <associate|footnote-5.1|<tuple|5.1|53>>
+    <associate|footnote-5.2|<tuple|5.2|58>>
     <associate|footnr-2.1|<tuple|2.1|21>>
     <associate|footnr-2.2|<tuple|2.2|30>>
     <associate|footnr-2.3|<tuple|2.3|34>>
@@ -6797,11 +6983,11 @@
     <associate|footnr-4.2|<tuple|4.2|43>>
     <associate|footnr-4.3|<tuple|4.3|43>>
     <associate|footnr-4.4|<tuple|4.4|45>>
-    <associate|footnr-5.1|<tuple|5.1|51>>
-    <associate|footnr-5.2|<tuple|5.2|57>>
+    <associate|footnr-5.1|<tuple|5.1|53>>
+    <associate|footnr-5.2|<tuple|5.2|58>>
     <associate|st53|<tuple|4.1|45>>
-    <associate|tab:colors|<tuple|5.1|57>>
-    <associate|touchface|<tuple|7.3|66>>
+    <associate|tab:colors|<tuple|5.1|59>>
+    <associate|touchface|<tuple|7.3|68>>
   </collection>
 </references>
 

@@ -532,7 +532,7 @@ void graphe::vertex::assign(const vertex &other) {
 }
 
 gen graphe::vertex::label() const {
-    map<int,gen>::const_iterator it=m_attributes.find(_GT_ATTRIB_LABEL);
+    attrib_iter it=m_attributes.find(_GT_ATTRIB_LABEL);
     if (it==m_attributes.end())
         return undef;
     return it->second;
@@ -557,7 +557,7 @@ void graphe::vertex::add_neighbor(int i,const attrib &attr) {
 
 bool graphe::vertex::is_temporary(int i) const {
     const attrib &attr=neighbor_attributes(i);
-    map<int,gen>::const_iterator it=attr.find(_GT_ATTRIB_TEMPORARY);
+    attrib_iter it=attr.find(_GT_ATTRIB_TEMPORARY);
     return it!=attr.end() && is_one(it->second);
 }
 
@@ -580,7 +580,7 @@ bool graphe::vertex::has_neighbor(int i,bool include_temp_edges) const {
     else yes=find(m_neighbors.begin(),m_neighbors.end(),i)!=m_neighbors.end();
     if (!yes)
         return false;
-    map<int,gen>::const_iterator ait;
+    attrib_iter ait;
     const attrib &attr=neighbor_attributes(i);
     return include_temp_edges || (ait=attr.find(_GT_ATTRIB_TEMPORARY))==attr.end() || !is_one(ait->second);
 }
@@ -2069,8 +2069,7 @@ void graphe::add_temporary_edge(int i,int j) {
 
 /* return true iff the edge {i,j} is temporary */
 bool graphe::is_temporary_edge(int i,int j) const {
-    if (!has_edge(i,j))
-        return false;
+    assert(has_edge(i,j));
     gen val;
     get_edge_attribute(i,j,_GT_ATTRIB_TEMPORARY,val);
     return is_one(val);
@@ -2078,16 +2077,18 @@ bool graphe::is_temporary_edge(int i,int j) const {
 
 /* remove all temporary edges */
 void graphe::remove_temporary_edges() {
-    assert(node_stack.empty());
+    stack<ipair> edges;
+    int i;
     for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
         for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
-            if (is_temporary_edge(it-nodes.begin(),*jt))
-                node_stack.push(*jt);
+            i=it-nodes.begin();
+            if (is_temporary_edge(i,*jt))
+                edges.push(make_pair(i,*jt));
         }
-        while (!node_stack.empty()) {
-            it->remove_neighbor(node_stack.top());
-            node_stack.pop();
-        }
+    }
+    while (!edges.empty()) {
+        remove_edge(edges.top());
+        edges.pop();
     }
 }
 
@@ -4538,7 +4539,7 @@ void graphe::make_lcf_graph(const int *j,int e) {
 }
 
 /* create Sierpinski (triangle) graph */
-void graphe::make_sierpinski_graph(int n, int k, bool triangle) {
+void graphe::make_sierpinski_graph(int n,int k,bool triangle) {
     ivectors tuples;
     ivector elem(n,0);
     ntupk(tuples,n,k,elem,0);
@@ -4573,6 +4574,9 @@ void graphe::make_sierpinski_graph(int n, int k, bool triangle) {
         for (unsigned i=isolated_nodes.size();i-->0;) {
             remove_isolated_node(isolated_nodes[i]);
         }
+        vecteur labels;
+        make_default_labels(labels,node_count());
+        relabel_nodes(labels);
     }
 }
 

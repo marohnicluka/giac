@@ -856,7 +856,7 @@ gen _adjacency_matrix(const gen &g,GIAC_CONTEXT) {
         return vecteur(0);
     matrice m;
     G.adjacency_matrix(m);
-    return m;
+    return gen(m,_MATRIX__VECT);
 }
 static const char _adjacency_matrix_s[]="adjacency_matrix";
 static define_unary_function_eval(__adjacency_matrix,&_adjacency_matrix,_adjacency_matrix_s);
@@ -877,7 +877,7 @@ gen _incidence_matrix(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     if (G.node_count()==0)
         return vecteur(0);
-    return G.incidence_matrix();
+    return gen(G.incidence_matrix(),_MATRIX__VECT);
 }
 static const char _incidence_matrix_s[]="incidence_matrix";
 static define_unary_function_eval(__incidence_matrix,&_incidence_matrix,_incidence_matrix_s);
@@ -894,7 +894,7 @@ gen _weight_matrix(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
     if (G.node_count()==0)
         return vecteur(0);
-    return G.weight_matrix();
+    return gen(G.weight_matrix(),_MATRIX__VECT);
 }
 static const char _weight_matrix_s[]="weight_matrix";
 static define_unary_function_eval(__weight_matrix,&_weight_matrix,_weight_matrix_s);
@@ -1515,9 +1515,10 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     }
     if (isdir || G_orig.is_weighted())
         G_orig.edge_labels_placement(main_layout);
-    if (method!=_GT_STYLE_3D)
+    if (method!=_GT_STYLE_3D) {
         drawing.push_back(symb_equal(change_subtype(gen(_AXES),_INT_PLOT),0));
-    drawing.push_back(symb_equal(change_subtype(gen(_GL_ORTHO),_INT_PLOT),1));
+        drawing.push_back(symb_equal(change_subtype(gen(_GL_ORTHO),_INT_PLOT),1));
+    }
     G_orig.draw_edges(drawing,main_layout);
     G_orig.draw_nodes(drawing,main_layout);
     if (labels)
@@ -3605,20 +3606,31 @@ gen _highlight_trail(const gen &g,GIAC_CONTEXT) {
     vecteur &gv=*g._VECTptr;
     if (gv.size()<2)
         return gensizeerr(contextptr);
-    if (gv[1].type!=_VECT || (gv.size()==3 && !gv.back().is_integer()))
+    if (gv[1].type!=_VECT || (gv.size()==3 && !gv.back().is_integer() && gv.back().type!=_VECT))
         return gentypeerr(contextptr);
+    vecteur V=*gv[1]._VECTptr;
+    if (V.empty())
+        return gv.front();
+    if (V.front().type!=_VECT)
+        V=makevecteur(V);
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH,contextptr);
-    vecteur V=*gv[1]._VECTptr;
-    int C=gv.size()==3?gv.back().val:_RED,i,j;
-    for (const_iterateur it=V.begin();it!=V.end()-1;++it) {
-        const gen &v=*it,&w=*(it+1);
-        if ((i=G.node_index(v))<0 || (j=G.node_index(w))<0)
-            return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
-        if (!G.has_edge(i,j))
-            return gt_err(_GT_ERR_EDGE_NOT_FOUND,contextptr);
-        G.set_edge_attribute(i,j,_GT_ATTRIB_COLOR,C);
+    gen color=gv.size()==3?gv.back():gen(_RED);
+    if (color.type==_VECT && !is_integer_vecteur(*color._VECTptr))
+        return gentypeerr(contextptr);
+    if (color.type==_VECT && color._VECTptr->size()!=V.size())
+        return gendimerr(contextptr);
+    int i,j;
+    for (const_iterateur it=V.begin();it!=V.end();++it) {
+        for (const_iterateur jt=it->_VECTptr->begin();jt!=it->_VECTptr->end()-1;++jt) {
+            const gen &v=*jt,&w=*(jt+1);
+            if ((i=G.node_index(v))<0 || (j=G.node_index(w))<0)
+                return gt_err(_GT_ERR_VERTEX_NOT_FOUND,contextptr);
+            if (!G.has_edge(i,j))
+                return gt_err(_GT_ERR_EDGE_NOT_FOUND,contextptr);
+            G.set_edge_attribute(i,j,_GT_ATTRIB_COLOR,(color.type==_VECT?color._VECTptr->at(it-V.begin()):color).val);
+        }
     }
     return G.to_gen();
 }

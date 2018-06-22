@@ -69,6 +69,7 @@ enum gt_attribute {
     _GT_ATTRIB_WEIGHTED,
     _GT_ATTRIB_POSITION,
     _GT_ATTRIB_NAME,
+    _GT_ATTRIB_TEMPORARY,
     //add more here
     _GT_ATTRIB_USER  // this one must be the last
 };
@@ -132,8 +133,8 @@ public:
         vertex(const vertex &other);
         vertex& operator =(const vertex &other);
         void assign(const vertex &other);
-        inline bool sorted() const { return m_sorted; }
         gen label() const;
+        inline bool is_sorted() const { return m_sorted; }
         inline void set_label(const gen &s) { m_attributes[_GT_ATTRIB_LABEL]=s; }
         inline void set_subgraph(int s) { m_subgraph=s; }
         inline int subgraph() const { return m_subgraph; }
@@ -180,15 +181,15 @@ public:
         inline void set_attributes(const attrib &attr) { copy_attributes(attr,m_attributes); }
         inline const ivector &neighbors() const { return m_neighbors; }
         void add_neighbor(int i,const attrib &attr=attrib());
+        bool is_temporary(int i) const;
         attrib &neighbor_attributes(int i);
         const attrib &neighbor_attributes(int i) const;
         bool has_neighbor(int i,bool include_temp_edges=true) const;
         void move_neighbor(int i,int j,bool after=true);
         void remove_neighbor(int i);
         template<class Compare>
-        inline void sort_neighbors(Compare comp) { sort(m_neighbors.begin(),m_neighbors.end(),comp); m_sorted=true; }
-        inline void sort_neighbors() { sort(m_neighbors.begin(),m_neighbors.end()); m_sorted=true; }
-        inline void clear_neighbors() { m_neighbors.clear(); m_neighbor_attributes.clear(); m_sorted=false; }
+        inline void sort_neighbors(Compare comp) { sort(m_neighbors.begin(),m_neighbors.end(),comp); m_sorted=false; }
+        inline void clear_neighbors() { m_neighbors.clear(); m_neighbor_attributes.clear(); m_sorted=true; }
         void incident_faces(ivector &F) const;
         inline void add_edge_face(int nb,int f) { assert(m_edge_faces.find(nb)==m_edge_faces.end()); m_edge_faces[nb]=f+1; }
         inline void clear_edge_faces() { m_edge_faces.clear(); }
@@ -607,7 +608,7 @@ public:
     void move_neighbor(int v,int w,int ref=-1,bool after=true);
     template<class Compare>
     inline void sort_neighbors(int v,Compare comp) { node(v).sort_neighbors(comp); }
-    gen to_gen() const;
+    gen to_gen();
     bool write_latex(const std::string &filename,const gen &drawing) const;
     bool write_dot(const std::string &filename) const;
     bool read_dot(const std::string &filename);
@@ -660,6 +661,7 @@ public:
     ipair add_edge(const gen &v,const gen &w,const gen &weight=gen(1));
     ipair add_edge(const gen &v,const gen &w,const attrib &attr);
     void add_temporary_edge(int i,int j);
+    bool is_temporary_edge(int i,int j) const;
     void remove_temporary_edges();
     bool remove_edge(int i,int j);
     inline bool remove_edge(const ipair &p) { return remove_edge(p.first,p.second); }

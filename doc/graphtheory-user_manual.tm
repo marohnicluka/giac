@@ -1659,8 +1659,9 @@
 
   <center|<image|images/grid2.eps|40%|||>>
 
-  Connecting the pairs of vertices lying on the opposite corners of the grid
-  yields a new graph.
+  To create an interesting new graph from the generated grid, one may
+  e.g.<nbsp>connect the pairs of vertices lying on the opposite corners of
+  the grid.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -1763,7 +1764,9 @@
   be time consuming for <math|n\<gtr\>6>.
 
   In particular, <math|S T<rsub|3><rsup|n>> is the well-known Sierpi«ski
-  sieve graph of order <math|n>.
+  sieve<\footnote>
+    <hlink|https://en.wikipedia.org/wiki/Sierpinski_triangle|>
+  </footnote> graph of order <math|n>.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -1858,13 +1861,21 @@
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      petersen_graph(8,3)
+      G:=petersen_graph(8,3)
     <|unfolded-io>
       <\equation*>
         <text|an undirected unweighted graph with 16 vertices and 24 edges>
       </equation*>
     </unfolded-io>
+
+    <\input>
+      \<gtr\>\ 
+    <|input>
+      draw_graph(G)
+    </input>
   </session>
+
+  <center|<image|images/moka.eps|40%|||>>
 
   Note that Desargues, Dürer and Nauru graphs are also generalized Petersen
   graphs <math|P<around|(|10,3|)>>, <math|P<around|(|6,2|)>> and
@@ -4576,40 +4587,10 @@
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      departures(G,2)
+      departures(G,2); arrivals(G,2); departures(G,1); arrivals(G,1)
     <|unfolded-io>
       <\equation*>
-        <around|[|3,5|]>
-      </equation*>
-    </unfolded-io>
-
-    <\unfolded-io>
-      \<gtr\>\ 
-    <|unfolded-io>
-      arrivals(G,2)
-    <|unfolded-io>
-      <\equation*>
-        <around|[|1,4|]>
-      </equation*>
-    </unfolded-io>
-
-    <\unfolded-io>
-      \<gtr\>\ 
-    <|unfolded-io>
-      departures(G,1)
-    <|unfolded-io>
-      <\equation*>
-        <around|[|2,6|]>
-      </equation*>
-    </unfolded-io>
-
-    <\unfolded-io>
-      \<gtr\>\ 
-    <|unfolded-io>
-      arrivals(G,1)
-    <|unfolded-io>
-      <\equation*>
-        <around|[|5|]>
+        <around|[|3,5|]>,<around|[|1,4|]>,<around|[|2,6|]>,<around|[|5|]>
       </equation*>
     </unfolded-io>
   </session>
@@ -4831,7 +4812,7 @@
         edges>
       </equation*>
 
-      <timing|3.782 sec>
+      <timing|3.562 sec>
     </unfolded-io>
 
     <\unfolded-io>
@@ -4850,7 +4831,7 @@
     <|unfolded-io>
       lowest_common_ancestor(G,0,L):;
     <|unfolded-io>
-      <timing|9.629 sec>
+      <timing|9.409 sec>
     </unfolded-io>
   </session>
 
@@ -4916,18 +4897,10 @@
       </equation*>
     </unfolded-io>
 
-    <\unfolded-io>
-      \<gtr\>\ 
-    <|unfolded-io>
-      M:=maximum_matching(G):;
-    <|unfolded-io>
-      <timing|235 msec>
-    </unfolded-io>
-
     <\input>
       \<gtr\>\ 
     <|input>
-      draw_graph(highlight_edges(G,M),labels=false)
+      draw_graph(highlight_edges(G,maximum_matching(G)),labels=false)
     </input>
   </session>
 
@@ -5125,8 +5098,6 @@
       <\equation*>
         <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|2|2|cell-rborder|0ln>|<table|<row|<cell|3>|<cell|14>>|<row|<cell|4>|<cell|185>>|<row|<cell|5>|<cell|370>>|<row|<cell|6>|<cell|201>>|<row|<cell|7>|<cell|47>>|<row|<cell|8>|<cell|5>>>>>|)>
       </equation*>
-
-      <timing|237 msec>
     </unfolded-io>
 
     <\unfolded-io>
@@ -5148,8 +5119,6 @@
       <\equation*>
         3124
       </equation*>
-
-      <timing|214 msec>
     </unfolded-io>
 
     <\unfolded-io>
@@ -5172,7 +5141,7 @@
         <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|2|2|cell-rborder|0ln>|<table|<row|<cell|5>|<cell|148657>>|<row|<cell|6>|<cell|17834>>|<row|<cell|7>|<cell|356>>>>>|)>
       </equation*>
 
-      <timing|1.254 sec>
+      <timing|1.034 sec>
     </unfolded-io>
   </session>
 
@@ -5457,9 +5426,9 @@
   solved by using the branch-and-bound method with specific branch/backtrack
   techniques <cite|diaz>. Lower and upper bounds for the number of colors
   <math|n> are obtained by finding a maximal clique (<math|n> cannot be lower
-  than its cardinality) and by using a coloring heuristic proposed by
-  <name|Brélaz> in<nbsp><cite|brelaz> (which will use at least <math|n>
-  colors), respectively.
+  than its cardinality) and by using the heuristic proposed by <name|Brélaz>
+  in<nbsp><cite|brelaz> (which will use at least <math|n> colors),
+  respectively.
 
   The algorithm is fast for graphs up to 50 vertices and for sparse graphs in
   general. For larger, denser graphs (e.g.<nbsp>with edge density around 0.5,
@@ -5523,7 +5492,7 @@
   </session>
 
   The chromatic number is computed by solving <abbr|MVCP> via
-  <verbatim|minimal_vertex_coloring> in about 9 seconds.
+  <verbatim|minimal_vertex_coloring> in about five seconds.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -5535,8 +5504,14 @@
         9
       </equation*>
 
-      <timing|9.022 sec>
+      <timing|4.537 sec>
     </unfolded-io>
+
+    <\input>
+      \<gtr\>\ 
+    <|input>
+      \;
+    </input>
   </session>
 
   Next, all maximal cliques in <math|G<rsup|c>> are counted using the
@@ -5582,14 +5557,213 @@
     </unfolded-io>
   </session>
 
-  The magnitude of the above result indicates that the algorithm would run
-  practically forever. The nine seconds which took the
-  <verbatim|chromatic_number> command to obtain the coloring is quite a good
-  result when compared to the complexity of the brute-force approach.
+  The magnitude of the above result (<math|\<approx\>4.7\<times\>10<rsup|22>>)
+  indicates that the algorithm would run practically forever. The five
+  seconds which took the <verbatim|chromatic_number> command to obtain the
+  coloring is quite a good result when compared to the complexity of the
+  brute-force approach.
 
   <subsection|Chromatic number>
 
+  The command <verbatim|chromatic_number> is used for exact computation and
+  approximation of the chromatic number of a graph.
+
+  <verbatim|chromatic_number> accepts one mandatory argument, the input graph
+  <math|G<around*|(|V,E|)>>, and optionally a second argument. To obtain only
+  upper and lower bound for the chromatic number (which is much faster than
+  computing exactly) the option <verbatim|approx> or <verbatim|interval>
+  should be passed as the second argument. Alternatively, an unassigned
+  identifier is passed as the second argument; in that case the corresponding
+  coloring will be stored to it in form of a list of colors of the individual
+  vertices, ordered as in <verbatim|vertices(G)>.
+
+  The command returns the chromatic number <math|\<chi\><rsub|G>> of the
+  graph <math|G> in the case of exact computation. If the option
+  <verbatim|approx> or <verbatim|interval> is given, an interval
+  <verbatim|lb..ub> is returned, where <verbatim|lb> is the best lower bound
+  and <verbatim|ub> the best upper bound for <math|\<chi\><rsub|G>> found by
+  the algorithm.
+
+  The strategy is call <verbatim|minimal_vertex_coloring> in the case of
+  exact computation. When approximating the chromatic number, the algorithm
+  will establish the lower bound by searching for maximum clique. The timeout
+  for this operation is set to 5 seconds as it can be time consuming. If the
+  maximum clique is not found after that time, the largest clique found is
+  used. Then, an upper bound is established by by using the heuristic
+  proposed by <name|Brélaz> in<nbsp><cite|brelaz>. Obtaining the bounds for
+  <math|\<chi\><rsub|G>> is usually very fast, but the difference between the
+  bounds grows with <math|<around*|\||V|\|>>.
+
+  Unless the input graph is sparse enough, the algorithm slows down
+  considerably for <math|<around*|\||V|\|>\<gtr\>50>.
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      chromatic_number(graph("grotzsch"),cols)
+    <|unfolded-io>
+      <\equation*>
+        4
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      cols
+    <|unfolded-io>
+      <\equation*>
+        <around|[|4,2,3,1,1,4,1,3,2,1,2|]>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      G:=random_graph(30,0.75)
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 30 vertices and 313 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      chromatic_number(G)
+    <|unfolded-io>
+      <\equation*>
+        10
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      G:=random_graph(300,0.05)
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 300 vertices and 2196
+        edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      chromatic_number(G,approx)
+    <|unfolded-io>
+      <\equation*>
+        4..7
+      </equation*>
+    </unfolded-io>
+  </session>
+
   <subsection|<math|k>-coloring>
+
+  The command <verbatim|is_vertex_colorable> is used for determining whether
+  the vertices of a graph can be colored with at most <math|k> colors.
+
+  <verbatim|is_vertex_colorable> accepts two or three arguments: the input
+  graph <math|G<around*|(|V,E|)>>, a positive integer <math|k> and optionally
+  an unassigned identifier. The command returns <verbatim|true> if <math|G>
+  can be colored using at most <math|k> colors and <verbatim|false>
+  otherwise. If an identifier is given, a coloring using at most <math|k>
+  colors is stored to it as a list of vertex colors, in the order of
+  <verbatim|vertices(G)>.
+
+  The strategy is to first apply a simple greedy coloring procedure which
+  runs in linear time. If the number of required colors is greater than
+  <math|k>, the heuristic proposed by <name|Brélaz> in<nbsp><cite|brelaz> is
+  used, which runs in quadratic time. If the number of required colors is
+  still larger than <math|k>, the algorithm attempts to find the chromatic
+  number <math|\<chi\><rsub|G>> using <math|k> as the upper bound in the
+  process.
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      G:=graph("grotzsch")
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 11 vertices and 20 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      is_vertex_colorable(G,3)
+    <|unfolded-io>
+      <\equation*>
+        <text|false>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      is_vertex_colorable(G,4)
+    <|unfolded-io>
+      <\equation*>
+        <text|true>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      G:=random_graph(70,0.2)
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 70 vertices and 469 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      chromatic_number(G,approx)
+    <|unfolded-io>
+      <\equation*>
+        5..6
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      is_vertex_colorable(G,5)
+    <|unfolded-io>
+      <\equation*>
+        <text|false>
+      </equation*>
+
+      <timing|818 msec>
+    </unfolded-io>
+  </session>
+
+  From the results of the last two command lines it follows that
+  <math|\<chi\><rsub|G>=6>. Finding <math|\<chi\><rsub|G>> by utilizing the
+  next command line is simpler, but requires much more time.
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      chromatic_number(G)
+    <|unfolded-io>
+      <\equation*>
+        6
+      </equation*>
+
+      <timing|92.7 sec>
+    </unfolded-io>
+  </session>
+
+  \;
 
   <section|Edge coloring>
 
@@ -5838,9 +6012,9 @@
   using <with|font-family|tt|plot3d> option when drawing a weighted graph.
 
   When no style option is specified, the algorithm first checks if the graph
-  <math|G> is bipartite or a tree, in which case it is drawn accordingly.
-  Else the graph is drawn as if the option <with|font-family|tt|circle> was
-  specified.
+  <math|G> is a tree or if it is bipartite, in which cases it is drawn
+  accordingly. Otherwise, the graph is drawn as if the option
+  <with|font-family|tt|circle> was specified.
 
   Tree, circle and bipartite drawings can be obtained in linear time with a
   very small overhead, allowing graphs to be drawn quickly no matter the
@@ -6112,24 +6286,14 @@
   horizontal space to draw the tree with respect to the specified root node
   <math|r>.
 
-  For example, the following command lines produce the drawing of a random
+  For example, the following command line produces the drawing of a random
   tree on 100 nodes.
 
   <\session|giac|default>
-    <\unfolded-io>
-      \<gtr\>\ 
-    <|unfolded-io>
-      T:=random_tree(100)
-    <|unfolded-io>
-      <\equation*>
-        <text|an undirected unweighted graph with 100 vertices and 99 edges>
-      </equation*>
-    </unfolded-io>
-
     <\input>
       \<gtr\>\ 
     <|input>
-      draw_graph(T)
+      draw_graph(random_tree(100))
     </input>
   </session>
 
@@ -6809,7 +6973,7 @@
     <associate|auto-123|<tuple|5.7|54>>
     <associate|auto-124|<tuple|5.7.1|54>>
     <associate|auto-125|<tuple|5.7.2|54>>
-    <associate|auto-126|<tuple|5.7.3|54>>
+    <associate|auto-126|<tuple|5.7.3|55>>
     <associate|auto-127|<tuple|5.7.4|55>>
     <associate|auto-128|<tuple|5.7.5|56>>
     <associate|auto-129|<tuple|5.8|57>>
@@ -6970,6 +7134,7 @@
     <associate|footnote-2.1|<tuple|2.1|21>>
     <associate|footnote-2.2|<tuple|2.2|30>>
     <associate|footnote-2.3|<tuple|2.3|34>>
+    <associate|footnote-2.4|<tuple|2.4|?>>
     <associate|footnote-4.1|<tuple|4.1|43>>
     <associate|footnote-4.2|<tuple|4.2|43>>
     <associate|footnote-4.3|<tuple|4.3|43>>
@@ -6979,6 +7144,7 @@
     <associate|footnr-2.1|<tuple|2.1|21>>
     <associate|footnr-2.2|<tuple|2.2|30>>
     <associate|footnr-2.3|<tuple|2.3|34>>
+    <associate|footnr-2.4|<tuple|2.4|?>>
     <associate|footnr-4.1|<tuple|4.1|43>>
     <associate|footnr-4.2|<tuple|4.2|43>>
     <associate|footnr-4.3|<tuple|4.3|43>>
@@ -7011,6 +7177,10 @@
       ostergard
 
       diaz
+
+      brelaz
+
+      brelaz
 
       brelaz
 

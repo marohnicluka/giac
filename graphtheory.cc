@@ -4280,7 +4280,7 @@ static const char _clique_cover_number_s[]="clique_cover_number";
 static define_unary_function_eval(__clique_cover_number,&_clique_cover_number,_clique_cover_number_s);
 define_unary_function_ptr5(at_clique_cover_number,alias_at_clique_cover_number,&__clique_cover_number,0,true)
 
-/* USAGE:   chromatic_number(G,[interval or approx],[cols])
+/* USAGE:   chromatic_number(G,[interval or approx || cols])
  *
  * Returns the chromatic number of graph G. If "interval" or "approx" parameter
  * is given, the bounds are returned as an interval. If identifier cols is
@@ -4294,19 +4294,14 @@ gen _chromatic_number(const gen &g,GIAC_CONTEXT) {
     bool only_provide_bounds=false;
     if (g.subtype==_SEQ__VECT) {
         vecteur &gv=*g._VECTptr;
-        if (gv.size()<2 || gv.size()>3)
+        if (gv.size()!=2 || gv.size()>3)
             return gensizeerr(contextptr);
-        gen &opt=g._VECTptr->at(1);
+        gen &opt=g._VECTptr->back();
         if (opt==at_interval || opt==at_approx)
             only_provide_bounds=true;
-        else if (gv.size()==2 && opt.type==_IDNT)
+        else if (opt.type==_IDNT)
             colors_dest=opt;
         else return gentypeerr(contextptr);
-        if (gv.size()==3) {
-            if (gv.back().type!=_IDNT)
-                return gentypeerr(contextptr);
-            colors_dest=gv.back();
-        }
     }
     graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))

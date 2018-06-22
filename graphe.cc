@@ -3862,6 +3862,19 @@ graphe::ipair graphe::adjacent_color_count(int i) const {
     return make_pair(colors.size(),unc);
 }
 
+/* insert colors adjacent to the i-th vertex to the given set */
+bool graphe::adjacent_colors(int i,std::set<int> &colors) const {
+    const vertex &v=node(i);
+    if (v.color()>0)
+        return false;
+    int c;
+    for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
+        if ((c=node(*it).color())>0)
+            colors.insert(c);
+    }
+    return true;
+}
+
 /*
  * painter class implementation
  */
@@ -3872,13 +3885,14 @@ void graphe::painter::compute_bounds(int max_colors) {
     G->uncolor_all_nodes();
     ostergard ost(G,timeout);
     lb=ost.maxclique(clique); // lower bound for number of colors
-    if (max_colors==0) {
+    ub=max_colors;
+    if (ub==0) {
         for (ivector_iter it=clique.begin();it!=clique.end();++it) {
-           G->set_node_color(*it,it-clique.begin()+1);
+            G->set_node_color(*it,it-clique.begin()+1);
         }
         G->dsatur();
+        ub=G->color_count();
     }
-    ub=max_colors==0?G->color_count():max_colors; // upper bound for number of colors
 }
 
 void graphe::painter::make_values() {
@@ -3913,7 +3927,7 @@ void graphe::painter::formulate_mip() {
     for (ivector_iter it=clique.begin();it!=clique.end();++it) {
         iscliq[*it]=true;
     }
-    // create row variables and count nonzero entries in the constraint matrix
+    /* create row variables and count nonzero entries in the constraint matrix */
     int nonzeros=0,cnt=0,rs,cn,val;
     int nrows=n*(ub+2)-3*lb;
     glp_add_rows(mip,nrows);
@@ -3956,7 +3970,7 @@ void graphe::painter::formulate_mip() {
         }
     }
     assert(cnt==nrows);
-    // create column variables
+    /* create column variables */
     int ncols=nxcols+ub-lb;
     glp_add_cols(mip,ncols);
     for (i=0;i<ncols;++i) {
@@ -3964,7 +3978,7 @@ void graphe::painter::formulate_mip() {
         if (i>=nxcols)
             glp_set_obj_coef(mip,i+1,1.0);
     }
-    // create the constraint matrix
+    /* create the constraint matrix */
     int *ia=new int[nonzeros+1];
     int *ja=new int[nonzeros+1];
     double *ar=new double[nonzeros+1];
@@ -4029,10 +4043,13 @@ void graphe::painter::formulate_mip() {
         }
     }
     assert(cnt<=nonzeros && row==nrows);
-    // assign the constraint matrix to the MIP
+    /* assign the constraint matrix to the MIP */
     glp_load_matrix(mip,cnt,ia,ja,ar);
     delete[] ia; delete[] ja;
     delete[] ar;
+    for (i=0;i<nrows;++i) {
+        glp_set_row_stat(mip,i+1,GLP_BS);
+    }
 }
 
 void graphe::painter::mip_callback(glp_tree *tree,void *info) {
@@ -4040,16 +4057,68 @@ void graphe::painter::mip_callback(glp_tree *tree,void *info) {
     int j;
     switch (glp_ios_reason(tree)) {
     case GLP_IBRANCH:
-        // select the branching variable
+        /* select the branching variable */
         if ((j=pt->select_branching_variable(tree))>0)
             glp_ios_branch_upon(tree,j,GLP_DN_BRNCH);
         break;
     case GLP_IHEUR:
-        // TODO
+        /* obtain a heuristic solution */
+        pt->heur_solution(tree);
         break;
     default:
         /* ignore call for other reasons */
         break;
+    }
+}
+
+/* fast construction of a heuristic solution using greedy coloring */
+void graphe::painter::heur_solution(glp_tree *tree) {
+    glp_prob *sp=glp_ios_get_prob(tree); // current subproblem LP
+    int iter_count=0;
+    while (++iter_count<=maxiter) {
+        G->uncolor_all_nodes();
+        for (ivector_iter it=clique.begin();it!=clique.end();++it) {
+            G->set_node_color(*it,int(it-clique.begin())+1);
+        }
+        for (int j=nxcols;j-->0;) {
+            ipair &ij=col2ij[j];
+            if (!glp_ios_can_branch(tree,j+1) && glp_get_col_prim(sp,j+1)==1)
+                G->set_node_color(ij.first,lb+ij.second+1);
+        }
+        int n=G->node_count(),i,j,ofs=array_start(G->giac_context());
+        ordering=vecteur_2_vector_int(*_randperm(n,G->giac_context())._VECTptr);
+        for (ivector_iter ot=ordering.begin();ot!=ordering.end();++ot) {
+            i=*ot-ofs;
+            used_colors.clear();
+            if (!G->adjacent_colors(i,used_colors))
+                continue;
+            j=0;
+            set<int>::const_iterator it=used_colors.begin();
+            for (;it!=used_colors.end();++it) {
+                if (*it!=++j) {
+                    G->set_node_color(i,j);
+                    break;
+                }
+            }
+            if (it==used_colors.end())
+                G->set_node_color(i,j+1);
+        }
+        G->get_node_colors(temp_colors);
+        int nc=G->color_count();
+        if (nc>ub)
+            return;
+        nc-=lb;
+        for (int col=1;col<=nxcols;++col) {
+            const ipair &p=col2ij[col-1];
+            i=p.first;
+            j=p.second;
+            *(heur+col)=temp_colors[i]==j+1?1.0:0.0;
+        }
+        for (i=0;i<ub-lb;++i) {
+            *(heur+nxcols+1+i)=i<nc?1.0:0.0;
+        }
+        if (glp_ios_heur_sol(tree,heur)==0)
+            break;
     }
 }
 
@@ -4099,32 +4168,37 @@ int graphe::painter::color_vertices(ivector &colors,int max_colors) {
     compute_bounds(max_colors);
     if (ub<lb)
         return 0;
+    int n=G->node_count();
     make_values();
     formulate_mip();
+    glp_smcp lparm;
+    glp_init_smcp(&lparm);
+    lparm.msg_lev=GLP_MSG_OFF;
+    glp_simplex(mip,&lparm);
     glp_iocp parm;
     glp_init_iocp(&parm);
-    parm.msg_lev=GLP_MSG_ERR;
-    //parm.br_tech=GLP_BR_FFV;
-    /* it seems that BFS backtrack works best with the custom branching rule,
-     * the rule from the original paper could not be implemented as it includes
-     * branching to more than 2 subproblems. */
-    parm.bt_tech=GLP_BT_BFS;
-    //parm.gmi_cuts=GLP_ON;
+    parm.msg_lev=GLP_MSG_OFF;
+    parm.gmi_cuts=GLP_OFF;
     parm.mir_cuts=GLP_ON;
     parm.clq_cuts=GLP_ON;
     parm.cov_cuts=GLP_ON;
-    parm.presolve=GLP_ON;
+    parm.presolve=GLP_OFF;
+    parm.bt_tech=n<=60?GLP_BT_BPH:GLP_BT_BFS;
     parm.cb_size=sizeof(int);
     parm.cb_func=&mip_callback;
     parm.cb_info=(void*)this;
-    branch_candidates.resize(G->node_count());
-    int ncolors,res=glp_intopt(mip,&parm);
+    branch_candidates.resize(n);
+    maxiter=n<50?10:(n<60?5:0);
+    heur=new double[nxcols+ub-lb+1];
+    int ncolors=0,res=glp_intopt(mip,&parm);
     if (res==0) {
-        switch (glp_get_status(mip)) {
-        case GLP_FEAS:
+        switch (glp_get_status(mip)) { // solution status:
+        case GLP_UNDEF:
+            G->message("Error: MIP solution undefined");
+            break;
+        case GLP_FEAS: // feasible but not necessarily optimal
             G->message("Warning: optimality of the coloring not guaranteed");
-        case GLP_UNDEF: // why does GLPK label optimal solution as undefined?
-        case GLP_OPT:
+        case GLP_OPT: // optimal
             ncolors=lb+glp_mip_obj_val(mip);
             // color the vertices
             for (int k=0;k<nxcols;++k) {
@@ -4134,12 +4208,13 @@ int graphe::painter::color_vertices(ivector &colors,int max_colors) {
             }
             G->get_node_colors(colors);
             break;
-        case GLP_NOFEAS:
-            ncolors=0;
+        case GLP_NOFEAS: // not feasible
+            G->message("Error: no feasible solution for MIP");
             break;
         }
-    } else G->message("Error: MIP solver failure");
+    } // else G->message("Error: MIP solver failure");
     glp_delete_prob(mip);
+    delete[] heur;
     return ncolors;
 }
 #endif
@@ -4157,6 +4232,10 @@ int graphe::exact_vertex_coloring(int max_colors) {
     painter pt(this);
     ivector colors;
     ncolors=pt.color_vertices(colors,max_colors);
+    if (ncolors>0 && find(colors.begin(),colors.end(),0)!=colors.end()) {
+        uncolor_all_nodes();
+        ncolors=0;
+    }
 #endif
     return ncolors;
 }
@@ -5733,11 +5812,13 @@ void graphe::make_random_tree(const vecteur &V,int maxd,bool addnodes) {
         add_nodes(V);
     }
     vecteur src,labels=*_randperm(V,ctx)._VECTptr;
-    src.push_back(labels.pop_back());
+    src.push_back(labels.back());
+    labels.pop_back();
     gen v,w;
     while (!labels.empty()) {
         v=_rand(src,ctx);
-        w=labels.pop_back();
+        w=labels.back();
+        labels.pop_back();
         add_edge(v,w);
         src.push_back(w);
         if (degree(node_index(v))==maxd) {
@@ -7592,7 +7673,7 @@ void graphe::dsatur() {
         return;
     ivector::iterator pos;
     do {
-        maxsat=0;
+        maxsat=-1;
         i=-1;
         for (ivector::iterator it=indices.begin();it!=indices.end();++it) {
             const vertex &v=node(*it);

@@ -271,11 +271,16 @@ public:
         ivector clique;
         ipairs col2ij;
         ivector branch_candidates;
+        ivector temp_colors;
+        ivector ordering;
+        std::set<int> used_colors;
         int lb;
         int ub;
+        int maxiter;
         int nxcols;
         glp_prob *mip;
         double timeout;
+        double *heur;
         void compute_bounds(int max_colors);
         void make_values();
         void formulate_mip();
@@ -284,6 +289,7 @@ public:
         painter(graphe *gr,double tm=5.0) { G=gr; timeout=tm; }
         int color_vertices(ivector &colors,int max_colors=0);
         int select_branching_variable(glp_tree *tree);
+        void heur_solution(glp_tree *tree);
     };
 #endif
 
@@ -801,6 +807,7 @@ public:
     void dsatur();
     int color_count() const;
     ipair adjacent_color_count(int i) const;
+    bool adjacent_colors(int i,std::set<int> &colors) const;
     ipair chromatic_number_bounds();
     void store_layout(const layout &x);
     bool has_stored_layout(layout &x) const;

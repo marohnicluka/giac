@@ -7459,14 +7459,30 @@ void graphe::compute_st_numbering(int s,int t) {
     }
 }
 
-/* return st numbering in form of vecteur */
+/* return st-numbering in form of vecteur */
 vecteur graphe::get_st_numbering() const {
     // assuming that st numbering has been computed
     vecteur st(node_count());
+    int ofs=1-array_start(ctx);
     for (iterateur it=st.begin();it!=st.end();++it) {
-        *it=node(it-st.begin()).number();
+        *it=node(it-st.begin()).number()-ofs;
     }
     return st;
+}
+
+/* assign directions to edges according to the st-numbering */
+void graphe::assign_edge_directions_from_st() {
+    set_directed(true);
+    int j;
+    for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
+        vertex &v=*it;
+        for (int i=v.neighbors().size();i-->0;) {
+            j=v.neighbors().at(i);
+            const vertex &w=node(j);
+            if (v.number()>w.number())
+                v.remove_neighbor(j);
+        }
+    }
 }
 
 /* greedy vertex coloring algorithm due to Biggs, also records vertex inclusion time */

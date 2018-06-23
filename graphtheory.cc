@@ -1046,7 +1046,7 @@ gen _maximum_matching(const gen &g,GIAC_CONTEXT) {
     for (graphe::ipairs_iter it=matching.begin();it!=matching.end();++it) {
         res.push_back(makevecteur(G.node_label(it->first),G.node_label(it->second)));
     }
-    return gen(res,_LIST__VECT);
+    return gen(res.size()<100?_sort(res,contextptr):res,_LIST__VECT);
 }
 static const char _maximum_matching_s[]="maximum_matching";
 static define_unary_function_eval(__maximum_matching,&_maximum_matching,_maximum_matching_s);
@@ -1076,7 +1076,7 @@ gen _bipartite_matching(const gen &g,GIAC_CONTEXT) {
     for (graphe::ipairs_iter it=matching.begin();it!=matching.end();++it) {
         res.push_back(makevecteur(G.node_label(it->first),G.node_label(it->second)));
     }
-    return change_subtype(makevecteur(count,change_subtype(res,_SET__VECT)),_SEQ__VECT);
+    return change_subtype(makevecteur(count,gen(res.size()<100?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT)),_SEQ__VECT);
 }
 static const char _bipartite_matching_s[]="bipartite_matching";
 static define_unary_function_eval(__bipartite_matching,&_bipartite_matching,_bipartite_matching_s);
@@ -1932,9 +1932,9 @@ gen _biconnected_components(const gen &g,GIAC_CONTEXT) {
     vecteur res;
     for (vector<vector<graphe::ipair> >::const_iterator it=blocks.begin();it!=blocks.end();++it) {
         G.subgraph(*it,H,false);
-        res.push_back(H.vertices());
+        res.push_back(_sort(H.vertices(),contextptr));
     }
-    return gen(res,_LIST__VECT);
+    return gen(res.size()<100?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
 }
 static const char _biconnected_components_s[]="biconnected_components";
 static define_unary_function_eval(__biconnected_components,&_biconnected_components,_biconnected_components_s);
@@ -2142,9 +2142,9 @@ gen _connected_components(const gen &g,GIAC_CONTEXT) {
     G.connected_components(components);
     vecteur res;
     for (graphe::ivectors_iter it=components.begin();it!=components.end();++it) {
-        res.push_back(G.get_node_labels(*it));
+        res.push_back(_sort(G.get_node_labels(*it),contextptr));
     }
-    return gen(res,_LIST__VECT);
+    return gen(res.size()<100?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
 }
 static const char _connected_components_s[]="connected_components";
 static define_unary_function_eval(__connected_components,&_connected_components,_connected_components_s);
@@ -3408,7 +3408,7 @@ gen _is_eulerian(const gen &g,GIAC_CONTEXT) {
     graphe::ivector path;
     bool iscycle; // dummy
     if ((has_path_idnt && !G.find_eulerian_path(path)) ||
-            (!has_path_idnt && !G.eulerian_path_start(iscycle)))
+            (!has_path_idnt && G.eulerian_path_start(iscycle)<0))
         return graphe::boole(false);
     if (has_path_idnt) {
         if (g._VECTptr->size()!=2)
@@ -4206,7 +4206,8 @@ gen _maximum_clique(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     graphe::ivector clique;
     G.maximum_clique(clique);
-    return G.get_node_labels(clique);
+    vecteur res=G.get_node_labels(clique);
+    return res.size()<100?_sort(res,contextptr):res;
 }
 static const char _maximum_clique_s[]="maximum_clique";
 static define_unary_function_eval(__maximum_clique,&_maximum_clique,_maximum_clique_s);
@@ -4253,8 +4254,8 @@ gen _clique_cover(const gen &g,GIAC_CONTEXT) {
     if (!G.clique_cover(cover,k))
         return vecteur(0);
     vecteur res;
-    G.ivectors2vecteur(cover,res);
-    return gen(res,_LIST__VECT);
+    G.ivectors2vecteur(cover,res,true);
+    return gen(res.size()<100?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
 }
 static const char _clique_cover_s[]="clique_cover";
 static define_unary_function_eval(__clique_cover,&_clique_cover,_clique_cover_s);
@@ -4337,7 +4338,8 @@ gen _maximum_independent_set(const gen &g,GIAC_CONTEXT) {
     G.complement(C);
     graphe::ivector clique;
     C.maximum_clique(clique);
-    return C.get_node_labels(clique);
+    vecteur res=C.get_node_labels(clique);
+    return res.size()<100?_sort(res,contextptr):res;
 }
 static const char _maximum_independent_set_s[]="maximum_independent_set";
 static define_unary_function_eval(__maximum_independent_set,&_maximum_independent_set,_maximum_independent_set_s);
@@ -4376,7 +4378,7 @@ gen _strongly_connected_components(const gen &g,GIAC_CONTEXT) {
     G.strongly_connected_components(components);
     vecteur res;
     G.ivectors2vecteur(components,res,true);
-    return gen(res,_LIST__VECT);
+    return gen(res.size()<100?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
 }
 static const char _strongly_connected_components_s[]="strongly_connected_components";
 static define_unary_function_eval(__strongly_connected_components,&_strongly_connected_components,_strongly_connected_components_s);
@@ -4853,16 +4855,18 @@ static const char _lowest_common_ancestor_s[]="lowest_common_ancestor";
 static define_unary_function_eval(__lowest_common_ancestor,&_lowest_common_ancestor,_lowest_common_ancestor_s);
 define_unary_function_ptr5(at_lowest_common_ancestor,alias_at_lowest_common_ancestor,&__lowest_common_ancestor,0,true)
 
-/* USAGE:   st_ordering(G,s,t)
+/* USAGE:   st_ordering(G,s,t,[D])
  *
- * Returns ST numbering for the biconnected graph G with source s and sink (target) t.
+ * Returns ST numbering for the biconnected graph G with source s and sink
+ * (target) t. If an identifier D is given, the acyclic directed graph defined
+ * by the ordering will ber constructed and stored to it.
  */
 gen _st_ordering(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
     vecteur &gv=*g._VECTptr;
-    if (gv.size()!=3)
+    if (gv.size()!=3 && gv.size()!=4)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
@@ -4875,7 +4879,14 @@ gen _st_ordering(const gen &g,GIAC_CONTEXT) {
     if (!G.has_edge(s,t))
         return gt_err(makevecteur(gv[1],gv[2]),_GT_ERR_EDGE_NOT_FOUND);
     G.compute_st_numbering(s,t);
-    return G.get_st_numbering();
+    vecteur st=G.get_st_numbering();
+    if (gv.size()>3) {
+        if (gv.back().type!=_IDNT)
+            return gentypeerr("Expected an identifier");
+        G.assign_edge_directions_from_st();
+        identifier_assign(*gv.back()._IDNTptr,G.to_gen(),contextptr);
+    }
+    return st;
 }
 static const char _st_ordering_s[]="st_ordering";
 static define_unary_function_eval(__st_ordering,&_st_ordering,_st_ordering_s);

@@ -800,6 +800,7 @@ public:
     int lowest_common_ancestor(int i,int j,int root);
     void compute_st_numbering(int s,int t);
     vecteur get_st_numbering() const;
+    void assign_edge_directions_from_st();
     void greedy_vertex_coloring_biggs(ivector &ordering);
     int greedy_vertex_coloring(const ivector &p);
     int exact_vertex_coloring(int max_colors=0);

@@ -6891,11 +6891,12 @@
     <item><with|font-family|tt|bipartite>: draw the bipartite graph <math|G>
     keeping the vertex partitions separated
 
-    <item><with|font-family|tt|circle[=L]>: draw the graph <math|G> by
-    setting the <with|font-shape|italic|hull vertices> from list
-    <math|L\<subset\>V> (assuming <math|L=V> by default) on the unit circle
-    and all other vertices in origin, subsequently applying a force-directed
-    vertex placement algorithm to generate the layout while keeping the hull
+    <item><with|font-family|tt|circle[=L]> or
+    <with|font-family|tt|convexhull[=L]>: draw the graph <math|G> by setting
+    the <with|font-shape|italic|hull vertices> from list <math|L\<subset\>V>
+    (assuming <math|L=V> by default) on the unit circle and all other
+    vertices in origin, subsequently applying a force-directed vertex
+    placement algorithm to generate the layout while keeping the hull
     vertices fixed
 
     <item><with|font-family|tt|planar> or <with|font-family|tt|plane>: draw
@@ -7346,20 +7347,21 @@
 
   <subsection|Circular graph drawings>
 
-  The drawing method selected by specifying the option <verbatim|circle=L>
-  when calling <verbatim|draw_graph> on a triconnected graph
-  <math|G<around*|(|V,E|)>>, where <math|L\<subset\>V> is a set of vertices
-  in <math|G>, uses the following strategy. First, positions of the vertices
-  from <math|L> are fixed so that they form a regular polygon on the unit
-  circle. Other vertices, i.e.<nbsp>all vertices from <math|V\<setminus\>L>,
-  are placed in origin. Then an iterative force-directed
-  algorithm<nbsp><cite|plestenjak>, similar to <name|Tutte>'s barycentric
-  method, is applied to obtain the final layout.
+  The drawing method selected by specifying the option <verbatim|circle=L> or
+  <verbatim|convexhull=L> when calling <verbatim|draw_graph> on a
+  triconnected graph <math|G<around*|(|V,E|)>>, where <math|L\<subset\>V> is
+  a set of vertices in <math|G>, uses the following strategy. First,
+  positions of the vertices from <math|L> are fixed so that they form a
+  regular polygon on the unit circle. Other vertices, i.e.<nbsp>all vertices
+  from <math|V\<setminus\>L>, are placed in origin. Then an iterative
+  force-directed algorithm<nbsp><cite|plestenjak>, similar to <name|Tutte>'s
+  barycentric method, is applied to obtain the final layout.
 
-  This approach produces pleasant drawings of round, symmetrical graphs, such
-  as generalized Petersen graphs. In addition, if the input graph is planar,
-  the drawing will also be planar (there is a possibility, however, that some
-  very short edges may cross each other).
+  This approach gives best results for symmetrical graphs such as generalized
+  Petersen graphs. In addition, if the input graph is planar, the drawing
+  will also be planar (there is a possibility, however, that some very short
+  edges may cross each other as the number of force update iterations is
+  limited).
 
   In the following example the Sierpi«ski graph <math|S<rsub|4><rsup|2>> is
   drawn using the above method. Note that the command lines below are

@@ -736,7 +736,7 @@ gen _graph_vertices(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    return gen(G.vertices(),_LIST__VECT);
+    return G.vertices();
 }
 static const char _graph_vertices_s[]="graph_vertices";
 static define_unary_function_eval(__graph_vertices,&_graph_vertices,_graph_vertices_s);
@@ -1503,7 +1503,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                         makevecteur(it->at(0),it->at(1),it->at(2)) :
                         makecomplex(it->front(),it->back());
         }
-        identifier_assign(*coords_dest._IDNTptr,gen(coords,_LIST__VECT),contextptr);
+        identifier_assign(*coords_dest._IDNTptr,coords,contextptr);
     }
     if (isdir || G_orig.is_weighted())
         G_orig.edge_labels_placement(main_layout);
@@ -2768,7 +2768,6 @@ gen _neighbors(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    vecteur res;
     if (g.subtype==_SEQ__VECT) {
         gen &v=g._VECTptr->back();
         int i=G.node_index(v);
@@ -2776,16 +2775,17 @@ gen _neighbors(const gen &g,GIAC_CONTEXT) {
             return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
         graphe::ivector adj;
         G.adjacent_nodes(i,adj);
-        res=G.get_node_labels(adj);
+        return G.get_node_labels(adj);
     } else {
+        vecteur res;
         int n=G.node_count();
         graphe::ivector adj;
         for (int i=0;i<n;++i) {
             G.adjacent_nodes(i,adj,false);
             res.push_back(_sort(G.get_node_labels(adj),contextptr));
         }
+        return change_subtype(res,_LIST__VECT);
     }
-    return gen(res,_LIST__VECT);
 }
 static const char _neighbors_s[]="neighbors";
 static define_unary_function_eval(__neighbors,&_neighbors,_neighbors_s);
@@ -2965,6 +2965,8 @@ gen _is_tree(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_directed())
+        return graphe::FAUX;
     return graphe::boole(G.is_tree());
 }
 static const char _is_tree_s[]="is_tree";
@@ -2981,6 +2983,8 @@ gen _is_forest(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_directed())
+        return graphe::FAUX;
     return graphe::boole(G.is_forest());
 }
 static const char _is_forest_s[]="is_forest";
@@ -3949,7 +3953,7 @@ gen _vertex_distance(const gen &g,GIAC_CONTEXT) {
     for (graphe::ivector_iter it=dist.begin();it!=dist.end();++it) {
         res[it-dist.begin()]=*it>=0?gen(*it):graphe::plusinf();
     }
-    return single?res.front():gen(res,_LIST__VECT);
+    return single?res.front():res;
 }
 static const char _vertex_distance_s[]="vertex_distance";
 static define_unary_function_eval(__vertex_distance,&_vertex_distance,_vertex_distance_s);
@@ -3996,7 +4000,7 @@ gen _shortest_path(const gen &g,GIAC_CONTEXT) {
         i=it-shortest_paths.begin();
         res[it-shortest_paths.begin()]=dist[i]>=0?G.get_node_labels(*it):vecteur(0);
     }
-    return single?res.front():res;
+    return single?res.front():gen(res,_LIST__VECT);
 }
 static const char _shortest_path_s[]="shortest_path";
 static define_unary_function_eval(__shortest_path,&_shortest_path,_shortest_path_s);
@@ -4941,12 +4945,11 @@ gen _is_bipartite(const gen &g,GIAC_CONTEXT) {
         if ((P=g._VECTptr->back()).type!=_IDNT)
             return gentypeerr(contextptr);
     }
-    graphe G(contextptr),U(contextptr);
+    graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    G.underlying(U);
     graphe::ivector V1,V2;
-    if (!U.is_bipartite(V1,V2))
+    if (!G.is_bipartite(V1,V2))
         return G.boole(false);
     if (!is_undef(P)) {
         identifier_assign(*P._IDNTptr,

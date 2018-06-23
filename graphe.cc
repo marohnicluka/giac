@@ -4317,7 +4317,11 @@ int graphe::maximum_independent_set(ivector &v) const {
 
 /* return true iff the graph is triangle-free */
 bool graphe::is_triangle_free() const {
-    assert(!is_directed());
+    if (is_directed()) {
+        graphe G(ctx);
+        underlying(G);
+        return G.is_triangle_free();
+    }
     sparsemat M,M2;
     adjacency_sparse_matrix(M);
     multiply_sparse_matrices(M,M,M2,node_count(),true);
@@ -4841,7 +4845,6 @@ int graphe::connected_components_count(int sg) {
 }
 
 void graphe::strongconnect_dfs(ivectors &components,int i,int sg) {
-    assert(node_stack.empty());
     vertex &v=node(i);
     v.set_visited(true);
     v.set_disc(disc_time++);
@@ -4862,18 +4865,23 @@ void graphe::strongconnect_dfs(ivectors &components,int i,int sg) {
         // output a strongly connected component
         components.resize(components.size()+1);
         ivector &component=components.back();
+        int w;
         do {
-            component.push_back(node_stack.top());
+            w=node_stack.top();
             node_stack.pop();
-            v.set_on_stack(false);
-        } while (component.back()!=i);
+            component.push_back(w);
+            node(w).set_on_stack(false);
+        } while (w!=i);
     }
-    clear_node_stack();
 }
 
 /* find all strongly connected components in directed graph using Tarjan's algorithm */
 void graphe::strongly_connected_components(ivectors &components,int sg) {
+    assert(node_stack.empty());
     unvisit_all_nodes(sg);
+    for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
+        it->set_on_stack(false);
+    }
     disc_time=0;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         if ((sg<0 || it->subgraph()==sg) && !it->is_visited())
@@ -6874,7 +6882,12 @@ void graphe::bfs(int root,bool rec,bool clr,ivector *D,int sg,bool skip_embedded
 
 /* return true iff the graph is connected */
 bool graphe::is_connected(int sg) {
-    assert(!is_empty() && !is_directed());
+    assert(!is_empty());
+    if (is_directed()) {
+        graphe G(ctx);
+        underlying(G);
+        return G.is_connected(sg);
+    }
     node_iter it=nodes.begin();
     if (sg>=0)
         for (;it->subgraph()!=sg && it!=nodes.end();++it);
@@ -6889,13 +6902,23 @@ bool graphe::is_connected(int sg) {
 
 /* return true iff the graph is biconnected */
 bool graphe::is_biconnected(int sg) {
-    assert(!is_empty() && !is_directed());
+    assert(!is_empty());
+    if (is_directed()) {
+        graphe G(ctx);
+        underlying(G);
+        return G.is_biconnected(sg);
+    }
     return is_connected(sg) && !has_cut_vertex(sg);
 }
 
 /* return true iff the graph is triconnected, using a simple O(n*(n+m)) algorithm */
 bool graphe::is_triconnected(int sg) {
-    assert(!is_empty() && !is_directed());
+    assert(!is_empty());
+    if (is_directed()) {
+        graphe G(ctx);
+        underlying(G);
+        return G.is_triconnected(sg);
+    }
     int color=max_subgraph_index()+1;
     for (int i=node_count();i-->0;) {
         vertex &v=node(i);
@@ -7479,7 +7502,11 @@ void graphe::greedy_vertex_coloring_biggs(ivector &ordering) {
 
 /* classical greedy vertex coloring algorithm, time complexity O(n+m) */
 int graphe::greedy_vertex_coloring(const ivector &p) {
-    assert(!is_directed());
+    if (is_directed()) {
+        graphe G(ctx);
+        underlying(G);
+        return G.greedy_vertex_coloring(p);
+    }
     uncolor_all_nodes();
     int c=0,k;
     set<int> used;
@@ -7518,7 +7545,12 @@ void graphe::get_node_colors(ivector &colors) {
 
 /* return true iff the graph is bipartite, time complexity O(n+m) */
 bool graphe::is_bipartite(ivector &V1,ivector &V2,int sg) {
-    assert(!is_directed() && node_queue.empty());
+    assert(node_queue.empty());
+    if (is_directed()) {
+        graphe G(ctx);
+        underlying(G);
+        return G.is_bipartite(V1,V2,sg);
+    }
     uncolor_all_nodes(-1,sg);
     node(0).set_color(1);
     node_iter nt=nodes.begin();

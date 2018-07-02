@@ -8138,7 +8138,7 @@ void graphe::transitive_closure(graphe &G,bool weighted) {
 }
 
 /* return true iff this graph is isomorphic to other, also obtain an isomorphism */
-int graphe::is_isomorphic(const graphe &other,map<int,int> &isom) {
+int graphe::is_isomorphic(const graphe &other,map<int,int> &isom) const {
 #ifndef HAVE_LIBNAUTY
     message("Error: nauty library is required for finding graph isomorphism");
     return -1;
@@ -8162,6 +8162,58 @@ int graphe::is_isomorphic(const graphe &other,map<int,int> &isom) {
     delete[] adj1;
     delete[] adj2;
     return res;
+#endif
+}
+
+/* convert a sequence of nd digits to nonnegative integer */
+int digits2int(char *digits,int nd) {
+    int n=1,res=0;
+    for (int i=nd;i-->0;) {
+        res+=*(digits+i)*n;
+        n*=10;
+    }
+    return res;
+}
+
+/* return the list of generators of the automorphism group of this graph */
+gen graphe::aut_generators() const {
+#ifndef HAVE_LIBNAUTY
+    message("Error: nauty library is required for finding graph automorphisms");
+    return undef;
+#else
+    int n=node_count(),ofs=array_start(ctx);
+    bool isdir=is_directed();
+    int *adj=to_array();
+    nautywrapper nw(isdir,n,adj);
+    char *res=nw.aut_generators();
+    /* parse the generators and output them as a list of
+     * permutations in form of lists of disjoint cycles */
+    int i=0,nd=0;
+    char c;
+    vecteur out,perm,cycle;
+    char digits[32];
+    while ((c=*(res+i))!='\0') {
+        if (c=='(')
+            cycle.clear();
+        else if (c==')') {
+            cycle.push_back(ofs+digits2int(digits,nd));
+            perm.push_back(cycle);
+            nd=0;
+        } else if (c=='\n') {
+            out.push_back(gen(perm,_LIST__VECT));
+            perm.clear();
+        } else if (c>47 && c<58)
+            digits[nd++]=c-48;
+        else if (c==32) {
+            cycle.push_back(ofs+digits2int(digits,nd));
+            nd=0;
+        }
+        ++i;
+    }
+    out.push_back(gen(perm,_LIST__VECT));
+    delete[] res;
+    delete[] adj;
+    return gen(out,_SEQ__VECT);
 #endif
 }
 

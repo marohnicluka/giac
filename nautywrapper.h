@@ -9,6 +9,7 @@ public:
     nautywrapper(bool isdirected,int n,int *adj1,int *adj2=0);
     ~nautywrapper();
     bool is_isomorphic() const;
+    char *aut_generators() const;
     int *labeling(int which) const;
 };
 

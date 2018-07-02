@@ -5252,6 +5252,22 @@ static const char _is_isomorphic_s[]="is_isomorphic";
 static define_unary_function_eval(__is_isomorphic,&_is_isomorphic,_is_isomorphic_s);
 define_unary_function_ptr5(at_is_isomorphic,alias_at_is_isomorphic,&__is_isomorphic,0,true)
 
+/* USAGE:   graph_automorphisms(G)
+ *
+ * Returns the sequence of generators of Aut(G), the automorphism group of G.
+ * Each element is a permutation in form of list of disjoint cycles.
+ */
+gen _graph_automorphisms(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    return G.aut_generators();
+}
+static const char _graph_automorphisms_s[]="graph_automorphisms";
+static define_unary_function_eval(__graph_automorphisms,&_graph_automorphisms,_graph_automorphisms_s);
+define_unary_function_ptr5(at_graph_automorphisms,alias_at_graph_automorphisms,&__graph_automorphisms,0,true)
+
 #ifndef NO_NAMESPACE_GIAC
 }
 #endif // ndef NO_NAMESPACE_GIAC

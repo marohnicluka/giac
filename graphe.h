@@ -837,7 +837,8 @@ public:
     int bipartite_matching(const ivector &p1,const ivector &p2,ipairs &matching);
     void line_graph(graphe &G) const;
     void transitive_closure(graphe &G,bool weighted=false);
-    int is_isomorphic(const graphe &other,std::map<int,int> &isom);
+    int is_isomorphic(const graphe &other,std::map<int,int> &isom) const;
+    gen aut_generators() const;
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

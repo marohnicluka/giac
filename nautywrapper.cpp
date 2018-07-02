@@ -48,6 +48,7 @@ nautywrapper::nautywrapper(bool isdirected,int n,int *adj1,int *adj2) {
     m=SETWORDSNEEDED(n);
     nauty_check(WORDSIZE,m,n,NAUTYVERSIONID);
     nauty_options.digraph=isdirected?TRUE:FALSE;
+    nauty_options.linelength=RAND_MAX;
     DYNALLOC1(int,nauty_lab1,nauty_lab1_sz,n,"malloc");
     DYNALLOC1(int,nauty_lab2,nauty_lab2_sz,n,"malloc");
     DYNALLOC1(int,nauty_ptn,nauty_ptn_sz,n,"malloc");
@@ -68,6 +69,7 @@ nautywrapper::nautywrapper(bool isdirected,int n,int *adj1,int *adj2) {
         add_edges(&nauty_sg2,n,adj2);
     }
     delete[] degrees;
+    nauty_options.outfile=tmpfile();
 }
 
 nautywrapper::~nautywrapper() {
@@ -81,11 +83,14 @@ nautywrapper::~nautywrapper() {
     DYNFREE(nauty_lab2,nauty_lab2_sz);
     DYNFREE(nauty_ptn,nauty_ptn_sz);
     DYNFREE(nauty_orbits,nauty_orbits_sz);
+    if (nauty_options.outfile!=NULL)
+        fclose(nauty_options.outfile);
 }
 
 bool nautywrapper::is_isomorphic() const {
     statsblk nauty_stats;
     nauty_options.getcanon=TRUE;
+    nauty_options.writeautoms=FALSE;
     sparsenauty(&nauty_sg1,nauty_lab1,nauty_ptn,nauty_orbits,&nauty_options,&nauty_stats,&nauty_cg1);
     sparsenauty(&nauty_sg2,nauty_lab2,nauty_ptn,nauty_orbits,&nauty_options,&nauty_stats,&nauty_cg2);
     return (bool)aresame_sg(&nauty_cg1,&nauty_cg2);
@@ -97,4 +102,26 @@ int *nautywrapper::labeling(int which) const {
     if (which==2)
         return nauty_lab2;
     return 0;
+}
+
+char *nautywrapper::aut_generators() const {
+    statsblk nauty_stats;
+    nauty_options.getcanon=FALSE;
+    nauty_options.writeautoms=TRUE;
+    sparsenauty(&nauty_sg1,nauty_lab1,nauty_ptn,nauty_orbits,&nauty_options,&nauty_stats,NULL);
+    FILE *f=nauty_options.outfile;
+    if (f!=NULL) {
+        long sz=ftell(f);
+        char *res=new char[sz+1];
+        rewind(f);
+        int i=0;
+        char c;
+        do {
+            *(res+i)=c=fgetc(f);
+            ++i;
+        } while (c!=EOF);
+        *(res+i-2)='\0';
+        return res;
+    }
+    return NULL;
 }

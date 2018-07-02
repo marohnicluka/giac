@@ -3447,7 +3447,7 @@ gen _kneser_graph(const gen &g,GIAC_CONTEXT) {
         return gentypeerr("Expected an integer");
     int n=gv.front().val,k=gv.back().val;
     if (n<2 || n>20 || k<1 || k>=n)
-        return gensizeerr("Failed to satisfy 2<n<=20 and 1<k<n");
+        return gensizeerr("Failed to satisfy 2<n<=20 and 1<=k<n");
     graphe G(contextptr);
     if (!G.make_kneser_graph(n,k))
         return gensizeerr(contextptr);
@@ -3848,16 +3848,8 @@ gen _subdivide_edges(const gen &g,GIAC_CONTEXT) {
             return gt_err(_GT_ERR_INVALID_EDGE);
         edges.push_back(make_pair(G.node_index(E.front()),G.node_index(E.back())));
     }
-    int v,w;
     for (graphe::ipairs_iter it=edges.begin();it!=edges.end();++it) {
-        G.remove_edge(*it);
-        v=it->first;
-        for (int k=0;k<r;++k) {
-           w=G.add_node(++l);
-           G.add_edge(v,w);
-           v=w;
-        }
-        G.add_edge(v,it->second);
+        G.subdivide_edge(*it,r,l);
     }
     return G.to_gen();
 }
@@ -5218,6 +5210,44 @@ gen _transitive_closure(const gen &g,GIAC_CONTEXT) {
 static const char _transitive_closure_s[]="transitive_closure";
 static define_unary_function_eval(__transitive_closure,&_transitive_closure,_transitive_closure_s);
 define_unary_function_ptr5(at_transitive_closure,alias_at_transitive_closure,&__transitive_closure,0,true)
+
+/* USAGE:   is_isomorphic(G1,G2,[isom])
+ *
+ * Returns true if the input graphs G1 and G2 are isomorphic, else returns
+ * false. If an unassigned identifier 'isom' is given, the list with pairwise
+ * vertex matching in G1 and G2 is stored to it.
+ */
+gen _is_isomorphic(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    gen isom=undef;
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()<2 || gv.size()>3)
+        return gensizeerr("Wrong number of arguments");
+    graphe G1(contextptr),G2(contextptr);
+    if (!G1.read_gen(gv[0]) || !G2.read_gen(gv[1]))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (gv.size()>2) {
+        if ((isom=gv.back()).type!=_IDNT)
+            return gentypeerr("Expected an unassigned identifier");
+    }
+    map<int,int> m;
+    if (!G1.is_isomorphic(G2,m))
+        return graphe::FAUX;
+    if (!is_undef(isom)) {
+        vecteur mapping;
+        int n=G1.node_count();
+        for (int i=0;i<n;++i) {
+            mapping.push_back(symbolic(at_equal,G1.node_label(i),G2.node_label(m[i])));
+        }
+        identifier_assign(*isom._IDNTptr,mapping,contextptr);
+    }
+    return graphe::VRAI;
+}
+static const char _is_isomorphic_s[]="is_isomorphic";
+static define_unary_function_eval(__is_isomorphic,&_is_isomorphic,_is_isomorphic_s);
+define_unary_function_ptr5(at_is_isomorphic,alias_at_is_isomorphic,&__is_isomorphic,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

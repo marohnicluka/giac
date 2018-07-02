@@ -17,8 +17,15 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define HAVE_LIBNAUTY 1
+
 #ifndef __GRAPHE_H
 #define __GRAPHE_H
+#ifdef HAVE_LIBNAUTY
+extern "C" {
+#include "x86_64-linux-gnu/nauty/nauty.h"
+}
+#endif
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -98,6 +105,7 @@ public:
     typedef std::map<int,std::map<int,double> > sparsemat;
     typedef std::set<ipair> edgeset;
     typedef std::vector<std::map<int,int> > edgemap;
+    typedef std::vector<std::map<int,double> > edgemapd;
 
     class vertex {
         int m_subgraph;
@@ -271,7 +279,9 @@ public:
         ivector cover_number;
         ivector clique;
         ipairs col2ij;
+        std::vector<bool> iscliq;
         ivector branch_candidates;
+        std::vector<double> fracts;
         ivector temp_colors;
         ivector ordering;
         std::set<int> used_colors;
@@ -279,13 +289,22 @@ public:
         int ub;
         int maxiter;
         int nxcols;
+        bool generate_clique_cuts;
         glp_prob *mip;
         double timeout;
         double *heur;
+        int *row_indices;
+        double *row_coeffs;
+        int *best_indices;
+        double *best_coeffs;
         void compute_bounds(int max_colors);
         void make_values();
         void formulate_mip();
         static void mip_callback(glp_tree *tree,void *info);
+        void fixed_coloring(glp_tree *tree);
+        int assign_heur(glp_tree *tree);
+        void generate_rows(glp_tree *tree);
+        void add_row(glp_prob *prob,int len,int *indices,double *coeffs,double rh);
     public:
         painter(graphe *gr,double tm=5.0) { G=gr; timeout=tm; }
         int color_vertices(ivector &colors,int max_colors=0);
@@ -453,6 +472,7 @@ private:
     std::stack<int> node_stack;
     std::queue<int> node_queue;
     ivectors visited_edges;
+    ivectors maxcliques;
     void clear_node_stack();
     void clear_node_queue();
     void message(const char *str) const;
@@ -498,7 +518,7 @@ private:
     void multilevel_recursion(layout &x,int d,double R,double K,double tol,int depth=0);
     int mdeg(const ivector &V,int i) const;
     void coarsening(graphe &G,const sparsemat &P,const ivector &V) const;
-    void tomita(ivector &R,ivector &P,ivector &X,std::map<int,int> &m,bool store_matching) const;
+    void tomita(ivector &R,ivector &P,ivector &X,std::map<int,int> &m,int mode=0);
     int cp_maxclique(ivector &clique);
     void cp_recurse(ivector &C,ivector &P,ivector &incumbent);
     int ost_maxclique(ivector &clique);
@@ -586,6 +606,9 @@ public:
     inline void copy_nodes(const std::vector<vertex> &V) { nodes=std::vector<vertex>(V.begin(),V.end()); }
     void join_edges(const graphe &G);
     void clear();
+    void clear_maximal_cliques() { maxcliques.clear(); }
+    void find_maximal_cliques();
+    const ivectors &maximal_cliques() const { return maxcliques; }
     int tag2index(const std::string &tag);
     std::string index2tag(int index) const;
     int register_user_tag(const std::string &tag);
@@ -609,6 +632,7 @@ public:
     template<class Compare>
     inline void sort_neighbors(int v,Compare comp) { node(v).sort_neighbors(comp); }
     gen to_gen();
+    int *to_array() const;
     bool write_latex(const std::string &filename,const gen &drawing) const;
     bool write_dot(const std::string &filename) const;
     bool read_dot(const std::string &filename);
@@ -779,6 +803,7 @@ public:
     bool fleury(int start,ivector &path);
     void hierholzer(ivector &path);
     void contract_edge(int i,int j);
+    void subdivide_edge(const ipair &e,int n,int &label);
     void incident_edges(const ivector &V,edgeset &E);
     static bool edges_incident(const ipair &e1,const ipair &e2);
     void convex_hull(const layout &x,layout &hull);
@@ -817,6 +842,7 @@ public:
     int bipartite_matching(const ivector &p1,const ivector &p2,ipairs &matching);
     void line_graph(graphe &G) const;
     void transitive_closure(graphe &G,bool weighted=false);
+    bool is_isomorphic(const graphe &other,std::map<int,int> &isom);
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

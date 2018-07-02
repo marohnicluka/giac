@@ -8150,7 +8150,7 @@ int graphe::is_isomorphic(const graphe &other,map<int,int> &isom) const {
     int *adj1=to_array();
     int *adj2=other.to_array();
     nautywrapper nw(isdir,n,adj1,adj2);
-    bool res=nw.is_isomorphic();
+    bool res=nw.is_isomorphic(); // NAUTY: check whether the two graphs are isomorphic
     if (res) {
         /* obtain the isomorphism */
         isom.clear();
@@ -8185,9 +8185,13 @@ gen graphe::aut_generators() const {
     bool isdir=is_directed();
     int *adj=to_array();
     nautywrapper nw(isdir,n,adj);
-    char *res=nw.aut_generators();
-    /* parse the generators and output them as a list of
-     * permutations in form of lists of disjoint cycles */
+    char *res=nw.aut_generators(); // NAUTY: find the generators
+    if (res==NULL) {
+        message("Error: failed to write the generators to a temporary file");
+        return undef;
+    }
+    /* parse the generators and output them as a sequence of
+     * permutations, each in form of a list of disjoint cycles */
     int i=0,nd=0;
     char c;
     vecteur out,perm,cycle;

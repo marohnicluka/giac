@@ -8210,7 +8210,6 @@ gen graphe::aut_generators() const {
         }
         ++i;
     }
-    out.push_back(gen(perm,_LIST__VECT));
     delete[] res;
     delete[] adj;
     return gen(out,_SEQ__VECT);

@@ -120,7 +120,7 @@ char *nautywrapper::aut_generators() const {
             *(res+i)=c=fgetc(f);
             ++i;
         } while (c!=EOF);
-        *(res+i-2)='\0';
+        *(res+i-1)='\0';
         return res;
     }
     return NULL;

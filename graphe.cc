@@ -8138,7 +8138,11 @@ void graphe::transitive_closure(graphe &G,bool weighted) {
 }
 
 /* return true iff this graph is isomorphic to other, also obtain an isomorphism */
-bool graphe::is_isomorphic(const graphe &other,map<int,int> &isom) {
+int graphe::is_isomorphic(const graphe &other,map<int,int> &isom) {
+#ifndef HAVE_LIBNAUTY
+    message("Error: nauty library is required for finding graph isomorphism");
+    return -1;
+#else
     int n=node_count();
     bool isdir=is_directed();
     if (n!=other.node_count() || isdir!=other.is_directed())
@@ -8158,6 +8162,7 @@ bool graphe::is_isomorphic(const graphe &other,map<int,int> &isom) {
     delete[] adj1;
     delete[] adj2;
     return res;
+#endif
 }
 
 #ifndef NO_NAMESPACE_GIAC

@@ -21,11 +21,6 @@
 
 #ifndef __GRAPHE_H
 #define __GRAPHE_H
-#ifdef HAVE_LIBNAUTY
-extern "C" {
-#include "x86_64-linux-gnu/nauty/nauty.h"
-}
-#endif
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -842,7 +837,7 @@ public:
     int bipartite_matching(const ivector &p1,const ivector &p2,ipairs &matching);
     void line_graph(graphe &G) const;
     void transitive_closure(graphe &G,bool weighted=false);
-    bool is_isomorphic(const graphe &other,std::map<int,int> &isom);
+    int is_isomorphic(const graphe &other,std::map<int,int> &isom);
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

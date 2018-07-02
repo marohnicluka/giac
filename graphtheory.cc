@@ -5233,8 +5233,11 @@ gen _is_isomorphic(const gen &g,GIAC_CONTEXT) {
             return gentypeerr("Expected an unassigned identifier");
     }
     map<int,int> m;
-    if (!G1.is_isomorphic(G2,m))
+    int res=G1.is_isomorphic(G2,m);
+    if (res==0)
         return graphe::FAUX;
+    if (res<0) // an error occurred
+        return undef;
     if (!is_undef(isom)) {
         vecteur mapping;
         int n=G1.node_count();

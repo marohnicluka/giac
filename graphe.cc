@@ -25,7 +25,9 @@
 #include <math.h>
 #include <ctime>
 #include <bitset>
+#ifdef HAVE_LIBNAUTY
 #include "nautywrapper.h"
+#endif
 using namespace std;
 
 #ifndef NO_NAMESPACE_GIAC
@@ -479,7 +481,7 @@ void graphe::ivectors2vecteur(const ivectors &v,vecteur &res,bool sort_all) cons
 }
 
 /* vertex class implementation */
-graphe::vertex::vertex() {
+void graphe::vertex::assign_defaults() {
     m_sorted=true;
     m_subgraph=-1;
     m_visited=false;
@@ -499,6 +501,15 @@ graphe::vertex::vertex() {
     m_y=0;
     m_embedded=false;
     m_number=-1;
+}
+
+graphe::vertex::vertex() {
+    assign_defaults();
+}
+
+graphe::vertex::vertex(const gen &lab) {
+    assign_defaults();
+    set_label(lab);
 }
 
 void graphe::vertex::assign(const vertex &other) {
@@ -521,6 +532,7 @@ void graphe::vertex::assign(const vertex &other) {
     m_y=other.y();
     m_embedded=other.is_embedded();
     m_number=other.number();
+    m_edge_faces=other.edge_faces();
     set_attributes(other.attributes());
     m_neighbors.resize(other.neighbors().size());
     m_neighbor_attributes.clear();
@@ -860,6 +872,7 @@ graphe::graphe(GIAC_CONTEXT) {
     ctx=contextptr;
     set_graph_attribute(_GT_ATTRIB_DIRECTED,FAUX);
     set_graph_attribute(_GT_ATTRIB_WEIGHTED,FAUX);
+    //nodes.reserve(1024);
 }
 
 /* graphe constructor, create a copy of G */
@@ -878,6 +891,7 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
     ivector hull;
     layout x;
     if (name=="clebsch") {
+        reserve_nodes(16);
         for (int i=0;i<16;++i) {
             add_node(i);
         }
@@ -994,28 +1008,35 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
 
 /* export this graph as a Giac gen object */
 gen graphe::to_gen() {
-    vecteur gv;
+    int n=node_count();
+    vecteur res(3+n+edge_count()*(is_directed()?1:2));
+    int cnt=0;
     gen_map attr;
     attrib2genmap(attributes,attr);
-    gv.push_back(attr);
-    vecteur uattr_ids;
+    res[cnt++]=n;
+    res[cnt++]=attr;
+    vecteur uattr_ids(user_tags.size());
     for (vector<string>::const_iterator it=user_tags.begin();it!=user_tags.end();++it) {
-        uattr_ids.push_back(str2gen(*it,true));
+        uattr_ids[it-user_tags.begin()]=str2gen(*it,true);
     }
-    gv.push_back(uattr_ids);
-    int n,j;
+    res[cnt++]=uattr_ids;
+    for (int i=0;i<n;++i) {
+        gen_map vattr;
+        const vertex &v=node(i);
+        attrib2genmap(v.attributes(),vattr);
+        vattr[-1]=v.neighbors().size();
+        res[cnt++]=vattr;
+    }
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
-        n=it->neighbors().size();
-        attrib2genmap(it->attributes(),attr);
-        vecteur v=makevecteur(it->label(),attr,vecteur(n));
-        j=0;
-        for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
-            attrib2genmap(it->neighbor_attributes(*jt),attr);
-            v.back()._VECTptr->at(j++)=makevecteur(*jt,attr);
+        const vertex &v=*it;
+        for (ivector_iter jt=v.neighbors().begin();jt!=v.neighbors().end();++jt) {
+            gen_map nattr;
+            attrib2genmap(v.neighbor_attributes(*jt),nattr);
+            nattr[-1]=*jt;
+            res[cnt++]=nattr;
         }
-        gv.push_back(v);
     }
-    return change_subtype(gv,_GRAPH__VECT);
+    return change_subtype(res,_GRAPH__VECT);
 }
 
 /* allocate, initialize and return an integer array of adjacency lists of this graph,
@@ -1918,36 +1939,61 @@ void graphe::attrib2genmap(const attrib &attr, gen_map &m) {
     }
 }
 
+bool gmap_find(const gen_map &gmap,const gen &key,gen &val) {
+    gen_map::const_iterator it=gmap.find(key);
+    if (it==gmap.end())
+        return false;
+    val=it->second;
+    return true;
+}
+
 /* initialize graph from Giac gen object */
 bool graphe::read_gen(const gen &g) {
     if (g.type!=_VECT || g.subtype!=_GRAPH__VECT)
         return false;
     this->clear();
-    vecteur &gv=*g._VECTptr;
-    if (gv.empty() || gv.front().type!=_MAP || !genmap2attrib(*gv.front()._MAPptr,attributes))
+    int n;
+    const vecteur &gv=*g._VECTptr;
+    if (gv.empty() || !gv.front().is_integer() ||
+            (n=gv.front().val)<0 || int(gv.size())<3+n || gv[1].type!=_MAP || gv[2].type!=_VECT)
         return false;
-    if (int(gv.size())<2 || gv[1].type!=_VECT)
+    if (!genmap2attrib(*gv[1]._MAPptr,this->attributes))
         return false;
-    for (const_iterateur it=gv[1]._VECTptr->begin();it!=gv[1]._VECTptr->end();++it) {
+    const vecteur &tags=*gv[2]._VECTptr;
+    user_tags.resize(tags.size());
+    for (const_iterateur it=tags.begin();it!=tags.end();++it) {
         if (it->type!=_STRNG)
             return false;
         register_user_tag(genstring2str(*it));
     }
-    for (const_iterateur it=gv.begin()+2;it!=gv.end();++it) {
-        if (it->type!=_VECT || int(it->_VECTptr->size())<3)
+    gen val;
+    attrib attr;
+    int deg,start=n+3,k;
+    for (int i=0;i<n;++i) {
+        const gen &elm=gv[i+3];
+        if (elm.type!=_MAP)
             return false;
-        vertex &vt=nodes[add_node(it->_VECTptr->front())];
-        if (it->_VECTptr->at(1).type!=_MAP || it->_VECTptr->at(2).type!=_VECT)
+        gen_map &mp=*elm._MAPptr;
+        if (!gmap_find(mp,-1,val) || !val.is_integer() || (deg=val.val)<0 || !genmap2attrib(mp,attr))
             return false;
-        genmap2attrib(*it->_VECTptr->at(1)._MAPptr,vt.attributes());
-        const_iterateur jt=it->_VECTptr->at(2)._VECTptr->begin();
-        for (;jt!=it->_VECTptr->at(2)._VECTptr->end();++jt) {
-            if (jt->type!=_VECT || !jt->_VECTptr->front().is_integer() || jt->_VECTptr->at(1).type!=_MAP)
+        attr.erase(attr.find(-1));
+        vertex vert;
+        vert.set_attributes(attr);
+        if (int(gv.size())<start+deg)
+            return false;
+        for (int j=0;j<deg;++j) {
+            const gen &ngh=gv[start+j];
+            if (ngh.type!=_MAP)
                 return false;
-            attrib attr;
-            genmap2attrib(*jt->_VECTptr->at(1)._MAPptr,attr);
-            vt.add_neighbor(jt->_VECTptr->front().val,attr);
+            gen_map &nmap=*ngh._MAPptr;
+            attrib nattr;
+            if (!gmap_find(nmap,-1,val) || !val.is_integer() || (k=val.val)<0 || k>=n || !genmap2attrib(nmap,nattr))
+                return false;
+            nattr.erase(nattr.find(-1));
+            vert.add_neighbor(k,nattr);
         }
+        start+=deg;
+        nodes.push_back(vert);
     }
     return true;
 }
@@ -2125,14 +2171,14 @@ int graphe::add_node(const gen &v) {
         if (it->label()==v)
             return it-nodes.begin();
     }
-    vertex vert;
-    vert.set_label(v);
-    nodes.push_back(vert);
+    nodes.push_back(vertex(v));
     return node_count()-1;
 }
 
 /* add vertices from list v to graph */
 void graphe::add_nodes(const vecteur &v) {
+    nodes.clear();
+    nodes.reserve(v.size());
     for (const_iterateur it=v.begin();it!=v.end();++it) {
         add_node(*it);
     }
@@ -2332,6 +2378,7 @@ bool graphe::is_weighted() const {
 /* create the subgraph defined by vertices from 'vi' and store it in G */
 void graphe::induce_subgraph(const ivector &vi,graphe &G,bool copy_attrib) const {
     G.clear();
+    G.reserve_nodes(vi.size());
     for (ivector_iter it=vi.begin();it!=vi.end();++it) {
         gen v_label=node_label(*it);
         const attrib &attri=nodes[*it].attributes();
@@ -2355,6 +2402,12 @@ void graphe::induce_subgraph(const ivector &vi,graphe &G,bool copy_attrib) const
 void graphe::subgraph(const ipairs &E,graphe &G,bool copy_attrib) const {
     G.clear();
     G.set_directed(is_directed());
+    set<int> nds;
+    for (ipairs_iter it=E.begin();it!=E.end();++it) {
+        nds.insert(it->first);
+        nds.insert(it->second);
+    }
+    G.reserve_nodes(nds.size());
     int i,j;
     for (ipairs_iter it=E.begin();it!=E.end();++it) {
         const vertex &v=node(it->first),&w=node(it->second);
@@ -6142,8 +6195,7 @@ void graphe::make_random_bipartite(const vecteur &V,const vecteur &W,double p) {
     this->clear();
     set_directed(false);
     int a=V.size(),b=W.size(),m=std::floor(p),k;
-    add_nodes(V);
-    add_nodes(W);
+    add_nodes(mergevecteur(V,W));
     ipairs E;
     E.reserve(a*b);
     for (int i=0;i<a;++i) {
@@ -6397,18 +6449,17 @@ void graphe::pack_rectangles(vector<rectangle> &rectangles) {
 
 /* return true iff an isomorphic copy with vertices permuted according to sigma is constructed */
 bool graphe::isomorphic_copy(graphe &G,const ivector &sigma) {
-    if (int(sigma.size())!=node_count())
-        return false;
+    int n=node_count();
+    assert(int(sigma.size())==n);
     G.set_name(name());
     G.register_user_tags(user_tags);
     G.set_graph_attributes(attributes);
     /* add vertices */
+    G.reserve_nodes(n);
     for (ivector_iter it=sigma.begin();it!=sigma.end();++it) {
-        if (*it<0 || *it>=node_count())
-            return false;
         G.add_node(node_label(*it),nodes[*it].attributes());
     }
-    if (G.node_count()!=node_count())
+    if (G.node_count()!=n)
         return false;
     /* add edges */
     int i;
@@ -7164,6 +7215,7 @@ bool graphe::is_planar() {
 void graphe::make_product_nodes(const graphe &G,graphe &P) const {
     int n=node_count(),m=G.node_count();
     stringstream ss;
+    P.reserve_nodes(n*m);
     for (int i=0;i<n;++i) {
         for (int j=0;j<m;++j) {
             const gen &v=node_label(i),&w=G.node_label(j);
@@ -7413,6 +7465,7 @@ void graphe::reverse(graphe &G) const {
     assert(is_directed());
     G.set_directed(true);
     G.set_graph_attributes(attributes);
+    G.reserve_nodes(node_count());
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         G.add_node(it->label(),it->attributes());
     }
@@ -8217,6 +8270,27 @@ gen graphe::aut_generators() const {
     delete[] res;
     delete[] adj;
     return gen(out,_SEQ__VECT);
+#endif
+}
+
+/* return the canonical labeling of this graph as a permutation */
+bool graphe::canonical_labeling(ivector &lab) const {
+#ifndef HAVE_LIBNAUTY
+    message("Error: nauty library is required for canonical labeling");
+    return false;
+#else
+    int n=node_count();
+    bool isdir=is_directed();
+    int *adj=to_array();
+    nautywrapper nw(isdir,n,adj);
+    nw.canonical(); // NAUTY: find the canonical labeling
+    int *res=nw.labeling(1);
+    lab.resize(n);
+    for (int i=0;i<n;++i) {
+        lab[i]=*(res+i);
+    }
+    delete[] adj;
+    return true;
 #endif
 }
 

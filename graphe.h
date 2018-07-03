@@ -131,9 +131,12 @@ public:
         attrib m_attributes;
         std::map<int,attrib> m_neighbor_attributes;
         ivector m_neighbors;
+        void assign_defaults();
     public:
         vertex();
         vertex(const vertex &other);
+        vertex(const gen &lab);
+        ~vertex() { }
         vertex& operator =(const vertex &other);
         void assign(const vertex &other);
         gen label() const;
@@ -197,6 +200,7 @@ public:
         inline void add_edge_face(int nb,int f) { assert(m_edge_faces.find(nb)==m_edge_faces.end()); m_edge_faces[nb]=f+1; }
         inline void clear_edge_faces() { m_edge_faces.clear(); }
         inline int edge_face(int nb) { return m_edge_faces[nb]-1; }
+        inline const std::map<int,int> &edge_faces() const { return m_edge_faces; }
     };
 
     class dotgraph {
@@ -594,6 +598,7 @@ public:
     static std::string gen2str(const gen &g);
     static gen plusinf();
     void ivectors2vecteur(const ivectors &v,vecteur &res,bool sort_all=false) const;
+    inline void reserve_nodes(int n) { assert(nodes.empty()); nodes.reserve(n); }
     bool read_gen(const gen &g);
     void read_special(const int *special_graph);
     void read_special(const char **special_graph);
@@ -839,6 +844,7 @@ public:
     void transitive_closure(graphe &G,bool weighted=false);
     int is_isomorphic(const graphe &other,std::map<int,int> &isom) const;
     gen aut_generators() const;
+    bool canonical_labeling(ivector &lab) const;
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

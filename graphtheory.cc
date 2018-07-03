@@ -2867,16 +2867,16 @@ gen _isomorphic_copy(const gen &g,GIAC_CONTEXT) {
     vecteur &gv=*g._VECTptr;
     if (gv.size()<2)
         return gensizeerr(contextptr);
-    if (gv[1].type!=_VECT || !is_integer_vecteur(*gv[1]._VECTptr))
+    if (is_zero(_is_permu(gv[1],contextptr)))
         return gentypeerr("Expected a permutation");
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     vecteur &sigma=*gv[1]._VECTptr;
     graphe::ivector v(sigma.size());
-    int offset=array_start(contextptr);
+    int ofs=array_start(contextptr);
     for (const_iterateur it=sigma.begin();it!=sigma.end();++it) {
-        v[it-sigma.begin()]=it->val-offset;
+        v[it-sigma.begin()]=it->val-ofs;
     }
     graphe H;
     if (!G.isomorphic_copy(H,v))
@@ -5267,6 +5267,25 @@ gen _graph_automorphisms(const gen &g,GIAC_CONTEXT) {
 static const char _graph_automorphisms_s[]="graph_automorphisms";
 static define_unary_function_eval(__graph_automorphisms,&_graph_automorphisms,_graph_automorphisms_s);
 define_unary_function_ptr5(at_graph_automorphisms,alias_at_graph_automorphisms,&__graph_automorphisms,0,true)
+
+/* USAGE:   graph_canonical(G)
+ *
+ * Permutes the vertices of the input graph G according to the canonical labeling and returns the modified copy of G.
+ */
+gen _graph_canonical(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr),H(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    graphe::ivector sigma;
+    G.canonical_labeling(sigma);
+    cout << sigma << endl;
+    G.isomorphic_copy(H,sigma);
+    return H.to_gen();
+}
+static const char _graph_canonical_s[]="graph_canonical";
+static define_unary_function_eval(__graph_canonical,&_graph_canonical,_graph_canonical_s);
+define_unary_function_ptr5(at_graph_canonical,alias_at_graph_canonical,&__graph_canonical,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

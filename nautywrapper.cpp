@@ -1,16 +1,6 @@
 #include "nauty/nausparse.h"
 #include "nautywrapper.h"
 
-DYNALLSTAT(int,nauty_lab1,nauty_lab1_sz);
-DYNALLSTAT(int,nauty_lab2,nauty_lab2_sz);
-DYNALLSTAT(int,nauty_ptn,nauty_ptn_sz);
-DYNALLSTAT(int,nauty_orbits,nauty_orbits_sz);
-static DEFAULTOPTIONS_SPARSEGRAPH(nauty_options);
-SG_DECL(nauty_sg1);
-SG_DECL(nauty_sg2);
-SG_DECL(nauty_cg1);
-SG_DECL(nauty_cg2);
-
 static int count_edges(int n,int *adj,int *degrees) {
     int ne=0,i=0,j=0,k,deg=0;
     while (j<n) {
@@ -42,86 +32,110 @@ static void add_edges(sparsegraph *g,int n,int *adj) {
     }
 }
 
-nautywrapper::nautywrapper(bool isdirected,int n,int *adj1,int *adj2) {
-    nv=n;
-    is_single_graph=adj2==0;
+void init_sparsegraph(sparsegraph *g,int n,int *adj,int *degrees) {
+    memcpy(g->d,degrees,n*sizeof(int));
+    add_edges(g,n,adj);
+}
+
+nautywrapper::nautywrapper(bool isdirected,int n,int *adj_1,int *adj_2) {
     m=SETWORDSNEEDED(n);
     nauty_check(WORDSIZE,m,n,NAUTYVERSIONID);
-    nauty_options.digraph=isdirected?TRUE:FALSE;
-    nauty_options.linelength=RAND_MAX;
-    DYNALLOC1(int,nauty_lab1,nauty_lab1_sz,n,"malloc");
-    DYNALLOC1(int,nauty_lab2,nauty_lab2_sz,n,"malloc");
-    DYNALLOC1(int,nauty_ptn,nauty_ptn_sz,n,"malloc");
-    DYNALLOC1(int,nauty_orbits,nauty_orbits_sz,n,"malloc");
-    int *degrees=new int[n];
-    int ne1=count_edges(n,adj1,degrees);
-    SG_ALLOC(nauty_sg1,n,ne1,"malloc");
-    nauty_sg1.nv=n;
-    nauty_sg1.nde=ne1;
-    memcpy(nauty_sg1.d,degrees,n*sizeof(int));
-    add_edges(&nauty_sg1,n,adj1);
-    if (adj2!=0) {
-        int ne2=count_edges(n,adj2,degrees);
-        SG_ALLOC(nauty_sg2,n,ne2,"malloc");
-        nauty_sg2.nv=n;
-        nauty_sg2.nde=ne2;
-        memcpy(nauty_sg2.d,degrees,n*sizeof(int));
-        add_edges(&nauty_sg2,n,adj2);
-    }
-    delete[] degrees;
-    nauty_options.outfile=tmpfile();
+    nv=n;
+    isdir=isdirected;
+    adj1=adj_1;
+    adj2=adj_2;
+    lab1_sz=lab2_sz=ptn_sz=orbits_sz=0;
+    DYNALLOC1(int,lab1,lab1_sz,n,"malloc");
+    DYNALLOC1(int,lab2,lab2_sz,n,"malloc");
+    DYNALLOC1(int,ptn,ptn_sz,n,"malloc");
+    DYNALLOC1(int,orbits,orbits_sz,n,"malloc");
+    degrees=new int[n];
 }
 
 nautywrapper::~nautywrapper() {
-    SG_FREE(nauty_sg1);
-    SG_FREE(nauty_cg1);
-    if (!is_single_graph) {
-        SG_FREE(nauty_sg2);
-        SG_FREE(nauty_cg2);
-    }
-    DYNFREE(nauty_lab1,nauty_lab1_sz);
-    DYNFREE(nauty_lab2,nauty_lab2_sz);
-    DYNFREE(nauty_ptn,nauty_ptn_sz);
-    DYNFREE(nauty_orbits,nauty_orbits_sz);
-    if (nauty_options.outfile!=NULL)
-        fclose(nauty_options.outfile);
+    delete[] degrees;
+    DYNFREE(lab1,lab1_sz);
+    DYNFREE(lab2,lab1_sz);
+    DYNFREE(ptn,ptn_sz);
+    DYNFREE(orbits,orbits_sz);
 }
 
-bool nautywrapper::is_isomorphic() const {
-    statsblk nauty_stats;
-    nauty_options.getcanon=TRUE;
-    nauty_options.writeautoms=FALSE;
-    sparsenauty(&nauty_sg1,nauty_lab1,nauty_ptn,nauty_orbits,&nauty_options,&nauty_stats,&nauty_cg1);
-    sparsenauty(&nauty_sg2,nauty_lab2,nauty_ptn,nauty_orbits,&nauty_options,&nauty_stats,&nauty_cg2);
-    return (bool)aresame_sg(&nauty_cg1,&nauty_cg2);
+bool nautywrapper::is_isomorphic() {
+    statsblk stats;
+    DEFAULTOPTIONS_SPARSEGRAPH(opt_undir);
+    DEFAULTOPTIONS_SPARSEDIGRAPH(opt_dir);
+    optionblk *options=isdir?&opt_dir:&opt_undir;
+    options->getcanon=TRUE;
+    options->writeautoms=FALSE;
+    SG_DECL(sg1); SG_DECL(sg2);
+    SG_DECL(cg1); SG_DECL(cg2);
+    int ne=count_edges(nv,adj1,degrees);
+    SG_ALLOC(sg1,nv,ne,"malloc");
+    init_sparsegraph(&sg1,nv,adj1,degrees);
+    ne=count_edges(nv,adj2,degrees);
+    SG_ALLOC(sg2,nv,ne,"malloc");
+    init_sparsegraph(&sg2,nv,adj2,degrees);
+    sparsenauty(&sg1,lab1,ptn,orbits,options,&stats,&cg1);
+    sparsenauty(&sg2,lab2,ptn,orbits,options,&stats,&cg2);
+    bool yes=(bool)aresame_sg(&cg1,&cg2);
+    SG_FREE(sg1); SG_FREE(cg1);
+    SG_FREE(sg2); SG_FREE(cg2);
+    return yes;
 }
 
-int *nautywrapper::labeling(int which) const {
+int *nautywrapper::labeling(int which) {
     if (which==1)
-        return nauty_lab1;
+        return lab1;
     if (which==2)
-        return nauty_lab2;
+        return lab2;
     return 0;
 }
 
-char *nautywrapper::aut_generators() const {
-    statsblk nauty_stats;
-    nauty_options.getcanon=FALSE;
-    nauty_options.writeautoms=TRUE;
-    sparsenauty(&nauty_sg1,nauty_lab1,nauty_ptn,nauty_orbits,&nauty_options,&nauty_stats,NULL);
-    FILE *f=nauty_options.outfile;
-    if (f!=NULL) {
-        long sz=ftell(f);
-        char *res=new char[sz+1];
-        rewind(f);
-        int i=0;
-        char c;
-        do {
-            *(res+i)=c=fgetc(f);
-            ++i;
-        } while (c!=EOF);
-        *(res+i-1)='\0';
-        return res;
-    }
-    return NULL;
+char *nautywrapper::aut_generators() {
+    statsblk stats;
+    DEFAULTOPTIONS_SPARSEGRAPH(opt_undir);
+    DEFAULTOPTIONS_SPARSEDIGRAPH(opt_dir);
+    optionblk *options=isdir?&opt_dir:&opt_undir;
+    options->getcanon=FALSE;
+    options->writeautoms=TRUE;
+    if ((options->outfile=tmpfile())==NULL)
+        return NULL;
+    options->linelength=RAND_MAX;
+    SG_DECL(sg);
+    int ne=count_edges(nv,adj1,degrees);
+    SG_ALLOC(sg,nv,ne,"malloc");
+    init_sparsegraph(&sg,nv,adj1,degrees);
+    sparsenauty(&sg,lab1,ptn,orbits,options,&stats,NULL);
+    printf("RES: %d\n",stats.numgenerators);
+    SG_FREE(sg);
+    FILE *f=options->outfile;
+    long sz=ftell(f);
+    char *res=new char[sz+1];
+    rewind(f);
+    int i=0;
+    char c;
+    do {
+        *(res+i)=c=fgetc(f);
+        ++i;
+    } while (c!=EOF);
+    *(res+i-1)='\0';
+    fclose(f);
+    return res;
+}
+
+void nautywrapper::canonical() {
+    statsblk stats;
+    DEFAULTOPTIONS_SPARSEGRAPH(opt_undir);
+    DEFAULTOPTIONS_SPARSEDIGRAPH(opt_dir);
+    optionblk *options=isdir?&opt_dir:&opt_undir;
+    options->getcanon=TRUE;
+    options->writeautoms=FALSE;
+    SG_DECL(sg);
+    SG_DECL(cg);
+    int ne=count_edges(nv,adj1,degrees);
+    SG_ALLOC(sg,nv,ne,"malloc");
+    init_sparsegraph(&sg,nv,adj1,degrees);
+    sparsenauty(&sg,lab1,ptn,orbits,options,&stats,&cg);
+    SG_FREE(sg);
+    SG_FREE(cg);
 }

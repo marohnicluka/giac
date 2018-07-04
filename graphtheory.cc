@@ -5228,6 +5228,8 @@ gen _is_isomorphic(const gen &g,GIAC_CONTEXT) {
     graphe G1(contextptr),G2(contextptr);
     if (!G1.read_gen(gv[0]) || !G2.read_gen(gv[1]))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G1.is_directed() || G2.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     if (gv.size()>2) {
         if ((isom=gv.back()).type!=_IDNT)
             return gentypeerr("Expected an unassigned identifier");
@@ -5262,30 +5264,38 @@ gen _graph_automorphisms(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     return G.aut_generators();
 }
 static const char _graph_automorphisms_s[]="graph_automorphisms";
 static define_unary_function_eval(__graph_automorphisms,&_graph_automorphisms,_graph_automorphisms_s);
 define_unary_function_ptr5(at_graph_automorphisms,alias_at_graph_automorphisms,&__graph_automorphisms,0,true)
 
-/* USAGE:   graph_canonical(G)
+/* USAGE:   canonical_labeling(G)
  *
- * Permutes the vertices of the input graph G according to the canonical labeling and returns the modified copy of G.
+ * Returns the permutation representing the canonical labeling of the input
+ * graph G.
  */
-gen _graph_canonical(const gen &g,GIAC_CONTEXT) {
+gen _canonical_labeling(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    graphe G(contextptr),H(contextptr);
+    graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     graphe::ivector sigma;
     G.canonical_labeling(sigma);
-    cout << sigma << endl;
-    G.isomorphic_copy(H,sigma);
-    return H.to_gen();
+    vecteur res(G.node_count());
+    int ofs=array_start(contextptr);
+    for (iterateur it=res.begin();it!=res.end();++it) {
+        *it=sigma[it-res.begin()]+ofs;
+    }
+    return res;
 }
-static const char _graph_canonical_s[]="graph_canonical";
-static define_unary_function_eval(__graph_canonical,&_graph_canonical,_graph_canonical_s);
-define_unary_function_ptr5(at_graph_canonical,alias_at_graph_canonical,&__graph_canonical,0,true)
+static const char _canonical_labeling_s[]="canonical_labeling";
+static define_unary_function_eval(__canonical_labeling,&_canonical_labeling,_canonical_labeling_s);
+define_unary_function_ptr5(at_canonical_labeling,alias_at_canonical_labeling,&__canonical_labeling,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

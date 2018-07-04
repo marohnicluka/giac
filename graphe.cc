@@ -25,6 +25,7 @@
 #include <math.h>
 #include <ctime>
 #include <bitset>
+#include <stdio.h>
 #ifdef HAVE_LIBNAUTY
 #include "nautywrapper.h"
 #endif
@@ -8196,24 +8197,22 @@ int graphe::is_isomorphic(const graphe &other,map<int,int> &isom) const {
     message("Error: nauty library is required for finding graph isomorphism");
     return -1;
 #else
+    assert(!is_directed() && !other.is_directed());
     int n=node_count();
-    bool isdir=is_directed();
-    if (n!=other.node_count() || isdir!=other.is_directed())
-        return false;
     int *adj1=to_array();
     int *adj2=other.to_array();
-    nautywrapper nw(isdir,n,adj1,adj2);
-    bool res=nw.is_isomorphic(); // NAUTY: check whether the two graphs are isomorphic
+    int *sigma=new int[n];
+    bool res=nautywrapper_is_isomorphic(n,adj1,adj2,sigma)!=0;
     if (res) {
         /* obtain the isomorphism */
         isom.clear();
-        int *lab1=nw.labeling(1),*lab2=nw.labeling(2);
         for (int i=0;i<n;++i) {
-            isom[lab1[i]]=lab2[i];
+            isom[i]=sigma[i];
         }
     }
     delete[] adj1;
     delete[] adj2;
+    delete[] sigma;
     return res;
 #endif
 }
@@ -8234,22 +8233,25 @@ gen graphe::aut_generators() const {
     message("Error: nauty library is required for finding graph automorphisms");
     return undef;
 #else
+    assert(!is_directed());
     int n=node_count(),ofs=array_start(ctx);
-    bool isdir=is_directed();
     int *adj=to_array();
-    nautywrapper nw(isdir,n,adj);
-    char *res=nw.aut_generators(); // NAUTY: find the generators
-    if (res==NULL) {
-        message("Error: failed to write the generators to a temporary file");
+    FILE *f=tmpfile();
+    if (f==NULL) {
+        message ("Error: failed to create temporary file");
         return undef;
     }
+    nautywrapper_aut_generators(n,adj,f);
     /* parse the generators and output them as a sequence of
      * permutations, each in form of a list of disjoint cycles */
+    int sz=ftell(f);
+    rewind(f);
     int i=0,nd=0;
     char c;
     vecteur out,perm,cycle;
     char digits[32];
-    while ((c=*(res+i))!='\0') {
+    for (int cnt=0;cnt<sz;++cnt) {
+        c=fgetc(f);
         if (c=='(')
             cycle.clear();
         else if (c==')') {
@@ -8267,7 +8269,7 @@ gen graphe::aut_generators() const {
         }
         ++i;
     }
-    delete[] res;
+    fclose(f);
     delete[] adj;
     return gen(out,_SEQ__VECT);
 #endif
@@ -8279,17 +8281,17 @@ bool graphe::canonical_labeling(ivector &lab) const {
     message("Error: nauty library is required for canonical labeling");
     return false;
 #else
+    assert(!is_directed());
     int n=node_count();
-    bool isdir=is_directed();
     int *adj=to_array();
-    nautywrapper nw(isdir,n,adj);
-    nw.canonical(); // NAUTY: find the canonical labeling
-    int *res=nw.labeling(1);
+    int *clab=new int[n];
+    nautywrapper_canonical(n,adj,clab);
     lab.resize(n);
     for (int i=0;i<n;++i) {
-        lab[i]=*(res+i);
+        lab[i]=clab[i];
     }
     delete[] adj;
+    delete[] clab;
     return true;
 #endif
 }

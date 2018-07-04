@@ -226,7 +226,7 @@ gen _transitive_closure(const gen &g,GIAC_CONTEXT);
 gen _line_graph(const gen &g,GIAC_CONTEXT);
 gen _is_isomorphic(const gen &g,GIAC_CONTEXT);
 gen _graph_automorphisms(const gen &g,GIAC_CONTEXT);
-gen _graph_canonical(const gen &g,GIAC_CONTEXT);
+gen _canonical_labeling(const gen &g,GIAC_CONTEXT);
 //gen _minimal_edge_coloring(const gen &g,GIAC_CONTEXT);
 //gen _is_edge_colorable(const gen &g,GIAC_CONTEXT);
 //gen _spanning_polynomial(const gen &g,GIAC_CONTEXT);

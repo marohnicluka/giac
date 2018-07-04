@@ -8197,12 +8197,14 @@ int graphe::is_isomorphic(const graphe &other,map<int,int> &isom) const {
     message("Error: nauty library is required for finding graph isomorphism");
     return -1;
 #else
-    assert(!is_directed() && !other.is_directed());
+    assert(is_directed()==other.is_directed());
     int n=node_count();
+    if (other.node_count()!=n)
+        return 0;
     int *adj1=to_array();
     int *adj2=other.to_array();
     int *sigma=new int[n];
-    bool res=nautywrapper_is_isomorphic(n,adj1,adj2,sigma)!=0;
+    bool res=nautywrapper_is_isomorphic(is_directed()?1:0,n,adj1,adj2,sigma)!=0;
     if (res) {
         /* obtain the isomorphism */
         isom.clear();
@@ -8233,44 +8235,46 @@ gen graphe::aut_generators() const {
     message("Error: nauty library is required for finding graph automorphisms");
     return undef;
 #else
-    assert(!is_directed());
     int n=node_count(),ofs=array_start(ctx);
-    int *adj=to_array();
-    FILE *f=tmpfile();
-    if (f==NULL) {
-        message ("Error: failed to create temporary file");
-        return undef;
-    }
-    nautywrapper_aut_generators(n,adj,f);
-    /* parse the generators and output them as a sequence of
-     * permutations, each in form of a list of disjoint cycles */
-    int sz=ftell(f);
-    rewind(f);
-    int i=0,nd=0;
-    char c;
-    vecteur out,perm,cycle;
-    char digits[32];
-    for (int cnt=0;cnt<sz;++cnt) {
-        c=fgetc(f);
-        if (c=='(')
-            cycle.clear();
-        else if (c==')') {
-            cycle.push_back(ofs+digits2int(digits,nd));
-            perm.push_back(cycle);
-            nd=0;
-        } else if (c=='\n') {
-            out.push_back(gen(perm,_LIST__VECT));
-            perm.clear();
-        } else if (c>47 && c<58)
-            digits[nd++]=c-48;
-        else if (c==32) {
-            cycle.push_back(ofs+digits2int(digits,nd));
-            nd=0;
+    vecteur out(0);
+    if (n>0) {
+        int *adj=to_array();
+        FILE *f=tmpfile();
+        if (f==NULL) {
+            message ("Error: failed to create temporary file");
+            return undef;
         }
-        ++i;
+        nautywrapper_aut_generators(is_directed()?1:0,n,adj,f);
+        /* parse the generators and output them as a sequence of
+         * permutations, each in form of a list of disjoint cycles */
+        int sz=ftell(f);
+        rewind(f);
+        int i=0,nd=0;
+        char c;
+        vecteur perm,cycle;
+        char digits[32];
+        for (int cnt=0;cnt<sz;++cnt) {
+            c=fgetc(f);
+            if (c=='(')
+                cycle.clear();
+            else if (c==')') {
+                cycle.push_back(ofs+digits2int(digits,nd));
+                perm.push_back(cycle);
+                nd=0;
+            } else if (c=='\n') {
+                out.push_back(gen(perm,_LIST__VECT));
+                perm.clear();
+            } else if (c>47 && c<58)
+                digits[nd++]=c-48;
+            else if (c==32) {
+                cycle.push_back(ofs+digits2int(digits,nd));
+                nd=0;
+            }
+            ++i;
+        }
+        fclose(f);
+        delete[] adj;
     }
-    fclose(f);
-    delete[] adj;
     return gen(out,_SEQ__VECT);
 #endif
 }
@@ -8281,11 +8285,12 @@ bool graphe::canonical_labeling(ivector &lab) const {
     message("Error: nauty library is required for canonical labeling");
     return false;
 #else
-    assert(!is_directed());
     int n=node_count();
+    if (n==0)
+        return false;
     int *adj=to_array();
     int *clab=new int[n];
-    nautywrapper_canonical(n,adj,clab);
+    nautywrapper_canonical(is_directed()?1:0,n,adj,clab);
     lab.resize(n);
     for (int i=0;i<n;++i) {
         lab[i]=clab[i];

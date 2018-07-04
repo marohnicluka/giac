@@ -5228,8 +5228,8 @@ gen _is_isomorphic(const gen &g,GIAC_CONTEXT) {
     graphe G1(contextptr),G2(contextptr);
     if (!G1.read_gen(gv[0]) || !G2.read_gen(gv[1]))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G1.is_directed() || G2.is_directed())
-        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
+    if (G1.is_directed()!=G2.is_directed())
+        return graphe::FAUX;
     if (gv.size()>2) {
         if ((isom=gv.back()).type!=_IDNT)
             return gentypeerr("Expected an unassigned identifier");
@@ -5264,8 +5264,6 @@ gen _graph_automorphisms(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G.is_directed())
-        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     return G.aut_generators();
 }
 static const char _graph_automorphisms_s[]="graph_automorphisms";
@@ -5282,10 +5280,9 @@ gen _canonical_labeling(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G.is_directed())
-        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     graphe::ivector sigma;
-    G.canonical_labeling(sigma);
+    if (!G.canonical_labeling(sigma))
+        return undef;
     vecteur res(G.node_count());
     int ofs=array_start(contextptr);
     for (iterateur it=res.begin();it!=res.end();++it) {

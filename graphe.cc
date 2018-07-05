@@ -8229,7 +8229,7 @@ int digits2int(char *digits,int nd) {
     return res;
 }
 
-/* return the list of generators of the automorphism group of this graph */
+/* return the set of generators of the automorphism group of this graph */
 gen graphe::aut_generators() const {
 #ifndef HAVE_LIBNAUTY
     message("Error: nauty library is required for finding graph automorphisms");
@@ -8275,7 +8275,7 @@ gen graphe::aut_generators() const {
         fclose(f);
         delete[] adj;
     }
-    return gen(out,_SEQ__VECT);
+    return gen(out,_SET__VECT);
 #endif
 }
 

@@ -43,7 +43,7 @@ static const char *gt_error_messages[] = {
     "Edge not found",                                                   // 10
     "Vertex not found",                                                 // 11
     "Graph is not a tree",                                              // 12
-    "Exactly one root node must be specified per connected component",  // 13
+    "Exactly one root node must be specified per connected component",  // 13Returns the sequence of generators of Aut(G)
     "Invalid root node specification",                                  // 14
     "Graph is not planar",                                              // 15
     "Connected graph required",                                         // 16
@@ -522,7 +522,7 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
         // list of vertices or set of edges is given
         if (g.subtype==_SET__VECT) {
             if (!parse_edges(G,*g._VECTptr,true))
-                return gentypeerr("Failed to parse edges");
+                return gentypeerr("Failed to parse edges,");
         } else G.add_nodes(*g._VECTptr);
     } else if (g.is_symb_of_sommet(at_trail)) {
         // a trail is given
@@ -537,16 +537,16 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
         while(args[n].is_symb_of_sommet(at_equal)) {
             vecteur &sides=*args[n]._SYMBptr->feuille._VECTptr;
             if (!sides.front().is_integer())
-                return gensizeerr("Unrecognized option");
+                return gensizeerr("Unrecognized option,");
             switch(sides.front().val) {
             case _GT_DIRECTED:
                 if (!sides.back().is_integer())
-                    return gensizeerr("Option value not supported");
+                    return gensizeerr("Option value not supported,");
                 G.set_directed((bool)sides.back().val);
                 break;
             case _GT_WEIGHTED:
                 if (!sides.back().is_integer())
-                    return gensizeerr("Option value not supported");
+                    return gensizeerr("Option value not supported,");
                 weighted=(bool)sides.back().val;
                 break;
             }
@@ -561,11 +561,11 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
                 if (!G.is_directed() && m!=mtran(m))
                     return gt_err(_GT_ERR_MATRIX_NOT_SYMMETRIC);
                 if (!parse_matrix(G,m,i==2 || weighted,i,size_err))
-                    return size_err?gendimerr(contextptr):gentypeerr("Failed to parse matrix");
+                    return size_err?gendimerr(contextptr):gentypeerr("Failed to parse matrix,");
             } else if (i==0 && arg.is_integer()) {
                 int nv=arg.val;
                 if (nv<0)
-                    return gensizeerr("Number of vertices must be positive");
+                    return gensizeerr("Number of vertices must be positive,");
                 vecteur V;
                 G.make_default_labels(V,nv);
                 G.add_nodes(V);
@@ -575,11 +575,11 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
                 if (arg.subtype==_SET__VECT) {
                     // set of edges
                     if (!parse_edges(G,argv,true))
-                        return gentypeerr("Failed to parse edges");
+                        return gentypeerr("Failed to parse edges,");
                 } else if (i==1 && !is_zero(_is_permu(arg,contextptr)) &&
                            (permu_size=argv.size())>0) {
                     if (permu_size!=G.node_count())
-                        return gensizeerr("Permutation size does not match the number of vertices");
+                        return gensizeerr("Permutation size does not match the number of vertices,");
                     // directed cycle
                     G.set_directed(true);
                     int offset=array_start(contextptr);
@@ -603,7 +603,7 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
                         if (rh.type==_VECT || int(rh._VECTptr->size())!=G.node_count())
                             return gensizeerr(contextptr);
                         if (!parse_vertex_colors(G,rh))
-                            return gensizeerr("Failed to parse vertex colors");
+                            return gensizeerr("Failed to parse vertex colors,");
                         break;
                     }
                 } else if (lh==at_coordonnees) {
@@ -614,8 +614,8 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
                         return gensizeerr(contextptr);
                     bool size_error=false;
                     if (!parse_vertex_coordinates(G,*rh._VECTptr,size_error))
-                        return size_error?gensizeerr("Wrong number of vertex positions"):
-                                          gentypeerr("Failed to parse vertex positions");
+                        return size_error?gensizeerr("Wrong number of vertex positions,"):
+                                          gentypeerr("Failed to parse vertex positions,");
                 }
             } else return gentypeerr(contextptr);
         }
@@ -675,7 +675,7 @@ gen _export_graph(const gen &g,GIAC_CONTEXT) {
             to_latex=true;
         else if (gv.back().is_symb_of_sommet(at_equal)) {
             if (gv.back()._SYMBptr->feuille._VECTptr->front()!=at_latex)
-                return gentypeerr("Option not supported, expected \"latex\"");
+                return gentypeerr("Option not supported, expected \"latex\",");
             to_latex=true;
             args=gv.back()._SYMBptr->feuille._VECTptr->back();
         } else return gentypeerr(contextptr);
@@ -1141,7 +1141,7 @@ gen _cycle_graph(const gen &g,GIAC_CONTEXT) {
     if (!vertices_from_integer_or_vecteur(g,G))
         return gt_err(_GT_ERR_BAD_VERTICES);
     if (G.node_count()<3)
-        return gensizeerr("At least 3 vertices are required");
+        return gensizeerr("At least 3 vertices are required,");
     G.make_cycle_graph();
     /*
     stringstream ss;
@@ -1316,7 +1316,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                         break;
                     case _LABELS:
                         if (!rh.is_integer())
-                            return gentypeerr("Expected an integer");
+                            return gentypeerr("Expected an integer,");
                         labels=(bool)rh.val;
                         opt_counter--;
                         break;
@@ -1691,7 +1691,7 @@ gen _random_bipartite_graph(const gen &g,GIAC_CONTEXT) {
     } else if (gv.front().type==_VECT && gv.front()._VECTptr->size()==2) {
         vecteur &ab=*gv.front()._VECTptr;
         if (!ab.front().is_integer() || !ab.back().is_integer())
-            return gentypeerr("Expected a pair of integers");
+            return gentypeerr("Expected a pair of integers,");
         a=ab.front().val;
         b=ab.back().val;
         if (a<=0 || b<=0)
@@ -1701,9 +1701,9 @@ gen _random_bipartite_graph(const gen &g,GIAC_CONTEXT) {
     double p;
     if (gv.back().is_integer()) {
         if ((m=gv.back().val)<1)
-            return gensizeerr("Expected a positive integer");
+            return gensizeerr("Expected a positive integer,");
         if (m>a*b)
-            return gensizeerr("Number of edges too large");
+            return gensizeerr("Number of edges too large,");
         p=m;
     } else p=gv.back().DOUBLE_val();
     G.make_default_labels(V,a,0);
@@ -1771,7 +1771,7 @@ gen _random_regular_graph(const gen &g,GIAC_CONTEXT) {
         connected=true;
     int n=V.size();
     if (n<=d+1 || (n*d)%2!=0) // check the necessary condition
-        return gensizeerr("Graph does not exist");
+        return gensizeerr("Graph does not exist,");
     G.make_random_regular(V,d,connected);
     return G.to_gen();
 }
@@ -1843,10 +1843,10 @@ gen _random_planar_graph(const gen &g,GIAC_CONTEXT) {
                 return gentypeerr(contextptr);
             p=gv[1].DOUBLE_val();
             if (p<0 || p>=1)
-                return gentypeerr("Invalid probability specification");
+                return gentypeerr("Invalid probability specification,");
             if (gv.size()==3) {
                 if (!gv.back().is_integer() || gv.back().val<0 || gv.back().val>3)
-                    return gentypeerr("Invalid connectivity specification");
+                    return gentypeerr("Invalid connectivity specification,");
                 connectivity=gv.back().val;
             }
         } else return gensizeerr(contextptr);
@@ -1883,15 +1883,15 @@ gen _assign_edge_weights(const gen &g,GIAC_CONTEXT) {
             return gentypeerr(contextptr);
         int m=gv[1].val,n=gv[2].val;
         if (m>n)
-            return gensizeerr("Lower bound too high");
+            return gensizeerr("Lower bound too high,");
         G.randomize_edge_weights(m,n,true);
     } else if (gv.size()==2) {
         if (!gv.back().is_symb_of_sommet(at_interval))
-            return gentypeerr("Expected an interval");
+            return gentypeerr("Expected an interval,");
         gen a=gv.back()._SYMBptr->feuille._VECTptr->front(),
                 b=gv.back()._SYMBptr->feuille._VECTptr->back();
         if (!graphe::is_real_number(a) || !graphe::is_real_number(b))
-            return gentypeerr("Expected an interval of reals");
+            return gentypeerr("Expected an interval of reals,");
         G.randomize_edge_weights(_evalf(a,contextptr).DOUBLE_val(),_evalf(b,contextptr).DOUBLE_val(),false);
     }
     return G.to_gen();
@@ -2868,7 +2868,7 @@ gen _isomorphic_copy(const gen &g,GIAC_CONTEXT) {
     if (gv.size()<2)
         return gensizeerr(contextptr);
     if (is_zero(_is_permu(gv[1],contextptr)))
-        return gentypeerr("Expected a permutation");
+        return gentypeerr("Expected a permutation,");
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
@@ -2880,7 +2880,7 @@ gen _isomorphic_copy(const gen &g,GIAC_CONTEXT) {
     }
     graphe H;
     if (!G.isomorphic_copy(H,v))
-        return gentypeerr("Failed to create isomorphic copy");
+        return gentypeerr("Failed to create isomorphic copy,");
     return H.to_gen();
 }
 static const char _isomorphic_copy_s[]="isomorphic_copy";
@@ -2900,13 +2900,13 @@ gen _permute_vertices(const gen &g,GIAC_CONTEXT) {
     if (gv.size()<2)
         return gensizeerr(contextptr);
     if (gv[1].type!=_VECT)
-        return gentypeerr("Expected a list of vertices");
+        return gentypeerr("Expected a list of vertices,");
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     vecteur &sigma=*gv[1]._VECTptr,V=G.vertices();
     if (sigma.size()!=V.size())
-        return gensizeerr("List size does not match");
+        return gensizeerr("List size does not match,");
     graphe::ivector v(sigma.size(),-1);
     const_iterateur jt;
     int i;
@@ -2915,7 +2915,7 @@ gen _permute_vertices(const gen &g,GIAC_CONTEXT) {
             return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
         i=jt-V.begin();
         if (find(v.begin(),v.end(),i)!=v.end())
-            return gentypeerr("List is not a permutation");
+            return gentypeerr("List is not a permutation,");
         v[it-sigma.begin()]=i;
     }
     graphe H;
@@ -2939,15 +2939,15 @@ gen _relabel_vertices(const gen &g,GIAC_CONTEXT) {
     if (gv.size()<2)
         return gensizeerr(contextptr);
     if (gv[1].type!=_VECT)
-        return gentypeerr("Expected a list of labels");
+        return gentypeerr("Expected a list of labels,");
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     vecteur &labels=*gv[1]._VECTptr;
     if (int(labels.size())!=G.node_count())
-        return gensizeerr("Wrong number of labels");
+        return gensizeerr("Wrong number of labels,");
     if (!G.relabel_nodes(labels))
-        return gentypeerr("Failed to relabel vertices");
+        return gentypeerr("Failed to relabel vertices,");
     return G.to_gen();
 }
 static const char _relabel_vertices_s[]="relabel_vertices";
@@ -3123,7 +3123,7 @@ gen _is_planar(const gen &g,GIAC_CONTEXT) {
         if (g._VECTptr->size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         if (g._VECTptr->back().type!=_IDNT)
-            return gentypeerr("Expected an identifier");
+            return gentypeerr("Expected an identifier,");
         F=g._VECTptr->back();
     }
     graphe G(contextptr),U(contextptr);
@@ -3176,7 +3176,7 @@ gen _complete_kary_tree(const gen &g,GIAC_CONTEXT) {
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (!gv.front().is_integer() || !gv.back().is_integer())
-        return gentypeerr("Expected an integer");
+        return gentypeerr("Expected an integer,");
     int k=gv.front().val,n=gv.back().val;
     if (k<2 || n<1)
         return gensizeerr(contextptr);
@@ -3196,7 +3196,7 @@ define_unary_function_ptr5(at_complete_kary_tree,alias_at_complete_kary_tree,&__
 gen _prism_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (!g.is_integer() || g.val<3)
-        return gensizeerr("Expected an integer greater than two");
+        return gensizeerr("Expected an integer greater than two,");
     return _petersen_graph(makesequence(g,1),contextptr);
 }
 static const char _prism_graph_s[]="prism_graph";
@@ -3210,7 +3210,7 @@ define_unary_function_ptr5(at_prism_graph,alias_at_prism_graph,&__prism_graph,0,
 gen _antiprism_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (!g.is_integer() || g.val<3)
-        return gensizeerr("Expected an integer greater than two");
+        return gensizeerr("Expected an integer greater than two,");
     graphe G(contextptr);
     graphe::layout x;
     G.make_antiprism_graph(g.val,&x);
@@ -3243,7 +3243,7 @@ define_unary_function_ptr5(at_star_graph,alias_at_star_graph,&__star_graph,0,tru
 gen _wheel_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (!g.is_integer() || g.val<3)
-        return gensizeerr("Expected an integer greater than two");
+        return gensizeerr("Expected an integer greater than two,");
     graphe G(contextptr);
     graphe::layout x;
     G.make_wheel_graph(g.val,&x);
@@ -3266,10 +3266,10 @@ gen _grid_graph(const gen &g,GIAC_CONTEXT) {
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (!gv.front().is_integer() || !gv.back().is_integer())
-        return gentypeerr("Expected an integer");
+        return gentypeerr("Expected an integer,");
     int m=gv.front().val,n=gv.back().val;
     if (m<2 || n<2)
-        return gensizeerr("Expected an integer greater than one");
+        return gensizeerr("Expected an integer greater than one,");
     graphe G(contextptr);
     G.make_grid_graph(m,n);
     return G.to_gen();
@@ -3290,10 +3290,10 @@ gen _torus_grid_graph(const gen &g,GIAC_CONTEXT) {
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (!gv.front().is_integer() || !gv.back().is_integer())
-        return gentypeerr("Expected an integer");
+        return gentypeerr("Expected an integer,");
     int m=gv.front().val,n=gv.back().val;
     if (m<3 || n<3)
-        return gensizeerr("Expected an integer greater than two");
+        return gensizeerr("Expected an integer greater than two,");
     graphe G(contextptr);
     G.make_grid_graph(m,n,true);
     return G.to_gen();
@@ -3314,10 +3314,10 @@ gen _web_graph(const gen &g,GIAC_CONTEXT) {
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (!gv.front().is_integer() || !gv.back().is_integer())
-        return gentypeerr("Expected an integer");
+        return gentypeerr("Expected an integer,");
     int a=gv.front().val,b=gv.back().val;
     if (a<3 || b<2)
-        return gensizeerr("Value too small");
+        return gensizeerr("Value too small,");
     graphe G(contextptr);
     graphe::layout x;
     G.make_web_graph(a,b,&x);
@@ -3380,7 +3380,7 @@ gen _path_graph(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_BAD_VERTICES);
     int n=G.node_count();
     if (n<2)
-        return gensizeerr("At least two vertices are required");
+        return gensizeerr("At least two vertices are required,");
     for (int i=0;i<n-1;++i) {
         G.add_edge(i,i+1);
     }
@@ -3416,7 +3416,7 @@ gen _is_eulerian(const gen &g,GIAC_CONTEXT) {
         // output path as vecteur V
         gen V=g._VECTptr->back();
         if (V.type!=_IDNT)
-            return gentypeerr("Expected an identifier");
+            return gentypeerr("Expected an identifier,");
         vecteur P(path.size());
         int i=0;
         for (graphe::ivector_iter it=path.begin();it!=path.end();++it) {
@@ -3444,10 +3444,10 @@ gen _kneser_graph(const gen &g,GIAC_CONTEXT) {
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (!gv.front().is_integer() || !gv.back().is_integer())
-        return gentypeerr("Expected an integer");
+        return gentypeerr("Expected an integer,");
     int n=gv.front().val,k=gv.back().val;
     if (n<2 || n>20 || k<1 || k>=n)
-        return gensizeerr("Failed to satisfy 2<n<=20 and 1<=k<n");
+        return gensizeerr("Failed to satisfy 2<n<=20 and 1<=k<n,");
     graphe G(contextptr);
     if (!G.make_kneser_graph(n,k))
         return gensizeerr(contextptr);
@@ -3468,7 +3468,7 @@ gen _odd_graph(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
     int n=g.val;
     if (n<2 || n>8)
-        return gensizeerr("Failed to satisfy 2<n<=8");
+        return gensizeerr("Failed to satisfy 2<n<=8,");
     graphe G(contextptr);
     assert(G.make_kneser_graph(2*n-1,n-1));
     return G.to_gen();
@@ -3507,7 +3507,7 @@ gen _highlight_vertex(const gen &g,GIAC_CONTEXT) {
     }
     gen C=gv.size()==3?gv.back():graphe::default_highlighted_vertex_color;
     if (!parse_vertex_colors(G,C,indices))
-        return gentypeerr("Failed to parse vertex colors");
+        return gentypeerr("Failed to parse vertex colors,");
     return G.to_gen();
 }
 static const char _highlight_vertex_s[]="highlight_vertex";
@@ -3564,7 +3564,7 @@ gen _highlight_subgraph(const gen &g,GIAC_CONTEXT) {
     int C1=graphe::default_highlighted_edge_color,C2=graphe::default_highlighted_vertex_color;
     if (gv.size()==4) {
         if (!gv[2].is_integer() || !gv[3].is_integer())
-            return gentypeerr("Expected an integer");
+            return gentypeerr("Expected an integer,");
         C1=gv[2].val;
         C2=gv[3].val;
     }
@@ -3613,9 +3613,9 @@ gen _highlight_trail(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     gen color=gv.size()==3?gv.back():gen(_RED);
     if (color.type==_VECT && !is_integer_vecteur(*color._VECTptr))
-        return gentypeerr("Invalid specification of colors");
+        return gentypeerr("Invalid specification of colors,");
     if (color.type==_VECT && color._VECTptr->size()!=V.size())
-        return gendimerr("Numbers of colors and vertices do not match");
+        return gendimerr("Numbers of colors and vertices do not match,");
     int i,j;
     for (const_iterateur it=V.begin();it!=V.end();++it) {
         for (const_iterateur jt=it->_VECTptr->begin();jt!=it->_VECTptr->end()-1;++jt) {
@@ -3777,11 +3777,11 @@ gen _interval_graph(const gen &g,GIAC_CONTEXT) {
     V.reserve(n);
     for (const_iterateur it=gv.begin();it!=gv.end();++it) {
         if (!it->is_symb_of_sommet(at_interval))
-            return gentypeerr("Expected an interval");
+            return gentypeerr("Expected an interval,");
         a=it->_SYMBptr->feuille._VECTptr->front();
         b=it->_SYMBptr->feuille._VECTptr->back();
         if (!graphe::is_real_number(a) || !graphe::is_real_number(b))
-            return gentypeerr("Expected an interval of reals");
+            return gentypeerr("Expected an interval of reals,");
         ss.str("");
         ss << a << " .. " << b;
         V.push_back(graphe::str2gen(ss.str(),true));
@@ -4275,8 +4275,8 @@ define_unary_function_ptr5(at_clique_cover_number,alias_at_clique_cover_number,&
 
 /* USAGE:   chromatic_number(G,[interval or approx || cols])
  *
- * Returns the chromatic number of graph G. If "interval" or "approx" parameter
- * is given, the bounds are returned as an interval. If identifier cols is
+ * Returns the chromatic number of the input graph G. If "interval" or "approx" parameter
+ * is given, the bounds are returned as an interval. If an identifier cols is
  * given, the coloring will be stored to it.
  */
 gen _chromatic_number(const gen &g,GIAC_CONTEXT) {
@@ -4874,7 +4874,7 @@ gen _st_ordering(const gen &g,GIAC_CONTEXT) {
     vecteur st=G.get_st_numbering();
     if (gv.size()>3) {
         if (gv.back().type!=_IDNT)
-            return gentypeerr("Expected an identifier");
+            return gentypeerr("Expected an identifier,");
         G.assign_edge_directions_from_st();
         identifier_assign(*gv.back()._IDNTptr,G.to_gen(),contextptr);
     }
@@ -4899,7 +4899,7 @@ gen _greedy_color(const gen &g,GIAC_CONTEXT) {
         if (g._VECTptr->size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         if (is_zero(_is_permu(g._VECTptr->back(),contextptr)))
-            return gentypeerr("Expected a permutation");
+            return gentypeerr("Expected a permutation,");
         p=vecteur_2_vector_int(*g._VECTptr->back()._VECTptr);
         int offset=array_start(contextptr);
         for (graphe::ivector::iterator it=p.begin();it!=p.end();++it) {
@@ -4915,7 +4915,7 @@ gen _greedy_color(const gen &g,GIAC_CONTEXT) {
             *it=it-p.begin();
         }
     } else if (G.node_count()!=int(p.size()))
-        return gensizeerr("Permutation size must match the number of vertices");
+        return gensizeerr("Permutation size must match the number of vertices,");
     G.greedy_vertex_coloring(p);
     G.get_node_colors(colors);
     return vector_int_2_vecteur(colors);
@@ -4938,7 +4938,7 @@ gen _is_bipartite(const gen &g,GIAC_CONTEXT) {
         if (g._VECTptr->size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         if ((P=g._VECTptr->back()).type!=_IDNT)
-            return gentypeerr("Expected an identifier");
+            return gentypeerr("Expected an identifier,");
     }
     graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
@@ -5020,7 +5020,7 @@ gen _is_vertex_colorable(const gen &g,GIAC_CONTEXT) {
     gen colors_dest=undef;
     if (gv.size()>2) {
         if (gv.back().type!=_IDNT)
-            return gentypeerr("Expected an identifier");
+            return gentypeerr("Expected an identifier,");
         colors_dest=gv.back();
     }
     graphe G(contextptr);
@@ -5054,14 +5054,14 @@ gen _set_vertex_positions(const gen &g,GIAC_CONTEXT) {
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (gv.back().type!=_VECT)
-        return gentypeerr("Expected a list of coordinates");
+        return gentypeerr("Expected a list of coordinates,");
     vecteur vp=*_evalf(gv.back(),contextptr)._VECTptr;
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     int n,d=0;
     if ((n=vp.size())!=G.node_count())
-        return gensizeerr("Number of positions must match the number of vertices");
+        return gensizeerr("Number of positions must match the number of vertices,");
     graphe::layout x(n);
     for (int i=0;i<n;++i) {
         graphe::gen2point(vp[i],x[i]);
@@ -5169,7 +5169,8 @@ gen _line_graph(const gen &g,GIAC_CONTEXT) {
         gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
-    G.line_graph(L);
+    graphe::ipairs E;
+    G.line_graph(L,E);
     return L.to_gen();
 }
 static const char _line_graph_s[]="line_graph";
@@ -5224,7 +5225,7 @@ gen _is_isomorphic(const gen &g,GIAC_CONTEXT) {
     gen isom=undef;
     vecteur &gv=*g._VECTptr;
     if (gv.size()<2 || gv.size()>3)
-        return gensizeerr("Wrong number of arguments");
+        return gensizeerr("Wrong number of arguments,");
     graphe G1(contextptr),G2(contextptr);
     if (!G1.read_gen(gv[0]) || !G2.read_gen(gv[1]))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
@@ -5232,10 +5233,10 @@ gen _is_isomorphic(const gen &g,GIAC_CONTEXT) {
         return graphe::FAUX;
     if (gv.size()>2) {
         if ((isom=gv.back()).type!=_IDNT)
-            return gentypeerr("Expected an unassigned identifier");
+            return gentypeerr("Expected an unassigned identifier,");
     }
-    map<int,int> m;
-    int res=G1.is_isomorphic(G2,m);
+    map<int,int> clab;
+    int res=G1.is_isomorphic(G2,clab);
     if (res==0)
         return graphe::FAUX;
     if (res<0) // an error occurred
@@ -5244,7 +5245,7 @@ gen _is_isomorphic(const gen &g,GIAC_CONTEXT) {
         vecteur mapping;
         int n=G1.node_count();
         for (int i=0;i<n;++i) {
-            mapping.push_back(symbolic(at_equal,G1.node_label(i),G2.node_label(m[i])));
+            mapping.push_back(symbolic(at_equal,G1.node_label(i),G2.node_label(clab[i])));
         }
         identifier_assign(*isom._IDNTptr,mapping,contextptr);
     }
@@ -5293,6 +5294,74 @@ gen _canonical_labeling(const gen &g,GIAC_CONTEXT) {
 static const char _canonical_labeling_s[]="canonical_labeling";
 static define_unary_function_eval(__canonical_labeling,&_canonical_labeling,_canonical_labeling_s);
 define_unary_function_ptr5(at_canonical_labeling,alias_at_canonical_labeling,&__canonical_labeling,0,true)
+
+/* USAGE:   minimal_edge_coloring(G,[sto])
+ *
+ * Finds the minimal edge coloring of the input graph G and returns the
+ * sequence n,L where n is the class of G (1 for D colors and 2 for D+1 colors)
+ * and L is the list of colors of edges of G as returned by the edges command,
+ * or a copy of G with colored edges if the option 'sto' is specified.
+ */
+gen _minimal_edge_coloring(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    bool store=false;
+    if (g.subtype==_SEQ__VECT) {
+        if (g._VECTptr->size()!=2)
+            return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+        if (g._VECTptr->back()!=at_sto)
+            return gensizeerr("Expected 'sto' as the second argument,");
+        store=true;
+    }
+    graphe G(contextptr);
+    if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    graphe::ivector colors;
+    int typ=G.exact_edge_coloring(colors);
+    if (typ==0)
+        return undef;
+    if (store)
+        return G.to_gen();
+    return makesequence(typ,vector_int_2_vecteur(colors));
+}
+static const char _minimal_edge_coloring_s[]="minimal_edge_coloring";
+static define_unary_function_eval(__minimal_edge_coloring,&_minimal_edge_coloring,_minimal_edge_coloring_s);
+define_unary_function_ptr5(at_minimal_edge_coloring,alias_at_minimal_edge_coloring,&__minimal_edge_coloring,0,true)
+
+/* USAGE:   chromatic_index(G,[cols])
+ *
+ * Returns the chromatic index of the input graph G. If identifier cols is
+ * given, the coloring will be stored to it.
+ */
+gen _chromatic_index(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    gen colors_dest=undef;
+    if (g.subtype==_SEQ__VECT) {
+        vecteur &gv=*g._VECTptr;
+        if (gv.size()!=2)
+            return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+        if ((colors_dest=g._VECTptr->back()).type!=_IDNT)
+            return gentypeerr("Expected an unassigned identifier,");
+    }
+    graphe G(contextptr);
+    if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    graphe::ivector colors;
+    int ncolors;
+    G.exact_edge_coloring(colors,&ncolors);
+    if (ncolors==0)
+        return undef;
+    if (!is_undef(colors_dest)) { // store the coloring
+        identifier_assign(*colors_dest._IDNTptr,vector_int_2_vecteur(colors),contextptr);
+    }
+    return ncolors;
+}
+static const char _chromatic_index_s[]="chromatic_index";
+static define_unary_function_eval(__chromatic_index,&_chromatic_index,_chromatic_index_s);
+define_unary_function_ptr5(at_chromatic_index,alias_at_chromatic_index,&__chromatic_index,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

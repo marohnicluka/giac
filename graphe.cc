@@ -1838,11 +1838,13 @@ bool graphe::read_dot(const string &filename) {
     dotfile.close();
     if (dot_subgraph_level!=0 || strict || dot_reading_value || dot_reading_attributes)
         error_raised=true;
-    /* set delayed attributes to nodes */
-    for (map<int,attrib>::const_iterator it=delayed_attributes.begin();it!=delayed_attributes.end();++it) {
-        vertex &v=nodes[it->first];
-        for (attrib_iter ait=it->second.begin();ait!=it->second.end();++ait) {
-            v.set_attribute(ait->first,ait->second);
+    else {
+        /* set delayed attributes to nodes */
+        for (map<int,attrib>::const_iterator it=delayed_attributes.begin();it!=delayed_attributes.end();++it) {
+            vertex &v=nodes[it->first];
+            for (attrib_iter ait=it->second.begin();ait!=it->second.end();++ait) {
+                v.set_attribute(ait->first,ait->second);
+            }
         }
     }
     return !error_raised;
@@ -2508,12 +2510,12 @@ void graphe::maximal_independent_set(ivector &ind) const {
  * matching_maximizer class implementation ****************************
  */
 
-graphe::matching_maximizer::matching_maximizer(graphe *gr) {
+graphe::edmonds::edmonds(graphe *gr) {
     G=gr;
 }
 
 /* return the vertex which matches v in matching, return -1 if v is not matched */
-int graphe::matching_maximizer::mate(const ipairs &matching, int v) {
+int graphe::edmonds::mate(const ipairs &matching, int v) {
     for (ipairs_iter it=matching.begin();it!=matching.end();++it) {
         if (it->first==v)
             return it->second;
@@ -2523,7 +2525,7 @@ int graphe::matching_maximizer::mate(const ipairs &matching, int v) {
     return -1;
 }
 
-int graphe::matching_maximizer::find_root(int k) {
+int graphe::edmonds::find_root(int k) {
     map<int,int>::const_iterator it=forest.find(k);
     if (it==forest.end())
         return -1;
@@ -2533,7 +2535,7 @@ int graphe::matching_maximizer::find_root(int k) {
     return it->first;
 }
 
-int graphe::matching_maximizer::root_distance(map<int,int>::const_iterator it) {
+int graphe::edmonds::root_distance(map<int,int>::const_iterator it) {
     int d=0;
     while (it->second!=-1) {
         it=forest.find(it->second);
@@ -2542,14 +2544,14 @@ int graphe::matching_maximizer::root_distance(map<int,int>::const_iterator it) {
     return d;
 }
 
-int graphe::matching_maximizer::root_distance(int v) {
+int graphe::edmonds::root_distance(int v) {
     map<int,int>::const_iterator it=forest.find(v);
     if (it==forest.end())
         return -1;
     return root_distance(it);
 }
 
-int graphe::matching_maximizer::find_base(int v, int w) {
+int graphe::edmonds::find_base(int v, int w) {
     map<int,int>::const_iterator it=forest.find(v);
     if (it==forest.end())
         return -1;
@@ -2569,7 +2571,7 @@ int graphe::matching_maximizer::find_base(int v, int w) {
     return it->first;
 }
 
-bool graphe::matching_maximizer::tree_path(int v, int w, ivector &path) {
+bool graphe::edmonds::tree_path(int v, int w, ivector &path) {
     path.clear();
     map<int,int>::const_iterator it=forest.find(w);
     if (it==forest.end())
@@ -2592,7 +2594,7 @@ bool graphe::matching_maximizer::tree_path(int v, int w, ivector &path) {
     return true;
 }
 
-map<int,graphe::ivector>::iterator graphe::matching_maximizer::in_blossom(int v) {
+map<int,graphe::ivector>::iterator graphe::edmonds::in_blossom(int v) {
     map<int,ivector>::iterator it=blossoms.begin();
     for (;it!=blossoms.end();++it) {
         if (find(it->second.begin(),it->second.end(),v)!=it->second.end())
@@ -2601,7 +2603,7 @@ map<int,graphe::ivector>::iterator graphe::matching_maximizer::in_blossom(int v)
     return it;
 }
 
-map<int,graphe::ivector>::iterator graphe::matching_maximizer::is_blossom_base(int v) {
+map<int,graphe::ivector>::iterator graphe::edmonds::is_blossom_base(int v) {
     map<int,ivector>::iterator it=blossoms.begin();
     for (;it!=blossoms.end();++it) {
         if (v==it->first)
@@ -2610,7 +2612,7 @@ map<int,graphe::ivector>::iterator graphe::matching_maximizer::is_blossom_base(i
     return it;
 }
 
-void graphe::matching_maximizer::append_non_blossom_adjacents(int v,map<int,ivector>::const_iterator bit,ivector &lst) {
+void graphe::edmonds::append_non_blossom_adjacents(int v,map<int,ivector>::const_iterator bit,ivector &lst) {
     ivector adj;
     G->adjacent_nodes(v,adj);
     int a;
@@ -2622,7 +2624,7 @@ void graphe::matching_maximizer::append_non_blossom_adjacents(int v,map<int,ivec
     lst.insert(lst.begin(),adj.begin(),adj.end());
 }
 
-graphe::ivector graphe::matching_maximizer::adjacent(int v) {
+graphe::ivector graphe::edmonds::adjacent(int v) {
     map<int,ivector>::const_iterator bit=is_blossom_base(v);
     ivector res;
     if (bit!=blossoms.end()) {
@@ -2643,7 +2645,7 @@ graphe::ivector graphe::matching_maximizer::adjacent(int v) {
     return res;
 }
 
-bool graphe::matching_maximizer::find_augmenting_path(const ipairs &matching, ivector &path) {
+bool graphe::edmonds::find_augmenting_path(const ipairs &matching, ivector &path) {
     map<int,bool> node_marked;
     map<int,map<int,bool> > edge_marked;
     /* collect exposed (free) vertices and create a forest of singleton trees */
@@ -2742,7 +2744,7 @@ bool graphe::matching_maximizer::find_augmenting_path(const ipairs &matching, iv
     return false;
 }
 
-void graphe::matching_maximizer::find_maximum_matching(ipairs &matching) {
+void graphe::edmonds::find_maximum_matching(ipairs &matching) {
     ivector path;
     while (find_augmenting_path(matching,path)) {
         /* augmenting path was found, extend the matching */
@@ -2769,7 +2771,7 @@ void graphe::matching_maximizer::find_maximum_matching(ipairs &matching) {
 /* extend given matching to a maximum matching using Edmonds'
  * blossom algorithm with time complexity O(m*n^2) */
 void graphe::maximize_matching(ipairs &matching) {
-    matching_maximizer maximizer(this);
+    edmonds maximizer(this);
     maximizer.find_maximum_matching(matching);
 }
 
@@ -3974,15 +3976,14 @@ bool graphe::adjacent_colors(int i,std::set<int> &colors) const {
  */
 
 #ifdef HAVE_LIBGLPK
-void graphe::painter::compute_bounds(int max_colors) {
+void graphe::painter::compute_bounds(const ivector &icol,int max_colors) {
     G->greedy_neighborhood_clique_cover_numbers(cover_number);
     G->uncolor_all_nodes();
-    ostergard ost(G,timeout);
-    lb=ost.maxclique(clique); // lower bound for number of colors
+    lb=(initially_colored=icol).size();
     ub=max_colors;
     if (ub==0) {
-        for (ivector_iter it=clique.begin();it!=clique.end();++it) {
-            G->set_node_color(*it,it-clique.begin()+1);
+        for (ivector_iter it=initially_colored.begin();it!=initially_colored.end();++it) {
+            G->set_node_color(*it,it-initially_colored.begin()+1);
         }
         G->dsatur();
         ub=G->color_count();
@@ -3998,11 +3999,11 @@ void graphe::painter::make_values() {
     for (int i=0;i<n;++i) {
         ivector &x=values[i];
         x.resize(ub);
-        pos=find(clique.begin(),clique.end(),i);
-        k=pos==clique.end()?-1:int(pos-clique.begin());
+        pos=find(initially_colored.begin(),initially_colored.end(),i);
+        k=pos==initially_colored.end()?-1:int(pos-initially_colored.begin());
         for (int j=0;j<ub;++j) {
             if (k<0) {
-                if (j<lb && G->node(clique[j]).has_neighbor(i))
+                if (j<lb && G->node(initially_colored[j]).has_neighbor(i))
                     x[j]=-2;
                 else {
                     x[j]=++col;
@@ -4020,7 +4021,7 @@ void graphe::painter::formulate_mip() {
     glp_set_obj_dir(mip,GLP_MIN);
     int n=G->node_count(),i,j,k;
     iscliq.resize(n,false);
-    for (ivector_iter it=clique.begin();it!=clique.end();++it) {
+    for (ivector_iter it=initially_colored.begin();it!=initially_colored.end();++it) {
         iscliq[*it]=true;
     }
     /* create row variables and count nonzero entries in the constraint matrix */
@@ -4041,7 +4042,7 @@ void graphe::painter::formulate_mip() {
         cn=cover_number[k];
         const vertex &v=G->node(k);
         for (j=0;j<ub;++j) {
-            if (j<lb && k==clique[j])
+            if (j<lb && k==initially_colored[j])
                 continue;
             nonzeros+=2;
             rs=j<lb?cn:0;
@@ -4100,7 +4101,7 @@ void graphe::painter::formulate_mip() {
         cn=cover_number[k];
         const vertex &v=G->node(k);
         for (j=0;j<ub;++j) {
-            if (j<lb && k==clique[j])
+            if (j<lb && k==initially_colored[j])
                 continue;
             ++row;
             for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
@@ -4268,8 +4269,8 @@ void graphe::painter::add_row(glp_prob *prob,int len,int *indices,double *coeffs
 void graphe::painter::fixed_coloring(glp_tree *tree) {
     glp_prob *prob=glp_ios_get_prob(tree); // current subproblem
     G->uncolor_all_nodes();
-    for (ivector_iter it=clique.begin();it!=clique.end();++it) {
-        G->set_node_color(*it,int(it-clique.begin())+1);
+    for (ivector_iter it=initially_colored.begin();it!=initially_colored.end();++it) {
+        G->set_node_color(*it,int(it-initially_colored.begin())+1);
     }
     for (int j=nxcols;j-->0;) {
         ipair &ij=col2ij[j];
@@ -4366,8 +4367,8 @@ int graphe::painter::select_branching_variable(glp_tree *tree) {
     return j;
 }
 
-int graphe::painter::color_vertices(ivector &colors,int max_colors) {
-    compute_bounds(max_colors);
+int graphe::painter::color_vertices(ivector &colors,const ivector &icol,int max_colors) {
+    compute_bounds(icol,max_colors);
     if (ub<lb)
         return 0;
     int n=G->node_count();
@@ -4441,8 +4442,10 @@ int graphe::exact_vertex_coloring(int max_colors) {
     message("Error: GLPK library is required for exact minimal graph coloring");
 #else
     painter pt(this);
-    ivector colors;
-    ncolors=pt.color_vertices(colors,max_colors);
+    ivector colors,clique;
+    ostergard ost(this,5.0);
+    ost.maxclique(clique);
+    ncolors=pt.color_vertices(colors,clique,max_colors);
     if (ncolors>0 && find(colors.begin(),colors.end(),0)!=colors.end()) {
         uncolor_all_nodes();
         ncolors=0;
@@ -4451,12 +4454,50 @@ int graphe::exact_vertex_coloring(int max_colors) {
     return ncolors;
 }
 
+/* color the edges of this graph using D or D+1 colors,
+ * return 1 in the former case, 2 in the latter, 0 on error */
+int graphe::exact_edge_coloring(ivector &colors,int *numcol) {
+    graphe L(ctx);
+    ipairs E;
+    line_graph(L,E);
+    /* find the vertex with maximum degree in G (this graph) */
+    int m=E.size(),maxdeg=0,deg,i,j,k;
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        if ((deg=it->neighbors().size())>maxdeg) {
+            maxdeg=deg;
+            i=it-nodes.begin();
+        }
+    }
+    ivector icol(maxdeg);
+    k=0;
+    for (j=0;j<m;++j) {
+        const ipair &e=E[j];
+        if (e.first==i || e.second==i)
+            icol[k++]=j;
+    }
+    assert(k==maxdeg);
+    painter pt(&L);
+    int ncolors=pt.color_vertices(colors,icol,maxdeg+1);
+    for (k=0;k<maxdeg;++k) {
+        colors[icol[k]]=k+1;
+    }
+    if (ncolors==0 || find(colors.begin(),colors.end(),0)!=colors.end())
+        return 0;
+    for (j=0;j<m;++j) {
+        const ipair &e=E[j];
+        set_edge_attribute(e.first,e.second,_GT_ATTRIB_COLOR,colors[j]);
+    }
+    if (numcol!=NULL)
+        *numcol=ncolors;
+    return ncolors-maxdeg+1;
+}
+
 /* returns true iff there is a clique cover of order not larger than k and finds that cover */
 bool graphe::clique_cover(ivectors &cover,int k) {
     if (is_triangle_free()) {
         /* clique cover consists of matched edges and singleton vertex sets */
         ipairs matching;
-        matching_maximizer maximizer(this);
+        edmonds maximizer(this);
         maximizer.find_maximum_matching(matching);
         int m=matching.size(),n=node_count(),i=0;
         if (k>0 && n-m>k)
@@ -4675,9 +4716,8 @@ bool graphe::hakimi(const ivector &L) {
     for (int i=0;i<n;++i) {
         D[i]=make_pair(i,L[i]);
     }
-    ipairs_comparator comp;
     do {
-        sort(D.begin(),D.end(),comp);
+        sort(D.begin(),D.end());
         i=D.back().first;
         d=D.back().second;
         D.pop_back();
@@ -5901,7 +5941,7 @@ void graphe::periphericity(const ivector &outer_face,ivector &p) {
  */
 
 /* traverse the tree from top to bottom using DFS */
-void graphe::tree_node_positioner::walk(int i,int pass,int level,double modsum) {
+void graphe::walker::walk(int i,int pass,int level,double modsum) {
     vertex &v=G->node(i);
     v.set_visited(true);
     if (pass==1)
@@ -5942,7 +5982,7 @@ void graphe::tree_node_positioner::walk(int i,int pass,int level,double modsum) 
 }
 
 /* set prelim and modifier for each node in V (they are on the same level) */
-void graphe::tree_node_positioner::process_level(int i) {
+void graphe::walker::process_level(int i) {
     ivector &L=levels[i];
     int lastp=G->node(L.front()).ancestor(),p,n=0,m=placed.size();
     double ppos=0,xpos=0,dist,shift=0,ssep=0,step=1,min_dist;
@@ -5993,7 +6033,7 @@ void graphe::tree_node_positioner::process_level(int i) {
 }
 
 /* node positioning procedure */
-void graphe::tree_node_positioner::positioning(int apex) {
+void graphe::walker::positioning(int apex) {
     walk(apex,1); // first walk: determine tree depth and set node ancestors
     /* allocate memory for level lists */
     levels.resize(depth);
@@ -6012,7 +6052,7 @@ void graphe::tree_node_positioner::positioning(int apex) {
     walk(apex,3); // third walk: sum up the modifiers (i.e. move subtrees)
 }
 
-graphe::tree_node_positioner::tree_node_positioner(graphe *gr,layout *ly,double hs,double vs) {
+graphe::walker::walker(graphe *gr,layout *ly,double hs,double vs) {
     G=gr;
     x=ly;
     hsep=hs;
@@ -6039,7 +6079,7 @@ void graphe::make_tree_layout(layout &x,double sep,int apex) {
     }
     /* layout the tree */
     double hsep=sep,vsep=sep*std::pow(PLASTIC_NUMBER,2);
-    tree_node_positioner P(this,&x,hsep,vsep);
+    walker P(this,&x,hsep,vsep);
     P.positioning(apex);
 }
 
@@ -6587,7 +6627,7 @@ bool graphe::points_coincide(const point &p,const point &q,double tol) {
  * IMPLEMENTATION OF THE DISJOINT SET DATA STRUCTURE
  */
 
-bool graphe::union_find::is_stored(int id) {
+bool graphe::unionfind::is_stored(int id) {
     assert(id>=0 && id<int(elements.size()));
     for (vector<element>::const_iterator it=elements.begin();it!=elements.end();++it) {
         if (it->id==id)
@@ -6596,7 +6636,7 @@ bool graphe::union_find::is_stored(int id) {
     return false;
 }
 
-void graphe::union_find::make_set(int id) {
+void graphe::unionfind::make_set(int id) {
     if (is_stored(id))
         return;
     element &e=elements[id];
@@ -6605,7 +6645,7 @@ void graphe::union_find::make_set(int id) {
     e.rank=1;
 }
 
-int graphe::union_find::find(int id) {
+int graphe::unionfind::find(int id) {
     assert(id>=0 && id<int(elements.size()));
     element &e=elements[id];
     assert(e.id>=0);
@@ -6614,7 +6654,7 @@ int graphe::union_find::find(int id) {
     return e.parent;
 }
 
-void graphe::union_find::unite(int id1,int id2) {
+void graphe::unionfind::unite(int id1,int id2) {
     int p1=find(id1),p2=find(id2);
     element &x=elements[p1],&y=elements[p2];
     if (x.rank>y.rank)
@@ -7512,7 +7552,7 @@ void graphe::minimal_spanning_tree(graphe &T,int sg) {
     edges_comparator comp(this);
     sort(E.begin(),E.end(),comp);
     int v,u;
-    union_find ds(node_count());
+    unionfind ds(node_count());
     for (ipairs_iter it=E.begin();it!=E.end();++it) {
         ds.make_set(it->first);
         ds.make_set(it->second);
@@ -7529,7 +7569,7 @@ void graphe::minimal_spanning_tree(graphe &T,int sg) {
 }
 
 /* Tarjan's offline algorithm for the lowest common ancestor, time complexity O(n) */
-void graphe::lca_recursion(int u,const ipairs &p,ivector &lca,union_find &ds) {
+void graphe::lca_recursion(int u,const ipairs &p,ivector &lca,unionfind &ds) {
     ds.make_set(u);
     vertex &U=node(u);
     U.set_ancestor(u);
@@ -7565,7 +7605,7 @@ void graphe::lowest_common_ancestors(int root,const ipairs &p,ivector &lca) {
     unset_all_ancestors();
     uncolor_all_nodes();
     lca.resize(p.size(),-1);
-    union_find ds(node_count());
+    unionfind ds(node_count());
     lca_recursion(root,p,lca,ds);
     assert(find(lca.begin(),lca.end(),-1)==lca.end());
 }
@@ -8124,9 +8164,9 @@ int graphe::bipartite_matching(const ivector &p1,const ivector &p2,ipairs &match
 }
 
 /* construct the line graph of this graph */
-void graphe::line_graph(graphe &G) const {
-    ipairs E;
-    get_edges_as_pairs(E);
+void graphe::line_graph(graphe &G,ipairs &E) const {
+    if (E.empty())
+        get_edges_as_pairs(E);
     G.clear();
     vecteur labels;
     gen label;

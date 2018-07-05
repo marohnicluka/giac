@@ -102,7 +102,7 @@ public:
     typedef std::vector<std::map<int,int> > edgemap;
     typedef std::vector<std::map<int,double> > edgemapd;
 
-    class vertex {
+    class vertex { // vertex class
         int m_subgraph;
         bool m_sorted;
         // used for traversing
@@ -203,7 +203,7 @@ public:
         inline const std::map<int,int> &edge_faces() const { return m_edge_faces; }
     };
 
-    class dotgraph {
+    class dotgraph { // temporary structure used in dot parsing
         int m_index;
         attrib vertex_attr;
         attrib edge_attr;
@@ -233,7 +233,7 @@ public:
         inline bool chain_empty() { return pos==0 && m_chain.front()==0; }
     };
 
-    class matching_maximizer {
+    class edmonds { // matching maximizer
         graphe *G;
         std::map<int,ivector> blossoms;
         std::map<int,int> forest;
@@ -249,12 +249,12 @@ public:
         ivector adjacent(int v);
         inline ipair make_edge(int i,int j) { return std::make_pair(i<j?i:j,i<j?j:i); }
     public:
-        matching_maximizer(graphe *gr);
+        edmonds(graphe *gr);
         bool find_augmenting_path(const ipairs &matching,ivector &path);
         void find_maximum_matching(ipairs &matching);
     };
 
-    class tree_node_positioner {
+    class walker { // tree node positioner
         graphe *G;
         layout *x;
         double hsep;
@@ -267,16 +267,16 @@ public:
         void walk(int i,int pass,int level=0,double modsum=0);
         void process_level(int i);
     public:
-        tree_node_positioner(graphe *gr,layout *ly,double hs,double vs);
+        walker(graphe *gr,layout *ly,double hs,double vs);
         void positioning(int apex);
     };
 
 #ifdef HAVE_LIBGLPK
-    class painter {
+    class painter { // vertex painter
         graphe *G;
         ivectors values;
         ivector cover_number;
-        ivector clique;
+        ivector initially_colored;
         ipairs col2ij;
         std::vector<bool> iscliq;
         ivector branch_candidates;
@@ -296,7 +296,7 @@ public:
         double *row_coeffs;
         int *best_indices;
         double *best_coeffs;
-        void compute_bounds(int max_colors);
+        void compute_bounds(const ivector &icol,int max_colors);
         void make_values();
         void formulate_mip();
         static void mip_callback(glp_tree *tree,void *info);
@@ -305,14 +305,14 @@ public:
         void generate_rows(glp_tree *tree);
         void add_row(glp_prob *prob,int len,int *indices,double *coeffs,double rh);
     public:
-        painter(graphe *gr,double tm=5.0) { G=gr; timeout=tm; }
-        int color_vertices(ivector &colors,int max_colors=0);
+        painter(graphe *gr) { G=gr; }
+        int color_vertices(ivector &colors,const ivector &icol,int max_colors=0);
         int select_branching_variable(glp_tree *tree);
         void heur_solution(glp_tree *tree);
     };
 #endif
 
-    class rectangle {
+    class rectangle { // simple rectangle class
         double m_x;
         double m_y;
         double m_width;
@@ -346,7 +346,7 @@ public:
         layout *get_layout() const { return L; }
     };
 
-    class union_find {
+    class unionfind { // disjoint-set data structure implementation
         struct element {
             int id;
             int parent;
@@ -355,14 +355,14 @@ public:
         };
         std::vector<element> elements;
     public:
-        union_find(int n) { elements.resize(n); }
+        unionfind(int n) { elements.resize(n); }
         void make_set(int id);
         bool is_stored(int id);
         int find(int id);
         void unite(int id1,int id2);
     };
 
-    class ostergard {
+    class ostergard { // clique maximizer
         graphe *G;
         int maxsize;
         bool found;
@@ -378,13 +378,7 @@ public:
         int maxclique(ivector &clique);
     };
 
-    struct ipairs_comparator {
-        bool operator()(const ipair &a,const ipair &b) {
-            return a.second<b.second;
-        }
-    };
-
-    struct edges_comparator {
+    struct edges_comparator { // sort edges by their weight
         graphe *G;
         bool operator()(const ipair &a,const ipair &b) {
             return G->weight(a)<G->weight(b);
@@ -392,7 +386,7 @@ public:
         edges_comparator(graphe *gr) { G=gr; }
     };
 
-    struct degree_comparator {
+    struct degree_comparator { // sort vertices by their degrees
         graphe *G;
         bool asc;
         bool operator()(int v,int w) {
@@ -402,7 +396,7 @@ public:
         degree_comparator(graphe *gr,bool ascending=true) { G=gr; asc=ascending; }
     };
 
-    struct ivectors_degree_comparator {
+    struct ivectors_degree_comparator { // sort sets of vertices by ascending total degree
         graphe *G;
         bool operator()(const ivector &a,const ivector &b) {
             int deg_a,deg_b;
@@ -562,7 +556,7 @@ private:
     static void generate_nk_sets(int n,int k,std::vector<ulong> &v);
     void strongconnect_dfs(ivectors &components,int i,int sg);
     bool degrees_equal(const ivector &v,int deg=0) const;
-    void lca_recursion(int u,const ipairs &p,ivector &lca_recursion,union_find &ds);
+    void lca_recursion(int u,const ipairs &p,ivector &lca_recursion,unionfind &ds);
     void pathfinder(int i,ivector &path);
     void rdfs(int i,ivector &d,bool rec,int sg,bool skip_embedded);
     bool is_descendant(int v,int anc) const;
@@ -829,6 +823,7 @@ public:
     void greedy_vertex_coloring_biggs(ivector &ordering);
     int greedy_vertex_coloring(const ivector &p);
     int exact_vertex_coloring(int max_colors=0);
+    int exact_edge_coloring(ivector &colors,int *numcol=NULL);
     void get_node_colors(ivector &colors);
     bool is_bipartite(ivector &V1,ivector &V2,int sg=-1);
     bool is_vertex_colorable(int k);
@@ -840,7 +835,7 @@ public:
     void store_layout(const layout &x);
     bool has_stored_layout(layout &x) const;
     int bipartite_matching(const ivector &p1,const ivector &p2,ipairs &matching);
-    void line_graph(graphe &G) const;
+    void line_graph(graphe &G,ipairs &E) const;
     void transitive_closure(graphe &G,bool weighted=false);
     int is_isomorphic(const graphe &other,std::map<int,int> &isom) const;
     gen aut_generators() const;

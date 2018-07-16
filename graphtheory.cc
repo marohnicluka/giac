@@ -43,7 +43,7 @@ static const char *gt_error_messages[] = {
     "Edge not found",                                                   // 10
     "Vertex not found",                                                 // 11
     "Graph is not a tree",                                              // 12
-    "Exactly one root node must be specified per connected component",  // 13Returns the sequence of generators of Aut(G)
+    "Exactly one root node must be specified per connected component",  // 13
     "Invalid root node specification",                                  // 14
     "Graph is not planar",                                              // 15
     "Connected graph required",                                         // 16
@@ -5331,8 +5331,8 @@ define_unary_function_ptr5(at_minimal_edge_coloring,alias_at_minimal_edge_colori
 
 /* USAGE:   chromatic_index(G,[cols])
  *
- * Returns the chromatic index of the input graph G. If identifier cols is
- * given, the coloring will be stored to it.
+ * Returns the chromatic index of the input graph G. If an identifier cols is
+ * given, the coloring is stored to it.
  */
 gen _chromatic_index(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;

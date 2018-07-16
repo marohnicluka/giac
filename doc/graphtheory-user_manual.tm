@@ -1399,8 +1399,8 @@
   <math|K<around*|(|n,k|)>>. The latter is obtained by setting all
   <math|k>-subsets of a set of <math|n> elements as vertices and connecting
   each two of them if and only if the corresponding sets are disjoint.
-  Therefore each Kneser graph is the complement of a certain intersection
-  graph.
+  Therefore, each Kneser graph is the complement of the corresponding
+  intersection graph on the same collection of subsets.
 
   Kneser graphs can get exceedingly complex even for relatively small values
   of <math|n> and <math|k>. Note that the number of vertices in
@@ -1983,7 +1983,17 @@
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      G:=isomorphic_copy(path_graph([1,2,3,4,5]),randperm(5))
+      P:=path_graph([1,2,3,4,5])
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 5 vertices and 4 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      G:=isomorphic_copy(P,randperm(5))
     <|unfolded-io>
       <\equation*>
         <text|an undirected unweighted graph with 5 vertices and 4 edges>
@@ -1996,7 +2006,17 @@
       vertices(G)
     <|unfolded-io>
       <\equation*>
-        <around|[|2,5,3,4,1|]>
+        <around|[|3,4,2,1,5|]>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      is_isomorphic(P,G)
+    <|unfolded-io>
+      <\equation*>
+        <text|true>
       </equation*>
     </unfolded-io>
   </session>
@@ -2430,16 +2450,37 @@
   The command <with|font-family|tt|graph_join> is used for joining graphs.
 
   <with|font-family|tt|graph_join> accepts two graphs <math|G> and <math|H>
-  as its arguments and returns the graph which is obtained by connecting all
-  the vertices of <math|G> to all vertices of <math|H>. The vertex labels in
-  the resulting graph are strings of the form <kbd|1:u> and <kbd|2:v> where
-  <math|u> is a vertex in <math|G> and <math|v> is a vertex in <math|H>.
+  as its arguments and returns the graph <math|G+H> which is obtained by
+  connecting all the vertices of <math|G> to all vertices of <math|H>. The
+  vertex labels in the resulting graph are strings of the form <kbd|1:u> and
+  <kbd|2:v> where <math|u> is a vertex in <math|G> and <math|v> is a vertex
+  in <math|H>.
 
   <\session|giac|default>
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      G:=graph_join(path_graph(2),graph(3))
+      G:=path_graph(2)
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 2 vertices and 1 edge>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      H:=graph(3)
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 3 vertices and 0 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      GH:=graph_join(G,H)
     <|unfolded-io>
       <\equation*>
         <text|an undirected unweighted graph with 5 vertices and 7 edges>
@@ -2449,7 +2490,7 @@
     <\input>
       \<gtr\>\ 
     <|input>
-      draw_graph(G,spring)
+      draw_graph(GH,spring)
     </input>
   </session>
 
@@ -2868,20 +2909,20 @@
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      is_planar(H,F)
+      is_planar(H,F); F
     <|unfolded-io>
       <\equation*>
-        <math-up|Done>,<text|true>
+        <text|true>,<around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|3|3|cell-halign|c>|<cwith|1|-1|4|4|cell-halign|c>|<cwith|1|-1|4|4|cell-rborder|0ln>|<table|<row|<cell|<with|math-font-family|rm|010>>|<cell|<with|math-font-family|rm|000>>|<cell|<with|math-font-family|rm|001>>|<cell|<with|math-font-family|rm|011>>>|<row|<cell|<with|math-font-family|rm|001>>|<cell|<with|math-font-family|rm|000>>|<cell|<with|math-font-family|rm|100>>|<cell|<with|math-font-family|rm|101>>>|<row|<cell|<with|math-font-family|rm|010>>|<cell|<with|math-font-family|rm|011>>|<cell|<with|math-font-family|rm|111>>|<cell|<with|math-font-family|rm|110>>>|<row|<cell|<with|math-font-family|rm|100>>|<cell|<with|math-font-family|rm|000>>|<cell|<with|math-font-family|rm|010>>|<cell|<with|math-font-family|rm|110>>>|<row|<cell|<with|math-font-family|rm|111>>|<cell|<with|math-font-family|rm|011>>|<cell|<with|math-font-family|rm|001>>|<cell|<with|math-font-family|rm|101>>>|<row|<cell|<with|math-font-family|rm|101>>|<cell|<with|math-font-family|rm|100>>|<cell|<with|math-font-family|rm|110>>|<cell|<with|math-font-family|rm|111>>>>>>|)>
       </equation*>
     </unfolded-io>
 
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      plane_dual(F)
+      is_isomorphic(plane_dual(F),D)
     <|unfolded-io>
       <\equation*>
-        <text|an undirected unweighted graph with 6 vertices and 12 edges>
+        <text|true>
       </equation*>
     </unfolded-io>
   </session>
@@ -3208,6 +3249,14 @@
   </session>
 
   <center|<image|images/rand4.eps|40%|||>>
+
+  <subsection|Random sequence graphs>
+
+  The command <verbatim|random_sequence_graph> is used for generating a
+  random undirected graph from the given degree sequence.
+
+  <verbatim|random_sequence_graph> accepts the degree sequence as its only
+  argument. It returns an asimptotically uniform\ 
 
   <subsection|Random regular graphs>
 
@@ -4909,7 +4958,9 @@
     </unfolded-io>
   </session>
 
-  <subsection|Incidence matrix>
+  <subsection|Incidence matrix>The join of graphs <math|G> and <math|H> is
+  denoted <math|G\<ast\>H>, and it is equal to
+  <math|<around*|(|G<rsup|c>\<cup\>H<rsup|c>|)><rsup|c>>.
 
   The command <verbatim|incidence_matrix> is used for obtaining the incidence
   matrix of a graph.
@@ -6729,14 +6780,9 @@
   <math|n> are obtained by finding a maximal clique (<math|n> cannot be lower
   than its cardinality) and by using the heuristic proposed by <name|Brélaz>
   in<nbsp><cite|brelaz> (which will use at least <math|n> colors),
-  respectively.
-
-  The algorithm is usually fast for graphs up to 40 vertices and for sparse
-  graphs in general. For larger, denser graphs (e.g.<nbsp>with edge density
-  around 0.5, which are the most difficult ones) one may have to wait for
-  several minutes, even hours, and sometimes for a practically infinite time.
-  Note that <abbr|MVCP> is a <abbr|NP>-hard problem, which means that no
-  polynomial (i.e.<nbsp>efficient) algorithm is known.
+  respectively. Note that the algorithm performs some randomization when
+  applying heuristics, so coloring a graph several times will not take the
+  same amount of computation time in each instance, generally.
 
   In the following example, the Grotzsch graph is colored with minimal number
   of colors by first finding the coloring and then assigning it to the graph
@@ -6772,112 +6818,11 @@
 
   <center|<image|images/grotzsch.eps|40%|||>>
 
-  To illustrate the combinatorial explosion which characterizes <abbr|MVCP>
-  one can use the following example. Note that finding an optimal coloring in
-  <math|G> is equivalent to finding the minimal clique cover in its
-  complement <math|G<rsup|c>>.
-
-  First, a random graph <math|G> with 40 vertices and edge density 0.5 is
-  generated. Such a graph is considered to be relatively small.
-
-  <\session|giac|default>
-    <\unfolded-io>
-      \<gtr\>\ 
-    <|unfolded-io>
-      G:=random_graph(40,0.5)
-    <|unfolded-io>
-      <\equation*>
-        <text|an undirected unweighted graph with 40 vertices and 393 edges>
-      </equation*>
-    </unfolded-io>
-  </session>
-
-  The chromatic number is computed by solving <abbr|MVCP> via
-  <verbatim|minimal_vertex_coloring> in less than a second.
-
-  <\session|giac|default>
-    <\unfolded-io>
-      \<gtr\>\ 
-    <|unfolded-io>
-      chromatic_number(G)
-    <|unfolded-io>
-      <\equation*>
-        8
-      </equation*>
-
-      <timing|273 msec>
-    </unfolded-io>
-  </session>
-
-  Next, all maximal cliques in <math|G<rsup|c>> are counted using the
-  <verbatim|clique_stats> command.
-
-  <\session|giac|default>
-    <\unfolded-io>
-      \<gtr\>\ 
-    <|unfolded-io>
-      S:=clique_stats(graph_complement(G))
-    <|unfolded-io>
-      <\equation*>
-        <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|2|2|cell-rborder|0ln>|<table|<row|<cell|3>|<cell|5>>|<row|<cell|4>|<cell|66>>|<row|<cell|5>|<cell|238>>|<row|<cell|6>|<cell|89>>|<row|<cell|7>|<cell|3>>>>>|)>
-      </equation*>
-    </unfolded-io>
-
-    <\unfolded-io>
-      \<gtr\>\ 
-    <|unfolded-io>
-      n:=sum(col(S,1))
-    <|unfolded-io>
-      <\equation*>
-        401
-      </equation*>
-    </unfolded-io>
-  </session>
-
-  To obtain the minimal coloring, a naive algorithm must check if a
-  combination of <math|2,3,\<ldots\>,8> maximal cliques forms a cover in
-  <math|G<rsup|c>>. In the worst case it will check
-  <math|<big|sum><rsub|k=2><rsup|8><binom|n|k>> combinations, the number
-  which is computed by the next command line.
-
-  <\session|giac|default>
-    <\unfolded-io>
-      \<gtr\>\ 
-    <|unfolded-io>
-      sum(comb(n,k),k=2..8)
-    <|unfolded-io>
-      <\equation*>
-        15776262844602110
-      </equation*>
-    </unfolded-io>
-  </session>
-
-  The magnitude of the above result (<math|\<approx\>1.6\<times\>10<rsup|17>>)
-  indicates that the algorithm would run practically forever. In particular,
-  assuming that the algorithm requires <math|1
-  \<mu\><with|math-font-family|rm|s>> to test one combination of cliques, the
-  runtime is about 5070 years. Even testing covers for <math|k=8> alone would
-  take about 490 years to complete. The fact that <verbatim|chromatic_number>
-  required only quarter of a second to obtain minimal coloring indicates that
-  the implemented algorithm is far more sophisticated than a simple
-  brute-force approach.
-
-  Note that solving <abbr|MVCP> for different graphs of exactly the same size
-  (but which do not share the same edge structure) may take quite different
-  time in each instance. For example, the time required to color a graph with
-  50 vertices and edge density 0.5 may take any value between six seconds and
-  six minutes. Also note that some graphs will take exponential time (that
-  is, \Pforever\Q) to obtain the coloring. Table<nbsp><reference|tab:times>
-  shows the runtimes (in seconds) of solving <abbr|MVCP> for random graphs
-  with <math|10*k> vertices and edge density <math|<frac|d|10>> for
-  <math|k=1,2,\<ldots\>,7> and <math|d=1,2,\<ldots\>,5>, using Intel i3-7130U
-  processor at 2.70<nbsp>GHz. For each pair <math|<around*|(|k,d|)>>, ten
-  graphs were generated and the average runtime was recorded in the
-  table.<\float|float|tbh>
-    <big-table|<tabular|<tformat|<cwith|1|1|2|2|cell-row-span|1>|<cwith|1|1|2|2|cell-col-span|5>|<cwith|1|1|1|1|cell-row-span|2>|<cwith|1|1|1|1|cell-col-span|1>|<cwith|1|2|1|2|cell-valign|c>|<cwith|1|2|1|2|cell-halign|c>|<cwith|3|7|1|1|cell-halign|c>|<cwith|2|2|3|6|cell-halign|c>|<cwith|3|7|2|-1|cell-halign|L.>|<twith|table-width|1par>|<twith|table-hmode|exact>|<cwith|1|-1|1|-1|cell-tborder|0ln>|<cwith|1|-1|1|-1|cell-bborder|0ln>|<cwith|1|-1|1|-1|cell-lborder|0ln>|<cwith|1|-1|1|-1|cell-rborder|0ln>|<cwith|3|3|1|-1|cell-tborder|1ln>|<cwith|1|2|1|-1|cell-bborder|1ln>|<cwith|3|3|1|-1|cell-bborder|0ln>|<cwith|4|4|1|-1|cell-tborder|0ln>|<cwith|3|3|1|1|cell-lborder|0ln>|<cwith|3|3|6|6|cell-rborder|0ln>|<cwith|7|7|1|-1|cell-tborder|0ln>|<cwith|6|6|1|-1|cell-bborder|0ln>|<cwith|7|7|1|-1|cell-bborder|1ln>|<cwith|7|7|1|1|cell-lborder|0ln>|<cwith|7|7|6|6|cell-rborder|0ln>|<table|<row|<cell|<strong|number
-    of vertices>>|<cell|<strong|edge density>>|<cell|>|<cell|>|<cell|>|<cell|>>|<row|<cell|>|<cell|<strong|0.1>>|<cell|<strong|0.2>>|<cell|<strong|0.3>>|<cell|<strong|0.4>>|<cell|<strong|0.5>>>|<row|<cell|<strong|10>>|<cell|0.0008892>|<cell|0.0010818>|<cell|0.0006116>|<cell|0.0005825>|<cell|0.0006331>>|<row|<cell|<strong|20>>|<cell|0.0014682>|<cell|0.00378>|<cell|0.0038329>|<cell|0.0077918>|<cell|0.0067932>>|<row|<cell|<strong|30>>|<cell|0.0021163>|<cell|0.0173315>|<cell|0.0372468>|<cell|0.111016>|<cell|0.143657>>|<row|<cell|<strong|40>>|<cell|0.0252134>|<cell|0.177707>|<cell|0.626175>|<cell|1.67746>|<cell|2.31473>>|<row|<cell|<strong|50>>|<cell|0.130089>|<cell|1.83819>|<cell|17.3564>|<cell|120.181>|<cell|246.161>>>>>|<label|tab:times>average
-    runtime of the algorithm for minimal coloring (in seconds)>
-  </float>
+  Solving <abbr|MVCP> for different graphs of exactly the same size (but
+  which do not share the same edge structure) may take quite different time
+  in each instance. Also note that some graphs will take exponential time
+  (that is, \Pforever\Q) to obtain the coloring, because the vertex coloring
+  problem is NP<nbsp>hard.
 
   <subsection|Chromatic number>
 
@@ -8382,73 +8327,73 @@
     <associate|a3|<tuple|A3|78>>
     <associate|auto-1|<tuple|1|7>>
     <associate|auto-10|<tuple|2.1.3|10>>
-    <associate|auto-100|<tuple|3.3|40>>
-    <associate|auto-101|<tuple|3.3.1|40>>
-    <associate|auto-102|<tuple|3.3.2|40>>
-    <associate|auto-103|<tuple|3.3.3|41>>
-    <associate|auto-104|<tuple|4|43>>
-    <associate|auto-105|<tuple|4.1|43>>
-    <associate|auto-106|<tuple|4.1.1|43>>
-    <associate|auto-107|<tuple|4.1.2|43>>
-    <associate|auto-108|<tuple|4.2|44>>
-    <associate|auto-109|<tuple|4.2.1|44>>
+    <associate|auto-100|<tuple|3.2.4|40>>
+    <associate|auto-101|<tuple|3.3|40>>
+    <associate|auto-102|<tuple|3.3.1|40>>
+    <associate|auto-103|<tuple|3.3.2|41>>
+    <associate|auto-104|<tuple|3.3.3|43>>
+    <associate|auto-105|<tuple|4|43>>
+    <associate|auto-106|<tuple|4.1|43>>
+    <associate|auto-107|<tuple|4.1.1|43>>
+    <associate|auto-108|<tuple|4.1.2|44>>
+    <associate|auto-109|<tuple|4.2|44>>
     <associate|auto-11|<tuple|2.1.4|10>>
-    <associate|auto-110|<tuple|4.2.2|44>>
-    <associate|auto-111|<tuple|4.1|45>>
-    <associate|auto-112|<tuple|5|47>>
-    <associate|auto-113|<tuple|5.1|47>>
-    <associate|auto-114|<tuple|5.1.1|47>>
-    <associate|auto-115|<tuple|5.1.2|47>>
-    <associate|auto-116|<tuple|5.1.3|48>>
-    <associate|auto-117|<tuple|5.1.4|49>>
-    <associate|auto-118|<tuple|5.2|50>>
-    <associate|auto-119|<tuple|5.2.1|50>>
+    <associate|auto-110|<tuple|4.2.1|44>>
+    <associate|auto-111|<tuple|4.2.2|45>>
+    <associate|auto-112|<tuple|4.1|47>>
+    <associate|auto-113|<tuple|5|47>>
+    <associate|auto-114|<tuple|5.1|47>>
+    <associate|auto-115|<tuple|5.1.1|47>>
+    <associate|auto-116|<tuple|5.1.2|48>>
+    <associate|auto-117|<tuple|5.1.3|49>>
+    <associate|auto-118|<tuple|5.1.4|50>>
+    <associate|auto-119|<tuple|5.2|50>>
     <associate|auto-12|<tuple|2.1.5|11>>
-    <associate|auto-120|<tuple|5.2.2|51>>
-    <associate|auto-121|<tuple|5.2.3|51>>
-    <associate|auto-122|<tuple|5.2.4|52>>
-    <associate|auto-123|<tuple|5.2.5|53>>
-    <associate|auto-124|<tuple|5.2.6|53>>
-    <associate|auto-125|<tuple|5.2.7|54>>
-    <associate|auto-126|<tuple|5.3|54>>
-    <associate|auto-127|<tuple|5.3.1|54>>
-    <associate|auto-128|<tuple|5.3.2|55>>
-    <associate|auto-129|<tuple|5.3.3|56>>
+    <associate|auto-120|<tuple|5.2.1|51>>
+    <associate|auto-121|<tuple|5.2.2|51>>
+    <associate|auto-122|<tuple|5.2.3|52>>
+    <associate|auto-123|<tuple|5.2.4|53>>
+    <associate|auto-124|<tuple|5.2.5|53>>
+    <associate|auto-125|<tuple|5.2.6|54>>
+    <associate|auto-126|<tuple|5.2.7|54>>
+    <associate|auto-127|<tuple|5.3|54>>
+    <associate|auto-128|<tuple|5.3.1|55>>
+    <associate|auto-129|<tuple|5.3.2|56>>
     <associate|auto-13|<tuple|2.1.6|11>>
-    <associate|auto-130|<tuple|5.3.4|56>>
-    <associate|auto-131|<tuple|5.3.5|56>>
-    <associate|auto-132|<tuple|5.3.6|57>>
-    <associate|auto-133|<tuple|5.4|57>>
-    <associate|auto-134|<tuple|5.4.1|57>>
-    <associate|auto-135|<tuple|5.4.2|58>>
-    <associate|auto-136|<tuple|5.4.3|58>>
-    <associate|auto-137|<tuple|5.4.4|58>>
-    <associate|auto-138|<tuple|5.5|59>>
-    <associate|auto-139|<tuple|5.5.1|59>>
+    <associate|auto-130|<tuple|5.3.3|56>>
+    <associate|auto-131|<tuple|5.3.4|56>>
+    <associate|auto-132|<tuple|5.3.5|57>>
+    <associate|auto-133|<tuple|5.3.6|57>>
+    <associate|auto-134|<tuple|5.4|57>>
+    <associate|auto-135|<tuple|5.4.1|58>>
+    <associate|auto-136|<tuple|5.4.2|58>>
+    <associate|auto-137|<tuple|5.4.3|58>>
+    <associate|auto-138|<tuple|5.4.4|59>>
+    <associate|auto-139|<tuple|5.5|59>>
     <associate|auto-14|<tuple|2.2|12>>
-    <associate|auto-140|<tuple|5.5.2|59>>
-    <associate|auto-141|<tuple|5.5.3|59>>
-    <associate|auto-142|<tuple|5.5.4|59>>
-    <associate|auto-143|<tuple|5.6|60>>
-    <associate|auto-144|<tuple|5.6.1|60>>
-    <associate|auto-145|<tuple|5.6.2|60>>
-    <associate|auto-146|<tuple|5.6.3|61>>
-    <associate|auto-147|<tuple|5.7|61>>
-    <associate|auto-148|<tuple|5.7.1|61>>
-    <associate|auto-149|<tuple|5.7.2|62>>
+    <associate|auto-140|<tuple|5.5.1|59>>
+    <associate|auto-141|<tuple|5.5.2|59>>
+    <associate|auto-142|<tuple|5.5.3|59>>
+    <associate|auto-143|<tuple|5.5.4|60>>
+    <associate|auto-144|<tuple|5.6|60>>
+    <associate|auto-145|<tuple|5.6.1|60>>
+    <associate|auto-146|<tuple|5.6.2|61>>
+    <associate|auto-147|<tuple|5.6.3|61>>
+    <associate|auto-148|<tuple|5.7|61>>
+    <associate|auto-149|<tuple|5.7.1|62>>
     <associate|auto-15|<tuple|2.2.1|12>>
-    <associate|auto-150|<tuple|5.8|63>>
-    <associate|auto-151|<tuple|5.8.1|63>>
-    <associate|auto-152|<tuple|5.8.2|63>>
-    <associate|auto-153|<tuple|5.8.3|63>>
-    <associate|auto-154|<tuple|5.8.4|64>>
-    <associate|auto-155|<tuple|5.8.5|65>>
-    <associate|auto-156|<tuple|5.9|66>>
-    <associate|auto-157|<tuple|5.9.1|66>>
-    <associate|auto-158|<tuple|5.1|67>>
-    <associate|auto-159|<tuple|5.9.2|66>>
+    <associate|auto-150|<tuple|5.7.2|63>>
+    <associate|auto-151|<tuple|5.8|63>>
+    <associate|auto-152|<tuple|5.8.1|63>>
+    <associate|auto-153|<tuple|5.8.2|63>>
+    <associate|auto-154|<tuple|5.8.3|64>>
+    <associate|auto-155|<tuple|5.8.4|65>>
+    <associate|auto-156|<tuple|5.8.5|66>>
+    <associate|auto-157|<tuple|5.9|66>>
+    <associate|auto-158|<tuple|5.9.1|67>>
+    <associate|auto-159|<tuple|5.1|66>>
     <associate|auto-16|<tuple|2.2.2|12>>
-    <associate|auto-160|<tuple|5.2|69>>
+    <associate|auto-160|<tuple|5.9.2|69>>
     <associate|auto-161|<tuple|5.9.3|68>>
     <associate|auto-162|<tuple|5.9.4|69>>
     <associate|auto-163|<tuple|5.10|70>>
@@ -8567,14 +8512,14 @@
     <associate|auto-9|<tuple|2.1.2|10>>
     <associate|auto-90|<tuple|2.11.7|35>>
     <associate|auto-91|<tuple|2.11.8|35>>
-    <associate|auto-92|<tuple|3|37>>
-    <associate|auto-93|<tuple|3.1|37>>
-    <associate|auto-94|<tuple|3.1.1|37>>
-    <associate|auto-95|<tuple|3.2|37>>
-    <associate|auto-96|<tuple|3.2.1|37>>
-    <associate|auto-97|<tuple|3.2.2|38>>
-    <associate|auto-98|<tuple|3.2.3|38>>
-    <associate|auto-99|<tuple|3.2.4|39>>
+    <associate|auto-92|<tuple|2.11.9|37>>
+    <associate|auto-93|<tuple|3|37>>
+    <associate|auto-94|<tuple|3.1|37>>
+    <associate|auto-95|<tuple|3.1.1|37>>
+    <associate|auto-96|<tuple|3.2|37>>
+    <associate|auto-97|<tuple|3.2.1|38>>
+    <associate|auto-98|<tuple|3.2.2|38>>
+    <associate|auto-99|<tuple|3.2.3|39>>
     <associate|bib-brelaz|<tuple|1|85>>
     <associate|bib-buchheim|<tuple|2|85>>
     <associate|bib-diaz|<tuple|3|85>>

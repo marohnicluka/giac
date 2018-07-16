@@ -6231,6 +6231,11 @@ void graphe::make_random(bool dir,const vecteur &V,double p) {
     }
 }
 
+/* create a random graph with the given degree sequence d which must be graphical */
+void graphe::make_random_sequential(const ivector &d) {
+
+}
+
 /* create a random bipartite graph with two groups of vertices V and W */
 void graphe::make_random_bipartite(const vecteur &V,const vecteur &W,double p) {
     this->clear();
@@ -8233,10 +8238,7 @@ void graphe::transitive_closure(graphe &G,bool weighted) {
 
 /* return true iff this graph is isomorphic to other, also obtain an isomorphism */
 int graphe::is_isomorphic(const graphe &other,map<int,int> &isom) const {
-#ifndef HAVE_LIBNAUTY
-    message("Error: nauty library is required for finding graph isomorphism");
-    return -1;
-#else
+#if defined HAVE_LIBNAUTY && defined HAVE_NAUTY_NAUTUTIL_H
     assert(is_directed()==other.is_directed());
     int n=node_count();
     if (other.node_count()!=n)
@@ -8256,6 +8258,9 @@ int graphe::is_isomorphic(const graphe &other,map<int,int> &isom) const {
     delete[] adj2;
     delete[] sigma;
     return res;
+#else
+    message("Error: nauty library is required for finding graph isomorphism");
+    return -1;
 #endif
 }
 
@@ -8271,10 +8276,7 @@ int digits2int(char *digits,int nd) {
 
 /* return the set of generators of the automorphism group of this graph */
 gen graphe::aut_generators() const {
-#ifndef HAVE_LIBNAUTY
-    message("Error: nauty library is required for finding graph automorphisms");
-    return undef;
-#else
+#if defined HAVE_LIBNAUTY && defined HAVE_NAUTY_NAUTUTIL_H
     int n=node_count(),ofs=array_start(ctx);
     vecteur out(0);
     if (n>0) {
@@ -8316,15 +8318,15 @@ gen graphe::aut_generators() const {
         delete[] adj;
     }
     return gen(out,_SET__VECT);
+#else
+    message("Error: nauty library is required for finding graph automorphisms");
+    return undef;
 #endif
 }
 
 /* return the canonical labeling of this graph as a permutation */
 bool graphe::canonical_labeling(ivector &lab) const {
-#ifndef HAVE_LIBNAUTY
-    message("Error: nauty library is required for canonical labeling");
-    return false;
-#else
+#if defined HAVE_LIBNAUTY && defined HAVE_NAUTY_NAUTUTIL_H
     int n=node_count();
     if (n==0)
         return false;
@@ -8338,6 +8340,9 @@ bool graphe::canonical_labeling(ivector &lab) const {
     delete[] adj;
     delete[] clab;
     return true;
+#else
+    message("Error: nauty library is required for canonical labeling");
+    return false;
 #endif
 }
 

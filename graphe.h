@@ -17,8 +17,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define HAVE_LIBNAUTY 1
-
 #ifndef __GRAPHE_H
 #define __GRAPHE_H
 #ifdef HAVE_CONFIG_H
@@ -777,6 +775,7 @@ public:
     void make_random_tree(const vecteur &V,int maxd,bool addnodes=true);
     void make_random_planar(double p,int connectivity);
     void make_random(bool dir,const vecteur &V,double p);
+    void make_random_sequential(const ivector &d);
     void make_random_bipartite(const vecteur &V,const vecteur &W,double p);
     void make_random_regular(const vecteur &V,int d,bool connected);
     void make_random_flow_network(const vecteur &V,int capacity);

@@ -1,6 +1,11 @@
-#include "nauty/nauty.h"
+#include "config.h"
+#if defined HAVE_LIBNAUTY && defined HAVE_NAUTY_NAUTUTIL_H
+#include "nauty/nausparse.h"
 #include "nauty/nautinv.h"
 #include "nautywrapper.h"
+
+static DEFAULTOPTIONS_GRAPH(opts_undir);
+static DEFAULTOPTIONS_DIGRAPH(opts_dir);
 
 int nautywrapper_is_isomorphic(int isdir,int n,int *adj1,int *adj2,int *sigma) {
     DYNALLSTAT(int,lab1,lab1_sz);
@@ -11,8 +16,6 @@ int nautywrapper_is_isomorphic(int isdir,int n,int *adj1,int *adj2,int *sigma) {
     DYNALLSTAT(graph,g2,g2_sz);
     DYNALLSTAT(graph,cg1,cg1_sz);
     DYNALLSTAT(graph,cg2,cg2_sz);
-    static DEFAULTOPTIONS_GRAPH(opts_undir);
-    static DEFAULTOPTIONS_DIGRAPH(opts_dir);
     optionblk *options=isdir!=0?&opts_dir:&opts_undir;
     statsblk stats;
     int m=SETWORDSNEEDED(n);
@@ -74,8 +77,6 @@ void nautywrapper_aut_generators(int isdir,int n,int *adj,FILE *f) {
     DYNALLSTAT(int,ptn,ptn_sz);
     DYNALLSTAT(int,orbits,orbits_sz);
     DYNALLSTAT(graph,g,g_sz);
-    static DEFAULTOPTIONS_GRAPH(opts_undir);
-    static DEFAULTOPTIONS_GRAPH(opts_dir);
     optionblk *options=isdir!=0?&opts_dir:&opts_undir;
     statsblk stats;
     int m=SETWORDSNEEDED(n);
@@ -109,8 +110,6 @@ void nautywrapper_canonical(int isdir,int n,int *adj,int *clab) {
     DYNALLSTAT(int,orbits,orbits_sz);
     DYNALLSTAT(graph,g,g_sz);
     DYNALLSTAT(graph,cg,cg_sz);
-    static DEFAULTOPTIONS_GRAPH(opts_undir);
-    static DEFAULTOPTIONS_DIGRAPH(opts_dir);
     optionblk *options=isdir!=0?&opts_dir:&opts_undir;
     statsblk stats;
     int m=SETWORDSNEEDED(n);
@@ -139,3 +138,18 @@ void nautywrapper_canonical(int isdir,int n,int *adj,int *clab) {
     DYNFREE(g,g_sz);
     DYNFREE(cg,cg_sz);
 }
+#else // HAVE_LIBNAUTY
+#include <stdio.h>
+int nautywrapper_is_isomorphic(int isdir,int n,int *adj1,int *adj2,int *sigma){
+  return 0;
+}
+
+/* write the generators of Aut(G), where G is represented by the sequence
+ * adj of adjacency lists, to the temporary file f and returns length of f
+ * (leaves the file open, it should be closed afterwards) */
+void nautywrapper_aut_generators(int isdir,int n,int *adj,FILE *f){}
+
+/* compute the canonical labeling for the graph represented by the sequence
+ * adj of adjacency lists */
+void nautywrapper_canonical(int isdir,int n,int *adj,int *clab){ *clab=16; }
+#endif // HAVE_LIBNAUTY

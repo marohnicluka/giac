@@ -161,6 +161,7 @@ gen _odd_graph(const gen &g,GIAC_CONTEXT);
 gen _random_graph(const gen &g,GIAC_CONTEXT);
 gen _random_digraph(const gen &g,GIAC_CONTEXT);
 gen _random_regular_graph(const gen &g,GIAC_CONTEXT);
+gen _random_sequence_graph(const gen &g,GIAC_CONTEXT);
 gen _random_bipartite_graph(const gen &g,GIAC_CONTEXT);
 gen _random_tournament(const gen &g,GIAC_CONTEXT);
 gen _random_tree(const gen &g,GIAC_CONTEXT);

@@ -1779,6 +1779,35 @@ static const char _random_regular_graph_s[]="random_regular_graph";
 static define_unary_function_eval(__random_regular_graph,&_random_regular_graph,_random_regular_graph_s);
 define_unary_function_ptr5(at_random_regular_graph,alias_at_random_regular_graph,&__random_regular_graph,0,true)
 
+/* USAGE:   random_sequence_graph(List(D))
+ *
+ * Returns a random graph with n=|D| vertices where i-th vertex has degree D[i].
+ */
+gen _random_sequence_graph(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    int n=g._VECTptr->size(),m=0;
+    if (n==0)
+        return gensizeerr("Expected a non-empty list,");
+    if (_is_graphic_sequence(g,contextptr)==graphe::FAUX)
+        return gt_err(_GT_ERR_NOT_A_GRAPHIC_SEQUENCE);
+    graphe::ivector deg(n);
+    for (const_iterateur it=g._VECTptr->begin();it!=g._VECTptr->end();++it) {
+        m+=(deg[it-g._VECTptr->begin()]=it->val);
+    }
+    if ((m%2)!=0)
+        return gensizeerr("The sum of degrees must be even,");
+    graphe G(contextptr);
+    vecteur labels;
+    G.make_default_labels(labels,n);
+    G.make_random_sequential(deg,labels);
+    return G.to_gen();
+}
+static const char _random_sequence_graph_s[]="random_sequence_graph";
+static define_unary_function_eval(__random_sequence_graph,&_random_sequence_graph,_random_sequence_graph_s);
+define_unary_function_ptr5(at_random_sequence_graph,alias_at_random_sequence_graph,&__random_sequence_graph,0,true)
+
 /* USAGE:   random_tree(n or V,[d])
  *
  * Returns a random tree graph with n vertices, which may be specified as list

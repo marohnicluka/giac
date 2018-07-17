@@ -775,7 +775,7 @@ public:
     void make_random_tree(const vecteur &V,int maxd,bool addnodes=true);
     void make_random_planar(double p,int connectivity);
     void make_random(bool dir,const vecteur &V,double p);
-    void make_random_sequential(const ivector &d);
+    void make_random_sequential(const ivector &d,const vecteur &labels);
     void make_random_bipartite(const vecteur &V,const vecteur &W,double p);
     void make_random_regular(const vecteur &V,int d,bool connected);
     void make_random_flow_network(const vecteur &V,int capacity);

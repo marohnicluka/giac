@@ -6232,8 +6232,56 @@ void graphe::make_random(bool dir,const vecteur &V,double p) {
 }
 
 /* create a random graph with the given degree sequence d which must be graphical */
-void graphe::make_random_sequential(const ivector &d) {
-
+void graphe::make_random_sequential(const ivector &d,const vecteur &labels) {
+    assert(d.size()==labels.size() && d.size()>0);
+    int s=0;
+    for (ivector_iter it=d.begin();it!=d.end();++it) {
+        s+=*it;
+    }
+    assert((s%2)==0);
+    int m=s/2,n=d.size(),sz,cnt;
+    double p,r;
+    map<ipair,bool> used;
+    map<int,pair<ipair,double> > emap;
+    ivector D;
+    ipair e;
+    do {
+        D=d;
+        used.clear();
+        cnt=0;
+        while(true) {
+            p=0;
+            sz=0;
+            int &i=e.first,&j=e.second;
+            for (i=0;i<n;++i) {
+                for (j=i+1;j<n;++j) {
+                    if (used[e])
+                        continue;
+                    p+=D[i]*D[j]*(1-d[i]*d[j]/(4*m));
+                    emap[sz++]=make_pair(e,p);
+                }
+            }
+            if (p==0)
+                break;
+            r=rand_uniform()*p;
+            for (int k=0;k<sz;++k) {
+                pair<ipair,double> &elm=emap[k];
+                if (r<=elm.second) {
+                    const ipair &edge=elm.first;
+                    used[edge]=true;
+                    ++cnt;
+                    --D[edge.first];
+                    --D[edge.second];
+                    break;
+                }
+            }
+        }
+    } while (cnt<m);
+    add_nodes(labels);
+    for (map<ipair,bool>::const_iterator it=used.begin();it!=used.end();++it) {
+        if (it->second)
+            add_edge(it->first);
+    }
 }
 
 /* create a random bipartite graph with two groups of vertices V and W */

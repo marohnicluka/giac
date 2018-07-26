@@ -8951,6 +8951,8 @@ bool graphe::tsp::find_subgraph_subtours(ivectors &sv,solution_status &status) {
     glp_init_iocp(&parm);
     parm.msg_lev=GLP_MSG_OFF;   // do not output any messages
     parm.gmi_cuts=GLP_ON;       // generate Gomory cuts (they seem to be most effective)
+    parm.mir_cuts=GLP_ON;
+    parm.cov_cuts=GLP_ON;
     parm.br_tech=GLP_BR_MFV;    // choose the most fractional variable (the fallback branching rule)
     parm.bt_tech=GLP_BT_BLB;    // choose the best subproblem (proposed by Padberg & Rinaldi)
     parm.fp_heur=GLP_ON;        // enable feasibility pump heuristic (designed for binary problems)
@@ -9247,6 +9249,11 @@ int graphe::tsp::solve(ivector &h,double &cost) {
     G->message("Generated %d relevant subtour elimination constraint(s) from %d nodes",sec.size(),num_nodes);
     sg=-1;
     G->unset_subgraphs();
+    /*
+    ivectors_comparator comp;
+    sort(sec.begin(),sec.end(),comp);
+    sec.resize(1+sec.size()/4); // take only the first quartile of SECs
+    */
     add_subtours(sec);
     solution_status status;
     if (!find_subgraph_subtours(sv,status))
@@ -9738,7 +9745,66 @@ void graphe::tsp::rowgen(glp_tree *tree) {
 
 /* generate 2-matching cuts by applying a simple heuristic algorithm */
 void graphe::tsp::cutgen(glp_tree *tree) {
-    int n=sg<0?nv:sg_nv;
+    glp_prob *lp=glp_ios_get_prob(tree);
+    int n=sg<0?nv:sg_nv,m=glp_get_num_cols(lp),i,len,e1,e2;
+    vector<double> x(m);
+    ivector delta,F,Fc;
+    double lh,rh;
+    for (i=0;i<m;++i) x[i]=glp_get_col_prim(lp,i+1);
+    for (int k=0;k<n;++k) {
+        i=sg<0?k:sg_vertices[k];
+        delta.clear();
+        for (int l=0;l<m;++l) {
+            const arc &a=arcs[sg<0?l:sg_edges[l]];
+            if (a.head==i || a.tail==i)
+                delta.push_back(l);
+        }
+        if (delta.size()<2)
+            continue;
+        F.clear(); Fc.clear();
+        for (ivector_iter it=delta.begin();it!=delta.end();++it) {
+            if (x[*it]>=0.5)
+                F.push_back(*it);
+            else Fc.push_back(*it);
+        }
+        if ((F.size()%2)==0) {
+            e1=-1,e2=-1;
+            double xmax=-DBL_MAX,xmin=DBL_MAX,xe;
+            for (ivector_iter it=F.begin();it!=F.end();++it) {
+                if ((xe=x[*it])<xmin) {
+                    xmin=xe;
+                    e1=*it;
+                }
+            }
+            for (ivector_iter it=Fc.begin();it!=Fc.end();++it) {
+                if ((xe=x[*it])>xmax) {
+                    xmax=xe;
+                    e2=*it;
+                }
+            }
+            if ((e1>=0 && e2>=0 && x[e1]+x[e2]<=1) || e2<0) {
+                F.erase(find(F.begin(),F.end(),e1));
+                Fc.push_back(e1);
+            } else if ((e1>=0 && e2>=0 && x[e1]+x[e2]>1) || e1<0) {
+                Fc.erase(find(Fc.begin(),Fc.end(),e2));
+                F.push_back(e2);
+            } else continue;
+        }
+        assert((F.size()%2)!=0);
+        /* construct the inequality */
+        len=0;
+        lh=0;
+        for (ivector_iter it=F.begin();it!=F.end();++it) {
+            indices[++len]=*it+1; coeff[len]=1.0;
+            lh+=x[*it];
+        }
+        for (ivector_iter it=Fc.begin();it!=Fc.end();++it) {
+            indices[++len]=*it+1; coeff[len]=-1.0;
+            lh-=x[*it];
+        }
+        if (lh-(rh=double(F.size()-1))>.001)
+            glp_ios_add_row(tree,NULL,0,0,len,indices,coeff,GLP_UP,rh);
+    }
 }
 
 /* MIP callback */

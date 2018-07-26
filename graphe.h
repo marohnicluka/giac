@@ -297,16 +297,106 @@ public:
         void compute_bounds(const ivector &icol,int max_colors);
         void make_values();
         void formulate_mip();
-        static void mip_callback(glp_tree *tree,void *info);
         void fixed_coloring(glp_tree *tree);
         int assign_heur(glp_tree *tree);
         void generate_rows(glp_tree *tree);
         void add_row(glp_prob *prob,int len,int *indices,double *coeffs,double rh);
+        static void callback(glp_tree *tree,void *info);
     public:
         painter(graphe *gr) { G=gr; }
         int color_vertices(ivector &colors,const ivector &icol,int max_colors=0);
         int select_branching_variable(glp_tree *tree);
         void heur_solution(glp_tree *tree);
+    };
+
+    class tsp { // traveling salesman
+        struct arc {
+            /* arc struct holds only the edge information relevant for TSP */
+            int head;
+            int tail;
+            int sg_index;
+        };
+        enum solution_status {
+            _GT_TSP_OPTIMAL,
+            _GT_TSP_CLOSE_ENOUGH,
+            _GT_TSP_NOT_HAMILTONIAN,
+            _GT_TSP_ERROR
+        };
+        graphe *G;                      // the graph
+        glp_prob *mip;                  // integer programming problem
+        bool isdirected;                // true iff G is directed
+        bool isweighted;                // true iff G is weighted
+        int sg;                         // current subgraph index
+        std::set<ivector> subtours;     // subtours collected in during solving the last MIP
+        ivectors hc_forest;             // hierarhical clustering forest of subgraphs
+        ivector tour;                   // a tour
+        ivector ctour;                  // a tour obtained by Christofides algorithm
+        double *coeff;                  // coefficients to be passed to MIP solver
+        int *indices;                   // indices of row entries to be passed to MIP solver
+        bool *visited;                  // used to mark vertices as visited
+        arc *arcs;                      // arcs of G
+        int *sg_vertices;               // list of sg_nv vertices of subgraph with index sg
+        int *sg_edges;                  // indices of edges belonging to the subgraph with index sg
+        int sg_nv;                      // number of vertices in subgraph with index sg
+        int sg_ne;                      // number of edges in subgraph with index sg
+        int nv;                         // total number of vertices
+        int ne;                         // total number of edges
+        ipair heur_success_ratio;
+        double heur_average_improvement;
+        double optimal_cost;            // optimal cost
+        int heur_state;                 // enable/disable generating heuristic tours
+        bool is_undir_weighted;
+        bool is_symmetric_tsp;
+        int num_nodes;
+        solution_status status;
+        std::map<int,std::map<int,double> > weight_map;
+        std::map<int,std::map<int,double> > rlx_sol_map;
+        std::map<int,std::map<int,int> > loc_map;
+        std::vector<double> xev;
+        std::vector<double> obj;
+        std::vector<bool> can_branch;
+        void formulate_mip();
+        void get_subtours();
+        void add_subtours(const ivectors &sv);
+        void append_sce(const ivector &subtour);
+        void make_hc_forest();
+        void hc_dfs(int i,ivectors &considered_sec,ivectors &relevant_sec);
+        ivector canonical_subtour(const ivector &subtour);
+        bool subtours_equal(const ivector &st1,const ivector &st2);
+        ipair make_edge(int i,int j) const;
+        void make_sg_edges();
+        double weight(int i,int j);
+        double tour_cost(const ivector &tour);
+        int edge_index(const ipair &e);
+        int vertex_index(int i);
+        bool find_subgraph_subtours(ivectors &sv,solution_status &status);
+        void lift_subtours(ivectors &sv) const;
+        void heur(glp_tree *tree);
+        double lower_bound();
+        bool make_2opt_move(ivector &t);
+        bool make_3opt_move(ivector &t);
+        void optimize_tour(ivector &t);
+        bool christofides(ivector &t);
+        bool is_cycle(const ivector &t) const;
+        void select_branching_variable(glp_tree *tree);
+        void rowgen(glp_tree *tree);
+        void cutgen(glp_tree *tree);
+        static void sample_mean_stddev(const std::vector<double> &sample,double &mean,double &stddev);
+        static void callback(glp_tree *tree,void *info);
+        /* min-cut routines, originally written by Andrew Makhorin (<mao@gnu.org>) */
+        ivectors mincut_data;
+        int max_flow(int nn,int nedg,const ivector &beg,
+                     const ivector &end,const ivector &cap,int s,int t,
+                     ivector &x);
+        int min_st_cut(int nn, int nedg,const ivector &beg,
+                       const ivector &end,const ivector &cap,int s,int t,
+                       const ivector &x,ivector &cut);
+        int minimal_cut(int nn,int nedg,const ivector &beg,
+                        const ivector &end,const ivector &cap,ivector &cut);
+    public:
+        tsp(graphe *gr);
+        ~tsp();
+        int solve(ivector &h,double &cost);
     };
 #endif
 
@@ -379,9 +469,15 @@ public:
     struct edges_comparator { // sort edges by their weight
         graphe *G;
         bool operator()(const ipair &a,const ipair &b) {
-            return G->weight(a)<G->weight(b);
+            return is_strictly_greater(G->weight(b),G->weight(a),G->giac_context());
         }
         edges_comparator(graphe *gr) { G=gr; }
+    };
+
+    struct ivectors_comparator { // sort ivectors by their length
+        bool operator()(const ivector &a,const ivector &b) {
+            return a.size()<b.size();
+        }
     };
 
     struct degree_comparator { // sort vertices by their degrees
@@ -578,6 +674,7 @@ public:
     inline int rand_integer(int n) const { return giac::giac_rand(ctx)%n; }
     inline double rand_uniform() const { return giac::giac_rand(ctx)/(RAND_MAX+1.0); }
     inline double rand_normal() const { return giac::randNorm(ctx); }
+    static ivector rand_permu(int n);
     static bool is_real_number(const gen &g);
     static gen to_binary(int number,int chars);
     inline const context *giac_context() const { return ctx; }
@@ -661,9 +758,14 @@ public:
     inline const gen node_label(int i) const { assert(i>=0 && i<node_count()); return nodes[i].label(); }
     vecteur get_node_labels(const ivector &v) const;
     int node_index(const gen &v) const;
+    int edge_index(const ipair &e) const;
     int largest_integer_label() const;
     void set_subgraph(const ivector &v,int s);
+    void get_subgraph(int sg,ivector &v) const;
+    int subgraph_size(int sg) const;
+    int first_vertex_from_subgraph(int sg) const;
     void merge_subgraphs(int s,int t);
+    void unset_subgraphs(int default_sg=-1);
     int max_subgraph_index() const;
     inline const attrib &graph_attributes() const { return attributes; }
     inline const attrib &node_attributes(int i) const { assert(i>=0 && i<node_count()); return node(i).attributes(); }
@@ -681,7 +783,7 @@ public:
     void remove_temporary_edges();
     bool remove_edge(int i,int j);
     inline bool remove_edge(const ipair &p) { return remove_edge(p.first,p.second); }
-    bool has_edge(int i,int j) const;
+    bool has_edge(int i,int j,int sg=-1) const;
     inline bool has_edge(ipair p) const { return has_edge(p.first,p.second); }
     ipair make_edge(const vecteur &v) const;
     bool edges2ipairs(const vecteur &E,ipairs &ev,bool &notfound) const;
@@ -746,7 +848,7 @@ public:
     bool is_forest();
     bool is_tournament() const;
     bool is_planar();
-    bool is_clique() const;
+    bool is_clique(int sg=-1) const;
     bool is_triangle_free() const;
     int tree_height(int root);
     void clique_stats(std::map<int,int> &m,bool store_matching=false);
@@ -839,6 +941,8 @@ public:
     int is_isomorphic(const graphe &other,std::map<int,int> &isom) const;
     gen aut_generators() const;
     bool canonical_labeling(ivector &lab) const;
+    int is_hamiltonian(bool conclusive=true);
+    int find_hamiltonian_cycle(ivector &h,double &cost);
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

@@ -7061,10 +7061,10 @@
 
   The graph <math|G> is Eulerian if it has a trail covering all its edges.
   Such a trail is called <em|Eulerian trail>. An Eulerian trail may be
-  closed, in which case it is called <em|Eulerian cycle>. Note that every
-  edge <math|e\<in\>E> must be visited, i.e.<nbsp>\Pstrolled through\Q,
-  exactly once. However, the edge endpoints (i.e.<nbsp>the vertices in
-  <math|G>) may be visited more than once.
+  closed, in which case it is called <em|Eulerian cycle> or <em|circuit>.
+  Note that every edge <math|e\<in\>E> must be visited, i.e.<nbsp>\Pstrolled
+  through\Q, exactly once. However, the edge endpoints (i.e.<nbsp>the
+  vertices in <math|G>) may be visited more than once.
 
   The strategy is to apply <name|Hierholzer>'s algorithm for finding an
   Eulerian path<nbsp><cite|hierholzer>. It works by covering one cycle at a
@@ -7166,7 +7166,7 @@
   <subsection|Cheapest paths in weighted graphs>
 
   The command <with|font-family|tt|dijkstra> is used to find the cheapest
-  path between two vertices of an undirected weighted graph.
+  path between two distinct vertices of an undirected weighted graph.
 
   <with|font-family|tt|dijkstra> accepts two or three arguments: a weighted
   graph <math|G<around|(|V,E|)>> with nonnegative weights, a vertex
@@ -7194,8 +7194,7 @@
 
   <subsection|Traveling salesman problem>
 
-  new method <cite|pferschy>, Padberg <cite|padberg> and 2-matching cuts
-  <cite|araoz>
+  new method <cite|pferschy>, Padberg <cite|padberg> and Cook <cite|cook>
 
   <section|Spanning trees>
 
@@ -7222,16 +7221,16 @@
 
   <verbatim|number_of_spanning_trees> accepts the input graph
   <math|G<around*|(|V,E|)>> as its only argument and returns the total number
-  <math|n> of mutually different spanning trees in <math|G>.
+  <math|n> of distinct spanning trees in <math|G>.
 
   The strategy is based on Theorem<nbsp>2.2.12 (Matrix Tree Theorem)
   in<nbsp><cite|west>, page<nbsp>86. First the adjacency matrix <math|A> and
   the degree sequence <math|\<delta\>> of <math|G> are obtained. Then the
-  matrix <math|B=\<Delta\>-A> is computed, where <math|\<Delta\>> is the
+  matrix <math|B=\<Delta\>-A> is formed, where <math|\<Delta\>> is the
   diagonal matrix of order <math|<around*|\||V|\|>> corresponding to
-  <math|\<delta\>>. The last row and the last column of <math|B> are popped
-  out, yielding the matrix <math|C> of order <math|<around*|\||V|\|>-1>. Now
-  <math|n=det C>.
+  <math|\<delta\>>. The last row and the last column of <math|B> are
+  subsequently deleted, yielding the square matrix <math|C> of order
+  <math|<around*|\||V|\|>-1>. Now <math|n=det C>.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -8155,23 +8154,16 @@
 
   <\bibliography|bib|tm-plain|graphtheory>
     <\bib-list|28>
-      <bibitem*|1><label|bib-araoz>J.<nbsp>Aráoz,
-      E.<nbsp>Fernández<localize|, and >O.<nbsp>Meza. <newblock>A simple
-      exact separation algorithm for 2-matching inequalities.
-      <newblock><with|font-shape|italic|Research Report DR-2007/13, EIO
-      Departement, Technical University of Catalonia (Spain)>, 2007.
-      <newblock><slink|http://www.optimization-online.org/DBHTML/2007/11/1827.html>.<newblock>
-
-      <bibitem*|2><label|bib-bayati>Mohsen Bayati, Jeong<nbsp>Han
+      <bibitem*|1><label|bib-bayati>Mohsen Bayati, Jeong<nbsp>Han
       Kim<localize|, and >Amin Saberi. <newblock>A Sequential Algorithm for
       Generating Random Graphs. <newblock><with|font-shape|italic|Algorithmica>,
       58:860\U910, 2010.<newblock>
 
-      <bibitem*|3><label|bib-brelaz>Daniel Brélaz. <newblock>New Methods to
+      <bibitem*|2><label|bib-brelaz>Daniel Brélaz. <newblock>New Methods to
       Color the Vertices of a Graph. <newblock><with|font-shape|italic|Communications
       of the ACM>, 22:251\U256, 1979.<newblock>
 
-      <bibitem*|4><label|bib-buchheim>Cristoph Buchheim, Michael
+      <bibitem*|3><label|bib-buchheim>Cristoph Buchheim, Michael
       Jünger<localize|, and >Sebastian Leipert. <newblock>Improving Walker's
       Algorithm to Run in Linear Time. <newblock><localize|In
       >M.<nbsp>T.<nbsp>Goodrich<localize| and
@@ -8179,6 +8171,11 @@
       <with|font-shape|italic|Graph Drawing 2002, Lecture Notes in Computer
       Science vol 2528>, <localize|pages >344\U353. Springer-Verlag Berlin
       Heidelberg, 2002.<newblock>
+
+      <bibitem*|4><label|bib-cook>William<nbsp>J.<nbsp>Cook.
+      <newblock><with|font-shape|italic|In Pursuit of the Traveling Salesman:
+      Mathematics at the Limits of Computation>. <newblock>Princeton
+      University Press, 2012.<newblock>
 
       <bibitem*|5><label|bib-diaz>Isabel<nbsp>M.<nbsp>Díaz<localize| and
       >Paula Zabala. <newblock>A Branch-and-Cut Algorithm for Graph Coloring.
@@ -8562,10 +8559,10 @@
     <associate|auto-97|<tuple|3.2.1|38>>
     <associate|auto-98|<tuple|3.2.2|38>>
     <associate|auto-99|<tuple|3.2.3|39>>
-    <associate|bib-araoz|<tuple|1|?>>
-    <associate|bib-bayati|<tuple|2|?>>
-    <associate|bib-brelaz|<tuple|3|85>>
-    <associate|bib-buchheim|<tuple|4|85>>
+    <associate|bib-bayati|<tuple|1|?>>
+    <associate|bib-brelaz|<tuple|2|85>>
+    <associate|bib-buchheim|<tuple|3|85>>
+    <associate|bib-cook|<tuple|4|?>>
     <associate|bib-diaz|<tuple|5|85>>
     <associate|bib-edmonds|<tuple|6|85>>
     <associate|bib-even|<tuple|7|85>>
@@ -8667,7 +8664,7 @@
 
       padberg
 
-      araoz
+      cook
 
       west
 

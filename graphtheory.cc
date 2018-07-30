@@ -5431,49 +5431,105 @@ static const char _is_hamiltonian_s[]="is_hamiltonian";
 static define_unary_function_eval(__is_hamiltonian,&_is_hamiltonian,_is_hamiltonian_s);
 define_unary_function_ptr5(at_is_hamiltonian,alias_at_is_hamiltonian,&__is_hamiltonian,0,true)
 
-/* USAGE:   traveling_salesman(G,[M])
+/* USAGE: traveling_salesman(G,[M])
  *
  * Returns sequence of two objects, optimal cost for traveling salesman problem
  * and the corresponding Hamiltonian cycle in the input graph G. If G is not
  * weighted, its adjacency matrix is used instead. Alternatively, weight matrix
  * may be passed as the optional parameter M. If G is not Hamiltonian, an error
- * is returned.
+ * is returned. A number of options may be passed at the end of sequence of
+ * arguments: 'approx' for approximate solution, a nonnegative integer
+ * representing the time limit for 2- and 3-opt heuristic, in milliseconds, or
+ * 'coordinates' to automatically determine distances between the vertices
+ * using their positions.
  */
 gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT)
         return gentypeerr(contextptr);
     matrice M;
+    vecteur options; // may be used in the future, now just a dummy
     if (g.subtype==_SEQ__VECT) {
-        if (g._VECTptr->size()!=2)
+        int pos=1;
+        vecteur &gv=*g._VECTptr;
+        if (gv.size()<2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-        if (g._VECTptr->back().type!=_VECT)
-            return gentypeerr("Expected a matrix.");
-        M=*g._VECTptr->back()._VECTptr;
+        if (gv.at(1).type==_VECT) {
+            M=*gv.at(1)._VECTptr;
+            ++pos;
+        }
+        options=vecteur(gv.begin()+pos,gv.end());
     }
     graphe G(contextptr),U(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    G.underlying(U);
-    if (!U.is_biconnected())
-        return gt_err(_GT_ERR_BICONNECTED_GRAPH_REQUIRED);
-    if (!M.empty()) {
+    /* parse options */
+    bool approximate=false,make_distances=false;
+    int time_limit=RAND_MAX;
+    for (const_iterateur it=options.begin();it!=options.end();++it) {
+        if (*it==at_approx)
+            approximate=true;
+        else if (approximate && it->is_integer())
+            time_limit=it->val;
+        else if (*it==at_vertex_distance && M.empty())
+            make_distances=true;
+    }
+    if (time_limit<0)
+        return gensizeerr("Expected a nonnegative integer.");
+    if (!M.empty() && !G.is_weighted()) {
         if (!is_squarematrix(M) || int(M.size())!=G.node_count())
             return gendimerr("The given weight matrix is invalid.");
         G.make_weighted(M);
     }
+    G.underlying(U);
+    int res;
     graphe::ivector h;
     double cost;
-    int res=G.find_hamiltonian_cycle(h,cost);
-    if (res==0)
-        return gensizeerr("The input graph is not Hamiltonian.");
-    if (res==-1)
-        return undef;
-    return makesequence(!G.is_weighted()?gen(int(std::round(cost))):gen(cost),G.get_node_labels(h));
+    if (approximate) {
+        if (!G.is_weighted())
+            gt_err(_GT_ERR_WEIGHTED_GRAPH_REQUIRED);
+        if (G.is_directed())
+            gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
+        if (!G.is_clique())
+            return gensizeerr("The input graph must be complete.");
+        G.find_hamiltonian_cycle(h,cost,true);
+    } else {
+        res=U.is_biconnected()?G.find_hamiltonian_cycle(h,cost):0;
+        if (res==0)
+            return gensizeerr("The input graph is not Hamiltonian.");
+        if (res==-1)
+            return undef;
+    }
+    /* success! */
+    return G.is_weighted()?makesequence(!G.is_weighted()?gen(int(std::round(cost))):gen(cost),G.get_node_labels(h)):
+                           G.get_node_labels(h);
 }
 static const char _traveling_salesman_s[]="traveling_salesman";
 static define_unary_function_eval(__traveling_salesman,&_traveling_salesman,_traveling_salesman_s);
 define_unary_function_ptr5(at_traveling_salesman,alias_at_traveling_salesman,&__traveling_salesman,0,true)
+
+/* USAGE:   trail2edges(T)
+ *
+ * Return the list of edges on the trail T.
+ */
+gen _trail2edges(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    vecteur t;
+    if (g.type==_VECT)
+        t=*g._VECTptr;
+    else if (g.is_symb_of_sommet(at_trail))
+        t=*g._SYMBptr->feuille._VECTptr;
+    else return gentypeerr(contextptr);
+    vecteur res;
+    int n=t.size();
+    for (int i=0;i<n-1;++i) {
+        res.push_back(makevecteur(t[i],t[i+1]));
+    }
+    return res;
+}
+static const char _trail2edges_s[]="trail2edges";
+static define_unary_function_eval(__trail2edges,&_trail2edges,_trail2edges_s);
+define_unary_function_ptr5(at_trail2edges,alias_at_trail2edges,&__trail2edges,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

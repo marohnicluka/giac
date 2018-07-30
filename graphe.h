@@ -310,6 +310,8 @@ public:
     };
 
     class tsp { // traveling salesman
+        typedef std::vector<double> dvector;
+        typedef dvector::const_iterator dvector_iter;
         struct arc {
             /* arc struct holds only the edge information relevant for TSP */
             int head;
@@ -318,9 +320,14 @@ public:
         };
         enum solution_status {
             _GT_TSP_OPTIMAL,
-            _GT_TSP_CLOSE_ENOUGH,
             _GT_TSP_NOT_HAMILTONIAN,
             _GT_TSP_ERROR
+        };
+        enum heuristic_type {
+            _GT_TSP_NO_HEUR                     = 0,
+            _GT_TSP_CHRISTOFIDES_SA             = 1,
+            _GT_TSP_FARTHEST_INSERTION_HEUR     = 2,
+            _GT_TSP_FARTHEST_INSERTION_RANDOM   = 3
         };
         graphe *G;                      // the graph
         glp_prob *mip;                  // integer programming problem
@@ -330,7 +337,6 @@ public:
         std::set<ivector> subtours;     // subtours collected in during solving the last MIP
         ivectors hc_forest;             // hierarhical clustering forest of subgraphs
         ivector tour;                   // a tour
-        ivector ctour;                  // a tour obtained by Christofides algorithm
         double *coeff;                  // coefficients to be passed to MIP solver
         int *indices;                   // indices of row entries to be passed to MIP solver
         bool *visited;                  // used to mark vertices as visited
@@ -341,10 +347,7 @@ public:
         int sg_ne;                      // number of edges in subgraph with index sg
         int nv;                         // total number of vertices
         int ne;                         // total number of edges
-        ipair heur_success_ratio;
-        double heur_average_improvement;
-        double optimal_cost;            // optimal cost
-        int heur_state;                 // enable/disable generating heuristic tours
+        int heur_type;                  // the type of heuristic to be applied
         bool is_undir_weighted;
         bool is_symmetric_tsp;
         int num_nodes;
@@ -352,9 +355,10 @@ public:
         std::map<int,std::map<int,double> > weight_map;
         std::map<int,std::map<int,double> > rlx_sol_map;
         std::map<int,std::map<int,int> > loc_map;
-        std::vector<double> xev;
-        std::vector<double> obj;
+        dvector xev;
+        dvector obj;
         std::vector<bool> can_branch;
+        bool  min_wpm_enable_heur;
         void formulate_mip();
         void get_subtours();
         void add_subtours(const ivectors &sv);
@@ -366,23 +370,24 @@ public:
         ipair make_edge(int i,int j) const;
         void make_sg_edges();
         double weight(int i,int j);
-        double tour_cost(const ivector &tour);
         int edge_index(const ipair &e);
         int vertex_index(int i);
         bool find_subgraph_subtours(ivectors &sv,solution_status &status);
         void lift_subtours(ivectors &sv) const;
         void heur(glp_tree *tree);
+        void min_wpm_heur(glp_tree *tree,const ivector &eind);
         double lower_bound();
-        bool make_2opt_move(ivector &t);
-        bool make_3opt_move(ivector &t);
-        void optimize_tour(ivector &t);
-        bool christofides(ivector &t);
-        bool is_cycle(const ivector &t) const;
+        void optimize_tour(ivector &hc);
+        void straighten(ivector &hc);
+        bool random_3opt_move(ivector &hc);
+        void farthest_insertion(int index,ivector &hc);
+        void min_weight_matching_bipartite(const ivector &eind,const dvector &weights,ivector &matched_arcs);
+        void christofides(ivector &hc);
         void select_branching_variable(glp_tree *tree);
         void rowgen(glp_tree *tree);
-        void cutgen(glp_tree *tree);
-        static void sample_mean_stddev(const std::vector<double> &sample,double &mean,double &stddev);
+        static void sample_mean_stddev(const dvector &sample,double &mean,double &stddev);
         static void callback(glp_tree *tree,void *info);
+        static void min_wpm_callback(glp_tree *tree,void *info);
         /* min-cut routines, originally written by Andrew Makhorin (<mao@gnu.org>) */
         ivectors mincut_data;
         int max_flow(int nn,int nedg,const ivector &beg,
@@ -396,7 +401,9 @@ public:
     public:
         tsp(graphe *gr);
         ~tsp();
-        int solve(ivector &h,double &cost);
+        int solve(ivector &hc,double &cost);
+        double approx(ivector &hc);
+        double tour_cost(const ivector &hc);
     };
 #endif
 
@@ -942,7 +949,7 @@ public:
     gen aut_generators() const;
     bool canonical_labeling(ivector &lab) const;
     int is_hamiltonian(bool conclusive=true);
-    int find_hamiltonian_cycle(ivector &h,double &cost);
+    int find_hamiltonian_cycle(ivector &h,double &cost,bool approximate=false);
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

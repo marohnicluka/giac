@@ -2449,6 +2449,10 @@ bool graphe::is_weighted() const {
 void graphe::induce_subgraph(const ivector &vi,graphe &G,bool copy_attrib) const {
     G.clear();
     G.reserve_nodes(vi.size());
+    if (copy_attrib) {
+        G.set_directed(is_directed());
+        G.set_weighted(is_weighted());
+    }
     for (ivector_iter it=vi.begin();it!=vi.end();++it) {
         gen v_label=node_label(*it);
         const attrib &attri=nodes[*it].attributes();
@@ -2471,7 +2475,10 @@ void graphe::induce_subgraph(const ivector &vi,graphe &G,bool copy_attrib) const
 /* create the subgraph G defined by a list of edges E */
 void graphe::subgraph(const ipairs &E,graphe &G,bool copy_attrib) const {
     G.clear();
-    G.set_directed(is_directed());
+    if (copy_attrib) {
+        G.set_directed(is_directed());
+        G.set_weighted(is_weighted());
+    }
     set<int> nds;
     for (ipairs_iter it=E.begin();it!=E.end();++it) {
         nds.insert(it->first);
@@ -8495,7 +8502,7 @@ int graphe::is_hamiltonian(bool conclusive) {
 #ifdef HAVE_LIBGLPK
 
 /* MINIMAL CUT implementation, adapted from glpk/examples/tsp (maxflow.c, mincut.c and main.c)
- * Originally written by Andrew Makhorin (<mao@gnu.org>, October 2015)
+ * Originally written by Andrew Makhorin <mao@gnu.org>
  */
 
 /* compute maximal flow */
@@ -8566,10 +8573,10 @@ int graphe::tsp::min_st_cut(int nn,int nedg,const ivector &beg,
         const ivector &end,const ivector &cap,int s,int t,
         const ivector &x,ivector &cut) {
     int i,j,k,p,q,temp;
-    ivector &head1=mincut_data[18];
-    ivector &head2=mincut_data[19];
-    ivector &next1=mincut_data[20];
-    ivector &next2=mincut_data[21];
+    ivector &head1=mincut_data[18]; if (int(head1.size())<nn) head1.resize(nn);
+    ivector &head2=mincut_data[19]; if (int(head2.size())<nn) head2.resize(nn);
+    ivector &next1=mincut_data[20]; if (int(next1.size())<nn) next1.resize(nn);
+    ivector &next2=mincut_data[21]; if (int(next2.size())<nn) next2.resize(nn);
     for (i=0;i<nn;i++) head1[i]=head2[i]=0;
     for (k=0;k<nedg;k++) {
         i=beg[k]-1; next1[k]=head1[i]; head1[i]=k+1;
@@ -8616,29 +8623,29 @@ int graphe::tsp::minimal_cut(int nn,int nedg,const ivector &beg,
         assert(cap[k]>0);
     }
     int i,j,min_cut,flow,temp,I,J,K,S,T,DEG,NV,NE;
-    ivector &head1=mincut_data[0];
-    ivector &head2=mincut_data[1];
-    ivector &next1=mincut_data[2];
-    ivector &next2=mincut_data[3];
+    ivector &head1=mincut_data[0]; if (int(head1.size())<nn) head1.resize(nn);
+    ivector &head2=mincut_data[1]; if (int(head2.size())<nn) head2.resize(nn);
+    ivector &next1=mincut_data[2]; if (int(next1.size())<nedg) next1.resize(nedg);
+    ivector &next2=mincut_data[3]; if (int(next2.size())<nedg) next2.resize(nedg);
     for (i=0;i<nn;i++) head1[i]=head2[i]=0;
     for (k=0;k<nedg;k++) {
         i=beg[k]; next1[k]=head1[i-1]; head1[i-1]=k+1;
         j=end[k]; next2[k]=head2[j-1]; head2[j-1]=k+1;
     }
     NV=nn;
-    ivector &HEAD=mincut_data[4];
-    ivector &NEXT=mincut_data[5];
-    ivector &NUMB=mincut_data[6];
+    ivector &HEAD=mincut_data[4]; if (int(HEAD.size())<nn) HEAD.resize(nn);
+    ivector &NEXT=mincut_data[5]; if (int(NEXT.size())<nn) NEXT.resize(nn);
+    ivector &NUMB=mincut_data[6]; if (int(NUMB.size())<nn) NUMB.resize(nn);
     for (i=0;i<nn;i++) {
         HEAD[i]=i+1; NEXT[i]=0; NUMB[i]=i+1;
     }
-    ivector &BEG=mincut_data[7];
-    ivector &END=mincut_data[8];
-    ivector &CAP=mincut_data[9];
-    ivector &X=mincut_data[10];
-    ivector &ADJ=mincut_data[11];
-    ivector &SUM=mincut_data[12];
-    ivector &CUT=mincut_data[13];
+    ivector &BEG=mincut_data[7]; if (int(BEG.size())<nedg) BEG.resize(nedg);
+    ivector &END=mincut_data[8]; if (int(END.size())<nedg) END.resize(nedg);
+    ivector &CAP=mincut_data[9]; if (int(CAP.size())<nedg) CAP.resize(nedg);
+    ivector &X=mincut_data[10]; if (int(X.size())<nedg) X.resize(nedg);
+    ivector &ADJ=mincut_data[11]; if (int(ADJ.size())<nn) ADJ.resize(nn);
+    ivector &SUM=mincut_data[12]; if (int(SUM.size())<nn) SUM.resize(nn);
+    ivector &CUT=mincut_data[13]; if (int(CUT.size())<nn) CUT.resize(nn);
     min_cut=INT_MAX;
     while (NV>1) {
         for (I=0;I<NV;I++) SUM[I]=0.0;
@@ -8729,31 +8736,7 @@ graphe::tsp::tsp(graphe *gr) {
         a.sg_index=-1;
         weight_map[a.tail][a.head]=_evalf(G->weight(*it),G->giac_context()).DOUBLE_val();
     }
-    if ((is_undir_weighted=!isdirected && isweighted)) {
-        mincut_data.resize(22);
-        mincut_data[0].resize(nv);      // head1
-        mincut_data[1].resize(nv);      // head2
-        mincut_data[2].resize(ne);      // next1
-        mincut_data[3].resize(ne);      // next2
-        mincut_data[4].resize(nv);      // HEAD
-        mincut_data[5].resize(nv);      // NEXT
-        mincut_data[6].resize(nv);      // NUMB
-        mincut_data[7].resize(ne);      // BEG
-        mincut_data[8].resize(ne);      // END
-        mincut_data[9].resize(ne);      // CAP
-        mincut_data[10].resize(ne);     // X
-        mincut_data[11].resize(nv);     // ADJ
-        mincut_data[12].resize(nv);     // SUM
-        mincut_data[13].resize(nv);     // CUT
-        mincut_data[14].resize(ne);     // beg
-        mincut_data[15].resize(ne);     // end
-        mincut_data[16].resize(ne);     // cap
-        mincut_data[17].resize(nv);     // cut
-        mincut_data[18].resize(nv);     // head1
-        mincut_data[19].resize(nv);     // head2
-        mincut_data[20].resize(nv);     // next1
-        mincut_data[21].resize(nv);     // next2
-    }
+    is_undir_weighted=!isdirected && isweighted;
 }
 
 /* TSP destructor */
@@ -8806,13 +8789,8 @@ void graphe::tsp::make_sg_edges() {
 /* formulate TSP as MIP, initially without any subtour elimination constraints */
 void graphe::tsp::formulate_mip() {
     ivectors rows;
-    int n=sg<0?nv:sg_nv;
-    int m=sg<0?ne:sg_ne;
+    int n=sg<0?nv:sg_nv,m=sg<0?ne:sg_ne;
     int nonzeros=0,i,j,k,l,cnt=0,nrows,ncols,nrows0;
-    bool has_bounds=!isdirected && isweighted;
-    bool has_upper_bound=has_bounds && christofides(ctour);
-    if (!has_upper_bound)
-        ctour.clear();
     for (j=0;j<m;++j) {
         const arc &a=arcs[sg<0?j:sg_edges[j]];
         obj[j]=isweighted?weight(a.tail,a.head):1.0;
@@ -8848,8 +8826,8 @@ void graphe::tsp::formulate_mip() {
     }
     ncols=m;
     nrows=rows.size();
-    if (has_bounds)
-        nonzeros+=m*(has_upper_bound?2:1);
+    if (is_undir_weighted)
+        nonzeros+=m;
     int *ia=new int[nonzeros+1];
     int *ja=new int[nonzeros+1];
     double *ar=new double[nonzeros+1];
@@ -8869,8 +8847,8 @@ void graphe::tsp::formulate_mip() {
     glp_add_rows(mip,nrows);
     double rh=isdirected?1.0:2.0;
     for (i=0;i<nrows;++i) glp_set_row_bnds(mip,i+1,GLP_FX,rh,rh);
-    if (has_bounds) {
-        /* set lower bound */
+    /*
+    if (is_undir_weighted) {
         int r=glp_add_rows(mip,1);
         double lb=lower_bound();
         glp_set_row_bnds(mip,r,GLP_LO,lb,DBL_MAX);
@@ -8878,25 +8856,15 @@ void graphe::tsp::formulate_mip() {
             ia[++cnt]=r; ja[cnt]=i+1;
             ar[cnt]=obj[i];
         }
-        /* set upper bound */
-        if (has_upper_bound) {
-            r=glp_add_rows(mip,1);
-            optimize_tour(ctour);
-            double ub=tour_cost(ctour);
-            glp_set_row_bnds(mip,r,GLP_UP,0.0,ub);
-            for (i=0;i<m;++i) {
-                ia[++cnt]=r; ja[cnt]=i+1;
-                ar[cnt]=obj[i];
-            }
-        }
     }
+    */
     glp_add_cols(mip,ncols);
     for (j=0;j<m;++j) {
         glp_set_col_kind(mip,j+1,GLP_BV);
         glp_set_obj_coef(mip,j+1,obj[j]);
     }
-    assert(cnt==nonzeros);
-    glp_load_matrix(mip,nonzeros,ia,ja,ar);
+    assert(cnt<=nonzeros);
+    glp_load_matrix(mip,cnt,ia,ja,ar);
     delete[] ia; delete[] ja;
     delete[] ar;
 }
@@ -8923,7 +8891,7 @@ double graphe::tsp::lower_bound() {
         if (sg<0)
             G->unset_subgraphs();
         else v.set_subgraph(sg);
-        vector<double> c;
+        dvector c;
         for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
             if (sg>=0 && G->node(*it).subgraph()!=sg)
                 continue;
@@ -8950,23 +8918,25 @@ bool graphe::tsp::find_subgraph_subtours(ivectors &sv,solution_status &status) {
     glp_iocp parm;              // MIP solver settings
     glp_init_iocp(&parm);
     parm.msg_lev=GLP_MSG_OFF;   // do not output any messages
-    parm.gmi_cuts=GLP_ON;       // generate Gomory cuts (they seem to be most effective)
-    parm.mir_cuts=GLP_ON;
-    parm.cov_cuts=GLP_ON;
+    parm.gmi_cuts=GLP_ON;       // generate Gomory cuts
     parm.br_tech=GLP_BR_MFV;    // choose the most fractional variable (the fallback branching rule)
-    parm.bt_tech=GLP_BT_BLB;    // choose the best subproblem (proposed by Padberg & Rinaldi)
-    parm.fp_heur=GLP_ON;        // enable feasibility pump heuristic (designed for binary problems)
-    parm.sr_heur=GLP_OFF;       // disable simple rounding heuristic
+    parm.fp_heur=GLP_ON;        // enable feasibility pump heuristic
+    parm.sr_heur=GLP_OFF;       // disable simple rounding heuristic (according to A. Makhorin)
     parm.cb_func=&callback;     // MIP callback
     parm.cb_info=static_cast<void*>(this);
-    if (sg>=0) {
-        parm.tm_lim=2500;       // time limit (active only when processing HC forest nodes)
-    }
+    parm.tm_lim=sg>=0?5000:RAND_MAX;            // time limit
+    parm.bt_tech=sg<0?GLP_BT_BPH:GLP_BT_BLB;    // backtracking technique
+    parm.mip_gap=sg<0?0.0:1e-4;  // MIP gap relative tolerance
     bool retval=true;
-    int iter_count=0,res,stat;
-    heur_state=is_undir_weighted?1:0;
+    int iter_count=0,res,lres,stat;
     is_symmetric_tsp=is_undir_weighted && G->is_clique(sg);
-    //if (sg<0 && isweighted) parm.mip_gap=0.05;
+    heur_type=is_symmetric_tsp?_GT_TSP_CHRISTOFIDES_SA:
+                               (is_undir_weighted?_GT_TSP_FARTHEST_INSERTION_HEUR:
+                                                  _GT_TSP_NO_HEUR);
+    /*
+    if (heur_type==_GT_TSP_CHRISTOFIDES_SA && (sg<0?nv:sg_nv)>50)
+        heur_type=_GT_TSP_FARTHEST_INSERTION_HEUR;
+        */
     do {
         ++iter_count;
         /* append subtour elimination constraints */
@@ -8974,23 +8944,16 @@ bool graphe::tsp::find_subgraph_subtours(ivectors &sv,solution_status &status) {
             append_sce(*it);
         }
         subtours.clear();
-        if (heur_state!=0 && heur_state!=2)
-            heur_state=1;
-        glp_simplex(mip,&lparm);
-        if ((stat=glp_get_status(mip))!=GLP_OPT) {
-            retval=false;
-            break;
-        }
-        res=glp_intopt(mip,&parm);
+        if ((lres=glp_simplex(mip,&lparm))==0 && glp_get_status(mip)==GLP_OPT)
+            res=glp_intopt(mip,&parm);
+        else res=-1;
         stat=glp_get_status(mip);
         if (res==0 && stat==GLP_OPT)
             status=_GT_TSP_OPTIMAL;
-        else if (res==0 && stat==GLP_NOFEAS) {
+        else if (lres==0 && stat==GLP_NOFEAS) {
             status=_GT_TSP_NOT_HAMILTONIAN;
             break;
-        } else if (res==GLP_EMIPGAP)
-            status=_GT_TSP_CLOSE_ENOUGH;
-        else {
+        } else {
             status=_GT_TSP_ERROR;
             retval=false;
             break;
@@ -9003,10 +8966,8 @@ bool graphe::tsp::find_subgraph_subtours(ivectors &sv,solution_status &status) {
         }
     } while (subtours.size()>1);
     ++num_nodes;
-    if (sg<0 && (status==_GT_TSP_OPTIMAL || status==_GT_TSP_CLOSE_ENOUGH)) {
-        optimal_cost=glp_mip_obj_val(mip);
+    if (sg<0 && (status==_GT_TSP_OPTIMAL))
         lift_subtours(sv);
-    }
     return retval;
 }
 
@@ -9208,9 +9169,7 @@ void graphe::tsp::hc_dfs(int i,ivectors &considered_sec,ivectors &relevant_sec) 
     subtours.clear();
     add_subtours(left_sec);
     add_subtours(right_sec);
-    //G->message("Solving %d edges",sg_ne);
     find_subgraph_subtours(sv,status);
-    //G->message("Found %d SECs",sv.size());
     for (ivectors::iterator it=cons.begin();it!=cons.end();++it) {
         *it=canonical_subtour(*it);
     }
@@ -9230,15 +9189,12 @@ void graphe::tsp::hc_dfs(int i,ivectors &considered_sec,ivectors &relevant_sec) 
 }
 
 /* solve the original problem */
-int graphe::tsp::solve(ivector &h,double &cost) {
-    heur_success_ratio=make_pair(0,0);
-    heur_average_improvement=0.0;
+int graphe::tsp::solve(ivector &hc,double &cost) {
     make_hc_forest();
     G->unset_subgraphs();
     ivectors cons,relevant,sec,sv;
     mip=glp_create_prob();
     num_nodes=0;
-    G->message("Processing the hierarhical clustering tree on %d nodes...",hc_forest.size());
     for (ivectors_iter it=hc_forest.begin();it!=hc_forest.end();++it) {
         if (it->front()<0) { // root node of a tree in the forest
             hc_dfs(it-hc_forest.begin(),cons,relevant);
@@ -9246,60 +9202,41 @@ int graphe::tsp::solve(ivector &h,double &cost) {
             sec.insert(sec.end(),relevant.begin(),relevant.end());
         }
     }
-    G->message("Generated %d relevant subtour elimination constraint(s) from %d nodes",sec.size(),num_nodes);
     sg=-1;
     G->unset_subgraphs();
-    /*
-    ivectors_comparator comp;
-    sort(sec.begin(),sec.end(),comp);
-    sec.resize(1+sec.size()/4); // take only the first quartile of SECs
-    */
     add_subtours(sec);
     solution_status status;
     if (!find_subgraph_subtours(sv,status))
         return -1;
-    int heur_count=heur_success_ratio.first+heur_success_ratio.second;
-    heur_average_improvement/=double(heur_count);
-    //*logptr(G->giac_context()) << "Heuristic success rate: " << double(heur_success_ratio.first)/double(heur_count) << endl;
-    //*logptr(G->giac_context()) << "Average tour improvement: " << heur_average_improvement << endl;
     int retval;
     switch (status) {
-    case _GT_TSP_CLOSE_ENOUGH: // found a tour which is close enough to optimal one
-        G->message("A suboptimal solution found");
-    case _GT_TSP_OPTIMAL: // found a tour
-        assert(!sv.empty());
-        if (sv.size()>1)
-            retval=0;
-        else {
-            if (status==_GT_TSP_OPTIMAL)
-                G->message("Optimal solution found");
+    case _GT_TSP_OPTIMAL:
+        if (sv.size()==1) {
             const ivector &t=sv.front();
             int n=G->node_count();
             assert(int(t.size())==n);
-            cost=optimal_cost;
-            h.clear();
+            hc.clear();
             const arc &first=arcs[t.front()],&last=arcs[t.back()];
             int i=first.tail,j=first.head,k;
             if (i==last.tail || i==last.head) {
-                h.push_back(i);
-                h.push_back(k=j);
+                hc.push_back(i);
+                hc.push_back(k=j);
             } else {
-                h.push_back(j);
-                h.push_back(k=i);
+                hc.push_back(j);
+                hc.push_back(k=i);
             }
             for (ivector_iter it=t.begin()+1;it!=t.end();++it) {
                 const arc &a=arcs[*it];
-                if (a.tail==k) h.push_back(k=a.head);
+                if (a.tail==k) hc.push_back(k=a.head);
                 else {
                     assert(a.head==k);
-                    h.push_back(k=a.tail);
+                    hc.push_back(k=a.tail);
                 }
             }
-            /* last attempt to optimize the suboptimal result */
-            if (status==_GT_TSP_CLOSE_ENOUGH)
-                optimize_tour(h);
+            straighten(hc);
+            cost=tour_cost(hc);
             retval=1; // success
-        }
+        } else retval=0;
         break;
     case _GT_TSP_NOT_HAMILTONIAN:
         retval=0; // fail
@@ -9319,281 +9256,477 @@ double graphe::tsp::weight(int i, int j) {
 }
 
 /* return the cost of the tour */
-double graphe::tsp::tour_cost(const ivector &tour) {
-    int n=tour.size();
+double graphe::tsp::tour_cost(const ivector &hc) {
+    int n=hc.size()-1,v,w;
+    if (!isweighted)
+        return n;
     double cost=0;
-    for (int i=0;i<n-1;++i) {
-        cost+=weight(tour[i],tour[i+1]);
+    for (int i=0;i<n;++i) {
+        v=hc[i];
+        w=hc[i+1];
+        assert(G->has_edge(v,w));
+        cost+=weight(v,w);
     }
     return cost;
 }
 
-/* farthest insertion heuristic for undirected graphs, improved to 3-optimality */
+/* apply heuristics */
 void graphe::tsp::heur(glp_tree *tree) {
-    int n=sg<0?nv:sg_nv,m=sg<0?ne:sg_ne,i,j,k,f;
-    if (heur_state==1 || heur_state==2) {
-        tour=ctour;
-        if (heur_state==1) {
-            heur_state=3;
-            if (tour.empty()) {
-                heur(tree);
-                return;
-            }
-        } else heur_state=0;
-    } else {
-        glp_prob *lp=glp_ios_get_prob(tree);
-        ivector cb;
-        int ncols=glp_get_num_cols(lp);
-        double col_val;
-        for (i=0;i<ncols;++i) {
-            col_val=glp_get_col_prim(lp,i+1);
-            if (std::abs(col_val-std::round(col_val))<.001)
-                cb.push_back(i);
-        }
-        if (cb.empty())
+    if (heur_type==_GT_TSP_NO_HEUR)
+        return;
+    int n=sg<0?nv:sg_nv,m=sg<0?ne:sg_ne,i,j,k;
+    if (heur_type==_GT_TSP_CHRISTOFIDES_SA) { // symmetric TSP
+        christofides(tour);
+        //double old_cost=tour_cost(tour),imp_cost;
+        optimize_tour(tour);
+        //imp_cost=tour_cost(tour);
+        //*logptr(G->giac_context()) << "Improvement: " << imp_cost/old_cost << endl;
+        heur_type=_GT_TSP_FARTHEST_INSERTION_RANDOM;
+    } else if (heur_type<=_GT_TSP_FARTHEST_INSERTION_HEUR) { // weighted undirected TSP
+        /* choose the initial arc a by random such that weight(e) >= median weight,
+         * in the first pass try to construct a tour starting from heaviest edge */
+        int index=heur_type==_GT_TSP_FARTHEST_INSERTION_RANDOM?(m+1)/2+G->rand_integer(m/2):m-1;
+        farthest_insertion(index,tour);
+        heur_type=_GT_TSP_FARTHEST_INSERTION_RANDOM;
+        if (int(tour.size())<=n)
             return;
-        arc *a_max=NULL;
-        double minw,maxw=0,w;
-        for (ivector_iter it=cb.begin();it!=cb.end();++it) {
-            arc &a=arcs[sg<0?*it:sg_edges[*it]];
-            if ((w=weight(a.head,a.tail))>maxw) {
-                maxw=w;
-                a_max=&a;
+        optimize_tour(tour);
+    }
+    assert(int(tour.size())==n+1);
+    /* construct the heuristic solution and pass it to the MIP solver */
+    for (i=0;i<m;++i) coeff[i+1]=0.0;
+    for (i=0;i<n;++i) {
+        j=i+1;
+        k=edge_index(make_edge(tour[i],tour[j]));
+        coeff[k+1]=1.0;
+    }
+    glp_ios_heur_sol(tree,coeff);
+}
+
+/* farthest insertion heuristic for obtaining a Hamiltonian tour */
+void graphe::tsp::farthest_insertion(int index,ivector &hc) {
+    int n=sg<0?nv:sg_nv,i,j,k,f;
+    const arc &a=arcs[index];
+    i=a.tail;
+    j=a.head;
+    hc.clear();
+    hc.push_back(i);
+    hc.push_back(j);
+    hc.push_back(i);
+    ivector_iter jt;
+    for (int vis=0;vis<nv;++vis) visited[vis]=false;
+    visited[i]=visited[j]=true;
+    dvector W;
+    double w,maxw,minw;
+    /* proceed with farthest insertion heuristic */
+    do {
+        maxw=0;
+        f=-1;
+        for (int l=0;l<n;++l) {
+            k=sg<0?l:sg_vertices[l];
+            if (visited[k])
+                continue;
+            W.clear();
+            for (ivector_iter it=hc.begin();it!=hc.end();++it) {
+                if (G->has_edge(k,*it))
+                    W.push_back(weight(k,*it));
             }
-        }
-        i=a_max->tail;
-        j=a_max->head;
-        tour.clear();
-        tour.push_back(i);
-        tour.push_back(j);
-        tour.push_back(i);
-        ivector_iter jt;
-        for (int vis=0;vis<nv;++vis) visited[vis]=false;
-        visited[i]=visited[j]=true;
-        vector<double> W;
-        do {
-            maxw=0;
-            f=-1;
-            for (int l=0;l<n;++l) {
-                k=sg<0?l:sg_vertices[l];
-                if (visited[k])
-                    continue;
-                W.clear();
-                for (ivector_iter it=tour.begin();it!=tour.end();++it) {
-                    if (G->has_edge(k,*it))
-                        W.push_back(weight(k,*it));
-                }
-                minw=DBL_MAX;
-                if (W.size()<2)
-                    continue;
-                else for (vector<double>::const_iterator wt=W.begin();wt!=W.end();++wt) {
-                    if (*wt<minw)
-                        minw=*wt;
-                }
-                if (minw>maxw) {
-                    maxw=minw;
-                    f=k;
-                }
-            }
-            if ((k=f)<0)
-                break;
-            i=-1;
             minw=DBL_MAX;
-            for (ivector_iter it=tour.begin();it!=tour.end();++it) {
-                jt=it+1;
-                if (jt!=tour.end() && G->has_edge(*it,k) && G->has_edge(k,*jt) &&
-                        minw>(w=weight(*it,k)+weight(k,*jt)-weight(*it,*jt))) {
-                    minw=w;
-                    i=it-tour.begin();
-                }
+            if (W.size()<2)
+                continue;
+            else for (dvector_iter wt=W.begin();wt!=W.end();++wt) {
+                if (*wt<minw)
+                    minw=*wt;
             }
-            if (i<0)
-                break;
-            tour.insert(tour.begin()+i+1,k);
-            visited[k]=true;
-        } while (int(tour.size())<=n);
-    }
-    if (int(tour.size())>n) {
-        if (heur_state>2)
-            optimize_tour(tour);
-        /* construct the heuristic solution and pass it to the MIP solver */
-        for (i=0;i<m;++i) coeff[i+1]=0.0;
+            if (minw>maxw) {
+                maxw=minw;
+                f=k;
+            }
+        }
+        if ((k=f)<0)
+            break;
+        i=-1;
+        minw=DBL_MAX;
+        for (ivector_iter it=hc.begin();it!=hc.end();++it) {
+            jt=it+1;
+            if (jt!=hc.end() && G->has_edge(*it,k) && G->has_edge(k,*jt) &&
+                    minw>(w=weight(*it,k)+weight(k,*jt)-weight(*it,*jt))) {
+                minw=w;
+                i=it-hc.begin();
+            }
+        }
+        if (i<0)
+            break;
+        hc.insert(hc.begin()+i+1,k);
+        visited[k]=true;
+    } while (int(hc.size())<=n);
+}
+
+/* try to lower the cost of the tour hc */
+void graphe::tsp::optimize_tour(ivector &hc) {
+    int n=hc.size()-1,b1,e1,b2,e2,b3,e3,i1,j1,i2,j2,i3,j3,i,j,k,var,iter_count=0,moves_count=0;
+    double opt_timeout=5.0+25.0*std::exp(-std::pow(std::max(0,1000-n),2)/2e5);
+    vector<bool> visited(nv);
+    ivectors opt_moves;
+    double sw,save,maxsave,wb1e1,wb2e2,wb3e3,wb1b2,wb1e2,we1e2;
+    bool hb1e2,hb1b2,he1e2;
+    /* improve the tour by making a limited number of 3-opt moves */
+    clock_t start_time=clock();
+    ivector ijk(3);
+    bool triplet_found=false;
+    bool timed_out=false;
+    do {
+        ++iter_count;
+        opt_moves.clear();
+        std::fill(visited.begin(),visited.end(),false);
         for (i=0;i<n;++i) {
-            j=i+1;
-            k=edge_index(make_edge(tour[i],tour[j]));
-            coeff[k+1]=1.0;
-        }
-        if (glp_ios_heur_sol(tree,coeff)==0)
-            ++heur_success_ratio.first;
-        else ++heur_success_ratio.second;
-    }
-}
-
-/* improve the tour by making 2- and 3-opt moves */
-void graphe::tsp::optimize_tour(ivector &t) {
-    double old_cost=tour_cost(t);
-    do { ; } while(make_2opt_move(t));
-    do { ; } while(make_3opt_move(t));
-    double imp_cost=tour_cost(t);
-    assert(imp_cost<=old_cost);
-    heur_average_improvement+=std::abs(old_cost-imp_cost)/old_cost;
-}
-
-/* make the best possible 2-opt move */
-bool graphe::tsp::make_2opt_move(ivector &t) {
-    int n=t.size();
-    int b1,e1,b2,e2;
-    vector<double> w(n-1);
-    for (int i=0;i<n-1;++i) {
-        w[i]=weight(t[i],t[i+1]);
-    }
-    ivector pos(2,-1);
-    double imp,max_imp=0;
-    for (int i=0;i<n-1;++i) {
-        b1=t[i]; e1=t[i+1];
-        for (int j=i+2;j<n-1;++j) {
-            b2=t[j]; e2=t[j+1];
-            if (G->has_edge(b1,b2) && G->has_edge(e1,e2) && (imp=w[i]+w[j]-weight(b1,b2)-weight(e1,e2))>max_imp) {
-                max_imp=imp;
-                pos[0]=i;
-                pos[1]=j;
-            }
-        }
-    }
-    if (pos.front()<0)
-        return false;
-    /* make the move */
-    std::reverse(t.begin()+pos[0]+1,t.begin()+pos[1]+1);
-    return true;
-}
-
-/* make the best possible 3-opt move */
-bool graphe::tsp::make_3opt_move(ivector &t) {
-    int n=t.size(),b;
-    int b1,e1,b2,e2,b3,e3;
-    vector<double> w(n+3);
-    for (int i=0;i<n-1;++i) {
-        w[i]=weight(t[i],t[i+1]);
-    }
-    ivector pos(4,-1);
-    double sw,imp,max_imp=0;
-    for (int i=0;i<n-1;++i) {
-        b1=t[i]; e1=t[i+1];
-        for (int j=i+2;j<n-1;++j) {
-            b2=t[j]; e2=t[j+1];
-            for (int k=j+2;k<n-1;++k) {
-                b3=t[k]; e3=t[k+1];
-                /* choose the best one of at most 4 possible 3-opt moves, if such exists */
-                sw=w[i]+w[j]+w[k];
-                b=-1;
-                if (G->has_edge(b1,e2) && G->has_edge(b3,e1) && G->has_edge(b2,e3) &&
-                        (imp=sw-weight(b1,e2)-weight(b3,e1)-weight(b2,e3))>max_imp) {
-                    max_imp=imp; b=0;
+            triplet_found=false;
+            b1=hc[i]; e1=hc[i+1];
+            if (visited[b1] || visited[e1])
+                continue;
+            wb1e1=weight(b1,e1);
+            for (j=i+2;j<n;++j) {
+                if (double(clock()-start_time)/CLOCKS_PER_SEC>opt_timeout) {
+                    timed_out=true;
+                    break;
                 }
-                if (G->has_edge(b1,e2) && G->has_edge(b3,b2) && G->has_edge(e1,e3) &&
-                        (imp=sw-weight(b1,e2)-weight(b3,b2)-weight(e1,e3))>max_imp) {
-                    max_imp=imp; b=1;
-                }
-                if (G->has_edge(b1,b2) && G->has_edge(b3,e1) && G->has_edge(e2,e3) &&
-                        (imp=sw-weight(b1,b2)-weight(b3,e1)-weight(e2,e3))>max_imp) {
-                    max_imp=imp; b=2;
-                }
-                if (G->has_edge(b1,b3) && G->has_edge(e2,e1) && G->has_edge(b2,e3) &&
-                        (imp=sw-weight(b1,b3)-weight(e2,e1)-weight(b2,e3))>max_imp)
-                    b=3;
-                if (b==-1)
+                b2=hc[j]; e2=hc[j+1];
+                if (visited[b2] || visited[e2])
                     continue;
-                pos[0]=i;
-                pos[1]=j;
-                pos[2]=k;
-                pos[3]=b;
+                wb2e2=weight(b2,e2);
+                hb1e2=G->has_edge(b1,e2);
+                hb1b2=G->has_edge(b1,b2);
+                he1e2=G->has_edge(e1,e2);
+                if (hb1b2) wb1b2=weight(b1,b2);
+                if (hb1e2) wb1e2=weight(b1,e2);
+                if (he1e2) we1e2=weight(e1,e2);
+                for (k=j+2;k<n;++k) {
+                    b3=hc[k]; e3=hc[k+1];
+                    if (visited[b3] || visited[e3])
+                        continue;
+                    wb3e3=weight(b3,e3);
+                    sw=wb1e1+wb2e2+wb3e3;
+                    if ((hb1e2 && G->has_edge(b3,e1) && G->has_edge(b2,e3) && sw>wb1e2+weight(b3,e1)+weight(b2,e3)) ||
+                            (hb1e2 && G->has_edge(b3,b2) && G->has_edge(e1,e3) && sw>wb1e2+weight(b3,b2)+weight(e1,e3)) ||
+                            (hb1b2 && G->has_edge(b3,e1) && G->has_edge(e2,e3) && sw>wb1b2+weight(b3,e1)+weight(e2,e3)) ||
+                            (G->has_edge(b1,b3) && he1e2 && G->has_edge(b2,e3) && sw>weight(b1,b3)+we1e2+weight(b2,e3)))
+                    {
+                        ivector opt_move(6);
+                        opt_move[0]=b1; opt_move[1]=b2; opt_move[2]=b3;
+                        opt_move[3]=e1; opt_move[4]=e2; opt_move[5]=e3;
+                        opt_moves.push_back(opt_move);
+                        visited[b1]=visited[b2]=visited[b3]=true;
+                        visited[e1]=visited[e2]=visited[e3]=true;
+                        triplet_found=true;
+                        break;
+                    }
+                }
+                if (triplet_found)
+                    break;
+            }
+            if (timed_out)
+                break;
+        }
+        if (opt_moves.empty()) break;
+        for (ivectors_iter it=opt_moves.begin(); it!=opt_moves.end();++it) {
+            const ivector &opt_move=*it;
+            i1=find(hc.begin(),hc.end(),opt_move[0])-hc.begin();
+            i2=find(hc.begin(),hc.end(),opt_move[1])-hc.begin();
+            i3=find(hc.begin(),hc.end(),opt_move[2])-hc.begin();
+            j1=find(hc.begin(),hc.end(),opt_move[3])-hc.begin();
+            j2=find(hc.begin(),hc.end(),opt_move[4])-hc.begin();
+            j3=find(hc.begin(),hc.end(),opt_move[5])-hc.begin();
+            if (std::abs(i1-j1)!=1) {
+                if (i1==0) i1=n;
+                else if (j1==0) j1=n;
+                else assert(false);
+            }
+            if (std::abs(i2-j2)!=1) {
+                if (i2==0) i2=n;
+                else if (j2==0) j2=n;
+                else assert(false);
+            }
+            if (std::abs(i3-j3)!=1) {
+                if (i3==0) i3=n;
+                else if (j3==0) j3=n;
+                else assert(false);
+            }
+            assert(std::abs(i1-j1)==1 && std::abs(i2-j2)==1 && std::abs(i3-j3)==1);
+            ijk[0]=std::min(i1,j1);
+            ijk[1]=std::min(i2,j2);
+            ijk[2]=std::min(i3,j3);
+            sort(ijk.begin(),ijk.end());
+            i=ijk[0]; j=ijk[1]; k=ijk[2];
+            b1=hc[i]; b2=hc[j]; b3=hc[k];
+            e1=hc[i+1]; e2=hc[j+1]; e3=hc[k+1];
+            sw=weight(b1,e1)+weight(b2,e2)+weight(b3,e3);
+            maxsave=0.0;
+            if (G->has_edge(b1,e2) && G->has_edge(b3,e1) && G->has_edge(b2,e3) &&
+                    (save=sw-weight(b1,e2)-weight(b3,e1)-weight(b2,e3))>maxsave) {
+                var=0; maxsave=save;
+            }
+            if (G->has_edge(b1,e2) && G->has_edge(b3,b2) && G->has_edge(e1,e3) &&
+                  (save=sw-weight(b1,e2)-weight(b3,b2)-weight(e1,e3))>maxsave) {
+                var=1; maxsave=save;
+            }
+            if (G->has_edge(b1,b2) && G->has_edge(b3,e1) && G->has_edge(e2,e3) &&
+                  (save=sw-weight(b1,b2)-weight(b3,e1)-weight(e2,e3))>maxsave) {
+                var=2; maxsave=save;
+            }
+            if (G->has_edge(b1,b3) && G->has_edge(e1,e2) && G->has_edge(b2,e3) &&
+                  (save=sw-weight(b1,b3)-weight(e1,e2)-weight(b2,e3))>maxsave) {
+                var=3; maxsave=save;
+            }
+            if (maxsave>.001) {
+                ivector part(hc.begin()+j+1,hc.begin()+k+1);
+                switch (var) {
+                case 1:
+                    std::reverse(hc.begin()+i+1,hc.begin()+j+1);
+                case 3:
+                    if (var==3) std::reverse(part.begin(),part.end());
+                case 0:
+                    hc.erase(hc.begin()+j+1,hc.begin()+k+1);
+                    hc.insert(hc.begin()+i+1,part.begin(),part.end());
+                    break;
+                case 2:
+                    std::reverse(hc.begin()+i+1,hc.begin()+j+1);
+                    std::reverse(hc.begin()+j+1,hc.begin()+k+1);
+                    break;
+                default:
+                    assert(false);
+                }
+                ++moves_count;
+            }
+        }
+    } while (!timed_out);
+    straighten(hc);
+}
+
+void graphe::tsp::straighten(ivector &hc) {
+    ivectors opt_moves;
+    int i,j,k,l,b1,b2,e1,e2,n=hc.size()-1,iter_count=0,moves_count=0;
+    double w0;
+    vector<bool> visited(n+1);
+    ivector opt_move(4);
+    while (true) {
+        ++iter_count;
+        opt_moves.clear();
+        std::fill(visited.begin(),visited.end(),false);
+        for (int i=0;i<n;++i) {
+            if (visited[i] && visited[i+1]) continue;
+            b1=hc[i]; e1=hc[i+1];
+            w0=weight(b1,e1);
+            for (int j=i+2;j<n;++j) {
+                if ((i==0 && j==n-1) || (visited[j] && visited[j+1])) continue;
+                b2=hc[j]; e2=hc[j+1];
+                if (G->has_edge(b1,b2) && G->has_edge(e1,e2) &&
+                        w0+weight(b2,e2)-weight(b1,b2)-weight(e1,e2)>.001) {
+                    opt_move[0]=b1; opt_move[1]=b2; opt_move[2]=e1; opt_move[3]=e2;
+                    opt_moves.push_back(opt_move);
+                    visited[i]=visited[i+1]=visited[j]=visited[j+1]=true;
+                    break;
+                }
+            }
+        }
+        if (opt_moves.empty()) break;
+        for (ivectors_iter it=opt_moves.begin();it!=opt_moves.end();++it) {
+            const ivector &opt_move=*it;
+            b1=opt_move[0]; b2=opt_move[1]; e1=opt_move[2]; e2=opt_move[3];
+            i=find(hc.begin(),hc.end(),b1)-hc.begin(); j=find(hc.begin(),hc.end(),e1)-hc.begin();
+            k=find(hc.begin(),hc.end(),b2)-hc.begin(); l=find(hc.begin(),hc.end(),e2)-hc.begin();
+            if (std::abs(i-j)!=1) {
+                if (i==0) i=n;
+                else if (j==0) j=n;
+                else assert(false);
+            }
+            if (std::abs(k-l)!=1) {
+                if (k==0) k=n;
+                else if (l==0) l=n;
+                else assert(false);
+            }
+            assert(std::abs(i-j)==1 && std::abs(k-l)==1);
+            i=std::min(i,j);
+            j=std::min(k,l);
+            std::reverse(hc.begin()+(i<j?i:j)+1,hc.begin()+(i<j?j:i)+1);
+            ++moves_count;
+        }
+    }
+}
+
+/* find minimum weight perfect matching in an undirected bipartite graph with
+ * even number of vertices, edge set E and edge weights W */
+void graphe::tsp::min_weight_matching_bipartite(const ivector &eind,const dvector &weights,ivector &matched_arcs) {
+    set<int> Vset; // set of vertices
+    for (ivector_iter it=eind.begin();it!=eind.end();++it) {
+        const arc &a=arcs[*it];
+        Vset.insert(a.head);
+        Vset.insert(a.tail);
+    }
+    ivector V;
+    for (set<int>::const_iterator it=Vset.begin();it!=Vset.end();++it) {
+        V.push_back(*it);
+    }
+    int m=eind.size(),n=V.size(),nz=2*m,cnt=0,v;
+    assert((n%2)==0);
+    glp_prob *wp=glp_create_prob();
+    glp_add_rows(wp,n);
+    glp_add_cols(wp,m);
+    glp_set_obj_dir(wp,GLP_MIN);
+    int *ia=new int[nz+1];
+    int *ja=new int[nz+1];
+    double *ar=new double[nz+1];
+    for (int i=0;i<n;++i) {
+        v=V[i];
+        for (int j=0;j<m;++j) {
+            const arc &a=arcs[eind[j]];
+            if (a.head==v || a.tail==v) {
+                ia[++cnt]=i+1; ja[cnt]=j+1;
+                ar[cnt]=1.0;
             }
         }
     }
-    if (pos.front()<0)
-        return false;
-    /* make the move */
-    ivector part(t.begin()+pos[1]+1,t.begin()+pos[2]+1);
-    switch (pos[3]) {
-    case 1:
-        std::reverse(t.begin()+pos[0]+1,t.begin()+pos[1]+1);
-    case 3:
-        if (pos[3]==3)
-            std::reverse(part.begin(),part.end());
-    case 0:
-        t.erase(t.begin()+pos[1]+1,t.begin()+pos[2]+1);
-        t.insert(t.begin()+pos[0]+1,part.begin(),part.end());
-        break;
-    case 2:
-        std::reverse(t.begin()+pos[0]+1,t.begin()+pos[1]+1);
-        std::reverse(t.begin()+pos[1]+1,t.begin()+pos[2]+1);
-        break;
-    default:
-        assert(false);
+    assert(cnt==nz);
+    for (int i=0;i<n;++i) glp_set_row_bnds(wp,i+1,GLP_FX,1.0,1.0);
+    for (int j=0;j<m;++j) {
+        glp_set_col_kind(wp,j+1,GLP_BV);
+        glp_set_obj_coef(wp,j+1,weights[j]);
     }
-    return true;
+    glp_load_matrix(wp,nz,ia,ja,ar);
+    delete[] ia; delete[] ja;
+    delete[] ar;
+    glp_smcp lparm;
+    glp_iocp parm;
+    glp_init_smcp(&lparm);
+    lparm.msg_lev=GLP_MSG_OFF;
+    glp_init_iocp(&parm);
+    parm.br_tech=GLP_BR_MFV;
+    parm.bt_tech=GLP_BT_BLB;
+    parm.gmi_cuts=GLP_ON;
+    parm.mir_cuts=GLP_ON;
+    parm.msg_lev=GLP_MSG_OFF;
+    parm.fp_heur=GLP_ON;
+    parm.sr_heur=GLP_OFF;
+    parm.cb_func=&min_wpm_callback;
+    pair<const ivector*,tsp*> info;
+    info.first=&eind;
+    info.second=this;
+    parm.cb_info=static_cast<void*>(&info);
+    min_wpm_enable_heur=true;
+    assert(glp_simplex(wp,&lparm)==0 && glp_get_status(wp)==GLP_OPT);
+    assert(glp_intopt(wp,&parm)==0 && glp_get_status(wp)==GLP_OPT);
+    for (int j=0;j<m;++j) {
+        if (glp_mip_col_val(wp,j+1)!=0)
+            matched_arcs.push_back(j);
+    }
+    glp_delete_prob(wp);
 }
 
-/* return true iff t is a cycle in G */
-bool graphe::tsp::is_cycle(const ivector &t) const {
-    int n=t.size();
-    if (t.size()<3 || t.front()!=t.back())
-        return false;
-    for (int i=0;i<n-1;++i) {
-        if (!G->has_edge(tour[i],tour[i+1]))
-            return false;
+/* simple heuristic for min weight perfect matching problem */
+void graphe::tsp::min_wpm_heur(glp_tree *tree,const ivector &eind) {
+    vector<bool> vertex_matched(nv,false);
+    vector<bool> arc_matched(eind.size(),false);
+    set<int> V;
+    int i,j,k,n=eind.size();
+    glp_prob *lp=glp_ios_get_prob(tree);
+    for (i=0;i<n;++i) {
+        if (glp_ios_can_branch(tree,i+1)==0 && glp_get_col_prim(lp,i+1)>0.9) {
+            const arc &a=arcs[eind[i]];
+            if (vertex_matched[a.head] || vertex_matched[a.tail])
+                continue;
+            arc_matched[i]=true;
+            vertex_matched[a.head]=vertex_matched[a.tail]=true;
+        }
     }
-    return true;
+    for (ivector_iter it=eind.begin();it!=eind.end();++it) {
+        k=it-eind.begin();
+        if (arc_matched[k])
+            continue;
+        const arc &a=arcs[*it];
+        i=a.tail; j=a.head;
+        V.insert(i); V.insert(j);
+        if (vertex_matched[i] || vertex_matched[j])
+            continue;
+        arc_matched[k]=true;
+        vertex_matched[i]=vertex_matched[j]=true;
+    }
+    int cnt=0;
+    for (vector<bool>::const_iterator it=arc_matched.begin();it!=arc_matched.end();++it) {
+        if (*it) ++cnt;
+        coeff[it-arc_matched.begin()+1]=*it?1.0:0.0;
+    }
+    if (int(V.size())==2*cnt)
+        glp_ios_heur_sol(tree,coeff);
 }
 
-/* construct a tour using Christofides method */
-bool graphe::tsp::christofides(ivector &t) {
-    int n=sg<0?nv:sg_nv;
-    graphe SG(G->giac_context());
-    ivector V;
-    if (sg<0)
-        SG=*G;
-    else {
-        G->get_subgraph(sg,V);
-        G->induce_subgraph(V,SG);
-    }
+/* construct a tour using the method of Christofides for symmetric TSP */
+void graphe::tsp::christofides(ivector &hc) {
+    hc.clear();
+    int n=sg<0?nv:sg_nv,m=sg<0?ne:sg_ne,ei;
+    /* create spanning tree T of the subgraph with index sg */
     graphe T(G->giac_context());
-    SG.spanning_tree(0,T);
-    V.clear();
+    G->minimal_spanning_tree(T,sg);
+    ivector V;
     for (int i=0;i<n;++i) {
         if ((T.degree(i)%2)!=0)
-            V.push_back(i);
+            V.push_back(G->node_index(T.node_label(i)));
     }
-    graphe SSG(G->giac_context());
-    SG.induce_subgraph(V,SSG);
-    ipairs matching;
-    SSG.maximize_matching(matching);
-    for (ipairs_iter it=matching.begin();it!=matching.end();++it) {
-        const attrib &attr=SSG.edge_attributes(it->first,it->second);
-        T.add_edge(SSG.node_label(it->first),SSG.node_label(it->second),attr);
+    /* the number of odd degree vertices in T must be even */
+    assert(V.size()>0 && (V.size()%2)==0);
+    /* get edges in SG\T connecting the vertices from V,
+     * these form a bipartite graph B(V,E) */
+    ivector eind,matched_arcs;
+    dvector weights;
+    for (int k=0;k<m;++k) {
+        ei=sg<0?k:sg_edges[k];
+        const arc &a=arcs[ei];
+        if (find(V.begin(),V.end(),a.head)!=V.end() &&
+                find(V.begin(),V.end(),a.tail)!=V.end() &&
+                !T.has_edge(T.node_index(G->node_label(a.tail)),
+                            T.node_index(G->node_label(a.head)))) {
+            eind.push_back(ei);
+            weights.push_back(weight(a.tail,a.head));
+        }
+    }
+    if (eind.size()==1)
+        matched_arcs.resize(1,0);
+    else min_weight_matching_bipartite(eind,weights,matched_arcs);
+    assert(2*matched_arcs.size()==V.size());
+    /* add matched edges to T and find Eulerian circuit,
+     * such exists because T now has all vertex degrees even */
+    for (ivector_iter it=matched_arcs.begin();it!=matched_arcs.end();++it) {
+        const arc &a=arcs[eind[*it]];
+        const attrib &attr=G->edge_attributes(a.tail,a.head);
+        T.add_edge(G->node_label(a.tail),G->node_label(a.head),attr);
     }
     ivector etrail; // eulerian trail
-    if (T.find_eulerian_path(etrail) && etrail.front()==etrail.back()) {
-        t.clear();
-        vector<bool> visited(n,false);
-        for (ivector_iter it=etrail.begin();it!=etrail.end();++it) {
-            if (visited[*it])
-                continue;
-            t.push_back(*it);
-            visited[*it]=true;
-        }
-        t.push_back(t.front());
-        return is_cycle(t);
+    assert(T.find_eulerian_path(etrail) && etrail.front()==etrail.back());
+    vector<bool> visited(n,false);
+    for (ivector_iter it=etrail.begin();it!=etrail.end();++it) {
+        if (visited[*it])
+            continue;
+        hc.push_back(G->node_index(T.node_label(*it)));
+        visited[*it]=true;
     }
-    return false;
+    hc.push_back(hc.front());
 }
 
-/* return the mean of the given sample */
-void graphe::tsp::sample_mean_stddev(const vector<double> &sample,double &mean,double &stddev) {
+/* construct an approximate tour, G must be a complete graph */
+double graphe::tsp::approx(ivector &hc) {
+    assert(is_undir_weighted);
+    sg=-1;
+    christofides(hc);
+    double old_cost=tour_cost(hc),imp_cost;
+    optimize_tour(hc);
+    imp_cost=tour_cost(hc);
+    return (1.5*imp_cost/old_cost);
+}
+
+/* compute the mean and the standard deviation of the given sample */
+void graphe::tsp::sample_mean_stddev(const dvector &sample,double &mean,double &stddev) {
     assert(!sample.empty());
     /* compute the mean */
     double sum=0;
-    for (vector<double>::const_iterator it=sample.begin();it!=sample.end();++it) {
+    for (dvector_iter it=sample.begin();it!=sample.end();++it) {
         sum+=*it;
     }
     mean=sum/double(sample.size());
@@ -9602,7 +9735,7 @@ void graphe::tsp::sample_mean_stddev(const vector<double> &sample,double &mean,d
     else {
         double d;
         sum=0;
-        for (vector<double>::const_iterator it=sample.begin();it!=sample.end();++it) {
+        for (dvector_iter it=sample.begin();it!=sample.end();++it) {
             d=*it-mean;
             sum+=d*d;
         }
@@ -9640,7 +9773,7 @@ void graphe::tsp::select_branching_variable(glp_tree *tree) {
             sorted_by_obj_coeff.push_back(make_pair(obj[*it],*it));
         }
         sort(sorted_by_obj_coeff.begin(),sorted_by_obj_coeff.end());
-        vector<double> data2(N),data1(0);
+        dvector data2(N),data1(0);
         for (int i=0;i<N;++i) {
             ind[i]=sorted_by_obj_coeff[i].second;
             data2[i]=sorted_by_obj_coeff[i].first;
@@ -9686,21 +9819,20 @@ void graphe::tsp::select_branching_variable(glp_tree *tree) {
 
 /* row generation (originally written by Andrew Makhorin) */
 void graphe::tsp::rowgen(glp_tree *tree) {
+    if (mincut_data.empty())
+        mincut_data.resize(22);
     glp_prob *prob=glp_ios_get_prob(tree);
-    int i,j,k,m,n,nedg,nz;
+    int i,j,k,m=sg<0?ne:sg_ne,n=sg<0?nv:sg_nv,nedg=0,nz;
     double sum,xk;
-    n=sg<0?nv:sg_nv;
-    m=sg<0?ne:sg_ne;
-    nedg=0;
     for (k=0;k<m;k++) {
         if (glp_get_col_prim(prob,k+1)>=.001)
             nedg++;
     }
     /* build the capacitated network */
     assert(nedg<=m);
-    ivector &beg=mincut_data[14];
-    ivector &end=mincut_data[15];
-    ivector &cap=mincut_data[16];
+    ivector &beg=mincut_data[14]; if (int(beg.size())<nedg) beg.resize(nedg);
+    ivector &end=mincut_data[15]; if (int(end.size())<nedg) end.resize(nedg);
+    ivector &cap=mincut_data[16]; if (int(cap.size())<nedg) cap.resize(nedg);
     nz=0;
     for (k=0;k<m;k++) {
         if ((xk=glp_get_col_prim(prob,k+1))>=.001) {
@@ -9711,7 +9843,7 @@ void graphe::tsp::rowgen(glp_tree *tree) {
         }
     }
     assert(nz==nedg);
-    ivector &cut=mincut_data[17];
+    ivector &cut=mincut_data[17]; if (int(cut.size())<n) cut.resize(n);
     minimal_cut(n,nedg,beg,end,cap,cut); // find minimal cut in the capacitated network
     nedg=0; sum=0;
     for (i=0;i<n;i++) {
@@ -9743,85 +9875,17 @@ void graphe::tsp::rowgen(glp_tree *tree) {
     }
 }
 
-/* generate 2-matching cuts by applying a simple heuristic algorithm */
-void graphe::tsp::cutgen(glp_tree *tree) {
-    glp_prob *lp=glp_ios_get_prob(tree);
-    int n=sg<0?nv:sg_nv,m=glp_get_num_cols(lp),i,len,e1,e2;
-    vector<double> x(m);
-    ivector delta,F,Fc;
-    double lh,rh;
-    for (i=0;i<m;++i) x[i]=glp_get_col_prim(lp,i+1);
-    for (int k=0;k<n;++k) {
-        i=sg<0?k:sg_vertices[k];
-        delta.clear();
-        for (int l=0;l<m;++l) {
-            const arc &a=arcs[sg<0?l:sg_edges[l]];
-            if (a.head==i || a.tail==i)
-                delta.push_back(l);
-        }
-        if (delta.size()<2)
-            continue;
-        F.clear(); Fc.clear();
-        for (ivector_iter it=delta.begin();it!=delta.end();++it) {
-            if (x[*it]>=0.5)
-                F.push_back(*it);
-            else Fc.push_back(*it);
-        }
-        if ((F.size()%2)==0) {
-            e1=-1,e2=-1;
-            double xmax=-DBL_MAX,xmin=DBL_MAX,xe;
-            for (ivector_iter it=F.begin();it!=F.end();++it) {
-                if ((xe=x[*it])<xmin) {
-                    xmin=xe;
-                    e1=*it;
-                }
-            }
-            for (ivector_iter it=Fc.begin();it!=Fc.end();++it) {
-                if ((xe=x[*it])>xmax) {
-                    xmax=xe;
-                    e2=*it;
-                }
-            }
-            if ((e1>=0 && e2>=0 && x[e1]+x[e2]<=1) || e2<0) {
-                F.erase(find(F.begin(),F.end(),e1));
-                Fc.push_back(e1);
-            } else if ((e1>=0 && e2>=0 && x[e1]+x[e2]>1) || e1<0) {
-                Fc.erase(find(Fc.begin(),Fc.end(),e2));
-                F.push_back(e2);
-            } else continue;
-        }
-        assert((F.size()%2)!=0);
-        /* construct the inequality */
-        len=0;
-        lh=0;
-        for (ivector_iter it=F.begin();it!=F.end();++it) {
-            indices[++len]=*it+1; coeff[len]=1.0;
-            lh+=x[*it];
-        }
-        for (ivector_iter it=Fc.begin();it!=Fc.end();++it) {
-            indices[++len]=*it+1; coeff[len]=-1.0;
-            lh-=x[*it];
-        }
-        if (lh-(rh=double(F.size()-1))>.001)
-            glp_ios_add_row(tree,NULL,0,0,len,indices,coeff,GLP_UP,rh);
-    }
-}
-
-/* MIP callback */
+/* MIP callback routine */
 void graphe::tsp::callback(glp_tree *tree,void *info) {
     tsp *tsprob=static_cast<tsp*>(info);
     switch (glp_ios_reason(tree)) {
     case GLP_IHEUR:
-        if (tsprob->heur_state>0)
-            tsprob->heur(tree);
+        tsprob->heur(tree);
         break;
     case GLP_IBRANCH:
         if (tsprob->is_undir_weighted)
             tsprob->select_branching_variable(tree);
         break;
-    case GLP_ICUTGEN:
-        if (tsprob->is_symmetric_tsp)
-            tsprob->cutgen(tree);
     case GLP_IROWGEN:
         if (tsprob->is_symmetric_tsp)
             tsprob->rowgen(tree);
@@ -9835,6 +9899,33 @@ void graphe::tsp::callback(glp_tree *tree,void *info) {
     }
 }
 
+/* min weight perfect matching solver callback routine */
+void graphe::tsp::min_wpm_callback(glp_tree *tree,void *info) {
+    pair<const ivector*,tsp*> *origin=static_cast<pair<const ivector*,tsp*>*>(info);
+    const ivector *eind=origin->first;
+    tsp *tsprob=origin->second;
+    //glp_prob *lp=glp_ios_get_prob(tree);
+    //int n=glp_get_num_cols(lp);
+    switch (glp_ios_reason(tree)) {
+    case GLP_IHEUR:
+        if (tsprob->min_wpm_enable_heur)
+            tsprob->min_wpm_heur(tree,*eind);
+        break;
+    case GLP_IBRANCH:
+        /*
+        for (int i=0;i<n;++i) {
+            if (glp_ios_can_branch(tree,i+1)) {
+                glp_ios_branch_upon(tree,i+1,GLP_UP_BRNCH);
+                break;
+            }
+        }
+        */
+        break;
+    default:
+        break;
+    }
+}
+
 #endif
 /*
 * END OF TSP CLASS IMPLEMENTATION
@@ -9842,9 +9933,15 @@ void graphe::tsp::callback(glp_tree *tree,void *info) {
 
 /* try to find Hamiltonian circuit, return 0 if the graph is not Hamiltonian,
 * else store the circuit in h and return 1, if unable to solve return -1 */
-int graphe::find_hamiltonian_cycle(ivector &h,double &cost) {
+int graphe::find_hamiltonian_cycle(ivector &h,double &cost,bool approximate) {
 #ifdef HAVE_LIBGLPK
     tsp t(this);
+    if (approximate) {
+        double r=t.approx(h)-1;
+        //message("Cost of the tour is within %d %% of the optimum",(int)std::round(100.0*r));
+        cost=t.tour_cost(h);
+        return 1;
+    }
     return t.solve(h,cost);
 #else
     message("Error: GLPK library is required for solving traveling salesman problem");

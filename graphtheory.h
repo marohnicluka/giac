@@ -73,6 +73,7 @@ gen _digraph(const gen &g,GIAC_CONTEXT);
 gen _export_graph(const gen &g,GIAC_CONTEXT);
 gen _import_graph(const gen &g,GIAC_CONTEXT);
 gen _trail(const gen &g,GIAC_CONTEXT);
+gen _trail2edges(const gen &g,GIAC_CONTEXT);
 gen _draw_graph(const gen &g,GIAC_CONTEXT);
 gen _graph_complement(const gen &g,GIAC_CONTEXT);
 gen _induced_subgraph(const gen &g,GIAC_CONTEXT);

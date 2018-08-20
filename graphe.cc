@@ -5813,7 +5813,7 @@ void graphe::build_block_tree(int i,ivectors &blocks) {
     }
 }
 
-/* choose a face to embed between those containing the vertex v */
+/* choose a face to embed among those containing the vertex v */
 int graphe::choose_embedding_face(const ivectors &faces,int v) {
     ivector candidates;
     for (ivectors_iter ft=faces.begin();ft!=faces.end();++ft) {
@@ -8847,7 +8847,6 @@ void graphe::tsp::formulate_mip() {
     glp_add_rows(mip,nrows);
     double rh=isdirected?1.0:2.0;
     for (i=0;i<nrows;++i) glp_set_row_bnds(mip,i+1,GLP_FX,rh,rh);
-    /*
     if (is_undir_weighted) {
         int r=glp_add_rows(mip,1);
         double lb=lower_bound();
@@ -8857,7 +8856,6 @@ void graphe::tsp::formulate_mip() {
             ar[cnt]=obj[i];
         }
     }
-    */
     glp_add_cols(mip,ncols);
     for (j=0;j<m;++j) {
         glp_set_col_kind(mip,j+1,GLP_BV);
@@ -8933,10 +8931,6 @@ bool graphe::tsp::find_subgraph_subtours(ivectors &sv,solution_status &status) {
     heur_type=is_symmetric_tsp?_GT_TSP_CHRISTOFIDES_SA:
                                (is_undir_weighted?_GT_TSP_FARTHEST_INSERTION_HEUR:
                                                   _GT_TSP_NO_HEUR);
-    /*
-    if (heur_type==_GT_TSP_CHRISTOFIDES_SA && (sg<0?nv:sg_nv)>50)
-        heur_type=_GT_TSP_FARTHEST_INSERTION_HEUR;
-        */
     do {
         ++iter_count;
         /* append subtour elimination constraints */
@@ -9021,7 +9015,7 @@ void graphe::tsp::append_sce(const ivector &subtour) {
     glp_set_mat_row(mip,r,cnt,indices,coeff);
 }
 
-/* append subtours from sv, converting them to conform to sg_edges */
+/* append subtours from sv, converting them to conform sg_edges */
 void graphe::tsp::add_subtours(const ivectors &sv) {
     ivector subtour;
     for (ivectors_iter it=sv.begin();it!=sv.end();++it) {
@@ -9079,30 +9073,30 @@ void graphe::tsp::get_subtours() {
 }
 
 /* construct hierarhical clustering forest */
-void graphe::tsp::make_hc_forest() {
+void graphe::tsp::make_hierarhical_clustering_forest() {
     int k;
     int u=std::floor(nv*4.0/std::log2(nv)); // upper bound on the cluster cardinality
-    hc_forest.clear();
+    hierarhical_clustering_forest.clear();
     /* create leaf nodes */
     for (int i=0;i<nv;++i) {
         ivector node(4,-1);
         node.back()=i;
-        hc_forest.push_back(node);
+        hierarhical_clustering_forest.push_back(node);
     }
     ipair child;
     /* add edges one by one, creating tree nodes from bottom up */
     for (int i=0;i<ne;++i) {
         arc &a=arcs[i];
-        k=hc_forest.size();
-        for (ivectors_iter it=hc_forest.begin();it!=hc_forest.end();++it) {
+        k=hierarhical_clustering_forest.size();
+        for (ivectors_iter it=hierarhical_clustering_forest.begin();it!=hierarhical_clustering_forest.end();++it) {
             if (it->front()<0 && find(it->begin()+3,it->end(),a.tail)!=it->end())
-                child.first=it-hc_forest.begin();
+                child.first=it-hierarhical_clustering_forest.begin();
             if (it->front()<0 && find(it->begin()+3,it->end(),a.head)!=it->end())
-                child.second=it-hc_forest.begin();
+                child.second=it-hierarhical_clustering_forest.begin();
         }
         if (child.first==child.second) // e does not connect two separated components
             continue;
-        ivector &c1=hc_forest[child.first],&c2=hc_forest[child.second];
+        ivector &c1=hierarhical_clustering_forest[child.first],&c2=hierarhical_clustering_forest[child.second];
         if (int(c1.size()+c2.size())>u+6) // forbid creating components with more than u vertices
             continue;
         /* merge components to parent node */
@@ -9114,7 +9108,7 @@ void graphe::tsp::make_hc_forest() {
         p.insert(p.end(),c1.begin()+3,c1.end());
         p.insert(p.end(),c2.begin()+3,c2.end());
         sort(p.begin()+3,p.end());
-        hc_forest.push_back(p);
+        hierarhical_clustering_forest.push_back(p);
     }
 }
 
@@ -9135,18 +9129,18 @@ graphe::ivector graphe::tsp::canonical_subtour(const ivector &subtour) {
 }
 
 /* traverse the hierarhical clustering forest and collect all relevant SEC */
-void graphe::tsp::hc_dfs(int i,ivectors &considered_sec,ivectors &relevant_sec) {
+void graphe::tsp::hierarhical_clustering_dfs(int i,ivectors &considered_sec,ivectors &relevant_sec) {
     if (i<0)
         return;
-    const ivector &node=hc_forest[i];
+    const ivector &node=hierarhical_clustering_forest[i];
     assert(node.size()>3);
     int sz=node.size()-3,left_child=node[1],right_child=node[2];
     if (sz<3) // do not search for subtours in nodes with less than 3 vertices
         return;
     /* process the children nodes to obtain considered and relevant SEC */
     ivectors left_cons,right_cons,left_sec,right_sec,sv,cons;
-    hc_dfs(left_child,left_cons,left_sec);
-    hc_dfs(right_child,right_cons,right_sec);
+    hierarhical_clustering_dfs(left_child,left_cons,left_sec);
+    hierarhical_clustering_dfs(right_child,right_cons,right_sec);
     relevant_sec.insert(relevant_sec.end(),left_sec.begin(),left_sec.end());
     relevant_sec.insert(relevant_sec.end(),right_sec.begin(),right_sec.end());
     cons.insert(cons.end(),left_cons.begin(),left_cons.end());
@@ -9190,14 +9184,14 @@ void graphe::tsp::hc_dfs(int i,ivectors &considered_sec,ivectors &relevant_sec) 
 
 /* solve the original problem */
 int graphe::tsp::solve(ivector &hc,double &cost) {
-    make_hc_forest();
+    make_hierarhical_clustering_forest();
     G->unset_subgraphs();
     ivectors cons,relevant,sec,sv;
     mip=glp_create_prob();
     num_nodes=0;
-    for (ivectors_iter it=hc_forest.begin();it!=hc_forest.end();++it) {
+    for (ivectors_iter it=hierarhical_clustering_forest.begin();it!=hierarhical_clustering_forest.end();++it) {
         if (it->front()<0) { // root node of a tree in the forest
-            hc_dfs(it-hc_forest.begin(),cons,relevant);
+            hierarhical_clustering_dfs(it-hierarhical_clustering_forest.begin(),cons,relevant);
             sec.insert(sec.end(),cons.begin(),cons.end());
             sec.insert(sec.end(),relevant.begin(),relevant.end());
         }
@@ -9250,9 +9244,13 @@ int graphe::tsp::solve(ivector &hc,double &cost) {
 }
 
 /* return weight of edge (i,j) */
-double graphe::tsp::weight(int i, int j) {
+double graphe::tsp::weight(int i,int j) {
     ipair e=make_edge(i,j);
     return weight_map[e.first][e.second];
+}
+
+double graphe::tsp::weight(const ipair &e) {
+    return weight(e.first,e.second);
 }
 
 /* return the cost of the tour */
@@ -9277,10 +9275,6 @@ void graphe::tsp::heur(glp_tree *tree) {
     int n=sg<0?nv:sg_nv,m=sg<0?ne:sg_ne,i,j,k;
     if (heur_type==_GT_TSP_CHRISTOFIDES_SA) { // symmetric TSP
         christofides(tour);
-        //double old_cost=tour_cost(tour),imp_cost;
-        optimize_tour(tour);
-        //imp_cost=tour_cost(tour);
-        //*logptr(G->giac_context()) << "Improvement: " << imp_cost/old_cost << endl;
         heur_type=_GT_TSP_FARTHEST_INSERTION_RANDOM;
     } else if (heur_type<=_GT_TSP_FARTHEST_INSERTION_HEUR) { // weighted undirected TSP
         /* choose the initial arc a by random such that weight(e) >= median weight,
@@ -9290,9 +9284,11 @@ void graphe::tsp::heur(glp_tree *tree) {
         heur_type=_GT_TSP_FARTHEST_INSERTION_RANDOM;
         if (int(tour.size())<=n)
             return;
-        optimize_tour(tour);
     }
     assert(int(tour.size())==n+1);
+    /* optimize the tour */
+    straighten(tour);
+    lin_kernighan(tour);
     /* construct the heuristic solution and pass it to the MIP solver */
     for (i=0;i<m;++i) coeff[i+1]=0.0;
     for (i=0;i<n;++i) {
@@ -9363,7 +9359,7 @@ void graphe::tsp::farthest_insertion(int index,ivector &hc) {
 }
 
 /* try to lower the cost of the tour hc */
-void graphe::tsp::optimize_tour(ivector &hc) {
+void graphe::tsp::perform_3opt_moves(ivector &hc) {
     int n=hc.size()-1,b1,e1,b2,e2,b3,e3,i1,j1,i2,j2,i3,j3,i,j,k,var,iter_count=0,moves_count=0;
     double opt_timeout=5.0+25.0*std::exp(-std::pow(std::max(0,1000-n),2)/2e5);
     vector<bool> visited(nv);
@@ -9499,7 +9495,6 @@ void graphe::tsp::optimize_tour(ivector &hc) {
             }
         }
     } while (!timed_out);
-    straighten(hc);
 }
 
 void graphe::tsp::straighten(ivector &hc) {
@@ -9551,6 +9546,150 @@ void graphe::tsp::straighten(ivector &hc) {
             ++moves_count;
         }
     }
+}
+
+/* Helsgaun criterion for k-opt move feasibility */
+bool graphe::tsp::is_move_feasible(int k,const ivector &t,const ipairs &x) {
+    ivector incl(2*k+1,0);
+    int i,j,pi,count;
+    for (int c=0;c<k;++c) {
+        i=2*c+1;
+        j=(i+1)%(2*k);
+        incl[i+1]=j+1;
+        incl[j+1]=i+1;
+    }
+    ivector p,q;
+    ipairs xs(x.begin()+1,x.begin()+k+1);
+    sort(xs.begin(),xs.end());
+    for (ipairs_iter it=xs.begin();it!=xs.end();++it) {
+        p.push_back(find(t.begin()+1,t.begin()+2*k+1,it->first)-t.begin());
+    }
+    for (i=k;i-->0;) {
+        p.insert(p.begin()+i+1,((pi=p[i])%2)==0?pi-1:pi+1);
+    }
+    q.resize(p.size()+1);
+    for (i=p.size();i-->0;) {
+        assert((pi=p[i])<=2*k);
+        q[pi]=i+1;
+    }
+    for (i=2*k,count=1;(i=q[incl[p[i-1]]]^1)!=0;count++);
+    return count==k;
+}
+
+/* Lin-Kernighan backtracking k-opt heuristic for tour improvement */
+void graphe::tsp::lin_kernighan(ivector &hc) {
+    int n=hc.size()-1;
+    int i,choice,j,j0,j_next,pos,ypos,t1,t2,t3,t4,t5,t2i,t2ip,dir;
+    static ipairs x,y,y_tmp;
+    static dvector wx,wy;
+    static ivector t,t1_alt,y1_alt,y2_alt,cheaper_hc;
+    x.resize(n+1); y.resize(n+1);
+    wx.resize(n+1); wy.resize(n+1);
+    t.resize(2*n+1);
+    cheaper_hc.resize(n+1);
+    t1_alt.clear();
+    double w,wi;
+    for (int k=0;k<n;++k) t1_alt.push_back(k); // initialize alternatives for t1
+lk2:
+    /* Let i:=1. Choose t[1] and let x1:=(t[1],t[2]=succ(t[1])) in hc.
+     * Initialize alternatives for y1. */
+    i=1;
+    if (t1_alt.empty()) return; // no more alternatives for t[1]
+    choice=t1_alt.size()==1?0:G->rand_integer(t1_alt.size());
+    t1=t[1]=t1_alt[choice]; t1_alt.erase(t1_alt.begin()+choice);
+    x[1]=make_pair(t1,t2=t[2]=(t1+1)%n);
+    w=wx[1]=weight(hc[t1],hc[t2]);
+    y1_alt.clear();
+    for (int k=0;k<n;++k) {
+        if (k!=t1 && k!=t2 && k!=(t1-1+n)%n && k!=(t2+1)%n &&
+                G->has_edge(hc[t2],hc[k]) && w>weight(hc[t2],hc[k]))
+            y1_alt.push_back(k);
+    }
+lk4:
+    /* Choose y1:=(t[2],t[3]) not in hc such that G1>0. Else, go to lk2. */
+    if (y1_alt.empty()) goto lk2;
+    choice=y1_alt.size()==1?0:G->rand_integer(y1_alt.size());
+    t3=t[3]=y1_alt[choice]; y1_alt.erase(y1_alt.begin()+choice);
+    y[1]=make_pair(t2=t[2],t3);
+    wy[1]=weight(hc[t2],hc[t3]);
+lk5:
+    /* Let i:=i+1 and let xi=(t[2i-1],t[2i]) in hc.
+     * Update the tour if possible. If i=1 initialize alternatives for y2. */
+    ++i;
+    t2ip=t[2*i-1];
+    x[i]=make_pair(t2ip,t2i=t[2*i]=(t2ip+1)%n);
+    wx[i]=weight(hc[t2ip],hc[t2i]);
+    w=0.0;
+    for (int k=1;k<=i;++k) w+=wx[k]-(k==i?0.0:wy[k]);
+    if (t2i!=(t1-1+n)%n && G->has_edge(hc[t2i],hc[t1]) &&
+            w-weight(hc[t2i],hc[t1])>.001 && is_move_feasible(i,t,x)) {
+        /* update hc with the new cheaper tour starting from t[2] */
+        y[i]=make_pair(t2i,t1); // temporary yi
+        y_tmp=ipairs(y.begin()+1,y.begin()+i+1);
+        j=j0=t[2]; j_next=t[3];
+        pos=ypos=dir=0;
+        while (true) {
+            if (ypos>=0)
+                y_tmp.erase(y_tmp.begin()+ypos);
+            cheaper_hc[pos++]=hc[j];
+            j=j_next;
+            if (j==j0) break;
+            ypos=-1;
+            for (int k=y_tmp.size();k-->0;) {
+                const ipair &yk=y_tmp[k];
+                if (yk.first==j || yk.second==j) {
+                    j_next=yk.first==j?yk.second:yk.first;
+                    ypos=k;
+                    dir=0;
+                    break;
+                }
+            }
+            if (ypos<0) {
+                if (dir==0)
+                    dir=find(x.begin()+1,x.begin()+i+1,make_pair(j,(j+1)%n))==x.begin()+i+1?1:-1;
+                j_next=(j+dir+n)%n;
+            }
+        }
+        assert(pos==n);
+        cheaper_hc.back()=hc[j0];
+        hc=cheaper_hc;
+        t1_alt.clear();
+        for (int k=0;k<n;++k) t1_alt.push_back(k); // initialize alternatives for t1
+        goto lk2;
+    } else if (i==2) { // initialize alternatives for y2
+        y2_alt.clear();
+        t1=t[1]; t4=t[4];
+        for (int k=0;k<n;++k) {
+            if (find(t.begin()+1,t.begin()+5,k)==t.begin()+5 &&
+                    find(t.begin()+1,t.begin()+5,(k+1)%n)==t.begin()+5 &&
+                    G->has_edge(hc[t4],hc[k]) && w-weight(hc[t4],hc[k])>.001)
+                y2_alt.push_back(k);
+        }
+    }
+lk7:
+    /* Choose yi:=(t[2i],t[2i+1]) not in hc such that Gi>0. If successful, go to lk5. */
+    if (i==2) {
+        if (y2_alt.empty()) { i=1; goto lk4; }
+        choice=y2_alt.size()==1?0:G->rand_integer(y2_alt.size());
+        y[2]=make_pair(t4=t[4],t5=t[5]=y2_alt[choice]); y2_alt.erase(y2_alt.begin()+choice);
+        wy[2]=weight(hc[t4],hc[t5]);
+        goto lk5;
+    } else {
+        int k;
+        t2i=t[2*i]; t1=t[1];
+        for (k=0;k<n;++k) {
+            if (find(t.begin()+1,t.begin()+2*i+1,k)==t.begin()+2*i+1 &&
+                    find(t.begin()+1,t.begin()+2*i+1,(k+1)%n)==t.begin()+2*i+1 &&
+                    G->has_edge(hc[t2i],hc[k]) && w-(wi=weight(hc[t2i],hc[k]))>.001) {
+                y[i]=make_pair(t2i,t[2*i+1]=k);
+                wy[i]=wi;
+                break;
+            }
+        }
+        if (k<n) goto lk5;
+    }
+    i=2;
+    goto lk7;
 }
 
 /* find minimum weight perfect matching in an undirected bipartite graph with
@@ -9611,7 +9750,6 @@ void graphe::tsp::min_weight_matching_bipartite(const ivector &eind,const dvecto
     info.first=&eind;
     info.second=this;
     parm.cb_info=static_cast<void*>(&info);
-    min_wpm_enable_heur=true;
     assert(glp_simplex(wp,&lparm)==0 && glp_get_status(wp)==GLP_OPT);
     assert(glp_intopt(wp,&parm)==0 && glp_get_status(wp)==GLP_OPT);
     for (int j=0;j<m;++j) {
@@ -9621,7 +9759,6 @@ void graphe::tsp::min_weight_matching_bipartite(const ivector &eind,const dvecto
     glp_delete_prob(wp);
 }
 
-/* simple heuristic for min weight perfect matching problem */
 void graphe::tsp::min_wpm_heur(glp_tree *tree,const ivector &eind) {
     vector<bool> vertex_matched(nv,false);
     vector<bool> arc_matched(eind.size(),false);
@@ -9716,7 +9853,7 @@ double graphe::tsp::approx(ivector &hc) {
     sg=-1;
     christofides(hc);
     double old_cost=tour_cost(hc),imp_cost;
-    optimize_tour(hc);
+    perform_3opt_moves(hc);
     imp_cost=tour_cost(hc);
     return (1.5*imp_cost/old_cost);
 }
@@ -9908,18 +10045,7 @@ void graphe::tsp::min_wpm_callback(glp_tree *tree,void *info) {
     //int n=glp_get_num_cols(lp);
     switch (glp_ios_reason(tree)) {
     case GLP_IHEUR:
-        if (tsprob->min_wpm_enable_heur)
-            tsprob->min_wpm_heur(tree,*eind);
-        break;
-    case GLP_IBRANCH:
-        /*
-        for (int i=0;i<n;++i) {
-            if (glp_ios_can_branch(tree,i+1)) {
-                glp_ios_branch_upon(tree,i+1,GLP_UP_BRNCH);
-                break;
-            }
-        }
-        */
+        tsprob->min_wpm_heur(tree,*eind);
         break;
     default:
         break;
@@ -9937,8 +10063,7 @@ int graphe::find_hamiltonian_cycle(ivector &h,double &cost,bool approximate) {
 #ifdef HAVE_LIBGLPK
     tsp t(this);
     if (approximate) {
-        double r=t.approx(h)-1;
-        //message("Cost of the tour is within %d %% of the optimum",(int)std::round(100.0*r));
+        t.approx(h);
         cost=t.tour_cost(h);
         return 1;
     }

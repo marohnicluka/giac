@@ -329,64 +329,66 @@ public:
             _GT_TSP_FARTHEST_INSERTION_HEUR     = 2,
             _GT_TSP_FARTHEST_INSERTION_RANDOM   = 3
         };
-        graphe *G;                      // the graph
-        glp_prob *mip;                  // integer programming problem
-        bool isdirected;                // true iff G is directed
-        bool isweighted;                // true iff G is weighted
-        int sg;                         // current subgraph index
-        std::set<ivector> subtours;     // subtours collected in during solving the last MIP
-        ivectors hc_forest;             // hierarhical clustering forest of subgraphs
-        ivector tour;                   // a tour
-        double *coeff;                  // coefficients to be passed to MIP solver
-        int *indices;                   // indices of row entries to be passed to MIP solver
-        bool *visited;                  // used to mark vertices as visited
-        arc *arcs;                      // arcs of G
-        int *sg_vertices;               // list of sg_nv vertices of subgraph with index sg
-        int *sg_edges;                  // indices of edges belonging to the subgraph with index sg
-        int sg_nv;                      // number of vertices in subgraph with index sg
-        int sg_ne;                      // number of edges in subgraph with index sg
-        int nv;                         // total number of vertices
-        int ne;                         // total number of edges
-        int heur_type;                  // the type of heuristic to be applied
-        bool is_undir_weighted;
-        bool is_symmetric_tsp;
-        int num_nodes;
-        solution_status status;
+        graphe *G;                              // the graph
+        glp_prob *mip;                          // integer programming problem
+        bool isdirected;                        // true iff G is directed
+        bool isweighted;                        // true iff G is weighted
+        int sg;                                 // current subgraph index
+        std::set<ivector> subtours;             // subtours collected in during solving the last MIP
+        ivectors hierarhical_clustering_forest; // hierarhical clustering forest of subgraphs
+        ivector tour;                           // a tour
+        double *coeff;                          // coefficients to be passed to MIP solver
+        int *indices;                           // indices of row entries to be passed to MIP solver
+        bool *visited;                          // used to mark vertices as visited
+        arc *arcs;                              // arcs of G
+        int *sg_vertices;                       // list of sg_nv vertices of subgraph with index sg
+        int *sg_edges;                          // indices of edges belonging to the subgraph with index sg
+        int sg_nv;                              // number of vertices in subgraph with index sg
+        int sg_ne;                              // number of edges in subgraph with index sg
+        int nv;                                 // total number of vertices
+        int ne;                                 // total number of edges
+        int heur_type;                          // the type of heuristic to be applied
+        bool is_undir_weighted;                 // true iff G is undirected and weighted
+        bool is_symmetric_tsp;                  // true if G is undirected weighted clique
+        int num_nodes;                          // counting the hierarhical clustering forest nodes
+        solution_status status;                 // status of the solution
         std::map<int,std::map<int,double> > weight_map;
         std::map<int,std::map<int,double> > rlx_sol_map;
         std::map<int,std::map<int,int> > loc_map;
         dvector xev;
         dvector obj;
         std::vector<bool> can_branch;
-        bool  min_wpm_enable_heur;
         void formulate_mip();
         void get_subtours();
         void add_subtours(const ivectors &sv);
-        void append_sce(const ivector &subtour);
-        void make_hc_forest();
-        void hc_dfs(int i,ivectors &considered_sec,ivectors &relevant_sec);
-        ivector canonical_subtour(const ivector &subtour);
+        void lift_subtours(ivectors &sv) const;
+        bool find_subgraph_subtours(ivectors &sv,solution_status &status);
         bool subtours_equal(const ivector &st1,const ivector &st2);
+        ivector canonical_subtour(const ivector &subtour);
+        void append_sce(const ivector &subtour);
+        void make_hierarhical_clustering_forest();
+        void hierarhical_clustering_dfs(int i,ivectors &considered_sec,ivectors &relevant_sec);
         ipair make_edge(int i,int j) const;
         void make_sg_edges();
-        double weight(int i,int j);
         int edge_index(const ipair &e);
         int vertex_index(int i);
-        bool find_subgraph_subtours(ivectors &sv,solution_status &status);
-        void lift_subtours(ivectors &sv) const;
-        void heur(glp_tree *tree);
-        void min_wpm_heur(glp_tree *tree,const ivector &eind);
+        double weight(int i,int j);
+        double weight(const ipair &e);
         double lower_bound();
-        void optimize_tour(ivector &hc);
+        void perform_3opt_moves(ivector &hc);
         void straighten(ivector &hc);
-        bool random_3opt_move(ivector &hc);
+        bool is_move_feasible(int k,const ivector &t,const ipairs &x);
+        void lin_kernighan(ivector &hc);
+        bool make_3opt_moves(ivector &hc);
         void farthest_insertion(int index,ivector &hc);
-        void min_weight_matching_bipartite(const ivector &eind,const dvector &weights,ivector &matched_arcs);
         void christofides(ivector &hc);
+        static void sample_mean_stddev(const dvector &sample,double &mean,double &stddev);
+        void min_weight_matching_bipartite(const ivector &eind,const dvector &weights,ivector &matched_arcs);
         void select_branching_variable(glp_tree *tree);
         void rowgen(glp_tree *tree);
-        static void sample_mean_stddev(const dvector &sample,double &mean,double &stddev);
+        void heur(glp_tree *tree);
         static void callback(glp_tree *tree,void *info);
+        void min_wpm_heur(glp_tree *tree,const ivector &eind);
         static void min_wpm_callback(glp_tree *tree,void *info);
         /* min-cut routines, originally written by Andrew Makhorin (<mao@gnu.org>) */
         ivectors mincut_data;

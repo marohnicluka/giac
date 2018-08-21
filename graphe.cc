@@ -6683,14 +6683,11 @@ bool graphe::isomorphic_copy(graphe &G,const ivector &sigma) {
     if (G.node_count()!=n)
         return false;
     /* add edges */
-    int i;
-    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
-        i=sigma[it-nodes.begin()];
-        for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
-            if (is_directed() || int(it-nodes.begin())<*jt) {
-                G.add_edge(i,sigma[*jt],it->neighbor_attributes(*jt));
-            }
-        }
+    ipairs E;
+    get_edges_as_pairs(E);
+    for (ipairs_iter it=E.begin();it!=E.end();++it) {
+        const ipair &e=*it;
+        G.add_edge(node_label(e.first),node_label(e.second),edge_attributes(e.first,e.second));
     }
     return true;
 }

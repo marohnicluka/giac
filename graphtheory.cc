@@ -3665,6 +3665,8 @@ gen _highlight_trail(const gen &g,GIAC_CONTEXT) {
         return generrdim("Numbers of colors and vertices do not match");
     int i,j;
     for (const_iterateur it=V.begin();it!=V.end();++it) {
+        if (G.node_index(*it)<0)
+            return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
         for (const_iterateur jt=it->_VECTptr->begin();jt!=it->_VECTptr->end()-1;++jt) {
             const gen &v=*jt,&w=*(jt+1);
             if ((i=G.node_index(v))<0 || (j=G.node_index(w))<0)

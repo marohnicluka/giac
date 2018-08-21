@@ -556,6 +556,7 @@ public:
     static const int icosahedron_graph[];
     static const int levi_graph[];
     static const int ljubljana_graph_lcf[];
+    static const int blanusa_graph[];
 
 private:
     const context *ctx;

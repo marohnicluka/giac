@@ -436,6 +436,26 @@ const int graphe::harries_wong_graph_lcf[] = {
     -9,-33,-17,19,-31,27,11,-25,29,-33,13,-13,21,-29,-21,25,9,-11,-19,29,9,-27,-19,-13,-35,-9,
     9,17,25,-9,9,27,-27,-21,15,-9,29,-29,33,-9,-25,0
 };
+const int graphe::blanusa_graph[] = {
+    1,      2,9,12,-1,
+    2,      3,15,-1,
+    3,      4,17,-1,
+    4,      5,16,-1,
+    5,      6,15,-1,
+    6,      7,18,-1,
+    7,      8,11,-1,
+    8,      9,13,-1,
+    9,      10,-1,
+    10,     11,18,-1,
+    11,     12,-1,
+    12,     13,-1,
+    13,     14,-1,
+    14,     15,-1,
+    15,     16,-1,
+    16,     17,-1,
+    17,     18,-1,
+    -2
+};
 
 /* messages */
 
@@ -918,6 +938,30 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         make_circular_layout(x,hull,3.5);
     } else if (name=="desargues") {
         make_petersen_graph(10,3,&x);
+    } else if (name=="blanusa") {
+        vecteur l1=makevecteur(1,2,3,4,5,6,7,8,9);
+        vecteur l2=makevecteur(10,11,12,13,14,15,16,17,18);
+        add_nodes(mergevecteur(l1,l2));
+        read_special(blanusa_graph);
+        x.resize(18);
+        x[0].resize(2);  x[0][0] = 24; x[0][1] = 64; // 1
+        x[1].resize(2);  x[1][0] =135; x[1][1] = 25; // 2
+        x[2].resize(2);  x[2][0] =144; x[2][1] = 50; // 3
+        x[3].resize(2);  x[3][0] =167; x[3][1] =111; // 4
+        x[4].resize(2);  x[4][0] =176; x[4][1] =137; // 5
+        x[5].resize(2);  x[5][0] = 90; x[5][1] =167; // 6
+        x[6].resize(2);  x[6][0] = 64; x[6][1] =177; // 7
+        x[7].resize(2);  x[7][0] = 55; x[7][1] =151; // 8
+        x[8].resize(2);  x[8][0] = 33; x[8][1] = 91; // 9
+        x[9].resize(2);  x[9][0] = 55; x[9][1] =100; //10
+        x[10].resize(2); x[10][0]= 70; x[10][1]= 85; //11
+        x[11].resize(2); x[11][0]= 85; x[11][1]= 70; //12
+        x[12].resize(2); x[12][0]=100; x[12][1]= 55; //13
+        x[13].resize(2); x[13][0]=146; x[13][1]=100; //14
+        x[14].resize(2); x[14][0]=131; x[14][1]=116; //15
+        x[15].resize(2); x[15][0]=116; x[15][1]=130; //16
+        x[16].resize(2); x[16][0]=100; x[16][1]=146; //17
+        x[17].resize(2); x[17][0]= 84; x[17][1]=131; //18
     } else if (name=="dodecahedron") {
         read_special(dodecahedron_graph);
         for (int i=1;i<=5;++i) hull.push_back(node_index(i));

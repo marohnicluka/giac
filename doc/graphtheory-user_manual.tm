@@ -1721,7 +1721,7 @@
   <center|<image|images/net.eps|50%|||>>
 
   In the next example, the Möbius strip is constructed by connecting the
-  vertices in the oppposite sides of a narrow grid graph.
+  vertices in the opposite sides of a narrow grid graph.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -5608,7 +5608,7 @@
   <em|articulation point> of <math|G> if the subgraph <math|H\<subset\>G>
   induced by <math|V\<setminus\><around*|{|v|}>> is disconnected.
 
-  The articulation points of <math|G> are found by depth-first serach in
+  The articulation points of <math|G> are found by depth-first search in
   <math|O<around*|(|<around*|\||V|\|>+<around*|\||E|\|>|)>>
   time<nbsp><cite|gibbons>.
 
@@ -5885,7 +5885,7 @@
 
   In the following example, the algorithm efficiency is tested on a large
   random tree with 10000 nodes. The lowest common ancestors for the list
-  <math|L> cotaining 100 pairs of vertices, chosen at random, need to be
+  <math|L> containing 100 pairs of vertices, chosen at random, need to be
   determined.
 
   <\session|giac|default>
@@ -7118,7 +7118,8 @@
   <subsection|Hamiltonian graphs>
 
   The command <verbatim|is_hamiltonian> is used for checking hamiltonicity of
-  an undirected graph and for finding Hamiltonian cycles in such graphs.
+  an undirected graph. The command can also construct a Hamiltonian cycle in
+  the input graph if the latter is Hamiltonian.
 
   <verbatim|is_hamiltonian> accepts one or two arguments, the input graph
   <math|G<around*|(|V,E|)>> and optionally an unassigned identifier. The
@@ -7141,15 +7142,21 @@
   if <math|deg<around*|(|u|)>+deg<around*|(|v|)>\<geqslant\>n> holds for
   every pair <math|u,v> of non-adjacent vertices from <math|V>, then <math|G>
   is Hamiltonian. Else, the theorem of <name|Bondy> and <name|Chvátal> is
-  applied: if the closure of <math|G> (obtained by connecting each pair
-  <math|u,v> of non-adjacent vertices from <math|V> such that
-  <math|deg<around*|(|u|)>+deg<around*|(|v|)>\<geqslant\>n>) is Hamiltonian,
-  then <math|G> is Hamiltonian. Else, the criterion of <name|Nash> and
+  applied: if the closure <math|cl<around*|(|G|)>> of <math|G> (obtained by
+  finding a pair <math|u,v> of non-adjacent vertices from <math|V> such that
+  <math|deg<around*|(|u|)>+deg<around*|(|v|)>\<geqslant\>n>, adding a new
+  edge <math|u v> to <math|E> and repeating the process until exhaustion) is
+  Hamiltonian, then <math|G> is Hamiltonian. (Note that in this case the
+  previously tried criteria are applied to <math|cl<around*|(|G|)>>; since
+  the vertex degrees in <math|cl<around*|(|G|)>> are generally higher than
+  those in <math|G>, the probability of success also rises.) Else, if the
+  edge density of <math|G> is large enough, the criterion of <name|Nash> and
   <name|Williams> is applied: if <math|\<delta\><around*|(|G|)>\<geqslant\>max<around*|{|<frac|n+2|3>,\<beta\>|}>>,
   where <math|\<beta\>> is the independence number of <math|G>, then <math|G>
-  is Hamiltonian. Else, the brute force algorithm is applied; essentially,
-  the command <verbatim|traveling_salesman> is called to find a Hamiltonian
-  cycle or to determine that none exist.
+  is Hamiltonian. If all of the above criteria fail, the brute force
+  algorithm is applied; essentially, the command
+  <hlink|<verbatim|traveling_salesman>|#traveling-salesman> is called to find
+  a Hamiltonian cycle or to determine that none exist.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -7300,11 +7307,11 @@
     </input>
   </session>
 
-  <subsection|Traveling salesman problem>
+  <subsection|Traveling salesman problem><label|traveling-salesman>
 
   The command <verbatim|traveling_salesman> is used for solving traveling
   salesman problem<\footnote>
-    For the details on traveling salesman problem and a historical overwiev
+    For the details on traveling salesman problem and a historical overview
     see <cite|cook>.
   </footnote> (<abbr|TSP>) for undirected graphs.
 
@@ -7334,13 +7341,13 @@
 
   If the option <verbatim|approx> is passed, a near-optimal tour is returned.
   In this case it is required that <math|G> is a complete weighted graph. For
-  larger graphs, this is significanlty faster than finding optimal tour.
+  larger graphs, this is significantly faster than finding optimal tour.
   Results thus obtained are usually within just a few percent of the
   corresponding optimal values, despite the fact that the reported guarantee
   is generally much weaker (around 30%).
 
   The strategy is to formulate <abbr|TSP> as a linear programming problem and
-  to solve it by branch-and-cut method, applying the hierarhical clustering
+  to solve it by branch-and-cut method, applying the hierarchical clustering
   method of <name|Pferschy> and <name|Stan¥k> <cite|pferschy> to generate
   subtour elimination constraints. The branching rule is implemented
   according to <name|Padberg> and <name|Rinaldi> <cite|padberg>. In addition,
@@ -7500,7 +7507,7 @@
 
   Near-optimal tours produced by the <verbatim|approx> option are usually
   only slightly more expensive than the optimal ones. For example, a
-  suboptimal tour for the graph <math|G> with 42 vertices is obtained by the
+  sub-optimal tour for the graph <math|G> with 42 vertices is obtained by the
   following command.\ 
 
   <\session|giac|default>
@@ -9185,6 +9192,7 @@
     <associate|st53|<tuple|3.1|47>>
     <associate|tab:colors|<tuple|4.1|69>>
     <associate|touchface|<tuple|6.3|83>>
+    <associate|traveling-salesman|<tuple|5.2.3|?>>
   </collection>
 </references>
 

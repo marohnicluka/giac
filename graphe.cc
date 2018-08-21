@@ -8475,20 +8475,25 @@ bool graphe::canonical_labeling(ivector &lab) const {
 #endif
 }
 
-/* construct the closure of this graph and store it to G, complexity O(n^2) */
-bool graphe::bondy_chvatal_closure(graphe &G,const ivector &d) {
+/* construct the closure of this graph and store it to G, complexity O(n^3) */
+bool graphe::bondy_chvatal_closure(graphe &G,ivector &d) {
     underlying(G);
     int n=node_count(),di;
-    bool yes=false;
-    for (int i=0;i<n;++i) {
-        di=d[i];
-        for (int j=i+1;j<n;++j) {
-            if (!has_edge(i,j) && di+d[j]>=n) {
-                G.add_edge(i,j);
-                yes=true;
+    bool yes=false,have_pair;
+    do {
+        have_pair=false;
+        for (int i=0;i<n && !have_pair;++i) {
+            di=d[i];
+            for (int j=i+1;j<n;++j) {
+                if (!has_edge(i,j) && di+d[j]>=n) {
+                    G.add_edge(i,j);
+                    ++d[i]; ++d[j];
+                    yes=have_pair=true;
+                    break;
+                }
             }
         }
-    }
+    } while (have_pair);
     return yes;
 }
 
@@ -8530,9 +8535,8 @@ int graphe::is_hamiltonian(bool conclusive,ivector &hc,bool make_closure) {
         /* apply the Bondy-Chvátal theorem: the graph is Hamiltonian if
            and only if its closure is Hamiltonian, complexity O(n^2) */
         graphe G(ctx);
-        if (bondy_chvatal_closure(G,d)) {
+        if (bondy_chvatal_closure(G,d))
             return G.is_hamiltonian(conclusive,hc,false);
-        }
     }
     if (double(edge_count())/double(n*n)>.75) {
         /* Nash-Williams criterion */

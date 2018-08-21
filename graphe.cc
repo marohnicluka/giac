@@ -1907,9 +1907,12 @@ void graphe::underlying(graphe &G) const {
     G.clear();
     G.add_nodes(vertices());
     G.set_directed(false);
+    int i;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        i=it-nodes.begin();
+        G.node(i).set_subgraph(it->subgraph());
         for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
-            G.add_edge(it-nodes.begin(),*jt);
+            G.add_edge(i,*jt);
         }
     }
 }
@@ -7272,12 +7275,10 @@ bool graphe::is_connected(int sg) {
         underlying(G);
         return G.is_connected(sg);
     }
-    node_iter it=nodes.begin();
-    if (sg>=0)
-        for (;it->subgraph()!=sg && it!=nodes.end();++it);
-    assert(it!=nodes.end());
-    dfs(it-nodes.begin(),false,true,NULL,sg);
-    for (;it!=nodes.end();++it) {
+    int i=sg<0?0:first_vertex_from_subgraph(sg);
+    assert(i>=0);
+    dfs(i,false,true,NULL,sg);
+    for (node_iter it=nodes.begin()+i;it!=nodes.end();++it) {
         if ((sg<0 || it->subgraph()==sg) && !it->is_visited())
             return false;
     }
@@ -9276,7 +9277,7 @@ void graphe::tsp::heur(glp_tree *tree) {
     if (heur_type==_GT_TSP_CHRISTOFIDES_SA) { // symmetric TSP
         christofides(tour);
         heur_type=_GT_TSP_FARTHEST_INSERTION_RANDOM;
-    } else if (heur_type<=_GT_TSP_FARTHEST_INSERTION_HEUR) { // weighted undirected TSP
+    } else { // weighted undirected TSP
         /* choose the initial arc a by random such that weight(e) >= median weight,
          * in the first pass try to construct a tour starting from heaviest edge */
         int index=heur_type==_GT_TSP_FARTHEST_INSERTION_RANDOM?(m+1)/2+G->rand_integer(m/2):m-1;
@@ -9287,8 +9288,10 @@ void graphe::tsp::heur(glp_tree *tree) {
     }
     assert(int(tour.size())==n+1);
     /* optimize the tour */
-    straighten(tour);
+    //double old=tour_cost(tour);
+    //cout << "Improving the tour... ";
     lin_kernighan(tour);
+    //cout << "Done. Ratio: " << (old-tour_cost(tour))/old*100.0 << "%" << endl;
     /* construct the heuristic solution and pass it to the MIP solver */
     for (i=0;i<m;++i) coeff[i+1]=0.0;
     for (i=0;i<n;++i) {
@@ -9847,13 +9850,20 @@ void graphe::tsp::christofides(ivector &hc) {
     hc.push_back(hc.front());
 }
 
+/* improve the tour hc by making k-opt moves */
+void graphe::tsp::improve_tour(ivector &hc) {
+    lin_kernighan(hc);
+    perform_3opt_moves(hc);
+    straighten(hc);
+}
+
 /* construct an approximate tour, G must be a complete graph */
 double graphe::tsp::approx(ivector &hc) {
     assert(is_undir_weighted);
     sg=-1;
     christofides(hc);
     double old_cost=tour_cost(hc),imp_cost;
-    perform_3opt_moves(hc);
+    improve_tour(hc);
     imp_cost=tour_cost(hc);
     return (1.5*imp_cost/old_cost);
 }
@@ -10063,7 +10073,9 @@ int graphe::find_hamiltonian_cycle(ivector &h,double &cost,bool approximate) {
 #ifdef HAVE_LIBGLPK
     tsp t(this);
     if (approximate) {
-        t.approx(h);
+        double ratio=t.approx(h);
+        message("The tour cost is within %d%% of the optimal value",
+                std::round((ratio-1.0)*100.0));
         cost=t.tour_cost(h);
         return 1;
     }
@@ -10072,6 +10084,27 @@ int graphe::find_hamiltonian_cycle(ivector &h,double &cost,bool approximate) {
     message("Error: GLPK library is required for solving traveling salesman problem");
     return -1;
 #endif
+}
+
+/* for each edge of the graph, assign the distance between endpoints as a weight */
+bool graphe::make_euclidean_distances() {
+    assert(!is_weighted() && !is_directed());
+    layout x;
+    if (!has_stored_layout(x))
+        return false;
+    if (!x.empty()) {
+        int n=node_count();
+        set_weighted(true);
+        point pq(x.front().size());
+        for (int i=0;i<n;++i) {
+            const point &p=x[i];
+            for (int j=i+1;j<n;++j) {
+                const point &q=x[j];
+                set_edge_attribute(i,j,_GT_ATTRIB_WEIGHT,gen(point_distance(p,q,pq)));
+            }
+        }
+    }
+    return true;
 }
 
 #ifndef NO_NAMESPACE_GIAC

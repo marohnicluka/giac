@@ -380,6 +380,7 @@ public:
         bool is_move_feasible(int k,const ivector &t,const ipairs &x);
         void lin_kernighan(ivector &hc);
         bool make_3opt_moves(ivector &hc);
+        void improve_tour(ivector &hc);
         void farthest_insertion(int index,ivector &hc);
         void christofides(ivector &hc);
         static void sample_mean_stddev(const dvector &sample,double &mean,double &stddev);
@@ -952,6 +953,7 @@ public:
     bool canonical_labeling(ivector &lab) const;
     int is_hamiltonian(bool conclusive=true);
     int find_hamiltonian_cycle(ivector &h,double &cost,bool approximate=false);
+    bool make_euclidean_distances();
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

@@ -3980,6 +3980,7 @@ int graphe::ostergard::maxclique(ivector &clique) {
 /* find maximum clique in this graph and return its size */
 int graphe::maximum_clique(ivector &clique) {
     assert(!is_directed());
+    clique.clear();
     int n=node_count(),m=edge_count();
     if (20*m<=n*(n-1)) // edge density smaller than or equal to 0.1
         return cp_maxclique(clique);
@@ -8474,26 +8475,74 @@ bool graphe::canonical_labeling(ivector &lab) const {
 #endif
 }
 
+/* construct the closure of this graph and store it to G, complexity O(n^2) */
+bool graphe::bondy_chvatal_closure(graphe &G,const ivector &d) {
+    underlying(G);
+    int n=node_count(),di;
+    bool yes=false;
+    for (int i=0;i<n;++i) {
+        di=d[i];
+        for (int j=i+1;j<n;++j) {
+            if (!has_edge(i,j) && di+d[j]>=n) {
+                G.add_edge(i,j);
+                yes=true;
+            }
+        }
+    }
+    return yes;
+}
+
 /* return 1 if the graph is Hamiltonian, i.e. if it has a Hamiltonian circuit,
 * else return 0 or -1 of not conclusive */
-int graphe::is_hamiltonian(bool conclusive) {
+int graphe::is_hamiltonian(bool conclusive,ivector &hc,bool make_closure) {
     assert(!is_directed());
+    hc.clear();
+    /* test biconnectivity, complexity O(n) */
     if (!is_biconnected())
         return 0;
-    int mindeg=RAND_MAX,deg;
+    int mindeg=RAND_MAX,deg,n=node_count();
+    ivector d(n);
+    /* Dirac criterion, complexity O(n) */
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
-        if ((deg=it->neighbors().size())<mindeg)
+        if ((deg=d[it-nodes.begin()]=it->neighbors().size())<mindeg)
             mindeg=deg;
     }
-    int n=node_count();
     if (2*mindeg>=n)
         return 1;
-    ivector v;
-    if (2*maximum_independent_set(v)>n)
+    ivector V1,V2,v;
+    /* unbalanced bipartite graph is not Hamiltonian, complexity O(n+m) */
+    if (is_bipartite(V1,V2) && V1.size()!=V2.size())
         return 0;
-    v.clear();
+    /* Ore criterion, complexity O(n^2) */
+    bool yes=true;
+    for (int i=0;i<n && yes;++i) {
+        deg=d[i];
+        for (int j=i+1;j<n;++j) {
+            if (!has_edge(i,j) && deg+d[j]<n) {
+                yes=false;
+                break;
+            }
+        }
+    }
+    if (yes)
+        return 1;
+    if (make_closure) {
+        /* apply the Bondy-Chvátal theorem: the graph is Hamiltonian if
+           and only if its closure is Hamiltonian, complexity O(n^2) */
+        graphe G(ctx);
+        if (bondy_chvatal_closure(G,d)) {
+            return G.is_hamiltonian(conclusive,hc,false);
+        }
+    }
+    if (double(edge_count())/double(n*n)>.75) {
+        /* Nash-Williams criterion */
+        int inum=maximum_independent_set(v);
+        if (3*mindeg>=std::max(n+2,3*inum))
+            return 1;
+    }
+    /* brute force, NP hard */
     double cost;
-    return conclusive?find_hamiltonian_cycle(v,cost):-1;
+    return conclusive?find_hamiltonian_cycle(hc,cost):-1;
 }
 
 /*

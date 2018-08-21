@@ -5432,17 +5432,18 @@ gen _is_hamiltonian(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
-    int res=G.is_hamiltonian(is_undef(dest));
+    graphe::ivector hc;
+    int res=G.is_hamiltonian(true,hc);
     if (res==0 || (res!=-1 && is_undef(dest)))
         return graphe::boole((bool)res);
-    graphe::ivector c;
     double cost;
-    res=G.find_hamiltonian_cycle(c,cost);
+    if (res!=1 || hc.empty())
+        res=G.find_hamiltonian_cycle(hc,cost);
     if (res==0)
         return graphe::FAUX;
     if (res==-1)
         return undef;
-    identifier_assign(*dest._IDNTptr,G.get_node_labels(c),contextptr);
+    identifier_assign(*dest._IDNTptr,G.get_node_labels(hc),contextptr);
     return graphe::VRAI;
 }
 static const char _is_hamiltonian_s[]="is_hamiltonian";
@@ -5479,10 +5480,13 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
         options=vecteur(gv.begin()+pos,gv.end());
     }
     graphe G(contextptr),U(contextptr);
+    graphe::ivector h;
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
+    if (G.is_hamiltonian(false,h)==0)
+        return generr("The input graph is not Hamiltonian");
     /* parse options */
     bool approximate=false,make_distances=false;
     int time_limit=RAND_MAX;
@@ -5509,7 +5513,6 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
     }
     G.underlying(U);
     int res;
-    graphe::ivector h;
     double cost;
     if (approximate) {
         if (!G.is_weighted())

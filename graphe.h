@@ -951,7 +951,8 @@ public:
     int is_isomorphic(const graphe &other,std::map<int,int> &isom) const;
     gen aut_generators() const;
     bool canonical_labeling(ivector &lab) const;
-    int is_hamiltonian(bool conclusive=true);
+    bool bondy_chvatal_closure(graphe &G,const ivector &d);
+    int is_hamiltonian(bool conclusive,ivector &hc,bool make_closure=true);
     int find_hamiltonian_cycle(ivector &h,double &cost,bool approximate=false);
     bool make_euclidean_distances();
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }

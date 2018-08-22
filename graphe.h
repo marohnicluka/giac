@@ -648,7 +648,7 @@ private:
     void clear_embedding();
     int choose_embedding_face(const ivectors &faces,int v);
     int choose_outer_face(const ivectors &faces);
-    static void make_regular_polygon_layout(layout &x,const ivector &v,double R=1.0);
+    static void make_regular_polygon_layout(layout &x,const ivector &v,double R=1.0,double elongate=0.0);
     bool edges_crossing(const ipair &e1,const ipair &e2,const layout &x,point &crossing) const;
     static void build_block_tree(int i,ivectors &blocks);
     static int common_element(const ivector &v1,const ivector &v2,int offset=0);
@@ -843,7 +843,7 @@ public:
     bool demoucron(ivectors &faces);
     void create_random_layout(layout &x,int dim);
     void make_spring_layout(layout &x,int d,double tol=0.001);
-    void make_circular_layout(layout &x,const ivector &hull,double A=0,double tol=0.005);
+    void make_circular_layout(layout &x,const ivector &hull,double A=0,double tol=0.005,double elongate=0.0);
     void make_tutte_layout(layout &x,const ivector &outer_face);
     bool make_planar_layout(layout &x);
     void make_tree_layout(layout &x,double sep,int apex=0);

@@ -437,23 +437,21 @@ const int graphe::harries_wong_graph_lcf[] = {
     9,17,25,-9,9,27,-27,-21,15,-9,29,-29,33,-9,-25,0
 };
 const int graphe::blanusa_graph[] = {
-    1,      2,9,12,-1,
-    2,      3,15,-1,
-    3,      4,17,-1,
-    4,      5,16,-1,
-    5,      6,15,-1,
-    6,      7,18,-1,
-    7,      8,11,-1,
-    8,      9,13,-1,
-    9,      10,-1,
-    10,     11,18,-1,
-    11,     12,-1,
-    12,     13,-1,
-    13,     14,-1,
-    14,     15,-1,
+    1,      2,6,8,-1,
+    2,      3,12,-1,
+    3,      4,13,-1,
+    4,      5,14,-1,
+    5,      6,18,-1,
+    6,      7,-1,
+    7,      9,17,-1,
+    8,      17,18,-1,
+    9,      10,18,-1,
+    10,     11,16,-1,
+    11,     13,14,-1,
+    12,     14,15,-1,
+    13,     15,-1,
     15,     16,-1,
     16,     17,-1,
-    17,     18,-1,
     -2
 };
 
@@ -943,25 +941,13 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         vecteur l2=makevecteur(10,11,12,13,14,15,16,17,18);
         add_nodes(mergevecteur(l1,l2));
         read_special(blanusa_graph);
-        x.resize(18);
-        x[0].resize(2);  x[0][0] = 24; x[0][1] = 64; // 1
-        x[1].resize(2);  x[1][0] =135; x[1][1] = 25; // 2
-        x[2].resize(2);  x[2][0] =144; x[2][1] = 50; // 3
-        x[3].resize(2);  x[3][0] =167; x[3][1] =111; // 4
-        x[4].resize(2);  x[4][0] =176; x[4][1] =137; // 5
-        x[5].resize(2);  x[5][0] = 90; x[5][1] =167; // 6
-        x[6].resize(2);  x[6][0] = 64; x[6][1] =177; // 7
-        x[7].resize(2);  x[7][0] = 55; x[7][1] =151; // 8
-        x[8].resize(2);  x[8][0] = 33; x[8][1] = 91; // 9
-        x[9].resize(2);  x[9][0] = 55; x[9][1] =100; //10
-        x[10].resize(2); x[10][0]= 70; x[10][1]= 85; //11
-        x[11].resize(2); x[11][0]= 85; x[11][1]= 70; //12
-        x[12].resize(2); x[12][0]=100; x[12][1]= 55; //13
-        x[13].resize(2); x[13][0]=146; x[13][1]=100; //14
-        x[14].resize(2); x[14][0]=131; x[14][1]=116; //15
-        x[15].resize(2); x[15][0]=116; x[15][1]=130; //16
-        x[16].resize(2); x[16][0]=100; x[16][1]=146; //17
-        x[17].resize(2); x[17][0]= 84; x[17][1]=131; //18
+        for (int i=0;i<6;++i) hull.push_back(i);
+        add_temporary_edge(0,9);
+        add_temporary_edge(1,9);
+        add_temporary_edge(3,15);
+        add_temporary_edge(4,15);
+        make_circular_layout(x,hull,2.5,0.005,0.618);
+        remove_temporary_edges();
     } else if (name=="dodecahedron") {
         read_special(dodecahedron_graph);
         for (int i=1;i<=5;++i) hull.push_back(node_index(i));
@@ -1949,6 +1935,7 @@ void graphe::randomize_edge_weights(double a,double b,bool integral_weights) {
 /* store the underlying graph to G (convert arcs to edges and strip all attributes) */
 void graphe::underlying(graphe &G) const {
     G.clear();
+    G.reserve_nodes(node_count());
     G.add_nodes(vertices());
     G.set_directed(false);
     int i;
@@ -1964,6 +1951,7 @@ void graphe::underlying(graphe &G) const {
 /* store the complement of this graph in G */
 void graphe::complement(graphe &G) const {
     int n=node_count();
+    G.reserve_nodes(n);
     G.add_nodes(vertices());
     bool isdir=is_directed();
     G.set_directed(isdir);
@@ -2234,8 +2222,6 @@ int graphe::add_node(const gen &v) {
 
 /* add vertices from list v to graph */
 void graphe::add_nodes(const vecteur &v) {
-    nodes.clear();
-    nodes.reserve(v.size());
     for (const_iterateur it=v.begin();it!=v.end();++it) {
         add_node(*it);
     }
@@ -3687,7 +3673,7 @@ void graphe::make_spring_layout(layout &x,int d,double tol) {
 }
 
 /* layout face as a regular polygon inscribed in circle of radius R */
-void graphe::make_regular_polygon_layout(layout &x,const ivector &v,double R) {
+void graphe::make_regular_polygon_layout(layout &x,const ivector &v,double R,double elongate) {
     int n=v.size(),i;
     double step=2.0*M_PI/(double)n,phi=(n%2)==0?M_PI_2*(1+2.0/n):M_PI_2;
     for (int k=0;k<n;++k) {
@@ -3696,17 +3682,21 @@ void graphe::make_regular_polygon_layout(layout &x,const ivector &v,double R) {
         p.resize(2);
         p[0]=R*std::cos(phi);
         p[1]=R*std::sin(phi);
+        if (elongate>0) {
+            if (p[0]>.001) p[0]+=elongate;
+            else if (p[0]<-.001) p[0]-=elongate;
+        }
         phi-=step;
     }
 }
 
 /* apply force directed algorithm to this graph (must be triconnected), with the specified outer hull,
 * using the algorithm by Bor Plestenjak in "An Algorithm for Drawing Planar Graphs" */
-void graphe::make_circular_layout(layout &x,const ivector &hull,double A,double tol) {
+void graphe::make_circular_layout(layout &x,const ivector &hull,double A,double tol,double elongate) {
     int n=node_count(),iter_count=0,maxper=0,j;
     /* place facial vertices on the unit circle and all other vertices in the origin */
     x.resize(n);
-    make_regular_polygon_layout(x,hull);
+    make_regular_polygon_layout(x,hull,1.0,elongate);
     if (n==int(hull.size())) // there are no vertices to place inside the circle
         return;
     vector<bool> is_hull_vertex(n,false);
@@ -4835,6 +4825,7 @@ bool graphe::hakimi(const ivector &L) {
         return true;
     vecteur V;
     make_default_labels(V,n);
+    reserve_nodes(n);
     add_nodes(V);
     ipairs D(n);
     for (int i=0;i<n;++i) {
@@ -4903,9 +4894,11 @@ int graphe::girth(bool odd,int sg) {
 
 /* create a graph from LCF notation [jumps]^e */
 void graphe::make_lcf_graph(const ivector &jumps,int e) {
+    this->clear();
     int m=jumps.size(),n=m*e;
     vecteur V;
     make_default_labels(V,n);
+    reserve_nodes(n);
     add_nodes(V);
     make_cycle_graph();
     int j=0,k;
@@ -4931,12 +4924,14 @@ void graphe::make_lcf_graph(const int *j,int e) {
 
 /* create Sierpinski (triangle) graph */
 void graphe::make_sierpinski_graph(int n,int k,bool triangle) {
+    this->clear();
     ivectors tuples;
     ivector elem(n,0);
     ntupk(tuples,n,k,elem,0);
     int N=std::pow(k,n);
     vecteur V;
     make_default_labels(V,N,0);
+    reserve_nodes(N);
     add_nodes(V);
     for (int i=0;i<N;++i) {
         ivector &u=tuples[i];
@@ -4976,6 +4971,7 @@ void graphe::make_shrikhande_graph() {
     this->clear();
     vecteur V;
     make_default_labels(V,16);
+    reserve_nodes(16);
     add_nodes(V);
     ipairs v(16);
     int k=0,m,n;
@@ -5010,17 +5006,18 @@ void graphe::make_complete_graph() {
 void graphe::make_complete_multipartite_graph(const ivector &partition_sizes,layout *x) {
     int k=partition_sizes.size();
     ivectors partitions;
-    int n0=0;
+    int ntotal=0,n;
     vecteur v;
     for (ivector_iter it=partition_sizes.begin();it!=partition_sizes.end();++it) {
-        int n=*it;
-        make_default_labels(v,n,n0);
+        n=*it;
+        make_default_labels(v,n,ntotal);
         add_nodes(v);
         ivector iv(n);
-        for (int i=0;i<n;++i) iv[i]=n0+i;
+        for (int i=0;i<n;++i) iv[i]=ntotal+i;
         partitions.push_back(iv);
-        n0+=n;
+        ntotal+=n;
     }
+    assert(node_count()==ntotal);
     for (int ip=0;ip<k;++ip) {
         ivector &pi=partitions[ip];
         for (int jp=ip+1;jp<k;++jp) {
@@ -5034,7 +5031,7 @@ void graphe::make_complete_multipartite_graph(const ivector &partition_sizes,lay
     }
     if (x!=NULL && partition_sizes.size()==2 && partition_sizes.front()==1 && partition_sizes.back()>2) {
         /* create the star layout */
-        int n=partition_sizes.back();
+        n=partition_sizes.back();
         ivector hull(n);
         for (int i=0;i<n;++i) hull[i]=i+1;
         make_circular_layout(*x,hull);
@@ -5043,8 +5040,10 @@ void graphe::make_complete_multipartite_graph(const ivector &partition_sizes,lay
 
 /* create generalized Petersen graph G(n,k) using Watkins' notation */
 void graphe::make_petersen_graph(int n,int k,layout *x) {
+    this->clear();
     vecteur V;
     make_default_labels(V,2*n);
+    reserve_nodes(2*n);
     add_nodes(V);
     /* add the outer cycle first */
     for (int i=0;i<n;++i) {
@@ -5076,10 +5075,12 @@ void graphe::generate_nk_sets(int n,int k,vector<ulong> &v) {
 
 /* create Kneser graph with parameters n (<=20) and k */
 bool graphe::make_kneser_graph(int n,int k) {
+    this->clear();
     assert(n>1 && n<21 && k>0 && k<n);
     int nchoosek=comb(n,k).val; // number of vertices
     vecteur V;
     make_default_labels(V,nchoosek);
+    reserve_nodes(nchoosek);
     add_nodes(V);
     vector<ulong> vert(nchoosek);
     generate_nk_sets(n,k,vert);
@@ -5105,15 +5106,18 @@ void graphe::make_path_graph() {
 
 /* create n times m (torus) grid graph */
 void graphe::make_grid_graph(int m,int n,bool torus) {
+    this->clear();
     vecteur V;
     graphe X(ctx);
     X.make_default_labels(V,m);
+    X.reserve_nodes(m);
     X.add_nodes(V);
     if (torus)
         X.make_cycle_graph();
     else X.make_path_graph();
     graphe Y(ctx);
     Y.make_default_labels(V,n);
+    Y.reserve_nodes(n);
     Y.add_nodes(V);
     if (torus)
         Y.make_cycle_graph();
@@ -5123,13 +5127,16 @@ void graphe::make_grid_graph(int m,int n,bool torus) {
 
 /* create n times m web graph as the cartesian product of n-cycle and m-path graphs */
 void graphe::make_web_graph(int n,int m,layout *x) {
+    this->clear();
     vecteur V;
     graphe C(ctx);
     C.make_default_labels(V,n);
+    C.reserve_nodes(n);
     C.add_nodes(V);
     C.make_cycle_graph();
     graphe P(ctx);
     P.make_default_labels(V,m);
+    P.reserve_nodes(m);
     P.add_nodes(V);
     P.make_path_graph();
     C.cartesian_product(P,*this);
@@ -5143,8 +5150,10 @@ void graphe::make_web_graph(int n,int m,layout *x) {
 
 /* create wheel graph with n+1 vertices */
 void graphe::make_wheel_graph(int n,layout *x) {
+    this->clear();
     vecteur V;
     make_default_labels(V,n,0,1);
+    reserve_nodes(n);
     add_nodes(V);
     make_cycle_graph();
     int i=add_node(0);
@@ -5161,8 +5170,10 @@ void graphe::make_wheel_graph(int n,layout *x) {
 
 /* create antiprism graph of order n (with 2n vertices and 4n edges) */
 void graphe::make_antiprism_graph(int n,layout *x) {
+    this->clear();
     vecteur V;
     make_default_labels(V,2*n,0);
+    reserve_nodes(2*n);
     add_nodes(V);
     int j;
     for (int i=0;i<n;++i) {
@@ -5183,9 +5194,11 @@ void graphe::make_antiprism_graph(int n,layout *x) {
 /* create the complete k-ary tree with depth d */
 void graphe::make_complete_kary_tree(int k,int d) {
     assert(k>=2);
+    this->clear();
     int n=((int)std::pow(k,d+1)-1)/(k-1),v=0,w=1,len=1;
     vecteur V;
     make_default_labels(V,n);
+    reserve_nodes(n);
     add_nodes(V);
     for (int i=0;i<d;++i) {
         for (int j=0;j<len;++j) {
@@ -6211,6 +6224,7 @@ void graphe::make_tree_layout(layout &x,double sep,int apex) {
 void graphe::make_random_tree(const vecteur &V,int maxd,bool addnodes) {
     if (addnodes) {
         this->clear();
+        reserve_nodes(V.size());
         add_nodes(V);
     }
     vecteur src,labels=*_randperm(V,ctx)._VECTptr;
@@ -6333,6 +6347,7 @@ void graphe::make_random_planar(double p,int connectivity) {
 void graphe::make_random(bool dir,const vecteur &V,double p) {
     this->clear();
     set_directed(dir);
+    reserve_nodes(V.size());
     add_nodes(V);
     int n=node_count(),m=std::floor(p),i,j,k;
     ipairs E;
@@ -6401,6 +6416,7 @@ void graphe::make_random_sequential(const ivector &d,const vecteur &labels) {
             }
         }
     } while (cnt<m);
+    reserve_nodes(labels.size());
     add_nodes(labels);
     for (map<ipair,bool>::const_iterator it=used.begin();it!=used.end();++it) {
         if (it->second)
@@ -6413,6 +6429,7 @@ void graphe::make_random_bipartite(const vecteur &V,const vecteur &W,double p) {
     this->clear();
     set_directed(false);
     int a=V.size(),b=W.size(),m=std::floor(p),k;
+    reserve_nodes(a+b);
     add_nodes(mergevecteur(V,W));
     ipairs E;
     E.reserve(a*b);
@@ -6445,6 +6462,7 @@ void graphe::make_random_regular(const vecteur &V,int d,bool connected) {
     int prob_total,k,dd;
     double r;
     ipair edge;
+    reserve_nodes(V.size());
     add_nodes(V);
     do {
         if (connected)
@@ -6512,6 +6530,7 @@ bool graphe::is_regular(int d) const {
 /* create a random flow network */
 void graphe::make_random_flow_network(const vecteur &V,int capacity) {
     assert(!V.empty());
+    reserve_nodes(V.size());
     add_nodes(V);
 }
 
@@ -6677,8 +6696,12 @@ bool graphe::isomorphic_copy(graphe &G,const ivector &sigma) {
     G.set_graph_attributes(attributes);
     /* add vertices */
     G.reserve_nodes(n);
+    gen_map gm;
+    gen lab;
     for (ivector_iter it=sigma.begin();it!=sigma.end();++it) {
-        G.add_node(node_label(*it),nodes[*it].attributes());
+        lab=node_label(*it);
+        gm[lab]=gen(it-sigma.begin());
+        G.add_node(lab,nodes[*it].attributes());
     }
     if (G.node_count()!=n)
         return false;
@@ -6687,7 +6710,8 @@ bool graphe::isomorphic_copy(graphe &G,const ivector &sigma) {
     get_edges_as_pairs(E);
     for (ipairs_iter it=E.begin();it!=E.end();++it) {
         const ipair &e=*it;
-        G.add_edge(node_label(e.first),node_label(e.second),edge_attributes(e.first,e.second));
+        G.add_edge(gm[node_label(e.first)].val,gm[node_label(e.second)].val,
+                edge_attributes(e.first,e.second));
     }
     return true;
 }
@@ -7696,6 +7720,7 @@ void graphe::reverse(graphe &G) const {
 void graphe::spanning_tree(int i,graphe &T,int sg) {
     T.clear();
     vecteur V=vertices(sg);
+    T.reserve_nodes(V.size());
     T.add_nodes(V);
     ivector indices(V.size());
     int v,p;
@@ -8074,6 +8099,7 @@ void graphe::make_plane_dual(const ivectors &faces) {
     set_directed(false);
     vecteur labels;
     make_default_labels(labels,faces.size());
+    reserve_nodes(labels.size());
     add_nodes(labels);
     int nc=0;
     for (ivectors_iter it=faces.begin();it!=faces.end();++it) {
@@ -8349,6 +8375,7 @@ void graphe::line_graph(graphe &G,ipairs &E) const {
         label=_cat(makesequence(node_label(it->first),str2gen("-",true),node_label(it->second)),ctx);
         labels.push_back(label);
     }
+    G.reserve_nodes(labels.size());
     G.add_nodes(labels);
     int i,j;
     for (ipairs_iter it=E.begin();it!=E.end();++it) {
@@ -8368,6 +8395,7 @@ void graphe::transitive_closure(graphe &G,bool weighted) {
     G.clear();
     G.set_directed(isdir);
     G.set_weighted(weighted);
+    G.reserve_nodes(n);
     G.add_nodes(vertices());
     if (weighted) {
         matrice m;
@@ -8487,7 +8515,7 @@ gen graphe::aut_generators() const {
         fclose(f);
         delete[] adj;
     }
-    return gen(out,_SET__VECT);
+    return gen(out,_LIST__VECT);
 #else
     message("Error: nauty library is required for finding graph automorphisms");
     return undef;

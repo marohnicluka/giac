@@ -2962,7 +2962,7 @@ gen _permute_vertices(const gen &g,GIAC_CONTEXT) {
             return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
         i=jt-V.begin();
         if (find(v.begin(),v.end(),i)!=v.end())
-            return generrtype("List is not a permutation");
+            return generrtype("Expected a permutation");
         v[it-sigma.begin()]=i;
     }
     graphe H;

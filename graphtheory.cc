@@ -389,7 +389,7 @@ gen flights(const gen &g,bool arrive,bool all,GIAC_CONTEXT) {
             return v;
         res.push_back(_sort(v,contextptr));
     } while (++i<G.node_count());
-    return gen(res,_LIST__VECT);
+    return change_subtype(res,_LIST__VECT);
 }
 
 gen randomgraph(const vecteur &gv,bool directed,GIAC_CONTEXT) {
@@ -1059,12 +1059,12 @@ gen _maximum_matching(const gen &g,GIAC_CONTEXT) {
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     graphe::ipairs matching;
-    G.maximize_matching(matching);
+    G.find_maximum_matching(matching);
     vecteur res;
     for (graphe::ipairs_iter it=matching.begin();it!=matching.end();++it) {
         res.push_back(makevecteur(G.node_label(it->first),G.node_label(it->second)));
     }
-    return gen(res.size()<100?_sort(res,contextptr):res,_LIST__VECT);
+    return change_subtype(res.size()<100?_sort(res,contextptr):res,_LIST__VECT);
 }
 static const char _maximum_matching_s[]="maximum_matching";
 static define_unary_function_eval(__maximum_matching,&_maximum_matching,_maximum_matching_s);
@@ -1094,7 +1094,7 @@ gen _bipartite_matching(const gen &g,GIAC_CONTEXT) {
     for (graphe::ipairs_iter it=matching.begin();it!=matching.end();++it) {
         res.push_back(makevecteur(G.node_label(it->first),G.node_label(it->second)));
     }
-    return change_subtype(makevecteur(count,gen(res.size()<100?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT)),_SEQ__VECT);
+    return change_subtype(makevecteur(count,change_subtype(res.size()<100?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT)),_SEQ__VECT);
 }
 static const char _bipartite_matching_s[]="bipartite_matching";
 static define_unary_function_eval(__bipartite_matching,&_bipartite_matching,_bipartite_matching_s);
@@ -1981,7 +1981,7 @@ gen _biconnected_components(const gen &g,GIAC_CONTEXT) {
         G.subgraph(*it,H,false);
         res.push_back(_sort(H.vertices(),contextptr));
     }
-    return gen(res.size()<100?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
+    return change_subtype(res.size()<100?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
 }
 static const char _biconnected_components_s[]="biconnected_components";
 static define_unary_function_eval(__biconnected_components,&_biconnected_components,_biconnected_components_s);
@@ -2191,7 +2191,7 @@ gen _connected_components(const gen &g,GIAC_CONTEXT) {
     for (graphe::ivectors_iter it=components.begin();it!=components.end();++it) {
         res.push_back(_sort(G.get_node_labels(*it),contextptr));
     }
-    return gen(res.size()<100?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
+    return change_subtype(res.size()<100?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
 }
 static const char _connected_components_s[]="connected_components";
 static define_unary_function_eval(__connected_components,&_connected_components,_connected_components_s);
@@ -2261,7 +2261,7 @@ gen _incident_edges(const gen &g,GIAC_CONTEXT) {
     for (graphe::edgeset_iter it=E.begin();it!=E.end();++it) {
         res.push_back(makevecteur(G.node_label(it->first),G.node_label(it->second)));
     }
-    return gen(res,_LIST__VECT);
+    return change_subtype(res,_LIST__VECT);
 }
 static const char _incident_edges_s[]="incident_edges";
 static define_unary_function_eval(__incident_edges,&_incident_edges,_incident_edges_s);
@@ -4034,7 +4034,7 @@ gen _shortest_path(const gen &g,GIAC_CONTEXT) {
         i=it-shortest_paths.begin();
         res[it-shortest_paths.begin()]=dist[i]>=0?G.get_node_labels(*it):vecteur(0);
     }
-    return single?res.front():gen(res,_LIST__VECT);
+    return single?res.front():change_subtype(res,_LIST__VECT);
 }
 static const char _shortest_path_s[]="shortest_path";
 static define_unary_function_eval(__shortest_path,&_shortest_path,_shortest_path_s);
@@ -4296,7 +4296,7 @@ gen _clique_cover(const gen &g,GIAC_CONTEXT) {
         return vecteur(0);
     vecteur res;
     G.ivectors2vecteur(cover,res,true);
-    return gen(res.size()<100?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
+    return change_subtype(res.size()<100?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
 }
 static const char _clique_cover_s[]="clique_cover";
 static define_unary_function_eval(__clique_cover,&_clique_cover,_clique_cover_s);
@@ -4309,11 +4309,12 @@ define_unary_function_ptr5(at_clique_cover,alias_at_clique_cover,&__clique_cover
  */
 gen _clique_cover_number(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    graphe G(contextptr),C(contextptr);
+    graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    G.complement(C);
-    int ncov=C.exact_vertex_coloring();
+    graphe::ivectors cover;
+    G.clique_cover(cover);
+    int ncov=cover.size();
     if (ncov==0)
         return undef;
     return ncov;
@@ -4419,7 +4420,7 @@ gen _strongly_connected_components(const gen &g,GIAC_CONTEXT) {
     G.strongly_connected_components(components);
     vecteur res;
     G.ivectors2vecteur(components,res,true);
-    return gen(res.size()<100?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
+    return change_subtype(res.size()<100?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
 }
 static const char _strongly_connected_components_s[]="strongly_connected_components";
 static define_unary_function_eval(__strongly_connected_components,&_strongly_connected_components,_strongly_connected_components_s);

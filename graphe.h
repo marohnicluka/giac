@@ -231,27 +231,6 @@ public:
         inline bool chain_empty() { return pos==0 && m_chain.front()==0; }
     };
 
-    class edmonds { // matching maximizer
-        graphe *G;
-        std::map<int,ivector> blossoms;
-        std::map<int,int> forest;
-        int mate(const ipairs &matching,int v);
-        int find_root(int k);
-        int root_distance(std::map<int,int>::const_iterator it);
-        int root_distance(int v);
-        int find_base(int v,int w);
-        bool tree_path(int v,int w,ivector &path);
-        std::map<int,ivector>::iterator in_blossom(int v);
-        std::map<int,ivector>::iterator is_blossom_base(int v);
-        void append_non_blossom_adjacents(int v,std::map<int,ivector>::const_iterator bit,ivector &lst);
-        ivector adjacent(int v);
-        inline ipair make_edge(int i,int j) { return std::make_pair(i<j?i:j,i<j?j:i); }
-    public:
-        edmonds(graphe *gr);
-        bool find_augmenting_path(const ipairs &matching,ivector &path);
-        void find_maximum_matching(ipairs &matching);
-    };
-
     class walker { // tree node positioner
         graphe *G;
         layout *x;
@@ -677,6 +656,7 @@ private:
     void remove_maximal_clique(ivector &V) const;
     bool bipartite_matching_bfs(ivector &dist);
     bool bipartite_matching_dfs(int u,ivector &dist);
+    static ipair forest_root_info(const ivector &forest,int v);
 
 public:
     graphe(const context *contextptr=context0);
@@ -837,8 +817,9 @@ public:
     void subgraph(const ipairs &E,graphe &G,bool copy_attrib=true) const;
     bool is_subgraph(const graphe &G) const;
     void maximal_independent_set(ivector &ind) const;
-    void maximize_matching(ipairs &matching);
+    void find_maximum_matching(ipairs &M);
     void find_maximal_matching(ipairs &matching) const;
+    bool find_augmenting_path(ivector &ap,std::map<int,int> &matching);
     bool trail(const vecteur &v);
     bool demoucron(ivectors &faces);
     void create_random_layout(layout &x,int dim);

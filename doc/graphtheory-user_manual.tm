@@ -9679,6 +9679,16 @@
 
   <center|<image|images/dh4.eps|40%|||>>
 
+  <\session|giac|default>
+    <\input>
+      \<gtr\>\ 
+    <|input>
+      draw_graph(highlight_trail(G,shortest_path(G,1,[19,12]),[green,magenta]))
+    </input>
+  </session>
+
+  <center|<image|images/hlt.eps|40%|||>>
+
   <subsection|Highlighting subgraphs><label|highlight-subgraph>
 
   The command <verbatim|highlight_subgraph><index|<verbatim|highlight_subgraph>>

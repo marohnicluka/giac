@@ -3648,9 +3648,13 @@ gen _highlight_trail(const gen &g,GIAC_CONTEXT) {
     vecteur &gv=*g._VECTptr;
     if (gv.size()<2)
         return gensizeerr(contextptr);
-    if (gv[1].type!=_VECT || (gv.size()==3 && !gv.back().is_integer() && gv.back().type!=_VECT))
+    if (gv.size()==3 && !gv.back().is_integer() && gv.back().type!=_VECT)
         return gentypeerr(contextptr);
-    vecteur V=*gv[1]._VECTptr;
+    vecteur V;
+    if (gv[1].type==_VECT)
+        V=*gv[1]._VECTptr;
+    else if (gv[1].is_symb_of_sommet(at_trail))
+        V=*gv[1]._SYMBptr->feuille._VECTptr;
     if (V.empty())
         return gv.front();
     if (V.front().type!=_VECT)
@@ -3665,10 +3669,10 @@ gen _highlight_trail(const gen &g,GIAC_CONTEXT) {
         return generrdim("Numbers of colors and vertices do not match");
     int i,j;
     for (const_iterateur it=V.begin();it!=V.end();++it) {
-        if (G.node_index(*it)<0)
-            return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
         for (const_iterateur jt=it->_VECTptr->begin();jt!=it->_VECTptr->end()-1;++jt) {
             const gen &v=*jt,&w=*(jt+1);
+            if (G.node_index(v)<0)
+                return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
             if ((i=G.node_index(v))<0 || (j=G.node_index(w))<0)
                 return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
             if (!G.has_edge(i,j))

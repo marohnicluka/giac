@@ -4574,6 +4574,8 @@ gen _is_arborescence(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (!G.is_directed())
+        return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED);
     return graphe::boole(G.is_arborescence());
 }
 static const char _is_arborescence_s[]="is_arborescence";

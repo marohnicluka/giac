@@ -8550,7 +8550,7 @@ int graphe::is_hamiltonian(bool conclusive,ivector &hc,bool make_closure) {
     /* test biconnectivity, complexity O(n) */
     if (!is_biconnected())
         return 0;
-    int mindeg=RAND_MAX,deg,n=node_count();
+    int mindeg=RAND_MAX,deg,n=node_count(),m=edge_count();
     ivector d(n);
     /* Dirac criterion, complexity O(n) */
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
@@ -8583,7 +8583,7 @@ int graphe::is_hamiltonian(bool conclusive,ivector &hc,bool make_closure) {
         if (bondy_chvatal_closure(G,d))
             return G.is_hamiltonian(conclusive,hc,false);
     }
-    if (double(edge_count())/double(n*n)>.75) {
+    if (double(m)/(double(n*n)>1.0-2.0/(1.0+std::exp(.0015*double(n))))) {
         /* Nash-Williams criterion */
         int inum=maximum_independent_set(v);
         if (3*mindeg>=std::max(n+2,3*inum))

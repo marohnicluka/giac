@@ -4582,13 +4582,13 @@ int graphe::exact_edge_coloring(ivector &colors,int *numcol) {
 }
 
 /* returns true iff there is a clique cover of order not larger than k and finds that cover */
-bool graphe::clique_cover(ivectors &cover,int v) {
+bool graphe::clique_cover(ivectors &cover,int k) {
     if (is_triangle_free()) {
         /* clique cover consists of matched edges and singleton vertex sets */
         ipairs matching;
         find_maximum_matching(matching);
         int m=matching.size(),n=node_count(),i=0;
-        if (v>0 && n-m>v)
+        if (k>0 && n-m>k)
             return false;
         vector<bool> matched(n);
         cover.resize(n-m);
@@ -4610,7 +4610,7 @@ bool graphe::clique_cover(ivectors &cover,int v) {
     graphe C(ctx);
     complement(C);
     int ncliques=C.exact_vertex_coloring();
-    if (ncliques==0 || (v>0 && ncliques>v))
+    if (ncliques==0 || (k>0 && ncliques>k))
         return false;
     cover.clear();
     cover.resize(ncliques);
@@ -5050,16 +5050,16 @@ void graphe::generate_nk_sets(int n,int k,vector<ulong> &v) {
 }
 
 /* create Kneser graph with parameters n (<=20) and k */
-bool graphe::make_kneser_graph(int n,int v) {
+bool graphe::make_kneser_graph(int n,int k) {
     this->clear();
-    assert(n>1 && n<21 && v>0 && v<n);
-    int nchoosek=comb(n,v).val; // number of vertices
+    assert(n>1 && n<21 && k>0 && k<n);
+    int nchoosek=comb(n,k).val; // number of vertices
     vecteur V;
     make_default_labels(V,nchoosek);
     reserve_nodes(nchoosek);
     add_nodes(V);
     vector<ulong> vert(nchoosek);
-    generate_nk_sets(n,v,vert);
+    generate_nk_sets(n,k,vert);
     ulong a,b;
     for (int i=0;i<nchoosek;++i) {
         a=vert[i];
@@ -8188,27 +8188,27 @@ int graphe::color_count() const {
 
 /* return true iff the vertices can be colored using at most k different colors,
 * the vertices will be colored after the function returns */
-bool graphe::is_vertex_colorable(int v) {
-    assert(v>=0);
-    if (v==0) {
+bool graphe::is_vertex_colorable(int k) {
+    assert(k>=0);
+    if (k==0) {
         uncolor_all_nodes();
         return true;
     }
-    if (v>node_count()) {
+    if (k>node_count()) {
         message("Warning: there are more colors than vertices");
         return false;
     }
     /* try greedy coloring first (linear time), use random order of vertices */
     ivector sigma=rand_permu(node_count());
-    if (greedy_vertex_coloring(sigma)<=v)
+    if (greedy_vertex_coloring(sigma)<=k)
         return true;
     /* next try dsatur algorithm (quadratic time) */
     uncolor_all_nodes();
     dsatur();
-    if (color_count()<=v)
+    if (color_count()<=k)
         return true;
     /* finally resort to solving MIP problem */
-    return exact_vertex_coloring(v)!=0;
+    return exact_vertex_coloring(k)!=0;
 }
 
 /* return the lower and the upper bound for chromatic number (inclusive) */

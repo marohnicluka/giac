@@ -604,6 +604,7 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
                     for (const_iterateur it=argv.begin();it!=argv.end()-1;++it) {
                         G.add_edge(it->val-offset,(it+1)->val-offset);
                     }
+                    G.add_edge(argv.back().val-offset,argv.front().val-offset);
                 } else if (i==0) // list of vertices
                     G.add_nodes(argv);
                 else return gentypeerr(contextptr);

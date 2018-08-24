@@ -6693,16 +6693,13 @@
   <subsection|Forest graphs>
 
   The command <verbatim|is_forest><index|<verbatim|is_forest>> is used for
-  determining if the particular graph is a <em|forest>, i.e.<nbsp>if its
-  connected components are all trees.
+  determining whether the given graph is a forest. A graph is called
+  <em|forest> if each of its connected components is a tree.
 
   <verbatim|is_forest> accepts the input graph <math|G> as its only argument
   and returns <verbatim|true> if <math|G> is a forest and <verbatim|false>
-  otherwise.
-
-  The only expensive step in the algorithm is the decomposition of <math|G>
-  to connected components. Therefore the algorithm runs in
-  <math|O<around*|(|<around*|\||V|\|>+<around*|\||E|\|>|)>> time.
+  otherwise. The algorithm runs in <math|O<around*|(|<around*|\||V|\|>+<around*|\||E|\|>|)>>
+  time.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -7002,11 +6999,12 @@
   The command <verbatim|maxflow><index|<verbatim|maxflow>> is used for
   computing the maximum flow in a network.
 
-  <verbatim|maxflow> accepts three arguments: the input network graph
-  <math|G<around*|(|V,E|)>>, the source <math|s\<in\>V> and the sink
-  <math|t\<in\>V>. It returns a sequence of two objects, the optimal value
-  for the maximum flow problem for <math|G> along with an optimal flow (as a
-  matrix).
+  <verbatim|maxflow> accepts three or four arguments: the input network graph
+  <math|G<around*|(|V,E|)>>, the source <math|s\<in\>V>, the sink
+  <math|t\<in\>V> and optionally an unassigned identifier. It returns the
+  optimal value for the maximum flow problem for <math|G>. If an identifier
+  is given as the fourth argument, an optimal flow is written to it in form
+  of a matrix.
 
   The strategy is to use the algorithm of <name|Edmonds> and <name|Karp>
   <cite|edmonds-karp>, which solves the maximum flow problem in
@@ -7056,10 +7054,10 @@
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      f,F:=maxflow(N,1,6)
+      maxflow(N,1,6)
     <|unfolded-io>
       <\equation*>
-        4,<around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|3|3|cell-halign|c>|<cwith|1|-1|4|4|cell-halign|c>|<cwith|1|-1|5|5|cell-halign|c>|<cwith|1|-1|6|6|cell-halign|c>|<cwith|1|-1|6|6|cell-rborder|0ln>|<table|<row|<cell|0>|<cell|1>|<cell|0>|<cell|3>|<cell|0>|<cell|0>>|<row|<cell|0>|<cell|0>|<cell|0>|<cell|0>|<cell|2>|<cell|0>>|<row|<cell|0>|<cell|1>|<cell|0>|<cell|0>|<cell|0>|<cell|1>>|<row|<cell|0>|<cell|0>|<cell|2>|<cell|0>|<cell|1>|<cell|0>>|<row|<cell|0>|<cell|0>|<cell|0>|<cell|0>|<cell|0>|<cell|3>>|<row|<cell|0>|<cell|0>|<cell|0>|<cell|0>|<cell|0>|<cell|0>>>>>|)>
+        4
       </equation*>
     </unfolded-io>
 
@@ -7069,7 +7067,7 @@
       N:=random_network_graph(2,3,0.95,acyclic)
     <|unfolded-io>
       <\equation*>
-        <text|a directed unweighted graph with 12 vertices and 18 arcs>
+        <text|a directed unweighted graph with 12 vertices and 20 arcs>
       </equation*>
     </unfolded-io>
 
@@ -7089,7 +7087,7 @@
       N:=assign_edge_weights(N,5,15)
     <|unfolded-io>
       <\equation*>
-        <text|a directed weighted graph with 12 vertices and 18 arcs>
+        <text|a directed weighted graph with 12 vertices and 20 arcs>
       </equation*>
     </unfolded-io>
 
@@ -7106,15 +7104,15 @@
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      f,F:=maxflow(N,6,11):; f
+      maxflow(N,6,11,F)
     <|unfolded-io>
       <\equation*>
-        <math-up|Done>,22
+        22
       </equation*>
     </unfolded-io>
   </session>
 
-  To visualize the obtained optimal flow <math|F>, one can use the
+  To visualize the optimal flow <math|F>, one can use the
   <verbatim|<hlink|highlight_subgraph|#highlight-subgraph>> command with the
   option <verbatim|weights> to display the actual flow in the highlighted
   edges.

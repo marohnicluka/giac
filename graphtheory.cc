@@ -5591,9 +5591,15 @@ gen _maxflow(const gen &g,GIAC_CONTEXT) {
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
     vecteur &gv=*g._VECTptr;
-    if (gv.size()!=3)
+    if (gv.size()<3)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     gen &S=gv[1],&T=gv[2];
+    gen M(undef);
+    if (gv.size()==4) {
+        M=gv[3];
+        if (M.type!=_IDNT)
+            return generr("Expected an unassigned identifier");
+    }
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
@@ -5609,14 +5615,17 @@ gen _maxflow(const gen &g,GIAC_CONTEXT) {
     vector<map<int,gen> > flow;
     gen mf=G.max_flow(s,t,flow);
     int n=G.node_count();
-    matrice m=*_matrix(makesequence(n,n,0),contextptr)._VECTptr;
-    for (int i=0;i<n;++i) {
-        map<int,gen> &f=flow[i];
-        for (map<int,gen>::const_iterator it=f.begin();it!=f.end();++it) {
-            m[i]._VECTptr->at(it->first)=max(it->second,0,contextptr);
+    if (!is_undef(M)) {
+        matrice m=*_matrix(makesequence(n,n,0),contextptr)._VECTptr;
+        for (int i=0;i<n;++i) {
+            map<int,gen> &f=flow[i];
+            for (map<int,gen>::const_iterator it=f.begin();it!=f.end();++it) {
+                m[i]._VECTptr->at(it->first)=max(it->second,0,contextptr);
+            }
         }
+        identifier_assign(*M._IDNTptr,m,contextptr);
     }
-    return makesequence(mf,m);
+    return mf;
 }
 static const char _maxflow_s[]="maxflow";
 static define_unary_function_eval(__maxflow,&_maxflow,_maxflow_s);

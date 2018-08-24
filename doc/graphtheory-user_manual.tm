@@ -9,6 +9,8 @@
     <assign|figure-text|<macro|<localize|Fig.>>>
 
     <assign|index-text|<macro|Command <localize|Index>>>
+
+    <assign|prologue-text|<macro|Introduction>>
   </hide-preamble>
 
   <\doc-data|<doc-title|Graph theory package for
@@ -692,7 +694,7 @@
     <pageref|auto-336><vspace|0.5fn>
   </table-of-contents>
 
-  <chapter*|Introduction>
+  <prologue>
 
   This document contains an overview of the graph theory commands built in
   the <samp|Giac> computation kernel, including the calling syntax, detailed
@@ -5971,20 +5973,21 @@
   </session>
 
   Graph isomorphism testing in <samp|nauty> is based on computing the
-  canonical labelings for the input graphs. These are in fact permutations of
-  the respective sets of vertices which, when applied, turn the input graphs
-  into their canonical representations. The input graphs are isomorphic if
-  and only if their canonical representations share the same edge structure.
+  canonical labelings for the input graphs. The <em|canonical labeling> of
+  <math|G> is a particular ordering of the vertices of <math|G>. Rearranging
+  the vertices with respect to that ordering produces the <em|canonical
+  representation> of <math|G>. Two graphs are isomorphic if and only if their
+  canonical representations share the same edge structure.
 
   The <verbatim|canonical_labeling><index|<verbatim|canonical_labeling>>
-  command is used for obtaining the canonical labeling of a graph as a
-  permutation, which can be used with the
+  command is used for computing the canonical labeling as a permutation. One
+  can reorder the vertices by using this permutation with the
   <verbatim|<hlink|isomorphic_copy|#isomorphic-copy>> command.
   <verbatim|canonical_labeling> accepts the input graph as its only argument.
 
   In the next example it is demonstrated how to prove that <math|G<rsub|1>>
   and <math|G<rsub|3>> are isomorphic by comparing their canonical
-  representations <math|H<rsub|1>> and <math|H<rsub|3>> with
+  representations <math|H<rsub|1>> and <math|H<rsub|3>> using the
   <verbatim|<hlink|graph_equal|#graph-equal>> command. Before testing
   <math|H<rsub|1>> and <math|H<rsub|3>> for equality, their vertices have to
   be relabeled so that the command <verbatim|<hlink|vertices|#vertices-edges>>
@@ -6079,7 +6082,12 @@
 
       <timing|1.7 sec>
     </unfolded-io>
+  </session>
 
+  To make the edge structures of <math|G> and <math|H> slightly different, a
+  random edge from <math|H> is \Pmisplaced\Q.
+
+  <\session|giac|default>
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>

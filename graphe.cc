@@ -6503,13 +6503,6 @@ bool graphe::is_regular(int d) const {
     return true;
 }
 
-/* create a random flow network */
-void graphe::make_random_flow_network(const vecteur &V,int capacity) {
-    assert(!V.empty());
-    reserve_nodes(V.size());
-    add_nodes(V);
-}
-
 /* return true iff this graph is equal to G */
 bool graphe::is_equal(const graphe &G) const {
     if (is_directed()!=G.is_directed() || is_weighted()!=G.is_weighted())
@@ -7489,24 +7482,6 @@ void graphe::tensor_product(const graphe &G,graphe &P) const {
                 }
             }
         }
-    }
-}
-
-/* highlight all edges from E using the specified color */
-void graphe::highlight_edges(const ipairs &E,int color) {
-    gen val;
-    for (ipairs_iter it=E.begin();it!=E.end();++it) {
-        val=change_subtype(color,_INT_COLOR);
-        set_edge_attribute(it->first,it->second,_GT_ATTRIB_COLOR,val);
-    }
-}
-
-/* highlight all nodes with indices in V using the specified color */
-void graphe::highlight_nodes(const ivector &V,int color) {
-    gen val;
-    for (ivector_iter it=V.begin();it!=V.end();++it) {
-        val=change_subtype(color,_INT_COLOR);
-        set_node_attribute(*it,_GT_ATTRIB_COLOR,val);
     }
 }
 
@@ -10203,6 +10178,82 @@ bool graphe::make_euclidean_distances() {
         }
     }
     return true;
+}
+
+/* find the maximum flow using Edmonds-Karp algorithm (exact computation) */
+gen graphe::max_flow(int s,int t,vector<map<int,gen> > &flow) {
+    assert(is_directed() && node_queue.empty());
+    gen mf(0),df; // the value of maximum flow
+    int n=node_count(),i,j;
+    vector<map<int,gen> > cap(n);
+    /* initialize arc capacities and flows */
+    flow.resize(n);
+    bool isweighted=is_weighted();
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        i=it-nodes.begin();
+        map<int,gen> &c=cap[i],&f=flow[i];
+        for (ivector_iter nt=it->neighbors().begin();nt!=it->neighbors().end();++nt) {
+            j=*nt;
+            c[j]=isweighted?weight(i,j):gen(1); // all capacities are set to 1 in unweighted graphs
+            f[j]=0;
+        }
+    }
+    ipairs pred(n);
+    ipair nullpair=make_pair(-1,-1);
+    while (true) {
+        /* run BFS */
+        node_queue.push(s);
+        std::fill(pred.begin(),pred.end(),nullpair);
+        while (!node_queue.empty()) {
+            i=node_queue.front();
+            node_queue.pop();
+            const vertex &v=nodes[i];
+            for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
+                j=*it;
+                if (j!=s && pred[j]==nullpair && is_strictly_greater(cap[i][j],flow[i][j],ctx)) {
+                    pred[j]=make_pair(i,j);
+                    node_queue.push(j);
+                }
+            }
+        }
+        if (pred[t]!=nullpair) {
+            /* found an augmenting path */
+            df=plusinf();
+            /* compute df = how much flow can we send ... */
+            for (ipair e=pred[t];e.first>=0;e=pred[e.first]) {
+                df=min(df,cap[e.first][e.second]-flow[e.first][e.second],ctx);
+            }
+            /* ... and increase edge flows by df */
+            for (ipair e=pred[t];e.first>=0;e=pred[e.first]) {
+                flow[e.first][e.second]+=df;
+                flow[e.second][e.first]-=df;
+            }
+            mf+=df;
+        } else break;
+    }
+    return mf; // return the maximum flow
+}
+
+gen graphe::make_colon_label(const ivector &v) {
+    stringstream ss;
+    for (ivector_iter it=v.begin();it!=v.end();++it) {
+        ss << *it;
+        if (it+1!=v.end())
+            ss << ":";
+    }
+    return graphe::str2gen(ss.str(),true);
+}
+
+gen graphe::colon_label(int i, int j) {
+    ivector v(2);
+    v[0]=i; v[1]=j;
+    return make_colon_label(v);
+}
+
+gen graphe::colon_label(int i, int j,int k) {
+    ivector v(3);
+    v[0]=i; v[1]=j; v[2]=k;
+    return make_colon_label(v);
 }
 
 #ifndef NO_NAMESPACE_GIAC

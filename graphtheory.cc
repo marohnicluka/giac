@@ -3609,12 +3609,15 @@ gen _highlight_subgraph(const gen &g,GIAC_CONTEXT) {
     if (gv[1].type!=_VECT)
         return gentypeerr(contextptr);
     int C1=graphe::default_highlighted_edge_color,C2=graphe::default_highlighted_vertex_color;
-    if (gv.size()==4) {
+    if (gv.size()>=4) {
         if (!gv[2].is_integer() || !gv[3].is_integer())
             return generrtype("Expected an integer");
         C1=gv[2].val;
         C2=gv[3].val;
     }
+    bool overwrite_weights=false;
+    if (gv.back().is_integer() && gv.back().val==_GT_WEIGHTS)
+        overwrite_weights=true;
     gen modG;
     if (gv[1]._VECTptr->front().type==_VECT) {
         modG=gv.front();
@@ -3629,6 +3632,16 @@ gen _highlight_subgraph(const gen &g,GIAC_CONTEXT) {
     if (!S.is_subgraph(G))
         return gt_err(_GT_ERR_NOT_A_SUBGRAPH);
     vecteur V=S.vertices(),E=S.edges(false);
+    if (overwrite_weights && G.is_weighted() && S.is_weighted()) {
+        int i,j,k,l;
+        for (const_iterateur it=E.begin();it!=E.end();++it) {
+            i=G.node_index(it->_VECTptr->front());
+            j=G.node_index(it->_VECTptr->back());
+            k=S.node_index(it->_VECTptr->front());
+            l=S.node_index(it->_VECTptr->back());
+            G.set_edge_attribute(i,j,_GT_ATTRIB_WEIGHT,S.weight(k,l));
+        }
+    }
     modG=_highlight_edges(makesequence(G.to_gen(),E,C1),contextptr);
     return _highlight_vertex(makesequence(modG,V,C2),contextptr);
 }
@@ -5281,7 +5294,7 @@ gen _is_isomorphic(const gen &g,GIAC_CONTEXT) {
     gen isom=undef;
     vecteur &gv=*g._VECTptr;
     if (gv.size()<2 || gv.size()>3)
-        return generr("Wrong number of arguments");
+        return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     graphe G1(contextptr),G2(contextptr);
     if (!G1.read_gen(gv[0]) || !G2.read_gen(gv[1]))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
@@ -5461,12 +5474,12 @@ define_unary_function_ptr5(at_is_hamiltonian,alias_at_is_hamiltonian,&__is_hamil
 
 /* USAGE: traveling_salesman(G,[M])
  *
- * Returns sequence of two objects, optimal cost for traveling salesman problem
- * and the corresponding Hamiltonian cycle in the undirected input graph G. If
- * G is not weighted, its adjacency matrix is used instead. Alternatively,
- * weight matrix may be passed as the optional parameter M. If G is not
- * Hamiltonian, an error is returned. A number of options may be passed at the
- * end of sequence of arguments: 'approx' for approximate solution, a
+ * Returns a sequence of two objects, optimal cost for traveling salesman
+ * problem and the corresponding Hamiltonian cycle in the undirected input
+ * graph G. If G is not weighted, its adjacency matrix is used instead.
+ * Alternatively, weight matrix may be passed as the optional parameter M. If G
+ * is not Hamiltonian, an error is returned. A number of options may be passed
+ * at the end of sequence of arguments: 'approx' for approximate solution, a
  * nonnegative integer representing the time limit (in milliseconds) or
  * 'vertex_distance' to automatically determine distances between the vertices
  * using their positions.
@@ -5546,7 +5559,7 @@ define_unary_function_ptr5(at_traveling_salesman,alias_at_traveling_salesman,&__
 
 /* USAGE:   trail2edges(T)
  *
- * Return the list of edges on the trail T.
+ * Returns the list of edges on the trail T.
  */
 gen _trail2edges(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -5566,6 +5579,242 @@ gen _trail2edges(const gen &g,GIAC_CONTEXT) {
 static const char _trail2edges_s[]="trail2edges";
 static define_unary_function_eval(__trail2edges,&_trail2edges,_trail2edges_s);
 define_unary_function_ptr5(at_trail2edges,alias_at_trail2edges,&__trail2edges,0,true)
+
+/* USAGE:   maxflow(G,s,t)
+ *
+ * Returns the optimal value for the max flow problem for network G with the
+ * source s and sink t along with an optimal flow (as a matrix).
+ */
+gen _maxflow(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()!=3)
+        return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+    gen &S=gv[1],&T=gv[2];
+    graphe G(contextptr);
+    if (!G.read_gen(gv.front()))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (!G.is_directed())
+        return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED);
+    int s=G.node_index(S),t=G.node_index(T);
+    if (s<0 || t<0)
+        return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
+    if (G.in_degree(s)>0)
+        return generr("The given vertex is not a source");
+    if (G.out_degree(t)>0)
+        return generr("The given vertex is not a sink");
+    vector<map<int,gen> > flow;
+    gen mf=G.max_flow(s,t,flow);
+    int n=G.node_count();
+    matrice m=*_matrix(makesequence(n,n,0),contextptr)._VECTptr;
+    for (int i=0;i<n;++i) {
+        map<int,gen> &f=flow[i];
+        for (map<int,gen>::const_iterator it=f.begin();it!=f.end();++it) {
+            m[i]._VECTptr->at(it->first)=max(it->second,0,contextptr);
+        }
+    }
+    return makesequence(mf,m);
+}
+static const char _maxflow_s[]="maxflow";
+static define_unary_function_eval(__maxflow,&_maxflow,_maxflow_s);
+define_unary_function_ptr5(at_maxflow,alias_at_maxflow,&__maxflow,0,true)
+
+/* USAGE:   is_network(G,[s,t])
+ *
+ * Returns true if the graph G is a network with the source s and sink t, else
+ * returns false. If s,t are not given, the output is a sequence of two sets of
+ * vertices, sources and sinks (if both lists are empty then G is not a
+ * network).
+ */
+gen _is_network(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    gen S=undef,T=undef;
+    if (g.subtype==_SEQ__VECT) {
+        vecteur &gv=*g._VECTptr;
+        if (gv.size()!=3)
+            return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+        S=gv[1];
+        T=gv[2];
+    }
+    graphe G(contextptr);
+    if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (!G.is_directed())
+        return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED);
+    bool con=G.is_connected();
+    vecteur sources,sinks;
+    if (!is_undef(S) && !is_undef(T)) {
+        int s=G.node_index(S),t=G.node_index(T);
+        if (s<0 || t<0)
+            return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
+        if (!con || G.in_degree(s)>0 || G.out_degree(t)>0)
+            return graphe::FAUX;
+        return graphe::VRAI;
+    } else if (con) {
+        int n=G.node_count();
+        for (int i=0;i<n;++i) {
+            if (G.in_degree(i)==0)
+                sources.push_back(G.node_label(i));
+            else if (G.out_degree(i)==0) // can't be indeg=outdeg=0 because con=true
+                sinks.push_back(G.node_label(i));
+        }
+    }
+    return makesequence(_sort(sources,contextptr),_sort(sinks,contextptr));
+}
+static const char _is_network_s[]="is_network";
+static define_unary_function_eval(__is_network,&_is_network,_is_network_s);
+define_unary_function_ptr5(at_is_network,alias_at_is_network,&__is_network,0,true)
+
+/* USAGE:   is_cut_set(G,E)
+ *
+ * Returns true if removing the edges in E from the graph G increases the
+ * number of connected components of G, else returns false.
+ */
+gen _is_cut_set(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()!=2)
+        return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+    graphe G(contextptr);
+    if (!G.read_gen(gv.front()))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (gv.back().type!=_VECT)
+        return gentypeerr("Expected a list of edges");
+    vecteur &E=*gv.back()._VECTptr;
+    graphe::ipairs edg;
+    int i,j;
+    for (const_iterateur it=E.begin();it!=E.end();++it) {
+        if (it->type!=_VECT || it->_VECTptr->size()!=2)
+            return gentypeerr("Expected an edge");
+        const gen &u=it->_VECTptr->front(),&v=it->_VECTptr->back();
+        i=G.node_index(u);
+        j=G.node_index(v);
+        if (i<0 || j<0)
+            return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
+        if (!G.has_edge(i,j))
+            return gt_err(_GT_ERR_EDGE_NOT_FOUND);
+        edg.push_back(make_pair(i,j));
+    }
+    graphe::ivectors comp;
+    G.connected_components(comp);
+    int nc=comp.size();
+    for (graphe::ipairs_iter it=edg.begin();it!=edg.end();++it) {
+        G.remove_edge(*it);
+    }
+    G.connected_components(comp);
+    return nc!=int(comp.size())?graphe::VRAI:graphe::FAUX;
+}
+static const char _is_cut_set_s[]="is_cut_set";
+static define_unary_function_eval(__is_cut_set,&_is_cut_set,_is_cut_set_s);
+define_unary_function_ptr5(at_is_cut_set,alias_at_is_cut_set,&__is_cut_set,0,true)
+
+/* USAGE:   random_network_graph(a,b,[p],[opts])
+ *
+ * Returns a random network with b grid frames of size a*a in which every edge
+ * appears with the probability p (by default 0.5). The source vertex is in the
+ * bottom left corner of the first frame and the sink vertex is in the top right
+ * corner of the b-th frame.
+ */
+gen _random_network_graph(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()<2)
+        return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+    int a,b;
+    if (!gv[0].is_integer() || !gv[1].is_integer() || (a=gv[0].val)<1 || (b=gv[1].val)<1)
+        return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
+    if (a+b<3)
+        return generr("a+b>2 is required");
+    double p=0.5;
+    /* parse options */
+    bool acyclic=false;
+    for (const_iterateur it=gv.begin()+2;it!=gv.end();++it) {
+        gen P=_evalf(*it,contextptr);
+        if (P.type==_DOUBLE_ && is_strictly_positive(P,contextptr) && !is_strictly_greater(P,1,contextptr))
+            p=P.DOUBLE_val();
+        else if (it->is_integer()) {
+            switch (it->val) {
+            case 150:// _GT_ACYCLIC:
+                acyclic=true;
+                break;
+            }
+        } else if (it->is_symb_of_sommet(at_equal)) {
+            gen &lh=it->_SYMBptr->feuille._VECTptr->front();
+            gen &rh=it->_SYMBptr->feuille._VECTptr->back();
+            if (lh.is_integer()) {
+                switch (lh.val) {
+                case 150:// _GT_ACYCLIC:
+                    if (rh.is_integer() && rh.subtype==_INT_BOOLEAN)
+                        acyclic=(bool)rh.val;
+                }
+            }
+        }
+    }
+    /* construct the network */
+    vecteur frames;
+    for (int k=0;k<b;++k) {
+        graphe F(contextptr);
+        F.make_grid_graph(a,a);
+        frames.push_back(F.to_gen());
+    }
+    graphe G(contextptr);
+    G.read_gen(_disjoint_union(change_subtype(frames,_SEQ__VECT),contextptr));
+    int ofs=array_start(contextptr);
+    gen lab1,lab2;
+    vecteur x,y;
+    for (int k=1;k<b;++k) {
+        x=*_randperm(a,contextptr)._VECTptr;
+        y=*_randperm(a,contextptr)._VECTptr;
+        for (int i=0;i<a;++i) {
+            for (int j=0;j<a;++j) {
+                lab1=graphe::colon_label(k,i+ofs,j+ofs);
+                lab2=graphe::colon_label(k+1,x[i].val,y[j].val);
+                G.add_edge(lab1,lab2);
+            }
+        }
+    }
+    int s=G.node_index(graphe::colon_label(1,ofs,ofs));
+    int t=G.node_index(graphe::colon_label(b,a-1+ofs,a-1+ofs));
+    assert(s>=0 && t>=0);
+    G.add_edge(s,t); // temporary edge
+    G.compute_st_numbering(s,t);
+    G.remove_edge(s,t);
+    G.assign_edge_directions_from_st();
+    graphe::ipairs E;
+    G.get_edges_as_pairs(E);
+    for (graphe::ipairs_iter it=E.begin();it!=E.end();++it) {
+        const graphe::ipair &e=*it;
+        if (G.rand_uniform()>p) {
+            G.remove_edge(e);
+            if (!G.is_connected())
+                G.add_edge(e);
+        }
+    }
+    if (!acyclic) {
+        G.get_edges_as_pairs(E);
+        for (graphe::ipairs_iter it=E.begin();it!=E.end();++it) {
+            const graphe::ipair &e=*it;
+            if (e.first!=s && e.first!=t && e.second!=s && e.second!=t && G.rand_integer(RAND_MAX)%2==0)
+                G.add_edge(e.second,e.first);
+        }
+    }
+    int n=G.node_count();
+    vecteur labels;
+    G.make_default_labels(labels,n);
+    G.relabel_nodes(labels);
+    return G.to_gen();
+}
+static const char _random_network_graph_s[]="random_network_graph";
+static define_unary_function_eval(__random_network_graph,&_random_network_graph,_random_network_graph_s);
+define_unary_function_ptr5(at_random_network_graph,alias_at_random_network_graph,&__random_network_graph,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

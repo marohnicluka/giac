@@ -657,6 +657,7 @@ private:
     bool bipartite_matching_bfs(ivector &dist);
     bool bipartite_matching_dfs(int u,ivector &dist);
     static ipair forest_root_info(const ivector &forest,int v);
+    static gen make_colon_label(const ivector &v);
 
 public:
     graphe(const context *contextptr=context0);
@@ -872,7 +873,6 @@ public:
     void make_random_sequential(const ivector &d,const vecteur &labels);
     void make_random_bipartite(const vecteur &V,const vecteur &W,double p);
     void make_random_regular(const vecteur &V,int d,bool connected);
-    void make_random_flow_network(const vecteur &V,int capacity);
     static void translate_layout(layout &x,const point &dx);
     void cartesian_product(const graphe &G,graphe &P) const;
     void tensor_product(const graphe &G,graphe &P) const;
@@ -898,8 +898,6 @@ public:
     void draw_edges(vecteur &drawing,const layout &x);
     void draw_nodes(vecteur &drawing,const layout &x) const;
     void draw_labels(vecteur &drawing,const layout &x) const;
-    void highlight_edges(const ipairs &E,int color);
-    void highlight_nodes(const ivector &V,int color);
     void distance(int i,const ivector &J,ivector &dist,ivectors *shortest_paths=NULL);
     void allpairs_distance(matrice &m) const;
     void dijkstra(int src,const ivector &dest,vecteur &path_weights,ivectors *cheapest_paths=NULL);
@@ -937,6 +935,9 @@ public:
     int is_hamiltonian(bool conclusive,ivector &hc,bool make_closure=true);
     int find_hamiltonian_cycle(ivector &h,double &cost,bool approximate=false);
     bool make_euclidean_distances();
+    gen max_flow(int s,int t,std::vector<std::map<int, gen> > &flow);
+    static gen colon_label(int i,int j);
+    static gen colon_label(int i,int j,int k);
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }
 };
 

@@ -454,254 +454,258 @@
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-230>>
 
+    <with|par-left|1tab|4.3.7.<space|2spc>Edge cuts
+    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <no-break><pageref|auto-231>>
+
     4.4.<space|2spc>Trees <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-231>
+    <no-break><pageref|auto-233>
 
     <with|par-left|1tab|4.4.1.<space|2spc>Tree graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-232>>
+    <no-break><pageref|auto-234>>
 
     <with|par-left|1tab|4.4.2.<space|2spc>Forest graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-234>>
+    <no-break><pageref|auto-236>>
 
     <with|par-left|1tab|4.4.3.<space|2spc>Height of a tree
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-236>>
+    <no-break><pageref|auto-238>>
 
     <with|par-left|1tab|4.4.4.<space|2spc>Lowest common ancestor of a pair of
     nodes <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-238>>
+    <no-break><pageref|auto-240>>
 
     <with|par-left|1tab|4.4.5.<space|2spc>Arborescence graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-240>>
+    <no-break><pageref|auto-242>>
 
     4.5.<space|2spc>Networks <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-242>
+    <no-break><pageref|auto-244>
 
     <with|par-left|1tab|4.5.1.<space|2spc>Network graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-243>>
+    <no-break><pageref|auto-245>>
 
     <with|par-left|1tab|4.5.2.<space|2spc>Maximum flow
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-245>>
+    <no-break><pageref|auto-247>>
 
     4.6.<space|2spc>Distance in graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-247>
+    <no-break><pageref|auto-249>
 
     <with|par-left|1tab|4.6.1.<space|2spc>Vertex distance
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-248>>
+    <no-break><pageref|auto-250>>
 
     <with|par-left|1tab|4.6.2.<space|2spc>All-pairs vertex distance
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-250>>
+    <no-break><pageref|auto-252>>
 
     <with|par-left|1tab|4.6.3.<space|2spc>Diameter of a graph
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-252>>
+    <no-break><pageref|auto-254>>
 
     <with|par-left|1tab|4.6.4.<space|2spc>Girth of a graph
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-253>>
+    <no-break><pageref|auto-255>>
 
     4.7.<space|2spc>Acyclic graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-256>
+    <no-break><pageref|auto-258>
 
     <with|par-left|1tab|4.7.1.<space|2spc>Checking if a graph is acyclic
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-257>>
+    <no-break><pageref|auto-259>>
 
     <with|par-left|1tab|4.7.2.<space|2spc>Topological sorting
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-259>>
+    <no-break><pageref|auto-261>>
 
     <with|par-left|1tab|4.7.3.<space|2spc><with|font-family|ss|st> ordering
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-262>>
+    <no-break><pageref|auto-264>>
 
     4.8.<space|2spc>Vertex matching <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-264>
+    <no-break><pageref|auto-266>
 
     <with|par-left|1tab|4.8.1.<space|2spc>Maximum matching
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-265>>
+    <no-break><pageref|auto-267>>
 
     <with|par-left|1tab|4.8.2.<space|2spc>Maximum matching in bipartite
     graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-267>>
+    <no-break><pageref|auto-269>>
 
     4.9.<space|2spc>Cliques <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-269>
+    <no-break><pageref|auto-271>
 
     <with|par-left|1tab|4.9.1.<space|2spc>Clique graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-270>>
+    <no-break><pageref|auto-272>>
 
     <with|par-left|1tab|4.9.2.<space|2spc>Triangle-free graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-272>>
+    <no-break><pageref|auto-274>>
 
     <with|par-left|1tab|4.9.3.<space|2spc>Maximal cliques
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-274>>
+    <no-break><pageref|auto-276>>
 
     <with|par-left|1tab|4.9.4.<space|2spc>Maximum clique
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-276>>
+    <no-break><pageref|auto-278>>
 
     <with|par-left|1tab|4.9.5.<space|2spc>Minimum clique covering
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-278>>
+    <no-break><pageref|auto-280>>
 
     <with|par-left|1tab|4.9.6.<space|2spc>Clique covering number
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-280>>
+    <no-break><pageref|auto-282>>
 
     4.10.<space|2spc>Vertex coloring <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-282>
+    <no-break><pageref|auto-284>
 
     <with|par-left|1tab|4.10.1.<space|2spc>Greedy coloring
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-283>>
+    <no-break><pageref|auto-285>>
 
     <with|par-left|1tab|4.10.2.<space|2spc>Minimal coloring
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-286>>
+    <no-break><pageref|auto-288>>
 
     <with|par-left|1tab|4.10.3.<space|2spc>Chromatic number
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-288>>
+    <no-break><pageref|auto-290>>
 
     <with|par-left|1tab|4.10.4.<space|2spc><with|mode|math|k>-coloring
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-290>>
+    <no-break><pageref|auto-292>>
 
     4.11.<space|2spc>Edge coloring <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-292>
+    <no-break><pageref|auto-294>
 
     <with|par-left|1tab|4.11.1.<space|2spc>Minimal coloring
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-293>>
+    <no-break><pageref|auto-295>>
 
     <with|par-left|1tab|4.11.2.<space|2spc>Chromatic index
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-295>>
+    <no-break><pageref|auto-297>>
 
     <vspace*|1fn><with|font-series|bold|math-font-series|bold|font-shape|small-caps|5.<space|2spc>Traversing
     graphs> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <pageref|auto-297><vspace|0.5fn>
+    <pageref|auto-299><vspace|0.5fn>
 
     5.1.<space|2spc>Walks and tours <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-298>
+    <no-break><pageref|auto-300>
 
     <with|par-left|1tab|5.1.1.<space|2spc>Eulerian graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-299>>
+    <no-break><pageref|auto-301>>
 
     <with|par-left|1tab|5.1.2.<space|2spc>Hamiltonian graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-301>>
+    <no-break><pageref|auto-303>>
 
     5.2.<space|2spc>Optimal routing <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-303>
+    <no-break><pageref|auto-305>
 
     <with|par-left|1tab|5.2.1.<space|2spc>Shortest paths in unweighted graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-304>>
+    <no-break><pageref|auto-306>>
 
     <with|par-left|1tab|5.2.2.<space|2spc>Cheapest paths in weighted graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-306>>
+    <no-break><pageref|auto-308>>
 
     <with|par-left|1tab|5.2.3.<space|2spc>Traveling salesman problem
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-308>>
+    <no-break><pageref|auto-310>>
 
     5.3.<space|2spc>Spanning trees <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-310>
+    <no-break><pageref|auto-312>
 
     <with|par-left|1tab|5.3.1.<space|2spc>Constructing a spanning tree
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-311>>
+    <no-break><pageref|auto-313>>
 
     <with|par-left|1tab|5.3.2.<space|2spc>Minimal spanning tree
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-313>>
+    <no-break><pageref|auto-315>>
 
     <with|par-left|1tab|5.3.3.<space|2spc>Counting all spanning trees
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-315>>
+    <no-break><pageref|auto-317>>
 
     <vspace*|1fn><with|font-series|bold|math-font-series|bold|font-shape|small-caps|6.<space|2spc>Visualizing
     graphs> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <pageref|auto-317><vspace|0.5fn>
+    <pageref|auto-319><vspace|0.5fn>
 
     6.1.<space|2spc>Drawing graphs by using various methods
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-318>
+    <no-break><pageref|auto-320>
 
     <with|par-left|1tab|6.1.1.<space|2spc>Overview
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-320>>
+    <no-break><pageref|auto-322>>
 
     <with|par-left|1tab|6.1.2.<space|2spc>Drawing disconnected graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-321>>
+    <no-break><pageref|auto-323>>
 
     <with|par-left|1tab|6.1.3.<space|2spc>Spring method
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-322>>
+    <no-break><pageref|auto-324>>
 
     <with|par-left|1tab|6.1.4.<space|2spc>Drawing trees
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-323>>
+    <no-break><pageref|auto-325>>
 
     <with|par-left|1tab|6.1.5.<space|2spc>Drawing planar graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-324>>
+    <no-break><pageref|auto-326>>
 
     <with|par-left|1tab|6.1.6.<space|2spc>Circular graph drawings
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-328>>
+    <no-break><pageref|auto-330>>
 
     6.2.<space|2spc>Custom vertex positions
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-329>
+    <no-break><pageref|auto-331>
 
     <with|par-left|1tab|6.2.1.<space|2spc>Setting vertex positions
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-330>>
+    <no-break><pageref|auto-332>>
 
     <with|par-left|1tab|6.2.2.<space|2spc>Generating vertex positions
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-332>>
+    <no-break><pageref|auto-334>>
 
     6.3.<space|2spc>Highlighting parts of a graph
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-333>
+    <no-break><pageref|auto-335>
 
     <with|par-left|1tab|6.3.1.<space|2spc>Highlighting vertices
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-334>>
+    <no-break><pageref|auto-336>>
 
     <with|par-left|1tab|6.3.2.<space|2spc>Highlighting edges and trails
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-336>>
+    <no-break><pageref|auto-338>>
 
     <with|par-left|1tab|6.3.3.<space|2spc>Highlighting subgraphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-339>>
+    <no-break><pageref|auto-341>>
 
     <vspace*|1fn><with|font-series|bold|math-font-series|bold|font-shape|small-caps|Bibliography>
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <pageref|auto-341><vspace|0.5fn>
+    <pageref|auto-343><vspace|0.5fn>
 
     <vspace*|1fn><with|font-series|bold|math-font-series|bold|font-shape|small-caps|Command
     Index> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <pageref|auto-342><vspace|0.5fn>
+    <pageref|auto-344><vspace|0.5fn>
   </table-of-contents>
 
   <prologue>
@@ -3479,6 +3483,10 @@
   for each arc in <math|G> the corresponding reverse arc is added to <math|G>
   with the probability 0.5.
 
+  The command <verbatim|<hlink|assign_edge_weights|#assign-edge-weights>> can
+  be used to generate arc capacities in a graph produced by
+  <verbatim|random_network_graph>.
+
   For example, the command line below creates a random network which consists
   of 3 frames of size <math|3\<times\>3> and in which each edge appears with
   the probability 0.7.
@@ -3545,8 +3553,8 @@
     </unfolded-io>
   </session>
 
-  Passing the value <math|p=1> alongside forbids removal of edges. Also,
-  there will be exactly one source and exactly one sink in the graph, as
+  Passing the value <math|p=1> forbids the removal of edges. Also, there will
+  be exactly one source and exactly one sink in the output graph, as
   demonstrated in the example below.
 
   <\session|giac|default>
@@ -3919,7 +3927,7 @@
 
   <with|font-family|tt|contract_edge> accepts two arguments, a graph
   <math|G<around|(|V,E|)>> and an edge/arc <math|e=<around|(|v,w|)>\<in\>E>,
-  and merges <math|w> and <math|v> into a single vertex, deleting the edge
+  and merges <math|v> and <math|w> to a single vertex, deleting the edge
   <math|e>. The resulting vertex inherits the label of <math|v>. The command
   returns the modified graph <math|G<rprime|'>*<around|(|V\<setminus\><around|{|w|}>,E<rprime|'>|)>>.
 
@@ -6565,6 +6573,71 @@
 
   <subsection|Edge connectivity>
 
+  <subsection|Edge cuts>
+
+  The command <verbatim|is_cut_set><index|<verbatim|is_cut_set>> is used for
+  determining whether a particular subset of edges of the given graph is an
+  <em|edge cut>, i.e.<nbsp>does removing them increase the number of
+  connected components of the graph.
+
+  <verbatim|is_cut_set> accepts two arguments, the input graph
+  <math|G<around*|(|V,E|)>> and a list <math|E<rprime|'>> of edges such that
+  <math|E<rprime|'>\<subset\>E>. It returns <verbatim|true> if the graph
+  <math|G<rprime|'><around*|(|V,E\<setminus\>E<rprime|'>|)>> has more
+  connected components than <math|G>, else it returns <verbatim|false>.
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      G:=graph(trail(1,2,3,4,5,6,4,1,3))
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 6 vertices and 8 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\input>
+      \<gtr\>\ 
+    <|input>
+      draw_graph(G)
+    </input>
+  </session>
+
+  <center|<image|images/cutset.eps|40%|||>>
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      E:=[[1,4],[3,4]]
+    <|unfolded-io>
+      <\equation*>
+        <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|2|2|cell-rborder|0ln>|<table|<row|<cell|1>|<cell|4>>|<row|<cell|3>|<cell|4>>>>>|)>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      is_cut_set(G,E)
+    <|unfolded-io>
+      <\equation*>
+        <text|true>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      is_connected(delete_edge(G,E))
+    <|unfolded-io>
+      <\equation*>
+        <text|false>
+      </equation*>
+    </unfolded-io>
+  </session>
+
   <section|Trees>
 
   <subsection|Tree graphs>
@@ -6988,7 +7061,7 @@
     <\input>
       \<gtr\>\ 
     <|input>
-      draw_graph(highlight_subgraph(N,digraph([1,2,3,4,5,6],F),weights),spring)
+      draw_graph(highlight_subgraph(N,digraph(vertices(N),F),weights),spring)
     </input>
   </session>
 
@@ -7157,8 +7230,8 @@
   If <math|G> is disconnected, <math|+\<infty\>> is returned.
 
   This command calls <verbatim|<hlink|allpairs_distance|#allpairs-distance>>
-  and picks the largest element in the resulting matrix. Hence the complexity
-  of the algorithm is <math|O<around*|(|<around*|\||V|\|><rsup|3>|)>>.
+  and picks the largest element in the output matrix. Hence the complexity of
+  the algorithm is <math|O<around*|(|<around*|\||V|\|><rsup|3>|)>>.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -8012,8 +8085,8 @@
   <math|G<around*|(|V,E|)>> as its only argument and returns the minimum
   number of cliques in <math|G> needed to cover the vertex set <math|V>.
   (More precisely, it calls the <verbatim|<hlink|clique_cover|#minimum-covering>>
-  command and returns the length of the resulting list.) This number, denoted
-  by <math|\<theta\><around*|(|G|)>>, is equal to the chromatic number
+  command and returns the length of the output list.) This number, denoted by
+  <math|\<theta\><around*|(|G|)>>, is equal to the chromatic number
   <math|\<chi\><around*|(|G<rsup|c>|)>> of the complement graph
   <math|G<rsup|c>> of <math|G>.
 
@@ -10327,7 +10400,7 @@
 
     <index-1|<with|font-family|tt|language|verbatim|adjacency_matrix>|<pageref|auto-196>>
 
-    <index-1|<with|font-family|tt|language|verbatim|allpairs_distance>|<pageref|auto-251>>
+    <index-1|<with|font-family|tt|language|verbatim|allpairs_distance>|<pageref|auto-253>>
 
     <index-1|<with|font-family|tt|language|verbatim|antiprism_graph>|<pageref|auto-49>>
 
@@ -10339,21 +10412,21 @@
 
     <index-1|<with|font-family|tt|language|verbatim|biconnected_components>|<pageref|auto-222>>
 
-    <index-1|<with|font-family|tt|language|verbatim|bipartite_matching>|<pageref|auto-268>>
+    <index-1|<with|font-family|tt|language|verbatim|bipartite_matching>|<pageref|auto-270>>
 
     <index-1|<with|font-family|tt|language|verbatim|canonical_labeling>|<pageref|auto-212>>
 
     <index-1|<with|font-family|tt|cartesian_product>|<pageref|auto-89>>
 
-    <index-1|<with|font-family|tt|language|verbatim|chromatic_index>|<pageref|auto-296>>
+    <index-1|<with|font-family|tt|language|verbatim|chromatic_index>|<pageref|auto-298>>
 
-    <index-1|<with|font-family|tt|language|verbatim|chromatic_number>|<pageref|auto-289>>
+    <index-1|<with|font-family|tt|language|verbatim|chromatic_number>|<pageref|auto-291>>
 
-    <index-1|<with|font-family|tt|clique_cover>|<pageref|auto-279>>
+    <index-1|<with|font-family|tt|clique_cover>|<pageref|auto-281>>
 
-    <index-1|<with|font-family|tt|language|verbatim|clique_cover_number>|<pageref|auto-281>>
+    <index-1|<with|font-family|tt|language|verbatim|clique_cover_number>|<pageref|auto-283>>
 
-    <index-1|<with|font-family|tt|clique_stats>|<pageref|auto-275>>
+    <index-1|<with|font-family|tt|clique_stats>|<pageref|auto-277>>
 
     <index-1|<with|font-family|tt|language|verbatim|complete_binary_tree>|<pageref|auto-24>>
 
@@ -10379,7 +10452,7 @@
 
     <index-1|<with|font-family|tt|language|verbatim|digraph>|<pageref|auto-7>>
 
-    <index-1|<with|font-family|tt|dijkstra>|<pageref|auto-307>>
+    <index-1|<with|font-family|tt|dijkstra>|<pageref|auto-309>>
 
     <index-1|<with|font-family|tt|discard_edge_attribute>|<pageref|auto-155>>
 
@@ -10389,7 +10462,7 @@
 
     <index-1|<with|font-family|tt|disjoint_union>|<pageref|auto-83>>
 
-    <index-1|<with|font-family|tt|draw_graph>|<pageref|auto-319>>
+    <index-1|<with|font-family|tt|draw_graph>|<pageref|auto-321>>
 
     <index-1|<with|font-family|tt|language|verbatim|edges>|<pageref|auto-174>>
 
@@ -10403,7 +10476,7 @@
 
     <index-1|<with|font-family|tt|get_vertex_attribute>|<pageref|auto-148>>
 
-    <index-1|<with|font-family|tt|language|verbatim|girth>|<pageref|auto-254>>
+    <index-1|<with|font-family|tt|language|verbatim|girth>|<pageref|auto-256>>
 
     <index-1|<with|font-family|tt|language|verbatim|graph>|<pageref|auto-5>>
 
@@ -10425,7 +10498,7 @@
 
     <index-1|<with|font-family|tt|language|verbatim|graph_vertices>|<pageref|auto-173>>
 
-    <index-1|<with|font-family|tt|greedy_color>|<pageref|auto-284>>
+    <index-1|<with|font-family|tt|greedy_color>|<pageref|auto-286>>
 
     <index-1|<with|font-family|tt|language|verbatim|grid_graph>|<pageref|auto-51>>
 
@@ -10433,13 +10506,13 @@
 
     <index-1|<with|font-family|tt|language|verbatim|has_edge>|<pageref|auto-187>>
 
-    <index-1|<with|font-family|tt|language|verbatim|highlight_edges>|<pageref|auto-337>>
+    <index-1|<with|font-family|tt|language|verbatim|highlight_edges>|<pageref|auto-339>>
 
-    <index-1|<with|font-family|tt|language|verbatim|highlight_subgraph>|<pageref|auto-340>>
+    <index-1|<with|font-family|tt|language|verbatim|highlight_subgraph>|<pageref|auto-342>>
 
-    <index-1|<with|font-family|tt|language|verbatim|highlight_trail>|<pageref|auto-338>>
+    <index-1|<with|font-family|tt|language|verbatim|highlight_trail>|<pageref|auto-340>>
 
-    <index-1|<with|font-family|tt|language|verbatim|highlight_vertex>|<pageref|auto-335>>
+    <index-1|<with|font-family|tt|language|verbatim|highlight_vertex>|<pageref|auto-337>>
 
     <index-1|<with|font-family|tt|language|verbatim|hypercube_graph>|<pageref|auto-39>>
 
@@ -10453,43 +10526,45 @@
 
     <index-1|<with|font-family|tt|language|verbatim|interval_graph>|<pageref|auto-33>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_acyclic>|<pageref|auto-258>>
+    <index-1|<with|font-family|tt|language|verbatim|is_acyclic>|<pageref|auto-260>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_arborescence>|<pageref|auto-241>>
+    <index-1|<with|font-family|tt|language|verbatim|is_arborescence>|<pageref|auto-243>>
 
     <index-1|<with|font-family|tt|language|verbatim|is_biconnected>|<pageref|auto-218>>
 
-    <index-1|<with|font-family|tt|is_clique>|<pageref|auto-271>>
+    <index-1|<with|font-family|tt|is_clique>|<pageref|auto-273>>
 
     <index-1|<with|font-family|tt|language|verbatim|is_connected>|<pageref|auto-217>>
 
+    <index-1|<with|font-family|tt|language|verbatim|is_cut_set>|<pageref|auto-232>>
+
     <index-1|<with|font-family|tt|language|verbatim|is_directed>|<pageref|auto-169>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_eulerian>|<pageref|auto-300>>
+    <index-1|<with|font-family|tt|language|verbatim|is_eulerian>|<pageref|auto-302>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_forest>|<pageref|auto-235>>
+    <index-1|<with|font-family|tt|language|verbatim|is_forest>|<pageref|auto-237>>
 
     <index-1|<with|font-family|tt|language|verbatim|is_graphic_sequence>|<pageref|auto-30>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_hamiltonian>|<pageref|auto-302>>
+    <index-1|<with|font-family|tt|language|verbatim|is_hamiltonian>|<pageref|auto-304>>
 
     <index-1|<with|font-family|tt|language|verbatim|is_integer_graph>|<pageref|auto-208>>
 
     <index-1|<with|font-family|tt|language|verbatim|is_isomorphic>|<pageref|auto-211>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_network>|<pageref|auto-244>>
+    <index-1|<with|font-family|tt|language|verbatim|is_network>|<pageref|auto-246>>
 
     <index-1|<with|font-family|tt|language|verbatim|is_regular>|<pageref|auto-185>>
 
     <index-1|<with|font-family|tt|language|verbatim|is_strongly_connected>|<pageref|auto-229>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_tree>|<pageref|auto-233>>
+    <index-1|<with|font-family|tt|language|verbatim|is_tree>|<pageref|auto-235>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_triangle_free>|<pageref|auto-273>>
+    <index-1|<with|font-family|tt|language|verbatim|is_triangle_free>|<pageref|auto-275>>
 
     <index-1|<with|font-family|tt|language|verbatim|is_triconnected>|<pageref|auto-219>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_vertex_colorable>|<pageref|auto-291>>
+    <index-1|<with|font-family|tt|language|verbatim|is_vertex_colorable>|<pageref|auto-293>>
 
     <index-1|<with|font-family|tt|language|verbatim|is_weighted>|<pageref|auto-170>>
 
@@ -10507,25 +10582,25 @@
 
     <index-1|<with|font-family|tt|list_vertex_attributes>|<pageref|auto-149>>
 
-    <index-1|<with|font-family|tt|language|verbatim|lowest_common_ancestor>|<pageref|auto-239>>
+    <index-1|<with|font-family|tt|language|verbatim|lowest_common_ancestor>|<pageref|auto-241>>
 
     <index-1|<with|font-family|tt|make_directed>|<pageref|auto-120>>
 
     <index-1|<with|font-family|tt|make_weighted>|<pageref|auto-122>>
 
-    <index-1|<with|font-family|tt|language|verbatim|maxflow>|<pageref|auto-246>>
+    <index-1|<with|font-family|tt|language|verbatim|maxflow>|<pageref|auto-248>>
 
-    <index-1|<with|font-family|tt|maximum_clique>|<pageref|auto-277>>
+    <index-1|<with|font-family|tt|maximum_clique>|<pageref|auto-279>>
 
     <index-1|<with|font-family|tt|language|verbatim|maximum_degree>|<pageref|auto-182>>
 
-    <index-1|<with|font-family|tt|language|verbatim|maximum_matching>|<pageref|auto-266>>
+    <index-1|<with|font-family|tt|language|verbatim|maximum_matching>|<pageref|auto-268>>
 
-    <index-1|<with|font-family|tt|language|verbatim|minimal_edge_coloring>|<pageref|auto-294>>
+    <index-1|<with|font-family|tt|language|verbatim|minimal_edge_coloring>|<pageref|auto-296>>
 
-    <index-1|<with|font-family|tt|minimal_spanning_tree>|<pageref|auto-314>>
+    <index-1|<with|font-family|tt|minimal_spanning_tree>|<pageref|auto-316>>
 
-    <index-1|<with|font-family|tt|minimal_vertex_coloring>|<pageref|auto-287>>
+    <index-1|<with|font-family|tt|minimal_vertex_coloring>|<pageref|auto-289>>
 
     <index-1|<with|font-family|tt|language|verbatim|minimum_degree>|<pageref|auto-183>>
 
@@ -10533,11 +10608,11 @@
 
     <index-1|<with|font-family|tt|language|verbatim|number_of_edges>|<pageref|auto-176>>
 
-    <index-1|<with|font-family|tt|language|verbatim|number_of_spanning_trees>|<pageref|auto-316>>
+    <index-1|<with|font-family|tt|language|verbatim|number_of_spanning_trees>|<pageref|auto-318>>
 
     <index-1|<with|font-family|tt|language|verbatim|number_of_vertices>|<pageref|auto-175>>
 
-    <index-1|<with|font-family|tt|language|verbatim|odd_girth>|<pageref|auto-255>>
+    <index-1|<with|font-family|tt|language|verbatim|odd_girth>|<pageref|auto-257>>
 
     <index-1|<with|font-family|tt|language|verbatim|odd_graph>|<pageref|auto-36>>
 
@@ -10587,15 +10662,15 @@
 
     <index-1|<with|font-family|tt|set_vertex_attribute>|<pageref|auto-147>>
 
-    <index-1|<with|font-family|tt|language|verbatim|set_vertex_positions>|<pageref|auto-331>>
+    <index-1|<with|font-family|tt|language|verbatim|set_vertex_positions>|<pageref|auto-333>>
 
-    <index-1|<with|font-family|tt|shortest_path>|<pageref|auto-305>>
+    <index-1|<with|font-family|tt|shortest_path>|<pageref|auto-307>>
 
     <index-1|<with|font-family|tt|language|verbatim|sierpinski_graph>|<pageref|auto-54>>
 
-    <index-1|<with|font-family|tt|spanning_tree>|<pageref|auto-312>>
+    <index-1|<with|font-family|tt|spanning_tree>|<pageref|auto-314>>
 
-    <index-1|<with|font-family|tt|language|verbatim|st_ordering>|<pageref|auto-263>>
+    <index-1|<with|font-family|tt|language|verbatim|st_ordering>|<pageref|auto-265>>
 
     <index-1|<with|font-family|tt|language|verbatim|star_graph>|<pageref|auto-41>>
 
@@ -10607,9 +10682,9 @@
 
     <index-1|<with|font-family|tt|tensor_product>|<pageref|auto-90>>
 
-    <index-1|<with|font-family|tt|language|verbatim|topologic_sort>|<pageref|auto-260>>
+    <index-1|<with|font-family|tt|language|verbatim|topologic_sort>|<pageref|auto-262>>
 
-    <index-1|<with|font-family|tt|language|verbatim|topological_sort>|<pageref|auto-261>>
+    <index-1|<with|font-family|tt|language|verbatim|topological_sort>|<pageref|auto-263>>
 
     <index-1|<with|font-family|tt|language|verbatim|torus_grid_graph>|<pageref|auto-52>>
 
@@ -10619,15 +10694,15 @@
 
     <index-1|<with|font-family|tt|language|verbatim|transitive_closure>|<pageref|auto-92>>
 
-    <index-1|<with|font-family|tt|language|verbatim|traveling_salesman>|<pageref|auto-309>>
+    <index-1|<with|font-family|tt|language|verbatim|traveling_salesman>|<pageref|auto-311>>
 
-    <index-1|<with|font-family|tt|language|verbatim|tree_height>|<pageref|auto-237>>
+    <index-1|<with|font-family|tt|language|verbatim|tree_height>|<pageref|auto-239>>
 
     <index-1|<with|font-family|tt|underlying_graph>|<pageref|auto-72>>
 
     <index-1|<with|font-family|tt|language|verbatim|vertex_degree>|<pageref|auto-178>>
 
-    <index-1|<with|font-family|tt|language|verbatim|vertex_distance>|<pageref|auto-249>>
+    <index-1|<with|font-family|tt|language|verbatim|vertex_distance>|<pageref|auto-251>>
 
     <index-1|<with|font-family|tt|language|verbatim|vertex_in_degree>|<pageref|auto-179>>
 
@@ -10653,8 +10728,8 @@
 
 <\references>
   <\collection>
-    <associate|a3|<tuple|A3|94>>
-    <associate|allpairs-distance|<tuple|4.6.2|70>>
+    <associate|a3|<tuple|A3|96>>
+    <associate|allpairs-distance|<tuple|4.6.2|71>>
     <associate|assign-edge-weights|<tuple|1.10.9|37>>
     <associate|auto-1|<tuple|?|7>>
     <associate|auto-10|<tuple|1.1.5|11>>
@@ -10670,8 +10745,8 @@
     <associate|auto-109|<tuple|1.10.6|35>>
     <associate|auto-11|<tuple|1.1.6|11>>
     <associate|auto-110|<tuple|1.10.6|35>>
-    <associate|auto-111|<tuple|1.10.7|35>>
-    <associate|auto-112|<tuple|1.10.7|35>>
+    <associate|auto-111|<tuple|1.10.7|36>>
+    <associate|auto-112|<tuple|1.10.7|36>>
     <associate|auto-113|<tuple|1.10.8|36>>
     <associate|auto-114|<tuple|1.10.8|36>>
     <associate|auto-115|<tuple|1.10.9|37>>
@@ -10803,130 +10878,132 @@
     <associate|auto-229|<tuple|4.3.5|65>>
     <associate|auto-23|<tuple|1.3.2|14>>
     <associate|auto-230|<tuple|4.3.6|65>>
-    <associate|auto-231|<tuple|4.4|65>>
-    <associate|auto-232|<tuple|4.4.1|65>>
-    <associate|auto-233|<tuple|4.4.1|65>>
-    <associate|auto-234|<tuple|4.4.2|66>>
-    <associate|auto-235|<tuple|4.4.2|66>>
-    <associate|auto-236|<tuple|4.4.3|66>>
-    <associate|auto-237|<tuple|4.4.3|66>>
-    <associate|auto-238|<tuple|4.4.4|67>>
-    <associate|auto-239|<tuple|4.4.4|67>>
+    <associate|auto-231|<tuple|4.3.7|65>>
+    <associate|auto-232|<tuple|4.3.7|65>>
+    <associate|auto-233|<tuple|4.4|66>>
+    <associate|auto-234|<tuple|4.4.1|66>>
+    <associate|auto-235|<tuple|4.4.1|66>>
+    <associate|auto-236|<tuple|4.4.2|66>>
+    <associate|auto-237|<tuple|4.4.2|66>>
+    <associate|auto-238|<tuple|4.4.3|67>>
+    <associate|auto-239|<tuple|4.4.3|67>>
     <associate|auto-24|<tuple|1.3.2|14>>
-    <associate|auto-240|<tuple|4.4.5|67>>
-    <associate|auto-241|<tuple|4.4.5|67>>
-    <associate|auto-242|<tuple|4.5|68>>
-    <associate|auto-243|<tuple|4.5.1|68>>
-    <associate|auto-244|<tuple|4.5.1|68>>
-    <associate|auto-245|<tuple|4.5.2|68>>
-    <associate|auto-246|<tuple|4.5.2|68>>
-    <associate|auto-247|<tuple|4.6|69>>
-    <associate|auto-248|<tuple|4.6.1|69>>
-    <associate|auto-249|<tuple|4.6.1|69>>
+    <associate|auto-240|<tuple|4.4.4|67>>
+    <associate|auto-241|<tuple|4.4.4|67>>
+    <associate|auto-242|<tuple|4.4.5|68>>
+    <associate|auto-243|<tuple|4.4.5|68>>
+    <associate|auto-244|<tuple|4.5|68>>
+    <associate|auto-245|<tuple|4.5.1|68>>
+    <associate|auto-246|<tuple|4.5.1|68>>
+    <associate|auto-247|<tuple|4.5.2|69>>
+    <associate|auto-248|<tuple|4.5.2|69>>
+    <associate|auto-249|<tuple|4.6|70>>
     <associate|auto-25|<tuple|1.3.2|14>>
-    <associate|auto-250|<tuple|4.6.2|70>>
-    <associate|auto-251|<tuple|4.6.2|70>>
-    <associate|auto-252|<tuple|4.6.3|71>>
-    <associate|auto-253|<tuple|4.6.4|72>>
-    <associate|auto-254|<tuple|4.6.4|72>>
+    <associate|auto-250|<tuple|4.6.1|70>>
+    <associate|auto-251|<tuple|4.6.1|70>>
+    <associate|auto-252|<tuple|4.6.2|71>>
+    <associate|auto-253|<tuple|4.6.2|71>>
+    <associate|auto-254|<tuple|4.6.3|72>>
     <associate|auto-255|<tuple|4.6.4|72>>
-    <associate|auto-256|<tuple|4.7|72>>
-    <associate|auto-257|<tuple|4.7.1|72>>
-    <associate|auto-258|<tuple|4.7.1|72>>
-    <associate|auto-259|<tuple|4.7.2|72>>
+    <associate|auto-256|<tuple|4.6.4|72>>
+    <associate|auto-257|<tuple|4.6.4|72>>
+    <associate|auto-258|<tuple|4.7|73>>
+    <associate|auto-259|<tuple|4.7.1|73>>
     <associate|auto-26|<tuple|1.4|14>>
-    <associate|auto-260|<tuple|4.7.2|72>>
-    <associate|auto-261|<tuple|4.7.2|72>>
-    <associate|auto-262|<tuple|4.7.3|73>>
-    <associate|auto-263|<tuple|4.7.3|73>>
-    <associate|auto-264|<tuple|4.8|74>>
-    <associate|auto-265|<tuple|4.8.1|74>>
-    <associate|auto-266|<tuple|4.8.1|74>>
-    <associate|auto-267|<tuple|4.8.2|75>>
-    <associate|auto-268|<tuple|4.8.2|75>>
-    <associate|auto-269|<tuple|4.9|75>>
+    <associate|auto-260|<tuple|4.7.1|73>>
+    <associate|auto-261|<tuple|4.7.2|73>>
+    <associate|auto-262|<tuple|4.7.2|73>>
+    <associate|auto-263|<tuple|4.7.2|73>>
+    <associate|auto-264|<tuple|4.7.3|74>>
+    <associate|auto-265|<tuple|4.7.3|74>>
+    <associate|auto-266|<tuple|4.8|74>>
+    <associate|auto-267|<tuple|4.8.1|74>>
+    <associate|auto-268|<tuple|4.8.1|74>>
+    <associate|auto-269|<tuple|4.8.2|75>>
     <associate|auto-27|<tuple|1.4.1|14>>
-    <associate|auto-270|<tuple|4.9.1|75>>
-    <associate|auto-271|<tuple|4.9.1|75>>
-    <associate|auto-272|<tuple|4.9.2|76>>
-    <associate|auto-273|<tuple|4.9.2|76>>
-    <associate|auto-274|<tuple|4.9.3|76>>
-    <associate|auto-275|<tuple|4.9.3|76>>
-    <associate|auto-276|<tuple|4.9.4|77>>
-    <associate|auto-277|<tuple|4.9.4|77>>
-    <associate|auto-278|<tuple|4.9.5|78>>
-    <associate|auto-279|<tuple|4.9.5|78>>
+    <associate|auto-270|<tuple|4.8.2|75>>
+    <associate|auto-271|<tuple|4.9|76>>
+    <associate|auto-272|<tuple|4.9.1|76>>
+    <associate|auto-273|<tuple|4.9.1|76>>
+    <associate|auto-274|<tuple|4.9.2|77>>
+    <associate|auto-275|<tuple|4.9.2|77>>
+    <associate|auto-276|<tuple|4.9.3|77>>
+    <associate|auto-277|<tuple|4.9.3|77>>
+    <associate|auto-278|<tuple|4.9.4|78>>
+    <associate|auto-279|<tuple|4.9.4|78>>
     <associate|auto-28|<tuple|1.4.1|14>>
-    <associate|auto-280|<tuple|4.9.6|79>>
-    <associate|auto-281|<tuple|4.9.6|79>>
-    <associate|auto-282|<tuple|4.10|79>>
-    <associate|auto-283|<tuple|4.10.1|79>>
-    <associate|auto-284|<tuple|4.10.1|79>>
-    <associate|auto-285|<tuple|4.1|81>>
-    <associate|auto-286|<tuple|4.10.2|80>>
-    <associate|auto-287|<tuple|4.10.2|80>>
-    <associate|auto-288|<tuple|4.10.3|80>>
-    <associate|auto-289|<tuple|4.10.3|80>>
+    <associate|auto-280|<tuple|4.9.5|78>>
+    <associate|auto-281|<tuple|4.9.5|78>>
+    <associate|auto-282|<tuple|4.9.6|79>>
+    <associate|auto-283|<tuple|4.9.6|79>>
+    <associate|auto-284|<tuple|4.10|80>>
+    <associate|auto-285|<tuple|4.10.1|80>>
+    <associate|auto-286|<tuple|4.10.1|80>>
+    <associate|auto-287|<tuple|4.1|81>>
+    <associate|auto-288|<tuple|4.10.2|80>>
+    <associate|auto-289|<tuple|4.10.2|80>>
     <associate|auto-29|<tuple|1.4.2|14>>
-    <associate|auto-290|<tuple|4.10.4|81>>
-    <associate|auto-291|<tuple|4.10.4|81>>
-    <associate|auto-292|<tuple|4.11|82>>
-    <associate|auto-293|<tuple|4.11.1|82>>
-    <associate|auto-294|<tuple|4.11.1|82>>
-    <associate|auto-295|<tuple|4.11.2|83>>
-    <associate|auto-296|<tuple|4.11.2|83>>
-    <associate|auto-297|<tuple|5|85>>
-    <associate|auto-298|<tuple|5.1|85>>
-    <associate|auto-299|<tuple|5.1.1|85>>
+    <associate|auto-290|<tuple|4.10.3|81>>
+    <associate|auto-291|<tuple|4.10.3|81>>
+    <associate|auto-292|<tuple|4.10.4|82>>
+    <associate|auto-293|<tuple|4.10.4|82>>
+    <associate|auto-294|<tuple|4.11|83>>
+    <associate|auto-295|<tuple|4.11.1|83>>
+    <associate|auto-296|<tuple|4.11.1|83>>
+    <associate|auto-297|<tuple|4.11.2|84>>
+    <associate|auto-298|<tuple|4.11.2|84>>
+    <associate|auto-299|<tuple|5|87>>
     <associate|auto-3|<tuple|1.1|9>>
     <associate|auto-30|<tuple|1.4.2|14>>
-    <associate|auto-300|<tuple|5.1.1|85>>
-    <associate|auto-301|<tuple|5.1.2|85>>
-    <associate|auto-302|<tuple|5.1.2|85>>
-    <associate|auto-303|<tuple|5.2|86>>
-    <associate|auto-304|<tuple|5.2.1|86>>
-    <associate|auto-305|<tuple|5.2.1|86>>
-    <associate|auto-306|<tuple|5.2.2|87>>
-    <associate|auto-307|<tuple|5.2.2|87>>
-    <associate|auto-308|<tuple|5.2.3|87>>
-    <associate|auto-309|<tuple|5.2.3|87>>
+    <associate|auto-300|<tuple|5.1|87>>
+    <associate|auto-301|<tuple|5.1.1|87>>
+    <associate|auto-302|<tuple|5.1.1|87>>
+    <associate|auto-303|<tuple|5.1.2|87>>
+    <associate|auto-304|<tuple|5.1.2|87>>
+    <associate|auto-305|<tuple|5.2|88>>
+    <associate|auto-306|<tuple|5.2.1|88>>
+    <associate|auto-307|<tuple|5.2.1|88>>
+    <associate|auto-308|<tuple|5.2.2|89>>
+    <associate|auto-309|<tuple|5.2.2|89>>
     <associate|auto-31|<tuple|1.5|15>>
-    <associate|auto-310|<tuple|5.3|90>>
-    <associate|auto-311|<tuple|5.3.1|90>>
-    <associate|auto-312|<tuple|5.3.1|90>>
-    <associate|auto-313|<tuple|5.3.2|90>>
-    <associate|auto-314|<tuple|5.3.2|90>>
-    <associate|auto-315|<tuple|5.3.3|90>>
-    <associate|auto-316|<tuple|5.3.3|90>>
-    <associate|auto-317|<tuple|6|91>>
-    <associate|auto-318|<tuple|6.1|91>>
-    <associate|auto-319|<tuple|6.1|91>>
+    <associate|auto-310|<tuple|5.2.3|89>>
+    <associate|auto-311|<tuple|5.2.3|89>>
+    <associate|auto-312|<tuple|5.3|92>>
+    <associate|auto-313|<tuple|5.3.1|92>>
+    <associate|auto-314|<tuple|5.3.1|92>>
+    <associate|auto-315|<tuple|5.3.2|92>>
+    <associate|auto-316|<tuple|5.3.2|92>>
+    <associate|auto-317|<tuple|5.3.3|92>>
+    <associate|auto-318|<tuple|5.3.3|92>>
+    <associate|auto-319|<tuple|6|93>>
     <associate|auto-32|<tuple|1.5.1|15>>
-    <associate|auto-320|<tuple|6.1.1|91>>
-    <associate|auto-321|<tuple|6.1.2|91>>
-    <associate|auto-322|<tuple|6.1.3|92>>
-    <associate|auto-323|<tuple|6.1.4|94>>
-    <associate|auto-324|<tuple|6.1.5|95>>
-    <associate|auto-325|<tuple|6.1|95>>
-    <associate|auto-326|<tuple|6.2|95>>
-    <associate|auto-327|<tuple|6.3|95>>
-    <associate|auto-328|<tuple|6.1.6|96>>
-    <associate|auto-329|<tuple|6.2|97>>
+    <associate|auto-320|<tuple|6.1|93>>
+    <associate|auto-321|<tuple|6.1|93>>
+    <associate|auto-322|<tuple|6.1.1|93>>
+    <associate|auto-323|<tuple|6.1.2|93>>
+    <associate|auto-324|<tuple|6.1.3|94>>
+    <associate|auto-325|<tuple|6.1.4|96>>
+    <associate|auto-326|<tuple|6.1.5|97>>
+    <associate|auto-327|<tuple|6.1|97>>
+    <associate|auto-328|<tuple|6.2|97>>
+    <associate|auto-329|<tuple|6.3|97>>
     <associate|auto-33|<tuple|1.5.1|15>>
-    <associate|auto-330|<tuple|6.2.1|97>>
-    <associate|auto-331|<tuple|6.2.1|97>>
-    <associate|auto-332|<tuple|6.2.2|97>>
-    <associate|auto-333|<tuple|6.3|98>>
-    <associate|auto-334|<tuple|6.3.1|98>>
-    <associate|auto-335|<tuple|6.3.1|98>>
-    <associate|auto-336|<tuple|6.3.2|99>>
-    <associate|auto-337|<tuple|6.3.2|99>>
-    <associate|auto-338|<tuple|6.3.2|99>>
-    <associate|auto-339|<tuple|6.3.3|100>>
+    <associate|auto-330|<tuple|6.1.6|98>>
+    <associate|auto-331|<tuple|6.2|99>>
+    <associate|auto-332|<tuple|6.2.1|99>>
+    <associate|auto-333|<tuple|6.2.1|99>>
+    <associate|auto-334|<tuple|6.2.2|99>>
+    <associate|auto-335|<tuple|6.3|100>>
+    <associate|auto-336|<tuple|6.3.1|100>>
+    <associate|auto-337|<tuple|6.3.1|100>>
+    <associate|auto-338|<tuple|6.3.2|101>>
+    <associate|auto-339|<tuple|6.3.2|101>>
     <associate|auto-34|<tuple|1.5.2|15>>
-    <associate|auto-340|<tuple|6.3.3|100>>
-    <associate|auto-341|<tuple|6.3.3|103>>
-    <associate|auto-342|<tuple|36|105>>
+    <associate|auto-340|<tuple|6.3.2|101>>
+    <associate|auto-341|<tuple|6.3.3|102>>
+    <associate|auto-342|<tuple|6.3.3|102>>
+    <associate|auto-343|<tuple|6.3.3|105>>
+    <associate|auto-344|<tuple|36|107>>
     <associate|auto-35|<tuple|1.5.2|15>>
     <associate|auto-36|<tuple|1.5.2|15>>
     <associate|auto-37|<tuple|1.6|16>>
@@ -10998,47 +11075,47 @@
     <associate|auto-97|<tuple|1.10|31>>
     <associate|auto-98|<tuple|1.10.1|31>>
     <associate|auto-99|<tuple|1.10.1|31>>
-    <associate|bib-bayati|<tuple|1|103>>
-    <associate|bib-blanusa|<tuple|2|103>>
-    <associate|bib-brelaz|<tuple|3|103>>
-    <associate|bib-buchheim|<tuple|4|103>>
-    <associate|bib-christofides|<tuple|5|103>>
-    <associate|bib-cook|<tuple|6|103>>
-    <associate|bib-diaz|<tuple|8|103>>
-    <associate|bib-diestel|<tuple|9|103>>
-    <associate|bib-edmonds|<tuple|10|103>>
-    <associate|bib-edmonds-karp|<tuple|11|103>>
-    <associate|bib-even|<tuple|12|103>>
-    <associate|bib-floyd|<tuple|13|103>>
-    <associate|bib-fruchterman|<tuple|14|103>>
-    <associate|bib-gibbons|<tuple|15|103>>
-    <associate|bib-helsgaun|<tuple|16|103>>
-    <associate|bib-hierholzer|<tuple|17|103>>
-    <associate|bib-hinz|<tuple|18|103>>
-    <associate|bib-hopcroft|<tuple|19|103>>
-    <associate|bib-hu|<tuple|20|103>>
-    <associate|bib-hu2|<tuple|21|103>>
-    <associate|bib-kahn|<tuple|22|103>>
-    <associate|bib-lca|<tuple|31|103>>
-    <associate|bib-mckay|<tuple|23|103>>
-    <associate|bib-melissa|<tuple|7|103>>
-    <associate|bib-myrwold|<tuple|24|103>>
-    <associate|bib-ostergard|<tuple|25|103>>
-    <associate|bib-padberg|<tuple|26|103>>
-    <associate|bib-pferschy|<tuple|27|103>>
-    <associate|bib-plestenjak|<tuple|28|103>>
-    <associate|bib-steger|<tuple|29|103>>
-    <associate|bib-tarjan72|<tuple|30|103>>
-    <associate|bib-tomita|<tuple|32|103>>
-    <associate|bib-tutte|<tuple|33|103>>
-    <associate|bib-walker|<tuple|34|103>>
-    <associate|bib-welch|<tuple|35|103>>
-    <associate|bib-west|<tuple|36|103>>
-    <associate|blockjoin|<tuple|6.1|95>>
-    <associate|chordface|<tuple|6.2|95>>
+    <associate|bib-bayati|<tuple|1|105>>
+    <associate|bib-blanusa|<tuple|2|105>>
+    <associate|bib-brelaz|<tuple|3|105>>
+    <associate|bib-buchheim|<tuple|4|105>>
+    <associate|bib-christofides|<tuple|5|105>>
+    <associate|bib-cook|<tuple|6|105>>
+    <associate|bib-diaz|<tuple|8|105>>
+    <associate|bib-diestel|<tuple|9|105>>
+    <associate|bib-edmonds|<tuple|10|105>>
+    <associate|bib-edmonds-karp|<tuple|11|105>>
+    <associate|bib-even|<tuple|12|105>>
+    <associate|bib-floyd|<tuple|13|105>>
+    <associate|bib-fruchterman|<tuple|14|105>>
+    <associate|bib-gibbons|<tuple|15|105>>
+    <associate|bib-helsgaun|<tuple|16|105>>
+    <associate|bib-hierholzer|<tuple|17|105>>
+    <associate|bib-hinz|<tuple|18|105>>
+    <associate|bib-hopcroft|<tuple|19|105>>
+    <associate|bib-hu|<tuple|20|105>>
+    <associate|bib-hu2|<tuple|21|105>>
+    <associate|bib-kahn|<tuple|22|105>>
+    <associate|bib-lca|<tuple|31|105>>
+    <associate|bib-mckay|<tuple|23|105>>
+    <associate|bib-melissa|<tuple|7|105>>
+    <associate|bib-myrwold|<tuple|24|105>>
+    <associate|bib-ostergard|<tuple|25|105>>
+    <associate|bib-padberg|<tuple|26|105>>
+    <associate|bib-pferschy|<tuple|27|105>>
+    <associate|bib-plestenjak|<tuple|28|105>>
+    <associate|bib-steger|<tuple|29|105>>
+    <associate|bib-tarjan72|<tuple|30|105>>
+    <associate|bib-tomita|<tuple|32|105>>
+    <associate|bib-tutte|<tuple|33|105>>
+    <associate|bib-walker|<tuple|34|105>>
+    <associate|bib-welch|<tuple|35|105>>
+    <associate|bib-west|<tuple|36|105>>
+    <associate|blockjoin|<tuple|6.1|97>>
+    <associate|chordface|<tuple|6.2|97>>
     <associate|departures-arrivals|<tuple|4.1.5|54>>
     <associate|digraph|<tuple|1.1.2|10>>
-    <associate|draw-graph|<tuple|6.1|91>>
+    <associate|draw-graph|<tuple|6.1|93>>
     <associate|footnote-1.1|<tuple|1.1|20>>
     <associate|footnote-1.2|<tuple|1.2|21>>
     <associate|footnote-1.3|<tuple|1.3|30>>
@@ -11047,11 +11124,11 @@
     <associate|footnote-3.2|<tuple|3.2|47>>
     <associate|footnote-3.3|<tuple|3.3|47>>
     <associate|footnote-3.4|<tuple|3.4|49>>
-    <associate|footnote-4.1|<tuple|4.1|74>>
-    <associate|footnote-4.2|<tuple|4.2|76>>
-    <associate|footnote-4.3|<tuple|4.3|80>>
-    <associate|footnote-4.4|<tuple|4.4|83>>
-    <associate|footnote-5.1|<tuple|5.1|87>>
+    <associate|footnote-4.1|<tuple|4.1|75>>
+    <associate|footnote-4.2|<tuple|4.2|77>>
+    <associate|footnote-4.3|<tuple|4.3|81>>
+    <associate|footnote-4.4|<tuple|4.4|84>>
+    <associate|footnote-5.1|<tuple|5.1|89>>
     <associate|footnr-1.1|<tuple|1.1|20>>
     <associate|footnr-1.2|<tuple|1.2|21>>
     <associate|footnr-1.3|<tuple|1.3|30>>
@@ -11060,18 +11137,18 @@
     <associate|footnr-3.2|<tuple|3.2|47>>
     <associate|footnr-3.3|<tuple|3.3|47>>
     <associate|footnr-3.4|<tuple|3.4|49>>
-    <associate|footnr-4.1|<tuple|4.1|74>>
-    <associate|footnr-4.2|<tuple|4.2|76>>
-    <associate|footnr-4.3|<tuple|4.3|80>>
-    <associate|footnr-4.4|<tuple|4.4|83>>
-    <associate|footnr-5.1|<tuple|5.1|87>>
+    <associate|footnr-4.1|<tuple|4.1|75>>
+    <associate|footnr-4.2|<tuple|4.2|77>>
+    <associate|footnr-4.3|<tuple|4.3|81>>
+    <associate|footnr-4.4|<tuple|4.4|84>>
+    <associate|footnr-5.1|<tuple|5.1|89>>
     <associate|frucht|<tuple|1.2|21>>
     <associate|graph|<tuple|1.1.1|9>>
     <associate|graph-equal|<tuple|4.2.8|59>>
     <associate|graph-union|<tuple|1.9.4|25>>
-    <associate|highlight-subgraph|<tuple|6.3.3|100>>
-    <associate|highlight-trail|<tuple|6.3.2|99>>
-    <associate|highlight-vertices|<tuple|6.3.1|98>>
+    <associate|highlight-subgraph|<tuple|6.3.3|102>>
+    <associate|highlight-trail|<tuple|6.3.2|101>>
+    <associate|highlight-vertices|<tuple|6.3.1|100>>
     <associate|induced-subgraph|<tuple|1.8.2|23>>
     <associate|is-network|<tuple|4.5.1|68>>
     <associate|isomorphic-copy|<tuple|1.7.1|22>>
@@ -11082,17 +11159,17 @@
     <associate|minimum-covering|<tuple|4.9.5|78>>
     <associate|random-network|<tuple|1.10.8|36>>
     <associate|random-planar|<tuple|1.10.4|33>>
-    <associate|set-vertex-positions|<tuple|6.2.1|97>>
-    <associate|st-ordering|<tuple|4.7.3|73>>
+    <associate|set-vertex-positions|<tuple|6.2.1|99>>
+    <associate|st-ordering|<tuple|4.7.3|74>>
     <associate|st53|<tuple|3.1|49>>
     <associate|subgraph|<tuple|1.8.1|23>>
     <associate|tab:colors|<tuple|4.1|81>>
-    <associate|touchface|<tuple|6.3|95>>
+    <associate|touchface|<tuple|6.3|97>>
     <associate|trail|<tuple|1.2.3|13>>
-    <associate|traveling-salesman|<tuple|5.2.3|87>>
+    <associate|traveling-salesman|<tuple|5.2.3|89>>
     <associate|underlying-graph|<tuple|1.8.3|23>>
     <associate|vertex-attribute|<tuple|2.4.2|43>>
-    <associate|vertex-distance|<tuple|4.6.1|69>>
+    <associate|vertex-distance|<tuple|4.6.1|70>>
     <associate|vertices-edges|<tuple|4.1.2|51>>
   </collection>
 </references>
@@ -11195,13 +11272,13 @@
       and PSTricks>|<pageref|auto-165>>
 
       <tuple|normal|<surround|<hidden|<tuple>>||joining two
-      blocks>|<pageref|auto-325>>
+      blocks>|<pageref|auto-327>>
 
       <tuple|normal|<surround|<hidden|<tuple>>||a chorded
-      face>|<pageref|auto-326>>
+      face>|<pageref|auto-328>>
 
       <tuple|normal|<surround|<hidden|<tuple>>||two adjacent
-      faces>|<pageref|auto-327>>
+      faces>|<pageref|auto-329>>
     </associate>
     <\associate|idx>
       <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|graph>>|<pageref|auto-5>>
@@ -11440,95 +11517,97 @@
 
       <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_strongly_connected>>|<pageref|auto-229>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_tree>>|<pageref|auto-233>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_cut_set>>|<pageref|auto-232>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_forest>>|<pageref|auto-235>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_tree>>|<pageref|auto-235>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|tree_height>>|<pageref|auto-237>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_forest>>|<pageref|auto-237>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|lowest_common_ancestor>>|<pageref|auto-239>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|tree_height>>|<pageref|auto-239>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_arborescence>>|<pageref|auto-241>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|lowest_common_ancestor>>|<pageref|auto-241>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_network>>|<pageref|auto-244>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_arborescence>>|<pageref|auto-243>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|maxflow>>|<pageref|auto-246>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_network>>|<pageref|auto-246>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|vertex_distance>>|<pageref|auto-249>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|maxflow>>|<pageref|auto-248>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|allpairs_distance>>|<pageref|auto-251>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|vertex_distance>>|<pageref|auto-251>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|girth>>|<pageref|auto-254>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|allpairs_distance>>|<pageref|auto-253>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|odd_girth>>|<pageref|auto-255>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|girth>>|<pageref|auto-256>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_acyclic>>|<pageref|auto-258>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|odd_girth>>|<pageref|auto-257>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|topologic_sort>>|<pageref|auto-260>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_acyclic>>|<pageref|auto-260>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|topological_sort>>|<pageref|auto-261>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|topologic_sort>>|<pageref|auto-262>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|st_ordering>>|<pageref|auto-263>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|topological_sort>>|<pageref|auto-263>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|maximum_matching>>|<pageref|auto-266>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|st_ordering>>|<pageref|auto-265>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|bipartite_matching>>|<pageref|auto-268>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|maximum_matching>>|<pageref|auto-268>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|is_clique>>|<pageref|auto-271>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|bipartite_matching>>|<pageref|auto-270>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_triangle_free>>|<pageref|auto-273>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|is_clique>>|<pageref|auto-273>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|clique_stats>>|<pageref|auto-275>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_triangle_free>>|<pageref|auto-275>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|maximum_clique>>|<pageref|auto-277>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|clique_stats>>|<pageref|auto-277>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|clique_cover>>|<pageref|auto-279>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|maximum_clique>>|<pageref|auto-279>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|clique_cover_number>>|<pageref|auto-281>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|clique_cover>>|<pageref|auto-281>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|greedy_color>>|<pageref|auto-284>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|clique_cover_number>>|<pageref|auto-283>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|minimal_vertex_coloring>>|<pageref|auto-287>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|greedy_color>>|<pageref|auto-286>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|chromatic_number>>|<pageref|auto-289>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|minimal_vertex_coloring>>|<pageref|auto-289>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_vertex_colorable>>|<pageref|auto-291>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|chromatic_number>>|<pageref|auto-291>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|minimal_edge_coloring>>|<pageref|auto-294>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_vertex_colorable>>|<pageref|auto-293>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|chromatic_index>>|<pageref|auto-296>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|minimal_edge_coloring>>|<pageref|auto-296>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_eulerian>>|<pageref|auto-300>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|chromatic_index>>|<pageref|auto-298>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_hamiltonian>>|<pageref|auto-302>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_eulerian>>|<pageref|auto-302>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|shortest_path>>|<pageref|auto-305>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_hamiltonian>>|<pageref|auto-304>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|dijkstra>>|<pageref|auto-307>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|shortest_path>>|<pageref|auto-307>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|traveling_salesman>>|<pageref|auto-309>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|dijkstra>>|<pageref|auto-309>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|spanning_tree>>|<pageref|auto-312>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|traveling_salesman>>|<pageref|auto-311>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|minimal_spanning_tree>>|<pageref|auto-314>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|spanning_tree>>|<pageref|auto-314>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|number_of_spanning_trees>>|<pageref|auto-316>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|minimal_spanning_tree>>|<pageref|auto-316>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|draw_graph>>|<pageref|auto-319>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|number_of_spanning_trees>>|<pageref|auto-318>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|set_vertex_positions>>|<pageref|auto-331>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|draw_graph>>|<pageref|auto-321>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|highlight_vertex>>|<pageref|auto-335>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|set_vertex_positions>>|<pageref|auto-333>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|highlight_edges>>|<pageref|auto-337>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|highlight_vertex>>|<pageref|auto-337>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|highlight_trail>>|<pageref|auto-338>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|highlight_edges>>|<pageref|auto-339>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|highlight_subgraph>>|<pageref|auto-340>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|highlight_trail>>|<pageref|auto-340>>
+
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|highlight_subgraph>>|<pageref|auto-342>>
     </associate>
     <\associate|table>
       <tuple|normal|<surround|<hidden|<tuple>>||interpretation of abstract
-      vertex/edge colors in <with|font-family|<quote|ss>|Xcas>>|<pageref|auto-285>>
+      vertex/edge colors in <with|font-family|<quote|ss>|Xcas>>|<pageref|auto-287>>
     </associate>
     <\associate|toc>
       <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-shape|<quote|small-caps>|Introduction>
@@ -11968,254 +12047,258 @@
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-230>>
 
+      <with|par-left|<quote|1tab>|4.3.7.<space|2spc>Edge cuts
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-231>>
+
       4.4.<space|2spc>Trees <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-231>
+      <no-break><pageref|auto-233>
 
       <with|par-left|<quote|1tab>|4.4.1.<space|2spc>Tree graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-232>>
+      <no-break><pageref|auto-234>>
 
       <with|par-left|<quote|1tab>|4.4.2.<space|2spc>Forest graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-234>>
+      <no-break><pageref|auto-236>>
 
       <with|par-left|<quote|1tab>|4.4.3.<space|2spc>Height of a tree
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-236>>
+      <no-break><pageref|auto-238>>
 
       <with|par-left|<quote|1tab>|4.4.4.<space|2spc>Lowest common ancestor of
       a pair of nodes <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-238>>
+      <no-break><pageref|auto-240>>
 
       <with|par-left|<quote|1tab>|4.4.5.<space|2spc>Arborescence graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-240>>
+      <no-break><pageref|auto-242>>
 
       4.5.<space|2spc>Networks <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-242>
+      <no-break><pageref|auto-244>
 
       <with|par-left|<quote|1tab>|4.5.1.<space|2spc>Network graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-243>>
+      <no-break><pageref|auto-245>>
 
       <with|par-left|<quote|1tab>|4.5.2.<space|2spc>Maximum flow
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-245>>
+      <no-break><pageref|auto-247>>
 
       4.6.<space|2spc>Distance in graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-247>
+      <no-break><pageref|auto-249>
 
       <with|par-left|<quote|1tab>|4.6.1.<space|2spc>Vertex distance
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-248>>
+      <no-break><pageref|auto-250>>
 
       <with|par-left|<quote|1tab>|4.6.2.<space|2spc>All-pairs vertex distance
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-250>>
+      <no-break><pageref|auto-252>>
 
       <with|par-left|<quote|1tab>|4.6.3.<space|2spc>Diameter of a graph
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-252>>
+      <no-break><pageref|auto-254>>
 
       <with|par-left|<quote|1tab>|4.6.4.<space|2spc>Girth of a graph
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-253>>
+      <no-break><pageref|auto-255>>
 
       4.7.<space|2spc>Acyclic graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-256>
+      <no-break><pageref|auto-258>
 
       <with|par-left|<quote|1tab>|4.7.1.<space|2spc>Checking if a graph is
       acyclic <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-257>>
+      <no-break><pageref|auto-259>>
 
       <with|par-left|<quote|1tab>|4.7.2.<space|2spc>Topological sorting
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-259>>
+      <no-break><pageref|auto-261>>
 
       <with|par-left|<quote|1tab>|4.7.3.<space|2spc><with|font-family|<quote|ss>|st>
       ordering <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-262>>
+      <no-break><pageref|auto-264>>
 
       4.8.<space|2spc>Vertex matching <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-264>
+      <no-break><pageref|auto-266>
 
       <with|par-left|<quote|1tab>|4.8.1.<space|2spc>Maximum matching
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-265>>
+      <no-break><pageref|auto-267>>
 
       <with|par-left|<quote|1tab>|4.8.2.<space|2spc>Maximum matching in
       bipartite graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-267>>
+      <no-break><pageref|auto-269>>
 
       4.9.<space|2spc>Cliques <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-269>
+      <no-break><pageref|auto-271>
 
       <with|par-left|<quote|1tab>|4.9.1.<space|2spc>Clique graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-270>>
+      <no-break><pageref|auto-272>>
 
       <with|par-left|<quote|1tab>|4.9.2.<space|2spc>Triangle-free graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-272>>
+      <no-break><pageref|auto-274>>
 
       <with|par-left|<quote|1tab>|4.9.3.<space|2spc>Maximal cliques
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-274>>
+      <no-break><pageref|auto-276>>
 
       <with|par-left|<quote|1tab>|4.9.4.<space|2spc>Maximum clique
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-276>>
+      <no-break><pageref|auto-278>>
 
       <with|par-left|<quote|1tab>|4.9.5.<space|2spc>Minimum clique covering
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-278>>
+      <no-break><pageref|auto-280>>
 
       <with|par-left|<quote|1tab>|4.9.6.<space|2spc>Clique covering number
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-280>>
+      <no-break><pageref|auto-282>>
 
       4.10.<space|2spc>Vertex coloring <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-282>
+      <no-break><pageref|auto-284>
 
       <with|par-left|<quote|1tab>|4.10.1.<space|2spc>Greedy coloring
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-283>>
+      <no-break><pageref|auto-285>>
 
       <with|par-left|<quote|1tab>|4.10.2.<space|2spc>Minimal coloring
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-286>>
+      <no-break><pageref|auto-288>>
 
       <with|par-left|<quote|1tab>|4.10.3.<space|2spc>Chromatic number
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-288>>
+      <no-break><pageref|auto-290>>
 
       <with|par-left|<quote|1tab>|4.10.4.<space|2spc><with|mode|<quote|math>|k>-coloring
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-290>>
+      <no-break><pageref|auto-292>>
 
       4.11.<space|2spc>Edge coloring <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-292>
+      <no-break><pageref|auto-294>
 
       <with|par-left|<quote|1tab>|4.11.1.<space|2spc>Minimal coloring
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-293>>
+      <no-break><pageref|auto-295>>
 
       <with|par-left|<quote|1tab>|4.11.2.<space|2spc>Chromatic index
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-295>>
+      <no-break><pageref|auto-297>>
 
       <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-shape|<quote|small-caps>|5.<space|2spc>Traversing
       graphs> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <pageref|auto-297><vspace|0.5fn>
+      <pageref|auto-299><vspace|0.5fn>
 
       5.1.<space|2spc>Walks and tours <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-298>
+      <no-break><pageref|auto-300>
 
       <with|par-left|<quote|1tab>|5.1.1.<space|2spc>Eulerian graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-299>>
+      <no-break><pageref|auto-301>>
 
       <with|par-left|<quote|1tab>|5.1.2.<space|2spc>Hamiltonian graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-301>>
+      <no-break><pageref|auto-303>>
 
       5.2.<space|2spc>Optimal routing <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-303>
+      <no-break><pageref|auto-305>
 
       <with|par-left|<quote|1tab>|5.2.1.<space|2spc>Shortest paths in
       unweighted graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-304>>
+      <no-break><pageref|auto-306>>
 
       <with|par-left|<quote|1tab>|5.2.2.<space|2spc>Cheapest paths in
       weighted graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-306>>
+      <no-break><pageref|auto-308>>
 
       <with|par-left|<quote|1tab>|5.2.3.<space|2spc>Traveling salesman
       problem <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-308>>
+      <no-break><pageref|auto-310>>
 
       5.3.<space|2spc>Spanning trees <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-310>
+      <no-break><pageref|auto-312>
 
       <with|par-left|<quote|1tab>|5.3.1.<space|2spc>Constructing a spanning
       tree <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-311>>
+      <no-break><pageref|auto-313>>
 
       <with|par-left|<quote|1tab>|5.3.2.<space|2spc>Minimal spanning tree
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-313>>
+      <no-break><pageref|auto-315>>
 
       <with|par-left|<quote|1tab>|5.3.3.<space|2spc>Counting all spanning
       trees <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-315>>
+      <no-break><pageref|auto-317>>
 
       <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-shape|<quote|small-caps>|6.<space|2spc>Visualizing
       graphs> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <pageref|auto-317><vspace|0.5fn>
+      <pageref|auto-319><vspace|0.5fn>
 
       6.1.<space|2spc>Drawing graphs by using various methods
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-318>
+      <no-break><pageref|auto-320>
 
       <with|par-left|<quote|1tab>|6.1.1.<space|2spc>Overview
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-320>>
+      <no-break><pageref|auto-322>>
 
       <with|par-left|<quote|1tab>|6.1.2.<space|2spc>Drawing disconnected
       graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-321>>
+      <no-break><pageref|auto-323>>
 
       <with|par-left|<quote|1tab>|6.1.3.<space|2spc>Spring method
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-322>>
+      <no-break><pageref|auto-324>>
 
       <with|par-left|<quote|1tab>|6.1.4.<space|2spc>Drawing trees
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-323>>
+      <no-break><pageref|auto-325>>
 
       <with|par-left|<quote|1tab>|6.1.5.<space|2spc>Drawing planar graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-324>>
+      <no-break><pageref|auto-326>>
 
       <with|par-left|<quote|1tab>|6.1.6.<space|2spc>Circular graph drawings
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-328>>
+      <no-break><pageref|auto-330>>
 
       6.2.<space|2spc>Custom vertex positions
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-329>
+      <no-break><pageref|auto-331>
 
       <with|par-left|<quote|1tab>|6.2.1.<space|2spc>Setting vertex positions
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-330>>
+      <no-break><pageref|auto-332>>
 
       <with|par-left|<quote|1tab>|6.2.2.<space|2spc>Generating vertex
       positions <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-332>>
+      <no-break><pageref|auto-334>>
 
       6.3.<space|2spc>Highlighting parts of a graph
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-333>
+      <no-break><pageref|auto-335>
 
       <with|par-left|<quote|1tab>|6.3.1.<space|2spc>Highlighting vertices
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-334>>
+      <no-break><pageref|auto-336>>
 
       <with|par-left|<quote|1tab>|6.3.2.<space|2spc>Highlighting edges and
       trails <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-336>>
+      <no-break><pageref|auto-338>>
 
       <with|par-left|<quote|1tab>|6.3.3.<space|2spc>Highlighting subgraphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-339>>
+      <no-break><pageref|auto-341>>
 
       <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-shape|<quote|small-caps>|Bibliography>
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <pageref|auto-341><vspace|0.5fn>
+      <pageref|auto-343><vspace|0.5fn>
 
       <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-shape|<quote|small-caps>|Command
       Index> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <pageref|auto-342><vspace|0.5fn>
+      <pageref|auto-344><vspace|0.5fn>
     </associate>
   </collection>
 </auxiliary>

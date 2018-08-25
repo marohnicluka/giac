@@ -5724,14 +5724,14 @@ static const char _is_cut_set_s[]="is_cut_set";
 static define_unary_function_eval(__is_cut_set,&_is_cut_set,_is_cut_set_s);
 define_unary_function_ptr5(at_is_cut_set,alias_at_is_cut_set,&__is_cut_set,0,true)
 
-/* USAGE:   random_network_graph(a,b,[p],[opts])
+/* USAGE:   random_network(a,b,[p],[opts])
  *
- * Returns a random network with b grid frames of size a*a in which every edge
- * appears with the probability p (by default 0.5). The source vertex is in the
- * bottom left corner of the first frame and the sink vertex is in the top right
- * corner of the b-th frame.
+ * Returns a random network graph with b grid frames of size a*a in which every
+ * edge appears with the probability p (by default 0.5). The source vertex is
+ * in the bottom left corner of the first frame and the sink vertex is in the
+ * top right corner of the b-th frame.
  */
-gen _random_network_graph(const gen &g,GIAC_CONTEXT) {
+gen _random_network(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
@@ -5822,9 +5822,9 @@ gen _random_network_graph(const gen &g,GIAC_CONTEXT) {
     G.relabel_nodes(labels);
     return G.to_gen();
 }
-static const char _random_network_graph_s[]="random_network_graph";
-static define_unary_function_eval(__random_network_graph,&_random_network_graph,_random_network_graph_s);
-define_unary_function_ptr5(at_random_network_graph,alias_at_random_network_graph,&__random_network_graph,0,true)
+static const char _random_network_s[]="random_network";
+static define_unary_function_eval(__random_network,&_random_network,_random_network_s);
+define_unary_function_ptr5(at_random_network,alias_at_random_network,&__random_network,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

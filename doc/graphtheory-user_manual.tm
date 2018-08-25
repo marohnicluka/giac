@@ -639,8 +639,8 @@
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-316>>
 
-    <with|par-left|1tab|5.3.3.<space|2spc>Counting spanning trees
-    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <with|par-left|1tab|5.3.3.<space|2spc>Counting the spanning trees in a
+    graph <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-318>>
 
     <vspace*|1fn><with|font-series|bold|math-font-series|bold|font-shape|small-caps|6.<space|2spc>Visualizing
@@ -1879,7 +1879,7 @@
   T<rsub|k><rsup|n>> <cite|hinz>.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|sierpinski_graph(n,k,[triangle])>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|sierpinski_graph(n,k)>>>|<row|<cell|>|<cell|<verbatim|sierpinski_graph(n,k,triangle)>>>>>>
   </bothlined>
 
   <with|font-family|tt|sierpinski_graph> accepts two positive integers
@@ -1950,7 +1950,7 @@
   generalized Petersen graphs <math|P<around*|(|n,k|)>>.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|petersen_graph(n,[k])>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|petersen_graph(n)>>>|<row|<cell|>|<cell|<verbatim|petersen_graph(n,k)>>>>>>
   </bothlined>
 
   <with|font-family|tt|petersen_graph> accepts two positive integers <math|n>
@@ -2026,7 +2026,7 @@
   </footnote>.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|lcf_graph(L,[n])>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|lcf_graph(L)>>>|<row|<cell|>|<cell|<verbatim|lcf_graph(L,n)>>>>>>
   </bothlined>
 
   <verbatim|lcf_graph> takes one or two arguments, a list <math|L> of nonzero
@@ -2894,8 +2894,8 @@
   there exists a (directed) path from <math|v> to <math|w> in <math|G>.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|transitive_closure(G,[weighted[=true
-    or false]])>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|transitive_closure(G)>>>|<row|<cell|>|<cell|<verbatim|transitive_closure(G,weighted[=true
+    or false])>>>>>>
   </bothlined>
 
   <verbatim|transitive_closure> accepts one or two arguments, the input graph
@@ -3242,8 +3242,8 @@
 
   <\bothlined>
     <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_bipartite_graph(n,p
-    or m)>>>|<row|<cell|>|<cell|<verbatim|random_bipartite_graph(List[a,b],p
-    or m)>>>>>>
+    or m)>>>|<row|<cell|>|<cell|<verbatim|random_bipartite_graph([a,b],p or
+    m)>>>>>>
   </bothlined>
 
   <verbatim|random_bipartite_graph> accepts two arguments. The first argument
@@ -3328,7 +3328,8 @@
 
   <\bothlined>
     <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_planar_graph(n
-    or L,p,[k])>>>>>>
+    or L,p)>>>|<row|<cell|>|<cell|<verbatim|random_planar_graph(n or
+    L,p,k)>>>>>>
   </bothlined>
 
   <verbatim|random_planar_graph> accepts two or three arguments, a positive
@@ -3553,7 +3554,8 @@
 
   <\bothlined>
     <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_regular_graph(n
-    or L,d,[connected])>>>>>>
+    or L,d)>>>|<row|<cell|>|<cell|<verbatim|random_regular_graph(n or
+    L,d,connected)>>>>>>
   </bothlined>
 
   <verbatim|random_regular_graph> accepts two mandatory arguments, a positive
@@ -3671,7 +3673,7 @@
   and at least one vertex with out-degree 0 (the <em|sink>).
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_network(a,b,[p],[acyclic])>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_network(a,b)>>>|<row|<cell|>|<cell|<verbatim|random_network(a,b,p)>>>|<row|<cell|>|<cell|<verbatim|random_network(a,b,acyclic)>>>|<row|<cell|>|<cell|<verbatim|random_network(a,b,p,acyclic)>>>>>>
   </bothlined>
 
   <verbatim|random_network> accepts two to four arguments: a positive integer
@@ -3868,7 +3870,7 @@
   <kbd|make_directed><index|<kbd|make_directed>>.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|make_directed(G,[A])>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|make_directed(G)>>>|<row|<cell|>|<cell|<verbatim|make_directed(G,A)>>>>>>
   </bothlined>
 
   <with|font-family|tt|make_directed> is called with one or two arguments, an
@@ -3909,7 +3911,7 @@
   <kbd|make_weighted><index|<kbd|make_weighted>>.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|make_weighted(G,[A])>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|make_weighted(G)>>>|<row|<cell|>|<cell|<verbatim|make_weighted(G,A)>>>>>>
   </bothlined>
 
   <with|font-family|tt|make_weighted> accepts one or two arguments, an
@@ -4341,7 +4343,7 @@
 
   <\bothlined>
     <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|subdivide_edges(G,e
-    or E,[r])>>>>>>
+    or E)>>>|<row|<cell|>|<cell|<verbatim|subdivide_edges(G,e or E,r)>>>>>>
   </bothlined>
 
   <with|font-family|tt|subdivide_edges> accepts two or three arguments: the
@@ -5121,7 +5123,7 @@
   command.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|vertices(G)>>>|<row|<cell|>|<cell|<verbatim|graph_vertices(G)>>>|<row|<cell|>|<cell|<verbatim|edges(G,[weights])>>>|<row|<cell|>|<cell|<verbatim|number_of_vertices(G)>>>|<row|<cell|>|<cell|<verbatim|number_of_edges(G)>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|vertices(G)>>>|<row|<cell|>|<cell|<verbatim|graph_vertices(G)>>>|<row|<cell|>|<cell|<verbatim|edges(G)>>>|<row|<cell|>|<cell|<verbatim|edges(G,weights)>>>|<row|<cell|>|<cell|<verbatim|number_of_vertices(G)>>>|<row|<cell|>|<cell|<verbatim|number_of_edges(G)>>>>>>
   </bothlined>
 
   <verbatim|vertices> or <verbatim|graph_vertices> accepts a graph
@@ -5428,7 +5430,7 @@
   heads resp.<nbsp>the tails of the corresponding arcs.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|has_edge(G,[u,v])>>>|<row|<cell|>|<cell|<verbatim|has_arc(G,[u,v])>>>|<row|<cell|>|<cell|<verbatim|neighbors(G,[v])>>>|<row|<cell|>|<cell|<verbatim|departures(G,[v])>>>|<row|<cell|>|<cell|<verbatim|arrivals(G,[v])>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|has_edge(G,[u,v])>>>|<row|<cell|>|<cell|<verbatim|has_arc(G,[u,v])>>>|<row|<cell|>|<cell|<verbatim|neighbors(G)>>>|<row|<cell|>|<cell|<verbatim|neighbors(G,v)>>>|<row|<cell|>|<cell|<verbatim|departures(G)>>>|<row|<cell|>|<cell|<verbatim|departures(G,v)>>>|<row|<cell|>|<cell|<verbatim|arrivals(G)>>>|<row|<cell|>|<cell|<verbatim|arrivals(G,v)>>>>>>
   </bothlined>
 
   <verbatim|has_edge> accepts two arguments, the input graph
@@ -5906,7 +5908,7 @@
   an undirected graph.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_charpoly(G,[x])>>>|<row|<cell|>|<cell|<verbatim|charpoly(G,[x])>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_charpoly(G)>>>|<row|<cell|>|<cell|<verbatim|graph_charpoly(G,x)>>>|<row|<cell|>|<cell|<verbatim|charpoly(G)>>>|<row|<cell|>|<cell|<verbatim|charpoly(G,x)>>>>>>
   </bothlined>
 
   <verbatim|graph_charpoly> or <verbatim|charpoly> accepts one or two
@@ -6183,7 +6185,7 @@
   used for determining whether two graphs are isomorphic.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_isomorphic(G1,G2,[m])>>>|<row|<cell|>|<cell|<verbatim|canonical_labeling(G)>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_isomorphic(G1,G2)>>>|<row|<cell|>|<cell|<verbatim|is_isomorphic(G1,G2,m)>>>|<row|<cell|>|<cell|<verbatim|canonical_labeling(G)>>>>>>
   </bothlined>
 
   <verbatim|is_isomorphic> accepts two or three arguments: the input graphs
@@ -6862,7 +6864,7 @@
   computing the rank of a graph.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_rank(G,[S])>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_rank(G)>>>|<row|<cell|>|<cell|<verbatim|graph_rank(G,S)>>>>>>
   </bothlined>
 
   <verbatim|graph_rank> accepts one or two arguments, the input graph
@@ -7475,7 +7477,7 @@
   computing the maximum flow in a network.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|maxflow(G,s,t,[M])>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|maxflow(G,s,t)>>>|<row|<cell|>|<cell|<verbatim|maxflow(G,s,t,M)>>>>>>
   </bothlined>
 
   <verbatim|maxflow> accepts three or four arguments: the input network graph
@@ -8050,7 +8052,7 @@
   for finding <samp|st>-orientation in undirected biconnected graphs.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|st_ordering(G,s,t,[D])>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|st_ordering(G,s,t)>>>|<row|<cell|>|<cell|<verbatim|st_ordering(G,s,t,D)>>>>>>
   </bothlined>
 
   <verbatim|st_ordering> accepts three or four arguments: the input graph
@@ -8407,8 +8409,7 @@
   <kbd|clique_stats><index|<kbd|clique_stats>> command.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|clique_stats(G,[k
-    or m..n])>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|clique_stats(G)>>>|<row|<cell|>|<cell|<verbatim|clique_stats(G,k)>>>|<row|<cell|>|<cell|<verbatim|clique_stats(G,m..n)>>>>>>
   </bothlined>
 
   <kbd|clique_stats> accepts the input graph <math|G<around*|(|V,E|)>> as the
@@ -8599,7 +8600,7 @@
   command.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|clique_cover(G,[k])>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|clique_cover(G)>>>|<row|<cell|>|<cell|<verbatim|clique_cover(G,k)>>>>>>
   </bothlined>
 
   <kbd|clique_cover> accepts graph <math|G> as its mandatory argument and
@@ -8747,7 +8748,7 @@
   coloring vertices of a graph in a greedy fashion.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|greedy_color(G,[p])>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|greedy_color(G)>>>|<row|<cell|>|<cell|<verbatim|greedy_color(G,p)>>>>>>
   </bothlined>
 
   <kbd|greedy_color> accepts one mandatory argument, the input graph
@@ -8824,7 +8825,7 @@
   the command <kbd|minimal_vertex_coloring><index|<kbd|minimal_vertex_coloring>>.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|minimal_coloring(G,[sto])>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|minimal_coloring(G)>>>|<row|<cell|>|<cell|<verbatim|minimal_coloring(G,sto)>>>>>>
   </bothlined>
 
   <kbd|minimal_vertex_coloring> accepts one mandatory argument, the input
@@ -8893,7 +8894,7 @@
   a graph.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|chromatic_number(G,[c])>>>|<row|<cell|>|<cell|<verbatim|chromatic_number(G,approx
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|chromatic_number(G)>>>|<row|<cell|>|<cell|<verbatim|chromatic_number(G,c)>>>|<row|<cell|>|<cell|<verbatim|chromatic_number(G,approx
     or interval)>>>>>>
   </bothlined>
 
@@ -8996,7 +8997,7 @@
   at most <math|k> colors.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_vertex_colorable(G,k,[c])>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_vertex_colorable(G,k)>>>|<row|<cell|>|<cell|<verbatim|is_vertex_colorable(G,k,c)>>>>>>
   </bothlined>
 
   <verbatim|is_vertex_colorable> accepts two or three arguments: the input
@@ -9111,7 +9112,7 @@
   where <math|\<Delta\>> is the maximum degree of the graph.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|minimal_edge_coloring(G,[sto])>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|minimal_edge_coloring(G)>>>|<row|<cell|>|<cell|<verbatim|minimal_edge_coloring(G,sto)>>>>>>
   </bothlined>
 
   <verbatim|minimal_edge_coloring> accepts one or two arguments, the input
@@ -9199,7 +9200,7 @@
   graph such that two incident edges never share the same color.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|chromatic_index(G,[c])>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|chromatic_index(G)>>>|<row|<cell|>|<cell|<verbatim|chromatic_index(G,c)>>>>>>
   </bothlined>
 
   <verbatim|chromatic_index> accepts one or two arguments, the input graph
@@ -9350,7 +9351,7 @@
   finding Eulerian trails in such graphs.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_eulerian(G,[T])>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_eulerian(G)>>>|<row|<cell|>|<cell|<verbatim|is_eulerian(G,T)>>>>>>
   </bothlined>
 
   <verbatim|is_eulerian> accepts one or two arguments, the input graph
@@ -9401,7 +9402,7 @@
   Hamiltonian.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_hamiltonian(G,[hc])>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_hamiltonian(G)>>>|<row|<cell|>|<cell|<verbatim|is_hamiltonian(G,hc)>>>>>>
   </bothlined>
 
   <verbatim|is_hamiltonian> accepts one or two arguments, the input graph
@@ -9659,7 +9660,7 @@
   </footnote> (<abbr|TSP>) for undirected graphs.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|traveling_salesman(G,[M],[opts])>>>>>>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|traveling_salesman(G)>>>|<row|<cell|>|<cell|<verbatim|traveling_salesman(G,opts)>>>|<row|<cell|>|<cell|<verbatim|traveling_salesman(G,M)>>>|<row|<cell|>|<cell|<verbatim|traveling_salesman(G,M,opts)>>>>>>
   </bothlined>
 
   <verbatim|traveling_salesman> accepts the following arguments: the input
@@ -10013,11 +10014,10 @@
 
   <center|<image|images/span3.eps|40%|||>>
 
-  <subsection|Counting spanning trees>
+  <subsection|Counting the spanning trees in a graph>
 
   The command <verbatim|number_of_spanning_trees><index|<verbatim|number_of_spanning_trees>>
-  is used for computing the number of distinct spanning trees in the given
-  graph.
+  is used for computing the number of distinct spanning trees in a graph.
 
   <\bothlined>
     <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|number_of_spanning_trees(G)>>>>>>
@@ -10087,6 +10087,10 @@
   The <kbd|draw_graph><index|<kbd|draw_graph>> command<label|draw-graph> is
   used for visualizing graphs. It is capable to produce a drawing of the
   given graph using one of the several built-in methods.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|draw_graph(G)>>>|<row|<cell|>|<cell|<verbatim|draw_graph(G,opts)>>>>>>
+  </bothlined>
 
   <subsection|Overview>
 
@@ -10617,6 +10621,10 @@
   is used to assign custom coordinates to vertices of a graph to be used when
   drawing the graph.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|set_vertex_positions(G,L)>>>>>>
+  </bothlined>
+
   <verbatim|set_vertex_positions> accepts two arguments, the graph
   <math|G<around*|(|V,E|)>> and the list <math|L> of positions to be assigned
   to vertices in order of <verbatim|vertices(G)>. The positions may be
@@ -10753,12 +10761,17 @@
   The command <verbatim|highlight_vertex><index|<verbatim|highlight_vertex>>
   is used for changing color of one or more vertices in a graph.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|highlight_vertex(G,v)>>>|<row|<cell|>|<cell|<verbatim|highlight_vertex(G,v,c)>>>|<row|<cell|>|<cell|<verbatim|highlight_vertex(G,[v1,v2,..,vk])>>>|<row|<cell|>|<cell|<verbatim|highlight_vertex(G,[v1,v2,..,vk],c)>>>|<row|<cell|>|<cell|<verbatim|highlight_vertex(G,[v1,v2,..,vk],[c1,c2,..,ck])>>>>>>
+  </bothlined>
+
   <verbatim|highlight_vertex> accepts two or three arguments: the graph
-  <math|G<around*|(|V,E|)>>, a vertex <math|v\<in\>V> or a list
-  <math|L\<subset\>V> of vertices and optionally the new color (or a list of
-  colors) for the selected vertices (the default color is green). It returns
-  a modified copy of <math|G> in which the specified vertices are colored
-  with the specified color.
+  <math|G<around*|(|V,E|)>>, a vertex <math|v\<in\>V> or a list of vertices
+  <math|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|k>\<in\>V> and optionally the
+  new color <math|c> or a list of colors <math|c<rsub|1>,c<rsub|2>,\<ldots\>,c<rsub|k>>
+  for the selected vertices (the default color is green). It returns a
+  modified copy of <math|G> in which the specified vertices are colored with
+  the specified color.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -10798,11 +10811,17 @@
   <verbatim|highlight_trail><index|<verbatim|highlight_trail>> command (see
   below).
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|highlight_edges(G,e)>>>|<row|<cell|>|<cell|<verbatim|highlight_edges(G,e,c)>>>|<row|<cell|>|<cell|<verbatim|highlight_edges(G,[e1,e2,..,ek])>>>|<row|<cell|>|<cell|<verbatim|highlight_edges(G,[e1,e2,..,ek],c)>>>|<row|<cell|>|<cell|<verbatim|highlight_edges(G,[e1,e2,..,ek],[c1,c2,..,ck])>>>|<row|<cell|>|<cell|<verbatim|highlight_trail(G,T)>>>|<row|<cell|>|<cell|<verbatim|highlight_trail(G,T,c)>>>|<row|<cell|>|<cell|<verbatim|highlight_trail(G,[T1,T2,..,Tk])>>>|<row|<cell|>|<cell|<verbatim|highlight_trail(G,[T1,T2,..,Tk],c)>>>|<row|<cell|>|<cell|<verbatim|highlight_trail(G,[T1,T2,..,Tk],[c1,c2,..,ck])>>>>>>
+  </bothlined>
+
   <verbatim|highlight_edges> accepts two or three arguments: the graph
-  <math|G<around*|(|V,E|)>>, an edge <math|e> or a list of edges <math|L> and
-  optionally the new color (or a list of colors) for the selected edges (the
-  default color is red). It returns a modified copy of <math|G> in which the
-  specified edges are colored with the specified color.
+  <math|G<around*|(|V,E|)>>, an edge <math|e\<in\>E> or a list of edges
+  <math|e<rsub|1>,e<rsub|2>,\<ldots\>,e<rsub|k>\<in\>E> and optionally the
+  new color <math|c> or a list of colors <math|c<rsub|1>,c<rsub|2>,\<ldots\>,c<rsub|k>>
+  for the selected edges (the default color is red). It returns a modified
+  copy of <math|G> in which the specified edges are colored with the
+  specified color.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -10845,17 +10864,13 @@
   <center|<image|images/dh3.eps|40%|||>>
 
   <verbatim|highlight_trail> accepts two or three arguments: the input graph
-  <math|G<around*|(|V,E|)>>, a list <math|L\<subset\>V> or a list
-  <verbatim|[L1,L2,...,Lk]> of such lists (each list represents the vertices
-  of the corresponding trail) and optionally a positive integer <math|c> or a
-  list of positive integers <verbatim|[c1,c2,...,ck]>. The command returns
-  the copy of <math|G> in which edges between consecutive vertices in
-  <math|L> are highlighted with color <math|c> (by default red) or the trail
-  represented by <math|L<rsub|i>> is highlighted with color <math|c<rsub|i>>
-  for <math|i=1,2,\<ldots\>,k>.
-
-  Note that a trail can cross itself, which means that the elements of
-  <math|L> are not required to be unique.
+  <math|G<around*|(|V,E|)>>, a trail <math|T> or a list of trails
+  <math|T<rsub|1>,T<rsub|2>,\<ldots\>,T<rsub|k>> and optionally the new color
+  <math|c> or a list of colors <math|c<rsub|1>,c<rsub|2>,\<ldots\>,c<rsub|k>>.
+  The command returns the copy of <math|G> in which edges between consecutive
+  vertices in each of the given trails are highlighted with color <math|c>
+  (by default red) or the trail <math|T<rsub|i>> is highlighted with color
+  <math|c<rsub|i>> for <math|i=1,2,\<ldots\>,k>.
 
   <\session|giac|default>
     <\input>
@@ -10882,10 +10897,15 @@
   The command <verbatim|highlight_subgraph><index|<verbatim|highlight_subgraph>>
   is used for highlighting subgraph(s) of the given graph.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|highlight_subgraph(G,S,[weights])>>>|<row|<cell|>|<cell|<verbatim|highlight_subgraph(G,S,c1,c2,[weights])>>>|<row|<cell|>|<cell|<verbatim|highlight_subgraph(G,[S1,S2,..,Sk])>>>|<row|<cell|>|<cell|<verbatim|highlight_subgraph(G,[S1,S2,..,Sk],c1,c2)>>>>>>
+  </bothlined>
+
   <verbatim|highlight_subgraph> accepts two or four arguments: the graph
   <math|G<around*|(|V,E|)>>, a subgraph <math|S<around*|(|V<rprime|'>,E<rprime|'>|)>>
-  of <math|G> (or a list of subgraphs in <math|G>) and optionally the new
-  colors for edges and vertices of the selected subgraph(s), respectively. It
+  of <math|G> or a list of subgraphs <math|S<rsub|1>,S<rsub|2>,\<ldots\>,S<rsub|k>>
+  in <math|G> and optionally the new colors <math|c<rsub|1>,c<rsub|2>> for
+  the edges and vertices of the selected subgraph(s), respectively. It
   returns a modified copy of <math|G> with the selected subgraph(s) colored
   as specified. If colors are not given, red and green are used,
   respectively.
@@ -11616,41 +11636,41 @@
     <associate|auto-192|<tuple|4.1.5|56>>
     <associate|auto-193|<tuple|4.1.6|57>>
     <associate|auto-194|<tuple|4.1.6|57>>
-    <associate|auto-195|<tuple|4.2|57>>
-    <associate|auto-196|<tuple|4.2.1|57>>
-    <associate|auto-197|<tuple|4.2.1|57>>
-    <associate|auto-198|<tuple|4.2.2|58>>
-    <associate|auto-199|<tuple|4.2.2|58>>
+    <associate|auto-195|<tuple|4.2|58>>
+    <associate|auto-196|<tuple|4.2.1|58>>
+    <associate|auto-197|<tuple|4.2.1|58>>
+    <associate|auto-198|<tuple|4.2.2|59>>
+    <associate|auto-199|<tuple|4.2.2|59>>
     <associate|auto-2|<tuple|1|9>>
     <associate|auto-20|<tuple|1.2.3|13>>
     <associate|auto-200|<tuple|4.2.3|59>>
     <associate|auto-201|<tuple|4.2.3|59>>
     <associate|auto-202|<tuple|4.2.4|60>>
     <associate|auto-203|<tuple|4.2.4|60>>
-    <associate|auto-204|<tuple|4.2.5|60>>
-    <associate|auto-205|<tuple|4.2.5|60>>
+    <associate|auto-204|<tuple|4.2.5|61>>
+    <associate|auto-205|<tuple|4.2.5|61>>
     <associate|auto-206|<tuple|4.2.6|61>>
     <associate|auto-207|<tuple|4.2.6|61>>
-    <associate|auto-208|<tuple|4.2.7|61>>
-    <associate|auto-209|<tuple|4.2.7|61>>
+    <associate|auto-208|<tuple|4.2.7|62>>
+    <associate|auto-209|<tuple|4.2.7|62>>
     <associate|auto-21|<tuple|1.3|13>>
     <associate|auto-210|<tuple|4.2.8|62>>
-    <associate|auto-211|<tuple|4.2.9|62>>
-    <associate|auto-212|<tuple|4.2.9|62>>
+    <associate|auto-211|<tuple|4.2.9|63>>
+    <associate|auto-212|<tuple|4.2.9|63>>
     <associate|auto-213|<tuple|4.2.9|64>>
     <associate|auto-214|<tuple|4.2.10|65>>
     <associate|auto-215|<tuple|4.2.10|65>>
-    <associate|auto-216|<tuple|4.3|65>>
-    <associate|auto-217|<tuple|4.3.1|65>>
-    <associate|auto-218|<tuple|4.3.1|65>>
-    <associate|auto-219|<tuple|4.3.1|65>>
+    <associate|auto-216|<tuple|4.3|66>>
+    <associate|auto-217|<tuple|4.3.1|66>>
+    <associate|auto-218|<tuple|4.3.1|66>>
+    <associate|auto-219|<tuple|4.3.1|66>>
     <associate|auto-22|<tuple|1.3.1|13>>
-    <associate|auto-220|<tuple|4.3.1|65>>
-    <associate|auto-221|<tuple|4.3.2|66>>
-    <associate|auto-222|<tuple|4.3.2|66>>
-    <associate|auto-223|<tuple|4.3.2|66>>
-    <associate|auto-224|<tuple|4.3.3|67>>
-    <associate|auto-225|<tuple|4.3.3|67>>
+    <associate|auto-220|<tuple|4.3.1|66>>
+    <associate|auto-221|<tuple|4.3.2|67>>
+    <associate|auto-222|<tuple|4.3.2|67>>
+    <associate|auto-223|<tuple|4.3.2|67>>
+    <associate|auto-224|<tuple|4.3.3|68>>
+    <associate|auto-225|<tuple|4.3.3|68>>
     <associate|auto-226|<tuple|4.3.4|68>>
     <associate|auto-227|<tuple|4.3.4|68>>
     <associate|auto-228|<tuple|4.3.5|68>>
@@ -11660,42 +11680,42 @@
     <associate|auto-231|<tuple|4.3.6|69>>
     <associate|auto-232|<tuple|4.3.7|69>>
     <associate|auto-233|<tuple|4.3.7|69>>
-    <associate|auto-234|<tuple|4.4|69>>
-    <associate|auto-235|<tuple|4.4.1|69>>
-    <associate|auto-236|<tuple|4.4.1|69>>
+    <associate|auto-234|<tuple|4.4|70>>
+    <associate|auto-235|<tuple|4.4.1|70>>
+    <associate|auto-236|<tuple|4.4.1|70>>
     <associate|auto-237|<tuple|4.4.2|70>>
     <associate|auto-238|<tuple|4.4.2|70>>
-    <associate|auto-239|<tuple|4.4.3|70>>
+    <associate|auto-239|<tuple|4.4.3|71>>
     <associate|auto-24|<tuple|1.3.2|14>>
-    <associate|auto-240|<tuple|4.4.3|70>>
+    <associate|auto-240|<tuple|4.4.3|71>>
     <associate|auto-241|<tuple|4.4.4|71>>
     <associate|auto-242|<tuple|4.4.4|71>>
-    <associate|auto-243|<tuple|4.4.5|71>>
-    <associate|auto-244|<tuple|4.4.5|71>>
+    <associate|auto-243|<tuple|4.4.5|72>>
+    <associate|auto-244|<tuple|4.4.5|72>>
     <associate|auto-245|<tuple|4.5|72>>
     <associate|auto-246|<tuple|4.5.1|72>>
     <associate|auto-247|<tuple|4.5.1|72>>
     <associate|auto-248|<tuple|4.5.2|73>>
     <associate|auto-249|<tuple|4.5.2|73>>
     <associate|auto-25|<tuple|1.3.2|14>>
-    <associate|auto-250|<tuple|4.6|74>>
-    <associate|auto-251|<tuple|4.6.1|74>>
-    <associate|auto-252|<tuple|4.6.1|74>>
+    <associate|auto-250|<tuple|4.6|75>>
+    <associate|auto-251|<tuple|4.6.1|75>>
+    <associate|auto-252|<tuple|4.6.1|75>>
     <associate|auto-253|<tuple|4.6.2|75>>
     <associate|auto-254|<tuple|4.6.2|75>>
     <associate|auto-255|<tuple|4.6.3|76>>
     <associate|auto-256|<tuple|4.6.4|77>>
     <associate|auto-257|<tuple|4.6.4|77>>
     <associate|auto-258|<tuple|4.6.4|77>>
-    <associate|auto-259|<tuple|4.7|77>>
+    <associate|auto-259|<tuple|4.7|78>>
     <associate|auto-26|<tuple|1.3.2|14>>
-    <associate|auto-260|<tuple|4.7.1|77>>
-    <associate|auto-261|<tuple|4.7.1|77>>
+    <associate|auto-260|<tuple|4.7.1|78>>
+    <associate|auto-261|<tuple|4.7.1|78>>
     <associate|auto-262|<tuple|4.7.2|78>>
     <associate|auto-263|<tuple|4.7.2|78>>
     <associate|auto-264|<tuple|4.7.2|78>>
-    <associate|auto-265|<tuple|4.7.3|78>>
-    <associate|auto-266|<tuple|4.7.3|78>>
+    <associate|auto-265|<tuple|4.7.3|79>>
+    <associate|auto-266|<tuple|4.7.3|79>>
     <associate|auto-267|<tuple|4.8|79>>
     <associate|auto-268|<tuple|4.8.1|79>>
     <associate|auto-269|<tuple|4.8.1|79>>
@@ -11705,33 +11725,33 @@
     <associate|auto-272|<tuple|4.9|81>>
     <associate|auto-273|<tuple|4.9.1|81>>
     <associate|auto-274|<tuple|4.9.1|81>>
-    <associate|auto-275|<tuple|4.9.2|81>>
-    <associate|auto-276|<tuple|4.9.2|81>>
-    <associate|auto-277|<tuple|4.9.3|81>>
-    <associate|auto-278|<tuple|4.9.3|81>>
-    <associate|auto-279|<tuple|4.9.4|82>>
+    <associate|auto-275|<tuple|4.9.2|82>>
+    <associate|auto-276|<tuple|4.9.2|82>>
+    <associate|auto-277|<tuple|4.9.3|82>>
+    <associate|auto-278|<tuple|4.9.3|82>>
+    <associate|auto-279|<tuple|4.9.4|83>>
     <associate|auto-28|<tuple|1.4.1|14>>
-    <associate|auto-280|<tuple|4.9.4|82>>
-    <associate|auto-281|<tuple|4.9.5|83>>
-    <associate|auto-282|<tuple|4.9.5|83>>
-    <associate|auto-283|<tuple|4.9.6|84>>
-    <associate|auto-284|<tuple|4.9.6|84>>
-    <associate|auto-285|<tuple|4.10|84>>
-    <associate|auto-286|<tuple|4.10.1|84>>
-    <associate|auto-287|<tuple|4.10.1|84>>
+    <associate|auto-280|<tuple|4.9.4|83>>
+    <associate|auto-281|<tuple|4.9.5|84>>
+    <associate|auto-282|<tuple|4.9.5|84>>
+    <associate|auto-283|<tuple|4.9.6|85>>
+    <associate|auto-284|<tuple|4.9.6|85>>
+    <associate|auto-285|<tuple|4.10|85>>
+    <associate|auto-286|<tuple|4.10.1|85>>
+    <associate|auto-287|<tuple|4.10.1|85>>
     <associate|auto-288|<tuple|4.1|86>>
-    <associate|auto-289|<tuple|4.10.2|85>>
+    <associate|auto-289|<tuple|4.10.2|86>>
     <associate|auto-29|<tuple|1.4.1|14>>
-    <associate|auto-290|<tuple|4.10.2|85>>
-    <associate|auto-291|<tuple|4.10.3|86>>
-    <associate|auto-292|<tuple|4.10.3|86>>
-    <associate|auto-293|<tuple|4.10.4|87>>
-    <associate|auto-294|<tuple|4.10.4|87>>
+    <associate|auto-290|<tuple|4.10.2|86>>
+    <associate|auto-291|<tuple|4.10.3|87>>
+    <associate|auto-292|<tuple|4.10.3|87>>
+    <associate|auto-293|<tuple|4.10.4|88>>
+    <associate|auto-294|<tuple|4.10.4|88>>
     <associate|auto-295|<tuple|4.11|88>>
     <associate|auto-296|<tuple|4.11.1|88>>
     <associate|auto-297|<tuple|4.11.1|88>>
-    <associate|auto-298|<tuple|4.11.2|88>>
-    <associate|auto-299|<tuple|4.11.2|88>>
+    <associate|auto-298|<tuple|4.11.2|89>>
+    <associate|auto-299|<tuple|4.11.2|89>>
     <associate|auto-3|<tuple|1.1|9>>
     <associate|auto-30|<tuple|1.4.2|15>>
     <associate|auto-300|<tuple|5|91>>
@@ -11746,36 +11766,36 @@
     <associate|auto-309|<tuple|5.2.2|93>>
     <associate|auto-31|<tuple|1.4.2|15>>
     <associate|auto-310|<tuple|5.2.2|93>>
-    <associate|auto-311|<tuple|5.2.3|93>>
-    <associate|auto-312|<tuple|5.2.3|93>>
+    <associate|auto-311|<tuple|5.2.3|94>>
+    <associate|auto-312|<tuple|5.2.3|94>>
     <associate|auto-313|<tuple|5.3|96>>
     <associate|auto-314|<tuple|5.3.1|96>>
     <associate|auto-315|<tuple|5.3.1|96>>
     <associate|auto-316|<tuple|5.3.2|97>>
     <associate|auto-317|<tuple|5.3.2|97>>
-    <associate|auto-318|<tuple|5.3.3|97>>
-    <associate|auto-319|<tuple|5.3.3|97>>
+    <associate|auto-318|<tuple|5.3.3|98>>
+    <associate|auto-319|<tuple|5.3.3|98>>
     <associate|auto-32|<tuple|1.5|15>>
     <associate|auto-320|<tuple|6|99>>
     <associate|auto-321|<tuple|6.1|99>>
     <associate|auto-322|<tuple|6.1|99>>
     <associate|auto-323|<tuple|6.1.1|99>>
-    <associate|auto-324|<tuple|6.1.2|99>>
+    <associate|auto-324|<tuple|6.1.2|100>>
     <associate|auto-325|<tuple|6.1.3|100>>
     <associate|auto-326|<tuple|6.1.4|102>>
     <associate|auto-327|<tuple|6.1.5|103>>
-    <associate|auto-328|<tuple|6.1|103>>
-    <associate|auto-329|<tuple|6.2|103>>
+    <associate|auto-328|<tuple|6.1|104>>
+    <associate|auto-329|<tuple|6.2|104>>
     <associate|auto-33|<tuple|1.5.1|15>>
-    <associate|auto-330|<tuple|6.3|103>>
+    <associate|auto-330|<tuple|6.3|104>>
     <associate|auto-331|<tuple|6.1.6|104>>
     <associate|auto-332|<tuple|6.2|105>>
     <associate|auto-333|<tuple|6.2.1|105>>
     <associate|auto-334|<tuple|6.2.1|105>>
-    <associate|auto-335|<tuple|6.2.2|105>>
-    <associate|auto-336|<tuple|6.3|106>>
-    <associate|auto-337|<tuple|6.3.1|106>>
-    <associate|auto-338|<tuple|6.3.1|106>>
+    <associate|auto-335|<tuple|6.2.2|106>>
+    <associate|auto-336|<tuple|6.3|107>>
+    <associate|auto-337|<tuple|6.3.1|107>>
+    <associate|auto-338|<tuple|6.3.1|107>>
     <associate|auto-339|<tuple|6.3.2|107>>
     <associate|auto-34|<tuple|1.5.1|15>>
     <associate|auto-340|<tuple|6.3.2|107>>
@@ -11892,8 +11912,8 @@
     <associate|bib-walker|<tuple|35|111>>
     <associate|bib-welch|<tuple|36|112>>
     <associate|bib-west|<tuple|37|112>>
-    <associate|blockjoin|<tuple|6.1|103>>
-    <associate|chordface|<tuple|6.2|103>>
+    <associate|blockjoin|<tuple|6.1|104>>
+    <associate|chordface|<tuple|6.2|104>>
     <associate|departures-arrivals|<tuple|4.1.5|56>>
     <associate|digraph|<tuple|1.1.2|10>>
     <associate|draw-graph|<tuple|6.1|99>>
@@ -11905,11 +11925,11 @@
     <associate|footnote-3.2|<tuple|3.2|49>>
     <associate|footnote-3.3|<tuple|3.3|49>>
     <associate|footnote-3.4|<tuple|3.4|51>>
-    <associate|footnote-4.1|<tuple|4.1|79>>
-    <associate|footnote-4.2|<tuple|4.2|81>>
-    <associate|footnote-4.3|<tuple|4.3|85>>
-    <associate|footnote-4.4|<tuple|4.4|89>>
-    <associate|footnote-5.1|<tuple|5.1|93>>
+    <associate|footnote-4.1|<tuple|4.1|80>>
+    <associate|footnote-4.2|<tuple|4.2|82>>
+    <associate|footnote-4.3|<tuple|4.3|86>>
+    <associate|footnote-4.4|<tuple|4.4|90>>
+    <associate|footnote-5.1|<tuple|5.1|94>>
     <associate|footnr-1.1|<tuple|1.1|20>>
     <associate|footnr-1.2|<tuple|1.2|22>>
     <associate|footnr-1.3|<tuple|1.3|32>>
@@ -11918,39 +11938,39 @@
     <associate|footnr-3.2|<tuple|3.2|49>>
     <associate|footnr-3.3|<tuple|3.3|49>>
     <associate|footnr-3.4|<tuple|3.4|51>>
-    <associate|footnr-4.1|<tuple|4.1|79>>
-    <associate|footnr-4.2|<tuple|4.2|81>>
-    <associate|footnr-4.3|<tuple|4.3|85>>
-    <associate|footnr-4.4|<tuple|4.4|89>>
-    <associate|footnr-5.1|<tuple|5.1|93>>
+    <associate|footnr-4.1|<tuple|4.1|80>>
+    <associate|footnr-4.2|<tuple|4.2|82>>
+    <associate|footnr-4.3|<tuple|4.3|86>>
+    <associate|footnr-4.4|<tuple|4.4|90>>
+    <associate|footnr-5.1|<tuple|5.1|94>>
     <associate|frucht|<tuple|1.2|22>>
     <associate|graph|<tuple|1.1.1|9>>
     <associate|graph-equal|<tuple|4.2.8|62>>
     <associate|graph-union|<tuple|1.9.4|27>>
     <associate|highlight-subgraph|<tuple|6.3.3|108>>
     <associate|highlight-trail|<tuple|6.3.2|107>>
-    <associate|highlight-vertices|<tuple|6.3.1|106>>
+    <associate|highlight-vertices|<tuple|6.3.1|107>>
     <associate|induced-subgraph|<tuple|1.8.2|24>>
     <associate|is-network|<tuple|4.5.1|72>>
     <associate|isomorphic-copy|<tuple|1.7.1|23>>
     <associate|make-directed|<tuple|2.1.1|41>>
     <associate|make-weighted|<tuple|2.1.2|41>>
     <associate|maximum-matching|<tuple|4.8.1|79>>
-    <associate|minimal-coloring|<tuple|4.10.2|85>>
-    <associate|minimum-covering|<tuple|4.9.5|83>>
+    <associate|minimal-coloring|<tuple|4.10.2|86>>
+    <associate|minimum-covering|<tuple|4.9.5|84>>
     <associate|random-network|<tuple|1.10.8|38>>
     <associate|random-planar|<tuple|1.10.4|35>>
     <associate|set-vertex-positions|<tuple|6.2.1|105>>
-    <associate|st-ordering|<tuple|4.7.3|78>>
+    <associate|st-ordering|<tuple|4.7.3|79>>
     <associate|st53|<tuple|3.1|51>>
     <associate|subgraph|<tuple|1.8.1|24>>
     <associate|tab:colors|<tuple|4.1|86>>
-    <associate|touchface|<tuple|6.3|103>>
+    <associate|touchface|<tuple|6.3|104>>
     <associate|trail|<tuple|1.2.3|13>>
-    <associate|traveling-salesman|<tuple|5.2.3|93>>
+    <associate|traveling-salesman|<tuple|5.2.3|94>>
     <associate|underlying-graph|<tuple|1.8.3|25>>
     <associate|vertex-attribute|<tuple|2.4.2|46>>
-    <associate|vertex-distance|<tuple|4.6.1|74>>
+    <associate|vertex-distance|<tuple|4.6.1|75>>
     <associate|vertices-edges|<tuple|4.1.2|53>>
   </collection>
 </references>
@@ -13015,8 +13035,8 @@
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-316>>
 
-      <with|par-left|<quote|1tab>|5.3.3.<space|2spc>Counting spanning trees
-      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <with|par-left|<quote|1tab>|5.3.3.<space|2spc>Counting the spanning
+      trees in a graph <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-318>>
 
       <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-shape|<quote|small-caps>|6.<space|2spc>Visualizing

@@ -794,7 +794,7 @@ define_unary_function_ptr5(at_edges,alias_at_edges,&__edges,0,true)
 
 /* USAGE:   has_edge(G,e)
  *
- * Returns true iff the edge e={i,j} is contained in undirected graph G.
+ * Returns true iff the edge e={v,w} is contained in the undirected graph G.
  */
 gen _has_edge(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -803,18 +803,19 @@ gen _has_edge(const gen &g,GIAC_CONTEXT) {
     vecteur &gv = *g._VECTptr;
     if (int(gv.size())!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-    if (gv.back().type!=_VECT || !is_integer_vecteur(*gv.back()._VECTptr))
+    if (gv.back().type!=_VECT)
         return gentypeerr(contextptr);
     if (int(gv.back()._VECTptr->size())!=2)
         return gensizeerr(contextptr);
     vecteur e(*gv.back()._VECTptr);
-    int ofs=array_start(contextptr);
-    int i=e.front().val-ofs,j=e.back().val-ofs;
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
+    int i=G.node_index(e.front()),j=G.node_index(e.back());
+    if (i<0 || j<0)
+        return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
     return graphe::boole(G.has_edge(i,j));
 }
 static const char _has_edge_s[]="has_edge";
@@ -823,9 +824,9 @@ define_unary_function_ptr5(at_has_edge,alias_at_has_edge,&__has_edge,0,true)
 
 /* USAGE:   has_arc(G,e)
  *
- * Returns true iff the arc e=[i,j] is contained in directed graph G. If
- * e={i,j}, true is returned if directed graph G has both edges [i,j] and
- * [j,i].
+ * Returns true iff the arc e=[v,w] is contained in directed graph G. If
+ * e={v,w}, true is returned if directed graph G has both edges [v,w] and
+ * [v,w].
  */
 gen _has_arc(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -840,13 +841,14 @@ gen _has_arc(const gen &g,GIAC_CONTEXT) {
         return gensizeerr(contextptr);
     vecteur e(*gv.back()._VECTptr);
     bool undirected=gv.back().subtype==_SET__VECT;
-    int ofs=array_start(contextptr);
-    int i=e.front().val-ofs,j=e.back().val-ofs;
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (!G.is_directed())
         return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED);
+    int i=G.node_index(e.front()),j=G.node_index(e.back());
+    if (i<0 || j<0)
+        return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
     return graphe::boole(G.has_edge(i,j) && (!undirected || G.has_edge(j,i)));
 }
 static const char _has_arc_s[]="has_arc";

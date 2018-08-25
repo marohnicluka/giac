@@ -279,19 +279,19 @@
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-119>
 
-    <with|par-left|1tab|2.1.1.<space|2spc>Converting each edge to a pair of
-    arcs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <with|par-left|1tab|2.1.1.<space|2spc>Converting edges to arcs
+    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-120>>
 
-    <with|par-left|1tab|2.1.2.<space|2spc>Assigning weight matrix to an
-    unweighted graph <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <with|par-left|1tab|2.1.2.<space|2spc>Assigning weight matrix to
+    unweighted graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-122>>
 
     2.2.<space|2spc>Modifying vertices of a graph
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-124>
 
-    <with|par-left|1tab|2.2.1.<space|2spc>Adding and removing single vertices
+    <with|par-left|1tab|2.2.1.<space|2spc>Adding and removing vertices
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-125>>
 
@@ -299,7 +299,7 @@
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-128>
 
-    <with|par-left|1tab|2.3.1.<space|2spc>Adding and removing single edges
+    <with|par-left|1tab|2.3.1.<space|2spc>Adding and removing edges
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-129>>
 
@@ -3698,8 +3698,9 @@
   attempted with the probability <math|1-p>, unless it is a bridge (since
   removing it would disconnect the graph), leaving approximately
   <math|100\<cdot\>p %> of the original edges in <math|G>. Additionally,
-  unless the option <verbatim|acyclic> is used, for each arc in <math|G> the
-  corresponding reverse arc is added to <math|G> with the probability 0.5.
+  unless the option <verbatim|acyclic> is used, for each arc in <math|G> not
+  incident to <math|s> or <math|t>, the corresponding reverse arc is added to
+  <math|G> with the probability 0.5.
 
   The command <verbatim|<hlink|assign_edge_weights|#assign-edge-weights>> can
   be used to generate arc capacities in a graph produced by
@@ -3801,22 +3802,21 @@
   <subsection|Randomizing edge weights><label|assign-edge-weights>
 
   The command <verbatim|assign_edge_weights><index|<verbatim|assign_edge_weights>>
-  is used for assigning weights to edges of a graph at random.
+  is used for assigning weights to edges of graphs at random.
 
   <\bothlined>
     <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|assign_edge_weights(G,a..b)>>>|<row|<cell|>|<cell|<verbatim|assign_edge_weights(G,m,n)>>>>>>
   </bothlined>
 
-  <verbatim|assign_edge_weights> accepts two or three arguments. The first
-  argument is always the input graph <math|G<around*|(|V,E|)>>. If only two
-  arguments are given, the second one is an interval
-  <math|a><nbsp>..<nbsp><math|b> of real numbers. Otherwise, if three
-  arguments are given, the second resp.<nbsp>the third argument is a positive
-  integer <math|m> resp.<nbsp><math|n>. The command operates such that for
-  each edge <math|e\<in\>E>, its weight is chosen uniformly from the real
-  interval <math|<around*|[|a,b|)>> or from the set of integers lying between
-  <math|m> and <math|n>, including both <math|m> and <math|n>. After
-  assigning weights to all edges, the modified copy of <math|G> is returned.
+  <verbatim|assign_edge_weights> accepts two or three arguments: the input
+  graph <math|G<around*|(|V,E|)>> and an interval
+  <math|a><nbsp>..<nbsp><math|b> of real numbers or a sequence of two
+  positive integers <math|m> and<nbsp><math|n>. The command operates such
+  that for, each edge <math|e\<in\>E>, the weight of <math|e> is chosen
+  uniformly from the real interval <math|<around*|[|a,b|)>> or from the set
+  of integers lying between <math|m> and <math|n>, including both <math|m>
+  and <math|n>. After assigning weights to all edges, a modified copy of
+  <math|G> is returned.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -3862,19 +3862,23 @@
 
   <section|Promoting to directed and weighted graphs>
 
-  <subsection|Converting each edge to a pair of arcs><label|make-directed>
+  <subsection|Converting edges to arcs><label|make-directed>
 
   To promote an existing undirected graph to a directed one, use the command
   <kbd|make_directed><index|<kbd|make_directed>>.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|make_directed(G,[A])>>>>>>
+  </bothlined>
+
   <with|font-family|tt|make_directed> is called with one or two arguments, an
-  undirected graph <math|G<around|(|V,E|)>> and optionally a square matrix of
-  order <math|<around|\||V|\|>>. Every edge <math|<around|{|i,j|}>\<in\>E> is
-  replaced with the pair of arcs <math|<around|(|i,j|)>> and
-  <math|<around|(|j,i|)>>. If matrix <math|A> is specified,
-  <math|a<rsub|i*j>> and <math|a<rsub|j*i>> are assigned as weights of these
-  arcs, respectively. Thus a directed (and possibly weighted) graph is
-  created and returned.
+  undirected graph <math|G<around|(|V,E|)>> and optionally a numerical square
+  matrix <math|A=<around*|[|a<rsub|i j>|]>> of order <math|<around|\||V|\|>>.
+  Every edge <math|<around|{|i,j|}>\<in\>E> is replaced with the pair of arcs
+  <math|<around|(|i,j|)>> and <math|<around|(|j,i|)>> and, if matrix <math|A>
+  is specified, its elements <math|a<rsub|i*j>> and <math|a<rsub|j*i>> are
+  assigned as weights of these arcs, respectively. Thus a directed (weighted)
+  copy of <math|G> is constructed and subsequently returned.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -3898,19 +3902,24 @@
     </unfolded-io>
   </session>
 
-  <subsection|Assigning weight matrix to an unweighted
-  graph><label|make-weighted>
+  <subsection|Assigning weight matrix to unweighted
+  graphs><label|make-weighted>
 
   To promote an existing unweighted graph to a weighted one, use the command
   <kbd|make_weighted><index|<kbd|make_weighted>>.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|make_weighted(G,[A])>>>>>>
+  </bothlined>
+
   <with|font-family|tt|make_weighted> accepts one or two arguments, an
   unweighted graph <math|G<around|(|V,E|)>> and optionally a square matrix
-  <math|A> of order <math|<around|\||V|\|>>. If the matrix specification is
-  omitted, a square matrix of ones is assumed. Then a copy of <math|G> is
-  returned where each edge/arc <math|<around|(|i,j|)>\<in\>E> gets
-  <math|a<rsub|i*j>> assigned as its weight. If <math|G> is an undirected
-  graph, it is assumed that <math|A> is symmetric.
+  <math|A=<around*|[|a<rsub|i j>|]>> of order <math|<around|\||V|\|>>. If the
+  matrix specification is omitted, a square matrix of ones is assumed. Then a
+  copy of <math|G> is returned in which each edge/arc
+  <math|<around|(|i,j|)>\<in\>E> gets the element <math|a<rsub|i*j>> in
+  <math|A> assigned as its weight. If <math|G> is undirected, it is assumed
+  that <math|A> is a symmetric matrix.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -3926,11 +3935,16 @@
 
   <section|Modifying vertices of a graph>
 
-  <subsection|Adding and removing single vertices>
+  <subsection|Adding and removing vertices>
 
   For adding and removing vertices to/from graphs use the commands
   <kbd|add_vertex><index|<kbd|add_vertex>> and
   <kbd|delete_vertex><index|<kbd|delete_vertex>>, respectively.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|add_vertex(G,v
+    or L)>>>|<row|<cell|>|<cell|<verbatim|delete_vertex(G,v or L)>>>>>>
+  </bothlined>
 
   The command <with|font-family|tt|add_vertex> accepts two arguments, a graph
   <math|G<around|(|V,E|)>> and a single label <math|v> or a list of labels
@@ -4028,18 +4042,26 @@
 
   <section|Modifying edges of a graph>
 
-  <subsection|Adding and removing single edges>
+  <subsection|Adding and removing edges>
 
   For adding and removing edges or arcs to/from graphs use the commands
   <kbd|add_edge><index|<kbd|add_edge>> or <kbd|add_arc><index|<kbd|add_arc>>
   and <kbd|delete_edge><index|<kbd|delete_edge>> or
   <kbd|delete_arc><index|<kbd|delete_arc>>, respectively.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|add_edge(G,e
+    or E or T)>>>|<row|<cell|>|<cell|<verbatim|add_arc(G,e or E or
+    T)>>>|<row|<cell|>|<cell|<verbatim|delete_edge(G,e or E or
+    T)>>>|<row|<cell|>|<cell|<verbatim|delete_arc(G,e or E or T)>>>>>>
+  </bothlined>
+
   The command <with|font-family|tt|add_edge> accepts two arguments, an
-  undirected graph <math|G<around|(|V,E|)>> and an edge or a list of edges or
-  a trail of edges (entered as a list of vertices), and returns the copy of
-  <math|G> with the specified edges inserted. Edge insertion implies creation
-  of its endpoints if they are not already present.
+  undirected graph <math|G> and an edge <math|e> or a list of edges <math|E>
+  or a trail of edges <math|T> (entered as a list of vertices), and returns
+  the copy of <math|G> with the specified edges inserted. Edge insertion
+  implies that its endpoints will be created if they are not already present
+  in <math|G>.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -4104,12 +4126,108 @@
     </unfolded-io>
   </session>
 
+  The commands <verbatim|delete_edge> and <verbatim|delete_arc> accept two
+  arguments, the input graph <math|G> and an edge/arc <math|e> or a list of
+  edges/arcs <math|E> or a trail of edges <math|T>. It returns a copy of
+  <math|G> in which the specified edges/arcs are removed. Note that this
+  operation does not change the set of vertices of <math|G>.
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      K33:=relabel_vertices(complete_graph(3,3),[A,B,C,D,E,F])
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 6 vertices and 9 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      has_edge(K33,[A,D])
+    <|unfolded-io>
+      <\equation*>
+        <text|true>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      delete_edge(K33,[A,D])
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 6 vertices and 8 edges>
+      </equation*>
+    </unfolded-io>
+  </session>
+
+  Note that <math|G> itself is not changed.
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      has_edge(K33,[B,D])
+    <|unfolded-io>
+      <\equation*>
+        <text|true>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      delete_edge(K33,[[A,D],[B,D]])
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 6 vertices and 7 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      DG:=digraph(trail(1,2,3,4,5,2,4))
+    <|unfolded-io>
+      <\equation*>
+        <text|a directed unweighted graph with 5 vertices and 6 arcs>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      delete_arc(DG,[[2,3],[4,5],[5,2]])
+    <|unfolded-io>
+      <\equation*>
+        <text|a directed unweighted graph with 5 vertices and 3 arcs>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      delete_arc(DG,[3,4,5,2])
+    <|unfolded-io>
+      <\equation*>
+        <text|a directed unweighted graph with 5 vertices and 3 arcs>
+      </equation*>
+    </unfolded-io>
+  </session>
+
   <subsection|Accessing and modifying edge weights>
 
   The commands <kbd|get_edge_weight><index|<kbd|get_edge_weight>> and
   <with|font-family|tt|set_edge_weight><index|<with|font-family|tt|set_edge_weight>>
   are used to access and modify the weight of an edge/arc in a weighted
   graph, respectively.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|set_edge_weight(G,e,w)>>>|<row|<cell|>|<cell|<verbatim|set_edge_weight(G,e)>>>>>>
+  </bothlined>
 
   <with|font-family|tt|set_edge_weight> accepts three arguments: a weighted
   graph <math|G<around|(|V,E|)>>, edge/arc <math|e\<in\>E> and the new weight
@@ -4146,6 +4264,10 @@
 
   The command <with|font-family|tt|contract_edge><index|<with|font-family|tt|contract_edge>>
   is used for contracting (collapsing) edges in a graph.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|contract_edge(G,e)>>>>>>
+  </bothlined>
 
   <with|font-family|tt|contract_edge> accepts two arguments, a graph
   <math|G<around|(|V,E|)>> and an edge/arc <math|e=<around|(|v,w|)>\<in\>E>,
@@ -4214,13 +4336,19 @@
   <subsection|Subdividing edges>
 
   The command <with|font-family|tt|subdivide_edges><index|<with|font-family|tt|subdivide_edges>>
-  is used for subdividing edges of a graph.
+  is used for subdividing edges in graphs, i.e.<nbsp>splitting them by
+  inserting new vertices.
 
-  <with|font-family|tt|subdivide_edges> accepts two or three arguments, a
-  graph <math|G<around|(|V,E|)>>, a single edge/arc or a list of edges/arcs
-  in <math|E> and optionally a positive integer <math|r> (which defaults to
-  1). Each of the specified edges/arcs will be subdivided with exactly
-  <math|r> new vertices, labeled with the smallest available integers. The
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|subdivide_edges(G,e
+    or E,[r])>>>>>>
+  </bothlined>
+
+  <with|font-family|tt|subdivide_edges> accepts two or three arguments: the
+  input graph <math|G>, a single edge/arc <math|e> or a list of edges/arcs
+  <math|E> and optionally a positive integer <math|r> (which defaults to 1).
+  Each of the specified edges/arcs will be subdivided with exactly <math|r>
+  new vertices, labeled with the smallest available nonnegative integers. The
   resulting graph, which is homeomorphic to <math|G>, is returned.
 
   If the endpoints of the edge being subdivided have valid coordinates, the
@@ -4283,6 +4411,10 @@
   The graph structure maintains a set of attributes as tag-value pairs which
   can be accessed and modified by the user.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|set_graph_attribute(G,tag1=value1,tag2=value2,...)>>>|<row|<cell|>|<cell|<verbatim|set_graph_attribute(G,[tag1,tag2,...],[value1,value2,...])>>>|<row|<cell|>|<cell|<verbatim|get_graph_attribute(G,tag1,tag2,...)>>>|<row|<cell|>|<cell|<verbatim|get_graph_attribute(G,[tag1,tag2,...])>>>|<row|<cell|>|<cell|<verbatim|list_graph_attributes(G)>>>|<row|<cell|>|<cell|<verbatim|discard_graph_attribute(G,tag1,tag2,...)>>>|<row|<cell|>|<cell|<verbatim|discard_graph_attribute(G,[tag1,tag2,...])>>>>>>
+  </bothlined>
+
   The command <with|font-family|tt|set_graph_attribute><index|<with|font-family|tt|set_graph_attribute>>
   is used for modifying the existing graph attributes or adding new ones. It
   accepts two arguments, a graph <math|G> and a sequence or list of graph
@@ -4311,11 +4443,11 @@
 
   Two tags being used by the <abbr|CAS> commands are <samp|directed> and
   <samp|weighted>, so it is not advisable to overwrite their values using
-  this command (instead, use <verbatim|<hlink|make_directed|#make-directed>>,
+  this command; use the <verbatim|<hlink|make_directed|#make-directed>>,
   <verbatim|<hlink|make_weighted|#make-weighted>> and
-  <verbatim|<hlink|underlying_graph|#underlying-graph>> commands). Another
-  attribute used internally is <samp|name>, which holds the name of the
-  respective graph (as a string).
+  <verbatim|<hlink|underlying_graph|#underlying-graph>> commands instead.
+  Another attribute used internally is <samp|name>, which holds the name of
+  the respective graph (as a string).
 
   <\session|giac|default>
     <\unfolded-io>
@@ -4384,6 +4516,10 @@
 
   For every vertex of a graph, the list of attributes in form of tag-value
   pairs is maintained, which can be accessed and modified by the user.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|set_vertex_attribute(G,v,tag1=value1,tag2=value2,...)>>>|<row|<cell|>|<cell|<verbatim|set_vertex_attribute(G,v,[tag1,tag2,...],[value1,value2,...])>>>|<row|<cell|>|<cell|<verbatim|get_vertex_attribute(G,v,tag1,tag2,...)>>>|<row|<cell|>|<cell|<verbatim|get_vertex_attribute(G,v,[tag1,tag2,...])>>>|<row|<cell|>|<cell|<verbatim|list_vertex_attributes(G,v)>>>|<row|<cell|>|<cell|<verbatim|discard_vertex_attribute(G,v,tag1,tag2,...)>>>|<row|<cell|>|<cell|<verbatim|discard_vertex_attribute(G,v,[tag1,tag2,...])>>>>>>
+  </bothlined>
 
   The command <with|font-family|tt|set_vertex_attribute><index|<with|font-family|tt|set_vertex_attribute>>
   is used for modifying the existing vertex attributes or adding new ones. It
@@ -4502,6 +4638,10 @@
 
   For every edge of a graph, the list of attributes in form of key-value
   pairs is maintained, which can be accessed and modified by the user.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|set_edge_attribute(G,e,tag1=value1,tag2=value2,...)>>>|<row|<cell|>|<cell|<verbatim|set_edge_attribute(G,e,[tag1,tag2,...],[value1,value2,...])>>>|<row|<cell|>|<cell|<verbatim|get_edge_attribute(G,e,tag1,tag2,...)>>>|<row|<cell|>|<cell|<verbatim|get_edge_attribute(G,e,[tag1,tag2,...])>>>|<row|<cell|>|<cell|<verbatim|list_edge_attributes(G,e)>>>|<row|<cell|>|<cell|<verbatim|discard_edge_attribute(G,e,tag1,tag2,...)>>>|<row|<cell|>|<cell|<verbatim|discard_edge_attribute(G,e,[tag1,tag2,...])>>>>>>
+  </bothlined>
 
   The command <with|font-family|tt|set_edge_attribute><index|<with|font-family|tt|set_edge_attribute>>
   is used for modifying the existing edge attributes or adding new ones. It
@@ -4636,6 +4776,10 @@
   for importing a graph from text file in <samp|dot> format<\footnote>
     <verbatim|<hlink|https://en.wikipedia.org/wiki/DOT_(graph_description_language)|>>
   </footnote>.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|import_graph(filename)>>>>>>
+  </bothlined>
 
   <with|font-family|tt|import_graph> accepts a string
   <with|font-family|tt|filename> as its only argument and returns the graph
@@ -4776,6 +4920,10 @@
   The command <with|font-family|tt|export_graph> is used for saving graphs to
   disk in <with|font-family|ss|dot> or <LaTeX> format.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|export_graph(G,filename)>>>|<row|<cell|>|<cell|<verbatim|export_graph(G,filename,latex[=\<less\>params\<gtr\>])>>>>>>
+  </bothlined>
+
   <subsection|Saving graphs in <with|font-family|ss|dot> format>
 
   <with|font-family|tt|export_graph<index|<with|font-family|tt|export_graph>>>
@@ -4900,6 +5048,10 @@
   determining the type of a graph: whether is it directed or not
   resp.<nbsp>weighted or not.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_directed(G)>>>|<row|<cell|>|<cell|<verbatim|is_weighted(G)>>>>>>
+  </bothlined>
+
   Both commands accept the input graph <math|G> as their only argument.
   <verbatim|is_directed> resp.<nbsp><verbatim|is_weighted> returns
   <verbatim|true> if <math|G> is directed resp.<nbsp>weighted, else it
@@ -4967,6 +5119,10 @@
   <verbatim|number_of_vertices><index|<verbatim|number_of_vertices>>
   resp.<nbsp>the <verbatim|number_of_edges><index|<verbatim|number_of_edges>>
   command.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|vertices(G)>>>|<row|<cell|>|<cell|<verbatim|graph_vertices(G)>>>|<row|<cell|>|<cell|<verbatim|edges(G,[weights])>>>|<row|<cell|>|<cell|<verbatim|number_of_vertices(G)>>>|<row|<cell|>|<cell|<verbatim|number_of_edges(G)>>>>>>
+  </bothlined>
 
   <verbatim|vertices> or <verbatim|graph_vertices> accepts a graph
   <math|G<around*|(|V,E|)>> as its only argument and returns the set of
@@ -5068,7 +5224,16 @@
 
   The command <verbatim|vertex_degree><index|<verbatim|vertex_degree>> is
   used for computing the degree of a vertex, i.e.<nbsp>counting the vertices
-  adjacent to it.
+  adjacent to it. The related specialized commands are
+  <verbatim|vertex_out_degree><index|<verbatim|vertex_out_degree>>,
+  <verbatim|vertex_in_degree><index|<verbatim|vertex_in_degree>>,
+  <verbatim|degree_sequence><index|<verbatim|degree_sequence>>,
+  <verbatim|minimum_degree><index|<verbatim|minimum_degree>> and
+  <verbatim|maximum_degree><index|<verbatim|maximum_degree>>.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|vertex_degree(G,v)>>>|<row|<cell|>|<cell|<verbatim|vertex_in_degree(G,v)>>>|<row|<cell|>|<cell|<verbatim|vertex_out_degree(G,v)>>>|<row|<cell|>|<cell|<verbatim|degree_sequence(G)>>>|<row|<cell|>|<cell|<verbatim|minimum_degree(G,v)>>>|<row|<cell|>|<cell|<verbatim|maximum_degree(G,v)>>>>>>
+  </bothlined>
 
   <verbatim|vertex_degree> accepts two arguments, a graph
   <math|G<around*|(|V,E|)>> and a vertex <math|v\<in\>V>, and returns the
@@ -5077,11 +5242,10 @@
   <math|v>.
 
   When dealing with directed graphs, one can also use the specialized command
-  <verbatim|vertex_in_degree><index|<verbatim|vertex_in_degree>>
-  resp.<nbsp><verbatim|vertex_out_degree><index|<verbatim|vertex_out_degree>>
-  which accepts the same arguments as <verbatim|vertex_degree> but returns
-  the number of arcs <math|<around*|(|w,v|)>\<in\>E> resp.<nbsp>the number of
-  arcs <math|<around*|(|v,w|)>\<in\>E>, where <math|w\<in\>V>.
+  <verbatim|vertex_out_degree> resp.<nbsp><verbatim|vertex_in_degree> which
+  accepts the same arguments as <verbatim|vertex_degree> but returns the
+  number of arcs <math|<around*|(|v,w|)>\<in\>E> resp.<nbsp>the number of
+  arcs <math|<around*|(|w,v|)>\<in\>E>, where <math|w\<in\>V>.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -5156,12 +5320,13 @@
   </session>
 
   To obtain the list of degrees of all vertices <math|v\<in\>V>, use the
-  <verbatim|degree_sequence><index|<verbatim|degree_sequence>> command.
+  <verbatim|degree_sequence> command.
 
-  <verbatim|degree_sequence> accepts a graph <math|G<around*|(|V,E|)>> as its
-  only argument and returns the list of degrees of vertices from <math|V> in
-  the same order as returned by the command <verbatim|vertices>. If <math|G>
-  is a digraph, arc directions are ignored.
+  <verbatim|degree_sequence> accepts the input graph
+  <math|G<around*|(|V,E|)>> as its only argument and returns the list of
+  degrees of vertices from <math|V> in the same order as returned by the
+  command <verbatim|vertices>. If <math|G> is a digraph, arc directions are
+  ignored.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -5175,11 +5340,12 @@
     </unfolded-io>
   </session>
 
-  To obtain the maximum degree <math|\<Delta\><around*|(|G|)>> or the minimum
-  degree <math|\<delta\><around*|(|G|)>> in the graph <math|G>, use the
-  command <verbatim|maximum_degree><index|<verbatim|maximum_degree>> or
-  <verbatim|minimum_degree><index|<verbatim|minimum_degree>>, respectively.
-  Both commands accept the input graph <math|G> as the only argument.
+  To compute the minimum vertex degree <math|\<delta\><around*|(|G|)>> or the
+  maximum vertex degree <math|\<Delta\><around*|(|G|)>> in the graph
+  <math|G>, use the command <verbatim|minimum_degree> or
+  <verbatim|maximum_degree>, respectively. Both commands accept the input
+  graph <math|G> as the only argument and return
+  <math|\<delta\><around*|(|G|)>> resp.<nbsp><math|\<Delta\><around*|(|G|)>>.
 
   For example, the command line below shows that Petersen graph is cubic
   (3-regular).
@@ -5211,6 +5377,10 @@
   The command <verbatim|is_regular><index|<verbatim|is_regular>> is used for
   checking whether a graph is regular, i.e.<nbsp>does each of its vertices
   have the same number of neighbors.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_regular(G)>>>>>>
+  </bothlined>
 
   <verbatim|is_regular> accepts the input graph <math|G<around*|(|V,E|)>> as
   its only argument and returns <verbatim|true> if
@@ -5244,17 +5414,29 @@
   <subsection|Vertex adjacency>
 
   The command <verbatim|has_edge><index|<verbatim|has_edge>> is used for
-  checking if two vertices in an undirected graph are adjacent or not.
+  checking if two vertices in an undirected graph are adjacent or not. For
+  digraphs, there is the similar command <verbatim|has_arc><index|<verbatim|has_arc>>.
+
+  The command <verbatim|neighbors><index|<verbatim|neighbors>> is used for
+  obtaining the list of vertices in a graph that are adjacent to the
+  particular vertex or the complete adjacency structure of the graph, in
+  sparse form.
+
+  <label|departures-arrivals>The command <verbatim|departures><index|<verbatim|departures>>
+  resp.<nbsp><verbatim|arrivals><index|<verbatim|arrivals>> is used for
+  determining all neighbors of a vertex <math|v> in a digraph which are the
+  heads resp.<nbsp>the tails of the corresponding arcs.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|has_edge(G,[u,v])>>>|<row|<cell|>|<cell|<verbatim|has_arc(G,[u,v])>>>|<row|<cell|>|<cell|<verbatim|neighbors(G,[v])>>>|<row|<cell|>|<cell|<verbatim|departures(G,[v])>>>|<row|<cell|>|<cell|<verbatim|arrivals(G,[v])>>>>>>
+  </bothlined>
 
   <verbatim|has_edge> accepts two arguments, the input graph
   <math|G<around*|(|V,E|)>> and a list <verbatim|[u,v]> where
   <math|u,v\<in\>V>. The command returns <verbatim|true> if <math|u v\<in\>E>
-  and <verbatim|false> otherwise.
-
-  For digraphs, there is the similar command
-  <verbatim|has_arc><index|<verbatim|has_arc>> with the same input syntax.
-  Note, however, that the order of vertices <math|u> and <math|v> matters
-  this time.
+  and <verbatim|false> otherwise. The syntax for <verbatim|has_arc> is the
+  same. Note, however, that the order of vertices <math|u> and <math|v>
+  matters in digraphs.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -5328,11 +5510,6 @@
     </unfolded-io>
   </session>
 
-  The command <verbatim|neighbors><index|<verbatim|neighbors>> is used for
-  obtaining the list of vertices in a graph that are adjacent to the
-  particular vertex or the complete adjacency structure of the graph, in
-  sparse form.
-
   <verbatim|neighbors> accepts one or two arguments. The first, mandatory
   argument is the input graph <math|G<around*|(|V,E|)>>. The second, optional
   argument is a vertex <math|v\<in\>V>. The command returns the list of
@@ -5364,11 +5541,6 @@
       </equation*>
     </unfolded-io>
   </session>
-
-  <label|departures-arrivals>The command <verbatim|departures><index|<verbatim|departures>>
-  resp.<nbsp><verbatim|arrivals><index|<verbatim|arrivals>> is used for
-  determining all neighbors of a vertex <math|v> in a digraph which are the
-  heads resp.<nbsp>the tails of the corresponding arcs.
 
   <verbatim|departures> resp.<nbsp><verbatim|arrivals> accepts one or two
   arguments, the input digraph <math|G<around*|(|V,E|)>> and optionally a
@@ -5413,6 +5585,10 @@
 
   The command <verbatim|incident_edges><index|<verbatim|incident_edges>> is
   used for obtaining edges incident to the given vertex in a graph.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|indcident_edges(G,v)>>>|<row|<cell|>|<cell|<verbatim|indcident_edges(G,L)>>>>>>
+  </bothlined>
 
   <verbatim|incident_edges> accepts two argument, the input graph
   <math|G<around*|(|V,E|)>> and a vertex <math|v\<in\>V> or a list of
@@ -5484,6 +5660,10 @@
   The command <verbatim|adjacency_matrix><index|<verbatim|adjacency_matrix>>
   is used for obtaining the adjacency matrix of a graph
   <math|G<around*|(|V,E|)>> where <math|V=<around*|{|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|n>|}>>.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|adjacency_matrix(G)>>>>>>
+  </bothlined>
 
   <verbatim|adjacency_matrix> accepts the input graph <math|G> as its only
   argument and returns the square matrix <math|A=<around*|[|a<rsub|i j>|]>>
@@ -5576,6 +5756,10 @@
   used for obtaining the weight matrix of a weighted graph
   <math|G<around*|(|V,E|)>> where <math|V=<around*|{|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|n>|}>>.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|weight_matrix(G)>>>>>>
+  </bothlined>
+
   <verbatim|weight_matrix> accepts the input graph <math|G> as its only
   argument and returns the square matrix <math|M=<around*|[|m<rsub|i j>|]>>
   of order <math|n> such that <math|m<rsub|i j>> equals zero if
@@ -5613,6 +5797,10 @@
 
   The command <verbatim|incidence_matrix><index|<verbatim|incidence_matrix>>
   is used for obtaining the incidence matrix of a graph.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|incidence_matrix(G)>>>>>>
+  </bothlined>
 
   <verbatim|incidence_matrix> accepts the input graph
   <math|G<around*|(|V,E|)>>, where <math|V=<around*|{|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|n>|}>>
@@ -5717,6 +5905,10 @@
   <verbatim|charpoly> is used for obtaining the characteristic polynomial of
   an undirected graph.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_charpoly(G,[x])>>>|<row|<cell|>|<cell|<verbatim|charpoly(G,[x])>>>>>>
+  </bothlined>
+
   <verbatim|graph_charpoly> or <verbatim|charpoly> accepts one or two
   arguments, the input graph <math|G<around*|(|V,E|)>> and optionally a value
   or symbol <math|x>. The command returns <math|p<around*|(|x|)>>, where
@@ -5780,6 +5972,10 @@
   The command <verbatim|graph_spectrum><index|<verbatim|graph_spectrum>> is
   used for obtaining the spectrum of eigenvalues of a graph.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_spectrum(G)>>>>>>
+  </bothlined>
+
   <verbatim|graph_spectrum> accepts the input graph <math|G> as its only
   argument and returns the list in which every element is an eigenvalue of
   the adjacency matrix of <math|G> paired with its multiplicity.
@@ -5834,6 +6030,10 @@
   The command <verbatim|seidel_spectrum><index|<verbatim|seidel_spectrum>> is
   used for obtaining the Seidel spectrum of a graph.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|seidel_spectrum(G)>>>>>>
+  </bothlined>
+
   <verbatim|seidel_spectrum> accepts the input graph
   <math|G<around*|(|V,E|)>> as its only argument and returns the list in
   which every element is an eigenvalue of the matrix <math|J-I-2*A> paired
@@ -5868,6 +6068,10 @@
   The command <verbatim|is_integer_graph><index|<verbatim|is_integer_graph>>
   is used for determining if a graph is an integer graph, i.e.<nbsp>if its
   spectrum consists only of integers.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_integer_graph(G)>>>>>>
+  </bothlined>
 
   <verbatim|is_integer_graph> accepts the input graph <math|G> as its only
   argument. The return value is <verbatim|true> if <math|G> is an integer
@@ -5911,6 +6115,10 @@
   the commands <verbatim|vertices> and <verbatim|edges> give the same results
   for both graphs. To test graphs for equality, use the command
   <verbatim|graph_equal>.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_equal(G1,G2)>>>>>>
+  </bothlined>
 
   <verbatim|graph_equal> accepts two arguments, the input graphs
   <math|G<rsub|1><around*|(|V<rsub|1>,E<rsub|1>|)>> and
@@ -5974,15 +6182,19 @@
   The command <verbatim|is_isomorphic><index|<verbatim|is_isomorphic>> is
   used for determining whether two graphs are isomorphic.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_isomorphic(G1,G2,[m])>>>|<row|<cell|>|<cell|<verbatim|canonical_labeling(G)>>>>>>
+  </bothlined>
+
   <verbatim|is_isomorphic> accepts two or three arguments: the input graphs
   <math|G<rsub|1><around*|(|V<rsub|1>,E<rsub|1>|)>> and
   <math|G<rsub|2><around*|(|V<rsub|2>,E<rsub|2>|)>> and optionally an
-  unassigned identifier. The command returns <verbatim|true> if
+  unassigned identifier <verbatim|m>. The command returns <verbatim|true> if
   <math|G<rsub|1>> and <math|G<rsub|2>> are isomorphic and <verbatim|false>
   otherwise. If the third argument is given and <math|G<rsub|1>> and
-  <math|G<rsub|2>> are isomorphic, the list of pairwise vertex matching in
-  <math|G<rsub|1>> and <math|G<rsub|2>>, representing the isomorphism between
-  the two graphs, is stored to it.
+  <math|G<rsub|2>> are isomorphic, the list of pairwise matching of vertices
+  in <math|G<rsub|1>> and <math|G<rsub|2>>, representing the isomorphism
+  between the two graphs, is stored to <verbatim|m>.
 
   This command, as well as the commands <verbatim|canonical_labeling> and
   <verbatim|graph_automorphisms> described below, is using <samp|nauty>
@@ -6337,6 +6549,10 @@
   The command <verbatim|graph_automorphisms><index|<verbatim|graph_automorphisms>>
   is used for finding generators of the automorphism group of a graph.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_automorphisms(G)>>>>>>
+  </bothlined>
+
   <verbatim|graph_automorphisms> accepts the input graph <math|G> as its only
   argument and returns a list containing the generators of
   <math|Aut<around*|(|G|)>>, the automorphism group of <math|G>. Each
@@ -6391,9 +6607,14 @@
   determining if a graph is connected, biconnected or triconnected,
   respectively.
 
-  All three commands accept only one argument, the input graph
-  <math|G<around*|(|V,E|)>>. They return <verbatim|true> if <math|G>
-  possesses the required type of connectivity and <verbatim|false> otherwise.
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_connected(G)>>>|<row|<cell|>|<cell|<verbatim|is_biconnected(G)>>>|<row|<cell|>|<cell|<verbatim|is_triconnected(G)>>>>>>
+  </bothlined>
+
+  Each of the above commands accepts the input graph
+  <math|G<around*|(|V,E|)>> as its only argument and returns <verbatim|true>
+  if <math|G> possesses the required type of connectivity. Else, it returns
+  <verbatim|false> otherwise.
 
   <math|G> is <em|connected> or <em|1-connected> if for every pair
   <math|v,w\<in\>V> there exists a path with endpoints <math|u> and <math|v>
@@ -6516,8 +6737,12 @@
   is used for decomposing a graph into connected resp.<nbsp>biconnected
   components.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|connected_components(G)>>>|<row|<cell|>|<cell|<verbatim|biconnected_components(G)>>>>>>
+  </bothlined>
+
   <verbatim|connected_components> resp.<nbsp><verbatim|biconnected_components>
-  accept the input graph <math|G<around*|(|V,E|)>> as its only argument and
+  accepts the input graph <math|G<around*|(|V,E|)>> as its only argument and
   returns the minimal partition <math|<around*|{|V<rsub|1>,V<rsub|2>,\<ldots\>,V<rsub|k>|}>>
   of <math|V> such that the subgraph <math|G<rsub|i>\<subset\>G> induced by
   <math|V<rsub|i>> is connected resp.<nbsp>biconnected for each
@@ -6636,6 +6861,10 @@
   The command <verbatim|graph_rank><index|<verbatim|graph_rank>> is used for
   computing the rank of a graph.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_rank(G,[S])>>>>>>
+  </bothlined>
+
   <verbatim|graph_rank> accepts one or two arguments, the input graph
   <math|G<around*|(|V,E|)>> and optionally a set of edges <math|S\<subset\>E>
   (by default <math|S=E>), and returns <math|<around*|\||V|\|>-k> where
@@ -6680,6 +6909,10 @@
   is used for obtaining the articulation points of a graph, i.e.<nbsp>cut
   vertices, if any.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|articulation_points(G)>>>>>>
+  </bothlined>
+
   <verbatim|articulation_points> accepts the input graph
   <math|G<around*|(|V,E|)>> as its only argument and returns the list of
   articulation points of <math|G>. A vertex <math|v\<in\>V> is an
@@ -6718,7 +6951,13 @@
   is used for decomposing a graph into strongly connected components. A
   (di)graph <math|H> is <em|strongly connected> if for each pair
   <math|<around*|(|v,w|)>> of distinct vertices in <math|H> there is a
-  (directed) path from <math|v> to <math|w> in <math|H>.
+  (directed) path from <math|v> to <math|w> in <math|H>. The command
+  <verbatim|is_strongly_connected><index|<verbatim|is_strongly_connected>>
+  can be used to determine if the given graph <math|G> is strongly connected.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|strongly_connected_components(G)>>>|<row|<cell|>|<cell|<verbatim|is_strongly_connected(G)>>>>>>
+  </bothlined>
 
   <verbatim|strongly_connected_components> accepts the input graph
   <math|G<around*|(|V,E|)>> as its only argument and returns the minimal
@@ -6735,11 +6974,9 @@
   Note that an undirected graph is strongly connected if and only if it is
   connected.
 
-  The command <verbatim|is_strongly_connected><index|<verbatim|is_strongly_connected>>
-  can be used to determine if the given graph <math|G> is strongly connected.
-  It accepts <math|G> as its only argument and returns <verbatim|true> if
-  <math|G> has exactly one strongly connected component and <verbatim|false>
-  otherwise.
+  <verbatim|is_strongly_connected> accepts <math|G> as its only argument and
+  returns <verbatim|true> if <math|G> has exactly one strongly connected
+  component and <verbatim|false> otherwise.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -6802,11 +7039,15 @@
   <em|edge cut>, i.e.<nbsp>does removing them increase the number of
   connected components of the graph.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_cut_set(G,L)>>>>>>
+  </bothlined>
+
   <verbatim|is_cut_set> accepts two arguments, the input graph
-  <math|G<around*|(|V,E|)>> and a list <math|E<rprime|'>> of edges such that
-  <math|E<rprime|'>\<subset\>E>. It returns <verbatim|true> if the graph
-  <math|G<rprime|'><around*|(|V,E\<setminus\>E<rprime|'>|)>> has more
-  connected components than <math|G>, else it returns <verbatim|false>.
+  <math|G<around*|(|V,E|)>> and a subset <math|L\<subset\>E> of edges, and
+  returns <verbatim|true> if the graph <math|G<rprime|'><around*|(|V,E\<setminus\>L|)>>
+  has more connected components than <math|G>. Else it returns
+  <verbatim|false>.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -6865,13 +7106,17 @@
   <subsection|Tree graphs>
 
   The command <verbatim|is_tree><index|<verbatim|is_tree>> is used for
-  determining whether the given graph is a tree. An undirected graph
-  <math|G<around*|(|V,E|)>> is a <em|tree> if
-  <math|<around*|\||V|\|>=<around*|\||E|\|>+1> and <math|G> is connected.
+  determining whether the given graph is a tree. An undirected graph is a
+  <em|tree> if it is connected and has <math|m+1> vertices, vhere <math|m> is
+  the number of edges.
 
-  <verbatim|is_tree> accepts the input graph <math|G> as its only argument
-  and returns <verbatim|true> if <math|G> is a tree and <verbatim|false>
-  otherwise.
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_tree(G)>>>>>>
+  </bothlined>
+
+  <verbatim|is_tree> accepts the input graph <math|G<around*|(|V,E|)>> as its
+  only argument and returns <verbatim|true> if <math|G> is a tree and
+  <verbatim|false> otherwise.
 
   The only expensive step in the algorithm is determining whether <math|G> is
   connected. The condition <math|<around*|\||V|\|>=<around*|\||E|\|>+1> is
@@ -6906,10 +7151,14 @@
   determining whether the given graph is a forest. A graph is called
   <em|forest> if each of its connected components is a tree.
 
-  <verbatim|is_forest> accepts the input graph <math|G> as its only argument
-  and returns <verbatim|true> if <math|G> is a forest and <verbatim|false>
-  otherwise. The algorithm runs in <math|O<around*|(|<around*|\||V|\|>+<around*|\||E|\|>|)>>
-  time.
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_forest(G)>>>>>>
+  </bothlined>
+
+  <verbatim|is_forest> accepts the input graph <math|G<around*|(|V,E|)>> as
+  its only argument and returns <verbatim|true> if <math|G> is a forest and
+  <verbatim|false> otherwise. The algorithm runs in
+  <math|O<around*|(|<around*|\||V|\|>+<around*|\||E|\|>|)>> time.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -6968,6 +7217,10 @@
   node. The <em|height> of a tree is the length of the longest path in that
   tree that has the root node as one of its endpoints.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|tree_height(G,r)>>>>>>
+  </bothlined>
+
   <verbatim|tree_height> accepts two arguments, the input tree graph
   <math|G<around*|(|V,E|)>> and a vertex <math|r\<in\>V>, which is used as
   the root node. The command returns the height of <math|G> with respect to
@@ -7015,6 +7268,10 @@
   The command <verbatim|lowest_common_ancestor><index|<verbatim|lowest_common_ancestor>>
   determines the <em|lowest common ancestor> (<abbr|LCA>) of a pair of nodes
   in a tree, or for every element of a list of such pairs.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|lowest_common_ancestor(G,r,u,v)>>>|<row|<cell|>|<cell|<verbatim|lowest_common_ancestor(G,r,[[u1,v1],[u2,v2],..,[uk,vk]])>>>>>>
+  </bothlined>
 
   <verbatim|lowest_common_ancestor> accepts two mandatory arguments, the
   input tree graph <math|G<around*|(|V,E|)>> and the root node
@@ -7077,11 +7334,15 @@
   used for determining whether a directed unweighted graph is an
   <em|arborescence>, which is the digraph form of a rotted tree.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_arborescence(G)>>>>>>
+  </bothlined>
+
   <verbatim|is_arborescence> accepts the input digraph
-  <math|G<around*|(|V,E|)>> and returns <verbatim|true> if there is a vertex
-  <math|u\<in\>V> such that for any other <math|v\<in\>V> there is exactly
-  one directed path from <math|u> to <math|v>. Else it returns
-  <verbatim|false>.
+  <math|G<around*|(|V,E|)>> as its only argument and returns <verbatim|true>
+  if there is a vertex <math|u\<in\>V> such that for any other
+  <math|v\<in\>V> there is exactly one directed path from <math|u> to
+  <math|v>. Else it returns <verbatim|false>.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -7121,6 +7382,10 @@
   determining whether the given graph is a <em|network>, i.e.<nbsp>a
   directed, connected graph with at least one vertex with in-degree 0 (the
   source) and at least one vertex with out-degree 0 (the sink).
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_network(G)>>>|<row|<cell|>|<cell|<verbatim|is_network(G,s,t)>>>>>>
+  </bothlined>
 
   <verbatim|is_network> accepts one or three arguments, the input digraph
   <math|G<around*|(|V,E|)>> and optionally the source vertex <math|s> and the
@@ -7209,12 +7474,16 @@
   The command <verbatim|maxflow><index|<verbatim|maxflow>> is used for
   computing the maximum flow in a network.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|maxflow(G,s,t,[M])>>>>>>
+  </bothlined>
+
   <verbatim|maxflow> accepts three or four arguments: the input network graph
   <math|G<around*|(|V,E|)>>, the source <math|s\<in\>V>, the sink
-  <math|t\<in\>V> and optionally an unassigned identifier. It returns the
-  optimal value for the maximum flow problem for <math|G>. If an identifier
-  is given as the fourth argument, an optimal flow is written to it in form
-  of a matrix.
+  <math|t\<in\>V> and optionally an unassigned identifier <verbatim|M>. It
+  returns the optimal value for the maximum flow problem for <math|G>. If the
+  fourth argument is given, an optimal flow is written to <verbatim|M> in
+  form of a matrix.
 
   The strategy is to use the algorithm of <name|Edmonds> and <name|Karp>
   <cite|edmonds-karp>, which solves the maximum flow problem in
@@ -7355,6 +7624,10 @@
   used for computing the length of the shortest path(s) from the source
   vertex to some other vertex/vertices of a graph.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|vertex_distance(G,v,w)>>>|<row|<cell|>|<cell|<verbatim|vertex_distance(G,v,L)>>>>>>
+  </bothlined>
+
   <verbatim|vertex_distance> accepts three arguments, the input graph
   <math|G<around*|(|V,E|)>>, a vertex <math|v\<in\>V> called the <em|source>
   and a vertex <math|w\<in\>V> called the <em|target>, or a list
@@ -7404,6 +7677,10 @@
   The command <verbatim|allpairs_distance><index|<verbatim|allpairs_distance>>
   is used for computing the matrix of distances between all pairs of vertices
   in the given (weighted) graph.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|allpairs_distance(G)>>>>>>
+  </bothlined>
 
   <verbatim|allpairs_distance> accepts the input graph
   <math|G<around*|(|V,E|)>> as its only argument and returns a square matrix
@@ -7505,9 +7782,14 @@
   The command <verbatim|graph_diameter> is used for determining the maximum
   distance among all pairs of vertices in a graph.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_diameter(G)>>>>>>
+  </bothlined>
+
   <verbatim|graph_diameter> accepts the input graph <math|G<around*|(|V,E|)>>
-  and returns the number <math|max<around*|{|distance<around*|(|u,v|)>\<of\>u,v\<in\>V|}>>.
-  If <math|G> is disconnected, <math|+\<infty\>> is returned.
+  as its only argument and returns the number
+  <math|max<around*|{|distance<around*|(|u,v|)>\<of\>u,v\<in\>V|}>>. If
+  <math|G> is disconnected, <math|+\<infty\>> is returned.
 
   This command calls <verbatim|<hlink|allpairs_distance|#allpairs-distance>>
   and picks the largest element in the output matrix. Hence the complexity of
@@ -7591,6 +7873,10 @@
   <verbatim|odd_girth><index|<verbatim|odd_girth>> are used for computing the
   (odd) girth of an undirected unweighted graph.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|girth(G)>>>>>>
+  </bothlined>
+
   <verbatim|girth> resp.<nbsp><verbatim|odd_girth> accepts the input graph
   <math|G<around*|(|V,E|)>> as its only argument and returns the girth
   resp.<nbsp>odd girth of <math|G>. The (odd) girth of <math|G> is defined to
@@ -7670,6 +7956,10 @@
   checking for absence of directed cycles in digraphs. A directed graph with
   no directed cycle is said to be <em|acyclic>.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_acyclic(G)>>>>>>
+  </bothlined>
+
   <verbatim|is_acyclic> accepts the input digraph <math|G<around*|(|V,E|)>>
   as its only argument and returns <verbatim|true> if <math|G> is acyclic and
   <verbatim|false> otherwise.
@@ -7706,6 +7996,10 @@
   <verbatim|topological_sort><index|<verbatim|topological_sort>> is used for
   finding a linear ordering of vertices of an acyclic digraph which is
   consistent with the arcs of the digraph.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|topologic_sort(G)>>>|<row|<cell|>|<cell|<verbatim|topological_sort(G)>>>>>>
+  </bothlined>
 
   <verbatim|topologic_sort> accepts the input graph <math|G<around*|(|V,E|)>>
   as its only argument and returns the list of vertices of <math|G> in a
@@ -7755,16 +8049,20 @@
   The command <verbatim|st_ordering><index|<verbatim|st_ordering>> is used
   for finding <samp|st>-orientation in undirected biconnected graphs.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|st_ordering(G,s,t,[D])>>>>>>
+  </bothlined>
+
   <verbatim|st_ordering> accepts three or four arguments: the input graph
   <math|G<around*|(|V,E|)>>, a vertex <math|s\<in\>V> called the <em|source>,
   a vertex <math|t\<in\>V> called the <em|target> or <em|sink> such that
-  <math|s t\<in\>E> and optionally an unassigned identifier <math|D>. The
+  <math|s t\<in\>E> and optionally an unassigned identifier <verbatim|D>. The
   command returns the permutation <math|\<sigma\>> which defines a particular
   order of vertices in <math|V>. That ordering defines the orientation for
   each edge <math|e\<in\>E>, which causes <math|G> to become acyclic with a
   single source <math|s> and sink <math|t>. The ordering defined by
   <math|\<sigma\>> is the topological ordering of the resulting digraph. If
-  the optional argument <math|D> is given, the digraph is stored to it.
+  the fourth argument is given, the digraph is stored to <verbatim|D>.
 
   The orientation of <math|e=u v\<in\>E> is determined by the ordinals
   <math|n> and <math|m> of its endpoints <math|u> and <math|v>, respectively,
@@ -7829,6 +8127,10 @@
 
   The command <verbatim|maximum_matching><index|<verbatim|maximum_matching>>
   is used for finding maximum matchings in undirected unweighted graphs.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|maximum_matching(G)>>>>>>
+  </bothlined>
 
   <verbatim|maximum_matching> accepts the input graph
   <math|G<around*|(|V,E|)>> as its only argument and returns a list of edges
@@ -7941,6 +8243,10 @@
   algorithm of <name|Edmonds> used by the command
   <verbatim|<hlink|maximum_matching|#maximum-matching>>.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|bipartite_matching(G)>>>>>>
+  </bothlined>
+
   <verbatim|bipartite_matching> accepts the input graph
   <math|G<around*|(|V,E|)>> as its only argument and returns a sequence
   containing two elements: the size of the matching and the list of edges
@@ -7993,6 +8299,10 @@
 
   To check whether an undirected graph is complete, one can use the
   <kbd|is_clique><index|<kbd|is_clique>> command.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_clique(G)>>>>>>
+  </bothlined>
 
   <kbd|is_clique> accepts the input graph <math|G<around*|(|V,E|)>> as its
   only argument and returns <kbd|true> if <math|E=V\<times\>V>, i.e.<nbsp>if
@@ -8048,6 +8358,10 @@
   a graph. Graphs having this property are said to be <em|triangle-free>.
   Because of the absence of 3-cliques, triangle-free graphs do not contain
   cliques of cardinality greater than two.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_triangle_free(G)>>>>>>
+  </bothlined>
 
   <verbatim|triangle_free> accepts the input graph <math|G> as its only
   argument and returns <verbatim|true> if <math|G> is triangle-free and
@@ -8188,6 +8502,10 @@
   <em|maximum clique>. The command <rigid|<kbd|maximum_clique>><index|<kbd|maximum_clique>>
   can be used to find one in the given graph.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|maximum_clique(G)>>>>>>
+  </bothlined>
+
   <kbd|maximum_clique> accepts the graph <math|G> as its only argument and
   returns a maximum clique in <math|G> as a list of vertices. The clique may
   subsequently be extracted from <math|G> using the command
@@ -8280,11 +8598,15 @@
   can be obtained by calling the <kbd|clique_cover><index|<kbd|clique_cover>>
   command.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|clique_cover(G,[k])>>>>>>
+  </bothlined>
+
   <kbd|clique_cover> accepts graph <math|G> as its mandatory argument and
-  returns the smallest possible covering. Optionally, a positive integer may
-  be passed as the second argument. In that case the requirement that
-  <math|k> is less or equal to the given integer is set. If no such covering
-  is found, <kbd|clique_cover> returns empty list.
+  returns the smallest possible covering. Optionally, a positive integer
+  <math|k> may be passed as the second argument. In that case the requirement
+  that <math|k> is less or equal to the given integer is set. If no such
+  covering is found, <kbd|clique_cover> returns empty list.
 
   The strategy is to find a minimal vertex coloring in the complement
   <math|G<rsup|c>> of <math|G> (note that these two graphs share the same set
@@ -8366,6 +8688,10 @@
   The command <verbatim|clique_cover_number><index|<verbatim|clique_cover_number>>
   is used for computing the clique covering number of a graph.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|clique_cover_number(G)>>>>>>
+  </bothlined>
+
   <verbatim|clique_cover_number> accepts the input graph
   <math|G<around*|(|V,E|)>> as its only argument and returns the minimum
   number of cliques in <math|G> needed to cover the vertex set <math|V>.
@@ -8419,6 +8745,10 @@
 
   The command <kbd|greedy_color><index|<kbd|greedy_color>> is used for
   coloring vertices of a graph in a greedy fashion.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|greedy_color(G,[p])>>>>>>
+  </bothlined>
 
   <kbd|greedy_color> accepts one mandatory argument, the input graph
   <math|G>. Optionally, a permutation <math|p> of order
@@ -8493,8 +8823,12 @@
   smallest possible number of colors is used. To obtain such a coloring use
   the command <kbd|minimal_vertex_coloring><index|<kbd|minimal_vertex_coloring>>.
 
-  <kbd|minimal_vertex_coloring> accepts one mandatory argument, the graph
-  <math|G>. Optionally, a symbol <kbd|sto> may be passed as the second
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|minimal_coloring(G,[sto])>>>>>>
+  </bothlined>
+
+  <kbd|minimal_vertex_coloring> accepts one mandatory argument, the input
+  graph <math|G>. Optionally, a symbol <kbd|sto> may be passed as the second
   argument. The command returns the vertex colors in order of
   <kbd|vertices(G)> or, if the second argument is given, stores the colors as
   vertex attributes and returns the modified copy of <math|G>.
@@ -8558,14 +8892,19 @@
   is used for exact computation and approximation of the chromatic number of
   a graph.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|chromatic_number(G,[c])>>>|<row|<cell|>|<cell|<verbatim|chromatic_number(G,approx
+    or interval)>>>>>>
+  </bothlined>
+
   <verbatim|chromatic_number> accepts one mandatory argument, the input graph
   <math|G<around*|(|V,E|)>>, and optionally a second argument. To obtain only
   upper and lower bound for the chromatic number (which is much faster than
   computing exactly) the option <verbatim|approx> or <verbatim|interval>
   should be passed as the second argument. Alternatively, an unassigned
-  identifier is passed as the second argument; in that case the corresponding
-  coloring will be stored to it in form of a list of colors of the individual
-  vertices, ordered as in <verbatim|vertices(G)>.
+  identifier <verbatim|c> is passed as the second argument; in that case the
+  corresponding coloring will be stored to it in form of a list of colors of
+  the individual vertices, ordered as in <verbatim|vertices(G)>.
 
   The command returns the chromatic number <math|\<chi\><rsub|G>> of the
   graph <math|G> in the case of exact computation. If the option
@@ -8656,13 +8995,17 @@
   is used for determining whether the vertices of a graph can be colored with
   at most <math|k> colors.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_vertex_colorable(G,k,[c])>>>>>>
+  </bothlined>
+
   <verbatim|is_vertex_colorable> accepts two or three arguments: the input
   graph <math|G<around*|(|V,E|)>>, a positive integer <math|k> and optionally
-  an unassigned identifier. The command returns <verbatim|true> if <math|G>
-  can be colored using at most <math|k> colors and <verbatim|false>
-  otherwise. If an identifier is given, a coloring using at most <math|k>
-  colors is stored to it as a list of vertex colors, in the order of
-  <verbatim|vertices(G)>.
+  an unassigned identifier <verbatim|c>. The command returns <verbatim|true>
+  if <math|G> can be colored using at most <math|k> colors and
+  <verbatim|false> otherwise. If the third argument is given, a coloring
+  using at most <math|k> colors is stored to <verbatim|c> as a list of vertex
+  colors, in the order of <verbatim|vertices(G)>.
 
   The strategy is to first apply a simple greedy coloring procedure which
   runs in linear time. If the number of required colors is greater than
@@ -8754,8 +9097,6 @@
     </unfolded-io>
   </session>
 
-  \;
-
   <section|Edge coloring>
 
   <subsection|Minimal coloring>
@@ -8768,6 +9109,10 @@
   implies that every simple undirected graph falls into one of two
   categories: <em|1> if <math|n=\<Delta\>> or <em|2> if <math|n=\<Delta\>+1>,
   where <math|\<Delta\>> is the maximum degree of the graph.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|minimal_edge_coloring(G,[sto])>>>>>>
+  </bothlined>
 
   <verbatim|minimal_edge_coloring> accepts one or two arguments, the input
   graph <math|G<around*|(|V,E|)>> and optionally the keyword <verbatim|sto>.
@@ -8853,13 +9198,17 @@
   i.e.<nbsp>the minimal number of colors needed to color each edge of the
   graph such that two incident edges never share the same color.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|chromatic_index(G,[c])>>>>>>
+  </bothlined>
+
   <verbatim|chromatic_index> accepts one or two arguments, the input graph
-  <math|G<around*|(|E,V|)>> and optionally an unassigned identifier. The
-  command returns the chromatic index <math|\<chi\><rprime|'><around*|(|G|)>>
-  of <math|G>. If the second argument is given, it specifies the destination
-  for storing the coloring in form of a list of colors according to the order
-  of edges in <math|E> as returned by the command
-  <verbatim|<hlink|edges|#vertices-edges>>.
+  <math|G<around*|(|E,V|)>> and optionally an unassigned identifier
+  <verbatim|c>. The command returns the chromatic index
+  <math|\<chi\><rprime|'><around*|(|G|)>> of <math|G>. If the second argument
+  is given, it specifies the destination for storing the coloring in form of
+  a list of colors according to the order of edges in <math|E> as returned by
+  the command <verbatim|<hlink|edges|#vertices-edges>>.
 
   The example below demonstrates how to color the edges of a graph with
   colors obtained by passing unassigned identifier <verbatim|c> to
@@ -9000,11 +9349,15 @@
   for determining whether the given graph is an Eulerian graph and for
   finding Eulerian trails in such graphs.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_eulerian(G,[T])>>>>>>
+  </bothlined>
+
   <verbatim|is_eulerian> accepts one or two arguments, the input graph
-  <math|G<around*|(|V,E|)>> and optionally an unassigned identifier <math|T>,
-  and returns <verbatim|true> if <math|G> is Eulerian and <verbatim|false>
-  otherwise. If <math|T> is given, the corresponding Eulerian trail is stored
-  to it.
+  <math|G<around*|(|V,E|)>> and optionally an unassigned identifier
+  <verbatim|T>, and returns <verbatim|true> if <math|G> is Eulerian and
+  <verbatim|false> otherwise. If the second argument is given, the
+  corresponding Eulerian trail is stored to <verbatim|T>.
 
   The graph <math|G> is Eulerian if it has a trail covering all its edges.
   Such a trail is called <em|Eulerian trail>. An Eulerian trail may be
@@ -9047,13 +9400,17 @@
   also construct a Hamiltonian cycle in the input graph if the latter is
   Hamiltonian.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_hamiltonian(G,[hc])>>>>>>
+  </bothlined>
+
   <verbatim|is_hamiltonian> accepts one or two arguments, the input graph
-  <math|G<around*|(|V,E|)>> and optionally an unassigned identifier. The
-  command returns <verbatim|true> if <math|G> is Hamiltonian and
-  <verbatim|false> otherwise. When failing to determine whether <math|G> is
-  Hamiltonian or not, <verbatim|is_hamiltonian> returns <verbatim|undef>. If
-  an identifier is passed as the second argument, a Hamiltonian cycle is
-  stored to it.
+  <math|G<around*|(|V,E|)>> and optionally an unassigned identifier
+  <verbatim|hc>. The command returns <verbatim|true> if <math|G> is
+  Hamiltonian and <verbatim|false> otherwise. When failing to determine
+  whether <math|G> is Hamiltonian or not, <verbatim|is_hamiltonian> returns
+  <verbatim|undef>. If the second argument is given, a Hamiltonian cycle is
+  stored to <verbatim|hc>.
 
   The strategy is to apply some (non)hamiltonicity criteria presented in
   <name|DeLeon> <cite|melissa> before resorting to the definitive but NP-hard
@@ -9158,6 +9515,10 @@
   is used to find the shortest path between two vertices in an undirected
   unweighted graph.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|shortest_path(G,s,t)>>>|<row|<cell|>|<cell|<verbatim|shortest_path(G,s,T)>>>>>>
+  </bothlined>
+
   <with|font-family|tt|shortest_path> accepts three arguments: a graph
   <math|G<around|(|V,E|)>>, the source vertex <math|s\<in\>V> and the target
   vertex <math|t\<in\>V> or a list <math|T> of target vertices. The shortest
@@ -9224,6 +9585,10 @@
   The command <with|font-family|tt|dijkstra><index|<with|font-family|tt|dijkstra>>
   is used for finding the cheapest path between two distinct vertices of an
   undirected weighted graph.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|dijkstra(G,s,t)>>>|<row|<cell|>|<cell|<verbatim|dijkstra(G,s,T)>>>>>>
+  </bothlined>
 
   <with|font-family|tt|dijkstra> accepts two or three arguments: a weighted
   graph <math|G<around|(|V,E|)>> with nonnegative weights, a vertex
@@ -9292,6 +9657,10 @@
     For the details on traveling salesman problem and a historical overview
     see <cite|cook>.
   </footnote> (<abbr|TSP>) for undirected graphs.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|traveling_salesman(G,[M],[opts])>>>>>>
+  </bothlined>
 
   <verbatim|traveling_salesman> accepts the following arguments: the input
   graph <math|G<around*|(|V,E|)>>, a weight matrix <math|M> (optional) and a
@@ -9509,27 +9878,150 @@
   The command <with|font-family|tt|spanning_tree><index|<with|font-family|tt|spanning_tree>>
   is used for construction of spanning trees in undirected graphs.
 
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|spanning_tree(G)>>>|<row|<cell|>|<cell|<verbatim|spanning_tree(G,r)>>>>>>
+  </bothlined>
+
   <verbatim|spanning_tree> accepts one or two arguments, the input graph
   <math|G<around*|(|V,E|)>> and optionally a vertex <math|r\<in\>V>. It
   returns the spanning tree <math|T> (rooted in <math|r>) of <math|G>,
   obtained by depth-first traversal in <math|O<around|(|<around|\||V|\|>+<around|\||E|\|>|)>>
   time.
 
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      P:=graph("petersen")
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 10 vertices and 15 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      T1:=spanning_tree(P)
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 10 vertices and 9 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\input>
+      \<gtr\>\ 
+    <|input>
+      draw_graph(P)
+    </input>
+  </session>
+
+  <center|<image|images/span1.eps|40%|||>>
+
+  Extracting <math|T<rsub|1>> as a subgraph from <math|P> before drawing
+  retains the vertex positions.
+
+  <\session|giac|default>
+    <\input>
+      \<gtr\>\ 
+    <|input>
+      draw_graph(subgraph(P,edges(T1)))
+    </input>
+  </session>
+
+  <center|<image|images/span2.eps|40%|||>>
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      T2:=spanning_tree(P,4)
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 10 vertices and 9 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      edges(T1), edges(T2)
+    <|unfolded-io>
+      <\equation*>
+        <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|2|2|cell-rborder|0ln>|<table|<row|<cell|0>|<cell|1>>|<row|<cell|1>|<cell|2>>|<row|<cell|2>|<cell|3>>|<row|<cell|3>|<cell|4>>|<row|<cell|4>|<cell|9>>|<row|<cell|5>|<cell|7>>|<row|<cell|5>|<cell|8>>|<row|<cell|6>|<cell|8>>|<row|<cell|6>|<cell|9>>>>>|)>,<around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|2|2|cell-rborder|0ln>|<table|<row|<cell|0>|<cell|1>>|<row|<cell|0>|<cell|4>>|<row|<cell|1>|<cell|2>>|<row|<cell|2>|<cell|3>>|<row|<cell|3>|<cell|8>>|<row|<cell|5>|<cell|7>>|<row|<cell|5>|<cell|8>>|<row|<cell|6>|<cell|9>>|<row|<cell|7>|<cell|9>>>>>|)>
+      </equation*>
+    </unfolded-io>
+  </session>
+
   <subsection|Minimal spanning tree>
 
   The command <with|font-family|tt|minimal_spanning_tree><index|<with|font-family|tt|minimal_spanning_tree>>
   is used for construction of minimal spanning trees in undirected graphs.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|minimal_spanning_tree(G)>>>>>>
+  </bothlined>
 
   <with|font-family|tt|minimal_spanning_tree> accepts the input graph
   <math|G<around|(|V,E|)>> as its only argument and returns its minimal
   spanning tree obtained by <name|Kruskal>'s algorithm in
   <math|O<around|(|<around|\||E|\|>*log <around|\||V|\|>|)>> time.
 
+  <\session|giac|default>
+    <\input>
+      \<gtr\>\ 
+    <|input>
+      A:=[[0,1,0,4,0,0],[1,0,1,0,4,0],[0,1,0,3,0,1],[4,0,3,0,1,0],[0,4,0,1,0,4],[0,0,1,0,4,0]]:;
+    </input>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      G:=graph(A)
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected weighted graph with 6 vertices and 8 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      T:=minimal_spanning_tree(G)
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected weighted graph with 6 vertices and 5 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      edges(T,weights)
+    <|unfolded-io>
+      <\equation*>
+        <around|{|<around|[|<around|[|0,1|]>,1|]>,<around|[|<around|[|1,2|]>,1|]>,<around|[|<around|[|2,5|]>,1|]>,<around|[|<around|[|2,3|]>,3|]>,<around|[|<around|[|3,4|]>,1|]>|}>
+      </equation*>
+    </unfolded-io>
+
+    <\input>
+      \<gtr\>\ 
+    <|input>
+      draw_graph(highlight_subgraph(G,T))
+    </input>
+  </session>
+
+  <center|<image|images/span3.eps|40%|||>>
+
   <subsection|Counting spanning trees>
 
   The command <verbatim|number_of_spanning_trees><index|<verbatim|number_of_spanning_trees>>
   is used for computing the number of distinct spanning trees in the given
   graph.
+
+  <\bothlined>
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|number_of_spanning_trees(G)>>>>>>
+  </bothlined>
 
   <verbatim|number_of_spanning_trees> accepts the input graph
   <math|G<around*|(|V,E|)>> as its only argument and returns the total number
@@ -10879,7 +11371,7 @@
 
     <index-1|<with|font-family|tt|maximum_clique>|<pageref|auto-280>>
 
-    <index-1|<with|font-family|tt|language|verbatim|maximum_degree>|<pageref|auto-183>>
+    <index-1|<with|font-family|tt|language|verbatim|maximum_degree>|<pageref|auto-184>>
 
     <index-1|<with|font-family|tt|language|verbatim|maximum_matching>|<pageref|auto-269>>
 
@@ -10889,7 +11381,7 @@
 
     <index-1|<with|font-family|tt|minimal_vertex_coloring>|<pageref|auto-290>>
 
-    <index-1|<with|font-family|tt|language|verbatim|minimum_degree>|<pageref|auto-184>>
+    <index-1|<with|font-family|tt|language|verbatim|minimum_degree>|<pageref|auto-183>>
 
     <index-1|<with|font-family|tt|language|verbatim|neighbors>|<pageref|auto-190>>
 
@@ -10991,9 +11483,9 @@
 
     <index-1|<with|font-family|tt|language|verbatim|vertex_distance>|<pageref|auto-252>>
 
-    <index-1|<with|font-family|tt|language|verbatim|vertex_in_degree>|<pageref|auto-180>>
+    <index-1|<with|font-family|tt|language|verbatim|vertex_in_degree>|<pageref|auto-181>>
 
-    <index-1|<with|font-family|tt|language|verbatim|vertex_out_degree>|<pageref|auto-181>>
+    <index-1|<with|font-family|tt|language|verbatim|vertex_out_degree>|<pageref|auto-180>>
 
     <index-1|<with|font-family|tt|language|verbatim|vertices>|<pageref|auto-173>>
 
@@ -11015,8 +11507,8 @@
 
 <\references>
   <\collection>
-    <associate|a3|<tuple|A3|98>>
-    <associate|allpairs-distance|<tuple|4.6.2|73>>
+    <associate|a3|<tuple|A3|102>>
+    <associate|allpairs-distance|<tuple|4.6.2|75>>
     <associate|assign-edge-weights|<tuple|1.10.9|40>>
     <associate|auto-1|<tuple|?|7>>
     <associate|auto-10|<tuple|2|10>>
@@ -11060,28 +11552,28 @@
     <associate|auto-134|<tuple|2.3.2|43>>
     <associate|auto-135|<tuple|2.3.2|43>>
     <associate|auto-136|<tuple|2.3.2|43>>
-    <associate|auto-137|<tuple|2.3.3|43>>
-    <associate|auto-138|<tuple|2.3.3|43>>
-    <associate|auto-139|<tuple|2.3.4|43>>
+    <associate|auto-137|<tuple|2.3.3|44>>
+    <associate|auto-138|<tuple|2.3.3|44>>
+    <associate|auto-139|<tuple|2.3.4|44>>
     <associate|auto-14|<tuple|1.2.1|12>>
-    <associate|auto-140|<tuple|2.3.4|43>>
-    <associate|auto-141|<tuple|2.4|44>>
-    <associate|auto-142|<tuple|2.4.1|44>>
-    <associate|auto-143|<tuple|2.4.1|44>>
-    <associate|auto-144|<tuple|2.4.1|44>>
-    <associate|auto-145|<tuple|2.4.1|44>>
-    <associate|auto-146|<tuple|2.4.1|44>>
-    <associate|auto-147|<tuple|2.4.2|45>>
-    <associate|auto-148|<tuple|2.4.2|45>>
-    <associate|auto-149|<tuple|2.4.2|45>>
+    <associate|auto-140|<tuple|2.3.4|44>>
+    <associate|auto-141|<tuple|2.4|45>>
+    <associate|auto-142|<tuple|2.4.1|45>>
+    <associate|auto-143|<tuple|2.4.1|45>>
+    <associate|auto-144|<tuple|2.4.1|45>>
+    <associate|auto-145|<tuple|2.4.1|46>>
+    <associate|auto-146|<tuple|2.4.1|46>>
+    <associate|auto-147|<tuple|2.4.2|46>>
+    <associate|auto-148|<tuple|2.4.2|46>>
+    <associate|auto-149|<tuple|2.4.2|46>>
     <associate|auto-15|<tuple|1.2.1|12>>
-    <associate|auto-150|<tuple|2.4.2|45>>
-    <associate|auto-151|<tuple|2.4.2|45>>
-    <associate|auto-152|<tuple|2.4.3|46>>
-    <associate|auto-153|<tuple|2.4.3|46>>
-    <associate|auto-154|<tuple|2.4.3|46>>
-    <associate|auto-155|<tuple|2.4.3|46>>
-    <associate|auto-156|<tuple|2.4.3|46>>
+    <associate|auto-150|<tuple|2.4.2|46>>
+    <associate|auto-151|<tuple|2.4.2|46>>
+    <associate|auto-152|<tuple|2.4.3|47>>
+    <associate|auto-153|<tuple|2.4.3|47>>
+    <associate|auto-154|<tuple|2.4.3|48>>
+    <associate|auto-155|<tuple|2.4.3|48>>
+    <associate|auto-156|<tuple|2.4.3|48>>
     <associate|auto-157|<tuple|3|49>>
     <associate|auto-158|<tuple|3.1|49>>
     <associate|auto-159|<tuple|3.1.1|49>>
@@ -11091,7 +11583,7 @@
     <associate|auto-162|<tuple|3.2|50>>
     <associate|auto-163|<tuple|3.2.1|50>>
     <associate|auto-164|<tuple|3.2.1|50>>
-    <associate|auto-165|<tuple|3.2.2|50>>
+    <associate|auto-165|<tuple|3.2.2|51>>
     <associate|auto-166|<tuple|3.1|51>>
     <associate|auto-167|<tuple|4|53>>
     <associate|auto-168|<tuple|4.1|53>>
@@ -11110,20 +11602,20 @@
     <associate|auto-18|<tuple|1.2.3|13>>
     <associate|auto-180|<tuple|4.1.3|54>>
     <associate|auto-181|<tuple|4.1.3|54>>
-    <associate|auto-182|<tuple|4.1.3|55>>
-    <associate|auto-183|<tuple|4.1.3|55>>
-    <associate|auto-184|<tuple|4.1.3|55>>
+    <associate|auto-182|<tuple|4.1.3|54>>
+    <associate|auto-183|<tuple|4.1.3|54>>
+    <associate|auto-184|<tuple|4.1.3|54>>
     <associate|auto-185|<tuple|4.1.4|55>>
     <associate|auto-186|<tuple|4.1.4|55>>
-    <associate|auto-187|<tuple|4.1.5|55>>
-    <associate|auto-188|<tuple|4.1.5|55>>
-    <associate|auto-189|<tuple|4.1.5|55>>
+    <associate|auto-187|<tuple|4.1.5|56>>
+    <associate|auto-188|<tuple|4.1.5|56>>
+    <associate|auto-189|<tuple|4.1.5|56>>
     <associate|auto-19|<tuple|1.2.3|13>>
     <associate|auto-190|<tuple|4.1.5|56>>
     <associate|auto-191|<tuple|4.1.5|56>>
     <associate|auto-192|<tuple|4.1.5|56>>
-    <associate|auto-193|<tuple|4.1.6|56>>
-    <associate|auto-194|<tuple|4.1.6|56>>
+    <associate|auto-193|<tuple|4.1.6|57>>
+    <associate|auto-194|<tuple|4.1.6|57>>
     <associate|auto-195|<tuple|4.2|57>>
     <associate|auto-196|<tuple|4.2.1|57>>
     <associate|auto-197|<tuple|4.2.1|57>>
@@ -11131,167 +11623,167 @@
     <associate|auto-199|<tuple|4.2.2|58>>
     <associate|auto-2|<tuple|1|9>>
     <associate|auto-20|<tuple|1.2.3|13>>
-    <associate|auto-200|<tuple|4.2.3|58>>
-    <associate|auto-201|<tuple|4.2.3|58>>
-    <associate|auto-202|<tuple|4.2.4|59>>
-    <associate|auto-203|<tuple|4.2.4|59>>
+    <associate|auto-200|<tuple|4.2.3|59>>
+    <associate|auto-201|<tuple|4.2.3|59>>
+    <associate|auto-202|<tuple|4.2.4|60>>
+    <associate|auto-203|<tuple|4.2.4|60>>
     <associate|auto-204|<tuple|4.2.5|60>>
     <associate|auto-205|<tuple|4.2.5|60>>
-    <associate|auto-206|<tuple|4.2.6|60>>
-    <associate|auto-207|<tuple|4.2.6|60>>
+    <associate|auto-206|<tuple|4.2.6|61>>
+    <associate|auto-207|<tuple|4.2.6|61>>
     <associate|auto-208|<tuple|4.2.7|61>>
     <associate|auto-209|<tuple|4.2.7|61>>
     <associate|auto-21|<tuple|1.3|13>>
-    <associate|auto-210|<tuple|4.2.8|61>>
-    <associate|auto-211|<tuple|4.2.9|61>>
-    <associate|auto-212|<tuple|4.2.9|61>>
-    <associate|auto-213|<tuple|4.2.9|63>>
-    <associate|auto-214|<tuple|4.2.10|64>>
-    <associate|auto-215|<tuple|4.2.10|64>>
-    <associate|auto-216|<tuple|4.3|64>>
-    <associate|auto-217|<tuple|4.3.1|64>>
-    <associate|auto-218|<tuple|4.3.1|64>>
-    <associate|auto-219|<tuple|4.3.1|64>>
+    <associate|auto-210|<tuple|4.2.8|62>>
+    <associate|auto-211|<tuple|4.2.9|62>>
+    <associate|auto-212|<tuple|4.2.9|62>>
+    <associate|auto-213|<tuple|4.2.9|64>>
+    <associate|auto-214|<tuple|4.2.10|65>>
+    <associate|auto-215|<tuple|4.2.10|65>>
+    <associate|auto-216|<tuple|4.3|65>>
+    <associate|auto-217|<tuple|4.3.1|65>>
+    <associate|auto-218|<tuple|4.3.1|65>>
+    <associate|auto-219|<tuple|4.3.1|65>>
     <associate|auto-22|<tuple|1.3.1|13>>
-    <associate|auto-220|<tuple|4.3.1|64>>
-    <associate|auto-221|<tuple|4.3.2|65>>
-    <associate|auto-222|<tuple|4.3.2|65>>
-    <associate|auto-223|<tuple|4.3.2|65>>
-    <associate|auto-224|<tuple|4.3.3|66>>
-    <associate|auto-225|<tuple|4.3.3|66>>
-    <associate|auto-226|<tuple|4.3.4|66>>
-    <associate|auto-227|<tuple|4.3.4|66>>
-    <associate|auto-228|<tuple|4.3.5|67>>
-    <associate|auto-229|<tuple|4.3.5|67>>
+    <associate|auto-220|<tuple|4.3.1|65>>
+    <associate|auto-221|<tuple|4.3.2|66>>
+    <associate|auto-222|<tuple|4.3.2|66>>
+    <associate|auto-223|<tuple|4.3.2|66>>
+    <associate|auto-224|<tuple|4.3.3|67>>
+    <associate|auto-225|<tuple|4.3.3|67>>
+    <associate|auto-226|<tuple|4.3.4|68>>
+    <associate|auto-227|<tuple|4.3.4|68>>
+    <associate|auto-228|<tuple|4.3.5|68>>
+    <associate|auto-229|<tuple|4.3.5|68>>
     <associate|auto-23|<tuple|1.3.1|13>>
-    <associate|auto-230|<tuple|4.3.5|67>>
-    <associate|auto-231|<tuple|4.3.6|67>>
-    <associate|auto-232|<tuple|4.3.7|67>>
-    <associate|auto-233|<tuple|4.3.7|67>>
-    <associate|auto-234|<tuple|4.4|68>>
-    <associate|auto-235|<tuple|4.4.1|68>>
-    <associate|auto-236|<tuple|4.4.1|68>>
-    <associate|auto-237|<tuple|4.4.2|68>>
-    <associate|auto-238|<tuple|4.4.2|68>>
-    <associate|auto-239|<tuple|4.4.3|69>>
+    <associate|auto-230|<tuple|4.3.5|68>>
+    <associate|auto-231|<tuple|4.3.6|69>>
+    <associate|auto-232|<tuple|4.3.7|69>>
+    <associate|auto-233|<tuple|4.3.7|69>>
+    <associate|auto-234|<tuple|4.4|69>>
+    <associate|auto-235|<tuple|4.4.1|69>>
+    <associate|auto-236|<tuple|4.4.1|69>>
+    <associate|auto-237|<tuple|4.4.2|70>>
+    <associate|auto-238|<tuple|4.4.2|70>>
+    <associate|auto-239|<tuple|4.4.3|70>>
     <associate|auto-24|<tuple|1.3.2|14>>
-    <associate|auto-240|<tuple|4.4.3|69>>
-    <associate|auto-241|<tuple|4.4.4|69>>
-    <associate|auto-242|<tuple|4.4.4|69>>
-    <associate|auto-243|<tuple|4.4.5|70>>
-    <associate|auto-244|<tuple|4.4.5|70>>
-    <associate|auto-245|<tuple|4.5|70>>
-    <associate|auto-246|<tuple|4.5.1|70>>
-    <associate|auto-247|<tuple|4.5.1|70>>
-    <associate|auto-248|<tuple|4.5.2|71>>
-    <associate|auto-249|<tuple|4.5.2|71>>
+    <associate|auto-240|<tuple|4.4.3|70>>
+    <associate|auto-241|<tuple|4.4.4|71>>
+    <associate|auto-242|<tuple|4.4.4|71>>
+    <associate|auto-243|<tuple|4.4.5|71>>
+    <associate|auto-244|<tuple|4.4.5|71>>
+    <associate|auto-245|<tuple|4.5|72>>
+    <associate|auto-246|<tuple|4.5.1|72>>
+    <associate|auto-247|<tuple|4.5.1|72>>
+    <associate|auto-248|<tuple|4.5.2|73>>
+    <associate|auto-249|<tuple|4.5.2|73>>
     <associate|auto-25|<tuple|1.3.2|14>>
-    <associate|auto-250|<tuple|4.6|72>>
-    <associate|auto-251|<tuple|4.6.1|72>>
-    <associate|auto-252|<tuple|4.6.1|72>>
-    <associate|auto-253|<tuple|4.6.2|73>>
-    <associate|auto-254|<tuple|4.6.2|73>>
-    <associate|auto-255|<tuple|4.6.3|74>>
-    <associate|auto-256|<tuple|4.6.4|75>>
-    <associate|auto-257|<tuple|4.6.4|75>>
-    <associate|auto-258|<tuple|4.6.4|75>>
-    <associate|auto-259|<tuple|4.7|75>>
+    <associate|auto-250|<tuple|4.6|74>>
+    <associate|auto-251|<tuple|4.6.1|74>>
+    <associate|auto-252|<tuple|4.6.1|74>>
+    <associate|auto-253|<tuple|4.6.2|75>>
+    <associate|auto-254|<tuple|4.6.2|75>>
+    <associate|auto-255|<tuple|4.6.3|76>>
+    <associate|auto-256|<tuple|4.6.4|77>>
+    <associate|auto-257|<tuple|4.6.4|77>>
+    <associate|auto-258|<tuple|4.6.4|77>>
+    <associate|auto-259|<tuple|4.7|77>>
     <associate|auto-26|<tuple|1.3.2|14>>
-    <associate|auto-260|<tuple|4.7.1|75>>
-    <associate|auto-261|<tuple|4.7.1|75>>
-    <associate|auto-262|<tuple|4.7.2|75>>
-    <associate|auto-263|<tuple|4.7.2|75>>
-    <associate|auto-264|<tuple|4.7.2|75>>
-    <associate|auto-265|<tuple|4.7.3|76>>
-    <associate|auto-266|<tuple|4.7.3|76>>
-    <associate|auto-267|<tuple|4.8|77>>
-    <associate|auto-268|<tuple|4.8.1|77>>
-    <associate|auto-269|<tuple|4.8.1|77>>
+    <associate|auto-260|<tuple|4.7.1|77>>
+    <associate|auto-261|<tuple|4.7.1|77>>
+    <associate|auto-262|<tuple|4.7.2|78>>
+    <associate|auto-263|<tuple|4.7.2|78>>
+    <associate|auto-264|<tuple|4.7.2|78>>
+    <associate|auto-265|<tuple|4.7.3|78>>
+    <associate|auto-266|<tuple|4.7.3|78>>
+    <associate|auto-267|<tuple|4.8|79>>
+    <associate|auto-268|<tuple|4.8.1|79>>
+    <associate|auto-269|<tuple|4.8.1|79>>
     <associate|auto-27|<tuple|1.4|14>>
-    <associate|auto-270|<tuple|4.8.2|78>>
-    <associate|auto-271|<tuple|4.8.2|78>>
-    <associate|auto-272|<tuple|4.9|78>>
-    <associate|auto-273|<tuple|4.9.1|78>>
-    <associate|auto-274|<tuple|4.9.1|78>>
-    <associate|auto-275|<tuple|4.9.2|79>>
-    <associate|auto-276|<tuple|4.9.2|79>>
-    <associate|auto-277|<tuple|4.9.3|79>>
-    <associate|auto-278|<tuple|4.9.3|79>>
-    <associate|auto-279|<tuple|4.9.4|80>>
+    <associate|auto-270|<tuple|4.8.2|80>>
+    <associate|auto-271|<tuple|4.8.2|80>>
+    <associate|auto-272|<tuple|4.9|81>>
+    <associate|auto-273|<tuple|4.9.1|81>>
+    <associate|auto-274|<tuple|4.9.1|81>>
+    <associate|auto-275|<tuple|4.9.2|81>>
+    <associate|auto-276|<tuple|4.9.2|81>>
+    <associate|auto-277|<tuple|4.9.3|81>>
+    <associate|auto-278|<tuple|4.9.3|81>>
+    <associate|auto-279|<tuple|4.9.4|82>>
     <associate|auto-28|<tuple|1.4.1|14>>
-    <associate|auto-280|<tuple|4.9.4|80>>
-    <associate|auto-281|<tuple|4.9.5|81>>
-    <associate|auto-282|<tuple|4.9.5|81>>
-    <associate|auto-283|<tuple|4.9.6|81>>
-    <associate|auto-284|<tuple|4.9.6|81>>
-    <associate|auto-285|<tuple|4.10|82>>
-    <associate|auto-286|<tuple|4.10.1|82>>
-    <associate|auto-287|<tuple|4.10.1|82>>
-    <associate|auto-288|<tuple|4.1|84>>
-    <associate|auto-289|<tuple|4.10.2|83>>
+    <associate|auto-280|<tuple|4.9.4|82>>
+    <associate|auto-281|<tuple|4.9.5|83>>
+    <associate|auto-282|<tuple|4.9.5|83>>
+    <associate|auto-283|<tuple|4.9.6|84>>
+    <associate|auto-284|<tuple|4.9.6|84>>
+    <associate|auto-285|<tuple|4.10|84>>
+    <associate|auto-286|<tuple|4.10.1|84>>
+    <associate|auto-287|<tuple|4.10.1|84>>
+    <associate|auto-288|<tuple|4.1|86>>
+    <associate|auto-289|<tuple|4.10.2|85>>
     <associate|auto-29|<tuple|1.4.1|14>>
-    <associate|auto-290|<tuple|4.10.2|83>>
-    <associate|auto-291|<tuple|4.10.3|83>>
-    <associate|auto-292|<tuple|4.10.3|83>>
-    <associate|auto-293|<tuple|4.10.4|84>>
-    <associate|auto-294|<tuple|4.10.4|84>>
-    <associate|auto-295|<tuple|4.11|85>>
-    <associate|auto-296|<tuple|4.11.1|85>>
-    <associate|auto-297|<tuple|4.11.1|85>>
-    <associate|auto-298|<tuple|4.11.2|86>>
-    <associate|auto-299|<tuple|4.11.2|86>>
+    <associate|auto-290|<tuple|4.10.2|85>>
+    <associate|auto-291|<tuple|4.10.3|86>>
+    <associate|auto-292|<tuple|4.10.3|86>>
+    <associate|auto-293|<tuple|4.10.4|87>>
+    <associate|auto-294|<tuple|4.10.4|87>>
+    <associate|auto-295|<tuple|4.11|88>>
+    <associate|auto-296|<tuple|4.11.1|88>>
+    <associate|auto-297|<tuple|4.11.1|88>>
+    <associate|auto-298|<tuple|4.11.2|88>>
+    <associate|auto-299|<tuple|4.11.2|88>>
     <associate|auto-3|<tuple|1.1|9>>
     <associate|auto-30|<tuple|1.4.2|15>>
-    <associate|auto-300|<tuple|5|89>>
-    <associate|auto-301|<tuple|5.1|89>>
-    <associate|auto-302|<tuple|5.1.1|89>>
-    <associate|auto-303|<tuple|5.1.1|89>>
-    <associate|auto-304|<tuple|5.1.2|89>>
-    <associate|auto-305|<tuple|5.1.2|89>>
-    <associate|auto-306|<tuple|5.2|90>>
-    <associate|auto-307|<tuple|5.2.1|90>>
-    <associate|auto-308|<tuple|5.2.1|90>>
-    <associate|auto-309|<tuple|5.2.2|91>>
+    <associate|auto-300|<tuple|5|91>>
+    <associate|auto-301|<tuple|5.1|91>>
+    <associate|auto-302|<tuple|5.1.1|91>>
+    <associate|auto-303|<tuple|5.1.1|91>>
+    <associate|auto-304|<tuple|5.1.2|91>>
+    <associate|auto-305|<tuple|5.1.2|91>>
+    <associate|auto-306|<tuple|5.2|92>>
+    <associate|auto-307|<tuple|5.2.1|92>>
+    <associate|auto-308|<tuple|5.2.1|92>>
+    <associate|auto-309|<tuple|5.2.2|93>>
     <associate|auto-31|<tuple|1.4.2|15>>
-    <associate|auto-310|<tuple|5.2.2|91>>
-    <associate|auto-311|<tuple|5.2.3|91>>
-    <associate|auto-312|<tuple|5.2.3|91>>
-    <associate|auto-313|<tuple|5.3|94>>
-    <associate|auto-314|<tuple|5.3.1|94>>
-    <associate|auto-315|<tuple|5.3.1|94>>
-    <associate|auto-316|<tuple|5.3.2|94>>
-    <associate|auto-317|<tuple|5.3.2|94>>
-    <associate|auto-318|<tuple|5.3.3|94>>
-    <associate|auto-319|<tuple|5.3.3|94>>
+    <associate|auto-310|<tuple|5.2.2|93>>
+    <associate|auto-311|<tuple|5.2.3|93>>
+    <associate|auto-312|<tuple|5.2.3|93>>
+    <associate|auto-313|<tuple|5.3|96>>
+    <associate|auto-314|<tuple|5.3.1|96>>
+    <associate|auto-315|<tuple|5.3.1|96>>
+    <associate|auto-316|<tuple|5.3.2|97>>
+    <associate|auto-317|<tuple|5.3.2|97>>
+    <associate|auto-318|<tuple|5.3.3|97>>
+    <associate|auto-319|<tuple|5.3.3|97>>
     <associate|auto-32|<tuple|1.5|15>>
-    <associate|auto-320|<tuple|6|95>>
-    <associate|auto-321|<tuple|6.1|95>>
-    <associate|auto-322|<tuple|6.1|95>>
-    <associate|auto-323|<tuple|6.1.1|95>>
-    <associate|auto-324|<tuple|6.1.2|95>>
-    <associate|auto-325|<tuple|6.1.3|96>>
-    <associate|auto-326|<tuple|6.1.4|98>>
-    <associate|auto-327|<tuple|6.1.5|99>>
-    <associate|auto-328|<tuple|6.1|99>>
-    <associate|auto-329|<tuple|6.2|99>>
+    <associate|auto-320|<tuple|6|99>>
+    <associate|auto-321|<tuple|6.1|99>>
+    <associate|auto-322|<tuple|6.1|99>>
+    <associate|auto-323|<tuple|6.1.1|99>>
+    <associate|auto-324|<tuple|6.1.2|99>>
+    <associate|auto-325|<tuple|6.1.3|100>>
+    <associate|auto-326|<tuple|6.1.4|102>>
+    <associate|auto-327|<tuple|6.1.5|103>>
+    <associate|auto-328|<tuple|6.1|103>>
+    <associate|auto-329|<tuple|6.2|103>>
     <associate|auto-33|<tuple|1.5.1|15>>
-    <associate|auto-330|<tuple|6.3|99>>
-    <associate|auto-331|<tuple|6.1.6|100>>
-    <associate|auto-332|<tuple|6.2|101>>
-    <associate|auto-333|<tuple|6.2.1|101>>
-    <associate|auto-334|<tuple|6.2.1|101>>
-    <associate|auto-335|<tuple|6.2.2|101>>
-    <associate|auto-336|<tuple|6.3|102>>
-    <associate|auto-337|<tuple|6.3.1|102>>
-    <associate|auto-338|<tuple|6.3.1|102>>
-    <associate|auto-339|<tuple|6.3.2|103>>
+    <associate|auto-330|<tuple|6.3|103>>
+    <associate|auto-331|<tuple|6.1.6|104>>
+    <associate|auto-332|<tuple|6.2|105>>
+    <associate|auto-333|<tuple|6.2.1|105>>
+    <associate|auto-334|<tuple|6.2.1|105>>
+    <associate|auto-335|<tuple|6.2.2|105>>
+    <associate|auto-336|<tuple|6.3|106>>
+    <associate|auto-337|<tuple|6.3.1|106>>
+    <associate|auto-338|<tuple|6.3.1|106>>
+    <associate|auto-339|<tuple|6.3.2|107>>
     <associate|auto-34|<tuple|1.5.1|15>>
-    <associate|auto-340|<tuple|6.3.2|103>>
-    <associate|auto-341|<tuple|6.3.2|103>>
-    <associate|auto-342|<tuple|6.3.3|104>>
-    <associate|auto-343|<tuple|6.3.3|104>>
-    <associate|auto-344|<tuple|6.3.3|107>>
-    <associate|auto-345|<tuple|37|109>>
+    <associate|auto-340|<tuple|6.3.2|107>>
+    <associate|auto-341|<tuple|6.3.2|107>>
+    <associate|auto-342|<tuple|6.3.3|108>>
+    <associate|auto-343|<tuple|6.3.3|108>>
+    <associate|auto-344|<tuple|6.3.3|111>>
+    <associate|auto-345|<tuple|37|113>>
     <associate|auto-35|<tuple|1.5.2|15>>
     <associate|auto-36|<tuple|1.5.2|15>>
     <associate|auto-37|<tuple|1.5.2|15>>
@@ -11363,48 +11855,48 @@
     <associate|auto-97|<tuple|1.9.11|32>>
     <associate|auto-98|<tuple|1.10|33>>
     <associate|auto-99|<tuple|1.10.1|33>>
-    <associate|bib-bayati|<tuple|1|107>>
-    <associate|bib-blanusa|<tuple|2|107>>
-    <associate|bib-brelaz|<tuple|3|107>>
-    <associate|bib-buchheim|<tuple|4|107>>
-    <associate|bib-christofides|<tuple|5|107>>
-    <associate|bib-cook|<tuple|6|107>>
-    <associate|bib-diaz|<tuple|8|107>>
-    <associate|bib-diestel|<tuple|9|107>>
-    <associate|bib-edmonds|<tuple|10|107>>
-    <associate|bib-edmonds-karp|<tuple|11|107>>
-    <associate|bib-even|<tuple|12|107>>
-    <associate|bib-floyd|<tuple|13|107>>
-    <associate|bib-fruchterman|<tuple|14|107>>
-    <associate|bib-gibbons|<tuple|15|107>>
-    <associate|bib-hakimi|<tuple|16|107>>
-    <associate|bib-helsgaun|<tuple|17|107>>
-    <associate|bib-hierholzer|<tuple|18|107>>
-    <associate|bib-hinz|<tuple|19|107>>
-    <associate|bib-hopcroft|<tuple|20|107>>
-    <associate|bib-hu|<tuple|21|107>>
-    <associate|bib-hu2|<tuple|22|107>>
-    <associate|bib-kahn|<tuple|23|107>>
-    <associate|bib-lca|<tuple|32|107>>
-    <associate|bib-mckay|<tuple|24|107>>
-    <associate|bib-melissa|<tuple|7|107>>
-    <associate|bib-myrwold|<tuple|25|107>>
-    <associate|bib-ostergard|<tuple|26|107>>
-    <associate|bib-padberg|<tuple|27|107>>
-    <associate|bib-pferschy|<tuple|28|107>>
-    <associate|bib-plestenjak|<tuple|29|107>>
-    <associate|bib-steger|<tuple|30|107>>
-    <associate|bib-tarjan72|<tuple|31|107>>
-    <associate|bib-tomita|<tuple|33|107>>
-    <associate|bib-tutte|<tuple|34|107>>
-    <associate|bib-walker|<tuple|35|107>>
-    <associate|bib-welch|<tuple|36|108>>
-    <associate|bib-west|<tuple|37|108>>
-    <associate|blockjoin|<tuple|6.1|99>>
-    <associate|chordface|<tuple|6.2|99>>
+    <associate|bib-bayati|<tuple|1|111>>
+    <associate|bib-blanusa|<tuple|2|111>>
+    <associate|bib-brelaz|<tuple|3|111>>
+    <associate|bib-buchheim|<tuple|4|111>>
+    <associate|bib-christofides|<tuple|5|111>>
+    <associate|bib-cook|<tuple|6|111>>
+    <associate|bib-diaz|<tuple|8|111>>
+    <associate|bib-diestel|<tuple|9|111>>
+    <associate|bib-edmonds|<tuple|10|111>>
+    <associate|bib-edmonds-karp|<tuple|11|111>>
+    <associate|bib-even|<tuple|12|111>>
+    <associate|bib-floyd|<tuple|13|111>>
+    <associate|bib-fruchterman|<tuple|14|111>>
+    <associate|bib-gibbons|<tuple|15|111>>
+    <associate|bib-hakimi|<tuple|16|111>>
+    <associate|bib-helsgaun|<tuple|17|111>>
+    <associate|bib-hierholzer|<tuple|18|111>>
+    <associate|bib-hinz|<tuple|19|111>>
+    <associate|bib-hopcroft|<tuple|20|111>>
+    <associate|bib-hu|<tuple|21|111>>
+    <associate|bib-hu2|<tuple|22|111>>
+    <associate|bib-kahn|<tuple|23|111>>
+    <associate|bib-lca|<tuple|32|111>>
+    <associate|bib-mckay|<tuple|24|111>>
+    <associate|bib-melissa|<tuple|7|111>>
+    <associate|bib-myrwold|<tuple|25|111>>
+    <associate|bib-ostergard|<tuple|26|111>>
+    <associate|bib-padberg|<tuple|27|111>>
+    <associate|bib-pferschy|<tuple|28|111>>
+    <associate|bib-plestenjak|<tuple|29|111>>
+    <associate|bib-steger|<tuple|30|111>>
+    <associate|bib-tarjan72|<tuple|31|111>>
+    <associate|bib-tomita|<tuple|33|111>>
+    <associate|bib-tutte|<tuple|34|111>>
+    <associate|bib-walker|<tuple|35|111>>
+    <associate|bib-welch|<tuple|36|112>>
+    <associate|bib-west|<tuple|37|112>>
+    <associate|blockjoin|<tuple|6.1|103>>
+    <associate|chordface|<tuple|6.2|103>>
     <associate|departures-arrivals|<tuple|4.1.5|56>>
     <associate|digraph|<tuple|1.1.2|10>>
-    <associate|draw-graph|<tuple|6.1|95>>
+    <associate|draw-graph|<tuple|6.1|99>>
     <associate|footnote-1.1|<tuple|1.1|20>>
     <associate|footnote-1.2|<tuple|1.2|22>>
     <associate|footnote-1.3|<tuple|1.3|32>>
@@ -11413,11 +11905,11 @@
     <associate|footnote-3.2|<tuple|3.2|49>>
     <associate|footnote-3.3|<tuple|3.3|49>>
     <associate|footnote-3.4|<tuple|3.4|51>>
-    <associate|footnote-4.1|<tuple|4.1|77>>
-    <associate|footnote-4.2|<tuple|4.2|79>>
-    <associate|footnote-4.3|<tuple|4.3|83>>
-    <associate|footnote-4.4|<tuple|4.4|86>>
-    <associate|footnote-5.1|<tuple|5.1|91>>
+    <associate|footnote-4.1|<tuple|4.1|79>>
+    <associate|footnote-4.2|<tuple|4.2|81>>
+    <associate|footnote-4.3|<tuple|4.3|85>>
+    <associate|footnote-4.4|<tuple|4.4|89>>
+    <associate|footnote-5.1|<tuple|5.1|93>>
     <associate|footnr-1.1|<tuple|1.1|20>>
     <associate|footnr-1.2|<tuple|1.2|22>>
     <associate|footnr-1.3|<tuple|1.3|32>>
@@ -11426,39 +11918,39 @@
     <associate|footnr-3.2|<tuple|3.2|49>>
     <associate|footnr-3.3|<tuple|3.3|49>>
     <associate|footnr-3.4|<tuple|3.4|51>>
-    <associate|footnr-4.1|<tuple|4.1|77>>
-    <associate|footnr-4.2|<tuple|4.2|79>>
-    <associate|footnr-4.3|<tuple|4.3|83>>
-    <associate|footnr-4.4|<tuple|4.4|86>>
-    <associate|footnr-5.1|<tuple|5.1|91>>
+    <associate|footnr-4.1|<tuple|4.1|79>>
+    <associate|footnr-4.2|<tuple|4.2|81>>
+    <associate|footnr-4.3|<tuple|4.3|85>>
+    <associate|footnr-4.4|<tuple|4.4|89>>
+    <associate|footnr-5.1|<tuple|5.1|93>>
     <associate|frucht|<tuple|1.2|22>>
     <associate|graph|<tuple|1.1.1|9>>
-    <associate|graph-equal|<tuple|4.2.8|61>>
+    <associate|graph-equal|<tuple|4.2.8|62>>
     <associate|graph-union|<tuple|1.9.4|27>>
-    <associate|highlight-subgraph|<tuple|6.3.3|104>>
-    <associate|highlight-trail|<tuple|6.3.2|103>>
-    <associate|highlight-vertices|<tuple|6.3.1|102>>
+    <associate|highlight-subgraph|<tuple|6.3.3|108>>
+    <associate|highlight-trail|<tuple|6.3.2|107>>
+    <associate|highlight-vertices|<tuple|6.3.1|106>>
     <associate|induced-subgraph|<tuple|1.8.2|24>>
-    <associate|is-network|<tuple|4.5.1|70>>
+    <associate|is-network|<tuple|4.5.1|72>>
     <associate|isomorphic-copy|<tuple|1.7.1|23>>
     <associate|make-directed|<tuple|2.1.1|41>>
     <associate|make-weighted|<tuple|2.1.2|41>>
-    <associate|maximum-matching|<tuple|4.8.1|77>>
-    <associate|minimal-coloring|<tuple|4.10.2|83>>
-    <associate|minimum-covering|<tuple|4.9.5|81>>
+    <associate|maximum-matching|<tuple|4.8.1|79>>
+    <associate|minimal-coloring|<tuple|4.10.2|85>>
+    <associate|minimum-covering|<tuple|4.9.5|83>>
     <associate|random-network|<tuple|1.10.8|38>>
     <associate|random-planar|<tuple|1.10.4|35>>
-    <associate|set-vertex-positions|<tuple|6.2.1|101>>
-    <associate|st-ordering|<tuple|4.7.3|76>>
+    <associate|set-vertex-positions|<tuple|6.2.1|105>>
+    <associate|st-ordering|<tuple|4.7.3|78>>
     <associate|st53|<tuple|3.1|51>>
     <associate|subgraph|<tuple|1.8.1|24>>
-    <associate|tab:colors|<tuple|4.1|84>>
-    <associate|touchface|<tuple|6.3|99>>
+    <associate|tab:colors|<tuple|4.1|86>>
+    <associate|touchface|<tuple|6.3|103>>
     <associate|trail|<tuple|1.2.3|13>>
-    <associate|traveling-salesman|<tuple|5.2.3|91>>
+    <associate|traveling-salesman|<tuple|5.2.3|93>>
     <associate|underlying-graph|<tuple|1.8.3|25>>
-    <associate|vertex-attribute|<tuple|2.4.2|45>>
-    <associate|vertex-distance|<tuple|4.6.1|72>>
+    <associate|vertex-attribute|<tuple|2.4.2|46>>
+    <associate|vertex-distance|<tuple|4.6.1|74>>
     <associate|vertices-edges|<tuple|4.1.2|53>>
   </collection>
 </references>
@@ -11746,15 +12238,15 @@
 
       <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|vertex_degree>>|<pageref|auto-179>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|vertex_in_degree>>|<pageref|auto-180>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|vertex_out_degree>>|<pageref|auto-180>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|vertex_out_degree>>|<pageref|auto-181>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|vertex_in_degree>>|<pageref|auto-181>>
 
       <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|degree_sequence>>|<pageref|auto-182>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|maximum_degree>>|<pageref|auto-183>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|minimum_degree>>|<pageref|auto-183>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|minimum_degree>>|<pageref|auto-184>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|maximum_degree>>|<pageref|auto-184>>
 
       <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_regular>>|<pageref|auto-186>>
 
@@ -12159,12 +12651,12 @@
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-119>
 
-      <with|par-left|<quote|1tab>|2.1.1.<space|2spc>Converting each edge to a
-      pair of arcs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <with|par-left|<quote|1tab>|2.1.1.<space|2spc>Converting edges to arcs
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-120>>
 
       <with|par-left|<quote|1tab>|2.1.2.<space|2spc>Assigning weight matrix
-      to an unweighted graph <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      to unweighted graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-122>>
 
       2.2.<space|2spc>Modifying vertices of a graph
@@ -12172,15 +12664,15 @@
       <no-break><pageref|auto-124>
 
       <with|par-left|<quote|1tab>|2.2.1.<space|2spc>Adding and removing
-      single vertices <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      vertices <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-125>>
 
       2.3.<space|2spc>Modifying edges of a graph
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-128>
 
-      <with|par-left|<quote|1tab>|2.3.1.<space|2spc>Adding and removing
-      single edges <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <with|par-left|<quote|1tab>|2.3.1.<space|2spc>Adding and removing edges
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-129>>
 
       <with|par-left|<quote|1tab>|2.3.2.<space|2spc>Accessing and modifying

@@ -8720,7 +8720,7 @@ int graphe::tsp::minimal_cut(int nn,int nedg,const ivector &beg,
     ivector &ADJ=mincut_data[11]; if (int(ADJ.size())<nn) ADJ.resize(nn);
     ivector &SUM=mincut_data[12]; if (int(SUM.size())<nn) SUM.resize(nn);
     ivector &CUT=mincut_data[13]; if (int(CUT.size())<nn) CUT.resize(nn);
-    min_cut=INT_MAX;
+    min_cut=RAND_MAX;
     while (NV>1) {
         for (I=0;I<NV;I++) SUM[I]=0.0;
         for (I=1;I<=NV;I++) {
@@ -9149,7 +9149,7 @@ void graphe::tsp::get_subtours() {
 /* construct hierarhical clustering forest */
 void graphe::tsp::make_hierarhical_clustering_forest() {
     int k;
-    int u=std::floor(nv*4.0/std::log2(nv)); // upper bound on the cluster cardinality
+    int u=std::floor(nv*4.0*M_LN2/std::log(nv)); // upper bound on the cluster cardinality
     hierarhical_clustering_forest.clear();
     /* create leaf nodes */
     for (int i=0;i<nv;++i) {
@@ -9583,11 +9583,11 @@ void graphe::tsp::straighten(ivector &hc) {
         ++iter_count;
         opt_moves.clear();
         std::fill(visited.begin(),visited.end(),false);
-        for (int i=0;i<n;++i) {
+        for (i=0;i<n;++i) {
             if (visited[i] && visited[i+1]) continue;
             b1=hc[i]; e1=hc[i+1];
             w0=weight(b1,e1);
-            for (int j=i+2;j<n;++j) {
+            for (j=i+2;j<n;++j) {
                 if ((i==0 && j==n-1) || (visited[j] && visited[j+1])) continue;
                 b2=hc[j]; e2=hc[j+1];
                 if (G->has_edge(b1,b2) && G->has_edge(e1,e2) &&
@@ -10148,7 +10148,7 @@ int graphe::find_hamiltonian_cycle(ivector &h,double &cost,bool approximate) {
     if (approximate) {
         double ratio=t.approx(h);
         message("The tour cost is within %d%% of the optimal value",
-                std::round((ratio-1.0)*100.0));
+                std::floor((ratio-1.0)*100.0+.5));
         cost=t.tour_cost(h);
         return 1;
     }

@@ -5551,7 +5551,7 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
             return undef;
     }
     /* success! */
-    return G.is_weighted()?makesequence(!G.is_weighted()?gen(int(std::round(cost))):gen(cost),G.get_node_labels(h)):
+    return G.is_weighted()?makesequence(!G.is_weighted()?gen(int(std::floor(cost+.5))):gen(cost),G.get_node_labels(h)):
                            G.get_node_labels(h);
 }
 static const char _traveling_salesman_s[]="traveling_salesman";

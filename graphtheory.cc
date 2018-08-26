@@ -1474,6 +1474,8 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 hull.clear();
                 break;
             case _GT_STYLE_BIPARTITE:
+                if (check && !C.is_bipartite(partition1,partition2))
+                    return gt_err(_GT_ERR_NOT_BIPARTITE);
                 C.make_bipartite_layout(x,partition1,partition2);
                 break;
             }

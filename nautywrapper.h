@@ -7,8 +7,8 @@
 extern "C" {
 #endif
 
-/* return nonzero if graphs represented by the sequences adj1
- * and adj2 of adjacency lists, else return zero */
+/* return nonzero if the graphs represented by the sequences adj1
+ * and adj2 of adjacency lists are isomorphic, else return zero */
 int nautywrapper_is_isomorphic(int isdir,int n,int *adj1,int *adj2,int *sigma);
 
 /* write the generators of Aut(G), where G is represented by the sequence
@@ -17,7 +17,7 @@ int nautywrapper_is_isomorphic(int isdir,int n,int *adj1,int *adj2,int *sigma);
 void nautywrapper_aut_generators(int isdir,int n,int *adj,FILE *f);
 
 /* compute the canonical labeling for the graph represented by the sequence
- * adj of adjacency lists */
+ * adj of adjacency lists, output it as clab */
 void nautywrapper_canonical(int isdir,int n,int *adj,int *clab);
 
 #if defined(__cplusplus)

@@ -1076,15 +1076,21 @@ gen graphe::to_gen() {
 }
 
 /* allocate, initialize and return an integer array of adjacency lists of this graph,
- * in form [a11,a12,...,-1,a21,a22,...,-1,...] */
+ * in form [c1,a11,a12,...,-1,c2,a21,a22,...,-1,...], where c1,c2,... are vertex colors */
 int *graphe::to_array() const {
     int sz=0;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         sz+=it->neighbors().size();
     }
-    int *res=new int[sz+node_count()];
-    int i=0;
+    int *res=new int[sz+2*node_count()];
+    int i=0,c;
+    attrib_iter ait;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        c=default_vertex_color;
+        if ((ait=it->attributes().find(_GT_ATTRIB_COLOR))!=it->attributes().end()) {
+            c=ait->second.val;
+        }
+        res[i++]=c;
         for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
             res[i++]=*jt;
         }

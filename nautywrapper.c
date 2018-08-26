@@ -7,10 +7,36 @@
 static DEFAULTOPTIONS_GRAPH(opts_undir);
 static DEFAULTOPTIONS_DIGRAPH(opts_dir);
 
+typedef struct { int a,b; } pair;
+
+int compfunc(const void *p,const void *q) {
+    return ((pair*)p)->a-((pair*)q)->a;
+}
+
+void color_graph(int n,int *lab,int *ptn,int *col) {
+    pair *lst;
+    lst=(pair*)malloc(n*sizeof(pair));
+    for (int i=0;i<n;++i) {
+        pair *p=&lst[i];
+        p->a=col[i];
+        p->b=i;
+    }
+    qsort((void*)lst,(size_t)n,sizeof(pair),compfunc);
+    for (int i=0;i<n;++i) {
+        pair *p=&lst[i];
+        lab[i]=p->b;
+        ptn[i]=(i==n-1 || (i<n-1 && p->a!=lst[i+1].a))?0:1;
+    }
+    free(lst);
+}
+
 int nautywrapper_is_isomorphic(int isdir,int n,int *adj1,int *adj2,int *sigma) {
     DYNALLSTAT(int,lab1,lab1_sz);
     DYNALLSTAT(int,lab2,lab2_sz);
-    DYNALLSTAT(int,ptn,ptn_sz);
+    DYNALLSTAT(int,ptn1,ptn1_sz);
+    DYNALLSTAT(int,ptn2,ptn2_sz);
+    DYNALLSTAT(int,col1,col1_sz);
+    DYNALLSTAT(int,col2,col2_sz);
     DYNALLSTAT(int,orbits,orbits_sz);
     DYNALLSTAT(graph,g1,g1_sz);
     DYNALLSTAT(graph,g2,g2_sz);
@@ -22,7 +48,10 @@ int nautywrapper_is_isomorphic(int isdir,int n,int *adj1,int *adj2,int *sigma) {
     nauty_check(WORDSIZE,m,n,NAUTYVERSIONID);
     DYNALLOC1(int,lab1,lab1_sz,n,"malloc");
     DYNALLOC1(int,lab2,lab2_sz,n,"malloc");
-    DYNALLOC1(int,ptn,ptn_sz,n,"malloc");
+    DYNALLOC1(int,ptn1,ptn1_sz,n,"malloc");
+    DYNALLOC1(int,ptn2,ptn2_sz,n,"malloc");
+    DYNALLOC1(int,col1,col1_sz,n,"malloc");
+    DYNALLOC1(int,col2,col2_sz,n,"malloc");
     DYNALLOC1(int,orbits,orbits_sz,n,"malloc");
     DYNALLOC2(graph,g1,g1_sz,n,m,"malloc");
     EMPTYGRAPH(g1,m,n);
@@ -33,23 +62,29 @@ int nautywrapper_is_isomorphic(int isdir,int n,int *adj1,int *adj2,int *sigma) {
     options->getcanon=TRUE;
     options->writeautoms=FALSE;
     options->outfile=NULL;
-    int i=0,j=0,k;
+    options->defaultptn=FALSE;
+    int i=0,j=0,k,read_col=1;
     /* create the first graph */
     while (1) {
-        if ((k=adj1[i++])==-1) { if ((++j)==n) break; }
+        if ((k=adj1[i++])==-1) { if ((++j)==n) break; read_col=1; }
+        else if (read_col==1) { col1[j]=k; read_col=0; }
         else if (j<k && isdir==0) { ADDONEEDGE(g1,j,k,m); }
         else if (isdir!=0) { ADDONEARC(g1,j,k,m); }
     }
     /* create the second graph */
     i=j=0;
+    read_col=1;
     while (1) {
-        if ((k=adj2[i++])==-1) { if ((++j)==n) break; }
+        if ((k=adj2[i++])==-1) { if ((++j)==n) break; read_col=1; }
+        else if (read_col==1) { col2[j]=k; read_col=0; }
         else if (j<k && isdir==0) { ADDONEEDGE(g2,j,k,m); }
         else if (isdir!=0) { ADDONEARC(g2,j,k,m); }
     }
+    color_graph(n,lab1,ptn1,col1);
+    color_graph(n,lab2,ptn2,col2);
     /* canonically label both graphs */
-    densenauty(g1,lab1,ptn,orbits,options,&stats,m,n,cg1);
-    densenauty(g2,lab2,ptn,orbits,options,&stats,m,n,cg2);
+    densenauty(g1,lab1,ptn1,orbits,options,&stats,m,n,cg1);
+    densenauty(g2,lab2,ptn2,orbits,options,&stats,m,n,cg2);
     /* return nonzero iff the canonical labelings match */
     size_t cnt=0;
     for (;cnt<m*(size_t)n;++cnt) {
@@ -58,12 +93,15 @@ int nautywrapper_is_isomorphic(int isdir,int n,int *adj1,int *adj2,int *sigma) {
     boolean isomorphic=cnt==m*(size_t)n?TRUE:FALSE;
     if (isomorphic) {
         for (i=0;i<n;++i) {
-            sigma[lab1[i]] = lab2[i];
+            sigma[lab1[i]]=lab2[i];
         }
     }
     DYNFREE(lab1,lab1_sz);
     DYNFREE(lab2,lab1_sz);
-    DYNFREE(ptn,ptn_sz);
+    DYNFREE(ptn1,ptn1_sz);
+    DYNFREE(ptn2,ptn2_sz);
+    DYNFREE(col1,col1_sz);
+    DYNFREE(col2,col2_sz);
     DYNFREE(orbits,orbits_sz);
     DYNFREE(g1,g1_sz);
     DYNFREE(g2,g2_sz);
@@ -75,6 +113,7 @@ int nautywrapper_is_isomorphic(int isdir,int n,int *adj1,int *adj2,int *sigma) {
 void nautywrapper_aut_generators(int isdir,int n,int *adj,FILE *f) {
     DYNALLSTAT(int,lab,lab_sz);
     DYNALLSTAT(int,ptn,ptn_sz);
+    DYNALLSTAT(int,col,col_sz);
     DYNALLSTAT(int,orbits,orbits_sz);
     DYNALLSTAT(graph,g,g_sz);
     optionblk *options=isdir!=0?&opts_dir:&opts_undir;
@@ -83,6 +122,7 @@ void nautywrapper_aut_generators(int isdir,int n,int *adj,FILE *f) {
     nauty_check(WORDSIZE,m,n,NAUTYVERSIONID);
     DYNALLOC1(int,lab,lab_sz,n,"malloc");
     DYNALLOC1(int,ptn,ptn_sz,n,"malloc");
+    DYNALLOC1(int,col,col_sz,n,"malloc");
     DYNALLOC1(int,orbits,orbits_sz,n,"malloc");
     DYNALLOC2(graph,g,g_sz,n,m,"malloc");
     EMPTYGRAPH(g,m,n);
@@ -90,16 +130,20 @@ void nautywrapper_aut_generators(int isdir,int n,int *adj,FILE *f) {
     options->writeautoms=TRUE;
     options->linelength=RAND_MAX;
     options->outfile=f;
-    int i=0,j=0,k;
+    options->defaultptn=FALSE;
+    int i=0,j=0,k,read_col=1;
     /* create the graph */
     while (1) {
-        if ((k=adj[i++])==-1) { if ((++j)==n) break; }
+        if ((k=adj[i++])==-1) { if ((++j)==n) break; read_col=1; }
+        else if (read_col==1) { col[j]=k; read_col=0; }
         else if (j<k && isdir==0) { ADDONEEDGE(g,j,k,m); }
         else if (isdir!=0) { ADDONEARC(g,j,k,m); }
     }
+    color_graph(n,lab,ptn,col);
     densenauty(g,lab,ptn,orbits,options,&stats,m,n,NULL);
     DYNFREE(lab,lab_sz);
     DYNFREE(ptn,ptn_sz);
+    DYNFREE(col,col_sz);
     DYNFREE(orbits,orbits_sz);
     DYNFREE(g,g_sz);
 }
@@ -107,6 +151,7 @@ void nautywrapper_aut_generators(int isdir,int n,int *adj,FILE *f) {
 void nautywrapper_canonical(int isdir,int n,int *adj,int *clab) {
     DYNALLSTAT(int,lab,lab_sz);
     DYNALLSTAT(int,ptn,ptn_sz);
+    DYNALLSTAT(int,col,col_sz);
     DYNALLSTAT(int,orbits,orbits_sz);
     DYNALLSTAT(graph,g,g_sz);
     DYNALLSTAT(graph,cg,cg_sz);
@@ -116,6 +161,7 @@ void nautywrapper_canonical(int isdir,int n,int *adj,int *clab) {
     nauty_check(WORDSIZE,m,n,NAUTYVERSIONID);
     DYNALLOC1(int,lab,lab_sz,n,"malloc");
     DYNALLOC1(int,ptn,ptn_sz,n,"malloc");
+    DYNALLOC1(int,col,col_sz,n,"malloc");
     DYNALLOC1(int,orbits,orbits_sz,n,"malloc");
     DYNALLOC2(graph,cg,cg_sz,n,m,"malloc");
     DYNALLOC2(graph,g,g_sz,n,m,"malloc");
@@ -123,17 +169,21 @@ void nautywrapper_canonical(int isdir,int n,int *adj,int *clab) {
     options->getcanon=TRUE;
     options->writeautoms=FALSE;
     options->outfile=NULL;
-    int i=0,j=0,k;
+    options->defaultptn=FALSE;
+    int i=0,j=0,k,read_col=1;
     /* create the graph */
     while (1) {
-        if ((k=adj[i++])==-1) { if ((++j)==n) break; }
+        if ((k=adj[i++])==-1) { if ((++j)==n) break; read_col=1; }
+        else if (read_col==1) { col[j]=k; read_col=0; }
         else if (j<k && isdir==0) { ADDONEEDGE(g,j,k,m); }
         else if (isdir!=0) { ADDONEARC(g,j,k,m); }
     }
+    color_graph(n,lab,ptn,col);
     densenauty(g,lab,ptn,orbits,options,&stats,m,n,cg);
     for (i=0;i<n;++i) clab[i]=lab[i];
     DYNFREE(lab,lab_sz);
     DYNFREE(ptn,ptn_sz);
+    DYNFREE(col,col_sz);
     DYNFREE(orbits,orbits_sz);
     DYNFREE(g,g_sz);
     DYNFREE(cg,cg_sz);

@@ -2896,17 +2896,46 @@ gen _is_regular(const gen &g,GIAC_CONTEXT) {
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.node_count()==0)
-        return graphe::boole(false);
-    int d=G.degree(0);
-    for (int i=1;i<G.node_count();++i) {
-        if (G.degree(i)!=d)
-            return graphe::boole(false);
-    }
-    return graphe::boole(true);
+        return gt_err(_GT_ERR_GRAPH_IS_EMPTY);
+    return graphe::boole(G.is_regular(-1));
 }
 static const char _is_regular_s[]="is_regular";
 static define_unary_function_eval(__is_regular,&_is_regular,_is_regular_s);
 define_unary_function_ptr5(at_is_regular,alias_at_is_regular,&__is_regular,0,true)
+
+/* USAGE:   is_strongly_regular(G,[srg])
+ *
+ * Returns true iff the graph G is strongly regular and optionally outputs
+ * srg=[k,l,m] where k is the vertex degree and l resp. m is the number of
+ * common neighbors for adjacent resp. non-adjacent vertices.
+ */
+gen _is_strongly_regular(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    gen srg=undef;
+    if (g.subtype==_SEQ__VECT) {
+        if (g._VECTptr->size()!=2)
+            return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+        if ((srg=g._VECTptr->back()).type!=_IDNT)
+            return generr("Expected an unassigned identifier");
+    }
+    graphe G(contextptr);
+    if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.node_count()==0)
+        return gt_err(_GT_ERR_GRAPH_IS_EMPTY);
+    graphe::ipair sig;
+    bool res=G.is_strongly_regular(sig);
+    if (!res)
+        return graphe::FAUX;
+    if (!is_undef(srg))
+        identifier_assign(*srg._IDNTptr,makevecteur(G.degree(0),sig.first,sig.second),contextptr);
+    return graphe::VRAI;
+}
+static const char _is_strongly_regular_s[]="is_strongly_regular";
+static define_unary_function_eval(__is_strongly_regular,&_is_strongly_regular,_is_strongly_regular_s);
+define_unary_function_ptr5(at_is_strongly_regular,alias_at_is_strongly_regular,&__is_strongly_regular,0,true)
 
 /* USAGE:   isomorphic_copy(G,sigma)
  *

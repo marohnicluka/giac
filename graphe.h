@@ -191,6 +191,7 @@ public:
         bool has_neighbor(int i,bool include_temp_edges=true) const;
         void move_neighbor(int i,int j,bool after=true);
         void remove_neighbor(int i);
+        inline void sort_neighbors() { sort(m_neighbors.begin(),m_neighbors.end()); m_sorted=true; }
         template<class Compare>
         inline void sort_neighbors(Compare comp) { sort(m_neighbors.begin(),m_neighbors.end(),comp); m_sorted=false; }
         inline void clear_neighbors() { m_neighbors.clear(); m_neighbor_attributes.clear(); m_sorted=true; }
@@ -710,6 +711,7 @@ public:
     inline bool is_edge_visited(const ipair &e) const { return is_edge_visited(e.first,e.second); }
     inline void unvisit_all_edges() { visited_edges.clear(); }
     void move_neighbor(int v,int w,int ref=-1,bool after=true);
+    inline void sort_all_neighbors();
     template<class Compare>
     inline void sort_neighbors(int v,Compare comp) { node(v).sort_neighbors(comp); }
     gen to_gen();
@@ -809,6 +811,7 @@ public:
     void make_unweighted();
     void randomize_edge_weights(double a,double b,bool integral_weights=false);
     bool is_regular(int d) const;
+    bool is_strongly_regular(ipair &sig);
     bool is_equal(const graphe &G) const;
     void underlying(graphe &G) const;
     void complement(graphe &G) const;

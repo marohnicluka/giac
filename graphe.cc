@@ -605,7 +605,7 @@ const graphe::attrib &graphe::vertex::neighbor_attributes(int i) const {
 
 bool graphe::vertex::has_neighbor(int i,bool include_temp_edges) const {
     bool yes;
-    if (m_sorted)
+    if (is_sorted())
         yes=binary_search(m_neighbors.begin(),m_neighbors.end(),i);
     else yes=find(m_neighbors.begin(),m_neighbors.end(),i)!=m_neighbors.end();
     if (!yes)
@@ -1236,6 +1236,13 @@ bool graphe::is_edge_visited(int i,int j) const {
 /* move neighbor w of v right before (or after) ref */
 void graphe::move_neighbor(int v,int w,int ref,bool after) {
     node(v).move_neighbor(w,ref,after);
+}
+
+/* sort adjacency lists */
+void graphe::sort_all_neighbors() {
+    for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
+        it->sort_neighbors();
+    }
 }
 
 /* return edge as pair of vertex indices */
@@ -6506,6 +6513,40 @@ bool graphe::is_regular(int d) const {
         else if (degree(i)!=deg)
             return false;
     }
+    return true;
+}
+
+/* return true iff the graph is strongly regular with sig = (lambda,mu) */
+bool graphe::is_strongly_regular(ipair &sig) {
+    assert(!is_empty());
+    if (!is_regular(-1))
+        return false;
+    int k=degree(0),n=node_count();
+    sort_all_neighbors();
+    ivector common(k);
+    int lambda=-1,mu=-1,m;
+    for (int i=0;i<n;++i) {
+        const ivector &Nv=nodes[i].neighbors();
+        for (int j=0;j<n;++j) {
+            if (i==j)
+                continue;
+            const ivector &Nw=nodes[j].neighbors();
+            m=set_intersection(Nv.begin(),Nv.end(),Nw.begin(),Nw.end(),common.begin())-common.begin();
+            if (has_edge(i,j)) {
+                if (lambda<0)
+                    lambda=m;
+                else if (lambda!=m)
+                    return false;
+            } else {
+                if (mu<0)
+                    mu=m;
+                else if (mu!=m)
+                    return false;
+            }
+        }
+    }
+    sig.first=lambda;
+    sig.second=mu;
     return true;
 }
 

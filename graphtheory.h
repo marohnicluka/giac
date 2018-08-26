@@ -138,6 +138,7 @@ gen _is_directed(const gen &g,GIAC_CONTEXT);
 gen _minimum_degree(const gen &g,GIAC_CONTEXT);
 gen _maximum_degree(const gen &g,GIAC_CONTEXT);
 gen _is_regular(const gen &g,GIAC_CONTEXT);
+gen _is_strongly_regular(const gen &g,GIAC_CONTEXT);
 gen _neighbors(const gen &g,GIAC_CONTEXT);
 gen _number_of_vertices(const gen &g,GIAC_CONTEXT);
 gen _graph_vertices(const gen &g,GIAC_CONTEXT);

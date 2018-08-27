@@ -3905,7 +3905,7 @@
   is used for assigning weights to edges of graphs at random.
 
   <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|assign_edge_weights(G,a..b)>>>|<row|<cell|>|<cell|<verbatim|assign_edge_weights(G,m,n)>>>>>>https://en.wikipedia.org/wiki/Strongly_regular_graph
+    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|assign_edge_weights(G,a..b)>>>|<row|<cell|>|<cell|<verbatim|assign_edge_weights(G,m,n)>>>>>>
   </bothlined>
 
   <verbatim|assign_edge_weights> accepts two or three arguments: the input
@@ -5514,7 +5514,7 @@
   <subsection|Strongly regular graphs>
 
   The command <verbatim|is_strongly_regular><index|<verbatim|is_strongly_regular>>
-  is used for determining wheter the given graph is <hlink|<rigid|strongly
+  is used for determining whether the given graph is <hlink|<rigid|strongly
   regular>|https://en.wikipedia.org/wiki/Strongly_regular_graph>.
 
   <\bothlined>

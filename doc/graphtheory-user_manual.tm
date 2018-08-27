@@ -8587,29 +8587,23 @@
   <strong|source>, a vertex <math|t\<in\>V> called the <strong|sink> such
   that <math|s t\<in\>E> and optionally an unassigned identifier
   <verbatim|D>. The command returns the permutation <math|\<sigma\>> which
-  defines a particular order of vertices in <math|V>. That ordering defines
-  the orientation for each edge <math|e\<in\>E>, which causes <math|G> to
-  become acyclic with a single source <math|s> and sink <math|t>. The
-  ordering defined by <math|\<sigma\>> is the topological ordering of the
-  resulting digraph. If the fourth argument is given, the digraph is stored
+  defines a particular ordering of the vertices in <math|V>. Now, an
+  orientation of each <math|e=u v\<in\>E> can be determined by the ordinals
+  <math|n> and <math|m> of its endpoints <math|u> and <math|v>, respectively,
+  which are assigned by the permutation <math|\<sigma\>>: if
+  <math|n\<less\>m>, then <math|u> is the head and <math|v> is the tail of
+  the corresponding arc, and vice versa otherwise. If the fourth argument is
+  given, a copy of <math|G> in which these orientations are defined is stored
   to <verbatim|D>.
 
-  The orientation of <math|e=u v\<in\>E> is determined by the ordinals
-  <math|n> and <math|m> of its endpoints <math|u> and <math|v>, respectively,
-  which are assigned by the permutation <math|\<sigma\>>. If
-  <math|n\<less\>m>, then <math|u> is the head and <math|v> is the tail of
-  the corresponding arc, and vice versa otherwise.
+  Note that <math|G> has a <samp|st>-orientation if and only if <math|G> is
+  biconnected. Furthermore, if the latter is true, a <samp|st>-orientation
+  can be computed for any pair <math|s,t\<in\>V> such that <math|s t\<in\>E>.
+  If <math|G> is not biconnected, <verbatim|st_ordering> returns an error.
 
-  Note that the input graph <math|G> has a <samp|st>-orientation if and only
-  if <math|G> is biconnected. Furthermore, if the latter is true, a
-  <samp|st>-orientation can be computed for any pair <math|s,t\<in\>V> such
-  that <math|s t\<in\>E>.
-
-  If the input graph is not biconnected, <verbatim|st_ordering> returns an
-  error. Otherwise, it applies the algorithm of <name|Even> and
-  <name|Tarjan><nbsp><cite|even>, which runs in
-  <math|O<around*|(|<around*|\||V|\|>+<around*|\||E|\|>|)>> time, to find
-  <samp|st>-ordering for the given pair of vertices.
+  The strategy is to apply the algorithm of <name|Even> and
+  <name|Tarjan><nbsp><cite|even> which runs in
+  <math|O<around*|(|<around*|\||V|\|>+<around*|\||E|\|>|)>> time.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -8667,16 +8661,15 @@
   <math|G<around*|(|V,E|)>> as its only argument and returns a list of edges
   <math|e<rsub|1>,e<rsub|2>,\<ldots\>,e<rsub|m>\<in\>E> such that
   <math|e<rsub|i>> and <math|e<rsub|j>> are not adjacent (i.e.<nbsp>have no
-  common endpoints) for all <math|1\<leqslant\>i\<less\>j\<leqslant\>m>,
-  under condition that <math|m> is maximal. Edges <math|e<rsub|k>> for
-  <math|k=1,\<ldots\>,m> represent the matched pairs of vertices in <math|G>.
+  common endpoints) for all <math|1\<leqslant\>i\<less\>j\<leqslant\>m> and
+  that <math|m> is maximal. The return value can be interpreted as the list
+  of matched pairs of vertices in <math|G>.
 
-  This command uses the blossom algorithm<\footnote>
+  The strategy is to apply the blossom algorithm<\footnote>
     For a good description of the blossom algorithm, see
     <verbatim|<hlink|https://en.wikipedia.org/wiki/Blossom_algorithm|>>.
-  </footnote> of <name|Edmonds> <cite|edmonds>, which finds a maximum
-  matching in <math|O<around*|(|<around*|\||V|\|><rsup|2>*<around*|\||E|\|>|)>>
-  time.
+  </footnote> of <name|Edmonds> <cite|edmonds>, which runs in
+  <math|O<around*|(|<around*|\||V|\|><rsup|2>*<around*|\||E|\|>|)>> time.
 
   <\session|giac|default>
     <\unfolded-io>

@@ -28,6 +28,8 @@ using namespace std;
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
+#define MAX_SIZE_TO_SORT 100
+
 /* error messages */
 static const char *gt_error_messages[] = {
     "Unknown error",                                                    //  0
@@ -464,6 +466,7 @@ int graphunion(graphe &G,const vecteur &gv,bool disjoint) {
                 add_prefix_to_vertex_label(*it,k,ss);
             }
         }
+        G.add_nodes(V);
         Gk.get_edges_as_pairs(E,false);
         for (graphe::ipairs_iter it=E.begin();it!=E.end();++it) {
             const gen &v=V[it->first],&w=V[it->second];
@@ -949,7 +952,7 @@ gen _subgraph(const gen &g,GIAC_CONTEXT) {
     bool notfound=false;
     if (!G.edges2ipairs(E,edges,notfound))
         return notfound?gt_err(_GT_ERR_EDGE_NOT_FOUND):gensizeerr(contextptr);
-    G.subgraph(edges,S);
+    G.extract_subgraph(edges,S);
     return S.to_gen();
 }
 static const char _subgraph_s[]="subgraph";
@@ -1036,8 +1039,7 @@ gen _induced_subgraph(const gen &g,GIAC_CONTEXT) {
     int i=0,index;
     vector<int> vi(V.size());
     for (const_iterateur it=V.begin();it!=V.end();++it) {
-        index=G.node_index(*it);
-        if (index==-1)
+        if ((index=G.node_index(*it))<0)
             return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
         vi[i++]=index;
     }
@@ -1067,7 +1069,7 @@ gen _maximum_matching(const gen &g,GIAC_CONTEXT) {
     for (graphe::ipairs_iter it=matching.begin();it!=matching.end();++it) {
         res.push_back(makevecteur(G.node_label(it->first),G.node_label(it->second)));
     }
-    return change_subtype(res.size()<100?_sort(res,contextptr):res,_LIST__VECT);
+    return change_subtype(res.size()<=MAX_SIZE_TO_SORT?_sort(res,contextptr):res,_LIST__VECT);
 }
 static const char _maximum_matching_s[]="maximum_matching";
 static define_unary_function_eval(__maximum_matching,&_maximum_matching,_maximum_matching_s);
@@ -1097,7 +1099,8 @@ gen _bipartite_matching(const gen &g,GIAC_CONTEXT) {
     for (graphe::ipairs_iter it=matching.begin();it!=matching.end();++it) {
         res.push_back(makevecteur(G.node_label(it->first),G.node_label(it->second)));
     }
-    return change_subtype(makevecteur(count,change_subtype(res.size()<100?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT)),_SEQ__VECT);
+    return change_subtype(makevecteur(count,change_subtype(res.size()<=MAX_SIZE_TO_SORT?
+                                                               *_sort(res,contextptr)._VECTptr:res,_LIST__VECT)),_SEQ__VECT);
 }
 static const char _bipartite_matching_s[]="bipartite_matching";
 static define_unary_function_eval(__bipartite_matching,&_bipartite_matching,_bipartite_matching_s);
@@ -1430,9 +1433,8 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
         bool check=method!=_GT_STYLE_DEFAULT;
         double sep=1.0;
         // draw the components separately
-        for (graphe::ivectors::iterator it=components.begin();it!=components.end();++it) {
+        for (graphe::ivectors_iter it=components.begin();it!=components.end();++it) {
             i=it-components.begin();
-            sort(it->begin(),it->end());
             Cv.resize(Cv.size()+1);
             graphe &C=Cv.back();
             G.induce_subgraph(*it,C,false);
@@ -1979,14 +1981,13 @@ gen _biconnected_components(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr),H(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    vector<vector<graphe::ipair> > blocks;
-    G.find_blocks(blocks);
+    graphe::ivectors comp;
+    G.biconnected_components(comp);
     vecteur res;
-    for (vector<vector<graphe::ipair> >::const_iterator it=blocks.begin();it!=blocks.end();++it) {
-        G.subgraph(*it,H,false);
-        res.push_back(_sort(H.vertices(),contextptr));
+    for (graphe::ivectors_iter it=comp.begin();it!=comp.end();++it) {
+        res.push_back(_sort(G.get_node_labels(*it),contextptr));
     }
-    return change_subtype(res.size()<100?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
+    return change_subtype(res.size()<=MAX_SIZE_TO_SORT?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
 }
 static const char _biconnected_components_s[]="biconnected_components";
 static define_unary_function_eval(__biconnected_components,&_biconnected_components,_biconnected_components_s);
@@ -2152,7 +2153,7 @@ define_unary_function_ptr5(at_delete_vertex,alias_at_delete_vertex,&__delete_ver
 
 /* USAGE:   contract_edge(G,e)
  *
- * Returns graph G with edge e contracted (collapsed).
+ * Returns graph G (undirected) with edge e contracted (collapsed).
  */
 gen _contract_edge(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -2165,6 +2166,8 @@ gen _contract_edge(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g._VECTptr->front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     vecteur &E=*g._VECTptr->back()._VECTptr;
     if (E.size()!=2)
         return gensizeerr(contextptr);
@@ -2196,7 +2199,7 @@ gen _connected_components(const gen &g,GIAC_CONTEXT) {
     for (graphe::ivectors_iter it=components.begin();it!=components.end();++it) {
         res.push_back(_sort(G.get_node_labels(*it),contextptr));
     }
-    return change_subtype(res.size()<100?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
+    return change_subtype(res.size()<=MAX_SIZE_TO_SORT?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
 }
 static const char _connected_components_s[]="connected_components";
 static define_unary_function_eval(__connected_components,&_connected_components,_connected_components_s);
@@ -2918,7 +2921,7 @@ gen _is_strongly_regular(const gen &g,GIAC_CONTEXT) {
         if (g._VECTptr->size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         if ((srg=g._VECTptr->back()).type!=_IDNT)
-            return generr("Expected an unassigned identifier");
+            return generr("Expected an identifier");
     }
     graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
@@ -4299,7 +4302,7 @@ gen _maximum_clique(const gen &g,GIAC_CONTEXT) {
     graphe::ivector clique;
     G.maximum_clique(clique);
     vecteur res=G.get_node_labels(clique);
-    return res.size()<100?_sort(res,contextptr):res;
+    return res.size()<=MAX_SIZE_TO_SORT?_sort(res,contextptr):res;
 }
 static const char _maximum_clique_s[]="maximum_clique";
 static define_unary_function_eval(__maximum_clique,&_maximum_clique,_maximum_clique_s);
@@ -4347,7 +4350,7 @@ gen _clique_cover(const gen &g,GIAC_CONTEXT) {
         return vecteur(0);
     vecteur res;
     G.ivectors2vecteur(cover,res,true);
-    return change_subtype(res.size()<100?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
+    return change_subtype(res.size()<=MAX_SIZE_TO_SORT?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
 }
 static const char _clique_cover_s[]="clique_cover";
 static define_unary_function_eval(__clique_cover,&_clique_cover,_clique_cover_s);
@@ -4432,7 +4435,7 @@ gen _maximum_independent_set(const gen &g,GIAC_CONTEXT) {
     graphe::ivector clique;
     C.maximum_clique(clique);
     vecteur res=C.get_node_labels(clique);
-    return res.size()<100?_sort(res,contextptr):res;
+    return res.size()<=MAX_SIZE_TO_SORT?_sort(res,contextptr):res;
 }
 static const char _maximum_independent_set_s[]="maximum_independent_set";
 static define_unary_function_eval(__maximum_independent_set,&_maximum_independent_set,_maximum_independent_set_s);
@@ -4471,7 +4474,7 @@ gen _strongly_connected_components(const gen &g,GIAC_CONTEXT) {
     G.strongly_connected_components(components);
     vecteur res;
     G.ivectors2vecteur(components,res,true);
-    return change_subtype(res.size()<100?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
+    return change_subtype(res.size()<=MAX_SIZE_TO_SORT?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
 }
 static const char _strongly_connected_components_s[]="strongly_connected_components";
 static define_unary_function_eval(__strongly_connected_components,&_strongly_connected_components,_strongly_connected_components_s);
@@ -4888,7 +4891,7 @@ gen _graph_rank(const gen &g,GIAC_CONTEXT) {
         bool notfound=false;
         if (!G.edges2ipairs(E,ev,notfound))
             return notfound?gt_err(_GT_ERR_EDGE_NOT_FOUND):gentypeerr(contextptr);
-        G.subgraph(ev,H,false);
+        G.extract_subgraph(ev,H,false);
         H.add_nodes(G.vertices());
         return G.node_count()-H.connected_components_count();
     }
@@ -5631,7 +5634,7 @@ gen _maxflow(const gen &g,GIAC_CONTEXT) {
     if (gv.size()==4) {
         M=gv[3];
         if (M.type!=_IDNT)
-            return generr("Expected an unassigned identifier");
+            return generr("Expected an identifier");
     }
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
@@ -5858,6 +5861,36 @@ gen _random_network(const gen &g,GIAC_CONTEXT) {
 static const char _random_network_s[]="random_network";
 static define_unary_function_eval(__random_network,&_random_network,_random_network_s);
 define_unary_function_ptr5(at_random_network,alias_at_random_network,&__random_network,0,true)
+
+/* USAGE:   tutte_polynomial(G,[x,y])
+ *
+ * Returns the Tutte polynomial (with identifiers x and y as its variables) for
+ * the undirected graph G.
+ */
+gen _tutte_polynomial(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    identificateur x("x"),y("y");
+    if (g.subtype==_SEQ__VECT) {
+        vecteur &gv=*g._VECTptr;
+        if (gv.size()!=3)
+            return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+        if (gv[1].type!=_IDNT || gv[2].type!=_IDNT)
+            return generr("Expected an identifier");
+        x=*gv[1]._IDNTptr;
+        y=*gv[2]._IDNTptr;
+    }
+    graphe G(contextptr);
+    if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
+    return _ratnormal(G.tutte_polynomial(x,y),contextptr);
+}
+static const char _tutte_polynomial_s[]="tutte_polynomial";
+static define_unary_function_eval(__tutte_polynomial,&_tutte_polynomial,_tutte_polynomial_s);
+define_unary_function_ptr5(at_tutte_polynomial,alias_at_tutte_polynomial,&__tutte_polynomial,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

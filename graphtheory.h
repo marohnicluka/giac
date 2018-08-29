@@ -238,6 +238,7 @@ gen _maxflow(const gen &g,GIAC_CONTEXT);
 gen _is_cut_set(const gen &g,GIAC_CONTEXT);
 gen _is_network(const gen &g,GIAC_CONTEXT);
 gen _random_network(const gen &g,GIAC_CONTEXT);
+gen _tutte_polynomial(const gen &g,GIAC_CONTEXT);
 //gen _spanning_polynomial(const gen &g,GIAC_CONTEXT);
 //gen _fundamental_cycle(const gen &g,GIAC_CONTEXT);
 //gen _mycielski(const gen &g,GIAC_CONTEXT);

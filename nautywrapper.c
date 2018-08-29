@@ -14,8 +14,7 @@ int compfunc(const void *p,const void *q) {
 }
 
 void color_graph(int n,int *lab,int *ptn,int *col) {
-    pair *lst;
-    lst=(pair*)malloc(n*sizeof(pair));
+    pair *lst=(pair*)malloc(n*sizeof(pair));
     for (int i=0;i<n;++i) {
         pair *p=&lst[i];
         p->a=col[i];
@@ -25,7 +24,7 @@ void color_graph(int n,int *lab,int *ptn,int *col) {
     for (int i=0;i<n;++i) {
         pair *p=&lst[i];
         lab[i]=p->b;
-        ptn[i]=(i==n-1 || (i<n-1 && p->a!=lst[i+1].a))?0:1;
+        ptn[i]=(i>=n-1 || p->a!=lst[i+1].a)?0:1;
     }
     free(lst);
 }
@@ -97,7 +96,7 @@ int nautywrapper_is_isomorphic(int isdir,int n,int *adj1,int *adj2,int *sigma) {
         }
     }
     DYNFREE(lab1,lab1_sz);
-    DYNFREE(lab2,lab1_sz);
+    DYNFREE(lab2,lab2_sz);
     DYNFREE(ptn1,ptn1_sz);
     DYNFREE(ptn2,ptn2_sz);
     DYNFREE(col1,col1_sz);

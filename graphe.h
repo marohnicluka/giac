@@ -127,8 +127,9 @@ public:
         int m_y;
         // *
         attrib m_attributes;
-        std::map<int,attrib> m_neighbor_attributes;
         ivector m_neighbors;
+        std::map<int,attrib> m_neighbor_attributes;
+        std::map<int,int> m_multiedges;
         void assign_defaults();
     public:
         vertex();
@@ -191,15 +192,18 @@ public:
         bool has_neighbor(int i,bool include_temp_edges=true) const;
         void move_neighbor(int i,int j,bool after=true);
         void remove_neighbor(int i);
-        inline void sort_neighbors() { sort(m_neighbors.begin(),m_neighbors.end()); m_sorted=true; }
         template<class Compare>
         inline void sort_neighbors(Compare comp) { sort(m_neighbors.begin(),m_neighbors.end(),comp); m_sorted=false; }
-        inline void clear_neighbors() { m_neighbors.clear(); m_neighbor_attributes.clear(); m_sorted=true; }
+        inline void clear_neighbors() { m_neighbors.clear(); m_neighbor_attributes.clear(); m_multiedges.clear(); m_sorted=true; }
         void incident_faces(ivector &F) const;
         inline void add_edge_face(int nb,int f) { assert(m_edge_faces.find(nb)==m_edge_faces.end()); m_edge_faces[nb]=f+1; }
         inline void clear_edge_faces() { m_edge_faces.clear(); }
         inline int edge_face(int nb) { return m_edge_faces[nb]-1; }
         inline const std::map<int,int> &edge_faces() const { return m_edge_faces; }
+        void set_multiedge(int v,int k);
+        int multiedges(int v) const;
+        inline void clear_multiedges() { m_multiedges.clear(); }
+        inline bool has_multiedges() const { return !m_multiedges.empty(); }
     };
 
     class dotgraph { // temporary structure used in dot parsing
@@ -353,7 +357,7 @@ public:
         int edge_index(const ipair &e);
         int vertex_index(int i);
         double weight(int i,int j);
-        double weight(const ipair &e);
+        double weight(const ipair &e) { return weight(e.first,e.second); }
         double lower_bound();
         void perform_3opt_moves(ivector &hc);
         void straighten(ivector &hc);
@@ -422,6 +426,21 @@ public:
         bool intersects(const std::vector<rectangle> &rectangles) const;
         bool intersects(std::vector<rectangle>::const_iterator first,std::vector<rectangle>::const_iterator last) const;
         layout *get_layout() const { return L; }
+    };
+
+    class cpol {
+        void assign(const cpol &other);
+    public:
+        int *data;
+        int sz;
+        int frq;
+        gen poly;
+        cpol() { data=NULL; sz=0; frq=0; }
+        cpol(int *d,int s,gen pol);
+        cpol(const cpol &other);
+        ~cpol() { }
+        cpol& operator =(const cpol &other);
+        bool match(int *adj,int adj_sz) const;
     };
 
     class unionfind { // disjoint-set data structure implementation
@@ -503,9 +522,6 @@ public:
     typedef ivectors::const_iterator ivectors_iter;
     typedef ipairs::const_iterator ipairs_iter;
     typedef edgeset::const_iterator edgeset_iter;
-    typedef edgemap::const_iterator edgemap_iter;
-    typedef vertex* vptr;
-    typedef std::vector<vptr> vpointers;
     static const gen FAUX;
     static const gen VRAI;
     static bool verbose;
@@ -516,6 +532,7 @@ public:
     static int default_highlighted_vertex_color;
     static int default_edge_width;
     static int bold_edge_width;
+    static std::vector<cpol> cache;
     // special graphs
     static const int clebsch_graph[];
     static const char* coxeter_graph[];
@@ -659,6 +676,8 @@ private:
     bool bipartite_matching_dfs(int u,ivector &dist);
     static ipair forest_root_info(const ivector &forest,int v);
     static gen make_colon_label(const ivector &v);
+    void simplify(graphe &G,bool color_temp_vertices=false) const;
+    gen tutte_poly_recurse(const identificateur &x,const identificateur &y,int con=0);
 
 public:
     graphe(const context *contextptr=context0);
@@ -685,7 +704,7 @@ public:
     void read_special(const int *special_graph);
     void read_special(const char **special_graph);
     void copy(graphe &G) const;
-    inline void copy_nodes(const std::vector<vertex> &V) { nodes=std::vector<vertex>(V.begin(),V.end()); }
+    inline void copy_nodes(const std::vector<vertex> &V) { nodes=V; }
     void join_edges(const graphe &G);
     void clear();
     void clear_maximal_cliques() { maxcliques.clear(); }
@@ -711,11 +730,10 @@ public:
     inline bool is_edge_visited(const ipair &e) const { return is_edge_visited(e.first,e.second); }
     inline void unvisit_all_edges() { visited_edges.clear(); }
     void move_neighbor(int v,int w,int ref=-1,bool after=true);
-    inline void sort_all_neighbors();
     template<class Compare>
     inline void sort_neighbors(int v,Compare comp) { node(v).sort_neighbors(comp); }
     gen to_gen();
-    int *to_array() const;
+    int *to_array(int &sz) const;
     bool write_latex(const std::string &filename,const gen &drawing) const;
     bool write_dot(const std::string &filename) const;
     bool read_dot(const std::string &filename);
@@ -736,11 +754,14 @@ public:
     bool is_connected(int sg=-1);
     bool is_biconnected(int sg=-1);
     bool is_triconnected(int sg=-1);
+    bool is_cycle(int sg=-1);
     void adjacent_nodes(int i,ivector &adj,bool include_temp_edges=true) const;
     void translate_indices_to(const graphe &G,const ivector &indices,ivector &dest) const;
     void translate_indices_from(const graphe &G,const ivector &indices,ivector &dest) const;
     void get_edges_as_pairs(ipairs &E, bool include_temp_edges=true,int sg=-1) const;
     vecteur edges(bool include_weights,int sg=-1) const;
+    ivector edge_multiplicities() const;
+    int sum_of_edge_multiplicities() const;
     int add_node(const gen &v);
     inline int add_node(const gen &v,const attrib &attr) { int i=add_node(v); nodes[i].set_attributes(attr); return i; }
     void add_nodes(const vecteur &v);
@@ -765,6 +786,8 @@ public:
     inline const attrib &node_attributes(int i) const { assert(i>=0 && i<node_count()); return node(i).attributes(); }
     const attrib &edge_attributes(int i,int j) const;
     attrib &edge_attributes(int i,int j);
+    inline const attrib &edge_attributes(const ipair &e) const { return edge_attributes(e.first,e.second); }
+    inline attrib &edge_attributes(const ipair &e) { return edge_attributes(e.first,e.second); }
     void attrib2vecteurs(const attrib &attr,vecteur &tags,vecteur &values) const;
     void add_edge(int i,int j,const gen &w=gen(1));
     void add_edge(int i,int j,const attrib &attr);
@@ -778,15 +801,17 @@ public:
     bool remove_edge(int i,int j);
     inline bool remove_edge(const ipair &p) { return remove_edge(p.first,p.second); }
     bool has_edge(int i,int j,int sg=-1) const;
-    inline bool has_edge(ipair p) const { return has_edge(p.first,p.second); }
+    inline bool has_edge(const ipair &p) const { return has_edge(p.first,p.second); }
     ipair make_edge(const vecteur &v) const;
     bool edges2ipairs(const vecteur &E,ipairs &ev,bool &notfound) const;
+    vecteur ipairs2edges(const ipairs &E) const;
     static void ipairs2edgeset(const ipairs &E,edgeset &Eset);
     bool nodes_are_adjacent(int i,int j) const;
     int in_degree(int index,bool count_temp_edges=true) const;
     int out_degree(int index,bool count_temp_edges=true) const;
     int degree(int index,bool count_temp_edges=true) const;
     vecteur degree_sequence(int sg=-1) const;
+    void sort_by_degrees();
     void adjacency_matrix(matrice &m) const;
     void adjacency_sparse_matrix(sparsemat &sm) const;
     matrice incidence_matrix() const;
@@ -818,7 +843,7 @@ public:
     bool isomorphic_copy(graphe &G,const ivector &sigma);
     bool relabel_nodes(const vecteur &labels);
     void induce_subgraph(const ivector &vi,graphe &G,bool copy_attrib=true) const;
-    void subgraph(const ipairs &E,graphe &G,bool copy_attrib=true) const;
+    void extract_subgraph(const ipairs &E,graphe &G,bool copy_attrib=true) const;
     bool is_subgraph(const graphe &G) const;
     void maximal_independent_set(ivector &ind) const;
     void find_maximum_matching(ipairs &M);
@@ -881,6 +906,7 @@ public:
     void tensor_product(const graphe &G,graphe &P) const;
     void connected_components(ivectors &components,int sg=-1,bool skip_embedded=false,int *count=NULL);
     int connected_components_count(int sg=-1);
+    void biconnected_components(ivectors &components,int sg=-1);
     void strongly_connected_components(ivectors &components,int sg=-1);
     bool has_cut_vertex(int sg=-1,int i=0);
     void find_cut_vertices(ivector &articulation_points,int sg=-1);
@@ -892,7 +918,11 @@ public:
     int eulerian_path_start(bool &iscycle) const;
     bool fleury(int start,ivector &path);
     void hierholzer(ivector &path);
-    void contract_edge(int i,int j);
+    bool is_multigraph() const;
+    int multiedges(const ipair &e) const;
+    void set_multiedge(const ipair &e,int k);
+    void contract_edge(int i,int j,bool adjust_positions=true);
+    inline void contract_edge(const ipair &e,bool adjust_pos=true) { contract_edge(e.first,e.second,adjust_pos); }
     void subdivide_edge(const ipair &e,int n,int &label);
     void incident_edges(const ivector &V,edgeset &E);
     static bool edges_incident(const ipair &e1,const ipair &e2);
@@ -938,7 +968,8 @@ public:
     int is_hamiltonian(bool conclusive,ivector &hc,bool make_closure=true);
     int find_hamiltonian_cycle(ivector &h,double &cost,bool approximate=false);
     bool make_euclidean_distances();
-    gen max_flow(int s,int t,std::vector<std::map<int, gen> > &flow);
+    gen max_flow(int s,int t,std::vector<std::map<int,gen> > &flow);
+    gen tutte_polynomial(const identificateur &x,const identificateur &y);
     static gen colon_label(int i,int j);
     static gen colon_label(int i,int j,int k);
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }

@@ -189,7 +189,7 @@ public:
         bool is_temporary(int i) const;
         attrib &neighbor_attributes(int i);
         const attrib &neighbor_attributes(int i) const;
-        bool has_neighbor(int i,bool include_temp_edges=true) const;
+        bool has_neighbor(int i) const;
         void move_neighbor(int i,int j,bool after=true);
         void remove_neighbor(int i);
         template<class Compare>
@@ -431,16 +431,18 @@ public:
     class cpol {
         void assign(const cpol &other);
     public:
-        int *data;
-        int sz;
+        int nv;
+        ulong *cg;
+        int *col;
+        size_t sz;
         int frq;
-        gen poly;
-        cpol() { data=NULL; sz=0; frq=0; }
-        cpol(int *d,int s,gen pol);
+        ivector pcf;
+        cpol() { cg=NULL; col=NULL; sz=0; frq=0; }
+        cpol(int n,ulong *g,int *c,size_t s,const ivector &p);
         cpol(const cpol &other);
         ~cpol() { }
         cpol& operator =(const cpol &other);
-        bool match(int *adj,int adj_sz) const;
+        bool match(int n,ulong *g,int *c) const;
     };
 
     class unionfind { // disjoint-set data structure implementation
@@ -532,7 +534,7 @@ public:
     static int default_highlighted_vertex_color;
     static int default_edge_width;
     static int bold_edge_width;
-    static std::vector<cpol> cache;
+    static std::map<ivector,std::vector<cpol> > cache;
     // special graphs
     static const int clebsch_graph[];
     static const char* coxeter_graph[];
@@ -562,7 +564,7 @@ private:
     std::vector<std::string> user_tags;
     ivector marked_nodes;
     int disc_time;
-    ivector discovered_nodes;
+    ivector disc_nodes;
     std::stack<ipair> edge_stack;
     std::stack<int> node_stack;
     std::queue<int> node_queue;
@@ -619,6 +621,7 @@ private:
     int ost_maxclique(ivector &clique);
     void ost_recursive(ivector &U,int size,int &maxsize,ivector &incumbent,bool &found);
     void remove_isolated_node(int i);
+    void remove_isolated_nodes(const std::set<int> &isolated_nodes);
     void find_cut_vertices_dfs(int i,std::set<int> &ap,int sg);
     void find_blocks_dfs(int i,std::vector<ipairs> &blocks,int sg);
     void find_bridges_dfs(int i,ipairs &B,int sg);
@@ -677,7 +680,9 @@ private:
     static ipair forest_root_info(const ivector &forest,int v);
     static gen make_colon_label(const ivector &v);
     void simplify(graphe &G,bool color_temp_vertices=false) const;
-    gen tutte_poly_recurse(const identificateur &x,const identificateur &y,int con=0);
+    gen tutte_poly_recurse(const identificateur &x,const identificateur &y,int con);
+    static void poly2ivector(const gen &p,const identificateur &x,const identificateur &y,ivector &v);
+    static void ivector2poly(const ivector &v,gen &p,const identificateur &x,const identificateur &y);
 
 public:
     graphe(const context *contextptr=context0);
@@ -686,7 +691,7 @@ public:
     inline int rand_integer(int n) const { return giac::giac_rand(ctx)%n; }
     inline double rand_uniform() const { return giac::giac_rand(ctx)/(RAND_MAX+1.0); }
     inline double rand_normal() const { return giac::randNorm(ctx); }
-    static ivector rand_permu(int n);
+    ivector rand_permu(int n) const;
     static bool is_real_number(const gen &g);
     static gen to_binary(int number,int chars);
     inline const context *giac_context() const { return ctx; }
@@ -733,7 +738,7 @@ public:
     template<class Compare>
     inline void sort_neighbors(int v,Compare comp) { node(v).sort_neighbors(comp); }
     gen to_gen();
-    int *to_array(int &sz) const;
+    int *to_array(int &sz,bool reduce=false) const;
     bool write_latex(const std::string &filename,const gen &drawing) const;
     bool write_dot(const std::string &filename) const;
     bool read_dot(const std::string &filename);
@@ -750,11 +755,11 @@ public:
     void set_node_color(int i,int c) { node(i).set_color(c); }
     void dfs(int root,bool rec=true,bool clr=true,ivector *D=NULL,int sg=-1,bool skip_embedded=false);
     void bfs(int root,bool rec=true,bool clr=true,ivector *D=NULL,int sg=-1,bool skip_embedded=false);
-    inline const ivector &get_discovered_nodes() const { return discovered_nodes; }
+    inline const ivector &get_discovered_nodes() const { return disc_nodes; }
     bool is_connected(int sg=-1);
     bool is_biconnected(int sg=-1);
     bool is_triconnected(int sg=-1);
-    bool is_cycle(int sg=-1);
+    bool is_cycle(ipairs &E,int sg=-1);
     void adjacent_nodes(int i,ivector &adj,bool include_temp_edges=true) const;
     void translate_indices_to(const graphe &G,const ivector &indices,ivector &dest) const;
     void translate_indices_from(const graphe &G,const ivector &indices,ivector &dest) const;
@@ -801,19 +806,20 @@ public:
     bool remove_edge(int i,int j);
     inline bool remove_edge(const ipair &p) { return remove_edge(p.first,p.second); }
     bool has_edge(int i,int j,int sg=-1) const;
-    inline bool has_edge(const ipair &p) const { return has_edge(p.first,p.second); }
+    inline bool has_edge(const ipair &p,int sg=-1) const { return has_edge(p.first,p.second,sg); }
     ipair make_edge(const vecteur &v) const;
     bool edges2ipairs(const vecteur &E,ipairs &ev,bool &notfound) const;
     vecteur ipairs2edges(const ipairs &E) const;
     static void ipairs2edgeset(const ipairs &E,edgeset &Eset);
     bool nodes_are_adjacent(int i,int j) const;
-    int in_degree(int index,bool count_temp_edges=true) const;
-    int out_degree(int index,bool count_temp_edges=true) const;
-    int degree(int index,bool count_temp_edges=true) const;
+    int in_degree(int index,int sg=-1) const;
+    int out_degree(int index,int sg=-1) const;
+    int degree(int index,int sg=-1) const;
     vecteur degree_sequence(int sg=-1) const;
-    void sort_by_degrees();
+    void sort_by_degrees(graphe &G);
     void adjacency_matrix(matrice &m) const;
     void adjacency_sparse_matrix(sparsemat &sm) const;
+    void laplacian_matrix(matrice &m) const;
     matrice incidence_matrix() const;
     inline void set_graph_attribute(int key,const gen &val) { attributes[key]=val; }
     inline void set_graph_attributes(const attrib &attr) { copy_attributes(attr,attributes); }
@@ -912,6 +918,7 @@ public:
     void find_cut_vertices(ivector &articulation_points,int sg=-1);
     void find_blocks(std::vector<ipairs> &blocks,int sg=-1);
     void find_bridges(ipairs &B,int sg=-1);
+    void find_ears(ivectors &ears,int sg=-1);
     bool find_cycle(ivector &cycle,int sg=-1);
     bool find_path(int i,int j,ivector &path,int sg=-1,bool skip_embedded=false);
     bool find_eulerian_path(ivector &path);
@@ -970,6 +977,7 @@ public:
     bool make_euclidean_distances();
     gen max_flow(int s,int t,std::vector<std::map<int,gen> > &flow);
     gen tutte_polynomial(const identificateur &x,const identificateur &y);
+    void sharc_order(graphe &G);
     static gen colon_label(int i,int j);
     static gen colon_label(int i,int j,int k);
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }

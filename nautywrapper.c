@@ -9,7 +9,7 @@ static DEFAULTOPTIONS_DIGRAPH(opts_dir);
 
 typedef struct { int a,b; } pair;
 
-int compfunc(const void *p,const void *q) {
+int pair_less(const void *p,const void *q) {
     return ((pair*)p)->a-((pair*)q)->a;
 }
 
@@ -20,13 +20,21 @@ void color_graph(int n,int *lab,int *ptn,int *col) {
         p->a=col[i];
         p->b=i;
     }
-    qsort((void*)lst,(size_t)n,sizeof(pair),compfunc);
+    qsort((void*)lst,(size_t)n,sizeof(pair),pair_less);
     for (int i=0;i<n;++i) {
         pair *p=&lst[i];
         lab[i]=p->b;
         ptn[i]=(i>=n-1 || p->a!=lst[i+1].a)?0:1;
     }
     free(lst);
+}
+
+int int_less(const void *p,const void *q) {
+    return *(int*)p-*(int*)q;
+}
+
+int nautywrapper_words_needed(int n) {
+    return SETWORDSNEEDED(n);
 }
 
 int nautywrapper_is_isomorphic(int isdir,int n,int *adj1,int *adj2,int *sigma) {
@@ -81,20 +89,29 @@ int nautywrapper_is_isomorphic(int isdir,int n,int *adj1,int *adj2,int *sigma) {
     }
     color_graph(n,lab1,ptn1,col1);
     color_graph(n,lab2,ptn2,col2);
-    /* canonically label both graphs */
-    densenauty(g1,lab1,ptn1,orbits,options,&stats,m,n,cg1);
-    densenauty(g2,lab2,ptn2,orbits,options,&stats,m,n,cg2);
-    /* return nonzero iff the canonical labelings match */
-    size_t cnt=0;
-    for (;cnt<m*(size_t)n;++cnt) {
-        if (cg1[cnt]!=cg2[cnt]) break;
+    boolean isomorphic;
+    qsort((void*)col1,(size_t)n,sizeof(int),int_less);
+    qsort((void*)col2,(size_t)n,sizeof(int),int_less);
+    for (i=0;i<n;++i) {
+        if (col1[i]!=col2[i])
+            break;
     }
-    boolean isomorphic=cnt==m*(size_t)n?TRUE:FALSE;
-    if (isomorphic) {
-        for (i=0;i<n;++i) {
-            sigma[lab1[i]]=lab2[i];
+    if (i==n) { // colors match
+        /* canonically label both graphs */
+        densenauty(g1,lab1,ptn1,orbits,options,&stats,m,n,cg1);
+        densenauty(g2,lab2,ptn2,orbits,options,&stats,m,n,cg2);
+        /* return nonzero iff the canonical labelings match */
+        size_t cnt=0;
+        for (;cnt<m*(size_t)n;++cnt) {
+            if (cg1[cnt]!=cg2[cnt]) break;
         }
-    }
+        isomorphic=cnt==m*(size_t)n?TRUE:FALSE;
+        if (isomorphic && sigma!=NULL) {
+            for (i=0;i<n;++i) {
+                sigma[lab1[i]]=lab2[i];
+            }
+        }
+    } else isomorphic=FALSE; // colors do not match
     DYNFREE(lab1,lab1_sz);
     DYNFREE(lab2,lab2_sz);
     DYNFREE(ptn1,ptn1_sz);
@@ -147,7 +164,7 @@ void nautywrapper_aut_generators(int isdir,int n,int *adj,FILE *f) {
     DYNFREE(g,g_sz);
 }
 
-void nautywrapper_canonical(int isdir,int n,int *adj,int *clab) {
+void nautywrapper_canonical(int isdir,int n,int *adj,int *clab,unsigned long *cgrph,int *cols) {
     DYNALLSTAT(int,lab,lab_sz);
     DYNALLSTAT(int,ptn,ptn_sz);
     DYNALLSTAT(int,col,col_sz);
@@ -179,7 +196,23 @@ void nautywrapper_canonical(int isdir,int n,int *adj,int *clab) {
     }
     color_graph(n,lab,ptn,col);
     densenauty(g,lab,ptn,orbits,options,&stats,m,n,cg);
-    for (i=0;i<n;++i) clab[i]=lab[i];
+    if (clab!=NULL) {
+        for (i=0;i<n;++i) {
+            clab[i]=lab[i];
+        }
+    }
+    if (cgrph!=NULL) {
+        size_t cnt=0;
+        for (;cnt<m*(size_t)n;++cnt) {
+            cgrph[cnt]=cg[cnt];
+        }
+    }
+    if (cols!=NULL) {
+        qsort((void*)col,(size_t)n,sizeof(int),int_less);
+        for (i=0;i<n;++i) {
+            cols[i]=col[i];
+        }
+    }
     DYNFREE(lab,lab_sz);
     DYNFREE(ptn,ptn_sz);
     DYNFREE(col,col_sz);
@@ -190,15 +223,10 @@ void nautywrapper_canonical(int isdir,int n,int *adj,int *clab) {
 #else // HAVE_LIBNAUTY
 #include <stdio.h>
 int nautywrapper_is_isomorphic(int isdir,int n,int *adj1,int *adj2,int *sigma){
-  return 0;
+    return 0;
 }
-
-/* write the generators of Aut(G), where G is represented by the sequence
- * adj of adjacency lists, to the temporary file f and returns length of f
- * (leaves the file open, it should be closed afterwards) */
 void nautywrapper_aut_generators(int isdir,int n,int *adj,FILE *f){}
-
-/* compute the canonical labeling for the graph represented by the sequence
- * adj of adjacency lists */
-void nautywrapper_canonical(int isdir,int n,int *adj,int *clab){ *clab=16; }
+void nautywrapper_canonical(int isdir,int n,int *adj,int *clab,unsigned long *cgrph,int *cols){
+    *clab=*cgrph=*cols=16;
+}
 #endif // HAVE_LIBNAUTY

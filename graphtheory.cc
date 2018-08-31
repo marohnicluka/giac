@@ -2957,6 +2957,8 @@ gen _isomorphic_copy(const gen &g,GIAC_CONTEXT) {
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     vecteur &sigma=*gv[1]._VECTptr;
+    if (int(sigma.size())!=G.node_count())
+        return generr("Permutation size does not match the number of vertices in the graph");
     graphe::ivector v(sigma.size());
     int ofs=array_start(contextptr);
     for (const_iterateur it=sigma.begin();it!=sigma.end();++it) {
@@ -2990,7 +2992,7 @@ gen _permute_vertices(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     vecteur &sigma=*gv[1]._VECTptr,V=G.vertices();
     if (sigma.size()!=V.size())
-        return generr("List size does not match");
+        return generr("List size does not match the number of vertices in the graph");
     graphe::ivector v(sigma.size(),-1);
     const_iterateur jt;
     int i;
@@ -3029,7 +3031,7 @@ gen _relabel_vertices(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     vecteur &labels=*gv[1]._VECTptr;
     if (int(labels.size())!=G.node_count())
-        return generr("Wrong number of labels");
+        return generr("Number of labels does not match the number of vertices in the graph");
     if (!G.relabel_nodes(labels))
         return generrtype("Failed to relabel vertices");
     return G.to_gen();
@@ -5788,7 +5790,7 @@ gen _random_network(const gen &g,GIAC_CONTEXT) {
             p=P.DOUBLE_val();
         else if (it->is_integer()) {
             switch (it->val) {
-            case 150:// _GT_ACYCLIC:
+            case _GT_ACYCLIC:
                 acyclic=true;
                 break;
             }
@@ -5797,7 +5799,7 @@ gen _random_network(const gen &g,GIAC_CONTEXT) {
             gen &rh=it->_SYMBptr->feuille._VECTptr->back();
             if (lh.is_integer()) {
                 switch (lh.val) {
-                case 150:// _GT_ACYCLIC:
+                case _GT_ACYCLIC:
                     if (rh.is_integer() && rh.subtype==_INT_BOOLEAN)
                         acyclic=(bool)rh.val;
                 }
@@ -5871,22 +5873,22 @@ gen _tutte_polynomial(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT)
         return gentypeerr(contextptr);
-    identificateur x("x"),y("y");
+    identificateur x(" x"),y(" y");
+    gen vx=identificateur("x"),vy=identificateur("y");
     if (g.subtype==_SEQ__VECT) {
         vecteur &gv=*g._VECTptr;
         if (gv.size()!=3)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-        if (gv[1].type!=_IDNT || gv[2].type!=_IDNT)
-            return generr("Expected an identifier");
-        x=*gv[1]._IDNTptr;
-        y=*gv[2]._IDNTptr;
+        vx=gv[1];
+        vy=gv[2];
     }
     graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
-    return _ratnormal(G.tutte_polynomial(x,y),contextptr);
+    gen p=G.tutte_polynomial(x,y);
+    return _subs(makesequence(p,makevecteur(x,y),makevecteur(vx,vy)),contextptr);
 }
 static const char _tutte_polynomial_s[]="tutte_polynomial";
 static define_unary_function_eval(__tutte_polynomial,&_tutte_polynomial,_tutte_polynomial_s);

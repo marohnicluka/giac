@@ -202,6 +202,7 @@ public:
         inline const std::map<int,int> &edge_faces() const { return m_edge_faces; }
         void set_multiedge(int v,int k);
         int multiedges(int v) const;
+        int multiedge_count() const;
         inline void clear_multiedges() { m_multiedges.clear(); }
         inline bool has_multiedges() const { return !m_multiedges.empty(); }
     };
@@ -680,9 +681,10 @@ private:
     static ipair forest_root_info(const ivector &forest,int v);
     static gen make_colon_label(const ivector &v);
     void simplify(graphe &G,bool color_temp_vertices=false) const;
-    gen tutte_poly_recurse(const identificateur &x,const identificateur &y,int con);
-    static void poly2ivector(const gen &p,const identificateur &x,const identificateur &y,ivector &v);
-    static void ivector2poly(const ivector &v,gen &p,const identificateur &x,const identificateur &y);
+    gen tutte_poly_recurse(const gen &x,const gen &y,int vc);
+    static void poly2ivector(const gen &p,const gen &x,const gen &y, ivector &v);
+    static void ivector2poly(const ivector &v,gen &p,const gen &x,const gen &y);
+    void sharc_order();
 
 public:
     graphe(const context *contextptr=context0);
@@ -816,11 +818,11 @@ public:
     int out_degree(int index,int sg=-1) const;
     int degree(int index,int sg=-1) const;
     vecteur degree_sequence(int sg=-1) const;
-    void sort_by_degrees(graphe &G);
+    void sort_by_degrees();
     void adjacency_matrix(matrice &m) const;
     void adjacency_sparse_matrix(sparsemat &sm) const;
-    void laplacian_matrix(matrice &m) const;
-    matrice incidence_matrix() const;
+    void laplacian_matrix(matrice &m,bool normalize=false) const;
+    void incidence_matrix(matrice &m) const;
     inline void set_graph_attribute(int key,const gen &val) { attributes[key]=val; }
     inline void set_graph_attributes(const attrib &attr) { copy_attributes(attr,attributes); }
     void set_node_attribute(int index,int key,const gen &val);
@@ -911,7 +913,7 @@ public:
     void cartesian_product(const graphe &G,graphe &P) const;
     void tensor_product(const graphe &G,graphe &P) const;
     void connected_components(ivectors &components,int sg=-1,bool skip_embedded=false,int *count=NULL);
-    int connected_components_count(int sg=-1);
+    int connected_component_count(int sg=-1);
     void biconnected_components(ivectors &components,int sg=-1);
     void strongly_connected_components(ivectors &components,int sg=-1);
     bool has_cut_vertex(int sg=-1,int i=0);
@@ -928,6 +930,7 @@ public:
     bool is_multigraph() const;
     int multiedges(const ipair &e) const;
     void set_multiedge(const ipair &e,int k);
+    bool weights2multiedges();
     void contract_edge(int i,int j,bool adjust_positions=true);
     inline void contract_edge(const ipair &e,bool adjust_pos=true) { contract_edge(e.first,e.second,adjust_pos); }
     void subdivide_edge(const ipair &e,int n,int &label);
@@ -945,6 +948,7 @@ public:
     bool is_arborescence() const;
     void reverse(graphe &G) const;
     void spanning_tree(int i,graphe &T,int sg=-1);
+    int spanning_tree_count() const;
     void minimal_spanning_tree(graphe &T,int sg=-1);
     void lowest_common_ancestors(int root,const ipairs &p,ivector &lca_recursion);
     int lowest_common_ancestor(int i,int j,int root);
@@ -976,8 +980,7 @@ public:
     int find_hamiltonian_cycle(ivector &h,double &cost,bool approximate=false);
     bool make_euclidean_distances();
     gen max_flow(int s,int t,std::vector<std::map<int,gen> > &flow);
-    gen tutte_polynomial(const identificateur &x,const identificateur &y);
-    void sharc_order(graphe &G);
+    gen tutte_polynomial(const gen &x,const gen &y);
     static gen colon_label(int i,int j);
     static gen colon_label(int i,int j,int k);
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }

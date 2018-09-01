@@ -239,6 +239,10 @@ gen _is_cut_set(const gen &g,GIAC_CONTEXT);
 gen _is_network(const gen &g,GIAC_CONTEXT);
 gen _random_network(const gen &g,GIAC_CONTEXT);
 gen _tutte_polynomial(const gen &g,GIAC_CONTEXT);
+gen _chromatic_polynomial(const gen &g,GIAC_CONTEXT);
+gen _flow_polynomial(const gen &g,GIAC_CONTEXT);
+gen _reliability_polynomial(const gen &g,GIAC_CONTEXT);
+gen _laplacian_matrix(const gen &g,GIAC_CONTEXT);
 //gen _spanning_polynomial(const gen &g,GIAC_CONTEXT);
 //gen _fundamental_cycle(const gen &g,GIAC_CONTEXT);
 //gen _mycielski(const gen &g,GIAC_CONTEXT);
@@ -251,7 +255,6 @@ gen _tutte_polynomial(const gen &g,GIAC_CONTEXT);
 //gen _cycle_basis(const gen &g,GIAC_CONTEXT);
 //gen _vertex_connectivity(const gen &g,GIAC_CONTEXT);
 //gen _is_two_edge_connected(const gen &g,GIAC_CONTEXT);
-//gen _laplacian_matrix(const gen &g,GIAC_CONTEXT);
 //gen _local_clustering_coefficient(const gen &g,GIAC_CONTEXT);
 
 // GENERAL GIAC COMMANDS

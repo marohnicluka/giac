@@ -572,6 +572,14 @@ int graphe::vertex::multiedges(int v) const {
     return 0;
 }
 
+int graphe::vertex::multiedge_count() const {
+    int count=0;
+    for (map<int,int>::const_iterator it=m_multiedges.begin();it!=m_multiedges.end();++it) {
+        count+=it->second;
+    }
+    return count;
+}
+
 void graphe::vertex::set_multiedge(int v,int k) {
     map<int,int>::iterator it=m_multiedges.find(v);
     if (k>0)
@@ -1328,12 +1336,17 @@ void graphe::ipairs2edgeset(const ipairs &E,edgeset &Eset) {
 
 /* return total number of edges/arcs */
 int graphe::edge_count() const {
-    int count=0;
+    int count=0,dup=0;
+    bool isdir=is_directed();
     for(node_iter it=nodes.begin();it!=nodes.end();++it) {
         count+=it->neighbors().size();
+        if (!isdir)
+            dup+=it->multiedge_count();
     }
-    if (!is_directed())
+    if (!isdir) {
         count/=2;
+        count+=dup;
+    }
     return count;
 }
 
@@ -1381,7 +1394,7 @@ vecteur graphe::degree_sequence(int sg) const {
 }
 
 /* sort the vertices by order of their degrees, starting from the highest */
-void graphe::sort_by_degrees(graphe &G) {
+void graphe::sort_by_degrees() {
     int n=node_count();
     ipairs lst(n);
     for (int i=0;i<n;++i) {
@@ -1392,7 +1405,8 @@ void graphe::sort_by_degrees(graphe &G) {
     for (ipairs_iter it=lst.begin();it!=lst.end();++it) {
         sigma[it-lst.begin()]=it->second;
     }
-    isomorphic_copy(G,sigma);
+    graphe G(*this);
+    G.isomorphic_copy(*this,sigma);
 }
 
 /* create the adjacency matrix of this graph */
@@ -1422,21 +1436,30 @@ void graphe::adjacency_sparse_matrix(sparsemat &sm) const {
 }
 
 /* create the Laplacian matrix of this graph */
-void graphe::laplacian_matrix(matrice &m) const {
-    matrice L;
-    adjacency_matrix(L);
-    for (int i=node_count();i-->0;) {
-        L[i]._VECTptr->at(i)=-degree(i);
+void graphe::laplacian_matrix(matrice &m,bool normalize) const {
+    int n=node_count(),i,j;
+    bool isdir=is_directed();
+    vecteur ds=degree_sequence();
+    ipairs E;
+    get_edges_as_pairs(E);
+    m=*_matrix(makesequence(n,n,0),ctx)._VECTptr;
+    for (i=0;i<n;++i) {
+        m[i]._VECTptr->at(i)=normalize?(is_zero(ds[i])?0:1):ds[i];
     }
-    m=-L;
+    for (ipairs_iter it=E.begin();it!=E.end();++it) {
+        i=it->first; j=it->second;
+        m[i]._VECTptr->at(j)=normalize?-fraction(1,sqrt(ds[i]*ds[j],ctx)):gen(-1);
+        if (!isdir)
+            m[j]._VECTptr->at(i)=normalize?-fraction(1,sqrt(ds[i]*ds[j],ctx)):gen(-1);
+    }
 }
 
 /* return incidence matrix of this graph */
-matrice graphe::incidence_matrix() const {
+void graphe::incidence_matrix(matrice &m) const {
     ipairs E;
     get_edges_as_pairs(E);
     int nr=node_count(),nc=E.size();
-    matrice m=*_matrix(makesequence(nr,nc,0),context0)._VECTptr;
+    m=*_matrix(makesequence(nr,nc,0),context0)._VECTptr;
     bool isdir=is_directed();
     for (int i=0;i<nr;++i) {
         for (int j=0;j<nc;++j) {
@@ -1451,7 +1474,6 @@ matrice graphe::incidence_matrix() const {
                 mij=1;
         }
     }
-    return m;
 }
 
 /* return weight associated with edge {i,j} or arc [i,j] */
@@ -4837,6 +4859,24 @@ void graphe::set_multiedge(const ipair &e,int k) {
     node(i<j?i:j).set_multiedge(i<j?j:i,k);
 }
 
+/* convert integral edge weights to multiedges, returns false if an edge
+ * has a weight which is not a positive integer */
+bool graphe::weights2multiedges() {
+    assert(!is_directed() && is_weighted());
+    ipairs E;
+    get_edges_as_pairs(E);
+    gen w;
+    int k;
+    for (ipairs_iter it=E.begin();it!=E.end();++it) {
+        const ipair &e=*it;
+        w=weight(e);
+        if (w.is_integer() && (k=w.val-1)>=0) {
+            set_multiedge(e,k);
+        } else return false;
+    }
+    return true;
+}
+
 /* contract the edge {i,j}, leaving j-th node isolated (not connected to any other node) */
 void graphe::contract_edge(int i,int j,bool adjust_positions) {
     /* assuming that the graph is undirected */
@@ -5398,7 +5438,7 @@ void graphe::biconnected_components(ivectors &components,int sg) {
 }
 
 /* return the number of connected components in this graph */
-int graphe::connected_components_count(int sg) {
+int graphe::connected_component_count(int sg) {
     unvisit_all_nodes(sg);
     unset_all_ancestors(sg);
     disc_time=0;
@@ -6957,9 +6997,12 @@ bool graphe::isomorphic_copy(graphe &G,const ivector &sigma) {
     /* add edges */
     ipairs E;
     get_edges_as_pairs(E);
+    ipair f;
     for (ipairs_iter it=E.begin();it!=E.end();++it) {
         const ipair &e=*it;
-        G.add_edge(gm[node_label(e.first)].val,gm[node_label(e.second)].val,edge_attributes(e));
+        f=make_pair(gm[node_label(e.first)].val,gm[node_label(e.second)].val);
+        G.add_edge(f,edge_attributes(e));
+        G.set_multiedge(f,multiedges(e));
     }
     return true;
 }
@@ -8000,6 +8043,19 @@ void graphe::spanning_tree(int i,graphe &T,int sg) {
                 T.add_edge(it-nodes.begin(),p);
         }
     }
+}
+
+/* return the number of spanning trees in this graph */
+int graphe::spanning_tree_count() const {
+    /* assuming that the graph is connected */
+    matrice L;
+    laplacian_matrix(L);
+    L.pop_back();
+    L=mtran(L);
+    L.pop_back();
+    gen d=_det(L,ctx);
+    assert(d.is_integer());
+    return d.val;
 }
 
 /* write the minimal spanning tree of this graph to T,
@@ -10584,9 +10640,9 @@ void graphe::simplify(graphe &G,bool color_temp_vertices) const {
 }
 
 /* permute vertices according to SHARC ordering by Michael Monagan */
-void graphe::sharc_order(graphe &G) {
+void graphe::sharc_order() {
     /* assuming that the graph is connected */
-    assert(!is_empty() && !is_directed() && node_queue.empty());
+    assert(!is_empty() && node_queue.empty());
     int n=node_count(),i,j;
     unset_subgraphs(0);
     node(0).set_subgraph(1); // the set S has subgraph=1
@@ -10646,7 +10702,8 @@ void graphe::sharc_order(graphe &G) {
             order.push_back(i);
         }
     }
-    isomorphic_copy(G,order);
+    graphe G(*this);
+    G.isomorphic_copy(*this,order);
 }
 
 map<graphe::ivector,vector<graphe::cpol> > graphe::cache;
@@ -10701,17 +10758,20 @@ bool graphe::cpol::match(int n,ulong *g,int *c) const {
 /* end of cpol class implementation */
 
 /* convert 2-variable polynomial with integer coefficients to a list */
-void graphe::poly2ivector(const gen &p,const identificateur &x,const identificateur &y,ivector &v) {
-    vecteur xcoeff=*_e2r(makesequence(p,x),context0)._VECTptr;
-    int n=xcoeff.size(),m,pwx,pwy;
+void graphe::poly2ivector(const gen &p,const gen &x,const gen &y,ivector &v) {
     v.clear();
+    int n,m,pwx,pwy;
+    vecteur xcoeff=x.type==_IDNT?*_e2r(makesequence(p,x),context0)._VECTptr:vecteur(1,p),ycoeff;
+    n=xcoeff.size();
     for (const_iterateur it=xcoeff.begin();it!=xcoeff.end();++it) {
+        if (is_exactly_zero(*it))
+            continue;
         pwx=n-1-int(it-xcoeff.begin());
-        vecteur ycoeff=*_e2r(makesequence(*it,y),context0)._VECTptr;
+        ycoeff=y.type==_IDNT?*_e2r(makesequence(*it,y),context0)._VECTptr:vecteur(1,*it);
         m=ycoeff.size();
         for (const_iterateur jt=ycoeff.begin();jt!=ycoeff.end();++jt) {
             assert(jt->is_integer());
-            if (jt->val==0)
+            if (is_zero(*jt))
                 continue;
             pwy=m-1-int(jt-ycoeff.begin());
             v.push_back(pwx);
@@ -10722,7 +10782,7 @@ void graphe::poly2ivector(const gen &p,const identificateur &x,const identificat
 }
 
 /* convert list of integers to a 2-variable polynomial with integral coefficients */
-void graphe::ivector2poly(const ivector &v,gen &p,const identificateur &x,const identificateur &y) {
+void graphe::ivector2poly(const ivector &v,gen &p,const gen &x,const gen &y) {
     ivector_iter it=v.begin();
     int pwx,pwy,cf;
     p=0;
@@ -10730,7 +10790,7 @@ void graphe::ivector2poly(const ivector &v,gen &p,const identificateur &x,const 
         pwx=*it; ++it; assert(it!=v.end());
         pwy=*it; ++it; assert(it!=v.end());
         cf=*it;  ++it;
-        p+=gen(cf)*pow(x,pwx)*pow(y,pwy);
+        p+=gen(cf)*(pwx==0?gen(1):pow(x,pwx))*(pwy==0?gen(1):pow(y,pwy));
     }
 }
 
@@ -10740,8 +10800,7 @@ static clock_t tutte_time_start;
 static double tutte_matching_time;
 
 /* compute the Tutte polynomial for this graph, using vorder-push heuristic */
-gen graphe::tutte_poly_recurse(const identificateur &x,const identificateur &y,int con) {
-    assert(!is_directed());
+gen graphe::tutte_poly_recurse(const gen &x,const gen &y,int vc) {
     ++tutte_iter_count;
     gen p(1),fd,fc;
     int n=node_count(),adj_sz,snv;
@@ -10758,9 +10817,31 @@ gen graphe::tutte_poly_recurse(const identificateur &x,const identificateur &y,i
     int *adj,*col;
     ulong *cg;
     size_t cg_sz;
-    switch (con) {
+    switch (vc) {
     case 2:
-        assert(n>2);        
+        assert(n>2);
+        /* process cycles with multiedges */
+        if (is_cycle(E)) {
+            int k=multiedges(E[n-1])+multiedges(E[n-2])+2;
+            p=x-1+(is_one(y)?gen(k):_ratnormal((1-pow(y,k))/(1-y),ctx));
+            for (int i=1;i<=n-2;++i) {
+                k=1+multiedges(E[i-1]);
+                p=p*(is_one(y)?gen(k):_ratnormal((1-pow(y,k))/(1-y),ctx));
+            }
+            for (int i=1;i<=n-2;++i) {
+                gen q(1),r(1);
+                for (int j=i+1;j<=n;++j) {
+                    k=1+multiedges(E[j-1]);
+                    q=q*(x-1+(is_one(y)?gen(k):_ratnormal((1-pow(y,k))/(1-y),ctx)));
+                }
+                for (int j=1;j<=i-1;++j) {
+                    k=1+multiedges(E[j-1]);
+                    r=r*(is_one(y)?gen(k):_ratnormal((1-pow(y,k))/(1-y),ctx));
+                }
+                p+=q*r;
+            }
+            break;
+        }
         /* check for cached isomorphic graph, record the time */
         isom=false;
         tutte_time_start=clock();
@@ -10793,7 +10874,7 @@ gen graphe::tutte_poly_recurse(const identificateur &x,const identificateur &y,i
         /* no luck, perform the delete-contract step */
         fc=fd=1;
         isolated_nodes.clear();
-        //find_ears(ears);
+        //if (edge_count()==n+2) find_ears(ears);
         if (ears.empty()) {
             /* no ears, pick the lowest edge (vorder heuristic) */
             get_edges_as_pairs(E);
@@ -10801,18 +10882,20 @@ gen graphe::tutte_poly_recurse(const identificateur &x,const identificateur &y,i
             for (ipairs_iter it=E.begin()+1;it!=E.end();++it) {
                 if (*it<e) e=*it;
             }
-            fc=_ratnormal((1-pow(y,1+multiedges(e)))/(1-y),ctx);
+            int k=1+multiedges(e);
+            fc=is_one(y)?gen(k):_ratnormal((1-pow(y,k))/(1-y),ctx);
             set_multiedge(e,0);
         } else {
-            /* pick the lowest ear and delete-contract upon it */
-            int ei,mi,low=RAND_MAX;
+            /* pick the longest ear and delete-contract upon it */
+            int ei,maxlen=0,len;
             for (ivectors_iter it=ears.begin();it!=ears.end();++it) {
-                if ((mi=std::min(it->front(),it->back()))<low) {
-                    low=mi;
+                if ((len=it->size())>maxlen) {
+                    maxlen=len;
                     ei=it-ears.begin();
                 }
             }
             const ivector &ear=ears[ei];
+            cout << ear.size() << endl;
             for (ivector_iter it=ear.begin();it+1!=ear.end();++it) {
                 remove_edge(*it,*(it+1));
                 if (it!=ear.begin())
@@ -10822,13 +10905,14 @@ gen graphe::tutte_poly_recurse(const identificateur &x,const identificateur &y,i
             if (e.first>e.second)
                 e=make_pair(e.second,e.first);
             add_edge(e);
-            fd=_ratnormal((1-pow(x,ear.size()-1))/(1-x),ctx);
+            int k=ear.size()-1;
+            fd=is_one(x)?gen(k):_ratnormal((1-pow(x,k))/(1-x),ctx);
         }
         copy(Gd); copy(Gc); // copies to perform deletion-contraction on
         Gd.remove_edge(e);
         Gd.remove_isolated_nodes(isolated_nodes);
-        Gc.contract_edge(e.first,e.second,false);
-        isolated_nodes.insert(e.second);
+        Gc.contract_edge(e.second,e.first,false);
+        isolated_nodes.insert(e.first);
         Gc.remove_isolated_nodes(isolated_nodes);
         p=_ratnormal(Gd.tutte_poly_recurse(x,y,1)*fd+Gc.tutte_poly_recurse(x,y,1)*fc,ctx);
         /* cache the graph and its polynomial for future use */
@@ -10836,28 +10920,14 @@ gen graphe::tutte_poly_recurse(const identificateur &x,const identificateur &y,i
         cache[L_cp].push_back(cpol(snv,cg,col,cg_sz,pvec));
         break;
     case 1:
-        if (is_cycle(E)) {
-            p=_ratnormal(x+(1-pow(y,multiedges(E[n-1])+multiedges(E[n-2])+2))/(1-y)-1,ctx);
-            for (int i=1;i<=n-2;++i) {
-                p=p*_ratnormal((1-pow(y,1+multiedges(E[i-1])))/(1-y),ctx);
-            }
-            for (int i=1;i<=n-2;++i) {
-                gen q(1),r(1);
-                for (int j=i+1;j<=n;++j) {
-                    q=q*_ratnormal(x+(1-pow(y,1+multiedges(E[j-1])))/(1-y)-1,ctx);
-                }
-                for (int k=1;k<=i-1;++k) {
-                    r=r*_ratnormal((1-pow(y,1+multiedges(E[k-1])))/(1-y),ctx);
-                }
-                p+=q*r;
-            }
-            break;
-        }
         find_blocks(blocks);
         for (vector<ipairs>::iterator it=blocks.begin();it!=blocks.end();++it) {
+            if (is_exactly_zero(p))
+                break;
             ipairs &block=*it;
             if (block.size()<2) { // bridge
-                p=p*_ratnormal(x+(1-pow(y,1+multiedges(block.front())))/(1-y)-1,ctx);
+                int k=1+multiedges(block.front());
+                p=p*(x-1+(is_one(y)?gen(k):_ratnormal((1-pow(y,k))/(1-y),ctx)));
             } else { // non-trivial biconnected subgraph
                 sort(block.begin(),block.end());
                 extract_subgraph(block,G,false);
@@ -10872,17 +10942,16 @@ gen graphe::tutte_poly_recurse(const identificateur &x,const identificateur &y,i
 }
 
 /* return the Tutte polynomial */
-gen graphe::tutte_polynomial(const identificateur &x,const identificateur &y) {
-    assert(cache.empty());
+gen graphe::tutte_polynomial(const gen &x,const gen &y) {
+    assert(cache.empty() && !is_directed());
     tutte_iter_count=tutte_hits=0;
     tutte_matching_time=0;
     gen p(1);
-    graphe G(ctx),Gs(ctx);
+    graphe G(ctx),H(ctx);
     if (is_connected()) {
-        sort_by_degrees(G);
-        G.sharc_order(Gs);
-        cout << Gs.degree_sequence() << endl;
-        p=Gs.tutte_poly_recurse(x,y,1);
+        sort_by_degrees();
+        sharc_order();
+        p=tutte_poly_recurse(x,y,1);
     } else {
         ivectors comp;
         connected_components(comp);
@@ -10891,14 +10960,16 @@ gen graphe::tutte_polynomial(const identificateur &x,const identificateur &y) {
                 continue;
             sort(it->begin(),it->end());
             induce_subgraph(*it,G,false);
-            G.sharc_order(Gs);
-            p=p*Gs.tutte_poly_recurse(x,y,1);
+            G.sort_by_degrees();
+            G.sharc_order();
+            p=p*G.tutte_poly_recurse(x,y,1);
         }
     }
     cout << "Iterations: " << tutte_iter_count
-         << ", Isomorphic hits: " << tutte_hits
+         << ", Hits: " << tutte_hits
          << ", Cache size: " << cache.size()
          << ", Matching time: " << tutte_matching_time << endl;
+    /* clear the cache and return the Tutte polynomial p */
     for (map<ivector,vector<cpol> >::iterator it=cache.begin();it!=cache.end();++it) {
         for (vector<cpol>::const_iterator jt=it->second.begin();jt!=it->second.end();++jt) {
             delete[] jt->cg;

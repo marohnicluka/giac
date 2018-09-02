@@ -718,6 +718,15 @@ void graphe::clear_node_queue() {
         node_queue.pop();
 }
 
+/* return true iff this graph has no edges */
+bool graphe::is_empty() const {
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        if (!it->neighbors().empty())
+            return false;
+    }
+    return true;
+}
+
 /* dotgraph class implementation */
 graphe::dotgraph::dotgraph() {
     m_index=0;
@@ -5848,7 +5857,7 @@ int graphe::find_cycle_dfs(int i,int sg) {
 * or an empty list if there is no cycle (i.e. if the graph is a tree) */
 bool graphe::find_cycle(ivector &cycle,int sg) {
     assert(node_stack.empty());
-    if (is_empty())
+    if (is_null())
         return false;
     int n=node_count(),initv,i;
     unvisit_all_nodes(sg);
@@ -6791,7 +6800,7 @@ bool graphe::is_regular(int d) const {
 
 /* return true iff the graph is strongly regular with sig = (lambda,mu) */
 bool graphe::is_strongly_regular(ipair &sig) {
-    assert(!is_empty());
+    assert(!is_null());
     if (!is_regular(-1))
         return false;
     int k=degree(0),n=node_count();
@@ -7500,7 +7509,7 @@ int graphe::best_quadrant(const point &p,const layout &adj) const {
 
 /* append labels of the nodes of this graph to vecteur v */
 void graphe::draw_labels(vecteur &drawing,const layout &x) const {
-    if (is_empty())
+    if (is_null())
         return;
     assert(!x.empty());
     ivector adjv;
@@ -7625,7 +7634,7 @@ void graphe::bfs(int root,bool rec,bool clr,ivector *D,int sg,bool skip_embedded
 
 /* return true iff the graph is connected */
 bool graphe::is_connected(int sg) {
-    assert(!is_empty());
+    assert(!is_null());
     if (is_directed()) {
         graphe G(ctx);
         underlying(G);
@@ -7643,7 +7652,7 @@ bool graphe::is_connected(int sg) {
 
 /* return true iff the graph is biconnected */
 bool graphe::is_biconnected(int sg) {
-    assert(!is_empty());
+    assert(!is_null());
     if (is_directed()) {
         graphe G(ctx);
         underlying(G);
@@ -7654,7 +7663,7 @@ bool graphe::is_biconnected(int sg) {
 
 /* return true iff the graph is triconnected, using a simple O(n*(n+m)) algorithm */
 bool graphe::is_triconnected(int sg) {
-    assert(!is_empty());
+    assert(!is_null());
     if (is_directed()) {
         graphe G(ctx);
         underlying(G);
@@ -7712,7 +7721,7 @@ bool graphe::is_cycle(ipairs &E,int sg) {
 
 /* return true iff the graph is a forest (check that the connected components are all trees) */
 bool graphe::is_forest() {
-    assert(!is_empty() && !is_directed());
+    assert(!is_null() && !is_directed());
     ivectors comp;
     connected_components(comp);
     graphe G(ctx);
@@ -10631,7 +10640,7 @@ void graphe::simplify(graphe &G,bool color_temp_vertices) const {
             for (int c=0;c<=k;++c) {
                 i=G.add_node(++lab);
                 if (color_temp_vertices)
-                    G.set_node_attribute(i,_GT_ATTRIB_COLOR,default_highlighted_vertex_color);
+                    G.set_node_attribute(i,_GT_ATTRIB_COLOR,0);
                 G.add_edge(e.first,i);
                 G.add_edge(e.second,i);
             }
@@ -10642,7 +10651,7 @@ void graphe::simplify(graphe &G,bool color_temp_vertices) const {
 /* permute vertices according to SHARC ordering by Michael Monagan */
 void graphe::sharc_order() {
     /* assuming that the graph is connected */
-    assert(!is_empty() && node_queue.empty());
+    assert(!is_null() && node_queue.empty());
     int n=node_count(),i,j;
     unset_subgraphs(0);
     node(0).set_subgraph(1); // the set S has subgraph=1
@@ -10712,31 +10721,46 @@ map<graphe::ivector,vector<graphe::cpol> > graphe::cache;
 
 void graphe::cpol::assign(const cpol &other) {
     nv=other.nv;
+#if defined HAVE_LIBNAUTY && defined HAVE_NAUTY_NAUTUTIL_H
     cg=other.cg;
     col=other.col;
+#else
+    adj=other.adj;
+#endif
     sz=other.sz;
     frq=other.frq;
-    pcf=other.pcf;
+    poly=other.poly;
 }
 
 graphe::cpol::cpol(const cpol &other) {
     assign(other);
 }
 
-graphe::cpol::cpol(int n,ulong *g,int *c,size_t s,const ivector &p) {
+#if defined HAVE_LIBNAUTY && defined HAVE_NAUTY_NAUTUTIL_H
+graphe::cpol::cpol(int n,ulong *g,int *c,size_t s,const intpoly &p) {
     nv=n;
     cg=g;
     col=c;
     sz=s;
     frq=0;
-    pcf=p;
+    poly=p;
 }
+#else
+graphe::cpol::cpol(int n,int *a,size_t s,const intpoly &p) {
+    nv=n;
+    adj=a;
+    sz=s;
+    frq=0;
+    poly=p;
+}
+#endif
 
 graphe::cpol &graphe::cpol::operator =(const cpol &other) {
     assign(other);
     return *this;
 }
 
+#if defined HAVE_LIBNAUTY && defined HAVE_NAUTY_NAUTUTIL_H
 bool graphe::cpol::match(int n,ulong *g,int *c) const {
     if (nv!=n)
         return false;
@@ -10751,47 +10775,70 @@ bool graphe::cpol::match(int n,ulong *g,int *c) const {
     }
     return true;
 }
-
-//#if defined HAVE_LIBNAUTY && defined HAVE_NAUTY_NAUTUTIL_H
-
+#else
+bool graphe::cpol::match(int n,int *a,int adj_sz) const {
+    if (nv!=n || sz!=adj_sz)
+        return false;
+    for (int i=0;i<sz;++i) {
+        if (adj[i]!=a[i])
+            return false;
+    }
+    return true;
+}
+#endif
 
 /* end of cpol class implementation */
 
-/* convert 2-variable polynomial with integer coefficients to a list */
-void graphe::poly2ivector(const gen &p,const gen &x,const gen &y,ivector &v) {
-    v.clear();
-    int n,m,pwx,pwy;
-    vecteur xcoeff=x.type==_IDNT?*_e2r(makesequence(p,x),context0)._VECTptr:vecteur(1,p),ycoeff;
-    n=xcoeff.size();
-    for (const_iterateur it=xcoeff.begin();it!=xcoeff.end();++it) {
-        if (is_exactly_zero(*it))
-            continue;
-        pwx=n-1-int(it-xcoeff.begin());
-        ycoeff=y.type==_IDNT?*_e2r(makesequence(*it,y),context0)._VECTptr:vecteur(1,*it);
-        m=ycoeff.size();
-        for (const_iterateur jt=ycoeff.begin();jt!=ycoeff.end();++jt) {
-            assert(jt->is_integer());
-            if (is_zero(*jt))
-                continue;
-            pwy=m-1-int(jt-ycoeff.begin());
-            v.push_back(pwx);
-            v.push_back(pwy);
-            v.push_back(jt->val);
+/* add the polynomial b to a (a is changed in place) */
+void graphe::poly_add(intpoly &a,const intpoly &b) {
+    for (intpoly_iter it=b.begin();it!=b.end();++it) {
+        a[it->first]+=it->second;
+    }
+}
+
+/* multiply the polynomial a with b (a is changed in place) */
+void graphe::poly_mult(intpoly &a,const intpoly &b) {
+    intpoly c(a);
+    a.clear();
+    for (intpoly_iter it=b.begin();it!=b.end();++it) {
+        const ipair &p=it->first;
+        for (intpoly_iter jt=c.begin();jt!=c.end();++jt) {
+            const ipair &q=jt->first;
+            a[make_pair(p.first+q.first,p.second+q.second)]+=it->second*jt->second;
         }
     }
 }
 
+/* return the geometric sequence in variable var (1 or 2) of length k */
+graphe::intpoly graphe::poly_geom(int var,int k,bool leading_one,bool add_other_var) {
+    assert((var==1 || var==2) && k>0);
+    intpoly res;
+    for (int i=leading_one?0:1;i<k;++i) {
+        res[make_pair(var==1?i:0,var==2?i:0)]=1;
+    }
+    if (add_other_var)
+        res[make_pair(var==2?1:0,var==1?1:0)]=1;
+    return res;
+}
+
+/* return 1 as polynom */
+graphe::intpoly graphe::poly_one() {
+    intpoly res;
+    res[make_pair(0,0)]=1;
+    return res;
+}
+
 /* convert list of integers to a 2-variable polynomial with integral coefficients */
-void graphe::ivector2poly(const ivector &v,gen &p,const gen &x,const gen &y) {
-    ivector_iter it=v.begin();
+gen graphe::intpoly2gen(const intpoly &v,const gen &x,const gen &y) {
     int pwx,pwy,cf;
-    p=0;
-    while (it!=v.end()) {
-        pwx=*it; ++it; assert(it!=v.end());
-        pwy=*it; ++it; assert(it!=v.end());
-        cf=*it;  ++it;
+    gen p(0);
+    for (intpoly_iter it=v.begin();it!=v.end();++it) {
+        pwx=it->first.first;
+        pwy=it->first.second;
+        cf=it->second;
         p+=gen(cf)*(pwx==0?gen(1):pow(x,pwx))*(pwy==0?gen(1):pow(y,pwy));
     }
+    return p;
 }
 
 static int tutte_iter_count;
@@ -10800,9 +10847,9 @@ static clock_t tutte_time_start;
 static double tutte_matching_time;
 
 /* compute the Tutte polynomial for this graph, using vorder-push heuristic */
-gen graphe::tutte_poly_recurse(const gen &x,const gen &y,int vc) {
+graphe::intpoly graphe::tutte_poly_recurse(int vc) {
     ++tutte_iter_count;
-    gen p(1),fd,fc;
+    intpoly p=poly_one(),fac;
     int n=node_count(),adj_sz,snv;
     bool isom;
     ipair e;
@@ -10810,9 +10857,8 @@ gen graphe::tutte_poly_recurse(const gen &x,const gen &y,int vc) {
     ipairs E;
     graphe G(ctx),Gd(ctx),Gc(ctx);
     matrice L;
-    ivector L_cp,pvec;
+    ivector L_cp;
     map<ivector,vector<cpol> >::iterator ct;
-    ivectors ears;
     set<int> isolated_nodes;
     int *adj,*col;
     ulong *cg;
@@ -10822,23 +10868,20 @@ gen graphe::tutte_poly_recurse(const gen &x,const gen &y,int vc) {
         assert(n>2);
         /* process cycles with multiedges */
         if (is_cycle(E)) {
-            int k=multiedges(E[n-1])+multiedges(E[n-2])+2;
-            p=x-1+(is_one(y)?gen(k):_ratnormal((1-pow(y,k))/(1-y),ctx));
+            p=poly_geom(2,multiedges(E[n-1])+multiedges(E[n-2])+2,false,true);
             for (int i=1;i<=n-2;++i) {
-                k=1+multiedges(E[i-1]);
-                p=p*(is_one(y)?gen(k):_ratnormal((1-pow(y,k))/(1-y),ctx));
+                poly_mult(p,poly_geom(2,1+multiedges(E[i-1]),true));
             }
             for (int i=1;i<=n-2;++i) {
-                gen q(1),r(1);
+                intpoly q=poly_one();
+                q[make_pair(0,0)]=1;
                 for (int j=i+1;j<=n;++j) {
-                    k=1+multiedges(E[j-1]);
-                    q=q*(x-1+(is_one(y)?gen(k):_ratnormal((1-pow(y,k))/(1-y),ctx)));
+                    poly_mult(q,poly_geom(2,1+multiedges(E[j-1]),false,true));
                 }
                 for (int j=1;j<=i-1;++j) {
-                    k=1+multiedges(E[j-1]);
-                    r=r*(is_one(y)?gen(k):_ratnormal((1-pow(y,k))/(1-y),ctx));
+                    poly_mult(q,poly_geom(2,1+multiedges(E[j-1]),true));
                 }
-                p+=q*r;
+                poly_add(p,q);
             }
             break;
         }
@@ -10850,95 +10893,82 @@ gen graphe::tutte_poly_recurse(const gen &x,const gen &y,int vc) {
         L_cp=vecteur_2_vector_int(*_eval(symbolic(at_charpoly,L),ctx)._VECTptr); // charpoly of the Laplacian
         adj=G.to_array(adj_sz,true);
         snv=G.node_count();
+#if defined HAVE_LIBNAUTY && defined HAVE_NAUTY_NAUTUTIL_H
         cg_sz=nautywrapper_words_needed(snv)*(size_t)snv;
         cg=new ulong[cg_sz];
         col=new int[snv];
         nautywrapper_canonical(0,snv,adj,NULL,cg,col);
         delete[] adj;
+#endif
         if ((ct=cache.find(L_cp))!=cache.end()) {
             for (vector<cpol>::iterator it=ct->second.begin();it!=ct->second.end();++it) {
                 cpol &cp=*it;
+#if defined HAVE_LIBNAUTY && defined HAVE_NAUTY_NAUTUTIL_H
                 if (cp.match(snv,cg,col)) {
                     ++cp.frq;
                     ++tutte_hits;
                     delete[] cg;
                     delete[] col;
+                    p=cp.poly;
                     isom=true;
-                    ivector2poly(cp.pcf,p,x,y);
                     break;
                 }
+#else
+                if (cp.match(snv,adj,adj_sz)) {
+                    ++cp.frq;
+                    ++tutte_hits;
+                    delete[] adj;
+                    p=cp.poly;
+                    isom=true;
+                    break;
+                }
+#endif
             }
         }
         tutte_matching_time+=double(clock()-tutte_time_start)/CLOCKS_PER_SEC;
         if (isom) break;
         /* no luck, perform the delete-contract step */
-        fc=fd=1;
         isolated_nodes.clear();
-        //if (edge_count()==n+2) find_ears(ears);
-        if (ears.empty()) {
-            /* no ears, pick the lowest edge (vorder heuristic) */
-            get_edges_as_pairs(E);
-            e=E.front();
-            for (ipairs_iter it=E.begin()+1;it!=E.end();++it) {
-                if (*it<e) e=*it;
-            }
-            int k=1+multiedges(e);
-            fc=is_one(y)?gen(k):_ratnormal((1-pow(y,k))/(1-y),ctx);
-            set_multiedge(e,0);
-        } else {
-            /* pick the longest ear and delete-contract upon it */
-            int ei,maxlen=0,len;
-            for (ivectors_iter it=ears.begin();it!=ears.end();++it) {
-                if ((len=it->size())>maxlen) {
-                    maxlen=len;
-                    ei=it-ears.begin();
-                }
-            }
-            const ivector &ear=ears[ei];
-            cout << ear.size() << endl;
-            for (ivector_iter it=ear.begin();it+1!=ear.end();++it) {
-                remove_edge(*it,*(it+1));
-                if (it!=ear.begin())
-                    isolated_nodes.insert(*it);
-            }
-            e=make_pair(ear.front(),ear.back());
-            if (e.first>e.second)
-                e=make_pair(e.second,e.first);
-            add_edge(e);
-            int k=ear.size()-1;
-            fd=is_one(x)?gen(k):_ratnormal((1-pow(x,k))/(1-x),ctx);
+        get_edges_as_pairs(E);
+        e=E.front();
+        for (ipairs_iter it=E.begin()+1;it!=E.end();++it) {
+            if (*it<e) e=*it;
         }
+        fac=poly_geom(2,1+multiedges(e),true);
+        set_multiedge(e,0);
         copy(Gd); copy(Gc); // copies to perform deletion-contraction on
         Gd.remove_edge(e);
         Gd.remove_isolated_nodes(isolated_nodes);
         Gc.contract_edge(e.second,e.first,false);
         isolated_nodes.insert(e.first);
         Gc.remove_isolated_nodes(isolated_nodes);
-        p=_ratnormal(Gd.tutte_poly_recurse(x,y,1)*fd+Gc.tutte_poly_recurse(x,y,1)*fc,ctx);
+        p=Gd.tutte_poly_recurse(1);
+        poly_mult(fac,Gc.tutte_poly_recurse(1));
+        poly_add(p,fac);
         /* cache the graph and its polynomial for future use */
-        poly2ivector(p,x,y,pvec);
-        cache[L_cp].push_back(cpol(snv,cg,col,cg_sz,pvec));
+#if defined HAVE_LIBNAUTY && defined HAVE_NAUTY_NAUTUTIL_H
+        cache[L_cp].push_back(cpol(snv,cg,col,cg_sz,p));
+#else
+        cache[L_cp].push_back(cpol(snv,adj,adj_sz,p));
+#endif
         break;
     case 1:
         find_blocks(blocks);
         for (vector<ipairs>::iterator it=blocks.begin();it!=blocks.end();++it) {
-            if (is_exactly_zero(p))
-                break;
             ipairs &block=*it;
             if (block.size()<2) { // bridge
-                int k=1+multiedges(block.front());
-                p=p*(x-1+(is_one(y)?gen(k):_ratnormal((1-pow(y,k))/(1-y),ctx)));
+                poly_mult(p,poly_geom(2,1+multiedges(block.front()),false,true));
             } else { // non-trivial biconnected subgraph
                 sort(block.begin(),block.end());
                 extract_subgraph(block,G,false);
-                p=p*G.tutte_poly_recurse(x,y,2);
+                poly_mult(p,G.tutte_poly_recurse(2));
             }
         }
         break;
     default:
         assert(false);
     }
-    return _ratnormal(p,ctx);
+    return p;
 }
 
 /* return the Tutte polynomial */
@@ -10946,13 +10976,14 @@ gen graphe::tutte_polynomial(const gen &x,const gen &y) {
     assert(cache.empty() && !is_directed());
     tutte_iter_count=tutte_hits=0;
     tutte_matching_time=0;
-    gen p(1);
-    graphe G(ctx),H(ctx);
+    intpoly p;
+    graphe G(ctx);
     if (is_connected()) {
         sort_by_degrees();
         sharc_order();
-        p=tutte_poly_recurse(x,y,1);
+        p=tutte_poly_recurse(1);
     } else {
+        p=poly_one();
         ivectors comp;
         connected_components(comp);
         for (ivectors::iterator it=comp.begin();it!=comp.end();++it) {
@@ -10962,23 +10993,29 @@ gen graphe::tutte_polynomial(const gen &x,const gen &y) {
             induce_subgraph(*it,G,false);
             G.sort_by_degrees();
             G.sharc_order();
-            p=p*G.tutte_poly_recurse(x,y,1);
+            poly_mult(p,G.tutte_poly_recurse(1));
         }
     }
+    /*
     cout << "Iterations: " << tutte_iter_count
          << ", Hits: " << tutte_hits
          << ", Cache size: " << cache.size()
          << ", Matching time: " << tutte_matching_time << endl;
+         */
     /* clear the cache and return the Tutte polynomial p */
     for (map<ivector,vector<cpol> >::iterator it=cache.begin();it!=cache.end();++it) {
         for (vector<cpol>::const_iterator jt=it->second.begin();jt!=it->second.end();++jt) {
+#if defined HAVE_LIBNAUTY && defined HAVE_NAUTY_NAUTUTIL_H
             delete[] jt->cg;
             delete[] jt->col;
+#else
+            delete[] jt->adj;
+#endif
         }
         it->second.clear();
     }
     cache.clear();
-    return p;
+    return intpoly2gen(p,x,y);
 }
 
 #ifndef NO_NAMESPACE_GIAC

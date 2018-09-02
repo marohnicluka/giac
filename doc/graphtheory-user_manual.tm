@@ -1,6 +1,6 @@
 <TeXmacs|1.99.7>
 
-<style|<tuple|mmxmanual|giac>>
+<style|<tuple|mmxmanual|framed-session|giac>>
 
 <\body>
   <\hide-preamble>
@@ -11,6 +11,18 @@
     <assign|index-text|<macro|Command <localize|Index>>>
 
     <assign|prologue-text|<macro|Introduction>>
+
+    <assign|unfolded-io|<\macro|prompt|in|out>
+      <\surround||<right-flush>>
+        <\input|<with|locus-color|preserve|<action|<arg|prompt>|mouse-fold|<arg|in>>>>
+          <arg|in>
+        </input>
+
+        <\output>
+          <arg|out>
+        </output>
+      </surround>
+    </macro>>
   </hide-preamble>
 
   <\doc-data|<doc-title|Graph theory package for
@@ -376,362 +388,380 @@
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-174>>
 
-    <with|par-left|1tab|4.1.3.<space|2spc>Vertex degrees
+    <with|par-left|1tab|4.1.3.<space|2spc>Equality of graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-180>>
 
-    <with|par-left|1tab|4.1.4.<space|2spc>Regular graphs
+    <with|par-left|1tab|4.1.4.<space|2spc>Vertex degrees
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-187>>
+    <no-break><pageref|auto-182>>
 
-    <with|par-left|1tab|4.1.5.<space|2spc>Strongly regular graphs
+    <with|par-left|1tab|4.1.5.<space|2spc>Regular graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-189>>
 
-    <with|par-left|1tab|4.1.6.<space|2spc>Vertex adjacency
+    <with|par-left|1tab|4.1.6.<space|2spc>Strongly regular graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-191>>
 
-    <with|par-left|1tab|4.1.7.<space|2spc>Tournament graphs
+    <with|par-left|1tab|4.1.7.<space|2spc>Vertex adjacency
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-197>>
+    <no-break><pageref|auto-193>>
 
-    <with|par-left|1tab|4.1.8.<space|2spc>Bipartite graphs
+    <with|par-left|1tab|4.1.8.<space|2spc>Tournament graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-199>>
 
-    <with|par-left|1tab|4.1.9.<space|2spc>Edge incidence
+    <with|par-left|1tab|4.1.9.<space|2spc>Bipartite graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-201>>
 
+    <with|par-left|1tab|4.1.10.<space|2spc>Edge incidence
+    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <no-break><pageref|auto-203>>
+
     4.2.<space|2spc>Algebraic properties <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-203>
+    <no-break><pageref|auto-205>
 
     <with|par-left|1tab|4.2.1.<space|2spc>Adjacency matrix
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-204>>
+    <no-break><pageref|auto-206>>
 
     <with|par-left|1tab|4.2.2.<space|2spc>Laplacian matrix
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-206>>
-
-    <with|par-left|1tab|4.2.3.<space|2spc>Weight matrix
-    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-208>>
 
-    <with|par-left|1tab|4.2.4.<space|2spc>Incidence matrix
+    <with|par-left|1tab|4.2.3.<space|2spc>Incidence matrix
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-210>>
 
-    <with|par-left|1tab|4.2.5.<space|2spc>Characteristic polynomial
+    <with|par-left|1tab|4.2.4.<space|2spc>Weight matrix
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-212>>
 
-    <with|par-left|1tab|4.2.6.<space|2spc>Graph spectrum
+    <with|par-left|1tab|4.2.5.<space|2spc>Characteristic polynomial
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-214>>
 
-    <with|par-left|1tab|4.2.7.<space|2spc>Seidel spectrum
+    <with|par-left|1tab|4.2.6.<space|2spc>Graph spectrum
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-216>>
 
-    <with|par-left|1tab|4.2.8.<space|2spc>Integer graphs
+    <with|par-left|1tab|4.2.7.<space|2spc>Seidel spectrum
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-218>>
 
-    <with|par-left|1tab|4.2.9.<space|2spc>Equality of graphs
+    <with|par-left|1tab|4.2.8.<space|2spc>Integer graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-220>>
 
-    <with|par-left|1tab|4.2.10.<space|2spc>Graph isomorphism
-    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-221>>
+    4.3.<space|2spc>Graph isomorphism <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <no-break><pageref|auto-222>
 
-    <with|par-left|1tab|4.2.11.<space|2spc>Graph automorphisms
+    <with|par-left|1tab|4.3.1.<space|2spc>Isomorphic graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-224>>
+    <no-break><pageref|auto-223>>
 
-    <with|par-left|1tab|4.2.12.<space|2spc>Graph polynomials
+    <with|par-left|1tab|4.3.2.<space|2spc>Graph automorphisms
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-226>>
 
-    4.3.<space|2spc>Connectivity <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-231>
+    4.4.<space|2spc>Graph polynomials <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <no-break><pageref|auto-228>
 
-    <with|par-left|1tab|4.3.1.<space|2spc>Vertex connectivity
+    <with|par-left|1tab|4.4.1.<space|2spc>Tutte polynomial
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-232>>
+    <no-break><pageref|auto-229>>
 
-    <with|par-left|1tab|4.3.2.<space|2spc>Connected and biconnected
+    <with|par-left|1tab|4.4.2.<space|2spc>Chromatic polynomial
+    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <no-break><pageref|auto-231>>
+
+    <with|par-left|1tab|4.4.3.<space|2spc>Flow polynomial
+    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <no-break><pageref|auto-233>>
+
+    <with|par-left|1tab|4.4.4.<space|2spc>Reliability polynomial
+    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <no-break><pageref|auto-235>>
+
+    4.5.<space|2spc>Connectivity <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <no-break><pageref|auto-237>
+
+    <with|par-left|1tab|4.5.1.<space|2spc>Vertex connectivity
+    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <no-break><pageref|auto-238>>
+
+    <with|par-left|1tab|4.5.2.<space|2spc>Connected and biconnected
     components <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-236>>
+    <no-break><pageref|auto-242>>
 
-    <with|par-left|1tab|4.3.3.<space|2spc>Graph rank
+    <with|par-left|1tab|4.5.3.<space|2spc>Graph rank
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-239>>
+    <no-break><pageref|auto-245>>
 
-    <with|par-left|1tab|4.3.4.<space|2spc>Articulation points
-    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-241>>
-
-    <with|par-left|1tab|4.3.5.<space|2spc>Strongly connected components
-    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-243>>
-
-    <with|par-left|1tab|4.3.6.<space|2spc>Edge connectivity
-    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-246>>
-
-    <with|par-left|1tab|4.3.7.<space|2spc>Edge cuts
+    <with|par-left|1tab|4.5.4.<space|2spc>Articulation points
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-247>>
 
-    4.4.<space|2spc>Trees <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-249>
-
-    <with|par-left|1tab|4.4.1.<space|2spc>Tree graphs
+    <with|par-left|1tab|4.5.5.<space|2spc>Strongly connected components
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-250>>
+    <no-break><pageref|auto-249>>
 
-    <with|par-left|1tab|4.4.2.<space|2spc>Forest graphs
+    <with|par-left|1tab|4.5.6.<space|2spc>Edge connectivity
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-252>>
 
-    <with|par-left|1tab|4.4.3.<space|2spc>Height of a tree
+    <with|par-left|1tab|4.5.7.<space|2spc>Edge cuts
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-254>>
+    <no-break><pageref|auto-253>>
 
-    <with|par-left|1tab|4.4.4.<space|2spc>Lowest common ancestor of a pair of
-    nodes <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    4.6.<space|2spc>Trees <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <no-break><pageref|auto-255>
+
+    <with|par-left|1tab|4.6.1.<space|2spc>Tree graphs
+    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-256>>
 
-    <with|par-left|1tab|4.4.5.<space|2spc>Arborescence graphs
+    <with|par-left|1tab|4.6.2.<space|2spc>Forest graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-258>>
 
-    4.5.<space|2spc>Networks <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-260>
-
-    <with|par-left|1tab|4.5.1.<space|2spc>Network graphs
+    <with|par-left|1tab|4.6.3.<space|2spc>Height of a tree
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-261>>
+    <no-break><pageref|auto-260>>
 
-    <with|par-left|1tab|4.5.2.<space|2spc>Maximum flow
+    <with|par-left|1tab|4.6.4.<space|2spc>Lowest common ancestor of a pair of
+    nodes <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <no-break><pageref|auto-262>>
+
+    <with|par-left|1tab|4.6.5.<space|2spc>Arborescence graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-263>>
+    <no-break><pageref|auto-264>>
 
-    4.6.<space|2spc>Distance in graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-265>
+    4.7.<space|2spc>Networks <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <no-break><pageref|auto-266>
 
-    <with|par-left|1tab|4.6.1.<space|2spc>Vertex distance
+    <with|par-left|1tab|4.7.1.<space|2spc>Network graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-266>>
+    <no-break><pageref|auto-267>>
 
-    <with|par-left|1tab|4.6.2.<space|2spc>All-pairs vertex distance
+    <with|par-left|1tab|4.7.2.<space|2spc>Maximum flow
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-268>>
+    <no-break><pageref|auto-269>>
 
-    <with|par-left|1tab|4.6.3.<space|2spc>Diameter of a graph
+    4.8.<space|2spc>Distance in graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <no-break><pageref|auto-271>
+
+    <with|par-left|1tab|4.8.1.<space|2spc>Vertex distance
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-270>>
+    <no-break><pageref|auto-272>>
 
-    <with|par-left|1tab|4.6.4.<space|2spc>Girth of a graph
+    <with|par-left|1tab|4.8.2.<space|2spc>All-pairs vertex distance
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-271>>
+    <no-break><pageref|auto-274>>
 
-    4.7.<space|2spc>Acyclic graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-274>
-
-    <with|par-left|1tab|4.7.1.<space|2spc>Checking if a graph is acyclic
+    <with|par-left|1tab|4.8.3.<space|2spc>Diameter
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-275>>
+    <no-break><pageref|auto-276>>
 
-    <with|par-left|1tab|4.7.2.<space|2spc>Topological sorting
+    <with|par-left|1tab|4.8.4.<space|2spc>Girth
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-277>>
 
-    <with|par-left|1tab|4.7.3.<space|2spc><with|font-family|ss|st> ordering
+    4.9.<space|2spc>Acyclic graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <no-break><pageref|auto-280>
+
+    <with|par-left|1tab|4.9.1.<space|2spc>Acyclic graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-280>>
+    <no-break><pageref|auto-281>>
 
-    4.8.<space|2spc>Matching in graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-282>
-
-    <with|par-left|1tab|4.8.1.<space|2spc>Maximum matching
+    <with|par-left|1tab|4.9.2.<space|2spc>Topological sorting
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-283>>
 
-    <with|par-left|1tab|4.8.2.<space|2spc>Maximum matching in bipartite
+    <with|par-left|1tab|4.9.3.<space|2spc><with|font-family|ss|st> ordering
+    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <no-break><pageref|auto-286>>
+
+    4.10.<space|2spc>Matching in graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <no-break><pageref|auto-288>
+
+    <with|par-left|1tab|4.10.1.<space|2spc>Maximum matching
+    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <no-break><pageref|auto-289>>
+
+    <with|par-left|1tab|4.10.2.<space|2spc>Maximum matching in bipartite
     graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-285>>
+    <no-break><pageref|auto-291>>
 
-    4.9.<space|2spc>Cliques <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-287>
+    4.11.<space|2spc>Cliques <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <no-break><pageref|auto-293>
 
-    <with|par-left|1tab|4.9.1.<space|2spc>Clique graphs
-    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-288>>
-
-    <with|par-left|1tab|4.9.2.<space|2spc>Triangle-free graphs
-    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-290>>
-
-    <with|par-left|1tab|4.9.3.<space|2spc>Maximal cliques
-    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-292>>
-
-    <with|par-left|1tab|4.9.4.<space|2spc>Maximum clique
+    <with|par-left|1tab|4.11.1.<space|2spc>Clique graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-294>>
 
-    <with|par-left|1tab|4.9.5.<space|2spc>Minimum clique cover
+    <with|par-left|1tab|4.11.2.<space|2spc>Triangle-free graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-297>>
+    <no-break><pageref|auto-296>>
 
-    <with|par-left|1tab|4.9.6.<space|2spc>Clique cover number
+    <with|par-left|1tab|4.11.3.<space|2spc>Maximal cliques
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-299>>
+    <no-break><pageref|auto-298>>
 
-    4.10.<space|2spc>Vertex coloring <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-301>
-
-    <with|par-left|1tab|4.10.1.<space|2spc>Greedy coloring
+    <with|par-left|1tab|4.11.4.<space|2spc>Maximum clique
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-302>>
+    <no-break><pageref|auto-300>>
 
-    <with|par-left|1tab|4.10.2.<space|2spc>Minimal coloring
+    <with|par-left|1tab|4.11.5.<space|2spc>Minimum clique cover
+    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <no-break><pageref|auto-303>>
+
+    <with|par-left|1tab|4.11.6.<space|2spc>Clique cover number
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-305>>
 
-    <with|par-left|1tab|4.10.3.<space|2spc>Chromatic number
+    4.12.<space|2spc>Vertex coloring <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <no-break><pageref|auto-307>
+
+    <with|par-left|1tab|4.12.1.<space|2spc>Greedy coloring
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-307>>
+    <no-break><pageref|auto-308>>
 
-    <with|par-left|1tab|4.10.4.<space|2spc><with|mode|math|k>-coloring
+    <with|par-left|1tab|4.12.2.<space|2spc>Minimal coloring
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-309>>
+    <no-break><pageref|auto-311>>
 
-    4.11.<space|2spc>Edge coloring <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-311>
-
-    <with|par-left|1tab|4.11.1.<space|2spc>Minimal coloring
+    <with|par-left|1tab|4.12.3.<space|2spc>Chromatic number
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-312>>
+    <no-break><pageref|auto-313>>
 
-    <with|par-left|1tab|4.11.2.<space|2spc>Chromatic index
+    <with|par-left|1tab|4.12.4.<space|2spc><with|mode|math|k>-coloring
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-314>>
+    <no-break><pageref|auto-315>>
 
-    <vspace*|1fn><with|font-series|bold|math-font-series|bold|font-shape|small-caps|5.<space|2spc>Traversing
-    graphs> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <pageref|auto-316><vspace|0.5fn>
-
-    5.1.<space|2spc>Walks and tours <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    4.13.<space|2spc>Edge coloring <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-317>
 
-    <with|par-left|1tab|5.1.1.<space|2spc>Eulerian graphs
+    <with|par-left|1tab|4.13.1.<space|2spc>Minimal coloring
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-318>>
 
-    <with|par-left|1tab|5.1.2.<space|2spc>Hamiltonian graphs
+    <with|par-left|1tab|4.13.2.<space|2spc>Chromatic index
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-320>>
 
+    <vspace*|1fn><with|font-series|bold|math-font-series|bold|font-shape|small-caps|5.<space|2spc>Traversing
+    graphs> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <pageref|auto-322><vspace|0.5fn>
+
+    5.1.<space|2spc>Walks and tours <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <no-break><pageref|auto-323>
+
+    <with|par-left|1tab|5.1.1.<space|2spc>Eulerian graphs
+    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <no-break><pageref|auto-324>>
+
+    <with|par-left|1tab|5.1.2.<space|2spc>Hamiltonian graphs
+    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <no-break><pageref|auto-326>>
+
     5.2.<space|2spc>Optimal routing <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-322>
+    <no-break><pageref|auto-328>
 
     <with|par-left|1tab|5.2.1.<space|2spc>Shortest unweighted paths
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-323>>
+    <no-break><pageref|auto-329>>
 
     <with|par-left|1tab|5.2.2.<space|2spc>Cheapest weighted paths
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-325>>
+    <no-break><pageref|auto-331>>
 
     <with|par-left|1tab|5.2.3.<space|2spc>Traveling salesman problem
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-327>>
+    <no-break><pageref|auto-333>>
 
     5.3.<space|2spc>Spanning trees <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-329>
+    <no-break><pageref|auto-335>
 
     <with|par-left|1tab|5.3.1.<space|2spc>Construction of spanning trees
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-330>>
+    <no-break><pageref|auto-336>>
 
     <with|par-left|1tab|5.3.2.<space|2spc>Minimal spanning tree
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-332>>
+    <no-break><pageref|auto-338>>
 
     <with|par-left|1tab|5.3.3.<space|2spc>Counting the spanning trees in a
     graph <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-334>>
+    <no-break><pageref|auto-340>>
 
     <vspace*|1fn><with|font-series|bold|math-font-series|bold|font-shape|small-caps|6.<space|2spc>Visualizing
     graphs> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <pageref|auto-336><vspace|0.5fn>
+    <pageref|auto-342><vspace|0.5fn>
 
     6.1.<space|2spc>Drawing graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-337>
+    <no-break><pageref|auto-343>
 
     <with|par-left|1tab|6.1.1.<space|2spc>Overview
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-339>>
+    <no-break><pageref|auto-345>>
 
     <with|par-left|1tab|6.1.2.<space|2spc>Drawing disconnected graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-340>>
+    <no-break><pageref|auto-346>>
 
     <with|par-left|1tab|6.1.3.<space|2spc>Spring method
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-341>>
+    <no-break><pageref|auto-347>>
 
     <with|par-left|1tab|6.1.4.<space|2spc>Drawing trees
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-342>>
+    <no-break><pageref|auto-348>>
 
     <with|par-left|1tab|6.1.5.<space|2spc>Drawing planar graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-343>>
+    <no-break><pageref|auto-349>>
 
     <with|par-left|1tab|6.1.6.<space|2spc>Circular graph drawings
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-347>>
+    <no-break><pageref|auto-353>>
 
     6.2.<space|2spc>Vertex positions <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-348>
+    <no-break><pageref|auto-354>
 
     <with|par-left|1tab|6.2.1.<space|2spc>Setting vertex positions
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-349>>
+    <no-break><pageref|auto-355>>
 
     <with|par-left|1tab|6.2.2.<space|2spc>Generating vertex positions
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-351>>
+    <no-break><pageref|auto-357>>
 
     6.3.<space|2spc>Highlighting in graphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-352>
+    <no-break><pageref|auto-358>
 
     <with|par-left|1tab|6.3.1.<space|2spc>Highlighting vertices
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-353>>
+    <no-break><pageref|auto-359>>
 
     <with|par-left|1tab|6.3.2.<space|2spc>Highlighting edges and trails
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-355>>
+    <no-break><pageref|auto-361>>
 
     <with|par-left|1tab|6.3.3.<space|2spc>Highlighting subgraphs
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <no-break><pageref|auto-358>>
+    <no-break><pageref|auto-364>>
 
     <vspace*|1fn><with|font-series|bold|math-font-series|bold|font-shape|small-caps|Bibliography>
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <pageref|auto-360><vspace|0.5fn>
+    <pageref|auto-366><vspace|0.5fn>
 
     <vspace*|1fn><with|font-series|bold|math-font-series|bold|font-shape|small-caps|Command
     Index> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-    <pageref|auto-361><vspace|0.5fn>
+    <pageref|auto-367><vspace|0.5fn>
   </table-of-contents>
 
   <prologue>
@@ -749,10 +779,8 @@
 
   <subsection|Undirected graphs><label|graph>
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph(n
-    or V,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(V,E,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(E,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(V,T,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(T,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(V,T1,T2,T3,..,Tk,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(T1,T2,T3,..,Tk,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(A,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(V,E,A,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(V,Perm,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(Str)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph(n
+  or V,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(V,E,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(E,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(V,T,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(T,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(V,T1,T2,T3,..,Tk,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(T1,T2,T3,..,Tk,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(A,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(V,E,A,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(V,Perm,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(Str)>>>>>>
 
   The command<index|<verbatim|graph>> <verbatim|graph> accepts between one
   and three main arguments, each of them being one of the following
@@ -999,7 +1027,7 @@
     </input>
   </session>
 
-  <center|<image|images/dg1.eps|40%|||>>
+  <center|<image|images/dg1.eps|35%|||>>
 
   Alternatively, one may specify edges as a <verbatim|<hlink|trail|#trail>>.
 
@@ -1061,7 +1089,7 @@
     </input>
   </session>
 
-  <center|<image|images/trails.eps|40%|||>>
+  <center|<image|images/trails.eps|35%|||>>
 
   <paragraph|Specifying adjacency or weight matrix>A graph can be created
   from a single square matrix <math|A=<around|[|a<rsub|i*j>|]><rsub|n>> of
@@ -1191,7 +1219,7 @@
     </input>
   </session>
 
-  <center|<image|images/cox.eps|40%|||>>
+  <center|<image|images/cox.eps|35%|||>>
 
   <section|Cycle and path graphs>
 
@@ -1199,20 +1227,18 @@
 
   The command<index|<verbatim|cycle_graph>> <with|font-family|tt|cycle_graph>
   is used for constructing <hlink|<rigid|cycle
-  graphs>|https://en.wikipedia.org/wiki/Cycle_graph> of arbitrary order.
+  graphs>|https://en.wikipedia.org/wiki/Cycle_graph>
+  <cite-detail|godsil|pp.<nbsp>4>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|cycle_graph(n)>>>|<row|<cell|>|<cell|<verbatim|cycle_graph(V)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|cycle_graph(n)>>>|<row|<cell|>|<cell|<verbatim|cycle_graph(V)>>>>>>
 
   <kbd|cycle_graph> accepts a positive integer <math|n> or a list of distinct
   vertices <math|V> as its only argument and returns the graph consisting of
-  a single cycle through the specified vertices in the given order. If
-  <math|n> is specified it is assumed to be the desired number of vertices,
-  in which case they will be created and labeled with the first <math|n>
-  integers (starting from 0 in <samp|Xcas> mode and from 1 in <samp|Maple>
-  mode). The resulting graph will be given the name <kbd|Cn>, for example
-  <kbd|C4> for <math|n=4>.
+  a single cycle on the specified vertices in the given order. If <math|n> is
+  specified it is assumed to be the desired number of vertices, in which case
+  they will be created and labeled with the first <math|n> integers (starting
+  from 0 in <samp|Xcas> mode and from 1 in <samp|Maple> mode). The resulting
+  graph will be given the name <kbd|Cn>, for example <kbd|C4> for <math|n=4>.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -1232,7 +1258,7 @@
     </input>
   </session>
 
-  <center|<image|images/c5.eps|40%|||>>
+  <center|<image|images/c5.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -1250,22 +1276,20 @@
 
   The command<index|<verbatim|path_graph>> <with|font-family|tt|path_graph>
   is used for constructing <hlink|<rigid|path
-  graphs>|https://en.wikipedia.org/wiki/Path_graph> of arbitrary length.
+  graphs>|https://en.wikipedia.org/wiki/Path_graph>
+  <cite-detail|godsil|pp.<nbsp>4>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|path_graph(n)>>>|<row|<cell|>|<cell|<verbatim|path_graph(V)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|path_graph(n)>>>|<row|<cell|>|<cell|<verbatim|path_graph(V)>>>>>>
 
   <kbd|path_graph> accepts a positive integer <math|n> or a list of distinct
   vertices <math|V> as its only argument and returns a graph consisting of a
-  single path through the specified vertices in the given order. If <math|n>
-  is specified it is assumed to be the desired number of vertices, in which
-  case they will be created and labeled with the first <math|n> integers
-  (starting from 0 in <samp|Xcas> mode resp.<nbsp>from 1 in <samp|Maple>
-  mode).
+  single path on the specified vertices in the given order. If <math|n> is
+  specified it is assumed to be the desired number of vertices, in which case
+  they will be created and labeled with the first <math|n> integers (starting
+  from 0 in <samp|Xcas> mode resp.<nbsp>from 1 in <samp|Maple> mode).
 
   Note that a path cannot intersect itself. Paths that are allowed to cross
-  themselves are called trails (see the command
+  themselves are called <strong|trails> (see the command
   <verbatim|<hlink|trail|#trail>>).
 
   <\session|giac|default>
@@ -1292,9 +1316,7 @@
 
   <subsection|Trails of edges><label|trail>
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|trail(v1,v2,..,vk)>>>|<row|<cell|>|<cell|<verbatim|trail2edges(T)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|trail(v1,v2,..,vk)>>>|<row|<cell|>|<cell|<verbatim|trail2edges(T)>>>>>>
 
   If the dummy command<index|<verbatim|trail>> <with|font-family|tt|trail> is
   called with a sequence of vertices <math|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|k>>
@@ -1343,21 +1365,19 @@
   (<hlink|multipartite|https://en.wikipedia.org/wiki/Multipartite_graph>)
   graphs.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|complete_graph(n)>>>|<row|<cell|>|<cell|<verbatim|complete_graph(V)>>>|<row|<cell|>|<cell|<verbatim|complete_graph(n1,n2,..,nk)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|complete_graph(n)>>>|<row|<cell|>|<cell|<verbatim|complete_graph(V)>>>|<row|<cell|>|<cell|<verbatim|complete_graph(n1,n2,..,nk)>>>>>>
 
   <with|font-family|tt|complete_graph> can be called with a single argument,
   a positive integer <math|n> or a list of distinct vertices <math|V>, in
-  which case it returns the complete graph with the specified vertices. If
-  integer <math|n> is specified, it is assumed that it is the desired number
-  of vertices and they will be created and labeled with the first <math|n>
-  integers (starting from 0 in <samp|Xcas> mode and from 1 in <samp|Maple>
-  mode).
+  which case it returns the complete graph <cite-detail|godsil|pp.<nbsp>2> on
+  the specified vertices. If integer <math|n> is specified, it is assumed
+  that it is the desired number of vertices and they will be created and
+  labeled with the first <math|n> integers (starting from 0 in <samp|Xcas>
+  mode and from 1 in <samp|Maple> mode).
 
   If <with|font-family|tt|complete_graph> is given a sequence of positive
-  integers <math|n<rsub|1>,n<rsub|2>,\<ldots\>,n<rsub|k>>, it returns a
-  complete multipartite graph with partitions of size
+  integers <math|n<rsub|1>,n<rsub|2>,\<ldots\>,n<rsub|k>> as its argument, it
+  returns a complete multipartite graph with partitions of size
   <math|n<rsub|1>,n<rsub|2>,\<ldots\>,n<rsub|k>>.
 
   <\session|giac|default>
@@ -1378,7 +1398,7 @@
     </input>
   </session>
 
-  <center|<image|images/complete.eps|40%|||>>
+  <center|<image|images/complete.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -1418,7 +1438,7 @@
     </input>
   </session>
 
-  <center|<image|images/k33.eps|40%|||>>
+  <center|<image|images/k33.eps|35%|||>>
 
   <subsection|Complete trees>
 
@@ -1429,9 +1449,7 @@
   <hlink|<rigid|<math|k>-ary trees>|https://en.wikipedia.org/wiki/K-ary_tree>,
   respectively.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|complete_binary_tree(n)>>>|<row|<cell|>|<cell|<verbatim|complete_kary_tree(k,n)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|complete_binary_tree(n)>>>|<row|<cell|>|<cell|<verbatim|complete_kary_tree(k,n)>>>>>>
 
   <with|font-family|tt|complete_binary_tree> accepts a positive integer
   <math|n> as its only argument and returns a complete binary tree of depth
@@ -1459,7 +1477,7 @@
     </input>
   </session>
 
-  <center|<image|images/ctree1.eps|40%|||>>
+  <center|<image|images/ctree1.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -1479,7 +1497,7 @@
     </input>
   </session>
 
-  <center|<image|images/ctree2.eps|40%|||>>
+  <center|<image|images/ctree2.eps|35%|||>>
 
   <section|Sequence graphs>
 
@@ -1489,9 +1507,7 @@
   <with|font-family|tt|sequence_graph> is used for constructing graphs from
   <hlink|<rigid|degree sequences>|https://en.wikipedia.org/wiki/Degree_(graph_theory)#Degree_sequence>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|sequence_graph(L)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|sequence_graph(L)>>>>>>
 
   <kbd|sequence_graph> accepts a list <math|L> of positive integers as its
   only argument and, if <math|L> represents a graphic sequence, the
@@ -1521,9 +1537,7 @@
   <with|font-family|tt|is_graphic_sequence> is used to check whether a list
   of integers represents the degree sequence of some graph.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_graphic_sequence(L)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_graphic_sequence(L)>>>>>>
 
   <with|font-family|tt|is_graphic_sequence> accepts a list <math|L> of
   positive integers as its only argument and returns
@@ -1553,9 +1567,7 @@
   <with|font-family|tt|interval_graph> is used for construction of
   <hlink|<rigid|interval graphs>|https://en.wikipedia.org/wiki/Interval_graph>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|interval_graph(L)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|interval_graph(L)>>>>>>
 
   <kbd|interval_graph> accepts a sequence or list <math|L> of real-line
   intervals as its argument and returns an undirected unweighted graph with
@@ -1581,7 +1593,7 @@
     </input>
   </session>
 
-  <center|<image|images/intersect.png|40%|||>>
+  <center|<image|images/intersect.png|35%|||>>
 
   <subsection|Kneser graphs>
 
@@ -1590,9 +1602,7 @@
   <kbd|odd_graph> are used for construction of <hlink|<rigid|Kneser
   graphs>|https://en.wikipedia.org/wiki/Kneser_graph>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|kneser_graph(n,k)>>>|<row|<cell|>|<cell|<verbatim|odd_graph(d)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|kneser_graph(n,k)>>>|<row|<cell|>|<cell|<verbatim|odd_graph(d)>>>>>>
 
   <kbd|kneser_graph> accepts two positive integers <math|n\<leq\>20> and
   <math|k> as its arguments and returns the Kneser graph
@@ -1644,7 +1654,7 @@
     </input>
   </session>
 
-  <center|<image|images/kneser.eps|40%|||>>
+  <center|<image|images/kneser.eps|35%|||>>
 
   The command <with|font-family|tt|odd_graph> is used for creating
   <strong|odd graphs>, i.e.<nbsp>Kneser graphs with parameters <math|n=2*d+1>
@@ -1675,9 +1685,7 @@
   used for construction of <hlink|<rigid|hypercube
   graphs>|https://en.wikipedia.org/wiki/Hypercube_graph>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|hypercube_graph(n)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|hypercube_graph(n)>>>>>>
 
   <verbatim|hypercube_graph> accepts a positive integer <math|n> as its only
   argument and returns the hypercube graph of dimension <math|n> on
@@ -1704,7 +1712,7 @@
     </input>
   </session>
 
-  <center|<image|images/cubeplan.eps|40%|||>>
+  <center|<image|images/cubeplan.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -1724,7 +1732,7 @@
     </input>
   </session>
 
-  <center|<image|images/hc.eps|40%|||>>
+  <center|<image|images/hc.eps|30%|||>>
 
   <subsection|Star graphs>
 
@@ -1732,9 +1740,7 @@
   is used for construction of <hlink|<rigid|star
   graphs>|https://en.wikipedia.org/wiki/Star_(graph_theory)>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|star_graph(n)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|star_graph(n)>>>>>>
 
   <with|font-family|tt|star_graph> accepts a positive integer <math|n> as its
   only argument and returns the star graph with <math|n+1> vertices, which is
@@ -1759,7 +1765,7 @@
     </input>
   </session>
 
-  <center|<image|images/star.eps|40%|||>>
+  <center|<image|images/star.eps|35%|||>>
 
   <subsection|Wheel graphs>
 
@@ -1767,9 +1773,7 @@
   is used for construction of <hlink|<rigid|wheel
   graphs>|https://en.wikipedia.org/wiki/Wheel_graph>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|wheel_graph(n)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|wheel_graph(n)>>>>>>
 
   <with|font-family|tt|wheel_graph> accepts a positive integer <math|n> as
   its only argument and returns the wheel graph with <math|n+1> vertices.
@@ -1792,16 +1796,14 @@
     </input>
   </session>
 
-  <center|<image|images/wheel.eps|40%|||>>
+  <center|<image|images/wheel.eps|35%|||>>
 
   <subsection|Web graphs>
 
   The command<index|<verbatim|web_graph>> <with|font-family|tt|web_graph> is
   used for construction of web graphs.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|web_graph(a,b)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|web_graph(a,b)>>>>>>
 
   <with|font-family|tt|web_graph> accepts two positive integers <math|a> and
   <math|b> as its arguments and returns the web graph with parameters
@@ -1827,7 +1829,7 @@
     </input>
   </session>
 
-  <center|<image|images/web.eps|40%|||>>
+  <center|<image|images/web.eps|35%|||>>
 
   <subsection|Prism graphs>
 
@@ -1835,9 +1837,7 @@
   is used for construction of <hlink|<rigid|prism
   graphs>|https://en.wikipedia.org/wiki/Prism_graph>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|prism_graph(n)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|prism_graph(n)>>>>>>
 
   <with|font-family|tt|prism_graph> accepts a positive integer <math|n> as
   its only argument and returns the prism graph with parameter <math|n>,
@@ -1861,7 +1861,7 @@
     </input>
   </session>
 
-  <center|<image|images/prism.eps|40%|||>>
+  <center|<image|images/prism.eps|35%|||>>
 
   <subsection|Antiprism graphs>
 
@@ -1869,9 +1869,7 @@
   <with|font-family|tt|antiprism_graph> is used for construction of
   <hlink|<rigid|antiprism graphs>|https://en.wikipedia.org/wiki/Antiprism_graph>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|antiprism_graph(n)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|antiprism_graph(n)>>>>>>
 
   <with|font-family|tt|antiprism_graph> accepts a positive integer <math|n>
   as its only argument and returns the antiprism graph with parameter
@@ -1897,7 +1895,7 @@
     </input>
   </session>
 
-  <center|<image|images/antiprism.eps|40%|||>>
+  <center|<image|images/antiprism.eps|35%|||>>
 
   <subsection|Grid graphs>
 
@@ -1906,9 +1904,7 @@
   is used for construction of rectangular resp.<nbsp>torus <hlink|<rigid|grid
   graphs>|https://en.wikipedia.org/wiki/Lattice_graph>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|grid_graph(m,n)>>>|<row|<cell|>|<cell|<verbatim|torus_grid_graph(m,n)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|grid_graph(m,n)>>>|<row|<cell|>|<cell|<verbatim|torus_grid_graph(m,n)>>>>>>
 
   <with|font-family|tt|grid_graph> accepts two positive integers <math|m> and
   <math|n> as its arguments and returns the <math|m> by <math|n> grid on
@@ -1934,7 +1930,7 @@
     </input>
   </session>
 
-  <center|<image|images/grid2.eps|40%|||>>
+  <center|<image|images/grid2.eps|35%|||>>
 
   For example, connecting vertices in the opposite corners of the generated
   grid yields a grid-like graph with no corners.
@@ -1957,7 +1953,7 @@
     </input>
   </session>
 
-  <center|<image|images/net.eps|50%|||>>
+  <center|<image|images/net.eps|35%|||>>
 
   In the next example, the Möbius strip is constructed by connecting the
   vertices in the opposite sides of a narrow grid graph.
@@ -1990,11 +1986,7 @@
     </input>
   </session>
 
-  <center|<image|images/strip.eps|60%|||>>
-
-  \;
-
-  \;
+  <center|<image|images/strip.eps|35%|||>>
 
   <with|font-family|tt|torus_grid_graph> accepts two positive integers
   <math|m> and <math|n> as its arguments and returns the <math|m> by <math|n>
@@ -2020,7 +2012,7 @@
     </input>
   </session>
 
-  <center|<image|images/torusgrid.eps|40%|||>>
+  <center|<image|images/torusgrid.eps|35%|||>>
 
   <subsection|Sierpi«ski graphs>
 
@@ -2029,9 +2021,7 @@
   Sierpi«ski-type graphs <math|S<rsub|k><rsup|n>> and <math|S
   T<rsub|k><rsup|n>><nbsp><cite|hinz>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|sierpinski_graph(n,k)>>>|<row|<cell|>|<cell|<verbatim|sierpinski_graph(n,k,triangle)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|sierpinski_graph(n,k)>>>|<row|<cell|>|<cell|<verbatim|sierpinski_graph(n,k,triangle)>>>>>>
 
   <with|font-family|tt|sierpinski_graph> accepts two positive integers
   <math|n> and <math|k> as its arguments and optionally the symbol
@@ -2066,7 +2056,7 @@
     </input>
   </session>
 
-  <center|<image|images/s43.eps|40%|||>>
+  <center|<image|images/s43.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -2100,9 +2090,7 @@
   <hlink|<rigid|generalized Petersen graphs>|https://en.wikipedia.org/wiki/Generalized_Petersen_graph>
   <math|P<around*|(|n,k|)>>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|petersen_graph(n)>>>|<row|<cell|>|<cell|<verbatim|petersen_graph(n,k)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|petersen_graph(n)>>>|<row|<cell|>|<cell|<verbatim|petersen_graph(n,k)>>>>>>
 
   <with|font-family|tt|petersen_graph> accepts two positive integers <math|n>
   and <math|k> as its arguments. The second argument may be omitted, in which
@@ -2125,7 +2113,7 @@
     </input>
   </session>
 
-  <center|<image|images/petersen.eps|40%|||>>
+  <center|<image|images/petersen.eps|35%|||>>
 
   To obtain the dodecahedral graph <math|P<around|(|10,2|)>>, input:
 
@@ -2161,7 +2149,7 @@
     </input>
   </session>
 
-  <center|<image|images/moka.eps|40%|||>>
+  <center|<image|images/moka.eps|35%|||>>
 
   Note that Desargues, Dürer and Nauru graphs are isomorphic to the
   generalized Petersen graphs <math|P<around|(|10,3|)>>,
@@ -2173,9 +2161,7 @@
   construction of cubic Hamiltonian graphs from <hlink|<rigid|<abbr|LCF>
   notation>|https://en.wikipedia.org/wiki/LCF_notation>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|lcf_graph(L)>>>|<row|<cell|>|<cell|<verbatim|lcf_graph(L,n)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|lcf_graph(L)>>>|<row|<cell|>|<cell|<verbatim|lcf_graph(L,n)>>>>>>
 
   <verbatim|lcf_graph> takes one or two arguments, a list <math|L> of nonzero
   integers, called <em|jumps>, and optionally a positive integer <math|n>,
@@ -2204,7 +2190,7 @@
     </input>
   </session>
 
-  <center|<image|images/frucht.eps|40%|||>>
+  <center|<image|images/frucht.eps|35%|||>>
 
   In the next example, the truncated octahedral graph is constructed from
   <abbr|LCF> notation.
@@ -2227,7 +2213,7 @@
     </input>
   </session>
 
-  <center|<image|images/oct_trunc.eps|40%|||>>
+  <center|<image|images/oct_trunc.eps|35%|||>>
 
   <section|Isomorphic copies of graphs>
 
@@ -2237,9 +2223,7 @@
   ordering of vertices, use the <verbatim|isomorphic_copy><index|<kbd|isomorphic_copy>>
   command.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|isomorphic_copy(G,sigma)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|isomorphic_copy(G,sigma)>>>>>>
 
   <with|font-family|tt|isomorphic_copy> accepts two arguments, a graph
   <math|G<around|(|V,E|)>> and a permutation <math|\<sigma\>> of order
@@ -2294,9 +2278,7 @@
   To create an isomorphic copy of a graph by providing the reordered list of
   vertex labels, use the command <verbatim|permute_vertices><index|<kbd|permute_vertices>>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|permute_vertices(G,L)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|permute_vertices(G,L)>>>>>>
 
   <with|font-family|tt|permute_vertices> accepts two arguments, a graph
   <math|G<around|(|V,E|)>> and a list <math|L> of length
@@ -2332,9 +2314,7 @@
   To relabel the vertices of a graph without changing their order, use the
   command <verbatim|relabel_vertices><index|<kbd|relabel_vertices>>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|relabel_vertices(G,L)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|relabel_vertices(G,L)>>>>>>
 
   <with|font-family|tt|relabel_vertices> accepts two arguments, a graph
   <math|G<around|(|V,E|)>> and a list <math|L> of vertex labels of length
@@ -2391,9 +2371,7 @@
   To extract the subgraph of a graph formed by a subset of the set of its
   edges, use the command <with|font-family|tt|subgraph><index|<with|font-family|tt|subgraph>>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|subgraph(G,L)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|subgraph(G,L)>>>>>>
 
   <verbatim|subgraph> accepts two arguments, a graph
   <math|G<around*|(|V,E|)>> and a list of edges <math|L>. It returns the
@@ -2429,7 +2407,7 @@
     </input>
   </session>
 
-  <center|<image|images/sg0.eps|40%|||>>
+  <center|<image|images/sg0.eps|35%|||>>
 
   <subsection|Induced subgraphs><label|induced-subgraph>
 
@@ -2437,15 +2415,13 @@
   by a subset of its vertices, use the command
   <with|font-family|tt|induced_subgraph><index|<with|font-family|tt|induced_subgraph>>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|induced_subgraph(G,L)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|induced_subgraph(G,L)>>>>>>
 
   <with|font-family|tt|induced_subgraph> accepts two arguments, a graph
   <math|G<around*|(|V,E|)>> and a list of vertices <math|L>. It returns the
   subgraph <math|G<rprime|'><around*|(|L,E<rprime|'>|)>> of <math|G>, where
   <math|E<rprime|'>\<subset\>E> contains all edges which have both endpoints
-  in <math|L>.
+  in <math|L> <cite-detail|godsil|pp.<nbsp>3>.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -2475,7 +2451,7 @@
     </input>
   </session>
 
-  <center|<image|images/sg.eps|40%|||>>
+  <center|<image|images/sg.eps|35%|||>>
 
   <subsection|Underlying graphs><label|underlying-graph>
 
@@ -2485,9 +2461,7 @@
   from <math|E> by dropping edge directions. To construct <math|U>, use the
   command <with|font-family|tt|underlying_graph><index|<with|font-family|tt|underlying_graph>>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|underlying_graph(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|underlying_graph(G)>>>>>>
 
   <verbatim|underlying_graph> accepts a graph <math|G<around*|(|V,E|)>> as
   its only argument. The result is obtained by copying <math|G> and
@@ -2534,9 +2508,7 @@
   is used for construction of <hlink|<rigid|complement
   graphs>|https://en.wikipedia.org/wiki/Complement_graph>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_complement(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_complement(G)>>>>>>
 
   <with|font-family|tt|graph_complement> accepts a graph
   <math|G<around|(|V,E|)>> as its only argument and returns the complement
@@ -2563,7 +2535,7 @@
     </input>
   </session>
 
-  <center|<image|images/c5.eps|40%|||>>
+  <center|<image|images/c5.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -2583,7 +2555,7 @@
     </input>
   </session>
 
-  <center|<image|images/star2.eps|40%|||>>
+  <center|<image|images/star2.eps|35%|||>>
 
   <subsection|Seidel switching>
 
@@ -2591,9 +2563,7 @@
   is used for Seidel <hlink|switching|https://en.wikipedia.org/wiki/Two-graph#Switching_and_graphs>
   in graphs.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|seidel_switch(G,L)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|seidel_switch(G,L)>>>>>>
 
   <with|font-family|tt|seidel_switch> accepts two arguments, an undirected
   and unweighted graph <math|G<around|(|V,E|)>> and a list of vertices
@@ -2619,16 +2589,14 @@
     </input>
   </session>
 
-  <center|<image|images/seidel.eps|40%|||>>
+  <center|<image|images/seidel.eps|35%|||>>
 
   <subsection|Transposing graphs>
 
   The command <with|font-family|tt|reverse_graph><index|<with|font-family|tt|reverse_graph>>
   is used for reversing arc directions in digraphs.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|reverse_graph(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|reverse_graph(G)>>>>>>
 
   <with|font-family|tt|reverse_graph> accepts a graph
   <math|G<around|(|V,E|)>> as its only argument and returns the reverse graph
@@ -2682,9 +2650,7 @@
   The command <with|font-family|tt|graph_union><index|<with|font-family|tt|graph_union>>
   is used for constructing unions of graphs.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_union(G1,G2,..,Gn)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_union(G1,G2,..,Gn)>>>>>>
 
   <with|font-family|tt|graph_union> accepts a sequence of graphs
   <math|G<rsub|k><around|(|V<rsub|k>,E<rsub|k>|)>> for
@@ -2739,9 +2705,7 @@
   To construct <hlink|<rigid|disjoint union>|https://en.wikipedia.org/wiki/Disjoint_union_of_graphs>
   of graphs use the command <with|font-family|tt|disjoint_union><index|<with|font-family|tt|disjoint_union>>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|disjoint_union(G1,G2,..,Gn)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|disjoint_union(G1,G2,..,Gn)>>>>>>
 
   <with|font-family|tt|disjoint_union> accepts a sequence of graphs
   <math|G<rsub|k><around|(|V<rsub|k>,E<rsub|k>|)>> for
@@ -2772,16 +2736,14 @@
     </input>
   </session>
 
-  <center|<image|images/disjoint.eps|40%|||>>
+  <center|<image|images/disjoint.eps|35%|||>>
 
   <subsection|Joining two graphs>
 
   The command <with|font-family|tt|graph_join><index|<with|font-family|tt|graph_join>>
   is used for joining two graphs together.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_join(G,H)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_join(G,H)>>>>>>
 
   <with|font-family|tt|graph_join> accepts two graphs <math|G> and <math|H>
   as its arguments and returns the graph <math|G+H> which is obtained by
@@ -2828,7 +2790,7 @@
     </input>
   </session>
 
-  <center|<image|images/join.eps|40%|||>>
+  <center|<image|images/join.eps|35%|||>>
 
   <subsection|Power graphs>
 
@@ -2836,9 +2798,7 @@
   is used for computing <hlink|<rigid|powers of
   graphs>|https://en.wikipedia.org/wiki/Graph_power>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|induced_subgraph(G,k)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|induced_subgraph(G,k)>>>>>>
 
   <with|font-family|tt|graph_power> accepts two arguments, a graph
   <math|G<around|(|V,E|)>> and a positive integer <math|k>. It returns the
@@ -2877,7 +2837,7 @@
     </input>
   </session>
 
-  <center|<image|images/pow1.eps|40%|||>>
+  <center|<image|images/pow1.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -2897,7 +2857,7 @@
     </input>
   </session>
 
-  <center|<image|images/pow2.eps|40%|||>>
+  <center|<image|images/pow2.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -2917,7 +2877,7 @@
     </input>
   </session>
 
-  <center|<image|images/pow3.eps|40%|||>>
+  <center|<image|images/pow3.eps|35%|||>>
 
   <subsection|Graph products>
 
@@ -2928,9 +2888,7 @@
   <kbd|cartesian_product><index|<kbd|cartesian_product>> and
   <kbd|tensor_product><index|<kbd|tensor_product>>, respectively.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|cartesian_product(G1,G2,..,Gn)>>>|<row|<cell|>|<cell|<verbatim|tensor_product(G1,G2,..,Gn)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|cartesian_product(G1,G2,..,Gn)>>>|<row|<cell|>|<cell|<verbatim|tensor_product(G1,G2,..,Gn)>>>>>>
 
   <with|font-family|tt|cartesian_product> accepts a sequence of graphs
   <math|G<rsub|k><around|(|V<rsub|k>,E<rsub|k>|)>> for
@@ -2964,7 +2922,7 @@
     </input>
   </session>
 
-  <center|<image|images/graph4.eps|40%|||>>
+  <center|<image|images/graph4.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -2984,7 +2942,7 @@
     </input>
   </session>
 
-  <center|<image|images/graph3.eps|40%|||>>
+  <center|<image|images/graph3.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -3004,7 +2962,7 @@
     </input>
   </session>
 
-  <center|<image|images/prod1.eps|40%|||>>
+  <center|<image|images/prod1.eps|35%|||>>
 
   <with|font-family|tt|tensor_product> accepts a sequence of graphs
   <math|G<rsub|k><around|(|V<rsub|k>,E<rsub|k>|)>> for
@@ -3036,7 +2994,7 @@
     </input>
   </session>
 
-  <center|<image|images/prod2.eps|40%|||>>
+  <center|<image|images/prod2.eps|35%|||>>
 
   <subsection|Transitive closure graph>
 
@@ -3044,10 +3002,8 @@
   is used for constructing <hlink|<rigid|transitive closure
   graphs>|https://en.wikipedia.org/wiki/Transitive_closure#In_graph_theory>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|transitive_closure(G)>>>|<row|<cell|>|<cell|<verbatim|transitive_closure(G,weighted[=true
-    or false])>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|transitive_closure(G)>>>|<row|<cell|>|<cell|<verbatim|transitive_closure(G,weighted[=true
+  or false])>>>>>>
 
   <verbatim|transitive_closure> accepts one or two arguments, a graph
   <math|G<around*|(|V,E|)>> and optionally the option
@@ -3088,7 +3044,7 @@
     </input>
   </session>
 
-  <center|<image|images/digraph3.eps|40%|||>>
+  <center|<image|images/digraph3.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -3108,7 +3064,7 @@
     </input>
   </session>
 
-  <center|<image|images/digraph4.eps|40%|||>>
+  <center|<image|images/digraph4.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -3128,7 +3084,7 @@
     </input>
   </session>
 
-  <center|<image|images/digraph5.eps|40%|||>>
+  <center|<image|images/digraph5.eps|35%|||>>
 
   <\session|giac|default>
     <\input>
@@ -3138,16 +3094,15 @@
     </input>
   </session>
 
-  <center|<image|images/digraph6.eps|40%|||>>
+  <center|<image|images/digraph6.eps|35%|||>>
 
   <subsection|Line graph>
 
   The command <verbatim|line_graph><index|<verbatim|line_graph>> is used for
-  construction of <hlink|<rigid|line graphs>|https://en.wikipedia.org/wiki/Line_graph>.
+  construction of <hlink|<rigid|line graphs>|https://en.wikipedia.org/wiki/Line_graph>
+  <cite-detail|godsil|pp.<nbsp>10>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|line_graph(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|line_graph(G)>>>>>>
 
   <verbatim|line_graph> accepts an undirected graph <math|G> as its only
   argument and returns the line graph <math|L<around*|(|G|)>> with
@@ -3186,7 +3141,7 @@
     </input>
   </session>
 
-  <center|<image|images/linegraph.eps|40%|||>>
+  <center|<image|images/linegraph.eps|35%|||>>
 
   <subsection|Plane dual graph>
 
@@ -3194,12 +3149,10 @@
   construction of <hlink|<rigid|dual graphs>|https://en.wikipedia.org/wiki/Dual_graph>
   from undirected biconnected <hlink|<rigid|planar
   graphs>|https://en.wikipedia.org/wiki/Planar_graph>. To determine whether
-  the given graph is planar use the command
+  the given graph is planar <cite-detail|godsil|pp.<nbsp>12> use the command
   <verbatim|is_planar><index|<verbatim|is_planar>>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|plane_dual(G)>>>|<row|<cell|>|<cell|<verbatim|plane_dual(F)>>>|<row|<cell|>|<cell|<verbatim|is_planar(G)>>>|<row|<cell|>|<cell|<verbatim|is_planar(G,F)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|plane_dual(G)>>>|<row|<cell|>|<cell|<verbatim|plane_dual(F)>>>|<row|<cell|>|<cell|<verbatim|is_planar(G)>>>|<row|<cell|>|<cell|<verbatim|is_planar(G,F)>>>>>>
 
   <verbatim|plane_dual> accepts a biconnected planar graph
   <math|G<around*|(|V,E|)>> or the list <math|F> of faces of a planar
@@ -3238,7 +3191,7 @@
     </input>
   </session>
 
-  <center|<image|images/cube.eps|40%|||>>
+  <center|<image|images/cube.eps|35%|||>>
 
   The cube has six faces, hence its plane dual graph <math|D> has six
   vertices. Also, every face obviously shares an edge with exactly four other
@@ -3262,7 +3215,7 @@
     </input>
   </session>
 
-  <center|<image|images/dual.eps|40%|||>>
+  <center|<image|images/dual.eps|35%|||>>
 
   <verbatim|is_planar> accepts one or two arguments, the input graph <math|G>
   and optionally an unassigned identifier<nbsp><verbatim|F>. It returns
@@ -3270,9 +3223,8 @@
   the second argument is given and <math|G> is planar and biconnected, the
   list of faces of <math|G> is stored to <verbatim|F>. Each face is
   represented as a cycle (a list) of vertices. The strategy is to use the
-  algorithm of <name|Demoucron> et al.<nbsp>(see <cite|gibbons>,
-  page<nbsp>88), which runs in <math|O<around*|(|<around*|\||V|\|><rsup|2>|)>>
-  time.
+  algorithm of <name|Demoucron> et al.<nbsp><cite-detail|gibbons|pp.<nbsp>88>,
+  which runs in <math|O<around*|(|<around*|\||V|\|><rsup|2>|)>> time.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -3332,12 +3284,10 @@
   <verbatim|random_digraph><index|<verbatim|random_digraph>> are used for
   generating general graphs at random.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_graph(n
-    or L,p)>>>|<row|<cell|>|<cell|<verbatim|random_graph(n or
-    L,m)>>>|<row|<cell|>|<cell|<verbatim|random_digraph(n or
-    L,p)>>>|<row|<cell|>|<cell|<verbatim|random_digraph(n or L,m)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_graph(n
+  or L,p)>>>|<row|<cell|>|<cell|<verbatim|random_graph(n or
+  L,m)>>>|<row|<cell|>|<cell|<verbatim|random_digraph(n or
+  L,p)>>>|<row|<cell|>|<cell|<verbatim|random_digraph(n or L,m)>>>>>>
 
   <verbatim|random_graph> and <verbatim|random_digraph> both accept two
   arguments. The first argument is a positive integer <math|n> or a list of
@@ -3365,7 +3315,7 @@
     </input>
   </session>
 
-  <center|<image|images/rand7.eps|40%|||>>
+  <center|<image|images/rand7.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -3426,7 +3376,7 @@
     </input>
   </session>
 
-  <center|<image|images/rand8.eps|40%|||>>
+  <center|<image|images/rand8.eps|35%|||>>
 
   <subsection|Random bipartite graphs>
 
@@ -3434,11 +3384,9 @@
   is used for generating <hlink|<rigid|bipartite graphs>|#is-bipartite> at
   random.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_bipartite_graph(n,p
-    or m)>>>|<row|<cell|>|<cell|<verbatim|random_bipartite_graph([a,b],p or
-    m)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_bipartite_graph(n,p
+  or m)>>>|<row|<cell|>|<cell|<verbatim|random_bipartite_graph([a,b],p or
+  m)>>>>>>
 
   <verbatim|random_bipartite_graph> accepts two arguments. The first argument
   is either a positive integer <math|n> or a list of two positive integers
@@ -3466,7 +3414,7 @@
     </input>
   </session>
 
-  <center|<image|images/rand6.eps|40%|||>>
+  <center|<image|images/rand6.eps|35%|||>>
 
   \;
 
@@ -3487,9 +3435,7 @@
   The command <verbatim|random_tree><index|<verbatim|random_tree>> is used
   for generating <hlink|tree graphs|#is-tree> uniformly at random.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_tree(n)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_tree(n)>>>>>>
 
   <verbatim|random_tree> accepts a positive integer <math|n> as its only
   argument and returns a random tree generated on <math|n> nodes
@@ -3513,18 +3459,16 @@
     </input>
   </session>
 
-  <center|<image|images/rand5.eps|40%|||>>
+  <center|<image|images/rand5.eps|35%|||>>
 
   <subsection|Random planar graphs><label|random-planar>
 
   The command <verbatim|random_planar_graph><index|<verbatim|random_planar_graph>>
   is used for generating random planar graphs.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_planar_graph(n
-    or L,p)>>>|<row|<cell|>|<cell|<verbatim|random_planar_graph(n or
-    L,p,k)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_planar_graph(n
+  or L,p)>>>|<row|<cell|>|<cell|<verbatim|random_planar_graph(n or
+  L,p,k)>>>>>>
 
   <verbatim|random_planar_graph> accepts two or three arguments, a positive
   integer <math|n> (or a list <math|L> of length <math|n>), a positive real
@@ -3562,7 +3506,7 @@
     </input>
   </session>
 
-  <center|<image|images/rand1.eps|40%|||>>
+  <center|<image|images/rand1.eps|35%|||>>
 
   The command line below generates a triconnected planar graph.
 
@@ -3584,7 +3528,7 @@
     </input>
   </session>
 
-  <center|<image|images/rand2.eps|40%|||>>
+  <center|<image|images/rand2.eps|35%|||>>
 
   The next command line generates a disconnected planar graph with high
   probability.
@@ -3617,7 +3561,7 @@
     </input>
   </session>
 
-  <center|<image|images/rand3.eps|40%|||>>
+  <center|<image|images/rand3.eps|35%|||>>
 
   By default, a connected planar graph is generated, like in the following
   example.
@@ -3670,7 +3614,7 @@
     </input>
   </session>
 
-  <center|<image|images/rand4.eps|40%|||>>
+  <center|<image|images/rand4.eps|35%|||>>
 
   <subsection|Random graphs from the given degree sequence>
 
@@ -3678,9 +3622,7 @@
   is used for generating a random undirected graph from the given degree
   sequence.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_sequence_graph(L)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_sequence_graph(L)>>>>>>
 
   <verbatim|random_sequence_graph> accepts the degree sequence <math|L> (a
   list of nonnegative integers) as its only argument. It returns an
@@ -3716,7 +3658,7 @@
     </input>
   </session>
 
-  <center|<image|images/seq.eps|40%|||>>
+  <center|<image|images/seq.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -3736,7 +3678,7 @@
     </input>
   </session>
 
-  <center|<image|images/seq2.eps|40%|||>>
+  <center|<image|images/seq2.eps|35%|||>>
 
   <subsection|Random regular graphs>
 
@@ -3744,11 +3686,9 @@
   is used for generating random <hlink|<rigid|regular graphs>|#is-regular> on
   the given set of vertices.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_regular_graph(n
-    or L,d)>>>|<row|<cell|>|<cell|<verbatim|random_regular_graph(n or
-    L,d,connected)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_regular_graph(n
+  or L,d)>>>|<row|<cell|>|<cell|<verbatim|random_regular_graph(n or
+  L,d,connected)>>>>>>
 
   <verbatim|random_regular_graph> accepts two mandatory arguments, a positive
   integer <math|n> (or a list <math|L> of length <math|n>) and a nonnegative
@@ -3808,16 +3748,14 @@
     </input>
   </session>
 
-  <center|<image|images/regular.eps|40%|||>>
+  <center|<image|images/regular.eps|35%|||>>
 
   <subsection|Random tournaments>
 
   The command <verbatim|random_tournament><index|<verbatim|random_tournament>>
   is used for generating random <hlink|tournaments|#is-tournament>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_tournament(n)>>>|<row|<cell|>|<cell|<verbatim|random_tournament(L)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_tournament(n)>>>|<row|<cell|>|<cell|<verbatim|random_tournament(L)>>>>>>
 
   <verbatim|random_tournament> accepts a positive integer <math|n> or a list
   <math|L> of length <math|n> as its only argument and returns a random
@@ -3852,16 +3790,14 @@
     </input>
   </session>
 
-  <center|<image|images/tnm.eps|40%|||>>
+  <center|<image|images/tnm.eps|35%|||>>
 
   <subsection|Random network graphs><label|random-network>
 
   The command <verbatim|random_network><index|<verbatim|random_network>> is
   used for generation of random <hlink|networks|#is-network>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_network(a,b)>>>|<row|<cell|>|<cell|<verbatim|random_network(a,b,p)>>>|<row|<cell|>|<cell|<verbatim|random_network(a,b,acyclic)>>>|<row|<cell|>|<cell|<verbatim|random_network(a,b,p,acyclic)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_network(a,b)>>>|<row|<cell|>|<cell|<verbatim|random_network(a,b,p)>>>|<row|<cell|>|<cell|<verbatim|random_network(a,b,acyclic)>>>|<row|<cell|>|<cell|<verbatim|random_network(a,b,p,acyclic)>>>>>>
 
   <verbatim|random_network> accepts two to four arguments: a positive integer
   <math|a>, a positive integer <math|b>, an optional real number <math|p>
@@ -3918,7 +3854,7 @@
   </session>
 
   <\center>
-    <image|images/network1.eps|40%|||>
+    <image|images/network1.eps|35%|||>
   </center>
 
   In the next example, passing the option <verbatim|acyclic> forces the
@@ -3943,7 +3879,7 @@
   </session>
 
   <\center>
-    <image|images/network2.eps|40%|||>
+    <image|images/network2.eps|35%|||>
   </center>
 
   To list sources and sinks, use the command
@@ -3984,7 +3920,7 @@
   </session>
 
   <\center>
-    <image|images/network0.eps|40%|||>
+    <image|images/network0.eps|35%|||>
   </center>
 
   <\session|giac|default>
@@ -4004,9 +3940,7 @@
   The command <verbatim|assign_edge_weights><index|<verbatim|assign_edge_weights>>
   is used for assigning weights to edges of graphs at random.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|assign_edge_weights(G,a..b)>>>|<row|<cell|>|<cell|<verbatim|assign_edge_weights(G,m,n)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|assign_edge_weights(G,a..b)>>>|<row|<cell|>|<cell|<verbatim|assign_edge_weights(G,m,n)>>>>>>
 
   <verbatim|assign_edge_weights> accepts two or three arguments: a graph
   <math|G<around*|(|V,E|)>> and an interval <math|a><nbsp>..<nbsp><math|b> of
@@ -4035,7 +3969,7 @@
     </input>
   </session>
 
-  <center|<image|images/grid.eps|40%|||>>
+  <center|<image|images/grid.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -4055,7 +3989,7 @@
     </input>
   </session>
 
-  <center|<image|images/rand9.eps|40%|||>>
+  <center|<image|images/rand9.eps|35%|||>>
 
   <chapter|Modifying graphs>
 
@@ -4066,9 +4000,7 @@
   To promote an existing undirected graph to a directed one, use the command
   <kbd|make_directed><index|<kbd|make_directed>>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|make_directed(G)>>>|<row|<cell|>|<cell|<verbatim|make_directed(G,A)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|make_directed(G)>>>|<row|<cell|>|<cell|<verbatim|make_directed(G,A)>>>>>>
 
   <with|font-family|tt|make_directed> is called with one or two arguments, an
   undirected graph <math|G<around|(|V,E|)>> and optionally a numerical square
@@ -4107,9 +4039,7 @@
   To promote an existing unweighted graph to a weighted one, use the command
   <kbd|make_weighted><index|<kbd|make_weighted>>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|make_weighted(G)>>>|<row|<cell|>|<cell|<verbatim|make_weighted(G,A)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|make_weighted(G)>>>|<row|<cell|>|<cell|<verbatim|make_weighted(G,A)>>>>>>
 
   <with|font-family|tt|make_weighted> accepts one or two arguments, an
   unweighted graph <math|G<around|(|V,E|)>> and optionally a square matrix
@@ -4140,10 +4070,8 @@
   <kbd|add_vertex><index|<kbd|add_vertex>> and
   <kbd|delete_vertex><index|<kbd|delete_vertex>>, respectively.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|add_vertex(G,v
-    or L)>>>|<row|<cell|>|<cell|<verbatim|delete_vertex(G,v or L)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|add_vertex(G,v
+  or L)>>>|<row|<cell|>|<cell|<verbatim|delete_vertex(G,v or L)>>>>>>
 
   The command <with|font-family|tt|add_vertex> accepts two arguments, a graph
   <math|G<around|(|V,E|)>> and a single label <math|v> or a list of labels
@@ -4248,12 +4176,10 @@
   and <kbd|delete_edge><index|<kbd|delete_edge>> or
   <kbd|delete_arc><index|<kbd|delete_arc>>, respectively.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|add_edge(G,e
-    or E or T)>>>|<row|<cell|>|<cell|<verbatim|add_arc(G,e or E or
-    T)>>>|<row|<cell|>|<cell|<verbatim|delete_edge(G,e or E or
-    T)>>>|<row|<cell|>|<cell|<verbatim|delete_arc(G,e or E or T)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|add_edge(G,e
+  or E or T)>>>|<row|<cell|>|<cell|<verbatim|add_arc(G,e or E or
+  T)>>>|<row|<cell|>|<cell|<verbatim|delete_edge(G,e or E or
+  T)>>>|<row|<cell|>|<cell|<verbatim|delete_arc(G,e or E or T)>>>>>>
 
   The command <with|font-family|tt|add_edge> accepts two arguments, an
   undirected graph <math|G> and an edge <math|e> or a list of edges <math|E>
@@ -4424,9 +4350,7 @@
   are used to access and modify the weight of an edge/arc in a weighted
   graph, respectively.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|set_edge_weight(G,e,w)>>>|<row|<cell|>|<cell|<verbatim|set_edge_weight(G,e)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|set_edge_weight(G,e,w)>>>|<row|<cell|>|<cell|<verbatim|set_edge_weight(G,e)>>>>>>
 
   <with|font-family|tt|set_edge_weight> accepts three arguments: a weighted
   graph <math|G<around|(|V,E|)>>, edge/arc <math|e\<in\>E> and the new weight
@@ -4467,9 +4391,7 @@
   is used for <hlink|<rigid|contracting edges>|https://en.wikipedia.org/wiki/Edge_contraction>
   in undirected graphs.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|contract_edge(G,e)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|contract_edge(G,e)>>>>>>
 
   <with|font-family|tt|contract_edge> accepts two arguments, an undirected
   graph <math|G<around|(|V,E|)>> and an edge
@@ -4536,17 +4458,15 @@
     </input>
   </session>
 
-  <center|<image|images/complete.eps|40%|||>>
+  <center|<image|images/complete.eps|35%|||>>
 
   <subsection|Subdividing edges>
 
   The command <with|font-family|tt|subdivide_edges><index|<with|font-family|tt|subdivide_edges>>
   is used for <hlink|<rigid|graph subdivision>|https://en.wikipedia.org/wiki/Homeomorphism_(graph_theory)#Subdivision_and_smoothing>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|subdivide_edges(G,e
-    or S)>>>|<row|<cell|>|<cell|<verbatim|subdivide_edges(G,e or S,r)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|subdivide_edges(G,e
+  or S)>>>|<row|<cell|>|<cell|<verbatim|subdivide_edges(G,e or S,r)>>>>>>
 
   <with|font-family|tt|subdivide_edges> accepts two or three arguments: a
   graph <math|G<around*|(|V,E|)>>, a single edge/arc <math|e\<in\>E> or a
@@ -4607,42 +4527,43 @@
     </input>
   </session>
 
-  <center|<image|images/subdiv.eps|40%|||>>
+  <center|<image|images/subdiv.eps|35%|||>>
 
   <section|Using attributes>
 
   <subsection|Graph attributes>
 
   The graph structure maintains a set of attributes as tag-value pairs which
-  can be accessed and modified by the user.
+  can be accessed and/or modified by using the commands
+  <verbatim|set_graph_attribute><index|<with|font-family|tt|set_graph_attribute>>,
+  <verbatim|get_graph_attribute><index|<with|font-family|tt|get_graph_attribute>>,
+  <verbatim|list_graph_attributes><index|<with|font-family|tt|list_graph_attributes>>
+  and <verbatim|discard_graph_attribute><index|<with|font-family|tt|discard_graph_attribute>>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|set_graph_attribute(G,tag1=value1,tag2=value2,...)>>>|<row|<cell|>|<cell|<verbatim|set_graph_attribute(G,[tag1=value1,tag2=value2,...])>>>|<row|<cell|>|<cell|<verbatim|set_graph_attribute(G,[tag1,tag2,...],[value1,value2,...])>>>|<row|<cell|>|<cell|<verbatim|get_graph_attribute(G,tag1,tag2,...)>>>|<row|<cell|>|<cell|<verbatim|get_graph_attribute(G,[tag1,tag2,...])>>>|<row|<cell|>|<cell|<verbatim|list_graph_attributes(G)>>>|<row|<cell|>|<cell|<verbatim|discard_graph_attribute(G,tag1,tag2,...)>>>|<row|<cell|>|<cell|<verbatim|discard_graph_attribute(G,[tag1,tag2,...])>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|set_graph_attribute(G,tag1=value1,tag2=value2,...)>>>|<row|<cell|>|<cell|<verbatim|set_graph_attribute(G,[tag1=value1,tag2=value2,...])>>>|<row|<cell|>|<cell|<verbatim|set_graph_attribute(G,[tag1,tag2,...],[value1,value2,...])>>>|<row|<cell|>|<cell|<verbatim|get_graph_attribute(G,tag1,tag2,...)>>>|<row|<cell|>|<cell|<verbatim|get_graph_attribute(G,[tag1,tag2,...])>>>|<row|<cell|>|<cell|<verbatim|list_graph_attributes(G)>>>|<row|<cell|>|<cell|<verbatim|discard_graph_attribute(G,tag1,tag2,...)>>>|<row|<cell|>|<cell|<verbatim|discard_graph_attribute(G,[tag1,tag2,...])>>>>>>
 
-  The command <with|font-family|tt|set_graph_attribute><index|<with|font-family|tt|set_graph_attribute>>
-  is used for modifying the existing graph attributes or adding new ones. It
-  accepts two arguments, a graph <math|G> and a sequence or list of graph
-  attributes in form <with|font-family|tt|tag=value> where
-  <with|font-family|tt|tag> is a string. Alternatively, attributes may be
-  specified as a sequence of two lists <with|font-family|tt|[tag1,tag2,...]>
-  and <with|font-family|tt|[value1,value2,...]>. The command sets the
-  specified values to the indicated attribute slots, which are meant to
-  represent some global properties of the graph <math|G>, and returns the
-  modified copy of <math|G>.
+  The command <with|font-family|tt|set_graph_attribute> is used for modifying
+  the existing graph attributes or adding new ones. It accepts two arguments,
+  a graph <math|G> and a sequence or list of graph attributes in form
+  <with|font-family|tt|tag=value> where <with|font-family|tt|tag> is a
+  string. Alternatively, attributes may be specified as a sequence of two
+  lists <with|font-family|tt|[tag1,tag2,...]> and
+  <with|font-family|tt|[value1,value2,...]>. The command sets the specified
+  values to the indicated attribute slots, which are meant to represent some
+  global properties of the graph <math|G>, and returns the modified copy of
+  <math|G>.
 
   The previously set graph attribute values can be fetched with the command
-  <with|font-family|tt|get_graph_attribute><index|<with|font-family|tt|get_graph_attribute>>
-  which accepts two arguments: a graph <math|G> and a sequence or list of
-  tags. The corresponding values will be returned in a sequence or list,
-  respectively. If some attribute is not set, <with|font-family|tt|undef> is
-  returned as its value.
+  <with|font-family|tt|get_graph_attribute> which accepts two arguments: a
+  graph <math|G> and a sequence or list of tags. The corresponding values
+  will be returned in a sequence or list, respectively. If some attribute is
+  not set, <with|font-family|tt|undef> is returned as its value.
 
   To list all graph attributes of <math|G> for which the values are set, use
-  the <with|font-family|tt|list_graph_attributes><index|<with|font-family|tt|list_graph_attributes>>
-  command which takes <math|G> as its only argument.
+  the <with|font-family|tt|list_graph_attributes> command which takes
+  <math|G> as its only argument.
 
-  To discard a graph attribute, use the <with|font-family|tt|discard_graph_attribute><index|<with|font-family|tt|discard_graph_attribute>>
+  To discard a graph attribute, use the <with|font-family|tt|discard_graph_attribute>
   command. It accepts two arguments: a graph <math|G> and a sequence or list
   of tags to be cleared, and returns the modified copy of <math|G>.
 
@@ -4720,16 +4641,18 @@
   <subsection|Vertex attributes><label|vertex-attribute>
 
   For every vertex of a graph, the list of attributes in form of tag-value
-  pairs is maintained, which can be accessed and modified by the user.
+  pairs is maintained, which can be accessed/modified by using the commands
+  <verbatim|set_vertex_attribute><index|<with|font-family|tt|set_vertex_attribute>>,
+  <verbatim|get_vertex_attribute><index|<with|font-family|tt|get_vertex_attribute>>,
+  <verbatim|list_vertex_attributes><index|<with|font-family|tt|list_vertex_attributes>>
+  and <verbatim|discard_vertex_attribute><index|<with|font-family|tt|discard_vertex_attribute>>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|set_vertex_attribute(G,v,tag1=value1,tag2=value2,...)>>>|<row|<cell|>|<cell|<verbatim|set_vertex_attribute(G,v,[tag1=value1,tag2=value2,...])>>>|<row|<cell|>|<cell|<verbatim|set_vertex_attribute(G,v,[tag1,tag2,...],[value1,value2,...])>>>|<row|<cell|>|<cell|<verbatim|get_vertex_attribute(G,v,tag1,tag2,...)>>>|<row|<cell|>|<cell|<verbatim|get_vertex_attribute(G,v,[tag1,tag2,...])>>>|<row|<cell|>|<cell|<verbatim|list_vertex_attributes(G,v)>>>|<row|<cell|>|<cell|<verbatim|discard_vertex_attribute(G,v,tag1,tag2,...)>>>|<row|<cell|>|<cell|<verbatim|discard_vertex_attribute(G,v,[tag1,tag2,...])>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|set_vertex_attribute(G,v,tag1=value1,tag2=value2,...)>>>|<row|<cell|>|<cell|<verbatim|set_vertex_attribute(G,v,[tag1=value1,tag2=value2,...])>>>|<row|<cell|>|<cell|<verbatim|set_vertex_attribute(G,v,[tag1,tag2,...],[value1,value2,...])>>>|<row|<cell|>|<cell|<verbatim|get_vertex_attribute(G,v,tag1,tag2,...)>>>|<row|<cell|>|<cell|<verbatim|get_vertex_attribute(G,v,[tag1,tag2,...])>>>|<row|<cell|>|<cell|<verbatim|list_vertex_attributes(G,v)>>>|<row|<cell|>|<cell|<verbatim|discard_vertex_attribute(G,v,tag1,tag2,...)>>>|<row|<cell|>|<cell|<verbatim|discard_vertex_attribute(G,v,[tag1,tag2,...])>>>>>>
 
-  The command <with|font-family|tt|set_vertex_attribute><index|<with|font-family|tt|set_vertex_attribute>>
-  is used for modifying the existing vertex attributes or adding new ones. It
-  accepts three arguments, a graph <math|G<around|(|V,E|)>>, a vertex
-  <math|v\<in\>V> and a sequence or list of attributes in form
+  The command <with|font-family|tt|set_vertex_attribute> is used for
+  modifying the existing vertex attributes or adding new ones. It accepts
+  three arguments, a graph <math|G<around|(|V,E|)>>, a vertex <math|v\<in\>V>
+  and a sequence or list of attributes in form
   <with|font-family|tt|tag=value> where <with|font-family|tt|tag> is a
   string. Alternatively, attributes may be specified as a sequence of two
   lists <with|font-family|tt|[tag1,tag2,...]> and
@@ -4738,21 +4661,20 @@
   modified copy of <math|G>.
 
   The previously set attribute values for <math|v> can be fetched with the
-  command <with|font-family|tt|get_vertex_attribute><index|<with|font-family|tt|get_vertex_attribute>>
-  which accepts three arguments: <math|G>, <math|v> and a sequence or list of
-  tags. The corresponding values will be returned in a sequence or list,
-  respectively. If some attribute is not set, <with|font-family|tt|undef> is
-  returned as its value.
+  command <with|font-family|tt|get_vertex_attribute> which accepts three
+  arguments: <math|G>, <math|v> and a sequence or list of tags. The
+  corresponding values will be returned in a sequence or list, respectively.
+  If some attribute is not set, <with|font-family|tt|undef> is returned as
+  its value.
 
   To list all attributes of <math|v> for which the values are set, use the
-  <with|font-family|tt|list_vertex_attributes><index|<with|font-family|tt|list_vertex_attributes>>
-  command which takes two arguments, <math|G> and <math|v>.
+  <with|font-family|tt|list_vertex_attributes> command which takes two
+  arguments, <math|G> and <math|v>.
 
-  The <with|font-family|tt|discard_vertex_attribute><index|<with|font-family|tt|discard_vertex_attribute>>
-  command is used for discarding attribute(s) assigned to some vertex
-  <math|v\<in\>V>. It accepts three arguments: <math|G>, <math|v> and a
-  sequence or list of tags to be cleared, and returns the modified copy of
-  <math|G>.
+  The <with|font-family|tt|discard_vertex_attribute> command is used for
+  discarding attribute(s) assigned to some vertex <math|v\<in\>V>. It accepts
+  three arguments: <math|G>, <math|v> and a sequence or list of tags to be
+  cleared, and returns the modified copy of <math|G>.
 
   The attributes <samp|label>, <samp|color>, <samp|shape> and <samp|pos> are
   also used internally. These hold the vertex label, color, shape and
@@ -4793,7 +4715,7 @@
     </input>
   </session>
 
-  <center|<image|images/rooted.eps|40%|||>>
+  <center|<image|images/rooted.eps|35%|||>>
 
   A vertex may also hold custom attributes.
 
@@ -4842,16 +4764,18 @@
   <subsection|Edge attributes>
 
   For every edge of a graph, the list of attributes in form of key-value
-  pairs is maintained, which can be accessed and modified by the user.
+  pairs is maintained, which can be accessed and/or modified by using the
+  commands <verbatim|set_edge_attribute><index|<with|font-family|tt|set_edge_attribute>>,
+  <verbatim|get_edge_attribute><index|<with|font-family|tt|get_edge_attribute>>,
+  <verbatim|list_edge_attributes><index|<with|font-family|tt|list_edge_attributes>>
+  and <verbatim|discard_edge_attribute><index|<with|font-family|tt|discard_edge_attribute>>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|set_edge_attribute(G,e,tag1=value1,tag2=value2,...)>>>|<row|<cell|>|<cell|<verbatim|set_edge_attribute(G,e,[tag1=value1,tag2=value2,...])>>>|<row|<cell|>|<cell|<verbatim|set_edge_attribute(G,e,[tag1,tag2,...],[value1,value2,...])>>>|<row|<cell|>|<cell|<verbatim|get_edge_attribute(G,e,tag1,tag2,...)>>>|<row|<cell|>|<cell|<verbatim|get_edge_attribute(G,e,[tag1,tag2,...])>>>|<row|<cell|>|<cell|<verbatim|list_edge_attributes(G,e)>>>|<row|<cell|>|<cell|<verbatim|discard_edge_attribute(G,e,tag1,tag2,...)>>>|<row|<cell|>|<cell|<verbatim|discard_edge_attribute(G,e,[tag1,tag2,...])>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|set_edge_attribute(G,e,tag1=value1,tag2=value2,...)>>>|<row|<cell|>|<cell|<verbatim|set_edge_attribute(G,e,[tag1=value1,tag2=value2,...])>>>|<row|<cell|>|<cell|<verbatim|set_edge_attribute(G,e,[tag1,tag2,...],[value1,value2,...])>>>|<row|<cell|>|<cell|<verbatim|get_edge_attribute(G,e,tag1,tag2,...)>>>|<row|<cell|>|<cell|<verbatim|get_edge_attribute(G,e,[tag1,tag2,...])>>>|<row|<cell|>|<cell|<verbatim|list_edge_attributes(G,e)>>>|<row|<cell|>|<cell|<verbatim|discard_edge_attribute(G,e,tag1,tag2,...)>>>|<row|<cell|>|<cell|<verbatim|discard_edge_attribute(G,e,[tag1,tag2,...])>>>>>>
 
-  The command <with|font-family|tt|set_edge_attribute><index|<with|font-family|tt|set_edge_attribute>>
-  is used for modifying the existing edge attributes or adding new ones. It
-  accepts three arguments, a graph <math|G<around|(|V,E|)>>, an edge/arc
-  <math|e\<in\>E> and a sequence or list of attributes in form
+  The command <with|font-family|tt|set_edge_attribute> is used for modifying
+  the existing edge attributes or adding new ones. It accepts three
+  arguments, a graph <math|G<around|(|V,E|)>>, an edge/arc <math|e\<in\>E>
+  and a sequence or list of attributes in form
   <with|font-family|tt|tag=value> where <with|font-family|tt|tag> is a
   string. Alternatively, attributes may be specified as a sequence of two
   lists <with|font-family|tt|[tag1,tag2,...]> and
@@ -4860,20 +4784,20 @@
   modified copy of <math|G>.
 
   The previously set attribute values for <math|e> can be fetched with the
-  command <with|font-family|tt|get_edge_attribute><index|<with|font-family|tt|get_edge_attribute>>
-  which accepts three arguments: <math|G>, <math|e> and a sequence or list of
-  tags. The corresponding values will be returned in a sequence or list,
-  respectively. If some attribute is not set, <with|font-family|tt|undef> is
-  returned as its value.
+  command <with|font-family|tt|get_edge_attribute> which accepts three
+  arguments: <math|G>, <math|e> and a sequence or list of tags. The
+  corresponding values will be returned in a sequence or list, respectively.
+  If some attribute is not set, <with|font-family|tt|undef> is returned as
+  its value.
 
   To list all attributes of <math|e> for which the values are set, use the
-  <with|font-family|tt|list_edge_attributes><index|<with|font-family|tt|list_edge_attributes>>
-  command which takes two arguments, <math|G> and <math|e>.
+  <with|font-family|tt|list_edge_attributes> command which takes two
+  arguments, <math|G> and <math|e>.
 
   To discard attribute(s) assigned to <math|e> call the
-  <with|font-family|tt|discard_edge_attribute><index|<with|font-family|tt|discard_edge_attribute>>
-  command, which accepts three arguments: <math|G>, <math|e> and a sequence
-  or list of tags to be cleared, and returns the modified copy of <math|G>.
+  <with|font-family|tt|discard_edge_attribute> command, which accepts three
+  arguments: <math|G>, <math|e> and a sequence or list of tags to be cleared,
+  and returns the modified copy of <math|G>.
 
   The attributes <samp|weight>, <samp|color>, <samp|style>, <samp|pos> and
   <samp|temp> are also used internally. They hold the edge weight, color,
@@ -4969,7 +4893,7 @@
     </input>
   </session>
 
-  <center|<image|images/dashed.eps|40%|||>>
+  <center|<image|images/dashed.eps|35%|||>>
 
   <chapter|Import and export>
 
@@ -4982,9 +4906,7 @@
   <hlink|<samp|dot>|https://en.wikipedia.org/wiki/DOT_(graph_description_language)>
   format.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|import_graph(filename)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|import_graph(filename)>>>>>>
 
   <with|font-family|tt|import_graph> accepts a string
   <with|font-family|tt|filename> as its only argument and returns the graph
@@ -5048,7 +4970,7 @@
     </input>
   </session>
 
-  <center|<image|images/ex.eps|40%|||>>
+  <center|<image|images/ex.eps|35%|||>>
 
   <subsection|The <with|font-family|ss|dot> file format overview>
 
@@ -5124,9 +5046,7 @@
   The command <with|font-family|tt|export_graph> is used for saving graphs to
   disk in <with|font-family|ss|dot> or <LaTeX> format.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|export_graph(G,filename)>>>|<row|<cell|>|<cell|<verbatim|export_graph(G,filename,latex[=\<less\>params\<gtr\>])>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|export_graph(G,filename)>>>|<row|<cell|>|<cell|<verbatim|export_graph(G,filename,latex[=\<less\>params\<gtr\>])>>>>>>
 
   <subsection|Saving graphs in <with|font-family|ss|dot> format>
 
@@ -5252,9 +5172,7 @@
   determining the type of a graph: whether is it directed or not
   resp.<nbsp>weighted or not.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_directed(G)>>>|<row|<cell|>|<cell|<verbatim|is_weighted(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_directed(G)>>>|<row|<cell|>|<cell|<verbatim|is_weighted(G)>>>>>>
 
   Both commands accept a graph <math|G> as their only argument.
   <verbatim|is_directed> resp.<nbsp><verbatim|is_weighted> returns
@@ -5324,9 +5242,7 @@
   resp.<nbsp>the <verbatim|number_of_edges><index|<verbatim|number_of_edges>>
   command.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|vertices(G)>>>|<row|<cell|>|<cell|<verbatim|graph_vertices(G)>>>|<row|<cell|>|<cell|<verbatim|edges(G)>>>|<row|<cell|>|<cell|<verbatim|edges(G,weights)>>>|<row|<cell|>|<cell|<verbatim|number_of_vertices(G)>>>|<row|<cell|>|<cell|<verbatim|number_of_edges(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|vertices(G)>>>|<row|<cell|>|<cell|<verbatim|graph_vertices(G)>>>|<row|<cell|>|<cell|<verbatim|edges(G)>>>|<row|<cell|>|<cell|<verbatim|edges(G,weights)>>>|<row|<cell|>|<cell|<verbatim|number_of_vertices(G)>>>|<row|<cell|>|<cell|<verbatim|number_of_edges(G)>>>>>>
 
   <verbatim|vertices> or <verbatim|graph_vertices> accepts a graph
   <math|G<around*|(|V,E|)>> as its only argument and returns the set of
@@ -5424,6 +5340,93 @@
     </unfolded-io>
   </session>
 
+  <subsection|Equality of graphs><label|graph-equal>
+
+  Two graphs are considered <strong|equal> if they are both (un)weighted and
+  (un)directed and if the commands <verbatim|<hlink|vertices|#vertices-edges>>
+  and <verbatim|<hlink|edges|#vertices-edges>> give the same results for both
+  graphs. To determine whether two graphs are equal use the command
+  <verbatim|graph_equal><index|<verbatim|graph_equal>>.
+
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_equal(G1,G2)>>>>>>
+
+  <verbatim|graph_equal> accepts two arguments, graphs <math|G<rsub|1>> and
+  <math|G<rsub|2>>, and returns <verbatim|true> if <math|G<rsub|1>> is equal
+  to <math|G<rsub|2>> with respect to the above definition. Else, it returns
+  <verbatim|false>.
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      G1:=graph([1,2,3],%{[1,2],[2,3]%})
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 3 vertices and 2 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      G2:=graph([1,3,2],%{[1,2],[2,3]%})
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 3 vertices and 2 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      graph_equal(G1,G2)
+    <|unfolded-io>
+      <\equation*>
+        <text|false>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      G3:=graph(trail(1,2,3))
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 3 vertices and 2 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      graph_equal(G1,G3)
+    <|unfolded-io>
+      <\equation*>
+        <text|true>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      G4:=digraph(trail(1,2,3))
+    <|unfolded-io>
+      <\equation*>
+        <text|a directed unweighted graph with 3 vertices and 2 arcs>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      graph_equal(G1,G4)
+    <|unfolded-io>
+      <\equation*>
+        <text|false>
+      </equation*>
+    </unfolded-io>
+  </session>
+
   <subsection|Vertex degrees>
 
   The command <verbatim|vertex_degree><index|<verbatim|vertex_degree>> is
@@ -5435,9 +5438,7 @@
   <verbatim|minimum_degree><index|<verbatim|minimum_degree>> and
   <verbatim|maximum_degree><index|<verbatim|maximum_degree>>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|vertex_degree(G,v)>>>|<row|<cell|>|<cell|<verbatim|vertex_in_degree(G,v)>>>|<row|<cell|>|<cell|<verbatim|vertex_out_degree(G,v)>>>|<row|<cell|>|<cell|<verbatim|degree_sequence(G)>>>|<row|<cell|>|<cell|<verbatim|minimum_degree(G,v)>>>|<row|<cell|>|<cell|<verbatim|maximum_degree(G,v)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|vertex_degree(G,v)>>>|<row|<cell|>|<cell|<verbatim|vertex_in_degree(G,v)>>>|<row|<cell|>|<cell|<verbatim|vertex_out_degree(G,v)>>>|<row|<cell|>|<cell|<verbatim|degree_sequence(G)>>>|<row|<cell|>|<cell|<verbatim|minimum_degree(G,v)>>>|<row|<cell|>|<cell|<verbatim|maximum_degree(G,v)>>>>>>
 
   <verbatim|vertex_degree> accepts two arguments, a graph
   <math|G<around*|(|V,E|)>> and a vertex <math|v\<in\>V>, and returns the
@@ -5469,7 +5470,7 @@
     </input>
   </session>
 
-  <center|<image|images/graph1.eps|40%|||>>
+  <center|<image|images/graph1.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -5499,7 +5500,7 @@
     </input>
   </session>
 
-  <center|<image|images/tournament.eps|40%|||>>
+  <center|<image|images/tournament.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -5580,9 +5581,7 @@
   The command <verbatim|is_regular><index|<verbatim|is_regular>> is used for
   determining whether the given graph is <hlink|regular|https://en.wikipedia.org/wiki/Regular_graph>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_regular(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_regular(G)>>>>>>
 
   <verbatim|is_regular> accepts a graph <math|G<around*|(|V,E|)>> as its only
   argument and returns <verbatim|true> if
@@ -5619,9 +5618,7 @@
   is used for determining whether the given graph is <hlink|<rigid|strongly
   regular>|https://en.wikipedia.org/wiki/Strongly_regular_graph>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_strongly_regular(G)>>>|<row|<cell|>|<cell|<verbatim|is_strongly_regular(G,srg)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_strongly_regular(G)>>>|<row|<cell|>|<cell|<verbatim|is_strongly_regular(G,srg)>>>>>>
 
   <verbatim|is_strongly_regular> accepts one or two arguments, a graph
   <math|G<around*|(|V,E|)>> and optionally an unassigned identifier
@@ -5736,9 +5733,7 @@
   obtaining all neighbors of a vertex <math|v> in a digraph which are the
   heads resp.<nbsp>the tails of the corresponding arcs.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|has_edge(G,[u,v])>>>|<row|<cell|>|<cell|<verbatim|has_arc(G,[u,v])>>>|<row|<cell|>|<cell|<verbatim|neighbors(G)>>>|<row|<cell|>|<cell|<verbatim|neighbors(G,v)>>>|<row|<cell|>|<cell|<verbatim|departures(G)>>>|<row|<cell|>|<cell|<verbatim|departures(G,v)>>>|<row|<cell|>|<cell|<verbatim|arrivals(G)>>>|<row|<cell|>|<cell|<verbatim|arrivals(G,v)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|has_edge(G,[u,v])>>>|<row|<cell|>|<cell|<verbatim|has_arc(G,[u,v])>>>|<row|<cell|>|<cell|<verbatim|neighbors(G)>>>|<row|<cell|>|<cell|<verbatim|neighbors(G,v)>>>|<row|<cell|>|<cell|<verbatim|departures(G)>>>|<row|<cell|>|<cell|<verbatim|departures(G,v)>>>|<row|<cell|>|<cell|<verbatim|arrivals(G)>>>|<row|<cell|>|<cell|<verbatim|arrivals(G,v)>>>>>>
 
   <verbatim|has_edge> accepts two arguments, a graph
   <math|G<around*|(|V,E|)>> and a list <verbatim|[u,v]> where
@@ -5916,7 +5911,7 @@
     </input>
   </session>
 
-  <center|<image|images/digraph7.eps|40%|||>>
+  <center|<image|images/digraph7.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -5936,9 +5931,7 @@
   used for determining whether the given graph is a
   <hlink|tournament|https://en.wikipedia.org/wiki/Tournament_(graph_theory)>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_tournament(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_tournament(G)>>>>>>
 
   <verbatim|is_tournament> accepts a graph <math|G<around*|(|V,E|)>> as its
   only argument and returns <verbatim|true> if <math|G> is directed and for
@@ -5993,9 +5986,7 @@
   The command <verbatim|is_bipartite><index|<verbatim|is_bipartite>> is used
   for determining if the given graph is <hlink|bipartite|https://en.wikipedia.org/wiki/Bipartite_graph>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_bipartite(G)>>>|<row|<cell|>|<cell|<verbatim|is_bipartite(G,P)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_bipartite(G)>>>|<row|<cell|>|<cell|<verbatim|is_bipartite(G,P)>>>>>>
 
   <verbatim|is_bipartite> accepts one or two arguments, a graph
   <math|G<around*|(|V,E|)>> and optionally an unassigned identifier
@@ -6045,7 +6036,7 @@
     </input>
   </session>
 
-  <center|<image|images/bip.eps|40%|||>>
+  <center|<image|images/bip.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -6084,9 +6075,7 @@
   The command <verbatim|incident_edges><index|<verbatim|incident_edges>> is
   used for obtaining edges incident to the given vertex in a graph.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|indcident_edges(G,v)>>>|<row|<cell|>|<cell|<verbatim|indcident_edges(G,L)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|indcident_edges(G,v)>>>|<row|<cell|>|<cell|<verbatim|indcident_edges(G,L)>>>>>>
 
   <verbatim|incident_edges> accepts two argument, a graph
   <math|G<around*|(|V,E|)>> and a vertex <math|v\<in\>V> or a list of
@@ -6159,9 +6148,7 @@
   is used for obtaining the <hlink|<rigid|adjacency
   matrix>|https://en.wikipedia.org/wiki/Adjacency_matrix> of a graph.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|adjacency_matrix(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|adjacency_matrix(G)>>>>>>
 
   <verbatim|adjacency_matrix> accepts a graph <math|G<around*|(|V,E|)>>,
   where <math|V=<around*|{|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|n>|}>>, as
@@ -6225,7 +6212,7 @@
     </input>
   </session>
 
-  <center|<image|images/digraph8.eps|40%|||>>
+  <center|<image|images/digraph8.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -6256,14 +6243,12 @@
   matrix>|https://en.wikipedia.org/wiki/Laplacian_matrix#Laplacian_matrix_for_simple_graphs>
   of a graph.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|laplacian_matrix(G)>>>|<row|<cell|>|<cell|<verbatim|laplacian_matrix(G,normal)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|laplacian_matrix(G)>>>|<row|<cell|>|<cell|<verbatim|laplacian_matrix(G,normal)>>>>>>
 
-  <verbatim|laplacian_matrix> accepts a graph <math|G<around*|(|V,E|)>>,
-  where <math|V=<around*|{|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|n>|}>>, and
-  returns the matrix <math|L=D-A>, where <math|A> is the adjacency matrix of
-  <math|G> and
+  <verbatim|laplacian_matrix> accepts an undirected graph
+  <math|G<around*|(|V,E|)>>, where <math|V=<around*|{|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|n>|}>>,
+  and returns the symmetric matrix <math|L=D-A>, where <math|A> is the
+  adjacency matrix of <math|G> and
 
   <\equation*>
     D=<matrix|<tformat|<table|<row|<cell|deg<around*|(|v<rsub|1>|)>>|<cell|0>|<cell|0>|<cell|\<cdots\>>|<cell|0>>|<row|<cell|0>|<cell|deg<around*|(|v<rsub|2>|)>>|<cell|0>|<cell|\<cdots\>>|<cell|0>>|<row|<cell|\<vdots\>>|<cell|\<vdots\>>|<cell|\<vdots\>>|<cell|\<ddots\>>|<cell|\<vdots\>>>|<row|<cell|0>|<cell|0>|<cell|0>|<cell|\<cdots\>>|<cell|deg<around*|(|v<rsub|n>|)>>>>>>.
@@ -6314,10 +6299,21 @@
         <text|true>
       </equation*>
     </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      laplacian_matrix(G,normal)
+    <|unfolded-io>
+      <\equation*>
+        <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|3|3|cell-halign|c>|<cwith|1|-1|4|4|cell-halign|c>|<cwith|1|-1|4|4|cell-rborder|0ln>|<table|<row|<cell|1>|<cell|<frac|-1|<sqrt|2>>>|<cell|0>|<cell|0>>|<row|<cell|<frac|-1|<sqrt|2>>>|<cell|1>|<cell|<frac|-1|2>>|<cell|0>>|<row|<cell|0>|<cell|<frac|-1|2>>|<cell|1>|<cell|<frac|-1|<sqrt|2>>>>|<row|<cell|0>|<cell|0>|<cell|<frac|-1|<sqrt|2>>>|<cell|1>>>>>|)>
+      </equation*>
+    </unfolded-io>
   </session>
 
-  The smallest eigenvalue of the Laplacian matrix of an undirected graph is
-  always zero.
+  The smallest eigenvalue of a Laplacian matrix of an undirected graph is
+  always zero. Moreover, its multiplicity is equal to the number of connected
+  components in the corresponding graph <cite-detail|godsil|pp.<nbsp>280>.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -6333,74 +6329,40 @@
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      laplacian_matrix(G,normal)
+      H:=disjoint_union(complete_graph(4),cycle_graph(3),path_graph(2))
     <|unfolded-io>
       <\equation*>
-        <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|3|3|cell-halign|c>|<cwith|1|-1|4|4|cell-halign|c>|<cwith|1|-1|4|4|cell-rborder|0ln>|<table|<row|<cell|1>|<cell|<frac|-1|<sqrt|2>>>|<cell|0>|<cell|0>>|<row|<cell|<frac|-1|<sqrt|2>>>|<cell|1>|<cell|<frac|-1|2>>|<cell|0>>|<row|<cell|0>|<cell|<frac|-1|2>>|<cell|1>|<cell|<frac|-1|<sqrt|2>>>>|<row|<cell|0>|<cell|0>|<cell|<frac|-1|<sqrt|2>>>|<cell|1>>>>>|)>
+        <text|an undirected unweighted graph with 9 vertices and 10 edges>
       </equation*>
     </unfolded-io>
 
-    <\unfolded-io>
+    <\input>
       \<gtr\>\ 
-    <|unfolded-io>
-      DG:=digraph(%{[1,2],[1,3],[2,3],[3,2]%})
-    <|unfolded-io>
-      <\equation*>
-        <text|a directed unweighted graph with 3 vertices and 4 arcs>
-      </equation*>
-    </unfolded-io>
-
-    <\unfolded-io>
-      \<gtr\>\ 
-    <|unfolded-io>
-      L:=laplacian_matrix(DG)
-    <|unfolded-io>
-      <\equation*>
-        <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|3|3|cell-halign|c>|<cwith|1|-1|3|3|cell-rborder|0ln>|<table|<row|<cell|2>|<cell|-1>|<cell|-1>>|<row|<cell|0>|<cell|3>|<cell|-1>>|<row|<cell|0>|<cell|-1>|<cell|3>>>>>|)>
-      </equation*>
-    </unfolded-io>
+    <|input>
+      draw_graph(H,labels=false)
+    </input>
   </session>
 
-  <subsection|Weight matrix>
-
-  The command <verbatim|weight_matrix><index|<verbatim|weight_matrix>> is
-  used for obtaining the weight matrix of a <hlink|<rigid|weighted
-  graph>|https://en.wikipedia.org/wiki/Graph_(discrete_mathematics)#Weighted_graph>.
-
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|weight_matrix(G)>>>>>>
-  </bothlined>
-
-  <verbatim|weight_matrix> accepts a graph <math|G<around*|(|V,E|)>>, where
-  <math|V=<around*|{|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|n>|}>>, as its only
-  argument and returns the square matrix <math|M=<around*|[|m<rsub|i j>|]>>
-  of order <math|n> such that <math|m<rsub|i j>> equals zero if
-  <math|v<rsub|i>> and <math|v<rsub|j>> are not adjacent and the weight of
-  the edge/arc <math|v<rsub|i> v<rsub|j>> otherwise, for all
-  <math|i,j=1,2,\<ldots\>,n> (note that the weight of an edge/arc may be any
-  real number).
-
-  Note that <math|tr <around*|(|M|)>=0>. Also, the weight matrix of an
-  undirected graph is always symmetrical.
+  <center|<image|images/disjoint2.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      G:=graph(%{[[1,2],1],[[2,3],2],[[4,5],3],[[5,2],4]%})
+      eigenvals(laplacian_matrix(H))
     <|unfolded-io>
       <\equation*>
-        <text|an undirected weighted graph with 5 vertices and 4 edges>
+        0,0,0,4,4,4,3,3,2
       </equation*>
     </unfolded-io>
 
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      weight_matrix(G)
+      nops(connected_components(H))
     <|unfolded-io>
       <\equation*>
-        <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|3|3|cell-halign|c>|<cwith|1|-1|4|4|cell-halign|c>|<cwith|1|-1|5|5|cell-halign|c>|<cwith|1|-1|5|5|cell-rborder|0ln>|<table|<row|<cell|0>|<cell|1>|<cell|0>|<cell|0>|<cell|0>>|<row|<cell|1>|<cell|0>|<cell|2>|<cell|0>|<cell|4>>|<row|<cell|0>|<cell|2>|<cell|0>|<cell|0>|<cell|0>>|<row|<cell|0>|<cell|0>|<cell|0>|<cell|0>|<cell|3>>|<row|<cell|0>|<cell|4>|<cell|0>|<cell|3>|<cell|0>>>>>|)>
+        3
       </equation*>
     </unfolded-io>
   </session>
@@ -6411,9 +6373,7 @@
   is used for obtaining the <hlink|<rigid|incidence
   matrix>|https://en.wikipedia.org/wiki/Incidence_matrix> of a graph.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|incidence_matrix(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|incidence_matrix(G)>>>>>>
 
   <verbatim|incidence_matrix> accepts a graph <math|G<around*|(|V,E|)>>,
   where <math|V=<around*|{|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|n>|}>> and
@@ -6488,7 +6448,7 @@
     </input>
   </session>
 
-  <center|<image|images/digraph9.eps|40%|||>>
+  <center|<image|images/digraph9.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -6512,6 +6472,48 @@
     </unfolded-io>
   </session>
 
+  <subsection|Weight matrix>
+
+  The command <verbatim|weight_matrix><index|<verbatim|weight_matrix>> is
+  used for obtaining the weight matrix of a <hlink|<rigid|weighted
+  graph>|https://en.wikipedia.org/wiki/Graph_(discrete_mathematics)#Weighted_graph>.
+
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|weight_matrix(G)>>>>>>
+
+  <verbatim|weight_matrix> accepts a graph <math|G<around*|(|V,E|)>>, where
+  <math|V=<around*|{|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|n>|}>>, as its only
+  argument and returns the square matrix <math|M=<around*|[|m<rsub|i j>|]>>
+  of order <math|n> such that <math|m<rsub|i j>> equals zero if
+  <math|v<rsub|i>> and <math|v<rsub|j>> are not adjacent and the weight of
+  the edge/arc <math|v<rsub|i> v<rsub|j>> otherwise, for all
+  <math|i,j=1,2,\<ldots\>,n> (note that the weight of an edge/arc may be any
+  real number).
+
+  Note that <math|tr <around*|(|M|)>=0>. Also, the weight matrix of an
+  undirected graph is always symmetrical.
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      G:=graph(%{[[1,2],1],[[2,3],2],[[4,5],3],[[5,2],4]%})
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected weighted graph with 5 vertices and 4 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      weight_matrix(G)
+    <|unfolded-io>
+      <\equation*>
+        <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|3|3|cell-halign|c>|<cwith|1|-1|4|4|cell-halign|c>|<cwith|1|-1|5|5|cell-halign|c>|<cwith|1|-1|5|5|cell-rborder|0ln>|<table|<row|<cell|0>|<cell|1>|<cell|0>|<cell|0>|<cell|0>>|<row|<cell|1>|<cell|0>|<cell|2>|<cell|0>|<cell|4>>|<row|<cell|0>|<cell|2>|<cell|0>|<cell|0>|<cell|0>>|<row|<cell|0>|<cell|0>|<cell|0>|<cell|0>|<cell|3>>|<row|<cell|0>|<cell|4>|<cell|0>|<cell|3>|<cell|0>>>>>|)>
+      </equation*>
+    </unfolded-io>
+  </session>
+
   <subsection|Characteristic polynomial>
 
   The command <verbatim|graph_charpoly><index|<verbatim|graph_charpoly>> or
@@ -6519,9 +6521,7 @@
   polynomial>|https://en.wikipedia.org/wiki/Characteristic_polynomial> of an
   undirected graph.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_charpoly(G)>>>|<row|<cell|>|<cell|<verbatim|graph_charpoly(G,x)>>>|<row|<cell|>|<cell|<verbatim|charpoly(G)>>>|<row|<cell|>|<cell|<verbatim|charpoly(G,x)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_charpoly(G)>>>|<row|<cell|>|<cell|<verbatim|graph_charpoly(G,x)>>>|<row|<cell|>|<cell|<verbatim|charpoly(G)>>>|<row|<cell|>|<cell|<verbatim|charpoly(G,x)>>>>>>
 
   <verbatim|graph_charpoly> or <verbatim|charpoly> accepts one or two
   arguments, an undirected graph <math|G<around*|(|V,E|)>> and optionally a
@@ -6586,9 +6586,7 @@
   The command <verbatim|graph_spectrum><index|<verbatim|graph_spectrum>> is
   used for computing <hlink|<rigid|graph spectra>|https://en.wikipedia.org/wiki/Adjacency_matrix#Spectrum>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_spectrum(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_spectrum(G)>>>>>>
 
   <verbatim|graph_spectrum> accepts a graph <math|G> as its only argument and
   returns the list in which every element is an eigenvalue of the adjacency
@@ -6642,13 +6640,10 @@
   <subsection|Seidel spectrum>
 
   The command <verbatim|seidel_spectrum><index|<verbatim|seidel_spectrum>> is
-  used for obtaining the <hlink|<rigid|Seidel
-  spectrum>|https://en.wikipedia.org/wiki/Seidel_adjacency_matrix> of a
-  graph.
+  used for computing <hlink|<rigid|Seidel
+  spectra>|https://en.wikipedia.org/wiki/Seidel_adjacency_matrix>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|seidel_spectrum(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|seidel_spectrum(G)>>>>>>
 
   <verbatim|seidel_spectrum> accepts a graph <math|G<around*|(|V,E|)>> as its
   only argument and returns the list in which every element is an eigenvalue
@@ -6688,9 +6683,7 @@
   is used for determining whether the given graph is an
   <hlink|<rigid|integral graph>|https://en.wikipedia.org/wiki/Integral_graph>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_integer_graph(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_integer_graph(G)>>>>>>
 
   <verbatim|is_integer_graph> accepts a graph <math|G> as its only argument
   and returns <verbatim|true> if the <hlink|<rigid|spectrum>|#graph-spectrum>
@@ -6738,103 +6731,15 @@
     </unfolded-io>
   </session>
 
-  <subsection|Equality of graphs><label|graph-equal>
+  <section|Graph isomorphism>
 
-  Two graphs are considered <strong|equal> if they are both (un)weighted and
-  (un)directed and if the commands <verbatim|vertices> and <verbatim|edges>
-  give the same results for both graphs. To test a pair of graphs for
-  equality, use the command <verbatim|graph_equal>.
-
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_equal(G1,G2)>>>>>>
-  </bothlined>
-
-  <verbatim|graph_equal> accepts two arguments, graphs <math|G<rsub|1>> and
-  <math|G<rsub|2>>, and returns <verbatim|true> if <math|G<rsub|1>> is equal
-  to <math|G<rsub|2>> with respect to the above definition. Else, it returns
-  <verbatim|false>.
-
-  <\session|giac|default>
-    <\unfolded-io>
-      \<gtr\>\ 
-    <|unfolded-io>
-      G1:=graph([1,2,3],%{[1,2],[2,3]%})
-    <|unfolded-io>
-      <\equation*>
-        <text|an undirected unweighted graph with 3 vertices and 2 edges>
-      </equation*>
-    </unfolded-io>
-
-    <\unfolded-io>
-      \<gtr\>\ 
-    <|unfolded-io>
-      G2:=graph([1,3,2],%{[1,2],[2,3]%})
-    <|unfolded-io>
-      <\equation*>
-        <text|an undirected unweighted graph with 3 vertices and 2 edges>
-      </equation*>
-    </unfolded-io>
-
-    <\unfolded-io>
-      \<gtr\>\ 
-    <|unfolded-io>
-      graph_equal(G1,G2)
-    <|unfolded-io>
-      <\equation*>
-        <text|false>
-      </equation*>
-    </unfolded-io>
-
-    <\unfolded-io>
-      \<gtr\>\ 
-    <|unfolded-io>
-      G3:=graph(trail(1,2,3))
-    <|unfolded-io>
-      <\equation*>
-        <text|an undirected unweighted graph with 3 vertices and 2 edges>
-      </equation*>
-    </unfolded-io>
-
-    <\unfolded-io>
-      \<gtr\>\ 
-    <|unfolded-io>
-      graph_equal(G1,G3)
-    <|unfolded-io>
-      <\equation*>
-        <text|true>
-      </equation*>
-    </unfolded-io>
-
-    <\unfolded-io>
-      \<gtr\>\ 
-    <|unfolded-io>
-      G4:=digraph(trail(1,2,3))
-    <|unfolded-io>
-      <\equation*>
-        <text|a directed unweighted graph with 3 vertices and 2 arcs>
-      </equation*>
-    </unfolded-io>
-
-    <\unfolded-io>
-      \<gtr\>\ 
-    <|unfolded-io>
-      graph_equal(G1,G4)
-    <|unfolded-io>
-      <\equation*>
-        <text|false>
-      </equation*>
-    </unfolded-io>
-  </session>
-
-  <subsection|Graph isomorphism>
+  <subsection|Isomorphic graphs>
 
   The command <verbatim|is_isomorphic><index|<verbatim|is_isomorphic>> is
   used for determining whether two graphs are
   <hlink|isomorphic|https://en.wikipedia.org/wiki/Graph_isomorphism>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_isomorphic(G1,G2)>>>|<row|<cell|>|<cell|<verbatim|is_isomorphic(G1,G2,m)>>>|<row|<cell|>|<cell|<verbatim|canonical_labeling(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_isomorphic(G1,G2)>>>|<row|<cell|>|<cell|<verbatim|is_isomorphic(G1,G2,m)>>>|<row|<cell|>|<cell|<verbatim|canonical_labeling(G)>>>>>>
 
   <verbatim|is_isomorphic> accepts two or three arguments: a graph
   <math|G<rsub|1><around*|(|V<rsub|1>,E<rsub|1>|)>>, a graph
@@ -6927,7 +6832,7 @@
 
   The drawings are ordered from left to right.
 
-  <htab|5mm><image|images/isom1.eps|40%|||><htab|5mm><image|images/isom2.eps|40%|||><htab|5mm><image|images/isom3.eps|40%|||><htab|5mm>
+  <htab|5mm><image|images/isom1.eps|35%|||><htab|5mm><image|images/isom2.eps|35%|||><htab|5mm><image|images/isom3.eps|35%|||><htab|5mm>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -7056,7 +6961,7 @@
 
   The drawings are ordered from left to right.
 
-  <htab|5mm><image|images/isom4.eps|40%|||><htab|5mm><image|images/isom5.eps|40%|||><htab|5mm><image|images/isom6.eps|40%|||><htab|5mm>
+  <htab|5mm><image|images/isom4.eps|35%|||><htab|5mm><image|images/isom5.eps|35%|||><htab|5mm><image|images/isom6.eps|35%|||><htab|5mm>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -7247,15 +7152,14 @@
   is used for finding generators of the <hlink|automorphism|https://en.wikipedia.org/wiki/Graph_automorphism>
   group of a graph.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_automorphisms(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_automorphisms(G)>>>>>>
 
   <verbatim|graph_automorphisms> accepts a graph <math|G> as its only
   argument and returns a list containing the generators of
-  <math|Aut<around*|(|G|)>>, the automorphism group of <math|G>. Each
-  generator is given as a list of cycles, which can be turned to a
-  permutation by calling the <verbatim|cycles2permu> command.
+  <math|Aut<around*|(|G|)>>, the automorphism group of <math|G>
+  <cite-detail|godsil|pp.<nbsp>4>. Each generator is given as a list of
+  cycles, which can be turned to a permutation by calling the
+  <verbatim|cycles2permu> command.
 
   Note that only vertices with the same color can be mapped to each other.
   The color of a vertex can be set by calling the
@@ -7317,8 +7221,8 @@
   it is the single green-colored vertex in <math|G> (it cannot be mapped to
   any other vertex because colors do not match).
 
-  Frucht graph (see the page<nbsp><pageref|frucht>) is an example of a graph
-  with automorphism group containing only the identity, so the set of its
+  Frucht graph (see page<nbsp><pageref|frucht>) is an example of a graph with
+  automorphism group containing only the identity, so the set of its
   generators is empty:
 
   <\session|giac|default>
@@ -7333,29 +7237,22 @@
     </unfolded-io>
   </session>
 
-  <subsection|Graph polynomials>
+  <section|Graph polynomials>
+
+  <subsection|Tutte polynomial><label|tutte-polynomial>
 
   The command <verbatim|tutte_polynomial><index|<verbatim|tutte_polynomial>>
   is used for computing <hlink|<rigid|Tutte
-  polynomials>|https://en.wikipedia.org/wiki/Tutte_polynomial> of undirected
-  (multi)graphs. The related specialized commands
-  <verbatim|chromatic_polynomial><index|<verbatim|chromatic_polynomial>>,
-  <verbatim|flow_polynomial><index|<verbatim|flow_polynomial>> and
-  <verbatim|reliability_polynomial><index|<verbatim|reliability_polynomial>>
-  are used for computing <hlink|chromatic|https://en.wikipedia.org/wiki/Tutte_polynomial#Chromatic_polynomial>,
-  <hlink|flow|https://en.wikipedia.org/wiki/Tutte_polynomial#Flow_polynomial>
-  and <hlink|reliability|https://en.wikipedia.org/wiki/Tutte_polynomial#Reliability_polynomial>
-  polynomials, respectively.
+  polynomials>|https://en.wikipedia.org/wiki/Tutte_polynomial>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|tutte_polynomial(G)>>>|<row|<cell|>|<cell|<verbatim|tutte_polynomial(G,x,y)>>>|<row|<cell|>|<cell|<verbatim|chromatic_polynomial(G)>>>|<row|<cell|>|<cell|<verbatim|chromatic_polynomial(G,t)>>>|<row|<cell|>|<cell|<verbatim|flow_polynomial(G)>>>|<row|<cell|>|<cell|<verbatim|flow_polynomial(G,x)>>>|<row|<cell|>|<cell|<verbatim|reliability_polynomial(G)>>>|<row|<cell|>|<cell|<verbatim|reliability_polynomial(G,p)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|tutte_polynomial(G)>>>|<row|<cell|>|<cell|<verbatim|tutte_polynomial(G,x,y)>>>>>>
 
   <verbatim|tutte_polynomial> accepts one or three arguments, an undirected
   graph <math|G<around*|(|V,E|)>> and optionally two variables or values
   <math|x> and <math|y>. It returns the the bivariate Tutte
   polynomial<\footnote>
-    See <cite|haggard> and Chapter 13 in <cite|biggs>, page 97.
+    See <cite|haggard>, <cite-detail|biggs|pp.<nbsp>97> and
+    <cite-detail|bollobas|pp.<nbsp>335>.
   </footnote> <math|T<rsub|G>> of <math|G> or
   <math|T<rsub|G><around*|(|x,y|)>> if the optional arguments are given. If
   <math|G> is weighted, it is treated as a multigraph: the weight <math|w> of
@@ -7364,11 +7261,12 @@
   loops are not supported.
 
   The strategy is to apply the recursive definition of Tutte polynomial
-  together with the <samp|vorder> heuristic proposed by <name|Haggard> et
-  al.<nbsp><cite|haggard> and improved by <name|Monagan> <cite|monagan>. The
-  subgraphs appearing in the computation tree are cached and reused when
-  possible, pruning the tree significantly. Subgraphs are stored (and
-  compared) in their canonical form, for which <samp|nauty> library is used.
+  <cite|haggard> together with the <samp|vorder> heuristic proposed by
+  <name|Haggard> et al.<nbsp><cite|haggard2> and improved by <name|Monagan>
+  <cite|monagan>. The subgraphs appearing in the computation tree are cached
+  and reused when possible, pruning the tree significantly. Subgraphs are
+  stored (and compared) in their canonical form, for which the <samp|nauty>
+  library is used.
 
   Note that finding Tutte polynomials is <abbr|NP>-hard in general, hence the
   problem becomes intractable for larger and/or denser graphs.
@@ -7425,9 +7323,9 @@
     </unfolded-io>
   </session>
 
-  This result coincides with that in <cite|biggs>, page 103, which is
-  supposed to be correct. Alternatively, it can be verified by applying the
-  recursive definition with an arbitrary edge <math|e\<in\>E>, as below.
+  This result coincides with that in <cite-detail|biggs|pp.<nbsp>103>, which
+  is supposed to be correct. Alternatively, it can be verified by applying
+  the recursive definition with an arbitrary edge <math|e\<in\>E>, as below.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -7472,9 +7370,10 @@
   </session>
 
   The value <math|T<rsub|G><around*|(|1,1|)>> is equal to the number of
-  spanning forests in <math|G>\Vin this case, the number of spanning trees in
-  Petersen graph. For verification, the same number is computed by using the
-  specialized command <hlink|<verbatim|number_of_spanning_trees>|#number-of-spanning-trees>,
+  spanning forests in <math|G> <cite-detail|bollobas|pp.<nbsp>345>\Vin this
+  case, the number of spanning trees in Petersen graph. For verification, the
+  same number is computed by using the specialized command
+  <hlink|<verbatim|number_of_spanning_trees>|#number-of-spanning-trees>,
   which uses a different (much faster) algorithm.
 
   <\session|giac|default>
@@ -7499,14 +7398,137 @@
     </unfolded-io>
   </session>
 
+  For a graph <math|G> and its dual <math|G<rsup|\<ast\>><rsup|>> the
+  following relation holds: <math|T<rsub|G><around*|(|x,y|)>=T<rsub|G<rsup|\<ast\>>><around*|(|y,x|)>>.
+  Therefore, if <math|T<rsub|G><around*|(|x,y|)>=T<rsub|G><around*|(|y,x|)>>
+  then <math|G> and <math|G<rsup|\<ast\>>> are isomorphic (since Tutte
+  polynomial is a graph invariant). A simple example of such graph is
+  tetrahedral graph. Since it is planar and biconnected, its dual can be
+  determined by using the <verbatim|plane_dual> command.
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      G:=graph("tetrahedron")
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 4 vertices and 6 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      is_biconnected(G) and is_planar(G)
+    <|unfolded-io>
+      <\equation*>
+        <text|true>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      H:=plane_dual(G)
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 4 vertices and 6 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      T:=tutte_polynomial(G)
+    <|unfolded-io>
+      <\equation*>
+        x<rsup|3>+3*x<rsup|2>+4*x*y+2*x+y<rsup|3>+3*y<rsup|2>+2*y
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      expand(T-subs(T,[x,y],[y,x]))
+    <|unfolded-io>
+      <\equation*>
+        0
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      is_isomorphic(G,H)
+    <|unfolded-io>
+      <\equation*>
+        <text|true>
+      </equation*>
+    </unfolded-io>
+  </session>
+
+  Multiple edges can be specified as edge weights.
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      M:=make_weighted(G)
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected weighted graph with 4 vertices and 6 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      M:=set_edge_weight(set_edge_weight(M,[1,2],2),[3,4],3)
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected weighted graph with 4 vertices and 6 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      edges(M,weights)
+    <|unfolded-io>
+      <\equation*>
+        <around|{|<around|[|<around|[|1,2|]>,2|]>,<around|[|<around|[|1,3|]>,1|]>,<around|[|<around|[|1,4|]>,1|]>,<around|[|<around|[|2,3|]>,1|]>,<around|[|<around|[|2,4|]>,1|]>,<around|[|<around|[|3,4|]>,3|]>|}>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      tutte_polynomial(M,x,y)
+    <|unfolded-io>
+      <\equation*>
+        x<rsup|3>+x<rsup|2>*y<rsup|2>+2*x<rsup|2>*y+3*x<rsup|2>+3*x*y<rsup|3>+6*x*y<rsup|2>+6*x*y+2*x+y<rsup|6>+3*y<rsup|5>+6*y<rsup|4>+7*y<rsup|3>+5*y<rsup|2>+2*y
+      </equation*>
+    </unfolded-io>
+  </session>
+
+  <subsection|Chromatic polynomial>
+
+  The command <verbatim|chromatic_polynomial><index|<verbatim|chromatic_polynomial>>,
+  is used for computing <hlink|<rigid|chromatic
+  polynomials>|https://en.wikipedia.org/wiki/Tutte_polynomial#Chromatic_polynomial>.
+
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|chromatic_polynomial(G)>>>|<row|<cell|>|<cell|<verbatim|chromatic_polynomial(G,t)>>>>>>
+
   <verbatim|chromatic_polynomial> accepts one or two arguments, an undirected
   unweighted graph <math|G<around*|(|V,E|)>> and optionally a variable or
   value <math|t>. It returns the chromatic polynomial <math|P<rsub|G>> of
   <math|G> or <math|P<rsub|G><around*|(|t|)>> if the second argument is
   given.
 
-  <math|P<rsub|G>> and the Tutte polynomial <math|T<rsub|G>> satisfy the
-  following relation<nbsp><cite|haggard>:
+  <math|P<rsub|G>> and the <hlink|Tutte polynomial|#tutte-polynomial>
+  <math|T<rsub|G>> satisfy the following relation<nbsp>(see <cite|haggard>
+  and <cite-detail|bollobas|pp.<nbsp>346>):
 
   <\equation>
     P<rsub|G><around*|(|t|)>=<around*|(|-1|)><rsup|<around*|\||V|\|>-\<kappa\><around*|(|G|)>>*t<rsup|\<kappa\><around*|(|G|)>>*T<rsub|G><around*|(|1-t,0|)>,<label|eq:chromatic-poly>
@@ -7518,15 +7540,15 @@
 
   The value <math|P<rsub|G><around*|(|k|)>>, where <math|k\<gtr\>0> is an
   integer, is equal to the number of all distinct <math|k>-colorings of
-  vertices in <math|G>. In the example below it is shown that Petersen graph
-  cannot be colored by using only two colors, but is 3-colorable with 120
-  distinct colorings (all using the same three colors).
+  vertices in <math|G>. As shown in the example below, Petersen graph cannot
+  be colored by using only two colors, but is 3-colorable with 120 distinct
+  colorings (all using the same three colors).
 
   <\session|giac|default>
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      P:=chromatic_polynomial(G,x)
+      P:=chromatic_polynomial(graph("petersen"),x)
     <|unfolded-io>
       <\equation*>
         x*<around|(|x-2|)>*<around|(|x-1|)>*<around|(|x<rsup|7>-12*x<rsup|6>+67*x<rsup|5>-230*x<rsup|4>+529*x<rsup|3>-814*x<rsup|2>+775*x-352|)>
@@ -7556,13 +7578,21 @@
     </unfolded-io>
   </session>
 
+  <subsection|Flow polynomial>
+
+  The command <verbatim|flow_polynomial><index|<verbatim|flow_polynomial>> is
+  used for computing <hlink|<rigid|flow polynomials>|https://en.wikipedia.org/wiki/Tutte_polynomial#Flow_polynomial>.
+
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|flow_polynomial(G)>>>|<row|<cell|>|<cell|<verbatim|flow_polynomial(G,x)>>>>>>
+
   <verbatim|flow_polynomial> accepts one or two arguments, an undirected
   unweighted graph <math|G<around*|(|V,E|)>> and optionally a variable or
   value <math|x>. It returns the flow polynomial <math|Q<rsub|G>> of <math|G>
   or <math|Q<rsub|G><around*|(|x|)>> if the second argument is given.
 
-  <math|Q<rsub|G>> and the Tutte polynomial <math|T<rsub|G>> satisfy the
-  following relation<nbsp>(see <cite|haggard> and <cite|biggs>, page 110):
+  <math|Q<rsub|G>> and the <hlink|Tutte polynomial|#tutte-polynomial>
+  <math|T<rsub|G>> satisfy the following relation<nbsp>(see <cite|haggard>
+  and <cite-detail|biggs|pp.<nbsp>110>):
 
   <\equation>
     Q<rsub|G><around*|(|x|)>=<around*|(|-1|)><rsup|<around*|\||E|\|>-<around*|\||V|\|>+\<kappa\><around*|(|G|)>>*T<rsub|G><around*|(|0,1-x|)>,<label|eq:flow-poly>
@@ -7577,14 +7607,14 @@
   <math|G>. In such flows, the total flow <math|f<rsub|v>> entering and
   leaving vertex <math|v> is congruent modulo <math|k>, hence
   <math|f<rsub|v>\<in\><around*|{|1,2,\<ldots\>,k-1|}>> for all
-  <math|v\<in\>V>. As shown in the example below, Petersen graph has zero
-  4-flows and 240 5-flows.
+  <math|v\<in\>V> <cite-detail|bollobas|pp.<nbsp>347>. As shown in the
+  example below, Petersen graph has zero 4-flows and 240 5-flows.
 
   <\session|giac|default>
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      Q:=flow_polynomial(G)
+      Q:=flow_polynomial(graph("petersen"))
     <|unfolded-io>
       <\equation*>
         x<rsup|6>-15*x<rsup|5>+95*x<rsup|4>-325*x<rsup|3>+624*x<rsup|2>-620*x+240
@@ -7612,6 +7642,14 @@
     </unfolded-io>
   </session>
 
+  <subsection|Reliability polynomial>
+
+  The command <verbatim|reliability_polynomial><index|<verbatim|reliability_polynomial>>
+  is used for computing <hlink|<rigid|reliability
+  polynomials>|https://en.wikipedia.org/wiki/Tutte_polynomial#Reliability_polynomial>.
+
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|reliability_polynomial(G)>>>|<row|<cell|>|<cell|<verbatim|reliability_polynomial(G,p)>>>>>>
+
   <verbatim|reliability_polynomial> accepts one or two arguments, an
   undirected graph <math|G<around*|(|V,E|)>> and optionally a variable or
   value <math|p>. It returns the all-terminal reliability polynomial
@@ -7621,8 +7659,8 @@
   positive integer, is interpreted as the multiplicity of <math|e>, for each
   <math|e\<in\>E>.
 
-  <math|R<rsub|G>> and the Tutte polynomial <math|T<rsub|G>> satisfy the
-  following relation <cite|monagan>:
+  <math|R<rsub|G>> and the <hlink|Tutte polynomial|#tutte-polynomial>
+  <math|T<rsub|G>> satisfy the following relation <cite|monagan>:
 
   <\equation>
     R<rsub|G><around*|(|p|)>=<around*|(|1-p|)><rsup|<around*|\||V|\|>-\<kappa\><around*|(|G|)>>*p<rsup|<around*|\||E|\|>-<around*|\||V|\|>+\<kappa\><around*|(|G|)>>*T<rsub|G><around*|(|1,p<rsup|-1>|)>,<label|eq:reliability-poly>
@@ -7635,13 +7673,18 @@
   If <math|G> is a connected network, then the value
   <math|R<rsub|G><around*|(|p|)>>, where <math|p\<in\><around*|[|0,1|]>>, is
   equal to the probability that <math|G> does not fail (i.e.<nbsp>stays
-  connected) after removing each edge with probability <math|p>.
+  connected) after removing each edge with probability
+  <math|p><nbsp><cite-detail|godsil|pp.<nbsp>354\U355>.
+
+  In the following example, it is clear that the graph <math|G> will stay
+  connected with probability <math|<around*|(|1-p|)><rsup|2>> if each of its
+  two edges is removed with probability <math|p>.
 
   <\session|giac|default>
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      H:=graph(%{[1,2],[2,3]%})
+      G:=graph(%{[1,2],[2,3]%})
     <|unfolded-io>
       <\equation*>
         <text|an undirected unweighted graph with 3 vertices and 2 edges>
@@ -7651,23 +7694,33 @@
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      R:=reliability_polynomial(H,p)
+      R:=reliability_polynomial(G,p)
     <|unfolded-io>
       <\equation*>
         p<rsup|2>-2*p+1
       </equation*>
     </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      factor(R)
+    <|unfolded-io>
+      <\equation*>
+        <around*|(|p-1|)><rsup|2>
+      </equation*>
+    </unfolded-io>
   </session>
 
-  Adding a new edge should increase the reliability of the connected network
-  <math|H>. Indeed, the difference <math|S-R> below is positive for
-  <math|0\<less\>p\<less\>1>.
+  Adding a new edge should increase the reliability of <math|G>, since the
+  latter is connected. Indeed, the difference <math|S-R> below is positive
+  for <math|0\<less\>p\<less\>1>.
 
   <\session|giac|default>
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      S:=reliability_polynomial(add_edge(H,[1,3]),p)
+      S:=reliability_polynomial(add_edge(G,[1,3]),p)
     <|unfolded-io>
       <\equation*>
         2*p<rsup|3>-3*p<rsup|2>+1
@@ -7709,8 +7762,8 @@
     </unfolded-io>
   </session>
 
-  The following graph represents the <name|Arpanet> (early internet) in
-  December 1970.
+  The following graph represents the Arpanet (early internet) in December
+  1970.
 
   <\session|giac|default>
     <\input>
@@ -7722,7 +7775,7 @@
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      Arpanet:=graph(V,trail("BBN","HARVARD","CMU","CASE","LINCOLN","MIT","UTAH","SRI","STANFORD","UCLA","UCSB","SRI","UCLA","RAND","BBN","MIT"),trail("RAND","SDC","UTAH"))
+      A:=graph(V,trail("BBN","HARVARD","CMU","CASE","LINCOLN","MIT","UTAH","SRI","STANFORD","UCLA","UCSB","SRI","UCLA","RAND","BBN","MIT"),trail("RAND","SDC","UTAH"))
     <|unfolded-io>
       <\equation*>
         <text|an undirected unweighted graph with 13 vertices and 17 edges>
@@ -7732,7 +7785,7 @@
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      Arpanet:=set_vertex_positions(Arpanet,[[1.0,1.0],[0.9,1.2],[0.5,1.1],[0.6,0.8],[1.0,0.6],[1.0,0.8],[-1.1,0.1],[-0.8,0.3],[-0.6,0.5],[-0.8,0.7],[-0.8,-0.1],[-0.3,0.9],[-0.5,0.2]])
+      Arpanet:=set_vertex_positions(A,[[1.0,1.0],[0.9,1.2],[0.5,1.1],[0.6,0.8],[1.0,0.6],[1.0,0.8],[-1.1,0.1],[-0.8,0.3],[-0.6,0.5],[-0.8,0.7],[-0.8,-0.1],[-0.3,0.9],[-0.5,0.2]])
     <|unfolded-io>
       <\equation*>
         <text|an undirected unweighted graph with 13 vertices and 17 edges>
@@ -7746,10 +7799,10 @@
     </input>
   </session>
 
-  <center|<image|images/arpa.eps|40%|||>>
+  <center|<image|images/arpa.eps|35%|||>>
 
-  Which edge should be added to the <name|Arpanet> to improve the reliability
-  the most? Below is an analysis for the edge from Stanford to <abbr|CMU>.
+  Which edge should be added to the Arpanet to improve the reliability the
+  most? Below is an analysis for the edge from Stanford to <abbr|CMU>.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -7779,9 +7832,9 @@
     </input>
   </session>
 
-  <center|<image|images/plot.eps|40%|||>>
+  <center|<image|images/plot.eps|35%|||>>
 
-  The improvement is equal to the area enclosed by the above two curves,
+  The improvement is defined as the area enclosed by the above two curves,
   which can be computed as an integral.
 
   <\session|giac|default>
@@ -7806,6 +7859,8 @@
     </unfolded-io>
   </session>
 
+  \;
+
   <section|Connectivity>
 
   <subsection|Vertex connectivity>
@@ -7818,25 +7873,23 @@
   triconnected (<hlink|3-connected|https://en.wikipedia.org/wiki/K-vertex-connected_graph>),
   respectively.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_connected(G)>>>|<row|<cell|>|<cell|<verbatim|is_biconnected(G)>>>|<row|<cell|>|<cell|<verbatim|is_triconnected(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_connected(G)>>>|<row|<cell|>|<cell|<verbatim|is_biconnected(G)>>>|<row|<cell|>|<cell|<verbatim|is_triconnected(G)>>>>>>
 
   Each of the above commands accepts a graph <math|G<around*|(|V,E|)>> as its
   only argument and returns <verbatim|true> if <math|G> possesses the
-  required type of connectivity. Else, it returns <verbatim|false> otherwise.
+  required level of connectivity. Else, it returns <verbatim|false>.
 
   The strategy for checking 1- and 2-connectivity is to use
   <hlink|depth-first search|https://en.wikipedia.org/wiki/Depth-first_search><nbsp>(see
-  <cite|gibbons>, page<nbsp>20, and<nbsp><cite|tarjan72>). Both algorithms
-  run in <math|O<around*|(|<around*|\||V|\|>+<around*|\||E|\|>|)>> time. The
-  algorithm for checking 3-connectivity is quite simple but less efficient:
-  it works by choosing a vertex <math|v\<in\>V> and checking if the subgraph
-  induced by <math|V\<setminus\><around*|{|v|}>> is biconnected, moving on to
-  the next vertex if so, and repeating the process until all vertices are
-  visited exactly once or a non-biconnected subgraph is found for some
-  <math|v>. In the latter case the input graph is not triconnected. The
-  complexity of this algorithm is <math|O<around*|(|<around*|\||V|\|>*<around*|\||E|\|>|)>>.
+  <cite-detail|gibbons|pp.<nbsp>20>, and<nbsp><cite|tarjan72>). Both
+  algorithms run in <math|O<around*|(|<around*|\||V|\|>+<around*|\||E|\|>|)>>
+  time. The algorithm for checking 3-connectivity is quite simple but less
+  efficient: it works by choosing a vertex <math|v\<in\>V> and checking if
+  the subgraph induced by <math|V\<setminus\><around*|{|v|}>> is biconnected,
+  moving on to the next vertex if so, and repeating the process until all
+  vertices are visited exactly once or a non-biconnected subgraph is found
+  for some <math|v>. In the latter case the input graph is not triconnected.
+  The complexity of this algorithm is <math|O<around*|(|<around*|\||V|\|>*<around*|\||E|\|>|)>>.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -7937,9 +7990,7 @@
   is used for decomposing a graph into <hlink|connected|https://en.wikipedia.org/wiki/Connected_component_(graph_theory)>
   resp.<nbsp><hlink|<rigid|biconnected components>|https://en.wikipedia.org/wiki/Biconnected_component>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|connected_components(G)>>>|<row|<cell|>|<cell|<verbatim|biconnected_components(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|connected_components(G)>>>|<row|<cell|>|<cell|<verbatim|biconnected_components(G)>>>>>>
 
   <verbatim|connected_components> resp.<nbsp><verbatim|biconnected_components>
   accepts a graph <math|G<around*|(|V,E|)>> as its only argument and returns
@@ -7949,10 +8000,10 @@
   <math|i=1,2,\<ldots\>,k>. The partition is returned as a list of lists
   <math|V<rsub|1>,V<rsub|2>,\<ldots\>,V<rsub|k>>.
 
-  The connected components of <math|G> are easily obtained by depth-first
+  The connected components of <math|G> are readily obtained by depth-first
   search in <math|O<around*|(|<around*|\||V|\|>+<around*|\||E|\|>|)>> time.
   To find the biconnected components of <math|G>, <name|Tarjan>'s algorithm
-  is used<nbsp><cite|tarjan72>, which also runs in linear time.\ 
+  is used<nbsp><cite|tarjan72>, which also runs in linear time.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -8012,7 +8063,7 @@
     </input>
   </session>
 
-  <center|<image|images/ccomp.eps|40%|||>>
+  <center|<image|images/ccomp.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -8032,7 +8083,7 @@
     </input>
   </session>
 
-  <center|<image|images/bic.eps|40%|||>>
+  <center|<image|images/bic.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -8061,9 +8112,7 @@
   The command <verbatim|graph_rank><index|<verbatim|graph_rank>> is used for
   computing <hlink|<rigid|graph rank>|https://en.wikipedia.org/wiki/Rank_(graph_theory)>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_rank(G)>>>|<row|<cell|>|<cell|<verbatim|graph_rank(G,S)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_rank(G)>>>|<row|<cell|>|<cell|<verbatim|graph_rank(G,S)>>>>>>
 
   <verbatim|graph_rank> accepts one or two arguments, a graph
   <math|G<around*|(|V,E|)>> and optionally a set of edges <math|S\<subset\>E>
@@ -8110,9 +8159,7 @@
   points|https://en.wikipedia.org/wiki/Biconnected_component> (cut-vertices)
   of a graph.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|articulation_points(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|articulation_points(G)>>>>>>
 
   <verbatim|articulation_points> accepts a graph <math|G<around*|(|V,E|)>> as
   its only argument and returns the list of articulation points of <math|G>.
@@ -8138,10 +8185,10 @@
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      articulation_points(cycle_graph(1,2,3,4))
+      length(articulation_points(cycle_graph(1,2,3,4)))
     <|unfolded-io>
       <\equation*>
-        <around|[||]>
+        0
       </equation*>
     </unfolded-io>
   </session>
@@ -8149,19 +8196,17 @@
   <subsection|Strongly connected components>
 
   The command <verbatim|strongly_connected_components><index|<verbatim|strongly_connected_components>>
-  is used for decomposing a graph into <hlink|<rigid|strongly connected
+  is used for decomposing digraphs into <hlink|<rigid|strongly connected
   components>|https://en.wikipedia.org/wiki/Strongly_connected_component>. A
-  (di)graph <math|H> is <strong|strongly connected> if for each pair
+  digraph <math|H> is <strong|strongly connected> if for each pair
   <math|<around*|(|v,w|)>> of distinct vertices in <math|H> there is a
-  (directed) path from <math|v> to <math|w> in <math|H>. The command
+  directed path from <math|v> to <math|w> in <math|H>. The command
   <verbatim|is_strongly_connected><index|<verbatim|is_strongly_connected>>
   can be used to determine whether the given graph is strongly connected.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|strongly_connected_components(G)>>>|<row|<cell|>|<cell|<verbatim|is_strongly_connected(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|strongly_connected_components(G)>>>|<row|<cell|>|<cell|<verbatim|is_strongly_connected(G)>>>>>>
 
-  <verbatim|strongly_connected_components> accepts a graph
+  <verbatim|strongly_connected_components> accepts a digraph
   <math|G<around*|(|V,E|)>> as its only argument and returns the minimal
   partition <math|<around*|{|V<rsub|1>,V<rsub|2>,\<ldots\>,V<rsub|k>|}>> of
   <math|V> such that the subgraph <math|G<rsub|i>\<subset\>G> induced by
@@ -8169,16 +8214,13 @@
   The result is returned as a list of lists
   <math|V<rsub|1>,V<rsub|2>,\<ldots\>,V<rsub|k>>.
 
+  <verbatim|is_strongly_connected> accepts a digraph <math|G> as its only
+  argument and returns <verbatim|true> if <math|G> has exactly one strongly
+  connected component and <verbatim|false> otherwise.
+
   The strategy is to use <name|Tarjan>'s algorithm for strongly connected
   components<nbsp><cite|tarjan72>, which runs in
   <math|O<around*|(|<around*|\||V|\|>+<around*|\||E|\|>|)>> time.
-
-  Note that an undirected graph is strongly connected if and only if it is
-  connected.
-
-  <verbatim|is_strongly_connected> accepts <math|G> as its only argument and
-  returns <verbatim|true> if <math|G> has exactly one strongly connected
-  component and <verbatim|false> otherwise.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -8198,7 +8240,7 @@
     </input>
   </session>
 
-  <center|<image|images/digraph10.eps|40%|||>>
+  <center|<image|images/digraph10.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -8240,9 +8282,7 @@
   determining whether a particular subset of edges of the given graph is an
   <hlink|<rigid|edge cut>|https://en.wikipedia.org/wiki/Connectivity_(graph_theory)#Definitions_of_components,_cuts_and_connectivity>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_cut_set(G,L)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_cut_set(G,L)>>>>>>
 
   <verbatim|is_cut_set> accepts two arguments, a graph
   <math|G<around*|(|V,E|)>> and a subset <math|L\<subset\>E> of edges, and
@@ -8268,7 +8308,7 @@
     </input>
   </session>
 
-  <center|<image|images/cutset.eps|40%|||>>
+  <center|<image|images/cutset.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -8310,9 +8350,7 @@
   determining whether the given graph is a
   <hlink|tree|https://en.wikipedia.org/wiki/Tree_(graph_theory)>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_tree(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_tree(G)>>>>>>
 
   <verbatim|is_tree> accepts a graph <math|G<around*|(|V,E|)>> as its only
   argument and returns <verbatim|true> if <math|G> is undirected, connected
@@ -8352,9 +8390,7 @@
   determining whether the given graph is a
   <hlink|forest|https://en.wikipedia.org/wiki/Tree_(graph_theory)#Forest>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_forest(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_forest(G)>>>>>>
 
   <verbatim|is_forest> accepts the a <math|G<around*|(|V,E|)>> as its only
   argument and returns <verbatim|true> if each of the connected components of
@@ -8409,7 +8445,7 @@
     </input>
   </session>
 
-  <center|<image|images/forest.eps|40%|||>>
+  <center|<image|images/forest.eps|35%|||>>
 
   <subsection|Height of a tree>
 
@@ -8419,9 +8455,7 @@
   path in <math|T> that has the root node of <math|T >as one of its
   endpoints.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|tree_height(G,r)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|tree_height(G,r)>>>>>>
 
   <verbatim|tree_height> accepts two arguments, a tree graph
   <math|G<around*|(|V,E|)>> and a vertex <math|r\<in\>V>, which is used as
@@ -8473,9 +8507,7 @@
   (<abbr|LCA>) of a pair of nodes in a tree or for each element of a list of
   such pairs.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|lowest_common_ancestor(G,r,u,v)>>>|<row|<cell|>|<cell|<verbatim|lowest_common_ancestor(G,r,[[u1,v1],[u2,v2],..,[uk,vk]])>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|lowest_common_ancestor(G,r,u,v)>>>|<row|<cell|>|<cell|<verbatim|lowest_common_ancestor(G,r,[[u1,v1],[u2,v2],..,[uk,vk]])>>>>>>
 
   <verbatim|lowest_common_ancestor> accepts two mandatory arguments, a tree
   graph <math|G<around*|(|V,E|)>> and the root node <math|r\<in\>V>. There
@@ -8489,8 +8521,7 @@
   <math|u<rsub|i>,v<rsub|i>> for <math|i=1,2,\<ldots\>,k>.
 
   The strategy is to use <name|Tarjan>'s offline <abbr|LCA>
-  algorithm<nbsp><cite|lca>. The implementation is simple and uses the
-  disjoint-set (union-find) data structure. It runs in nearly linear time.
+  algorithm<nbsp><cite|lca>, which runs in nearly linear time.
 
   In the following example, the algorithm efficiency is tested on a large
   random tree with 10000 nodes. The lowest common ancestors for the list
@@ -8538,9 +8569,7 @@
   <hlink|arborescence|https://en.wikipedia.org/wiki/Arborescence_(graph_theory)>
   (which is the digraph form of a rotted tree).
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_arborescence(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_arborescence(G)>>>>>>
 
   <verbatim|is_arborescence> accepts a digraph <math|G<around*|(|V,E|)>> as
   its only argument and returns <verbatim|true> if there is a vertex
@@ -8576,7 +8605,7 @@
     </input>
   </session>
 
-  <center|<image|images/arbor.eps|40%|||>>
+  <center|<image|images/arbor.eps|35%|||>>
 
   <section|Networks>
 
@@ -8589,9 +8618,7 @@
   one vertex with in-degree 0 (the <strong|source>) and at least one vertex
   with out-degree 0 (the <strong|sink>).
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_network(G)>>>|<row|<cell|>|<cell|<verbatim|is_network(G,s,t)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_network(G)>>>|<row|<cell|>|<cell|<verbatim|is_network(G,s,t)>>>>>>
 
   <verbatim|is_network> accepts one or three arguments, a digraph
   <math|G<around*|(|V,E|)>> and optionally the source vertex <math|s> and the
@@ -8621,7 +8648,7 @@
     </input>
   </session>
 
-  <center|<image|images/network3.eps|40%|||>>
+  <center|<image|images/network3.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -8661,7 +8688,7 @@
     </input>
   </session>
 
-  <center|<image|images/network4.eps|40%|||>>
+  <center|<image|images/network4.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -8681,9 +8708,7 @@
   computing the <hlink|<rigid|maximum flow>|https://en.wikipedia.org/wiki/Maximum_flow_problem>
   in a network.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|maxflow(G,s,t)>>>|<row|<cell|>|<cell|<verbatim|maxflow(G,s,t,M)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|maxflow(G,s,t)>>>|<row|<cell|>|<cell|<verbatim|maxflow(G,s,t,M)>>>>>>
 
   <verbatim|maxflow> accepts three or four arguments: a network graph
   <math|G<around*|(|V,E|)>>, the source <math|s\<in\>V>, the sink
@@ -8734,7 +8759,7 @@
     </input>
   </session>
 
-  <center|<image|images/network5.eps|40%|||>>
+  <center|<image|images/network5.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -8794,7 +8819,7 @@
     </input>
   </session>
 
-  <center|<image|images/network6.eps|40%|||>>
+  <center|<image|images/network6.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -8821,7 +8846,7 @@
     </input>
   </session>
 
-  <center|<image|images/network7.eps|40%|||>>
+  <center|<image|images/network7.eps|35%|||>>
 
   <section|Distance in graphs>
 
@@ -8831,9 +8856,7 @@
   used for computing the length of the shortest path(s) from the source
   vertex to some other vertex/vertices of a graph.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|vertex_distance(G,v,w)>>>|<row|<cell|>|<cell|<verbatim|vertex_distance(G,v,L)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|vertex_distance(G,v,w)>>>|<row|<cell|>|<cell|<verbatim|vertex_distance(G,v,L)>>>>>>
 
   <verbatim|vertex_distance> accepts three arguments, a graph
   <math|G<around*|(|V,E|)>>, a vertex <math|v\<in\>V> called the
@@ -8845,7 +8868,7 @@
 
   The strategy is to use <hlink|breadth-first
   search|https://en.wikipedia.org/wiki/Breadth-first_search>
-  (see<nbsp><cite|gibbons>, page<nbsp>35) starting from the source vertex.
+  <cite-detail|gibbons|pp.<nbsp>35> starting from the source vertex.
   Therefore, the algorithm runs in <math|O<around*|(|<around*|\||V|\|>+<around*|\||E|\|>|)>>
   time.
 
@@ -8887,9 +8910,7 @@
   is used for computing the matrix of distances between all pairs of vertices
   in the given (weighted) graph.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|allpairs_distance(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|allpairs_distance(G)>>>>>>
 
   <verbatim|allpairs_distance> accepts a graph <math|G<around*|(|V,E|)>> as
   its only argument and returns a square matrix <math|D=<around*|[|d<rsub|i
@@ -8952,7 +8973,7 @@
     </input>
   </session>
 
-  <center|<image|images/floyd.eps|40%|||>>
+  <center|<image|images/floyd.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -8972,7 +8993,7 @@
     </input>
   </session>
 
-  <center|<image|images/floydw.eps|40%|||>>
+  <center|<image|images/floydw.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -8986,14 +9007,12 @@
     </unfolded-io>
   </session>
 
-  <subsection|Diameter of a graph>
+  <subsection|Diameter>
 
   The command <verbatim|graph_diameter> is used for determining the maximum
   distance among all pairs of vertices in a graph.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_diameter(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_diameter(G)>>>>>>
 
   <verbatim|graph_diameter> accepts a graph <math|G<around*|(|V,E|)>> as its
   only argument and returns the number <math|max<around*|{|distance<around*|(|u,v|)>\<of\>u,v\<in\>V|}>>.
@@ -9051,7 +9070,7 @@
     </input>
   </session>
 
-  <center|<image|images/diam.eps|40%|||>>
+  <center|<image|images/diam.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -9075,15 +9094,13 @@
     </unfolded-io>
   </session>
 
-  <subsection|Girth of a graph>
+  <subsection|Girth>
 
   The commands <verbatim|girth><index|<verbatim|girth>> and
   <verbatim|odd_girth><index|<verbatim|odd_girth>> are used for computing the
   (odd) girth of an undirected unweighted graph.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|girth(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|girth(G)>>>>>>
 
   <verbatim|girth> resp.<nbsp><verbatim|odd_girth> accepts a graph
   <math|G<around*|(|V,E|)>> as its only argument and returns the girth
@@ -9158,15 +9175,13 @@
 
   <section|Acyclic graphs>
 
-  <subsection|Checking if a graph is acyclic>
+  <subsection|Acyclic graphs>
 
   The command <verbatim|is_acyclic><index|<verbatim|is_acyclic>> is used for
   checking for absence of directed cycles in digraphs. A directed graph with
   no directed cycle is said to be <strong|acyclic>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_acyclic(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_acyclic(G)>>>>>>
 
   <verbatim|is_acyclic> accepts a digraph <math|G<around*|(|V,E|)>> as its
   only argument and returns <verbatim|true> if <math|G> is acyclic and
@@ -9206,9 +9221,7 @@
   consistent with the arcs of the digraph. This procedure is called
   <hlink|<rigid|topological sorting>|https://en.wikipedia.org/wiki/Topological_sorting>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|topologic_sort(G)>>>|<row|<cell|>|<cell|<verbatim|topological_sort(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|topologic_sort(G)>>>|<row|<cell|>|<cell|<verbatim|topological_sort(G)>>>>>>
 
   <verbatim|topologic_sort> accepts a graph <math|G<around*|(|V,E|)>> as its
   only argument and returns the list of vertices of <math|G> in a particular
@@ -9259,9 +9272,7 @@
   for finding <hlink|<samp|st>-orientations|https://en.wikipedia.org/wiki/Bipolar_orientation>
   in undirected biconnected graphs.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|st_ordering(G,s,t)>>>|<row|<cell|>|<cell|<verbatim|st_ordering(G,s,t,D)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|st_ordering(G,s,t)>>>|<row|<cell|>|<cell|<verbatim|st_ordering(G,s,t,D)>>>>>>
 
   <verbatim|st_ordering> accepts three or four arguments: an undirected
   biconnected graph <math|G<around*|(|V,E|)>>, a vertex <math|s\<in\>V>
@@ -9321,7 +9332,7 @@
     </input>
   </session>
 
-  <center|<image|images/digraph11.eps|40%|||>>
+  <center|<image|images/digraph11.eps|35%|||>>
 
   <section|Matching in graphs>
 
@@ -9329,11 +9340,9 @@
 
   The command <verbatim|maximum_matching><index|<verbatim|maximum_matching>>
   is used for finding maximum <hlink|matchings|https://en.wikipedia.org/wiki/Matching_(graph_theory)>
-  in undirected unweighted graphs.
+  <cite-detail|godsil|pp.<nbsp>43> in undirected unweighted graphs.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|maximum_matching(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|maximum_matching(G)>>>>>>
 
   <verbatim|maximum_matching> accepts an undirected graph
   <math|G<around*|(|V,E|)>> as its only argument and returns a list of edges
@@ -9387,7 +9396,7 @@
   </session>
 
   <\center>
-    <image|images/matching1.eps|40%|||>
+    <image|images/matching1.eps|35%|||>
   </center>
 
   <\session|giac|default>
@@ -9431,7 +9440,7 @@
     </input>
   </session>
 
-  <center|<image|images/matching3.eps|40%|||>>
+  <center|<image|images/matching3.eps|35%|||>>
 
   \;
 
@@ -9443,9 +9452,7 @@
   <name|Karp><nbsp><cite|hopcroft>, which is more efficient than the general
   algorithm used by the command <verbatim|<hlink|maximum_matching|#maximum-matching>>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|bipartite_matching(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|bipartite_matching(G)>>>>>>
 
   <verbatim|bipartite_matching> accepts an undirected bipartite graph
   <math|G<around*|(|V,E|)>> as its only argument and returns a sequence
@@ -9491,7 +9498,7 @@
     </input>
   </session>
 
-  <center|<image|images/matching2.eps|40%|||>>
+  <center|<image|images/matching2.eps|35%|||>>
 
   <section|Cliques>
 
@@ -9500,9 +9507,7 @@
   To check whether an undirected graph is complete, one can use the
   <kbd|is_clique><index|<kbd|is_clique>> command.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_clique(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_clique(G)>>>>>>
 
   <kbd|is_clique> accepts an undirected graph <math|G<around*|(|V,E|)>> as
   its only argument and returns <kbd|true> if every pair of distinct vertices
@@ -9554,13 +9559,12 @@
 
   The command <verbatim|is_triangle_free><index|<verbatim|is_triangle_free>>
   is used for checking that there are no cliques of cardinality equal to 3 in
-  the (underlying) graph. Graphs having this property are said to be
-  <strong|triangle-free>. Because of the absence of 3-cliques, triangle-free
-  graphs do not contain cliques of cardinality greater than two.
+  the given (underlying) graph. Graphs having this property are said to be
+  <strong|triangle-free> <cite-detail|godsil|pp.<nbsp>11>. Because of the
+  absence of 3-cliques, triangle-free graphs do not contain cliques of
+  cardinality greater than two.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_triangle_free(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_triangle_free(G)>>>>>>
 
   <verbatim|triangle_free> accepts a graph <math|G> as its only argument and
   returns <verbatim|true> if <math|G> is triangle-free and <verbatim|false>
@@ -9568,7 +9572,7 @@
 
   The strategy is to compute the trace of <math|A<rsup|3>>, where <math|A> is
   the adjacency matrix of <math|G> (encoded as a sparse matrix). If <math|tr
-  <around*|(|A<rsup|3>|)>=0>, the graph is triangle-free<\footnote>
+  <around*|(|A<rsup|3>|)>=0>, then <math|G> is triangle-free<\footnote>
     See <verbatim|<hlink|https://en.wikipedia.org/wiki/Triangle-free_graph#Triangle_finding_problem|https://en.wikipedia.org/wiki/Triangle-free_graph#Triangle_finding_problem>>.
   </footnote>.
 
@@ -9604,9 +9608,7 @@
   <math|V> to it. To count all maximal cliques in a graph one can use the
   <kbd|clique_stats><index|<kbd|clique_stats>> command.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|clique_stats(G)>>>|<row|<cell|>|<cell|<verbatim|clique_stats(G,k)>>>|<row|<cell|>|<cell|<verbatim|clique_stats(G,m..n)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|clique_stats(G)>>>|<row|<cell|>|<cell|<verbatim|clique_stats(G,k)>>>|<row|<cell|>|<cell|<verbatim|clique_stats(G,m..n)>>>>>>
 
   <kbd|clique_stats> accepts an undirected graph <math|G<around*|(|V,E|)>> as
   the mandatory first argument. If no other arguments are given, the command
@@ -9699,9 +9701,7 @@
   clique is desired, one can use the command
   <verbatim|clique_number><index|<verbatim|clique_number>>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|maximum_clique(G)>>>|<row|<cell|>|<cell|<verbatim|clique_number(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|maximum_clique(G)>>>|<row|<cell|>|<cell|<verbatim|clique_number(G)>>>>>>
 
   <kbd|maximum_clique> accepts an undirected graph <math|G> as its only
   argument and returns a maximum clique in <math|G> as a list of vertices.
@@ -9784,7 +9784,7 @@
     </input>
   </session>
 
-  <center|<image|images/cliq.eps|40%|||>>
+  <center|<image|images/cliq.eps|35%|||>>
 
   <verbatim|clique_number> accepts an undirected graph <math|G> as its only
   argument and returns the number of vertices forming a maximum clique in
@@ -9811,9 +9811,7 @@
   a cover can be obtained by calling the <kbd|clique_cover><index|<kbd|clique_cover>>
   command.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|clique_cover(G)>>>|<row|<cell|>|<cell|<verbatim|clique_cover(G,k)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|clique_cover(G)>>>|<row|<cell|>|<cell|<verbatim|clique_cover(G,k)>>>>>>
 
   <kbd|clique_cover> accepts an undirected graph <math|G<around*|(|V,E|)>> as
   its mandatory argument and returns the smallest possible cover. Optionally,
@@ -9903,9 +9901,7 @@
   is used for computing the <hlink|<rigid|clique cover
   number>|https://en.wikipedia.org/wiki/Clique_cover> of a graph.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|clique_cover_number(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|clique_cover_number(G)>>>>>>
 
   <verbatim|clique_cover_number> accepts an undirected graph
   <math|G<around*|(|V,E|)>> as its only argument and returns the minimum
@@ -9962,9 +9958,7 @@
   The command <kbd|greedy_color><index|<kbd|greedy_color>> is used for
   coloring vertices of a graph in a greedy fashion.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|greedy_color(G)>>>|<row|<cell|>|<cell|<verbatim|greedy_color(G,p)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|greedy_color(G)>>>|<row|<cell|>|<cell|<verbatim|greedy_color(G,p)>>>>>>
 
   <kbd|greedy_color> accepts one mandatory argument, a graph
   <math|G<around*|(|V,E|)>>. Optionally, a permutation <math|p> of order
@@ -10022,7 +10016,7 @@
     </input>
   </session>
 
-  <center|<image|images/color1.eps|40%|||>>
+  <center|<image|images/color1.eps|35%|||>>
 
   The first six positive integers are always mapped to the standard
   <samp|Xcas> colors, as indicated in Table<nbsp><reference|tab:colors>.<\float|float|tbh>
@@ -10039,9 +10033,7 @@
   if the smallest possible number of colors is used. To obtain such a
   coloring use the command <kbd|minimal_vertex_coloring><index|<kbd|minimal_vertex_coloring>>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|minimal_coloring(G)>>>|<row|<cell|>|<cell|<verbatim|minimal_coloring(G,sto)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|minimal_coloring(G)>>>|<row|<cell|>|<cell|<verbatim|minimal_coloring(G,sto)>>>>>>
 
   <kbd|minimal_vertex_coloring> accepts one mandatory argument, a graph
   <math|G<around*|(|V,E|)>> where <math|V=<around*|{|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|n>|}>>.
@@ -10095,7 +10087,7 @@
     </input>
   </session>
 
-  <center|<image|images/grotzsch.eps|40%|||>>
+  <center|<image|images/grotzsch.eps|35%|||>>
 
   Solving <abbr|MVCP> for different graphs of exactly the same size (but
   which do not share the same edge structure) may take quite different time
@@ -10109,10 +10101,8 @@
   <hlink|<rigid|chromatic number>|https://en.wikipedia.org/wiki/Graph_coloring#Vertex_coloring>
   of a graph.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|chromatic_number(G)>>>|<row|<cell|>|<cell|<verbatim|chromatic_number(G,c)>>>|<row|<cell|>|<cell|<verbatim|chromatic_number(G,approx
-    or interval)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|chromatic_number(G)>>>|<row|<cell|>|<cell|<verbatim|chromatic_number(G,c)>>>|<row|<cell|>|<cell|<verbatim|chromatic_number(G,approx
+  or interval)>>>>>>
 
   <verbatim|chromatic_number> accepts one mandatory argument, a graph
   <math|G<around*|(|V,E|)>>, and optionally a second argument. To obtain only
@@ -10212,9 +10202,7 @@
   is used for determining whether the vertices of a graph can be colored with
   at most <math|k><nbsp>colors.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_vertex_colorable(G,k)>>>|<row|<cell|>|<cell|<verbatim|is_vertex_colorable(G,k,c)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_vertex_colorable(G,k)>>>|<row|<cell|>|<cell|<verbatim|is_vertex_colorable(G,k,c)>>>>>>
 
   <verbatim|is_vertex_colorable> accepts two or three arguments: a graph
   <math|G<around*|(|V,E|)>>, a positive integer <math|k> and optionally an
@@ -10323,14 +10311,12 @@
   edges>|https://en.wikipedia.org/wiki/Edge_coloring> in a graph, satisfying
   the following two conditions: any two mutually incident edges are colored
   differently and the total number <math|n> of colors is minimal. The theorem
-  of <name|Vizing> (see <cite|diestel>, Theorem 5.3.2, page 103) implies that
-  every simple undirected graph falls into one of two categories: <em|1> if
+  of <name|Vizing> <cite-detail|diestel|pp.<nbsp>103> implies that every
+  simple undirected graph falls into one of two categories: <em|1> if
   <math|n=\<Delta\>> or <em|2> if <math|n=\<Delta\>+1>, where
   <math|\<Delta\>> is the maximum degree of the graph.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|minimal_edge_coloring(G)>>>|<row|<cell|>|<cell|<verbatim|minimal_edge_coloring(G,sto)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|minimal_edge_coloring(G)>>>|<row|<cell|>|<cell|<verbatim|minimal_edge_coloring(G,sto)>>>>>>
 
   <verbatim|minimal_edge_coloring> accepts one or two arguments, a graph
   <math|G<around*|(|V,E|)>> and optionally the keyword <verbatim|sto>. If the
@@ -10384,7 +10370,7 @@
     </input>
   </session>
 
-  <center|<image|images/ecol.eps|40%|||>>
+  <center|<image|images/ecol.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -10413,9 +10399,7 @@
   The command <verbatim|chromatic_index><index|<verbatim|chromatic_index>> is
   used for computing the chromatic index of an undirected graph.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|chromatic_index(G)>>>|<row|<cell|>|<cell|<verbatim|chromatic_index(G,c)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|chromatic_index(G)>>>|<row|<cell|>|<cell|<verbatim|chromatic_index(G,c)>>>>>>
 
   <verbatim|chromatic_index> accepts one or two arguments, an undirected
   graph <math|G<around*|(|E,V|)>> and optionally an unassigned identifier
@@ -10458,7 +10442,7 @@
     </input>
   </session>
 
-  <center|<image|images/ecol2.eps|40%|||>>
+  <center|<image|images/ecol2.eps|35%|||>>
 
   Blanu²a snarks, the two graphs with 18 vertices found in 1946 by
   <name|Danilo Blanu²a>, were the second and third
@@ -10487,7 +10471,7 @@
   </session>
 
   <\center>
-    <image|images/blanusa.eps|40%|||>
+    <image|images/blanusa.eps|35%|||>
   </center>
 
   <\session|giac|default>
@@ -10545,13 +10529,10 @@
   <subsection|Eulerian graphs>
 
   The command <verbatim|is_eulerian><index|<verbatim|is_eulerian>> is used
-  for determining whether an undirected graph is an Eulerian graph and for
-  finding <hlink|<rigid|Eulerian trails>|https://en.wikipedia.org/wiki/Eulerian_path>
-  in such graphs.
+  for determining whether an undirected graph contains an
+  <hlink|<rigid|Eulerian trail>|https://en.wikipedia.org/wiki/Eulerian_path>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_eulerian(G)>>>|<row|<cell|>|<cell|<verbatim|is_eulerian(G,T)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_eulerian(G)>>>|<row|<cell|>|<cell|<verbatim|is_eulerian(G,T)>>>>>>
 
   <verbatim|is_eulerian> accepts one or two arguments, an undirected graph
   <math|G<around*|(|V,E|)>> and optionally an unassigned identifier
@@ -10563,8 +10544,9 @@
   edges. Such a trail is called <strong|Eulerian trail>. An Eulerian trail
   may be closed, in which case it is called <strong|Eulerian cycle>. Note
   that every edge <math|e\<in\>E> must be visited, i.e.<nbsp>\Pstrolled
-  through\Q, exactly once. The edge endpoints (i.e.<nbsp>the vertices in
-  <math|G>) may, however, be visited more than once.
+  through\Q, exactly once <cite-detail|godsil|pp.<nbsp>395>. The edge
+  endpoints (i.e.<nbsp>the vertices in <math|G>) may, however, be visited
+  more than once.
 
   The strategy is to apply <name|Hierholzer>'s algorithm for finding an
   Eulerian path<nbsp><cite|hierholzer>. It works by covering one cycle at a
@@ -10621,9 +10603,7 @@
   cycle>|https://en.wikipedia.org/wiki/Hamiltonian_path> in the input graph
   if the latter is Hamiltonian.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_hamiltonian(G)>>>|<row|<cell|>|<cell|<verbatim|is_hamiltonian(G,hc)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_hamiltonian(G)>>>|<row|<cell|>|<cell|<verbatim|is_hamiltonian(G,hc)>>>>>>
 
   <verbatim|is_hamiltonian> accepts one or two arguments, an undirected graph
   <math|G<around*|(|V,E|)>> and optionally an unassigned identifier
@@ -10690,7 +10670,7 @@
   </session>
 
   <\center>
-    <image|images/tsp5.eps|40%|||>
+    <image|images/tsp5.eps|35%|||>
   </center>
 
   <\session|giac|default>
@@ -10734,9 +10714,7 @@
   The command <with|font-family|tt|shortest_path><index|<with|font-family|tt|shortest_path>>
   is used for finding shortest paths in unweighted graphs.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|shortest_path(G,s,t)>>>|<row|<cell|>|<cell|<verbatim|shortest_path(G,s,T)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|shortest_path(G,s,t)>>>|<row|<cell|>|<cell|<verbatim|shortest_path(G,s,T)>>>>>>
 
   <with|font-family|tt|shortest_path> accepts three arguments: an undirected
   unweighted graph <math|G<around|(|V,E|)>>, the source vertex
@@ -10797,16 +10775,14 @@
     </input>
   </session>
 
-  <center|<image|images/short.eps|40%|||>>
+  <center|<image|images/short.eps|35%|||>>
 
   <subsection|Cheapest weighted paths>
 
   The command <with|font-family|tt|dijkstra><index|<with|font-family|tt|dijkstra>>
   is used for finding cheapest paths in weighted graphs.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|dijkstra(G,s,t)>>>|<row|<cell|>|<cell|<verbatim|dijkstra(G,s,T)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|dijkstra(G,s,t)>>>|<row|<cell|>|<cell|<verbatim|dijkstra(G,s,T)>>>>>>
 
   <with|font-family|tt|dijkstra> accepts two or three arguments: a weighted
   graph <math|G<around|(|V,E|)>> with nonnegative weights, a vertex
@@ -10853,7 +10829,7 @@
   </session>
 
   <\center>
-    <image|images/dijkstra.eps|40%|||>
+    <image|images/dijkstra.eps|35%|||>
   </center>
 
   <\session|giac|default>
@@ -10878,9 +10854,7 @@
     see <cite|cook>.
   </footnote>.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|traveling_salesman(G)>>>|<row|<cell|>|<cell|<verbatim|traveling_salesman(G,opts)>>>|<row|<cell|>|<cell|<verbatim|traveling_salesman(G,M)>>>|<row|<cell|>|<cell|<verbatim|traveling_salesman(G,M,opts)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|traveling_salesman(G)>>>|<row|<cell|>|<cell|<verbatim|traveling_salesman(G,opts)>>>|<row|<cell|>|<cell|<verbatim|traveling_salesman(G,M)>>>|<row|<cell|>|<cell|<verbatim|traveling_salesman(G,M,opts)>>>>>>
 
   <verbatim|traveling_salesman> accepts the following arguments: an
   undirected graph <math|G<around*|(|V,E|)>>, a weight matrix <math|M>
@@ -10903,7 +10877,7 @@
   If the option <verbatim|approx> is passed, a near-optimal tour is returned.
   In this case it is required that <math|G> is a complete weighted graph. For
   larger graphs, this is significantly faster than finding optimal tour.
-  Results thus obtained are usually within just a few percent of the
+  Results thus obtained are usually only a few percent larger than the
   corresponding optimal values, despite the fact that the reported guarantee
   is generally much weaker (around 30%).
 
@@ -10949,7 +10923,7 @@
     </input>
   </session>
 
-  <center|<image|images/tsp1.eps|40%|||>>
+  <center|<image|images/tsp1.eps|35%|||>>
 
   A matrix may be passed alongside an undirected graph to specify the edge
   weights. The alternative is to pass a weighted graph as the single
@@ -10993,7 +10967,7 @@
     </input>
   </session>
 
-  <center|<image|images/tsp4.eps|40%|||>>
+  <center|<image|images/tsp4.eps|35%|||>>
 
   In the next example, an instance of Euclidean <abbr|TSP> with 42 cities is
   solved to optimality. The vertex positions are pairs of integers randomly
@@ -11025,7 +10999,7 @@
     </input>
   </session>
 
-  <center|<image|images/tsp2.eps|40%|||>>
+  <center|<image|images/tsp2.eps|35%|||>>
 
   For large instances of Euclidean <abbr|TSP> the <verbatim|approx> option
   may be used, as in the following example with 555 cities.
@@ -11057,7 +11031,7 @@
     </input>
   </session>
 
-  <center|<image|images/tsp3.eps|40%|||>>
+  <center|<image|images/tsp3.eps|35%|||>>
 
   Near-optimal tours produced by the <verbatim|approx> option are usually
   only slightly more expensive than the optimal ones. For example, a
@@ -11098,9 +11072,7 @@
   is used for construction of <hlink|<rigid|spanning
   trees>|https://en.wikipedia.org/wiki/Spanning_tree> in graphs.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|spanning_tree(G)>>>|<row|<cell|>|<cell|<verbatim|spanning_tree(G,r)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|spanning_tree(G)>>>|<row|<cell|>|<cell|<verbatim|spanning_tree(G,r)>>>>>>
 
   <verbatim|spanning_tree> accepts one or two arguments, an undirected graph
   <math|G<around*|(|V,E|)>> and optionally a vertex <math|r\<in\>V>. It
@@ -11136,7 +11108,7 @@
     </input>
   </session>
 
-  <center|<image|images/span1.eps|40%|||>>
+  <center|<image|images/span1.eps|35%|||>>
 
   By extracting <math|T<rsub|1>> from <math|P> as a subgraph, it inherits
   vertex positions from <math|P>.
@@ -11149,7 +11121,7 @@
     </input>
   </session>
 
-  <center|<image|images/span2.eps|40%|||>>
+  <center|<image|images/span2.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -11179,9 +11151,7 @@
   is used for construction of <hlink|<rigid|minimal spanning
   trees>|https://en.wikipedia.org/wiki/Minimum_spanning_tree> in graphs.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|minimal_spanning_tree(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|minimal_spanning_tree(G)>>>>>>
 
   <with|font-family|tt|minimal_spanning_tree> accepts the input graph
   <math|G<around|(|V,E|)>> as its only argument and returns its minimal
@@ -11232,7 +11202,7 @@
     </input>
   </session>
 
-  <center|<image|images/span3.eps|40%|||>>
+  <center|<image|images/span3.eps|35%|||>>
 
   <subsection|Counting the spanning trees in a
   graph><label|number-of-spanning-trees>
@@ -11242,17 +11212,15 @@
   trees>|https://en.wikipedia.org/wiki/Spanning_tree#Counting_spanning_trees>
   in a graph.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|number_of_spanning_trees(G)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|number_of_spanning_trees(G)>>>>>>
 
   <verbatim|number_of_spanning_trees> accepts an undirected graph
   <math|G<around*|(|V,E|)>> as its only argument and returns the total number
   <math|n> of mutually different spanning trees in <math|G>.
 
-  The strategy is based on Theorem<nbsp>2.2.12 (Matrix Tree Theorem)
-  in<nbsp><cite|west>, page<nbsp>86. First the adjacency matrix <math|A> and
-  the degree sequence <math|\<delta\>> of <math|G> are obtained. Then the
+  The strategy is based on Theorem<nbsp>2.2.12
+  in<nbsp><cite-detail|west|pp.<nbsp>86>. First the adjacency matrix <math|A>
+  and the degree sequence <math|\<delta\>> of <math|G> are obtained. Then the
   Laplacian matrix <math|L=D-A> of <math|G> is formed, where <math|D> is the
   diagonal matrix of order <math|<around*|\||V|\|>> corresponding to
   <math|\<delta\>>. The last row and the last column of <math|L> are
@@ -11311,9 +11279,7 @@
   used for visualizing graphs. It is capable to produce a drawing of the
   given graph using one of the several built-in methods.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|draw_graph(G)>>>|<row|<cell|>|<cell|<verbatim|draw_graph(G,opts)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|draw_graph(G)>>>|<row|<cell|>|<cell|<verbatim|draw_graph(G,opts)>>>>>>
 
   <subsection|Overview>
 
@@ -11405,7 +11371,7 @@
     </input>
   </session>
 
-  <center|<image|images/sparse.eps|35%|||>>
+  <center|<image|images/sparse.eps|30%|||>>
 
   <subsection|Spring method>
 
@@ -11510,7 +11476,7 @@
     </input>
   </session>
 
-  <center|<image|images/tensorproduct.eps|40%|||>>
+  <center|<image|images/tensorproduct.eps|35%|||>>
 
   The following command lines demonstrate drawing of a much larger graph.
 
@@ -11533,7 +11499,7 @@
     </input>
   </session>
 
-  <center|<image|images/sg54.eps|40%|||>>
+  <center|<image|images/sg54.eps|35%|||>>
 
   Note that vertex labels are automatically suppressed because of the large
   number of vertices. On our system, the algorithm took less than 2 seconds
@@ -11551,7 +11517,7 @@
     </input>
   </session>
 
-  <center|<image|images/ball.eps|50%|||>>
+  <center|<image|images/ball.eps|45%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -11601,7 +11567,7 @@
     </input>
   </session>
 
-  <center|<image|images/3d.eps|40%|||>>
+  <center|<image|images/3d.eps|35%|||>>
 
   <subsection|Drawing trees>
 
@@ -11652,7 +11618,7 @@
     </input>
   </session>
 
-  <center|<image|images/tree.eps|40%|||>>
+  <center|<image|images/tree.eps|35%|||>>
 
   <subsection|Drawing planar graphs>
 
@@ -11660,10 +11626,10 @@
   augmentation techniques to extend the input graph <math|G> to a graph
   <math|G<rprime|'>>, which is homeomorphic to some triconnected graph, by
   adding temporary edges. The augmented graph <math|G<rprime|'>> is then
-  drawn using <name|Tutte>'s barycentric method <cite|tutte>, a
-  force-directed algorithm which puts each vertex in the barycenter of its
-  neighbors. It is guaranteed that a (non-strict) convex drawing will be
-  produced, without edge crossings. In the end, the duplicate of the outer
+  drawn using <name|Tutte>'s barycentric method (see <cite|tutte> and
+  <cite-detail|godsil|pp.<nbsp>293>) which puts each vertex in the barycenter
+  of its neighbors. It is guaranteed that a (non-strict) convex drawing will
+  be produced, without edge crossings. In the end, the duplicate of the outer
   face and the temporary edges inserted during the augmentation stage are
   removed.
 
@@ -11678,15 +11644,18 @@
 
   The augmentation process consists of two parts. Firstly, the input graph
   <math|G> is decomposed into biconnected components (blocks) using the
-  depth-first search (see <cite|gibbons>, page<nbsp>25). Each block is then
+  depth-first search <cite-detail|gibbons|pp.<nbsp>25>. Each block is then
   decomposed into faces (represented by cycles of vertices) using
-  <name|Demoucron>'s algorithm (see <cite|gibbons>, page<nbsp>88, with a
-  correction proposed in<nbsp><cite|myrwold>). Embeddings obtained for each
-  blocks are then combined by adding one temporary edge for each articulation
-  point, joining the two corresponding blocks.
-  Figure<nbsp><reference|blockjoin> shows the outer faces of two blocks
-  <math|B<rsub|1>> and <math|B<rsub|2>>, connected by an articulation point
-  (cut vertex). The temporary edge (shown in blue) is added to join
+  <name|Demoucron>'s algorithm (see <cite-detail|gibbons|pp.<nbsp>88> and
+  <cite|myrwold>). Embeddings obtained for each blocks are then combined by
+  adding one temporary edge for each articulation point, joining the two
+  corresponding blocks. Figure<nbsp><reference|blockjoin> shows the outer
+  faces of two blocks <math|B<rsub|1>> and <math|B<rsub|2>>, connected by an
+  articulation point (cut vertex)<\float|float|tbh>
+    <big-figure|<with|gr-mode|<tuple|group-edit|edit-props>|gr-frame|<tuple|scale|1cm|<tuple|0.5gw|0.5gh>>|gr-geometry|<tuple|geometry|1par|0.6par|top>|gr-auto-crop|true|gr-color|light
+    grey|gr-line-width|2ln|<graphics||<point|-7.02714|4.71764>|<point|-7.27902|3.87308>|<point|-6.21221|2.99889>|<with|color|green|line-width|2ln|<line|<point|-5.9307|3.7101>|<point|-5.32321|2.76182>>>|<point|-5.9307|3.7101>|<point|-6.36038|4.55465>|<point|-6.74562|2.13952>|<point|-6.0196|1.26533>|<point|-5.11577|0.998627>|<point|-4.83425|2.02098>|<point|-5.32321|2.76182>|<line|<point|-7.02714|4.71764>|<point|-6.36038|4.55465>|<point|-5.9307|3.7101>|<point|-6.21221|2.99889>|<point|-7.27902|3.87308>|<point|-7.02714|4.71764>>|<line|<point|-6.21221|2.99889>|<point|-6.74562|2.13952>|<point|-6.0196|1.26533>|<point|-5.11577|0.998627>|<point|-4.83425|2.02098>|<point|-5.32321|2.76182>|<point|-6.21221|2.99889>>|<text-at|<math|B<rsub|1>>|<point|-6.86415200423336|3.87308175684614>>|<text-at|<math|B<rsub|2>>|<point|-5.93069519777748|1.90245072099484>>|<text-at|temp.<nbsp>edge|<point|-6.02040613837809|4.26236936102659>>|<with|dash-style|11100|<line|<point|-4.92621811732097|4.05921748908586>|<point|-5.44174163249107|3.28041076862019>>>>>|<label|blockjoin>Joining
+    two block by adding a temporary edge.>
+  </float>. The temporary edge (shown in green) is added to join
   <math|B<rsub|1>> and <math|B<rsub|2>> into a single block. After \Pfolding
   up\Q the tree of blocks, the algorithm picks the largest face in the
   resulting biconnected graph to be the outer face of the planar embedding.
@@ -11697,21 +11666,21 @@
   is non-convex if there exist <math|k> and <math|l> such that
   <math|1\<leqslant\>k\<less\>l-1\<less\>n> and either <math|v<rsub|k>
   v<rsub|l>\<in\>E>, in which case the edge <math|v<rsub|k> v<rsub|l>> is a
-  <em|chord> (see Figure<nbsp><reference|chordface> for an example) or there
-  exists a face <math|g=<around*|(|w<rsub|1>,w<rsub|2>,\<ldots\>,v<rsub|k>,\<ldots\>,v<rsub|l>,\<ldots\>,w<rsub|m-1>,w<rsub|m>|)>>
+  <em|chord> (see Figure<nbsp><reference|chordface> for an
+  example)<\float|float|tbh>
+    <big-figure|<with|gr-mode|<tuple|group-edit|edit-props>|gr-frame|<tuple|scale|1cm|<tuple|0.5gw|0.5gh>>|gr-geometry|<tuple|geometry|1par|0.6par|top>|gr-auto-crop|true|gr-color|light
+    grey|gr-line-width|2ln|<graphics||<with|color|green|line-width|2ln|<line|<point|-7.03767|3.2286>|<point|-6.0|3.6>>>|<point|-6|3.6>|<text-at|<math|f>|<point|-5.7|2.8>>|<with|color|red|line-width|2ln|<line|<point|-6.59316708559333|4.25095912157693>|<point|-4.25833443577193|4.01635467654452>>>|<point|-6.59316708559333|4.25095912157693>|<point|-4.91887154385501|2.01362614102394>|<point|-6.51908321206509|2.36922873395952>|<point|-7.0376703267628|3.22860166688715>|<with|color|green|line-width|2ln|<line|<point|-5.22142|3.45332>|<point|-4.18425056224368|2.8902797989152>>>|<point|-5.22142479163911|3.45331723772986>|<line|<point|-6.59316708559333|4.25095912157693>|<point|-7.0376703267628|3.22860166688715>|<point|-6.51908321206509|2.36922873395952>|<point|-4.91887154385501|2.01362614102394>|<point|-4.18425056224368|2.8902797989152>|<point|-4.25833443577193|4.01635467654452>|<point|-5.22142479163911|3.45331723772986>|<point|-6.0|3.6>|<point|-6.59316708559333|4.23614234687128>>|<point|-4.18425056224368|2.8902797989152>|<point|-4.25833443577193|4.01635467654452>|<text-at|chord|<point|-5.82891255457071|5.08316245535124>>|<with|dash-style|11100|<line|<point|-5.36484654054769|4.95510318825241>|<point|-5.3399589892843|4.31269017065749>>>>>|<label|chordface>A
+    chorded face.>
+  </float> or there exists a face <math|g=<around*|(|w<rsub|1>,w<rsub|2>,\<ldots\>,v<rsub|k>,\<ldots\>,v<rsub|l>,\<ldots\>,w<rsub|m-1>,w<rsub|m>|)>>
   such that the vertices <math|v<rsub|k+1>,\<ldots\>,v<rsub|l-1>> are not
   contained in <math|g> (see Figure<nbsp><reference|touchface> for an
-  example). In Figures<nbsp><reference|blockjoin>, <reference|chordface>
+  example)<\float|float|tbh>
+    <big-figure|<with|gr-mode|<tuple|group-edit|edit-props>|gr-frame|<tuple|scale|1cm|<tuple|0.5gw|0.5gh>>|gr-geometry|<tuple|geometry|1par|0.6par|top>|gr-auto-crop|true|gr-color|light
+    grey|gr-line-width|2ln|<graphics||<with|color|green|line-width|2ln|<line|<point|-7.47976|3.22362>|<point|-6.31419|3.16188>>>|<with|color|green|line-width|2ln|<line|<point|-5.73634|3.17669>|<point|-4.96587|4.11015>>>|<with|color|red|<line|<point|-7.12912|2.64329>|<point|-7.47975922741103|3.22362415663448>|<point|-7.61807|3.87308>|<point|-7.04022|4.45094>|<point|-5.95859|4.64355>|<point|-4.96587|4.11015>|<point|-5.14367|2.99889>|<point|-5.73634|3.17669>|<point|-6.31419|3.16188>|<point|-7.12912|2.64329>>>|<with|color|green|line-width|2ln|<line|<point|-7.24765|2.09507>|<point|-6.71425|2.33214>>>|<with|color|green|line-width|2ln|<line|<point|-5.57336|2.53957>|<point|-4.53618|2.33214>>>|<with|color|blue|<line|<point|-7.12912|2.64329>|<point|-7.24765|2.09507>|<point|-7.17357|1.39868>|<point|-6.37346|0.89491>|<point|-5.42519|0.835643>|<point|-4.62508|1.51721>|<point|-4.53618|2.33214>|<point|-5.14367|2.99889>|<point|-5.57336|2.53957>|<point|-6.03268|2.22842>|<point|-6.71425|2.33214>|<point|-7.12912|2.64329>>>|<point|-7.04022|4.45094>|<point|-7.61807|3.87308>|<point|-7.12912|2.64329>|<point|-6.31419|3.16188>|<point|-5.73634|3.17669>|<point|-5.14367|2.99889>|<point|-4.96587|4.11015>|<point|-5.95859|4.64355>|<point|-7.24765|2.09507>|<point|-7.17357|1.39868>|<point|-6.37346|0.89491>|<point|-5.42519|0.835643>|<point|-4.62508|1.51721>|<point|-4.53618|2.33214>|<point|-5.57336|2.53957>|<point|-6.03268|2.22842>|<point|-6.71425|2.33214>|<text-at|<math|f>|<point|-6.37346209816113|3.7397307844953>>|<text-at|<math|g>|<point|-5.82524143405212|1.50239780394232>>|<text-at|<math|v<rsub|l>>|<point|-4.94369294880275|3.06221060986903>>|<text-at|<math|v<rsub|k>>|<point|-7.6551627199365|2.48435639634872>>|<point|-7.47975922741103|3.22362415663448>>>|<label|touchface>Two
+    faces sharing a pair of vertices and no edges between them.>
+  </float>. In Figures<nbsp><reference|blockjoin>, <reference|chordface>
   and<nbsp><reference|touchface>, the temporary edges added by the algorithm
-  are drawn in green.<\float|float|tbh>
-    <center|<small-figure|<with|gr-mode|<tuple|group-edit|edit-props>|gr-frame|<tuple|scale|1cm|<tuple|0.5gw|0.5gh>>|gr-geometry|<tuple|geometry|1par|0.6par|top>|gr-auto-crop|true|gr-color|light
-    grey|gr-line-width|2ln|<graphics||<point|-7.02714|4.71764>|<point|-7.27902|3.87308>|<point|-6.21221|2.99889>|<with|color|green|line-width|2ln|<line|<point|-5.9307|3.7101>|<point|-5.32321|2.76182>>>|<point|-5.9307|3.7101>|<point|-6.36038|4.55465>|<point|-6.74562|2.13952>|<point|-6.0196|1.26533>|<point|-5.11577|0.998627>|<point|-4.83425|2.02098>|<point|-5.32321|2.76182>|<line|<point|-7.02714|4.71764>|<point|-6.36038|4.55465>|<point|-5.9307|3.7101>|<point|-6.21221|2.99889>|<point|-7.27902|3.87308>|<point|-7.02714|4.71764>>|<line|<point|-6.21221|2.99889>|<point|-6.74562|2.13952>|<point|-6.0196|1.26533>|<point|-5.11577|0.998627>|<point|-4.83425|2.02098>|<point|-5.32321|2.76182>|<point|-6.21221|2.99889>>|<text-at|<math|B<rsub|1>>|<point|-6.86415200423336|3.87308175684614>>|<text-at|<math|B<rsub|2>>|<point|-5.93069519777748|1.90245072099484>>|<text-at|temp.<nbsp>edge|<point|-6.02040613837809|4.26236936102659>>|<with|dash-style|11100|<line|<point|-4.92621811732097|4.05921748908586>|<point|-5.44174163249107|3.28041076862019>>>>>|<label|blockjoin>joining
-    two blocks><small-figure|<with|gr-mode|<tuple|group-edit|edit-props>|gr-frame|<tuple|scale|1cm|<tuple|0.5gw|0.5gh>>|gr-geometry|<tuple|geometry|1par|0.6par|top>|gr-auto-crop|true|gr-color|light
-    grey|gr-line-width|2ln|<graphics||<with|color|green|line-width|2ln|<line|<point|-7.03767|3.2286>|<point|-6.0|3.6>>>|<point|-6|3.6>|<text-at|<math|f>|<point|-5.7|2.8>>|<with|color|red|line-width|2ln|<line|<point|-6.59316708559333|4.25095912157693>|<point|-4.25833443577193|4.01635467654452>>>|<point|-6.59316708559333|4.25095912157693>|<point|-4.91887154385501|2.01362614102394>|<point|-6.51908321206509|2.36922873395952>|<point|-7.0376703267628|3.22860166688715>|<with|color|green|line-width|2ln|<line|<point|-5.22142|3.45332>|<point|-4.18425056224368|2.8902797989152>>>|<point|-5.22142479163911|3.45331723772986>|<line|<point|-6.59316708559333|4.25095912157693>|<point|-7.0376703267628|3.22860166688715>|<point|-6.51908321206509|2.36922873395952>|<point|-4.91887154385501|2.01362614102394>|<point|-4.18425056224368|2.8902797989152>|<point|-4.25833443577193|4.01635467654452>|<point|-5.22142479163911|3.45331723772986>|<point|-6.0|3.6>|<point|-6.59316708559333|4.23614234687128>>|<point|-4.18425056224368|2.8902797989152>|<point|-4.25833443577193|4.01635467654452>|<text-at|chord|<point|-5.82891255457071|5.08316245535124>>|<with|dash-style|11100|<line|<point|-5.36484654054769|4.95510318825241>|<point|-5.3399589892843|4.31269017065749>>>>>|<label|chordface>a
-    chorded face><small-figure|<with|gr-mode|<tuple|group-edit|edit-props>|gr-frame|<tuple|scale|1cm|<tuple|0.5gw|0.5gh>>|gr-geometry|<tuple|geometry|1par|0.6par|top>|gr-auto-crop|true|gr-color|light
-    grey|gr-line-width|2ln|<graphics||<with|color|green|line-width|2ln|<line|<point|-7.47976|3.22362>|<point|-6.31419|3.16188>>>|<with|color|green|line-width|2ln|<line|<point|-5.73634|3.17669>|<point|-4.96587|4.11015>>>|<with|color|red|<line|<point|-7.12912|2.64329>|<point|-7.47975922741103|3.22362415663448>|<point|-7.61807|3.87308>|<point|-7.04022|4.45094>|<point|-5.95859|4.64355>|<point|-4.96587|4.11015>|<point|-5.14367|2.99889>|<point|-5.73634|3.17669>|<point|-6.31419|3.16188>|<point|-7.12912|2.64329>>>|<with|color|green|line-width|2ln|<line|<point|-7.24765|2.09507>|<point|-6.71425|2.33214>>>|<with|color|green|line-width|2ln|<line|<point|-5.57336|2.53957>|<point|-4.53618|2.33214>>>|<with|color|blue|<line|<point|-7.12912|2.64329>|<point|-7.24765|2.09507>|<point|-7.17357|1.39868>|<point|-6.37346|0.89491>|<point|-5.42519|0.835643>|<point|-4.62508|1.51721>|<point|-4.53618|2.33214>|<point|-5.14367|2.99889>|<point|-5.57336|2.53957>|<point|-6.03268|2.22842>|<point|-6.71425|2.33214>|<point|-7.12912|2.64329>>>|<point|-7.04022|4.45094>|<point|-7.61807|3.87308>|<point|-7.12912|2.64329>|<point|-6.31419|3.16188>|<point|-5.73634|3.17669>|<point|-5.14367|2.99889>|<point|-4.96587|4.11015>|<point|-5.95859|4.64355>|<point|-7.24765|2.09507>|<point|-7.17357|1.39868>|<point|-6.37346|0.89491>|<point|-5.42519|0.835643>|<point|-4.62508|1.51721>|<point|-4.53618|2.33214>|<point|-5.57336|2.53957>|<point|-6.03268|2.22842>|<point|-6.71425|2.33214>|<text-at|<math|f>|<point|-6.37346209816113|3.7397307844953>>|<text-at|<math|g>|<point|-5.82524143405212|1.50239780394232>>|<text-at|<math|v<rsub|l>>|<point|-4.94369294880275|3.06221060986903>>|<text-at|<math|v<rsub|k>>|<point|-7.6551627199365|2.48435639634872>>|<point|-7.47975922741103|3.22362415663448>>>|<label|touchface>two
-    adjacent faces>>
-  </float>
+  are drawn in green.
 
   This method of drawing planar graphs operates in
   <math|O<around*|(|<around*|\||V|\|><rsup|2>|)>> time. Nevertheless, it is
@@ -11747,7 +11716,7 @@
     </input>
   </session>
 
-  <center|<image|images/planar1.eps|40%|||>>
+  <center|<image|images/planar1.eps|35%|||>>
 
   Note that the inner diamond-like shape in the above drawing would end up
   flattened\Vmaking the two triangular faces invisible\Vif the input graph
@@ -11789,7 +11758,7 @@
     </input>
   </session>
 
-  <center|<image|images/planar2.eps|40%|||>>
+  <center|<image|images/planar2.eps|35%|||>>
 
   In the above example, several redraws were required to obtain a good planar
   embedding.
@@ -11834,7 +11803,7 @@
     </input>
   </session>
 
-  <center|<image|images/sg24.eps|40%|||>>
+  <center|<image|images/sg24.eps|35%|||>>
 
   <section|Vertex positions>
 
@@ -11844,9 +11813,7 @@
   is used to assign custom coordinates to vertices of a graph to be used when
   drawing the graph.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|set_vertex_positions(G,L)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|set_vertex_positions(G,L)>>>>>>
 
   <verbatim|set_vertex_positions> accepts two arguments, a graph
   <math|G<around*|(|V,E|)>> and the list <math|L> of positions to be assigned
@@ -11880,7 +11847,7 @@
     </input>
   </session>
 
-  <center|<image|images/digraph1.eps|40%|||>>
+  <center|<image|images/digraph1.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -11900,7 +11867,7 @@
     </input>
   </session>
 
-  <center|<image|images/digraph2.eps|40%|||>>
+  <center|<image|images/digraph2.eps|35%|||>>
 
   <subsection|Generating vertex positions>
 
@@ -11937,7 +11904,7 @@
     </input>
   </session>
 
-  <center|<image|images/oct2.eps|40%|||>>
+  <center|<image|images/oct2.eps|35%|||>>
 
   <\session|giac|default>
     <\input>
@@ -11968,7 +11935,7 @@
     </input>
   </session>
 
-  <center|<image|images/oct1.eps|40%|||>>
+  <center|<image|images/oct1.eps|35%|||>>
 
   It should be noted that, after a particular layout is fixed, it stays valid
   when some edges or vertices are removed or when an edge is contracted. The
@@ -11984,9 +11951,7 @@
   The command <verbatim|highlight_vertex><index|<verbatim|highlight_vertex>>
   is used for changing color of one or more vertices in a graph.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|highlight_vertex(G,v)>>>|<row|<cell|>|<cell|<verbatim|highlight_vertex(G,v,c)>>>|<row|<cell|>|<cell|<verbatim|highlight_vertex(G,[v1,v2,..,vk])>>>|<row|<cell|>|<cell|<verbatim|highlight_vertex(G,[v1,v2,..,vk],c)>>>|<row|<cell|>|<cell|<verbatim|highlight_vertex(G,[v1,v2,..,vk],[c1,c2,..,ck])>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|highlight_vertex(G,v)>>>|<row|<cell|>|<cell|<verbatim|highlight_vertex(G,v,c)>>>|<row|<cell|>|<cell|<verbatim|highlight_vertex(G,[v1,v2,..,vk])>>>|<row|<cell|>|<cell|<verbatim|highlight_vertex(G,[v1,v2,..,vk],c)>>>|<row|<cell|>|<cell|<verbatim|highlight_vertex(G,[v1,v2,..,vk],[c1,c2,..,ck])>>>>>>
 
   <verbatim|highlight_vertex> accepts two or three arguments: a graph
   <math|G<around*|(|V,E|)>>, a vertex <math|v\<in\>V> or a list of vertices
@@ -12024,7 +11989,7 @@
     </input>
   </session>
 
-  <center|<image|images/dh1.eps|40%|||>>
+  <center|<image|images/dh1.eps|35%|||>>
 
   <subsection|Highlighting edges and trails><label|highlight-trail>
 
@@ -12034,9 +11999,7 @@
   <verbatim|highlight_trail><index|<verbatim|highlight_trail>> command (see
   below).
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|highlight_edges(G,e)>>>|<row|<cell|>|<cell|<verbatim|highlight_edges(G,e,c)>>>|<row|<cell|>|<cell|<verbatim|highlight_edges(G,[e1,e2,..,ek])>>>|<row|<cell|>|<cell|<verbatim|highlight_edges(G,[e1,e2,..,ek],c)>>>|<row|<cell|>|<cell|<verbatim|highlight_edges(G,[e1,e2,..,ek],[c1,c2,..,ck])>>>|<row|<cell|>|<cell|<verbatim|highlight_trail(G,T)>>>|<row|<cell|>|<cell|<verbatim|highlight_trail(G,T,c)>>>|<row|<cell|>|<cell|<verbatim|highlight_trail(G,[T1,T2,..,Tk])>>>|<row|<cell|>|<cell|<verbatim|highlight_trail(G,[T1,T2,..,Tk],c)>>>|<row|<cell|>|<cell|<verbatim|highlight_trail(G,[T1,T2,..,Tk],[c1,c2,..,ck])>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|highlight_edges(G,e)>>>|<row|<cell|>|<cell|<verbatim|highlight_edges(G,e,c)>>>|<row|<cell|>|<cell|<verbatim|highlight_edges(G,[e1,e2,..,ek])>>>|<row|<cell|>|<cell|<verbatim|highlight_edges(G,[e1,e2,..,ek],c)>>>|<row|<cell|>|<cell|<verbatim|highlight_edges(G,[e1,e2,..,ek],[c1,c2,..,ck])>>>|<row|<cell|>|<cell|<verbatim|highlight_trail(G,T)>>>|<row|<cell|>|<cell|<verbatim|highlight_trail(G,T,c)>>>|<row|<cell|>|<cell|<verbatim|highlight_trail(G,[T1,T2,..,Tk])>>>|<row|<cell|>|<cell|<verbatim|highlight_trail(G,[T1,T2,..,Tk],c)>>>|<row|<cell|>|<cell|<verbatim|highlight_trail(G,[T1,T2,..,Tk],[c1,c2,..,ck])>>>>>>
 
   <verbatim|highlight_edges> accepts two or three arguments: a graph
   <math|G<around*|(|V,E|)>>, an edge <math|e\<in\>E> or a list of edges
@@ -12064,7 +12027,7 @@
     </input>
   </session>
 
-  <center|<image|images/dh2.eps|40%|||>>
+  <center|<image|images/dh2.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -12084,7 +12047,7 @@
     </input>
   </session>
 
-  <center|<image|images/dh3.eps|40%|||>>
+  <center|<image|images/dh3.eps|35%|||>>
 
   <verbatim|highlight_trail> accepts two or three arguments: a graph
   <math|G<around*|(|V,E|)>>, a trail <math|T> or a list of trails
@@ -12103,7 +12066,7 @@
     </input>
   </session>
 
-  <center|<image|images/dh4.eps|40%|||>>
+  <center|<image|images/dh4.eps|35%|||>>
 
   <\session|giac|default>
     <\input>
@@ -12113,16 +12076,14 @@
     </input>
   </session>
 
-  <center|<image|images/hlt.eps|40%|||>>
+  <center|<image|images/hlt.eps|35%|||>>
 
   <subsection|Highlighting subgraphs><label|highlight-subgraph>
 
   The command <verbatim|highlight_subgraph><index|<verbatim|highlight_subgraph>>
   is used for highlighting subgraph(s) of the given graph.
 
-  <\bothlined>
-    <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|highlight_subgraph(G,S,[weights])>>>|<row|<cell|>|<cell|<verbatim|highlight_subgraph(G,S,c1,c2,[weights])>>>|<row|<cell|>|<cell|<verbatim|highlight_subgraph(G,[S1,S2,..,Sk])>>>|<row|<cell|>|<cell|<verbatim|highlight_subgraph(G,[S1,S2,..,Sk],c1,c2)>>>>>>
-  </bothlined>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|highlight_subgraph(G,S,[weights])>>>|<row|<cell|>|<cell|<verbatim|highlight_subgraph(G,S,c1,c2,[weights])>>>|<row|<cell|>|<cell|<verbatim|highlight_subgraph(G,[S1,S2,..,Sk])>>>|<row|<cell|>|<cell|<verbatim|highlight_subgraph(G,[S1,S2,..,Sk],c1,c2)>>>>>>
 
   <verbatim|highlight_subgraph> accepts two or four arguments: a graph
   <math|G<around*|(|V,E|)>>, a subgraph <math|S<around*|(|V<rprime|'>,E<rprime|'>|)>>
@@ -12186,7 +12147,7 @@
     </input>
   </session>
 
-  <center|<image|images/sg1.eps|40%|||>>
+  <center|<image|images/sg1.eps|35%|||>>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -12216,10 +12177,10 @@
     </input>
   </session>
 
-  <center|<image|images/sg2.eps|40%|||>>
+  <center|<image|images/sg2.eps|35%|||>>
 
   <\bibliography|bib|tm-plain|graphtheory>
-    <\bib-list|40>
+    <\bib-list|43>
       <bibitem*|1><label|bib-bayati>Mohsen Bayati, Jeong<nbsp>Han
       Kim<localize|, and >Amin Saberi. <newblock>A Sequential Algorithm for
       Generating Random Graphs. <newblock><with|font-shape|italic|Algorithmica>,
@@ -12234,11 +12195,16 @@
       £etiriju boja. <newblock><with|font-shape|italic|Glasnik
       Mat.-Fiz.<nbsp>Astr.<nbsp>Ser.<nbsp>II>, 1:31\U32, 1946.<newblock>
 
-      <bibitem*|4><label|bib-brelaz>Daniel Brélaz. <newblock>New Methods to
+      <bibitem*|4><label|bib-bollobas>Béla Bollobás.
+      <newblock><with|font-shape|italic|Modern Graph Theory>.
+      <newblock>Graduate Texts in Mathematics. Springer, Corrected<localize|
+      edition>, 2002.<newblock>
+
+      <bibitem*|5><label|bib-brelaz>Daniel Brélaz. <newblock>New Methods to
       Color the Vertices of a Graph. <newblock><with|font-shape|italic|Communications
       of the ACM>, 22:251\U256, 1979.<newblock>
 
-      <bibitem*|5><label|bib-buchheim>Cristoph Buchheim, Michael
+      <bibitem*|6><label|bib-buchheim>Cristoph Buchheim, Michael
       Jünger<localize|, and >Sebastian Leipert. <newblock>Improving Walker's
       Algorithm to Run in Linear Time. <newblock><localize|In
       >M.<nbsp>T.<nbsp>Goodrich<localize| and
@@ -12247,183 +12213,194 @@
       Science vol 2528>, <localize|pages >344\U353. Springer-Verlag Berlin
       Heidelberg, 2002.<newblock>
 
-      <bibitem*|6><label|bib-christofides>Nicos Christofides.
+      <bibitem*|7><label|bib-christofides>Nicos Christofides.
       <newblock>Worst-case analysis of a new heuristic for the traveling
       salesman problem. <newblock>Report 388, Graduate School of Industrial
       Administration, 1976.<newblock>
 
-      <bibitem*|7><label|bib-cook>William<nbsp>J.<nbsp>Cook.
+      <bibitem*|8><label|bib-cook>William<nbsp>J.<nbsp>Cook.
       <newblock><with|font-shape|italic|In Pursuit of the Traveling Salesman:
       Mathematics at the Limits of Computation>. <newblock>Princeton
       University Press, 2012.<newblock>
 
-      <bibitem*|8><label|bib-melissa>Melissa DeLeon. <newblock>A Study of
+      <bibitem*|9><label|bib-melissa>Melissa DeLeon. <newblock>A Study of
       Sufficient Conditions for Hamiltonian Cycles.
       <newblock><with|font-shape|italic|Rose-Hulman Undergraduate Mathematics
       Journal>, 1, Article 6, 2000. <newblock><slink|https://scholar.rose-hulman.edu/rhumj/vol1/iss1/6>.<newblock>
 
-      <bibitem*|9><label|bib-diaz>Isabel<nbsp>M.<nbsp>Díaz<localize| and
+      <bibitem*|10><label|bib-diaz>Isabel<nbsp>M.<nbsp>Díaz<localize| and
       >Paula Zabala. <newblock>A Branch-and-Cut Algorithm for Graph Coloring.
       <newblock><with|font-shape|italic|Discrete Applied Mathematics>,
       154:826\U847, 2006.<newblock>
 
-      <bibitem*|10><label|bib-diestel>Reinhard Diestel.
+      <bibitem*|11><label|bib-diestel>Reinhard Diestel.
       <newblock><with|font-shape|italic|Graph Theory>.
       <newblock>Springer-Verlag, New York, 1997.<newblock>
 
-      <bibitem*|11><label|bib-edmonds>Jack Edmonds. <newblock>Paths, Trees,
+      <bibitem*|12><label|bib-edmonds>Jack Edmonds. <newblock>Paths, Trees,
       and Flowers. <newblock><localize|In >Gessel I.<localize| and
       >GC.<nbsp>Rota<localize|, editors>, <with|font-shape|italic|Classic
       Papers in Combinatorics>, <localize|pages >361\U379. Birkhäuser Boston,
       2009. Modern Birkhäuser Classics.<newblock>
 
-      <bibitem*|12><label|bib-edmonds-karp>Jack Edmonds<localize| and
+      <bibitem*|13><label|bib-edmonds-karp>Jack Edmonds<localize| and
       >Richard<nbsp>M.<nbsp>Karp. <newblock>Theoretical improvements in
       algorithmic efficiency for network flow problems.
       <newblock><with|font-shape|italic|Journal of the ACM>, 19:248\U264,
       1972.<newblock>
 
-      <bibitem*|13><label|bib-even>S.<nbsp>Even<localize| and
+      <bibitem*|14><label|bib-even>S.<nbsp>Even<localize| and
       >R.<nbsp>E.<nbsp>Tarjan. <newblock>Computing an st-numbering.
       <newblock><with|font-shape|italic|Theoretical Computer Science>,
       2:339\U344, 1976.<newblock>
 
-      <bibitem*|14><label|bib-floyd>Robert<nbsp>W.<nbsp>Floyd.
+      <bibitem*|15><label|bib-floyd>Robert<nbsp>W.<nbsp>Floyd.
       <newblock>Algorithm 97: Shortest path.
       <newblock><with|font-shape|italic|Communications of the ACM>, 5:345,
       1962.<newblock>
 
-      <bibitem*|15><label|bib-fruchterman>T.<nbsp>M.<nbsp>J.<nbsp>Fruchterman<localize|
+      <bibitem*|16><label|bib-fruchterman>T.<nbsp>M.<nbsp>J.<nbsp>Fruchterman<localize|
       and >E.<nbsp>M.<nbsp>Reingold. <newblock>Graph Drawing by
       Force-Directed Placement. <newblock><with|font-shape|italic|Software:
       Practice and Experience>, 21:1129\U1164, 1991.<newblock>
 
-      <bibitem*|16><label|bib-gibbons>Alan Gibbons.
+      <bibitem*|17><label|bib-gibbons>Alan Gibbons.
       <newblock><with|font-shape|italic|Algorithmic graph theory>.
       <newblock>Cambridge University Press, 1985.<newblock>
 
-      <bibitem*|17><label|bib-haggard>Gary Haggard,
+      <bibitem*|18><label|bib-godsil>Chris Godsil<localize| and
+      >Gordon<nbsp>F.<nbsp>Royle. <newblock><with|font-shape|italic|Algebraic
+      graph theory>. <newblock>Graduate Texts in Mathematics. Springer,
+      First<localize| edition>, 2001.<newblock>
+
+      <bibitem*|19><label|bib-haggard>Gary Haggard,
       David<nbsp>J.<nbsp>Pearce<localize|, and >Gordon Royle.
       <newblock>Computing Tutte Polynomials.
       <newblock><with|font-shape|italic|ACM Transactions on Mathematical
       Software>, 37, 2010. <newblock>Article No.<nbsp>24.<newblock>
 
-      <bibitem*|18><label|bib-hakimi>S.<nbsp>L.<nbsp>Hakimi. <newblock>On
+      <bibitem*|20><label|bib-haggard2>Gary Haggard,
+      David<nbsp>J.<nbsp>Pearce<localize|, and >Gordon Royle.
+      <newblock>Edge-Selection Heuristics for Computing Tutte Polynomials.
+      <newblock><with|font-shape|italic|Chicago Journal of Theoretical
+      Computer Science>, 2010. <newblock>Article 6.<newblock>
+
+      <bibitem*|21><label|bib-hakimi>S.<nbsp>L.<nbsp>Hakimi. <newblock>On
       realizability of a set of integers as degrees of the vertices of a
       linear graph. I. <newblock><with|font-shape|italic|Journal of the
       Society for Industrial and Applied Mathematics>, 10:496\U506,
       1962.<newblock>
 
-      <bibitem*|19><label|bib-helsgaun>Keld Helsgaun. <newblock>General
+      <bibitem*|22><label|bib-helsgaun>Keld Helsgaun. <newblock>General
       <math|k>-opt submoves for the Lin--Kernighan TSP heuristic.
       <newblock><with|font-shape|italic|Math.<nbsp>Prog.<nbsp>Comp.>,
       1:119\U163, 2009.<newblock>
 
-      <bibitem*|20><label|bib-hierholzer>Carl Hierholzer. <newblock>Ueber die
+      <bibitem*|23><label|bib-hierholzer>Carl Hierholzer. <newblock>Ueber die
       möglichkeit, einen Linienzug ohne Wiederholung und ohne Unterbrechung
       zu umfahren. <newblock><with|font-shape|italic|Mathematische Annalen>,
       6:30\U32, 1873.<newblock>
 
-      <bibitem*|21><label|bib-hinz>Andreas<nbsp>M.<nbsp>Hinz, Sandi
+      <bibitem*|24><label|bib-hinz>Andreas<nbsp>M.<nbsp>Hinz, Sandi
       Klavºar<localize|, and >Sara<nbsp>S.<nbsp>Zemlji£. <newblock>A survey
       and classification of Sierpi«ski-type graphs.
       <newblock><with|font-shape|italic|Discrete Applied Mathematics>,
       217:565\U600, 2017.<newblock>
 
-      <bibitem*|22><label|bib-hopcroft>John<nbsp>E.<nbsp>Hopcroft<localize|
+      <bibitem*|25><label|bib-hopcroft>John<nbsp>E.<nbsp>Hopcroft<localize|
       and >Richard<nbsp>M.<nbsp>Karp. <newblock>An <math|n<rsup|5/2>>
       algorithm for maximum matchings in bipartite graphs.
       <newblock><with|font-shape|italic|SIAM Journal on Computing>,
       2:225\U231, 1973.<newblock>
 
-      <bibitem*|23><label|bib-hu>Yifan Hu. <newblock>Efficient and High
+      <bibitem*|26><label|bib-hu>Yifan Hu. <newblock>Efficient and High
       Quality Force-Directed Graph Drawing.
       <newblock><with|font-shape|italic|Mathematica Journal>, 10:37\U71,
       2005.<newblock>
 
-      <bibitem*|24><label|bib-hu2>Yifan Hu<localize| and >Jennifer Scott.
+      <bibitem*|27><label|bib-hu2>Yifan Hu<localize| and >Jennifer Scott.
       <newblock>A Multilevel Algorithm for Wavefront Reduction.
       <newblock><with|font-shape|italic|SIAM Journal on Scientific
       Computing>, 23:1352\U1375, 2001.<newblock>
 
-      <bibitem*|25><label|bib-kahn>Arthur<nbsp>B.<nbsp>Kahn.
+      <bibitem*|28><label|bib-kahn>Arthur<nbsp>B.<nbsp>Kahn.
       <newblock>Topological sorting of large networks.
       <newblock><with|font-shape|italic|Communications of the ACM>,
       5:558\U562, 1962.<newblock>
 
-      <bibitem*|26><label|bib-mckay>B.<nbsp>D.<nbsp>McKay<localize| and
+      <bibitem*|29><label|bib-mckay>B.<nbsp>D.<nbsp>McKay<localize| and
       >A.<nbsp>Piperno. <newblock>Practical Graph Isomorphism, II.
       <newblock><with|font-shape|italic|J.<nbsp>Symbolic Computation>,
       60:94\U112, 2013.<newblock>
 
-      <bibitem*|27><label|bib-monagan>Michael Monagan. <newblock>A new edge
+      <bibitem*|30><label|bib-monagan>Michael Monagan. <newblock>A new edge
       selection heuristic for computing Tutte polynomials.
       <newblock><localize|In ><with|font-shape|italic|Proceedings of FPSAC
       2012>, <localize|pages >839\U850.<newblock>
 
-      <bibitem*|28><label|bib-myrwold>Wendy Myrwold<localize| and >Willian
+      <bibitem*|31><label|bib-myrwold>Wendy Myrwold<localize| and >Willian
       Kocay. <newblock>Errors in graph embedding algorithms.
       <newblock><with|font-shape|italic|Journal of Computer and System
       Sciences>, 77:430\U438, 2011.<newblock>
 
-      <bibitem*|29><label|bib-ostergard>Patric<nbsp>R.<nbsp>J.<nbsp>Östergård.
+      <bibitem*|32><label|bib-ostergard>Patric<nbsp>R.<nbsp>J.<nbsp>Östergård.
       <newblock>A fast algorithm for the maximum clique problem.
       <newblock><with|font-shape|italic|Discrete Applied Mathematics>,
       120:197\U207, 2002.<newblock>
 
-      <bibitem*|30><label|bib-padberg>Manfred Padberg<localize| and >Giovanni
+      <bibitem*|33><label|bib-padberg>Manfred Padberg<localize| and >Giovanni
       Rinaldi. <newblock>A Branch-and-Cut Algorithm for the Resolution of
       Large-Scale Symmetric Traveling Salesman Problems.
       <newblock><with|font-shape|italic|SIAM Review>, 33:60\U100,
       1991.<newblock>
 
-      <bibitem*|31><label|bib-pferschy>Ulrich Pferschy<localize| and
+      <bibitem*|34><label|bib-pferschy>Ulrich Pferschy<localize| and
       >Rostislav Stan¥k. <newblock>Generating subtour elimination constraints
       for the TSP from pure integer solutions.
       <newblock><with|font-shape|italic|Central European Journal of
       Operations Research>, 25:231\U260, 2017.<newblock>
 
-      <bibitem*|32><label|bib-plestenjak>Bor Plestenjak. <newblock>An
+      <bibitem*|35><label|bib-plestenjak>Bor Plestenjak. <newblock>An
       Algorithm for Drawing Planar Graphs.
       <newblock><with|font-shape|italic|Software: Practice and Experience>,
       29:973\U984, 1999.<newblock>
 
-      <bibitem*|33><label|bib-steger>Angelika Steger<localize| and
+      <bibitem*|36><label|bib-steger>Angelika Steger<localize| and
       >Nicholas<nbsp>C.<nbsp>Wormald. <newblock>Generating random regular
       graphs quickly. <newblock><with|font-shape|italic|Combinatorics
       Probability and Computing>, 8:377\U396, 1999.<newblock>
 
-      <bibitem*|34><label|bib-tarjan72>R.<nbsp>E.<nbsp>Tarjan.
+      <bibitem*|37><label|bib-tarjan72>R.<nbsp>E.<nbsp>Tarjan.
       <newblock>Depth-First Search and Linear Graph Algorithms.
       <newblock><with|font-shape|italic|SIAM Journal on Comp.>, 1:146\U160,
       1972.<newblock>
 
-      <bibitem*|35><label|bib-lca>R.<nbsp>E.<nbsp>Tarjan.
+      <bibitem*|38><label|bib-lca>R.<nbsp>E.<nbsp>Tarjan.
       <newblock>Applications of path compression on balanced trees.
       <newblock><with|font-shape|italic|Journal of the ACM>, 26:690\U715,
       1979.<newblock>
 
-      <bibitem*|36><label|bib-tomita>Etsuji Tomita, Akira Tanaka<localize|,
+      <bibitem*|39><label|bib-tomita>Etsuji Tomita, Akira Tanaka<localize|,
       and >Haruhisa Takahashi. <newblock>The worst-case time complexity for
       generating all maximal cliques and computational experiments.
       <newblock><with|font-shape|italic|Theoretical Computer Science>,
       363:28\U42, 2006.<newblock>
 
-      <bibitem*|37><label|bib-tutte>W.<nbsp>T.<nbsp>Tutte. <newblock>How to
+      <bibitem*|40><label|bib-tutte>W.<nbsp>T.<nbsp>Tutte. <newblock>How to
       draw a graph. <newblock><with|font-shape|italic|Proceedings of the
       London Mathematical Society>, s3-13:743\U767, 1963.<newblock>
 
-      <bibitem*|38><label|bib-walker>John<nbsp>Q.<nbsp>Walker II. <newblock>A
+      <bibitem*|41><label|bib-walker>John<nbsp>Q.<nbsp>Walker II. <newblock>A
       nodepositioning algorithm for general trees.
       <newblock><with|font-shape|italic|Software: Practice and Experience>,
       20:685\U705, 1990.<newblock>
 
-      <bibitem*|39><label|bib-welch>E.<nbsp>Welch<localize| and
+      <bibitem*|42><label|bib-welch>E.<nbsp>Welch<localize| and
       >S.<nbsp>Kobourov. <newblock>Measuring Symmetry in Drawings of Graphs.
       <newblock><with|font-shape|italic|Computer Graphics Forum>,
       36:341\U351, 2017.<newblock>
 
-      <bibitem*|40><label|bib-west>Douglas<nbsp>B.<nbsp>West.
+      <bibitem*|43><label|bib-west>Douglas<nbsp>B.<nbsp>West.
       <newblock><with|font-shape|italic|Introduction to Graph Theory>.
       <newblock>Pearson Education, 2002.<newblock>
     </bib-list>
@@ -12436,39 +12413,39 @@
 
     <index-1|<with|font-family|tt|add_vertex>|<pageref|auto-128>>
 
-    <index-1|<with|font-family|tt|language|verbatim|adjacency_matrix>|<pageref|auto-205>>
+    <index-1|<with|font-family|tt|language|verbatim|adjacency_matrix>|<pageref|auto-207>>
 
-    <index-1|<with|font-family|tt|language|verbatim|allpairs_distance>|<pageref|auto-269>>
+    <index-1|<with|font-family|tt|language|verbatim|allpairs_distance>|<pageref|auto-275>>
 
     <index-1|<with|font-family|tt|language|verbatim|antiprism_graph>|<pageref|auto-51>>
 
-    <index-1|<with|font-family|tt|language|verbatim|arrivals>|<pageref|auto-196>>
+    <index-1|<with|font-family|tt|language|verbatim|arrivals>|<pageref|auto-198>>
 
-    <index-1|<with|font-family|tt|language|verbatim|articulation_points>|<pageref|auto-242>>
+    <index-1|<with|font-family|tt|language|verbatim|articulation_points>|<pageref|auto-248>>
 
     <index-1|<with|font-family|tt|language|verbatim|assign_edge_weights>|<pageref|auto-119>>
 
-    <index-1|<with|font-family|tt|language|verbatim|biconnected_components>|<pageref|auto-238>>
+    <index-1|<with|font-family|tt|language|verbatim|biconnected_components>|<pageref|auto-244>>
 
-    <index-1|<with|font-family|tt|language|verbatim|bipartite_matching>|<pageref|auto-286>>
+    <index-1|<with|font-family|tt|language|verbatim|bipartite_matching>|<pageref|auto-292>>
 
-    <index-1|<with|font-family|tt|language|verbatim|canonical_labeling>|<pageref|auto-223>>
+    <index-1|<with|font-family|tt|language|verbatim|canonical_labeling>|<pageref|auto-225>>
 
     <index-1|<with|font-family|tt|cartesian_product>|<pageref|auto-91>>
 
-    <index-1|<with|font-family|tt|language|verbatim|chromatic_index>|<pageref|auto-315>>
+    <index-1|<with|font-family|tt|language|verbatim|chromatic_index>|<pageref|auto-321>>
 
-    <index-1|<with|font-family|tt|language|verbatim|chromatic_number>|<pageref|auto-308>>
+    <index-1|<with|font-family|tt|language|verbatim|chromatic_number>|<pageref|auto-314>>
 
-    <index-1|<with|font-family|tt|language|verbatim|chromatic_polynomial>|<pageref|auto-228>>
+    <index-1|<with|font-family|tt|language|verbatim|chromatic_polynomial>|<pageref|auto-232>>
 
-    <index-1|<with|font-family|tt|clique_cover>|<pageref|auto-298>>
+    <index-1|<with|font-family|tt|clique_cover>|<pageref|auto-304>>
 
-    <index-1|<with|font-family|tt|language|verbatim|clique_cover_number>|<pageref|auto-300>>
+    <index-1|<with|font-family|tt|language|verbatim|clique_cover_number>|<pageref|auto-306>>
 
-    <index-1|<with|font-family|tt|language|verbatim|clique_number>|<pageref|auto-296>>
+    <index-1|<with|font-family|tt|language|verbatim|clique_number>|<pageref|auto-302>>
 
-    <index-1|<with|font-family|tt|clique_stats>|<pageref|auto-293>>
+    <index-1|<with|font-family|tt|clique_stats>|<pageref|auto-299>>
 
     <index-1|<with|font-family|tt|language|verbatim|complete_binary_tree>|<pageref|auto-26>>
 
@@ -12476,13 +12453,13 @@
 
     <index-1|<with|font-family|tt|language|verbatim|complete_kary_tree>|<pageref|auto-27>>
 
-    <index-1|<with|font-family|tt|language|verbatim|connected_components>|<pageref|auto-237>>
+    <index-1|<with|font-family|tt|language|verbatim|connected_components>|<pageref|auto-243>>
 
     <index-1|<with|font-family|tt|contract_edge>|<pageref|auto-140>>
 
     <index-1|<with|font-family|tt|language|verbatim|cycle_graph>|<pageref|auto-16>>
 
-    <index-1|<with|font-family|tt|language|verbatim|degree_sequence>|<pageref|auto-184>>
+    <index-1|<with|font-family|tt|language|verbatim|degree_sequence>|<pageref|auto-186>>
 
     <index-1|<with|font-family|tt|delete_arc>|<pageref|auto-135>>
 
@@ -12490,11 +12467,11 @@
 
     <index-1|<with|font-family|tt|delete_vertex>|<pageref|auto-129>>
 
-    <index-1|<with|font-family|tt|language|verbatim|departures>|<pageref|auto-195>>
+    <index-1|<with|font-family|tt|language|verbatim|departures>|<pageref|auto-197>>
 
     <index-1|<with|font-family|tt|language|verbatim|digraph>|<pageref|auto-7>>
 
-    <index-1|<with|font-family|tt|dijkstra>|<pageref|auto-326>>
+    <index-1|<with|font-family|tt|dijkstra>|<pageref|auto-332>>
 
     <index-1|<with|font-family|tt|discard_edge_attribute>|<pageref|auto-158>>
 
@@ -12504,13 +12481,13 @@
 
     <index-1|<with|font-family|tt|disjoint_union>|<pageref|auto-85>>
 
-    <index-1|<with|font-family|tt|draw_graph>|<pageref|auto-338>>
+    <index-1|<with|font-family|tt|draw_graph>|<pageref|auto-344>>
 
     <index-1|<with|font-family|tt|language|verbatim|edges>|<pageref|auto-177>>
 
     <index-1|<with|font-family|tt|export_graph>|<pageref|auto-166>>
 
-    <index-1|<with|font-family|tt|language|verbatim|flow_polynomial>|<pageref|auto-229>>
+    <index-1|<with|font-family|tt|language|verbatim|flow_polynomial>|<pageref|auto-234>>
 
     <index-1|<with|font-family|tt|get_edge_attribute>|<pageref|auto-156>>
 
@@ -12520,43 +12497,45 @@
 
     <index-1|<with|font-family|tt|get_vertex_attribute>|<pageref|auto-151>>
 
-    <index-1|<with|font-family|tt|language|verbatim|girth>|<pageref|auto-272>>
+    <index-1|<with|font-family|tt|language|verbatim|girth>|<pageref|auto-278>>
 
     <index-1|<with|font-family|tt|language|verbatim|graph>|<pageref|auto-5>>
 
-    <index-1|<with|font-family|tt|language|verbatim|graph_automorphisms>|<pageref|auto-225>>
+    <index-1|<with|font-family|tt|language|verbatim|graph_automorphisms>|<pageref|auto-227>>
 
-    <index-1|<with|font-family|tt|language|verbatim|graph_charpoly>|<pageref|auto-213>>
+    <index-1|<with|font-family|tt|language|verbatim|graph_charpoly>|<pageref|auto-215>>
 
     <index-1|<with|font-family|tt|graph_complement>|<pageref|auto-77>>
+
+    <index-1|<with|font-family|tt|language|verbatim|graph_equal>|<pageref|auto-181>>
 
     <index-1|<with|font-family|tt|graph_join>|<pageref|auto-87>>
 
     <index-1|<with|font-family|tt|graph_power>|<pageref|auto-89>>
 
-    <index-1|<with|font-family|tt|language|verbatim|graph_rank>|<pageref|auto-240>>
+    <index-1|<with|font-family|tt|language|verbatim|graph_rank>|<pageref|auto-246>>
 
-    <index-1|<with|font-family|tt|language|verbatim|graph_spectrum>|<pageref|auto-215>>
+    <index-1|<with|font-family|tt|language|verbatim|graph_spectrum>|<pageref|auto-217>>
 
     <index-1|<with|font-family|tt|graph_union>|<pageref|auto-83>>
 
     <index-1|<with|font-family|tt|language|verbatim|graph_vertices>|<pageref|auto-176>>
 
-    <index-1|<with|font-family|tt|greedy_color>|<pageref|auto-303>>
+    <index-1|<with|font-family|tt|greedy_color>|<pageref|auto-309>>
 
     <index-1|<with|font-family|tt|language|verbatim|grid_graph>|<pageref|auto-53>>
 
-    <index-1|<with|font-family|tt|language|verbatim|has_arc>|<pageref|auto-193>>
+    <index-1|<with|font-family|tt|language|verbatim|has_arc>|<pageref|auto-195>>
 
-    <index-1|<with|font-family|tt|language|verbatim|has_edge>|<pageref|auto-192>>
+    <index-1|<with|font-family|tt|language|verbatim|has_edge>|<pageref|auto-194>>
 
-    <index-1|<with|font-family|tt|language|verbatim|highlight_edges>|<pageref|auto-356>>
+    <index-1|<with|font-family|tt|language|verbatim|highlight_edges>|<pageref|auto-362>>
 
-    <index-1|<with|font-family|tt|language|verbatim|highlight_subgraph>|<pageref|auto-359>>
+    <index-1|<with|font-family|tt|language|verbatim|highlight_subgraph>|<pageref|auto-365>>
 
-    <index-1|<with|font-family|tt|language|verbatim|highlight_trail>|<pageref|auto-357>>
+    <index-1|<with|font-family|tt|language|verbatim|highlight_trail>|<pageref|auto-363>>
 
-    <index-1|<with|font-family|tt|language|verbatim|highlight_vertex>|<pageref|auto-354>>
+    <index-1|<with|font-family|tt|language|verbatim|highlight_vertex>|<pageref|auto-360>>
 
     <index-1|<with|font-family|tt|language|verbatim|hypercube_graph>|<pageref|auto-41>>
 
@@ -12564,59 +12543,59 @@
 
     <index-1|<with|font-family|tt|language|verbatim|incidence_matrix>|<pageref|auto-211>>
 
-    <index-1|<with|font-family|tt|language|verbatim|incident_edges>|<pageref|auto-202>>
+    <index-1|<with|font-family|tt|language|verbatim|incident_edges>|<pageref|auto-204>>
 
     <index-1|<with|font-family|tt|induced_subgraph>|<pageref|auto-72>>
 
     <index-1|<with|font-family|tt|language|verbatim|interval_graph>|<pageref|auto-35>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_acyclic>|<pageref|auto-276>>
+    <index-1|<with|font-family|tt|language|verbatim|is_acyclic>|<pageref|auto-282>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_arborescence>|<pageref|auto-259>>
+    <index-1|<with|font-family|tt|language|verbatim|is_arborescence>|<pageref|auto-265>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_biconnected>|<pageref|auto-234>>
+    <index-1|<with|font-family|tt|language|verbatim|is_biconnected>|<pageref|auto-240>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_bipartite>|<pageref|auto-200>>
+    <index-1|<with|font-family|tt|language|verbatim|is_bipartite>|<pageref|auto-202>>
 
-    <index-1|<with|font-family|tt|is_clique>|<pageref|auto-289>>
+    <index-1|<with|font-family|tt|is_clique>|<pageref|auto-295>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_connected>|<pageref|auto-233>>
+    <index-1|<with|font-family|tt|language|verbatim|is_connected>|<pageref|auto-239>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_cut_set>|<pageref|auto-248>>
+    <index-1|<with|font-family|tt|language|verbatim|is_cut_set>|<pageref|auto-254>>
 
     <index-1|<with|font-family|tt|language|verbatim|is_directed>|<pageref|auto-172>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_eulerian>|<pageref|auto-319>>
+    <index-1|<with|font-family|tt|language|verbatim|is_eulerian>|<pageref|auto-325>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_forest>|<pageref|auto-253>>
+    <index-1|<with|font-family|tt|language|verbatim|is_forest>|<pageref|auto-259>>
 
     <index-1|<with|font-family|tt|language|verbatim|is_graphic_sequence>|<pageref|auto-32>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_hamiltonian>|<pageref|auto-321>>
+    <index-1|<with|font-family|tt|language|verbatim|is_hamiltonian>|<pageref|auto-327>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_integer_graph>|<pageref|auto-219>>
+    <index-1|<with|font-family|tt|language|verbatim|is_integer_graph>|<pageref|auto-221>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_isomorphic>|<pageref|auto-222>>
+    <index-1|<with|font-family|tt|language|verbatim|is_isomorphic>|<pageref|auto-224>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_network>|<pageref|auto-262>>
+    <index-1|<with|font-family|tt|language|verbatim|is_network>|<pageref|auto-268>>
 
     <index-1|<with|font-family|tt|language|verbatim|is_planar>|<pageref|auto-99>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_regular>|<pageref|auto-188>>
+    <index-1|<with|font-family|tt|language|verbatim|is_regular>|<pageref|auto-190>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_strongly_connected>|<pageref|auto-245>>
+    <index-1|<with|font-family|tt|language|verbatim|is_strongly_connected>|<pageref|auto-251>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_strongly_regular>|<pageref|auto-190>>
+    <index-1|<with|font-family|tt|language|verbatim|is_strongly_regular>|<pageref|auto-192>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_tournament>|<pageref|auto-198>>
+    <index-1|<with|font-family|tt|language|verbatim|is_tournament>|<pageref|auto-200>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_tree>|<pageref|auto-251>>
+    <index-1|<with|font-family|tt|language|verbatim|is_tree>|<pageref|auto-257>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_triangle_free>|<pageref|auto-291>>
+    <index-1|<with|font-family|tt|language|verbatim|is_triangle_free>|<pageref|auto-297>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_triconnected>|<pageref|auto-235>>
+    <index-1|<with|font-family|tt|language|verbatim|is_triconnected>|<pageref|auto-241>>
 
-    <index-1|<with|font-family|tt|language|verbatim|is_vertex_colorable>|<pageref|auto-310>>
+    <index-1|<with|font-family|tt|language|verbatim|is_vertex_colorable>|<pageref|auto-316>>
 
     <index-1|<with|font-family|tt|language|verbatim|is_weighted>|<pageref|auto-173>>
 
@@ -12624,7 +12603,7 @@
 
     <index-1|<with|font-family|tt|language|verbatim|kneser_graph>|<pageref|auto-37>>
 
-    <index-1|<with|font-family|tt|language|verbatim|laplacian_matrix>|<pageref|auto-207>>
+    <index-1|<with|font-family|tt|language|verbatim|laplacian_matrix>|<pageref|auto-209>>
 
     <index-1|<with|font-family|tt|language|verbatim|lcf_graph>|<pageref|auto-60>>
 
@@ -12636,37 +12615,37 @@
 
     <index-1|<with|font-family|tt|list_vertex_attributes>|<pageref|auto-152>>
 
-    <index-1|<with|font-family|tt|language|verbatim|lowest_common_ancestor>|<pageref|auto-257>>
+    <index-1|<with|font-family|tt|language|verbatim|lowest_common_ancestor>|<pageref|auto-263>>
 
     <index-1|<with|font-family|tt|make_directed>|<pageref|auto-123>>
 
     <index-1|<with|font-family|tt|make_weighted>|<pageref|auto-125>>
 
-    <index-1|<with|font-family|tt|language|verbatim|maxflow>|<pageref|auto-264>>
+    <index-1|<with|font-family|tt|language|verbatim|maxflow>|<pageref|auto-270>>
 
-    <index-1|<with|font-family|tt|maximum_clique>|<pageref|auto-295>>
+    <index-1|<with|font-family|tt|maximum_clique>|<pageref|auto-301>>
 
-    <index-1|<with|font-family|tt|language|verbatim|maximum_degree>|<pageref|auto-186>>
+    <index-1|<with|font-family|tt|language|verbatim|maximum_degree>|<pageref|auto-188>>
 
-    <index-1|<with|font-family|tt|language|verbatim|maximum_matching>|<pageref|auto-284>>
+    <index-1|<with|font-family|tt|language|verbatim|maximum_matching>|<pageref|auto-290>>
 
-    <index-1|<with|font-family|tt|language|verbatim|minimal_edge_coloring>|<pageref|auto-313>>
+    <index-1|<with|font-family|tt|language|verbatim|minimal_edge_coloring>|<pageref|auto-319>>
 
-    <index-1|<with|font-family|tt|minimal_spanning_tree>|<pageref|auto-333>>
+    <index-1|<with|font-family|tt|minimal_spanning_tree>|<pageref|auto-339>>
 
-    <index-1|<with|font-family|tt|minimal_vertex_coloring>|<pageref|auto-306>>
+    <index-1|<with|font-family|tt|minimal_vertex_coloring>|<pageref|auto-312>>
 
-    <index-1|<with|font-family|tt|language|verbatim|minimum_degree>|<pageref|auto-185>>
+    <index-1|<with|font-family|tt|language|verbatim|minimum_degree>|<pageref|auto-187>>
 
-    <index-1|<with|font-family|tt|language|verbatim|neighbors>|<pageref|auto-194>>
+    <index-1|<with|font-family|tt|language|verbatim|neighbors>|<pageref|auto-196>>
 
     <index-1|<with|font-family|tt|language|verbatim|number_of_edges>|<pageref|auto-179>>
 
-    <index-1|<with|font-family|tt|language|verbatim|number_of_spanning_trees>|<pageref|auto-335>>
+    <index-1|<with|font-family|tt|language|verbatim|number_of_spanning_trees>|<pageref|auto-341>>
 
     <index-1|<with|font-family|tt|language|verbatim|number_of_vertices>|<pageref|auto-178>>
 
-    <index-1|<with|font-family|tt|language|verbatim|odd_girth>|<pageref|auto-273>>
+    <index-1|<with|font-family|tt|language|verbatim|odd_girth>|<pageref|auto-279>>
 
     <index-1|<with|font-family|tt|language|verbatim|odd_graph>|<pageref|auto-38>>
 
@@ -12700,11 +12679,11 @@
 
     <index-1|<with|font-family|tt|relabel_vertices>|<pageref|auto-67>>
 
-    <index-1|<with|font-family|tt|language|verbatim|reliability_polynomial>|<pageref|auto-230>>
+    <index-1|<with|font-family|tt|language|verbatim|reliability_polynomial>|<pageref|auto-236>>
 
     <index-1|<with|font-family|tt|reverse_graph>|<pageref|auto-81>>
 
-    <index-1|<with|font-family|tt|language|verbatim|seidel_spectrum>|<pageref|auto-217>>
+    <index-1|<with|font-family|tt|language|verbatim|seidel_spectrum>|<pageref|auto-219>>
 
     <index-1|<with|font-family|tt|seidel_switch>|<pageref|auto-79>>
 
@@ -12718,19 +12697,19 @@
 
     <index-1|<with|font-family|tt|set_vertex_attribute>|<pageref|auto-150>>
 
-    <index-1|<with|font-family|tt|language|verbatim|set_vertex_positions>|<pageref|auto-350>>
+    <index-1|<with|font-family|tt|language|verbatim|set_vertex_positions>|<pageref|auto-356>>
 
-    <index-1|<with|font-family|tt|shortest_path>|<pageref|auto-324>>
+    <index-1|<with|font-family|tt|shortest_path>|<pageref|auto-330>>
 
     <index-1|<with|font-family|tt|language|verbatim|sierpinski_graph>|<pageref|auto-56>>
 
-    <index-1|<with|font-family|tt|spanning_tree>|<pageref|auto-331>>
+    <index-1|<with|font-family|tt|spanning_tree>|<pageref|auto-337>>
 
-    <index-1|<with|font-family|tt|language|verbatim|st_ordering>|<pageref|auto-281>>
+    <index-1|<with|font-family|tt|language|verbatim|st_ordering>|<pageref|auto-287>>
 
     <index-1|<with|font-family|tt|language|verbatim|star_graph>|<pageref|auto-43>>
 
-    <index-1|<with|font-family|tt|language|verbatim|strongly_connected_components>|<pageref|auto-244>>
+    <index-1|<with|font-family|tt|language|verbatim|strongly_connected_components>|<pageref|auto-250>>
 
     <index-1|<with|font-family|tt|subdivide_edges>|<pageref|auto-142>>
 
@@ -12738,9 +12717,9 @@
 
     <index-1|<with|font-family|tt|tensor_product>|<pageref|auto-92>>
 
-    <index-1|<with|font-family|tt|language|verbatim|topologic_sort>|<pageref|auto-278>>
+    <index-1|<with|font-family|tt|language|verbatim|topologic_sort>|<pageref|auto-284>>
 
-    <index-1|<with|font-family|tt|language|verbatim|topological_sort>|<pageref|auto-279>>
+    <index-1|<with|font-family|tt|language|verbatim|topological_sort>|<pageref|auto-285>>
 
     <index-1|<with|font-family|tt|language|verbatim|torus_grid_graph>|<pageref|auto-54>>
 
@@ -12750,27 +12729,27 @@
 
     <index-1|<with|font-family|tt|language|verbatim|transitive_closure>|<pageref|auto-94>>
 
-    <index-1|<with|font-family|tt|language|verbatim|traveling_salesman>|<pageref|auto-328>>
+    <index-1|<with|font-family|tt|language|verbatim|traveling_salesman>|<pageref|auto-334>>
 
-    <index-1|<with|font-family|tt|language|verbatim|tree_height>|<pageref|auto-255>>
+    <index-1|<with|font-family|tt|language|verbatim|tree_height>|<pageref|auto-261>>
 
-    <index-1|<with|font-family|tt|language|verbatim|tutte_polynomial>|<pageref|auto-227>>
+    <index-1|<with|font-family|tt|language|verbatim|tutte_polynomial>|<pageref|auto-230>>
 
     <index-1|<with|font-family|tt|underlying_graph>|<pageref|auto-74>>
 
-    <index-1|<with|font-family|tt|language|verbatim|vertex_degree>|<pageref|auto-181>>
+    <index-1|<with|font-family|tt|language|verbatim|vertex_degree>|<pageref|auto-183>>
 
-    <index-1|<with|font-family|tt|language|verbatim|vertex_distance>|<pageref|auto-267>>
+    <index-1|<with|font-family|tt|language|verbatim|vertex_distance>|<pageref|auto-273>>
 
-    <index-1|<with|font-family|tt|language|verbatim|vertex_in_degree>|<pageref|auto-183>>
+    <index-1|<with|font-family|tt|language|verbatim|vertex_in_degree>|<pageref|auto-185>>
 
-    <index-1|<with|font-family|tt|language|verbatim|vertex_out_degree>|<pageref|auto-182>>
+    <index-1|<with|font-family|tt|language|verbatim|vertex_out_degree>|<pageref|auto-184>>
 
     <index-1|<with|font-family|tt|language|verbatim|vertices>|<pageref|auto-175>>
 
     <index-1|<with|font-family|tt|language|verbatim|web_graph>|<pageref|auto-47>>
 
-    <index-1|<with|font-family|tt|language|verbatim|weight_matrix>|<pageref|auto-209>>
+    <index-1|<with|font-family|tt|language|verbatim|weight_matrix>|<pageref|auto-213>>
 
     <index-1|<with|font-family|tt|language|verbatim|wheel_graph>|<pageref|auto-45>>
   </the-index>
@@ -12778,7 +12757,10 @@
 
 <\initial>
   <\collection>
+    <associate|font|roman>
     <associate|font-base-size|10>
+    <associate|math-font|roman>
+    <associate|page-breaking|professional>
     <associate|page-medium|papyrus>
     <associate|page-type|a4>
   </collection>
@@ -12786,478 +12768,500 @@
 
 <\references>
   <\collection>
-    <associate|a3|<tuple|A3|112>>
-    <associate|allpairs-distance|<tuple|4.6.2|85>>
-    <associate|assign-edge-weights|<tuple|1.10.9|41>>
+    <associate|a3|<tuple|A3|110>>
+    <associate|allpairs-distance|<tuple|4.8.2|83>>
+    <associate|assign-edge-weights|<tuple|1.10.9|39>>
     <associate|auto-1|<tuple|?|7>>
     <associate|auto-10|<tuple|2|10>>
-    <associate|auto-100|<tuple|1.10|34>>
-    <associate|auto-101|<tuple|1.10.1|34>>
-    <associate|auto-102|<tuple|1.10.1|34>>
-    <associate|auto-103|<tuple|1.10.1|34>>
-    <associate|auto-104|<tuple|1.10.2|35>>
-    <associate|auto-105|<tuple|1.10.2|35>>
-    <associate|auto-106|<tuple|1.10.3|36>>
-    <associate|auto-107|<tuple|1.10.3|36>>
-    <associate|auto-108|<tuple|1.10.4|36>>
-    <associate|auto-109|<tuple|1.10.4|36>>
+    <associate|auto-100|<tuple|1.10|33>>
+    <associate|auto-101|<tuple|1.10.1|33>>
+    <associate|auto-102|<tuple|1.10.1|33>>
+    <associate|auto-103|<tuple|1.10.1|33>>
+    <associate|auto-104|<tuple|1.10.2|34>>
+    <associate|auto-105|<tuple|1.10.2|34>>
+    <associate|auto-106|<tuple|1.10.3|34>>
+    <associate|auto-107|<tuple|1.10.3|34>>
+    <associate|auto-108|<tuple|1.10.4|35>>
+    <associate|auto-109|<tuple|1.10.4|35>>
     <associate|auto-11|<tuple|3|11>>
-    <associate|auto-110|<tuple|1.10.5|38>>
-    <associate|auto-111|<tuple|1.10.5|38>>
-    <associate|auto-112|<tuple|1.10.6|39>>
-    <associate|auto-113|<tuple|1.10.6|39>>
-    <associate|auto-114|<tuple|1.10.7|39>>
-    <associate|auto-115|<tuple|1.10.7|39>>
-    <associate|auto-116|<tuple|1.10.8|40>>
-    <associate|auto-117|<tuple|1.10.8|40>>
-    <associate|auto-118|<tuple|1.10.9|41>>
-    <associate|auto-119|<tuple|1.10.9|41>>
-    <associate|auto-12|<tuple|4|12>>
-    <associate|auto-120|<tuple|2|43>>
-    <associate|auto-121|<tuple|2.1|43>>
-    <associate|auto-122|<tuple|2.1.1|43>>
-    <associate|auto-123|<tuple|2.1.1|43>>
-    <associate|auto-124|<tuple|2.1.2|43>>
-    <associate|auto-125|<tuple|2.1.2|43>>
-    <associate|auto-126|<tuple|2.2|43>>
-    <associate|auto-127|<tuple|2.2.1|43>>
-    <associate|auto-128|<tuple|2.2.1|43>>
-    <associate|auto-129|<tuple|2.2.1|43>>
+    <associate|auto-110|<tuple|1.10.5|36>>
+    <associate|auto-111|<tuple|1.10.5|36>>
+    <associate|auto-112|<tuple|1.10.6|37>>
+    <associate|auto-113|<tuple|1.10.6|37>>
+    <associate|auto-114|<tuple|1.10.7|38>>
+    <associate|auto-115|<tuple|1.10.7|38>>
+    <associate|auto-116|<tuple|1.10.8|38>>
+    <associate|auto-117|<tuple|1.10.8|38>>
+    <associate|auto-118|<tuple|1.10.9|39>>
+    <associate|auto-119|<tuple|1.10.9|39>>
+    <associate|auto-12|<tuple|4|11>>
+    <associate|auto-120|<tuple|2|41>>
+    <associate|auto-121|<tuple|2.1|41>>
+    <associate|auto-122|<tuple|2.1.1|41>>
+    <associate|auto-123|<tuple|2.1.1|41>>
+    <associate|auto-124|<tuple|2.1.2|41>>
+    <associate|auto-125|<tuple|2.1.2|41>>
+    <associate|auto-126|<tuple|2.2|41>>
+    <associate|auto-127|<tuple|2.2.1|41>>
+    <associate|auto-128|<tuple|2.2.1|41>>
+    <associate|auto-129|<tuple|2.2.1|41>>
     <associate|auto-13|<tuple|5|12>>
-    <associate|auto-130|<tuple|2.3|44>>
-    <associate|auto-131|<tuple|2.3.1|44>>
-    <associate|auto-132|<tuple|2.3.1|44>>
-    <associate|auto-133|<tuple|2.3.1|44>>
-    <associate|auto-134|<tuple|2.3.1|44>>
-    <associate|auto-135|<tuple|2.3.1|44>>
-    <associate|auto-136|<tuple|2.3.2|45>>
-    <associate|auto-137|<tuple|2.3.2|45>>
-    <associate|auto-138|<tuple|2.3.2|45>>
-    <associate|auto-139|<tuple|2.3.3|46>>
+    <associate|auto-130|<tuple|2.3|42>>
+    <associate|auto-131|<tuple|2.3.1|42>>
+    <associate|auto-132|<tuple|2.3.1|42>>
+    <associate|auto-133|<tuple|2.3.1|42>>
+    <associate|auto-134|<tuple|2.3.1|42>>
+    <associate|auto-135|<tuple|2.3.1|42>>
+    <associate|auto-136|<tuple|2.3.2|43>>
+    <associate|auto-137|<tuple|2.3.2|43>>
+    <associate|auto-138|<tuple|2.3.2|43>>
+    <associate|auto-139|<tuple|2.3.3|44>>
     <associate|auto-14|<tuple|1.2|13>>
-    <associate|auto-140|<tuple|2.3.3|46>>
-    <associate|auto-141|<tuple|2.3.4|46>>
-    <associate|auto-142|<tuple|2.3.4|46>>
-    <associate|auto-143|<tuple|2.4|47>>
-    <associate|auto-144|<tuple|2.4.1|47>>
-    <associate|auto-145|<tuple|2.4.1|47>>
-    <associate|auto-146|<tuple|2.4.1|48>>
-    <associate|auto-147|<tuple|2.4.1|48>>
-    <associate|auto-148|<tuple|2.4.1|48>>
-    <associate|auto-149|<tuple|2.4.2|48>>
+    <associate|auto-140|<tuple|2.3.3|44>>
+    <associate|auto-141|<tuple|2.3.4|44>>
+    <associate|auto-142|<tuple|2.3.4|44>>
+    <associate|auto-143|<tuple|2.4|45>>
+    <associate|auto-144|<tuple|2.4.1|45>>
+    <associate|auto-145|<tuple|2.4.1|45>>
+    <associate|auto-146|<tuple|2.4.1|45>>
+    <associate|auto-147|<tuple|2.4.1|45>>
+    <associate|auto-148|<tuple|2.4.1|45>>
+    <associate|auto-149|<tuple|2.4.2|46>>
     <associate|auto-15|<tuple|1.2.1|13>>
-    <associate|auto-150|<tuple|2.4.2|48>>
-    <associate|auto-151|<tuple|2.4.2|48>>
-    <associate|auto-152|<tuple|2.4.2|49>>
-    <associate|auto-153|<tuple|2.4.2|49>>
-    <associate|auto-154|<tuple|2.4.3|49>>
-    <associate|auto-155|<tuple|2.4.3|50>>
-    <associate|auto-156|<tuple|2.4.3|50>>
-    <associate|auto-157|<tuple|2.4.3|50>>
-    <associate|auto-158|<tuple|2.4.3|50>>
-    <associate|auto-159|<tuple|3|51>>
+    <associate|auto-150|<tuple|2.4.2|46>>
+    <associate|auto-151|<tuple|2.4.2|46>>
+    <associate|auto-152|<tuple|2.4.2|46>>
+    <associate|auto-153|<tuple|2.4.2|46>>
+    <associate|auto-154|<tuple|2.4.3|47>>
+    <associate|auto-155|<tuple|2.4.3|47>>
+    <associate|auto-156|<tuple|2.4.3|47>>
+    <associate|auto-157|<tuple|2.4.3|47>>
+    <associate|auto-158|<tuple|2.4.3|47>>
+    <associate|auto-159|<tuple|3|49>>
     <associate|auto-16|<tuple|1.2.1|13>>
-    <associate|auto-160|<tuple|3.1|51>>
-    <associate|auto-161|<tuple|3.1.1|51>>
-    <associate|auto-162|<tuple|3.1.1|51>>
-    <associate|auto-163|<tuple|3.1.2|51>>
-    <associate|auto-164|<tuple|3.2|52>>
-    <associate|auto-165|<tuple|3.2.1|52>>
-    <associate|auto-166|<tuple|3.2.1|52>>
-    <associate|auto-167|<tuple|3.2.2|53>>
-    <associate|auto-168|<tuple|3.1|53>>
-    <associate|auto-169|<tuple|4|55>>
+    <associate|auto-160|<tuple|3.1|49>>
+    <associate|auto-161|<tuple|3.1.1|49>>
+    <associate|auto-162|<tuple|3.1.1|49>>
+    <associate|auto-163|<tuple|3.1.2|49>>
+    <associate|auto-164|<tuple|3.2|50>>
+    <associate|auto-165|<tuple|3.2.1|50>>
+    <associate|auto-166|<tuple|3.2.1|50>>
+    <associate|auto-167|<tuple|3.2.2|50>>
+    <associate|auto-168|<tuple|3.1|51>>
+    <associate|auto-169|<tuple|4|53>>
     <associate|auto-17|<tuple|1.2.2|13>>
-    <associate|auto-170|<tuple|4.1|55>>
-    <associate|auto-171|<tuple|4.1.1|55>>
-    <associate|auto-172|<tuple|4.1.1|55>>
-    <associate|auto-173|<tuple|4.1.1|55>>
-    <associate|auto-174|<tuple|4.1.2|55>>
-    <associate|auto-175|<tuple|4.1.2|55>>
-    <associate|auto-176|<tuple|4.1.2|55>>
-    <associate|auto-177|<tuple|4.1.2|55>>
-    <associate|auto-178|<tuple|4.1.2|55>>
-    <associate|auto-179|<tuple|4.1.2|55>>
+    <associate|auto-170|<tuple|4.1|53>>
+    <associate|auto-171|<tuple|4.1.1|53>>
+    <associate|auto-172|<tuple|4.1.1|53>>
+    <associate|auto-173|<tuple|4.1.1|53>>
+    <associate|auto-174|<tuple|4.1.2|53>>
+    <associate|auto-175|<tuple|4.1.2|53>>
+    <associate|auto-176|<tuple|4.1.2|53>>
+    <associate|auto-177|<tuple|4.1.2|53>>
+    <associate|auto-178|<tuple|4.1.2|53>>
+    <associate|auto-179|<tuple|4.1.2|53>>
     <associate|auto-18|<tuple|1.2.2|13>>
-    <associate|auto-180|<tuple|4.1.3|56>>
-    <associate|auto-181|<tuple|4.1.3|56>>
-    <associate|auto-182|<tuple|4.1.3|56>>
-    <associate|auto-183|<tuple|4.1.3|56>>
-    <associate|auto-184|<tuple|4.1.3|56>>
-    <associate|auto-185|<tuple|4.1.3|56>>
-    <associate|auto-186|<tuple|4.1.3|56>>
-    <associate|auto-187|<tuple|4.1.4|57>>
-    <associate|auto-188|<tuple|4.1.4|57>>
-    <associate|auto-189|<tuple|4.1.5|58>>
-    <associate|auto-19|<tuple|1.2.3|14>>
-    <associate|auto-190|<tuple|4.1.5|58>>
-    <associate|auto-191|<tuple|4.1.6|58>>
-    <associate|auto-192|<tuple|4.1.6|58>>
-    <associate|auto-193|<tuple|4.1.6|58>>
-    <associate|auto-194|<tuple|4.1.6|59>>
-    <associate|auto-195|<tuple|4.1.6|59>>
-    <associate|auto-196|<tuple|4.1.6|59>>
-    <associate|auto-197|<tuple|4.1.7|60>>
-    <associate|auto-198|<tuple|4.1.7|60>>
-    <associate|auto-199|<tuple|4.1.8|60>>
+    <associate|auto-180|<tuple|4.1.3|54>>
+    <associate|auto-181|<tuple|4.1.3|54>>
+    <associate|auto-182|<tuple|4.1.4|55>>
+    <associate|auto-183|<tuple|4.1.4|55>>
+    <associate|auto-184|<tuple|4.1.4|55>>
+    <associate|auto-185|<tuple|4.1.4|55>>
+    <associate|auto-186|<tuple|4.1.4|55>>
+    <associate|auto-187|<tuple|4.1.4|55>>
+    <associate|auto-188|<tuple|4.1.4|55>>
+    <associate|auto-189|<tuple|4.1.5|56>>
+    <associate|auto-19|<tuple|1.2.3|13>>
+    <associate|auto-190|<tuple|4.1.5|56>>
+    <associate|auto-191|<tuple|4.1.6|56>>
+    <associate|auto-192|<tuple|4.1.6|56>>
+    <associate|auto-193|<tuple|4.1.7|57>>
+    <associate|auto-194|<tuple|4.1.7|57>>
+    <associate|auto-195|<tuple|4.1.7|57>>
+    <associate|auto-196|<tuple|4.1.7|57>>
+    <associate|auto-197|<tuple|4.1.7|57>>
+    <associate|auto-198|<tuple|4.1.7|57>>
+    <associate|auto-199|<tuple|4.1.8|58>>
     <associate|auto-2|<tuple|1|9>>
     <associate|auto-20|<tuple|1.2.3|14>>
-    <associate|auto-200|<tuple|4.1.8|60>>
-    <associate|auto-201|<tuple|4.1.9|61>>
-    <associate|auto-202|<tuple|4.1.9|61>>
-    <associate|auto-203|<tuple|4.2|62>>
-    <associate|auto-204|<tuple|4.2.1|62>>
-    <associate|auto-205|<tuple|4.2.1|62>>
-    <associate|auto-206|<tuple|4.2.2|63>>
-    <associate|auto-207|<tuple|4.2.2|63>>
-    <associate|auto-208|<tuple|4.2.3|64>>
-    <associate|auto-209|<tuple|4.2.3|64>>
+    <associate|auto-200|<tuple|4.1.8|58>>
+    <associate|auto-201|<tuple|4.1.9|59>>
+    <associate|auto-202|<tuple|4.1.9|59>>
+    <associate|auto-203|<tuple|4.1.10|59>>
+    <associate|auto-204|<tuple|4.1.10|59>>
+    <associate|auto-205|<tuple|4.2|60>>
+    <associate|auto-206|<tuple|4.2.1|60>>
+    <associate|auto-207|<tuple|4.2.1|60>>
+    <associate|auto-208|<tuple|4.2.2|61>>
+    <associate|auto-209|<tuple|4.2.2|61>>
     <associate|auto-21|<tuple|1.2.3|14>>
-    <associate|auto-210|<tuple|4.2.4|64>>
-    <associate|auto-211|<tuple|4.2.4|64>>
-    <associate|auto-212|<tuple|4.2.5|65>>
-    <associate|auto-213|<tuple|4.2.5|65>>
-    <associate|auto-214|<tuple|4.2.6|66>>
-    <associate|auto-215|<tuple|4.2.6|66>>
-    <associate|auto-216|<tuple|4.2.7|66>>
-    <associate|auto-217|<tuple|4.2.7|66>>
-    <associate|auto-218|<tuple|4.2.8|67>>
-    <associate|auto-219|<tuple|4.2.8|67>>
+    <associate|auto-210|<tuple|4.2.3|62>>
+    <associate|auto-211|<tuple|4.2.3|62>>
+    <associate|auto-212|<tuple|4.2.4|63>>
+    <associate|auto-213|<tuple|4.2.4|63>>
+    <associate|auto-214|<tuple|4.2.5|64>>
+    <associate|auto-215|<tuple|4.2.5|64>>
+    <associate|auto-216|<tuple|4.2.6|64>>
+    <associate|auto-217|<tuple|4.2.6|64>>
+    <associate|auto-218|<tuple|4.2.7|65>>
+    <associate|auto-219|<tuple|4.2.7|65>>
     <associate|auto-22|<tuple|1.3|14>>
-    <associate|auto-220|<tuple|4.2.9|67>>
-    <associate|auto-221|<tuple|4.2.10|68>>
-    <associate|auto-222|<tuple|4.2.10|68>>
-    <associate|auto-223|<tuple|4.2.10|70>>
-    <associate|auto-224|<tuple|4.2.11|71>>
-    <associate|auto-225|<tuple|4.2.11|71>>
-    <associate|auto-226|<tuple|4.2.12|71>>
-    <associate|auto-227|<tuple|4.2.12|71>>
-    <associate|auto-228|<tuple|4.2.12|71>>
-    <associate|auto-229|<tuple|4.2.12|71>>
+    <associate|auto-220|<tuple|4.2.8|65>>
+    <associate|auto-221|<tuple|4.2.8|65>>
+    <associate|auto-222|<tuple|4.3|65>>
+    <associate|auto-223|<tuple|4.3.1|65>>
+    <associate|auto-224|<tuple|4.3.1|65>>
+    <associate|auto-225|<tuple|4.3.1|67>>
+    <associate|auto-226|<tuple|4.3.2|68>>
+    <associate|auto-227|<tuple|4.3.2|68>>
+    <associate|auto-228|<tuple|4.4|69>>
+    <associate|auto-229|<tuple|4.4.1|69>>
     <associate|auto-23|<tuple|1.3.1|14>>
-    <associate|auto-230|<tuple|4.2.12|71>>
-    <associate|auto-231|<tuple|4.3|75>>
-    <associate|auto-232|<tuple|4.3.1|75>>
-    <associate|auto-233|<tuple|4.3.1|75>>
-    <associate|auto-234|<tuple|4.3.1|75>>
-    <associate|auto-235|<tuple|4.3.1|75>>
-    <associate|auto-236|<tuple|4.3.2|76>>
-    <associate|auto-237|<tuple|4.3.2|76>>
-    <associate|auto-238|<tuple|4.3.2|76>>
-    <associate|auto-239|<tuple|4.3.3|77>>
+    <associate|auto-230|<tuple|4.4.1|69>>
+    <associate|auto-231|<tuple|4.4.2|71>>
+    <associate|auto-232|<tuple|4.4.2|71>>
+    <associate|auto-233|<tuple|4.4.3|72>>
+    <associate|auto-234|<tuple|4.4.3|72>>
+    <associate|auto-235|<tuple|4.4.4|72>>
+    <associate|auto-236|<tuple|4.4.4|72>>
+    <associate|auto-237|<tuple|4.5|74>>
+    <associate|auto-238|<tuple|4.5.1|74>>
+    <associate|auto-239|<tuple|4.5.1|74>>
     <associate|auto-24|<tuple|1.3.1|14>>
-    <associate|auto-240|<tuple|4.3.3|77>>
-    <associate|auto-241|<tuple|4.3.4|78>>
-    <associate|auto-242|<tuple|4.3.4|78>>
-    <associate|auto-243|<tuple|4.3.5|78>>
-    <associate|auto-244|<tuple|4.3.5|78>>
-    <associate|auto-245|<tuple|4.3.5|78>>
-    <associate|auto-246|<tuple|4.3.6|79>>
-    <associate|auto-247|<tuple|4.3.7|79>>
-    <associate|auto-248|<tuple|4.3.7|79>>
-    <associate|auto-249|<tuple|4.4|79>>
+    <associate|auto-240|<tuple|4.5.1|74>>
+    <associate|auto-241|<tuple|4.5.1|74>>
+    <associate|auto-242|<tuple|4.5.2|75>>
+    <associate|auto-243|<tuple|4.5.2|75>>
+    <associate|auto-244|<tuple|4.5.2|75>>
+    <associate|auto-245|<tuple|4.5.3|76>>
+    <associate|auto-246|<tuple|4.5.3|76>>
+    <associate|auto-247|<tuple|4.5.4|76>>
+    <associate|auto-248|<tuple|4.5.4|76>>
+    <associate|auto-249|<tuple|4.5.5|77>>
     <associate|auto-25|<tuple|1.3.2|15>>
-    <associate|auto-250|<tuple|4.4.1|79>>
-    <associate|auto-251|<tuple|4.4.1|79>>
-    <associate|auto-252|<tuple|4.4.2|80>>
-    <associate|auto-253|<tuple|4.4.2|80>>
-    <associate|auto-254|<tuple|4.4.3|80>>
-    <associate|auto-255|<tuple|4.4.3|80>>
-    <associate|auto-256|<tuple|4.4.4|81>>
-    <associate|auto-257|<tuple|4.4.4|81>>
-    <associate|auto-258|<tuple|4.4.5|81>>
-    <associate|auto-259|<tuple|4.4.5|81>>
+    <associate|auto-250|<tuple|4.5.5|77>>
+    <associate|auto-251|<tuple|4.5.5|77>>
+    <associate|auto-252|<tuple|4.5.6|77>>
+    <associate|auto-253|<tuple|4.5.7|77>>
+    <associate|auto-254|<tuple|4.5.7|77>>
+    <associate|auto-255|<tuple|4.6|78>>
+    <associate|auto-256|<tuple|4.6.1|78>>
+    <associate|auto-257|<tuple|4.6.1|78>>
+    <associate|auto-258|<tuple|4.6.2|78>>
+    <associate|auto-259|<tuple|4.6.2|78>>
     <associate|auto-26|<tuple|1.3.2|15>>
-    <associate|auto-260|<tuple|4.5|82>>
-    <associate|auto-261|<tuple|4.5.1|82>>
-    <associate|auto-262|<tuple|4.5.1|82>>
-    <associate|auto-263|<tuple|4.5.2|83>>
-    <associate|auto-264|<tuple|4.5.2|83>>
-    <associate|auto-265|<tuple|4.6|84>>
-    <associate|auto-266|<tuple|4.6.1|84>>
-    <associate|auto-267|<tuple|4.6.1|84>>
-    <associate|auto-268|<tuple|4.6.2|85>>
-    <associate|auto-269|<tuple|4.6.2|85>>
+    <associate|auto-260|<tuple|4.6.3|79>>
+    <associate|auto-261|<tuple|4.6.3|79>>
+    <associate|auto-262|<tuple|4.6.4|79>>
+    <associate|auto-263|<tuple|4.6.4|79>>
+    <associate|auto-264|<tuple|4.6.5|80>>
+    <associate|auto-265|<tuple|4.6.5|80>>
+    <associate|auto-266|<tuple|4.7|80>>
+    <associate|auto-267|<tuple|4.7.1|80>>
+    <associate|auto-268|<tuple|4.7.1|80>>
+    <associate|auto-269|<tuple|4.7.2|81>>
     <associate|auto-27|<tuple|1.3.2|15>>
-    <associate|auto-270|<tuple|4.6.3|86>>
-    <associate|auto-271|<tuple|4.6.4|87>>
-    <associate|auto-272|<tuple|4.6.4|87>>
-    <associate|auto-273|<tuple|4.6.4|87>>
-    <associate|auto-274|<tuple|4.7|87>>
-    <associate|auto-275|<tuple|4.7.1|87>>
-    <associate|auto-276|<tuple|4.7.1|87>>
-    <associate|auto-277|<tuple|4.7.2|88>>
-    <associate|auto-278|<tuple|4.7.2|88>>
-    <associate|auto-279|<tuple|4.7.2|88>>
-    <associate|auto-28|<tuple|1.4|16>>
-    <associate|auto-280|<tuple|4.7.3|88>>
-    <associate|auto-281|<tuple|4.7.3|88>>
-    <associate|auto-282|<tuple|4.8|89>>
-    <associate|auto-283|<tuple|4.8.1|89>>
-    <associate|auto-284|<tuple|4.8.1|89>>
-    <associate|auto-285|<tuple|4.8.2|90>>
-    <associate|auto-286|<tuple|4.8.2|90>>
-    <associate|auto-287|<tuple|4.9|91>>
-    <associate|auto-288|<tuple|4.9.1|91>>
-    <associate|auto-289|<tuple|4.9.1|91>>
-    <associate|auto-29|<tuple|1.4.1|16>>
-    <associate|auto-290|<tuple|4.9.2|91>>
-    <associate|auto-291|<tuple|4.9.2|91>>
-    <associate|auto-292|<tuple|4.9.3|91>>
-    <associate|auto-293|<tuple|4.9.3|91>>
-    <associate|auto-294|<tuple|4.9.4|92>>
-    <associate|auto-295|<tuple|4.9.4|92>>
-    <associate|auto-296|<tuple|4.9.4|92>>
-    <associate|auto-297|<tuple|4.9.5|93>>
-    <associate|auto-298|<tuple|4.9.5|93>>
-    <associate|auto-299|<tuple|4.9.6|94>>
+    <associate|auto-270|<tuple|4.7.2|81>>
+    <associate|auto-271|<tuple|4.8|83>>
+    <associate|auto-272|<tuple|4.8.1|83>>
+    <associate|auto-273|<tuple|4.8.1|83>>
+    <associate|auto-274|<tuple|4.8.2|83>>
+    <associate|auto-275|<tuple|4.8.2|83>>
+    <associate|auto-276|<tuple|4.8.3|84>>
+    <associate|auto-277|<tuple|4.8.4|85>>
+    <associate|auto-278|<tuple|4.8.4|85>>
+    <associate|auto-279|<tuple|4.8.4|85>>
+    <associate|auto-28|<tuple|1.4|15>>
+    <associate|auto-280|<tuple|4.9|85>>
+    <associate|auto-281|<tuple|4.9.1|85>>
+    <associate|auto-282|<tuple|4.9.1|85>>
+    <associate|auto-283|<tuple|4.9.2|86>>
+    <associate|auto-284|<tuple|4.9.2|86>>
+    <associate|auto-285|<tuple|4.9.2|86>>
+    <associate|auto-286|<tuple|4.9.3|86>>
+    <associate|auto-287|<tuple|4.9.3|86>>
+    <associate|auto-288|<tuple|4.10|87>>
+    <associate|auto-289|<tuple|4.10.1|87>>
+    <associate|auto-29|<tuple|1.4.1|15>>
+    <associate|auto-290|<tuple|4.10.1|87>>
+    <associate|auto-291|<tuple|4.10.2|88>>
+    <associate|auto-292|<tuple|4.10.2|88>>
+    <associate|auto-293|<tuple|4.11|89>>
+    <associate|auto-294|<tuple|4.11.1|89>>
+    <associate|auto-295|<tuple|4.11.1|89>>
+    <associate|auto-296|<tuple|4.11.2|89>>
+    <associate|auto-297|<tuple|4.11.2|89>>
+    <associate|auto-298|<tuple|4.11.3|89>>
+    <associate|auto-299|<tuple|4.11.3|89>>
     <associate|auto-3|<tuple|1.1|9>>
-    <associate|auto-30|<tuple|1.4.1|16>>
-    <associate|auto-300|<tuple|4.9.6|94>>
-    <associate|auto-301|<tuple|4.10|94>>
-    <associate|auto-302|<tuple|4.10.1|94>>
-    <associate|auto-303|<tuple|4.10.1|94>>
-    <associate|auto-304|<tuple|4.1|96>>
-    <associate|auto-305|<tuple|4.10.2|95>>
-    <associate|auto-306|<tuple|4.10.2|95>>
-    <associate|auto-307|<tuple|4.10.3|96>>
-    <associate|auto-308|<tuple|4.10.3|96>>
-    <associate|auto-309|<tuple|4.10.4|97>>
+    <associate|auto-30|<tuple|1.4.1|15>>
+    <associate|auto-300|<tuple|4.11.4|90>>
+    <associate|auto-301|<tuple|4.11.4|90>>
+    <associate|auto-302|<tuple|4.11.4|90>>
+    <associate|auto-303|<tuple|4.11.5|91>>
+    <associate|auto-304|<tuple|4.11.5|91>>
+    <associate|auto-305|<tuple|4.11.6|92>>
+    <associate|auto-306|<tuple|4.11.6|92>>
+    <associate|auto-307|<tuple|4.12|92>>
+    <associate|auto-308|<tuple|4.12.1|92>>
+    <associate|auto-309|<tuple|4.12.1|92>>
     <associate|auto-31|<tuple|1.4.2|16>>
-    <associate|auto-310|<tuple|4.10.4|97>>
-    <associate|auto-311|<tuple|4.11|98>>
-    <associate|auto-312|<tuple|4.11.1|98>>
-    <associate|auto-313|<tuple|4.11.1|98>>
-    <associate|auto-314|<tuple|4.11.2|99>>
-    <associate|auto-315|<tuple|4.11.2|99>>
-    <associate|auto-316|<tuple|5|101>>
-    <associate|auto-317|<tuple|5.1|101>>
-    <associate|auto-318|<tuple|5.1.1|101>>
-    <associate|auto-319|<tuple|5.1.1|101>>
+    <associate|auto-310|<tuple|4.1|93>>
+    <associate|auto-311|<tuple|4.12.2|93>>
+    <associate|auto-312|<tuple|4.12.2|93>>
+    <associate|auto-313|<tuple|4.12.3|94>>
+    <associate|auto-314|<tuple|4.12.3|94>>
+    <associate|auto-315|<tuple|4.12.4|95>>
+    <associate|auto-316|<tuple|4.12.4|95>>
+    <associate|auto-317|<tuple|4.13|96>>
+    <associate|auto-318|<tuple|4.13.1|96>>
+    <associate|auto-319|<tuple|4.13.1|96>>
     <associate|auto-32|<tuple|1.4.2|16>>
-    <associate|auto-320|<tuple|5.1.2|101>>
-    <associate|auto-321|<tuple|5.1.2|101>>
-    <associate|auto-322|<tuple|5.2|102>>
-    <associate|auto-323|<tuple|5.2.1|102>>
-    <associate|auto-324|<tuple|5.2.1|102>>
-    <associate|auto-325|<tuple|5.2.2|103>>
-    <associate|auto-326|<tuple|5.2.2|103>>
-    <associate|auto-327|<tuple|5.2.3|104>>
-    <associate|auto-328|<tuple|5.2.3|104>>
-    <associate|auto-329|<tuple|5.3|106>>
+    <associate|auto-320|<tuple|4.13.2|96>>
+    <associate|auto-321|<tuple|4.13.2|96>>
+    <associate|auto-322|<tuple|5|99>>
+    <associate|auto-323|<tuple|5.1|99>>
+    <associate|auto-324|<tuple|5.1.1|99>>
+    <associate|auto-325|<tuple|5.1.1|99>>
+    <associate|auto-326|<tuple|5.1.2|99>>
+    <associate|auto-327|<tuple|5.1.2|99>>
+    <associate|auto-328|<tuple|5.2|100>>
+    <associate|auto-329|<tuple|5.2.1|100>>
     <associate|auto-33|<tuple|1.5|16>>
-    <associate|auto-330|<tuple|5.3.1|106>>
-    <associate|auto-331|<tuple|5.3.1|106>>
-    <associate|auto-332|<tuple|5.3.2|107>>
-    <associate|auto-333|<tuple|5.3.2|107>>
-    <associate|auto-334|<tuple|5.3.3|108>>
-    <associate|auto-335|<tuple|5.3.3|108>>
-    <associate|auto-336|<tuple|6|109>>
-    <associate|auto-337|<tuple|6.1|109>>
-    <associate|auto-338|<tuple|6.1|109>>
-    <associate|auto-339|<tuple|6.1.1|109>>
+    <associate|auto-330|<tuple|5.2.1|100>>
+    <associate|auto-331|<tuple|5.2.2|101>>
+    <associate|auto-332|<tuple|5.2.2|101>>
+    <associate|auto-333|<tuple|5.2.3|102>>
+    <associate|auto-334|<tuple|5.2.3|102>>
+    <associate|auto-335|<tuple|5.3|104>>
+    <associate|auto-336|<tuple|5.3.1|104>>
+    <associate|auto-337|<tuple|5.3.1|104>>
+    <associate|auto-338|<tuple|5.3.2|105>>
+    <associate|auto-339|<tuple|5.3.2|105>>
     <associate|auto-34|<tuple|1.5.1|16>>
-    <associate|auto-340|<tuple|6.1.2|110>>
-    <associate|auto-341|<tuple|6.1.3|110>>
-    <associate|auto-342|<tuple|6.1.4|112>>
-    <associate|auto-343|<tuple|6.1.5|113>>
-    <associate|auto-344|<tuple|6.1|114>>
-    <associate|auto-345|<tuple|6.2|114>>
-    <associate|auto-346|<tuple|6.3|114>>
-    <associate|auto-347|<tuple|6.1.6|114>>
-    <associate|auto-348|<tuple|6.2|115>>
-    <associate|auto-349|<tuple|6.2.1|115>>
+    <associate|auto-340|<tuple|5.3.3|105>>
+    <associate|auto-341|<tuple|5.3.3|105>>
+    <associate|auto-342|<tuple|6|107>>
+    <associate|auto-343|<tuple|6.1|107>>
+    <associate|auto-344|<tuple|6.1|107>>
+    <associate|auto-345|<tuple|6.1.1|107>>
+    <associate|auto-346|<tuple|6.1.2|107>>
+    <associate|auto-347|<tuple|6.1.3|108>>
+    <associate|auto-348|<tuple|6.1.4|110>>
+    <associate|auto-349|<tuple|6.1.5|111>>
     <associate|auto-35|<tuple|1.5.1|16>>
-    <associate|auto-350|<tuple|6.2.1|115>>
-    <associate|auto-351|<tuple|6.2.2|116>>
-    <associate|auto-352|<tuple|6.3|117>>
-    <associate|auto-353|<tuple|6.3.1|117>>
-    <associate|auto-354|<tuple|6.3.1|117>>
-    <associate|auto-355|<tuple|6.3.2|117>>
-    <associate|auto-356|<tuple|6.3.2|117>>
-    <associate|auto-357|<tuple|6.3.2|117>>
-    <associate|auto-358|<tuple|6.3.3|118>>
-    <associate|auto-359|<tuple|6.3.3|118>>
-    <associate|auto-36|<tuple|1.5.2|17>>
-    <associate|auto-360|<tuple|6.3.3|121>>
-    <associate|auto-361|<tuple|40|123>>
-    <associate|auto-37|<tuple|1.5.2|17>>
-    <associate|auto-38|<tuple|1.5.2|17>>
-    <associate|auto-39|<tuple|1.6|18>>
+    <associate|auto-350|<tuple|6.1|111>>
+    <associate|auto-351|<tuple|6.2|112>>
+    <associate|auto-352|<tuple|6.3|112>>
+    <associate|auto-353|<tuple|6.1.6|113>>
+    <associate|auto-354|<tuple|6.2|113>>
+    <associate|auto-355|<tuple|6.2.1|113>>
+    <associate|auto-356|<tuple|6.2.1|113>>
+    <associate|auto-357|<tuple|6.2.2|114>>
+    <associate|auto-358|<tuple|6.3|115>>
+    <associate|auto-359|<tuple|6.3.1|115>>
+    <associate|auto-36|<tuple|1.5.2|16>>
+    <associate|auto-360|<tuple|6.3.1|115>>
+    <associate|auto-361|<tuple|6.3.2|115>>
+    <associate|auto-362|<tuple|6.3.2|115>>
+    <associate|auto-363|<tuple|6.3.2|115>>
+    <associate|auto-364|<tuple|6.3.3|116>>
+    <associate|auto-365|<tuple|6.3.3|116>>
+    <associate|auto-366|<tuple|6.3.3|119>>
+    <associate|auto-367|<tuple|43|121>>
+    <associate|auto-37|<tuple|1.5.2|16>>
+    <associate|auto-38|<tuple|1.5.2|16>>
+    <associate|auto-39|<tuple|1.6|17>>
     <associate|auto-4|<tuple|1.1.1|9>>
-    <associate|auto-40|<tuple|1.6.1|18>>
-    <associate|auto-41|<tuple|1.6.1|18>>
+    <associate|auto-40|<tuple|1.6.1|17>>
+    <associate|auto-41|<tuple|1.6.1|17>>
     <associate|auto-42|<tuple|1.6.2|18>>
     <associate|auto-43|<tuple|1.6.2|18>>
-    <associate|auto-44|<tuple|1.6.3|19>>
-    <associate|auto-45|<tuple|1.6.3|19>>
-    <associate|auto-46|<tuple|1.6.4|19>>
-    <associate|auto-47|<tuple|1.6.4|19>>
+    <associate|auto-44|<tuple|1.6.3|18>>
+    <associate|auto-45|<tuple|1.6.3|18>>
+    <associate|auto-46|<tuple|1.6.4|18>>
+    <associate|auto-47|<tuple|1.6.4|18>>
     <associate|auto-48|<tuple|1.6.5|19>>
     <associate|auto-49|<tuple|1.6.5|19>>
     <associate|auto-5|<tuple|1.1.1|9>>
-    <associate|auto-50|<tuple|1.6.6|20>>
-    <associate|auto-51|<tuple|1.6.6|20>>
+    <associate|auto-50|<tuple|1.6.6|19>>
+    <associate|auto-51|<tuple|1.6.6|19>>
     <associate|auto-52|<tuple|1.6.7|20>>
     <associate|auto-53|<tuple|1.6.7|20>>
     <associate|auto-54|<tuple|1.6.7|20>>
-    <associate|auto-55|<tuple|1.6.8|22>>
-    <associate|auto-56|<tuple|1.6.8|22>>
-    <associate|auto-57|<tuple|1.6.9|22>>
-    <associate|auto-58|<tuple|1.6.9|22>>
-    <associate|auto-59|<tuple|1.6.10|23>>
+    <associate|auto-55|<tuple|1.6.8|21>>
+    <associate|auto-56|<tuple|1.6.8|21>>
+    <associate|auto-57|<tuple|1.6.9|21>>
+    <associate|auto-58|<tuple|1.6.9|21>>
+    <associate|auto-59|<tuple|1.6.10|22>>
     <associate|auto-6|<tuple|1.1.2|10>>
-    <associate|auto-60|<tuple|1.6.10|23>>
-    <associate|auto-61|<tuple|1.7|24>>
-    <associate|auto-62|<tuple|1.7.1|24>>
-    <associate|auto-63|<tuple|1.7.1|24>>
-    <associate|auto-64|<tuple|1.7.2|24>>
-    <associate|auto-65|<tuple|1.7.2|24>>
-    <associate|auto-66|<tuple|1.7.3|25>>
-    <associate|auto-67|<tuple|1.7.3|25>>
-    <associate|auto-68|<tuple|1.8|25>>
-    <associate|auto-69|<tuple|1.8.1|25>>
+    <associate|auto-60|<tuple|1.6.10|22>>
+    <associate|auto-61|<tuple|1.7|23>>
+    <associate|auto-62|<tuple|1.7.1|23>>
+    <associate|auto-63|<tuple|1.7.1|23>>
+    <associate|auto-64|<tuple|1.7.2|23>>
+    <associate|auto-65|<tuple|1.7.2|23>>
+    <associate|auto-66|<tuple|1.7.3|24>>
+    <associate|auto-67|<tuple|1.7.3|24>>
+    <associate|auto-68|<tuple|1.8|24>>
+    <associate|auto-69|<tuple|1.8.1|24>>
     <associate|auto-7|<tuple|1.1.2|10>>
-    <associate|auto-70|<tuple|1.8.1|25>>
-    <associate|auto-71|<tuple|1.8.2|25>>
-    <associate|auto-72|<tuple|1.8.2|25>>
-    <associate|auto-73|<tuple|1.8.3|26>>
-    <associate|auto-74|<tuple|1.8.3|26>>
-    <associate|auto-75|<tuple|1.9|26>>
-    <associate|auto-76|<tuple|1.9.1|26>>
-    <associate|auto-77|<tuple|1.9.1|26>>
-    <associate|auto-78|<tuple|1.9.2|27>>
-    <associate|auto-79|<tuple|1.9.2|27>>
+    <associate|auto-70|<tuple|1.8.1|24>>
+    <associate|auto-71|<tuple|1.8.2|24>>
+    <associate|auto-72|<tuple|1.8.2|24>>
+    <associate|auto-73|<tuple|1.8.3|25>>
+    <associate|auto-74|<tuple|1.8.3|25>>
+    <associate|auto-75|<tuple|1.9|25>>
+    <associate|auto-76|<tuple|1.9.1|25>>
+    <associate|auto-77|<tuple|1.9.1|25>>
+    <associate|auto-78|<tuple|1.9.2|26>>
+    <associate|auto-79|<tuple|1.9.2|26>>
     <associate|auto-8|<tuple|1.1.3|10>>
-    <associate|auto-80|<tuple|1.9.3|27>>
-    <associate|auto-81|<tuple|1.9.3|27>>
-    <associate|auto-82|<tuple|1.9.4|28>>
-    <associate|auto-83|<tuple|1.9.4|28>>
-    <associate|auto-84|<tuple|1.9.5|28>>
-    <associate|auto-85|<tuple|1.9.5|28>>
-    <associate|auto-86|<tuple|1.9.6|29>>
-    <associate|auto-87|<tuple|1.9.6|29>>
-    <associate|auto-88|<tuple|1.9.7|29>>
-    <associate|auto-89|<tuple|1.9.7|29>>
+    <associate|auto-80|<tuple|1.9.3|26>>
+    <associate|auto-81|<tuple|1.9.3|26>>
+    <associate|auto-82|<tuple|1.9.4|27>>
+    <associate|auto-83|<tuple|1.9.4|27>>
+    <associate|auto-84|<tuple|1.9.5|27>>
+    <associate|auto-85|<tuple|1.9.5|27>>
+    <associate|auto-86|<tuple|1.9.6|27>>
+    <associate|auto-87|<tuple|1.9.6|27>>
+    <associate|auto-88|<tuple|1.9.7|28>>
+    <associate|auto-89|<tuple|1.9.7|28>>
     <associate|auto-9|<tuple|1|10>>
-    <associate|auto-90|<tuple|1.9.8|30>>
-    <associate|auto-91|<tuple|1.9.8|30>>
-    <associate|auto-92|<tuple|1.9.8|30>>
-    <associate|auto-93|<tuple|1.9.9|31>>
-    <associate|auto-94|<tuple|1.9.9|31>>
-    <associate|auto-95|<tuple|1.9.10|33>>
-    <associate|auto-96|<tuple|1.9.10|33>>
-    <associate|auto-97|<tuple|1.9.11|33>>
-    <associate|auto-98|<tuple|1.9.11|33>>
-    <associate|auto-99|<tuple|1.9.11|33>>
-    <associate|automorphisms|<tuple|4.2.11|71>>
-    <associate|bib-bayati|<tuple|1|121>>
-    <associate|bib-biggs|<tuple|2|121>>
-    <associate|bib-blanusa|<tuple|3|121>>
-    <associate|bib-brelaz|<tuple|4|121>>
-    <associate|bib-buchheim|<tuple|5|121>>
-    <associate|bib-christofides|<tuple|6|121>>
-    <associate|bib-cook|<tuple|7|121>>
-    <associate|bib-diaz|<tuple|9|121>>
-    <associate|bib-diestel|<tuple|10|121>>
-    <associate|bib-edmonds|<tuple|11|121>>
-    <associate|bib-edmonds-karp|<tuple|12|121>>
-    <associate|bib-even|<tuple|13|121>>
-    <associate|bib-floyd|<tuple|14|121>>
-    <associate|bib-fruchterman|<tuple|15|121>>
-    <associate|bib-gibbons|<tuple|16|121>>
-    <associate|bib-haggard|<tuple|17|121>>
-    <associate|bib-hakimi|<tuple|18|121>>
-    <associate|bib-helsgaun|<tuple|19|121>>
-    <associate|bib-hierholzer|<tuple|20|121>>
-    <associate|bib-hinz|<tuple|21|121>>
-    <associate|bib-hopcroft|<tuple|22|121>>
-    <associate|bib-hu|<tuple|23|121>>
-    <associate|bib-hu2|<tuple|24|121>>
-    <associate|bib-kahn|<tuple|25|121>>
-    <associate|bib-lca|<tuple|35|122>>
-    <associate|bib-mckay|<tuple|26|121>>
-    <associate|bib-melissa|<tuple|8|121>>
-    <associate|bib-monagan|<tuple|27|121>>
-    <associate|bib-myrwold|<tuple|28|121>>
-    <associate|bib-ostergard|<tuple|29|121>>
-    <associate|bib-padberg|<tuple|30|121>>
-    <associate|bib-pferschy|<tuple|31|121>>
-    <associate|bib-plestenjak|<tuple|32|121>>
-    <associate|bib-steger|<tuple|33|121>>
-    <associate|bib-tarjan72|<tuple|34|121>>
-    <associate|bib-tomita|<tuple|36|122>>
-    <associate|bib-tutte|<tuple|37|122>>
-    <associate|bib-walker|<tuple|38|122>>
-    <associate|bib-welch|<tuple|39|122>>
-    <associate|bib-west|<tuple|40|122>>
-    <associate|blockjoin|<tuple|6.1|114>>
-    <associate|canonical-labeling|<tuple|4.2.10|70>>
-    <associate|chordface|<tuple|6.2|114>>
-    <associate|departures-arrivals|<tuple|4.1.6|59>>
+    <associate|auto-90|<tuple|1.9.8|29>>
+    <associate|auto-91|<tuple|1.9.8|29>>
+    <associate|auto-92|<tuple|1.9.8|29>>
+    <associate|auto-93|<tuple|1.9.9|30>>
+    <associate|auto-94|<tuple|1.9.9|30>>
+    <associate|auto-95|<tuple|1.9.10|31>>
+    <associate|auto-96|<tuple|1.9.10|31>>
+    <associate|auto-97|<tuple|1.9.11|32>>
+    <associate|auto-98|<tuple|1.9.11|32>>
+    <associate|auto-99|<tuple|1.9.11|32>>
+    <associate|automorphisms|<tuple|4.3.2|68>>
+    <associate|bib-bayati|<tuple|1|119>>
+    <associate|bib-biggs|<tuple|2|119>>
+    <associate|bib-blanusa|<tuple|3|119>>
+    <associate|bib-bollobas|<tuple|4|119>>
+    <associate|bib-brelaz|<tuple|5|119>>
+    <associate|bib-buchheim|<tuple|6|119>>
+    <associate|bib-christofides|<tuple|7|119>>
+    <associate|bib-cook|<tuple|8|119>>
+    <associate|bib-diaz|<tuple|10|119>>
+    <associate|bib-diestel|<tuple|11|119>>
+    <associate|bib-edmonds|<tuple|12|119>>
+    <associate|bib-edmonds-karp|<tuple|13|119>>
+    <associate|bib-even|<tuple|14|119>>
+    <associate|bib-floyd|<tuple|15|119>>
+    <associate|bib-fruchterman|<tuple|16|119>>
+    <associate|bib-gibbons|<tuple|17|119>>
+    <associate|bib-godsil|<tuple|18|119>>
+    <associate|bib-haggard|<tuple|19|119>>
+    <associate|bib-haggard2|<tuple|20|119>>
+    <associate|bib-hakimi|<tuple|21|119>>
+    <associate|bib-helsgaun|<tuple|22|119>>
+    <associate|bib-hierholzer|<tuple|23|119>>
+    <associate|bib-hinz|<tuple|24|119>>
+    <associate|bib-hopcroft|<tuple|25|119>>
+    <associate|bib-hu|<tuple|26|119>>
+    <associate|bib-hu2|<tuple|27|119>>
+    <associate|bib-kahn|<tuple|28|119>>
+    <associate|bib-lca|<tuple|38|120>>
+    <associate|bib-mckay|<tuple|29|119>>
+    <associate|bib-melissa|<tuple|9|119>>
+    <associate|bib-monagan|<tuple|30|119>>
+    <associate|bib-myrwold|<tuple|31|119>>
+    <associate|bib-ostergard|<tuple|32|119>>
+    <associate|bib-padberg|<tuple|33|119>>
+    <associate|bib-pferschy|<tuple|34|119>>
+    <associate|bib-plestenjak|<tuple|35|120>>
+    <associate|bib-steger|<tuple|36|120>>
+    <associate|bib-tarjan72|<tuple|37|120>>
+    <associate|bib-tomita|<tuple|39|120>>
+    <associate|bib-tutte|<tuple|40|120>>
+    <associate|bib-walker|<tuple|41|120>>
+    <associate|bib-welch|<tuple|42|120>>
+    <associate|bib-west|<tuple|43|120>>
+    <associate|blockjoin|<tuple|6.1|111>>
+    <associate|canonical-labeling|<tuple|4.3.1|67>>
+    <associate|chordface|<tuple|6.2|112>>
+    <associate|departures-arrivals|<tuple|4.1.7|57>>
     <associate|digraph|<tuple|1.1.2|10>>
-    <associate|draw-graph|<tuple|6.1|109>>
-    <associate|eq:chromatic-poly|<tuple|4.1|73>>
-    <associate|eq:flow-poly|<tuple|4.2|73>>
-    <associate|eq:reliability-poly|<tuple|4.3|74>>
-    <associate|footnote-1.1|<tuple|1.1|33>>
-    <associate|footnote-3.1|<tuple|3.1|51>>
-    <associate|footnote-3.2|<tuple|3.2|53>>
-    <associate|footnote-4.1|<tuple|4.1|72>>
-    <associate|footnote-4.2|<tuple|4.2|91>>
-    <associate|footnote-5.1|<tuple|5.1|104>>
-    <associate|footnr-1.1|<tuple|1.1|33>>
-    <associate|footnr-3.1|<tuple|3.1|51>>
-    <associate|footnr-3.2|<tuple|3.2|53>>
-    <associate|footnr-4.1|<tuple|4.1|72>>
-    <associate|footnr-4.2|<tuple|4.2|91>>
-    <associate|footnr-5.1|<tuple|5.1|104>>
-    <associate|frucht|<tuple|1.6.10|23>>
+    <associate|draw-graph|<tuple|6.1|107>>
+    <associate|eq:chromatic-poly|<tuple|4.1|71>>
+    <associate|eq:flow-poly|<tuple|4.2|72>>
+    <associate|eq:reliability-poly|<tuple|4.3|72>>
+    <associate|footnote-1.1|<tuple|1.1|32>>
+    <associate|footnote-3.1|<tuple|3.1|49>>
+    <associate|footnote-3.2|<tuple|3.2|51>>
+    <associate|footnote-4.1|<tuple|4.1|69>>
+    <associate|footnote-4.2|<tuple|4.2|89>>
+    <associate|footnote-5.1|<tuple|5.1|102>>
+    <associate|footnr-1.1|<tuple|1.1|32>>
+    <associate|footnr-3.1|<tuple|3.1|49>>
+    <associate|footnr-3.2|<tuple|3.2|51>>
+    <associate|footnr-4.1|<tuple|4.1|69>>
+    <associate|footnr-4.2|<tuple|4.2|89>>
+    <associate|footnr-5.1|<tuple|5.1|102>>
+    <associate|frucht|<tuple|1.6.10|22>>
     <associate|graph|<tuple|1.1.1|9>>
-    <associate|graph-equal|<tuple|4.2.9|67>>
-    <associate|graph-spectrum|<tuple|4.2.6|66>>
-    <associate|graph-union|<tuple|1.9.4|28>>
-    <associate|highlight-subgraph|<tuple|6.3.3|118>>
-    <associate|highlight-trail|<tuple|6.3.2|117>>
-    <associate|highlight-vertices|<tuple|6.3.1|117>>
-    <associate|induced-subgraph|<tuple|1.8.2|25>>
-    <associate|is-bipartite|<tuple|4.1.8|60>>
-    <associate|is-network|<tuple|4.5.1|82>>
-    <associate|is-regular|<tuple|4.1.4|57>>
-    <associate|is-tournament|<tuple|4.1.7|60>>
-    <associate|is-tree|<tuple|4.4.1|79>>
-    <associate|isomorphic-copy|<tuple|1.7.1|24>>
-    <associate|make-directed|<tuple|2.1.1|43>>
-    <associate|make-weighted|<tuple|2.1.2|43>>
-    <associate|maximum-matching|<tuple|4.8.1|89>>
-    <associate|minimal-coloring|<tuple|4.10.2|95>>
-    <associate|minimum-covering|<tuple|4.9.5|93>>
-    <associate|number-of-spanning-trees|<tuple|5.3.3|108>>
-    <associate|random-network|<tuple|1.10.8|40>>
-    <associate|random-planar|<tuple|1.10.4|36>>
-    <associate|set-vertex-positions|<tuple|6.2.1|115>>
-    <associate|st-ordering|<tuple|4.7.3|88>>
-    <associate|st53|<tuple|3.1|53>>
-    <associate|subgraph|<tuple|1.8.1|25>>
-    <associate|tab:colors|<tuple|4.1|96>>
-    <associate|touchface|<tuple|6.3|114>>
-    <associate|trail|<tuple|1.2.3|14>>
-    <associate|traveling-salesman|<tuple|5.2.3|104>>
-    <associate|underlying-graph|<tuple|1.8.3|26>>
-    <associate|vertex-attribute|<tuple|2.4.2|48>>
-    <associate|vertex-distance|<tuple|4.6.1|84>>
-    <associate|vertices-edges|<tuple|4.1.2|55>>
+    <associate|graph-equal|<tuple|4.1.3|54>>
+    <associate|graph-spectrum|<tuple|4.2.6|64>>
+    <associate|graph-union|<tuple|1.9.4|27>>
+    <associate|highlight-subgraph|<tuple|6.3.3|116>>
+    <associate|highlight-trail|<tuple|6.3.2|115>>
+    <associate|highlight-vertices|<tuple|6.3.1|115>>
+    <associate|induced-subgraph|<tuple|1.8.2|24>>
+    <associate|is-bipartite|<tuple|4.1.9|59>>
+    <associate|is-network|<tuple|4.7.1|80>>
+    <associate|is-regular|<tuple|4.1.5|56>>
+    <associate|is-tournament|<tuple|4.1.8|58>>
+    <associate|is-tree|<tuple|4.6.1|78>>
+    <associate|isomorphic-copy|<tuple|1.7.1|23>>
+    <associate|make-directed|<tuple|2.1.1|41>>
+    <associate|make-weighted|<tuple|2.1.2|41>>
+    <associate|maximum-matching|<tuple|4.10.1|87>>
+    <associate|minimal-coloring|<tuple|4.12.2|93>>
+    <associate|minimum-covering|<tuple|4.11.5|91>>
+    <associate|number-of-spanning-trees|<tuple|5.3.3|105>>
+    <associate|random-network|<tuple|1.10.8|38>>
+    <associate|random-planar|<tuple|1.10.4|35>>
+    <associate|set-vertex-positions|<tuple|6.2.1|113>>
+    <associate|st-ordering|<tuple|4.9.3|86>>
+    <associate|st53|<tuple|3.1|51>>
+    <associate|subgraph|<tuple|1.8.1|24>>
+    <associate|tab:colors|<tuple|4.1|93>>
+    <associate|touchface|<tuple|6.3|112>>
+    <associate|trail|<tuple|1.2.3|13>>
+    <associate|traveling-salesman|<tuple|5.2.3|102>>
+    <associate|tutte-polynomial|<tuple|4.4.1|69>>
+    <associate|underlying-graph|<tuple|1.8.3|25>>
+    <associate|vertex-attribute|<tuple|2.4.2|46>>
+    <associate|vertex-distance|<tuple|4.8.1|83>>
+    <associate|vertices-edges|<tuple|4.1.2|53>>
   </collection>
 </references>
 
 <\auxiliary>
   <\collection>
     <\associate|bib>
+      godsil
+
+      godsil
+
+      godsil
+
       hakimi
 
       hinz
 
       tomita
+
+      godsil
+
+      godsil
+
+      godsil
 
       gibbons
 
@@ -13265,25 +13269,41 @@
 
       steger
 
+      godsil
+
       mckay
 
+      godsil
+
       haggard
 
       biggs
 
+      bollobas
+
       haggard
+
+      haggard2
 
       monagan
 
       biggs
 
+      bollobas
+
       haggard
+
+      bollobas
 
       haggard
 
       biggs
 
+      bollobas
+
       monagan
+
+      godsil
 
       gibbons
 
@@ -13307,9 +13327,13 @@
 
       even
 
+      godsil
+
       edmonds
 
       hopcroft
+
+      godsil
 
       tomita
 
@@ -13326,6 +13350,8 @@
       diestel
 
       blanusa
+
+      godsil
 
       hierholzer
 
@@ -13357,6 +13383,8 @@
 
       tutte
 
+      godsil
+
       gibbons
 
       gibbons
@@ -13371,14 +13399,14 @@
       L<rsup|<space|-0.8spc><move|A|0fn|-0.1fn>><space|-0.2spc>T<rsub|<space|-0.4spc><move|<resize|<with|math-level|<quote|0>|E>||||0.5fn>|0fn|-0.1fn>><space|-0.4spc>X
       and PSTricks>|<pageref|auto-168>>
 
-      <tuple|normal|<surround|<hidden|<tuple>>||joining two
-      blocks>|<pageref|auto-344>>
+      <tuple|normal|<surround|<hidden|<tuple>>||Joining two block by adding a
+      temporary edge.>|<pageref|auto-350>>
 
-      <tuple|normal|<surround|<hidden|<tuple>>||a chorded
-      face>|<pageref|auto-345>>
+      <tuple|normal|<surround|<hidden|<tuple>>||A chorded
+      face.>|<pageref|auto-351>>
 
-      <tuple|normal|<surround|<hidden|<tuple>>||two adjacent
-      faces>|<pageref|auto-346>>
+      <tuple|normal|<surround|<hidden|<tuple>>||Two faces sharing a pair of
+      vertices and no edges between them.>|<pageref|auto-352>>
     </associate>
     <\associate|idx>
       <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|graph>>|<pageref|auto-5>>
@@ -13555,179 +13583,181 @@
 
       <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|number_of_edges>>|<pageref|auto-179>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|vertex_degree>>|<pageref|auto-181>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|graph_equal>>|<pageref|auto-181>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|vertex_out_degree>>|<pageref|auto-182>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|vertex_degree>>|<pageref|auto-183>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|vertex_in_degree>>|<pageref|auto-183>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|vertex_out_degree>>|<pageref|auto-184>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|degree_sequence>>|<pageref|auto-184>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|vertex_in_degree>>|<pageref|auto-185>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|minimum_degree>>|<pageref|auto-185>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|degree_sequence>>|<pageref|auto-186>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|maximum_degree>>|<pageref|auto-186>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|minimum_degree>>|<pageref|auto-187>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_regular>>|<pageref|auto-188>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|maximum_degree>>|<pageref|auto-188>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_strongly_regular>>|<pageref|auto-190>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_regular>>|<pageref|auto-190>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|has_edge>>|<pageref|auto-192>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_strongly_regular>>|<pageref|auto-192>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|has_arc>>|<pageref|auto-193>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|has_edge>>|<pageref|auto-194>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|neighbors>>|<pageref|auto-194>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|has_arc>>|<pageref|auto-195>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|departures>>|<pageref|auto-195>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|neighbors>>|<pageref|auto-196>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|arrivals>>|<pageref|auto-196>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|departures>>|<pageref|auto-197>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_tournament>>|<pageref|auto-198>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|arrivals>>|<pageref|auto-198>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_bipartite>>|<pageref|auto-200>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_tournament>>|<pageref|auto-200>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|incident_edges>>|<pageref|auto-202>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_bipartite>>|<pageref|auto-202>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|adjacency_matrix>>|<pageref|auto-205>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|incident_edges>>|<pageref|auto-204>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|laplacian_matrix>>|<pageref|auto-207>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|adjacency_matrix>>|<pageref|auto-207>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|weight_matrix>>|<pageref|auto-209>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|laplacian_matrix>>|<pageref|auto-209>>
 
       <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|incidence_matrix>>|<pageref|auto-211>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|graph_charpoly>>|<pageref|auto-213>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|weight_matrix>>|<pageref|auto-213>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|graph_spectrum>>|<pageref|auto-215>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|graph_charpoly>>|<pageref|auto-215>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|seidel_spectrum>>|<pageref|auto-217>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|graph_spectrum>>|<pageref|auto-217>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_integer_graph>>|<pageref|auto-219>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|seidel_spectrum>>|<pageref|auto-219>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_isomorphic>>|<pageref|auto-222>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_integer_graph>>|<pageref|auto-221>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|canonical_labeling>>|<pageref|auto-223>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_isomorphic>>|<pageref|auto-224>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|graph_automorphisms>>|<pageref|auto-225>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|canonical_labeling>>|<pageref|auto-225>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|tutte_polynomial>>|<pageref|auto-227>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|graph_automorphisms>>|<pageref|auto-227>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|chromatic_polynomial>>|<pageref|auto-228>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|tutte_polynomial>>|<pageref|auto-230>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|flow_polynomial>>|<pageref|auto-229>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|chromatic_polynomial>>|<pageref|auto-232>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|reliability_polynomial>>|<pageref|auto-230>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|flow_polynomial>>|<pageref|auto-234>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_connected>>|<pageref|auto-233>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|reliability_polynomial>>|<pageref|auto-236>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_biconnected>>|<pageref|auto-234>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_connected>>|<pageref|auto-239>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_triconnected>>|<pageref|auto-235>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_biconnected>>|<pageref|auto-240>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|connected_components>>|<pageref|auto-237>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_triconnected>>|<pageref|auto-241>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|biconnected_components>>|<pageref|auto-238>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|connected_components>>|<pageref|auto-243>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|graph_rank>>|<pageref|auto-240>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|biconnected_components>>|<pageref|auto-244>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|articulation_points>>|<pageref|auto-242>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|graph_rank>>|<pageref|auto-246>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|strongly_connected_components>>|<pageref|auto-244>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|articulation_points>>|<pageref|auto-248>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_strongly_connected>>|<pageref|auto-245>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|strongly_connected_components>>|<pageref|auto-250>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_cut_set>>|<pageref|auto-248>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_strongly_connected>>|<pageref|auto-251>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_tree>>|<pageref|auto-251>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_cut_set>>|<pageref|auto-254>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_forest>>|<pageref|auto-253>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_tree>>|<pageref|auto-257>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|tree_height>>|<pageref|auto-255>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_forest>>|<pageref|auto-259>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|lowest_common_ancestor>>|<pageref|auto-257>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|tree_height>>|<pageref|auto-261>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_arborescence>>|<pageref|auto-259>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|lowest_common_ancestor>>|<pageref|auto-263>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_network>>|<pageref|auto-262>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_arborescence>>|<pageref|auto-265>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|maxflow>>|<pageref|auto-264>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_network>>|<pageref|auto-268>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|vertex_distance>>|<pageref|auto-267>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|maxflow>>|<pageref|auto-270>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|allpairs_distance>>|<pageref|auto-269>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|vertex_distance>>|<pageref|auto-273>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|girth>>|<pageref|auto-272>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|allpairs_distance>>|<pageref|auto-275>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|odd_girth>>|<pageref|auto-273>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|girth>>|<pageref|auto-278>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_acyclic>>|<pageref|auto-276>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|odd_girth>>|<pageref|auto-279>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|topologic_sort>>|<pageref|auto-278>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_acyclic>>|<pageref|auto-282>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|topological_sort>>|<pageref|auto-279>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|topologic_sort>>|<pageref|auto-284>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|st_ordering>>|<pageref|auto-281>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|topological_sort>>|<pageref|auto-285>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|maximum_matching>>|<pageref|auto-284>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|st_ordering>>|<pageref|auto-287>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|bipartite_matching>>|<pageref|auto-286>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|maximum_matching>>|<pageref|auto-290>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|is_clique>>|<pageref|auto-289>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|bipartite_matching>>|<pageref|auto-292>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_triangle_free>>|<pageref|auto-291>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|is_clique>>|<pageref|auto-295>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|clique_stats>>|<pageref|auto-293>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_triangle_free>>|<pageref|auto-297>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|maximum_clique>>|<pageref|auto-295>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|clique_stats>>|<pageref|auto-299>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|clique_number>>|<pageref|auto-296>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|maximum_clique>>|<pageref|auto-301>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|clique_cover>>|<pageref|auto-298>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|clique_number>>|<pageref|auto-302>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|clique_cover_number>>|<pageref|auto-300>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|clique_cover>>|<pageref|auto-304>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|greedy_color>>|<pageref|auto-303>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|clique_cover_number>>|<pageref|auto-306>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|minimal_vertex_coloring>>|<pageref|auto-306>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|greedy_color>>|<pageref|auto-309>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|chromatic_number>>|<pageref|auto-308>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|minimal_vertex_coloring>>|<pageref|auto-312>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_vertex_colorable>>|<pageref|auto-310>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|chromatic_number>>|<pageref|auto-314>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|minimal_edge_coloring>>|<pageref|auto-313>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_vertex_colorable>>|<pageref|auto-316>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|chromatic_index>>|<pageref|auto-315>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|minimal_edge_coloring>>|<pageref|auto-319>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_eulerian>>|<pageref|auto-319>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|chromatic_index>>|<pageref|auto-321>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_hamiltonian>>|<pageref|auto-321>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_eulerian>>|<pageref|auto-325>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|shortest_path>>|<pageref|auto-324>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|is_hamiltonian>>|<pageref|auto-327>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|dijkstra>>|<pageref|auto-326>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|shortest_path>>|<pageref|auto-330>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|traveling_salesman>>|<pageref|auto-328>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|dijkstra>>|<pageref|auto-332>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|spanning_tree>>|<pageref|auto-331>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|traveling_salesman>>|<pageref|auto-334>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|minimal_spanning_tree>>|<pageref|auto-333>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|spanning_tree>>|<pageref|auto-337>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|number_of_spanning_trees>>|<pageref|auto-335>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|minimal_spanning_tree>>|<pageref|auto-339>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|draw_graph>>|<pageref|auto-338>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|number_of_spanning_trees>>|<pageref|auto-341>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|set_vertex_positions>>|<pageref|auto-350>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|draw_graph>>|<pageref|auto-344>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|highlight_vertex>>|<pageref|auto-354>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|set_vertex_positions>>|<pageref|auto-356>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|highlight_edges>>|<pageref|auto-356>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|highlight_vertex>>|<pageref|auto-360>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|highlight_trail>>|<pageref|auto-357>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|highlight_edges>>|<pageref|auto-362>>
 
-      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|highlight_subgraph>>|<pageref|auto-359>>
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|highlight_trail>>|<pageref|auto-363>>
+
+      <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|highlight_subgraph>>|<pageref|auto-365>>
     </associate>
     <\associate|table>
       <tuple|normal|<surround|<hidden|<tuple>>||interpretation of abstract
-      vertex/edge colors in <with|font-family|<quote|ss>|Xcas>>|<pageref|auto-304>>
+      vertex/edge colors in <with|font-family|<quote|ss>|Xcas>>|<pageref|auto-310>>
     </associate>
     <\associate|toc>
       <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-shape|<quote|small-caps>|Introduction>
@@ -14088,363 +14118,382 @@
       edges <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-174>>
 
-      <with|par-left|<quote|1tab>|4.1.3.<space|2spc>Vertex degrees
+      <with|par-left|<quote|1tab>|4.1.3.<space|2spc>Equality of graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-180>>
 
-      <with|par-left|<quote|1tab>|4.1.4.<space|2spc>Regular graphs
+      <with|par-left|<quote|1tab>|4.1.4.<space|2spc>Vertex degrees
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-187>>
+      <no-break><pageref|auto-182>>
 
-      <with|par-left|<quote|1tab>|4.1.5.<space|2spc>Strongly regular graphs
+      <with|par-left|<quote|1tab>|4.1.5.<space|2spc>Regular graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-189>>
 
-      <with|par-left|<quote|1tab>|4.1.6.<space|2spc>Vertex adjacency
+      <with|par-left|<quote|1tab>|4.1.6.<space|2spc>Strongly regular graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-191>>
 
-      <with|par-left|<quote|1tab>|4.1.7.<space|2spc>Tournament graphs
+      <with|par-left|<quote|1tab>|4.1.7.<space|2spc>Vertex adjacency
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-197>>
+      <no-break><pageref|auto-193>>
 
-      <with|par-left|<quote|1tab>|4.1.8.<space|2spc>Bipartite graphs
+      <with|par-left|<quote|1tab>|4.1.8.<space|2spc>Tournament graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-199>>
 
-      <with|par-left|<quote|1tab>|4.1.9.<space|2spc>Edge incidence
+      <with|par-left|<quote|1tab>|4.1.9.<space|2spc>Bipartite graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-201>>
 
+      <with|par-left|<quote|1tab>|4.1.10.<space|2spc>Edge incidence
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-203>>
+
       4.2.<space|2spc>Algebraic properties
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-203>
+      <no-break><pageref|auto-205>
 
       <with|par-left|<quote|1tab>|4.2.1.<space|2spc>Adjacency matrix
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-204>>
+      <no-break><pageref|auto-206>>
 
       <with|par-left|<quote|1tab>|4.2.2.<space|2spc>Laplacian matrix
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-206>>
-
-      <with|par-left|<quote|1tab>|4.2.3.<space|2spc>Weight matrix
-      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-208>>
 
-      <with|par-left|<quote|1tab>|4.2.4.<space|2spc>Incidence matrix
+      <with|par-left|<quote|1tab>|4.2.3.<space|2spc>Incidence matrix
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-210>>
 
-      <with|par-left|<quote|1tab>|4.2.5.<space|2spc>Characteristic polynomial
+      <with|par-left|<quote|1tab>|4.2.4.<space|2spc>Weight matrix
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-212>>
 
-      <with|par-left|<quote|1tab>|4.2.6.<space|2spc>Graph spectrum
+      <with|par-left|<quote|1tab>|4.2.5.<space|2spc>Characteristic polynomial
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-214>>
 
-      <with|par-left|<quote|1tab>|4.2.7.<space|2spc>Seidel spectrum
+      <with|par-left|<quote|1tab>|4.2.6.<space|2spc>Graph spectrum
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-216>>
 
-      <with|par-left|<quote|1tab>|4.2.8.<space|2spc>Integer graphs
+      <with|par-left|<quote|1tab>|4.2.7.<space|2spc>Seidel spectrum
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-218>>
 
-      <with|par-left|<quote|1tab>|4.2.9.<space|2spc>Equality of graphs
+      <with|par-left|<quote|1tab>|4.2.8.<space|2spc>Integer graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-220>>
 
-      <with|par-left|<quote|1tab>|4.2.10.<space|2spc>Graph isomorphism
-      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-221>>
+      4.3.<space|2spc>Graph isomorphism <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-222>
 
-      <with|par-left|<quote|1tab>|4.2.11.<space|2spc>Graph automorphisms
+      <with|par-left|<quote|1tab>|4.3.1.<space|2spc>Isomorphic graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-224>>
+      <no-break><pageref|auto-223>>
 
-      <with|par-left|<quote|1tab>|4.2.12.<space|2spc>Graph polynomials
+      <with|par-left|<quote|1tab>|4.3.2.<space|2spc>Graph automorphisms
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-226>>
 
-      4.3.<space|2spc>Connectivity <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-231>
+      4.4.<space|2spc>Graph polynomials <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-228>
 
-      <with|par-left|<quote|1tab>|4.3.1.<space|2spc>Vertex connectivity
+      <with|par-left|<quote|1tab>|4.4.1.<space|2spc>Tutte polynomial
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-232>>
+      <no-break><pageref|auto-229>>
 
-      <with|par-left|<quote|1tab>|4.3.2.<space|2spc>Connected and biconnected
+      <with|par-left|<quote|1tab>|4.4.2.<space|2spc>Chromatic polynomial
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-231>>
+
+      <with|par-left|<quote|1tab>|4.4.3.<space|2spc>Flow polynomial
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-233>>
+
+      <with|par-left|<quote|1tab>|4.4.4.<space|2spc>Reliability polynomial
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-235>>
+
+      4.5.<space|2spc>Connectivity <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-237>
+
+      <with|par-left|<quote|1tab>|4.5.1.<space|2spc>Vertex connectivity
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-238>>
+
+      <with|par-left|<quote|1tab>|4.5.2.<space|2spc>Connected and biconnected
       components <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-236>>
+      <no-break><pageref|auto-242>>
 
-      <with|par-left|<quote|1tab>|4.3.3.<space|2spc>Graph rank
+      <with|par-left|<quote|1tab>|4.5.3.<space|2spc>Graph rank
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-239>>
+      <no-break><pageref|auto-245>>
 
-      <with|par-left|<quote|1tab>|4.3.4.<space|2spc>Articulation points
-      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-241>>
-
-      <with|par-left|<quote|1tab>|4.3.5.<space|2spc>Strongly connected
-      components <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-243>>
-
-      <with|par-left|<quote|1tab>|4.3.6.<space|2spc>Edge connectivity
-      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-246>>
-
-      <with|par-left|<quote|1tab>|4.3.7.<space|2spc>Edge cuts
+      <with|par-left|<quote|1tab>|4.5.4.<space|2spc>Articulation points
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-247>>
 
-      4.4.<space|2spc>Trees <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-249>
+      <with|par-left|<quote|1tab>|4.5.5.<space|2spc>Strongly connected
+      components <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-249>>
 
-      <with|par-left|<quote|1tab>|4.4.1.<space|2spc>Tree graphs
-      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-250>>
-
-      <with|par-left|<quote|1tab>|4.4.2.<space|2spc>Forest graphs
+      <with|par-left|<quote|1tab>|4.5.6.<space|2spc>Edge connectivity
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-252>>
 
-      <with|par-left|<quote|1tab>|4.4.3.<space|2spc>Height of a tree
+      <with|par-left|<quote|1tab>|4.5.7.<space|2spc>Edge cuts
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-254>>
+      <no-break><pageref|auto-253>>
 
-      <with|par-left|<quote|1tab>|4.4.4.<space|2spc>Lowest common ancestor of
-      a pair of nodes <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      4.6.<space|2spc>Trees <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-255>
+
+      <with|par-left|<quote|1tab>|4.6.1.<space|2spc>Tree graphs
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-256>>
 
-      <with|par-left|<quote|1tab>|4.4.5.<space|2spc>Arborescence graphs
+      <with|par-left|<quote|1tab>|4.6.2.<space|2spc>Forest graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-258>>
 
-      4.5.<space|2spc>Networks <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-260>
-
-      <with|par-left|<quote|1tab>|4.5.1.<space|2spc>Network graphs
+      <with|par-left|<quote|1tab>|4.6.3.<space|2spc>Height of a tree
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-261>>
+      <no-break><pageref|auto-260>>
 
-      <with|par-left|<quote|1tab>|4.5.2.<space|2spc>Maximum flow
+      <with|par-left|<quote|1tab>|4.6.4.<space|2spc>Lowest common ancestor of
+      a pair of nodes <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-262>>
+
+      <with|par-left|<quote|1tab>|4.6.5.<space|2spc>Arborescence graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-263>>
+      <no-break><pageref|auto-264>>
 
-      4.6.<space|2spc>Distance in graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-265>
+      4.7.<space|2spc>Networks <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-266>
 
-      <with|par-left|<quote|1tab>|4.6.1.<space|2spc>Vertex distance
+      <with|par-left|<quote|1tab>|4.7.1.<space|2spc>Network graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-266>>
+      <no-break><pageref|auto-267>>
 
-      <with|par-left|<quote|1tab>|4.6.2.<space|2spc>All-pairs vertex distance
+      <with|par-left|<quote|1tab>|4.7.2.<space|2spc>Maximum flow
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-268>>
+      <no-break><pageref|auto-269>>
 
-      <with|par-left|<quote|1tab>|4.6.3.<space|2spc>Diameter of a graph
+      4.8.<space|2spc>Distance in graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-271>
+
+      <with|par-left|<quote|1tab>|4.8.1.<space|2spc>Vertex distance
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-270>>
+      <no-break><pageref|auto-272>>
 
-      <with|par-left|<quote|1tab>|4.6.4.<space|2spc>Girth of a graph
+      <with|par-left|<quote|1tab>|4.8.2.<space|2spc>All-pairs vertex distance
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-271>>
+      <no-break><pageref|auto-274>>
 
-      4.7.<space|2spc>Acyclic graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-274>
+      <with|par-left|<quote|1tab>|4.8.3.<space|2spc>Diameter
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-276>>
 
-      <with|par-left|<quote|1tab>|4.7.1.<space|2spc>Checking if a graph is
-      acyclic <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-275>>
-
-      <with|par-left|<quote|1tab>|4.7.2.<space|2spc>Topological sorting
+      <with|par-left|<quote|1tab>|4.8.4.<space|2spc>Girth
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-277>>
 
-      <with|par-left|<quote|1tab>|4.7.3.<space|2spc><with|font-family|<quote|ss>|st>
-      ordering <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-280>>
+      4.9.<space|2spc>Acyclic graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-280>
 
-      4.8.<space|2spc>Matching in graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-282>
+      <with|par-left|<quote|1tab>|4.9.1.<space|2spc>Acyclic graphs
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-281>>
 
-      <with|par-left|<quote|1tab>|4.8.1.<space|2spc>Maximum matching
+      <with|par-left|<quote|1tab>|4.9.2.<space|2spc>Topological sorting
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-283>>
 
-      <with|par-left|<quote|1tab>|4.8.2.<space|2spc>Maximum matching in
+      <with|par-left|<quote|1tab>|4.9.3.<space|2spc><with|font-family|<quote|ss>|st>
+      ordering <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-286>>
+
+      4.10.<space|2spc>Matching in graphs
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-288>
+
+      <with|par-left|<quote|1tab>|4.10.1.<space|2spc>Maximum matching
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-289>>
+
+      <with|par-left|<quote|1tab>|4.10.2.<space|2spc>Maximum matching in
       bipartite graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-285>>
+      <no-break><pageref|auto-291>>
 
-      4.9.<space|2spc>Cliques <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-287>
+      4.11.<space|2spc>Cliques <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-293>
 
-      <with|par-left|<quote|1tab>|4.9.1.<space|2spc>Clique graphs
-      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-288>>
-
-      <with|par-left|<quote|1tab>|4.9.2.<space|2spc>Triangle-free graphs
-      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-290>>
-
-      <with|par-left|<quote|1tab>|4.9.3.<space|2spc>Maximal cliques
-      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-292>>
-
-      <with|par-left|<quote|1tab>|4.9.4.<space|2spc>Maximum clique
+      <with|par-left|<quote|1tab>|4.11.1.<space|2spc>Clique graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-294>>
 
-      <with|par-left|<quote|1tab>|4.9.5.<space|2spc>Minimum clique cover
+      <with|par-left|<quote|1tab>|4.11.2.<space|2spc>Triangle-free graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-297>>
+      <no-break><pageref|auto-296>>
 
-      <with|par-left|<quote|1tab>|4.9.6.<space|2spc>Clique cover number
+      <with|par-left|<quote|1tab>|4.11.3.<space|2spc>Maximal cliques
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-299>>
+      <no-break><pageref|auto-298>>
 
-      4.10.<space|2spc>Vertex coloring <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-301>
-
-      <with|par-left|<quote|1tab>|4.10.1.<space|2spc>Greedy coloring
+      <with|par-left|<quote|1tab>|4.11.4.<space|2spc>Maximum clique
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-302>>
+      <no-break><pageref|auto-300>>
 
-      <with|par-left|<quote|1tab>|4.10.2.<space|2spc>Minimal coloring
+      <with|par-left|<quote|1tab>|4.11.5.<space|2spc>Minimum clique cover
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-303>>
+
+      <with|par-left|<quote|1tab>|4.11.6.<space|2spc>Clique cover number
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-305>>
 
-      <with|par-left|<quote|1tab>|4.10.3.<space|2spc>Chromatic number
+      4.12.<space|2spc>Vertex coloring <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-307>
+
+      <with|par-left|<quote|1tab>|4.12.1.<space|2spc>Greedy coloring
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-307>>
+      <no-break><pageref|auto-308>>
 
-      <with|par-left|<quote|1tab>|4.10.4.<space|2spc><with|mode|<quote|math>|k>-coloring
+      <with|par-left|<quote|1tab>|4.12.2.<space|2spc>Minimal coloring
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-309>>
+      <no-break><pageref|auto-311>>
 
-      4.11.<space|2spc>Edge coloring <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-311>
-
-      <with|par-left|<quote|1tab>|4.11.1.<space|2spc>Minimal coloring
+      <with|par-left|<quote|1tab>|4.12.3.<space|2spc>Chromatic number
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-312>>
+      <no-break><pageref|auto-313>>
 
-      <with|par-left|<quote|1tab>|4.11.2.<space|2spc>Chromatic index
+      <with|par-left|<quote|1tab>|4.12.4.<space|2spc><with|mode|<quote|math>|k>-coloring
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-314>>
+      <no-break><pageref|auto-315>>
 
-      <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-shape|<quote|small-caps>|5.<space|2spc>Traversing
-      graphs> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <pageref|auto-316><vspace|0.5fn>
-
-      5.1.<space|2spc>Walks and tours <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      4.13.<space|2spc>Edge coloring <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-317>
 
-      <with|par-left|<quote|1tab>|5.1.1.<space|2spc>Eulerian graphs
+      <with|par-left|<quote|1tab>|4.13.1.<space|2spc>Minimal coloring
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-318>>
 
-      <with|par-left|<quote|1tab>|5.1.2.<space|2spc>Hamiltonian graphs
+      <with|par-left|<quote|1tab>|4.13.2.<space|2spc>Chromatic index
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-320>>
 
+      <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-shape|<quote|small-caps>|5.<space|2spc>Traversing
+      graphs> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <pageref|auto-322><vspace|0.5fn>
+
+      5.1.<space|2spc>Walks and tours <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-323>
+
+      <with|par-left|<quote|1tab>|5.1.1.<space|2spc>Eulerian graphs
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-324>>
+
+      <with|par-left|<quote|1tab>|5.1.2.<space|2spc>Hamiltonian graphs
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-326>>
+
       5.2.<space|2spc>Optimal routing <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-322>
+      <no-break><pageref|auto-328>
 
       <with|par-left|<quote|1tab>|5.2.1.<space|2spc>Shortest unweighted paths
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-323>>
+      <no-break><pageref|auto-329>>
 
       <with|par-left|<quote|1tab>|5.2.2.<space|2spc>Cheapest weighted paths
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-325>>
+      <no-break><pageref|auto-331>>
 
       <with|par-left|<quote|1tab>|5.2.3.<space|2spc>Traveling salesman
       problem <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-327>>
+      <no-break><pageref|auto-333>>
 
       5.3.<space|2spc>Spanning trees <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-329>
+      <no-break><pageref|auto-335>
 
       <with|par-left|<quote|1tab>|5.3.1.<space|2spc>Construction of spanning
       trees <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-330>>
+      <no-break><pageref|auto-336>>
 
       <with|par-left|<quote|1tab>|5.3.2.<space|2spc>Minimal spanning tree
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-332>>
+      <no-break><pageref|auto-338>>
 
       <with|par-left|<quote|1tab>|5.3.3.<space|2spc>Counting the spanning
       trees in a graph <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-334>>
+      <no-break><pageref|auto-340>>
 
       <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-shape|<quote|small-caps>|6.<space|2spc>Visualizing
       graphs> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <pageref|auto-336><vspace|0.5fn>
+      <pageref|auto-342><vspace|0.5fn>
 
       6.1.<space|2spc>Drawing graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-337>
+      <no-break><pageref|auto-343>
 
       <with|par-left|<quote|1tab>|6.1.1.<space|2spc>Overview
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-339>>
+      <no-break><pageref|auto-345>>
 
       <with|par-left|<quote|1tab>|6.1.2.<space|2spc>Drawing disconnected
       graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-340>>
+      <no-break><pageref|auto-346>>
 
       <with|par-left|<quote|1tab>|6.1.3.<space|2spc>Spring method
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-341>>
+      <no-break><pageref|auto-347>>
 
       <with|par-left|<quote|1tab>|6.1.4.<space|2spc>Drawing trees
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-342>>
+      <no-break><pageref|auto-348>>
 
       <with|par-left|<quote|1tab>|6.1.5.<space|2spc>Drawing planar graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-343>>
+      <no-break><pageref|auto-349>>
 
       <with|par-left|<quote|1tab>|6.1.6.<space|2spc>Circular graph drawings
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-347>>
+      <no-break><pageref|auto-353>>
 
       6.2.<space|2spc>Vertex positions <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-348>
+      <no-break><pageref|auto-354>
 
       <with|par-left|<quote|1tab>|6.2.1.<space|2spc>Setting vertex positions
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-349>>
+      <no-break><pageref|auto-355>>
 
       <with|par-left|<quote|1tab>|6.2.2.<space|2spc>Generating vertex
       positions <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-351>>
+      <no-break><pageref|auto-357>>
 
       6.3.<space|2spc>Highlighting in graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-352>
+      <no-break><pageref|auto-358>
 
       <with|par-left|<quote|1tab>|6.3.1.<space|2spc>Highlighting vertices
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-353>>
+      <no-break><pageref|auto-359>>
 
       <with|par-left|<quote|1tab>|6.3.2.<space|2spc>Highlighting edges and
       trails <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-355>>
+      <no-break><pageref|auto-361>>
 
       <with|par-left|<quote|1tab>|6.3.3.<space|2spc>Highlighting subgraphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-358>>
+      <no-break><pageref|auto-364>>
 
       <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-shape|<quote|small-caps>|Bibliography>
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <pageref|auto-360><vspace|0.5fn>
+      <pageref|auto-366><vspace|0.5fn>
 
       <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-shape|<quote|small-caps>|Command
       Index> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <pageref|auto-361><vspace|0.5fn>
+      <pageref|auto-367><vspace|0.5fn>
     </associate>
   </collection>
 </auxiliary>

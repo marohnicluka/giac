@@ -54,7 +54,7 @@ static const char *gt_error_messages[] = {
     "No cycle found",                                                   // 19
     "Graph name not recognized",                                        // 20
     "Argument is not a subgraph",                                       // 21
-    "Graph is empty",                                                   // 22
+    "Graph is null",                                                    // 22
     "Expected \"tag\"=value pair",                                      // 23
     "Argument is not a valid graphic sequence",                         // 24
     "Graph is not acyclic",                                             // 25
@@ -525,7 +525,7 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
         // construct special graph
         string name=graphe::genstring2str(g);
         graphe G(name,contextptr);
-        if (G.is_empty())
+        if (G.is_null())
             return gt_err(_GT_ERR_NAME_NOT_RECOGNIZED);
         return G.to_gen();
     }
@@ -869,7 +869,7 @@ gen _adjacency_matrix(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G.is_empty())
+    if (G.is_null())
         return vecteur(0);
     matrice m;
     G.adjacency_matrix(m);
@@ -892,7 +892,7 @@ gen _incidence_matrix(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G.is_empty())
+    if (G.is_null())
         return vecteur(0);
     matrice M;
     G.incidence_matrix(M);
@@ -911,7 +911,7 @@ gen _weight_matrix(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g) || !G.is_weighted())
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G.is_empty())
+    if (G.is_null())
         return vecteur(0);
     return change_subtype(G.weight_matrix(),_MATRIX__VECT);
 }
@@ -2856,7 +2856,7 @@ gen _minimum_degree(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G.is_empty())
+    if (G.is_null())
         return 0;
     int mindeg=RAND_MAX,d;
     for (int i=0;i<G.node_count();++i) {
@@ -2878,7 +2878,7 @@ gen _maximum_degree(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G.is_empty())
+    if (G.is_null())
         return 0;
     int maxdeg=0,d;
     for (int i=0;i<G.node_count();++i) {
@@ -2900,8 +2900,8 @@ gen _is_regular(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G.is_empty())
-        return gt_err(_GT_ERR_GRAPH_IS_EMPTY);
+    if (G.is_null())
+        return gt_err(_GT_ERR_GRAPH_IS_NULL);
     return graphe::boole(G.is_regular(-1));
 }
 static const char _is_regular_s[]="is_regular";
@@ -2928,8 +2928,8 @@ gen _is_strongly_regular(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G.is_empty())
-        return gt_err(_GT_ERR_GRAPH_IS_EMPTY);
+    if (G.is_null())
+        return gt_err(_GT_ERR_GRAPH_IS_NULL);
     graphe::ipair sig;
     bool res=G.is_strongly_regular(sig);
     if (!res)
@@ -4113,7 +4113,7 @@ gen _allpairs_distance(const gen &g,GIAC_CONTEXT) {
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     matrice dist;
-    if (!G.is_empty())
+    if (!G.is_null())
         G.allpairs_distance(dist);
     return dist;
 }
@@ -4131,8 +4131,8 @@ gen _graph_diameter(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G.is_empty())
-        return gt_err(_GT_ERR_GRAPH_IS_EMPTY);
+    if (G.is_null())
+        return gt_err(_GT_ERR_GRAPH_IS_NULL);
     if (!G.is_connected())
         return graphe::plusinf();
     matrice D;
@@ -4349,7 +4349,7 @@ gen _clique_cover(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G.is_empty())
+    if (G.is_null())
         return vecteur(0);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
@@ -4374,7 +4374,7 @@ gen _clique_cover_number(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G.is_empty())
+    if (G.is_null())
         return 0;
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
@@ -5230,7 +5230,7 @@ gen _clique_stats(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G.is_empty())
+    if (G.is_null())
         return vecteur(0);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
@@ -5890,8 +5890,7 @@ gen _tutte_polynomial(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT)
         return gentypeerr(contextptr);
-    gen x=identificateur("x"),y=identificateur("y"),
-            tmpx=identificateur(" x"),tmpy=identificateur(" y");
+    gen x=identificateur("x"),y=identificateur("y");
     if (g.subtype==_SEQ__VECT) {
         vecteur &gv=*g._VECTptr;
         if (gv.size()!=3)
@@ -5902,22 +5901,18 @@ gen _tutte_polynomial(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G.is_empty())
-        return gt_err(_GT_ERR_GRAPH_IS_EMPTY);
+    if (G.is_null())
+        return gt_err(_GT_ERR_GRAPH_IS_NULL);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     if (G.is_weighted()) {
         if (!G.weights2multiedges())
             return generr("Some edge weights are not positive integers");
     }
-    gen p;
-    if ((x.type==_IDNT || x.is_integer()) && (y.type==_IDNT || y.is_integer()))
-        p=G.tutte_polynomial(x,y);
-    else p=_ratnormal(_subs(makesequence(G.tutte_polynomial(tmpx,tmpy),
-                                         makevecteur(tmpx,tmpy),makevecteur(x,y)),contextptr),contextptr);
+    gen p=G.tutte_polynomial(x,y);
     if (p.is_symb_of_sommet(at_plus) && p._SYMBptr->feuille._VECTptr->size()>7)
         return _factor(p,contextptr);
-    return p;
+    return _ratnormal(p,contextptr);
 }
 static const char _tutte_polynomial_s[]="tutte_polynomial";
 static define_unary_function_eval(__tutte_polynomial,&_tutte_polynomial,_tutte_polynomial_s);
@@ -5932,7 +5927,7 @@ gen _flow_polynomial(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT)
         return gentypeerr(contextptr);
-    gen y=identificateur("x"),tmp=identificateur(" y");
+    gen y=identificateur("x");
     if (g.subtype==_SEQ__VECT) {
         vecteur &gv=*g._VECTptr;
         if (gv.size()!=2)
@@ -5942,16 +5937,15 @@ gen _flow_polynomial(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G.is_empty())
-        return gt_err(_GT_ERR_GRAPH_IS_EMPTY);
+    if (G.is_null())
+        return gt_err(_GT_ERR_GRAPH_IS_NULL);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     if (G.is_weighted())
         return gt_err(_GT_ERR_UNWEIGHTED_GRAPH_REQUIRED);
     int n=G.node_count(),m=G.edge_count(),c=G.connected_component_count();
     assert(n>0 && c>0);
-    gen p=_ratnormal(pow(gen(-1),m-n+c)
-                     *_subs(makesequence(G.tutte_polynomial(0,tmp),tmp,1-y),contextptr),contextptr);
+    gen p=_ratnormal(pow(gen(-1),m-n+c)*G.tutte_polynomial(0,1-y),contextptr);
     if (p.is_symb_of_sommet(at_plus) && p._SYMBptr->feuille._VECTptr->size()>7)
         return _factor(p,contextptr);
     return p;
@@ -5969,7 +5963,7 @@ gen _chromatic_polynomial(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT)
         return gentypeerr(contextptr);
-    gen x=identificateur("x"),tmp=identificateur(" x");
+    gen x=identificateur("x");
     if (g.subtype==_SEQ__VECT) {
         vecteur &gv=*g._VECTptr;
         if (gv.size()!=2)
@@ -5979,16 +5973,15 @@ gen _chromatic_polynomial(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G.is_empty())
-        return gt_err(_GT_ERR_GRAPH_IS_EMPTY);
+    if (G.is_null())
+        return gt_err(_GT_ERR_GRAPH_IS_NULL);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     if (G.is_weighted())
         return gt_err(_GT_ERR_UNWEIGHTED_GRAPH_REQUIRED);
     int n=G.node_count(),c=G.connected_component_count();
     assert(n>0 && c>0);
-    gen p=_ratnormal(pow(gen(-1),n-c)*pow(x,c)
-                     *_subs(makesequence(G.tutte_polynomial(tmp,0),tmp,1-x),contextptr),contextptr);
+    gen p=_ratnormal(pow(gen(-1),n-c)*pow(x,c)*G.tutte_polynomial(1-x,0),contextptr);
     if (p.is_symb_of_sommet(at_plus) && p._SYMBptr->feuille._VECTptr->size()>7)
         return _factor(p,contextptr);
     return p;
@@ -6007,7 +6000,7 @@ gen _reliability_polynomial(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT)
         return gentypeerr(contextptr);
-    gen x=identificateur("x"),tmp=identificateur(" x"),tmpx=identificateur(" t");
+    gen x=identificateur("x"),tmp=identificateur(" x");
     if (g.subtype==_SEQ__VECT) {
         vecteur &gv=*g._VECTptr;
         if (gv.size()!=2)
@@ -6017,8 +6010,8 @@ gen _reliability_polynomial(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G.is_empty())
-        return gt_err(_GT_ERR_GRAPH_IS_EMPTY);
+    if (G.is_null())
+        return gt_err(_GT_ERR_GRAPH_IS_NULL);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     if (G.is_weighted()) {
@@ -6027,10 +6020,9 @@ gen _reliability_polynomial(const gen &g,GIAC_CONTEXT) {
     }
     int n=G.node_count(),m=G.edge_count(),c=G.connected_component_count();
     assert(n>0 && c>0);
-    gen p=_ratnormal(_subs(makesequence(
-                               _ratnormal(pow(gen(1-tmp),n-c)*pow(tmp,m-n+c)
-                                          *_subs(makesequence(G.tutte_polynomial(1,tmpx),tmpx,pow(tmp,-1)),contextptr),contextptr),
-                               tmp,x),contextptr),contextptr);
+    gen p=_ratnormal(_subs(makesequence(_ratnormal(pow(gen(1-tmp),n-c)*pow(tmp,m-n+c)
+                                                   *G.tutte_polynomial(1,pow(tmp,-1)),contextptr),
+                                        tmp,x),contextptr),contextptr);
     if (p.is_symb_of_sommet(at_plus) && p._SYMBptr->feuille._VECTptr->size()>7)
         return _factor(p,contextptr);
     return p;
@@ -6041,8 +6033,8 @@ define_unary_function_ptr5(at_reliability_polynomial,alias_at_reliability_polyno
 
 /* USAGE:   laplacian_matrix(G,[normal])
  *
- * Returns the Laplacian matrix L=D-A of graph G where D resp. A is the degree
- * matrix resp. the adjacency matrix of G.
+ * Returns the Laplacian matrix L=D-A of an undirected graph G where D resp. A
+ * is the degree matrix resp. the adjacency matrix of G.
  */
 gen _laplacian_matrix(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -6060,8 +6052,10 @@ gen _laplacian_matrix(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G.is_empty())
-        return gt_err(_GT_ERR_GRAPH_IS_EMPTY);
+    if (G.is_null())
+        return gt_err(_GT_ERR_GRAPH_IS_NULL);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     matrice L;
     G.laplacian_matrix(L,normalize);
     return change_subtype(_ratnormal(L,contextptr),_MATRIX__VECT);

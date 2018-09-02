@@ -99,6 +99,7 @@ public:
     typedef std::set<ipair> edgeset;
     typedef std::vector<std::map<int,int> > edgemap;
     typedef std::vector<std::map<int,double> > edgemapd;
+    typedef std::map<ipair,int> intpoly;
 
     class vertex { // vertex class
         int m_subgraph;
@@ -433,17 +434,29 @@ public:
         void assign(const cpol &other);
     public:
         int nv;
+#if defined HAVE_LIBNAUTY && defined HAVE_NAUTY_NAUTUTIL_H
         ulong *cg;
         int *col;
+#else
+        int *adj;
+#endif
         size_t sz;
         int frq;
-        ivector pcf;
+        intpoly poly;
         cpol() { cg=NULL; col=NULL; sz=0; frq=0; }
-        cpol(int n,ulong *g,int *c,size_t s,const ivector &p);
+#if defined HAVE_LIBNAUTY && defined HAVE_NAUTY_NAUTUTIL_H
+        cpol(int n,ulong *g,int *c,size_t s,const intpoly &p);
+#else
+        cpol(int n,int *a,size_t s,const intpoly &p);
+#endif
         cpol(const cpol &other);
         ~cpol() { }
         cpol& operator =(const cpol &other);
+#if defined HAVE_LIBNAUTY && defined HAVE_NAUTY_NAUTUTIL_H
         bool match(int n,ulong *g,int *c) const;
+#else
+        bool match(int n,int *a,int adj_sz) const;
+#endif
     };
 
     class unionfind { // disjoint-set data structure implementation
@@ -525,6 +538,7 @@ public:
     typedef ivectors::const_iterator ivectors_iter;
     typedef ipairs::const_iterator ipairs_iter;
     typedef edgeset::const_iterator edgeset_iter;
+    typedef intpoly::const_iterator intpoly_iter;
     static const gen FAUX;
     static const gen VRAI;
     static bool verbose;
@@ -681,9 +695,12 @@ private:
     static ipair forest_root_info(const ivector &forest,int v);
     static gen make_colon_label(const ivector &v);
     void simplify(graphe &G,bool color_temp_vertices=false) const;
-    gen tutte_poly_recurse(const gen &x,const gen &y,int vc);
-    static void poly2ivector(const gen &p,const gen &x,const gen &y, ivector &v);
-    static void ivector2poly(const ivector &v,gen &p,const gen &x,const gen &y);
+    intpoly tutte_poly_recurse(int vc);
+    static void poly_mult(intpoly &a,const intpoly &b);
+    static void poly_add(intpoly &a,const intpoly &b);
+    static intpoly poly_geom(int var,int k,bool leading_one,bool add_other_var=false);
+    static intpoly poly_one();
+    static gen intpoly2gen(const intpoly &v,const gen &x,const gen &y);
     void sharc_order();
 
 public:
@@ -744,7 +761,8 @@ public:
     bool write_latex(const std::string &filename,const gen &drawing) const;
     bool write_dot(const std::string &filename) const;
     bool read_dot(const std::string &filename);
-    inline bool is_empty() const { return nodes.empty(); }
+    inline bool is_null() const { return nodes.empty(); }
+    bool is_empty() const;
     matrice weight_matrix() const;
     gen weight(int i,int j) const;
     inline gen weight(const ipair &edge) const { return weight(edge.first,edge.second); }

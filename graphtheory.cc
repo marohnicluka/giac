@@ -5863,7 +5863,6 @@ gen _random_network(const gen &g,GIAC_CONTEXT) {
         }
     }
     if (!acyclic) {
-        G.get_edges_as_pairs(E);
         for (graphe::ipairs_iter it=E.begin();it!=E.end();++it) {
             const graphe::ipair &e=*it;
             if (e.first!=s && e.first!=t && e.second!=s && e.second!=t && G.rand_integer(RAND_MAX)%2==0)
@@ -5882,7 +5881,7 @@ define_unary_function_ptr5(at_random_network,alias_at_random_network,&__random_n
 
 /* USAGE:   tutte_polynomial(G,[x,y])
  *
- * Returns the Tutte polynomial (with identifiers x and y as its variables or
+ * Returns the Tutte polynomial (with x and y as its variables or
  * their values) of an undirected graph G. If G is weighted, all weights must
  * be positive integers and are interpreted as edge multiplicities.
  */
@@ -6063,6 +6062,57 @@ gen _laplacian_matrix(const gen &g,GIAC_CONTEXT) {
 static const char _laplacian_matrix_s[]="laplacian_matrix";
 static define_unary_function_eval(__laplacian_matrix,&_laplacian_matrix,_laplacian_matrix_s);
 define_unary_function_ptr5(at_laplacian_matrix,alias_at_laplacian_matrix,&__laplacian_matrix,0,true)
+
+/* USAGE:   fundamental_cycle(G)
+ *
+ * Returns the unique cycle in an unicyclic graph G as a graph.
+ */
+gen _fundamental_cycle(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_null())
+        return gt_err(_GT_ERR_GRAPH_IS_NULL);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
+    if (!G.is_connected())
+        return gt_err(_GT_ERR_CONNECTED_GRAPH_REQUIRED);
+    graphe::ivectors cycles;
+    G.fundamental_cycles(cycles,-1,false);
+    if (cycles.size()!=1)
+        return generr("The graph is not unicyclic");
+    graphe::ivector &fc=cycles.front();
+    return _cycle_graph(G.get_node_labels(fc),contextptr);
+}
+static const char _fundamental_cycle_s[]="fundamental_cycle";
+static define_unary_function_eval(__fundamental_cycle,&_fundamental_cycle,_fundamental_cycle_s);
+define_unary_function_ptr5(at_fundamental_cycle,alias_at_fundamental_cycle,&__fundamental_cycle,0,true)
+
+/* USAGE:   cycle_basis(G)
+ *
+ * Returns the list of all fundamental cycles in undirected graph G.
+ */
+gen _cycle_basis(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_null())
+        return gt_err(_GT_ERR_GRAPH_IS_NULL);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
+    graphe::ivectors cycles;
+    G.fundamental_cycles(cycles);
+    vecteur res(cycles.size());
+    for (graphe::ivectors_iter it=cycles.begin();it!=cycles.end();++it) {
+        res[it-cycles.begin()]=G.get_node_labels(*it);
+    }
+    return change_subtype(res,_LIST__VECT);
+}
+static const char _cycle_basis_s[]="cycle_basis";
+static define_unary_function_eval(__cycle_basis,&_cycle_basis,_cycle_basis_s);
+define_unary_function_ptr5(at_cycle_basis,alias_at_cycle_basis,&__cycle_basis,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

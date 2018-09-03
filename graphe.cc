@@ -504,20 +504,10 @@ void graphe::vertex::assign_defaults() {
     m_sorted=true;
     m_subgraph=-1;
     m_visited=false;
-    m_on_stack=false;
     m_ancestor=-1;
     m_low=-1;
     m_disc=-1;
     m_color=0; // white
-    m_prelim=0;
-    m_modifier=0;
-    m_children=0;
-    m_position=0;
-    m_gaps=0;
-    m_left=-1;
-    m_right=-1;
-    m_x_offset=0;
-    m_y=0;
     m_embedded=false;
     m_number=-1;
 }
@@ -535,20 +525,10 @@ void graphe::vertex::assign(const vertex &other) {
     m_sorted=other.is_sorted();
     m_subgraph=other.subgraph();
     m_visited=other.is_visited();
-    m_on_stack=other.is_on_stack();
     m_ancestor=other.ancestor();
     m_low=other.low();
     m_disc=other.disc();
     m_color=other.color();
-    m_prelim=other.prelim();
-    m_modifier=other.modifier();
-    m_children=other.children();
-    m_position=other.position();
-    m_gaps=other.gaps();
-    m_left=other.left();
-    m_right=other.right();
-    m_x_offset=other.x_offset();
-    m_y=other.y();
     m_embedded=other.is_embedded();
     m_number=other.number();
     m_edge_faces=other.edge_faces();
@@ -4035,7 +4015,7 @@ int graphe::cp_maxclique(ivector &clique) {
 * Discrete Applied Mathematics 120 (2002) 197–207
 */
 
-void graphe::ostergard::recurse(ivector &U, int size) {
+void graphe::ostergard::recurse(ivector &U,int size,ivector &position) {
     if (U.empty()) {
         if (size>maxsize) {
             maxsize=size;
@@ -4059,7 +4039,7 @@ void graphe::ostergard::recurse(ivector &U, int size) {
         minpos=-1;
         for (ivector::iterator jt=U.begin();jt!=U.end();++jt) {
             j=*jt;
-            p=G->node(j).position();
+            p=position[j];
             if (minpos<0 || p<minpos) {
                 minpos=p;
                 i=j;
@@ -4081,7 +4061,7 @@ void graphe::ostergard::recurse(ivector &U, int size) {
         }
         V.resize(j);
         clique_nodes.push_back(i);
-        recurse(V,size+1);
+        recurse(V,size+1,position);
         clique_nodes.pop_back();
         if (found || timed_out)
             break;
@@ -4091,7 +4071,7 @@ void graphe::ostergard::recurse(ivector &U, int size) {
 /* return the size of maximum clique */
 int graphe::ostergard::maxclique(ivector &clique) {
     int n=G->node_count();
-    ivector S(n),U;
+    ivector S(n),U,position(n,0);
     for (int i=0;i<n;++i) {
         S[i]=i;
         vertex &v=G->node(i);
@@ -4101,7 +4081,7 @@ int graphe::ostergard::maxclique(ivector &clique) {
     std::reverse(S.begin(),S.end());
     G->node(S.back()).set_low(1);
     for (ivector_iter it=S.begin();it!=S.end();++it) {
-        G->node(*it).set_position(it-S.begin());
+        position[*it]=it-S.begin();
     }
     maxsize=0;
     clique_nodes.clear();
@@ -4118,7 +4098,7 @@ int graphe::ostergard::maxclique(ivector &clique) {
                 U.push_back(*it);
         }
         clique_nodes.push_back(k);
-        recurse(U,1);
+        recurse(U,1,position);
         if (timed_out)
             break;
         clique_nodes.pop_back();
@@ -5461,34 +5441,34 @@ int graphe::connected_component_count(int sg) {
     return count;
 }
 
-void graphe::strongconnect_dfs(ivectors &components,int i,int sg) {
+void graphe::strongconnect_dfs(ivectors &components,vector<bool> &onstack,int i,int sg) {
     vertex &v=node(i);
     v.set_visited(true);
     v.set_disc(disc_time++);
     v.set_low(v.disc());
     node_stack.push(i);
-    v.set_on_stack(true);
+    onstack[i]=true;
+    int j;
     for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
-        vertex &w=node(*it);
+        vertex &w=node(j=*it);
         if (sg>=0 && w.subgraph()!=sg)
             continue;
         if (!w.is_visited()) {
-            strongconnect_dfs(components,*it,sg);
+            strongconnect_dfs(components,onstack,j,sg);
             v.set_low(std::min(v.low(),w.low()));
-        } else if (w.is_on_stack())
+        } else if (onstack[j])
             v.set_low(std::min(v.low(),w.disc()));
     }
     if (v.low()==v.disc()) {
         /* output a strongly connected component */
         components.resize(components.size()+1);
         ivector &component=components.back();
-        int w;
         do {
-            w=node_stack.top();
+            j=node_stack.top();
             node_stack.pop();
-            component.push_back(w);
-            node(w).set_on_stack(false);
-        } while (w!=i);
+            component.push_back(j);
+            onstack[j]=false;
+        } while (j!=i);
     }
 }
 
@@ -5496,13 +5476,11 @@ void graphe::strongconnect_dfs(ivectors &components,int i,int sg) {
 void graphe::strongly_connected_components(ivectors &components,int sg) {
     assert(node_stack.empty());
     unvisit_all_nodes(sg);
-    for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
-        it->set_on_stack(false);
-    }
+    vector<bool> onstack(node_count(),false);
     disc_time=0;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         if ((sg<0 || it->subgraph()==sg) && !it->is_visited())
-            strongconnect_dfs(components,it-nodes.begin(),sg);
+            strongconnect_dfs(components,onstack,it-nodes.begin(),sg);
     }
 }
 
@@ -6352,25 +6330,22 @@ void graphe::periphericity(const ivector &outer_face,ivector &p) {
 void graphe::walker::walk(int i,int pass,int level,double modsum) {
     vertex &v=G->node(i);
     v.set_visited(true);
-    if (pass==1)
-        v.clear_children();
     double m=0;
     if (pass==3) {
         point &p=x->at(i);
         p.resize(2);
-        p[0]=v.prelim()+modsum;
+        p[0]=prelim[i]+modsum;
         p[1]=-level*vsep;
-        m=v.modifier();
+        m=modifier[i];
     }
     int j;
     for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
-        j=*it;
-        vertex &w=G->node(j);
+        vertex &w=G->node(j=*it);
         if (w.is_visited())
             continue;
         if (pass==1) {
             w.set_ancestor(i);
-            v.inc_children();
+            ++children[i];
         }
         walk(j,pass,level+1,modsum+m);
     }
@@ -6380,10 +6355,10 @@ void graphe::walker::walk(int i,int pass,int level,double modsum) {
     } else if (pass==2) {
         if (node_counters[level]>0 && G->node(levels[level][node_counters[level]-1]).ancestor()!=v.ancestor())
             ++gap_counters[level];
-        v.set_position(node_counters[level]++);
-        levels[level][v.position()]=i;
-        if (!v.is_leaf()) {
-            v.set_gaps(gap_counters[level]);
+        levels[level][position[i]=node_counters[level]]=i;
+        ++node_counters[level];
+        if (children[i]>0) {
+            gaps[i]=gap_counters[level];
             gap_counters[level]=0;
         }
     }
@@ -6392,56 +6367,57 @@ void graphe::walker::walk(int i,int pass,int level,double modsum) {
 /* set prelim and modifier for each node in V (they are on the same level) */
 void graphe::walker::process_level(int i) {
     ivector &L=levels[i];
-    int lastp=G->node(L.front()).ancestor(),p,n=0,m=placed.size();
+    int lastp=G->node(L.front()).ancestor(),p,n=0,m=placed.size(),j;
     double ppos=0,xpos=0,dist,shift=0,ssep=0,step=1,min_dist;
     if (m>0) {
-        vertex &w=G->node(placed.front());
-        xpos=w.prelim()-w.position()*hsep;
+        j=placed.front();
+        xpos=prelim[j]-position[j]*hsep;
     }
     for (ivector_iter it=L.begin();it!=L.end();++it) {
-        vertex &v=G->node(*it);
+        const vertex &v=G->node(*it);
         p=v.ancestor();
         if (p!=lastp) {
-            G->node(lastp).set_prelim(ppos/n);
+            prelim[lastp]=ppos/n;
             placed.push(lastp);
             lastp=p;
             ppos=0;
             n=0;
             xpos+=ssep;
         }
-        if (v.is_leaf()) {
-            v.set_prelim(xpos);
+        if (children[*it]==0) {
+            prelim[*it]=xpos;
         } else {
-            v.set_prelim(v.prelim()+shift);
-            v.set_modifier(shift);
-            xpos=v.prelim();
+            prelim[*it]+=(modifier[*it]=shift);
+            xpos=prelim[*it];
             step=1;
             ssep=0;
             placed.pop();
             --m;
             if (m>0) {
-                vertex &w=G->node(placed.front());
-                dist=w.prelim()+shift-xpos;
-                min_dist=(w.position()-v.position())*hsep;
+                vertex &w=G->node(j=placed.front());
+                dist=prelim[j]+shift-xpos;
+                min_dist=(position[j]-position[*it])*hsep;
                 if (dist<min_dist)
                     shift+=min_dist-dist;
                 else if (v.ancestor()==w.ancestor())
                     step=dist/min_dist;
                 else
-                    ssep=(dist-min_dist)/w.gaps();
+                    ssep=(dist-min_dist)/gaps[j];
             }
         }
-        ppos+=v.prelim();
+        ppos+=prelim[*it];
         ++n;
         xpos+=hsep*step;
     }
     assert(m==0);
-    G->node(lastp).set_prelim(ppos/n);
+    prelim[lastp]=ppos/n;
     placed.push(lastp);
 }
 
 /* node positioning procedure */
 void graphe::walker::positioning(int apex) {
+    G->unset_all_ancestors();
+    G->unvisit_all_nodes();
     walk(apex,1); // first walk: determine tree depth and set node ancestors
     /* allocate memory for level lists */
     levels.resize(depth);
@@ -6468,6 +6444,11 @@ graphe::walker::walker(graphe *gr,layout *ly,double hs,double vs) {
     depth=0;
     int n=G->node_count();
     node_counters.resize(n,0);
+    position.resize(n,0);
+    prelim.resize(n,0);
+    modifier.resize(n,0);
+    gaps.resize(n,0);
+    children.resize(n,0);
 }
 
 /*
@@ -6479,14 +6460,8 @@ void graphe::make_tree_layout(layout &x,double sep,int apex) {
     int n=node_count();
     x.resize(n);
     if (n==0) return;
-    unset_all_ancestors();
-    unvisit_all_nodes();
-    for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
-        it->set_prelim(-1);
-        it->set_modifier(0);
-    }
     /* layout the tree */
-    double hsep=sep,vsep=sep*std::pow(PLASTIC_NUMBER,2);
+    double hsep=sep,vsep=sep*1.5;
     walker P(this,&x,hsep,vsep);
     P.positioning(apex);
 }
@@ -7559,7 +7534,6 @@ void graphe::rdfs(int i,ivector &d,bool rec,int sg,bool skip_embedded) {
     v.set_visited(true);
     v.set_disc(++disc_time);
     v.set_low(v.disc());
-    v.clear_children();
     if (rec)
         d.push_back(i);
     int j;
@@ -7570,7 +7544,6 @@ void graphe::rdfs(int i,ivector &d,bool rec,int sg,bool skip_embedded) {
             continue;
         if (!w.is_visited()) {
             w.set_ancestor(i);
-            v.inc_children();
             rdfs(j,d,rec,sg,skip_embedded);
             v.set_low(std::min(v.low(),w.low()));
         } else if (j!=v.ancestor())
@@ -8153,87 +8126,57 @@ bool graphe::is_descendant(int v,int anc) const {
     return false;
 }
 
-/* find a path from v to other visited vertex w along unvisited edges */
-void graphe::pathfinder(int i,ivector &path) {
-    const vertex &v=node(i);
-    path.clear();
-    /* find an unvisited edge from v */
-    int j=-1,k;
+void graphe::st_numbering_dfs(int i,ivector &preorder) {
+    vertex &v=node(i);
+    v.set_disc(++disc_time);
+    v.set_low(i);
+    int j;
     for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
-        if (!is_edge_visited(i,*it)) {
-            j=*it;
-            break;
-        }
-    }
-    if (j<0)
-        return;
-    vertex &w=node(j);
-    int mode=0;
-    if (v.ancestor()!=j && w.ancestor()!=i) {
-        if (is_descendant(i,j))
-            mode=1;
-        else if (is_descendant(j,i))
-            mode=2;
-    } else if (w.ancestor()==i)
-        mode=3;
-    if (mode>0) {
-        set_edge_visited(i,j);
-        path.push_back(i);
-        path.push_back(j);
-    }
-    if (mode>1) {
-        while (true) {
-            vertex &u=node(j);
-            if (u.is_visited())
-                break;
-            k=-1;
-            for (ivector_iter it=u.neighbors().begin();it!=u.neighbors().end();++it) {
-                vertex &t=node(*it);
-                if (!is_edge_visited(j,*it) && ((mode==2 && u.ancestor()==*it) ||
-                                                (mode==3 && (t.disc()==u.low() || t.low()==u.low())))) {
-                    k=*it;
-                    break;
-                }
-            }
-            assert(k>=0);
-            u.set_visited(true);
-            set_edge_visited(j,k);
-            path.push_back(k);
-            j=k;
-        }
+        vertex &w=node(j=*it);
+        if (w.disc()==0) {
+            st_numbering_dfs(j,preorder);
+            w.set_ancestor(i);
+            preorder.push_back(j);
+            if (node(w.low()).disc()<node(v.low()).disc())
+                v.set_low(w.low());
+        } else if (w.disc()!=0 && w.disc()<node(v.low()).disc())
+            v.set_low(*it);
     }
 }
 
-/* compute the ST numbering for this graph using Even-Tarjan algorithm, time complexity O(n+m) */
+/* find st-numbering using Tarjan's algorithm (1986), time complexity O(n+m) */
 void graphe::compute_st_numbering(int s,int t) {
     /* assuming that the graph is biconnected */
     assert(has_edge(s,t) && node_stack.empty());
-    vertex &v=node(s),&w=node(t);
-    v.move_neighbor(t,-1);
-    dfs(s,false);
-    unvisit_all_nodes();
-    unvisit_all_edges();
-    v.set_visited(true);
-    w.set_visited(true);
-    set_edge_visited(make_pair(s,t));
-    node_stack.push(t);
-    node_stack.push(s);
-    int n=0,i;
-    ivector path;
-    while (!node_stack.empty()) {
-        i=node_stack.top();
-        vertex &u=node(i);
-        node_stack.pop();
-        pathfinder(i,path);
-        if (path.empty()) {
-            u.set_number(++n);
-        } else {
-            path.pop_back();
-            while (!path.empty()) {
-                node_stack.push(path.back());
-                path.pop_back();
-            }
+    int n=node_count(),i;
+    for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
+        it->set_disc(0);
+    }
+    disc_time=1;
+    node(s).set_disc(1);
+    ivector preorder,L;
+    st_numbering_dfs(t,preorder);
+    L.push_back(s);
+    L.push_back(t);
+    vector<bool> sign(n);
+    ivector::iterator lit;
+    bool sign_plus=true,sign_minus=false;
+    sign[s]=sign_minus;
+    for (ivector::const_reverse_iterator it=preorder.rbegin();it!=preorder.rend();++it) {
+        vertex &v=node(*it);
+        lit=find(L.begin(),L.end(),v.ancestor());
+        assert(lit!=L.end());
+        if (sign[v.low()]==sign_minus) {
+            L.insert(lit,*it);
+            sign[v.ancestor()]=sign_plus;
+        } else if (sign[v.low()]==sign_plus) {
+            L.insert(lit+1,*it);
+            sign[v.ancestor()]=sign_minus;
         }
+    }
+    i=0;
+    for (ivector_iter it=L.begin();it!=L.end();++it) {
+        node(*it).set_number(++i);
     }
 }
 
@@ -11016,6 +10959,45 @@ gen graphe::tutte_polynomial(const gen &x,const gen &y) {
     }
     cache.clear();
     return intpoly2gen(p,x,y);
+}
+
+/* find all fundamental cycles in this graph */
+void graphe::fundamental_cycles(ivectors &cycles,int sg,bool check) {
+    assert(!is_directed());
+    ivectors comp;
+    if (check) {
+        connected_components(comp,sg);
+        if (comp.size()>1) {
+            int nsg=max_subgraph_index();
+            for (ivectors_iter it=comp.begin();it!=comp.end();++it) {
+                set_subgraph(*it,++nsg);
+                fundamental_cycles(cycles,nsg,false);
+            }
+            return;
+        }
+    }
+    ipairs E,nte;
+    get_edges_as_pairs(E,true,sg);
+    int root=sg<0?0:first_vertex_from_subgraph(sg),i,j;
+    dfs(root,true,true,NULL,sg);
+    for (ipairs_iter it=E.begin();it!=E.end();++it) {
+        i=it->first; j=it->second;
+        if (node(i).ancestor()!=j && node(j).ancestor()!=i)
+            nte.push_back(*it);
+    }
+    for (ipairs_iter it=nte.begin();it!=nte.end();++it) {
+        const vertex &v=node(it->first),&w=node(it->second);
+        i=v.disc()>w.disc()?it->first:it->second;
+        j=v.disc()<w.disc()?it->first:it->second;
+        ivector c;
+        while (i!=j) {
+            c.push_back(i);
+            i=node(i).ancestor();
+            assert(i>=0);
+        }
+        c.push_back(j);
+        cycles.push_back(c);
+    }
 }
 
 #ifndef NO_NAMESPACE_GIAC

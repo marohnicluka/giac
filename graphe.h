@@ -100,45 +100,34 @@ public:
     typedef std::vector<std::map<int,int> > edgemap;
     typedef std::vector<std::map<int,double> > edgemapd;
     typedef std::map<ipair,int> intpoly;
+    typedef std::vector<double> dvector;
 
     class vertex { // vertex class
         int m_subgraph;
         bool m_sorted;
         // used for traversing
         bool m_visited;
-        bool m_on_stack;
         int m_low;
         int m_disc;
         int m_ancestor;
         int m_color;
-        // used for drawing trees
-        int m_position;
-        int m_gaps;
-        double m_prelim;
-        double m_modifier;
-        int m_children;
         // used for planar embedding
         bool m_embedded;
         int m_number;
         std::map<int,int> m_edge_faces;
-        // used for grid drawing
-        int m_left;
-        int m_right;
-        int m_x_offset;
-        int m_y;
         // *
         attrib m_attributes;
         ivector m_neighbors;
         std::map<int,attrib> m_neighbor_attributes;
         std::map<int,int> m_multiedges;
         void assign_defaults();
+        void assign(const vertex &other);
     public:
         vertex();
         vertex(const vertex &other);
         vertex(const gen &lab);
         ~vertex() { }
         vertex& operator =(const vertex &other);
-        void assign(const vertex &other);
         gen label() const;
         inline bool is_sorted() const { return m_sorted; }
         inline void set_label(const gen &s) { m_attributes[_GT_ATTRIB_LABEL]=s; }
@@ -150,8 +139,6 @@ public:
         inline int number() const { return m_number; }
         inline void set_visited(bool yes) { m_visited=yes; }
         inline bool is_visited() const { return m_visited; }
-        inline bool is_on_stack() const { return m_on_stack; }
-        inline void set_on_stack(bool yes) { m_on_stack=yes; }
         inline void set_low(int l) { m_low=l; }
         inline int low() const { return m_low; }
         inline void set_disc(int t) { m_disc=t; }
@@ -161,26 +148,6 @@ public:
         inline int ancestor() const { return m_ancestor; }
         inline void set_color(int c) { m_color=c; }
         inline int color() const { return m_color; }
-        inline void inc_children() { ++m_children; }
-        inline void clear_children() { m_children=0; }
-        inline int children() const { return m_children; }
-        inline bool is_leaf() const { return m_children==0; }
-        inline void set_position(int p) { m_position=p; }
-        inline int position() const { return m_position; }
-        inline void set_gaps(int n) { m_gaps=n; }
-        inline int gaps() const { return m_gaps; }
-        inline void set_prelim(double val) { m_prelim=val; }
-        inline double prelim() const { return m_prelim; }
-        inline void set_modifier(double val) { m_modifier=val; }
-        inline double modifier() const { return m_modifier; }
-        inline void set_left(int l) { m_left=l; }
-        inline int left() const { return m_left; }
-        inline void set_right(int r) { m_right=r; }
-        inline int right() const { return m_right; }
-        inline void set_x_offset(int dx) { m_x_offset=dx; }
-        inline int x_offset() const { return m_x_offset; }
-        inline void set_y(int y) { m_y=y; }
-        inline int y() const { return m_y; }
         inline const attrib &attributes() const { return m_attributes; }
         inline attrib &attributes() { return m_attributes; }
         inline void set_attribute(int key,const gen &val) { m_attributes[key]=val; }
@@ -246,6 +213,11 @@ public:
         ivectors levels;
         ivector node_counters;
         ivector gap_counters;
+        ivector position;
+        dvector prelim;
+        dvector modifier;
+        ivector gaps;
+        ivector children;
         std::queue<int> placed;
         int depth;
         void walk(int i,int pass,int level=0,double modsum=0);
@@ -296,8 +268,6 @@ public:
     };
 
     class tsp { // traveling salesman
-        typedef std::vector<double> dvector;
-        typedef dvector::const_iterator dvector_iter;
         struct arc {
             /* arc struct holds only the edge information relevant for TSP */
             int head;
@@ -443,7 +413,11 @@ public:
         size_t sz;
         int frq;
         intpoly poly;
-        cpol() { cg=NULL; col=NULL; sz=0; frq=0; }
+#if defined HAVE_LIBNAUTY && defined HAVE_NAUTY_NAUTUTIL_H
+        cpol() { nv=0; cg=NULL; col=NULL; sz=0; frq=0; }
+#else
+        cpol() { nv=0; adj=NULL; sz=0; frq=0; }
+#endif
 #if defined HAVE_LIBNAUTY && defined HAVE_NAUTY_NAUTUTIL_H
         cpol(int n,ulong *g,int *c,size_t s,const intpoly &p);
 #else
@@ -485,7 +459,7 @@ public:
         ivector clique_nodes;
         clock_t start;
         bool timed_out;
-        void recurse(ivector &U,int size);
+        void recurse(ivector &U,int size,ivector &position);
     public:
         ostergard(graphe *gr,double max_time=0) { G=gr; timeout=max_time; }
         int maxclique(ivector &clique);
@@ -539,6 +513,7 @@ public:
     typedef ipairs::const_iterator ipairs_iter;
     typedef edgeset::const_iterator edgeset_iter;
     typedef intpoly::const_iterator intpoly_iter;
+    typedef dvector::const_iterator dvector_iter;
     static const gen FAUX;
     static const gen VRAI;
     static bool verbose;
@@ -674,10 +649,10 @@ private:
     void make_product_nodes(const graphe &G,graphe &P) const;
     static void extract_path_from_cycle(const ivector &cycle,int i,int j,ivector &path);
     static void generate_nk_sets(int n,int k,std::vector<ulong> &v);
-    void strongconnect_dfs(ivectors &components,int i,int sg);
+    void strongconnect_dfs(ivectors &components,std::vector<bool> &onstack,int i,int sg);
     bool degrees_equal(const ivector &v,int deg=0) const;
     void lca_recursion(int u,const ipairs &p,ivector &lca_recursion,unionfind &ds);
-    void pathfinder(int i,ivector &path);
+    void st_numbering_dfs(int i,ivector &preorder);
     void rdfs(int i,ivector &d,bool rec,int sg,bool skip_embedded);
     bool is_descendant(int v,int anc) const;
     static int pred(int i,int n);
@@ -999,6 +974,7 @@ public:
     bool make_euclidean_distances();
     gen max_flow(int s,int t,std::vector<std::map<int,gen> > &flow);
     gen tutte_polynomial(const gen &x,const gen &y);
+    void fundamental_cycles(ivectors &cycles,int sg=-1,bool check=true);
     static gen colon_label(int i,int j);
     static gen colon_label(int i,int j,int k);
     graphe &operator =(const graphe &other) { nodes.clear(); other.copy(*this); return *this; }

@@ -516,8 +516,10 @@ graphe::vertex::vertex() {
     assign_defaults();
 }
 
-graphe::vertex::vertex(const gen &lab) {
+graphe::vertex::vertex(const gen &lab,const attrib &attr) {
     assign_defaults();
+    if (!attr.empty())
+        set_attributes(attr);
     set_label(lab);
 }
 
@@ -2316,12 +2318,12 @@ bool graphe::remove_edge(int i,int j) {
 }
 
 /* add vertex v to graph */
-int graphe::add_node(const gen &v) {
+int graphe::add_node(const gen &v,const attrib &attr) {
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         if (it->label()==v)
             return it-nodes.begin();
     }
-    nodes.push_back(vertex(v));
+    nodes.push_back(vertex(v,attr));
     return node_count()-1;
 }
 
@@ -6466,13 +6468,126 @@ void graphe::make_tree_layout(layout &x,double sep,int apex) {
     P.positioning(apex);
 }
 
-/* create a random tree with n vertices and degree not larger than maxd */
-void graphe::make_random_tree(const vecteur &V,int maxd,bool addnodes) {
-    if (addnodes) {
-        this->clear();
-        reserve_nodes(V.size());
-        add_nodes(V);
+/* compute the number of rooted trees on 1,..,n vertices, output as t[1],..,t[n] */
+void graphe::number_of_rooted_trees(int n,vecteur &t) {
+    t.resize(n+1);
+    t[1]=1;
+    gen sum,td;
+    int nlast=1,i;
+    while (n>nlast) {
+        sum=0;
+        for (int d=1;d<=nlast;++d) {
+            i=nlast+1;
+            td=t[d]*gen(d);
+            for (int j=1;j<=nlast;++j) {
+                i-=d;
+                if (i<=0) break;
+                sum+=t[i]*td;
+            }
+        }
+        ++nlast;
+        t[nlast]=sum/gen(nlast-1);
     }
+}
+
+/* Wilf's RANRUT algorithm - the original implementation: creates a random
+ * rooted tree on n vertices, the numbers t[k] may be passed as pt if already computed */
+void graphe::ranrut(int n,ivector &tree,const vecteur &pt) {
+    int l=0,d,j,i,k=n,is1=0,is2=0,m,ll,ls;
+    tree.resize(n+1);
+    ipairs jd(n+1);
+    gen td,z;
+    if (k<3) {
+        tree[1]=0;
+        if (k>1) tree[2]=1;
+        return;
+    }
+    vecteur t;
+    if (int(pt.size())>=n+1)
+        t=vecteur(pt.begin(),pt.begin()+n+1);
+    else
+        number_of_rooted_trees(n,t);
+label12:
+    if (k<=2) goto label70;
+    z=t[k]*exact((k-1)*rand_uniform(),ctx);
+    d=0;
+label30:
+    ++d;
+    td=t[d]*gen(d);
+    m=k;
+    j=0;
+label40:
+    ++j;
+    m-=d;
+    if (m<1) goto label30;
+    z-=t[m]*td;
+    if (is_positive(z,ctx)) goto label40;
+    jd[++is1]=make_pair(j,d);
+    k=m;
+    goto label12;
+label70:
+    tree[is2+1]=l;
+    l=is2+1;
+    is2+=k;
+    if (k>1) tree[is2]=is2-1;
+label80:
+    k=jd[is1].second;
+    if (k==0) goto label90;
+    jd[is1].second=0;
+    goto label12;
+label90:
+    j=jd[is1--].first;
+    m=is2-l+1;
+    ll=tree[l];
+    ls=l+(j-1)*m-1;
+    if (j==1) goto label105;
+    for (i=l;i<=ls;++i) {
+        tree[i+m]=tree[i]+m;
+        if ((i-l)%m==0) tree[i+m]=ll;
+    }
+label105:
+    is2=ls+m;
+    if (is2==n) return;
+    l=ll;
+    goto label80;
+}
+
+void graphe::ranrut_forest(int m,ivectors &trees,const vecteur &alpha,const vecteur &a) {
+    if (m==0)
+        return;
+    gen z=alpha[m]*exact(m*rand_uniform(),ctx),alphad;
+    int d=0,i,j;
+label30:
+    ++d;
+    alphad=a[d]*gen(d);
+    i=m;
+    j=0;
+label40:
+    ++j;
+    i-=d;
+    if (i<0) goto label30;
+    z-=alpha[i]*alphad;
+    if (is_positive(z,ctx)) goto label40;
+    ranrut_forest(m-j*d,trees,alpha,a);
+    ivector tree;
+    ranrut(d,tree,a);
+    tree[0]=j; // number of copies
+    trees.push_back(tree);
+}
+
+/* insert a tree rooted at vertex 'root' */
+void graphe::insert_tree(const ivector &tree,int root) {
+    for (ivector_iter it=tree.begin()+2;it!=tree.end();++it) {
+        add_edge(it-tree.begin()-1+root,*it-1+root);
+    }
+}
+
+/* create random tree on n vertices with degree not larger than maxd */
+void graphe::make_random_tree(const vecteur &V,int maxd) {
+    this->clear();
+    reserve_nodes(V.size());
+    add_nodes(V);
+    /* add one edge at a time to the tree */
     vecteur src,labels=*_randperm(V,ctx)._VECTptr;
     src.push_back(labels.back());
     labels.pop_back();
@@ -6487,6 +6602,70 @@ void graphe::make_random_tree(const vecteur &V,int maxd,bool addnodes) {
             iterateur it=find(src.begin(),src.end(),v);
             assert(it!=src.end());
             src.erase(it);
+        }
+    }
+}
+
+/* create a rooted tree on vertex set V uniformly at random (|V|<=500) */
+void graphe::make_random_rooted_tree(const vecteur &V) {
+    this->clear();
+    ivector tree;
+    ranrut(V.size(),tree);
+    reserve_nodes(V.size());
+    add_nodes(V);
+    insert_tree(tree,0);
+}
+
+/* create a free tree on vertex set V uniformly at random */
+void graphe::make_random_free_tree(const vecteur &V) {
+    this->clear();
+    int n=V.size();
+    reserve_nodes(n);
+    add_nodes(V);
+    vecteur a;
+    number_of_rooted_trees(n,a);
+    if (n%2==0 && is_strictly_greater(a[n/2]*(1+a[n/2]),gen(rand_uniform())*a[n],ctx)) {
+        /* the output tree will have two centroids */
+        ivector tree;
+        ranrut(n/2,tree,a);
+        insert_tree(tree,0);
+        if (is_positive(gen(rand_uniform())*(a[n/2]+1)-1,ctx))
+            ranrut(n/2,tree,a);
+        insert_tree(tree,n/2);
+        add_edge(0,n/2);
+    } else {
+        /* the output tree will have one centroid */
+        vecteur alpha(n);
+        alpha[0]=1;
+        gen sum,alphad;
+        int m=0,i;
+        while (n-1>m) {
+            sum=0;
+            for (int d=1;2*d<=n-1;++d) {
+                i=m+1;
+                alphad=a[d]*gen(d);
+                for (int j=1;;++j) {
+                    i-=d;
+                    if (i<0) break;
+                    sum+=alpha[i]*alphad;
+                }
+            }
+            ++m;
+            alpha[m]=sum/gen(m);
+        }
+        ivectors trees;
+        ivector roots;
+        ranrut_forest(n-1,trees,alpha,a);
+        m=1;
+        for (ivectors_iter it=trees.begin();it!=trees.end();++it) {
+            for (int j=0;j<it->front();++j) {
+                insert_tree(*it,m);
+                roots.push_back(m);
+                m+=it->size()-1;
+            }
+        }
+        for (ivector_iter it=roots.begin();it!=roots.end();++it) {
+            add_edge(0,*it);
         }
     }
 }

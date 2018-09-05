@@ -443,8 +443,6 @@ int graphunion(graphe &G,const vecteur &gv,bool disjoint) {
     int k=0,i,j;
     graphe::ipairs E;
     stringstream ss;
-    gen weight;
-    graphe::ipair e;
     for (const_iterateur it=gv.begin();it!=gv.end();++it) {
         ++k;
         graphe Gk(G.giac_context());
@@ -461,21 +459,20 @@ int graphunion(graphe &G,const vecteur &gv,bool disjoint) {
             have_properties=true;
         }
         vecteur V=Gk.vertices();
-        if (disjoint) {
-            for (iterateur it=V.begin();it!=V.end();++it) {
+        for (iterateur it=V.begin();it!=V.end();++it) {
+            if (disjoint)
                 add_prefix_to_vertex_label(*it,k,ss);
-            }
+            G.add_node(*it,Gk.node_attributes(it-V.begin()));
         }
-        G.add_nodes(V);
         Gk.get_edges_as_pairs(E,false);
         for (graphe::ipairs_iter it=E.begin();it!=E.end();++it) {
             const gen &v=V[it->first],&w=V[it->second];
-            weight=Gk.is_weighted()?Gk.weight(it->first,it->second):1;
-            if (!disjoint && G.is_weighted() && (i=G.node_index(v))>=0 &&
-                    (j=G.node_index(w))>=0 && G.has_edge(i,j))
-                G.set_edge_attribute(i,j,_GT_ATTRIB_WEIGHT,G.weight(i,j)+weight);
-            e=G.add_edge(v,w,Gk.edge_attributes(it->first,it->second));
-            G.set_edge_attribute(e.first,e.second,_GT_ATTRIB_WEIGHT,weight);
+            i=G.node_index(v); j=G.node_index(w);
+            assert(i>=0 && j>=0);
+            if (!disjoint && G.is_weighted() && G.has_edge(i,j))
+                G.set_edge_attribute(i,j,_GT_ATTRIB_WEIGHT,G.weight(i,j)+Gk.weight(it->first,it->second));
+            if (!G.has_edge(i,j))
+                G.add_edge(v,w,Gk.edge_attributes(it->first,it->second));
         }
     }
     return -1;
@@ -1843,7 +1840,8 @@ define_unary_function_ptr5(at_random_sequence_graph,alias_at_random_sequence_gra
  */
 gen _random_tree(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    int maxd=RAND_MAX,n;
+    int maxd=-1,n;
+    bool rooted=false;
     vecteur V;
     graphe G(contextptr);
     if (g.is_integer()) {
@@ -1851,6 +1849,8 @@ gen _random_tree(const gen &g,GIAC_CONTEXT) {
     } else if (g.type==_VECT) {
         vecteur &gv=*g._VECTptr;
         if (g.subtype==_SEQ__VECT) {
+            if (gv.size()!=2)
+                return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
             if (gv.front().is_integer()) {
                 n=gv.front().val;
             } else if (gv.front().type==_VECT) {
@@ -1858,11 +1858,25 @@ gen _random_tree(const gen &g,GIAC_CONTEXT) {
                 n=V.size();
             } else
                 return gt_err(_GT_ERR_BAD_VERTICES);
-            if (gv.size()>1 && gv[1].is_integer()) {
-                maxd=gv[1].val;
-                if (maxd<1)
-                    return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
+            if (gv.back().is_integer()) {
+                if ((maxd=gv.back().val)<2)
+                    return generr("Maximum degree must be at least two");
+            } else if (is_inf(gv.back()))
+                maxd=RAND_MAX;
+            else if (gv.back()==at_maple_root)
+                rooted=true;
+            else if (gv.back().is_symb_of_sommet(at_equal) &&
+                     gv.back()._SYMBptr->feuille._VECTptr->front()==at_maple_root &&
+                     gv.front().type==_VECT) {
+                gen root_label=gv.back()._SYMBptr->feuille._VECTptr->back();
+                iterateur it;
+                if ((it=find(V.begin(),V.end(),root_label))==V.end())
+                    return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
+                V.erase(it);
+                V.insert(V.begin(),root_label);
+                rooted=true;
             }
+            else return generr("Invalid option");
         } else {
             V=gv;
             n=V.size();
@@ -1872,7 +1886,12 @@ gen _random_tree(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
     if (V.empty())
         G.make_default_labels(V,n);
-    G.make_random_tree(V,maxd);
+    if (maxd>0)
+        G.make_random_tree(V,maxd);
+    else if (rooted)
+        G.make_random_rooted_tree(V);
+    else
+        G.make_random_free_tree(V);
     return G.to_gen();
 }
 static const char _random_tree_s[]="random_tree";
@@ -3748,7 +3767,7 @@ define_unary_function_ptr5(at_highlight_trail,alias_at_highlight_trail,&__highli
  */
 gen _disjoint_union(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+    if (g.type!=_VECT)
         return gentypeerr(contextptr);
     graphe G(contextptr);
     int err;
@@ -3770,7 +3789,7 @@ define_unary_function_ptr5(at_disjoint_union,alias_at_disjoint_union,&__disjoint
  */
 gen _graph_union(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+    if (g.type!=_VECT)
         return gentypeerr(contextptr);
     graphe G(contextptr);
     int err;

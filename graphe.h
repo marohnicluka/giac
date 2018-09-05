@@ -125,7 +125,7 @@ public:
     public:
         vertex();
         vertex(const vertex &other);
-        vertex(const gen &lab);
+        vertex(const gen &lab,const attrib &attr);
         ~vertex() { }
         vertex& operator =(const vertex &other);
         gen label() const;
@@ -677,6 +677,10 @@ private:
     static intpoly poly_one();
     static gen intpoly2gen(const intpoly &v,const gen &x,const gen &y);
     void sharc_order();
+    static void number_of_rooted_trees(int n,vecteur &t);
+    void ranrut(int n,ivector &tree,const vecteur &pt=vecteur(0));
+    void ranrut_forest(int m,ivectors &trees,const vecteur &alpha,const vecteur &a);
+    void insert_tree(const ivector &tree,int root);
 
 public:
     graphe(const context *contextptr=context0);
@@ -762,8 +766,7 @@ public:
     vecteur edges(bool include_weights,int sg=-1) const;
     ivector edge_multiplicities() const;
     int sum_of_edge_multiplicities() const;
-    int add_node(const gen &v);
-    inline int add_node(const gen &v,const attrib &attr) { int i=add_node(v); nodes[i].set_attributes(attr); return i; }
+    int add_node(const gen &v,const attrib &attr=attrib());
     void add_nodes(const vecteur &v);
     bool remove_node(int i);
     bool remove_node(const gen &v);
@@ -896,7 +899,9 @@ public:
     void make_wheel_graph(int n,layout *x=NULL);
     void make_antiprism_graph(int n,layout *x=NULL);
     void make_complete_kary_tree(int k,int d);
-    void make_random_tree(const vecteur &V,int maxd,bool addnodes=true);
+    void make_random_tree(const vecteur &V,int maxd=0);
+    void make_random_rooted_tree(const vecteur &V);
+    void make_random_free_tree(const vecteur &V);
     void make_random_planar(double p,int connectivity);
     void make_random(bool dir,const vecteur &V,double p);
     void make_random_sequential(const ivector &d,const vecteur &labels);

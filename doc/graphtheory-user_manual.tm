@@ -3688,27 +3688,48 @@
   <subsection|Random trees>
 
   The command <verbatim|random_tree><index|<verbatim|random_tree>> is used
-  for generating rooted <hlink|tree graphs|#is-tree> at random.
+  for generating rooted <hlink|tree graphs|#is-tree> uniformly at random.
 
-  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_tree(n\|V)>>>|<row|<cell|>|<cell|<verbatim|random_tree(n\|V,d)>>>>>>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_tree(n\|V)>>>|<row|<cell|>|<cell|<verbatim|random_tree(n\|V,d)>>>|<row|<cell|>|<cell|<verbatim|random_tree(n\|V,root[=v])>>>>>>
 
   <verbatim|random_tree> accepts one or two arguments: a positive integer
   <math|n> or a list <math|V=<around*|{|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|n>|}>>
-  and optionally an integer <math|d\<geqslant\>2>. It returns a random tree
-  <math|T<around*|(|V,E|)>> on <math|n> vertices such that, if <math|d> is
-  given, the maximal vertex degree in <math|T> does not exceed <math|d>.
+  and optionally an integer <math|d\<geqslant\>2> or the option
+  <verbatim|root[=v]>, where <math|v\<in\>V>. It returns a random tree
+  <math|T<around*|(|V,E|)>> on <math|n> vertices such that
 
-  For <math|n\<leqslant\>500> and <math|d> not set, <name|Wilf>'s
-  <abbr|RANRUT> algorithm<nbsp><cite-detail|nijenhuis|pp.<nbsp>274> is
-  applied, which generates rooted trees on <math|n> vertices uniformly at
-  random. The root of a tree <math|T> generated this way is always the first
-  vertex in the list returned by the command <verbatim|vertices(T)>. If
-  <math|n\<gtr\>500> or <math|d> is specified, a simpler algorithm is
-  applied, which starts with an empty graph on <math|n> vertices and adds
-  edges at random, one at a time.
+  <\itemize-minus>
+    <item>if the second argument is omitted, <math|T> is an uniformly
+    selected free tree.
+
+    <item>if <math|d> is given, then <math|\<Delta\><around*|(|T|)>\<leqslant\>d>,
+    where <math|\<Delta\><around*|(|T|)>> is the maximum vertex degree in
+    <math|T>,
+
+    <item>if <verbatim|root[=v]> is given, <math|T> is an uniformly selected
+    rooted tree (with root <math|v\<in\>V>).
+  </itemize-minus>
+
+  Rooted trees are generated uniformly at random using <abbr|RANRUT>
+  algorithm <cite-detail|nijenhuis|pp.<nbsp>274>. The root of a tree <math|T>
+  generated this way, if not specified as <math|v>, is always the first
+  vertex in the list returned by the command <verbatim|vertices(T)>. The
+  average time complexity of <abbr|RANRUT> algorithm is
+  <math|O<around*|(|<around*|\||V|\|>*log
+  <around*|\||V|\|>|)>><nbsp><cite|alonso>.
+
+  Free trees are generated uniformly at random using <name|Wilf>'s
+  algorithm<nbsp><cite|wilf>, which is based on <abbr|RANRUT> algorithm and
+  runs in about the same time as <abbr|RANRUT> itself.
+
+  Trees with bounded maximum degree are generated using a simple algorithm
+  which starts with an empty tree and adds edges at random one at a time. It
+  is faster than <abbr|RANRUT> but selects trees in a non-uniform manner. To
+  force the use of this algorithm even without vertex degree limit (for
+  example, when <math|n> is high), one can set <math|d=+\<infty\>>.
 
   The command line below creates a forest containing 10 randomly selected
-  rooted trees on 10 vertices.
+  free trees on 10 vertices.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -3732,15 +3753,88 @@
     <image|images/rand5.eps|35%|||>
   </center>
 
+  There are exactly 6 distinct free trees on 6 vertices. They are created by
+  the next command line.
+
+  <\session|giac|default>
+    <\input>
+      \<gtr\>\ 
+    <|input>
+      trees:=[star_graph(5),path_graph(6),graph(trail(1,2,3,4),trail(5,4,6)),
+      graph(%{[1,2],[2,3],[2,4],[4,5],[4,6]%}),graph(trail(1,2,3,4),trail(3,5,6)),graph(trail(1,2,3,4),trail(5,3,6))]:;
+    </input>
+
+    <\input>
+      \<gtr\>\ 
+    <|input>
+      draw_graph(disjoint_union(trees),spring,labels=false)
+    </input>
+  </session>
+
+  <\center>
+    <image|images/trees6.eps|35%|||>
+  </center>
+
+  <\session|giac|default>
+    <\input>
+      \<gtr\>\ 
+    <|input>
+      hits:=[0$6]:;
+    </input>
+
+    <\input>
+      \<gtr\>\ 
+    <|input>
+      for k from 1 to 1200 do
+
+      \ \ \ \ T:=random_tree(6);
+
+      \ \ \ \ for j from 0 to 5 do
+
+      \ \ \ \ \ \ \ \ if is_isomorphic(T,trees[j]) then hits[j]++; fi;
+
+      \ \ \ \ od;
+
+      od:;
+    </input>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      hits
+    <|unfolded-io>
+      <\equation*>
+        <around|[|198,194,192,199,211,206|]>
+      </equation*>
+    </unfolded-io>
+  </session>
+
+  The mean of all hit counts and the corresponding coefficient of variantion
+  are computed below.
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      m:=mean(hits); cat(stddev(hits)/m*100.0,"%")
+    <|unfolded-io>
+      <\equation*>
+        200,<with|math-font-family|rm|3.3040379336%>
+      </equation*>
+    </unfolded-io>
+  </session>
+
   To show that the algorithm generates rooted trees on <math|n> vertices with
   equal probability, one can reproduce the example
-  in<nbsp><cite-detail|nijenhuis|pp.<nbsp>281> for <math|n=5>. First, nine
-  rooted trees on 5 vertices are created and stored. Root vertices are
-  highlighted to be distinguishable. Then, 4500 rooted trees on 5 vertices
-  are generated at random, recording every match with the stored trees in the
-  variable called <verbatim|hits>. Finally, the number times a tree was
-  matched is displayed for each stored tree and a brief statistical analysis
-  of the result is provided.
+  in<nbsp><cite-detail|nijenhuis|pp.<nbsp>281> for <math|n=5>. First, all
+  distinct rooted trees on 5 vertices are created and stored in
+  <verbatim|trees>; there are exactly nine of them and will be called
+  <em|basic 5-trees>. Their root vertices are highlighted to be
+  distinguishable. Then, 4500 rooted trees on 5 vertices are generated at
+  random. For each such tree <math|T> there is a unique <math|k> such that
+  <math|T> is isomorphic to <verbatim|trees[k]>, therefore the number
+  <verbatim|hits[k]> is increased by one to record the match. Finally, the
+  list <verbatim|hits> is displayed.
 
   <\session|giac|default>
     <\input>
@@ -3790,7 +3884,7 @@
     <|unfolded-io>
       for k from 1 to 4500 do
 
-      \ \ \ \ T:=random_tree(5);
+      \ \ \ \ T:=random_tree(5,root);
 
       \ \ \ \ HT:=highlight_vertex(T,vertices(T)[0]);
 
@@ -3816,14 +3910,14 @@
     </unfolded-io>
   </session>
 
-  The command line below computes the mean of all hit counts and the
-  corresponding coefficient of variantion.
+  The mean of all hit counts and the corresponding coefficient of variantion
+  are computed below.
 
   <\session|giac|default>
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      m:=mean(hits); cat(approx(stddev(hits)/m*100),"%")
+      m:=mean(hits); cat(stddev(hits)/m*100.0,"%")
     <|unfolded-io>
       <\equation*>
         500,<with|math-font-family|rm|3.3413237563%>
@@ -12528,31 +12622,36 @@
   <center|<image|images/sg2.eps|35%|||>>
 
   <\bibliography|bib|tm-plain|graphtheory>
-    <\bib-list|44>
-      <bibitem*|1><label|bib-bayati>Mohsen Bayati, Jeong<nbsp>Han
+    <\bib-list|46>
+      <bibitem*|1><label|bib-alonso>L.<nbsp>Alonso<localize| and
+      >R.<nbsp>Schott. <newblock>Random Unlabelled Rooted Trees Revisited.
+      <newblock><localize|In ><with|font-shape|italic|Proc.<nbsp>Int.<nbsp>Conf.<nbsp>on
+      Computing and Information 1994>, <localize|pages >1352\U1367.<newblock>
+
+      <bibitem*|2><label|bib-bayati>Mohsen Bayati, Jeong<nbsp>Han
       Kim<localize|, and >Amin Saberi. <newblock>A Sequential Algorithm for
       Generating Random Graphs. <newblock><with|font-shape|italic|Algorithmica>,
       58:860\U910, 2010.<newblock>
 
-      <bibitem*|2><label|bib-biggs>Norman Biggs.
+      <bibitem*|3><label|bib-biggs>Norman Biggs.
       <newblock><with|font-shape|italic|Algebraic graph theory>.
       <newblock>Cambridge University Press, Second<localize| edition>,
       1993.<newblock>
 
-      <bibitem*|3><label|bib-blanusa>Danilo Blanu²a. <newblock>Problem
+      <bibitem*|4><label|bib-blanusa>Danilo Blanu²a. <newblock>Problem
       £etiriju boja. <newblock><with|font-shape|italic|Glasnik
       Mat.-Fiz.<nbsp>Astr.<nbsp>Ser.<nbsp>II>, 1:31\U32, 1946.<newblock>
 
-      <bibitem*|4><label|bib-bollobas>Béla Bollobás.
+      <bibitem*|5><label|bib-bollobas>Béla Bollobás.
       <newblock><with|font-shape|italic|Modern Graph Theory>.
       <newblock>Graduate Texts in Mathematics. Springer, Corrected<localize|
       edition>, 2002.<newblock>
 
-      <bibitem*|5><label|bib-brelaz>Daniel Brélaz. <newblock>New Methods to
+      <bibitem*|6><label|bib-brelaz>Daniel Brélaz. <newblock>New Methods to
       Color the Vertices of a Graph. <newblock><with|font-shape|italic|Communications
       of the ACM>, 22:251\U256, 1979.<newblock>
 
-      <bibitem*|6><label|bib-buchheim>Cristoph Buchheim, Michael
+      <bibitem*|7><label|bib-buchheim>Cristoph Buchheim, Michael
       Jünger<localize|, and >Sebastian Leipert. <newblock>Improving Walker's
       Algorithm to Run in Linear Time. <newblock><localize|In
       >M.<nbsp>T.<nbsp>Goodrich<localize| and
@@ -12561,201 +12660,205 @@
       Science vol 2528>, <localize|pages >344\U353. Springer-Verlag Berlin
       Heidelberg, 2002.<newblock>
 
-      <bibitem*|7><label|bib-christofides>Nicos Christofides.
+      <bibitem*|8><label|bib-christofides>Nicos Christofides.
       <newblock>Worst-case analysis of a new heuristic for the traveling
       salesman problem. <newblock>Report 388, Graduate School of Industrial
       Administration, 1976.<newblock>
 
-      <bibitem*|8><label|bib-cook>William<nbsp>J.<nbsp>Cook.
+      <bibitem*|9><label|bib-cook>William<nbsp>J.<nbsp>Cook.
       <newblock><with|font-shape|italic|In Pursuit of the Traveling Salesman:
       Mathematics at the Limits of Computation>. <newblock>Princeton
       University Press, 2012.<newblock>
 
-      <bibitem*|9><label|bib-melissa>Melissa DeLeon. <newblock>A Study of
+      <bibitem*|10><label|bib-melissa>Melissa DeLeon. <newblock>A Study of
       Sufficient Conditions for Hamiltonian Cycles.
       <newblock><with|font-shape|italic|Rose-Hulman Undergraduate Mathematics
       Journal>, 1, Article 6, 2000. <newblock><slink|https://scholar.rose-hulman.edu/rhumj/vol1/iss1/6>.<newblock>
 
-      <bibitem*|10><label|bib-diaz>Isabel<nbsp>M.<nbsp>Díaz<localize| and
+      <bibitem*|11><label|bib-diaz>Isabel<nbsp>M.<nbsp>Díaz<localize| and
       >Paula Zabala. <newblock>A Branch-and-Cut Algorithm for Graph Coloring.
       <newblock><with|font-shape|italic|Discrete Applied Mathematics>,
       154:826\U847, 2006.<newblock>
 
-      <bibitem*|11><label|bib-diestel>Reinhard Diestel.
+      <bibitem*|12><label|bib-diestel>Reinhard Diestel.
       <newblock><with|font-shape|italic|Graph Theory>.
       <newblock>Springer-Verlag, New York, 1997.<newblock>
 
-      <bibitem*|12><label|bib-edmonds>Jack Edmonds. <newblock>Paths, Trees,
+      <bibitem*|13><label|bib-edmonds>Jack Edmonds. <newblock>Paths, Trees,
       and Flowers. <newblock><localize|In >Gessel I.<localize| and
       >GC.<nbsp>Rota<localize|, editors>, <with|font-shape|italic|Classic
       Papers in Combinatorics>, <localize|pages >361\U379. Birkhäuser Boston,
       2009. Modern Birkhäuser Classics.<newblock>
 
-      <bibitem*|13><label|bib-edmonds-karp>Jack Edmonds<localize| and
+      <bibitem*|14><label|bib-edmonds-karp>Jack Edmonds<localize| and
       >Richard<nbsp>M.<nbsp>Karp. <newblock>Theoretical improvements in
       algorithmic efficiency for network flow problems.
       <newblock><with|font-shape|italic|Journal of the ACM>, 19:248\U264,
       1972.<newblock>
 
-      <bibitem*|14><label|bib-floyd>Robert<nbsp>W.<nbsp>Floyd.
+      <bibitem*|15><label|bib-floyd>Robert<nbsp>W.<nbsp>Floyd.
       <newblock>Algorithm 97: Shortest path.
       <newblock><with|font-shape|italic|Communications of the ACM>, 5:345,
       1962.<newblock>
 
-      <bibitem*|15><label|bib-fruchterman>T.<nbsp>M.<nbsp>J.<nbsp>Fruchterman<localize|
+      <bibitem*|16><label|bib-fruchterman>T.<nbsp>M.<nbsp>J.<nbsp>Fruchterman<localize|
       and >E.<nbsp>M.<nbsp>Reingold. <newblock>Graph Drawing by
       Force-Directed Placement. <newblock><with|font-shape|italic|Software:
       Practice and Experience>, 21:1129\U1164, 1991.<newblock>
 
-      <bibitem*|16><label|bib-gibbons>Alan Gibbons.
+      <bibitem*|17><label|bib-gibbons>Alan Gibbons.
       <newblock><with|font-shape|italic|Algorithmic graph theory>.
       <newblock>Cambridge University Press, 1985.<newblock>
 
-      <bibitem*|17><label|bib-godsil>Chris Godsil<localize| and
+      <bibitem*|18><label|bib-godsil>Chris Godsil<localize| and
       >Gordon<nbsp>F.<nbsp>Royle. <newblock><with|font-shape|italic|Algebraic
       graph theory>. <newblock>Graduate Texts in Mathematics. Springer,
       First<localize| edition>, 2001.<newblock>
 
-      <bibitem*|18><label|bib-haggard>Gary Haggard,
+      <bibitem*|19><label|bib-haggard>Gary Haggard,
       David<nbsp>J.<nbsp>Pearce<localize|, and >Gordon Royle.
       <newblock>Computing Tutte Polynomials.
       <newblock><with|font-shape|italic|ACM Transactions on Mathematical
       Software>, 37, 2010. <newblock>Article No.<nbsp>24.<newblock>
 
-      <bibitem*|19><label|bib-haggard2>Gary Haggard,
+      <bibitem*|20><label|bib-haggard2>Gary Haggard,
       David<nbsp>J.<nbsp>Pearce<localize|, and >Gordon Royle.
       <newblock>Edge-Selection Heuristics for Computing Tutte Polynomials.
       <newblock><with|font-shape|italic|Chicago Journal of Theoretical
       Computer Science>, 2010. <newblock>Article 6.<newblock>
 
-      <bibitem*|20><label|bib-hakimi>S.<nbsp>L.<nbsp>Hakimi. <newblock>On
+      <bibitem*|21><label|bib-hakimi>S.<nbsp>L.<nbsp>Hakimi. <newblock>On
       realizability of a set of integers as degrees of the vertices of a
       linear graph. I. <newblock><with|font-shape|italic|Journal of the
       Society for Industrial and Applied Mathematics>, 10:496\U506,
       1962.<newblock>
 
-      <bibitem*|21><label|bib-helsgaun>Keld Helsgaun. <newblock>General
+      <bibitem*|22><label|bib-helsgaun>Keld Helsgaun. <newblock>General
       <math|k>-opt submoves for the Lin--Kernighan TSP heuristic.
       <newblock><with|font-shape|italic|Math.<nbsp>Prog.<nbsp>Comp.>,
       1:119\U163, 2009.<newblock>
 
-      <bibitem*|22><label|bib-hierholzer>Carl Hierholzer. <newblock>Ueber die
+      <bibitem*|23><label|bib-hierholzer>Carl Hierholzer. <newblock>Ueber die
       möglichkeit, einen Linienzug ohne Wiederholung und ohne Unterbrechung
       zu umfahren. <newblock><with|font-shape|italic|Mathematische Annalen>,
       6:30\U32, 1873.<newblock>
 
-      <bibitem*|23><label|bib-hinz>Andreas<nbsp>M.<nbsp>Hinz, Sandi
+      <bibitem*|24><label|bib-hinz>Andreas<nbsp>M.<nbsp>Hinz, Sandi
       Klavºar<localize|, and >Sara<nbsp>S.<nbsp>Zemlji£. <newblock>A survey
       and classification of Sierpi«ski-type graphs.
       <newblock><with|font-shape|italic|Discrete Applied Mathematics>,
       217:565\U600, 2017.<newblock>
 
-      <bibitem*|24><label|bib-hopcroft>John<nbsp>E.<nbsp>Hopcroft<localize|
+      <bibitem*|25><label|bib-hopcroft>John<nbsp>E.<nbsp>Hopcroft<localize|
       and >Richard<nbsp>M.<nbsp>Karp. <newblock>An <math|n<rsup|5/2>>
       algorithm for maximum matchings in bipartite graphs.
       <newblock><with|font-shape|italic|SIAM Journal on Computing>,
       2:225\U231, 1973.<newblock>
 
-      <bibitem*|25><label|bib-hu>Yifan Hu. <newblock>Efficient and High
+      <bibitem*|26><label|bib-hu>Yifan Hu. <newblock>Efficient and High
       Quality Force-Directed Graph Drawing.
       <newblock><with|font-shape|italic|Mathematica Journal>, 10:37\U71,
       2005.<newblock>
 
-      <bibitem*|26><label|bib-hu2>Yifan Hu<localize| and >Jennifer Scott.
+      <bibitem*|27><label|bib-hu2>Yifan Hu<localize| and >Jennifer Scott.
       <newblock>A Multilevel Algorithm for Wavefront Reduction.
       <newblock><with|font-shape|italic|SIAM Journal on Scientific
       Computing>, 23:1352\U1375, 2001.<newblock>
 
-      <bibitem*|27><label|bib-kahn>Arthur<nbsp>B.<nbsp>Kahn.
+      <bibitem*|28><label|bib-kahn>Arthur<nbsp>B.<nbsp>Kahn.
       <newblock>Topological sorting of large networks.
       <newblock><with|font-shape|italic|Communications of the ACM>,
       5:558\U562, 1962.<newblock>
 
-      <bibitem*|28><label|bib-mckay>B.<nbsp>D.<nbsp>McKay<localize| and
+      <bibitem*|29><label|bib-mckay>B.<nbsp>D.<nbsp>McKay<localize| and
       >A.<nbsp>Piperno. <newblock>Practical Graph Isomorphism, II.
       <newblock><with|font-shape|italic|J.<nbsp>Symbolic Computation>,
       60:94\U112, 2013.<newblock>
 
-      <bibitem*|29><label|bib-monagan>Michael Monagan. <newblock>A new edge
+      <bibitem*|30><label|bib-monagan>Michael Monagan. <newblock>A new edge
       selection heuristic for computing Tutte polynomials.
       <newblock><localize|In ><with|font-shape|italic|Proceedings of FPSAC
       2012>, <localize|pages >839\U850.<newblock>
 
-      <bibitem*|30><label|bib-myrwold>Wendy Myrwold<localize| and >Willian
+      <bibitem*|31><label|bib-myrwold>Wendy Myrwold<localize| and >Willian
       Kocay. <newblock>Errors in graph embedding algorithms.
       <newblock><with|font-shape|italic|Journal of Computer and System
       Sciences>, 77:430\U438, 2011.<newblock>
 
-      <bibitem*|31><label|bib-nijenhuis>Albert Nijenhuis<localize| and
+      <bibitem*|32><label|bib-nijenhuis>Albert Nijenhuis<localize| and
       >Herbert<nbsp>S.<nbsp>Wilf. <newblock><with|font-shape|italic|Combinatorial
       Algorithms>. <newblock>Computer Science and Applied Mathematics.
       Academic Press, Second<localize| edition>, 1978.<newblock>
 
-      <bibitem*|32><label|bib-ostergard>Patric<nbsp>R.<nbsp>J.<nbsp>Östergård.
+      <bibitem*|33><label|bib-ostergard>Patric<nbsp>R.<nbsp>J.<nbsp>Östergård.
       <newblock>A fast algorithm for the maximum clique problem.
       <newblock><with|font-shape|italic|Discrete Applied Mathematics>,
       120:197\U207, 2002.<newblock>
 
-      <bibitem*|33><label|bib-padberg>Manfred Padberg<localize| and >Giovanni
+      <bibitem*|34><label|bib-padberg>Manfred Padberg<localize| and >Giovanni
       Rinaldi. <newblock>A Branch-and-Cut Algorithm for the Resolution of
       Large-Scale Symmetric Traveling Salesman Problems.
       <newblock><with|font-shape|italic|SIAM Review>, 33:60\U100,
       1991.<newblock>
 
-      <bibitem*|34><label|bib-pferschy>Ulrich Pferschy<localize| and
+      <bibitem*|35><label|bib-pferschy>Ulrich Pferschy<localize| and
       >Rostislav Stan¥k. <newblock>Generating subtour elimination constraints
       for the TSP from pure integer solutions.
       <newblock><with|font-shape|italic|Central European Journal of
       Operations Research>, 25:231\U260, 2017.<newblock>
 
-      <bibitem*|35><label|bib-plestenjak>Bor Plestenjak. <newblock>An
+      <bibitem*|36><label|bib-plestenjak>Bor Plestenjak. <newblock>An
       Algorithm for Drawing Planar Graphs.
       <newblock><with|font-shape|italic|Software: Practice and Experience>,
       29:973\U984, 1999.<newblock>
 
-      <bibitem*|36><label|bib-steger>Angelika Steger<localize| and
+      <bibitem*|37><label|bib-steger>Angelika Steger<localize| and
       >Nicholas<nbsp>C.<nbsp>Wormald. <newblock>Generating random regular
       graphs quickly. <newblock><with|font-shape|italic|Combinatorics
       Probability and Computing>, 8:377\U396, 1999.<newblock>
 
-      <bibitem*|37><label|bib-tarjan72>R.<nbsp>E.<nbsp>Tarjan.
+      <bibitem*|38><label|bib-tarjan72>R.<nbsp>E.<nbsp>Tarjan.
       <newblock>Depth-First Search and Linear Graph Algorithms.
       <newblock><with|font-shape|italic|SIAM Journal on Comp.>, 1:146\U160,
       1972.<newblock>
 
-      <bibitem*|38><label|bib-lca>R.<nbsp>E.<nbsp>Tarjan.
+      <bibitem*|39><label|bib-lca>R.<nbsp>E.<nbsp>Tarjan.
       <newblock>Applications of path compression on balanced trees.
       <newblock><with|font-shape|italic|Journal of the ACM>, 26:690\U715,
       1979.<newblock>
 
-      <bibitem*|39><label|bib-tarjan86>R.<nbsp>E.<nbsp>Tarjan. <newblock>Two
+      <bibitem*|40><label|bib-tarjan86>R.<nbsp>E.<nbsp>Tarjan. <newblock>Two
       streamlined depth-first search algorithms.
       <newblock><with|font-shape|italic|Fundamenta Informaticae>, 9:85\U94,
       1986.<newblock>
 
-      <bibitem*|40><label|bib-tomita>Etsuji Tomita, Akira Tanaka<localize|,
+      <bibitem*|41><label|bib-tomita>Etsuji Tomita, Akira Tanaka<localize|,
       and >Haruhisa Takahashi. <newblock>The worst-case time complexity for
       generating all maximal cliques and computational experiments.
       <newblock><with|font-shape|italic|Theoretical Computer Science>,
       363:28\U42, 2006.<newblock>
 
-      <bibitem*|41><label|bib-tutte>W.<nbsp>T.<nbsp>Tutte. <newblock>How to
+      <bibitem*|42><label|bib-tutte>W.<nbsp>T.<nbsp>Tutte. <newblock>How to
       draw a graph. <newblock><with|font-shape|italic|Proceedings of the
       London Mathematical Society>, s3-13:743\U767, 1963.<newblock>
 
-      <bibitem*|42><label|bib-walker>John<nbsp>Q.<nbsp>Walker II. <newblock>A
+      <bibitem*|43><label|bib-walker>John<nbsp>Q.<nbsp>Walker II. <newblock>A
       nodepositioning algorithm for general trees.
       <newblock><with|font-shape|italic|Software: Practice and Experience>,
       20:685\U705, 1990.<newblock>
 
-      <bibitem*|43><label|bib-welch>E.<nbsp>Welch<localize| and
+      <bibitem*|44><label|bib-welch>E.<nbsp>Welch<localize| and
       >S.<nbsp>Kobourov. <newblock>Measuring Symmetry in Drawings of Graphs.
       <newblock><with|font-shape|italic|Computer Graphics Forum>,
       36:341\U351, 2017.<newblock>
 
-      <bibitem*|44><label|bib-west>Douglas<nbsp>B.<nbsp>West.
+      <bibitem*|45><label|bib-west>Douglas<nbsp>B.<nbsp>West.
       <newblock><with|font-shape|italic|Introduction to Graph Theory>.
       <newblock>Pearson Education, 2002.<newblock>
+
+      <bibitem*|46><label|bib-wilf>Herbert<nbsp>S.<nbsp>Wilf. <newblock>The
+      Uniform Selection of Free Trees. <newblock><with|font-shape|italic|Journal
+      of Algorithms>, 2:204\U207, 1981.<newblock>
     </bib-list>
   </bibliography>
 
@@ -13429,7 +13532,7 @@
     <associate|auto-368|<tuple|6.3.3|120>>
     <associate|auto-369|<tuple|6.3.3|123>>
     <associate|auto-37|<tuple|1.5.2|16>>
-    <associate|auto-370|<tuple|44|125>>
+    <associate|auto-370|<tuple|46|125>>
     <associate|auto-38|<tuple|1.5.2|16>>
     <associate|auto-39|<tuple|1.6|17>>
     <associate|auto-4|<tuple|1.1.1|9>>
@@ -13499,50 +13602,52 @@
     <associate|auto-98|<tuple|1.9.10|33>>
     <associate|auto-99|<tuple|1.9.10|33>>
     <associate|automorphisms|<tuple|4.3.2|72>>
-    <associate|bib-bayati|<tuple|1|123>>
-    <associate|bib-biggs|<tuple|2|123>>
-    <associate|bib-blanusa|<tuple|3|123>>
-    <associate|bib-bollobas|<tuple|4|123>>
-    <associate|bib-brelaz|<tuple|5|123>>
-    <associate|bib-buchheim|<tuple|6|123>>
-    <associate|bib-christofides|<tuple|7|123>>
-    <associate|bib-cook|<tuple|8|123>>
-    <associate|bib-diaz|<tuple|10|123>>
-    <associate|bib-diestel|<tuple|11|123>>
-    <associate|bib-edmonds|<tuple|12|123>>
-    <associate|bib-edmonds-karp|<tuple|13|123>>
-    <associate|bib-floyd|<tuple|14|123>>
-    <associate|bib-fruchterman|<tuple|15|123>>
-    <associate|bib-gibbons|<tuple|16|123>>
-    <associate|bib-godsil|<tuple|17|123>>
-    <associate|bib-haggard|<tuple|18|123>>
-    <associate|bib-haggard2|<tuple|19|123>>
-    <associate|bib-hakimi|<tuple|20|123>>
-    <associate|bib-helsgaun|<tuple|21|123>>
-    <associate|bib-hierholzer|<tuple|22|123>>
-    <associate|bib-hinz|<tuple|23|123>>
-    <associate|bib-hopcroft|<tuple|24|123>>
-    <associate|bib-hu|<tuple|25|123>>
-    <associate|bib-hu2|<tuple|26|123>>
-    <associate|bib-kahn|<tuple|27|123>>
-    <associate|bib-lca|<tuple|38|124>>
-    <associate|bib-mckay|<tuple|28|123>>
-    <associate|bib-melissa|<tuple|9|123>>
-    <associate|bib-monagan|<tuple|29|123>>
-    <associate|bib-myrwold|<tuple|30|123>>
-    <associate|bib-nijenhuis|<tuple|31|123>>
-    <associate|bib-ostergard|<tuple|32|123>>
-    <associate|bib-padberg|<tuple|33|123>>
-    <associate|bib-pferschy|<tuple|34|123>>
-    <associate|bib-plestenjak|<tuple|35|124>>
-    <associate|bib-steger|<tuple|36|124>>
-    <associate|bib-tarjan72|<tuple|37|124>>
-    <associate|bib-tarjan86|<tuple|39|124>>
-    <associate|bib-tomita|<tuple|40|124>>
-    <associate|bib-tutte|<tuple|41|124>>
-    <associate|bib-walker|<tuple|42|124>>
-    <associate|bib-welch|<tuple|43|124>>
-    <associate|bib-west|<tuple|44|124>>
+    <associate|bib-alonso|<tuple|1|?>>
+    <associate|bib-bayati|<tuple|2|123>>
+    <associate|bib-biggs|<tuple|3|123>>
+    <associate|bib-blanusa|<tuple|4|123>>
+    <associate|bib-bollobas|<tuple|5|123>>
+    <associate|bib-brelaz|<tuple|6|123>>
+    <associate|bib-buchheim|<tuple|7|123>>
+    <associate|bib-christofides|<tuple|8|123>>
+    <associate|bib-cook|<tuple|9|123>>
+    <associate|bib-diaz|<tuple|11|123>>
+    <associate|bib-diestel|<tuple|12|123>>
+    <associate|bib-edmonds|<tuple|13|123>>
+    <associate|bib-edmonds-karp|<tuple|14|123>>
+    <associate|bib-floyd|<tuple|15|123>>
+    <associate|bib-fruchterman|<tuple|16|123>>
+    <associate|bib-gibbons|<tuple|17|123>>
+    <associate|bib-godsil|<tuple|18|123>>
+    <associate|bib-haggard|<tuple|19|123>>
+    <associate|bib-haggard2|<tuple|20|123>>
+    <associate|bib-hakimi|<tuple|21|123>>
+    <associate|bib-helsgaun|<tuple|22|123>>
+    <associate|bib-hierholzer|<tuple|23|123>>
+    <associate|bib-hinz|<tuple|24|123>>
+    <associate|bib-hopcroft|<tuple|25|123>>
+    <associate|bib-hu|<tuple|26|123>>
+    <associate|bib-hu2|<tuple|27|123>>
+    <associate|bib-kahn|<tuple|28|123>>
+    <associate|bib-lca|<tuple|39|124>>
+    <associate|bib-mckay|<tuple|29|123>>
+    <associate|bib-melissa|<tuple|10|123>>
+    <associate|bib-monagan|<tuple|30|123>>
+    <associate|bib-myrwold|<tuple|31|123>>
+    <associate|bib-nijenhuis|<tuple|32|123>>
+    <associate|bib-ostergard|<tuple|33|123>>
+    <associate|bib-padberg|<tuple|34|123>>
+    <associate|bib-pferschy|<tuple|35|123>>
+    <associate|bib-plestenjak|<tuple|36|124>>
+    <associate|bib-steger|<tuple|37|124>>
+    <associate|bib-tarjan72|<tuple|38|124>>
+    <associate|bib-tarjan86|<tuple|40|124>>
+    <associate|bib-tomita|<tuple|41|124>>
+    <associate|bib-tutte|<tuple|42|124>>
+    <associate|bib-walker|<tuple|43|124>>
+    <associate|bib-welch|<tuple|44|124>>
+    <associate|bib-west|<tuple|45|124>>
+    <associate|bib-wilf|<tuple|46|?>>
     <associate|blockjoin|<tuple|6.1|115>>
     <associate|canonical-labeling|<tuple|4.3.1|71>>
     <associate|chordface|<tuple|6.2|116>>
@@ -13627,6 +13732,10 @@
       gibbons
 
       nijenhuis
+
+      alonso
+
+      wilf
 
       nijenhuis
 

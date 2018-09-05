@@ -4654,7 +4654,7 @@ int graphe::painter::color_vertices(ivector &colors,const ivector &icol,int max_
 int graphe::exact_vertex_coloring(int max_colors) {
     int ncolors=0;
 #ifndef HAVE_LIBGLPK
-    message("Error: GLPK library is required for exact minimal graph coloring");
+    message("Error: GLPK library is required for graph coloring");
 #else
     painter pt(this);
     ivector colors,clique;
@@ -4692,7 +4692,12 @@ int graphe::exact_edge_coloring(ivector &colors,int *numcol) {
     }
     assert(k==maxdeg);
     painter pt(&L);
+#ifdef HAVE_LIBGLPK
     int ncolors=pt.color_vertices(colors,icol,maxdeg+1);
+#else
+    message("Error: GLPK library is required for graph coloring");
+    int ncolors=0;
+#endif
     for (k=0;k<maxdeg;++k) {
         colors[icol[k]]=k+1;
     }
@@ -6624,12 +6629,24 @@ void graphe::make_random_free_tree(const vecteur &V) {
     add_nodes(V);
     vecteur a;
     number_of_rooted_trees(n,a);
-    if (n%2==0 && is_strictly_greater(a[n/2]*(1+a[n/2]),gen(rand_uniform())*a[n],ctx)) {
+    /* the following is a correction of Wilf's algorithm:
+     * a_n in step (T1) on page 207 should be T_n, the number of unrooted trees
+     * on n vertices.
+     * This number is correctly computed from a_1,a_2,..,a_n using the formula in:
+     * Otter, "Number of trees" (1948), pp. 589 (http://users.math.msu.edu/users/magyar/Math482/Otter-Trees.pdf)
+     */
+    gen Tn=a[n];
+    for (int i=1;i<n;++i) {
+        Tn-=a[i]*a[n-i]/2;
+    }
+    if (n%2==0)
+        Tn+=a[n/2]/2;
+    if (n%2==0 && is_strictly_greater(a[n/2]*(1+a[n/2])/(2*Tn),exact(rand_uniform(),ctx),ctx)) {
         /* the output tree will have two centroids */
         ivector tree;
         ranrut(n/2,tree,a);
         insert_tree(tree,0);
-        if (is_positive(gen(rand_uniform())*(a[n/2]+1)-1,ctx))
+        if (is_positive(exact(rand_uniform(),ctx)*(a[n/2]+1)-1,ctx))
             ranrut(n/2,tree,a);
         insert_tree(tree,n/2);
         add_edge(0,n/2);

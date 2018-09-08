@@ -111,7 +111,7 @@ gen _biconnected_components(const gen &g,GIAC_CONTEXT);
 gen _connected_components(const gen &g,GIAC_CONTEXT);
 gen _departures(const gen &g,GIAC_CONTEXT);
 gen _incident_edges(const gen &g,GIAC_CONTEXT);
-gen _is_triangle_free(const gen &g,GIAC_CONTEXT);
+gen _number_of_triangles(const gen &g,GIAC_CONTEXT);
 gen _is_connected(const gen &g,GIAC_CONTEXT);
 gen _is_biconnected(const gen &g,GIAC_CONTEXT);
 gen _is_triconnected(const gen &g,GIAC_CONTEXT);
@@ -245,16 +245,13 @@ gen _reliability_polynomial(const gen &g,GIAC_CONTEXT);
 gen _laplacian_matrix(const gen &g,GIAC_CONTEXT);
 gen _fundamental_cycle(const gen &g,GIAC_CONTEXT);
 gen _cycle_basis(const gen &g,GIAC_CONTEXT);
-//gen _mycielski(const gen &g,GIAC_CONTEXT);
-//gen _circular_chromatic_index(const gen &g,GIAC_CONTEXT);
-//gen _circular_chromatic_number(const gen &g,GIAC_CONTEXT);
-//gen _circular_edge_chromatic_number(const gen &g,GIAC_CONTEXT);
-//gen _edge_connectivity(const gen &g,GIAC_CONTEXT);
-//gen _global_clustering_coefficient(const gen &g,GIAC_CONTEXT);
-//gen _two_edge_connected_components(const gen &g,GIAC_CONTEXT);
+gen _mycielski(const gen &g,GIAC_CONTEXT);
+gen _clustering_coefficient(const gen &g,GIAC_CONTEXT);
+gen _network_transitivity(const gen &g,GIAC_CONTEXT);
 //gen _vertex_connectivity(const gen &g,GIAC_CONTEXT);
+//gen _edge_connectivity(const gen &g,GIAC_CONTEXT);
 //gen _is_two_edge_connected(const gen &g,GIAC_CONTEXT);
-//gen _local_clustering_coefficient(const gen &g,GIAC_CONTEXT);
+//gen _two_edge_connected_components(const gen &g,GIAC_CONTEXT);
 
 // GENERAL GIAC COMMANDS
 

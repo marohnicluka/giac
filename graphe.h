@@ -690,7 +690,6 @@ private:
     void save_subgraphs();
     void restore_subgraphs();
 
-
 public:
     graphe(const context *contextptr=context0,bool support_attributes=true);
     graphe(const graphe &G);
@@ -851,7 +850,7 @@ public:
     void make_directed() { set_directed(true); }
     void make_unweighted();
     void randomize_edge_weights(double a,double b,bool integral_weights=false);
-    bool is_regular(int d) const;
+    int is_regular(int d) const;
     bool is_strongly_regular(ipair &sig);
     bool is_equal(const graphe &G) const;
     void underlying(graphe &G) const;
@@ -989,13 +988,15 @@ public:
     int is_hamiltonian(bool conclusive,ivector &hc,bool make_closure=true);
     int find_hamiltonian_cycle(ivector &h,double &cost,bool approximate=false);
     bool make_euclidean_distances();
-    gen maxflow_edmonds_karp(int s,int t,std::vector<std::map<int,gen> > &flow);
+    gen maxflow_edmonds_karp(int s,int t,std::vector<std::map<int,gen> > &flow,const gen &limit=plusinf());
+    void minimum_cut(int s,const std::vector<std::map<int,gen> > &flow,ipairs &cut);
     gen tutte_polynomial(const gen &x,const gen &y);
     void fundamental_cycles(ivectors &cycles,int sg=-1,bool check=true);
     void mycielskian(graphe &G) const;
     gen local_clustering_coeff(int i) const;
     gen clustering_coeff() const;
     gen transitivity() const;
+    int edge_connectivity();
     static gen colon_label(int i,int j);
     static gen colon_label(int i,int j,int k);
     graphe &operator =(const graphe &other);

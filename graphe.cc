@@ -5444,24 +5444,24 @@ void graphe::make_path_graph() {
     }
 }
 
-/* create n times m (torus) grid graph */
+/* create n times m grid graph (triangular if mode=1, torus if mode=2) */
 void graphe::make_grid_graph(int m,int n,bool torus) {
     this->clear();
     vecteur V;
-    graphe X(ctx);
+    graphe X(ctx),Y(ctx);
     X.make_default_labels(V,m);
     X.reserve_nodes(m);
     X.add_nodes(V);
-    if (torus)
-        X.make_cycle_graph();
-    else X.make_path_graph();
-    graphe Y(ctx);
     Y.make_default_labels(V,n);
     Y.reserve_nodes(n);
     Y.add_nodes(V);
-    if (torus)
+    if (torus) {
+        X.make_cycle_graph();
         Y.make_cycle_graph();
-    else Y.make_path_graph();
+    } else {
+        X.make_path_graph();
+        Y.make_path_graph();
+    }
     X.cartesian_product(Y,*this);
 }
 
@@ -7128,17 +7128,22 @@ void graphe::make_random_regular(const vecteur &V,int d,bool connected) {
     } while (!is_regular(d));
 }
 
-/* return true iff the graph is d-regular */
-bool graphe::is_regular(int d) const {
+/* return -1 iff the graph is not (d-)regular, else return >=0 */
+int graphe::is_regular(int d) const {
     int n=node_count();
     int deg=d;
+    bool isdir=is_directed();
     for (int i=0;i<n;++i) {
-        if (deg<0)
+        if (deg<0) {
             deg=degree(i);
-        else if (degree(i)!=deg)
-            return false;
+            if (isdir && out_degree(i)!=in_degree(i))
+                return -1;
+        } else {
+            if (degree(i)!=deg || (isdir && in_degree(i)!=out_degree(i)))
+                return -1;
+        }
     }
-    return true;
+    return deg;
 }
 
 /* return true iff the graph is strongly regular with sig = (lambda,mu) */
@@ -10876,7 +10881,7 @@ bool graphe::make_euclidean_distances() {
 }
 
 /* find the maximum flow using Edmonds-Karp algorithm (exact computation) */
-gen graphe::maxflow_edmonds_karp(int s,int t,vector<map<int,gen> > &flow) {
+gen graphe::maxflow_edmonds_karp(int s,int t,vector<map<int,gen> > &flow,const gen &limit) {
     assert(is_directed() && node_queue.empty());
     gen mf(0),df; // the value of maximum flow
     int n=node_count(),i,j;
@@ -10886,11 +10891,11 @@ gen graphe::maxflow_edmonds_karp(int s,int t,vector<map<int,gen> > &flow) {
     bool isweighted=is_weighted();
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         i=it-nodes.begin();
-        map<int,gen> &c=cap[i],&f=flow[i];
-        for (ivector_iter nt=it->neighbors().begin();nt!=it->neighbors().end();++nt) {
-            j=*nt;
+        map<int,gen> &c=cap[i];
+        flow[i].clear();
+        for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
+            j=*jt;
             c[j]=isweighted?weight(i,j):gen(1); // all capacities are set to 1 in unweighted graphs
-            f[j]=0;
         }
     }
     ipairs pred(n);
@@ -10924,9 +10929,50 @@ gen graphe::maxflow_edmonds_karp(int s,int t,vector<map<int,gen> > &flow) {
                 flow[e.second][e.first]-=df;
             }
             mf+=df;
+            if (is_greater(mf,limit,ctx))
+                break;
         } else break;
     }
     return mf; // return the maximum flow
+}
+
+/* obtain a minimum cut from maximum flow */
+void graphe::minimum_cut(int s,const vector<map<int,gen> > &flow,ipairs &cut) {
+    /* create the residual network */
+    graphe G(ctx,false);
+    G.add_nodes(node_count());
+    G.make_directed();
+    cut.clear();
+    int i,j;
+    gen c,f;
+    bool isweighted=is_weighted();
+    map<int,gen>::const_iterator mit;
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        i=it-nodes.begin();
+        const map<int,gen> &flowi=flow[i];
+        for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
+            j=*jt;
+            f=max(0,(mit=flowi.find(j))!=flowi.end()?mit->second:gen(0),ctx);
+            c=isweighted?weight(i,j):gen(1);
+            if (!is_zero(_ratnormal(c-f,ctx),ctx))
+                G.add_edge(i,j);
+        }
+    }
+    /* run DFS on the residual network, store all discovered nodes */
+    ivector disc;
+    G.dfs(s,true,true,&disc);
+    unvisit_all_nodes();
+    for (ivector_iter it=disc.begin();it!=disc.end();++it) {
+        node(*it).set_visited(true);
+    }
+    /* if, for an edge (u,v), u is discovered and v is not
+     * or vice versa, (u,v) belongs to the cut */
+    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
+            if (it->is_visited() && !node(*jt).is_visited())
+                cut.push_back(make_pair(it-nodes.begin(),*jt));
+        }
+    }
 }
 
 gen graphe::make_colon_label(const ivector &v) {
@@ -11477,6 +11523,55 @@ gen graphe::transitivity() const {
     return _ratnormal(fraction(num_triangles,num_triplets),ctx);
 }
 
+/* return the edge connectivity of this graph using Matula's algorithm */
+int graphe::edge_connectivity() {
+    int n=node_count();
+    assert(n>=2 && !is_directed());
+    set<int> D,A;
+    vector<map<int,gen> > flow;
+    int p,lambda=RAND_MAX,d,v,w,lambda_vw,maxdeg,i;
+    /* set lambda to its upper bound */
+    for (i=0;i<n;++i) {
+        if ((d=degree(i))<lambda) {
+            p=i;
+            lambda=d;
+        }
+    }
+    /* construct a dominating set D */
+    v=p; maxdeg=lambda;
+    for (i=0;i<n;++i) {
+        A.insert(i);
+        if (i!=v && (d=degree(i))>maxdeg) {
+            maxdeg=d;
+            v=i;
+        }
+    }
+    set<int>::iterator sit;
+    while (true) {
+        D.insert(v);
+        A.erase(A.find(v));
+        const vertex &vv=node(v);
+        for (ivector_iter it=vv.neighbors().begin();it!=vv.neighbors().end();++it) {
+            sit=A.find(*it);
+            if (sit!=A.end())
+                A.erase(sit);
+        }
+        if (A.empty()) break;
+        v=*A.begin();
+    }
+    /* find lambda(G) */
+    v=*D.begin();
+    D.erase(D.begin());
+    set_directed(true);
+    for (set<int>::const_iterator it=D.begin();it!=D.end();++it) {
+        w=*it;
+        lambda_vw=maxflow_edmonds_karp(v,w,flow).val;
+        if (lambda_vw<lambda)
+            lambda=lambda_vw;
+    }
+    set_directed(false);
+    return lambda;
+}
 
 #ifndef NO_NAMESPACE_GIAC
 }

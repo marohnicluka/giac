@@ -1076,9 +1076,8 @@ define_unary_function_ptr5(at_maximum_matching,alias_at_maximum_matching,&__maxi
 
 /* USAGE:   bipartite_matching(G)
  *
- * Returns the sequence containing the size of maximum matching of the
- * undirected unweighted bipartite graph G and the list of edges of the
- * matching.
+ * Returns the list of edges of a maximum matching an undirected unweighted
+ * bipartite graph G.
  */
 gen _bipartite_matching(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -1093,13 +1092,11 @@ gen _bipartite_matching(const gen &g,GIAC_CONTEXT) {
     if (!G.is_bipartite(p1,p2))
         return gt_err(_GT_ERR_NOT_BIPARTITE);
     graphe::ipairs matching;
-    int count=G.bipartite_matching(p1,p2,matching);
-    vecteur res;
+    vecteur res(G.bipartite_matching(p1,p2,matching));
     for (graphe::ipairs_iter it=matching.begin();it!=matching.end();++it) {
-        res.push_back(makevecteur(G.node_label(it->first),G.node_label(it->second)));
+        res[it-matching.begin()]=makevecteur(G.node_label(it->first),G.node_label(it->second));
     }
-    return change_subtype(makevecteur(count,change_subtype(res.size()<=MAX_SIZE_TO_SORT?
-                                                               *_sort(res,contextptr)._VECTptr:res,_LIST__VECT)),_SEQ__VECT);
+    return change_subtype(res.size()<=MAX_SIZE_TO_SORT?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
 }
 static const char _bipartite_matching_s[]="bipartite_matching";
 static define_unary_function_eval(__bipartite_matching,&_bipartite_matching,_bipartite_matching_s);
@@ -2014,10 +2011,9 @@ gen _biconnected_components(const gen &g,GIAC_CONTEXT) {
         U.biconnected_components(comp);
     } else G.biconnected_components(comp);
     vecteur res;
-    for (graphe::ivectors_iter it=comp.begin();it!=comp.end();++it) {
-        res.push_back(_sort(G.get_node_labels(*it),contextptr));
-    }
-    return change_subtype(res.size()<=MAX_SIZE_TO_SORT?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
+    bool do_sort=G.node_count()<=MAX_SIZE_TO_SORT;
+    G.ivectors2vecteur(comp,res,do_sort);
+    return change_subtype(do_sort?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
 }
 static const char _biconnected_components_s[]="biconnected_components";
 static define_unary_function_eval(__biconnected_components,&_biconnected_components,_biconnected_components_s);
@@ -2230,10 +2226,9 @@ gen _connected_components(const gen &g,GIAC_CONTEXT) {
         U.connected_components(comp);
     } else  G.connected_components(comp);
     vecteur res;
-    for (graphe::ivectors_iter it=comp.begin();it!=comp.end();++it) {
-        res.push_back(_sort(G.get_node_labels(*it),contextptr));
-    }
-    return change_subtype(res.size()<=MAX_SIZE_TO_SORT?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
+    bool do_sort=G.node_count()<=MAX_SIZE_TO_SORT;
+    G.ivectors2vecteur(comp,res,do_sort);
+    return change_subtype(do_sort?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
 }
 static const char _connected_components_s[]="connected_components";
 static define_unary_function_eval(__connected_components,&_connected_components,_connected_components_s);
@@ -2881,7 +2876,7 @@ define_unary_function_ptr5(at_neighbors,alias_at_neighbors,&__neighbors,0,true)
 
 /* USAGE:   minimum_degree(G)
  *
- * Returns the smallest degree among vertices in graph G.
+ * Returns the smallest degree among vertices in an undirected graph G.
  */
 gen _minimum_degree(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -2889,7 +2884,9 @@ gen _minimum_degree(const gen &g,GIAC_CONTEXT) {
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_null())
-        return 0;
+        return gt_err(_GT_ERR_GRAPH_IS_NULL);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     int mindeg=RAND_MAX,d;
     for (int i=0;i<G.node_count();++i) {
         if ((d=G.degree(i))<mindeg)
@@ -2903,7 +2900,7 @@ define_unary_function_ptr5(at_minimum_degree,alias_at_minimum_degree,&__minimum_
 
 /* USAGE:   maximum_degree(G)
  *
- * Returns the largest degree among vertices in graph G.
+ * Returns the largest degree among vertices in an undirected graph G.
  */
 gen _maximum_degree(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -2911,7 +2908,9 @@ gen _maximum_degree(const gen &g,GIAC_CONTEXT) {
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_null())
-        return 0;
+        return gt_err(_GT_ERR_GRAPH_IS_NULL);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     int maxdeg=0,d;
     for (int i=0;i<G.node_count();++i) {
         if ((d=G.degree(i))>maxdeg)
@@ -2923,18 +2922,38 @@ static const char _maximum_degree_s[]="maximum_degree";
 static define_unary_function_eval(__maximum_degree,&_maximum_degree,_maximum_degree_s);
 define_unary_function_ptr5(at_maximum_degree,alias_at_maximum_degree,&__maximum_degree,0,true)
 
-/* USAGE:   is_regular(G)
+/* USAGE:   is_regular(G,[d])
  *
- * Returns true iff max and min degrees of graph G are equal.
+ * Returns true iff max and min degrees of graph G are equal [and stores that
+ * number in d].
  */
 gen _is_regular(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    int d=-1,dd;
+    gen arg(undef);
+    if (g.subtype==_SEQ__VECT) {
+        if (g._VECTptr->size()!=2)
+            return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+        arg=g._VECTptr->at(1);
+    }
     graphe G(contextptr);
-    if (!G.read_gen(g))
+    if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_null())
         return gt_err(_GT_ERR_GRAPH_IS_NULL);
-    return graphe::boole(G.is_regular(-1));
+    if (!is_undef(arg)) {
+        if (arg.is_integer()) {
+            if ((d=arg.val)<0)
+                return generr("Expected a nonnegative integer");
+        } else if (arg.type!=_IDNT)
+            return gentypeerr(contextptr);
+    }
+    dd=G.is_regular(d);
+    if (dd>=0 && !is_undef(arg) && arg.type==_IDNT)
+        identifier_assign(*arg._IDNTptr,gen(dd),contextptr);
+    return graphe::boole(dd>=0);
 }
 static const char _is_regular_s[]="is_regular";
 static define_unary_function_eval(__is_regular,&_is_regular,_is_regular_s);
@@ -2998,7 +3017,7 @@ gen _isomorphic_copy(const gen &g,GIAC_CONTEXT) {
     if (sigma.empty())
         sigma=*_randperm(G.node_count(),contextptr)._VECTptr;
     if (int(sigma.size())!=G.node_count())
-        return generr("Permutation size does not match the number of vertices in the graph");
+        return generr("Invalid permutation size");
     graphe::ivector v(sigma.size());
     int ofs=array_start(contextptr);
     for (const_iterateur it=sigma.begin();it!=sigma.end();++it) {
@@ -3039,7 +3058,7 @@ gen _permute_vertices(const gen &g,GIAC_CONTEXT) {
     if (sigma.empty())
         sigma=*_eval(symbolic(at_shuffle,V),contextptr)._VECTptr;
     if (sigma.size()!=V.size())
-        return generr("List size does not match the number of vertices in the graph");
+        return generr("Invalid permutation size");
     graphe::ivector v(sigma.size(),-1);
     const_iterateur jt;
     int i;
@@ -3078,7 +3097,7 @@ gen _relabel_vertices(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     vecteur &labels=*gv[1]._VECTptr;
     if (int(labels.size())!=G.node_count())
-        return generr("Number of labels does not match the number of vertices in the graph");
+        return generr("Invalid number of labels");
     if (!G.relabel_nodes(labels))
         return generrtype("Failed to relabel vertices");
     return G.to_gen();
@@ -3386,24 +3405,49 @@ static const char _wheel_graph_s[]="wheel_graph";
 static define_unary_function_eval(__wheel_graph,&_wheel_graph,_wheel_graph_s);
 define_unary_function_ptr5(at_wheel_graph,alias_at_wheel_graph,&__wheel_graph,0,true)
 
-/* USAGE:   grid_graph(m,n)
+/* USAGE:   grid_graph(m,n,[triangle])
  *
- * Returns the grid graph on m*n vertices, where m,n>=2.
+ * Returns a [triangular] grid graph on m*n vertices, where m,n>=2.
  */
 gen _grid_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
     vecteur &gv=*g._VECTptr;
-    if (gv.size()!=2)
+    if (gv.size()<2 || gv.size()>3)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-    if (!gv.front().is_integer() || !gv.back().is_integer())
+    bool trg=false;
+    if (gv.size()==3) {
+        if (gv[2]!=at_triangle)
+            return generr("Unrecognized option");
+        trg=true;
+    }
+    if (!gv[0].is_integer() || !gv[1].is_integer())
         return generrtype("Expected an integer");
-    int m=gv.front().val,n=gv.back().val;
+    int m=gv[0].val,n=gv[1].val;
     if (m<2 || n<2)
         return generr("Expected an integer greater than one");
     graphe G(contextptr);
-    G.make_grid_graph(m,n);
+    if (trg) {
+        /* create triangulated grid using strong product of digraphs */
+        graphe X(contextptr),Y(contextptr);
+        vecteur Xlab,Ylab;
+        X.make_default_labels(Xlab,m);
+        Y.make_default_labels(Ylab,n);
+        X.add_nodes(Xlab);
+        Y.add_nodes(Ylab);
+        X.make_directed();
+        Y.make_directed();
+        for (int i=0;i<m-1;++i) X.add_edge(i,i+1);
+        for (int i=0;i<n-1;++i) Y.add_edge(i,i+1);
+        gen seq=makesequence(X.to_gen(),Y.to_gen());
+        return _underlying_graph(_graph_union(makesequence(
+                                                  _cartesian_product(seq,contextptr),
+                                                  _tensor_product(seq,contextptr)),
+                                              contextptr),
+                                 contextptr);
+    }
+    G.make_grid_graph(m,n,false);
     return G.to_gen();
 }
 static const char _grid_graph_s[]="grid_graph";
@@ -4401,8 +4445,9 @@ gen _clique_cover(const gen &g,GIAC_CONTEXT) {
     if (!G.clique_cover(cover,k))
         return vecteur(0);
     vecteur res;
-    G.ivectors2vecteur(cover,res,true);
-    return change_subtype(res.size()<=MAX_SIZE_TO_SORT?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
+    bool do_sort=G.node_count()<=MAX_SIZE_TO_SORT;
+    G.ivectors2vecteur(cover,res,do_sort);
+    return change_subtype(do_sort?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
 }
 static const char _clique_cover_s[]="clique_cover";
 static define_unary_function_eval(__clique_cover,&_clique_cover,_clique_cover_s);
@@ -4526,11 +4571,12 @@ gen _strongly_connected_components(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (!G.is_directed())
         return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED);
-    graphe::ivectors components;
-    G.strongly_connected_components(components);
-    vecteur res;
-    G.ivectors2vecteur(components,res,true);
-    return change_subtype(res.size()<=MAX_SIZE_TO_SORT?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
+    graphe::ivectors comp;
+    G.strongly_connected_components(comp);
+    vecteur res(comp.size());
+    bool do_sort=G.node_count()<=MAX_SIZE_TO_SORT;
+    G.ivectors2vecteur(comp,res,do_sort);
+    return change_subtype(do_sort?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
 }
 static const char _strongly_connected_components_s[]="strongly_connected_components";
 static define_unary_function_eval(__strongly_connected_components,&_strongly_connected_components,_strongly_connected_components_s);
@@ -5678,10 +5724,10 @@ static const char _trail2edges_s[]="trail2edges";
 static define_unary_function_eval(__trail2edges,&_trail2edges,_trail2edges_s);
 define_unary_function_ptr5(at_trail2edges,alias_at_trail2edges,&__trail2edges,0,true)
 
-/* USAGE:   maxflow(G,s,t)
+/* USAGE:   maxflow(G,s,t,[F])
  *
  * Returns the optimal value for the max flow problem for network G with the
- * source s and sink t along with an optimal flow (as a matrix).
+ * source s and sink t [along with an optimal flow F (as a matrix)].
  */
 gen _maxflow(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -5705,10 +5751,6 @@ gen _maxflow(const gen &g,GIAC_CONTEXT) {
     int s=G.node_index(S),t=G.node_index(T);
     if (s<0 || t<0)
         return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
-    if (G.in_degree(s)>0)
-        return generr("The given vertex is not a source");
-    if (G.out_degree(t)>0)
-        return generr("The given vertex is not a sink");
     vector<map<int,gen> > flow;
     gen mf=G.maxflow_edmonds_karp(s,t,flow);
     int n=G.node_count();
@@ -5727,6 +5769,38 @@ gen _maxflow(const gen &g,GIAC_CONTEXT) {
 static const char _maxflow_s[]="maxflow";
 static define_unary_function_eval(__maxflow,&_maxflow,_maxflow_s);
 define_unary_function_ptr5(at_maxflow,alias_at_maxflow,&__maxflow,0,true)
+
+/* USAGE:   minimum_cut(G,s,t)
+ *
+ * Returns the list of edges forming a minimum cut in a directed graph G with
+ * respect to source s and sink t.
+ */
+gen _minimum_cut(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()!=3)
+        return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+    gen &S=gv[1],&T=gv[2];
+    graphe G(contextptr);
+    if (!G.read_gen(gv.front()))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (!G.is_directed())
+        return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED);
+    int s=G.node_index(S),t=G.node_index(T);
+    if (s<0 || t<0)
+        return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
+    vector<map<int,gen> > flow;
+    G.maxflow_edmonds_karp(s,t,flow);
+    graphe::ipairs cut;
+    G.minimum_cut(s,flow,cut);
+    vecteur res=G.ipairs2edges(cut);
+    return change_subtype(int(res.size())<=MAX_SIZE_TO_SORT?_sort(res,contextptr):res,_LIST__VECT);
+}
+static const char _minimum_cut_s[]="minimum_cut";
+static define_unary_function_eval(__minimum_cut,&_minimum_cut,_minimum_cut_s);
+define_unary_function_ptr5(at_minimum_cut,alias_at_minimum_cut,&__minimum_cut,0,true)
 
 /* USAGE:   is_network(G,[s,t])
  *
@@ -6267,6 +6341,77 @@ gen _network_transitivity(const gen &g,GIAC_CONTEXT) {
 static const char _network_transitivity_s[]="network_transitivity";
 static define_unary_function_eval(__network_transitivity,&_network_transitivity,_network_transitivity_s);
 define_unary_function_ptr5(at_network_transitivity,alias_at_network_transitivity,&__network_transitivity,0,true)
+
+/* USAGE:   two_edge_connected_components(G)
+ *
+ * Returns the list of two-edge connected components of an undirected graph G.
+ */
+gen _two_edge_connected_components(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_null())
+        return vecteur(0);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
+    graphe::ipairs bridges;
+    G.find_bridges(bridges);
+    for (graphe::ipairs_iter it=bridges.begin();it!=bridges.end();++it) {
+        G.remove_edge(*it);
+    }
+    graphe::ivectors comp;
+    G.connected_components(comp);
+    bool do_sort=G.node_count()<=MAX_SIZE_TO_SORT;
+    vecteur res(comp.size());
+    G.ivectors2vecteur(comp,res,do_sort);
+    return change_subtype(do_sort?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
+}
+static const char _two_edge_connected_components_s[]="two_edge_connected_components";
+static define_unary_function_eval(__two_edge_connected_components,&_two_edge_connected_components,_two_edge_connected_components_s);
+define_unary_function_ptr5(at_two_edge_connected_components,alias_at_two_edge_connected_components,&__two_edge_connected_components,0,true)
+
+/* USAGE:   is_two_edge_connected(G)
+ *
+ * Returns true iff the undirected graph G is two-edge connected.
+ */
+gen _is_two_edge_connected(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_null())
+        return gt_err(_GT_ERR_GRAPH_IS_NULL);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
+    graphe::ipairs bridges;
+    G.find_bridges(bridges);
+    return graphe::boole(bridges.empty());
+}
+static const char _is_two_edge_connected_s[]="is_two_edge_connected";
+static define_unary_function_eval(__is_two_edge_connected,&_is_two_edge_connected,_is_two_edge_connected_s);
+define_unary_function_ptr5(at_is_two_edge_connected,alias_at_is_two_edge_connected,&__is_two_edge_connected,0,true)
+
+/* USAGE:   edge_connectivity(G)
+ *
+ * Returns the edge connectivity of an undirected graph G.
+ */
+gen _edge_connectivity(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
+    if (G.node_count()<2)
+        return generr("The graph must have at least two vertices");
+    if (!G.is_connected())
+        return gt_err(_GT_ERR_CONNECTED_GRAPH_REQUIRED);
+    return G.edge_connectivity();
+}
+static const char _edge_connectivity_s[]="edge_connectivity";
+static define_unary_function_eval(__edge_connectivity,&_edge_connectivity,_edge_connectivity_s);
+define_unary_function_ptr5(at_edge_connectivity,alias_at_edge_connectivity,&__edge_connectivity,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

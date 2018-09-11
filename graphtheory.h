@@ -235,6 +235,7 @@ gen _chromatic_index(const gen &g,GIAC_CONTEXT);
 gen _is_hamiltonian(const gen &g,GIAC_CONTEXT);
 gen _traveling_salesman(const gen &g,GIAC_CONTEXT);
 gen _maxflow(const gen &g,GIAC_CONTEXT);
+gen _minimum_cut(const gen &g,GIAC_CONTEXT);
 gen _is_cut_set(const gen &g,GIAC_CONTEXT);
 gen _is_network(const gen &g,GIAC_CONTEXT);
 gen _random_network(const gen &g,GIAC_CONTEXT);
@@ -248,10 +249,9 @@ gen _cycle_basis(const gen &g,GIAC_CONTEXT);
 gen _mycielski(const gen &g,GIAC_CONTEXT);
 gen _clustering_coefficient(const gen &g,GIAC_CONTEXT);
 gen _network_transitivity(const gen &g,GIAC_CONTEXT);
-//gen _vertex_connectivity(const gen &g,GIAC_CONTEXT);
-//gen _edge_connectivity(const gen &g,GIAC_CONTEXT);
-//gen _is_two_edge_connected(const gen &g,GIAC_CONTEXT);
-//gen _two_edge_connected_components(const gen &g,GIAC_CONTEXT);
+gen _two_edge_connected_components(const gen &g,GIAC_CONTEXT);
+gen _is_two_edge_connected(const gen &g,GIAC_CONTEXT);
+gen _edge_connectivity(const gen &g,GIAC_CONTEXT);
 
 // GENERAL GIAC COMMANDS
 

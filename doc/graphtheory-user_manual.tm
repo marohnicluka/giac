@@ -810,11 +810,11 @@
   </footnote> contains an overview of the library of graph theory commands
   built in <samp|Giac> computation kernel and fully supported within
   <samp|Xcas> <abbr|GUI>. The library provides an effective and free
-  replacement for the Graph Theory package in <samp|Maple> whith a high level
-  of syntax compatibiliy (although there are some minor differences).
+  replacement for the Graph Theory package in <samp|Maple> with a high level
+  of syntax compatibility (although there are some minor differences).
 
   For each command, the calling syntax is presented along with the detailed
-  description of its funcionality. Several examples are also supplied to
+  description of its functionality. Several examples are also supplied to
   illustrate the usage.
 
   The algorithms in this library are implemented according to the relevant
@@ -822,7 +822,7 @@
   the algorithms are reasonably fast. Naive implementations (just for the
   sake of having particular commands available) were avoided. To enable some
   difficult tasks, such as solving traveling salesman problem, find graph
-  colorings and graph isomorphism problem, freely avaliable third party
+  colorings and graph isomorphism problem, freely available third party
   libraries are used, in particular <abbr|GNU> Linear Programming Kit
   (<samp|GLPK>) for solving linear programming problems and <samp|nauty> for
   graph isomorphism. These libraries, included in <samp|Giac/Xcas> by

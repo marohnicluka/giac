@@ -1385,7 +1385,8 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
         graphe::ivectors components;
         G.connected_components(components);
         int nc=components.size();
-        graphe::ivector roots,hull;
+        graphe::ivector hull;
+        vecteur roots;
         if (!root_nodes.empty()) {
             // get the root nodes for forest drawing
             if (int(root_nodes.size())!=nc)
@@ -1407,7 +1408,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 }
                 if (it==indices.end())
                     return gt_err(_GT_ERR_INVALID_ROOT);
-                roots[i]=*it;
+                roots[i]=root_nodes[it-indices.begin()];
                 indices.erase(it);
             }
         }
@@ -1455,7 +1456,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
             case _GT_STYLE_TREE:
                 if (check && !C.is_tree())
                     return gt_err(_GT_ERR_NOT_A_TREE);
-                C.make_tree_layout(x,sep,roots.empty()?0:roots[i]);
+                C.make_tree_layout(x,sep,roots.empty()?0:C.node_index(roots[i]));
                 break;
             case _GT_STYLE_PLANAR:
                 if (!C.make_planar_layout(x))

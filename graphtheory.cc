@@ -6051,6 +6051,7 @@ gen _tutte_polynomial(const gen &g,GIAC_CONTEXT) {
     if (G.is_weighted()) {
         if (!G.weights2multiedges())
             return generr("Some edge weights are not positive integers");
+        G.set_weighted(false);
     }
     gen p=G.tutte_polynomial(x,y);
     if (p.is_symb_of_sommet(at_plus) && p._SYMBptr->feuille._VECTptr->size()>7)

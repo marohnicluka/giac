@@ -689,6 +689,7 @@ private:
     static gen ipair2rat(const ipair &p);
     void save_subgraphs();
     void restore_subgraphs();
+    int vertex_pair_connectivity(int v,int w);
 
 public:
     graphe(const context *contextptr=context0,bool support_attributes=true);
@@ -997,6 +998,7 @@ public:
     gen clustering_coeff() const;
     gen transitivity() const;
     int edge_connectivity();
+    int vertex_connectivity();
     static gen colon_label(int i,int j);
     static gen colon_label(int i,int j,int k);
     graphe &operator =(const graphe &other);

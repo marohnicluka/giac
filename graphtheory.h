@@ -252,6 +252,7 @@ gen _network_transitivity(const gen &g,GIAC_CONTEXT);
 gen _two_edge_connected_components(const gen &g,GIAC_CONTEXT);
 gen _is_two_edge_connected(const gen &g,GIAC_CONTEXT);
 gen _edge_connectivity(const gen &g,GIAC_CONTEXT);
+gen _vertex_connectivity(const gen &g,GIAC_CONTEXT);
 
 // GENERAL GIAC COMMANDS
 

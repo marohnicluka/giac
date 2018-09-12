@@ -11573,6 +11573,51 @@ int graphe::edge_connectivity() {
     return lambda;
 }
 
+int graphe::vertex_pair_connectivity(int v,int w) {
+    int n=node_count();
+    graphe D(ctx,false);
+    D.set_directed(true);
+    D.add_nodes(2*n);
+    int u1,u2;
+    for (int i=0;i<n;++i) {
+        u1=2*i; u2=2*i+1;
+        if (i!=v || i!=w)
+            D.add_edge(u1,u2);
+        const vertex &u=node(i);
+        for (ivector_iter it=u.neighbors().begin();it!=u.neighbors().end();++it) {
+            if (i!=v) D.add_edge(*it,u1);
+            if (i!=w) D.add_edge(u2,*it);
+        }
+    }
+    vector<map<int,gen> > flow;
+    return D.maxflow_edmonds_karp(2*v+1,2*w,flow).val;
+}
+
+/* return the vertex connectivity of an undirected graph */
+int graphe::vertex_connectivity() {
+    int n=node_count(),k=RAND_MAX,mindeg=RAND_MAX,deg,v;
+    for (int i=0;i<n;++i) {
+        if ((deg=degree(i))<mindeg) {
+            v=i;
+            mindeg=deg;
+        }
+    }
+    for (int i=0;i<n;++i) {
+        if (i==v || has_edge(i,v))
+            continue;
+        k=std::min(k,vertex_pair_connectivity(v,i));
+    }
+    ivector adj;
+    adjacent_nodes(v,adj);
+    for (ivector_iter it=adj.begin();it!=adj.end();++it) {
+        for (ivector_iter jt=it+1;jt!=adj.end();++jt) {
+            if (has_edge(*it,*jt)) continue;
+            k=std::min(k,vertex_pair_connectivity(*it,*jt));
+        }
+    }
+    return k;
+}
+
 #ifndef NO_NAMESPACE_GIAC
 }
 #endif // ndef NO_NAMESPACE_GIAC

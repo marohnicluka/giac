@@ -6413,6 +6413,27 @@ static const char _edge_connectivity_s[]="edge_connectivity";
 static define_unary_function_eval(__edge_connectivity,&_edge_connectivity,_edge_connectivity_s);
 define_unary_function_ptr5(at_edge_connectivity,alias_at_edge_connectivity,&__edge_connectivity,0,true)
 
+/* USAGE:   vertex_connectivity(G)
+ *
+ * Returns the vertex connectivity of an undirected graph G.
+ */
+gen _vertex_connectivity(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
+    if (G.node_count()<2)
+        return generr("The graph must have at least two vertices");
+    if (!G.is_connected())
+        return gt_err(_GT_ERR_CONNECTED_GRAPH_REQUIRED);
+    return G.vertex_connectivity();
+}
+static const char _vertex_connectivity_s[]="vertex_connectivity";
+static define_unary_function_eval(__vertex_connectivity,&_vertex_connectivity,_vertex_connectivity_s);
+define_unary_function_ptr5(at_vertex_connectivity,alias_at_vertex_connectivity,&__vertex_connectivity,0,true)
+
 #ifndef NO_NAMESPACE_GIAC
 }
 #endif // ndef NO_NAMESPACE_GIAC

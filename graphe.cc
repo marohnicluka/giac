@@ -8118,7 +8118,6 @@ bool graphe::is_planar() {
         set_subgraph(*it,++sg);
         m=edge_count(sg);
         if (m>3*int(it->size())-6) {
-            restore_subgraphs();
             return false;
         }
         if (m<9) continue;
@@ -8129,7 +8128,6 @@ bool graphe::is_planar() {
             set_subgraph(*jt,++sg);
             if (subgraph_size(sg)<5) continue;
             if (!demoucron(faces,sg)) {
-                restore_subgraphs();
                 return false;
             }
         }

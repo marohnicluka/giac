@@ -3596,15 +3596,12 @@
   adjacent if and only if the corresponding faces share an edge in <math|G>.
   The algorithm runs in <math|O<around*|(|<around*|\||V|\|><rsup|2>|)>> time.
 
-  Note that the concept of dual graph is normally defined for
-  multigraphs<\footnote>
-    See <verbatim|<hlink|https://en.wikipedia.org/wiki/Dual_graph|>> for the
-    strict definition of plane dual graph.
-  </footnote>. By the strict definition, every planar multigraph has the
-  corresponding dual multigraph; moreover, the dual of the latter is equal to
-  the former. Since <samp|Giac> generally does not support multigraphs, a
-  simplified definition suitable for simple graphs is used; hence the
-  requirement that the input graph is biconnected.
+  Note that the concept of dual graph is normally defined for multigraphs. By
+  the strict definition, every planar multigraph has the corresponding dual
+  multigraph; moreover, the dual of the latter is equal to the former. Since
+  <samp|Giac> generally does not support multigraphs, a simplified definition
+  suitable for simple graphs is used; hence the requirement that the input
+  graph is biconnected.
 
   In the example below, the dual graph of the cube graph is obtained.
 
@@ -5026,8 +5023,6 @@
       <\equation*>
         6
       </equation*>
-
-      https://en.wikipedia.org/wiki/Strongly_regular_graph
     </unfolded-io>
   </session>
 
@@ -14908,6 +14903,7 @@
     <associate|footnote-1|<tuple|1|7>>
     <associate|footnote-1.1|<tuple|1.1|35>>
     <associate|footnote-1.2|<tuple|1.2|38>>
+    <associate|footnote-2|<tuple|2|?>>
     <associate|footnote-3.1|<tuple|3.1|55>>
     <associate|footnote-3.2|<tuple|3.2|57>>
     <associate|footnote-4.1|<tuple|4.1|76>>

@@ -7125,7 +7125,7 @@ void graphe::make_random_regular(const vecteur &V,int d,bool connected) {
                     E.erase(E.begin()+k);
             }
         }
-    } while (!is_regular(d));
+    } while (is_regular(d)<0);
 }
 
 /* return -1 iff the graph is not (d-)regular, else return >=0 */

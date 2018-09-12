@@ -1132,17 +1132,15 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
 gen graphe::to_gen() {
     assert(supports_attributes());
     int n=node_count();
-    vecteur res(3+n+edge_count()*(is_directed()?1:2));
+    vecteur res(2+int(user_tags.size())+n+edge_count()*(is_directed()?1:2));
     int cnt=0;
     gen_map attr;
     attrib2genmap(attributes,attr);
     res[cnt++]=n;
     res[cnt++]=attr;
-    vecteur uattr_ids(user_tags.size());
     for (vector<string>::const_iterator it=user_tags.begin();it!=user_tags.end();++it) {
-        uattr_ids[it-user_tags.begin()]=str2gen(*it,true);
+        res[cnt++]=str2gen(*it,true);
     }
-    res[cnt++]=uattr_ids;
     for (int i=0;i<n;++i) {
         gen_map vattr;
         const vertex &v=node(i);
@@ -2187,22 +2185,20 @@ bool graphe::read_gen(const gen &g) {
     int n;
     const vecteur &gv=*g._VECTptr;
     if (gv.empty() || !gv.front().is_integer() ||
-            (n=gv.front().val)<0 || int(gv.size())<3+n || gv[1].type!=_MAP || gv[2].type!=_VECT)
+            (n=gv.front().val)<0 || int(gv.size())<3+n || gv[1].type!=_MAP)
         return false;
     if (!genmap2attrib(*gv[1]._MAPptr,this->attributes))
         return false;
-    const vecteur &tags=*gv[2]._VECTptr;
-    user_tags.resize(tags.size());
-    for (const_iterateur it=tags.begin();it!=tags.end();++it) {
-        if (it->type!=_STRNG)
-            return false;
+    int i0=2;
+    for (const_iterateur it=gv.begin()+2;it!=gv.end() && it->type==_STRNG;++it) {
         register_user_tag(genstring2str(*it));
+        ++i0;
     }
     gen val;
     attrib attr;
-    int deg,start=n+3,k;
+    int deg,start=n+i0,k;
     for (int i=0;i<n;++i) {
-        const gen &elm=gv[i+3];
+        const gen &elm=gv[i+i0];
         if (elm.type!=_MAP)
             return false;
         gen_map &mp=*elm._MAPptr;

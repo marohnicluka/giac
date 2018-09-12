@@ -821,13 +821,13 @@
   scientific publications. Although the development focus was on simplicity,
   the algorithms are reasonably fast. Naive implementations (just for the
   sake of having particular commands available) were avoided. To enable some
-  difficult tasks, such as solving traveling salesman problem, find graph
-  colorings and graph isomorphism problem, freely available third party
-  libraries are used, in particular <abbr|GNU> Linear Programming Kit
-  (<samp|GLPK>) for solving linear programming problems and <samp|nauty> for
-  graph isomorphism. These libraries, included in <samp|Giac/Xcas> by
-  default, are optional during the compilation. The majority of commands has
-  no dependencies save <samp|Giac> itself.
+  difficult tasks, such as traveling salesman problem, graph colorings and
+  graph isomorphism problem, freely available third party libraries are used,
+  in particular <abbr|GNU> Linear Programming Kit (<samp|GLPK>) for solving
+  linear programming problems and <samp|nauty> for graph isomorphism. These
+  libraries, included in <samp|Giac/Xcas> by default, are optional during the
+  compilation. The majority of commands has no dependencies save <samp|Giac>
+  itself.
 
   This library was developed and documented by <name|Luka Marohni¢>
   (<verbatim|luka.marohnic@tvz.hr>). Special thanks go to <name|Bernard

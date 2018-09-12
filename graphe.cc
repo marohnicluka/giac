@@ -5169,22 +5169,22 @@ bool graphe::hakimi(const ivector &L) {
     add_nodes(V);
     ipairs D(n);
     for (int i=0;i<n;++i) {
-        D[i]=make_pair(i,L[i]);
+        D[i]=make_pair(L[i],i);
     }
     do {
         sort(D.begin(),D.end());
-        i=D.back().first;
-        d=D.back().second;
+        d=D.back().first;
+        i=D.back().second;
         D.pop_back();
         for (int k=0;k<d;++k) {
-            ipair &p=*(D.rbegin()+k);
-            if (--p.second<0)
+            ipair &p=D[D.size()-1-k];
+            if (--p.first<0)
                 return false;
-            add_edge(i,p.first);
+            add_edge(i,p.second);
         }
         z=0;
         for (ipairs_iter it=D.begin();it!=D.end();++it) {
-            if (it->second==0)
+            if (it->first==0)
                 ++z;
         }
     } while (z<int(D.size()));

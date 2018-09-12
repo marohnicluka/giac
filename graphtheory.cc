@@ -1463,9 +1463,12 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 break;
             case _GT_STYLE_CIRCLE:
                 if (hull.empty()) {
-                    hull.resize(C.node_count());
-                    for (graphe::ivector::iterator ht=hull.begin();ht!=hull.end();++ht) {
-                        *ht=ht-hull.begin();
+                    gen_map vmap;
+                    for (int vi=C.node_count();vi-->0;) {
+                        vmap[C.node_label(vi)]=vi;
+                    }
+                    for (gen_map::const_iterator it=vmap.begin();it!=vmap.end();++it) {
+                        hull.push_back(it->second.val);
                     }
                 }
                 C.make_circular_layout(x,hull,2.5);

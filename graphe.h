@@ -958,7 +958,6 @@ public:
     bool is_arborescence() const;
     void reverse(graphe &G) const;
     void spanning_tree(int i,graphe &T,int sg=-1);
-    int spanning_tree_count() const;
     void minimal_spanning_tree(graphe &T,int sg=-1);
     void lowest_common_ancestors(int root,const ipairs &p,ivector &lca_recursion);
     int lowest_common_ancestor(int i,int j,int root);

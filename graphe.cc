@@ -4942,7 +4942,7 @@ int graphe::maximum_independent_set(ivector &v) const {
     return C.maximum_clique(v);
 }
 
-/* return true iff the graph is triangle-free */
+/* return the number of (directed) triangles in (di)graph */
 int graphe::triangle_count() const {
     sparsemat M,M2;
     bool isdir=is_directed();
@@ -8404,19 +8404,6 @@ void graphe::spanning_tree(int i,graphe &T,int sg) {
                 T.add_edge(it-nodes.begin(),p);
         }
     }
-}
-
-/* return the number of spanning trees in this graph */
-int graphe::spanning_tree_count() const {
-    /* assuming that the graph is connected */
-    matrice L;
-    laplacian_matrix(L);
-    L.pop_back();
-    L=mtran(L);
-    L.pop_back();
-    gen d=_det(L,ctx);
-    assert(d.is_integer());
-    return d.val;
 }
 
 /* write the minimal spanning tree of this graph to T,

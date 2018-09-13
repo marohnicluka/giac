@@ -478,6 +478,13 @@ int graphunion(graphe &G,const vecteur &gv,bool disjoint) {
     return -1;
 }
 
+gen count_spanning_trees(const graphe &G) {
+    matrice L;
+    G.laplacian_matrix(L);
+    const context *ctx=G.giac_context();
+    return _det(_delcols(makesequence(_delrows(makesequence(L,0),ctx),0),ctx),ctx);
+}
+
 // +--------------------------------------------------------------------------+
 // |                             GIAC COMMANDS                                |
 // +--------------------------------------------------------------------------+
@@ -4932,20 +4939,22 @@ gen _number_of_spanning_trees(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_null())
+        return gt_err(_GT_ERR_GRAPH_IS_NULL);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     if (!G.is_connected()) {
-        int res=1;
+        gen res(1);
         graphe C(contextptr,false);
         graphe::ivectors comp;
         G.connected_components(comp);
         for (graphe::ivectors_iter it=comp.begin();it!=comp.end();++it) {
             G.induce_subgraph(*it,C);
-            res*=C.spanning_tree_count();
+            res=res*count_spanning_trees(C);
         }
         return res;
     }
-    return G.spanning_tree_count();
+    return count_spanning_trees(G);
 }
 static const char _number_of_spanning_trees_s[]="number_of_spanning_trees";
 static define_unary_function_eval(__number_of_spanning_trees,&_number_of_spanning_trees,_number_of_spanning_trees_s);

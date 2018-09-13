@@ -2,8 +2,10 @@
 
 This package contains a collection of graph theory commands for the Giac CAS which are compatible with the corresponding Maple commands.
 
-The commands are listed in the file "graphtheory.h". The implementation of the commands serves as a Giac interface to the **graphe** class which does all the hard work.
+The commands are listed in the file graphtheory.h. The implementation of the commands serves as a Giac interface to the **graphe** class which does all the hard work.
 
 This library is written in C++ from scratch and has no mandatory dependencies save the Giac itself. Although the focus is on simplicity, the implemented algorithms are reasonably fast.
 
 See graphtheory-user_manual.pdf for the details of command usage.
+
+To translate the manual, copy the doc directory to the disk and open graphtheory-user_manual.tm in TeXmacs editor.

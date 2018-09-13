@@ -8,4 +8,4 @@ This library is written in C++ from scratch and has no mandatory dependencies sa
 
 See graphtheory-user_manual.pdf for the details of command usage.
 
-To translate the manual, copy the doc directory to the disk and open graphtheory-user_manual.tm in TeXmacs editor.
+To translate the manual, copy the doc directory to disk and open graphtheory-user_manual.tm in TeXmacs editor.

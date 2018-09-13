@@ -817,6 +817,11 @@
   description of its functionality. Several examples are also supplied to
   illustrate the usage.
 
+  In calling syntax, the square brackets <verbatim|[> and <verbatim|]> are
+  used for specifying that an argument should be a list of particular
+  elements, as well as to indicate that an argument is optional. The
+  character <verbatim|\|> stands for <em|or>.
+
   The algorithms in this library are implemented according to the relevant
   scientific publications. Although the development focus was on simplicity,
   the algorithms are reasonably fast. Naive implementations (just for the
@@ -9115,7 +9120,9 @@
     </input>
   </session>
 
-  <center|<image|images/scomp.eps|35%|||>>
+  <\center>
+    <image|images/scomp.eps|35%|||>
+  </center>
 
   <\session|giac|default>
     <\unfolded-io>
@@ -9124,7 +9131,7 @@
       strongly_connected_components(G)
     <|unfolded-io>
       <\equation*>
-        <around|{|<around|[|0,3,4,5,7|]>,<around|[|1,6|]>,<around|[|2|]>,<around|[|8|]>,<around|[|9|]>|}>
+        <around|{|<around|[|0,2,6|]>,<around|[|1|]>,<around|[|3|]>,<around|[|4|]>,<around|[|5,7,8|]>,<around|[|9|]>|}>
       </equation*>
     </unfolded-io>
   </session>
@@ -10543,8 +10550,6 @@
       <\equation*>
         50
       </equation*>
-
-      <timing|13.01 sec>
     </unfolded-io>
 
     <\unfolded-io>
@@ -10608,10 +10613,10 @@
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      n,M:=bipartite_matching(G)
+      M:=bipartite_matching(G)
     <|unfolded-io>
       <\equation*>
-        10,<around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|2|2|cell-rborder|0ln>|<table|<row|<cell|0>|<cell|1>>|<row|<cell|2>|<cell|3>>|<row|<cell|4>|<cell|5>>|<row|<cell|6>|<cell|7>>|<row|<cell|8>|<cell|9>>|<row|<cell|10>|<cell|13>>|<row|<cell|11>|<cell|18>>|<row|<cell|12>|<cell|15>>|<row|<cell|14>|<cell|17>>|<row|<cell|16>|<cell|19>>>>>|)>
+        <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|2|2|cell-rborder|0ln>|<table|<row|<cell|0>|<cell|1>>|<row|<cell|2>|<cell|3>>|<row|<cell|4>|<cell|5>>|<row|<cell|6>|<cell|7>>|<row|<cell|8>|<cell|9>>|<row|<cell|10>|<cell|13>>|<row|<cell|11>|<cell|18>>|<row|<cell|12>|<cell|15>>|<row|<cell|14>|<cell|17>>|<row|<cell|16>|<cell|19>>>>>|)>
       </equation*>
     </unfolded-io>
 
@@ -11339,11 +11344,14 @@
     </input>
   </session>
 
-  <center|<image|images/ntrans.eps|35%|||>>
+  <\center>
+    <image|images/ntrans.eps|35%|||>
+  </center>
 
-  In the above digraph, the triplet <math|<around*|(|6,9,7|)>> is open while
-  the triplet <math|<around*|(|9,2,1|)>> is closed. Also,
-  <math|<around*|(|1,4,3|)>> is closed but <math|<around*|(|3,1,4|)>> is not.
+  In the above digraph, the triplet <math|<around*|(|5,7,6|)>> is open while
+  the triplet <math|<around*|(|7,6,4|)>> is closed. Triangles
+  <math|<around*|(|2,5,9|)>> and <math|<around*|(|6,8,7|)>> are not closed by
+  definition.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -11352,7 +11360,7 @@
       network_transitivity(G)
     <|unfolded-io>
       <\equation*>
-        <frac|11|36>
+        <frac|5|33>
       </equation*>
     </unfolded-io>
   </session>
@@ -14898,13 +14906,13 @@
     <associate|eq:flow-poly|<tuple|4.2|78>>
     <associate|eq:reliability-poly|<tuple|4.3|79>>
     <associate|footnote-1|<tuple|1|7>>
-    <associate|footnote-1.1|<tuple|1.1|35>>
+    <associate|footnote-1.1|<tuple|1.1|38>>
     <associate|footnote-3.1|<tuple|3.1|55>>
     <associate|footnote-3.2|<tuple|3.2|57>>
     <associate|footnote-4.1|<tuple|4.1|76>>
     <associate|footnote-5.1|<tuple|5.1|116>>
     <associate|footnr-1|<tuple|1|7>>
-    <associate|footnr-1.1|<tuple|1.1|35>>
+    <associate|footnr-1.1|<tuple|1.1|38>>
     <associate|footnr-3.1|<tuple|3.1|55>>
     <associate|footnr-3.2|<tuple|3.2|57>>
     <associate|footnr-4.1|<tuple|4.1|76>>
@@ -14926,7 +14934,7 @@
     <associate|is-tournament|<tuple|4.1.8|65>>
     <associate|is-tree|<tuple|4.6.1|87>>
     <associate|isomorphic-copy|<tuple|1.7.1|23>>
-    <associate|laplacian-matrix|<tuple|4.2.2|?>>
+    <associate|laplacian-matrix|<tuple|4.2.2|68>>
     <associate|make-directed|<tuple|2.1.1|47>>
     <associate|make-weighted|<tuple|2.1.2|47>>
     <associate|maxflow|<tuple|4.7.2|90>>

@@ -6972,7 +6972,7 @@
     </unfolded-io>
   </session>
 
-  <subsection|Laplacian matrix>
+  <subsection|Laplacian matrix><label|laplacian-matrix>
 
   The command <verbatim|laplacian_matrix><index|<verbatim|laplacian_matrix>>
   is used for computing the <hlink|<rigid|Laplacian
@@ -12805,16 +12805,13 @@
 
   <verbatim|number_of_spanning_trees> accepts an undirected graph
   <math|G<around*|(|V,E|)>> as its only argument and returns the total number
-  <math|n> of mutually different spanning trees in <math|G>.
+  <math|n> of (labeled) spanning trees in <math|G>.
 
-  The strategy is based on Theorem<nbsp>2.2.12
-  in<nbsp><cite-detail|west|pp.<nbsp>86>. First the adjacency matrix <math|A>
-  and the degree sequence <math|\<delta\>> of <math|G> are obtained. Then the
-  Laplacian matrix <math|L=D-A> of <math|G> is formed, where <math|D> is the
-  diagonal matrix of order <math|<around*|\||V|\|>> corresponding to
-  <math|\<delta\>>. The last row and the last column of <math|L> are
-  subsequently deleted, yielding the square matrix <math|L<rprime|'>> of
-  order <math|<around*|\||V|\|>-1> such that <math|n=det L<rprime|'>>.
+  The strategy is to use <hlink|<rigid|<name|Kirchhoff>'s
+  Theorem>|https://en.wikipedia.org/wiki/Kirchhoff%27s_theorem><nbsp><cite-detail|west|Theorem<nbsp>2.2.12,
+  pp.<nbsp>86>. The number of spanning trees is equal to the first principal
+  minor of the <hlink|<rigid|Laplacian matrix>|#laplacian-matrix> of
+  <math|G>.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -14902,15 +14899,12 @@
     <associate|eq:reliability-poly|<tuple|4.3|79>>
     <associate|footnote-1|<tuple|1|7>>
     <associate|footnote-1.1|<tuple|1.1|35>>
-    <associate|footnote-1.2|<tuple|1.2|38>>
-    <associate|footnote-2|<tuple|2|?>>
     <associate|footnote-3.1|<tuple|3.1|55>>
     <associate|footnote-3.2|<tuple|3.2|57>>
     <associate|footnote-4.1|<tuple|4.1|76>>
     <associate|footnote-5.1|<tuple|5.1|116>>
     <associate|footnr-1|<tuple|1|7>>
     <associate|footnr-1.1|<tuple|1.1|35>>
-    <associate|footnr-1.2|<tuple|1.2|38>>
     <associate|footnr-3.1|<tuple|3.1|55>>
     <associate|footnr-3.2|<tuple|3.2|57>>
     <associate|footnr-4.1|<tuple|4.1|76>>
@@ -14932,6 +14926,7 @@
     <associate|is-tournament|<tuple|4.1.8|65>>
     <associate|is-tree|<tuple|4.6.1|87>>
     <associate|isomorphic-copy|<tuple|1.7.1|23>>
+    <associate|laplacian-matrix|<tuple|4.2.2|?>>
     <associate|make-directed|<tuple|2.1.1|47>>
     <associate|make-weighted|<tuple|2.1.2|47>>
     <associate|maxflow|<tuple|4.7.2|90>>

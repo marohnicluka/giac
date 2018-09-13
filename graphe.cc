@@ -9986,7 +9986,7 @@ int graphe::tsp::solve(ivector &hc,double &cost) {
                     hc.push_back(k=a.tail);
                 }
             }
-            straighten(hc);
+            improve_tour(hc);
             cost=tour_cost(hc);
             retval=1; // success
         } else retval=0;

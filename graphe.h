@@ -547,6 +547,7 @@ public:
     static const int icosahedron_graph[];
     static const int levi_graph[];
     static const int ljubljana_graph_lcf[];
+    static const int foster_graph_lcf[];
     static const int blanusa_graph[];
 
 private:
@@ -681,8 +682,8 @@ private:
     static intpoly poly_one();
     static gen intpoly2gen(const intpoly &v,const gen &x,const gen &y);
     void sharc_order();
-    static void number_of_rooted_trees(int n,vecteur &t);
-    void ranrut(int n,ivector &tree,const vecteur &pt=vecteur(0));
+    static void compute_rutcounts(int n,vecteur &t);
+    void ranrut(int n,ivector &tree,const vecteur &pt);
     void ranrut_forest(int m,ivectors &trees,const vecteur &alpha,const vecteur &a);
     void insert_tree(const ivector &tree,int root);
     static ipair rat2ipair(const gen &r);

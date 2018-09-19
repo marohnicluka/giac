@@ -805,13 +805,13 @@
   This document<\footnote>
     This manual was written in <hlink|<rigid|<abbr|GNU>
     <TeXmacs>>|http://www.texmacs.org/tmweb/home/welcome.en.html>, a
-    scientific document editing platform. All the examples were entered as
+    scientific document editing platform. All examples were entered as
     interactive <samp|Giac> sessions.
   </footnote> contains an overview of the library of graph theory commands
   built in <samp|Giac> computation kernel and fully supported within
   <samp|Xcas> <abbr|GUI>. The library provides an effective and free
-  replacement for the Graph Theory package in <samp|Maple> with a high level
-  of syntax compatibility (although there are some minor differences).
+  replacement for the <abbr|GraphTheory> package in <samp|Maple> with a high
+  level of syntax compatibility (although there are some minor differences).
 
   For each command, the calling syntax is presented along with the detailed
   description of its functionality. Several examples are also supplied to

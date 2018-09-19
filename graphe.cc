@@ -436,6 +436,9 @@ const int graphe::harries_wong_graph_lcf[] = {
     -9,-33,-17,19,-31,27,11,-25,29,-33,13,-13,21,-29,-21,25,9,-11,-19,29,9,-27,-19,-13,-35,-9,
     9,17,25,-9,9,27,-27,-21,15,-9,29,-29,33,-9,-25,0
 };
+const int graphe::foster_graph_lcf[] = {
+    17,-9,37,-37,9,-17,0
+};
 const int graphe::blanusa_graph[] = {
     1,      2,6,8,-1,
     2,      3,12,-1,
@@ -1076,6 +1079,8 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         make_circular_layout(x,hull);
     } else if (name=="ljubljana") {
         make_lcf_graph(ljubljana_graph_lcf,2);
+    } else if (name=="foster") {
+        make_lcf_graph(foster_graph_lcf,15);
     } else if (name=="mcgee") {
         read_special(mcgee_graph);
         for (int i=0;i<node_count();++i) hull.push_back(i);
@@ -3173,6 +3178,7 @@ int graphe::succ(int i,int n) {
     return 0;
 }
 
+/* return arc path from i-th to j-th vertex (inclusive), going in clockwise direction */
 void graphe::arc_path(int i,int j,const ivector &cycle,ivector &path) {
     int n=cycle.size(),k=i,m=j-i,l=0;
     if (m<0)
@@ -4857,8 +4863,8 @@ int graphe::exact_edge_coloring(ivector &colors,int *numcol) {
             icol[k++]=j;
     }
     assert(k==maxdeg);
-    painter pt(&L);
 #ifdef HAVE_LIBGLPK
+    painter pt(&L);
     int ncolors=pt.color_vertices(colors,icol,maxdeg+1);
 #else
     message("Error: GLPK library is required for graph coloring");
@@ -6005,8 +6011,6 @@ int graphe::find_cycle_dfs(int i,int sg) {
     return -1;
 }
 
-/* return a cycle in this graph using DFS (graph is assumed to be connected),
-* or an empty list if there is no cycle (i.e. if the graph is a tree) */
 bool graphe::find_cycle(ivector &cycle,int sg) {
     assert(node_stack.empty());
     if (is_null())
@@ -6121,7 +6125,7 @@ void graphe::unembed_all_nodes() {
 /* finds planar embedding of a biconnected graph as a list of faces,
 * returns true iff the graph is planar */
 bool graphe::demoucron(ivectors &faces,int sg) {
-    ivector cycle,path,face1,face2;
+    ivector cycle,path,updated_face;
     ivectors bridges,components(node_count());
     ipairs admissible_faces;
     int i,j,k,n,f,s=sg,bc=max_subgraph_index(),cnt;
@@ -6228,18 +6232,17 @@ bool graphe::demoucron(ivectors &faces,int sg) {
             set_nodes_embedded(path);
         } else path.clear();
         f=admissible_faces[k].second;
-        ivector &face=faces[f];
+        faces.resize(faces.size()+1);
+        ivector &face=faces[f],&new_face=faces.back();
         i=find(face.begin(),face.end(),bridge[2])-face.begin();
         j=find(face.begin(),face.end(),bridge[3])-face.begin();
-        arc_path(i,j,face,face1);
-        arc_path(j,i,face,face2);
+        arc_path(i,j,face,updated_face);
+        arc_path(j,i,face,new_face);
         if (path.size()>0) {
-            face1.insert(face1.end(),path.begin(),path.end());
-            face2.insert(face2.end(),path.rbegin(),path.rend());
+            updated_face.insert(updated_face.end(),path.begin(),path.end());
+            new_face.insert(new_face.end(),path.rbegin(),path.rend());
         }
-        faces.erase(faces.begin()+f);
-        faces.push_back(face1);
-        faces.push_back(face2);
+        face=updated_face;
         bridges.erase(bridges.begin()+k); // we're done with this bridge
     }
     restore_subgraphs();
@@ -6618,7 +6621,7 @@ void graphe::make_tree_layout(layout &x,double sep,int apex) {
 }
 
 /* compute the number of rooted trees on 1,..,n vertices, output as t[1],..,t[n] */
-void graphe::number_of_rooted_trees(int n,vecteur &t) {
+void graphe::compute_rutcounts(int n,vecteur &t) {
     t.resize(n+1);
     t[1]=1;
     gen sum,td;
@@ -6655,7 +6658,7 @@ void graphe::ranrut(int n,ivector &tree,const vecteur &pt) {
     if (int(pt.size())>=n+1)
         t=vecteur(pt.begin(),pt.begin()+n+1);
     else
-        number_of_rooted_trees(n,t);
+        compute_rutcounts(n,t);
 label12:
     if (k<=2) goto label70;
     z=t[k]*exact((k-1)*rand_uniform(),ctx);
@@ -6759,7 +6762,7 @@ void graphe::make_random_tree(const vecteur &V,int maxd) {
 void graphe::make_random_rooted_tree(const vecteur &V) {
     this->clear();
     ivector tree;
-    ranrut(V.size(),tree);
+    ranrut(V.size(),tree,vecteur(0));
     reserve_nodes(V.size());
     add_nodes(V);
     insert_tree(tree,0);
@@ -6772,7 +6775,7 @@ void graphe::make_random_free_tree(const vecteur &V) {
     reserve_nodes(n);
     add_nodes(V);
     vecteur a;
-    number_of_rooted_trees(n,a);
+    compute_rutcounts(n,a);
     /* the following is a correction of Wilf's algorithm:
      * a_n in step (T1) on page 207 should be T_n, the number of unrooted trees
      * on n vertices.

@@ -1520,7 +1520,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 i=components[it-Cv.begin()][jt-x.begin()];
                 main_layout[i]=*jt;
                 if (isdir) {
-                    for (graphe::ivector_iter nt=v.neighbors().begin();nt!=v.neighbors().end();++nt) {
+                    for (graphe::iset_iter nt=v.neighbors().begin();nt!=v.neighbors().end();++nt) {
                         j=components[it-Cv.begin()][*nt];
                         const graphe::attrib &attr=v.neighbor_attributes(*nt);
                         if (G_orig.has_edge(i,j))

@@ -101,10 +101,10 @@ public:
     typedef std::vector<std::map<int,double> > edgemapd;
     typedef std::map<ipair,int> intpoly;
     typedef std::vector<double> dvector;
+    typedef std::set<int> iset;
 
     class vertex { // vertex class
         int m_subgraph;
-        bool m_sorted;
         // used for traversing
         bool m_visited;
         int m_low;
@@ -117,7 +117,7 @@ public:
         std::map<int,int> m_faces;
         // *
         attrib *m_attributes;
-        ivector m_neighbors;
+        iset m_neighbors;
         std::map<int,attrib> *m_neighbor_attributes;
         std::map<int,int> m_multiedges;
         void assign_defaults();
@@ -131,7 +131,6 @@ public:
         gen label() const;
         inline bool supports_attributes() const { return m_attributes!=NULL; }
         inline void unsupport_attributes() { m_attributes=NULL; m_neighbor_attributes=NULL; }
-        inline bool is_sorted() const { return m_sorted; }
         inline void set_label(const gen &s) { assert(supports_attributes()); (*m_attributes)[_GT_ATTRIB_LABEL]=s; }
         inline void set_subgraph(int s) { m_subgraph=s; }
         inline int subgraph() const { return m_subgraph; }
@@ -154,16 +153,14 @@ public:
         inline attrib &attributes() { assert(supports_attributes()); return *m_attributes; }
         inline void set_attribute(int key,const gen &val) { assert(supports_attributes()); (*m_attributes)[key]=val; }
         inline void set_attributes(const attrib &attr) { assert(supports_attributes()); copy_attributes(attr,*m_attributes); }
-        inline const ivector &neighbors() const { return m_neighbors; }
+        inline const iset &neighbors() const { return m_neighbors; }
+        inline int degree() const { return m_neighbors.size(); }
         void add_neighbor(int i,const attrib &attr=attrib());
         bool is_temporary(int i) const;
         attrib &neighbor_attributes(int i);
         const attrib &neighbor_attributes(int i) const;
-        bool has_neighbor(int i) const;
-        void move_neighbor(int i,int j,bool after=true);
+        inline bool has_neighbor(int i) const { return m_neighbors.find(i)!=m_neighbors.end(); }
         void remove_neighbor(int i);
-        template<class Compare>
-        inline void sort_neighbors(Compare comp) { sort(m_neighbors.begin(),m_neighbors.end(),comp); m_sorted=false; }
         inline void clear_neighbors();
         void incident_faces(ivector &F) const;
         inline void add_edge_face(int nb,int f) { assert(m_faces.find(nb)==m_faces.end()); m_faces[nb]=f+1; }
@@ -516,6 +513,8 @@ public:
     typedef edgeset::const_iterator edgeset_iter;
     typedef intpoly::const_iterator intpoly_iter;
     typedef dvector::const_iterator dvector_iter;
+    typedef iset::const_iterator iset_iter;
+
     static const gen FAUX;
     static const gen VRAI;
     static bool verbose;
@@ -580,9 +579,9 @@ private:
     static void attrib2genmap(const attrib &attr,gen_map &m);
     static void copy_attributes(const attrib &src,attrib &dest);
     void write_attrib(std::ofstream &dotfile,const attrib &attr) const;
-    static int sets_union(const ivector &A,const ivector &B,ivector &U);
-    static int sets_intersection(const ivector &A,const ivector &B,ivector &I);
-    static int sets_difference(const ivector &A,const ivector &B,ivector &D);
+    static int sets_union(const iset &A,const iset &B,iset &U);
+    static int sets_intersection(const iset &A,const iset &B,iset &I);
+    static int sets_difference(const iset &A,const iset &B,iset &D);
     static point make_point(double x,double y) { point p(2,x); p.back()=y; return p; }
     static point make_point(double x,double y,double z) { point p(3,x); p[1]=y; p.back()=z; return p; }
     static void add_point(point &a,const point &b);
@@ -610,7 +609,7 @@ private:
     void multilevel_recursion(layout &x,int d,double R,double K,double tol,int depth=0);
     int mdeg(const ivector &V,int i) const;
     void coarsening(graphe &G,const sparsemat &P,const ivector &V) const;
-    void tomita(ivector &R,ivector &P,ivector &X,std::map<int,int> &m,int mode=0);
+    void tomita(iset &R,iset &P,iset &X,std::map<int,int> &m,int mode=0);
     int cp_maxclique(ivector &clique);
     void cp_recurse(ivector &C,ivector &P,ivector &incumbent);
     int ost_maxclique(ivector &clique);
@@ -669,7 +668,7 @@ private:
     int saturation_degree(const vertex &v,std::set<int> &colors) const;
     int uncolored_degree(const vertex &v) const;
     bool is_partially_colored() const;
-    void remove_maximal_clique(ivector &V) const;
+    void remove_maximal_clique(iset &V) const;
     bool bipartite_matching_bfs(ivector &dist);
     bool bipartite_matching_dfs(int u,ivector &dist);
     static ipair forest_root_info(const ivector &forest,int v);
@@ -743,9 +742,6 @@ public:
     bool is_edge_visited(int i,int j) const;
     inline bool is_edge_visited(const ipair &e) const { return is_edge_visited(e.first,e.second); }
     inline void unvisit_all_edges() { visited_edges.clear(); }
-    void move_neighbor(int v,int w,int ref=-1,bool after=true);
-    template<class Compare>
-    inline void sort_neighbors(int v,Compare comp) { node(v).sort_neighbors(comp); }
     gen to_gen();
     int *to_array(int &sz,bool reduce=false) const;
     bool write_latex(const std::string &filename,const gen &drawing) const;

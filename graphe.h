@@ -579,9 +579,10 @@ private:
     static void attrib2genmap(const attrib &attr,gen_map &m);
     static void copy_attributes(const attrib &src,attrib &dest);
     void write_attrib(std::ofstream &dotfile,const attrib &attr) const;
-    static int sets_union(const iset &A,const iset &B,iset &U);
-    static int sets_intersection(const iset &A,const iset &B,iset &I);
-    static int sets_difference(const iset &A,const iset &B,iset &D);
+    static size_t sets_union(const iset &A,const iset &B,iset &U);
+    static size_t sets_intersection(const iset &A,const iset &B,iset &I);
+    static size_t sets_difference(const iset &A,const iset &B,iset &D);
+    static size_t set_intersection_size(const iset &A,const iset &B);
     static point make_point(double x,double y) { point p(2,x); p.back()=y; return p; }
     static point make_point(double x,double y,double z) { point p(3,x); p[1]=y; p.back()=z; return p; }
     static void add_point(point &a,const point &b);

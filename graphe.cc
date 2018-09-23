@@ -927,24 +927,40 @@ graphe::ivector graphe::rand_permu(int n) const {
 }
 
 /* compute the union of A and B and store it in U */
-int graphe::sets_union(const iset &A,const iset &B,iset &U) {
+size_t graphe::sets_union(const iset &A,const iset &B,iset &U) {
     U.clear();
     set_union(A.begin(),A.end(),B.begin(),B.end(),std::inserter(U,U.begin()));
     return U.size();
 }
 
 /* compute the intersection of A and B and store it in I */
-int graphe::sets_intersection(const iset &A,const iset &B,iset &I) {
+size_t graphe::sets_intersection(const iset &A,const iset &B,iset &I) {
     I.clear();
     set_intersection(A.begin(),A.end(),B.begin(),B.end(),std::inserter(I,I.begin()));
     return I.size();
 }
 
 /* compute the set difference of A and B and store it in D */
-int graphe::sets_difference(const iset &A,const iset &B,iset &D) {
+size_t graphe::sets_difference(const iset &A,const iset &B,iset &D) {
     D.clear();
     set_difference(A.begin(),A.end(),B.begin(),B.end(),std::inserter(D,D.begin()));
     return D.size();
+}
+
+/* return the size of the intersection of sets A and B */
+size_t graphe::set_intersection_size(const iset &A,const iset &B) {
+    size_t result = 0;
+    iset_iter first1=A.begin(),last1=A.end(),first2=B.begin(),last2=B.end();
+    while (first1!=last1 && first2!=last2)
+    {
+        if (*first1<*first2) ++first1;
+        else if (*first2<*first1) ++first2;
+        else {
+            result++;
+            ++first1; ++first2;
+        }
+    }
+    return result;
 }
 
 /* graphe default constructor */
@@ -7049,7 +7065,6 @@ bool graphe::is_strongly_regular(ipair &sig) {
     if (!is_regular(-1))
         return false;
     int n=node_count();
-    iset common;
     int lambda=-1,mu=-1,m;
     for (int i=0;i<n;++i) {
         const iset &Nv=node(i).neighbors();
@@ -7057,7 +7072,7 @@ bool graphe::is_strongly_regular(ipair &sig) {
             if (i==j)
                 continue;
             const iset &Nw=node(j).neighbors();
-            m=sets_intersection(Nv,Nw,common);
+            m=set_intersection_size(Nv,Nw);
             if (has_edge(i,j)) {
                 if (lambda<0)
                     lambda=m;
@@ -11335,9 +11350,8 @@ gen graphe::local_clustering_coeff(int i) const {
     assert(!is_directed());
     const vertex &v=node(i);
     int d=v.neighbors().size(),cnt=0;
-    iset is;
     for (iset_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
-        cnt+=sets_intersection(v.neighbors(),node(*it).neighbors(),is);
+        cnt+=set_intersection_size(v.neighbors(),node(*it).neighbors());
     }
     return _ratnormal(fraction(cnt,d*(d-1)),ctx);
 }
@@ -11349,11 +11363,10 @@ gen graphe::clustering_coeff() const {
     get_edges_as_pairs(E);
     int i,j,n=node_count(),d,denom,numer;
     ivector num_triangles(n),num_triplets(n);
-    iset is;
     for (ipairs_iter it=E.begin();it!=E.end();++it) {
         i=it->first; j=it->second;
         const vertex &v=node(i),&w=node(j);
-        d=sets_intersection(v.neighbors(),w.neighbors(),is);
+        d=set_intersection_size(v.neighbors(),w.neighbors());
         num_triangles[i]+=d;
         num_triangles[j]+=d;
     }
@@ -11375,22 +11388,23 @@ gen graphe::clustering_coeff() const {
 gen graphe::transitivity() const {
     ipairs E;
     get_edges_as_pairs(E);
-    int i,j,num_triangles=0,num_triplets=0;
+    int i,j;
+    gen num_triangles(0),num_triplets(0);
     bool isdir=is_directed();
-    iset is;
     for (ipairs_iter it=E.begin();it!=E.end();++it) {
         i=it->first; j=it->second;
         const vertex &v=node(i),&w=node(j);
-        num_triangles+=sets_intersection(v.neighbors(),w.neighbors(),is);
+        num_triangles+=set_intersection_size(v.neighbors(),w.neighbors());
         num_triplets+=w.neighbors().size()-(w.has_neighbor(i)?1:0);
         if (!isdir)
             num_triplets+=v.neighbors().size()-1;
     }
-    if (num_triplets==0)
+    if (is_zero(num_triplets))
         return 0;
     if (!isdir) {
-        assert(num_triangles%3==0 && num_triplets%2==0);
-        num_triplets/=2;
+        assert(is_zero(_rem(makesequence(num_triangles,3),ctx)) &&
+               is_zero(_rem(makesequence(num_triplets,2),ctx)));
+        num_triplets=num_triplets/gen(2);
     }
     return _ratnormal(fraction(num_triangles,num_triplets),ctx);
 }

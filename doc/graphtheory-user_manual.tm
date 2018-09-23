@@ -11145,18 +11145,26 @@
   coefficient>|https://en.wikipedia.org/wiki/Clustering_coefficient#Local_clustering_coefficient>
   of a particular vertex.
 
-  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|clustering_coefficient(G)>>>|<row|<cell|>|<cell|<verbatim|clustering_coefficient(G,v)>>>>>>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|clustering_coefficient(G)>>>|<row|<cell|>|<cell|<verbatim|clustering_coefficient(G,v)>>>|<row|<cell|>|<cell|<verbatim|clustering_coefficient(G,v1,v2,..,vk)>>>|<row|<cell|>|<cell|<verbatim|clustering_coefficient(G,[v1,v2,..,vk])>>>|<row|<cell|>|<cell|<verbatim|clustering_coefficient(G,approx)>>>>>>
 
   <verbatim|clustering_coefficient> accepts one or two arguments, an
   undirected graph <math|G<around*|(|V,E|)>> and optionally a vertex
-  <math|v\<in\>V>. It returns the average clustering coefficient
-  <math|c<around*|(|G|)>><nbsp><cite-detail|boot|pp.<nbsp>5> if <math|v> is
-  not given and the local clustering coefficient
-  <math|c<rsub|G><around*|(|v|)>> of <math|v> <cite-detail|boot|pp.<nbsp>4>
-  otherwise. The returned value is, by definition, a rational number in the
-  range <math|<around*|[|0,1|]>> in both cases. The number
-  <math|c<around*|(|G|)>> can be computed from
-  <math|c<rsub|G><around*|(|v|)>> using the following relation:
+  <math|v\<in\>V> or a list/sequence of vertices
+  <math|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|k>\<in\>V>. It returns the
+  average clustering coefficient <math|c<around*|(|G|)>><nbsp><cite-detail|boot|pp.<nbsp>5>
+  if only <math|G> is given as an argument. Otherwise, the return value is
+  the local clustering coefficient <math|c<rsub|G><around*|(|v|)>>
+  <cite-detail|boot|pp.<nbsp>4> of <math|v> resp.<nbsp>a list of local
+  clustering coefficients of <math|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|k>>.\ 
+
+  If the option <verbatim|approx> is specified, the average clustering
+  coefficient is approximated within <math|<frac|1|2>\<times\>10<rsup|-2>> of
+  the exact value with probability of failure <math|p=10<rsup|-5>>.
+
+  In any case, the return value is\Vby definition\Va rational number in the
+  range <math|<around*|[|0,1|]>>. It can be computed from
+  <math|c<rsub|G><around*|(|v|)>>, <math|v\<in\>V> using the following
+  relation:
 
   <\equation*>
     c<around*|(|G|)>=<frac|1|<around*|\||V|\|>>*<big|sum><rsub|v\<in\>V>c<rsub|G><around*|(|v|)>.
@@ -11170,9 +11178,12 @@
   context: it measures how probable the friendship transitivity is for a
   particular node <math|v\<in\>V>.
 
-  The complexity of computing <math|c<around*|(|G|)>> is
+  The complexity of computing <math|c<around*|(|G|)>> exactly is
   <math|O<around*|(|\<Delta\><rsub|G>*<around*|\||E|\|>|)>>, where
-  <math|\<Delta\><rsub|G>> is the maximum vertex degree in <math|G>.
+  <math|\<Delta\><rsub|G>> is the maximum vertex degree in <math|G>. For
+  approximating <math|c<around*|(|G|)>> the algorithm of <name|Schank> and
+  <name|Wagner><nbsp><cite-detail|schank|Algorithm<nbsp>1, pp.<nbsp>269> is
+  used, which runs in <math|O<around*|(|log <around*|\||V|\|>|)>> time.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -13774,7 +13785,7 @@
   <center|<image|images/sg2.eps|35%|||>>
 
   <\bibliography|bib|tm-plain|graphtheory>
-    <\bib-list|56>
+    <\bib-list|57>
       <bibitem*|1><label|bib-afzal>Shehzad Afzal<localize| and >Clemens
       Brand. <newblock>Recognizing triangulated Cartesian graph products.
       <newblock><with|font-shape|italic|Discrete Mathematics>, 312:188\U193,
@@ -13998,68 +14009,73 @@
       <newblock><with|font-shape|italic|Software: Practice and Experience>,
       29:973\U984, 1999.<newblock>
 
-      <bibitem*|44><label|bib-steger>Angelika Steger<localize| and
+      <bibitem*|44><label|bib-schank>Thomas Schank<localize| and >Dorothea
+      Wagner. <newblock>Approximating Clustering Coefficient and
+      Transitivity. <newblock><with|font-shape|italic|Journal of Graph
+      Algorithms and Applications>, 9:265\U275, 2005.<newblock>
+
+      <bibitem*|45><label|bib-steger>Angelika Steger<localize| and
       >Nicholas<nbsp>C.<nbsp>Wormald. <newblock>Generating random regular
       graphs quickly. <newblock><with|font-shape|italic|Combinatorics
       Probability and Computing>, 8:377\U396, 1999.<newblock>
 
-      <bibitem*|45><label|bib-tarjan72>R.<nbsp>E.<nbsp>Tarjan.
+      <bibitem*|46><label|bib-tarjan72>R.<nbsp>E.<nbsp>Tarjan.
       <newblock>Depth-First Search and Linear Graph Algorithms.
       <newblock><with|font-shape|italic|SIAM Journal on Comp.>, 1:146\U160,
       1972.<newblock>
 
-      <bibitem*|46><label|bib-tarjan-bridges>R.<nbsp>E.<nbsp>Tarjan.
+      <bibitem*|47><label|bib-tarjan-bridges>R.<nbsp>E.<nbsp>Tarjan.
       <newblock>A note on finding the bridges of a graph.
       <newblock><with|font-shape|italic|Information Processing Letters>,
       2:160\U161, 1974.<newblock>
 
-      <bibitem*|47><label|bib-lca>R.<nbsp>E.<nbsp>Tarjan.
+      <bibitem*|48><label|bib-lca>R.<nbsp>E.<nbsp>Tarjan.
       <newblock>Applications of path compression on balanced trees.
       <newblock><with|font-shape|italic|Journal of the ACM>, 26:690\U715,
       1979.<newblock>
 
-      <bibitem*|48><label|bib-tarjan86>R.<nbsp>E.<nbsp>Tarjan. <newblock>Two
+      <bibitem*|49><label|bib-tarjan86>R.<nbsp>E.<nbsp>Tarjan. <newblock>Two
       streamlined depth-first search algorithms.
       <newblock><with|font-shape|italic|Fundamenta Informaticae>, 9:85\U94,
       1986.<newblock>
 
-      <bibitem*|49><label|bib-krishnaiyan>K.<nbsp>Thulasiraman,
+      <bibitem*|50><label|bib-krishnaiyan>K.<nbsp>Thulasiraman,
       S.<nbsp>Arumugam, A.<nbsp>Brandstädt<localize|, and
       >T.<nbsp>Nishizeki<localize|, editors>.
       <newblock><with|font-shape|italic|Handbook of Graph Theory,
       Combinatorial Optimization, and Algorithms>. <newblock>CRC Press,
       2016.<newblock>
 
-      <bibitem*|50><label|bib-tomita>Etsuji Tomita, Akira Tanaka<localize|,
+      <bibitem*|51><label|bib-tomita>Etsuji Tomita, Akira Tanaka<localize|,
       and >Haruhisa Takahashi. <newblock>The worst-case time complexity for
       generating all maximal cliques and computational experiments.
       <newblock><with|font-shape|italic|Theoretical Computer Science>,
       363:28\U42, 2006.<newblock>
 
-      <bibitem*|51><label|bib-tutte>W.<nbsp>T.<nbsp>Tutte. <newblock>How to
+      <bibitem*|52><label|bib-tutte>W.<nbsp>T.<nbsp>Tutte. <newblock>How to
       draw a graph. <newblock><with|font-shape|italic|Proceedings of the
       London Mathematical Society>, s3-13:743\U767, 1963.<newblock>
 
-      <bibitem*|52><label|bib-walker>John<nbsp>Q.<nbsp>Walker II. <newblock>A
+      <bibitem*|53><label|bib-walker>John<nbsp>Q.<nbsp>Walker II. <newblock>A
       nodepositioning algorithm for general trees.
       <newblock><with|font-shape|italic|Software: Practice and Experience>,
       20:685\U705, 1990.<newblock>
 
-      <bibitem*|53><label|bib-wasserman>Stanley Wasserman<localize| and
+      <bibitem*|54><label|bib-wasserman>Stanley Wasserman<localize| and
       >Katherine Faust. <newblock><with|font-shape|italic|Social Network
       Analysis: Methods and Applications>. <newblock>Cambridge University
       Press, 1994.<newblock>
 
-      <bibitem*|54><label|bib-welch>E.<nbsp>Welch<localize| and
+      <bibitem*|55><label|bib-welch>E.<nbsp>Welch<localize| and
       >S.<nbsp>Kobourov. <newblock>Measuring Symmetry in Drawings of Graphs.
       <newblock><with|font-shape|italic|Computer Graphics Forum>,
       36:341\U351, 2017.<newblock>
 
-      <bibitem*|55><label|bib-west>Douglas<nbsp>B.<nbsp>West.
+      <bibitem*|56><label|bib-west>Douglas<nbsp>B.<nbsp>West.
       <newblock><with|font-shape|italic|Introduction to Graph Theory>.
       <newblock>Pearson Education, 2002.<newblock>
 
-      <bibitem*|56><label|bib-wilf>Herbert<nbsp>S.<nbsp>Wilf. <newblock>The
+      <bibitem*|57><label|bib-wilf>Herbert<nbsp>S.<nbsp>Wilf. <newblock>The
       Uniform Selection of Free Trees. <newblock><with|font-shape|italic|Journal
       of Algorithms>, 2:204\U207, 1981.<newblock>
     </bib-list>
@@ -14558,9 +14574,9 @@
     <associate|auto-193|<tuple|4.1.5|62>>
     <associate|auto-194|<tuple|4.1.6|63>>
     <associate|auto-195|<tuple|4.1.6|63>>
-    <associate|auto-196|<tuple|4.1.7|63>>
-    <associate|auto-197|<tuple|4.1.7|63>>
-    <associate|auto-198|<tuple|4.1.7|63>>
+    <associate|auto-196|<tuple|4.1.7|64>>
+    <associate|auto-197|<tuple|4.1.7|64>>
+    <associate|auto-198|<tuple|4.1.7|64>>
     <associate|auto-199|<tuple|4.1.7|64>>
     <associate|auto-2|<tuple|1|9>>
     <associate|auto-20|<tuple|1.2.3|14>>
@@ -14582,18 +14598,18 @@
     <associate|auto-214|<tuple|4.2.3|69>>
     <associate|auto-215|<tuple|4.2.4|70>>
     <associate|auto-216|<tuple|4.2.4|70>>
-    <associate|auto-217|<tuple|4.2.5|70>>
-    <associate|auto-218|<tuple|4.2.5|70>>
+    <associate|auto-217|<tuple|4.2.5|71>>
+    <associate|auto-218|<tuple|4.2.5|71>>
     <associate|auto-219|<tuple|4.2.6|71>>
     <associate|auto-22|<tuple|1.3|14>>
     <associate|auto-220|<tuple|4.2.6|71>>
-    <associate|auto-221|<tuple|4.2.7|71>>
-    <associate|auto-222|<tuple|4.2.7|71>>
+    <associate|auto-221|<tuple|4.2.7|72>>
+    <associate|auto-222|<tuple|4.2.7|72>>
     <associate|auto-223|<tuple|4.2.8|72>>
     <associate|auto-224|<tuple|4.2.8|72>>
-    <associate|auto-225|<tuple|4.3|72>>
-    <associate|auto-226|<tuple|4.3.1|72>>
-    <associate|auto-227|<tuple|4.3.1|72>>
+    <associate|auto-225|<tuple|4.3|73>>
+    <associate|auto-226|<tuple|4.3.1|73>>
+    <associate|auto-227|<tuple|4.3.1|73>>
     <associate|auto-228|<tuple|4.3.2|75>>
     <associate|auto-229|<tuple|4.3.2|75>>
     <associate|auto-23|<tuple|1.3.1|14>>
@@ -14604,8 +14620,8 @@
     <associate|auto-234|<tuple|4.4.1|76>>
     <associate|auto-235|<tuple|4.4.2|78>>
     <associate|auto-236|<tuple|4.4.2|78>>
-    <associate|auto-237|<tuple|4.4.3|78>>
-    <associate|auto-238|<tuple|4.4.3|78>>
+    <associate|auto-237|<tuple|4.4.3|79>>
+    <associate|auto-238|<tuple|4.4.3|79>>
     <associate|auto-239|<tuple|4.4.4|79>>
     <associate|auto-24|<tuple|1.3.1|14>>
     <associate|auto-240|<tuple|4.4.4|79>>
@@ -14620,8 +14636,8 @@
     <associate|auto-249|<tuple|4.5.3|83>>
     <associate|auto-25|<tuple|1.3.2|15>>
     <associate|auto-250|<tuple|4.5.3|83>>
-    <associate|auto-251|<tuple|4.5.4|83>>
-    <associate|auto-252|<tuple|4.5.4|83>>
+    <associate|auto-251|<tuple|4.5.4|84>>
+    <associate|auto-252|<tuple|4.5.4|84>>
     <associate|auto-253|<tuple|4.5.5|84>>
     <associate|auto-254|<tuple|4.5.5|84>>
     <associate|auto-255|<tuple|4.5.6|84>>
@@ -14630,29 +14646,29 @@
     <associate|auto-258|<tuple|4.5.7|85>>
     <associate|auto-259|<tuple|4.5.7|85>>
     <associate|auto-26|<tuple|1.3.2|15>>
-    <associate|auto-260|<tuple|4.5.8|85>>
-    <associate|auto-261|<tuple|4.5.8|85>>
+    <associate|auto-260|<tuple|4.5.8|86>>
+    <associate|auto-261|<tuple|4.5.8|86>>
     <associate|auto-262|<tuple|4.5.9|86>>
     <associate|auto-263|<tuple|4.5.9|86>>
     <associate|auto-264|<tuple|4.5.9|86>>
     <associate|auto-265|<tuple|4.6|87>>
     <associate|auto-266|<tuple|4.6.1|87>>
     <associate|auto-267|<tuple|4.6.1|87>>
-    <associate|auto-268|<tuple|4.6.2|87>>
-    <associate|auto-269|<tuple|4.6.2|87>>
+    <associate|auto-268|<tuple|4.6.2|88>>
+    <associate|auto-269|<tuple|4.6.2|88>>
     <associate|auto-27|<tuple|1.3.2|15>>
     <associate|auto-270|<tuple|4.6.3|88>>
     <associate|auto-271|<tuple|4.6.3|88>>
-    <associate|auto-272|<tuple|4.6.4|88>>
-    <associate|auto-273|<tuple|4.6.4|88>>
+    <associate|auto-272|<tuple|4.6.4|89>>
+    <associate|auto-273|<tuple|4.6.4|89>>
     <associate|auto-274|<tuple|4.6.5|89>>
     <associate|auto-275|<tuple|4.6.5|89>>
-    <associate|auto-276|<tuple|4.7|89>>
-    <associate|auto-277|<tuple|4.7.1|89>>
-    <associate|auto-278|<tuple|4.7.1|89>>
-    <associate|auto-279|<tuple|4.7.2|90>>
+    <associate|auto-276|<tuple|4.7|90>>
+    <associate|auto-277|<tuple|4.7.1|90>>
+    <associate|auto-278|<tuple|4.7.1|90>>
+    <associate|auto-279|<tuple|4.7.2|91>>
     <associate|auto-28|<tuple|1.4|15>>
-    <associate|auto-280|<tuple|4.7.2|90>>
+    <associate|auto-280|<tuple|4.7.2|91>>
     <associate|auto-281|<tuple|4.7.3|92>>
     <associate|auto-282|<tuple|4.7.3|92>>
     <associate|auto-283|<tuple|4.8|93>>
@@ -14660,19 +14676,19 @@
     <associate|auto-285|<tuple|4.8.1|93>>
     <associate|auto-286|<tuple|4.8.2|93>>
     <associate|auto-287|<tuple|4.8.2|93>>
-    <associate|auto-288|<tuple|4.8.3|94>>
+    <associate|auto-288|<tuple|4.8.3|95>>
     <associate|auto-289|<tuple|4.8.4|95>>
     <associate|auto-29|<tuple|1.4.1|15>>
     <associate|auto-290|<tuple|4.8.4|95>>
     <associate|auto-291|<tuple|4.8.4|95>>
-    <associate|auto-292|<tuple|4.9|95>>
-    <associate|auto-293|<tuple|4.9.1|95>>
-    <associate|auto-294|<tuple|4.9.1|95>>
+    <associate|auto-292|<tuple|4.9|96>>
+    <associate|auto-293|<tuple|4.9.1|96>>
+    <associate|auto-294|<tuple|4.9.1|96>>
     <associate|auto-295|<tuple|4.9.2|96>>
     <associate|auto-296|<tuple|4.9.2|96>>
     <associate|auto-297|<tuple|4.9.2|96>>
-    <associate|auto-298|<tuple|4.9.3|96>>
-    <associate|auto-299|<tuple|4.9.3|96>>
+    <associate|auto-298|<tuple|4.9.3|97>>
+    <associate|auto-299|<tuple|4.9.3|97>>
     <associate|auto-3|<tuple|1.1|9>>
     <associate|auto-30|<tuple|1.4.1|15>>
     <associate|auto-300|<tuple|4.10|97>>
@@ -14691,8 +14707,8 @@
     <associate|auto-312|<tuple|4.11.3|100>>
     <associate|auto-313|<tuple|4.11.4|101>>
     <associate|auto-314|<tuple|4.11.4|101>>
-    <associate|auto-315|<tuple|4.11.5|101>>
-    <associate|auto-316|<tuple|4.11.5|101>>
+    <associate|auto-315|<tuple|4.11.5|102>>
+    <associate|auto-316|<tuple|4.11.5|102>>
     <associate|auto-317|<tuple|4.12|102>>
     <associate|auto-318|<tuple|4.12.1|102>>
     <associate|auto-319|<tuple|4.12.1|102>>
@@ -14702,21 +14718,21 @@
     <associate|auto-322|<tuple|4.12.3|104>>
     <associate|auto-323|<tuple|4.12.3|104>>
     <associate|auto-324|<tuple|4.13|105>>
-    <associate|auto-325|<tuple|4.13.1|105>>
-    <associate|auto-326|<tuple|4.13.1|105>>
-    <associate|auto-327|<tuple|4.1|106>>
+    <associate|auto-325|<tuple|4.13.1|106>>
+    <associate|auto-326|<tuple|4.13.1|106>>
+    <associate|auto-327|<tuple|4.1|107>>
     <associate|auto-328|<tuple|4.13.2|106>>
     <associate|auto-329|<tuple|4.13.2|106>>
     <associate|auto-33|<tuple|1.5|16>>
     <associate|auto-330|<tuple|4.13.3|107>>
     <associate|auto-331|<tuple|4.13.3|107>>
-    <associate|auto-332|<tuple|4.13.4|107>>
-    <associate|auto-333|<tuple|4.13.4|107>>
-    <associate|auto-334|<tuple|4.13.5|108>>
-    <associate|auto-335|<tuple|4.13.5|108>>
-    <associate|auto-336|<tuple|4.14|109>>
-    <associate|auto-337|<tuple|4.14.1|109>>
-    <associate|auto-338|<tuple|4.14.1|109>>
+    <associate|auto-332|<tuple|4.13.4|108>>
+    <associate|auto-333|<tuple|4.13.4|108>>
+    <associate|auto-334|<tuple|4.13.5|109>>
+    <associate|auto-335|<tuple|4.13.5|109>>
+    <associate|auto-336|<tuple|4.14|110>>
+    <associate|auto-337|<tuple|4.14.1|110>>
+    <associate|auto-338|<tuple|4.14.1|110>>
     <associate|auto-339|<tuple|4.14.2|110>>
     <associate|auto-34|<tuple|1.5.1|16>>
     <associate|auto-340|<tuple|4.14.2|110>>
@@ -14769,7 +14785,7 @@
     <associate|auto-383|<tuple|6.3.3|130>>
     <associate|auto-384|<tuple|6.3.3|130>>
     <associate|auto-385|<tuple|6.3.3|133>>
-    <associate|auto-386|<tuple|56|135>>
+    <associate|auto-386|<tuple|57|135>>
     <associate|auto-39|<tuple|1.6|17>>
     <associate|auto-4|<tuple|1.1.1|9>>
     <associate|auto-40|<tuple|1.6.1|17>>
@@ -14871,8 +14887,8 @@
     <associate|bib-hu|<tuple|32|133>>
     <associate|bib-hu2|<tuple|33|133>>
     <associate|bib-kahn|<tuple|34|134>>
-    <associate|bib-krishnaiyan|<tuple|49|134>>
-    <associate|bib-lca|<tuple|47|134>>
+    <associate|bib-krishnaiyan|<tuple|50|134>>
+    <associate|bib-lca|<tuple|48|134>>
     <associate|bib-mckay|<tuple|35|134>>
     <associate|bib-melissa|<tuple|13|133>>
     <associate|bib-monagan|<tuple|36|134>>
@@ -14883,17 +14899,18 @@
     <associate|bib-padberg|<tuple|41|134>>
     <associate|bib-pferschy|<tuple|42|134>>
     <associate|bib-plestenjak|<tuple|43|134>>
-    <associate|bib-steger|<tuple|44|134>>
-    <associate|bib-tarjan-bridges|<tuple|46|134>>
-    <associate|bib-tarjan72|<tuple|45|134>>
-    <associate|bib-tarjan86|<tuple|48|134>>
-    <associate|bib-tomita|<tuple|50|134>>
-    <associate|bib-tutte|<tuple|51|134>>
-    <associate|bib-walker|<tuple|52|134>>
-    <associate|bib-wasserman|<tuple|53|134>>
-    <associate|bib-welch|<tuple|54|134>>
-    <associate|bib-west|<tuple|55|134>>
-    <associate|bib-wilf|<tuple|56|134>>
+    <associate|bib-schank|<tuple|44|134>>
+    <associate|bib-steger|<tuple|45|134>>
+    <associate|bib-tarjan-bridges|<tuple|47|134>>
+    <associate|bib-tarjan72|<tuple|46|134>>
+    <associate|bib-tarjan86|<tuple|49|134>>
+    <associate|bib-tomita|<tuple|51|134>>
+    <associate|bib-tutte|<tuple|52|134>>
+    <associate|bib-walker|<tuple|53|134>>
+    <associate|bib-wasserman|<tuple|54|134>>
+    <associate|bib-welch|<tuple|55|134>>
+    <associate|bib-west|<tuple|56|134>>
+    <associate|bib-wilf|<tuple|57|134>>
     <associate|blockjoin|<tuple|6.1|125>>
     <associate|canonical-labeling|<tuple|4.3.2|75>>
     <associate|chordface|<tuple|6.2|126>>
@@ -14903,7 +14920,7 @@
     <associate|digraph|<tuple|1.1.2|10>>
     <associate|draw-graph|<tuple|6.1|121>>
     <associate|eq:chromatic-poly|<tuple|4.1|78>>
-    <associate|eq:flow-poly|<tuple|4.2|78>>
+    <associate|eq:flow-poly|<tuple|4.2|79>>
     <associate|eq:reliability-poly|<tuple|4.3|79>>
     <associate|footnote-1|<tuple|1|7>>
     <associate|footnote-1.1|<tuple|1.1|38>>
@@ -14928,8 +14945,8 @@
     <associate|highlight-vertices|<tuple|6.3.1|129>>
     <associate|induced-subgraph|<tuple|1.8.2|25>>
     <associate|is-bipartite|<tuple|4.1.9|65>>
-    <associate|is-isomorphic|<tuple|4.3.1|72>>
-    <associate|is-network|<tuple|4.7.1|89>>
+    <associate|is-isomorphic|<tuple|4.3.1|73>>
+    <associate|is-network|<tuple|4.7.1|90>>
     <associate|is-regular|<tuple|4.1.5|62>>
     <associate|is-tournament|<tuple|4.1.8|65>>
     <associate|is-tree|<tuple|4.6.1|87>>
@@ -14937,7 +14954,7 @@
     <associate|laplacian-matrix|<tuple|4.2.2|68>>
     <associate|make-directed|<tuple|2.1.1|47>>
     <associate|make-weighted|<tuple|2.1.2|47>>
-    <associate|maxflow|<tuple|4.7.2|90>>
+    <associate|maxflow|<tuple|4.7.2|91>>
     <associate|maximum-matching|<tuple|4.10.1|97>>
     <associate|minimal-coloring|<tuple|4.13.2|106>>
     <associate|minimum-covering|<tuple|4.11.4|101>>
@@ -14945,10 +14962,10 @@
     <associate|random-network|<tuple|1.10.8|43>>
     <associate|random-planar|<tuple|1.10.4|40>>
     <associate|set-vertex-positions|<tuple|6.2.1|127>>
-    <associate|st-ordering|<tuple|4.9.3|96>>
+    <associate|st-ordering|<tuple|4.9.3|97>>
     <associate|st53|<tuple|3.1|57>>
     <associate|subgraph|<tuple|1.8.1|25>>
-    <associate|tab:colors|<tuple|4.1|106>>
+    <associate|tab:colors|<tuple|4.1|107>>
     <associate|touchface|<tuple|6.3|126>>
     <associate|trail|<tuple|1.2.3|13>>
     <associate|traveling-salesman|<tuple|5.2.3|116>>
@@ -15084,6 +15101,8 @@
       boot
 
       boot
+
+      schank
 
       boot
 

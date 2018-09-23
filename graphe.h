@@ -117,7 +117,7 @@ public:
         std::map<int,int> m_faces;
         // *
         attrib *m_attributes;
-        iset m_neighbors;
+        ivector m_neighbors;
         std::map<int,attrib> *m_neighbor_attributes;
         std::map<int,int> m_multiedges;
         void assign_defaults();
@@ -153,13 +153,13 @@ public:
         inline attrib &attributes() { assert(supports_attributes()); return *m_attributes; }
         inline void set_attribute(int key,const gen &val) { assert(supports_attributes()); (*m_attributes)[key]=val; }
         inline void set_attributes(const attrib &attr) { assert(supports_attributes()); copy_attributes(attr,*m_attributes); }
-        inline const iset &neighbors() const { return m_neighbors; }
+        inline const ivector &neighbors() const { return m_neighbors; }
         inline int degree() const { return m_neighbors.size(); }
         void add_neighbor(int i,const attrib &attr=attrib());
         bool is_temporary(int i) const;
         attrib &neighbor_attributes(int i);
         const attrib &neighbor_attributes(int i) const;
-        inline bool has_neighbor(int i) const { return m_neighbors.find(i)!=m_neighbors.end(); }
+        inline bool has_neighbor(int i) const { return binary_search(m_neighbors.begin(),m_neighbors.end(),i); }
         void remove_neighbor(int i);
         inline void clear_neighbors();
         void incident_faces(ivector &F) const;
@@ -581,8 +581,10 @@ private:
     void write_attrib(std::ofstream &dotfile,const attrib &attr) const;
     static size_t sets_union(const iset &A,const iset &B,iset &U);
     static size_t sets_intersection(const iset &A,const iset &B,iset &I);
+    static size_t sets_intersection(const ivector &A,const iset &B,iset &I);
     static size_t sets_difference(const iset &A,const iset &B,iset &D);
-    static size_t set_intersection_size(const iset &A,const iset &B);
+    static size_t sets_difference(const iset &A,const ivector &B,iset &D);
+    static size_t set_intersection_size(const ivector &A,const ivector &B);
     static point make_point(double x,double y) { point p(2,x); p.back()=y; return p; }
     static point make_point(double x,double y,double z) { point p(3,x); p[1]=y; p.back()=z; return p; }
     static void add_point(point &a,const point &b);
@@ -989,7 +991,7 @@ public:
     void fundamental_cycles(ivectors &cycles,int sg=-1,bool check=true);
     void mycielskian(graphe &G) const;
     gen local_clustering_coeff(int i) const;
-    gen clustering_coeff() const;
+    gen clustering_coeff(bool approx=false) const;
     gen transitivity() const;
     int edge_connectivity();
     int vertex_connectivity();

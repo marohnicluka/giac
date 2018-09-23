@@ -1520,7 +1520,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 i=components[it-Cv.begin()][jt-x.begin()];
                 main_layout[i]=*jt;
                 if (isdir) {
-                    for (graphe::iset_iter nt=v.neighbors().begin();nt!=v.neighbors().end();++nt) {
+                    for (graphe::ivector_iter nt=v.neighbors().begin();nt!=v.neighbors().end();++nt) {
                         j=components[it-Cv.begin()][*nt];
                         const graphe::attrib &attr=v.neighbor_attributes(*nt);
                         if (G_orig.has_edge(i,j))
@@ -6308,6 +6308,7 @@ gen _clustering_coefficient(const gen &g,GIAC_CONTEXT) {
     if (g.type!=_VECT)
         return gentypeerr(contextptr);
     vecteur V;
+    bool apprx=false;
     if (g.subtype==_SEQ__VECT) {
         vecteur &gv=*g._VECTptr;
         if (gv.size()<2)
@@ -6317,6 +6318,11 @@ gen _clustering_coefficient(const gen &g,GIAC_CONTEXT) {
                 if (it-gv.begin()>1)
                     return gentypeerr(contextptr);
                 V=*it->_VECTptr;
+                break;
+            } else if (*it==at_approx) {
+                if (it-gv.begin()>1)
+                    return gentypeerr(contextptr);
+                apprx=true;
                 break;
             }
             V.push_back(*it);
@@ -6330,7 +6336,7 @@ gen _clustering_coefficient(const gen &g,GIAC_CONTEXT) {
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     if (V.empty())
-        return G.clustering_coeff();
+        return G.clustering_coeff(apprx);
     int i;
     vecteur res;
     for (const_iterateur it=V.begin();it!=V.end();++it) {

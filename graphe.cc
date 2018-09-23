@@ -9729,7 +9729,7 @@ void graphe::tsp::get_subtours() {
 /* construct hierarhical clustering forest */
 void graphe::tsp::make_hierarhical_clustering_forest() {
     int k;
-    int u=std::floor(nv*4.0*M_LN2/std::log(nv)); // upper bound on the cluster cardinality
+    int u=std::min(nv-1,(int)std::floor(nv*4.0*M_LN2/std::log(nv))); // max cluster cardinality
     hierarhical_clustering_forest.clear();
     /* create leaf nodes */
     for (int i=0;i<nv;++i) {

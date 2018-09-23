@@ -614,8 +614,6 @@ private:
     void cp_recurse(ivector &C,ivector &P,ivector &incumbent);
     int ost_maxclique(ivector &clique);
     void ost_recursive(ivector &U,int size,int &maxsize,ivector &incumbent,bool &found);
-    void remove_isolated_node(int i);
-    void remove_isolated_nodes(const std::set<int> &isolated_nodes);
     void find_cut_vertices_dfs(int i,std::set<int> &ap,int sg);
     void find_blocks_dfs(int i,std::vector<ipairs> &blocks,int sg);
     void find_bridges_dfs(int i,ipairs &B,int sg);
@@ -704,6 +702,7 @@ public:
     inline const context *giac_context() const { return ctx; }
     static gen make_idnt(const char* name,int index=-1,bool intern=true);
     void make_default_labels(vecteur &labels,int n,int n0=0,int offset=-1) const;
+    bool labels2iset(const vecteur &labels,iset &s);
     static gen boole(bool b) { return b?VRAI:FAUX; }
     static gen word2gen(const std::string &word);
     static gen str2gen(const std::string &str,bool isstring=false);
@@ -776,10 +775,8 @@ public:
     void add_nodes(const vecteur &v);
     void add_nodes(int n);
     void add_unlabeled_nodes(int n);
-    bool remove_node(int i);
-    bool remove_node(const gen &v);
-    void remove_nodes(const ivector &V);
-    void remove_nodes(const vecteur &V);
+    void remove_isolated_nodes(const iset &I,graphe &G);
+    void isolate_nodes(const iset &V);
     inline const vertex &node(int i) const { return nodes[i]; }
     inline const gen node_label(int i) const { assert(i>=0 && i<node_count()); return nodes[i].label(); }
     vecteur get_node_labels(const ivector &v) const;

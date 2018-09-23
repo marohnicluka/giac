@@ -2172,17 +2172,23 @@ gen _delete_vertex(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     if (g._VECTptr->size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-    graphe G(contextptr);
+    graphe G(contextptr),H(contextptr);
     if (!G.read_gen(g._VECTptr->front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     gen &V=g._VECTptr->back();
+    graphe::iset s;
     if (V.type==_VECT) {
-        G.remove_nodes(*V._VECTptr);
+        G.labels2iset(*V._VECTptr,s);
+        G.isolate_nodes(s);
+        G.remove_isolated_nodes(s,H);
     } else {
-        if (!G.remove_node(V))
+        s.insert(G.node_index(V));
+        if (*s.begin()==-1)
             return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
+        G.isolate_nodes(s);
+        G.remove_isolated_nodes(s,H);
     }
-    return G.to_gen();
+    return H.to_gen();
 }
 static const char _delete_vertex_s[]="delete_vertex";
 static define_unary_function_eval(__delete_vertex,&_delete_vertex,_delete_vertex_s);
@@ -2200,7 +2206,7 @@ gen _contract_edge(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (g._VECTptr->back().type!=_VECT)
         return gt_err(_GT_ERR_INVALID_EDGE);
-    graphe G(contextptr);
+    graphe G(contextptr),H(contextptr);
     if (!G.read_gen(g._VECTptr->front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_directed())
@@ -2212,8 +2218,10 @@ gen _contract_edge(const gen &g,GIAC_CONTEXT) {
     if (i<0 || j<0 || !G.has_edge(i,j))
         return gt_err(_GT_ERR_EDGE_NOT_FOUND);
     G.contract_edge(i,j);
-    G.remove_node(j);
-    return G.to_gen();
+    graphe::iset s;
+    s.insert(j);
+    G.remove_isolated_nodes(s,H);
+    return H.to_gen();
 }
 static const char _contract_edge_s[]="contract_edge";
 static define_unary_function_eval(__contract_edge,&_contract_edge,_contract_edge_s);
@@ -5465,8 +5473,8 @@ gen _is_isomorphic(const gen &g,GIAC_CONTEXT) {
     int res=G1.is_isomorphic(G2,clab);
     if (res==0)
         return graphe::FAUX;
-    if (res<0) // an error occurred
-        return undef;
+    if (res<0) // nauty not found
+        return generr("nauty library is required for finding graph isomorphism");
     if (!is_undef(isom)) {
         vecteur mapping;
         int n=G1.node_count();
@@ -5508,8 +5516,8 @@ gen _canonical_labeling(const gen &g,GIAC_CONTEXT) {
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     graphe::ivector sigma;
-    if (!G.canonical_labeling(sigma))
-        return undef;
+    if (!G.canonical_labeling(sigma)) // nauty not found
+        return generr("nauty library is required for canonical labeling");
     vecteur res(G.node_count());
     int ofs=array_start(contextptr);
     for (iterateur it=res.begin();it!=res.end();++it) {

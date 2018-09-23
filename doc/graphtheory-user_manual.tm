@@ -4843,7 +4843,7 @@
       C4:=cycle_graph(4)
     <|unfolded-io>
       <\equation*>
-        <text|C4: an undirected unweighted graph with 4 vertices and 4 edges>
+        <text|an undirected unweighted graph with 4 vertices and 4 edges>
       </equation*>
     </unfolded-io>
 
@@ -4853,7 +4853,7 @@
       add_edge(C4,[1,3])
     <|unfolded-io>
       <\equation*>
-        <text|C4: an undirected unweighted graph with 4 vertices and 5 edges>
+        <text|an undirected unweighted graph with 4 vertices and 5 edges>
       </equation*>
     </unfolded-io>
 
@@ -4863,7 +4863,7 @@
       add_edge(C4,[1,3,5,7])
     <|unfolded-io>
       <\equation*>
-        <text|C4: an undirected unweighted graph with 6 vertices and 7 edges>
+        <text|an undirected unweighted graph with 6 vertices and 7 edges>
       </equation*>
     </unfolded-io>
   </session>
@@ -4995,13 +4995,13 @@
 
   The commands <kbd|get_edge_weight><index|<kbd|get_edge_weight>> and
   <with|font-family|tt|set_edge_weight><index|<with|font-family|tt|set_edge_weight>>
-  are used to access and modify the weight of an edge/arc in a weighted
-  graph, respectively.
+  are used to access and modify the weight of an edge in a weighted graph,
+  respectively.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|set_edge_weight(G,e,w)>>>|<row|<cell|>|<cell|<verbatim|set_edge_weight(G,e)>>>>>>
 
   <with|font-family|tt|set_edge_weight> accepts three arguments: a weighted
-  graph <math|G<around|(|V,E|)>>, edge/arc <math|e\<in\>E> and the new weight
+  graph <math|G<around|(|V,E|)>>, edge <math|e\<in\>E> and the new weight
   <math|w>, which may be any number. It returns the modified copy of
   <math|G>.
 
@@ -5967,7 +5967,7 @@
       edges(H)
     <|unfolded-io>
       <\equation*>
-        <around|{|<around|[|0,1|]>,<around|[|0,3|]>,<around|[|1,3|]>,<around|[|2,1|]>,<around|[|3,0|]>,<around|[|3,2|]>|}>
+        <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|2|2|cell-rborder|0ln>|<table|<row|<cell|0>|<cell|1>>|<row|<cell|0>|<cell|3>>|<row|<cell|1>|<cell|3>>|<row|<cell|2>|<cell|1>>|<row|<cell|3>|<cell|0>>|<row|<cell|3>|<cell|2>>>>>|)>
       </equation*>
     </unfolded-io>
 
@@ -6836,7 +6836,7 @@
       G:=cycle_graph([1,2,3,4,5])
     <|unfolded-io>
       <\equation*>
-        <text|C5: an undirected unweighted graph with 5 vertices and 5 edges>
+        <text|an undirected unweighted graph with 5 vertices and 5 edges>
       </equation*>
     </unfolded-io>
 
@@ -6846,7 +6846,7 @@
       incident_edges(G,1)
     <|unfolded-io>
       <\equation*>
-        <around|{|<around|[|1,2|]>,<around|[|1,5|]>|}>
+        <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|2|2|cell-rborder|0ln>|<table|<row|<cell|1>|<cell|2>>|<row|<cell|1>|<cell|5>>>>>|)>
       </equation*>
     </unfolded-io>
 
@@ -6856,7 +6856,7 @@
       incident_edges(G,[2,4,5])
     <|unfolded-io>
       <\equation*>
-        <around|{|<around|[|1,2|]>,<around|[|1,5|]>,<around|[|2,3|]>,<around|[|3,4|]>,<around|[|4,5|]>|}>
+        <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|2|2|cell-rborder|0ln>|<table|<row|<cell|1>|<cell|2>>|<row|<cell|1>|<cell|5>>|<row|<cell|2>|<cell|3>>|<row|<cell|3>|<cell|4>>|<row|<cell|4>|<cell|5>>>>>|)>
       </equation*>
     </unfolded-io>
 
@@ -6876,7 +6876,7 @@
       incident_edges(G,2)
     <|unfolded-io>
       <\equation*>
-        <around|{|<around|[|2,1|]>,<around|[|2,3|]>,<around|[|2,5|]>,<around|[|4,2|]>|}>
+        <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|2|2|cell-rborder|0ln>|<table|<row|<cell|1>|<cell|2>>|<row|<cell|2>|<cell|3>>|<row|<cell|2>|<cell|5>>|<row|<cell|4>|<cell|2>>>>>|)>
       </equation*>
     </unfolded-io>
   </session>
@@ -7158,7 +7158,7 @@
       edges(K4)
     <|unfolded-io>
       <\equation*>
-        <around|{|<around|[|1,2|]>,<around|[|1,3|]>,<around|[|1,4|]>,<around|[|2,3|]>,<around|[|2,4|]>,<around|[|3,4|]>|}>
+        <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|2|2|cell-rborder|0ln>|<table|<row|<cell|1>|<cell|2>>|<row|<cell|1>|<cell|3>>|<row|<cell|1>|<cell|4>>|<row|<cell|2>|<cell|3>>|<row|<cell|2>|<cell|4>>|<row|<cell|3>|<cell|4>>>>>|)>
       </equation*>
     </unfolded-io>
 
@@ -7198,7 +7198,7 @@
       edges(DG)
     <|unfolded-io>
       <\equation*>
-        <around|{|<around|[|1,2|]>,<around|[|1,5|]>,<around|[|2,3|]>,<around|[|2,4|]>,<around|[|3,4|]>,<around|[|4,1|]>,<around|[|4,5|]>,<around|[|5,2|]>,<around|[|5,3|]>|}>
+        <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|2|2|cell-rborder|0ln>|<table|<row|<cell|1>|<cell|2>>|<row|<cell|1>|<cell|5>>|<row|<cell|2>|<cell|3>>|<row|<cell|2>|<cell|4>>|<row|<cell|3>|<cell|4>>|<row|<cell|4>|<cell|1>>|<row|<cell|4>|<cell|5>>|<row|<cell|5>|<cell|2>>|<row|<cell|5>|<cell|3>>>>>|)>
       </equation*>
     </unfolded-io>
 
@@ -7340,7 +7340,7 @@
       C5:=cycle_graph(5)
     <|unfolded-io>
       <\equation*>
-        <text|C5: an undirected unweighted graph with 5 vertices and 5 edges>
+        <text|an undirected unweighted graph with 5 vertices and 5 edges>
       </equation*>
     </unfolded-io>
 

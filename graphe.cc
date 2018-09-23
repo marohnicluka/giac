@@ -11382,20 +11382,14 @@ gen graphe::local_clustering_coeff(int i) const {
 gen graphe::clustering_coeff(bool approx) const {
     assert(!is_directed());
     int i,j,n=node_count();
-    vecteur N;
-    N.reserve(n);
     if (approx) {
-        /* approximate within eps=1/2*1e-2 with probability 0.9999 */
+        /* approximate within +-1/2*1e-2 with probability 0.9999 */
         int k=184207,l=0,u,v;
         for (i=0;i<k;++i) {
             j=rand_integer(n);
             const ivector &ngh=node(j).neighbors();
-            N.clear();
-            for (ivector_iter it=ngh.begin();it!=ngh.end();++it) {
-                N.push_back(*it);
-            }
-            u=_rand(N,ctx).val;
-            while (u==(v=_rand(N,ctx).val));
+            u=ngh[rand_integer(ngh.size())];
+            while (u==(v=ngh[rand_integer(ngh.size())]));
             if (has_edge(u,v)) ++l;
         }
         return _ratnormal(fraction(l,k),ctx);

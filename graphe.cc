@@ -968,10 +968,9 @@ size_t graphe::sets_difference(const iset &A,const ivector &B,iset &D) {
 
 /* return the size of the intersection of sets A and B */
 size_t graphe::set_intersection_size(const ivector &A,const ivector &B) {
-    size_t result = 0;
+    size_t result=0;
     ivector_iter first1=A.begin(),last1=A.end(),first2=B.begin(),last2=B.end();
-    while (first1!=last1 && first2!=last2)
-    {
+    while (first1!=last1 && first2!=last2) {
         if (*first1<*first2) ++first1;
         else if (*first2<*first1) ++first2;
         else {

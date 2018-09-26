@@ -9014,7 +9014,9 @@ int graphe::is_isomorphic(const graphe &other,map<int,int> &isom) const {
     int *adj1=to_array(sz);
     int *adj2=other.to_array(sz);
     int *sigma=new int[n];
+    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE,NULL);
     bool res=nautywrapper_is_isomorphic(is_directed()?1:0,n,adj1,adj2,sigma)!=0;
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,NULL);
     if (res) {
         /* obtain the isomorphism */
         isom.clear();
@@ -9053,7 +9055,9 @@ gen graphe::aut_generators() const {
             message ("Error: failed to create temporary file");
             return undef;
         }
+        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE,NULL);
         nautywrapper_aut_generators(is_directed()?1:0,n,adj,f);
+        pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,NULL);
         /* parse the generators and output them as a sequence of
      * permutations, each in form of a list of disjoint cycles */
         int sz=ftell(f);
@@ -9098,7 +9102,9 @@ bool graphe::canonical_labeling(ivector &lab) const {
         return false;
     int *adj=to_array(sz);
     int *clab=new int[n];
+    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE,NULL);
     nautywrapper_canonical(is_directed()?1:0,n,adj,clab,NULL,NULL);
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,NULL);
     lab.resize(n);
     for (int i=0;i<n;++i) {
         lab[i]=clab[i];
@@ -11186,7 +11192,9 @@ graphe::intpoly graphe::tutte_poly_recurse(int vc) {
         cg_sz=nautywrapper_words_needed(snv)*(size_t)snv;
         cg=new ulong[cg_sz];
         col=new int[snv];
+        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE,NULL);
         nautywrapper_canonical(0,snv,adj,NULL,cg,col);
+        pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,NULL);
         delete[] adj;
 #endif
         if ((ct=cache.find(L_cp))!=cache.end()) {

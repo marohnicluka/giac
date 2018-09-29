@@ -97,8 +97,8 @@
     1.3.<space|2spc>Complete graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-23>
 
-    <with|par-left|1tab|1.3.1.<space|2spc>Complete graphs (with multiple
-    vertex partitions) <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <with|par-left|1tab|1.3.1.<space|2spc>Complete (multipartite) graphs
+    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-24>>
 
     <with|par-left|1tab|1.3.2.<space|2spc>Complete trees
@@ -271,8 +271,8 @@
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-112>>
 
-    <with|par-left|1tab|1.10.5.<space|2spc>Random graphs from the given
-    degree sequence <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <with|par-left|1tab|1.10.5.<space|2spc>Random graphs from a given degree
+    sequence <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-114>>
 
     <with|par-left|1tab|1.10.6.<space|2spc>Random regular graphs
@@ -638,11 +638,10 @@
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-316>>
 
-    4.12.<space|2spc>Clustering and transitivity in networks
-    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    4.12.<space|2spc>Triangles in graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-318>
 
-    <with|par-left|1tab|4.12.1.<space|2spc>Counting triangles in graphs
+    <with|par-left|1tab|4.12.1.<space|2spc>Counting triangles
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-319>>
 
@@ -824,15 +823,13 @@
 
   The algorithms in this library are implemented according to the relevant
   scientific publications. Although the development focus was on simplicity,
-  the algorithms are reasonably fast. Naive implementations (just for the
-  sake of having particular commands available) were avoided. To enable some
-  difficult tasks, such as traveling salesman problem, graph colorings and
-  graph isomorphism problem, freely available third party libraries are used,
-  in particular <abbr|GNU> Linear Programming Kit (<samp|GLPK>) for solving
-  linear programming problems and <samp|nauty> for graph isomorphism. These
-  libraries, included in <samp|Giac/Xcas> by default, are optional during the
-  compilation. The majority of commands has no dependencies save <samp|Giac>
-  itself.
+  the algorithms are reasonably fast since naive implementations were not
+  considered. For some difficult tasks, such as solving traveling salesman
+  problem, finding graph colorings and graph isomorphism, freely available
+  third party libraries are used, in particular <abbr|GNU> Linear Programming
+  Kit (<samp|GLPK>) and <samp|nauty>. These libraries, included in
+  <samp|Giac/Xcas> by default, are optional during the compilation.
+  Nevertheless, most commands has no dependencies save <samp|Giac> itself.
 
   This library was developed and documented by <name|Luka Marohni¢>
   (<verbatim|luka.marohnic@tvz.hr>). Special thanks go to <name|Bernard
@@ -848,7 +845,78 @@
 
   <subsection|Undirected graphs><label|graph>
 
-  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph(n\|V,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(V,E,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(E,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(V,T,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(T,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(V,T1,T2,T3,..,Tk,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(T1,T2,T3,..,Tk,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(A,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(V,E,A,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(V,Perm,[opts])>>>|<row|<cell|>|<cell|<verbatim|graph(Str)>>>>>>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<cwith|1|11|3|3|cell-valign|c>|<cwith|1|11|3|3|cell-lsep|1em>|<cwith|6|6|3|3|cell-row-span|2>|<cwith|6|6|3|3|cell-col-span|1>|<cwith|1|11|2|3|cell-background|>|<table|<row|<\cell>
+    Syntax:
+  </cell>|<\cell>
+    <verbatim|graph(n\|V,[opts])>
+  </cell>|<\cell>
+    <very-small|graph with <math|n> vertices or vertex set <math|V> and no
+    edges>
+  </cell>>|<row|<\cell>
+    \;
+  </cell>|<\cell>
+    <verbatim|graph(V,E,[opts])>
+  </cell>|<\cell>
+    <very-small|graph <math|<around*|(|V,E|)>>>
+  </cell>>|<row|<\cell>
+    \;
+  </cell>|<\cell>
+    <verbatim|graph(E,[opts])>
+  </cell>|<\cell>
+    <very-small|graph with edge set <math|E>, vertices implied>
+  </cell>>|<row|<\cell>
+    \;
+  </cell>|<\cell>
+    <verbatim|graph(V,T,[opts])>
+  </cell>|<\cell>
+    <very-small|graph <math|<around*|(|V,E|)>> where <math|E> is the edge set
+    of trail <math|T>>
+  </cell>>|<row|<\cell>
+    \;
+  </cell>|<\cell>
+    <verbatim|graph(T,[opts])>
+  </cell>|<\cell>
+    <very-small|graph with edges from trail <math|T>, vertices implied>
+  </cell>>|<row|<\cell>
+    \;
+  </cell>|<\cell>
+    <verbatim|graph(V,T1,T2,T3,..,Tk,[opts])>
+  </cell>|<\cell>
+    <very-small|graph with edge set consisting of edges on the given trails>
+  </cell>>|<row|<\cell>
+    \;
+  </cell>|<\cell>
+    <verbatim|graph(T1,T2,T3,..,Tk,[opts])>
+  </cell>|<\cell>
+    \;
+  </cell>>|<row|<\cell>
+    \;
+  </cell>|<\cell>
+    <verbatim|graph(A,[opts])>
+  </cell>|<\cell>
+    <very-small|graph with adjacency or weight matrix <math|A>, vertices
+    implied>
+  </cell>>|<row|<\cell>
+    \;
+  </cell>|<\cell>
+    <verbatim|graph(V,E,A,[opts])>
+  </cell>|<\cell>
+    <very-small|weighted graph <math|<around*|(|V,E|)>> with weight matrix
+    <math|A>>
+  </cell>>|<row|<\cell>
+    \;
+  </cell>|<\cell>
+    <verbatim|graph(V,Perm,[opts])>
+  </cell>|<\cell>
+    <very-small|digraph with a single cycle as a permutation of vertices
+    <math|V>>
+  </cell>>|<row|<\cell>
+    \;
+  </cell>|<\cell>
+    <verbatim|graph(Str)>
+  </cell>|<\cell>
+    <very-small|special graph>
+  </cell>>>>>
 
   The command<index|<verbatim|graph>> <verbatim|graph> takes between one and
   three main arguments, each of them being one of the following structural
@@ -1342,7 +1410,7 @@
   symbolic object is recognizable by some commands, for example
   <verbatim|<hlink|graph|#graph>> and <verbatim|<hlink|digraph|#digraph>>.
   Note that a trail may cross itself (some vertices may be repeated in the
-  given sequence).
+  sequence).
 
   Any trail <math|T> is easily converted to the corresponding list of edges
   by calling the <verbatim|trail2edges><index|<verbatim|trail2edges>>
@@ -1373,7 +1441,7 @@
 
   <section|Complete graphs>
 
-  <subsection|Complete graphs (with multiple vertex partitions)>
+  <subsection|Complete (multipartite) graphs>
 
   The command<index|<verbatim|complete_graph>>
   <with|font-family|tt|complete_graph> is used for construction of
@@ -1381,7 +1449,9 @@
   (<hlink|multipartite|https://en.wikipedia.org/wiki/Multipartite_graph>)
   graphs.
 
-  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|complete_graph(n)>>>|<row|<cell|>|<cell|<verbatim|complete_graph(V)>>>|<row|<cell|>|<cell|<verbatim|complete_graph(n1,n2,..,nk)>>>>>>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<cwith|1|1|3|3|cell-row-span|2>|<cwith|1|1|3|3|cell-col-span|1>|<cwith|1|-1|3|3|cell-lsep|1em>|<cwith|1|-1|3|3|cell-valign|c>|<table|<row|<cell|Syntax:>|<cell|<verbatim|complete_graph(n)>>|<cell|<very-small|complete
+  graphs>>>|<row|<cell|>|<cell|<verbatim|complete_graph(V)>>|<cell|>>|<row|<cell|>|<cell|<verbatim|complete_graph(n1,n2,..,nk)>>|<cell|<very-small|complete
+  multipartite graphs>>>>>>
 
   <with|font-family|tt|complete_graph> can be called with a single argument,
   a positive integer <math|n> or a list of distinct vertices <math|V>, in
@@ -1918,7 +1988,10 @@
   is used for construction of rectangular/triangular resp.<nbsp>torus
   <hlink|<rigid|grid graphs>|https://en.wikipedia.org/wiki/Lattice_graph>.
 
-  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|grid_graph(m,n)>>>|<row|<cell|>|<cell|<verbatim|grid_graph(m,n,triangle)>>>|<row|<cell|>|<cell|<verbatim|torus_grid_graph(m,n)>>>>>>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<cwith|1|-1|3|3|cell-lsep|1em>|<cwith|1|-1|3|3|cell-valign|c>|<table|<row|<cell|Syntax:>|<cell|<verbatim|grid_graph(m,n)>>|<cell|<very-small|rectangular
+  grids>>>|<row|<cell|>|<cell|<verbatim|grid_graph(m,n,triangle)>>|<cell|<very-small|triangular
+  grids>>>|<row|<cell|>|<cell|<verbatim|torus_grid_graph(m,n)>>|<cell|<very-small|toroidal
+  grids>>>>>>
 
   <with|font-family|tt|grid_graph> takes two positive integers <math|m> and
   <math|n> as its arguments and returns the <math|m> by <math|n> grid on
@@ -3533,8 +3606,8 @@
   The command <verbatim|plane_dual><index|<verbatim|plane_dual>> is used for
   construction of <hlink|<rigid|dual graphs>|https://en.wikipedia.org/wiki/Dual_graph>
   from undirected biconnected <hlink|<rigid|planar
-  graphs>|https://en.wikipedia.org/wiki/Planar_graph>. To determine whether
-  the given graph is planar <cite-detail|godsil|pp.<nbsp>12> use the command
+  graphs>|https://en.wikipedia.org/wiki/Planar_graph>. To determine whether a
+  graph is planar <cite-detail|godsil|pp.<nbsp>12> use the command
   <verbatim|is_planar><index|<verbatim|is_planar>>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|plane_dual(G)>>>|<row|<cell|>|<cell|<verbatim|plane_dual(F)>>>|<row|<cell|>|<cell|<verbatim|is_planar(G)>>>|<row|<cell|>|<cell|<verbatim|is_planar(G,F)>>>>>>
@@ -3660,27 +3733,91 @@
 
   <section|Random graphs>
 
-  <subsection|Random general graphs>
+  <subsection|Random general graphs><label|random-graph>
 
   The commands <verbatim|random_graph><index|<verbatim|random_graph>> and
   <verbatim|random_digraph><index|<verbatim|random_digraph>> are used for
-  generating general (di)graphs uniformly at random according to
-  <hlink|<rigid|Erd®s\URényi model>|https://en.wikipedia.org/wiki/Erd%C5%91s%E2%80%93R%C3%A9nyi_model>.
+  generating general (di)graphs at random according to a given model,
+  including <hlink|<rigid|preferential attachment>|https://en.wikipedia.org/wiki/Preferential_attachment>.
 
-  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_graph(n\|L,p)>>>|<row|<cell|>|<cell|<verbatim|random_graph(n\|L,m)>>>|<row|<cell|>|<cell|<verbatim|random_digraph(n\|L,p)>>>|<row|<cell|>|<cell|<verbatim|random_digraph(n\|L,m)>>>>>>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<cwith|1|1|3|3|cell-valign|c>|<cwith|1|-1|3|3|cell-lsep|1em>|<cwith|5|5|3|3|cell-valign|c>|<cwith|7|7|3|3|cell-valign|c>|<cwith|5|5|3|3|cell-row-span|2>|<cwith|5|5|3|3|cell-col-span|1>|<cwith|1|1|3|3|cell-row-span|4>|<cwith|1|1|3|3|cell-col-span|1>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_graph(n\|L,p)>>|<cell|<very-small|Erd®s\URényi
+  model>>>|<row|<cell|>|<cell|<verbatim|random_graph(n\|L,m)>>|<cell|>>|<row|<cell|>|<cell|<verbatim|random_digraph(n\|L,p)>>|<cell|>>|<row|<cell|>|<cell|<verbatim|random_digraph(n\|L,m)>>|<cell|>>|<row|<cell|>|<cell|<verbatim|random_graph(n\|L,[p0,p1,...])>>|<cell|<very-small|custom
+  vertex degree distribution>>>|<row|<cell|>|<cell|<verbatim|random_graph(n\|L,f)>>|<cell|>>|<row|<cell|>|<cell|<verbatim|random_graph(n\|L,d,k)>>|<cell|<very-small|preferential
+  attachment>>>>>>
 
-  <verbatim|random_graph> and <verbatim|random_digraph> both take two
-  arguments. The first argument is a positive integer <math|n> or a list of
-  labels <math|L> of length <math|n>. The second argument is a positive real
-  number <math|p\<less\>1> or a positive integer <math|m>. The return value
-  is a (di)graph on <math|n> vertices (using the elements of <math|L> as
-  vertex labels) selected uniformly at random, i.e.<nbsp>a (di)graph in which
-  each edge/arc is present with probability <math|p> or which contains
-  exactly <math|m> edges/arcs chosen uniformly at random.
+  <verbatim|random_graph> and <verbatim|random_digraph> can both take two
+  arguments: a positive integer <math|n> or a list of labels <math|L> of
+  length <math|n>. The second argument is a positive real number
+  <math|p\<less\>1> or a positive integer <math|m>. The return value is a
+  (di)graph on <math|n> vertices (with elements of <math|L> as vertex labels)
+  selected uniformly at random, i.e.<nbsp>a (di)graph in which each edge/arc
+  is present with probability <math|p> or which contains exactly <math|m>
+  edges/arcs chosen uniformly at random (<hlink|Erd®s\URényi|https://en.wikipedia.org/wiki/Erd%C5%91s%E2%80%93R%C3%A9nyi_model>
+  model).
 
-  The strategy is to use the algorithms of <name|Bagatelj> and
-  <name|Brandes><nbsp><cite-detail|bagatelj|algorithms<nbsp>1<nbsp>and<nbsp>2>,
-  which run in linear time.
+  Erd®s\URényi model is implemented according to <name|Bagatelj> and
+  <name|Brandes><nbsp><cite-detail|bagatelj|algorithms<nbsp>1<nbsp>and<nbsp>2>.
+  The corresponding algorithms run in linear time and are suitable for
+  generating large graphs.
+
+  <verbatim|random_graph> can also generate graphs with respect to a given
+  probability distribution of vertex degrees if the second argument is a
+  discrete probability density function given as a list
+  <math|<around*|(|p<rsub|0>,p<rsub|1>,\<ldots\>,p<rsub|N>|)>>, where
+  <math|N\<leqslant\>n-1> is the desired maximum vertex degree, or as a
+  mapping <math|f\<of\><around*|{|0,1,2,\<ldots\>,n-1|}>\<rightarrow\><around*|[|0,1|]>>
+  such that <math|p<rsub|i>=f<around*|(|i|)>> for <math|i=0,1,\<ldots\>,n-1>.
+  If <math|N\<less\>n-1>, it is assumed that <math|p<rsub|i>=0> for
+  <math|i=N+1,\<ldots\>,n-1>. The numbers <math|p<rsub|i>> are automatically
+  scaled by <math|1/<big|sum><rsub|i=1><rsup|n-1>p<rsub|i>> to achieve the
+  sum of 1. Then a graph with that precise distribution of vertex degrees is
+  generated at random using the algorithm described
+  in<nbsp><cite-detail|newman|pp.<nbsp>2567> with some modifications. First,
+  a degree sequence <math|d> is generated randomly by drawing samples from
+  the given distribution and repeating the process until a graphic sequence
+  is obtained. Then the algorithm for constructing a feasible solution from
+  <math|d><nbsp><cite|hakimi> is applied. Finally, the edges of that graph
+  are randomized by choosing suitable pairs of nonincident edges and
+  \Prewiring\Q them without changing the degree sequence. Two edges <math|u
+  v> and <math|w z> can be rewired in exactly two ways, giving <math|u z> and
+  <math|w v> resp.<nbsp><math|u w> and <math|v z>. Letting <math|m> denote
+  the number of edges, the total of
+
+  <\equation*>
+    N=<around*|\<lceil\>|<around*|(|log<rsub|2>
+    <frac|m|m-1>|)><rsup|-1>|\<rceil\>>\<less\>m
+  </equation*>
+
+  such choices (if possible) is made to assure that the probability for each
+  edge to be rewired at least once is larger than <math|<frac|1|2>>. The
+  complexity of the algorithm is <math|O<around*|(|n<rsup|2>+n<rsup|2>*log
+  n+N|)>=O<around*|(|n<rsup|2>*log n|)>>.
+
+  Additionally, to support generation of realistic networks,
+  <verbatim|random_graph> can be used with integer parameters
+  <math|d\<gtr\>0> and <math|k\<geqslant\>0> as the second and the third
+  argument, respectively, in which case a preferential attachment rule is
+  applied in the following way. For <math|n\<geqslant\>2>, the resulting
+  graph <math|G<around*|(|V,E|)>> initially contains two vertices
+  <math|v<rsub|1>,v<rsub|2>> and one edge <math|v<rsub|1> v<rsub|2>>. For
+  each <math|i=3,\<ldots\>,n>, the vertex <math|v<rsub|i>> is added to
+  <math|V> along with edges <math|v<rsub|i> v<rsub|j>> for
+  <math|min<around*|{|i-1,d|}>> mutually different values of <math|j>, which
+  are chosen at random in the set <math|<around*|{|1,2,\<ldots\>,i-1|}>> with
+  probability
+
+  <\equation*>
+    p<rsub|j>=<frac|deg v<rsub|j>|<big|sum><rsub|r=1><rsup|i-1>deg
+    v<rsub|r>>.
+  </equation*>
+
+  Subsequently, additional at most <math|k> random edges connecting the
+  neighbors of <math|v<rsub|i>> to each other are added to <math|E>, allowing
+  the user to control the <hlink|<rigid|clustering
+  coefficient>|#clustering-coefficient> of <math|G>. This method is due to
+  <name|Schank> and <name|Wagner><nbsp><cite-detail|schank|Algorithm<nbsp>2,
+  pp.<nbsp>271>. The time complexity of the implementation is
+  <math|O<around*|(|n<rsup|2>*d+n*k|)>>.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -3834,7 +3971,10 @@
   The command <verbatim|random_tree><index|<verbatim|random_tree>> is used
   for generating <hlink|tree graphs|#is-tree> at random.
 
-  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_tree(n\|V)>>>|<row|<cell|>|<cell|<verbatim|random_tree(n\|V,d)>>>|<row|<cell|>|<cell|<verbatim|random_tree(n\|V,root)>>>|<row|<cell|>|<cell|<verbatim|random_tree(V,root=v)>>>>>>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<cwith|1|1|3|3|cell-lsep|1em>|<cwith|2|-1|3|3|cell-lsep|1em>|<cwith|3|3|3|3|cell-row-span|2>|<cwith|3|3|3|3|cell-col-span|1>|<cwith|3|3|3|3|cell-valign|c>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_tree(n\|V)>>|<cell|<very-small|unrooted
+  unlabeled trees>>>|<row|<cell|>|<cell|<verbatim|random_tree(n\|V,d)>>|<cell|<very-small|trees
+  with limited maximum degree>>>|<row|<cell|>|<cell|<verbatim|random_tree(n\|V,root)>>|<cell|<very-small|rooted
+  unlabeled trees>>>|<row|<cell|>|<cell|<verbatim|random_tree(V,root=v)>>|<cell|>>>>>
 
   <verbatim|random_tree> takes one or two arguments: a positive integer
   <math|n> or a list <math|V=<around*|{|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|n>|}>>
@@ -3862,9 +4002,8 @@
   <abbr|RANRUT> algorithm <cite-detail|nijenhuis|pp.<nbsp>274>. The root of a
   tree <math|T> generated this way, if not specified as <math|v>, is always
   the first vertex in the list returned by <verbatim|vertices>. The average
-  time complexity of <abbr|RANRUT> algorithm is
-  <math|O<around*|(|<around*|\||V|\|>*log
-  <around*|\||V|\|>|)>><nbsp><cite|alonso>.
+  time complexity of <abbr|RANRUT> algorithm is <math|O<around*|(|n*log
+  n|)>><nbsp><cite|alonso>.
 
   Unrooted unlabeled trees, also called <strong|free> trees, are generated
   uniformly at random using <name|Wilf>'s algorithm<\footnote>
@@ -4222,19 +4361,22 @@
 
   <center|<image|images/rand4.eps|35%|||>>
 
-  <subsection|Random graphs from the given degree sequence>
+  <subsection|Random graphs from a given degree sequence>
 
   The command <verbatim|random_sequence_graph><index|<verbatim|random_sequence_graph>>
-  is used for generating a random undirected graph from the given degree
+  is used for generating a random undirected graph with a specified degree
   sequence.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_sequence_graph(L)>>>>>>
 
   <verbatim|random_sequence_graph> takes the degree sequence <math|L> (a list
   of nonnegative integers) as its only argument. It returns an asimptotically
-  uniform random graph with the degree sequence equal to <math|L> in almost
-  linear time, using the algorithm developed by <name|Bayati> et
-  al.<nbsp><cite|bayati>.
+  uniform random graph with the degree sequence equal to <math|L> using the
+  algorithm developed by <name|Bayati> et al.<nbsp><cite|bayati>.
+
+  The algorithm slows down quickly and uses
+  <math|O<around*|(|<around*|\||L|\|><rsup|2>|)>> of auxiliary space, so it
+  is best used for a few hundreds of vertices or less.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -4290,7 +4432,7 @@
 
   The command <verbatim|random_regular_graph><index|<verbatim|random_regular_graph>>
   is used for generating random <hlink|<rigid|regular graphs>|#is-regular> on
-  the given set of vertices.
+  a specified set of vertices.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_regular_graph(n
   or L,d)>>>|<row|<cell|>|<cell|<verbatim|random_regular_graph(n or
@@ -6174,7 +6316,7 @@
   <subsection|Regular graphs><label|is-regular>
 
   The command <verbatim|is_regular><index|<verbatim|is_regular>> is used for
-  determining whether the given graph is <hlink|regular|https://en.wikipedia.org/wiki/Regular_graph>.
+  determining whether a graph is <hlink|regular|https://en.wikipedia.org/wiki/Regular_graph>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_regular(G)>>>|<row|<cell|>|<cell|<verbatim|is_regular(G,d)>>>>>>
 
@@ -6307,7 +6449,7 @@
   <subsection|Strongly regular graphs>
 
   The command <verbatim|is_strongly_regular><index|<verbatim|is_strongly_regular>>
-  is used for determining whether the given graph is <hlink|<rigid|strongly
+  is used for determining whether a graph is <hlink|<rigid|strongly
   regular>|https://en.wikipedia.org/wiki/Strongly_regular_graph>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_strongly_regular(G)>>>|<row|<cell|>|<cell|<verbatim|is_strongly_regular(G,srg)>>>>>>
@@ -6615,7 +6757,7 @@
   <subsection|Tournament graphs><label|is-tournament>
 
   The command <verbatim|is_tournament><index|<verbatim|is_tournament>> is
-  used for determining whether the given graph is a
+  used for determining whether a graph is a
   <hlink|tournament|https://en.wikipedia.org/wiki/Tournament_(graph_theory)>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_tournament(G)>>>>>>
@@ -6671,7 +6813,7 @@
   <subsection|Bipartite graphs><label|is-bipartite>
 
   The command <verbatim|is_bipartite><index|<verbatim|is_bipartite>> is used
-  for determining if the given graph is <hlink|bipartite|https://en.wikipedia.org/wiki/Bipartite_graph>.
+  for determining if a graph is <hlink|bipartite|https://en.wikipedia.org/wiki/Bipartite_graph>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_bipartite(G)>>>|<row|<cell|>|<cell|<verbatim|is_bipartite(G,P)>>>>>>
 
@@ -6760,7 +6902,7 @@
   <subsection|Edge incidence>
 
   The command <verbatim|incident_edges><index|<verbatim|incident_edges>> is
-  used for obtaining edges incident to the given vertex in a graph.
+  used for obtaining edges incident to a given vertex in a graph.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|indcident_edges(G,v)>>>|<row|<cell|>|<cell|<verbatim|indcident_edges(G,L)>>>>>>
 
@@ -7367,8 +7509,8 @@
   <subsection|Integer graphs>
 
   The command <verbatim|is_integer_graph><index|<verbatim|is_integer_graph>>
-  is used for determining whether the given graph is an
-  <hlink|<rigid|integral graph>|https://en.wikipedia.org/wiki/Integral_graph>.
+  is used for determining whether a graph is an <hlink|<rigid|integral
+  graph>|https://en.wikipedia.org/wiki/Integral_graph>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_integer_graph(G)>>>>>>
 
@@ -8978,7 +9120,7 @@
   <math|<around*|(|v,w|)>> of distinct vertices in <math|H> there is a
   directed path from <math|v> to <math|w> in <math|H>. The command
   <verbatim|is_strongly_connected><index|<verbatim|is_strongly_connected>>
-  can be used to determine whether the given graph is strongly connected.
+  can be used to determine whether a graph is strongly connected.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|strongly_connected_components(G)>>>|<row|<cell|>|<cell|<verbatim|is_strongly_connected(G)>>>>>>
 
@@ -9168,7 +9310,7 @@
   <subsection|Edge cuts>
 
   The command <verbatim|is_cut_set><index|<verbatim|is_cut_set>> is used for
-  determining whether a particular subset of edges of the given graph is an
+  determining whether a particular subset of edges of a graph is an
   <hlink|<rigid|edge cut>|https://en.wikipedia.org/wiki/Connectivity_(graph_theory)#Definitions_of_components,_cuts_and_connectivity>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_cut_set(G,L)>>>>>>
@@ -9346,8 +9488,7 @@
   <subsection|Tree graphs><label|is-tree>
 
   The command <verbatim|is_tree><index|<verbatim|is_tree>> is used for
-  determining whether the given graph is a
-  <hlink|tree|https://en.wikipedia.org/wiki/Tree_(graph_theory)>.
+  determining whether a graph is a <hlink|tree|https://en.wikipedia.org/wiki/Tree_(graph_theory)>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_tree(G)>>>>>>
 
@@ -9386,8 +9527,7 @@
   <subsection|Forest graphs>
 
   The command <verbatim|is_forest><index|<verbatim|is_forest>> is used for
-  determining whether the given graph is a
-  <hlink|forest|https://en.wikipedia.org/wiki/Tree_(graph_theory)#Forest>.
+  determining whether a graph is a <hlink|forest|https://en.wikipedia.org/wiki/Tree_(graph_theory)#Forest>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_forest(G)>>>>>>
 
@@ -9563,7 +9703,7 @@
   <subsection|Arborescence graphs>
 
   The command <verbatim|is_arborescence><index|<verbatim|is_arborescence>> is
-  used for determining whether the given directed unweighted graph is an
+  used for determining whether a directed unweighted graph is an
   <hlink|arborescence|https://en.wikipedia.org/wiki/Arborescence_(graph_theory)>
   (which is the digraph form of a rotted tree).
 
@@ -9610,7 +9750,7 @@
   <subsection|Network graphs><label|is-network>
 
   The command <verbatim|is_network><index|<verbatim|is_network>> is used for
-  determining whether the given graph is a <hlink|<rigid|flow
+  determining whether a graph is a <hlink|<rigid|flow
   network>|http://www.encyclopediaofmath.org/index.php?title=Flow_in_a_network>.
   In this context, a flow network is directed, connected graph with at least
   one vertex with in-degree 0 (the <strong|source>) and at least one vertex
@@ -9987,7 +10127,7 @@
 
   The command <verbatim|allpairs_distance><index|<verbatim|allpairs_distance>>
   is used for computing the matrix of distances between all pairs of vertices
-  in the given (weighted) graph.
+  in a (weighted) graph.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|allpairs_distance(G)>>>>>>
 
@@ -10481,10 +10621,10 @@
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      G:=random_graph(100,1000)
+      G:=random_graph(1000,10,5)
     <|unfolded-io>
       <\equation*>
-        <text|an undirected unweighted graph with 100 vertices and 1000
+        <text|an undirected unweighted graph with 1000 vertices and 13993
         edges>
       </equation*>
     </unfolded-io>
@@ -10495,8 +10635,10 @@
       length(maximum_matching(G))
     <|unfolded-io>
       <\equation*>
-        50
+        500
       </equation*>
+
+      <timing|181 sec>
     </unfolded-io>
 
     <\unfolded-io>
@@ -10652,9 +10794,9 @@
   <math|G>. Furthermore, a second argument may be passed to
   <verbatim|clique_stats>; if so, it must be a positive integer <math|k> or
   an interval with integer bounds <math|m><nbsp>..<nbsp><math|n>. In the
-  first case only the number of <math|k>-cliques for the given <math|k> is
-  returned; in the second case, only cliques with cardinality between
-  <math|m> and <math|n> (inclusive) are counted.
+  first case only the number of <math|k>-cliques is returned; in the second
+  case, only cliques with cardinality between <math|m> and <math|n>
+  (inclusive) are counted.
 
   The strategy used to find all maximal cliques is a variant of the algorithm
   of <name|Bron> and <name|Kerbosch> developed by <name|Tomita> et
@@ -10669,7 +10811,7 @@
       G:=random_graph(50,0.5)
     <|unfolded-io>
       <\equation*>
-        <text|an undirected unweighted graph with 50 vertices and 588 edges>
+        <text|an undirected unweighted graph with 50 vertices and 633 edges>
       </equation*>
     </unfolded-io>
 
@@ -10679,7 +10821,7 @@
       clique_stats(G)
     <|unfolded-io>
       <\equation*>
-        <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|2|2|cell-rborder|0ln>|<table|<row|<cell|3>|<cell|14>>|<row|<cell|4>|<cell|185>>|<row|<cell|5>|<cell|370>>|<row|<cell|6>|<cell|201>>|<row|<cell|7>|<cell|47>>|<row|<cell|8>|<cell|5>>>>>|)>
+        <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|2|2|cell-rborder|0ln>|<table|<row|<cell|3>|<cell|2>>|<row|<cell|4>|<cell|123>>|<row|<cell|5>|<cell|465>>|<row|<cell|6>|<cell|388>>|<row|<cell|7>|<cell|73>>|<row|<cell|8>|<cell|6>>>>>|)>
       </equation*>
     </unfolded-io>
 
@@ -10689,7 +10831,7 @@
       G:=random_graph(100,0.5)
     <|unfolded-io>
       <\equation*>
-        <text|an undirected unweighted graph with 100 vertices and 2461
+        <text|an undirected unweighted graph with 100 vertices and 2448
         edges>
       </equation*>
     </unfolded-io>
@@ -10700,7 +10842,7 @@
       clique_stats(G,5)
     <|unfolded-io>
       <\equation*>
-        3124
+        4080
       </equation*>
     </unfolded-io>
 
@@ -10710,7 +10852,7 @@
       G:=random_graph(500,0.25)
     <|unfolded-io>
       <\equation*>
-        <text|an undirected unweighted graph with 500 vertices and 30991
+        <text|an undirected unweighted graph with 500 vertices and 31400
         edges>
       </equation*>
     </unfolded-io>
@@ -10721,7 +10863,7 @@
       clique_stats(G,5..7)
     <|unfolded-io>
       <\equation*>
-        <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|2|2|cell-rborder|0ln>|<table|<row|<cell|5>|<cell|144544>>|<row|<cell|6>|<cell|16268>>|<row|<cell|7>|<cell|267>>>>>|)>
+        <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|2|2|cell-rborder|0ln>|<table|<row|<cell|5>|<cell|158436>>|<row|<cell|6>|<cell|19507>>|<row|<cell|7>|<cell|383>>>>>|)>
       </equation*>
     </unfolded-io>
   </session>
@@ -10730,9 +10872,8 @@
 
   Any largest maximal clique in an undirected graph is called <strong|maximum
   clique>. The command <rigid|<kbd|maximum_clique>><index|<kbd|maximum_clique>>
-  can be used to find one in the given graph. If only the size of a maximum
-  clique is desired, one can use the command
-  <verbatim|clique_number><index|<verbatim|clique_number>>.
+  can be used to find one in a graph. If only the size of a maximum clique is
+  desired, one can use the command <verbatim|clique_number><index|<verbatim|clique_number>>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|maximum_clique(G)>>>|<row|<cell|>|<cell|<verbatim|clique_number(G)>>>>>>
 
@@ -10775,7 +10916,7 @@
       G:=random_graph(300,0.3)
     <|unfolded-io>
       <\equation*>
-        <text|an undirected unweighted graph with 300 vertices and 13380
+        <text|an undirected unweighted graph with 300 vertices and 13352
         edges>
       </equation*>
     </unfolded-io>
@@ -10786,7 +10927,7 @@
       maximum_clique(G)
     <|unfolded-io>
       <\equation*>
-        <around|[|46,64,144,183,208,241,244,261|]>
+        <around|[|60,80,111,201,248,252,288|]>
       </equation*>
     </unfolded-io>
 
@@ -10877,7 +11018,7 @@
       G:=random_graph(30,0.2)
     <|unfolded-io>
       <\equation*>
-        <text|an undirected unweighted graph with 30 vertices and 89 edges>
+        <text|an undirected unweighted graph with 30 vertices and 83 edges>
       </equation*>
     </unfolded-io>
 
@@ -10887,7 +11028,7 @@
       clique_cover(G)
     <|unfolded-io>
       <\equation*>
-        <around|{|<around|[|0,21|]>,<around|[|1,17|]>,<around|[|2,25,28|]>,<around|[|3,7,10|]>,<around|[|4,8|]>,<around|[|5,11,20|]>,<around|[|6,13,14|]>,<around|[|9,16,23|]>,<around|[|12,15,19|]>,<around|[|18,22|]>,<around|[|24,26|]>,<around|[|27,29|]>|}>
+        <around|{|<around|[|0,22,24|]>,<around|[|1,14,17,20|]>,<around|[|2,25|]>,<around|[|3,10,16|]>,<around|[|4,28|]>,<around|[|5,19,29|]>,<around|[|6,27|]>,<around|[|7,8,11|]>,<around|[|9,12|]>,<around|[|13,23|]>,<around|[|15,26|]>,<around|[|18,21|]>|}>
       </equation*>
     </unfolded-io>
 
@@ -10978,33 +11119,31 @@
     </unfolded-io>
   </session>
 
-  <section|Clustering and transitivity in networks>
+  <section|Triangles in graphs>
 
-  <subsection|Counting triangles in graphs>
+  <subsection|Counting triangles>
 
   The command <verbatim|number_of_triangles><index|<verbatim|is_triangle_free>>
   is used for counting <hlink|<rigid|triangles>|https://en.wikipedia.org/wiki/Triangle_graph>
   in graphs.
 
-  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|number_of_triangles(G)>>>>>>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|number_of_triangles(G)>>>|<row|<cell|>|<cell|<verbatim|number_of_triangles(G,L)>>>>>>
 
-  <verbatim|number_of_triangles> takes a graph <math|G> as its only argument
-  and returns the number <math|n> of 3-cliques in <math|G> if <math|G> is
-  undirected resp.<nbsp>the number <math|m> of directed paths of length 3 if
-  <math|G> is directed.
+  <verbatim|number_of_triangles> takes a graph <math|G> as its first,
+  mandatory argument and returns the number <math|n> of 3-cliques in <math|G>
+  if <math|G> is undirected resp.<nbsp>the number <math|m> of directed cycles
+  of length 3 if <math|G> is directed. If an unassigned identifier <math|L>
+  is given as the second argument, the triangles are also listed and stored
+  to <math|L>. Note that triangle listing is supported only for undirected
+  graphs.
 
-  The strategy is to compute the trace of <math|A<rsup|3>>, where <math|A> is
-  the adjacency matrix of <math|G> (encoded as a sparse matrix). This number
-  is equal to <math|6*n> if <math|G> is undirected resp.<nbsp>to <math|3*m>
-  if <math|G> is directed. If <math|tr <around*|(|A<rsup|3>|)>=0>, then
-  <math|G> is <strong|triangle-free> (i.e.<nbsp>has no 3-cliques).
-
-  The matrix <math|A> is kept in sparse form and only the computation of
-  <math|A<rsup|2>> needs to be carried out completely. To obtain <math|tr
-  <around*|(|A<rsup|3>|)>>, one needs to compute only the elements of
-  <math|A<rsup|3>> lying on its diagonal. Hence the algorithm requires
-  <math|O<around*|(|<around*|\||V|\|>*<around*|\||E|\|>|)>> time and
-  <math|O<around*|(|<around*|\||E|\|>|)>> space.
+  For undirected graphs the algorithm of <name|Schank> and <name|Wagner>
+  <cite-detail|schank2|Algorithm <with|font-shape|italic|forward>>, improved
+  by <name|Latapy><nbsp><cite|latapy>, is used, which runs in
+  <math|O<around*|(|<around*|\||E|\|><rsup|3/2>|)>> time. For digraphs, the
+  strategy is to compute the trace of <math|A<rsup|3>> where <math|A> is the
+  adjacency matrix of <math|G> encoded in a sparse form. This algorithm
+  requires <math|O<around*|(|<around*|\||V|\|>*<around*|\||E|\|>|)>> time.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -11069,16 +11208,92 @@
     </unfolded-io>
   </session>
 
-  The truncated icosahedral graph is triangle-free.
+  Petersen graph is triangle-free, i.e.<nbsp>contains no 3-cliques.
 
   <\session|giac|default>
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      number_of_triangles(graph("soccerball"))
+      number_of_triangles(graph("petersen"))
     <|unfolded-io>
       <\equation*>
         0
+      </equation*>
+    </unfolded-io>
+  </session>
+
+  Counting triangles in undirected graphs is very fast, as illustrated by the
+  following example.
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      G:=random_graph(10^5,10^6)
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 100000 vertices and 1000000
+        edges>
+      </equation*>
+
+      <timing|147 sec>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      number_of_triangles(G)
+    <|unfolded-io>
+      <\equation*>
+        25315
+      </equation*>
+
+      <timing|1.62 sec>
+    </unfolded-io>
+  </session>
+
+  To list all triangles in a graph, pass an unassigned identifier as the
+  second argument. The triangles will be stored to it as a list of triples of
+  vertices.\ 
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      G:=graph("octahedron")
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 6 vertices and 12 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\input>
+      \<gtr\>\ 
+    <|input>
+      draw_graph(G)
+    </input>
+  </session>
+
+  <center|<image|images/octa.eps|35%|||>>
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      number_of_triangles(G,L)
+    <|unfolded-io>
+      <\equation*>
+        8
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      L
+    <|unfolded-io>
+      <\equation*>
+        <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|3|3|cell-halign|c>|<cwith|1|-1|3|3|cell-rborder|0ln>|<table|<row|<cell|2>|<cell|4>|<cell|5>>|<row|<cell|2>|<cell|4>|<cell|6>>|<row|<cell|2>|<cell|3>|<cell|5>>|<row|<cell|1>|<cell|4>|<cell|5>>|<row|<cell|2>|<cell|3>|<cell|6>>|<row|<cell|1>|<cell|4>|<cell|6>>|<row|<cell|1>|<cell|3>|<cell|5>>|<row|<cell|1>|<cell|3>|<cell|6>>>>>|)>
       </equation*>
     </unfolded-io>
   </session>
@@ -11092,21 +11307,27 @@
   coefficient>|https://en.wikipedia.org/wiki/Clustering_coefficient#Local_clustering_coefficient>
   of a particular vertex.
 
-  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|clustering_coefficient(G)>>>|<row|<cell|>|<cell|<verbatim|clustering_coefficient(G,v)>>>|<row|<cell|>|<cell|<verbatim|clustering_coefficient(G,v1,v2,..,vk)>>>|<row|<cell|>|<cell|<verbatim|clustering_coefficient(G,[v1,v2,..,vk])>>>|<row|<cell|>|<cell|<verbatim|clustering_coefficient(G,approx)>>>>>>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|clustering_coefficient(G,[opt])>>>|<row|<cell|>|<cell|<verbatim|clustering_coefficient(G,v)>>>|<row|<cell|>|<cell|<verbatim|clustering_coefficient(G,v1,v2,..,vk)>>>|<row|<cell|>|<cell|<verbatim|clustering_coefficient(G,[v1,v2,..,vk])>>>>>>
 
   <verbatim|clustering_coefficient> takes one or two arguments, an undirected
   graph <math|G<around*|(|V,E|)>> and optionally a vertex <math|v\<in\>V> or
   a list/sequence of vertices <math|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|k>\<in\>V>.
-  It returns the average clustering coefficient
-  <math|c<around*|(|G|)>><nbsp><cite-detail|boot|pp.<nbsp>5> if only <math|G>
-  is given as an argument. Otherwise, the return value is the local
-  clustering coefficient <math|c<rsub|G><around*|(|v|)>>
+  If <math|G> is the only argument, the average clustering coefficient
+  <math|c<around*|(|G|)>><nbsp><cite-detail|boot|pp.<nbsp>5> is returned.
+  Otherwise, the local clustering coefficient <math|c<rsub|G><around*|(|v|)>>
   <cite-detail|boot|pp.<nbsp>4> of <math|v> resp.<nbsp>a list of local
-  clustering coefficients of <math|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|k>>.\ 
+  clustering coefficients of <math|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|k>>
+  is returned. The second argument may also be one of the following options:
 
-  If the option <verbatim|approx> is specified, the average clustering
-  coefficient is approximated within <math|<frac|1|2>\<times\>10<rsup|-2>> of
-  the exact value with probability of failure <math|p=10<rsup|-5>>.
+  <\description-dash>
+    <verbatim|exact><item*|>The average clustering coefficient is returned as
+    a rational number (by default it is a floating point number). Note that
+    local clustering coefficient is always returned in exact form.
+
+    <verbatim|approx><item*|>The average clustering coefficient is
+    approximated within <math|0.5\<times\>10<rsup|-2>> of the exact value
+    with probability of failure <math|p=10<rsup|-5>>.
+  </description-dash>
 
   In any case, the return value is\Vby definition\Va rational number in the
   range <math|<around*|[|0,1|]>>. It can be computed from
@@ -11117,13 +11338,17 @@
     c<around*|(|G|)>=<frac|1|<around*|\||V|\|>>*<big|sum><rsub|v\<in\>V>c<rsub|G><around*|(|v|)>.
   </equation*>
 
-  In the context of social networks, <math|c<around*|(|G|)>> can be
-  interpreted as the probability that if <math|v,w\<in\>V> are friends and
-  <math|w,z\<in\>V> are friends then <math|v> and <math|z> are friends (note
-  that friendship is a symmetric relation). The number
-  <math|c<rsub|G><around*|(|v|)>> has the same interpretation but in a local
-  context: it measures how probable the friendship transitivity is for a
-  particular node <math|v\<in\>V>.
+  <math|c<around*|(|G|)>> can be interpreted as the probability that <math|u
+  v,v w\<in\>E\<Longrightarrow\>u w\<in\>E>. In the context of social
+  networks, for example, <math|u v\<in\>E> could mean that <math|u> and
+  <math|v> are friends (which is symmetric relation). The number
+  <math|c<rsub|G><around*|(|v|)>> is interpreted analogously but for a fixed
+  <math|v\<in\>V>. It represents the probability that two neighbors of
+  <math|v> are connected to each other.
+
+  Note that the command <verbatim|<hlink|random_graph|#random-graph>> is able
+  to generate realistic random networks with adjustable clustering
+  coefficient.
 
   The complexity of computing <math|c<around*|(|G|)>> exactly is
   <math|O<around*|(|\<Delta\><rsub|G>*<around*|\||E|\|>|)>>, where
@@ -11159,7 +11384,7 @@
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      clustering_coefficient(G)
+      clustering_coefficient(G,exact)
     <|unfolded-io>
       <\equation*>
         <frac|5|6>
@@ -11188,41 +11413,37 @@
   </session>
 
   The next example demonstrates the performance of
-  <verbatim|clustering_coefficient> on large graphs.
+  <verbatim|clustering_coefficient> on a large graph.
 
   <\session|giac|default>
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      G:=random_graph(5000,500000)
+      G:=random_graph(25000,10,100)
     <|unfolded-io>
       <\equation*>
-        <text|an undirected unweighted graph with 5000 vertices and 500000
+        <text|an undirected unweighted graph with 25000 vertices and 1196615
         edges>
       </equation*>
+
+      <timing|22.66 sec>
     </unfolded-io>
 
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      cf:=clustering_coefficient(G):;
-    <|unfolded-io>
-      <timing|2.14 sec>
-    </unfolded-io>
-
-    <\unfolded-io>
-      \<gtr\>\ 
-    <|unfolded-io>
-      evalf(cf)
+      cf:=clustering_coefficient(G)
     <|unfolded-io>
       <\equation*>
-        0.0400370165471
+        0.330624015809
       </equation*>
+
+      <timing|1.82 sec>
     </unfolded-io>
   </session>
 
-  The probability that friendship is transitive in the network <math|G> above
-  is therefore about 4%.
+  The probability that two neighbors of a vertex in <math|G> are connected is
+  therefore about 33%.
 
   <subsection|Network transitivity>
 
@@ -11342,7 +11563,7 @@
     <|unfolded-io>
       nt:=network_transitivity(G):;
     <|unfolded-io>
-      <timing|3.5 sec>
+      <timing|2.92 sec>
     </unfolded-io>
 
     <\unfolded-io>
@@ -11351,7 +11572,7 @@
       evalf(nt)
     <|unfolded-io>
       <\equation*>
-        0.500492245999
+        0.50052797489
       </equation*>
     </unfolded-io>
   </session>
@@ -12241,9 +12462,7 @@
     <|unfolded-io>
       is_hamiltonian(graph("petersen"))
     <|unfolded-io>
-      <\equation*>
-        <text|false>
-      </equation*>
+      <script-busy>
     </unfolded-io>
 
     <\unfolded-io>
@@ -12829,8 +13048,8 @@
   <section|Drawing graphs>
 
   The <kbd|draw_graph><index|<kbd|draw_graph>> command<label|draw-graph> is
-  used for visualizing graphs. It is capable to produce a drawing of the
-  given graph using one of the several built-in methods.
+  used for visualizing graphs. It is capable to produce a drawing of a graph
+  using one of the several built-in methods.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|draw_graph(G)>>>|<row|<cell|>|<cell|<verbatim|draw_graph(G,opts)>>>>>>
 
@@ -13634,7 +13853,7 @@
   <subsection|Highlighting subgraphs><label|highlight-subgraph>
 
   The command <verbatim|highlight_subgraph><index|<verbatim|highlight_subgraph>>
-  is used for highlighting subgraph(s) of the given graph.
+  is used for highlighting subgraph(s) of a graph.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|highlight_subgraph(G,S,[weights])>>>|<row|<cell|>|<cell|<verbatim|highlight_subgraph(G,S,c1,c2,[weights])>>>|<row|<cell|>|<cell|<verbatim|highlight_subgraph(G,[S1,S2,..,Sk])>>>|<row|<cell|>|<cell|<verbatim|highlight_subgraph(G,[S1,S2,..,Sk],c1,c2)>>>>>>
 
@@ -13733,7 +13952,7 @@
   <center|<image|images/sg2.eps|35%|||>>
 
   <\bibliography|bib|tm-plain|graphtheory>
-    <\bib-list|57>
+    <\bib-list|60>
       <bibitem*|1><label|bib-afzal>Shehzad Afzal<localize| and >Clemens
       Brand. <newblock>Recognizing triangulated Cartesian graph products.
       <newblock><with|font-shape|italic|Discrete Mathematics>, 312:188\U193,
@@ -13911,119 +14130,139 @@
       <newblock><with|font-shape|italic|Communications of the ACM>,
       5:558\U562, 1962.<newblock>
 
-      <bibitem*|35><label|bib-mckay>B.<nbsp>D.<nbsp>McKay<localize| and
+      <bibitem*|35><label|bib-latapy>Matthieu Latapy. <newblock>Main-memory
+      triangle computations for very large (sparse (power-law)) graphs.
+      <newblock><with|font-shape|italic|Theor.<nbsp>Comput.<nbsp>Sci.>,
+      407:458\U473, 2008.<newblock>
+
+      <bibitem*|36><label|bib-mckay>B.<nbsp>D.<nbsp>McKay<localize| and
       >A.<nbsp>Piperno. <newblock>Practical Graph Isomorphism, II.
       <newblock><with|font-shape|italic|J.<nbsp>Symbolic Computation>,
       60:94\U112, 2013.<newblock>
 
-      <bibitem*|36><label|bib-monagan>Michael Monagan. <newblock>A new edge
+      <bibitem*|37><label|bib-monagan>Michael Monagan. <newblock>A new edge
       selection heuristic for computing Tutte polynomials.
       <newblock><localize|In ><with|font-shape|italic|Proceedings of FPSAC
       2012>, <localize|pages >839\U850.<newblock>
 
-      <bibitem*|37><label|bib-myrwold>Wendy Myrwold<localize| and >Willian
+      <bibitem*|38><label|bib-myrwold>Wendy Myrwold<localize| and >Willian
       Kocay. <newblock>Errors in graph embedding algorithms.
       <newblock><with|font-shape|italic|Journal of Computer and System
       Sciences>, 77:430\U438, 2011.<newblock>
 
-      <bibitem*|38><label|bib-nijenhuis>Albert Nijenhuis<localize| and
+      <bibitem*|39><label|bib-newman>M.<nbsp>E.<nbsp>Newman,
+      D.<nbsp>J.<nbsp>Watts<localize|, and >S.<nbsp>H.<nbsp>Strogatz.
+      <newblock>Random graph models of social networks.
+      <newblock><with|font-shape|italic|Proc Natl Acad Sci USA>,
+      99:2566\U2572, 2002.<newblock>
+
+      <bibitem*|40><label|bib-nijenhuis>Albert Nijenhuis<localize| and
       >Herbert<nbsp>S.<nbsp>Wilf. <newblock><with|font-shape|italic|Combinatorial
       Algorithms>. <newblock>Computer Science and Applied Mathematics.
       Academic Press, Second<localize| edition>, 1978.<newblock>
 
-      <bibitem*|39><label|bib-ostergard>Patric<nbsp>R.<nbsp>J.<nbsp>Östergård.
+      <bibitem*|41><label|bib-ostergard>Patric<nbsp>R.<nbsp>J.<nbsp>Östergård.
       <newblock>A fast algorithm for the maximum clique problem.
       <newblock><with|font-shape|italic|Discrete Applied Mathematics>,
       120:197\U207, 2002.<newblock>
 
-      <bibitem*|40><label|bib-otter>Richard Otter. <newblock>The Number of
+      <bibitem*|42><label|bib-otter>Richard Otter. <newblock>The Number of
       Trees. <newblock><with|font-shape|italic|The Annals of Mathematics, 2nd
       Ser.>, 49:583\U599, 1948.<newblock>
 
-      <bibitem*|41><label|bib-padberg>Manfred Padberg<localize| and >Giovanni
+      <bibitem*|43><label|bib-padberg>Manfred Padberg<localize| and >Giovanni
       Rinaldi. <newblock>A Branch-and-Cut Algorithm for the Resolution of
       Large-Scale Symmetric Traveling Salesman Problems.
       <newblock><with|font-shape|italic|SIAM Review>, 33:60\U100,
       1991.<newblock>
 
-      <bibitem*|42><label|bib-pferschy>Ulrich Pferschy<localize| and
+      <bibitem*|44><label|bib-pferschy>Ulrich Pferschy<localize| and
       >Rostislav Stan¥k. <newblock>Generating subtour elimination constraints
       for the TSP from pure integer solutions.
       <newblock><with|font-shape|italic|Central European Journal of
       Operations Research>, 25:231\U260, 2017.<newblock>
 
-      <bibitem*|43><label|bib-plestenjak>Bor Plestenjak. <newblock>An
+      <bibitem*|45><label|bib-plestenjak>Bor Plestenjak. <newblock>An
       Algorithm for Drawing Planar Graphs.
       <newblock><with|font-shape|italic|Software: Practice and Experience>,
       29:973\U984, 1999.<newblock>
 
-      <bibitem*|44><label|bib-schank>Thomas Schank<localize| and >Dorothea
+      <bibitem*|46><label|bib-schank2>T.<nbsp>Schank<localize| and
+      >D.<nbsp>Wagner. <newblock>Finding, Counting and Listing All Triangles
+      in Large Graphs, an Experimental Study. <newblock><localize|In
+      >S.<nbsp>E.<nbsp>Nikoletseas<localize|, editor>,
+      <with|font-shape|italic|Experimental and Efficient Algorithms.<nbsp>WEA
+      2005.<nbsp>Lecture Notes in Computer Science>, <localize|volume> 3503,
+      <localize|pages >606\U609. Springer, Berlin, Heidelberg,
+      2005.<newblock>
+
+      <bibitem*|47><label|bib-schank>Thomas Schank<localize| and >Dorothea
       Wagner. <newblock>Approximating Clustering Coefficient and
       Transitivity. <newblock><with|font-shape|italic|Journal of Graph
       Algorithms and Applications>, 9:265\U275, 2005.<newblock>
 
-      <bibitem*|45><label|bib-steger>Angelika Steger<localize| and
+      <bibitem*|48><label|bib-steger>Angelika Steger<localize| and
       >Nicholas<nbsp>C.<nbsp>Wormald. <newblock>Generating random regular
       graphs quickly. <newblock><with|font-shape|italic|Combinatorics
       Probability and Computing>, 8:377\U396, 1999.<newblock>
 
-      <bibitem*|46><label|bib-tarjan72>R.<nbsp>E.<nbsp>Tarjan.
+      <bibitem*|49><label|bib-tarjan72>R.<nbsp>E.<nbsp>Tarjan.
       <newblock>Depth-First Search and Linear Graph Algorithms.
       <newblock><with|font-shape|italic|SIAM Journal on Comp.>, 1:146\U160,
       1972.<newblock>
 
-      <bibitem*|47><label|bib-tarjan-bridges>R.<nbsp>E.<nbsp>Tarjan.
+      <bibitem*|50><label|bib-tarjan-bridges>R.<nbsp>E.<nbsp>Tarjan.
       <newblock>A note on finding the bridges of a graph.
       <newblock><with|font-shape|italic|Information Processing Letters>,
       2:160\U161, 1974.<newblock>
 
-      <bibitem*|48><label|bib-lca>R.<nbsp>E.<nbsp>Tarjan.
+      <bibitem*|51><label|bib-lca>R.<nbsp>E.<nbsp>Tarjan.
       <newblock>Applications of path compression on balanced trees.
       <newblock><with|font-shape|italic|Journal of the ACM>, 26:690\U715,
       1979.<newblock>
 
-      <bibitem*|49><label|bib-tarjan86>R.<nbsp>E.<nbsp>Tarjan. <newblock>Two
+      <bibitem*|52><label|bib-tarjan86>R.<nbsp>E.<nbsp>Tarjan. <newblock>Two
       streamlined depth-first search algorithms.
       <newblock><with|font-shape|italic|Fundamenta Informaticae>, 9:85\U94,
       1986.<newblock>
 
-      <bibitem*|50><label|bib-krishnaiyan>K.<nbsp>Thulasiraman,
+      <bibitem*|53><label|bib-krishnaiyan>K.<nbsp>Thulasiraman,
       S.<nbsp>Arumugam, A.<nbsp>Brandstädt<localize|, and
       >T.<nbsp>Nishizeki<localize|, editors>.
       <newblock><with|font-shape|italic|Handbook of Graph Theory,
       Combinatorial Optimization, and Algorithms>. <newblock>CRC Press,
       2016.<newblock>
 
-      <bibitem*|51><label|bib-tomita>Etsuji Tomita, Akira Tanaka<localize|,
+      <bibitem*|54><label|bib-tomita>Etsuji Tomita, Akira Tanaka<localize|,
       and >Haruhisa Takahashi. <newblock>The worst-case time complexity for
       generating all maximal cliques and computational experiments.
       <newblock><with|font-shape|italic|Theoretical Computer Science>,
       363:28\U42, 2006.<newblock>
 
-      <bibitem*|52><label|bib-tutte>W.<nbsp>T.<nbsp>Tutte. <newblock>How to
+      <bibitem*|55><label|bib-tutte>W.<nbsp>T.<nbsp>Tutte. <newblock>How to
       draw a graph. <newblock><with|font-shape|italic|Proceedings of the
       London Mathematical Society>, s3-13:743\U767, 1963.<newblock>
 
-      <bibitem*|53><label|bib-walker>John<nbsp>Q.<nbsp>Walker II. <newblock>A
+      <bibitem*|56><label|bib-walker>John<nbsp>Q.<nbsp>Walker II. <newblock>A
       nodepositioning algorithm for general trees.
       <newblock><with|font-shape|italic|Software: Practice and Experience>,
       20:685\U705, 1990.<newblock>
 
-      <bibitem*|54><label|bib-wasserman>Stanley Wasserman<localize| and
+      <bibitem*|57><label|bib-wasserman>Stanley Wasserman<localize| and
       >Katherine Faust. <newblock><with|font-shape|italic|Social Network
       Analysis: Methods and Applications>. <newblock>Cambridge University
       Press, 1994.<newblock>
 
-      <bibitem*|55><label|bib-welch>E.<nbsp>Welch<localize| and
+      <bibitem*|58><label|bib-welch>E.<nbsp>Welch<localize| and
       >S.<nbsp>Kobourov. <newblock>Measuring Symmetry in Drawings of Graphs.
       <newblock><with|font-shape|italic|Computer Graphics Forum>,
       36:341\U351, 2017.<newblock>
 
-      <bibitem*|56><label|bib-west>Douglas<nbsp>B.<nbsp>West.
+      <bibitem*|59><label|bib-west>Douglas<nbsp>B.<nbsp>West.
       <newblock><with|font-shape|italic|Introduction to Graph Theory>.
       <newblock>Pearson Education, 2002.<newblock>
 
-      <bibitem*|57><label|bib-wilf>Herbert<nbsp>S.<nbsp>Wilf. <newblock>The
+      <bibitem*|60><label|bib-wilf>Herbert<nbsp>S.<nbsp>Wilf. <newblock>The
       Uniform Selection of Free Trees. <newblock><with|font-shape|italic|Journal
       of Algorithms>, 2:204\U207, 1981.<newblock>
     </bib-list>
@@ -14414,7 +14653,7 @@
     <associate|a3|<tuple|A3|124>>
     <associate|allpairs-distance|<tuple|4.8.2|93>>
     <associate|articulation-points|<tuple|4.5.5|84>>
-    <associate|assign-edge-weights|<tuple|1.10.9|44>>
+    <associate|assign-edge-weights|<tuple|1.10.9|45>>
     <associate|auto-1|<tuple|?|7>>
     <associate|auto-10|<tuple|1|10>>
     <associate|auto-100|<tuple|1.9.10|34>>
@@ -14425,24 +14664,24 @@
     <associate|auto-105|<tuple|1.10.1|36>>
     <associate|auto-106|<tuple|1.10.1|36>>
     <associate|auto-107|<tuple|1.10.1|36>>
-    <associate|auto-108|<tuple|1.10.2|37>>
-    <associate|auto-109|<tuple|1.10.2|37>>
+    <associate|auto-108|<tuple|1.10.2|38>>
+    <associate|auto-109|<tuple|1.10.2|38>>
     <associate|auto-11|<tuple|2|10>>
     <associate|auto-110|<tuple|1.10.3|38>>
     <associate|auto-111|<tuple|1.10.3|38>>
     <associate|auto-112|<tuple|1.10.4|40>>
     <associate|auto-113|<tuple|1.10.4|40>>
-    <associate|auto-114|<tuple|1.10.5|41>>
-    <associate|auto-115|<tuple|1.10.5|41>>
+    <associate|auto-114|<tuple|1.10.5|42>>
+    <associate|auto-115|<tuple|1.10.5|42>>
     <associate|auto-116|<tuple|1.10.6|42>>
     <associate|auto-117|<tuple|1.10.6|42>>
     <associate|auto-118|<tuple|1.10.7|43>>
     <associate|auto-119|<tuple|1.10.7|43>>
     <associate|auto-12|<tuple|3|11>>
-    <associate|auto-120|<tuple|1.10.8|43>>
-    <associate|auto-121|<tuple|1.10.8|43>>
-    <associate|auto-122|<tuple|1.10.9|44>>
-    <associate|auto-123|<tuple|1.10.9|44>>
+    <associate|auto-120|<tuple|1.10.8|44>>
+    <associate|auto-121|<tuple|1.10.8|44>>
+    <associate|auto-122|<tuple|1.10.9|45>>
+    <associate|auto-123|<tuple|1.10.9|45>>
     <associate|auto-124|<tuple|2|47>>
     <associate|auto-125|<tuple|2.1|47>>
     <associate|auto-126|<tuple|2.1.1|47>>
@@ -14734,7 +14973,7 @@
     <associate|auto-384|<tuple|6.3.3|130>>
     <associate|auto-385|<tuple|6.3.3|130>>
     <associate|auto-386|<tuple|6.3.3|133>>
-    <associate|auto-387|<tuple|57|135>>
+    <associate|auto-387|<tuple|60|135>>
     <associate|auto-39|<tuple|1.5.2|16>>
     <associate|auto-4|<tuple|1.1.1|9>>
     <associate|auto-40|<tuple|1.6|17>>
@@ -14836,30 +15075,33 @@
     <associate|bib-hu|<tuple|32|133>>
     <associate|bib-hu2|<tuple|33|133>>
     <associate|bib-kahn|<tuple|34|134>>
-    <associate|bib-krishnaiyan|<tuple|50|134>>
-    <associate|bib-lca|<tuple|48|134>>
-    <associate|bib-mckay|<tuple|35|134>>
+    <associate|bib-krishnaiyan|<tuple|53|134>>
+    <associate|bib-latapy|<tuple|35|134>>
+    <associate|bib-lca|<tuple|51|134>>
+    <associate|bib-mckay|<tuple|36|134>>
     <associate|bib-melissa|<tuple|13|133>>
-    <associate|bib-monagan|<tuple|36|134>>
-    <associate|bib-myrwold|<tuple|37|134>>
-    <associate|bib-nijenhuis|<tuple|38|134>>
-    <associate|bib-ostergard|<tuple|39|134>>
-    <associate|bib-otter|<tuple|40|134>>
-    <associate|bib-padberg|<tuple|41|134>>
-    <associate|bib-pferschy|<tuple|42|134>>
-    <associate|bib-plestenjak|<tuple|43|134>>
-    <associate|bib-schank|<tuple|44|134>>
-    <associate|bib-steger|<tuple|45|134>>
-    <associate|bib-tarjan-bridges|<tuple|47|134>>
-    <associate|bib-tarjan72|<tuple|46|134>>
-    <associate|bib-tarjan86|<tuple|49|134>>
-    <associate|bib-tomita|<tuple|51|134>>
-    <associate|bib-tutte|<tuple|52|134>>
-    <associate|bib-walker|<tuple|53|134>>
-    <associate|bib-wasserman|<tuple|54|134>>
-    <associate|bib-welch|<tuple|55|134>>
-    <associate|bib-west|<tuple|56|134>>
-    <associate|bib-wilf|<tuple|57|134>>
+    <associate|bib-monagan|<tuple|37|134>>
+    <associate|bib-myrwold|<tuple|38|134>>
+    <associate|bib-newman|<tuple|39|134>>
+    <associate|bib-nijenhuis|<tuple|40|134>>
+    <associate|bib-ostergard|<tuple|41|134>>
+    <associate|bib-otter|<tuple|42|134>>
+    <associate|bib-padberg|<tuple|43|134>>
+    <associate|bib-pferschy|<tuple|44|134>>
+    <associate|bib-plestenjak|<tuple|45|134>>
+    <associate|bib-schank|<tuple|47|134>>
+    <associate|bib-schank2|<tuple|46|134>>
+    <associate|bib-steger|<tuple|48|134>>
+    <associate|bib-tarjan-bridges|<tuple|50|134>>
+    <associate|bib-tarjan72|<tuple|49|134>>
+    <associate|bib-tarjan86|<tuple|52|134>>
+    <associate|bib-tomita|<tuple|54|134>>
+    <associate|bib-tutte|<tuple|55|134>>
+    <associate|bib-walker|<tuple|56|134>>
+    <associate|bib-wasserman|<tuple|57|134>>
+    <associate|bib-welch|<tuple|58|134>>
+    <associate|bib-west|<tuple|59|134>>
+    <associate|bib-wilf|<tuple|60|134>>
     <associate|blockjoin|<tuple|6.1|125>>
     <associate|canonical-labeling|<tuple|4.3.2|75>>
     <associate|chordface|<tuple|6.2|126>>
@@ -14872,13 +15114,13 @@
     <associate|eq:flow-poly|<tuple|4.2|79>>
     <associate|eq:reliability-poly|<tuple|4.3|79>>
     <associate|footnote-1|<tuple|1|7>>
-    <associate|footnote-1.1|<tuple|1.1|38>>
+    <associate|footnote-1.1|<tuple|1.1|39>>
     <associate|footnote-3.1|<tuple|3.1|55>>
     <associate|footnote-3.2|<tuple|3.2|57>>
     <associate|footnote-4.1|<tuple|4.1|76>>
     <associate|footnote-5.1|<tuple|5.1|116>>
     <associate|footnr-1|<tuple|1|7>>
-    <associate|footnr-1.1|<tuple|1.1|38>>
+    <associate|footnr-1.1|<tuple|1.1|39>>
     <associate|footnr-3.1|<tuple|3.1|55>>
     <associate|footnr-3.2|<tuple|3.2|57>>
     <associate|footnr-4.1|<tuple|4.1|76>>
@@ -14908,7 +15150,8 @@
     <associate|minimal-coloring|<tuple|4.13.2|106>>
     <associate|minimum-covering|<tuple|4.11.4|101>>
     <associate|number-of-spanning-trees|<tuple|5.3.3|119>>
-    <associate|random-network|<tuple|1.10.8|43>>
+    <associate|random-graph|<tuple|1.10.1|36>>
+    <associate|random-network|<tuple|1.10.8|44>>
     <associate|random-planar|<tuple|1.10.4|40>>
     <associate|set-vertex-positions|<tuple|6.2.1|127>>
     <associate|st-ordering|<tuple|4.9.3|97>>
@@ -14953,6 +15196,12 @@
       gibbons
 
       bagatelj
+
+      newman
+
+      hakimi
+
+      schank
 
       nijenhuis
 
@@ -15047,6 +15296,10 @@
       tomita
 
       ostergard
+
+      schank2
+
+      latapy
 
       boot
 
@@ -15566,8 +15819,8 @@
       1.3.<space|2spc>Complete graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-23>
 
-      <with|par-left|<quote|1tab>|1.3.1.<space|2spc>Complete graphs (with
-      multiple vertex partitions) <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <with|par-left|<quote|1tab>|1.3.1.<space|2spc>Complete (multipartite)
+      graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-24>>
 
       <with|par-left|<quote|1tab>|1.3.2.<space|2spc>Complete trees
@@ -15742,7 +15995,7 @@
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-112>>
 
-      <with|par-left|<quote|1tab>|1.10.5.<space|2spc>Random graphs from the
+      <with|par-left|<quote|1tab>|1.10.5.<space|2spc>Random graphs from a
       given degree sequence <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-114>>
 
@@ -16114,12 +16367,12 @@
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-316>>
 
-      4.12.<space|2spc>Clustering and transitivity in networks
+      4.12.<space|2spc>Triangles in graphs
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-318>
 
-      <with|par-left|<quote|1tab>|4.12.1.<space|2spc>Counting triangles in
-      graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <with|par-left|<quote|1tab>|4.12.1.<space|2spc>Counting triangles
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-319>>
 
       <with|par-left|<quote|1tab>|4.12.2.<space|2spc>Clustering coefficient

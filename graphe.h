@@ -176,9 +176,7 @@ public:
 
     class dotgraph { // temporary structure used in dot parsing
         int m_index;
-        attrib vertex_attr;
-        attrib edge_attr;
-        attrib chain_attr;
+        attrib vertex_attr,edge_attr,chain_attr;
         ivector m_chain;
         int pos;
     public:
@@ -207,16 +205,9 @@ public:
     class walker { // tree node positioner
         graphe *G;
         layout *x;
-        double hsep;
-        double vsep;
+        double hsep,vsep;
         ivectors levels;
-        ivector node_counters;
-        ivector gap_counters;
-        ivector position;
-        dvector prelim;
-        dvector modifier;
-        ivector gaps;
-        ivector children;
+        ivector node_counters,gap_counters,position,prelim,modifier,gaps,children;
         std::queue<int> placed;
         int depth;
         void walk(int i,int pass,int level=0,double modsum=0);
@@ -230,27 +221,15 @@ public:
     class painter { // vertex painter
         graphe *G;
         ivectors values;
-        ivector cover_number;
-        ivector initially_colored;
         ipairs col2ij;
-        std::vector<bool> iscliq;
-        ivector branch_candidates;
-        std::vector<double> fracts;
-        ivector temp_colors;
-        ivector ordering;
+        std::vector<bool> iscliq,fracts;
+        ivector cover_number,initially_colored,branch_candidates,temp_colors,ordering;
         std::set<int> used_colors;
-        int lb;
-        int ub;
-        int maxiter;
-        int nxcols;
+        int lb,ub,maxiter,nxcols;
         bool generate_clique_cuts;
         glp_prob *mip;
-        double timeout;
-        double *heur;
-        int *row_indices;
-        double *row_coeffs;
-        int *best_indices;
-        double *best_coeffs;
+        double timeout,*heur,*row_coeffs,*best_coeffs;
+        int *row_indices,*best_indices;
         void compute_bounds(const ivector &icol,int max_colors);
         void make_values();
         void formulate_mip();
@@ -290,8 +269,8 @@ public:
         bool isweighted;                        // true iff G is weighted
         int sg;                                 // current subgraph index
         std::set<ivector> subtours;             // subtours collected in during solving the last MIP
-        ivectors hierarhical_clustering_forest; // hierarhical clustering forest of subgraphs
-        ivector tour;                           // a tour
+        ivectors clustering_forest;             // hierarchical clustering forest of subgraphs
+        ivector tour,old_sol;                   // a tour, old mip solution
         double *coeff;                          // coefficients to be passed to MIP solver
         int *indices;                           // indices of row entries to be passed to MIP solver
         bool *visited;                          // used to mark vertices as visited
@@ -314,15 +293,15 @@ public:
         dvector obj;
         std::vector<bool> can_branch;
         void formulate_mip();
-        void get_subtours();
+        bool get_subtours();
         void add_subtours(const ivectors &sv);
         void lift_subtours(ivectors &sv) const;
         bool find_subgraph_subtours(ivectors &sv,solution_status &status);
         bool subtours_equal(const ivector &st1,const ivector &st2);
         ivector canonical_subtour(const ivector &subtour);
         void append_sce(const ivector &subtour);
-        void make_hierarhical_clustering_forest();
-        void hierarhical_clustering_dfs(int i,ivectors &considered_sec,ivectors &relevant_sec);
+        void make_hierarchical_clustering_forest();
+        void hierarchical_clustering_dfs(int i,ivectors &considered_sec,ivectors &relevant_sec);
         ipair make_edge(int i,int j) const;
         void make_sg_edges();
         int edge_index(const ipair &e);
@@ -366,12 +345,8 @@ public:
 #endif
 
     class rectangle { // simple rectangle class
-        double m_x;
-        double m_y;
-        double m_width;
-        double m_height;
-        bool m_locked_above;
-        bool m_locked_right;
+        double m_x,m_y,m_width,m_height;
+        bool m_locked_above,m_locked_right;
         layout *L;
     public:
         struct comparator {
@@ -434,14 +409,14 @@ public:
 
     class unionfind { // disjoint-set data structure
         struct element {
-            int id;
-            int parent;
-            int rank;
+            int id,parent,rank;
             element() { id=-1; }
         };
-        std::vector<element> elements;
+        int sz;
+        element *elements;
     public:
-        unionfind(int n) { elements.resize(n); }
+        unionfind(int n) { sz=n; elements=new element[n]; }
+        ~unionfind() { delete[] elements; }
         void make_set(int id);
         bool is_stored(int id);
         int find(int id);
@@ -453,9 +428,7 @@ public:
         int maxsize;
         bool found;
         double timeout; // in seconds
-        ivector c;
-        ivector incumbent;
-        ivector clique_nodes;
+        ivector c,incumbent,clique_nodes;
         clock_t start;
         bool timed_out;
         void recurse(ivector &U,int size,ivector &position);
@@ -579,12 +552,12 @@ private:
     static void attrib2genmap(const attrib &attr,gen_map &m);
     static void copy_attributes(const attrib &src,attrib &dest);
     void write_attrib(std::ofstream &dotfile,const attrib &attr) const;
+    static ivector_iter binsearch(ivector_iter first,ivector_iter last,int a);
     static size_t sets_union(const iset &A,const iset &B,iset &U);
     static size_t sets_intersection(const iset &A,const iset &B,iset &I);
     static size_t sets_intersection(const ivector &A,const iset &B,iset &I);
     static size_t sets_difference(const iset &A,const iset &B,iset &D);
     static size_t sets_difference(const iset &A,const ivector &B,iset &D);
-    static size_t set_intersection_size(const ivector &A,const ivector &B);
     static point make_point(double x,double y) { point p(2,x); p.back()=y; return p; }
     static point make_point(double x,double y,double z) { point p(3,x); p[1]=y; p.back()=z; return p; }
     static void add_point(point &a,const point &b);
@@ -691,6 +664,8 @@ private:
     void save_subgraphs();
     void restore_subgraphs();
     int vertex_pair_connectivity(int v,int w);
+    static inline gen harmonic_mean_exact(gen a,gen b,gen c) { return 3*a*b*c/(a*b+b*c+a*c); }
+    static inline double harmonic_mean(double a,double b,double c) { return 3.0*a*b*c/(a*b+b*c+a*c); }
 
 public:
     graphe(const context *contextptr=context0,bool support_attributes=true);
@@ -720,7 +695,6 @@ public:
     void copy(graphe &G) const;
     inline void copy_nodes(const std::vector<vertex> &V);
     inline bool supports_attributes() const { return m_supports_attributes; }
-    void join_edges(const graphe &G);
     void clear();
     void clear_maximal_cliques() { maxcliques.clear(); }
     void find_maximal_cliques();
@@ -769,7 +743,7 @@ public:
     bool is_triconnected(int sg=-1);
     bool is_cycle(ipairs &E,int sg=-1);
     void adjacent_nodes(int i,ivector &adj,bool include_temp_edges=true) const;
-    void get_edges_as_pairs(ipairs &E, bool include_temp_edges=true,int sg=-1) const;
+    void get_edges_as_pairs(ipairs &E,int sg=-1) const;
     vecteur edges(bool include_weights,int sg=-1) const;
     ivector edge_multiplicities() const;
     int sum_of_edge_multiplicities() const;
@@ -822,6 +796,9 @@ public:
     int in_degree(int index,int sg=-1) const;
     int out_degree(int index,int sg=-1) const;
     int degree(int index,int sg=-1) const;
+    int maximum_degree() const;
+    int minimum_degree() const;
+    int average_degree() const;
     vecteur degree_sequence(int sg=-1) const;
     void sort_by_degrees();
     void adjacency_matrix(matrice &m) const;
@@ -883,7 +860,7 @@ public:
     bool is_tournament() const;
     bool is_planar();
     bool is_clique(int sg=-1) const;
-    int triangle_count() const;
+    gen triangle_count(ivectors *dest=NULL,bool ccoeff=false,bool exact=true);
     int tree_height(int root);
     void clique_stats(std::map<int,int> &m,bool store_matching=false);
     int maximum_clique(ivector &clique);
@@ -892,6 +869,9 @@ public:
     int maximum_independent_set(ivector &v) const;
     int girth(bool odd=false,int sg=-1);
     bool hakimi(const ivector &L);
+    void erdos_renyi(double p);
+    void preferential_attachment(int d,int o);
+    void molloy_reed(const dvector &p_orig);
     void make_plane_dual(const ivectors &faces);
     void make_lcf_graph(const ivector &jumps,int e);
     void make_lcf_graph(const int *j,int e);
@@ -908,14 +888,13 @@ public:
     void make_wheel_graph(int n,layout *x=NULL);
     void make_antiprism_graph(int n,layout *x=NULL);
     void make_complete_kary_tree(int k,int d);
-    void make_random_tree(const vecteur &V,int maxd=0);
-    void make_random_rooted_tree(const vecteur &V);
-    void make_random_free_tree(const vecteur &V);
+    void make_random_tree(int maxd=0);
+    void make_random_rooted_tree();
+    void make_random_free_tree();
     void make_random_planar(double p,int connectivity);
-    void make_random(bool isdir,const vecteur &V,double p);
-    void make_random_sequential(const ivector &d,const vecteur &labels);
-    void make_random_bipartite(const vecteur &V,const vecteur &W,double p);
-    void make_random_regular(const vecteur &V,int d,bool connected);
+    void make_random_sequential(const ivector &d);
+    void make_random_bipartite(int a,int b,double p);
+    void make_random_regular(int d,bool connected);
     static void translate_layout(layout &x,const point &dx);
     void cartesian_product(const graphe &G,graphe &P) const;
     void tensor_product(const graphe &G,graphe &P) const;
@@ -991,12 +970,16 @@ public:
     void fundamental_cycles(ivectors &cycles,int sg=-1,bool check=true);
     void mycielskian(graphe &G) const;
     gen local_clustering_coeff(int i) const;
-    gen clustering_coeff(bool approx=false) const;
+    gen clustering_coeff(bool approx,bool exact);
     gen transitivity() const;
     int edge_connectivity();
     int vertex_connectivity();
     static gen colon_label(int i,int j);
     static gen colon_label(int i,int j,int k);
+    static size_t intersect_fast(ivector_iter min1,ivector_iter max1,ivector_iter min2,ivector_iter max2);
+    static size_t intersect_linear(ivector_iter min1,ivector_iter max1,ivector_iter min2,ivector_iter max2);
+    static size_t intersect_hybrid(ivector_iter min1,ivector_iter max1,ivector_iter min2,ivector_iter max2);
+    static bool is_graphic_sequence(const ivector &s_orig);
     graphe &operator =(const graphe &other);
 };
 

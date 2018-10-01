@@ -407,6 +407,32 @@ public:
 #endif
     };
 
+    class ransampl { // random sampling from a given degree distribution
+        int n;
+        ivector alias;
+        vecteur prob;
+        const context *ctx;
+    public:
+        ransampl(const vecteur &p,GIAC_CONTEXT);
+        int generate() const;
+    };
+
+    class bucketsampler { // random sampling from a dynamic distribution
+        const context *ctx;
+        ivector weights;
+        long total_weight;
+        std::map<int,int> max_weight,level_weight;
+        std::map<int,ivector> levels;
+        ipairs positions;
+        inline int nearest_pow2(double a) { return std::floor(0.5+std::log(a)/M_LN2); }
+    public:
+        bucketsampler(const ivector &W,GIAC_CONTEXT);
+        int generate();
+        void insert(int w);
+        void update(int i,int w);
+        inline void increment(int i) { update(i,weights[i]+1); }
+    };
+
     class unionfind { // disjoint-set data structure
         struct element {
             int id,parent,rank;
@@ -871,7 +897,7 @@ public:
     bool hakimi(const ivector &L);
     void erdos_renyi(double p);
     void preferential_attachment(int d,int o);
-    void molloy_reed(const dvector &p_orig);
+    void molloy_reed(const vecteur &p);
     void make_plane_dual(const ivectors &faces);
     void make_lcf_graph(const ivector &jumps,int e);
     void make_lcf_graph(const int *j,int e);
@@ -971,7 +997,7 @@ public:
     void mycielskian(graphe &G) const;
     gen local_clustering_coeff(int i) const;
     gen clustering_coeff(bool approx,bool exact);
-    gen transitivity() const;
+    gen transitivity();
     int edge_connectivity();
     int vertex_connectivity();
     static gen colon_label(int i,int j);

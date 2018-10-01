@@ -410,34 +410,30 @@ gen randomgraph(const vecteur &gv,bool directed,GIAC_CONTEXT) {
         gen p=_evalf(gv.back(),contextptr);
         if (p.type==_DOUBLE_) {
             if (!is_strictly_positive(p,contextptr))
-                return gentypeerr("Expected a positive number");
+                return gentypeerr("Expected a positive constant");
             G.set_directed(directed);
             G.erdos_renyi(p.DOUBLE_val());
-        } else if (gv.back().type==_VECT) {
-            if (directed) return generr("This method cannot generate digraphs");
-            vecteur P=*gv.back()._VECTptr;
-            graphe::dvector pk(P.size());
-            for (const_iterateur it=P.begin();it!=P.end();++it) {
-                p=_evalf(*it,contextptr);
-                if (p.type!=_DOUBLE_ || !is_positive(*it,contextptr))
-                    return generr("Probabilities must be nonnegative real numbers");
-                pk[it-P.begin()]=p.DOUBLE_val();
+        } else {
+            vecteur P;
+            if (directed)
+                return generr("This method cannot generate digraphs");
+            if (gv.back().type==_VECT) {
+                P=*gv.back()._VECTptr;
+            } else if (gv.back().is_symb_of_sommet(at_program)) {
+                vecteur L(n);
+                for (int i=0;i<n;++i) L[i]=i;
+                P=*_apply(makesequence(gv.back(),L),contextptr)._VECTptr;
             }
-            G.molloy_reed(pk);
-        } else if (gv.back().is_symb_of_sommet(at_program)) {
-            if (directed) return generr("This method cannot generate digraphs");
-            gen f=gv.back();
-            graphe::dvector pk(n);
-            for (int i=0;i<n;++i) {
-                p=_evalf(f(i,contextptr),contextptr);
-                if (p.type!=_DOUBLE_ || !is_positive(p,contextptr))
-                    return generr("Function should return nonnegative real numbers");
-                pk[i]=p.DOUBLE_val();
+            for (iterateur it=P.begin();it!=P.end();++it) {
+                if (!is_real(*it,contextptr) || !is_positive(*it,contextptr))
+                    return generr("Weights must be nonnegative real numbers");
+                *it=_evalf(*it,contextptr);
             }
-            G.molloy_reed(pk);
+            G.molloy_reed(P);
         }
     } else if (gv.size()==3) { // preferential attachment
-        if (directed) return generr("This method cannot generate digraphs");
+        if (directed)
+            return generr("This method cannot generate digraphs");
         if (!gv[1].is_integer() || !is_strictly_positive(gv[1],contextptr))
             return generr("Expected a positive integer");
         if (!gv[2].is_integer() || !is_positive(gv[2],contextptr))

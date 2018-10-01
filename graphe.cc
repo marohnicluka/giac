@@ -6989,25 +6989,15 @@ void graphe::preferential_attachment(int d,int o) {
     int n=node_count();
     if (n<2) return;
     add_edge(0,1);
-    int td=2,j,k,z,c;
-    ivector deg(n);
-    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
-        deg[it-nodes.begin()]=it->neighbors().size();
-    }
+    int j,k;
+    bucketsampler sampler(ivector(2,1),ctx);
     for (int i=2;i<n;++i) {
         for (int count=std::min(i,d);count-->0;) {
             do {
-                c=rand_integer(z=td-deg[i]);
-                ivector_iter it=deg.begin()+i-1;
-                for (;z>0;--it) {
-                    z-=*it;
-                    if (c>=z) break;
-                }
-                j=it-deg.begin();
+                j=sampler.generate();
             } while (has_edge(i,j));
             add_edge(i,j);
-            ++deg[i]; ++deg[j];
-            td+=2;
+            sampler.increment(j);
         }
         for (int count=0;count<o;++count) {
             const ivector &ngh=node(i).neighbors();
@@ -7018,9 +7008,11 @@ void graphe::preferential_attachment(int d,int o) {
             k=ngh[k];
             if (!has_edge(j,k)) {
                 add_edge(j,k);
-                ++deg[j]; ++deg[k];
+                sampler.increment(j);
+                sampler.increment(k);
             }
         }
+        sampler.insert(std::min(i,d));
     }
 }
 
@@ -7045,29 +7037,21 @@ bool graphe::is_graphic_sequence(const ivector &s_orig) {
 }
 
 /* generate edges according to the given degree distribution */
-void graphe::molloy_reed(const dvector &p_orig) {
+void graphe::molloy_reed(const vecteur &p) {
     int n=node_count(),k,i;
     long sum;
-    double r,s=0;
     ivector stubs(n);
-    dvector p=p_orig;
-    for (dvector_iter it=p.begin();it!=p.end();++it) {
-        s+=*it;
-    }
-    if (s==0) return;
-    for (dvector::iterator it=p.begin();it!=p.end();++it) *it/=s;
+    ransampl rs(p,ctx);
     do {
         i=0; sum=0;
+        bool done=false;
         while (true) {
-            r=rand_uniform(); s=0; k=0;
-            for (dvector_iter it=p.begin();it!=p.end();++it,++k) {
-                s+=*it;
-                if (r>1-s) break;
-            }
-            sum+=(stubs[i]=k);
-            if (i<n-1) ++i;
-            else if (sum%2!=0) sum-=stubs[(i=rand_integer(n))];
-            else break;
+            sum+=(stubs[i]=rs.generate());
+            if (!done && i<n-1) ++i;
+            else if (sum%2!=0) {
+                sum-=stubs[(i=rand_integer(n))];
+                done=true;
+            } else break;
         }
     } while (!is_graphic_sequence(stubs));
     assert(hakimi(stubs));
@@ -7613,8 +7597,142 @@ bool graphe::points_coincide(const point &p,const point &q,double tol) {
 }
 
 /*
-* IMPLEMENTATION OF THE DISJOINT SET DATA STRUCTURE
-*/
+ * IMPLEMENTATION OF RANDOM SAMPLING CLASSES
+ *
+ * RANSAMPL:
+ * drawing samples from a given probability distribution
+ * adapted from: ransampl.c by Joachim Wuttke, Forschungszentrum Juelich GmbH (2013)
+ * see the original code at: apps.jcns.fz-juelich.de/ransampl
+ *
+ * Description:
+ * Random-number sampling using the Walker-Vose alias
+ * method, as described by Keith Schwarz (2011)
+ */
+
+graphe::ransampl::ransampl(const vecteur &p,GIAC_CONTEXT) {
+    ctx=contextptr;
+    n=p.size();
+    alias.resize(n);
+    prob.resize(n);
+    vecteur P(n);
+    ivector S(n),L(n);
+    gen norm_factor=gen(n)/_sum(p,ctx);
+    for (int i=0;i<n;++i) P[i]=_evalf(p[i]*norm_factor,ctx);
+    int nS=0,nL=0,a,g;
+    for (int i=n-1;i>=0;--i) {
+        if (is_strictly_greater(1,P[i],ctx)) S[nS++]=i; else L[nL++]=i;
+    }
+    while (nS!=0 && nL!=0) {
+        a=S[--nS];
+        g=L[--nL];
+        prob[a]=P[a];
+        alias[a]=g;
+        P[g]+=P[a]-1;
+        if (is_strictly_greater(1,P[g],ctx)) S[nS++]=g; else L[nL++]=g;
+    }
+    while (nL!=0) prob[L[--nL]]=1;
+    while (nS!=0) prob[S[--nS]]=1;
+}
+
+int graphe::ransampl::generate() const {
+    double ran1=giac_rand(ctx)/(RAND_MAX+1.0);
+    double ran2=giac_rand(ctx)/(RAND_MAX+1.0);
+    int i=std::floor(n*ran1);
+    return is_strictly_greater(prob[i],ran2,ctx)?i:alias[i];
+}
+
+/*
+ * BUCKETSAMPLER:
+ * draw samples from a given dynamic probability distribution,
+ * supports updating the weights
+ */
+
+graphe::bucketsampler::bucketsampler(const ivector &W,GIAC_CONTEXT) {
+    ctx=contextptr;
+    int n=(weights=W).size(),k,w;
+    total_weight=0;
+    positions.resize(n);
+    for (int i=0;i<n;++i) {
+        if ((w=weights[i])==0)
+            continue;
+        k=nearest_pow2(w);
+        max_weight[k]=std::max(max_weight[k],w);
+        level_weight[k]+=w;
+        positions[i]=make_pair(k,levels[k].size());
+        levels[k].push_back(i);
+        total_weight+=w;
+    }
+}
+
+int graphe::bucketsampler::generate() {
+    int u=giac_rand(ctx)/(RAND_MAX+1.0)*double(total_weight),i;
+    long cweight=0;
+    for (map<int,ivector>::const_reverse_iterator it=levels.rbegin();it!=levels.rend();++it) {
+        cweight+=level_weight[it->first];
+        i=it->first;
+        if (cweight>u)
+            break;
+    }
+    ivector &level=levels[i];
+    int lmax=max_weight[i];
+    double r,frac;
+    int idx_in_level,idx,sz=level.size();
+    do {
+        r=giac_rand(ctx)/(RAND_MAX+1.0)*double(sz);
+        idx_in_level=std::floor(r);
+        frac=r-idx_in_level;
+        idx=level[idx_in_level];
+    } while (weights[idx]<frac*lmax);
+    return idx;
+}
+
+void graphe::bucketsampler::insert(int w) {
+    int k=nearest_pow2(w);
+    positions.push_back(make_pair(k,levels[k].size()));
+    levels[k].push_back(weights.size());
+    weights.push_back(w);
+    max_weight[k]=std::max(max_weight[k],w);
+    level_weight[k]+=w;
+    total_weight+=w;
+}
+
+void graphe::bucketsampler::update(int i,int w) {
+    int old_w=weights[i];
+    ipair &pos=positions[i];
+    int old_k=pos.first,index=pos.second,k=nearest_pow2(w),last;
+    if (k!=old_k) {
+        ivector &old_level=levels[old_k];
+        ivector &level=levels[k];
+        last=old_level.back();
+        ipair &last_pos=positions[last];
+        last_pos.second=index;
+        old_level[index]=last;
+        old_level.pop_back();
+        pos=make_pair(k,level.size());
+        level.push_back(i);
+        if (w>=max_weight[old_k]) {
+            int &mw=max_weight[old_k];
+            mw=0;
+            for (ivector_iter it=old_level.begin();it!=old_level.end();++it) {
+                if (weights[*it]>mw)
+                    mw=weights[*it];
+            }
+        }
+    }
+    weights[i]=w;
+    level_weight[old_k]-=old_w;
+    level_weight[k]+=w;
+    max_weight[k]=std::max(max_weight[k],w);
+    total_weight+=w-old_w;
+}
+
+/*
+ * END OF RANDOM SAMPLING CLASSES
+ */
+
+/*
+ * IMPLEMENTATION OF THE DISJOINT SET DATA STRUCTURE
+ */
 
 bool graphe::unionfind::is_stored(int id) {
     for (int i=0;i<sz;++i) {
@@ -7654,8 +7772,8 @@ void graphe::unionfind::unite(int id1,int id2) {
 }
 
 /*
-* END OF DISJOINT_SET CLASS
-*/
+ * END OF DISJOINT_SET CLASS
+ */
 
 /* make planar layout */
 bool graphe::make_planar_layout(layout &x) {
@@ -11608,28 +11726,27 @@ gen graphe::clustering_coeff(bool approx,bool exact) {
 }
 
 /* return the triangle density (transitivity) of this graph */
-gen graphe::transitivity() const {
-    ipairs E;
-    get_edges_as_pairs(E);
-    int i,j;
+gen graphe::transitivity() {
     gen num_triangles(0),num_triplets(0);
-    bool isdir=is_directed();
-    for (ipairs_iter it=E.begin();it!=E.end();++it) {
-        i=it->first; j=it->second;
-        const vertex &v=node(i),&w=node(j);
-        const ivector &vn=v.neighbors(),&wn=w.neighbors();
-        num_triangles+=intersect_linear(vn.begin(),vn.end(),wn.begin(),wn.end());
-        num_triplets+=wn.size()-(w.has_neighbor(i)?1:0);
-        if (!isdir)
-            num_triplets+=vn.size()-1;
+    if (!is_directed()) {
+        num_triangles=gen(3)*triangle_count();
+        for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+            num_triplets+=comb(it->neighbors().size(),2);
+        }
+    } else {
+        ipairs E;
+        get_edges_as_pairs(E);
+        int i,j;
+        for (ipairs_iter it=E.begin();it!=E.end();++it) {
+            i=it->first; j=it->second;
+            const vertex &v=node(i),&w=node(j);
+            const ivector &vn=v.neighbors(),&wn=w.neighbors();
+            num_triangles+=intersect_linear(vn.begin(),vn.end(),wn.begin(),wn.end());
+            num_triplets+=wn.size()-(w.has_neighbor(i)?1:0);
+        }
     }
     if (is_zero(num_triplets))
         return 0;
-    if (!isdir) {
-        assert(is_zero(_rem(makesequence(num_triangles,3),ctx)) &&
-               is_zero(_rem(makesequence(num_triplets,2),ctx)));
-        num_triplets=num_triplets/gen(2);
-    }
     return _ratnormal(fraction(num_triangles,num_triplets),ctx);
 }
 

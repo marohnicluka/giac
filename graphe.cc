@@ -10033,9 +10033,9 @@ void graphe::tsp::append_sce(const ivector &subtour) {
 void graphe::tsp::add_subtours(const ivectors &sv) {
     ivector subtour;
     for (ivectors_iter it=sv.begin();it!=sv.end();++it) {
-        if (sg<0)
+        if (sg<0) {
             subtours.insert(canonical_subtour(*it));
-        else {
+        } else {
             subtour.resize(it->size());
             for (ivector_iter jt=it->begin();jt!=it->end();++jt) {
                 subtour[jt-it->begin()]=arcs[*jt].sg_index;
@@ -10168,15 +10168,14 @@ void graphe::tsp::hierarchical_clustering_dfs(int i,ivectors &considered_sec,ive
     /* process this node */
     solution_status status;
     sg=G->max_subgraph_index()+1;
-    G->set_subgraph(ivector(node.begin()+3,node.end()),sg);
+    ivector V(node.begin()+3,node.end());
+    G->set_subgraph(V,sg);
     if (!G->is_biconnected(sg)) {
         considered_sec=cons;
         return;
     }
     make_sg_edges();
-    ivector V;
-    G->get_subgraph(sg,V);
-    sg_nv=V.size();
+    sg_nv=sz;
     for (ivector_iter it=V.begin();it!=V.end();++it) {
         sg_vertices[it-V.begin()]=*it;
     }
@@ -10216,10 +10215,10 @@ int graphe::tsp::solve(ivector &hc,double &cost) {
             sec.insert(sec.end(),relevant.begin(),relevant.end());
         }
     }
-    add_subtours(sec);
     solution_status status;
     sg=-1;
     G->unset_subgraphs();
+    add_subtours(sec);
     if (!find_subgraph_subtours(sv,status))
         return -1;
     int retval;

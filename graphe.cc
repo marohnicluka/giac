@@ -7634,6 +7634,12 @@ graphe::ransampl::ransampl(const vecteur &p,GIAC_CONTEXT) {
     while (nS!=0) prob[S[--nS]]=1;
 }
 
+gen graphe::ransampl::data() const {
+    vecteur ret(1,n);
+    ret=mergevecteur(ret,prob);
+    return mergevecteur(ret,vector_int_2_vecteur(alias));
+}
+
 int graphe::ransampl::generate() const {
     double ran1=giac_rand(ctx)/(RAND_MAX+1.0);
     double ran2=giac_rand(ctx)/(RAND_MAX+1.0);

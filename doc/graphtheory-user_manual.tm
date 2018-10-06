@@ -4062,16 +4062,17 @@
   </session>
 
   The distribution of vertex degrees in a graph generated with preferential
-  attachment rule roughly obeys the power law in its tail.
+  attachment rule roughly obeys the power law in its tail, as shown in the
+  example below.
 
   <\session|giac|default>
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      G:=random_graph(10000,10,20)
+      G:=random_graph(10000,5,2)
     <|unfolded-io>
       <\equation*>
-        <text|an undirected unweighted graph with 10000 vertices and 231947
+        <text|an undirected unweighted graph with 10000 vertices and 67875
         edges>
       </equation*>
     </unfolded-io>
@@ -4083,7 +4084,9 @@
     </input>
   </session>
 
-  <center|<image|images/powlaw.eps|35%|||>>
+  <\center>
+    <image|images/powlaw.eps|35%|||>
+  </center>
 
   <subsection|Random bipartite graphs>
 
@@ -4183,8 +4186,8 @@
     rooted unlabeled trees on <math|n> vertices, one should put the number
     <math|t<rsub|n>> of all <em|unrooted> unlabeled trees. <math|t<rsub|n>>
     can be obtained from <math|a<rsub|1>,a<rsub|2>,\<ldots\>,a<rsub|n>> by
-    applying the formula in <cite-detail|otter|pp.<nbsp>589>. The <samp|Giac>
-    implementation includes this correction.
+    applying the formula in <cite-detail|otter|pp.<nbsp>589>. This
+    implementation includes the correction.
   </footnote><nbsp><cite|wilf>, which is based on <abbr|RANRUT> algorithm and
   runs in about the same time as <abbr|RANRUT> itself.
 
@@ -5438,7 +5441,7 @@
   <verbatim|list_graph_attributes><index|<with|font-family|tt|list_graph_attributes>>
   and <verbatim|discard_graph_attribute><index|<with|font-family|tt|discard_graph_attribute>>.
 
-  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|set_graph_attribute(G,tag1=value1,tag2=value2,...)>>>|<row|<cell|>|<cell|<verbatim|set_graph_attribute(G,[tag1=value1,tag2=value2,...])>>>|<row|<cell|>|<cell|<verbatim|set_graph_attribute(G,[tag1,tag2,...],[value1,value2,...])>>>|<row|<cell|>|<cell|<verbatim|get_graph_attribute(G,tag1,tag2,...)>>>|<row|<cell|>|<cell|<verbatim|get_graph_attribute(G,[tag1,tag2,...])>>>|<row|<cell|>|<cell|<verbatim|list_graph_attributes(G)>>>|<row|<cell|>|<cell|<verbatim|discard_graph_attribute(G,tag1,tag2,...)>>>|<row|<cell|>|<cell|<verbatim|discard_graph_attribute(G,[tag1,tag2,...])>>>>>>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<cwith|1|1|1|1|cell-tborder|0ln>|<cwith|8|8|1|1|cell-bborder|0ln>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|1|1|cell-rborder|0ln>|<cwith|1|-1|2|2|cell-lborder|0ln>|<table|<row|<cell|Syntax:>|<cell|<verbatim|set_graph_attribute(G,tag1=value1,tag2=value2,...)>>>|<row|<cell|>|<cell|<verbatim|set_graph_attribute(G,[tag1=value1,tag2=value2,...])>>>|<row|<cell|>|<cell|<verbatim|set_graph_attribute(G,[tag1,tag2,...],[value1,value2,...])>>>|<row|<cell|>|<cell|<verbatim|get_graph_attribute(G,tag1,tag2,...)>>>|<row|<cell|>|<cell|<verbatim|get_graph_attribute(G,[tag1,tag2,...])>>>|<row|<cell|>|<cell|<verbatim|list_graph_attributes(G)>>>|<row|<cell|>|<cell|<verbatim|discard_graph_attribute(G,tag1,tag2,...)>>>|<row|<cell|>|<cell|<verbatim|discard_graph_attribute(G,[tag1,tag2,...])>>>>>>
 
   The command <with|font-family|tt|set_graph_attribute> is used for modifying
   the existing graph attributes or adding new ones. It takes two arguments, a
@@ -5454,7 +5457,7 @@
   The previously set graph attribute values can be fetched with the command
   <with|font-family|tt|get_graph_attribute> which takes two arguments: a
   graph <math|G> and a sequence or list of tags. The corresponding values
-  will be returned in a sequence or list, respectively. If some attribute is
+  will be returned in a sequence or list, respectively. If an attribute is
   not set, <with|font-family|tt|undef> is returned as its value.
 
   To list all graph attributes of <math|G> for which the values are set, use
@@ -5563,8 +5566,8 @@
   command <with|font-family|tt|get_vertex_attribute> which takes three
   arguments: <math|G>, <math|v> and a sequence or list of tags. The
   corresponding values will be returned in a sequence or list, respectively.
-  If some attribute is not set, <with|font-family|tt|undef> is returned as
-  its value.
+  If an attribute is not set, <with|font-family|tt|undef> is returned as its
+  value.
 
   To list all attributes of <math|v> for which the values are set, use the
   command <with|font-family|tt|list_vertex_attributes> which takes two
@@ -6135,8 +6138,8 @@
   The command <verbatim|vertices><index|<verbatim|vertices>> or
   <verbatim|graph_vertices><index|<verbatim|graph_vertices>>
   resp.<nbsp><verbatim|edges><index|<verbatim|edges>> is used for extracting
-  set of vertices resp.<nbsp>set of edges from a graph. To obtain the number
-  of vertices resp.<nbsp>the number of edges, use the
+  the set of vertices resp.<nbsp>the set of edges from a graph. To obtain the
+  number of vertices resp.<nbsp>the number of edges, use the
   <verbatim|number_of_vertices><index|<verbatim|number_of_vertices>>
   resp.<nbsp>the <verbatim|number_of_edges><index|<verbatim|number_of_edges>>
   command.
@@ -10957,21 +10960,22 @@
   <kbd|clique_stats> takes an undirected graph <math|G<around*|(|V,E|)>> as
   the mandatory first argument. If no other arguments are given, the command
   returns a list of pairs, each pair consisting of two integers: clique
-  cardinality <math|k> (first) and the number <math|n<rsub|k>\<gtr\>0> of
-  <math|k>-cliques in <math|G> (second). Therefore, the sum of second members
-  of all returned pairs is equal to the total count of all maximal cliques in
-  <math|G>. Furthermore, a second argument may be passed to
-  <verbatim|clique_stats>; if so, it must be a positive integer <math|k> or
-  an interval with integer bounds <math|m><nbsp>..<nbsp><math|n>. In the
-  first case only the number of <math|k>-cliques is returned; in the second
+  cardinality <math|k> and the number <math|n<rsub|k>\<gtr\>0> of
+  <math|k>-cliques in <math|G>, respectively. (Therefore, the sum of second
+  members of all returned pairs is equal to the total count of all maximal
+  cliques in <math|G>.) If two arguments are passed to
+  <verbatim|clique_stats>, the second argument must be a positive integer
+  <math|k> or an interval with integer bounds <math|m><nbsp>..<nbsp><math|n>.
+  In the first case the number of <math|k>-cliques is returned; in the second
   case, only cliques with cardinality between <math|m> and <math|n>
   (inclusive) are counted.
 
   The strategy used to find all maximal cliques is a variant of the algorithm
   of <name|Bron> and <name|Kerbosch> developed by <name|Tomita> et
   al.<nbsp><cite|tomita>. Its worst-case running time is
-  <math|O<around*|(|3<rsup|<around*|\||V|\|>/3>|)>>. However, the performance
-  usually takes only a moment for graphs with 100 vertices or less.
+  <math|O<around*|(|3<rsup|<around*|\||V|\|>/3>|)>>. However, the algorithm
+  is usually very fast, typically taking only a moment for graphs with few
+  hundred vertices or less.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -11055,7 +11059,7 @@
   classical algorithm by <name|Carraghan> and <name|Pardalos> developed by
   <name|Östergård> <cite|ostergard>.
 
-  In the following examples the results were obtained almost instantly.
+  In the following examples, the results were obtained almost instantly.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -11509,23 +11513,29 @@
     c<around*|(|G|)>=<frac|1|<around*|\||V|\|>>*<big|sum><rsub|v\<in\>V>c<rsub|G><around*|(|v|)>.
   </equation*>
 
-  <math|c<around*|(|G|)>> can be interpreted as the probability that <math|u
-  v,v w\<in\>E\<Longrightarrow\>u w\<in\>E>. In the context of social
-  networks, for example, <math|u v\<in\>E> could mean that <math|u> and
-  <math|v> are friends (which is symmetric relation). The number
+  <math|c<around*|(|G|)>> can be interpreted as the probability that, for a
+  randomly selected pair of incident edges <math|u v> and <math|v w> in
+  <math|G>, the vertices <math|u> and <math|w> are connected. The number
   <math|c<rsub|G><around*|(|v|)>> is interpreted analogously but for a fixed
   <math|v\<in\>V>. It represents the probability that two neighbors of
   <math|v> are connected to each other.
 
-  Note that the command <verbatim|<hlink|random_graph|#random-graph>> is able
-  to generate realistic random networks with adjustable clustering
-  coefficient.
+  For example, assume that <math|G> represents a social network in which
+  <math|u v\<in\>E> means that <math|u> and <math|v> are friends (which is a
+  symmetric relation). In this context, <math|c<around*|(|v|)>> represents
+  the probability that two friends of <math|v> are also friends of each
+  other.
 
   The time complexity of computing <math|c<around*|(|G|)>> is
   <math|O<around*|(|<around*|\||E|\|><rsup|3/2>|)>>, whereas the algorithm of
   <name|Schank> and <name|Wagner><nbsp><cite-detail|schank|Algorithm<nbsp>1,
   pp.<nbsp>269> for approximating <math|c<around*|(|G|)>> runs in
   <math|O<around*|(|log <around*|\||V|\|>|)>> time.
+
+  In addition, note that the command <verbatim|<hlink|random_graph|#random-graph>>
+  is able to generate\Vusing a preferential attachment rule\Vrealistic random
+  networks with adjustable clustering coefficient, which are suitable for
+  testing purposes.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -11647,10 +11657,11 @@
   relation between the vertices of a network. If <math|G> is a digraph, a
   <strong|triplet> in <math|G> is any directed path
   <math|<around*|(|v,w,z|)>> where <math|v,w,z\<in\>V>. For example, in a
-  Twitter-like network this could mean that <math|v> following <math|w> and
-  <math|w> following <math|z>. The triplet <math|<around*|(|v,w,z|)>> is
-  <strong|closed> if <math|v z\<in\>E>, i.e.<nbsp>if <math|v> also follows
-  <math|z> <cite-detail|wasserman|pp.<nbsp>243>. A closed triplet is called a
+  Twitter-like social network this could mean that <math|v> following
+  <math|w> and <math|w> following <math|z>. The triplet
+  <math|<around*|(|v,w,z|)>> is <strong|closed> if <math|v z\<in\>E>,
+  i.e.<nbsp>if <math|v> also follows <math|z>
+  <cite-detail|wasserman|pp.<nbsp>243>. A closed triplet is called a
   <strong|triangle>. If <math|G> is undirected, <math|N<rsub|triangles>> is
   the number of 3-cliques and <math|N<rsub|triplets>> is the number of
   two-edge paths in <math|V>.
@@ -13266,42 +13277,41 @@
   or 3D coordinates to each vertex <math|v\<in\>V> and produces a visual
   representation of <math|G> based on these coordinates. The second
   (optional) argument is a sequence of options. Each option is one of the
-  following:
+  following.
 
-  <\itemize-minus>
-    <item><with|font-family|tt|labels=true> or <with|font-family|tt|false>:
-    controls the visibility of vertex labels and edge weights (by default
+  <\description-dash>
+    <with|font-family|tt|labels=true> or <with|font-family|tt|false><item*|>Control
+    the visibility of vertex labels and edge weights (by default
     <with|font-family|tt|true>, i.e.<nbsp>the labels and weights are
-    displayed)
+    displayed).
 
-    <item><with|font-family|tt|spring>: draw the graph <math|G> using a
-    multilevel force-directed algorithm
+    <with|font-family|tt|spring><item*|>Apply a multilevel force-directed
+    algorithm.
 
-    <item><with|font-family|tt|tree[=r> or
-    <with|font-family|tt|[r1,r2,...]]>: draw the tree or forest <math|G>,
-    optionally specifying root nodes for each tree
+    <with|font-family|tt|tree[=r> or <with|font-family|tt|[r1,r2,...]]><item*|>Draw
+    a tree or forest <math|G>, optionally specifying the root node for each
+    tree (by default the first node is used).
 
-    <item><with|font-family|tt|bipartite>: draw the bipartite graph <math|G>
-    keeping the vertex partitions separated
+    <with|font-family|tt|bipartite><item*|>Draw a bipartite graph <math|G>,
+    separating the vertex partitions from one another.
 
-    <item><with|font-family|tt|circle[=L]> or
-    <with|font-family|tt|convexhull[=L]>: draw the graph <math|G> by setting
-    the <with|font-shape|italic|hull vertices> from list <math|L\<subset\>V>
-    (assuming <math|L=V> by default) on the unit circle and all other
-    vertices in origin, subsequently applying a force-directed vertex
-    placement algorithm to generate the layout while keeping the hull
-    vertices fixed
+    <with|font-family|tt|circle[=L]> or <with|font-family|tt|convexhull[=L]><item*|>Draw
+    a graph <math|G> by spreading the <with|font-shape|italic|hull vertices>
+    from list <math|L\<subset\>V> (assuming <math|L=V> by default) accross
+    the unit circle and putting all other vertices in origin, subsequently
+    applying a force-directed vertex placement algorithm to generate the
+    layout while keeping the hull vertices fixed.
 
-    <item><with|font-family|tt|planar> or <with|font-family|tt|plane>: draw
-    the planar graph <math|G> using a force-directed algorithm
+    <with|font-family|tt|planar> or <with|font-family|tt|plane><item*|>Draw a
+    planar graph <math|G> using a force-directed algorithm.
 
-    <item><with|font-family|tt|plot3d>: draw the connected graph <math|G> as
-    if the <with|font-family|tt|spring> option was enabled, but with vertex
-    positions in 3D instead of 2D
+    <with|font-family|tt|plot3d><item*|>Draw a connected graph <math|G> as if
+    the <with|font-family|tt|spring> option was enabled, but with vertex
+    positions in <abbr|3D> instead of <abbr|2D>.
+  </description-dash>
 
-    <item>any unassigned identifier <math|P>: when given, the vertex
-    coordinates will be stored to it in form of a list
-  </itemize-minus>
+  If an unassigned identifier is passed as an argument, it is used as the
+  destination for storing the computed vertex positions as a list.
 
   The style options <with|font-family|tt|spring>, <with|font-family|tt|tree>,
   <with|font-family|tt|circle>, <with|font-family|tt|planar> and
@@ -13355,10 +13365,10 @@
 
   When the option <kbd|spring> is specified, the input graph is drawn using
   the force-directed algorithm described in<nbsp><cite|hu> (for an example of
-  such a drawing see Figure<nbsp><reference|st53>). The idea, originally due
-  to <name|Fruchterman> and <name|Reingold> <cite|fruchterman>, is to
-  simulate physical forces in a spring-electrical model where the vertices
-  and edges represent equally charged particles and springs connecting them,
+  such drawing see Figure<nbsp><reference|st53>). The idea, originally due to
+  <name|Fruchterman> and <name|Reingold> <cite|fruchterman>, is to simulate
+  physical forces in a spring-electrical model where the vertices and edges
+  represent equally charged particles and springs connecting them,
   respectively.
 
   In a spring-electrical model, each vertex is being repulsed by every other
@@ -13385,33 +13395,31 @@
   The force-directed method is computationally expensive and for larger
   graphs the pleasing layout cannot be obtained most of the time since the
   algorithm, starting with a random initial layout, gets easily \Pstuck\Q in
-  the local energy minimum (ideally, the vertex positions should settle in
-  the global minimal energy constellation). To avoid this a multilevel scheme
-  is applied. The input graph is iteratively coarsened, either by removing
-  the vertices from a maximal independent vertex set or contracting the edges
-  of a maximal matching in each iteration. Each coarsening level is then
-  processed by the force-directed algorithm, starting from the deepest
-  (coarsest) one and \Plifting\Q the obtained layout to the first upper
-  level, using it as the initial layout for that level. The lifting is
-  achieved by using the prolongation matrix technique described
-  in<nbsp><cite|hu2>. To support drawing large graphs (with, say, 1000
-  vertices or more), the matrices used in the lifting process are stored as
-  sparse matrices. The multilevel algorithm is significantly faster than the
-  original, single-level one and usually produces better results.
+  a local energy minimum. To avoid this a multilevel scheme is applied. The
+  input graph is iteratively coarsened, either by removing the vertices from
+  a maximal independent vertex set or by contracting the edges of a maximal
+  matching in each iteration. Each coarsening level is processed by the
+  force-directed algorithm, starting from the deepest (coarsest) one and
+  \Plifting\Q the obtained layout to the first upper level, using it as the
+  initial layout for that level. The lifting done using a prolongation matrix
+  technique described in<nbsp><cite|hu2>. To support drawing large graphs
+  (with, say, 1000 vertices or more), the matrices used in the lifting
+  process are stored in sparse form. The multilevel algorithm is
+  significantly faster than the original, single-level algorithm one and
+  usually produces better results.
 
-  Graph layouts obtained by using force-directed method have a unique
-  property of reflecting symmetries in the design of the input graph, if any.
-  Thus the drawings become more appealing and illustrate the certain
-  properties of the input graph better. To make the symmetry more prominent,
-  the drawing is rotated such that the axis, with respect to which the layout
-  exhibits the largest <em|symmetry score>, becomes vertical. As the symmetry
-  detection is in general very computationally expensive\Vup to
-  <math|O<around*|(|<around*|\||V|\|><rsup|7>|)>> when using the symmetry
-  measure by <name|Purchase><nbsp><cite|welch>, for example\Vthe algorithm
-  deals only with the convex hull and the barycenter of the layout, which may
+  If the structure of the input graph is symmetric, a layout obtained by
+  using a force-directed method typically reveals these symmetries, which is
+  a unique property among graph drawing algorithms. To make the symmetries
+  more prominent, the layout is rotated such that the axis, with respect to
+  which the layout exhibits the largest <em|symmetry score>, becomes
+  vertical. Because symmetry detection is computationally quite expensive (up
+  to <math|O<around*|(|<around*|\||V|\|><rsup|7>|)>> when using the symmetry
+  measure by <name|Purchase><nbsp><cite|welch>, for example), the algorithm
+  accounts only the convex hull and the barycenter of the layout, which may
   not always be enough to produce the optimal result. Nevertheless, this
-  approach is very fast and seems to work most of the time for graphs with a
-  high level of symmetry.
+  approach is fast and works (most of the time) for graphs with a high level
+  of symmetry.
 
   For example, the following command lines produce a drawing of the tensor
   product of two graphs using the force-directed algorithm.
@@ -13648,14 +13656,14 @@
   example)<\float|float|tbh>
     <big-figure|<with|gr-mode|<tuple|group-edit|edit-props>|gr-frame|<tuple|scale|1cm|<tuple|0.5gw|0.5gh>>|gr-geometry|<tuple|geometry|1par|0.6par|top>|gr-auto-crop|true|gr-color|light
     grey|gr-line-width|2ln|<graphics||<with|color|green|line-width|2ln|<line|<point|-7.03767|3.2286>|<point|-6.0|3.6>>>|<point|-6|3.6>|<text-at|<math|f>|<point|-5.7|2.8>>|<with|color|red|line-width|2ln|<line|<point|-6.59316708559333|4.25095912157693>|<point|-4.25833443577193|4.01635467654452>>>|<point|-6.59316708559333|4.25095912157693>|<point|-4.91887154385501|2.01362614102394>|<point|-6.51908321206509|2.36922873395952>|<point|-7.0376703267628|3.22860166688715>|<with|color|green|line-width|2ln|<line|<point|-5.22142|3.45332>|<point|-4.18425056224368|2.8902797989152>>>|<point|-5.22142479163911|3.45331723772986>|<line|<point|-6.59316708559333|4.25095912157693>|<point|-7.0376703267628|3.22860166688715>|<point|-6.51908321206509|2.36922873395952>|<point|-4.91887154385501|2.01362614102394>|<point|-4.18425056224368|2.8902797989152>|<point|-4.25833443577193|4.01635467654452>|<point|-5.22142479163911|3.45331723772986>|<point|-6.0|3.6>|<point|-6.59316708559333|4.23614234687128>>|<point|-4.18425056224368|2.8902797989152>|<point|-4.25833443577193|4.01635467654452>|<text-at|chord|<point|-5.82891255457071|5.08316245535124>>|<with|dash-style|11100|<line|<point|-5.36484654054769|4.95510318825241>|<point|-5.3399589892843|4.31269017065749>>>>>|<label|chordface>A
-    chorded face.>
+    chorded face <math|f>.>
   </float> or there exists a face <math|g=<around*|(|w<rsub|1>,w<rsub|2>,\<ldots\>,v<rsub|k>,\<ldots\>,v<rsub|l>,\<ldots\>,w<rsub|m-1>,w<rsub|m>|)>>
   such that the vertices <math|v<rsub|k+1>,\<ldots\>,v<rsub|l-1>> are not
   contained in <math|g> (see Figure<nbsp><reference|touchface> for an
   example)<\float|float|tbh>
     <big-figure|<with|gr-mode|<tuple|group-edit|edit-props>|gr-frame|<tuple|scale|1cm|<tuple|0.5gw|0.5gh>>|gr-geometry|<tuple|geometry|1par|0.6par|top>|gr-auto-crop|true|gr-color|light
-    grey|gr-line-width|2ln|<graphics||<with|color|green|line-width|2ln|<line|<point|-7.47976|3.22362>|<point|-6.31419|3.16188>>>|<with|color|green|line-width|2ln|<line|<point|-5.73634|3.17669>|<point|-4.96587|4.11015>>>|<with|color|red|<line|<point|-7.12912|2.64329>|<point|-7.47975922741103|3.22362415663448>|<point|-7.61807|3.87308>|<point|-7.04022|4.45094>|<point|-5.95859|4.64355>|<point|-4.96587|4.11015>|<point|-5.14367|2.99889>|<point|-5.73634|3.17669>|<point|-6.31419|3.16188>|<point|-7.12912|2.64329>>>|<with|color|green|line-width|2ln|<line|<point|-7.24765|2.09507>|<point|-6.71425|2.33214>>>|<with|color|green|line-width|2ln|<line|<point|-5.57336|2.53957>|<point|-4.53618|2.33214>>>|<with|color|blue|<line|<point|-7.12912|2.64329>|<point|-7.24765|2.09507>|<point|-7.17357|1.39868>|<point|-6.37346|0.89491>|<point|-5.42519|0.835643>|<point|-4.62508|1.51721>|<point|-4.53618|2.33214>|<point|-5.14367|2.99889>|<point|-5.57336|2.53957>|<point|-6.03268|2.22842>|<point|-6.71425|2.33214>|<point|-7.12912|2.64329>>>|<point|-7.04022|4.45094>|<point|-7.61807|3.87308>|<point|-7.12912|2.64329>|<point|-6.31419|3.16188>|<point|-5.73634|3.17669>|<point|-5.14367|2.99889>|<point|-4.96587|4.11015>|<point|-5.95859|4.64355>|<point|-7.24765|2.09507>|<point|-7.17357|1.39868>|<point|-6.37346|0.89491>|<point|-5.42519|0.835643>|<point|-4.62508|1.51721>|<point|-4.53618|2.33214>|<point|-5.57336|2.53957>|<point|-6.03268|2.22842>|<point|-6.71425|2.33214>|<text-at|<math|f>|<point|-6.37346209816113|3.7397307844953>>|<text-at|<math|g>|<point|-5.82524143405212|1.50239780394232>>|<text-at|<math|v<rsub|l>>|<point|-4.94369294880275|3.06221060986903>>|<text-at|<math|v<rsub|k>>|<point|-7.6551627199365|2.48435639634872>>|<point|-7.47975922741103|3.22362415663448>>>|<label|touchface>Two
-    faces sharing a pair of vertices and no edges between them.>
+    grey|gr-line-width|2ln|<graphics||<with|color|green|line-width|2ln|<line|<point|-7.47976|3.22362>|<point|-6.31419|3.16188>>>|<with|color|green|line-width|2ln|<line|<point|-5.73634|3.17669>|<point|-4.96587|4.11015>>>|<with|color|red|<line|<point|-7.12912|2.64329>|<point|-7.47975922741103|3.22362415663448>|<point|-7.61807|3.87308>|<point|-7.04022|4.45094>|<point|-5.95859|4.64355>|<point|-4.96587|4.11015>|<point|-5.14367|2.99889>|<point|-5.73634|3.17669>|<point|-6.31419|3.16188>|<point|-7.12912|2.64329>>>|<with|color|green|line-width|2ln|<line|<point|-7.24765|2.09507>|<point|-6.71425|2.33214>>>|<with|color|green|line-width|2ln|<line|<point|-5.57336|2.53957>|<point|-4.53618|2.33214>>>|<with|color|blue|<line|<point|-7.12912|2.64329>|<point|-7.24765|2.09507>|<point|-7.17357|1.39868>|<point|-6.37346|0.89491>|<point|-5.42519|0.835643>|<point|-4.62508|1.51721>|<point|-4.53618|2.33214>|<point|-5.14367|2.99889>|<point|-5.57336|2.53957>|<point|-6.03268|2.22842>|<point|-6.71425|2.33214>|<point|-7.12912|2.64329>>>|<point|-7.04022|4.45094>|<point|-7.61807|3.87308>|<point|-7.12912|2.64329>|<point|-6.31419|3.16188>|<point|-5.73634|3.17669>|<point|-5.14367|2.99889>|<point|-4.96587|4.11015>|<point|-5.95859|4.64355>|<point|-7.24765|2.09507>|<point|-7.17357|1.39868>|<point|-6.37346|0.89491>|<point|-5.42519|0.835643>|<point|-4.62508|1.51721>|<point|-4.53618|2.33214>|<point|-5.57336|2.53957>|<point|-6.03268|2.22842>|<point|-6.71425|2.33214>|<text-at|<math|f>|<point|-6.37346209816113|3.7397307844953>>|<text-at|<math|g>|<point|-5.82524143405212|1.50239780394232>>|<text-at|<math|v<rsub|l>>|<point|-4.94369294880275|3.06221060986903>>|<text-at|<math|v<rsub|k>>|<point|-7.6551627199365|2.48435639634872>>|<point|-7.47975922741103|3.22362415663448>>>|<label|touchface>Faces
+    <math|f> and <math|g> having two vertices but no edges in common.>
   </float>. In Figures<nbsp><reference|blockjoin>, <reference|chordface>
   and<nbsp><reference|touchface>, the temporary edges added by the algorithm
   are drawn in green.
@@ -13663,12 +13671,13 @@
   This method of drawing planar graphs operates in
   <math|O<around*|(|<around*|\||V|\|><rsup|2>|)>> time. Nevertheless, it is
   quite fast for graphs up to 1000 vertices, usually producing results in
-  less than a second. The drawback of this method is that it sometimes
-  creates clusters of vertices which are very close to each other, resulting
-  in a very high ratio of the area of the largest inner face to the area of
-  the smallest inner face. However, if the result is not satisfactory, one
-  should simply redraw the graph and repeat the process until a better layout
-  is found. The planar embedding will in general be different each time.
+  less than a second. A drawback of this method is that it sometimes creates
+  clusters of vertices which are very close to each other, resulting in a
+  very high ratio of the area of the largest inner face to the area of the
+  smallest inner face. However, if the result is not satisfactory, one can
+  simply redraw the graph and repeat the process until a better layout is
+  obtained. The planar embedding will in general be different each time if
+  the graph is not triconnected.
 
   Another drawback of this method is that sparse planar graphs are sometimes
   drawn poorly.
@@ -15111,13 +15120,13 @@
     <associate|auto-322|<tuple|4.12.2|106>>
     <associate|auto-323|<tuple|4.12.3|107>>
     <associate|auto-324|<tuple|4.12.3|107>>
-    <associate|auto-325|<tuple|4.13|108>>
+    <associate|auto-325|<tuple|4.13|109>>
     <associate|auto-326|<tuple|4.13.1|109>>
     <associate|auto-327|<tuple|4.13.1|109>>
-    <associate|auto-328|<tuple|4.1|110>>
-    <associate|auto-329|<tuple|4.13.2|109>>
+    <associate|auto-328|<tuple|4.1|109>>
+    <associate|auto-329|<tuple|4.13.2|110>>
     <associate|auto-33|<tuple|1.4.2|16>>
-    <associate|auto-330|<tuple|4.13.2|109>>
+    <associate|auto-330|<tuple|4.13.2|110>>
     <associate|auto-331|<tuple|4.13.3|110>>
     <associate|auto-332|<tuple|4.13.3|110>>
     <associate|auto-333|<tuple|4.13.4|111>>
@@ -15156,7 +15165,7 @@
     <associate|auto-363|<tuple|6.1|123>>
     <associate|auto-364|<tuple|6.1|123>>
     <associate|auto-365|<tuple|6.1.1|123>>
-    <associate|auto-366|<tuple|6.1.2|123>>
+    <associate|auto-366|<tuple|6.1.2|124>>
     <associate|auto-367|<tuple|6.1.3|124>>
     <associate|auto-368|<tuple|6.1.4|126>>
     <associate|auto-369|<tuple|6.1.5|127>>
@@ -15353,7 +15362,7 @@
     <associate|make-weighted|<tuple|2.1.2|49>>
     <associate|maxflow|<tuple|4.7.2|93>>
     <associate|maximum-matching|<tuple|4.10.1|99>>
-    <associate|minimal-coloring|<tuple|4.13.2|109>>
+    <associate|minimal-coloring|<tuple|4.13.2|110>>
     <associate|minimum-covering|<tuple|4.11.4|103>>
     <associate|number-of-spanning-trees|<tuple|5.3.3|121>>
     <associate|random-graph|<tuple|1.10.1|36>>
@@ -15363,7 +15372,7 @@
     <associate|st-ordering|<tuple|4.9.3|99>>
     <associate|st53|<tuple|3.1|59>>
     <associate|subgraph|<tuple|1.8.1|25>>
-    <associate|tab:colors|<tuple|4.1|110>>
+    <associate|tab:colors|<tuple|4.1|109>>
     <associate|tab:special|<tuple|1.1|10>>
     <associate|touchface|<tuple|6.3|128>>
     <associate|trail|<tuple|1.2.3|13>>
@@ -15582,11 +15591,12 @@
       <tuple|normal|<surround|<hidden|<tuple>>||Joining two block by adding a
       temporary edge.>|<pageref|auto-370>>
 
-      <tuple|normal|<surround|<hidden|<tuple>>||A chorded
-      face.>|<pageref|auto-371>>
+      <tuple|normal|<surround|<hidden|<tuple>>||A chorded face
+      <with|mode|<quote|math>|f>.>|<pageref|auto-371>>
 
-      <tuple|normal|<surround|<hidden|<tuple>>||Two faces sharing a pair of
-      vertices and no edges between them.>|<pageref|auto-372>>
+      <tuple|normal|<surround|<hidden|<tuple>>||Faces
+      <with|mode|<quote|math>|f> and <with|mode|<quote|math>|g> having two
+      vertices but no edges in common.>|<pageref|auto-372>>
     </associate>
     <\associate|idx>
       <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|graph>>|<pageref|auto-5>>

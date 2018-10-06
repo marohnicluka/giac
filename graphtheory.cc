@@ -419,7 +419,7 @@ gen randomgraph(const vecteur &gv,bool directed,GIAC_CONTEXT) {
                 return generr("This method cannot generate digraphs");
             if (gv.back().type==_VECT) {
                 P=*gv.back()._VECTptr;
-            } else if (gv.back().is_symb_of_sommet(at_program)) {
+            } else if (gv.back().is_symb_of_sommet(at_program) || gv.back().type==_FUNC) {
                 vecteur L(n);
                 for (int i=0;i<n;++i) L[i]=i;
                 P=*_apply(makesequence(gv.back(),L),contextptr)._VECTptr;
@@ -522,12 +522,289 @@ gen count_spanning_trees(const graphe &G) {
 // |                             GIAC COMMANDS                                |
 // +--------------------------------------------------------------------------+
 
+/* USAGE:   foldl(op,id,r1,r2,...)
+ *
+ * Returns the composition of the binary operator or function op, with identity
+ * or initial value id onto its arguments r1, r2, ..., associating from the
+ * left. For example, given three arguments a, b and c and an initial value id,
+ * foldl(op,id,a,b,c) is equivalent to op(op(op(id,a),b),c).
+ */
+gen _foldl(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT  || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()<3)
+        return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+    gen &op=gv.front();
+    gen arg=gv[1];
+    for (const_iterateur it=gv.begin()+2;it!=gv.end();++it) {
+        arg=symbolic(at_of,makesequence(op,makesequence(arg,*it)));
+    }
+    return _eval(arg,contextptr);
+}
+static const char _foldl_s[]="foldl";
+static define_unary_function_eval(__foldl,&_foldl,_foldl_s);
+define_unary_function_ptr5(at_foldl,alias_at_foldl,&__foldl,0,true)
+
+/* USAGE:   foldr(op,id,r1,r2,...)
+ *
+ * Returns the composition of the binary operator or function op, with identity
+ * or initial value id onto its arguments r1, r2, ..., associating from the
+ * right. For example, given three arguments a, b and c and an initial value id,
+ * foldl(op,id,a,b,c) is equivalent to op(a,op(b,op(c,id))).
+ */
+gen _foldr(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT  || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()<3)
+        return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+    gen &op=gv.front();
+    gen arg=gv[1];
+    for (int i=gv.size();i-->2;) {
+        arg=symbolic(at_of,makesequence(op,makesequence(gv[i],arg)));
+    }
+    return _eval(arg,contextptr);
+}
+static const char _foldr_s[]="foldr";
+static define_unary_function_eval(__foldr,&_foldr,_foldr_s);
+define_unary_function_ptr5(at_foldr,alias_at_foldr,&__foldr,0,true)
+
+/* USAGE:   randvar(f,[params])
+ *          random_variable(f,[params])
+ *          randvar(f,[range=]a..b,[V])
+ *          randvar(L,[V])
+ *
+ * Returns a random variable with the specified probability distribution.
+ */
+gen _randvar(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.is_symb_of_sommet(at_program) || g.type==_FUNC) {
+        if (g==at_normal || g==at_normald || g==at_NORMALD || g==at_randNorm || g==at_randnormald)
+            return symbolic(at_normald,makesequence(0.0,1.0));
+        if (g==at_uniform || g==at_uniformd)
+            return symbolic(at_uniformd,makesequence(0.0,1.0));
+        return g;
+    }
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    vecteur items,weights,categories;
+    if (g.subtype==_SEQ__VECT) {
+        vecteur &gv=*g._VECTptr;
+        if (gv.front().type==_FUNC) {
+            const_iterateur it=gv.begin()+1;
+            for (;it!=gv.end();++it) {
+                if (!graphe::is_real_number(*it)) break;
+            }
+            if (it==gv.end())
+                return symbolic(gv.front()._SYMBptr->sommet,change_subtype(vecteur(gv.begin()+1,gv.end()),_SEQ__VECT));
+        }
+        if (gv.size()<2)
+            return gensizeerr(contextptr);
+        gen mean(undef),sdev(undef),a(undef),b(undef),&f=gv.front();
+        int cnt=1,samples=0;
+        for (const_iterateur it=gv.begin()+1;it!=gv.end();++it,++cnt) {
+            if (it->is_symb_of_sommet(at_equal)) {
+                gen &lh=it->_SYMBptr->feuille._VECTptr->front();
+                gen &rh=it->_SYMBptr->feuille._VECTptr->back();
+                if (lh==at_mean)
+                    mean=rh;
+                else if (lh==at_stddev)
+                    sdev=rh;
+                else if (lh==at_variance) {
+                    if (!is_positive(rh,contextptr)) return gensizeerr(contextptr);
+                    sdev=sqrt(rh,contextptr);
+                } else if (lh==at_range) {
+                    if (rh.type==_VECT) {
+                        if (rh._VECTptr->size()!=2)
+                            return gensizeerr(contextptr);
+                        a=rh._VECTptr->front();
+                        b=rh._VECTptr->back();
+                    } else if (rh.is_symb_of_sommet(at_interval)) {
+                        a=rh._SYMBptr->feuille._VECTptr->front();
+                        b=rh._SYMBptr->feuille._VECTptr->back();
+                    } else return gensizeerr(contextptr);
+                } else return gensizeerr(contextptr);
+            } else if (it->is_symb_of_sommet(at_interval)) {
+                a=it->_SYMBptr->feuille._VECTptr->front();
+                b=it->_SYMBptr->feuille._VECTptr->back();
+            } else if (it->type==_VECT) {
+                if (f.type==_VECT) {
+                    if (cnt!=1) return gensizeerr(contextptr);
+                    items=*(it->_VECTptr);
+                } else if (cnt==1)
+                    categories=*(it->_VECTptr);
+                else items=*(it->_VECTptr);
+            } else if (it->is_integer() && it->val>1 && cnt==2) {
+                samples=it->val;
+            } else return gensizeerr(contextptr);
+        }
+        if (!is_undef(sdev) && !is_strictly_positive(sdev,contextptr))
+            return gensizeerr(contextptr);
+        if (f.type==_VECT) { // custom discrete distribution
+            weights=*f._VECTptr;
+        } else if (f==at_normald || f==at_NORMALD || f==at_normal) {
+            if (is_undef(mean)) mean=0;
+            if (is_undef(sdev)) sdev=1;
+            mean=_evalf(mean,contextptr);
+            sdev=_evalf(sdev,contextptr);
+            return symbolic(at_normald,makesequence(mean,sdev));
+        } else if (f==at_uniform || f==at_uniformd) {
+            if (!is_undef(a) && !is_undef(b)) {
+                if (_evalf(a,contextptr).type!=_DOUBLE_ || _evalf(b,contextptr).type!=_DOUBLE_ ||
+                        !is_strictly_greater(b,a,contextptr))
+                    return gensizeerr(contextptr);
+                return makesequence(at_uniformd,a,b);
+            } else if (!is_undef(mean) && !is_undef(sdev)) {
+                gen sqrt3=sqrt(3,contextptr);
+                return symbolic(at_uniformd,makesequence(mean-sqrt3*sdev,mean+sqrt3*sdev));
+            } else return gensizeerr(contextptr);
+        } else if (f==at_poisson || f==at_POISSON) {
+            gen lambda;
+            if (!is_undef(mean)) {
+                if (!is_undef(sdev) && !is_zero(_ratnormal(sq(sdev)-mean,contextptr)))
+                    return gensizeerr(contextptr);
+                lambda=mean;
+            } else if (!is_undef(sdev)) {
+                lambda=sq(sdev);
+            } else return gensizeerr(contextptr);
+            if (!is_strictly_positive(lambda,contextptr))
+                return gensizeerr(contextptr);
+            return symbolic(at_poisson,lambda);
+        } else if (f==at_exp || f==at_EXP || f==at_exponential || f==at_exponentiald) {
+            gen lambda;
+            if (!is_undef(mean)) {
+                if (!is_undef(sdev) && !is_zero(_ratnormal(sdev-mean,contextptr)))
+                    return gensizeerr(contextptr);
+                if (!is_strictly_positive(mean,contextptr))
+                    return gensizeerr(contextptr);
+                lambda=_inv(mean,contextptr);
+            } else if (!is_undef(sdev)) {
+                lambda=_inv(sdev,contextptr);
+            } else return gensizeerr(contextptr);
+            if (!is_strictly_positive(lambda,contextptr))
+                return gensizeerr(contextptr);
+            return symbolic(at_exponentiald,lambda);
+        } else if (f==at_weibull || f==at_weibulld) {
+            if (is_undef(mean) || is_undef(sdev) || !is_strictly_positive(mean,contextptr))
+                return gensizeerr(contextptr);
+            gen var=sq(sdev);
+            if (is_zero(var))
+                return gensizeerr(contextptr);
+            identificateur tmp(" k");
+            gen e=_Gamma(1+gen(2)/tmp,contextptr)/_Gamma(1+gen(1)/tmp,contextptr)-var/sq(mean)-1;
+            gen k=_solve(makesequence(e,symb_equal(tmp,max(1,_inv(var,contextptr),contextptr)),_NEWTON_SOLVER),contextptr);
+            gen lambda=mean/_Gamma(1+_inv(k,contextptr),contextptr);
+            return symbolic(at_weibulld,makesequence(k,lambda));
+        } else if (f==at_Gamma || f==at_gammad) {
+            if (is_undef(mean) || is_undef(sdev) || !is_strictly_positive(mean,contextptr))
+                return gensizeerr(contextptr);
+            gen var=sq(sdev);
+            return symbolic(at_gammad,makesequence(sq(mean)/var,mean/var));
+        } else if (f==at_Beta || f==at_betad) {
+            if (is_undef(mean) || is_undef(sdev) || !is_strictly_positive(mean,contextptr) ||
+                    !is_strictly_greater(1,mean,contextptr))
+                return gensizeerr(contextptr);
+            gen var=sq(sdev),fac=(var+sq(mean)-mean)/var;
+            gen par1=-mean*fac,par2=(mean-1)*fac;
+            if (!is_strictly_positive(par1,contextptr) || !is_strictly_positive(par2,contextptr))
+                return gensizeerr(contextptr);
+            return symbolic(at_betad,makesequence(par1,par2));
+        } else if (f==at_geometric) {
+            gen p;
+            if (!is_undef(mean)) {
+                if (!is_strictly_positive(mean,contextptr) ||
+                        (!is_undef(sdev) && !is_zero(_ratnormal(sq(sdev)-sq(mean)-mean,contextptr))))
+                    return gensizeerr(contextptr);
+                p=_inv(mean,contextptr);
+            } else if (!is_undef(sdev)) {
+                gen var=sq(sdev);
+                p=_ratnormal((sqrt(4*var+1,contextptr)-1)/(2*var),contextptr);
+            } else return gensizeerr(contextptr);
+            return symbolic(at_geometric,p);
+        } else if (f==at_fisher || f==at_fisherd || f==at_snedecor || f==at_chisquare || f==at_chisquared ||
+                   f==at_cauchy || f==at_cauchyd || f==at_student || f==at_studentd) {
+            return generr("Specifying moments is not supported for this distribution");
+        } else if (f==at_multinomial) {
+            if (categories.empty())
+                return gensizeerr(contextptr);
+            if (items.empty())
+                return makesequence(at_multinomial,categories);
+            return makesequence(at_multinomial,categories,items);
+        } else if (f==at_binomial || f==at_BINOMIAL) {
+            if (is_undef(mean) || is_undef(sdev) || !is_strictly_positive(mean,contextptr) ||
+                    is_zero(ratnormal(mean-sq(sdev),contextptr)))
+                return gensizeerr(contextptr);
+            gen tmp=mean-sq(sdev),N=_ratnormal(sq(mean)/tmp,contextptr),p=tmp/mean;
+            if (!is_zero(N-_floor(N,contextptr))) {
+                N=_round(N,contextptr);
+                if (is_zero(N))
+                    return gensizeerr(contextptr);
+                p=mean/N;
+            } else N=_round(N,contextptr);
+            if (!is_greater(p,0,contextptr) || is_strictly_greater(p,1,contextptr))
+                return gensizeerr(contextptr);
+            return symbolic(at_binomial,makesequence(N,_ratnormal(p,contextptr)));
+        } else if (f.type==_FUNC || f.is_symb_of_sommet(at_program)) { // custom discrete distribution
+            if (!is_integer(a) || !is_integer(b) || !is_strictly_greater(b,a,contextptr))
+                return gensizeerr(contextptr);
+            if (samples>0) {
+                identificateur k(" k");
+                gen support=_seq(makesequence(k,symb_equal(k,symb_interval(a,b)),
+                                              _evalf((b-a)/gen(samples),contextptr)),contextptr);
+                gen values=_apply(makesequence(f,support),contextptr);
+                return _randvar(makesequence(values,support),contextptr);
+            }
+            int lb=a.val,ub=b.val;
+            vecteur rng(ub-lb+1);
+            for (iterateur it=rng.begin();it!=rng.end();++it) {
+                *it=lb+int(it-rng.begin());
+            }
+            weights=*_apply(makesequence(gv.front(),rng),contextptr)._VECTptr;
+            if (items.empty()) items=rng;
+        }
+    } else if (ckmatrix(g)) {
+        if (g._VECTptr->front()._VECTptr->size()!=2)
+            return gendimerr(contextptr);
+        int n=g._VECTptr->size();
+        weights.reserve(n);
+        items.reserve(n);
+        for (int i=0;i<n;++i) {
+            items.push_back(g._VECTptr->at(i)._VECTptr->front());
+            weights.push_back(g._VECTptr->at(i)._VECTptr->back());
+        }
+    } else weights=*g._VECTptr;
+    if (weights.empty())
+        return gensizeerr(contextptr);
+    if (!items.empty() && items.size()!=weights.size())
+        return gendimerr(contextptr);
+    for (const_iterateur it=weights.begin();it!=weights.end();++it) {
+        if (!graphe::is_real_number(*it) || !is_positive(*it,contextptr))
+            return gensizeerr(contextptr);
+    }
+    graphe::ransampl rs(weights,contextptr);
+    gen ret=rs.data();
+    if (!items.empty())
+        ret=mergevecteur(*ret._VECTptr,items);
+    return symbolic(at_discreted,change_subtype(ret,_SEQ__VECT));
+}
+static const char _randvar_s[]="randvar";
+static define_unary_function_eval(__randvar,&_randvar,_randvar_s);
+define_unary_function_ptr5(at_randvar,alias_at_randvar,&__randvar,0,true)
+
+static const char _random_variable_s[]="random_variable";
+static define_unary_function_eval(__random_variable,&_randvar,_random_variable_s);
+define_unary_function_ptr5(at_random_variable,alias_at_random_variable,&__random_variable,0,true)
+
 /* USAGE:   trail(V)
  *
  * Returns a trail of vertices from sequence V (this is a dummy command, it
  * returns itself).
  */
 gen _trail(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
     return symbolic(at_trail,g);
 }
 static const char _trail_s[]="trail";
@@ -2080,17 +2357,19 @@ gen _add_arc(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
     if (g._VECTptr->size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-    if (g._VECTptr->back().type!=_VECT)
+    if (gv.back().type!=_VECT)
         return gt_err(_GT_ERR_INVALID_EDGE);
-    vecteur &E=*g._VECTptr->back()._VECTptr;
+    vecteur E=gv.back().is_symb_of_sommet(at_trail)?
+                *gv.back()._SYMBptr->feuille._VECTptr:*gv.back()._VECTptr;
     graphe G(contextptr);
-    if (!G.read_gen(g._VECTptr->front()))
+    if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (!G.is_directed())
         return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED);
-    if (!parse_edges(G,E,ckmatrix(g._VECTptr->back())))
+    if (!parse_edges(G,E,ckmatrix(gv.back())))
         return gendimerr(contextptr);
     return G.to_gen();
 }
@@ -2107,13 +2386,15 @@ gen _delete_arc(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    if (g._VECTptr->size()!=2)
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-    if (g._VECTptr->back().type!=_VECT)
+    if (gv.back().type!=_VECT)
         return gt_err(_GT_ERR_INVALID_EDGE);
-    vecteur &E=*g._VECTptr->back()._VECTptr;
+    vecteur E=gv.back().is_symb_of_sommet(at_trail)?
+                *gv.back()._SYMBptr->feuille._VECTptr:*gv.back()._VECTptr;
     graphe G(contextptr);
-    if (!G.read_gen(g._VECTptr->front()))
+    if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (!G.is_directed())
         return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED);
@@ -2134,17 +2415,19 @@ gen _add_edge(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    if (g._VECTptr->size()!=2)
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-    if (g._VECTptr->back().type!=_VECT)
+    if (gv.back().type!=_VECT)
         return gt_err(_GT_ERR_INVALID_EDGE);
-    vecteur &E=*g._VECTptr->back()._VECTptr;
+    vecteur E=gv.back().is_symb_of_sommet(at_trail)?
+                *gv.back()._SYMBptr->feuille._VECTptr:*gv.back()._VECTptr;
     graphe G(contextptr);
-    if (!G.read_gen(g._VECTptr->front()))
+    if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
-    if (!parse_edges(G,E,ckmatrix(g._VECTptr->back())))
+    if (!parse_edges(G,E,ckmatrix(gv.back())))
         return gendimerr(contextptr);
     return G.to_gen();
 }
@@ -2161,13 +2444,15 @@ gen _delete_edge(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    if (g._VECTptr->size()!=2)
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-    if (g._VECTptr->back().type!=_VECT)
+    if (gv.back().type!=_VECT)
         return gt_err(_GT_ERR_INVALID_EDGE);
-    vecteur &E=*g._VECTptr->back()._VECTptr;
+    vecteur E=gv.back().is_symb_of_sommet(at_trail)?
+                *gv.back()._SYMBptr->feuille._VECTptr:*gv.back()._VECTptr;
     graphe G(contextptr);
-    if (!G.read_gen(g._VECTptr->front()))
+    if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
@@ -3834,7 +4119,7 @@ gen _highlight_subgraph(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_SUBGRAPH);
     vecteur V=S.vertices(),E=S.edges(false);
     if (overwrite_weights && G.is_weighted() && S.is_weighted()) {
-        int i,j,k,l;
+        int i,j,k,l;if (g.type==_STRNG && g.subtype==-1) return g;
         for (const_iterateur it=E.begin();it!=E.end();++it) {
             i=G.node_index(it->_VECTptr->front());
             j=G.node_index(it->_VECTptr->back());
@@ -4411,11 +4696,8 @@ static const char _topologic_sort_s[]="topologic_sort";
 static define_unary_function_eval(__topologic_sort,&_topologic_sort,_topologic_sort_s);
 define_unary_function_ptr5(at_topologic_sort,alias_at_topologic_sort,&__topologic_sort,0,true)
 
-gen _topological_sort(const gen &g,GIAC_CONTEXT) {
-    return _topologic_sort(g,contextptr);
-}
 static const char _topological_sort_s[]="topological_sort";
-static define_unary_function_eval(__topological_sort,&_topological_sort,_topological_sort_s);
+static define_unary_function_eval(__topological_sort,&_topologic_sort,_topological_sort_s);
 define_unary_function_ptr5(at_topological_sort,alias_at_topological_sort,&__topological_sort,0,true)
 
 /* USAGE:   is_acyclic(G)
@@ -4797,57 +5079,7 @@ static const char _is_arborescence_s[]="is_arborescence";
 static define_unary_function_eval(__is_arborescence,&_is_arborescence,_is_arborescence_s);
 define_unary_function_ptr5(at_is_arborescence,alias_at_is_arborescence,&__is_arborescence,0,true)
 
-/* USAGE:   foldl(op,id,r1,r2,...)
- *
- * Returns the composition of the binary operator or function op, with identity
- * or initial value id onto its arguments r1, r2, ..., associating from the
- * left. For example, given three arguments a, b and c and an initial value id,
- * foldl(op,id,a,b,c) is equivalent to op(op(op(id,a),b),c).
- */
-gen _foldl(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type!=_VECT  || g.subtype!=_SEQ__VECT)
-        return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
-    if (gv.size()<3)
-        return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-    gen &op=gv.front();
-    gen arg=gv[1];
-    for (const_iterateur it=gv.begin()+2;it!=gv.end();++it) {
-        arg=symbolic(at_of,makesequence(op,makesequence(arg,*it)));
-    }
-    return _eval(arg,contextptr);
-}
-static const char _foldl_s[]="foldl";
-static define_unary_function_eval(__foldl,&_foldl,_foldl_s);
-define_unary_function_ptr5(at_foldl,alias_at_foldl,&__foldl,0,true)
-
-/* USAGE:   foldr(op,id,r1,r2,...)
- *
- * Returns the composition of the binary operator or function op, with identity
- * or initial value id onto its arguments r1, r2, ..., associating from the
- * right. For example, given three arguments a, b and c and an initial value id,
- * foldl(op,id,a,b,c) is equivalent to op(a,op(b,op(c,id))).
- */
-gen _foldr(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type!=_VECT  || g.subtype!=_SEQ__VECT)
-        return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
-    if (gv.size()<3)
-        return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-    gen &op=gv.front();
-    gen arg=gv[1];
-    for (int i=gv.size();i-->2;) {
-        arg=symbolic(at_of,makesequence(op,makesequence(gv[i],arg)));
-    }
-    return _eval(arg,contextptr);
-}
-static const char _foldr_s[]="foldr";
-static define_unary_function_eval(__foldr,&_foldr,_foldr_s);
-define_unary_function_ptr5(at_foldr,alias_at_foldr,&__foldr,0,true)
-
-/* UASGE:   graph_spectrum(G)
+/* USAGE:   graph_spectrum(G)
  *
  * Returns the graph spectrum of G. The return value is a list of lists with two
  * elements, each containing an eigenvalue and its multiplicity.
@@ -4873,7 +5105,7 @@ static const char _graph_spectrum_s[]="graph_spectrum";
 static define_unary_function_eval(__graph_spectrum,&_graph_spectrum,_graph_spectrum_s);
 define_unary_function_ptr5(at_graph_spectrum,alias_at_graph_spectrum,&__graph_spectrum,0,true)
 
-/* UASGE:   seidel_spectrum(G)
+/* USAGE:   seidel_spectrum(G)
  *
  * Returns the Seidel spectrum of G. The return value is a list of lists with two
  * elements, each containing an eigenvalue and its multiplicity.
@@ -4934,7 +5166,7 @@ static const char _graph_charpoly_s[]="graph_charpoly";
 static define_unary_function_eval(__graph_charpoly,&_graph_charpoly,_graph_charpoly_s);
 define_unary_function_ptr5(at_graph_charpoly,alias_at_graph_charpoly,&__graph_charpoly,0,true)
 
-/* UASGE:   is_integer_graph(G)
+/* USAGE:   is_integer_graph(G)
  *
  * Returns true iff the spectrum of graph G consists only of integers.
  */

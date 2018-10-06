@@ -409,11 +409,12 @@ public:
 
     class ransampl { // random sampling from a given degree distribution
         int n;
-        ivector alias;
         vecteur prob;
+        ivector alias;
         const context *ctx;
     public:
         ransampl(const vecteur &p,GIAC_CONTEXT);
+        gen data() const;
         int generate() const;
     };
 

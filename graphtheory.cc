@@ -586,6 +586,8 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
             return symbolic(at_normald,makesequence(0.0,1.0));
         if (g==at_uniform || g==at_uniformd)
             return symbolic(at_uniformd,makesequence(0.0,1.0));
+        if (g==at_exp || g==at_exponential || g==at_exponentiald || g==at_EXP)
+            return symbolic(at_exponentiald,1.0);
         return g;
     }
     if (g.type!=_VECT)
@@ -596,10 +598,25 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
         if (gv.front().type==_FUNC) {
             const_iterateur it=gv.begin()+1;
             for (;it!=gv.end();++it) {
-                if (!graphe::is_real_number(*it)) break;
+                if (!graphe::is_real_number(*it) && it->type!=_IDNT) break;
             }
-            if (it==gv.end())
-                return symbolic(gv.front()._SYMBptr->sommet,change_subtype(vecteur(gv.begin()+1,gv.end()),_SEQ__VECT));
+            if (it==gv.end()) {
+                gen args=change_subtype(vecteur(gv.begin()+1,gv.end()),_SEQ__VECT);
+                if (gv.front()==at_exp) {
+                    if (args._VECTptr->size()==1)
+                        return symbolic(at_exponentiald,args._VECTptr->front());
+                    return gensizeerr(contextptr);
+                }
+                if (gv.front()==at_normal) {
+                    if (args._VECTptr->size()==2)
+                        return symbolic(at_exponentiald,args._VECTptr->front());
+                    return gensizeerr(contextptr);
+                }
+                gen dist=symbolic(gv.front()._SYMBptr->sommet,args);
+                int nd=is_distribution(dist);
+                if (nd==0) return gensizeerr(contextptr);
+                return symbolic(distribution(nd),args);
+            }
         }
         if (gv.size()<2)
             return gensizeerr(contextptr);

@@ -615,7 +615,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
                 gen dist=symbolic(gv.front()._SYMBptr->sommet,args);
                 int nd=is_distribution(dist);
                 if (nd==0) return gensizeerr(contextptr);
-                return symbolic(distribution(nd),args);
+                return symbolic(distribution(nd)._SYMBptr->sommet,args);
             }
         }
         if (gv.size()<2)

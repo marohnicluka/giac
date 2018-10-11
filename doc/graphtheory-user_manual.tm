@@ -12603,7 +12603,7 @@
   <verbatim|undef>. If the second argument is given, a Hamiltonian cycle is
   stored to <verbatim|hc>.
 
-  The strategy is to apply some hamiltonicity criteria presented in
+  The strategy is to apply some hamiltonicity criteria presented by
   <name|DeLeon> <cite|melissa> before resorting to the definitive but NP-hard
   algorithm. If <math|G> is not biconnected, it is not Hamiltonian. Else, the
   criterion of <name|Dirac> is applied: if
@@ -12679,7 +12679,9 @@
     <|unfolded-io>
       is_hamiltonian(graph("petersen"))
     <|unfolded-io>
-      <script-busy>
+      <\equation*>
+        <text|false>
+      </equation*>
     </unfolded-io>
 
     <\unfolded-io>

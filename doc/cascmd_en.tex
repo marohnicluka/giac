@@ -6538,7 +6538,7 @@ by combining {\tt simplify}, {\tt texpand}, {\tt tlin}, {\tt tcollect}, {\tt tri
 Input :
 \begin{center}{\tt trigsimplify((sin(x+y)-sin(x-y))/(cos(x+y)+cos(x-y)))}\end{center}
 Output :
-\begin{center}{\tt tan(4*x/3)}\end{center}
+\begin{center}{\tt tan(y)}\end{center}
 Input :
 \begin{center}{\tt trigsimplify(1-1/4*sin(2a)\verb|^|2-sin(b)\verb|^|2-cos(a)\verb|^|4)}\end{center}
 Output :
@@ -13739,76 +13739,6 @@ It is advisable to use only (capital) letters, digits and underscore when naming
 
 \textbf{Warning!} Too large problems won't be loaded. More precisely, if $ n_v\cdot n_c>10^5 $, where $ n_v $ is the number of variables and $ n_c $ is the number of constraints, loading is aborted. Many MPS files available, for example, in the Netlib repository ({\tt http://www.netlib.org/}), contain very large problems with thousands of variables and constraints. Trying to load them to Xcas without a safety limit could easily eat up huge amounts of available memory, probably freezing up the whole system. If a large LP problem needs to be solved, one may consider using GLPK standalone solver\footnote{See {\tt https://www.gnu.org/software/glpk/} for installing GLPK in Linux or {\tt http://winglpk.sourceforge.net/} for MS~Windows.}.
 
-\subsection{Nonlinear optimization: {\tt nlpsolve}}\index{nlpsolve}
-{\tt nlpsolve} computes the optimum of a (not necessarily differentiable) nonlinear (multivariate) objective function, subject to a set of nonlinear equality and/or inequality constraints, using the COBYLA algorithm. The command takes the following arguments:
-\begin{itemize}
-	\item {\tt obj} : objective expression
-	\item {\tt constr} : list of equality and inequality constraints (optional)
-	\item {\tt bd} : sequence of variable boundaries (optional) : {\tt x=a..b}, {\tt y=c..d}, \ldots
-	\item {\tt opt} : sequence of options (optional), which may be one of:
-	\begin{itemize}
-		\item {\tt maximize=true} or {\tt false} (or just {\tt maximize})
-		\item {\tt nlp\_initialpoint=[x=x0,y=y0,...]}
-		\item {\tt nlp\_iterationlimit=n}
-		\item {\tt assume=nlp\_nonnegative}
-		\item {\tt nlp\_precision=eps}
-	\end{itemize}
-\end{itemize}
-
-{\tt nlpsolve} returns a list containing the optimal value of the objective and a vector of optimal values of the decision variables.
-
-The objective is minimized by default, unless {\tt maximize} or {\tt maximize=true} is specified as an option.
-
-Initial point, if given, does not need to be feasible. Note, however, that the initial value of a variable must not be zero. If the initial point is not given or isn't feasible, a feasible starting guess is automatically generated. Note that choosing a good initial point is needed for obtaining a correct solution in some cases.
-
-Input syntax for {\tt nlpsolve} resembles that of Maple's {\tt NLPSolve} (entering the objective as a function (univariate case) is not supported, however).
-
-\subsubsection{Examples}
-
-Input :
-\begin{center}
-	\tt nlpsolve(ln(1+x1\^{}2)-x2,[(1+x1\^{}2)\^{}2+x2\^{}2=4])
-\end{center}
-Output :
-\begin{center}
-	\tt [-1.73205080757,[x1=-4.77142305945e-08,x2=1.73205080757]]
-\end{center}
-Input :
-\begin{center}
-	\tt nlpsolve(-x1*x2*x3,[72-x1-2x2-2x3>=0],
-	x1=0..20,x2=0..11,x3=0..42)
-\end{center}
-Output :
-\begin{center}
-	\tt [-3300.0,[x1=20.0,x2=11.0,x3=15.0]]
-\end{center}
-Input :
-\begin{center}
-	\tt nlpsolve(x\^{}3+2x*y-2y\^{}2,x=-10..10,y=-10..10,
-	nlp\_initialpoint=[x=3,y=4],maximize)
-\end{center}
-Output :
-\begin{center}
-	\tt [1050.0,[x=10.0,y=4.99999985519]]
-\end{center}
-Input :
-\begin{center}
-	\tt nlpsolve(sin(x)/x,x=1..30)
-\end{center}
-Output :
-\begin{center}
-	\tt [-0.217233628211,[x=4.49340942383]]
-\end{center}
-Input :
-\begin{center}
-	\tt nlpsolve(2-1/120*x1*x2*x3*x4*x5,
-	[x1<=1,x2<=2,x3<=3,x4<=4,x5<=5],assume=nlp\_nonnegative)
-\end{center}
-Output :
-\begin{center}
-	\tt [1.0,[x1=1.0,x2=2.0,x3=3.0,x4=4.0,x5=5.0]]
-\end{center}
-
 \subsection{Solving transportation problems: {\tt tpsolve}}\index{tpsolve|textbf}
 The objective of a transportation problem is to minimize the cost of distributing a product from $ m $ sources to $ n $ destinations. It is determined by three parameters :
 \begin{itemize}
@@ -14098,6 +14028,76 @@ Input :
 Output :
 \begin{center}
 {\tt [[1,0,0],[0,1,0],[0,0,1],[1/3,1/3,1/3]]}
+\end{center}
+
+\subsection{Global extrema without using derivatives : {\tt nlpsolve}}\index{nlpsolve}
+{\tt nlpsolve} computes the optimum of a (not necessarily differentiable) nonlinear (multivariate) objective function, subject to a set of nonlinear equality and/or inequality constraints, using the COBYLA algorithm. The command takes the following arguments:
+\begin{itemize}
+	\item {\tt obj} : objective expression
+	\item {\tt constr} : list of equality and inequality constraints (optional)
+	\item {\tt bd} : sequence of variable boundaries (optional) : {\tt x=a..b}, {\tt y=c..d}, \ldots
+	\item {\tt opt} : sequence of options (optional), which may be one of:
+	\begin{itemize}
+		\item {\tt maximize=true} or {\tt false} (or just {\tt maximize})
+		\item {\tt nlp\_initialpoint=[x=x0,y=y0,...]}
+		\item {\tt nlp\_iterationlimit=n}
+		\item {\tt assume=nlp\_nonnegative}
+		\item {\tt nlp\_precision=eps}
+	\end{itemize}
+\end{itemize}
+
+{\tt nlpsolve} returns a list containing the optimal value of the objective and a vector of optimal values of the decision variables.
+
+The objective is minimized by default, unless {\tt maximize} or {\tt maximize=true} is specified as an option.
+
+Initial point, if given, does not need to be feasible. Note, however, that the initial value of a variable must not be zero. If the initial point is not given or isn't feasible, a feasible starting guess is automatically generated. Note that choosing a good initial point is needed for obtaining a correct solution in some cases.
+
+Input syntax for {\tt nlpsolve} resembles that of Maple's {\tt NLPSolve} (entering the objective as a function (univariate case) is not supported, however).
+
+\subsubsection{Examples}
+
+Input :
+\begin{center}
+	\tt nlpsolve(ln(1+x1\^{}2)-x2,[(1+x1\^{}2)\^{}2+x2\^{}2=4])
+\end{center}
+Output :
+\begin{center}
+	\tt [-1.73205080757,[x1=-4.77142305945e-08,x2=1.73205080757]]
+\end{center}
+Input :
+\begin{center}
+	\tt nlpsolve(-x1*x2*x3,[72-x1-2x2-2x3>=0],
+	x1=0..20,x2=0..11,x3=0..42)
+\end{center}
+Output :
+\begin{center}
+	\tt [-3300.0,[x1=20.0,x2=11.0,x3=15.0]]
+\end{center}
+Input :
+\begin{center}
+	\tt nlpsolve(x\^{}3+2x*y-2y\^{}2,x=-10..10,y=-10..10,
+	nlp\_initialpoint=[x=3,y=4],maximize)
+\end{center}
+Output :
+\begin{center}
+	\tt [1050.0,[x=10.0,y=4.99999985519]]
+\end{center}
+Input :
+\begin{center}
+	\tt nlpsolve(sin(x)/x,x=1..30)
+\end{center}
+Output :
+\begin{center}
+	\tt [-0.217233628211,[x=4.49340942383]]
+\end{center}
+Input :
+\begin{center}
+	\tt nlpsolve(2-1/120*x1*x2*x3*x4*x5,
+	[x1<=1,x2<=2,x3<=3,x4<=4,x5<=5],assume=nlp\_nonnegative)
+\end{center}
+Output :
+\begin{center}
+	\tt [1.0,[x1=1.0,x2=2.0,x3=3.0,x4=4.0,x5=5.0]]
 \end{center}
 
 \subsection{Minimax polynomial approximation: {\tt minimax}}\index{minimax|textbf}

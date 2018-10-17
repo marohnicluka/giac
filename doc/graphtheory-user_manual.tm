@@ -823,15 +823,15 @@
 
   The algorithms in this library are implemented according to the relevant
   scientific publications. Although the development focus was on simplicity,
-  the algorithms are reasonably fast since naive implementations were not
-  considered. For some difficult tasks, such as solving traveling salesman
-  problem, finding graph colorings and graph isomorphism, freely available
-  third party libraries are used, in particular <abbr|GNU> Linear Programming
-  Kit (<samp|GLPK>) and <samp|nauty>. These libraries, included in
-  <samp|Giac/Xcas> by default, are optional during the compilation.
-  Nevertheless, most commands has no dependencies save <samp|Giac> itself.
+  the algorithms are reasonably fast. For some more difficult tasks, such as
+  solving traveling salesman problem, finding graph colorings and graph
+  isomorphism, freely available third party libraries are used, in particular
+  <abbr|GNU> Linear Programming Kit (<samp|GLPK>) and <samp|nauty>. These
+  libraries, included in <samp|Giac/Xcas> by default, are optional during the
+  compilation. Nevertheless, most commands has no dependencies save
+  <samp|Giac> itself.
 
-  This library was developed and documented by <name|Luka Marohni¢>
+  This library was written and documented by <name|Luka Marohni¢>
   (<verbatim|luka.marohnic@tvz.hr>). Special thanks go to <name|Bernard
   parisse>, the <samp|Giac/Xcas> project leader, and <name|Jose Capco> for
   their interest, comments, suggestions and support.
@@ -13639,14 +13639,15 @@
   adding one temporary edge for each articulation point, joining the two
   corresponding blocks. Figure<nbsp><reference|blockjoin> shows the outer
   faces of two blocks <math|B<rsub|1>> and <math|B<rsub|2>>, connected by an
-  articulation point (cut vertex)<\float|float|tbh>
+  articulation point (cut vertex). The temporary edge (shown in green) is
+  added to join <math|B<rsub|1>> and <math|B<rsub|2>> into a single block.
+  After \Pfolding up\Q the tree of blocks, the algorithm picks the largest
+  face in the resulting biconnected graph to be the outer face of the planar
+  embedding.<\float|float|tbh>
     <big-figure|<with|gr-mode|<tuple|group-edit|edit-props>|gr-frame|<tuple|scale|1cm|<tuple|0.5gw|0.5gh>>|gr-geometry|<tuple|geometry|1par|0.6par|top>|gr-auto-crop|true|gr-color|light
     grey|gr-line-width|2ln|<graphics||<point|-7.02714|4.71764>|<point|-7.27902|3.87308>|<point|-6.21221|2.99889>|<with|color|green|line-width|2ln|<line|<point|-5.9307|3.7101>|<point|-5.32321|2.76182>>>|<point|-5.9307|3.7101>|<point|-6.36038|4.55465>|<point|-6.74562|2.13952>|<point|-6.0196|1.26533>|<point|-5.11577|0.998627>|<point|-4.83425|2.02098>|<point|-5.32321|2.76182>|<line|<point|-7.02714|4.71764>|<point|-6.36038|4.55465>|<point|-5.9307|3.7101>|<point|-6.21221|2.99889>|<point|-7.27902|3.87308>|<point|-7.02714|4.71764>>|<line|<point|-6.21221|2.99889>|<point|-6.74562|2.13952>|<point|-6.0196|1.26533>|<point|-5.11577|0.998627>|<point|-4.83425|2.02098>|<point|-5.32321|2.76182>|<point|-6.21221|2.99889>>|<text-at|<math|B<rsub|1>>|<point|-6.86415200423336|3.87308175684614>>|<text-at|<math|B<rsub|2>>|<point|-5.93069519777748|1.90245072099484>>|<text-at|temp.<nbsp>edge|<point|-6.02040613837809|4.26236936102659>>|<with|dash-style|11100|<line|<point|-4.92621811732097|4.05921748908586>|<point|-5.44174163249107|3.28041076862019>>>>>|<label|blockjoin>Joining
     two block by adding a temporary edge.>
-  </float>. The temporary edge (shown in green) is added to join
-  <math|B<rsub|1>> and <math|B<rsub|2>> into a single block. After \Pfolding
-  up\Q the tree of blocks, the algorithm picks the largest face in the
-  resulting biconnected graph to be the outer face of the planar embedding.
+  </float>
 
   The second part of the augmentation process consists of recursively
   decomposing each non-convex inner face into several convex polygons by

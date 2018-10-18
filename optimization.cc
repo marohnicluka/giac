@@ -3131,12 +3131,12 @@ gen _bvpsolve(const gen &g,GIAC_CONTEXT) {
         return undef;
     }
     if (ec==2) {
-        *logptr(contextptr) << "Error: failed to converge using the shooting method";
+        *logptr(contextptr) << "Error: the shooting method failed to converge";
         if (is_undef(tk))
             *logptr(contextptr) << ", try to set an initial guess for y'(a)";
         *logptr(contextptr) << endl;
         if (N>=3 && (output_type==_BVP_LIST || output_type==_BVP_PIECEWISE)) {
-            *logptr(contextptr) << "Using the finite-difference method instead" << endl;
+            *logptr(contextptr) << "Trying the finite-difference method instead" << endl;
             ec=finitediff(F,x,y,dy,x1,x2,y1,y2,N-1,tol,maxiter,X,Y,contextptr);
             if (ec==2) {
                 *logptr(contextptr) << "Error: failed to converge" << endl;

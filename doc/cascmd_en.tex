@@ -21072,7 +21072,7 @@ The procedure uses the method of nonlinear shooting which is based on Newton and
   \item {\tt spline}, a piecewise spline interpolation of the points $(x_k,y_k)$ is returned, based on the values $y'_k$ computed in the process.
 \end{itemize}
 
-Note that the shooting method is sensitive to roundoff errors and may fail to converge in some cases, especially when $y$ is a rapidly increasing function. In the absence of convergence or if the maximum number of iterations is exceeded, {\tt bvpsolve} returns {\tt undef}. However, if output type is {\tt list} or {\tt piecewise} and if $N>2$, a slower but more stable finite-difference method is tried first.
+Note that the shooting method is sensitive to roundoff errors and may fail to converge in some cases, especially when $y$ is a rapidly increasing function. In the absence of convergence or if the maximum number of iterations is exceeded, {\tt bvpsolve} returns {\tt undef}. However, if output type is {\tt list} or {\tt piecewise} and if $N>2$, a slower but more stable finite-difference method (which approximates only the function $y$) is tried first.
 
 Sometimes setting an initial guess for $y'(a)$ to a suitable value may help the shooting algorithm to converge or to converge faster. The default initial guess $y_0'$ for the value $y'(a)$ is\[ y_0'=\frac{\beta-\alpha}{b-a}. \]
 

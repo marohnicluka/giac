@@ -2937,11 +2937,11 @@ double eval_func(const gen &f,const vecteur &vars,const gen &x,const gen &y,cons
  * y''=f(x,y,y'), a<=x<=b, y(a)=alpha, y(b)=beta.
  * The solution is stored in the lists X, w1 and w2 such that
  * X=[x0=a,x1,x2,..,xN=b] and w1[k]=y(xk), w2[k]=y'(xk) for k=0,1,...,N.
- * Return value: true on success, false if the maximum number of iterations M is exceeded.
+ * Return value: 0 on success, 1 if the maximum number of iterations M is exceeded and 2 on computation failure.
  */
-bool shooting(const gen &f,const gen &x_idn,const gen &y_idn,const gen &dy_idn,const gen &TK_orig,
-              const gen &x1,const gen &x2,const gen &y1,const gen &y2,
-              int N,double tol,int M,vecteur &Y,vecteur &dY,vecteur &X,GIAC_CONTEXT) {
+int shooting(const gen &f,const gen &x_idn,const gen &y_idn,const gen &dy_idn,const gen &TK_orig,
+             const gen &x1,const gen &x2,const gen &y1,const gen &y2,
+             int N,double tol,int M,vecteur &X,vecteur &Y,vecteur &dY,GIAC_CONTEXT) {
     gen dfy=_derive(makesequence(f,y_idn),contextptr),dfdy=_derive(makesequence(f,dy_idn),contextptr);
     vecteur vars=makevecteur(x_idn,y_idn,dy_idn);
     double a=x1.DOUBLE_val(),b=x2.DOUBLE_val(),alpha=y1.DOUBLE_val(),beta=y2.DOUBLE_val();
@@ -2985,7 +2985,7 @@ bool shooting(const gen &f,const gen &x_idn,const gen &y_idn,const gen &dy_idn,c
                     eval_func(dfdy,vars,x+h,w1i,w2i,ef,contextptr)*(u2+dk32));
             u1+=(dk11+2*dk21+2*dk31+dk41)/6;
             u2+=(dk12+2*dk22+2*dk32+dk42)/6;
-            if (!ef) return false;
+            if (!ef) return 2;
         }
         if (std::abs(w1[N]-beta)<=tol) {
             X.resize(N+1);
@@ -2996,14 +2996,79 @@ bool shooting(const gen &f,const gen &x_idn,const gen &y_idn,const gen &dy_idn,c
                 Y[i]=w1[i];
                 dY[i]=w2[i];
             }
-            return true; // success
+            return 0; // success
         }
         TK-=(w1[N]-beta)/u1;
         ++k;
     }
-    *logptr(contextptr) << "Error: maximum number of iterations is exceeded" << endl;
-    return false; // max number of iterations is exceeded
+    return 1; // max number of iterations is exceeded
 }
+
+/* the finite-difference method as an slower but more stable alternative to shooting method */
+int finitediff(const gen &f,const gen &x_idn,const gen &y_idn,const gen &dy_idn,const gen &x1,const gen &x2,
+               const gen &y1,const gen &y2,int N,double tol,int M,vecteur &X,vecteur &Y,GIAC_CONTEXT) {
+    gen dfy=_derive(makesequence(f,y_idn),contextptr),dfdy=_derive(makesequence(f,dy_idn),contextptr);
+    vecteur vars=makevecteur(x_idn,y_idn,dy_idn);
+    double a=x1.DOUBLE_val(),b=x2.DOUBLE_val(),alpha=y1.DOUBLE_val(),beta=y2.DOUBLE_val();
+    double h=(b-a)/(N+1),fac=(beta-alpha)/(b-a)*h,x,t;
+    vector<double> W(N+2,alpha),A(N+1),B(N+1),C(N+1),D(N+1),U(N+1),L(N+1),Z(N+1);
+    vecteur V(N+1);
+    W[N+1]=beta;
+    for (int i=1;i<=N;++i) W[i]+=i*fac;
+    int k=1;
+    bool ef=true;
+    dfy=_ratnormal(dfy,contextptr);
+    dfdy=_ratnormal(dfdy,contextptr);
+    while (k<=M) {
+        x=a+h;
+        t=(W[2]-alpha)/(2*h);
+        A[1]=2+h*h*eval_func(dfy,vars,x,W[1],t,ef,contextptr);
+        B[1]=h*eval_func(dfdy,vars,x,W[1],t,ef,contextptr)/2-1;
+        D[1]=W[2]+alpha-2*W[1]-h*h*eval_func(f,vars,x,W[1],t,ef,contextptr);
+        for (int i=2;i<N;++i) {
+            x=a+i*h;
+            t=(W[i+1]-W[i-1])/(2*h);
+            A[i]=2+h*h*eval_func(dfy,vars,x,W[i],t,ef,contextptr);
+            B[i]=h*eval_func(dfdy,vars,x,W[i],t,ef,contextptr)/2-1;
+            C[i]=-h*eval_func(dfdy,vars,x,W[i],t,ef,contextptr)/2-1;
+            D[i]=W[i+1]+W[i-1]-2*W[i]-h*h*eval_func(f,vars,x,W[i],t,ef,contextptr);
+        }
+        x=b-h;
+        t=(beta-W[N-1])/(2*h);
+        A[N]=2+h*h*eval_func(dfy,vars,x,W[N],t,ef,contextptr);
+        C[N]=-h*eval_func(dfdy,vars,x,W[N],t,ef,contextptr)/2-1;
+        D[N]=W[N-1]+beta-2*W[N]-h*h*eval_func(f,vars,x,W[N],t,ef,contextptr);
+        if (!ef) return 2;
+        L[1]=A[1];
+        U[1]=B[1]/A[1];
+        Z[1]=D[1]/L[1];
+        for (int i=2;i<N;++i) {
+            L[i]=A[i]-C[i]*U[i-1];
+            U[i]=B[i]/L[i];
+            Z[i]=(D[i]-C[i]*Z[i-1])/L[i];
+        }
+        L[N]=A[N]-C[N]*U[N-1];
+        Z[N]=(D[N]-C[N]*Z[N-1])/L[N];
+        V[N]=Z[N];
+        W[N]+=Z[N];
+        for (int i=N;i-->1;) {
+            V[i]=gen(Z[i])-gen(U[i])*V[i+1];
+            W[i]+=Z[i]-U[i]*V[i+1].DOUBLE_val();
+        }
+        if (is_greater(tol,_l2norm(V,contextptr),contextptr)) {
+            X.resize(N+2);
+            Y.resize(N+2);
+            for (int i=0;i<=N+1;++i) {
+                X[i]=a+i*h;
+                Y[i]=W[i];
+            }
+            return 0; // success
+        }
+        ++k;
+    }
+    return 1; // maximum number of iterations is exceeded
+}
+
 
 gen _bvpsolve(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -3060,8 +3125,29 @@ gen _bvpsolve(const gen &g,GIAC_CONTEXT) {
     F=_subst(makesequence(F,symb_of(y,x),y),contextptr);
     vecteur X,Y,dY;
     double tol=_evalf(_epsilon(change_subtype(vecteur(0),_SEQ__VECT),contextptr),contextptr).DOUBLE_val();
-    if (!shooting(F,x,y,dy,tk,x1,x2,y1,y2,N,tol,maxiter,Y,dY,X,contextptr))
+    int ec=shooting(F,x,y,dy,tk,x1,x2,y1,y2,N,tol,maxiter,X,Y,dY,contextptr);
+    if (ec==1) {
+        *logptr(contextptr) << "Error: maximum number of iterations exceeded" << endl;
         return undef;
+    }
+    if (ec==2) {
+        *logptr(contextptr) << "Error: failed to converge using the shooting method";
+        if (is_undef(tk))
+            *logptr(contextptr) << ", try to set an initial guess for y'(a)";
+        *logptr(contextptr) << endl;
+        if (N>=3 && (output_type==_BVP_LIST || output_type==_BVP_PIECEWISE)) {
+            *logptr(contextptr) << "Using the finite-difference method instead" << endl;
+            ec=finitediff(F,x,y,dy,x1,x2,y1,y2,N-1,tol,maxiter,X,Y,contextptr);
+            if (ec==2) {
+                *logptr(contextptr) << "Error: failed to converge" << endl;
+                return undef;
+            }
+            if (ec==1) {
+                *logptr(contextptr) << "Error: maximum number of iterations exceeded" << endl;
+                return undef;
+            }
+        } else return undef;
+    }
     vecteur res,coeff;
     matrice m=*_matrix(makesequence(4,4,0),contextptr)._VECTptr;
     m[0]._VECTptr->at(3)=m[1]._VECTptr->at(3)=m[2]._VECTptr->at(2)=m[3]._VECTptr->at(2)=1;

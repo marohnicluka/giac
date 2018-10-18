@@ -2923,6 +2923,194 @@ static const char _fitdistr_s []="fitdistr";
 static define_unary_function_eval (__fitdistr,&_fitdistr,_fitdistr_s);
 define_unary_function_ptr5(at_fitdistr,alias_at_fitdistr,&__fitdistr,0,true)
 
+/* evaluates the function f(x,y,y') in the specified point and returns the result as a floating point number. */
+double eval_func(const gen &f,const vecteur &vars,const gen &x,const gen &y,const gen &dy,bool &errflag,GIAC_CONTEXT) {
+    gen e=_evalf(_subst(makesequence(f,vars,makevecteur(x,y,dy)),contextptr),contextptr);
+    if (e.type!=_DOUBLE_) {
+        errflag=false;
+        return 0;
+    }
+    return e.DOUBLE_val();
+}
+
+/* approximate the solution of the following boundary-value problem:
+ * y''=f(x,y,y'), a<=x<=b, y(a)=alpha, y(b)=beta.
+ * The solution is stored in the lists X, w1 and w2 such that
+ * X=[x0=a,x1,x2,..,xN=b] and w1[k]=y(xk), w2[k]=y'(xk) for k=0,1,...,N.
+ * Return value: true on success, false if the maximum number of iterations M is exceeded.
+ */
+bool shooting(const gen &f,const gen &x_idn,const gen &y_idn,const gen &dy_idn,const gen &TK_orig,
+              const gen &x1,const gen &x2,const gen &y1,const gen &y2,
+              int N,double tol,int M,vecteur &Y,vecteur &dY,vecteur &X,GIAC_CONTEXT) {
+    gen dfy=_derive(makesequence(f,y_idn),contextptr),dfdy=_derive(makesequence(f,dy_idn),contextptr);
+    vecteur vars=makevecteur(x_idn,y_idn,dy_idn);
+    double a=x1.DOUBLE_val(),b=x2.DOUBLE_val(),alpha=y1.DOUBLE_val(),beta=y2.DOUBLE_val();
+    double h=(b-a)/N,x,k11,k12,k21,k22,k31,k32,k41,k42,dk11,dk12,dk21,dk22,dk31,dk32,dk41,dk42,u1,u2,fv1,fv2,w1i,w2i;
+    double TK=is_undef(TK_orig)?(beta-alpha)/(b-a):TK_orig.DOUBLE_val();
+    vector<double> w1(N+1),w2(N+1);
+    int k=1;
+    dfy=_ratnormal(dfy,contextptr);
+    dfdy=_ratnormal(dfdy,contextptr);
+    bool ef=true;
+    while (k<=M) {
+        w1[0]=alpha;
+        w2[0]=TK;
+        u1=0;
+        u2=1;
+        for (int i=0;i<N;++i) {
+            x=a+i*h;
+            w1i=w1[i];
+            w2i=w2[i];
+            k11=h*w2i;
+            k12=h*eval_func(f,vars,x,w1i,w2i,ef,contextptr);
+            k21=h*(w2i+k12/2);
+            k22=h*eval_func(f,vars,x+h/2,w1i+k11/2,w2i+k12/2,ef,contextptr);
+            k31=h*(w2i+k22/2);
+            k32=h*eval_func(f,vars,x+h/2,w1i+k21/2,w2i+k22/2,ef,contextptr);
+            k41=h*(w2i+k32);
+            k42=h*eval_func(f,vars,x+h,w1i+k31,w2i+k32,ef,contextptr);
+            w1[i+1]=w1i+(k11+2*k21+2*k31+k41)/6;
+            w2[i+1]=w2i+(k12+2*k22+2*k32+k42)/6;
+            dk11=h*u2;
+            dk12=h*(eval_func(dfy,vars,x,w1i,w2i,ef,contextptr)*u1+
+                    eval_func(dfdy,vars,x,w1i,w2i,ef,contextptr)*u2);
+            dk21=h*(u2+dk12/2);
+            fv1=eval_func(dfy,vars,x+h/2,w1i,w2i,ef,contextptr);
+            fv2=eval_func(dfdy,vars,x+h/2,w1i,w2i,ef,contextptr);
+            dk22=h*(fv1*(u1+dk11/2)+fv2*(u2+dk12/2));
+            dk31=h*(u2+dk22/2);
+            dk32=h*(fv1*(u1+dk21/2)+fv2*(u2+dk22/2));
+            dk41=h*(u2+dk32);
+            dk42=h*(eval_func(dfy,vars,x+h,w1i,w2i,ef,contextptr)*(u1+dk31)+
+                    eval_func(dfdy,vars,x+h,w1i,w2i,ef,contextptr)*(u2+dk32));
+            u1+=(dk11+2*dk21+2*dk31+dk41)/6;
+            u2+=(dk12+2*dk22+2*dk32+dk42)/6;
+            if (!ef) return false;
+        }
+        if (std::abs(w1[N]-beta)<=tol) {
+            X.resize(N+1);
+            Y.resize(N+1);
+            dY.resize(N+1);
+            for (int i=0;i<=N;++i) {
+                X[i]=a+i*h;
+                Y[i]=w1[i];
+                dY[i]=w2[i];
+            }
+            return true; // success
+        }
+        TK-=(w1[N]-beta)/u1;
+        ++k;
+    }
+    *logptr(contextptr) << "Error: maximum number of iterations is exceeded" << endl;
+    return false; // max number of iterations is exceeded
+}
+
+gen _bvpsolve(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    gen tk(undef);
+    int maxiter=RAND_MAX;
+    if (gv.size()<3 || gv[1].type!=_VECT || gv[2].type!=_VECT ||
+            gv[1]._VECTptr->size()!=2 || (gv[2]._VECTptr->size()!=2 && gv[2]._VECTptr->size()!=3))
+        return gensizeerr(contextptr);
+    gen &f=gv.front(),&t=gv[1]._VECTptr->front(),&y=gv[1]._VECTptr->back(),
+            y1=_evalf(gv[2]._VECTptr->at(0),contextptr),y2=_evalf(gv[2]._VECTptr->at(1),contextptr);
+    if (gv[2]._VECTptr->size()==3 && (tk=_evalf(gv[2]._VECTptr->at(2),contextptr)).type!=_DOUBLE_)
+        return gensizeerr(contextptr);
+    if (y.type!=_IDNT || !t.is_symb_of_sommet(at_equal) ||
+            t._SYMBptr->feuille._VECTptr->front().type!=_IDNT ||
+            !t._SYMBptr->feuille._VECTptr->back().is_symb_of_sommet(at_interval))
+        return gensizeerr(contextptr);
+    gen &x=t._SYMBptr->feuille._VECTptr->front();
+    vecteur &rng=*t._SYMBptr->feuille._VECTptr->back()._SYMBptr->feuille._VECTptr;
+    gen x1=_evalf(rng.front(),contextptr),x2=_evalf(rng.back(),contextptr);
+    if (x1.type!=_DOUBLE_ || x2.type!=_DOUBLE_ || y1.type!=_DOUBLE_ || y2.type!=_DOUBLE_ ||
+            !is_strictly_greater(x2,x1,contextptr))
+        return gensizeerr(contextptr);
+    int N=100;
+    /* parse options */
+    int output_type=_BVP_LIST;
+    for (const_iterateur it=gv.begin()+3;it!=gv.end();++it) {
+        if (it->is_symb_of_sommet(at_equal)) {
+            gen &lh=it->_SYMBptr->feuille._VECTptr->front();
+            gen &rh=it->_SYMBptr->feuille._VECTptr->back();
+            if (lh==at_output || lh==at_Output) {
+                if (rh==_MAPLE_LIST)
+                    output_type=_BVP_LIST;
+                else if (rh==at_derive)
+                    output_type=_BVP_DIFF;
+                else if (rh==at_piecewise)
+                    output_type=_BVP_PIECEWISE;
+                else if (rh==at_spline)
+                    output_type=_BVP_SPLINE;
+                else return gensizeerr(contextptr);
+            } else if (lh==at_limit) {
+                if (!rh.is_integer() || (maxiter=rh.val)<1)
+                    return gensizeerr(contextptr);
+            } else return gensizeerr(contextptr);
+        } else if (it->is_integer()) {
+            if ((N=it->val)<2)
+                return gensizeerr(contextptr);
+        } else return gensizeerr(contextptr);
+    }
+    gen dy=identificateur(" dy");
+    gen F=_subst(makesequence(f,_derive(makesequence(symb_of(y,x),x),contextptr),dy),contextptr);
+    F=_subst(makesequence(F,symb_of(y,x),y),contextptr);
+    vecteur X,Y,dY;
+    double tol=_evalf(_epsilon(change_subtype(vecteur(0),_SEQ__VECT),contextptr),contextptr).DOUBLE_val();
+    if (!shooting(F,x,y,dy,tk,x1,x2,y1,y2,N,tol,maxiter,Y,dY,X,contextptr))
+        return undef;
+    vecteur res,coeff;
+    matrice m=*_matrix(makesequence(4,4,0),contextptr)._VECTptr;
+    m[0]._VECTptr->at(3)=m[1]._VECTptr->at(3)=m[2]._VECTptr->at(2)=m[3]._VECTptr->at(2)=1;
+    switch (output_type) {
+    case _BVP_LIST:
+        res.reserve(N+1);
+        for (int i=0;i<=N;++i)
+            res.push_back(makevecteur(X[i],Y[i]));
+        break;
+    case _BVP_DIFF:
+        res.reserve(N+1);
+        for (int i=0;i<=N;++i)
+            res.push_back(makevecteur(X[i],Y[i],dY[i]));
+        break;
+    case _BVP_PIECEWISE:
+    case _BVP_SPLINE:
+        res.reserve(2*(N+1)+1);
+        for (int i=0;i<=N;++i) {
+            res.push_back(i<N?symb_inferieur_strict(x,X[i]):symb_inferieur_egal(x,X[i]));
+            if (i==0)
+                res.push_back(0);
+            else if (output_type==_BVP_PIECEWISE)
+                res.push_back(Y[i-1]+(x-X[i-1])*(Y[i]-Y[i-1])/(X[i]-X[i-1]));
+            else {
+                m[0]._VECTptr->at(0)=pow(X[i-1],3);
+                m[0]._VECTptr->at(1)=pow(X[i-1],2);
+                m[0]._VECTptr->at(2)=X[i-1];
+                m[1]._VECTptr->at(0)=pow(X[i],3);
+                m[1]._VECTptr->at(1)=pow(X[i],2);
+                m[1]._VECTptr->at(2)=X[i];
+                m[2]._VECTptr->at(0)=3*m[0][1];
+                m[2]._VECTptr->at(1)=2*X[i-1];
+                m[3]._VECTptr->at(0)=3*m[1][1];
+                m[3]._VECTptr->at(1)=2*X[i];
+                coeff=*_linsolve(makesequence(m,makevecteur(Y[i-1],Y[i],dY[i-1],dY[i])),contextptr)._VECTptr;
+                res.push_back(pow(x,3)*coeff[0]+pow(x,2)*coeff[1]+x*coeff[2]+coeff[3]);
+            }
+        }
+        res.push_back(0);
+        return symbolic(at_piecewise,change_subtype(res,_SEQ__VECT));
+    default:
+        break;
+    }
+    return res;
+}
+static const char _bvpsolve_s []="bvpsolve";
+static define_unary_function_eval (__bvpsolve,&_bvpsolve,_bvpsolve_s);
+define_unary_function_ptr5(at_bvpsolve,alias_at_bvpsolve,&__bvpsolve,0,true)
+
 #ifndef NO_NAMESPACE_GIAC
 }
 #endif // ndef NO_NAMESPACE_GIAC

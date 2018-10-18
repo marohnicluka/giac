@@ -21048,6 +21048,80 @@ Output :
 \begin{center}{\tt  [[0.1781,[-0.177159948386,0.984182072936]], [0.3781,[-0.369155338156,0.929367707805]], [0.5781,[-0.54643366953,0.837502384954]], [0.7781,[-0.701927414872,0.712248484906]]]}\end{center}
 \end{itemize}
 
+\subsection{Approximate solution of a nonlinear second-order boundary value problem : {\tt bvpsolve\index{bvpsolve}} }
+{\tt bvpsolve} finds an approximate solution of a boundary value problem
+\[ y''=f(x,y,y'),\quad y(a)=\alpha,\ y(b)=\beta \]
+on the interval $[a,b]$. It takes the following mandatory arguments :
+\begin{itemize}
+  \item expression $f(x,y,y')$,
+  \item list {\tt [x=a..b,y]}, specifying the independent variable $x$, its range $[a,b]$ and the sought function $y$,
+  \item list containing $\alpha$, $\beta$ and optionally an initial guess for $y'(a)$ as the third element.
+\end{itemize}
+One or more of the additional arguments below can optionally follow (in no particular order) :
+\begin{itemize}
+  \item integer $N\geq 2$ (by default 100),
+  \item {\tt output=<type>} or {\tt Output=<type>} : the type of the output, which can be {\tt list} (the default), {\tt diff}, {\tt piecewise} or {\tt spline},
+  \item {\tt limit=M} : the procedure will be stopped if the number of iterations exceeds $M$, which must be a positive integer (by default there is no limit).
+\end{itemize}
+
+The procedure uses the method of nonlinear shooting which is based on Newton and Runge-Kutta methods. Values of $y$ and its first derivative $y'$ are approximated at points $x_k=a+k\,\delta$, where $\delta=\frac{b-a}{N}$ and $k=0,1,\dots,N$. For the numeric tolerance (precision) threshold, the algorithm uses {\tt epsilon} specified in the session settings in Xcas. If the output type is
+\begin{itemize}
+  \item {\tt list}, a list of pairs $[x_k,y_k]$ is returned where $y_k\approx y(x_k)$,
+  \item {\tt diff}, a list of lists $[x_k,y_k,y'_k]$ is returned, where $y'_k\approx y'(x_k)$,
+  \item {\tt piecewise}, a piecewise linear interpolation of the points $(x_k,y_k)$ is returned,
+  \item {\tt spline}, a piecewise spline interpolation of the points $(x_k,y_k)$ is returned, based on the values $y'_k$ computed in the process.
+\end{itemize}
+
+Note that the shooting method is sensitive to roundoff errors and may fail to converge in some cases, especially when $y$ is a rapidly increasing function. In the absence of convergence or if the maximum number of iterations is exceeded, {\tt bvpsolve} returns {\tt undef}.
+
+Sometimes setting an initial guess for $y'(a)$ to a suitable value may help the algorithm to converge or to converge faster. The default initial guess $y_0'$ for the value $y'(a)$ is\[ y_0'=\frac{\beta-\alpha}{b-a}. \]
+
+\paragraph{Examples.}
+In the first example we solve the problem \[y''=\frac{1}{8}\,(32+2\,x^3-y\,y'),\quad 1\leq x\leq 3\] with boundary conditions $y(1)=17$ and $y(3)=\frac{43}{3}$. We use $N=20$, which gives $x$-step of $0.01$. Input :
+\begin{center}
+  \tt f:=(32+2x\verb|^|3-y(x)*diff(y(x),x))/8:; bvpsolve(f,[x=1..3,y],[17,43/3],20)
+\end{center}
+The output is shown in Table~\ref{tab:bvp} (the middle two columns) alongside with the values $y(x_k)$ of the exact solution $y=x^2+16/x$ (the fourth column).
+\begin{table}
+  \centering\small
+  \begin{tabular}{|r|ll|l|}
+    \hline
+    $k$ & $x_k$ & $y_k$ & $y(x_k)$\\\hline
+    0 & 1.0 & 17.0 & 17.0\\
+    1 & 1.1 & 15.7554961579 & 15.7554545455\\
+    2 & 1.2 & 14.7733911821 & 14.7733333333\\
+    3 & 1.3 & 13.9977543159 & 13.9976923077\\
+    4 & 1.4 & 13.388631813 & 13.3885714286\\
+    5 & 1.5 & 12.9167227424 & 12.9166666667\\
+    6 & 1.6 & 12.5600506483 & 12.56\\
+    7 & 1.7 & 12.3018096101 & 12.3017647059\\
+    8 & 1.8 & 12.1289281414 & 12.1288888889\\
+    9 & 1.9 & 12.0310865274 & 12.0310526316\\
+    10 & 2.0 & 12.0000289268 & 12.0\\
+    11 & 2.1 & 12.0290719981 & 12.029047619\\
+    12 & 2.2 & 12.1127475278 & 12.1127272727\\
+    13 & 2.3 & 12.2465382803 & 12.2465217391\\
+    14 & 2.4 & 12.4266798825 & 12.4266666667\\
+    15 & 2.5 & 12.650010254 & 12.65\\
+    16 & 2.6 & 12.9138537834 & 12.9138461538\\
+    17 & 2.7 & 13.2159312426 & 13.2159259259\\
+    18 & 2.8 & 13.5542890043 & 13.5542857143\\
+    19 & 2.9 & 13.9272429048 & 13.9272413793\\
+    20 & 3.0 & 14.3333333333 & 14.3333333333\\\hline
+  \end{tabular}
+  \caption{approximate and true values of the function $y=x^2+16/x$ on $[1,3]$\label{tab:bvp}}
+\end{table}
+
+In the next example we solve the problem
+\[ y''=\frac{x^2\,(y')^2-9\,y^2+4\,x^6}{x^5},\quad 1\leq x\leq 2, \]
+with the boundary conditions $y(1)=0$ and $y(2)=\ln 256$. We obtain the solution as a piecewise spline interpolation for $N=10$ and estimate the absolute error {\tt err} of the approximation using the exact solution $y=x^3\,\ln x$ and {\tt romberg} command for numerical integration. We also need to explicitly set an initial guess $y_0'$ for the value $y'(1)$ because the algorithm fails to converge with the default guess $y_0'=\ln 256\approx 5.545$. Therefore let $y_0'=1$ instead. Input :
+\begin{center}
+  \tt f:=(x\verb|^|2*diff(y(x),x)\verb|^|2-9*y(x)\verb|^|2+4*x\verb|^|6)/x\verb|^|5:; vars:=[x=1..2,y]:; yinit:=[0,ln(256),1]:; p:=bvpsolve(f,vars,yinit,10,output=spline):; err:=sqrt(romberg((p-x\verb|^|3*ln(x))\verb|^|2,x=1..2))
+\end{center}
+Output :
+\begin{center}
+  \tt 3.27720911686e-06
+\end{center}
 
 \section{Solve equations with {\tt fsolve nSolve}}\index{fsolve}\index{nSolve}
 \noindent{\tt fsolve} or {\tt nSolve} solves numeric equations

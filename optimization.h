@@ -31,6 +31,13 @@ enum bandwidth_selection_method {
     _KDE_BW_METHOD_ROT
 };
 
+enum bvp_output_type {
+    _BVP_LIST,
+    _BVP_DIFF,
+    _BVP_PIECEWISE,
+    _BVP_SPLINE
+};
+
 class ipdiff {
     /* IPDIFF CLASS (Implicit Partial DIFFerentiation)
      * This class is used for implicit differentiation of f with respect to g=0.
@@ -122,6 +129,7 @@ gen _thiele(const gen &g,GIAC_CONTEXT);
 gen _triginterp(const gen &g,GIAC_CONTEXT);
 gen _kernel_density(const gen &g,GIAC_CONTEXT);
 gen _fitdistr(const gen &g,GIAC_CONTEXT);
+gen _bvpsolve(const gen &g,GIAC_CONTEXT);
 
 extern const unary_function_ptr * const at_implicitdiff;
 extern const unary_function_ptr * const at_minimize;
@@ -134,6 +142,7 @@ extern const unary_function_ptr * const at_thiele;
 extern const unary_function_ptr * const at_triginterp;
 extern const unary_function_ptr * const at_kernel_density;
 extern const unary_function_ptr * const at_fitdistr;
+extern const unary_function_ptr * const at_bvpsolve;
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

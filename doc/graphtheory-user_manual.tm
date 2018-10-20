@@ -13406,9 +13406,8 @@
   initial layout for that level. The lifting done using a prolongation matrix
   technique described in<nbsp><cite|hu2>. To support drawing large graphs
   (with, say, 1000 vertices or more), the matrices used in the lifting
-  process are stored in sparse form. The multilevel algorithm is
-  significantly faster than the original, single-level algorithm one and
-  usually produces better results.
+  process are stored in sparse form. The multilevel scheme also speeds up the
+  layout process significantly.
 
   If the structure of the input graph is symmetric, a layout obtained by
   using a force-directed method typically reveals these symmetries, which is
@@ -13595,8 +13594,8 @@
   horizontal space to draw the tree with respect to the specified root node
   <math|r>.
 
-  For example, the following command line produces the drawing of a random
-  tree on 100 nodes.
+  For example, the following command line draws a random free unlabeled tree
+  on 100 nodes.
 
   <\session|giac|default>
     <\input>

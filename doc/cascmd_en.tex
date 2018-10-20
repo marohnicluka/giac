@@ -21079,7 +21079,7 @@ Sometimes setting an initial guess for $y'(a)$ to a suitable value may help the 
 \paragraph{Examples.}
 In the first example we solve the problem \[y''=\frac{1}{8}\,(32+2\,x^3-y\,y'),\quad 1\leq x\leq 3\] with boundary conditions $y(1)=17$ and $y(3)=\frac{43}{3}$. We use $N=20$, which gives $x$-step of $0.01$. Input :
 \begin{center}
-  \tt f:=(32+2x\verb|^|3-y(x)*diff(y(x),x))/8:; bvpsolve(f,[x=1..3,y],[17,43/3],20)
+  \tt bvpsolve((32+2x\verb|^|3-y*y')/8,[x=1..3,y],[17,43/3],20)
 \end{center}
 The output is shown in Table~\ref{tab:bvp} (the middle two columns) alongside with the values $y(x_k)$ of the exact solution $y=x^2+16/x$ (the fourth column).
 \begin{table}
@@ -21122,7 +21122,7 @@ Output :
 \begin{center}
   \tt 3.27720911686e-06
 \end{center}
-Note that, if the output type was set to {\tt list} or {\tt piecewise}, the solution would have been found even without specifying an initial guess for $y'(1)$ because the algorithm would automatically apply the alternative finite-difference method.
+Note that, if the output type was set to {\tt list} or {\tt piecewise}, the solution would have been found even without specifying an initial guess for $y'(1)$ because the algorithm would automatically apply the alternative finite-difference method, which converges.
 
 \section{Solve equations with {\tt fsolve nSolve}}\index{fsolve}\index{nSolve}
 \noindent{\tt fsolve} or {\tt nSolve} solves numeric equations

@@ -130,6 +130,8 @@ gen _triginterp(const gen &g,GIAC_CONTEXT);
 gen _kernel_density(const gen &g,GIAC_CONTEXT);
 gen _fitdistr(const gen &g,GIAC_CONTEXT);
 gen _bvpsolve(const gen &g,GIAC_CONTEXT);
+gen _euler_lagrange(const gen &g,GIAC_CONTEXT);
+gen _convex(const gen &g,GIAC_CONTEXT);
 
 extern const unary_function_ptr * const at_implicitdiff;
 extern const unary_function_ptr * const at_minimize;
@@ -143,6 +145,8 @@ extern const unary_function_ptr * const at_triginterp;
 extern const unary_function_ptr * const at_kernel_density;
 extern const unary_function_ptr * const at_fitdistr;
 extern const unary_function_ptr * const at_bvpsolve;
+extern const unary_function_ptr * const at_euler_lagrange;
+extern const unary_function_ptr * const at_convex;
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

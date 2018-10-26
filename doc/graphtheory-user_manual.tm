@@ -831,10 +831,11 @@
   compilation. Nevertheless, most commands has no dependencies save
   <samp|Giac> itself.
 
-  This library was written and documented by <name|Luka Marohni¢>
-  (<verbatim|luka.marohnic@tvz.hr>). Special thanks go to <name|Bernard
-  parisse>, the <samp|Giac/Xcas> project leader, and <name|Jose Capco> for
-  their interest, comments, suggestions and support.
+  This library was written and documented by Luka Marohni¢<\footnote>
+    Email: <verbatim|luka.marohnic@tvz.hr>
+  </footnote>. The author would like to thank Bernard Parisse,
+  <samp|Giac/Xcas> project leader, for integrating the package and Jose Capco
+  for suggesting <samp|nauty> integration.
 
   <chapter|Constructing graphs>
 
@@ -15332,12 +15333,14 @@
     <associate|eq:reliability-poly|<tuple|4.3|81>>
     <associate|footnote-1|<tuple|1|7>>
     <associate|footnote-1.1|<tuple|1.1|40>>
+    <associate|footnote-2|<tuple|2|?>>
     <associate|footnote-3.1|<tuple|3.1|57>>
     <associate|footnote-3.2|<tuple|3.2|59>>
     <associate|footnote-4.1|<tuple|4.1|78>>
     <associate|footnote-5.1|<tuple|5.1|118>>
     <associate|footnr-1|<tuple|1|7>>
     <associate|footnr-1.1|<tuple|1.1|40>>
+    <associate|footnr-2|<tuple|2|?>>
     <associate|footnr-3.1|<tuple|3.1|57>>
     <associate|footnr-3.2|<tuple|3.2|59>>
     <associate|footnr-4.1|<tuple|4.1|78>>

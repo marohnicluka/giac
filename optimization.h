@@ -118,6 +118,8 @@ public:
     void solve(const matrice &cost_matrix,matrice &sol);
 };
 
+gen kovacicsols(const gen &r_orig,const gen &x,const gen &dy_coeff,GIAC_CONTEXT);
+
 gen _implicitdiff(const gen &g,GIAC_CONTEXT);
 gen _minimize(const gen &g,GIAC_CONTEXT);
 gen _maximize(const gen &g,GIAC_CONTEXT);
@@ -132,6 +134,7 @@ gen _fitdistr(const gen &g,GIAC_CONTEXT);
 gen _bvpsolve(const gen &g,GIAC_CONTEXT);
 gen _euler_lagrange(const gen &g,GIAC_CONTEXT);
 gen _convex(const gen &g,GIAC_CONTEXT);
+gen _kovacicsols(const gen &g,GIAC_CONTEXT);
 
 extern const unary_function_ptr * const at_implicitdiff;
 extern const unary_function_ptr * const at_minimize;

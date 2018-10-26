@@ -17553,3 +17553,26 @@ fitdistr(randvector(1000,weibulld,1/2,1),weibull)
 -1 odesolve
 bvpsolve((32+2x^3-y*diff(y(x),x))/8,[x=1..3,y],[17,43/3],20)
 bvpsolve((x^2*diff(y(x),x)^2-9y^2+4x^6)/x^5,[x=1..2,y],[0,ln(256),1],10,output=spline)
+
+# convex
+0 Expr(f),Lst(x,y,..)
+2 Returns a list of conditions under which f(x,y,..) is convex.
+-1 hessian
+convex(-2x+y+x^2-2x*y+y^2,[x,y])
+convex(3*exp(x)+5x^4-ln(x),x)
+convex(x+y-exp(x)-exp(x+y),[x,y])
+convex(x^2+y^2+3z^2-x*y+2x*z+y*z,[x,y,z])
+convex(x1^3+2x1^2+2*x1*x2+x2^2/2-8x1-2x2-8,[x1,x2])
+convex(x1^2+2x2^2+a*x3^2-2x1*x2+2x1*x3-6x2*x3,[x1,x2,x3])
+convex(exp(x1)+exp(x2)+x1*x2,[x1,x2])
+convex(sqrt((1+cos(x)^2)/sin(x)),x)
+convex(sqrt((1+(u')^2)/(2*g*u)),u(t))
+
+# kovacicsols
+0 Expr||Lst(eq),[Var(x),[Var(y)]]
+2 Solves a linear homogeneous second-order ODE eq for y(x) with rational coefficients in variable x.
+-1 desolve
+kovacicsols(y''=y*(1/x-3/16x^2))
+kovacicsols(y''-y*27/(36*(x-1)^2),x,y)
+kovacicsols(x''+3*(t^2-t+1)/(16*(t-1)^2*t^2)*x,t,x)
+kovacicsols([48t*(t+1)*(5t-4),8*(25t+16)*(t-2),-(5t+68)],t)

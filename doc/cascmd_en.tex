@@ -6250,7 +6250,127 @@ Output :
 {\tt x*(log(x))\verb|^|2+x*(-(2*log(x)))+2*x}
 
 \subsection{Change of variables : {\tt subst}}
-See the {\tt subst} command  in the section \ref{sec:subst}. 
+See the {\tt subst} command  in the section \ref{sec:subst}.
+
+\section{Calculus of variations}
+
+
+
+\subsection{Determining whether a function is convex : {\tt convex\index{convex}}}
+{\tt convex} takes two mandatory arguments, an at least twice differentiable function(al) $f:\mathbb{R}^n\to\mathbb{R}$ and a variable or list of variables. Some variables may depend on a common independent parameter, say $t$, when entered as e.g.~$x(t)$ instead of $x$. The first derivatives of such variables, when encountered in $f$, are treated as independent parameters of $f$.
+
+The command returns a condition or list of conditions under which $f$ is convex. If $f$ is convex on the entire domain, the return value is {\tt true}. If it is nowhere convex, the return value is {\tt false}. Otherwise, the conditions are returned as inequalities which depend on the parameters of $f$. The returned inequalities are not necessarily independent.
+
+An optional third argument {\tt simplify=false} or {\tt simplify=true} may be given. By default is {\tt simplify=true}, which means that simplification is applied when generating convexity conditions. If {\tt simplify=false}, only rational normalization is performed (using the {\tt ratnormal} command).
+
+The command operates by computing the Hessian $H_f$ of $f$ and its principal minors (in total $2^n$ of them where $n$ is the number of parameters) and checks their signs. If all minors are nonnegative, then $H_f$ is positive semidefinite and $f$ is therefore convex.
+
+The function $f$ is said to be \emph{concave} if the function $g=-f$ is convex.
+
+For example, input :
+\begin{center}
+  \tt convex(3*exp(x)+5x\verb|^|4-ln(x),x)
+\end{center}
+Output :
+\begin{center}
+  \tt true
+\end{center}
+Input :
+\begin{center}
+  \tt convex(x\verb|^|2+y\verb|^|2+3z\verb|^|2-x*y+2x*z+y*z,[x,y,z])
+\end{center}
+Output :
+\begin{center}
+  \tt true
+\end{center}
+Input :
+\begin{center}
+  \tt convex(x1\verb|^|3+2x1\verb|^|2+2*x1*x2+x2\verb|^|2/2-8x1-2x2-8,[x1,x2])
+\end{center}
+Output :
+\begin{center}
+  \tt [(3*x1+2)>=0,x1>=0]
+\end{center}
+In the example below, the function $f(x,y,z)=x^2+x\,z+a\,y\,z+z^2$ is not convex regardless of the value $a\in\mathbb{R}$ :
+\begin{center}
+  \tt convex(x\verb|^|2+x*z+a*y*z+z\verb|^|2,[x,y,z])
+\end{center}
+Output :
+\begin{center}
+  \tt false
+\end{center}
+In the next example we find all values $a\in\mathbb{R}$ for which the function \[f(x,y,z)=x^2+2\,y^2+a\,z^2-2\,x\,y+2\,x\,z-6\,y\,z\] is convex on $\mathbb{R}^3$. Input :
+\begin{center}
+  \tt cond:=convex(x\verb|^|2+2y\verb|^|2+a*z\verb|^|2-2x*y+2x*z-6y*z,[x,y,z])
+\end{center}
+Output :
+\begin{center}
+  \tt [a>=0,(a-1)>=0,(2*a-9)>=0,(a-5)>=0]
+\end{center}
+The returned inequalities are simplified by {\tt solve} :
+\begin{center}
+  \tt solve(cond,a)
+\end{center}
+Output :
+\begin{center}
+  \tt list[a>=5]
+\end{center}
+Therefore $f$ is convex for $a\geq 5$.
+
+Let's find the set $S\subset\mathbb{R}^2$ on which the function $f:\mathbb{R}^2\to\mathbb{R}$ defined by
+\[ f(x_1,x_2)=\exp(x_1)+\exp(x_2)+x_1\,x_2 \]
+is convex. Input :
+\begin{center}
+  \tt cond:=convex(exp(x1)+exp(x2)+x1*x2,[x1,x2]
+\end{center}
+Output :
+\begin{center}
+  \tt (exp(x1)*exp(x2)-1)>=0
+\end{center}
+Input :
+\begin{center}
+  \tt lin(cond)
+\end{center}
+Output :
+\begin{center}
+  \tt (exp(x1+x2)-1)>=0
+\end{center}
+From here we conclude that $f$ is convex when $x_1+x_2\geq 0$. The sought set $S$ is therefore the half-space defined by this inequality.
+
+The algorithm respects the assumptions that may be set upon variables. Therefore, the convexity of a given function can be checked only on a particular domain. For example, input :
+\begin{center}
+  \tt assume(x1>0),assume(x2>0):; convex(exp(x1)+exp(x2)+x1*x2,[x1,x2]
+\end{center}
+Output :
+\begin{center}
+  \tt true
+\end{center}
+
+\paragraph{\label{brachistochrone}The Brachistochrone Problem.}
+We want to minimize the objective functional \[T(y)=\int_0^{x_1}L(t,y(t),y'(t))\,\mathrm{d} t\] where the Lagrangian $L$ is defined by
+\[ L(t,y(t),y'(t))=\sqrt{\frac{1+y'(t)^2}{2\,g\,y(t)}} \]
+for $y:[0,x_1]\to\mathbb{R}$ such that $y(0)=y_0$ and $y(x_1)=0$ where $x_1>0$ and $y_0>0$ are fixed (the constant $g$ is the gravitational acceleration). This is called the \emph{brachistochrone problem} (the problem of shortest travel by own weight from the point $(0,y_0)$ to $(x_1,0)$).
+By solving Euler-Lagrange equation one obtains a cycloid $\overline{y}(t)$ as the only stationary function for $L$. The problem is to prove that it minimizes $T$, which would be easy if the integrand $L$ was convex. However, it's not the case here :
+\begin{center}
+  \tt assume(y>=0):; assume(g>0):; convex(sqrt((1+y'\verb|^|2)/(2*g*y)),y(t))
+\end{center}
+Output :
+\begin{center}
+  \tt (-diff(y(t),t)\verb|^|2+3)>=0
+\end{center}
+This is equivalent to $|y'(t)|\leq\sqrt{3}$, which is certainly not satisfied by the cycloid $\overline{y}$ near the point $x=0$.
+
+Using the substitution $y(t)=z(t)^2/2$ we obtain $y'(t)=z'(t)\,z(t)$ and
+\[ L(t,y(t),y'(t))=P(t,z(t),z'(t))=\sqrt{\frac{z(t)^{-2}+z'(t)^2}{g}}. \]
+The function $P$ is convex :
+\begin{center}
+  \tt assume(z>=0):; convex(sqrt((z\verb|^|-2+z'\verb|^|2)/g),z(t))
+\end{center}
+Output :
+\begin{center}
+  \tt true
+\end{center}
+Hence the function $\overline{z}(t)=\sqrt{2\,\overline{y}(t)}$, stationary for $P$ (which is verified directly), minimizes the objective functional \[U(z)=\int_0^{x_1}P(t,z(t),z'(t))\,\mathrm{d} t.\] From here and $U(z)=T(y)$ it easily follows that $\overline{y}$ minimizes $T$ and therefore the brachistochrone. For details see John L.~Troutman, \emph{Variational Calculus and Optimal Control} (second edition), page 257.
 
 \section{Limits}
 \subsection{Limits : {\tt limit}}\index{limit|textbf}\label{sec:limit}
@@ -16021,6 +16141,123 @@ Input :
 \begin{center}{\tt desolve(y''-6*y'+9*y=x*exp(3*x),y)}\end{center}
 Output :
 \begin{center}{\tt exp(3*x)*(-18*c\_0*x+6*c\_0+x\verb|^|3+6*x*c\_1)/6}\end{center}
+
+\subsection{Solving linear homogeneous second-order ODE with rational coefficients : {\tt kovacicsols\index{kovacicsols}}}
+{\tt kovacicsols} uses Kovacic's algorithm to find a Liouvillian solution of an ordinary linear homogeneous second-order differential equation
+\begin{equation}\label{kovacic-ode}a\,y''+b\,y'+c\,y=0,\end{equation}
+where $a$, $b$ and $c$ are rational functions of the independent variable. The command takes from one to three arguments :
+\begin{itemize}
+  \item equation~\eqref{kovacic-ode} as an expression (left-hand side), equality or a list of coefficients~$[a,b,c]$,
+  \item independent variable (optional, by default $x$),
+  \item dependent variable (optional, by default $y$).
+\end{itemize}
+The dependent variable should not be specified if the equation~\eqref{kovacic-ode} is entered as a list of coefficients.
+
+The return value can be a list or an expression. An empty list means that there are no Liouvillian solutions to the input equation. If a non-empty list is returned, it contains one or two independent solution(s) $y_1$ (and $y_2$) to the equation~\eqref{kovacic-ode}. The general solution to~\eqref{kovacic-ode} is then
+\[ y=C_1\,y_1+C_2\,y_2, \]
+where $C_1,C_2\in\mathbb{R}$ are arbitrary constants. However, for some equations only $y_1$ is returned, in which case $y_2$ can be obtained as (using the reduction of order) :
+\begin{equation}\label{kovacic-reduction}y_2=y_1\,\int y_1^{-2}.\end{equation}
+If {\tt kovacicsols} returns an expression, it means that the solution to~\eqref{kovacic-ode} is given implicitly. In that case the return value is a polynomial $P$ of order $n\in\{4,6,12\}$ in the variable {\tt omega\_} (denoted here by $\omega$) with rational coefficients $r_k$, $k=0,1,2,\dots,n$. If $P(\omega_0)=0$ for some $\omega_0$, then $y=\exp\left(\int\omega_0\right)$ is a solution to the equation~\eqref{kovacic-ode}.
+
+\paragraph{Examples.}
+In the first example we find the general solution to the equation
+\[ y''=\left(\frac{1}{x}-\frac{3}{16\,x^2}\right)\,y. \]
+Input :
+\begin{center}
+  \tt kovacicsols(y\verb|''|=y*(1/x-3/16x\verb|^|2))
+\end{center}
+Output :
+\begin{center}
+  \tt [x\verb|^|(1/4)*exp(2*sqrt(x)),x\verb|^|(1/4)*exp(-2*sqrt(x))]
+\end{center}
+Therefore, $y=C_1\,x^{1/4}\,\mathrm{e}^{2\,\sqrt{x}}+C_2\,x^{1/4}\,\mathrm{e}^{-2\,\sqrt{x}}$ is the general solution.
+
+In the following example we solve the equation
+\[ x''(t)+\frac{3\,(t^2-t+1)}{16\,(t-1)^2\,t^2}\,x(t)=0. \]
+Input :
+\begin{center}
+  \tt kovacicsols(x\verb|''|+3*(t\verb|^|2-t+1)/(16*(t-1)\verb|^|2*t\verb|^|2)*x,t,x)
+\end{center}
+Output :
+\begin{center}
+  \tt [(-t*(t-1)*(2*t+2*sqrt(t\verb|^|2-t)-1))\verb|^|(1/4), (t*(t-1)*(-2*t+2*sqrt(t\verb|^|2-t)+1))\verb|^|(1/4)]
+\end{center}
+Now for arbitrary $C_1,C_2\in\mathbb{R}$ we have
+\[\begin{split}x(t)=C_1\,\sqrt[4]{t\,(t-1)\,(1-2\,t-2\,\sqrt{t^2-t})}+\\C_2\,\sqrt[4]{t\,(t-1)\,(1-2\,t+2\,\sqrt{t^2-t})}.\end{split}\]
+
+In the next example we find a particular solution to the equation
+\[ y''=\frac{4\,x^6-8\,x^5+12\,x^4+4\,x^3+7\,x^2-20\,x+4}{4\,x^4}\,y. \]
+Input :
+\begin{center}
+  \tt r:=(4x\verb|^|6-8x\verb|^|5+12x\verb|^|4+4x\verb|^|3+7x\verb|^|2-20x+4)/(4x\verb|^|4):; kovacicsols(y\verb|''|=r*y)
+\end{center}
+Output :
+\begin{center}
+  \tt [(x\verb|^|2-1)/(x*sqrt(x))*exp((x\verb|^|3-2*x\verb|^|2-2)/(2*x))]
+\end{center}
+Hence $y=(x^2-1)\,x^{-3/2}\,\mathrm{e}^{\frac{x^3-2\,x^2-2}{2\,x}}$ is a solution to the given equation.
+
+In the following example we find the general solution of the non-homogeneous equation
+\[ y''-\frac{27\,y}{36\,(x-1)^2}=x+4. \]
+First we need to find the general solution to the corresponding homogeneous equation $y_h''-\frac{27\,y_h}{36\,(x-1)^2}=0$. Input :
+\begin{center}
+  \tt sols:=kovacicsols(y\verb|''|-y*27/(36*(x-1)\verb|^|2),x,y)
+\end{center}
+Output :
+\begin{center}
+  \tt [(x\verb|^|2-2*x)/(sqrt(x-1))]
+\end{center}
+We call the obtained solution $y_1$ and find the other basic independent solution by using~\eqref{kovacic-reduction}. Input :
+\begin{center}
+  \tt y1:=sols[0]:; y2:=y1*int(1/y1\verb|^|2,x)
+\end{center}
+Output :
+\begin{center}
+  \tt -1/(sqrt(x-1)*2)
+\end{center}
+Now the general solution of the homogeneous equation is
+\[ y_h=C_1\,y_1+C_2\,y_2=\frac{C_1\,(x^2-2\,x)+C_2}{\sqrt{x-1}},\quad C_1,C_2\in\mathbb{R}. \]
+A particular solution $y_p$ of the non-homogeneous equation can be obtained by variation of parameters as
+\[ y_p=-y_1\,\int\frac{y_2\,f(x)}{W}\,\mathrm{d}x+y_2\,\int\frac{y_1\,f(x)}{W}\,\mathrm{d}x, \]
+where $f(x)=x+4$ and $W$ is the Wronskian of $y_1$ and $y_2$, i.e.~\[W=y_1\,y_2'-y_2\,y_1'\neq 0.\] Input :
+\begin{center}
+  \tt W:=y1*y2'-y2*y1':; f:=x+4:; yp:=normal(-y1*int(y2*f/W,x)+y2*int(y1*f/W,x))
+\end{center}
+Output :
+\begin{center}
+  \tt (4*x\verb|^|3+72*x\verb|^|2-156*x+80)/21
+\end{center}
+Hence $y_p=\frac{1}{21}\,(4\,x^3+72\,x^2-156\,x+80)$. Now $y=y_p+y_h$. We proceed by checking that it is indeed the general solution of the given equation. Input :
+\begin{center}
+  \tt purge(C1,C2):; ysol:=yp+C1*y1+C2*y2:; normal(diff(ysol,x,2)-27/(36*(x-1)\verb|^|2)*ysol)==f
+\end{center}
+Output :
+\begin{center}
+  \tt true
+\end{center}
+
+In the next example we attempt to solve the equation from the original Kovacic's paper :
+\[ y''=\left(\frac{3}{16\,x\,(x-1)}-\frac{2}{9\,(x-1)^2}-\frac{3}{16\,x^2}\right)\,y. \]
+Input :
+\begin{center}
+  \tt r:=-3/(16x\verb|^|2)-2/(9*(x-1)\verb|^|2)+3/(16x*(x-1)):; kovacicsols(y\verb|''|=r*y)
+\end{center}
+Output :
+\begin{center}
+  \tt -omega\_\verb|^|4*x\verb|^|4*(x-1)\verb|^|4+ omega\_\verb|^|3*x\verb|^|3*(x-1)\verb|^|3*(7*x-3)/3- omega\_\verb|^|2*x\verb|^|2*(x-1)\verb|^|2*(48*x\verb|^|2-41*x+9)/24+ omega\_*x*(x-1)*(320*x\verb|^|3-409*x\verb|^|2+180*x-27)/432+ (-2048*x\verb|^|4+3484*x\verb|^|3-2313*x\verb|^|2+702*x-81)/20736
+\end{center}
+The solution is $y=\exp\left(\int\omega_0\right)$, where $\omega_0$ is a zero of the above expression, thus being a root of a fourth-order polynomial in $\omega$. In similar cases one can try the Ferrari method to obtain $\omega_0$.
+
+We get similar output while trying to solve the equation
+\[ 48\,t\,(t+1)\,(5\,t-4)\,y''+8\,(25\,t+16)\,(t-2)\,y'-(5\,t+68)\,y=0. \]
+Input :
+\begin{center}
+  \tt de:=[48t*(t+1)*(5t-4),8*(25t+16)*(t-2),-(5t+68)]:; kovacicsols(de,t)
+\end{center}
+Output :
+\begin{center}
+  \tt omega\_\verb|^|4*(135*t\verb|^|4-616*t\verb|^|3-144*t\verb|^|2+3072*t-4096)/20736- omega\_\verb|^|2*t\verb|^|2*(t+1)*(15*t\verb|^|3-80*t\verb|^|2+80*t+256)/24- t\verb|^|4*(t+1)\verb|^|2*(t+4)*(5*t+4)+ 2*omega\_*t\verb|^|3*(t+1)\verb|^|2*(t-4)*(5*t+8)/3- omega\_\verb|^|3*t*(t+1)*(23*t\verb|^|2-92*t+128)/54
+\end{center}
 
 \section{Other functions}
 \subsection{Replace small values by 0: {\tt epsilon2zero}}

@@ -92,16 +92,6 @@ namespace giac {
 #define GOLDEN_RATIO 1.61803398875
 typedef unsigned long ulong;
 
-gen make_idnt(const char* name,int index=-1,bool intern=true) {
-    stringstream ss;
-    if (intern)
-        ss << " ";
-    ss << string(name);
-    if (index>=0)
-        ss << index;
-    return identificateur(ss.str().c_str());
-}
-
 /*
  * Return true iff the expression 'e' is constant with respect to
  * variables in 'vars'.
@@ -154,7 +144,7 @@ vecteur solve2(const vecteur &e_orig,const vecteur &vars_orig,GIAC_CONTEXT) {
                     *it==(deps[i]=exp(vars[i],contextptr)) ||
                     is_zero(_simplify(*it-(deps[i]=tan(vars[i]/gen(2),contextptr)),contextptr))) {
                 vars[i]=undef;
-                depvars[i]=make_idnt("depvar",i);
+                depvars[i]=identificateur(" depvar"+print_INT_(i));
                 break;
             }
         }
@@ -239,7 +229,7 @@ vecteur make_temp_vars(const vecteur &vars,const vecteur &ineq,GIAC_CONTEXT) {
                     (t=jt->_SYMBptr->feuille._VECTptr->back()).evalf(1,contextptr).type==_DOUBLE_)
                 xmax=t;
         }
-        gen v=make_idnt("var",index++);
+        gen v=identificateur(" var"+print_INT_(index++));
         if (!is_undef(xmax) && !is_undef(xmin))
             assume_t_in_ab(v,xmin,xmax,false,false,contextptr);
         else if (!is_undef(xmin))
@@ -261,12 +251,12 @@ vecteur solve_kkt(gen &f,vecteur &g,vecteur &h,vecteur &vars_orig,GIAC_CONTEXT) 
     matrice gr_g,gr_h;
     vars.resize(n+m+l);
     for (int i=0;i<m;++i) {
-        vars[n+i]=make_idnt("mu",n+i);
+        vars[n+i]=identificateur(" mu"+print_INT_(n+i));
         giac_assume(symb_superieur_strict(vars[n+i],gen(0)),contextptr);
         gr_g.push_back(*_grad(makesequence(g[i],vars_orig),contextptr)._VECTptr);
     }
     for (int i=0;i<l;++i) {
-        vars[n+m+i]=make_idnt("lambda",n+m+i);
+        vars[n+m+i]=identificateur(" lambda"+print_INT_(n+m+i));
         gr_h.push_back(*_grad(makesequence(h[i],vars_orig),contextptr)._VECTptr);
     }
     vecteur eqv;
@@ -1273,7 +1263,7 @@ void find_local_extrema(gen_map &cpts,const gen &f,const vecteur &g,const vecteu
         if (!initial.empty())
             allinitial=mergevecteur(vecteur(m,0),initial);
         for (int i=m;i-->0;) {
-            L+=-(multipliers[i]=make_idnt("lambda",i))*g[i];
+            L+=-(multipliers[i]=identificateur(" lambda"+print_INT_(i)))*g[i];
         }
         L=subst(L,vars,tmpvars,false,contextptr);
         vecteur allvars=mergevecteur(multipliers,tmpvars),
@@ -1349,7 +1339,7 @@ void find_local_extrema(gen_map &cpts,const gen &f,const vecteur &g,const vecteu
             fvars.resize(n);
             ipd.hessian(hess);
             for (int i=0;i<nv;++i) {
-                a[i]=make_idnt("a",i);
+                a[i]=identificateur(" a"+print_INT_(i));
             }
             for (const_iterateur it=cv.begin();it!=cv.end();++it) {
                 for (int j=0;j<nv;++j) {
@@ -2023,10 +2013,10 @@ void tprob::modi(const matrice &P_orig,matrice &X) {
         P=subst(P,M,100*largest,false,ctx);
     }
     for (int i=0;i<m;++i) {
-        u[i]=i==0?gen(0):make_idnt("u",i);
+        u[i]=i==0?gen(0):identificateur(" u"+print_INT_(i));
     }
     for (int j=0;j<n;++j) {
-        v[j]=make_idnt("v",j);
+        v[j]=identificateur(" v"+print_INT_(j));
     }
     vecteur vars(mergevecteur(vecteur(u.begin()+1,u.end()),v));
     while (true) {
@@ -3126,7 +3116,7 @@ gen _bvpsolve(const gen &g,GIAC_CONTEXT) {
         } else return gensizeerr(contextptr);
     }
     gen dy=identificateur(" dy"),diffy=_derive(makesequence(symb_of(y,x),x),contextptr);
-    gen F=_subst(makesequence(f,symbolic(at_derive,y),diffy),contextptr);
+    gen F=_subst(makesequence(f.type==_IDNT?_eval(f,contextptr):f,symbolic(at_derive,y),diffy),contextptr);
     F=_subst(makesequence(F,diffy,dy),contextptr);
     F=_eval(_subst(makesequence(F,symb_of(y,x),y),contextptr),contextptr);
     vecteur X,Y,dY;
@@ -3281,9 +3271,11 @@ gen _convex(const gen &g,GIAC_CONTEXT) {
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
     vecteur &gv=*g._VECTptr,vars;
-    gen &f=gv.front(),t(undef);
+    gen f=gv.front(),t(undef);
     if (gv.size()<2)
         return gensizeerr(contextptr);
+    if (f.type==_IDNT)
+        f=_eval(f,contextptr);
     if (gv[1].type==_VECT)
         vars=*gv[1]._VECTptr;
     else vars.push_back(gv[1]);
@@ -3947,14 +3939,19 @@ gen _kovacicsols(const gen &g,GIAC_CONTEXT) {
         if (y.type!=_IDNT || x.type!=_IDNT)
             return gensizeerr(contextptr);
     }
+    if (eq.type==_IDNT)
+        eq=_eval(eq,contextptr);
     if (eq.type==_VECT) {
         vecteur &cfs=*eq._VECTptr;
         if (cfs.size()!=3)
             return gensizeerr(contextptr);
         p=cfs[1]; q=cfs[2]; r=cfs[0];
     } else if (eq.type==_SYMB) {
-        gen dy=identificateur(" dy"),d2y=identificateur(" d2y"),diffy=symbolic(at_derive,y),diff2y=symbolic(at_derive,diffy);
-        eq=_subst(makesequence(_subst(makesequence(eq,diff2y,d2y),contextptr),diffy,dy),contextptr);
+        gen dy=identificateur(" dy"),d2y=identificateur(" d2y"),yx=symb_of(y,x);
+        gen diffy=symbolic(at_derive,y),diff2y=symbolic(at_derive,diffy);
+        eq=_subst(makesequence(eq,makevecteur(_derive(makesequence(yx,x),contextptr),_derive(makesequence(yx,x,2),contextptr)),
+                               makevecteur(dy,d2y)),contextptr);
+        eq=_subst(makesequence(_subst(makesequence(eq,diff2y,d2y),contextptr),makevecteur(diffy,yx),makevecteur(dy,y)),contextptr);
         if (eq.is_symb_of_sommet(at_equal))
             eq=equal2diff(eq);
         eq=expand(eq,contextptr);
@@ -3985,6 +3982,92 @@ gen _kovacicsols(const gen &g,GIAC_CONTEXT) {
 static const char _kovacicsols_s []="kovacicsols";
 static define_unary_function_eval (__kovacicsols,&_kovacicsols,_kovacicsols_s);
 define_unary_function_ptr5(at_kovacicsols,alias_at_kovacicsols,&__kovacicsols,_QUOTE_ARGUMENTS,true)
+
+static int cnst_count=0;
+
+/* return the (list of) Euler-Lagrange equation(s) for functional L(u,du,t) */
+gen _euler_lagrange(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    gen L,t=identificateur("x");
+    vecteur u=makevecteur(identificateur("y"));
+    if (g.type!=_VECT) {
+        L=g;
+    } else {
+        if (g.subtype!=_SEQ__VECT)
+            return gensizeerr(contextptr);
+        vecteur &gv=*g._VECTptr;
+        L=gv.front();
+        if (gv.size()>1) {
+            if (gv.size()==2 && gv[1].is_symb_of_sommet(at_of)) {
+                u.front()=gv[1]._SYMBptr->feuille._VECTptr->front();
+                t=gv[1]._SYMBptr->feuille._VECTptr->back();
+            } else if (gv.size()==2 && gv[1].type==_VECT && !gv[1]._VECTptr->empty()) {
+                u.clear();
+                t=undef;
+                for (const_iterateur it=gv[1]._VECTptr->begin();it!=gv[1]._VECTptr->end();++it) {
+                    if (!it->is_symb_of_sommet(at_of))
+                        return gensizeerr(contextptr);
+                    u.push_back(it->_SYMBptr->feuille._VECTptr->front());
+                    if (is_undef(t))
+                        t=it->_SYMBptr->feuille._VECTptr->back();
+                    else if (t!=it->_SYMBptr->feuille._VECTptr->back())
+                        return gensizeerr(contextptr);
+                }
+            } else t=gv[1];
+            if (t.type!=_IDNT)
+                return gensizeerr(contextptr);
+        }
+        if (gv.size()>2) {
+            if (gv[2].type==_IDNT)
+                u.front()=gv[2];
+            else if (gv[2].type==_VECT)
+                u=*gv[2]._VECTptr;
+            else return gensizeerr(contextptr);
+        }
+    }
+    if (L.type==_IDNT)
+        L=_eval(L,contextptr);
+    int n=u.size();
+    vecteur du(n),Du(n),DU(n),D2U(n),d2u(n);
+    for (int i=0;i<n;++i) {
+        if (u[i].type!=_IDNT)
+            return gensizeerr(contextptr);
+        du[i]=identificateur(" du"+print_INT_(i));
+        d2u[i]=identificateur(" d2u"+print_INT_(i));
+        Du[i]=symbolic(at_derive,u[i]);
+        DU[i]=_derive(makesequence(symb_of(u[i],t),t),contextptr);
+        D2U[i]=_derive(makesequence(symb_of(u[i],t),t,2),contextptr);
+    }
+    L=_subst(makesequence(L,Du,du),contextptr);
+    L=_subst(makesequence(L,DU,du),contextptr);
+    vecteur ret;
+    if (n==1 && !depend(L,*t._IDNTptr)) {
+        ret.push_back(symb_equal(_simplify(du[0]*_derive(makesequence(L,du[0]),contextptr)-L,contextptr),
+                identificateur("K_"+print_INT_(cnst_count++))));
+    } else {
+        for (int i=0;i<n;++i) {
+            if (!depend(L,*u[i]._IDNTptr)) {
+                ret.push_back(symb_equal(_simplify(_derive(makesequence(L,du[i]),contextptr),contextptr),
+                                         identificateur("K_"+print_INT_(cnst_count++))));
+            } else {
+                gen eq=_derive(makesequence(L,u[i]),contextptr);
+                eq-=_derive(makesequence(_subst(makesequence(_derive(makesequence(L,du[i]),contextptr),
+                                               makevecteur(du[i],u[i]),makevecteur(DU[i],symb_of(u[i],t))),contextptr),t),contextptr);
+                eq=symb_equal(_simplify(_subst(makesequence(eq,makevecteur(symb_of(u[i],t),DU[i],D2U[i]),
+                                                            makevecteur(u[i],du[i],d2u[i])),contextptr),contextptr),0);
+                gen sol=_solve(makesequence(eq,d2u[i]),contextptr);
+                if (sol.type==_VECT && sol._VECTptr->size()==1)
+                    eq=symb_equal(d2u[i],_simplify(sol._VECTptr->front(),contextptr));
+                ret.push_back(eq);
+            }
+        }
+    }
+    ret=*radsimp(_subst(makesequence(ret,mergevecteur(du,d2u),mergevecteur(DU,D2U)),contextptr),contextptr)._VECTptr;
+    return ret.size()==1?ret.front():ret;
+}
+static const char _euler_lagrange_s []="euler_lagrange";
+static define_unary_function_eval (__euler_lagrange,&_euler_lagrange,_euler_lagrange_s);
+define_unary_function_ptr5(at_euler_lagrange,alias_at_euler_lagrange,&__euler_lagrange,_QUOTE_ARGUMENTS,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

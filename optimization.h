@@ -133,6 +133,7 @@ gen _kernel_density(const gen &g,GIAC_CONTEXT);
 gen _fitdistr(const gen &g,GIAC_CONTEXT);
 gen _bvpsolve(const gen &g,GIAC_CONTEXT);
 gen _euler_lagrange(const gen &g,GIAC_CONTEXT);
+gen _jacobi_equation(const gen &g,GIAC_CONTEXT);
 gen _convex(const gen &g,GIAC_CONTEXT);
 gen _kovacicsols(const gen &g,GIAC_CONTEXT);
 

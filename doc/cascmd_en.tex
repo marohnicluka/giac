@@ -6254,7 +6254,73 @@ See the {\tt subst} command  in the section \ref{sec:subst}.
 
 \section{Calculus of variations}
 
+\subsection{Necessary conditions for extrema of a functional : {\tt euler\_lagrange\index{euler\_lagrange}}}
+{\tt euler\_lagrange} takes from one to three arguments :
+\begin{itemize}
+  \item expression $f(y,y',x)$,
+  \item independent variable (optional, by default $x$),
+  \item dependent variable (optional, by default $y$).
+\end{itemize}
+If $y\in\mathbb{R}^n$ is required (by default $n=1$), one can enter $y=(y_1,y_2,\dots,y_n)$ as a vector $[y_1,y_2,\dots,y_n]$. In that case, $y':=(y_1',y_2',\dots,y_n')$. Alternatively, one can specify two arguments, $f$ and either $y(x)$ or $[y_1(x),y_2(x),\dots,y_n(x)]$.
 
+The return value is a system of differential Euler-Lagrange equations, which represent necessary conditions for extremals of the functional
+\[ F(y)=\int_a^bf(y,y',x)\,\mathrm{d}x,\quad y\in C[a,b] \]
+with boundary conditions $y(a)=A$ and $y(b)=B$. If $n=1$, a single equation is returned :
+\[ \frac{\partial f}{\partial y}=\frac{\mathrm{d}}{\mathrm{d}x}\,\frac{\partial f}{\partial y'}. \]
+If $n>1$, there are $n$ Euler-Lagrange equations (not necessarily idenpendent) :
+\[ \frac{\partial f}{\partial y_k}=\frac{\mathrm{d}}{\mathrm{d}x}\,\frac{\partial f}{\partial y_k'},\quad k=1,2,\dots,n. \]
+The degrees of these differential equations are kept as low as possible. If, for example, $\frac{\partial f}{\partial y}=0$, the equation $\frac{\partial f}{\partial y'}=K$ is returned, where $K\in\mathbb{R}$ is an arbitrary constant. Similarly, using the Hamiltonian
+\[ H(y,y',x)=y'\,\frac{\partial}{\partial y'}\,f(y,y',x)-f(y,y',x) \]
+the Euler-Lagrange equation is simplified in case $n=1$ and $\frac{\partial f}{\partial t}=0$ to :
+\[ H(y,y',x)=K, \]
+since it can be shown that $\frac{\mathrm{d}}{\mathrm{d}x}\,H(y,y',x)=0$. Therefore the Euler-Lagrange equations, which are generally of order two in $y$, are returned in simpler form of order one in the aforementioned cases.
+
+It can be proven that if $f$ is convex (as a function of three independent variables), then a solution $y$ to Euler-Lagrange equations minimizes the functional $F$.
+
+For example, input :
+\begin{center}
+  \tt euler\_lagrange(sqrt(x\verb|'^|2+y\verb|'^|2),[x(t),y(t)])
+\end{center}
+We obtain a system of two differential equations of order one :
+\[ \begin{cases}\frac{x'(t)}{\sqrt{x'(t)^2+y'(t)^2}}&=K_0,\\\frac{y'(t)}{\sqrt{x'(t)^2+y'(t)^2}}&=K_1\end{cases} \]
+where $K_0,K_1\in\mathbb{R}$ are arbitrary (these constants are generated automatically).
+
+In the next example we find the Euler-Lagrange equation for the brachistochrone problem, in which
+\[ f(y,y',x)=\sqrt{\frac{1+y'^2}{y}} \]
+for some function $y\geq 0$ such that $y(a)=h>0$ and $y(b)=0$. It represents a curve alongside which an object travels from $(a,h)$ to $(b,0)$ in shortest possible time (for simplicity, it is assumed that the acceleration of gravity is $g=\frac{1}{2}$). Input :
+\begin{center}
+  \tt assume(y>=0):; euler\_lagrange(sqrt((1+y\verb|'^|2)/y),t,y)
+\end{center}
+Output :
+\begin{center}
+  \tt -1/sqrt(y*(1+diff(y(t),t)\verb|^|2))=K\_2
+\end{center}
+
+In the next example we minimize the functional $F$ for $0<a<b$ and
+\[ f(y,y',x)=x^2\,y'(x)^2+y(x)^2. \]
+Input :
+\begin{center}
+  \tt f:=x\verb|^|2*diff(y(x),x)\verb|^|2+y\verb|^|2:; eq:=euler\_lagrange(f)
+\end{center}
+We obtain the following Euler-Lagrange equation :
+\[ y''=\frac{1}{x^2}\,(y-2\,x\,y'). \]
+It can be solved by assuming $y(x)=x^r$ for some $r\in\mathbb{R}$. Input :
+\begin{center}
+  \tt solve(subs(eq,y(x)=x\verb|^|r,y=x\verb|^|r),r)
+\end{center}
+Output :
+\begin{center}
+  \tt [-(sqrt(5)+1)/2,(sqrt(5)-1)/2]
+\end{center}
+Therefore $y=C_1\,x^{-\frac{\sqrt{5}+1}{2}}+C_2\,x^{\frac{\sqrt{5}+1}{2}}$. The values of $C_1$ and $C_2$ are determined from the boundary conditions. Finally we prove that $f$ is convex :
+\begin{center}
+  \tt convex(f,y(x))
+\end{center}
+Output :
+\begin{center}
+  \tt true
+\end{center}
+Therefore, $y$ minimizes $F$ on $[a,b]$.
 
 \subsection{Determining whether a function is convex : {\tt convex\index{convex}}}
 {\tt convex} takes two mandatory arguments, an at least twice differentiable function(al) $f:\mathbb{R}^n\to\mathbb{R}$ and a variable or list of variables. Some variables may depend on a common independent parameter, say $t$, when entered as e.g.~$x(t)$ instead of $x$. The first derivatives of such variables, when encountered in $f$, are treated as independent parameters of $f$.
@@ -16153,9 +16219,9 @@ where $a$, $b$ and $c$ are rational functions of the independent variable. The c
 \end{itemize}
 The dependent variable should not be specified if the equation~\eqref{kovacic-ode} is entered as a list of coefficients.
 
-The return value can be a list or an expression. An empty list means that there are no Liouvillian solutions to the input equation. If a non-empty list is returned, it contains one or two independent solution(s) $y_1$ (and $y_2$) to the equation~\eqref{kovacic-ode}. The general solution to~\eqref{kovacic-ode} is then
+The return value can be a list or an expression. An empty list means that there are no Liouvillian solutions to the input equation or that none can be determined. If a non-empty list is returned, it contains one or two independent solution(s) $y_1$ (and $y_2$) to the equation~\eqref{kovacic-ode}. The general solution to~\eqref{kovacic-ode} is then
 \[ y=C_1\,y_1+C_2\,y_2, \]
-where $C_1,C_2\in\mathbb{R}$ are arbitrary constants. However, for some equations only $y_1$ is returned, in which case $y_2$ can be obtained as (using the reduction of order) :
+where $C_1,C_2\in\mathbb{R}$ are arbitrary constants. However, for some equations only $y_1$ is returned, in which case $y_2$ can be obtained as (using reduction of order) :
 \begin{equation}\label{kovacic-reduction}y_2=y_1\,\int y_1^{-2}.\end{equation}
 If {\tt kovacicsols} returns an expression, it means that the solution to~\eqref{kovacic-ode} is given implicitly. In that case the return value is a polynomial $P$ of order $n\in\{4,6,12\}$ in the variable {\tt omega\_} (denoted here by $\omega$) with rational coefficients $r_k$, $k=0,1,2,\dots,n$. If $P(\omega_0)=0$ for some $\omega_0$, then $y=\exp\left(\int\omega_0\right)$ is a solution to the equation~\eqref{kovacic-ode}.
 
@@ -16197,6 +16263,17 @@ Output :
 \end{center}
 Hence $y=(x^2-1)\,x^{-3/2}\,\mathrm{e}^{\frac{x^3-2\,x^2-2}{2\,x}}$ is a solution to the given equation.
 
+A similar output is obtained when solving the equation
+\[ y''+y'=\frac{6\,y}{x^2}. \]
+Input :
+\begin{center}
+  \tt kovacicsols(y\verb|''|+y\verb|'|=6y/x\verb|^|2)
+\end{center}
+Output :
+\begin{center}
+  \tt [(x\verb|^|2+6*x+12)*exp(-x)/x\verb|^|2]
+\end{center}
+
 In the following example we find the general solution of the non-homogeneous equation
 \[ y''-\frac{27\,y}{36\,(x-1)^2}=x+4. \]
 First we need to find the general solution to the corresponding homogeneous equation $y_h''-\frac{27\,y_h}{36\,(x-1)^2}=0$. Input :
@@ -16227,7 +16304,7 @@ Output :
 \begin{center}
   \tt (4*x\verb|^|3+72*x\verb|^|2-156*x+80)/21
 \end{center}
-Hence $y_p=\frac{1}{21}\,(4\,x^3+72\,x^2-156\,x+80)$. Now $y=y_p+y_h$. We proceed by checking that it is indeed the general solution of the given equation. Input :
+Hence $y_p=\frac{1}{21}\,(4\,x^3+72\,x^2-156\,x+80)$. Now $y=y_p+y_h$. We proceed by verifying that it is indeed the general solution of the given equation. Input :
 \begin{center}
   \tt purge(C1,C2):; ysol:=yp+C1*y1+C2*y2:; normal(diff(ysol,x,2)-27/(36*(x-1)\verb|^|2)*ysol)==f
 \end{center}
@@ -16248,7 +16325,7 @@ Output :
 \end{center}
 The solution is $y=\exp\left(\int\omega_0\right)$, where $\omega_0$ is a zero of the above expression, thus being a root of a fourth-order polynomial in $\omega$. In similar cases one can try the Ferrari method to obtain $\omega_0$.
 
-We get similar output while trying to solve the equation
+A similar output is obtained when attempting to solve the equation
 \[ 48\,t\,(t+1)\,(5\,t-4)\,y''+8\,(25\,t+16)\,(t-2)\,y'-(5\,t+68)\,y=0. \]
 Input :
 \begin{center}

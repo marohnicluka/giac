@@ -16944,6 +16944,13 @@ graph_diameter(graph("petersen"))
 -2 shortest_path
 dijkstra(graph(%{[[1,2],1],[[2,3],3],[[3,4],7],[[4,5],3],[[5,6],3],[[1,6],3]%}),1,4)
 
+# bellman_ford
+0 Graph(G),Vrtx(s),Vrtx(t)||Lst(T)
+2 Returns the length of the shortest path resp. paths from s to vertex t resp. vertices in T in weighted graph G.
+-1 dijkstra
+-2 shortest_path
+bellman_ford(graph(%{[[1,2],-1],[[2,3],-3],[[3,4],-7],[[4,5],-3],[[5,6],-3],[[1,6],-3]%}),1,4)
+
 # topologic_sort topological_sort
 0 Graph(G)
 2 Returns the list of vertices sorted according to the topological ordering in the directed acyclic graph G.
@@ -17575,14 +17582,38 @@ convex(sqrt((1+(u')^2)/(2*g*u)),u(t))
 kovacicsols(y''=y*(1/x-3/16x^2))
 kovacicsols(y''-y*27/(36*(x-1)^2),x,y)
 kovacicsols(x''+3*(t^2-t+1)/(16*(t-1)^2*t^2)*x,t,x)
+kovacicsols(y''+y'=6y/x^2)
+kovacicsols(y''+(19-x^2)*y=0,x,y)
+kovacicsols((1+x^2)^2*y''+3y=0,x,y)
 kovacicsols([48t*(t+1)*(5t-4),8*(25t+16)*(t-2),-(5t+68)],t)
 
 # euler_lagrange
 0 Expr(f),[(Var(x),[Var||Lst(y)]) || y(x) || Lst(y(x))]
 2 Returns the (system of) Euler-Lagrange equation(s) for the functional F=int(f,x=a..b).
--2 dsolve
--3 bvpsolve
--1 convex
+-1 dsolve
+-2 bvpsolve
+-3 convex
 euler_lagrange(x^2*y'^2+y^2)
-euler_lagrange(sqrt(x’^2+y’^2),[x(t),y(t)])
- assume(y>=0):; euler_lagrange(sqrt((1+y’^2)/y),t,y)
+euler_lagrange(sqrt(x'^2+y'^2),[x(t),y(t)])
+ assume(y>=0):; euler_lagrange(sqrt((1+y'^2)/y),t,y)
+
+# icomp
+0 Intg(n),Intg(k),[zeros=true||false]
+2 Returns the list of compositions of n into k parts.
+-1 sum
+icomp(4,2)
+icomp(6,3,zeros=false)
+
+# jacobi_equation
+0 Expr(f),Var(x),Var(y),Expr(y0),Var(h),Real(a)
+2 Returns the Jacobi equation for stationary function y0(x) in a problem of minimizing the functional int(f(x,y,y'),x=a..b).
+-1 conjugate_equation
+-2 euler_lagrange
+jacobi_equation(-1/2*y'(t)^2+y(t)^2/2,t,y,sin(t),h,0)
+
+# conjugate_equation
+0 Expr(y0),Lst(P),Lst(V),Var(x),Real(a)
+2 Returns the expression which is zero for a point x1 conjugate to x (a is the left or the right bound for x) with respect to the function y0 depending on two parameters in P with values in V.
+-1 jacobi_equation
+-2 euler_lagrange
+conjugate_equation(A*sin(t)+B*cos(t),[A,B],[1,0],t,0)

@@ -17617,3 +17617,11 @@ jacobi_equation(-1/2*y'(t)^2+y(t)^2/2,t,y,sin(t),h,0)
 -1 jacobi_equation
 -2 euler_lagrange
 conjugate_equation(A*sin(t)+B*cos(t),[A,B],[1,0],t,0)
+
+# tonnetz
+0 Intg(a),Intg(b),Intg(c),[Intg(d)]
+2 Returns the graph corresponding to the [a,b,c] resp. [a,b,c,d] tone network (tonnetz) used in neo-Riemannian music theory.
+-1 is_regular
+-2 clique_stats
+tonnetz(3,4,5)
+tonnetz(2,3,3,4)

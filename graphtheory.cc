@@ -4624,7 +4624,8 @@ define_unary_function_ptr5(at_graph_diameter,alias_at_graph_diameter,&__graph_di
  * and d is the weight of the path. If no such path exists, returns
  * [[],+infinity]. Also, when list W of vertices is specified, a sequence of
  * cheapest paths to vertices from W is returned. If W is omitted, it is
- * assumed that W=vertices(G).
+ * assumed that W=vertices(G). The Dijkstra's algorithm is used (nonnegative
+ * weights).
  */
 gen _dijkstra(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -4687,6 +4688,83 @@ gen _dijkstra(const gen &g,GIAC_CONTEXT) {
 static const char _dijkstra_s[]="dijkstra";
 static define_unary_function_eval(__dijkstra,&_dijkstra,_dijkstra_s);
 define_unary_function_ptr5(at_dijkstra,alias_at_dijkstra,&__dijkstra,0,true)
+
+/* USAGE:   bellman_ford(G,v,w)
+ *          bellman_ford(G,v,W)
+ *          bellman_ford(G,v)
+ *
+ * Returns the cheapest weighted path from vertex v to w in graph G. Output is
+ * in form [[v1,v2,...,vk],d] where v1,v2,...,vk are vertices along the path
+ * and d is the weight of the path. If no such path exists, returns
+ * [[],+infinity]. Also, when list W of vertices is specified, a sequence of
+ * cheapest paths to vertices from W is returned. If W is omitted, it is
+ * assumed that W=vertices(G). The Bellman-Ford algorithm is used, which
+ * accepts negative weights but fails on graphs containing negative cycles.
+ */
+gen _bellman_ford(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()<2)
+        return gensizeerr(contextptr);
+    graphe G(contextptr);
+    if (!G.read_gen(gv.front()))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (!G.is_weighted())
+        return gt_err(_GT_ERR_WEIGHTED_GRAPH_REQUIRED);
+    int v,i;
+    if ((v=G.node_index(gv[1]))<0)
+        return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
+    int n=G.node_count();
+    vecteur V,path_weights,paths;
+    graphe::ivector dest;
+    if (gv.size()==2) {
+        V=G.vertices();
+        dest.resize(n);
+        for (i=0;i<n;++i) {
+            dest[i]=i;
+        }
+    } else {
+        if (gv[2].type==_VECT)
+            V=*gv[2]._VECTptr;
+        else V.push_back(gv[2]);
+        dest.resize(V.size());
+        i=0;
+        for (const_iterateur it=V.begin();it!=V.end();++it) {
+            if ((dest[i++]=G.node_index(*it))<0)
+                return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
+        }
+    }
+    graphe::ivectors cheapest_paths;
+    if (!G.bellman_ford(v,dest,path_weights,&cheapest_paths)) {
+        *logptr(contextptr) << "Error: graph contains a negative-weight cycle" << endl;
+        return vecteur(0);
+    }
+    paths.resize(dest.size());
+    i=0;
+    for (graphe::ivectors_iter it=cheapest_paths.begin();it!=cheapest_paths.end();++it) {
+        vecteur &path=*(paths[i++]=vecteur(it->size()))._VECTptr;
+        for (graphe::ivector_iter jt=it->begin();jt!=it->end();++jt) {
+            path[jt-it->begin()]=G.node_label(*jt);
+        }
+    }
+    if (gv.size()>2 && gv[2].type!=_VECT) {
+        gen &w=path_weights.front();
+        return makevecteur(is_inf(w)?vecteur(0):paths.front(),w);
+    }
+    vecteur res(dest.size());
+    i=0;
+    for (const_iterateur it=paths.begin();it!=paths.end();++it) {
+        vecteur &path=*(it->_VECTptr);
+        gen &w=path_weights[i];
+        res[i++]=makevecteur(is_inf(w)?vecteur(0):path,w);
+    }
+    return change_subtype(res,_SEQ__VECT);
+}
+static const char _bellman_ford_s[]="bellman_ford";
+static define_unary_function_eval(__bellman_ford,&_bellman_ford,_bellman_ford_s);
+define_unary_function_ptr5(at_bellman_ford,alias_at_bellman_ford,&__bellman_ford,0,true)
 
 /* USAGE:   topologic_sort(G)
  *
@@ -5370,18 +5448,21 @@ static const char _lowest_common_ancestor_s[]="lowest_common_ancestor";
 static define_unary_function_eval(__lowest_common_ancestor,&_lowest_common_ancestor,_lowest_common_ancestor_s);
 define_unary_function_ptr5(at_lowest_common_ancestor,alias_at_lowest_common_ancestor,&__lowest_common_ancestor,0,true)
 
-/* USAGE:   st_ordering(G,s,t,[D])
+/* USAGE:   st_ordering(G,s,t,[D],[p])
  *
  * Returns ST numbering for the biconnected graph G with source s and sink
  * (target) t. If an identifier D is given, the acyclic directed graph defined
- * by the ordering will ber constructed and stored to it.
+ * by the ordering will ber constructed and stored to it. If a value of the
+ * parameter p in [0,1] is given, the longest path in the resulting DAG will be
+ * approcimately equal to L*p, where L is the length of the longest possible
+ * (Hamiltonian) path.
  */
 gen _st_ordering(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
     vecteur &gv=*g._VECTptr;
-    if (gv.size()!=3 && gv.size()!=4)
+    if (gv.size()<3 && gv.size()>5)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
@@ -5393,13 +5474,22 @@ gen _st_ordering(const gen &g,GIAC_CONTEXT) {
         return gt_err(s<0?gv[1]:gv[2],_GT_ERR_VERTEX_NOT_FOUND);
     if (!G.has_edge(s,t))
         return gt_err(makevecteur(gv[1],gv[2]),_GT_ERR_EDGE_NOT_FOUND);
-    G.compute_st_numbering(s,t);
+    double p=-1;
+    gen gp;
+    if ((gp=_evalf(gv.back(),contextptr)).type==_DOUBLE_) {
+        p=gp.DOUBLE_val();
+        if (p<0 || p>1)
+            return generr("0<=p<=1 is required");
+    }
+    if (p<0)
+        G.compute_st_numbering(s,t);
+    else G.parametrized_st_orientation(s,t,p);
     vecteur st=G.get_st_numbering();
-    if (gv.size()>3) {
-        if (gv.back().type!=_IDNT)
+    if ((gv.size()==4 && p<0) || (gv.size()==5 && p>=0)) {
+        if (gv[3].type!=_IDNT)
             return generrtype("Expected an identifier");
         G.assign_edge_directions_from_st();
-        identifier_assign(*gv.back()._IDNTptr,G.to_gen(),contextptr);
+        identifier_assign(*gv[3]._IDNTptr,G.to_gen(),contextptr);
     }
     return st;
 }
@@ -5612,33 +5702,66 @@ gen _clique_stats(const gen &g,GIAC_CONTEXT) {
     if (g.type!=_VECT)
         return gentypeerr(contextptr);
     int lb=0,ub=RAND_MAX;
+    gen dest(undef);
     if (g.subtype==_SEQ__VECT) {
-        if (g._VECTptr->size()!=2)
+        int len=g._VECTptr->size();
+        if (g._VECTptr->back().type==_IDNT) {
+            dest=g._VECTptr->back();
+            --len;
+        }
+        if (len==2) {
+            gen &opt=g._VECTptr->at(1);
+            if (opt.is_integer() && (lb=opt.val)>0)
+                ub=opt.val;
+            else if (opt.is_symb_of_sommet(at_interval)) {
+                vecteur &bnds=*opt._SYMBptr->feuille._VECTptr;
+                if (!bnds.front().is_integer() ||
+                        !(bnds.back().is_integer() ||
+                          (is_inf(bnds.back()) && is_positive(bnds.back(),contextptr))))
+                    return gentypeerr(contextptr);
+                lb=bnds.front().val;
+                ub=is_inf(bnds.back())?RAND_MAX:bnds.back().val;
+                if (lb<0 || ub<0 || lb>ub)
+                    return gensizeerr(contextptr);
+            } else return gentypeerr(contextptr);
+        } else if (len>2)
             return gensizeerr(contextptr);
-        gen &opt=g._VECTptr->back();
-        if (opt.is_integer() && (lb=opt.val)>0)
-            ub=opt.val;
-        else if (opt.is_symb_of_sommet(at_interval)) {
-            vecteur &bnds=*opt._SYMBptr->feuille._VECTptr;
-            if (!bnds.front().is_integer() ||
-                    !(bnds.back().is_integer() ||
-                      (is_inf(bnds.back()) && is_positive(bnds.back(),contextptr))))
-                return gentypeerr(contextptr);
-            lb=bnds.front().val;
-            ub=is_inf(bnds.back())?RAND_MAX:bnds.back().val;
-            if (lb<0 || ub<0 || lb>ub)
-                return gensizeerr(contextptr);
-        } else return gentypeerr(contextptr);
     }
-    graphe G(contextptr,false);
+    int mode=is_undef(dest)?0:3;
+    graphe G(contextptr,mode==3);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_null())
         return vecteur(0);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
-    map<int,int> stats;
-    G.clique_stats(stats);
+    map<int,int> stats,tmp;
+    G.clique_stats(stats,mode);
+    if (mode==3 && !stats.empty()) {
+        const graphe::ivectors &mc=G.maximal_cliques();
+        vecteur cg;
+        int sz;
+        for (graphe::ivectors_iter it=mc.begin();it!=mc.end();++it) {
+            sz=it->size();
+            if (sz>=lb && sz<=ub) {
+                cg.push_back(G.get_node_labels(*it));
+                ++tmp[sz];
+            }
+        }
+        gen_map gm;
+        for (map<int,int>::const_iterator it=tmp.begin();it!=tmp.end();++it) {
+            (gm[it->first]=vecteur(0))._VECTptr->reserve(it->second);
+        }
+        for (const_iterateur it=cg.begin();it!=cg.end();++it) {
+            gm[it->_VECTptr->size()]._VECTptr->push_back(*it);
+        }
+        cg.clear();
+        for (gen_map::const_iterator it=gm.begin();it!=gm.end();++it) {
+            cg.push_back(it->second);
+        }
+        assert(!cg.empty());
+        identifier_assign(*dest._IDNTptr,cg.size()>1?cg:cg.front(),contextptr);
+    }
     if (lb==ub)
         return stats[lb];
     vecteur res;
@@ -5873,7 +5996,7 @@ gen _chromatic_index(const gen &g,GIAC_CONTEXT) {
         if ((colors_dest=g._VECTptr->back()).type!=_IDNT)
             return generrtype("Expected an identifier");
     }
-    graphe G(contextptr,false);
+    graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     graphe::ivector colors;
@@ -6754,6 +6877,134 @@ gen _vertex_connectivity(const gen &g,GIAC_CONTEXT) {
 static const char _vertex_connectivity_s[]="vertex_connectivity";
 static define_unary_function_eval(__vertex_connectivity,&_vertex_connectivity,_vertex_connectivity_s);
 define_unary_function_ptr5(at_vertex_connectivity,alias_at_vertex_connectivity,&__vertex_connectivity,0,true)
+
+/* USAGE:   tonnetz(a,b,c,[d])
+ *
+ * Returns the neo.Riemannian style tone network corresponding to the pitch
+ * class [a,b,c] resp. [a,b,c,d], where n=a+b+c[+d] is the octave range.
+ * Vertices of the resulting graph are elements of the cyclic group Zn, i.e.
+ * 0,1,...,n-1. The neighbors of vertex v are: v+a, v-a, v+b, v-b, v+c, v-c,
+ * [v+a+b, v-a-b, v+b+c,v-b-c].
+ */
+gen _tonnetz(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    if (gv.size()!=3 && gv.size()!=4)
+        return gensizeerr(contextptr);
+    for (const_iterateur it=gv.begin();it!=gv.end();++it) {
+        if (!it->is_integer() || !is_strictly_positive(*it,contextptr))
+            return gensizeerr(contextptr);
+    }
+    graphe G(contextptr);
+    vecteur labels;
+    int n=_sum(gv,contextptr).val;
+    G.make_default_labels(labels,n,0,0);
+    G.add_nodes(labels);
+    int a=gv[0].val,b=gv[1].val,c=gv[2].val;
+    for (int i=0;i<n;++i) {
+        set<int> adj;
+        adj.insert((n+i+a)%n);
+        adj.insert((n+i-a)%n);
+        adj.insert((n+i+b)%n);
+        adj.insert((n+i-a)%n);
+        adj.insert((n+i+c)%n);
+        adj.insert((n+i-c)%n);
+        for (set<int>::const_iterator it=adj.begin();it!=adj.end();++it) {
+            G.add_edge(i,*it);
+        }
+    }
+    if (gv.size()==4) {
+        int d=gv[3].val;
+        for (int i=0;i<n;++i) {
+            set<int> adj;
+            adj.insert((n+i+d)%n);
+            adj.insert((n+i-d)%n);
+            adj.insert((n+i+a+b)%n);
+            adj.insert((n+i-a-b)%n);
+            adj.insert((n+i+b+c)%n);
+            adj.insert((n+i-b-c)%n);
+            for (set<int>::const_iterator it=adj.begin();it!=adj.end();++it) {
+                G.add_edge(i,*it);
+            }
+        }
+    }
+    return G.to_gen();
+}
+static const char _tonnetz_s[]="tonnetz";
+static define_unary_function_eval(__tonnetz,&_tonnetz,_tonnetz_s);
+define_unary_function_ptr5(at_tonnetz,alias_at_tonnetz,&__tonnetz,0,true)
+
+void nexcom(int n,int k,int &h,int &t,vector<int> &r,bool &mtc) {
+    int i;
+    if (mtc) goto label20;
+    r[0]=n;
+    t=n;
+    h=0;
+    if (k==1) goto label15;
+    for (i=1;i<k;++i) {
+        r[i]=0;
+    }
+label15:
+    mtc=r.back()!=n;
+    return;
+label20:
+    if (t>1) h=0;
+    ++h;
+    t=r[h-1];
+    r[h-1]=0;
+    r[0]=t-1;
+    ++r[h];
+    goto label15;
+}
+
+/* USAGE:   icomp(n,k,[zeros=true or false])
+ *
+ * Returns the list of all decompositions of n into k parts (the order of parts
+ * matters). If zeros is set to false, the compositions containing zero are
+ * omitte (by default, zeros=true).
+ */
+gen _icomp(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur gv=*g._VECTptr;
+    if (gv.size()<1)
+        return gensizeerr(contextptr);
+    bool zer=true;
+    if (gv.back().is_symb_of_sommet(at_equal)) {
+        gen &lh=gv.back()._SYMBptr->feuille._VECTptr->front();
+        gen &rh=gv.back()._SYMBptr->feuille._VECTptr->back();
+        if (lh!=at_zeros || !rh.is_integer())
+            return gensizeerr(contextptr);
+        zer=(bool)rh.val;
+        gv.pop_back();
+    }
+    if (gv.size()!=2)
+        return gensizeerr(contextptr);
+    gen &N=gv.front(),&K=gv.back();
+    if (!is_integer(N) || !is_integer(K) || N.val<=0 || K.val<=0 || K.val>N.val)
+        return gensizeerr(contextptr);
+    int n=N.val,k=K.val,h,t;
+    vector<int> r(k);
+    bool mtc=false;
+    vecteur res;
+    do {
+        nexcom(n,k,h,t,r,mtc);
+        res.push_back(vector_int_2_vecteur(r,contextptr));
+    } while (mtc);
+    if (!zer) {
+        for (int i=res.size();i-->0;) {
+            if (!is_zero(_count_eq(makesequence(0,res[i]),contextptr)))
+                res.erase(res.begin()+i);
+        }
+    }
+    return res;
+}
+static const char _icomp_s[]="icomp";
+static define_unary_function_eval(__icomp,&_icomp,_icomp_s);
+define_unary_function_ptr5(at_icomp,alias_at_icomp,&__icomp,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

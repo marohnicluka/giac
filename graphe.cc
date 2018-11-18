@@ -4100,12 +4100,14 @@ void graphe::tomita(iset &R,iset &P,iset &X,map<int,int> &m,int mode) {
         if (mode==1) { // store matching
             if (R.size()==2)
                 m[*R.begin()]=*R.rbegin();
-        } else if (mode==2) { // store the clique
+        } else if (mode==2 || mode==3) { // store the clique
             ivector cliq;
             cliq.reserve(R.size());
             for (iset_iter it=R.begin();it!=R.end();++it) cliq.push_back(*it);
             maxcliques.push_back(cliq);
-        } else ++m[R.size()];
+        }
+        if (mode==0 || mode==3)
+            ++m[R.size()];
     } else {
         /* choose as the pivot element the node with the highest number of neighbors in P, say i-th */
         iset PUX,PP,XX,S;
@@ -4136,10 +4138,10 @@ void graphe::tomita(iset &R,iset &P,iset &X,map<int,int> &m,int mode) {
 /* a modified version of the Bron-Kerbosch algorithm for listing all maximal cliques,
 * developed by Tomita et al. Number of k-cliques will be stored to m[k] for each k.
 * If store_matching is true, store 2-cliques (v,w) as m[v]=w. */
-void graphe::clique_stats(map<int,int> &m,bool store_matching) {
+void graphe::clique_stats(map<int,int> &m,int mode) {
     iset R,X,P;
     for (int i=0;i<node_count();++i) P.insert(i);
-    tomita(R,P,X,m,store_matching?1:0);
+    tomita(R,P,X,m,mode);
 }
 
 /* generate a clique vertex cover of this graph */
@@ -5319,7 +5321,7 @@ void graphe::make_sierpinski_graph(int n,int k,bool triangle) {
     if (triangle && k>1) {
         /* remove all non-clique edges to obtain Sierpinski triangle graph */
         map<int,int> m;
-        clique_stats(m,true);
+        clique_stats(m,1);
         iset isolated_nodes;
         for (map<int,int>::const_iterator it=m.begin();it!=m.end();++it) {
             int v=it->first,w=it->second;
@@ -8527,6 +8529,7 @@ void graphe::dijkstra(int src,const ivector &dest,vecteur &path_weights,ivectors
     int pos,u;
     while (!Q.empty()) {
         min_dist=plusinf();
+        pos=-1;
         for (ivector_iter it=Q.begin();it!=Q.end();++it) {
             const gen &d=dist[*it];
             if (is_strictly_greater(min_dist,d,ctx)) {
@@ -8535,6 +8538,7 @@ void graphe::dijkstra(int src,const ivector &dest,vecteur &path_weights,ivectors
                 u=*it;
             }
         }
+        if (pos<0) break;
         Q.erase(Q.begin()+pos);
         vertex &v=node(u);
         v.set_visited(true);
@@ -8563,6 +8567,56 @@ void graphe::dijkstra(int src,const ivector &dest,vecteur &path_weights,ivectors
     for (ivector_iter it=dest.begin();it!=dest.end();++it) {
         path_weights[it-dest.begin()]=dist[*it];
     }
+}
+
+/* return the length of the shortest path from src to dest in weighted
+* graph (Bellman-Ford algorithm), also fill shortest_path with the respective vertices */
+bool graphe::bellman_ford(int src,const ivector &dest,vecteur &path_weights,ivectors *cheapest_paths) {
+    int n=node_count(),u,v;
+    ivector prev(n);
+    vecteur dist(n);
+    bool isweighted=is_weighted();
+    for (int i=0;i<n;++i) {
+        dist[i]=i==src?gen(0):plusinf();
+        prev[i]=-1;
+    }
+    ipairs E;
+    get_edges_as_pairs(E);
+    gen w(1);
+    for (int i=1;i<n;++i) {
+        for (ipairs_iter it=E.begin();it!=E.end();++it) {
+            u=it->first; v=it->second;
+            if (isweighted)
+                get_edge_attribute(u,v,_GT_ATTRIB_WEIGHT,w);
+            if (is_strictly_greater(dist[v],dist[u]+w,ctx)) {
+                dist[v]=dist[u]+w;
+                prev[v]=u;
+            }
+        }
+    }
+    /* check for negative-weight cycles */
+    for (ipairs_iter it=E.begin();it!=E.end();++it) {
+        if (isweighted)
+            get_edge_attribute(u,v,_GT_ATTRIB_WEIGHT,w);
+        if (is_strictly_greater(dist[v],dist[u]+w,ctx))
+            return false; // a negative-weight cycle is found
+    }
+    if (cheapest_paths!=NULL) {
+        cheapest_paths->resize(dest.size());
+        for (ivector_iter it=dest.begin();it!=dest.end();++it) {
+            ivector &path=cheapest_paths->at(it-dest.begin());
+            path.clear();
+            path.push_back(*it);
+            int p=*it;
+            while ((p=prev[p])>=0) path.push_back(p);
+            std::reverse(path.begin(),path.end());
+        }
+    }
+    path_weights.resize(dest.size());
+    for (ivector_iter it=dest.begin();it!=dest.end();++it) {
+        path_weights[it-dest.begin()]=dist[*it];
+    }
+    return true; // success
 }
 
 /* return true iff the graph has a topological ordering and output the indices
@@ -8809,16 +8863,114 @@ vecteur graphe::get_st_numbering() const {
 
 /* assign directions to edges according to the st-numbering */
 void graphe::assign_edge_directions_from_st() {
+    bool isweighted=is_weighted();
+    matrice W;
+    if (isweighted)
+        W=weight_matrix();
+    ipairs E;
+    get_edges_as_pairs(E);
+    for (ipairs_iter it=E.begin();it!=E.end();++it) {
+        discard_edge_attribute(it->first,it->second,_GT_ATTRIB_WEIGHT);
+    }
+    set_weighted(false);
     set_directed(true);
     for (vector<vertex>::iterator it=nodes.begin();it!=nodes.end();++it) {
         vertex &v=*it;
         ivector ngh=v.neighbors();
-        for (ivector_iter it=ngh.begin();it!=ngh.end();++it) {
-            const vertex &w=node(*it);
+        for (ivector_iter jt=ngh.begin();jt!=ngh.end();++jt) {
+            const vertex &w=node(*jt);
             if (v.number()>w.number())
-                v.remove_neighbor(*it);
+                v.remove_neighbor(*jt);
         }
     }
+    if (isweighted)
+        make_weighted(W);
+}
+
+void graphe::strec(int i,int t,int counter,int np,iset &Q,vecteur &timestamp,vecteur &l) {
+    bool isweighted=is_weighted();
+    ++counter;
+    vertex &v=node(i);
+    v.set_number(counter);
+    gen w(1);
+    for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
+        if (node(*it).subgraph()!=0)
+            continue;
+        if (*it!=t)
+            Q.insert(*it);
+        if (isweighted)
+            get_edge_attribute(i,*it,_GT_ATTRIB_WEIGHT,w);
+        if (is_strictly_greater(l[i]+w,l[*it],ctx))
+            l[*it]=l[i]+w;
+        timestamp[*it]=isweighted?l[*it]:gen(counter);
+    }
+    Q.erase(i);
+    v.set_subgraph(1);
+    if (Q.empty()) {
+        node(t).set_number(node_count());
+        return;
+    }
+    /* update blocks */
+    vector<iset> B;
+    vector<ipairs> blocks;
+    find_blocks(blocks,0);
+    int nb=blocks.size();
+    B.resize(nb);
+    for (vector<ipairs>::const_iterator it=blocks.begin();it!=blocks.end();++it) {
+        iset &b=B[it-blocks.begin()];
+        for (ipairs_iter jt=it->begin();jt!=it->end();++jt) {
+            b.insert(jt->first);
+            b.insert(jt->second);
+        }
+    }
+    iset df;
+    bool has_root=false;
+    if (nb>1) { // G-v is not biconnected
+        ivector cv;
+        find_cut_vertices(cv,0);
+        for (int k=nb;k-->0;) {
+            iset &b=B[k];
+            if (!has_root && b.find(t)!=b.end()) { // root block, delete it
+                B.erase(B.begin()+k);
+                has_root=true;
+            } else {
+                sets_intersection(cv,b,df);
+                if (df.size()!=1) // non-leaf tree node, delete it
+                    B.erase(B.begin()+k);
+                else b.erase(*df.begin()); // b is leaf node, detach it
+            }
+        }
+    }
+    /* recurse */
+    for (vector<iset>::const_iterator it=B.begin();it!=B.end();++it) {
+        sets_intersection(*it,Q,df);
+        if (df.empty()) continue;
+        gen_map m;
+        gen ts,max_ts(undef),min_ts(undef);
+        for (iset_iter jt=df.begin();jt!=df.end();++jt) {
+            ts=timestamp[*jt];
+            max_ts=is_undef(max_ts)?ts:_max(makevecteur(max_ts,ts),ctx);
+            min_ts=is_undef(min_ts)?ts:_min(makevecteur(min_ts,ts),ctx);
+            if (m.find(ts)==m.end())
+                m[ts]=vecteur(1,*jt);
+            else m[ts]._VECTptr->push_back(*jt);
+        }
+        vecteur &cand=*m[counter<=np?max_ts:min_ts]._VECTptr;
+        int choice=(cand.size()==1?cand.front():cand[rand_integer(cand.size())]).val;
+        strec(choice,t,counter,np,Q,timestamp,l);
+    }
+}
+
+/* impose parametrized st-orientation on this graph with parameter p in [0,1] */
+void graphe::parametrized_st_orientation(int s,int t,double p) {
+    assert(p>=0 && p<=1);
+    int n=node_count(),counter=0,np=(int)(n*p);
+    vecteur timestamp(n,0),l(n,0);
+    iset Q;
+    Q.insert(s);
+    unset_subgraphs(0);
+    strec(s,t,counter,np,Q,timestamp,l);
+    unset_subgraphs();
 }
 
 /* greedy vertex coloring algorithm due to Biggs, also records vertex inclusion time */

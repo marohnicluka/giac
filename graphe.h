@@ -693,6 +693,7 @@ private:
     int vertex_pair_connectivity(int v,int w);
     static inline gen harmonic_mean_exact(gen a,gen b,gen c) { return 3*a*b*c/(a*b+b*c+a*c); }
     static inline double harmonic_mean(double a,double b,double c) { return 3.0*a*b*c/(a*b+b*c+a*c); }
+    void strec(int i,int t,int counter,int np,iset &Q,vecteur &timestamp,vecteur &l);
 
 public:
     graphe(const context *contextptr=context0,bool support_attributes=true);
@@ -889,7 +890,7 @@ public:
     bool is_clique(int sg=-1) const;
     gen triangle_count(ivectors *dest=NULL,bool ccoeff=false,bool exact=true);
     int tree_height(int root);
-    void clique_stats(std::map<int,int> &m,bool store_matching=false);
+    void clique_stats(std::map<int,int> &m,int mode=0);
     int maximum_clique(ivector &clique);
     void greedy_neighborhood_clique_cover_numbers(ivector &cover_numbers);
     bool clique_cover(ivectors &cover,int k=0);
@@ -957,6 +958,7 @@ public:
     void distance(int i,const ivector &J,ivector &dist,ivectors *shortest_paths=NULL);
     void allpairs_distance(matrice &m) const;
     void dijkstra(int src,const ivector &dest,vecteur &path_weights,ivectors *cheapest_paths=NULL);
+    bool bellman_ford(int src,const ivector &dest,vecteur &path_weights,ivectors *cheapest_paths=NULL);
     bool topologic_sort(ivector &ordering);
     bool is_arborescence() const;
     void reverse(graphe &G) const;
@@ -967,6 +969,7 @@ public:
     void compute_st_numbering(int s,int t);
     vecteur get_st_numbering() const;
     void assign_edge_directions_from_st();
+    void parametrized_st_orientation(int s,int t,double p);
     void greedy_vertex_coloring_biggs(ivector &ordering);
     int greedy_vertex_coloring(const ivector &p);
     int exact_vertex_coloring(int max_colors=0);

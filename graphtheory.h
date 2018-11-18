@@ -205,6 +205,7 @@ gen _graph_power(const gen &g,GIAC_CONTEXT);
 gen _vertex_distance(const gen &g,GIAC_CONTEXT);
 gen _shortest_path(const gen &g,GIAC_CONTEXT);
 gen _dijkstra(const gen &g,GIAC_CONTEXT);
+gen _bellman_ford(const gen &g,GIAC_CONTEXT);
 gen _allpairs_distance(const gen &g,GIAC_CONTEXT);
 gen _graph_diameter(const gen &g,GIAC_CONTEXT);
 gen _is_clique(const gen &g,GIAC_CONTEXT);
@@ -270,12 +271,14 @@ gen _two_edge_connected_components(const gen &g,GIAC_CONTEXT);
 gen _is_two_edge_connected(const gen &g,GIAC_CONTEXT);
 gen _edge_connectivity(const gen &g,GIAC_CONTEXT);
 gen _vertex_connectivity(const gen &g,GIAC_CONTEXT);
+gen _tonnetz(const gen &g,GIAC_CONTEXT);
 
 // GENERAL GIAC COMMANDS
 
 gen _foldl(const gen &g,GIAC_CONTEXT);
 gen _foldr(const gen &g,GIAC_CONTEXT);
 gen _randvar(const gen &g,GIAC_CONTEXT);
+gen _icomp(const gen &g,GIAC_CONTEXT);
 
 // FUNCTION POINTERS
 

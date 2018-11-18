@@ -3637,6 +3637,26 @@ Input :
 Output :
 \begin{center}{\tt 0}\end{center}
 
+\subsection{Listing all compositions of an integer into $k$ parts : {\tt icomp\index{icomp}}}
+{\tt icomp} accepts two or three arguments : a positive integer $n$, a positive integer $k$ not larger than $n$ and optionally {\tt zeros=true} or {\tt zeros=false}. The return value is the list of all compostions of $n$ into $k$ parts. Each composition is a list of nonnegative integers which sum up to $n$. If the option {\tt zeros} is set to {\tt true} (which is the default), a part can have zero value. Else, each part has nonzero (positive) value.
+
+For example, input :
+\begin{center}
+  \tt icomp(4,2)
+\end{center}
+Output :
+\begin{center}
+  \tt [[4,0],[3,1],[2,2],[1,3],[0,4]]
+\end{center}
+Input :
+\begin{center}
+  \tt icomp(6,3,zeros=false)
+\end{center}
+Output :
+\begin{center}
+  \tt [[4,1,1],[3,2,1],[2,3,1],[1,4,1],[3,1,2], [2,2,2],[1,3,2],[2,1,3],[1,2,3],[1,1,4]]
+\end{center}
+
 \section{Combinatorial analysis}
 \subsection{Factorial : {\tt factorial \ !}}\index{factorial|textbf}\index{\symbol{33}|textbf}
 \noindent{\tt factorial} (prefix) or {\tt !} (postfix)
@@ -6254,74 +6274,6 @@ See the {\tt subst} command  in the section \ref{sec:subst}.
 
 \section{Calculus of variations}
 
-\subsection{Necessary conditions for extrema of a functional : {\tt euler\_lagrange\index{euler\_lagrange}}}
-{\tt euler\_lagrange} takes from one to three arguments :
-\begin{itemize}
-  \item expression $f(y,y',x)$,
-  \item independent variable (optional, by default $x$),
-  \item dependent variable (optional, by default $y$).
-\end{itemize}
-If $y\in\mathbb{R}^n$ is required (by default $n=1$), one can enter $y=(y_1,y_2,\dots,y_n)$ as a vector $[y_1,y_2,\dots,y_n]$. In that case, $y':=(y_1',y_2',\dots,y_n')$. Alternatively, one can specify two arguments, $f$ and either $y(x)$ or $[y_1(x),y_2(x),\dots,y_n(x)]$.
-
-The return value is a system of differential Euler-Lagrange equations, which represent necessary conditions for extremals of the functional
-\[ F(y)=\int_a^bf(y,y',x)\,\mathrm{d}x,\quad y\in C[a,b] \]
-with boundary conditions $y(a)=A$ and $y(b)=B$. If $n=1$, a single equation is returned :
-\[ \frac{\partial f}{\partial y}=\frac{\mathrm{d}}{\mathrm{d}x}\,\frac{\partial f}{\partial y'}. \]
-If $n>1$, there are $n$ Euler-Lagrange equations (not necessarily idenpendent) :
-\[ \frac{\partial f}{\partial y_k}=\frac{\mathrm{d}}{\mathrm{d}x}\,\frac{\partial f}{\partial y_k'},\quad k=1,2,\dots,n. \]
-The degrees of these differential equations are kept as low as possible. If, for example, $\frac{\partial f}{\partial y}=0$, the equation $\frac{\partial f}{\partial y'}=K$ is returned, where $K\in\mathbb{R}$ is an arbitrary constant. Similarly, using the Hamiltonian
-\[ H(y,y',x)=y'\,\frac{\partial}{\partial y'}\,f(y,y',x)-f(y,y',x) \]
-the Euler-Lagrange equation is simplified in case $n=1$ and $\frac{\partial f}{\partial t}=0$ to :
-\[ H(y,y',x)=K, \]
-since it can be shown that $\frac{\mathrm{d}}{\mathrm{d}x}\,H(y,y',x)=0$. Therefore the Euler-Lagrange equations, which are generally of order two in $y$, are returned in simpler form of order one in the aforementioned cases.
-
-It can be proven that if $f$ is convex (as a function of three independent variables), then a solution $y$ to Euler-Lagrange equations minimizes the functional $F$.
-
-For example, input :
-\begin{center}
-  \tt euler\_lagrange(sqrt(x\verb|'^|2+y\verb|'^|2),[x(t),y(t)])
-\end{center}
-We obtain a system of two differential equations of order one :
-\[ \begin{cases}\frac{x'(t)}{\sqrt{x'(t)^2+y'(t)^2}}&=K_0,\\\frac{y'(t)}{\sqrt{x'(t)^2+y'(t)^2}}&=K_1\end{cases} \]
-where $K_0,K_1\in\mathbb{R}$ are arbitrary (these constants are generated automatically).
-
-In the next example we find the Euler-Lagrange equation for the brachistochrone problem, in which
-\[ f(y,y',x)=\sqrt{\frac{1+y'^2}{y}} \]
-for some function $y\geq 0$ such that $y(a)=h>0$ and $y(b)=0$. It represents a curve alongside which an object travels from $(a,h)$ to $(b,0)$ in shortest possible time (for simplicity, it is assumed that the acceleration of gravity is $g=\frac{1}{2}$). Input :
-\begin{center}
-  \tt assume(y>=0):; euler\_lagrange(sqrt((1+y\verb|'^|2)/y),t,y)
-\end{center}
-Output :
-\begin{center}
-  \tt -1/sqrt(y*(1+diff(y(t),t)\verb|^|2))=K\_2
-\end{center}
-
-In the next example we minimize the functional $F$ for $0<a<b$ and
-\[ f(y,y',x)=x^2\,y'(x)^2+y(x)^2. \]
-Input :
-\begin{center}
-  \tt f:=x\verb|^|2*diff(y(x),x)\verb|^|2+y\verb|^|2:; eq:=euler\_lagrange(f)
-\end{center}
-We obtain the following Euler-Lagrange equation :
-\[ y''=\frac{1}{x^2}\,(y-2\,x\,y'). \]
-It can be solved by assuming $y(x)=x^r$ for some $r\in\mathbb{R}$. Input :
-\begin{center}
-  \tt solve(subs(eq,y(x)=x\verb|^|r,y=x\verb|^|r),r)
-\end{center}
-Output :
-\begin{center}
-  \tt [-(sqrt(5)+1)/2,(sqrt(5)-1)/2]
-\end{center}
-Therefore $y=C_1\,x^{-\frac{\sqrt{5}+1}{2}}+C_2\,x^{\frac{\sqrt{5}+1}{2}}$. The values of $C_1$ and $C_2$ are determined from the boundary conditions. Finally we prove that $f$ is convex :
-\begin{center}
-  \tt convex(f,y(x))
-\end{center}
-Output :
-\begin{center}
-  \tt true
-\end{center}
-Therefore, $y$ minimizes $F$ on $[a,b]$.
-
 \subsection{Determining whether a function is convex : {\tt convex\index{convex}}}
 {\tt convex} takes two mandatory arguments, an at least twice differentiable function(al) $f:\mathbb{R}^n\to\mathbb{R}$ and a variable or list of variables. Some variables may depend on a common independent parameter, say $t$, when entered as e.g.~$x(t)$ instead of $x$. The first derivatives of such variables, when encountered in $f$, are treated as independent parameters of $f$.
 
@@ -6411,6 +6363,14 @@ Output :
 \begin{center}
   \tt true
 \end{center}
+Input :
+\begin{center}
+  \tt assume(x>=0 and x<=pi/4):; convex(exp(y)*sec(x)\verb|^|3-z,[x,y,z])
+\end{center}
+Output :
+\begin{center}
+  \tt true
+\end{center}
 
 \paragraph{\label{brachistochrone}The Brachistochrone Problem.}
 We want to minimize the objective functional \[T(y)=\int_0^{x_1}L(t,y(t),y'(t))\,\mathrm{d} t\] where the Lagrangian $L$ is defined by
@@ -6437,6 +6397,359 @@ Output :
   \tt true
 \end{center}
 Hence the function $\overline{z}(t)=\sqrt{2\,\overline{y}(t)}$, stationary for $P$ (which is verified directly), minimizes the objective functional \[U(z)=\int_0^{x_1}P(t,z(t),z'(t))\,\mathrm{d} t.\] From here and $U(z)=T(y)$ it easily follows that $\overline{y}$ minimizes $T$ and therefore the brachistochrone. For details see John L.~Troutman, \emph{Variational Calculus and Optimal Control} (second edition), page 257.
+
+\subsection{Euler-Lagrange equation(s) : {\tt euler\_lagrange\index{euler\_lagrange}}}
+{\tt euler\_lagrange} takes from one to three arguments :
+\begin{itemize}
+  \item expression $f(x,y,y')$,
+  \item independent variable (optional, by default $x$),
+  \item dependent variable (optional, by default $y$).
+\end{itemize}
+If $y\in\mathbb{R}^n$ is required (by default $n=1$), one can enter $y=(y_1,y_2,\dots,y_n)$ as a vector $[y_1,y_2,\dots,y_n]$. In that case, $y':=(y_1',y_2',\dots,y_n')$. Alternatively, one can specify two arguments, $f$ and either $y(x)$ or $[y_1(x),y_2(x),\dots,y_n(x)]$.
+
+The return value is a system of differential Euler-Lagrange equations, which represent necessary conditions for extremum of the functional
+\[ F(y)=\int_a^bf(x,y,y')\,\mathrm{d}x,\quad y\in C^2[a,b] \]
+with boundary conditions $y(a)=A$ and $y(b)=B$ where $A,B\in\mathbb{R}$. If $n=1$, a single equation is returned :
+\begin{equation}\label{eq:euler-lagrange}\frac{\partial f}{\partial y}=\frac{\mathrm{d}}{\mathrm{d}x}\,\frac{\partial f}{\partial y'}.\end{equation}
+If $n>1$, there are $n$ Euler-Lagrange equations :
+\[ \frac{\partial f}{\partial y_k}=\frac{\mathrm{d}}{\mathrm{d}x}\,\frac{\partial f}{\partial y_k'},\quad k=1,2,\dots,n. \]
+The degrees of these differential equations are kept as low as possible. If, for example, $\frac{\partial f}{\partial y}=0$, the equation $\frac{\partial f}{\partial y'}=K$ is returned, where $K\in\mathbb{R}$ is an arbitrary constant. Similarly, using the Hamiltonian
+\[ H(x,y,y')=y'\,\frac{\partial}{\partial y'}\,f(x,y,y')-f(x,y,y') \]
+the Euler-Lagrange equation is simplified in case $n=1$ and $\frac{\partial f}{\partial t}=0$ to :
+\begin{equation}\label{eq:hamiltonian}H(x,y,y')=K,\end{equation}
+since it can be shown that $\frac{\mathrm{d}}{\mathrm{d}x}\,H(y,y',x)=0$. Therefore the Euler-Lagrange equations, which are generally of order two in $y$, are returned in simpler form of order one in the aforementioned cases. If $n=1$ and $\frac{\partial f}{\partial t}=0$ then both equations~\eqref{eq:euler-lagrange} and~\eqref{eq:hamiltonian} are returned, each of them being sufficient to determine $y$ (one of the returned equations is usually simpler than the other).
+
+It can be proven that if $f$ is convex (as a function of three independent variables), then a solution $y$ to Euler-Lagrange equations minimizes the functional $F$.
+
+For example, input :
+\begin{center}
+  \tt euler\_lagrange(sqrt(x'(t)\verb|^|2+y'(t)\verb|^|2),[x(t),y(t)])
+\end{center}
+We obtain a system of two differential equations of order one :
+\[ \begin{cases}\frac{x'(t)}{\sqrt{x'(t)^2+y'(t)^2}}&=K_0,\\\frac{y'(t)}{\sqrt{x'(t)^2+y'(t)^2}}&=K_1\end{cases} \]
+where $K_0,K_1\in\mathbb{R}$ are arbitrary (these constants are generated automatically).
+
+In the following example we find the Euler-Lagrange equation for the brachistochrone problem, in which the functional
+\[ F(y)=\frac{1}{\sqrt{2\,g}}\int_0^{x_1}\sqrt{\frac{1+y'(x)^2}{y(x)}}\,\mathrm{d}x \]
+for some function $y\geq 0$ such that $y(0)=0$ and $y(x_1)=h>0$. It represents a curve alongside which an object travels, forced by the force of gravity (its vector pointing upwards), from the point $(0,0)$ to the point $(x_1,h)$ in shortest possible time. To obtain the corresponding Euler-Lagrange equation, input :
+\begin{center}
+  \tt assume(y>=0):; euler\_lagrange(sqrt((1+y\verb|'^|2)/y),t,y)
+\end{center}
+Output :
+\begin{center}
+  \tt [-1/sqrt(y(t)*(1+diff(y(t),t)\verb|^|2))=K\_2,
+  diff(y(t),t,2)=(diff(y(t),t)\verb|^|2+1)/(2*y(t))]
+\end{center}
+It is easier to solve the first equation for $y$, since it is first-order and separable.
+
+In the next example we minimize the functional $F$ for $0<a<b$ and
+\[ f(x,y,y')=x^2\,y'(x)^2+y(x)^2. \]
+Input :
+\begin{center}
+  \tt f:=x\verb|^|2*diff(y(x),x)\verb|^|2+y\verb|^|2:; eq:=euler\_lagrange(f)
+\end{center}
+We obtain the following Euler-Lagrange equation :
+\[ y''=\frac{1}{x^2}\,(y-2\,x\,y'). \]
+It can be solved by assuming $y(x)=x^r$ for some $r\in\mathbb{R}$. Input :
+\begin{center}
+  \tt solve(subs(eq,y(x)=x\verb|^|r),r)
+\end{center}
+Output :
+\begin{center}
+  \tt [-(sqrt(5)+1)/2,(sqrt(5)-1)/2]
+\end{center}
+Note that a pair of independent solutions is also returned by {\tt kovacicsols} command :
+\begin{center}
+  \tt assume(x>=0):; kovacicsols(y\verb|''|=(y-2x*y')/x\verb|^|2,x,y)
+\end{center}
+Output :
+\begin{center}
+  \tt [sqrt(x\verb|^|(sqrt(5)-1)),sqrt(x\verb|^|(-(sqrt(5))-1))]
+\end{center}
+Anyway, we conclude that $y=C_1\,x^{-\frac{\sqrt{5}+1}{2}}+C_2\,x^{\frac{\sqrt{5}+1}{2}}$. The values of $C_1$ and $C_2$ are determined from the boundary conditions. Finally we prove that $f$ is convex :
+\begin{center}
+  \tt convex(f,y(x))
+\end{center}
+Output :
+\begin{center}
+  \tt true
+\end{center}
+Therefore, $y$ minimizes $F$ on $[a,b]$.
+
+In the example below we find the function \[y\in\left\{y\in C^1\left[\frac{1}{2},1\right]:y\left(\frac{1}{2}\right)=-\frac{\sqrt{3}}{2},y(1)=0\right\}\] which minimizes the functional
+\[ F(y)=\int_{1/2}^1\frac{\sqrt{1+y'(x)^2}}{x}\,\mathrm{d}x. \]
+To obtain the corresponding Euler-Lagrange equation, input :
+\begin{center}
+  \tt f:=sqrt(1+diff(y(x),x)\verb|^|2)/x:; eq:=euler\_lagrange(f)
+\end{center}
+Output :
+\begin{center}
+  \tt diff(y(x),x)/(sqrt(diff(y(x),x)\verb|^|2+1)*x)=K\_3
+\end{center}
+Input :
+\begin{center}
+  \tt sol:=dsolve(eq)
+\end{center}
+Output :
+\begin{center}
+  \tt [c\_0-(sqrt(-K\_3\verb|^|2*x\verb|^|2+1))/K\_3]
+\end{center}
+The sought solution is the function of the above form which satisfies the boundary conditions. Input :
+\begin{center}
+  \tt y0:=sol[0]:; c:=[K\_3,c\_0]:; v:=solve([subs(y0,x=1/2)=-sqrt(3)/2,subs(y0,x=1)=0],c)
+\end{center}
+Output :
+\begin{center}
+  \tt [[1,0]]
+\end{center}
+Input :
+\begin{center}
+  \tt y0:=normal(subs(y0,c,v[0])
+\end{center}
+Output :
+\begin{center}
+  \tt -sqrt(1-x\verb|^|2)
+\end{center}
+To prove that $y_0(x)=-\sqrt{1-x^2}$ is indeed a minimizer for $F$, we show that the integrand in $F(y)$ is convex. Input :
+\begin{center}
+  \tt convex(sqrt(1+y'\verb|^|2)/x,y(x))
+\end{center}
+Output :
+\begin{center}
+  \tt x>=0
+\end{center}
+Hence the integrand is convex for $x\in\left[\frac{1}{2},1\right]$.
+
+Similarly, we find the minimizer for
+\[ F(y)=\int_0^{\pi}\left(2\,\sin(x)\,y(x)+y'(x)^2\right)\,\mathrm{d}x \]
+where $y\in C^1[0,\pi]$ and $y(0)=y(\pi)=0$. Input :
+\begin{center}
+  \tt f:=2*sin(x)*y(x)+diff(y(x),x)\verb|^|2:; eq:=euler\_lagrange(f)
+\end{center}
+Output :
+\begin{center}
+  \tt diff(y(x),x,2)=sin(x)
+\end{center}
+Input :
+\begin{center}
+  \tt dsolve(eq and y(0)=0 and y(pi)=0,x,y)
+\end{center}
+Output :
+\begin{center}
+  \tt -sin(x)
+\end{center}
+The above function is the sought minimizer as the integrand $f$ is convex :
+\begin{center}
+  \tt convex(f,y(x))
+\end{center}
+Output :
+\begin{center}
+  \tt true
+\end{center}
+
+In the next example we minimize the functional $F(y)=\int_0^1(y'(x)^4-4\,y(x))\,\mathrm{d}x$ on $C^1[0,1]$ with boundary conditions $y(0)=1$ and $y(1)=2$. First we solve the associated Euler-Lagrange equation :
+\begin{center}
+  \tt eq:=euler\_lagrange(y'\verb|^|4-4y,x,y)
+\end{center}
+Output :
+\begin{center}
+  \tt [(3*diff(y(x),x)\verb|^|4+4*y(x))=K\_4, diff(y(x),x,2)=-1/(3*diff(y(x),x)\verb|^|2)]
+\end{center}
+Input :
+\begin{center}
+  \tt dsolve(eq[1] and y(0)=1 and y(1)=2,x,y)
+\end{center}
+Output :
+\begin{center}
+  \tt [-3*(-x+1.52832425067)\verb|^|(4/3)/4+2.32032831141]
+\end{center}
+We find that the integrand in $F(y)$ is convex :
+\begin{center}
+  \tt convex(y\verb|'^|4-4y,[x,y])
+\end{center}
+Output :
+\begin{center}
+  \tt true
+\end{center}
+Hence the minimizer is
+\[ y_0(x)=\frac{3}{4}\,(1.52832425067-x)^{4/3}+2.32032831141,\quad 0\leq x\leq 1. \]
+
+\subsection{Jacobi equation : {\tt jacobi\_equation\index{jacobi\_equation}}}
+{\tt jacobi\_equation} takes five or six arguments :
+\begin{itemize}
+  \item expression $f(y,y',x)$,
+  \item independent variable $x$,
+  \item dependent variable $y$ (this argument and the previous one can be combined to a single argument $y(x)$, in which case the call has five arguments),
+  \item expression $y_0\in C^1[a,b]$ which is stationary for the functional $F(y)=\int_a^bf(y,y',x)\,\mathrm{d}x$,
+  \item symbol $h$ for the unknown function in Jacobi equation,
+  \item point $a\in\mathbb{R}$, which is the lower bound for $x$.
+\end{itemize}
+The return value contains the Jacobi equation
+\begin{equation}\label{eq:jacobi-equation}
+  -\frac{\mathrm{d}}{\mathrm{d}t}\,\left(f_{y'\,y'}(y_0,y_0',t)\,h'\right)+\left(f_{y\,y}(y_0,y_0',t)-\frac{\mathrm{d}}{\mathrm{d}t}\,f_{y\,y'}(y_0,y_0',t)\right)\,h=0.
+\end{equation}
+If the Jacobi equation has a solution such that $h(a)=0$, $h(c)=0$ for some $c\in(a,b]$ and $h$ not identically zero on $[a,c]$, then $y_0$ does not minimize the functional $F$. It is said that $c$ is \emph{conjugate} to $a$. The function $y_0$ minimizes $F$ if $f_{y'\,y'}(y_0,y_0',t)>0$ for all $t\in[a,b]$ and there are no points conjugate to $a$ in $(a,b]$.
+
+If the Jacobi equation can be solved by {\tt dsolve}, a sequence containing the equation~\eqref{eq:jacobi-equation} and its solution is returned. Otherwise, if~\eqref{eq:jacobi-equation} cannot be solved immediately, only the Jacobi equation is returned.
+
+For example, input :
+\begin{center}
+  \tt jacobi\_equation(-1/2*y'(t)\verb|^|2+y(t)\verb|^|2/2,t,y,sin(t),h,0)
+\end{center}
+Output :
+\begin{center}
+  \tt (-diff(h(t),t,2)-h(t))=0, c\_0*sin(t)
+\end{center}
+
+\subsection{Finding conjugate points : {\tt conjugate\_equation\index{conjugate\_equation}}}
+{\tt conjugate\_equation} takes four arguments :
+\begin{itemize}
+  \item expression $y_0$ which depends on the independent variable and two parameters,
+  \item list $[\alpha,\beta]$ of parameters which $y_0$ depends on,
+  \item list $[A,B]$ of the values of parameters $\alpha$ and $\beta$, respectively,
+  \item independent variable $x$,
+  \item real number $a$ equal to the lower or to the upper bound for $x$.
+\end{itemize}
+The function $y_0(x)$ is assumed to be stationary for the problem of minimizing some functional $F(y)=\int_a^bf(x,y,y')\,\mathrm{d}x$. The return value is the expression
+\begin{equation}\label{eq:conjugate-equation}
+  \frac{\partial y_0(t)}{\partial\alpha}\,\frac{\partial y_0(a)}{\partial\beta}-
+  \frac{\partial y_0(a)}{\partial\alpha}\,\frac{\partial y_0(t)}{\partial\beta},
+\end{equation}
+at $\alpha=A$ and $\beta=B$, which is zero if and only if $t$ is conjugate to $a$. To find any conjugate points, set the returned expression to zero and solve.
+
+For example, we find a minimum for the functional
+\[ F(y)=\int_0^{\frac{\pi}{2}}\left(y'(x)^2-x\,y(x)-y(x)^2\right)\,\mathrm{d}x \]
+on $D=\{y\in C^1[0,\pi/2]:y(0)=y(\pi/2)=0\}$. The corresponding Euler-Lagrange equation is :
+\begin{center}
+  \tt eq:=euler\_lagrange(y'(x)\verb|^|2-x*y(x)-y(x)\verb|^|2,y(x))
+\end{center}
+Output :
+\begin{center}
+  \tt diff(y(x),x,2)=((-2*y(x)-x)/2)
+\end{center}
+The general solution is :
+\begin{center}
+  \tt y0:=dsolve(eq,x,y)
+\end{center}
+Output :
+\begin{center}
+  \tt c\_0*cos(x)+c\_1*sin(x)-x/2
+\end{center}
+The stationary function depends on two parameters $c_0$ and $c_1$ which are fixed by the boundary conditions :
+\begin{center}
+  \tt c:=solve([subs(y0,x,0)=0,subs(y0,x,pi/2)=0],[c\_0,c\_1])
+\end{center}
+Output :
+\begin{center}
+  \tt [[0,pi/4]]
+\end{center}
+Input :
+\begin{center}
+  \tt conjugate\_equation(y0,[c\_0,c\_1],c[0],x,0)
+\end{center}
+Output :
+\begin{center}
+  \tt sin(x)
+\end{center}
+The above expression obviously has no zeros in $(0,\pi/2]$, hence there are no points conjugate to $0$. Since $f_{y'\,y'}=2>0$, where $f(y,y',x)$ is the integrand in $F(y)$ (the strong Legendre condition), $y_0$ minimizes $F$ on $D$. To obtain $y_0$ explicitly, input :
+\begin{center}
+  \tt subs(y0,[c\_0,c\_1],c[0])
+\end{center}
+Output :
+\begin{center}
+  \tt pi*sin(x)/4-x/2
+\end{center}
+
+\subsection{An example : finding the surface of revolution with minimal area}
+In this section we find the function
+\[ y_0\in D=\{y\in C^1[0,1]:y(0)=1,y(1)=2/3\} \]
+for which the area of the corresponding surface of revolution is minimal. The result is not necessarily intuitive.
+
+The area of the surface of revolution is measured by the functional
+\[ F(y)=2\,\pi\,\int_0^1y(x)\,\sqrt{1+y'(x)^2}\,\mathrm{d}x. \]
+We set $f(y,y',x)=y(x)\,\sqrt{1+y'(x)^2}$ and compute the associated Euler-Lagrange equation :
+\begin{center}
+  \tt dy:=diff(y(x),x):; f:=y*sqrt(1+dy\verb|^|2):; eq:=euler\_lagrange(f)
+\end{center}
+Output :
+\begin{center}
+  \tt [-(y(x))/(sqrt(diff(y(x),x)\verb|^|2+1))=K\_0, diff(y(x),x,2)=((diff(y(x),x)\verb|^|2+1)/(y(x)))]
+\end{center}
+We obtain the stationary function by finding the general solution of the first equation. Input :
+\begin{center}
+  \tt sol:=collect(simplify(dsolve(eq[0],x,y)))
+\end{center}
+Output :
+\begin{center}
+  \tt [-K\_0,K\_0*(-exp((x-c\_1)/K\_0)\verb|^|2-1)/(2*exp((x-c\_1)/K\_0))]
+\end{center}
+Obviously the constant solution $-K_0$ is not in $D$, so we set $y_0$ to be the second element of the above list. That function, which can be written as \[ y_0(x)=-K_0\,\cosh\left(\frac{x-c_1}{K_0}\right), \] is called a \emph{catenary}. Input :
+\begin{center}
+  \tt y0:=sol[1]:; p:=[K\_0,c\_1]:;
+\end{center}
+To find the values of $K_0$ and $c_1$ from the boundary conditions, we first plot the curves $y_0(0)=1$ and $y_0(1)=\frac{2}{3}$ for $K_0\in[-1,1]$ and $c_1\in[-1,2]$ to see where they intersect each other. Input :
+\begin{center}
+  \tt eq1:=subs(y0,x=0)=1:; eq2:=subs(y0,x=1)=2/3:; implicitplot([eq1,eq2],K\_0=-1..1,c\_1=-1..2)
+\end{center}
+Output :
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{catenoid_intersections.png}
+\end{center}
+We observe that there are exactly two catenaries satisfying the Euler-Lagrange necessary conditions and the given boundary conditions : the first with $K_0\approx -0.5$ and $c_1\approx 0.6$ resp.~the second with $K_0\approx -0.3$ and $c_1\approx 0.5$. We obtain the values of these constants more precisely by using {\tt fsolve}. Input :
+\begin{center}
+  \tt p1:=fsolve([eq1,eq2],p,[-0.5,0.6]);
+  p2:=fsolve([eq1,eq2],p,[-0.3,0.5])
+\end{center}
+Output :
+\begin{center}
+  \tt [-0.56237423894,0.662588703113], [-0.30613431407,0.567138261119]
+\end{center}
+We check, for each catenary, whether the strong Legendre condition \[f_{y'\,y'}(x,y_k,y_k')>0\] holds for $k=1,2$. Input :
+\begin{center}
+  \tt y1:=subs(y0,p,p1):; y2:=subs(y0,p,p2):;
+  D2f:=diff(f,diff(y(x),x),2):;
+  solve([eval(subs(D2f,y=y1,y(x)=y1))<=0,x>=0,x<=1],x);
+  solve([eval(subs(D2f,y=y2,y(x)=y2))<=0,x>=0,x<=1],x)
+\end{center}
+Output :
+\begin{center}
+  \tt [],[]
+\end{center}
+We conclude that the strong Legendre condition is satisfied in both cases, so we proceed by attempting to find the points conjugate to 0 for each catenary. The function $y_0$ depends on two parameters, so we use {\tt conjugate\_equation} to find these points easily. Input :
+\begin{center}
+  \tt fsolve(conjugate\_equation(y0,p,p1,x,0)=0,x=0..1)
+  fsolve(conjugate\_equation(y0,p,p2,x,0)=0,x=0..1)
+\end{center}
+Output :
+\begin{center}
+  \tt [0.0], [0.0,0.799514772606]
+\end{center}
+We conclude that there are no points conjugate to $0$ in $(0,1]$ for the catenary $y_1$, so it minimizes the functional $F$. However, for the other catenary there is a conjugate point in the relevant interval, therefore $y_2$ is not a minimizer.
+
+We can verify the above conclusions by computing the surface area for catenaries $y_1$ and $y_2$ and comparing them. Input :
+\begin{center}
+  \tt int(y1*sqrt(1+diff(y1,x)\verb|^|2),x=0..1); int(y2*sqrt(1+diff(y2,x)\verb|^|2),x=0..1)
+\end{center}
+Output :
+\begin{center}
+  \tt 0.81396915825,0.826468466845
+\end{center}
+We see that the surface formed by rotating the curve $y_1$ is indeed smaller than the area of the surface formed by rotating the curve $y_2$. Finally, we visualize both surfaces for convenience. Input :
+\begin{center}
+  \tt plot3d([y1*cos(t),y1*sin(t),x],x=0..1,t=0..2*pi, display=yellow+filled)
+\end{center}
+Output :
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{catenoid_1.png}
+\end{center}
+Input :
+\begin{center}
+  \tt plot3d([y2*cos(t),y2*sin(t),x],x=0..1,t=0..2*pi, display=yellow+filled)
+\end{center}
+Output :
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{catenoid_2.png}
+\end{center}
 
 \section{Limits}
 \subsection{Limits : {\tt limit}}\index{limit|textbf}\label{sec:limit}
@@ -11963,6 +12276,27 @@ then :
 Output :
 \begin{center}{\tt   [[25,7],[29,7],[2,2]]}\end{center}
 
+\subsection{Fold operators : {\tt foldl\index{foldl}}, {\tt foldr\index{foldr}}}
+The fold operators {\tt foldl} and {\tt foldr} both take a binary operator, identifier or function $R$ as the first argument followed by an argument $I$ and an arbitrary number of arguments $a$, $b$, $c$, \ldots, like for example {\tt foldl(R,I,a,b,c,...)}.
+
+The left-fold operator {\tt foldl} composes a binary operator $R$ with initial value $I$ onto the arguments $a$, $b$, \ldots (which may be zero in number), associating from the left. For example, input :
+\begin{center}
+  \tt foldl(R,I,a,b,c)
+\end{center}
+Output :
+\begin{center}
+  \tt R(R(R(I,a),b),c)
+\end{center}
+
+The right-fold operator {\tt foldr} is similar but associates operands from the right. For example, input :
+\begin{center}
+  \tt foldr(R,I,a,b,c)
+\end{center}
+Output :
+\begin{center}
+  \tt R(a,R(b,R(c,I)))
+\end{center}
+
 \subsection{Make a list with zeros : {\tt newList}}\index{newList}
 \noindent{\tt newList(n)} makes a list of {\tt n} zeros.\\
 Input :
@@ -16274,6 +16608,35 @@ Output :
   \tt [(x\verb|^|2+6*x+12)*exp(-x)/x\verb|^|2]
 \end{center}
 
+To solve Titchmarsh equation
+\[ y''+(19-x^2)\,y=0, \]
+input :
+\begin{center}
+  \tt kovacicsols(y\verb|''|+(19-x\verb|^|2)*y=0,x,y)
+\end{center}
+We obtain a particular solution
+\[ y=\left(x^9-18\,x^7+\frac{189\,x^5}{2}-\frac{315\,x^3}{2}+\frac{945\,x}{16}\right)\,\exp\left(-\frac{x^2}{2}\right). \]
+
+To find the general solution of Halm's equation
+\[ (1+x^2)^2\,y''(x)+3\,y(x)=0, \]
+input :
+\begin{center}
+  \tt sol:=kovacicsols((1+x\verb|^|2)\verb|^|2*y\verb|''|+3y=0,x,y)
+\end{center}
+Output :
+\begin{center}
+  \tt [(x\verb|^|2-1)/(sqrt(x\verb|^|2+1))]
+\end{center}
+The other basic solution is obtained by using~\eqref{kovacic-reduction}. Input :
+\begin{center}
+  \tt y1:=sol[0]; y2:=normal(y1*int(y1\verb|^|-2,x))
+\end{center}
+Output :
+\begin{center}
+  \tt (x\verb|^|2-1)/(sqrt(x\verb|^|2+1)),-x/(sqrt(x\verb|^|2+1))
+\end{center}
+Therefore, $y=C_1\,\frac{x^2-1}{\sqrt{x^2+1}}+C_2\,\frac{x}{\sqrt{x^2+1}}$, where $C_1,C_2\in\mathbb{R}$.
+
 In the following example we find the general solution of the non-homogeneous equation
 \[ y''-\frac{27\,y}{36\,(x-1)^2}=x+4. \]
 First we need to find the general solution to the corresponding homogeneous equation $y_h''-\frac{27\,y_h}{36\,(x-1)^2}=0$. Input :
@@ -16304,7 +16667,7 @@ Output :
 \begin{center}
   \tt (4*x\verb|^|3+72*x\verb|^|2-156*x+80)/21
 \end{center}
-Hence $y_p=\frac{1}{21}\,(4\,x^3+72\,x^2-156\,x+80)$. Now $y=y_p+y_h$. We proceed by verifying that it is indeed the general solution of the given equation. Input :
+Hence $y_p=\frac{1}{21}\,(4\,x^3+72\,x^2-156\,x+80)$. Now $y=y_p+y_h$. We proceed by checking that it is indeed the general solution of the given equation. Input :
 \begin{center}
   \tt purge(C1,C2):; ysol:=yp+C1*y1+C2*y2:; normal(diff(ysol,x,2)-27/(36*(x-1)\verb|^|2)*ysol)==f
 \end{center}
@@ -16325,7 +16688,7 @@ Output :
 \end{center}
 The solution is $y=\exp\left(\int\omega_0\right)$, where $\omega_0$ is a zero of the above expression, thus being a root of a fourth-order polynomial in $\omega$. In similar cases one can try the Ferrari method to obtain $\omega_0$.
 
-A similar output is obtained when attempting to solve the equation
+We get similar output while trying to solve the equation
 \[ 48\,t\,(t+1)\,(5\,t-4)\,y''+8\,(25\,t+16)\,(t-2)\,y'-(5\,t+68)\,y=0. \]
 Input :
 \begin{center}

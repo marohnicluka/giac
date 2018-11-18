@@ -16553,7 +16553,7 @@ where $a$, $b$ and $c$ are rational functions of the independent variable. The c
 \end{itemize}
 The dependent variable should not be specified if the equation~\eqref{kovacic-ode} is entered as a list of coefficients.
 
-The return value can be a list or an expression. An empty list means that there are no Liouvillian solutions to the input equation or that none can be determined. If a non-empty list is returned, it contains one or two independent solution(s) $y_1$ (and $y_2$) to the equation~\eqref{kovacic-ode}. The general solution to~\eqref{kovacic-ode} is then
+The return value can be a list or an expression. An empty list means that there are no Liouvillian solutions to the input equation. If a non-empty list is returned, it contains one or two independent solution(s) $y_1$ (and $y_2$) to the equation~\eqref{kovacic-ode}. The general solution to~\eqref{kovacic-ode} is then
 \[ y=C_1\,y_1+C_2\,y_2, \]
 where $C_1,C_2\in\mathbb{R}$ are arbitrary constants. However, for some equations only $y_1$ is returned, in which case $y_2$ can be obtained as (using reduction of order) :
 \begin{equation}\label{kovacic-reduction}y_2=y_1\,\int y_1^{-2}.\end{equation}

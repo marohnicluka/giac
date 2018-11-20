@@ -7919,7 +7919,7 @@ Output :
 \subsection{Visualizing power spectra : {\tt plotspectrum}\index{plotspectrum}}
 {\tt plotspectrum} takes an audio clip as its first argument and optionally a range in form {\tt range=[lf,uf]} or {\tt range=lf..uf}, where {\tt lf} is the lower bound and {\tt uf} the upper bound of the desired frequency band, as its second argument. The command displays the power spectrum of the audio data on the specified frequency range (by default $[0,s/2]$, where $s$ is the sampling rate). If the audio clip has more than one channel, the channels are mixed down to a single channel before computing the spectrum.
 
-For example, input :
+For example, assume that a male voice is recorded in the file {\tt example1.wav}. Input :
 \begin{center}
   \tt clip:=readwav("/path/to/sounds/example1.wav"):;\\
   plotspectrum(clip,range=[0,1500])
@@ -7928,7 +7928,7 @@ Output :
 \begin{center}
   \includegraphics[width=0.75\textwidth]{sound_spectrum.png}
 \end{center}
-One can observe that the dominant frequency is around 220~Hz, which is the middle of tenor range. This is consistent with the fact that a male voice is recorded in the clip.
+One can observe that the dominant frequency is around 220~Hz, which is the middle of tenor range. This is consistent with the fact that a man is speaking in the clip.
 
 \section{Signal Processing}
 \subsection{Cross-correlation of two signals : {\tt cross\_correlation}\index{cross\_correlation}}
@@ -8020,7 +8020,7 @@ Output :
 \begin{center}
   \includegraphics[width=0.75\textwidth]{sound_reverb.png}
 \end{center}
-Note that the resulting audio is longer than the input (by the length of the impulse response).
+Note that the resulting audio is longer than the input (for the length of the impulse response).
 
 \subsection{Low-pass filtering : {\tt lowpass}\index{lowpass}}
 {\tt lowpass} takes two or three arguments: an audio clip or a real vector $ \mathbf{v} $ representing the sampled signal, a real number $ c $ specifying the cutoff frequency and optionally a samplerate (which defaults to 44100). The command returns the input data after applying a simple first-order lowpass RC filter.

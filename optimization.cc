@@ -4058,6 +4058,8 @@ gen _euler_lagrange(const gen &g,GIAC_CONTEXT) {
     vecteur u=makevecteur(identificateur("y"));
     if (g.type!=_VECT) {
         L=g;
+        if (!contains(lidnt(g),t))
+            t=t__IDNT_e;
     } else {
         if (g.subtype!=_SEQ__VECT)
             return gensizeerr(contextptr);

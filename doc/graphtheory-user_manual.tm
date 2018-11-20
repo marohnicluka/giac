@@ -828,7 +828,7 @@
   isomorphism, freely available third party libraries are used, in particular
   <abbr|GNU> Linear Programming Kit (<samp|GLPK>) and <samp|nauty>. These
   libraries, included in <samp|Giac/Xcas> by default, are optional during the
-  compilation. Nevertheless, most commands has no dependencies save
+  compilation. Nevertheless, most commands have no dependencies save
   <samp|Giac> itself.
 
   This library was written and documented by Luka Marohni¢<\footnote>
@@ -1631,7 +1631,8 @@
   <math|<around|{|deg v:v\<in\>V|}>> equal to <math|L> and
   <with|font-family|tt|false> otherwise. The algorithm, which has the
   complexity <math|O<around|(|<around|\||L|\|><rsup|2>|)>>, is based on the
-  theorem of <name|Erd®s> and <name|Gallai>.
+  <hlink|theorem|https://en.wikipedia.org/wiki/Erd%C5%91s%E2%80%93Gallai_theorem>
+  of <name|Erd®s> and <name|Gallai>.
 
   <\session|giac|default>
     <\unfolded-io>

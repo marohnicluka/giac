@@ -2682,8 +2682,16 @@ gen _make_weighted(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(has_matrix?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G.is_weighted())
-        return gt_err(_GT_ERR_UNWEIGHTED_GRAPH_REQUIRED);
+    if (G.is_weighted()) {
+        if (!has_matrix)
+            return gt_err(_GT_ERR_UNWEIGHTED_GRAPH_REQUIRED);
+        graphe::ipairs E;
+        G.get_edges_as_pairs(E);
+        G.set_weighted(false);
+        for (graphe::ipairs_iter it=E.begin();it!=E.end();++it) {
+            G.discard_edge_attribute(it->first,it->second,_GT_ATTRIB_WEIGHT);
+        }
+    }
     int n=G.node_count();
     matrice m=*_matrix(makesequence(n,n,1),contextptr)._VECTptr;
     if (has_matrix) {

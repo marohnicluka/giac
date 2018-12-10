@@ -12848,12 +12848,12 @@
 
   <verbatim|dijsktra> computes the cheapest path using <name|Dijkstra>'s
   <hlink|algorithm|https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm>
-  which runs in <math|O<around*|(|<around*|\||V|\|><rsup|2>|)>> time.
-  <verbatim|bellman_ford> uses somewhat slower
+  which runs in <math|O<around*|(|<around*|\||V|\|><rsup|2>|)>>
+  time<nbsp><cite|dijkstra>. <verbatim|bellman_ford> uses somewhat slower
   <hlink|algorithm|https://en.wikipedia.org/wiki/Bellman%E2%80%93Ford_algorithm#CITEREFShimbel1955>
-  by <name|Bellman> and <name|Ford> which runs in
-  <math|O<around*|(|<around*|\||V|\|>*<around*|\||E|\|>|)>> time but in turn
-  imposes less requirements upon its input.
+  by <name|Bellman> and <name|Ford> (see <cite|bellman> and<nbsp><cite|ford>)
+  which runs in <math|O<around*|(|<around*|\||V|\|>*<around*|\||E|\|>|)>>
+  time but in turn imposes less requirements upon its input.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -14234,7 +14234,7 @@
   <center|<image|images/sg2.eps|35%|||>>
 
   <\bibliography|bib|tm-plain|graphtheory>
-    <\bib-list|61>
+    <\bib-list|64>
       <bibitem*|1><label|bib-afzal>Shehzad Afzal<localize| and >Clemens
       Brand. <newblock>Recognizing triangulated Cartesian graph products.
       <newblock><with|font-shape|italic|Discrete Mathematics>, 312:188\U193,
@@ -14255,30 +14255,34 @@
       Generating Random Graphs. <newblock><with|font-shape|italic|Algorithmica>,
       58:860\U910, 2010.<newblock>
 
-      <bibitem*|5><label|bib-biggs>Norman Biggs.
+      <bibitem*|5><label|bib-bellman>R.<nbsp>Bellman. <newblock>On a routing
+      problem. <newblock><with|font-shape|italic|Quarterly of Applied
+      Mathematics>, 16:87\U90, 1958.<newblock>
+
+      <bibitem*|6><label|bib-biggs>Norman Biggs.
       <newblock><with|font-shape|italic|Algebraic graph theory>.
       <newblock>Cambridge University Press, Second<localize| edition>,
       1993.<newblock>
 
-      <bibitem*|6><label|bib-blanusa>Danilo Blanu²a. <newblock>Problem
+      <bibitem*|7><label|bib-blanusa>Danilo Blanu²a. <newblock>Problem
       £etiriju boja. <newblock><with|font-shape|italic|Glasnik
       Mat.-Fiz.<nbsp>Astr.<nbsp>Ser.<nbsp>II>, 1:31\U32, 1946.<newblock>
 
-      <bibitem*|7><label|bib-bollobas>Béla Bollobás.
+      <bibitem*|8><label|bib-bollobas>Béla Bollobás.
       <newblock><with|font-shape|italic|Modern Graph Theory>.
       <newblock>Graduate Texts in Mathematics. Springer, Corrected<localize|
       edition>, 2002.<newblock>
 
-      <bibitem*|8><label|bib-boot>Coen Boot. <newblock>Algorithms for
+      <bibitem*|9><label|bib-boot>Coen Boot. <newblock>Algorithms for
       Determining the Clustering Coefficient in Large Graphs.
       <newblock>Bachelor's thesis, Faculty of Science, Utrecht University,
       2016.<newblock>
 
-      <bibitem*|9><label|bib-brelaz>Daniel Brélaz. <newblock>New Methods to
+      <bibitem*|10><label|bib-brelaz>Daniel Brélaz. <newblock>New Methods to
       Color the Vertices of a Graph. <newblock><with|font-shape|italic|Communications
       of the ACM>, 22:251\U256, 1979.<newblock>
 
-      <bibitem*|10><label|bib-buchheim>Cristoph Buchheim, Michael
+      <bibitem*|11><label|bib-buchheim>Cristoph Buchheim, Michael
       Jünger<localize|, and >Sebastian Leipert. <newblock>Improving Walker's
       Algorithm to Run in Linear Time. <newblock><localize|In
       >M.<nbsp>T.<nbsp>Goodrich<localize| and
@@ -14287,194 +14291,203 @@
       Science vol 2528>, <localize|pages >344\U353. Springer-Verlag Berlin
       Heidelberg, 2002.<newblock>
 
-      <bibitem*|11><label|bib-christofides>Nicos Christofides.
+      <bibitem*|12><label|bib-christofides>Nicos Christofides.
       <newblock>Worst-case analysis of a new heuristic for the traveling
       salesman problem. <newblock>Report 388, Graduate School of Industrial
       Administration, 1976.<newblock>
 
-      <bibitem*|12><label|bib-cook>William<nbsp>J.<nbsp>Cook.
+      <bibitem*|13><label|bib-cook>William<nbsp>J.<nbsp>Cook.
       <newblock><with|font-shape|italic|In Pursuit of the Traveling Salesman:
       Mathematics at the Limits of Computation>. <newblock>Princeton
       University Press, 2012.<newblock>
 
-      <bibitem*|13><label|bib-melissa>Melissa DeLeon. <newblock>A Study of
+      <bibitem*|14><label|bib-melissa>Melissa DeLeon. <newblock>A Study of
       Sufficient Conditions for Hamiltonian Cycles.
       <newblock><with|font-shape|italic|Rose-Hulman Undergraduate Mathematics
       Journal>, 1, Article 6, 2000. <newblock><slink|https://scholar.rose-hulman.edu/rhumj/vol1/iss1/6>.<newblock>
 
-      <bibitem*|14><label|bib-diaz>Isabel<nbsp>M.<nbsp>Díaz<localize| and
+      <bibitem*|15><label|bib-diaz>Isabel<nbsp>M.<nbsp>Díaz<localize| and
       >Paula Zabala. <newblock>A Branch-and-Cut Algorithm for Graph Coloring.
       <newblock><with|font-shape|italic|Discrete Applied Mathematics>,
       154:826\U847, 2006.<newblock>
 
-      <bibitem*|15><label|bib-diestel>Reinhard Diestel.
+      <bibitem*|16><label|bib-diestel>Reinhard Diestel.
       <newblock><with|font-shape|italic|Graph Theory>.
       <newblock>Springer-Verlag, New York, 1997.<newblock>
 
-      <bibitem*|16><label|bib-edmonds>Jack Edmonds. <newblock>Paths, Trees,
+      <bibitem*|17><label|bib-dijkstra>Edsger<nbsp>W.<nbsp>Dijkstra.
+      <newblock>A note on Two Problems in Connexion with Graphs.
+      <newblock><with|font-shape|italic|Numerische Mathematik>, 1:269\U271,
+      1959.<newblock>
+
+      <bibitem*|18><label|bib-edmonds>Jack Edmonds. <newblock>Paths, Trees,
       and Flowers. <newblock><localize|In >Gessel I.<localize| and
       >GC.<nbsp>Rota<localize|, editors>, <with|font-shape|italic|Classic
       Papers in Combinatorics>, <localize|pages >361\U379. Birkhäuser Boston,
       2009. Modern Birkhäuser Classics.<newblock>
 
-      <bibitem*|17><label|bib-edmonds-karp>Jack Edmonds<localize| and
+      <bibitem*|19><label|bib-edmonds-karp>Jack Edmonds<localize| and
       >Richard<nbsp>M.<nbsp>Karp. <newblock>Theoretical improvements in
       algorithmic efficiency for network flow problems.
       <newblock><with|font-shape|italic|Journal of the ACM>, 19:248\U264,
       1972.<newblock>
 
-      <bibitem*|18><label|bib-esfahanian>Abdol<nbsp>H.<nbsp>Esfahanian<localize|
+      <bibitem*|20><label|bib-esfahanian>Abdol<nbsp>H.<nbsp>Esfahanian<localize|
       and >S.<nbsp>Louis Hakimi. <newblock>On computing the connectivities of
       graphs and digraphs. <newblock><with|font-shape|italic|Networks>,
       14:355\U366, 1984.<newblock>
 
-      <bibitem*|19><label|bib-even-algorithms>Shimon Even.
+      <bibitem*|21><label|bib-even-algorithms>Shimon Even.
       <newblock><with|font-shape|italic|Graph Algorithms>. <newblock>Computer
       software engineering series. Computer Science Press, 1979.<newblock>
 
-      <bibitem*|20><label|bib-floyd>Robert<nbsp>W.<nbsp>Floyd.
+      <bibitem*|22><label|bib-floyd>Robert<nbsp>W.<nbsp>Floyd.
       <newblock>Algorithm 97: Shortest path.
       <newblock><with|font-shape|italic|Communications of the ACM>, 5:345,
       1962.<newblock>
 
-      <bibitem*|21><label|bib-fruchterman>T.<nbsp>M.<nbsp>J.<nbsp>Fruchterman<localize|
+      <bibitem*|23><label|bib-ford>L.<nbsp>R.<nbsp>Ford.
+      <newblock><with|font-shape|italic|Network flow theory>. <newblock>Rand
+      Corporation, 1956.<newblock>
+
+      <bibitem*|24><label|bib-fruchterman>T.<nbsp>M.<nbsp>J.<nbsp>Fruchterman<localize|
       and >E.<nbsp>M.<nbsp>Reingold. <newblock>Graph Drawing by
       Force-Directed Placement. <newblock><with|font-shape|italic|Software:
       Practice and Experience>, 21:1129\U1164, 1991.<newblock>
 
-      <bibitem*|22><label|bib-gibbons>Alan Gibbons.
+      <bibitem*|25><label|bib-gibbons>Alan Gibbons.
       <newblock><with|font-shape|italic|Algorithmic graph theory>.
       <newblock>Cambridge University Press, 1985.<newblock>
 
-      <bibitem*|23><label|bib-godsil>Chris Godsil<localize| and
+      <bibitem*|26><label|bib-godsil>Chris Godsil<localize| and
       >Gordon<nbsp>F.<nbsp>Royle. <newblock><with|font-shape|italic|Algebraic
       graph theory>. <newblock>Graduate Texts in Mathematics. Springer,
       First<localize| edition>, 2001.<newblock>
 
-      <bibitem*|24><label|bib-goldfarb>Donald Goldfarb<localize| and
+      <bibitem*|27><label|bib-goldfarb>Donald Goldfarb<localize| and
       >Michael<nbsp>D.<nbsp>Grigoriadis. <newblock>A computational comparison
       of the dinic and network simplex methods for maximum flow.
       <newblock><with|font-shape|italic|Annals of Operations Research>,
       13:81\U123, 1988.<newblock>
 
-      <bibitem*|25><label|bib-haggard>Gary Haggard,
+      <bibitem*|28><label|bib-haggard>Gary Haggard,
       David<nbsp>J.<nbsp>Pearce<localize|, and >Gordon Royle.
       <newblock>Computing Tutte Polynomials.
       <newblock><with|font-shape|italic|ACM Transactions on Mathematical
       Software>, 37, 2010. <newblock>Article No.<nbsp>24.<newblock>
 
-      <bibitem*|26><label|bib-haggard2>Gary Haggard,
+      <bibitem*|29><label|bib-haggard2>Gary Haggard,
       David<nbsp>J.<nbsp>Pearce<localize|, and >Gordon Royle.
       <newblock>Edge-Selection Heuristics for Computing Tutte Polynomials.
       <newblock><with|font-shape|italic|Chicago Journal of Theoretical
       Computer Science>, 2010. <newblock>Article 6.<newblock>
 
-      <bibitem*|27><label|bib-hakimi>S.<nbsp>L.<nbsp>Hakimi. <newblock>On
+      <bibitem*|30><label|bib-hakimi>S.<nbsp>L.<nbsp>Hakimi. <newblock>On
       realizability of a set of integers as degrees of the vertices of a
       linear graph. I. <newblock><with|font-shape|italic|Journal of the
       Society for Industrial and Applied Mathematics>, 10:496\U506,
       1962.<newblock>
 
-      <bibitem*|28><label|bib-helsgaun>Keld Helsgaun. <newblock>General
+      <bibitem*|31><label|bib-helsgaun>Keld Helsgaun. <newblock>General
       <math|k>-opt submoves for the Lin--Kernighan TSP heuristic.
       <newblock><with|font-shape|italic|Math.<nbsp>Prog.<nbsp>Comp.>,
       1:119\U163, 2009.<newblock>
 
-      <bibitem*|29><label|bib-hierholzer>Carl Hierholzer. <newblock>Ueber die
+      <bibitem*|32><label|bib-hierholzer>Carl Hierholzer. <newblock>Ueber die
       möglichkeit, einen Linienzug ohne Wiederholung und ohne Unterbrechung
       zu umfahren. <newblock><with|font-shape|italic|Mathematische Annalen>,
       6:30\U32, 1873.<newblock>
 
-      <bibitem*|30><label|bib-hinz>Andreas<nbsp>M.<nbsp>Hinz, Sandi
+      <bibitem*|33><label|bib-hinz>Andreas<nbsp>M.<nbsp>Hinz, Sandi
       Klavºar<localize|, and >Sara<nbsp>S.<nbsp>Zemlji£. <newblock>A survey
       and classification of Sierpi«ski-type graphs.
       <newblock><with|font-shape|italic|Discrete Applied Mathematics>,
       217:565\U600, 2017.<newblock>
 
-      <bibitem*|31><label|bib-hopcroft>John<nbsp>E.<nbsp>Hopcroft<localize|
+      <bibitem*|34><label|bib-hopcroft>John<nbsp>E.<nbsp>Hopcroft<localize|
       and >Richard<nbsp>M.<nbsp>Karp. <newblock>An <math|n<rsup|5/2>>
       algorithm for maximum matchings in bipartite graphs.
       <newblock><with|font-shape|italic|SIAM Journal on Computing>,
       2:225\U231, 1973.<newblock>
 
-      <bibitem*|32><label|bib-hu>Yifan Hu. <newblock>Efficient and High
+      <bibitem*|35><label|bib-hu>Yifan Hu. <newblock>Efficient and High
       Quality Force-Directed Graph Drawing.
       <newblock><with|font-shape|italic|Mathematica Journal>, 10:37\U71,
       2005.<newblock>
 
-      <bibitem*|33><label|bib-hu2>Yifan Hu<localize| and >Jennifer Scott.
+      <bibitem*|36><label|bib-hu2>Yifan Hu<localize| and >Jennifer Scott.
       <newblock>A Multilevel Algorithm for Wavefront Reduction.
       <newblock><with|font-shape|italic|SIAM Journal on Scientific
       Computing>, 23:1352\U1375, 2001.<newblock>
 
-      <bibitem*|34><label|bib-kahn>Arthur<nbsp>B.<nbsp>Kahn.
+      <bibitem*|37><label|bib-kahn>Arthur<nbsp>B.<nbsp>Kahn.
       <newblock>Topological sorting of large networks.
       <newblock><with|font-shape|italic|Communications of the ACM>,
       5:558\U562, 1962.<newblock>
 
-      <bibitem*|35><label|bib-latapy>Matthieu Latapy. <newblock>Main-memory
+      <bibitem*|38><label|bib-latapy>Matthieu Latapy. <newblock>Main-memory
       triangle computations for very large (sparse (power-law)) graphs.
       <newblock><with|font-shape|italic|Theor.<nbsp>Comput.<nbsp>Sci.>,
       407:458\U473, 2008.<newblock>
 
-      <bibitem*|36><label|bib-mckay>B.<nbsp>D.<nbsp>McKay<localize| and
+      <bibitem*|39><label|bib-mckay>B.<nbsp>D.<nbsp>McKay<localize| and
       >A.<nbsp>Piperno. <newblock>Practical Graph Isomorphism, II.
       <newblock><with|font-shape|italic|J.<nbsp>Symbolic Computation>,
       60:94\U112, 2013.<newblock>
 
-      <bibitem*|37><label|bib-monagan>Michael Monagan. <newblock>A new edge
+      <bibitem*|40><label|bib-monagan>Michael Monagan. <newblock>A new edge
       selection heuristic for computing Tutte polynomials.
       <newblock><localize|In ><with|font-shape|italic|Proceedings of FPSAC
       2012>, <localize|pages >839\U850.<newblock>
 
-      <bibitem*|38><label|bib-myrwold>Wendy Myrwold<localize| and >Willian
+      <bibitem*|41><label|bib-myrwold>Wendy Myrwold<localize| and >Willian
       Kocay. <newblock>Errors in graph embedding algorithms.
       <newblock><with|font-shape|italic|Journal of Computer and System
       Sciences>, 77:430\U438, 2011.<newblock>
 
-      <bibitem*|39><label|bib-newman>M.<nbsp>E.<nbsp>Newman,
+      <bibitem*|42><label|bib-newman>M.<nbsp>E.<nbsp>Newman,
       D.<nbsp>J.<nbsp>Watts<localize|, and >S.<nbsp>H.<nbsp>Strogatz.
       <newblock>Random graph models of social networks.
       <newblock><with|font-shape|italic|Proc Natl Acad Sci USA>,
       99:2566\U2572, 2002.<newblock>
 
-      <bibitem*|40><label|bib-nijenhuis>Albert Nijenhuis<localize| and
+      <bibitem*|43><label|bib-nijenhuis>Albert Nijenhuis<localize| and
       >Herbert<nbsp>S.<nbsp>Wilf. <newblock><with|font-shape|italic|Combinatorial
       Algorithms>. <newblock>Computer Science and Applied Mathematics.
       Academic Press, Second<localize| edition>, 1978.<newblock>
 
-      <bibitem*|41><label|bib-ostergard>Patric<nbsp>R.<nbsp>J.<nbsp>Östergård.
+      <bibitem*|44><label|bib-ostergard>Patric<nbsp>R.<nbsp>J.<nbsp>Östergård.
       <newblock>A fast algorithm for the maximum clique problem.
       <newblock><with|font-shape|italic|Discrete Applied Mathematics>,
       120:197\U207, 2002.<newblock>
 
-      <bibitem*|42><label|bib-otter>Richard Otter. <newblock>The Number of
+      <bibitem*|45><label|bib-otter>Richard Otter. <newblock>The Number of
       Trees. <newblock><with|font-shape|italic|The Annals of Mathematics, 2nd
       Ser.>, 49:583\U599, 1948.<newblock>
 
-      <bibitem*|43><label|bib-padberg>Manfred Padberg<localize| and >Giovanni
+      <bibitem*|46><label|bib-padberg>Manfred Padberg<localize| and >Giovanni
       Rinaldi. <newblock>A Branch-and-Cut Algorithm for the Resolution of
       Large-Scale Symmetric Traveling Salesman Problems.
       <newblock><with|font-shape|italic|SIAM Review>, 33:60\U100,
       1991.<newblock>
 
-      <bibitem*|44><label|bib-cpap>Charalampos Papamanthou<localize| and
+      <bibitem*|47><label|bib-cpap>Charalampos Papamanthou<localize| and
       >Ioannis<nbsp>G.<nbsp>Tollis. <newblock>Algorithms for computing a
       parametrized st-orientation. <newblock><with|font-shape|italic|Theoretical
       Computer Science>, 408:224\U240, 2008.<newblock>
 
-      <bibitem*|45><label|bib-pferschy>Ulrich Pferschy<localize| and
+      <bibitem*|48><label|bib-pferschy>Ulrich Pferschy<localize| and
       >Rostislav Stan¥k. <newblock>Generating subtour elimination constraints
       for the TSP from pure integer solutions.
       <newblock><with|font-shape|italic|Central European Journal of
       Operations Research>, 25:231\U260, 2017.<newblock>
 
-      <bibitem*|46><label|bib-plestenjak>Bor Plestenjak. <newblock>An
+      <bibitem*|49><label|bib-plestenjak>Bor Plestenjak. <newblock>An
       Algorithm for Drawing Planar Graphs.
       <newblock><with|font-shape|italic|Software: Practice and Experience>,
       29:973\U984, 1999.<newblock>
 
-      <bibitem*|47><label|bib-schank2>T.<nbsp>Schank<localize| and
+      <bibitem*|50><label|bib-schank2>T.<nbsp>Schank<localize| and
       >D.<nbsp>Wagner. <newblock>Finding, Counting and Listing All Triangles
       in Large Graphs, an Experimental Study. <newblock><localize|In
       >S.<nbsp>E.<nbsp>Nikoletseas<localize|, editor>,
@@ -14483,73 +14496,73 @@
       <localize|pages >606\U609. Springer, Berlin, Heidelberg,
       2005.<newblock>
 
-      <bibitem*|48><label|bib-schank>Thomas Schank<localize| and >Dorothea
+      <bibitem*|51><label|bib-schank>Thomas Schank<localize| and >Dorothea
       Wagner. <newblock>Approximating Clustering Coefficient and
       Transitivity. <newblock><with|font-shape|italic|Journal of Graph
       Algorithms and Applications>, 9:265\U275, 2005.<newblock>
 
-      <bibitem*|49><label|bib-steger>Angelika Steger<localize| and
+      <bibitem*|52><label|bib-steger>Angelika Steger<localize| and
       >Nicholas<nbsp>C.<nbsp>Wormald. <newblock>Generating random regular
       graphs quickly. <newblock><with|font-shape|italic|Combinatorics
       Probability and Computing>, 8:377\U396, 1999.<newblock>
 
-      <bibitem*|50><label|bib-tarjan72>R.<nbsp>E.<nbsp>Tarjan.
+      <bibitem*|53><label|bib-tarjan72>R.<nbsp>E.<nbsp>Tarjan.
       <newblock>Depth-First Search and Linear Graph Algorithms.
       <newblock><with|font-shape|italic|SIAM Journal on Comp.>, 1:146\U160,
       1972.<newblock>
 
-      <bibitem*|51><label|bib-tarjan-bridges>R.<nbsp>E.<nbsp>Tarjan.
+      <bibitem*|54><label|bib-tarjan-bridges>R.<nbsp>E.<nbsp>Tarjan.
       <newblock>A note on finding the bridges of a graph.
       <newblock><with|font-shape|italic|Information Processing Letters>,
       2:160\U161, 1974.<newblock>
 
-      <bibitem*|52><label|bib-lca>R.<nbsp>E.<nbsp>Tarjan.
+      <bibitem*|55><label|bib-lca>R.<nbsp>E.<nbsp>Tarjan.
       <newblock>Applications of path compression on balanced trees.
       <newblock><with|font-shape|italic|Journal of the ACM>, 26:690\U715,
       1979.<newblock>
 
-      <bibitem*|53><label|bib-tarjan86>R.<nbsp>E.<nbsp>Tarjan. <newblock>Two
+      <bibitem*|56><label|bib-tarjan86>R.<nbsp>E.<nbsp>Tarjan. <newblock>Two
       streamlined depth-first search algorithms.
       <newblock><with|font-shape|italic|Fundamenta Informaticae>, 9:85\U94,
       1986.<newblock>
 
-      <bibitem*|54><label|bib-krishnaiyan>K.<nbsp>Thulasiraman,
+      <bibitem*|57><label|bib-krishnaiyan>K.<nbsp>Thulasiraman,
       S.<nbsp>Arumugam, A.<nbsp>Brandstädt<localize|, and
       >T.<nbsp>Nishizeki<localize|, editors>.
       <newblock><with|font-shape|italic|Handbook of Graph Theory,
       Combinatorial Optimization, and Algorithms>. <newblock>CRC Press,
       2016.<newblock>
 
-      <bibitem*|55><label|bib-tomita>Etsuji Tomita, Akira Tanaka<localize|,
+      <bibitem*|58><label|bib-tomita>Etsuji Tomita, Akira Tanaka<localize|,
       and >Haruhisa Takahashi. <newblock>The worst-case time complexity for
       generating all maximal cliques and computational experiments.
       <newblock><with|font-shape|italic|Theoretical Computer Science>,
       363:28\U42, 2006.<newblock>
 
-      <bibitem*|56><label|bib-tutte>W.<nbsp>T.<nbsp>Tutte. <newblock>How to
+      <bibitem*|59><label|bib-tutte>W.<nbsp>T.<nbsp>Tutte. <newblock>How to
       draw a graph. <newblock><with|font-shape|italic|Proceedings of the
       London Mathematical Society>, s3-13:743\U767, 1963.<newblock>
 
-      <bibitem*|57><label|bib-walker>John<nbsp>Q.<nbsp>Walker II. <newblock>A
+      <bibitem*|60><label|bib-walker>John<nbsp>Q.<nbsp>Walker II. <newblock>A
       nodepositioning algorithm for general trees.
       <newblock><with|font-shape|italic|Software: Practice and Experience>,
       20:685\U705, 1990.<newblock>
 
-      <bibitem*|58><label|bib-wasserman>Stanley Wasserman<localize| and
+      <bibitem*|61><label|bib-wasserman>Stanley Wasserman<localize| and
       >Katherine Faust. <newblock><with|font-shape|italic|Social Network
       Analysis: Methods and Applications>. <newblock>Cambridge University
       Press, 1994.<newblock>
 
-      <bibitem*|59><label|bib-welch>E.<nbsp>Welch<localize| and
+      <bibitem*|62><label|bib-welch>E.<nbsp>Welch<localize| and
       >S.<nbsp>Kobourov. <newblock>Measuring Symmetry in Drawings of Graphs.
       <newblock><with|font-shape|italic|Computer Graphics Forum>,
       36:341\U351, 2017.<newblock>
 
-      <bibitem*|60><label|bib-west>Douglas<nbsp>B.<nbsp>West.
+      <bibitem*|63><label|bib-west>Douglas<nbsp>B.<nbsp>West.
       <newblock><with|font-shape|italic|Introduction to Graph Theory>.
       <newblock>Pearson Education, 2002.<newblock>
 
-      <bibitem*|61><label|bib-wilf>Herbert<nbsp>S.<nbsp>Wilf. <newblock>The
+      <bibitem*|64><label|bib-wilf>Herbert<nbsp>S.<nbsp>Wilf. <newblock>The
       Uniform Selection of Free Trees. <newblock><with|font-shape|italic|Journal
       of Algorithms>, 2:204\U207, 1981.<newblock>
     </bib-list>
@@ -15263,7 +15276,7 @@
     <associate|auto-385|<tuple|6.3.3|134>>
     <associate|auto-386|<tuple|6.3.3|134>>
     <associate|auto-387|<tuple|6.3.3|137>>
-    <associate|auto-388|<tuple|61|139>>
+    <associate|auto-388|<tuple|64|139>>
     <associate|auto-39|<tuple|1.5.2|16>>
     <associate|auto-4|<tuple|1.1.1|9>>
     <associate|auto-40|<tuple|1.6|17>>
@@ -15336,63 +15349,66 @@
     <associate|bib-alonso|<tuple|2|137>>
     <associate|bib-bagatelj|<tuple|3|137>>
     <associate|bib-bayati|<tuple|4|137>>
-    <associate|bib-biggs|<tuple|5|137>>
-    <associate|bib-blanusa|<tuple|6|137>>
-    <associate|bib-bollobas|<tuple|7|137>>
-    <associate|bib-boot|<tuple|8|137>>
-    <associate|bib-brelaz|<tuple|9|137>>
-    <associate|bib-buchheim|<tuple|10|137>>
-    <associate|bib-christofides|<tuple|11|137>>
-    <associate|bib-cook|<tuple|12|137>>
-    <associate|bib-cpap|<tuple|44|138>>
-    <associate|bib-diaz|<tuple|14|137>>
-    <associate|bib-diestel|<tuple|15|137>>
-    <associate|bib-edmonds|<tuple|16|137>>
-    <associate|bib-edmonds-karp|<tuple|17|137>>
-    <associate|bib-esfahanian|<tuple|18|137>>
-    <associate|bib-even-algorithms|<tuple|19|137>>
-    <associate|bib-floyd|<tuple|20|137>>
-    <associate|bib-fruchterman|<tuple|21|137>>
-    <associate|bib-gibbons|<tuple|22|137>>
-    <associate|bib-godsil|<tuple|23|137>>
-    <associate|bib-goldfarb|<tuple|24|137>>
-    <associate|bib-haggard|<tuple|25|137>>
-    <associate|bib-haggard2|<tuple|26|137>>
-    <associate|bib-hakimi|<tuple|27|137>>
-    <associate|bib-helsgaun|<tuple|28|137>>
-    <associate|bib-hierholzer|<tuple|29|137>>
-    <associate|bib-hinz|<tuple|30|137>>
-    <associate|bib-hopcroft|<tuple|31|137>>
-    <associate|bib-hu|<tuple|32|137>>
-    <associate|bib-hu2|<tuple|33|137>>
-    <associate|bib-kahn|<tuple|34|138>>
-    <associate|bib-krishnaiyan|<tuple|54|138>>
-    <associate|bib-latapy|<tuple|35|138>>
-    <associate|bib-lca|<tuple|52|138>>
-    <associate|bib-mckay|<tuple|36|138>>
-    <associate|bib-melissa|<tuple|13|137>>
-    <associate|bib-monagan|<tuple|37|138>>
-    <associate|bib-myrwold|<tuple|38|138>>
-    <associate|bib-newman|<tuple|39|138>>
-    <associate|bib-nijenhuis|<tuple|40|138>>
-    <associate|bib-ostergard|<tuple|41|138>>
-    <associate|bib-otter|<tuple|42|138>>
-    <associate|bib-padberg|<tuple|43|138>>
-    <associate|bib-pferschy|<tuple|45|138>>
-    <associate|bib-plestenjak|<tuple|46|138>>
-    <associate|bib-schank|<tuple|48|138>>
-    <associate|bib-schank2|<tuple|47|138>>
-    <associate|bib-steger|<tuple|49|138>>
-    <associate|bib-tarjan-bridges|<tuple|51|138>>
-    <associate|bib-tarjan72|<tuple|50|138>>
-    <associate|bib-tarjan86|<tuple|53|138>>
-    <associate|bib-tomita|<tuple|55|138>>
-    <associate|bib-tutte|<tuple|56|138>>
-    <associate|bib-walker|<tuple|57|138>>
-    <associate|bib-wasserman|<tuple|58|138>>
-    <associate|bib-welch|<tuple|59|138>>
-    <associate|bib-west|<tuple|60|138>>
-    <associate|bib-wilf|<tuple|61|138>>
+    <associate|bib-bellman|<tuple|5|137>>
+    <associate|bib-biggs|<tuple|6|137>>
+    <associate|bib-blanusa|<tuple|7|137>>
+    <associate|bib-bollobas|<tuple|8|137>>
+    <associate|bib-boot|<tuple|9|137>>
+    <associate|bib-brelaz|<tuple|10|137>>
+    <associate|bib-buchheim|<tuple|11|137>>
+    <associate|bib-christofides|<tuple|12|137>>
+    <associate|bib-cook|<tuple|13|137>>
+    <associate|bib-cpap|<tuple|47|138>>
+    <associate|bib-diaz|<tuple|15|137>>
+    <associate|bib-diestel|<tuple|16|137>>
+    <associate|bib-dijkstra|<tuple|17|137>>
+    <associate|bib-edmonds|<tuple|18|137>>
+    <associate|bib-edmonds-karp|<tuple|19|137>>
+    <associate|bib-esfahanian|<tuple|20|137>>
+    <associate|bib-even-algorithms|<tuple|21|137>>
+    <associate|bib-floyd|<tuple|22|137>>
+    <associate|bib-ford|<tuple|23|137>>
+    <associate|bib-fruchterman|<tuple|24|137>>
+    <associate|bib-gibbons|<tuple|25|137>>
+    <associate|bib-godsil|<tuple|26|137>>
+    <associate|bib-goldfarb|<tuple|27|137>>
+    <associate|bib-haggard|<tuple|28|137>>
+    <associate|bib-haggard2|<tuple|29|137>>
+    <associate|bib-hakimi|<tuple|30|137>>
+    <associate|bib-helsgaun|<tuple|31|137>>
+    <associate|bib-hierholzer|<tuple|32|137>>
+    <associate|bib-hinz|<tuple|33|137>>
+    <associate|bib-hopcroft|<tuple|34|137>>
+    <associate|bib-hu|<tuple|35|138>>
+    <associate|bib-hu2|<tuple|36|138>>
+    <associate|bib-kahn|<tuple|37|138>>
+    <associate|bib-krishnaiyan|<tuple|57|138>>
+    <associate|bib-latapy|<tuple|38|138>>
+    <associate|bib-lca|<tuple|55|138>>
+    <associate|bib-mckay|<tuple|39|138>>
+    <associate|bib-melissa|<tuple|14|137>>
+    <associate|bib-monagan|<tuple|40|138>>
+    <associate|bib-myrwold|<tuple|41|138>>
+    <associate|bib-newman|<tuple|42|138>>
+    <associate|bib-nijenhuis|<tuple|43|138>>
+    <associate|bib-ostergard|<tuple|44|138>>
+    <associate|bib-otter|<tuple|45|138>>
+    <associate|bib-padberg|<tuple|46|138>>
+    <associate|bib-pferschy|<tuple|48|138>>
+    <associate|bib-plestenjak|<tuple|49|138>>
+    <associate|bib-schank|<tuple|51|138>>
+    <associate|bib-schank2|<tuple|50|138>>
+    <associate|bib-steger|<tuple|52|138>>
+    <associate|bib-tarjan-bridges|<tuple|54|138>>
+    <associate|bib-tarjan72|<tuple|53|138>>
+    <associate|bib-tarjan86|<tuple|56|138>>
+    <associate|bib-tomita|<tuple|58|138>>
+    <associate|bib-tutte|<tuple|59|138>>
+    <associate|bib-walker|<tuple|60|138>>
+    <associate|bib-wasserman|<tuple|61|138>>
+    <associate|bib-welch|<tuple|62|138>>
+    <associate|bib-west|<tuple|63|138>>
+    <associate|bib-wilf|<tuple|64|138>>
     <associate|blockjoin|<tuple|6.1|129>>
     <associate|canonical-labeling|<tuple|4.3.2|77>>
     <associate|chordface|<tuple|6.2|130>>
@@ -15625,6 +15641,12 @@
       hierholzer
 
       melissa
+
+      dijkstra
+
+      bellman
+
+      ford
 
       cook
 

@@ -629,14 +629,15 @@ gen _resample(const gen &g,GIAC_CONTEXT) {
     SRC_DATA data;
     data.input_frames=len;
     data.output_frames=nlen;
-    data.data_in=new float[len*nc];
+    float *indata=new float[len*nc];
     data.data_out=new float[nlen*nc];
     data.src_ratio=double(nsr)/double(sr);
     for (int i=0;i<len;++i) {
         for (int j=0;j<nc;++j) {
-            data.data_in[i*nc+j]=_evalf(chdata[j][i],contextptr).DOUBLE_val();
+            indata[i*nc+j]=_evalf(chdata[j][i],contextptr).DOUBLE_val();
         }
     }
+    data.data_in=indata;
     switch(quality) {
     case 0:
         quality=SRC_LINEAR;
@@ -663,7 +664,7 @@ gen _resample(const gen &g,GIAC_CONTEXT) {
             output[j]._VECTptr->at(i)=data.data_out[i*nc+j];
         }
     }
-    delete[] data.data_in;
+    delete[] indata;
     delete[] data.data_out;
     vecteur header=*snd._VECTptr->front()._VECTptr;
     header[2]=nsr;

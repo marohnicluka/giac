@@ -961,12 +961,12 @@ odd(1251)
  L:=[1,2,2,3];S:=set[op(L)]
  set[1,2]*set[2,3]
 
-# i[] []
-1 i[] est utilisé pour définir un intervalle réel.
-2 i[] is used to define a real interval.
-3 i[] definido uno intervalo real.
-4 i[] χρησιμοποιείται για τον ορισμό ενός πραγματικό διαστήματος.
-0 Seq
+# i[] [..]
+1 i[] est utilisé pour définir un intervalle réel(i[a,b]=[a..b]).
+2 i[] is used to define a real interval(i[a,b]=[a..b]).
+3 i[] definido uno intervalo real(i[a,b]=[a..b]).
+4 i[] χρησιμοποιείται για τον ορισμό ενός πραγματικό διαστήματος(i[a,b]=[a..b]).
+0 Seq(a,b)
 -1 op
 i[1,3]
  i[1,3]+i[2,4]*i
@@ -4738,9 +4738,9 @@ mksa(1_N)
  CST:=[evalc,["euro",6.55957],["f",x->2*x],["g",g]]
 
 # isopolygon
-1 Trace un polygone régulier ayant abs(n) sommets, si n>0 donné par 2 sommets (ou 2 sommets et 1 point du plan), si n<0 par son centre et 1 sommet (ou son centre, 1 sommets et 1 point du plan).
-2 Draws a regular polygon having abs(n) vertices, if n>0 given by 2 vertices (or 2 vertices and 1 point of the plane), if n<0 by its center and 1 vertex (or its center, 1 vertex and 1 point of the plane).
-3 Traza un polígono regular con abs(n) vértices, si n>0 dado por 2 vértices (o 2 vértices y 1 punto del plano), y si n<0 dado por su centro y 1 vértice (o centro, 1 vértice y 1 punto del plano).
+1 Trace  un polygone régulier ayant abs(n) sommets, donné si n>0  par 2 sommets (ou 2 sommets et 1 point du plan) et si n<0 par son centre et 1 sommet (ou son centre, 1 sommets et 1 point du plan).
+2 Draws a regular polygon having abs(n) vertices, given if n>0 by 2 vertices (or 2 vertices and 1 point of the plane) and  if n<0 by its center and 1 vertex (or its center, 1 vertex and 1 point of the plane).
+3 Traza un polígono regular con abs(n) vértices, dado si n>0 por 2 vértices (o 2 vértices y 1 punto del plano) y dado si n<0 por su centro y 1 vértice (o centro, 1 vértice y 1 punto del plano).
 4 Σχεδιάζει ένα κανονικό πολύγωνο που έχει abs(n) κορυφές, και που καθορίζεται από 2 κορυφές (ή από 2 κορυφές και ένα σημείο του επιπέδου) αν n>0 και από το κέντρο του και μία κορυφή (ή από το κέντρο του, μία κορυφή και ένα σημείο του επιπέδου) αν n<0.
 0 Pnt,Pnt,[Pnt],Intg(n)
 -1 polygon
@@ -9596,7 +9596,7 @@ eigenvals([[4,1],[-4,0]])
 3 ellipse(F1,F2,M)=elipse de focos F1,F2 que pasa por M o MF1+MF2=2*a (geo2d) y ellipse(p(x,y)) traza la cónica si deg(p)=2.
 4 ellipse(F1,F2,M)=έλλειψη με εστίες F1,F2 που διέρχεται από το M ή τέτοια ώστε MF1+MF2=2*a (γεω2Δ) και ellipse(p(x,y)) σχεδιάζει την κωνική αν deg(p)=2.
 8 椭圆。
-0 Pnt(F1),Pnt(F2),(Pnt(M) or Real(a)) y ellipse(p(x,y))=conic si deg(p)=2.
+0 Pnt(F1),Pnt(F2),(Pnt(M) or Real(a))
 -1 hyperbola
 -2 parabola
 ellipse(-1,1,point(1+i))
@@ -10074,6 +10074,14 @@ igamma(5.0,2.0)
 igamma(-5.1,2.1)
 igamma(5.0,2.0,1)
 
+# LambertW
+1 Renvoie une solution en t de t*exp(t)=x
+2 Returns a solution in t of t*exp(t)=x
+0 Real(x),[Intg(n)]
+LambertW(1.0)
+LambertW(ln(4))
+LambertW(-0.1,-1)
+
 # gauss
 1 Décompose une forme quadratique en somme/différence de carrés
 2 Split a quadratic form as a sum/difference of square
@@ -10506,8 +10514,15 @@ ichinrem([(x+1)%2,(x+2)%3,(3*x-1)%5])
 8 素数分解。  以乘积的形式返回整数 a 的素数分解。 是否可与 STO 一起使用？
 0 Intg(a)
 -1 factor
+-2 ecm_factor
 ifactor(50)
 ifactor(123456789)
+
+# ecm_factor
+1 Factorisation d'un entier n par la methode des courbes elliptiques, B1 parametre optionnel de friabilite
+2 Factorization of integer n by the Elliptic Curve Method algorithm, B1 smoothness optional parameter
+0 Intg(a),[Intg(B1)]
+ecm_factor(1000000000000000003000000000000000000000000000000000031000000000000000093)
 
 # ilaplace invlaplace
 1 Transformée de Laplace inverse d'une fraction rationnelle
@@ -10869,7 +10884,7 @@ Nullspace([[1,2,3],[1,3,6],[2,5,9]])
 -1 resultant
 Resultant(x^3+x+1,x^2-x-2,x)
 
-# kill
+# kill tuer
 1 Arrête l'exécution d'un programme en mode pas-à-pas (avec debug)
 2 Stop step-by-step execution of a program (with debug)
 3 Para la ejecución paso a paso de un programa
@@ -11957,6 +11972,13 @@ pmin([[1,0],[0,1]],x)
 pmin(sqrt(2)+sqrt(3))
 pmin(sqrt(2)+sqrt(3),x)
 
+# order
+1 Renvoie l'ordre d'un element g de (Z/nZ)^* ou d'un corps fini
+2 Returns element order of g in (Z/nZ)^* or in a finite field
+0 g
+order(3 % 7)
+ GF(3,5,g); order(g^2+g+1);
+
 # plotpolar polarplot DrawPol courbe_polaire
 1 plotpolar(f(x),x,a,b) trace la courbe en polaire r=f(x) pour x dans [a,b].
 2 plotpolar(f(x),x,a,b) draws the polar curve r=fx) for x in [a,b].
@@ -11984,13 +12006,62 @@ plotpolar(sin(2*x),x,0,pi,tstep=0.1)
  F:=display(square(0,2+i),filled+rgb(rand(),rand(),rand()))
  L:=rand(),rand(),rand();affichage(square(0,2+i),rgb(L)+rempli);legend(0.2,[L])
 
-# set_pixel
-1 Colorie un pixel et ajoute a la liste des pixels
-2 Pixel on and adds to the list of pixel
+# set_pixel draw_pixel
+1 Colorie un pixel et ajoute a la liste des pixels. Utiliser show_pixelx() pour afficher.
+2 Pixel on and adds to the list of pixel. Run show_pixels() to display
 0 Intg(x),Intg(y),Intg(col)
 -1 clear
 -2 show_pixels
-set_pixel(1,2,3)
+-3 draw_line
+-4 draw_rectangle
+-5 draw_polygon
+ clear(); draw_pixel(1,2,red); show_pixels();
+
+# draw_line
+1 Segment pixelise
+2 Pixelised segment
+0 Intg(x1),Intg(y1),Intg(x2),Intg(y2),Intg(col)
+-1 draw_pixel
+-2 draw_rectangle
+-3 draw_polygon
+ clear(); draw_line(10,10,60,60,blue); show_pixels();
+
+# draw_rectangle
+1 Rectangle pixelise, ajouter filled a la couleur pour remplir le rectangle
+2 Pixelised rectangle, add filled to the color to fill the rectangle
+0 Intg(x),Intg(y),Intg(w),Intg(h),Intg(col)
+-1 draw_pixel
+-2 draw_line
+-3 draw_polygon
+ clear(); draw_rectangle(10,20,30,40,red); show_pixels();
+ clear(); draw_rectangle(10,20,30,40,red+filled); show_pixels();
+
+# draw_polygon
+1 Polygone pixelise, ajouter filled a la couleur pour remplir le polygone
+2 Pixelised polygon, add filled to the color to fill the rectangle
+0 Lst(l),Intg(col)
+-1 draw_pixel
+-2 draw_line
+-3 draw_rectangle
+ clear(); draw_polygon([[50,30],[100,10],[20,70]],red); show_pixels();
+ clear(); draw_polygon([[50,30],[100,10],[20,70]],red+filled); show_pixels();
+
+# draw_circle
+1 Cercle pixelise, ajouter filled a la couleur pour remplir le cercle
+2 Pixelised circle, add filled to the color to fill the circle
+0 Intg(x),Intg(y),Intg(r),Intg(col)
+-1 draw_pixel
+-2 draw_arc
+ clear(); draw_circle(100,60,20,blue); show_pixels();
+ clear(); draw_circle(100,60,20,blue+filled); show_pixels();
+
+# draw_arc
+1 Arc d'ellipse pixelise
+2 Pixelised ellipsis arc
+0 Intg(x),Intg(y),Intg(rx),Intg(ry),Real(theta1),Real(theta2),Intg(col)
+-1 draw_pixel
+-2 draw_circle
+ clear(); draw_arc(100,80,40,20,0,pi,blue); show_pixels();
 
 # clear
 1 Efface la liste des pixels
@@ -12306,8 +12377,10 @@ rand(0..2)()
  f:=rand(0..2)
 rand(3,1,10)
 rand(3,["r","r","r","b","n"])
- L:=["r","r","r","b","n"];L:=rand(L,3)
- L:=["r","r","r","b","n"];L.rand(3)
+ L:=["r","r","r","b","n"];L3:=rand(L,3)
+ L:=["r","r","r","b","n"];L3:=L.rand(3)
+ L:=["r","r","r","b","n"];a:=rand(L)
+ L:=["r","r","r","b","n"];a:=L.rand()
 
 # choice
 1 choice(L)=rand(L)=un élément de L tiré au hasard.
@@ -12486,7 +12559,7 @@ randstudent(2)
 randfisher(5,2)
 randfisher(2,4)
 
-# randnorm randNorm
+# randnorm randNorm normalvariate
 1 Renvoie un réel aléatoirement distribué selon la loi normale N(mu,sigma).
 2 Returns a random real with normal distribution N(mu,sigma).
 3 Devuelve un número aleatorio distribuido según la ley normal N(mu,sigma).
@@ -12504,7 +12577,7 @@ randfisher(2,4)
 randnorm(0,1)
 randnorm(2,1)
 
-# randexp
+# randexp expovariate
 1 Renvoie un réel aléatoirement distribué selon la loi exponentielle de paramètre a>0.
 2 Returns a random real according to the exponential distribution of parameter a>0.
 3 Devuelve un número aleatorio distribuido según la ley exponencial (parámetro a>0).
@@ -12517,7 +12590,7 @@ randnorm(2,1)
 randexp(1)
 randexp(2)
 
-# randgammad
+# randgammad gammavariate
 1 Renvoie un réel aléatoirement distribué selon la loi Gamma de paramètre a>0 et b>0
 2 Returns a random real according to the Gamma distribution of parameter a>0 and b>0
 3 Devuelve un número aleatorio distribuido según la ley Gamma (parámetro a>0, b>0).
@@ -12529,7 +12602,7 @@ randexp(2)
 randgammad(1,2)
 randgammad(1.5,4)
 
-# randweibulld
+# randweibulld weibullvariate
 1 Renvoie un réel aléatoirement distribué selon la loi de Weibull de paramètre a>0 et b>0
 2 Returns a random real according to the Weibull distribution of parameter a>0 and b>0
 3 Devuelve un número aleatorio distribuido según la ley Weibull (parámetro a>0, b>0).
@@ -12541,7 +12614,7 @@ randgammad(1.5,4)
 randweibulld(1,2)
 randweibulld(1.5,4)
 
-# randbetad
+# randbetad betavariate
 1 Renvoie un réel aléatoirement distribué selon la loi Beta de paramètre a>0 et b>0
 2 Returns a random real according to the Beta distribution of parameter a>0 and b>0
 3 Devuelve un número aleatorio distribuido según la ley Beta (parámetro a>0, b>0).
@@ -14559,6 +14632,13 @@ fonction f(a,b) local c;c=a+b;c+gcd(a,b);ffonction;
  (72 mod 7) mod 0
  (2%10)^50
  (72%7)%0
+
+# fmod
+1 Renvoie a mod b pour a et b flottants
+2 Returns a mod b for a and b floats
+0 Real(a),Real(b)
+1 mod
+fmod(10.0,pi)
 
 # pa2b2
 1 Renvoie [a,b] tels que a^2+b^2=n (pour n premier et n=1 (mod 4)).
@@ -17577,9 +17657,10 @@ convex(sqrt((1+(u')^2)/(2*g*u)),u(t))
 
 # kovacicsols
 0 Expr||Lst(eq),[Var(x),[Var(y)]]
+1 Resolution d'une equation differentielle lineaire homogene du second ordre a coefficient fraction rationnelle en la variable x
 2 Solves a linear homogeneous second-order ODE eq for y(x) with rational coefficients in variable x.
 -1 desolve
-kovacicsols(y''=y*(1/x-3/16x^2))
+kovacicsols(y''=y*(1/x-3/16/x^2))
 kovacicsols(y''-y*27/(36*(x-1)^2),x,y)
 kovacicsols(x''+3*(t^2-t+1)/(16*(t-1)^2*t^2)*x,t,x)
 kovacicsols(y''+y'=6y/x^2)
@@ -17589,6 +17670,7 @@ kovacicsols([48t*(t+1)*(5t-4),8*(25t+16)*(t-2),-(5t+68)],t)
 
 # euler_lagrange
 0 Expr(f),[(Var(x),[Var||Lst(y)]) || y(x) || Lst(y(x))]
+1 Renvoie les equations d'Euler-Lagrange pour la fonctionnelle F=int(f,x=a..b)
 2 Returns the (system of) Euler-Lagrange equation(s) for the functional F=int(f,x=a..b).
 -1 dsolve
 -2 bvpsolve

@@ -45,10 +45,9 @@
 
 %\usepackage[pdftex]{hyperref}
 \title {Symbolic algebra and Mathematics with {\tt Xcas}}
-\author{Ren\'ee De Graeve, Bernard Parisse\\ 
-University of Grenoble I\\
-Corrected by Jay Belanger\\
-Optimization section written by Luka Marohnić}
+\author{Ren\'ee De Graeve, Bernard Parisse\footnote{Universit\'e de Grenoble, initial translation of parts of the French user manual},\\ 
+Jay Belanger\footnote{Full translation and improvements}\\
+Sections written by Luka Marohnić\footnote{Optimization, signal processing. The graph theory is in a separate manual.}}
 \date{}
 \makeindex
 \usepackage{cutting}
@@ -5738,6 +5737,7 @@ For this reason, it is impossible to assign a variable named
 geometric object {\tt D}).
 
 \subsection{Length of an arc : {\tt arcLen}}\index{arcLen}
+\label{sec:arclen}
 \noindent {\tt arcLen} takes four arguments : an expression $ex$ (resp. a list
 of two expressions $[ex1,ex2]$), the name of a parameter and two values $a$
 and $b$ of this parameter.\\
@@ -23403,4 +23403,4888 @@ This button will put the command \texttt{rmwatch\index{rmwatch}} in
 the \texttt{eval} box without the arguments filled in.  The arguments
 are the variables you want to remove from the watch list.
 
+\chapter{Two-dimensional Graphics}
+
+\section{Introduction}
+
+\subsection{Points, vectors and complex numbers}
+
+A point in the Cartesian plane is described with an ordered pair
+$(a,b)$.  It has $x$-coordinate (abscissa) $a$ and
+$y$-coordinate (ordinate) $b$.  
+
+A vector from one point $(a_{1},b_{1})$ to another $(a_{2},b_{2})$
+has associated ordered pair $(a_{2}-a_{1},b_{2}-b_{1})$; so the
+abscissa is $a_{2}-a_{1}$ and the ordinate is $b_{2}-b_{1}$.
+
+A complex number $a + bi$ can be associated with the point $(a,b)$ in
+the Cartesian plane.  The complex number is called the \emph{affix} of the
+point.
+
+A point in \texttt{Xcas} is specified with the
+\texttt{point} command (see section \ref{sec:2dpoint}), which takes as
+argument either two real numbers $a,b$ or a complex number $a + bi$.
+In this section, when a command take a point as an argument, the
+point can either be the result of the \texttt{point} command or 
+simply a complex number.
+
+An interactive graphic screen opens whenever a geometric object is
+drawn, or with the command \texttt{Alt+G}.  The objects on the screen
+can also be created and manipulated with the mouse.
+
+As an example (to be explained in more detail later), the
+\texttt{triangle} command draws a triangle; the result will be a
+graphics screen containing axes, the triangle and a
+control panel on the right.\\ 
+Input:
+\begin{center}
+  \tt
+  triangle(0,1,1+i)
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-tr.png}
+\end{center}
+
+\section{Basic commands}
+
+\subsection{Clear the \texttt{DispG} screen: \texttt{erase}\index{erase}}
+
+The \texttt{DispG} screen records all graphic commands
+since the beginning of the session.  The \texttt{Alt-D} command (or
+the menu command \texttt{Cfg $\blacktriangleright$ Show
+$\blacktriangleright$ DispG}) brings up this screen.
+
+The \texttt{erase} command clears the \texttt{DispG} screen without
+restarting the session.  Entering\\
+Input:
+\begin{center}
+  \tt
+  erase
+\end{center}
+or:
+\begin{center}
+  \tt
+  erase()
+\end{center}
+clears the \texttt{DispG} screen.  This can be useful for commands
+such as \texttt{graph2tex}, which only takes into account the objects
+on the \texttt{DispG} screen.
+
+\subsection{Toggle the axes: \texttt{switch\_axes}\index{switch\_axes}}
+
+The \texttt{switch\_axes} command shows, hides or toggles the 
+coordinate axes on the graphics screen depending on whether the
+argument is \texttt{1}, \texttt{0} or empty.
+(This can also be controlled by a \texttt{show axes} checkbox in the
+configuration panel brought up with the \texttt{cfg} button on the
+graphic screen control panel.) 
+
+Entering\\
+Input:
+\begin{center}
+  \tt
+  switch\_axes()
+\end{center}
+toggles whether or not the coordinate axes are shown in subsequent
+graphic screens.  Rather than toggling,\\
+Input:
+\begin{center}
+  \tt
+  switch\_axes(1)
+\end{center}
+causes all later graphic screens to have the axes, and\\
+Input:
+\begin{center}
+  \tt
+  switch\_axes(0)
+\end{center}
+causes all later graphic screens to omit the axes.
+
+When the axes are visible, they have tick marks whose
+separation is determined by the X-tick and Y-tick values on the
+graphic configuration screen.  Setting these values to 0 removes the
+axes.
+
+\subsection{Draw unit vectors:
+\texttt{Ox\_2d\_unit\_vector}\index{Ox\_2d\_unit\_vector}
+\texttt{Oy\_2d\_unit\_vector}\index{Oy\_2d\_unit\_vector}
+\texttt{frame\_2d}\index{frame\_2d}}
+
+The \texttt{Ox\_2d\_unit\_vector} command draws the unit vector in
+the $x$-direction on a plane.\\
+Input:
+\begin{center}
+  \tt
+  Ox\_2d\_unit\_vector()
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-unit-vector.png}
+\end{center}
+Similarly, the \texttt{Oy\_2d\_unit\_vector} command
+draws the unit vector in the $y$ direction.
+The \texttt{frame\_2d} command simultaneously draws both unit
+vectors.
+
+\subsection{Draw dotted paper: \texttt{dot\_paper}\index{dot\_paper}}
+
+The \texttt{dot\_paper} command draws dotted paper.  This
+command takes three to five arguments; the first argument is
+the spacing in the $x$ direction, the second argument is the angle
+from the horizontal to draw the dots, and the third argument is the spacing
+in the $y$ direction.  By default, the dots extend in the $x$ and
+$y$ directions for the distances given in the graphic configuration
+page accessible from the main menu; the optional fourth and fifth
+arguments \texttt{x=xmin..xmax} and \texttt{y=ymin..ymax} change the
+size of the dotted paper.\\
+Input:
+\begin{center}
+  \tt
+  dot\_paper(0.6,pi/2,0.6)
+\end{center}
+Output:
+\begin{center}
+ \includegraphics[width=0.75\textwidth]{xcas-dot-paper.png}
+\end{center}
+Unchecking \texttt{Show Axes} on the \texttt{cfg} screen removes
+the axes.
+
+\subsection{Draw lined paper: \texttt{line\_paper}\index{line\_paper}}
+
+The \texttt{line\_paper} command draws lined paper.  This
+command takes two mandatory arguments and two optional arguments.
+The mandatory arguments are
+the spacing in the $x$ direction and the angle
+from the horizontal to draw the lines.  The optional third and fourth
+arguments, \texttt{x=xmin..xmax} and \texttt{y=ymin..ymax}, 
+determine the size of the lined paper.\\
+Input:
+\begin{center}
+  \tt
+  line\_paper(0.6,pi/3)
+\end{center}
+Output:
+\begin{center}
+ \includegraphics[width=0.75\textwidth]{xcas-line-paper.png}
+\end{center}
+Unchecking \texttt{Show Axes} on the \texttt{cfg} screen removes
+the axes.
+
+\subsection{Draw grid paper: \texttt{grid\_paper}\index{grid\_paper}}
+
+The \texttt{grid\_paper} command draws grid paper.  This
+command takes three mandatory arguments and two optional arguments.
+The mandatory arguments are
+the spacing in the $x$ direction, the the angle
+from the horizontal to draw the grid, and the spacing
+in the $y$ direction.  The optional fourth and fifth arguments, 
+\texttt{x=xmin..xmax} and \texttt{y=ymin..ymax}, restrict the
+size of the grid.\\
+Input:
+\begin{center}
+  \tt
+  grid\_paper(1,pi/2,1)
+\end{center}
+Output:
+\begin{center}
+ \includegraphics[width=0.75\textwidth]{xcas-grid-paper.png}
+\end{center}
+Unchecking \texttt{Show Axes} on the \texttt{cfg} screen removes
+the axes.
+
+\subsection{Draw triangular paper: \texttt{triangle\_paper}\index{triangle\_paper}}
+
+The \texttt{triangle\_paper} command draws triangular paper.  This
+command takes three mandatory and two optional arguments.  The
+mandatory arguments are
+the spacing in the $x$ direction, the angle
+from the horizontal, and the spacing
+in the $y$ direction.  The optional fourth and fifth arguments, 
+\texttt{x=xmin..xmax} and \texttt{y=ymin..ymax}, restrict the
+size of the grid.\\
+Input:
+\begin{center}
+  \tt
+  triangle\_paper(1,pi/2,1)
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-triangle-paper.png}
+\end{center}
+Unchecking \texttt{Show Axes} on the \texttt{cfg} screen removes the
+axes.
+
+\section{Display features of graphics}
+
+\subsection{Graphic features}
+
+Graphic objects and graphic screens can have features, such as
+labels and colors, that are only included when requested, and other
+features, such as line width, which are configurable.  Some features
+will be global, meaning that they will apply to the entire graphic
+screen, and some will be local, meaning that they will only apply to
+individual objects. 
+
+\subsection{Parameters for changing features}
+
+Graphical features are changed by giving appropriate values to
+certain parameters.  Several values can be given at once with an
+expression of the form \texttt{\textit{feature}=value1+value2+\dots}.
+Some values can be set using optional arguments to graphic commands,
+which will set the feature locally; namely, it will only apply to that
+particular graphic object. Some values can be specified at the
+beginning of a line, which will set the feature globally; it will
+apply to all the graphic objects created on that line.  For some
+features, both options are available.  
+
+\subsubsection{Parameters for local features}
+\label{sec:localfeatures}
+
+Commands which create graphic objects, such as \texttt{triangle}, can
+have optional arguments to change a features of the object.
+For example, the argument \texttt{color = red} will make an object red.\\ 
+Input:
+\begin{center}
+  \tt
+  triangle(0,1,1+i,color=red)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-red-triangle.png}
+\end{center}
+
+The features and their possible values are:
+\begin{description}
+  \item[\texttt{display} or \texttt{color}] These two parameter names
+  have the same effect.  They control the following features.
+  \begin{description}
+  \item[Color]  The following values will change the color:
+  \begin{itemize}
+    \item An integer from \texttt{0} to \texttt{381}.\\
+    Integers from 0 to 255 correspond to the color palette, integers from
+    256 to 381 will be the spectrum of colors.\\
+    The program
+\begin{verbatim}
+  rainbow() := {
+    local j, C;
+    C := [];
+    for (j := 256; j < 382; j++) {
+      C := append(C,square(j,j+1,color=j+filled));
+      }
+   }
+\end{verbatim}
+will show the colors;\\
+Input:
+\begin{center}
+  \tt
+  rainbow();
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-rainbow.png}
+\end{center}
+The number of a color is its $x$-coordinate.  To see just
+one color, say the color corresponding to $n$ for $256 \le n \le 381$,
+enter\\
+Input:
+\begin{center}
+  \tt
+  rainbow()[$n$-256]
+\end{center}
+
+    \item The names 
+    \texttt{black}, \texttt{white}, \texttt{red}, \texttt{blue},
+    \texttt{green}, \texttt{magenta} \texttt{cyan} or \texttt{yellow}.
+  \end{itemize}
+
+  \item[Fill] The \texttt{filled} value creates a solid object.\\
+  Input:
+  \begin{center}
+    \tt
+    triangle(0,1,1+i,display=filled)
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.75\textwidth]{xcas-filledtriangle.png}
+  \end{center}
+  \item[Point markers]  By default, points are drawn 
+    with a small cross.  The following (self-explanatory) values
+    change the marker.
+    \begin{description}
+      \item[\texttt{rhombus\_point}]
+      \item[\texttt{square\_point}]
+      \item[\texttt{cross\_point}]
+      \item[\texttt{star\_point}]      
+      \item[\texttt{plus\_point}]      
+      \item[\texttt{point\_point}]      
+      \item[\texttt{triangle\_point}]
+      \item[\texttt{invisible\_point}]      
+    \end{description}
+    
+    \item[Point width]   The values
+    \texttt{point\_width\_1},\dots,\texttt{point\_width\_8}
+    change the thickness of the lines in the point markers.
+
+    \item[Line style]  The following (self-explanatory) values change
+    the style of lines.
+    \begin{description}
+      \item[\texttt{solid\_line}]
+      \item[\texttt{dash\_line}]
+      \item[\texttt{dashdot\_line}]
+      \item[\texttt{dashdotdot\_line}]      
+      \item[\texttt{cap\_flat\_line}]      
+      \item[\texttt{cap\_round\_line}]      
+      \item[\texttt{cap\_square\_line}]
+    \end{description}
+    
+    \item[Line widths]   The values
+    \texttt{line\_width\_1},\dots,\texttt{line\_width\_8}
+    change the thickness of the lines.
+  \end{description}
+
+  \item[\texttt{thickness}]  This controls line thickness, it can be
+  an integer from 1 to 7.
+  \item[\texttt{nstep}]  This sets the number of sampling points
+  for three-dimensional objects.
+  \item[\texttt{tstep}] This sets the step size of the
+   parameter when drawing a one parameter parametric plot.
+   \item[\texttt{ustep}] This sets the step size of the
+   first parameter when drawing a two-parameter parametric plot.
+   \item[\texttt{vstep}] This sets the step size of the
+   second parameter when drawing a two-parameter parametric plot.
+   \item[\texttt{xstep}] This sets the step size of the
+   $x$ variable.
+   \item[\texttt{ystep}] This sets the step size of the
+   $y$ variable.
+   \item[\texttt{zstep}] This sets the step size of the
+   $z$ variable.
+   \item[\texttt{frames}] This sets the number of
+   graphs computed when an animated graph is created with the
+   \texttt{animate} or \texttt{animate3d} command.
+   \item[\texttt{legend}] This adds a legend to a graphic object and
+   should be a string.  It is probably most useful when
+   that object is a point or a polygon.  If the object is a polygon,
+   the legend will be placed in the middle of the last side.  
+   Other parameters for the graphic object will specify the color or
+   position of the legend.
+   % \item[\texttt{style}]  This only takes the value \texttt{point}.
+   % If you set it to point, then lines will be drawn as dotted lines.
+   \item[\texttt{gl\_texture}] This sets an
+   image file to be put on the graphic object; it should be the name
+   of the file.
+\end{description}
+
+\subsubsection{Parameters for global features}
+
+Parameters set at the beginning of a line change features on the
+entire graphic screen.  It only takes effect
+when the line ends with a graphic command.
+For example, starting the line with \texttt{title=\textit{title
+string}} will give the graphic screen a title.\\
+Input:
+\begin{center}
+  \tt
+  title = "Some triangles"; triangle(0,1,1+i); triangle(2,3,3+i);
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-some-triangles.png}
+\end{center}
+
+The parameters for features and their possible values are:
+\begin{description}
+  \item[\texttt{axes}]
+  This determines whether axes are shown or hidden; a value of
+  \texttt{0} or \texttt{false} hides the axes, a value of
+  \texttt{1} or \texttt{true} shows the axes.
+  \item[\texttt{labels}]  This sets labels for the axes; it should be
+  a list of two strings  \texttt{["\textit{x axis label}","\textit{y
+  axis label}"]}.
+  \item[\texttt{label}]
+  This puts a labels on the graphic screen in the following ways.
+  \begin{itemize}
+    \item 
+    To set the units on the axes, it can be a list of two or three strings,
+    \texttt{["\textit{x units}","\textit{y units}"]} or
+    \texttt{["\textit{x units}","\textit{y units}","\texttt{z
+    units}"]}.
+    \item 
+    To place a string at a particular point, it can
+    be a list of two integers followed by a
+    string.  The integers determine the point,
+    starting from \texttt{[0,0]} in the top left of the
+    screen.
+  \end{itemize}
+  \item[\texttt{title}]  This sets the title for the graphic window,
+  it should be a string.
+   \item[\texttt{gl\_texture}] This sets the wallpaper of the graphic
+   window to be an image file, it should be the name of the file.
+   \item[\texttt{gl\_x\_axis\_name},\texttt{gl\_x\_axis\_name},\texttt{gl\_x\_axis\_name}]
+   These set the names of the axes.
+   \item[\texttt{gl\_x\_axis\_unit},\texttt{gl\_x\_axis\_unit},\texttt{gl\_x\_axis\_unit}]
+   These set the units of the axes.   
+   \item[\texttt{gl\_x\_axis\_color},\texttt{gl\_x\_axis\_color},\texttt{gl\_x\_axis\_color}]
+   These set the colors of the axes
+   labels; they take the same color options as the local parameter
+   \texttt{color}.
+   \item[\texttt{gl\_ortho}]  This ensures that the graph is
+   orthonormal when it is set to \texttt{1}.
+   \item[\texttt{gl\_x},\texttt{gl\_y},\texttt{gl\_z}]
+   These define the framing of the graph; they should be intervals
+   \textit{min}\texttt{..}\textit{max}. (They are not compatible with
+   interactive graphs.)
+   \item[\texttt{gl\_xtick},\texttt{gl\_ytick},\texttt{gl\_ztick}]
+   These determine the spacing of the ticks on the axes.
+   \item[\texttt{gl\_shownames}]  This shows or hides object names, it
+   can be \texttt{true} or \texttt{false}.
+   \item[\texttt{gl\_rotation}]  This sets the axis of rotation for
+   three-dimensional scene animations; it should be a direction vector
+   \texttt{[$x$,$y$,$z$]}.
+   \item[\texttt{gl\_quaternion}]  This sets the quaternion for viewing
+   three-dimensional scenes; it should be a fourtuple
+   \texttt{[$x$,$y$,$z$,$t$]}.   (This is not compatible with
+   interactive graphs.)
+\end{description}
+
+\subsection{Commands for global display features}
+
+\subsubsection{Add a legend: \texttt{legend}\index{legend}}
+\label{sec:addlegend}
+
+The \texttt{legend} command takes two arguments and an optional third.  The
+arguments are:
+\begin{itemize}
+  \item A position to put the legend.  This can either be a point or a
+  list of two integers giving the number of pixels from the upper left
+  hand corner.
+  \item The legend itself, a string or a variable.
+  \item An optional third parameter indicating where to put the legend
+  relative to the point.  By default, it will be to the upper right of
+  the point (\texttt{quadrant1}), but you can specify
+  \texttt{quadrant1}, \texttt{quadrant2}, \texttt{quadrant3} or
+  \texttt{quadrant4}.
+\end{itemize}
+For example, to put "hello" to the upper left of the point
+$(1,1)$:\\
+Input:
+\begin{center}
+  \tt
+  legend(1+i,"hello",quadrant3)
+\end{center}
+or\\
+Input:
+\begin{center}
+  \tt
+  legend(1+i,quadrant3,"hello")
+\end{center}
+Output:
+\begin{center}
+  \tt
+  \includegraphics[width=0.75\textwidth]{xcas-hello-legend.png}
+\end{center}
+
+%To put a legend at an angle, see section \ref{sec:2dangle}.
+
+\subsubsection{Change various features:\texttt{display}\index{display}
+\texttt{color}\index{color}}
+
+The \texttt{display} command changes the properties of
+graphics; the same properties that can also be changed with the \texttt{display} and
+\texttt{color} parameters.  (See section \ref{sec:localfeatures}.)  
+The \texttt{color} command is
+the same as the \texttt{display} command.
+
+The \texttt{display} command can draw objects with specified
+properties.  In this case, the first argument will be a command to
+create the object and the second argument will be a value for the 
+\texttt{display} or \texttt{color} parameter.
+Both\\
+Input:
+\begin{center}
+  \tt
+  display(triangle(0,1,1+i),red)
+\end{center}
+and\\
+Input:
+\begin{center}
+  \tt
+  triangle(0,1,1+i,display=red)
+\end{center}
+draw\\
+Output:
+\begin{center}
+  \tt
+  \includegraphics[width=.75\textwidth]{xcas-red-triangle.png}
+\end{center}
+Similarly, both\\
+Input:
+\begin{center}
+  \tt
+  triangle(0,1,1+i,display=filled)
+\end{center}
+and\\
+Input:
+\begin{center}
+  \tt
+  display(triangle(0,1,1+i),filled)
+\end{center}
+draw\\
+Output:
+\begin{center}
+  \tt
+  \includegraphics[width=0.75\textwidth]{xcas-trianglefilled.png}
+\end{center}
+The \texttt{display} command can also take a second argument of
+\texttt{hidden\_name}.  By default, if a geometric object is named,
+the drawing is labeled.\\ 
+Input:
+\begin{center}
+  \tt
+  A := triangle(0,1,1+i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  \includegraphics[width=0.75\textwidth]{xcas-triangleA.png}
+\end{center}
+Creating the object with the \texttt{display} command and the
+\texttt{hidden\_name} argument will draw it without the label.\\
+Input:
+\begin{center}
+  \tt
+  display(A := triangle(0,1,1+i),hidden\_name)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  \includegraphics[width=0.75\textwidth]{xcas-triangleNoA.png}
+\end{center}
+
+The \texttt{display} command can also be used without drawing an
+object, such as  \texttt{display(hidden\_name)} or
+\texttt{display(filled)}.  In this case it will be a
+global command; the display effect will apply to all objects
+afterwards.  Entering \texttt{display(0)} will reset the display
+parameters; afterwards, for example, the colors will be black, the
+figures won't be filled, and the objects will have labels.
+
+\section{Define geometric objects without drawing them: \texttt{nodisp}\index{nodisp}}
+
+The \texttt{nodisp} command will define an object without displaying
+it.  Setting a variable to a graphic object draws the object.\\
+Input:
+\begin{center}
+  \tt
+  C := point(1+i)
+\end{center}
+will define the point \texttt{C} as well as draw it.  Setting a
+variable to a graphic object inside the \texttt{nodisp} command will
+not draw the object.\\
+Input:
+\begin{center}
+  \tt
+  nodisp(C:= point(1+i))
+\end{center}
+will define the point $C$  but not display it.  This is
+equivalent to following the command with \texttt{:;},
+\\
+Input:
+\begin{center}
+  \tt
+  C := point(1+i):;
+\end{center}
+
+To define a point as above and display it without the
+label, enter the point's name;\\
+Input:
+\begin{center}
+  \tt
+  C
+\end{center}
+Alternatively, define the point within an
+\texttt{eval} statement;\\
+Input:
+\begin{center}
+  \tt
+  eval(C := point(1+i))
+\end{center}
+defines $C$ as the point, displays the point, but doesn't display the
+label.  To later display the point with a label, use the
+\texttt{legend} command.\\
+Input:
+\begin{center}
+  \tt
+  legend(C,"C")
+\end{center}
+or:
+\begin{center}
+  \tt
+  point(affix(C),legend="C")
+\end{center}
+Output:
+\begin{center}
+  \tt
+  \includegraphics[width=0.75\textwidth]{xcas-legendC.png}
+\end{center}
+In this case, the string "C" can be replaced with any other string 
+as a label.  Alternatively, redefine the
+variable as itself;\\
+Input:
+\begin{center}
+  \tt
+  C := C
+\end{center}
+prints $C$ with its label.
+
+\section{Geometric demonstrations: \texttt{assume}\index{assume}}
+
+Variables should be unspecified to demonstrate a general geometric
+result, but need to have specific values when drawing.  There are a
+couple of different approaches of dealing with this.
+
+One approach is to use the \texttt{assume} command.  If a variable is 
+\emph{assumed} to have a value, then that value will be used in
+graphics but the variable will still be unspecified for calculations.
+For example,\\
+Input:
+\begin{center}
+  \tt
+  assume(a = 2.1)
+\end{center}
+then 
+\\
+Input:
+\begin{center}
+  \tt
+  A := point(a + i)
+\end{center}
+will draw a point at the coordinate $(2.1,1)$,\\
+Output:
+\begin{center}
+  \tt
+  \includegraphics[width=0.75\textwidth]{xcas-assumea.png}
+\end{center}
+but the variable $a$ will still be treated as a variable in
+calculations;\\
+Input:
+\begin{center}
+  \tt
+  distance(0,A)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  sqrt((-a)\^{}2 + 1)
+\end{center}
+
+Another approach would be to use \texttt{point} or \texttt{pointer}
+mode in a geometry screen.  If there isn't a geometry screen showing,
+the command \texttt{Alt-G} or the \texttt{Geo$\blacktriangleright$New
+figure 2d} menu will open a screen.  Clicking on the 
+\texttt{Mode} button right above the graphic screen and choosing 
+\texttt{pointer} or \texttt{point} will put the screen in
+\texttt{pointer} or \texttt{point} mode.
+If a point is defined and displayed, such as 
+with \texttt{A := point(2.1 + i)}, then clicking on the name of the
+point (\texttt{A} in this case) with the right mouse button will bring
+up a configuration screen.  As long as there is a point defined with
+non-symbolic values, there sill be a \texttt{symb} box on the configuration
+screen.  Selecting the \texttt{symb} box and
+choosing \texttt{OK} will  be equivalent to the commands
+\texttt{assume(Ax=[2.1,-8.16901408451,8.16901408451])}
+and \texttt{assume(Ay = [1, -5.0, 5.0]}, this will bring up
+two lines beneath the arrows to the right of the screen which can be
+used to change the assumed values of \texttt{Ax} and \texttt{Ay}.
+Also, the point \texttt{A} will be redefined as \texttt{point(Ax,Ay)}.
+\begin{center}
+  \tt
+  \includegraphics[width=0.75\textwidth]{xcas-assumespoint.png}
+\end{center}
+
+\section{Points in plane geometry}
+
+\subsection{Points and complex numbers}
+
+The \emph{affix} of a point $(a,b)$ in the plane is the complex number
+$a + bi$.   In this section, when a command take points as arguments,
+the points can be specified by a pair or by a complex number.
+
+\subsection{The point in the plane: \texttt{point}\index{point}}
+\label{sec:2dpoint}
+
+%See section \ref{sec:3dpoint} for points in space.
+
+In the 2-d geometry screen in point mode, clicking on a point with the
+left mouse button will choose that point.  Points chosen this are
+automatically named, first with \texttt{A}, then \texttt{B}, etc.  
+
+Alternatively, the \texttt{point} command chooses a point, where the
+point $(a,b)$ is specified by either the two coordinates \text{a,b}, a
+list \texttt{[a,b]} of the coordinates, or the affix \texttt{a + b*i}.\\
+Input:
+\begin{center}
+  \tt
+  A := point(2,1)
+\end{center}
+or:
+\begin{center}
+  \tt
+  A := point([2,1])
+\end{center}
+or\\
+Input:
+\begin{center}
+  \tt
+  A := point(2 + i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  \includegraphics[width=0.75\textwidth]{xcas-2dpoint.png}
+\end{center}
+(The marker used to indicate the point can be changed; see section
+\ref{sec:localfeatures}.)
+
+If the \texttt{point} command has two numbers for arguments, at least
+one of which is complex but not real, then it will choose two points.
+Entering\\
+Input:
+\begin{center}
+  \tt
+  A := point(1,2*i)
+\end{center}
+or:
+\begin{center}
+  \tt
+  A := point([1,2*i])
+\end{center}
+will choose two points named \texttt{A}; one with affix $1$ and
+one with affix \texttt{2i}.
+
+\subsection{Define random points: \texttt{point2d}\index{point2d}}
+
+The \texttt{point2d} command defines a random point whose
+coordinates are integers between -5 and 5.  This command takes a name
+as an argument and assigns the point to the name.  For example,\\
+Input:
+\begin{center}
+  \tt
+  point2d(A)
+\end{center}
+assigns \texttt{A} to a random point.  Once assigned, the point
+is fixed.  The command can also take a sequence of names, and
+will assign separate random points to each name.  For example, to
+generate a random triangle, finding three random points\\
+Input:
+\begin{center}
+  \tt
+  point2d(A,B,C)
+\end{center}
+and then use them for a triangle\\
+Input:
+\begin{center}
+  \tt
+  triangle(A,B,C)
+\end{center}
+
+\subsection{Points in polar coordinates: \texttt{polar\_point}\index{polar\_point} \texttt{point\_polar}\index{point\_polar}}
+
+To specify a point in polar coordinates, enter the polar
+representation of complex numbers.  For example, the command\\
+Input:
+\begin{center}
+  \tt
+  point(2*exp(i * pi/4))
+\end{center}
+draws the point with polar coordinates $r=2$, $\theta = \pi/4$.
+The \texttt{polar\_point} command does this in an easier way, it
+takes $r$ and $\theta$ as arguments.  
+The command\\
+Input:
+\begin{center}
+  \tt
+  polar\_point(2,pi/4)
+\end{center}
+creates the same point as before.
+
+\subsection{Find a point of intersection of two objects: \texttt{single\_inter}\index{single\_inter} \texttt{line\_inter}\index{line\_inter}}
+\label{sec:single2dintersection}
+
+%See section \ref{sec:single3dintersection} for single points of intersection of objects
+%in space.
+
+The \texttt{single\_inter} (or the \texttt{line\_inter}) command takes
+two geometric objects as arguments
+and returns one of the points of intersection of the two objects.  
+
+The \texttt{single\_inter} command optionally takes a third
+argument, which can be a point or a list of points.  If the optional
+argument is 
+a single point, then \texttt{single\_inter} returns the point of
+intersection \emph{closest} to the optional argument.  If the optional
+argument is a list of points, then \texttt{single\_inter} tries to
+return a point of intersection not in the list.
+
+For example, the unit circle \texttt{circle(0,1)} and line
+\texttt{line(-1,i)} intersect at the points
+$(-1,0)$ and $(0,1)$.  Entering\\
+Input:
+\begin{center}
+  \tt
+  single\_inter(circle(0,1),line(-1,i))
+\end{center}
+draws the point $(-1,0)$.  To draw the other
+point, enter\\
+Input:
+\begin{center}
+  \tt
+  single\_inter(circle(0,1),line(-1,i),[-1])
+\end{center}
+and \texttt{Xcas} will draw $(0,1)$.  Similarly, since this second
+point of intersection is closest to $(0,1/2)$, entering\\
+Input:
+\begin{center}
+  \tt
+  single\_inter(circle(0,1),line(-1,i),i/2)
+\end{center}
+also draws the second point.
+
+\subsection{Find the points of intersection of two geometric objects: \texttt{inter}\index{inter}}
+\label{sec:2dintersection}
+
+%See section \ref{sec:3dintersection} for points of intersection of objects
+%in space.
+
+The \texttt{inter} command takes
+two geometric objects as arguments
+and returns a list of the points of intersection of the two objects.  
+
+The \texttt{inter} command optionally takes a point as a third argument.
+In this case, \texttt{inter} returns the point of intersection
+\emph{closest} to this argument.
+
+For example, entering\\
+Input:
+\begin{center}
+  \tt
+  inter(circle(0,1),line(1,i))
+\end{center}
+draws the points at $(1,0)$ and $(0,1)$.
+To get just one of the points, use the usual list indices.\\
+Input:
+\begin{center}
+  \tt
+  inter(circle(0,1),line(1,i))[0]
+\end{center}
+draws just one of the points.
+To get the point closest to $(0,1/2)$, enter\\
+Input:
+\begin{center}
+  \tt
+  inter(circle(0,1),line(1,i),i/2)
+\end{center}
+
+\subsection{Find the orthocenter of a triangle: \texttt{orthocenter}\index{orthocenter}}
+
+The \texttt{orthocenter} command take a triangle (or three
+points representing the vertices of a triangle) as argument and returns the
+orthocenter of the triangle.  Entering\\
+Input:
+\begin{center}
+  \tt
+  orthocenter(triangle(0,1+i,-1+i))
+\end{center}
+or\\
+Input:
+\begin{center}
+  \tt
+  orthocenter(0,1+i,-1+i)  
+\end{center}
+draws the point $(0,0)$, the orthocenter of the
+triangle.
+
+\subsection{Find the midpoint of a segment: \texttt{midpoint}\index{midpoint}}
+\label{sec:2dmidpt}
+
+%See section \ref{sec:3dmidpt} for midpoints in space.
+
+The \texttt{midpoint} command takes two points (or a list of two
+points) as arguments and draws the midpoint of the segment
+determined by these points.  
+
+\subsection{The barycenter: \texttt{barycenter}\index{barycenter}}
+\label{sec:2dbarycenter}
+
+%See section \ref{sec:3dbarycenter} for barycenters of objects in
+%space.
+
+The \texttt{barycenter} command draws the barycenter of a set of
+weighted points.  The points and their weights (real numbers) can be
+given in three different ways.
+\begin{enumerate}
+  \item A sequence of lists of length two.\\
+  The first element of each list is a point and the second element is
+  the weight of the point.
+  \item A matrix with two columns.\\
+  The first column of the matrix contains the points and the
+  second column contains the corresponding weights.
+  \item A matrix with two rows and more than two columns.\\
+  The first row contains the points and the second column the
+  corresponding weights.
+\end{enumerate}
+
+For example, the following commands will draw the barycenter of the
+points $(1,1)$ with weight $1$, $(1,-1)$ with weight $1$ and $(1,4)$
+with weight $2$.\\
+Input:
+\begin{center}
+  \tt
+  barycenter([1 + i,1],[1 - i,1],[1 + 4*i, 2])
+\end{center}
+or:
+\begin{center}
+  \tt
+  barycenter([[1 + i,1],[1 - i,1],[1 + 4*i, 2]])
+\end{center}
+or:
+\begin{center}
+  \tt
+  barycenter([[1 + i, 1 - i, 1 + 4*i],[1,1,2]])
+\end{center}
+Output:
+\begin{center}
+  \tt
+  \includegraphics[width=0.75\textwidth]{xcas-barycenter.png}
+\end{center}
+
+\subsection{The isobarycenter of $n$ points: \texttt{isobarycenter}\index{isobarycenter}}
+\label{sec:2disobarycenter}
+
+%See section \ref{sec:3disobarycenter} for isobarycenters of objects in
+%space.
+
+The \texttt{isobarycenter} command takes a list (or sequence) of
+points and draws the isobarycenter, which is the barycenter when all
+the points are equally weighted.
+
+\subsection{The center of a circle: \texttt{center}\index{center}}
+
+The \texttt{center} command takes as argument a circle and returns and draws the
+center.\\
+Input:
+\begin{center}
+  \tt
+  C := center(circle(point(1+i),1))
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-center.png}
+\end{center}
+
+\subsection{The vertices of a polygon: \texttt{vertices}\index{vertices} \texttt{vertices\_abc}\index{vertices\_abc}}
+
+The \texttt{vertices} command (or \texttt{vertices\_abc}) takes as argument a
+polygon.
+
+\texttt{vertices} returns a list of the vertices of the polygon and
+draws them.\\
+Input:
+\begin{center}
+  \tt
+  vertices(equilateral\_triangle(0,2))
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-vertices.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  C := vertices(equilateral\_triangle(0,2))[2]
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-vertices2.png}
+\end{center}
+
+\subsection{The vertices of a polygon, closed: \texttt{vertices\_abca}\index{vertices\_abca}}
+
+The \texttt{vertices\_abca} command takes as argument a polygon.
+
+\texttt{vertices\_abca} returns the ``closed'' list of vertices (it
+repeats the beginning vertex) and draws them.\\
+Input:
+\begin{center}
+  \tt
+  vertices\_abca(equilateral\_triangle(0,2))
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-vertices_abca.png}
+\end{center}
+
+\subsection{A point on a geometric object: \texttt{element}\index{element}}
+\label{sec:element}
+
+The \texttt{element} command is most useful in a two-dimensional
+geometry screen; it creates objects that are
+restricted to a geometric figure.
+
+\texttt{element} takes different types of arguments:
+\begin{itemize}
+  \item An interval $a..b$ and an optional initial value (by default
+  $(a+b)/2$ and step size (by default $(b-a)/100$).
+  
+  This creates a parameter restricted to the interval, with the
+  given initial value and whose value can be changed in the given step
+  sizes. 
+
+  For example, the command \texttt{t := element(0..pi)}  creates a
+  parameter \texttt{t} which can take on values between $0$ and $\pi$
+  and has initial value $\pi/2$.  It also creates a slider labeled
+  \texttt{t} which can be used to change the values.  The values of
+  any later formulas involving \texttt{t} will change with \texttt{t}.
+  
+  \item A curve and an optional initial value (by default $1/2$).  
+  
+  This creates a point which will be restricted to the curve,
+  the initial position of the point is determined by setting the
+  parameter (in the default parameterization of the object) to the
+  initial value.  If the point can be moved by the mouse (as it can
+  when the geometry screen is in \texttt{Pointer} mode), then the
+  motion will be restricted to the geometric object.
+  
+  For example, the command \texttt{A := element(circle(0,2))} 
+  creates a point labeled \texttt{A} whose position is restricted to
+  the circle of radius $2$ centered at the origin.  Since the circle
+  has default parameterization $2\exp(i t)$, \texttt{A} starts out at
+  $2\exp(i/2)$.
+
+  \item A polygon or polygonal line \texttt{PL} with $n$ sides and 
+  \texttt{[floor($t$),frac($t$)]}, where $t$ is a variable previously
+  defined by \texttt{$t$ = element(0..$n$)}.
+  
+  This creates a point restricted to the polygonal line.  With the
+  sides numbered starting at $0$, the value of \texttt{floor($t$)}
+  determines which side the point is on, and the value of
+  \texttt{frac($t$)} determines how far along the side the point is.
+\end{itemize}
+
+If a point $A$ (corresponding to the complex number $a$) is defined as
+an element of a curve $C$ and $B$ is a point (corresponding to the
+complex number $b$), then $A + B$ will be a point on $C$; it will be
+the projection onto $C$ of the point corresponding to $a + b$.
+
+Note that in this case, if $B'$ is another point, then $A + (B - B')$
+isn't the same as $A + B - B'$.  The expression $A + (B - B')$ is
+interpreted as adding the point $A$, defined as a point on $C$, to the
+point $B - B'$, and so the sum will be on $C$.  The expression $A + B
+- B'$ is interpreted as $(A + B) - B'$, and so the point $B'$ is not
+being added to a point defined as an element of the curve $C$, and so
+this sum may not be on $C$.
+
+\section{Lines in plane geometry}
+
+\subsection{Lines and directed lines: \texttt{line}\index{line}}
+\label{sec:2dlines}
+
+%See section \ref{sec:3dlines} for lines in space.
+
+The \texttt{line} command returns and draws a directed line given one of the
+following types of arguments:
+\begin{itemize}
+  \item Two points or a list of two points.\\
+  The direction of the line is from the first point
+  to the second point.
+  \item A point and a slope given by \texttt{slope=\textit{value}}.\\
+  The direction of the line is determined by the slope.
+  \item A point and  direction vector (in the form
+  \texttt{[$u_1$,$u_2$]}).\\
+  The direction of the line is given by the direction vector.
+  \item An equation of the form \texttt{a*x+b*y+c=0}.\\
+  The direction of the line is given by \texttt{[b,-1]}.
+\end{itemize}
+Input:
+\begin{center}
+  \tt
+  line(0,1+i)
+\end{center}
+or:
+\begin{center}
+  \tt
+  line(1+i,slope=1)
+\end{center}
+or:
+\begin{center}
+  \tt
+  line(1+i,[3,3])
+\end{center}
+or:
+\begin{center}
+  \tt
+  line(y - x = 0)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-line.png}
+\end{center}
+
+\textbf{Warning:} To draw a line with an additional argument for color
+(such as \texttt{color = blue}), this argument must be the third
+argument.  In particular, for a list of two points to
+specify a line in this command, the list must be turned into a sequence, such as
+with \texttt{op}.  For example, given a list \texttt{L} of two
+points (possibly the result of a different command) which determines a
+line, to draw the line \texttt{blue} enter
+\texttt{line(op(L),color=blue)}; entering
+\texttt{line(L,color=blue)} results in an error.
+
+\subsection{Half-lines}
+\label{sec:2dhalflines}
+
+%See section \ref{sec:3dhalfines} for half-lines in space.
+
+The \texttt{half\_line} command takes as argument two points or a list of two
+points.
+
+\texttt{half\_line} returns and draws the ray from the first point
+through the second.\\
+Input:
+\begin{center}
+  \tt
+  half\_line(0,-1+i)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-halfline.png}
+\end{center}
+
+\subsection{Line segments in the plane: \texttt{segment}\index{segment} \texttt{Line}\index{Line}}
+\label{sec:2dsegments}
+
+%See section \ref{sec:3dsegments} for segments in space.
+
+The \texttt{segment} command and the \texttt{Line} command draw line
+segments.  (The \texttt{segment} command can also draw vectors, see
+section \ref{sec:2dvectors}.)
+
+\texttt{segment} takes as argument two points or a list of two points.
+
+\texttt{segment} returns the corresponding line segment and draws it.
+
+\texttt{Line} takes as argument four real numbers, the first two
+represent the coordinates of the beginning of the segment and the last
+two represent the end.
+
+\texttt{Line} returns the line segment and draws it.
+
+\noindent
+\textbf{Example.}\\
+Input:
+\begin{center}
+  \tt
+  segment(-1,1+i)    
+\end{center}
+or:
+\begin{center}
+  \tt
+  segment(point(-1),point(1,1))
+\end{center}
+or:
+\begin{center}
+  \tt
+  Line(-1,0,1,1)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-segment.png}
+\end{center}
+
+\subsection{Vectors: \texttt{segment}\index{segment} \texttt{vector}\index{vector}}
+\label{sec:2dvectors}
+
+%See section \ref{sec:3dvectors} for vectors in space.
+
+The \texttt{segment} and \texttt{vector} commands return and draw vectors.
+(The \texttt{segment} command can also draw line segments, see section
+\ref{sec:2dsegments}.)
+
+\texttt{segment} takes as arguments a point and a vector.
+The point indicates the beginning of the result and the vector (given
+as a list of coordinates) the direction.
+
+\texttt{segment} returns and draws the corresponding vector as a line
+segment.  If the arguments are \texttt{P} and \texttt{V}, then command
+draws the segment from \texttt{P} to \texttt{P+V}.\\
+Input:
+\begin{center}
+  \tt
+  segment([-1,0],[1,1])
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-segvec.png}
+\end{center}
+
+\texttt{vector} takes as arguments two points (or a list with two
+points) or a point and a vector.
+
+\texttt{vector} returns and draws the corresponding vector.  If the
+arguments are two points, the vector goes from the first
+to the second point; if the arguments are a point and a vector, then
+the vector starts at the given point.\\
+Input:
+\begin{center}
+  \tt
+  vector([-1,0],[1,i])
+\end{center}
+or:
+\begin{center}
+  \tt
+  vector(-1,i)
+\end{center}
+or:
+\begin{center}
+  \tt
+  V := vector(1,2+i):; vector(-1,V)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-vect.png}
+\end{center}
+
+\subsection{Parallel lines: \texttt{parallel}\index{parallel}}
+\label{sec:2dparallel}
+
+%See section \ref{sec:3dparallel} for parallel lines in space.
+
+The \texttt{parallel} command takes as argument a point and a line.
+
+\texttt{parallel} returns and draws the line parallel to the given
+line passing through the given point.\\
+Input:
+\begin{center}
+  \tt
+  parallel(0,line(1,i))
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-parallel.png}
+\end{center}
+
+\subsection{Perpendicular lines: \texttt{perpendicular}\index{perpendicular}}
+\label{sec:2dperp}
+
+%See section \ref{sec:3dperp} for perpendicular lines in space.
+
+The \texttt{perpendicular} command takes as arguments either a point and a line,
+or three points (the last two points determining a line).
+
+\texttt{perpendicular} returns and draws the line perpendicular to the
+given line passing through the given point.\\
+Input:
+\begin{center}
+  \tt
+  perpendicular(0,line(1,i))
+\end{center}
+or:
+\begin{center}
+  \tt
+  perpendicular(0,1,i)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-perp.png}
+\end{center}
+
+\subsection{Tangents to curves: \texttt{tangent}\index{tangent}}
+\label{sec:2dtangents}
+
+%See section \ref{sec:3dtangents} for tangents in space.
+
+The \texttt{tangent} command takes as arguments either a curve and a point, or a
+point defined with \texttt{element} (see section \ref{sec:element}) using a curve and
+parameter value.
+
+\texttt{tangent} returns and draws the list of lines tangent to the
+curve passing through the given point.\\
+Input:
+\begin{center}
+  \tt
+  tangent(circle(0,1),1+i)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-tangent1.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  t := element(0..pi,pi/4):; A := element(circle(0,1),t):; tangent(A)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-tangent2.png}
+\end{center}
+
+When \texttt{tangent} is called with an element,
+the tangent will change along with the point on the element.
+
+\subsection{The median of a triangle: \texttt{median\_line}\index{median\_line}}
+
+The \texttt{median\_line} command takes as argument three points representing the
+vertices of a triangle.
+
+\texttt{median\_line} returns and draws the median line, through the
+point given by the first argument and bisecting the segment determined
+by the other two arguments.\\
+Input:
+\begin{center}
+  \tt
+  median\_line(0,1,i)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-median.png}
+\end{center}
+
+\subsection{The altitude of a triangle: \texttt{altitude}\index{altitude}}
+
+The \texttt{altitude} command takes as argument three points representing the
+vertices of a triangle.
+
+\texttt{altitude} returns and draws the altitude line, through the
+point given by the first argument and perpendicular to the line determined
+by the other two arguments.\\
+Input:
+\begin{center}
+  \tt
+  altitude(0,1,i)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-altitude.png}
+\end{center}
+
+\subsection{The perpendicular bisector of a segment: \texttt{perpen\_bisector}\index{perpen\_bisector}}
+\label{sec:2dperpbis}
+
+%See section \ref{sec:3dperpbis} for perpendicular bisectors in space.
+
+The \texttt{perpen\_bisector} command takes as argument a line segment or two
+points representing the end points of a line segment.
+
+\texttt{perpen\_bisector} returns and draws the perpendicular bisector
+of the segment.\\
+Input:
+\begin{center}
+  \tt
+  perpen\_bisector(1,i)
+\end{center}
+or:
+\begin{center}
+  \tt
+  perpen\_bisector(segment(1,i))
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-perpbisect.png}
+\end{center}
+
+The \texttt{perpen\_bisector} command can also take two lines as segments, in
+which case it returns and draws the perpendicular bisector of the
+segment from the first point defining the first line and the second
+point defining the second line.
+
+\subsection{The angle bisector: \texttt{bisector}\index{bisector}}
+
+The \texttt{bisector} command takes as argument three points or a list of three
+points.  The first point represents the vertex of an angle; the
+remaining two points will be on the two sides of the angle.
+
+\texttt{bisector} returns and draws the angle bisector.\\
+Input:
+\begin{center}
+  \tt
+  bisector(0,1,i)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-bisector.png}
+\end{center}
+
+\subsection{The exterior angle bisector}
+
+The \texttt{exbisector} command takes as argument three points or a list of three
+points.  
+
+\texttt{exbisector} returns the bisector of the exterior angle of the
+triangle determined by the points; the first point is the vertex of
+the angle, the opposite of the first and second points determine one
+side of the angle and the first and third determine the second side.\\
+Input:
+\begin{center}
+  \tt
+  exbisector(0,1,i)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-exbisector.png}
+\end{center}
+
+\section{Triangles}
+
+%See section \ref{sec:3dtriangles} for triangles in space.
+
+\subsection{Arbitrary triangles: \texttt{triangle}\index{triangle}}
+\label{sec:2dtricommand}
+
+%See section \ref{sec:3dtricommand} for the \texttt{triangle} command
+%in space.
+
+The \texttt{triangle} command takes as arguments three points or a list of three
+points.  
+
+\texttt{triangle} returns and draws the triangle with the given
+vertices.\\
+Input:
+\begin{center}
+  \tt
+  triangle(-1,i,1+i)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-triangle.png}
+\end{center}
+
+\subsection{Isosceles triangles: \texttt{isosceles\_triangle}\index{isosceles\_triangle}}
+\label{sec:2disotriangles}
+
+%See section \ref{sec:3disotriangles} for isosceles triangles in space.
+
+The \texttt{isosceles\_triangle} command takes three arguments and an optional
+fourth.  The three mandatory arguments are two points \texttt{A}
+and \texttt{B} and an angle $\theta$.
+
+\texttt{isosceles\_triangle} returns and draws the isosceles triangle 
+\texttt{ABC}, where \texttt{AB} and \texttt{AC} are equal sides and 
+$\theta$ is the angle from \texttt{AB} to \texttt{AC}.\\
+Input:
+\begin{center}
+  \tt
+  isosceles\_triangle(i, 1, -3*pi/4)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-isotriangle.png}
+\end{center}
+The optional argument needs to be a variable name,
+which is assigned to vertex \texttt{C}.\\
+Input:
+\begin{center}
+  \tt
+  isosceles\_triangle(i, 1, -3*pi/4,C)  
+\end{center}
+Output:
+\begin{center}
+  \tt
+  \includegraphics[width=0.75\textwidth]{xcas-isotriangleC.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  normal(affix(C))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  -sqrt(2) + i
+\end{center}
+
+\subsection{Right triangles: \texttt{right\_triangle}\index{right\_triangle}}
+\label{sec:2dright}
+
+%See section \ref{sec:3dright} for right triangles in space.
+
+The \texttt{right\_triangle} command takes three arguments and an optional fourth.
+The three mandatory arguments are two points \texttt{A} and
+\texttt{B} and a real nonzero number \texttt{k}.
+
+\texttt{right\_triangle} returns and draws the right triangle
+\texttt{ABC}, with the right angle at \texttt{A} and with 
+$\texttt{AB} = |k|\cdot\texttt{AC}$.  If $\texttt{k} > 0$, then
+\texttt{AB} to \texttt{AC} is counterclockwise; if $\texttt{k} < 0$
+then \texttt{AB} to \texttt{AC} is clockwise.\\
+Input:
+\begin{center}
+  \tt
+  right\_triangle(i,-i,2)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-rttriangle.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  right\_triangle(i,-i,-2)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-rttriangle2.png}
+\end{center}
+The optional argument needs to be a variable name
+which is assigned to vertex \texttt{C}.\\
+Input:
+\begin{center}
+  \tt
+  right\_triangle(i, -i, 2, C)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  \includegraphics[width=0.75\textwidth]{xcas-rttriangleC.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  affix(C)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  4 + i
+\end{center}
+
+\subsection{Equilateral triangles: \texttt{equilateral\_triangle}\index{equilateral\_triangle}}
+\label{sec:2dequi}
+
+%See section \ref{sec:3dequi} for equilateral triangles in space.
+
+The \texttt{equilateral\_triangle} command takes two arguments and an optional
+third.  The two mandatory arguments are points \texttt{A} and
+\texttt{B}.
+
+\texttt{equilateral\_triangle} returns and draws the equilateral triangle
+\texttt{ABC}, where \texttt{AB} to \texttt{AC} is counterclockwise.\\
+Input:
+\begin{center}
+  \tt
+  equilateral\_triangle(0,2)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-equitriangle.png}
+\end{center}
+The optional argument needs to be a variable name
+which is assigned to vertex \texttt{C}.\\
+Input:
+\begin{center}
+  \tt
+  equilateral\_triangle(0, 2, C)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  \includegraphics[width=0.75\textwidth]{xcas-equitriangleC.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  affix(C)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  i*sqrt(3) + 1
+\end{center}
+
+\section{Quadrilaterals}
+\label{sec:2dquad}
+
+%See section \ref{sec:3dquad} for quadrilaterals in space.
+
+\subsection{Squares: \texttt{square}\index{square}}
+\label{sec:2dsquares}
+
+%See section \ref{sec:3dsquares} for squares in space.
+
+The \texttt{square} command takes two mandatory arguments and one or
+two optional arguments.  The mandatory arguments are points \texttt{A} and
+\texttt{B}.
+
+\texttt{square} returns and draws the square \texttt{ABCD}, where the
+square is traversed counterclockwise.\\
+Input:
+\begin{center}
+  \tt
+  square(0,1+i)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-square.png}
+\end{center}
+The optional third fourth arguments need to be
+variable names, which will be assigned to vertex \texttt{C} (and
+\texttt{D}).\\
+Input:
+\begin{center}
+  \tt
+  square(0,1+i,C,D)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  \includegraphics[width=0.75\textwidth]{xcas-squareCD.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  affix(C), affix(D)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  2*i, -1 + i
+\end{center}
+
+\subsection{Rhombuses: \texttt{rhombus}\index{rhombus}}
+\label{sec:2drhombuses}
+
+%See section \ref{sec:3drhombuses} for rhombuses in space.
+
+The \texttt{rhombus} command takes three mandatory arguments and one
+or two optional arguments.  The three mandatory arguments are two
+points \texttt{A} and \texttt{B} and a real number \texttt{a}.
+
+\texttt{rhombus} returns and draws the rhombus \texttt{ABCD}, where
+\texttt{a} is the counterclockwise angle from \texttt{AB} to
+\texttt{AC}.\\
+Input:
+\begin{center}
+  \tt
+  rhombus(-2*i, sqrt(3) - i, pi/3)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-rhombus.png}
+\end{center}
+The optional fourth and fifth arguments need to be
+variable names which will be assigned to vertices \texttt{C} and
+\texttt{D}.\\
+Input:
+\begin{center}
+  \tt
+  rhombus(-2*i, sqrt(3) - i, pi/3, C, D)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  \includegraphics[width=0.75\textwidth]{xcas-rhombusCD.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  affix(C), affix(D)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  sqrt(3) + i, 0
+\end{center}
+
+\subsection{Rectangles: \texttt{rectangle}\index{rectangle}}
+\label{sec:2drect}
+
+%See section \ref{sec:3drect} for rectangles in space.
+
+The \texttt{rectangle} command takes three mandatory arguments and one
+or two optional arguments.  The mandatory arguments are two points
+\texttt{A} and \texttt{B} and a nonzero real number \texttt{k}.
+
+\texttt{rectangle} returns and draws the rectangle \texttt{ABCD}, where
+$\texttt{AD}=|\texttt{k}|\cdot\texttt{AB}$ and the angle from 
+\texttt{AB} to \texttt{AD} is counterclockwise if $\texttt{k} > 0$,
+clockwise if $\texttt{k}<0$.\\ 
+Input:
+\begin{center}
+  \tt
+  rectangle(0, 1+i, 1/2)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-rectangle.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  rectangle(0, 1+i, -1/2)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-rectangle2.png}
+\end{center}
+The optional fourth and fifth arguments need to be
+variable names which will be assigned to vertices \texttt{C} and
+\texttt{D}.\\
+Input:
+\begin{center}
+  \tt
+  rectangle(0, 1+i, -1/2, C, D)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  \includegraphics[width=0.75\textwidth]{xcas-rectangleCD.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  affix(C), affix(D)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  (3 + i)/2, (1 - i)/2
+\end{center}
+
+Given \texttt{rectangle(A,B,k)}, \texttt{Xcas} computes \texttt{D}
+by $\texttt{affix(D}) = \texttt{affix(A)} +
+\texttt{k}\exp(i\pi/2)(\texttt{affix(B)}-\texttt{affix(A)})$.  If
+\texttt{k} is complex, then \texttt{rectangle} draws a
+parallelogram.\\
+Input:
+\begin{center}
+  \tt
+  rectangle(0,1,1+i)
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-rectangle3.png}
+\end{center}
+
+\subsection{Parallelograms: \texttt{parallelogram}\index{parallelogram}}
+\label{sec:2dparallelograms}
+
+%See section \ref{sec:3dparallelograms} for parallelograms in space.
+
+The \texttt{parallelogram} command takes three mandatory arguments and
+one optional argument.  The mandatory arguments are three points \texttt{A},
+\texttt{B} and \texttt{C}.
+
+\texttt{parallelogram} returns and draws the parallelogram
+\texttt{ABCD} for the appropriate \texttt{D}.\\
+Input:
+\begin{center}
+  \tt
+  parallelogram(0, 1, 2 + i)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-parallelogram.png}
+\end{center}
+The fourth optional argument will need to be
+a variable name which will be assigned to vertex \texttt{D}.\\
+Input:
+\begin{center}
+  \tt
+  parallelogram(0, 1, 2 + i, D)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  \includegraphics[width=0.75\textwidth]{xcas-parallelogramD.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  affix(D)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  1 + i
+\end{center}
+
+\subsection{Arbitrary quadrilaterals:
+\texttt{quadrilateral}\index{quadrilateral}}
+\label{sec:2dquads}
+
+%See section \ref{sec:3dquads} for quadrilaterals in space.
+
+The \texttt{quadrilateral} command takes four arguments, points
+\texttt{A}, \texttt{B}, \texttt{C} and \texttt{D}.
+
+\texttt{quadrilateral} returns and draws the quadrilateral
+\texttt{ABCD}.\\
+Input:
+\begin{center}
+  \tt
+  quadrilateral(0, 1, 1 + i, -1 + 2*i)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-quadrilateral.png}
+\end{center}
+
+\section{Other polygons}
+\label{sec:2dpolygons}
+
+%See section \ref{sec:3dpolygons} for polygons in space.
+
+\subsection{Regular hexagons: \texttt{hexagon}\index{hexagon}}
+\label{sec:2dhex}
+
+%See section \ref{sec:3dhex} for hexagons in space.
+
+The \texttt{hexagon} command takes two mandatory arguments and up to
+four optional arguments.
+The two mandatory arguments points \texttt{A} and
+\texttt{B}.
+
+\texttt{hexagon} returns and draws the regular hexagon
+\texttt{ABCDEF}, where the vertices are counterclockwise.\\
+Input:
+\begin{center}
+  \tt
+  hexagon(0,1)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-hexagon.png}
+\end{center}
+The optional arguments will need to be
+variable names, which will be assigned in order to vertices \texttt{C}
+through \texttt{F}.\\
+Input:
+\begin{center}
+  \tt
+  hexagon(0, 1, C, D, E, F)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  \includegraphics[width=0.75\textwidth]{xcas-hexagonCDEF.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  affix(C), affix(D), affix(E), affix(F)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  3/2 + i*sqrt(3)/2, 1 + i*sqrt(3), i*sqrt(3), -1/2 + i*sqrt(3)/2
+\end{center}
+
+\subsection{Regular polygons: \texttt{isopolygon}\index{isopolygon}}
+\label{sec:2dregpoly}
+
+%See section \ref{sec:3dregpoly} for regular polygons in space.
+
+The \texttt{isopolygon} command takes three arguments; two points \texttt{A} and 
+\texttt{B} and a non-zero integer \texttt{k}.
+
+\texttt{isopolygon} returns and draws the regular $|\texttt{k}|$-sided
+polygon with one side \texttt{AB}.  If $\texttt{k} > 0$, then the
+polygon will continue counterclockwise; if $\texttt{k} < 0$, then it
+will be clockwise.\\
+Input:
+\begin{center}
+  \tt
+  isopolygon(0,1,4)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-isopolygon.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  isopolygon(0,1,-4)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-isopolygon2.png}
+\end{center}
+
+\subsection{General polygons: \texttt{polygon}\index{polygon}}
+\label{sec:2dgenpolygon}
+
+%See section \ref{sec:3dgenpolygon} for general polygons in space.
+
+The \texttt{polygon} command takes as argument a sequence or list of points.  
+
+\texttt{polygon} returns and draws the polygon with the given vertices.\\
+Input:
+\begin{center}
+  \tt
+  polygon(-1,-1+i/2,i,1+i,-i)
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-polygon.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  polygon(makelist(x->exp(i*pi*x/3),0,5,1))
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-polygon2.png}
+\end{center}
+
+\subsection{Polygonal lines: \texttt{open\_polygon}\index{open\_polygon}}
+\label{sec:2dpolylines}
+
+%See section \ref{sec:3dpolylines} for polygonal lines in space.
+
+The \texttt{open\_polygon} command takes as argument a sequence or list of points.  
+
+\texttt{open\_polygon} returns and draws the polygon line with the given vertices.\\
+Input:
+\begin{center}
+  \tt
+  open\_polygon(-1,-1+i/2,i,1+i,-i)
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-opolygon.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  open\_polygon(makelist(x->exp(i*pi*x/3),0,5,1))
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-opolygon2.png}
+\end{center}
+
+\subsection{Convex hulls: \texttt{convexhull}\index{convexhull}}
+
+The \texttt{convexhull} command uses the Graham scanning algorithm to
+find the convex hull of a set of points.
+
+\texttt{convexhull} takes as argument a list of points.
+
+\texttt{convexhull} returns the vertices of the convex hull of the
+points.\\
+Input:
+\begin{center}
+  \tt
+  convexhull(0,1,1+i,1+2i,-1-i,1-3i,-2+i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  (1-3*i,1+2*i,-2+i,-1-i)
+\end{center}
+To draw the hull, use the \texttt{polygon} command with the output of
+\texttt{convexhull}.\\
+Input:
+\begin{center}
+  \tt
+  polygon(convexhull(0,1,1+i,1+2i,-1-i,1-3i,-2+i))
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-chull.png}
+\end{center}
+
+\section{Circles}
+
+\subsection{Circles and arcs: \texttt{circle}\index{circle}}
+\label{sec:2dcircles}
+See also section \ref{sec:2darcs}.
+
+%See section \ref{sec:3dcircles} for circles in space.
+
+The \texttt{circle} command returns and draws a circle or arc of a circle,
+depending on the arguments.  
+\texttt{circle} can take the following arguments:
+\begin{itemize}
+  \item One argument, the equation of a circle with variables $x$ and
+  $y$ (or an expression assumed to be set to 0).\\
+  \texttt{circle} returns and draws the circle. \\
+  Input:
+  \begin{center}
+    \tt
+    circle(x\^2 + y\^2 - 2*x - 2*y)
+  \end{center}
+  Output:
+  \begin{center}
+     \includegraphics[width=0.75\textwidth]{xcas-circle.png}
+  \end{center}
+  \item Two arguments, a point and a complex number.\\
+  \texttt{circle}  returns and draws the circle centered at the
+  point and whose radius is the modulus of the complex number.\\
+  Input:
+  \begin{center}
+    \tt
+    circle(-1,i)
+  \end{center}
+  Output:
+  \begin{center}
+     \includegraphics[width=0.75\textwidth]{xcas-circle2.png}
+  \end{center}
+  \item Two arguments, both points (where the second is the value of
+  \texttt{point} and not simply the affix).\\
+  \texttt{circle} returns and draws the circle with a diameter given
+  by the two points.\\
+  Input:
+  \begin{center}
+    \tt
+    circle(-1,point(i))
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.75\textwidth]{xcas-circle3.png}
+  \end{center}
+  \item Four mandatory arguments and two optional arguments.
+  The mandatory arguments are a point \texttt{C}, a
+  complex number \texttt{r}, and two real numbers.  The
+  arguments \texttt{C} and \texttt{r} determine a circle, as above.
+  The two real numbers specify the central angles
+  that determine an arc, where the angles start on the axis defined by
+  the points \texttt{C} and \texttt{C + r}.\\
+  \texttt{circle} returns and draws the arc.\\
+  Input:
+  \begin{center}
+    \tt
+    circle(-1,1,0,pi/4)
+  \end{center}
+  Output:
+  \begin{center}
+     \includegraphics[width=0.75\textwidth]{xcas-circle4.png}
+  \end{center}
+  The optional arguments need to be
+  variable names which will be assigned to the ends of the arc.
+  \item Four mandatory arguments and two optional arguments.
+  The mandatory arguments are two points \texttt{A}
+  and \texttt{B} and two real numbers.  The
+  points \texttt{A} and \texttt{B} determine a circle, as above.
+  The two real numbers specify the central angles
+  that determine an arc, where the angles start on the axis defined by 
+  the diameter \texttt{AB}.\\
+  \texttt{circle} returns and draws the arc.\\
+  Input:
+  \begin{center}
+    \tt
+    circle(-1,point(i),0,pi/4)
+  \end{center}
+  Output:
+  \begin{center}
+     \includegraphics[width=0.75\textwidth]{xcas-circle5.png}
+  \end{center}
+  The optional arguments need to be
+  variable names which will be assigned to the ends of the arc.
+\end{itemize}
+
+\subsection{Circular arcs: \texttt{arc}\index{arc}}
+\label{sec:2darcs}
+
+See also section \ref{sec:2dcircles}
+
+The \texttt{arc} command takes three mandatory arguments and one or two optional
+arguments.  The mandatory arguments are two points \texttt{A}
+and \texttt{B} and a real number \texttt{a} between $-2\pi$ and $2\pi$.
+
+\texttt{arc} returns and draws the circular arc from \texttt{A} to
+\texttt{B} that represents and angle of \texttt{a}.
+(Note that the center of the circle will be 
+\texttt{(A + B)/2 + i*(B - A)/(2*tan(a/2))}.)\\
+Input:
+\begin{center}
+  \tt
+  arc(1,i,pi/2)
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-arc.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  arc(1,i,-pi/2)
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-arc2.png}
+\end{center}
+The optional arguments need to be
+variable names which will be assigned to the center and
+the radius of the circle.
+
+\subsection{Circles (TI compatibility): \texttt{Circle}\index{Circle}}
+
+The \texttt{Circle} command takes three mandatory arguments and an optional argument.  The
+first two arguments are the $x$ and $y$ coordinates of the center and
+the third is the radius.
+
+\texttt{Circle} returns and draws the circle.\\
+Input:
+\begin{center}
+  \tt
+  Circle(-1,0,2)
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-bigCircle.png}
+\end{center}
+The optional fourth argument is either \texttt{0} or \texttt{1}.  If
+it is \texttt{1}, then \texttt{Circle} will draw the circle; this is
+the default.  If it is \texttt{0}, then \texttt{Circle} will erase
+the circle.
+  
+\subsection{Inscribed circles: \texttt{incircle}\index{incircle}}
+
+The \texttt{incircle} command takes three arguments.  The arguments
+are three points, regarded as the vertices of a triangle.
+
+\texttt{incircle} returns and draws the inscribed circle of the
+triangle.\\
+Input:
+\begin{center}
+  \tt
+  incircle(-1,i,1+i)
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-incircle.png}
+\end{center}
+
+\subsection{Circumscribed circles: \texttt{circumcircle}\index{circumcircle}}
+
+The \texttt{circumcircle} command takes three arguments.  The arguments are three
+points, regarded as the vertices of a triangle.
+
+\texttt{circumcircle} returns and draws the circumscribed circle of the
+triangle.\\
+Input:
+\begin{center}
+  \tt
+  circumcircle(-1,i,1+i)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-circumcircle.png}
+\end{center}
+
+\subsection{Excircles: \texttt{excircle}\index{excircle}}
+
+The \texttt{excircle} command takes three arguments.  The arguments are three
+points, regarded as the vertices of a triangle.
+
+\texttt{excircle} returns and draws the excircle of the
+triangle in the interior angle of the first vertex.\\
+Input:
+\begin{center}
+  \tt
+  excircle(-1,i,1+i)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-excircle.png}
+\end{center}
+
+\subsection{The power of a point relative to a circle: \texttt{powerpc}\index{powerpc}}
+
+Given a circle $C$ of radius $r$ and a point $A$ at a distance of $d$
+from the center of $C$, the power of $A$ relative to $C$ is $d^2 - r^2$.
+
+The \texttt{powerpc} command takes as arguments a circle and a point.
+
+\texttt{powerpc} returns the power of the point relative to the circle.\\
+Input:
+\begin{center}
+  \tt
+  powerpc(circle(0, 1+i), 3+i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  8
+\end{center}
+
+\subsection{The radical axis of two circles: \texttt{radical\_axis}\index{radical\_axis}}
+
+The radical axis of two circles is the set of points which have the
+same power with respect to each circle.
+
+The \texttt{radical\_axis} command takes as arguments two circles.
+
+\texttt{radical\_axis} returns and draws the radical axis.\\
+Input:
+\begin{center}
+  \tt
+  radical\_axis(circle(0,1+i),circle(1,1+i))
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-radaxis.png}
+\end{center}
+
+\section{Other conic sections}
+
+\subsection{The ellipse: \texttt{ellipse}\index{ellipse}}
+\label{sec:2dellipse}
+
+%See section \ref{sec:3dellipse} for ellipses in space.
+
+The \texttt{ellipse} command draws ellipses and other conic sections.
+
+\texttt{ellipse} can take parameters in different forms.
+\begin{itemize}
+  \item \texttt{ellipse} can take one parameter, a second degree equation in the 
+  variables $x$ and $y$ (or an expression which will be set to zero).
+  
+  \texttt{ellipse} returns and draws the conic section given by the
+  equation.\\
+  Input:
+  \begin{center}
+    \tt
+    ellipse(x\^{}2 + 2*y\^{}2 - 1)
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.75\textwidth]{xcas-ellipse.png}
+  \end{center}
+  
+  \item \texttt{ellipse} can take three parameters; either three
+  points or two points and a real number.  The first two points will
+  be the foci of the ellipse and the third argument will be either a
+  point on the ellipse or the length of the semi-major axis.
+  
+  \texttt{ellipse} returns and draws the ellipse.\\
+  Input:
+  \begin{center}
+    \tt
+    ellipse(-i,i,i+1)
+  \end{center}
+  Output:
+  \begin{center}
+     \includegraphics[width=0.75\textwidth]{xcas-ellipse2.png}
+  \end{center}
+  Input:
+  \begin{center}
+    \tt
+    ellipse(-i,i,sqrt(5) - 1)
+  \end{center}
+  Output:
+  \begin{center}
+     \includegraphics[width=0.75\textwidth]{xcas-ellipse3.png}
+  \end{center}
+  Note that if the third argument is a point on the real axis, the
+  real affix of the point won't work, it needs to be specified with
+  the \texttt{point} command.
+\end{itemize}
+
+\subsection{The hyperbola: \texttt{hyperbola}\index{hyperbola}}
+\label{sec:2dhyperbola}
+
+%See section \ref{sec:3dhyperbola} for hyperbolas in space.
+
+The \texttt{hyperbola} command draws hyperbolas and other conic sections.
+
+\texttt{hyperbola} can take parameters in different forms.
+\begin{itemize}
+  \item \texttt{hyperbola} can take one parameter, a second degree equation in the 
+  variables $x$ and $y$ (or an expression which will be set to zero).
+  
+  \texttt{hyperbola} returns and draws the conic section given by the
+  equation.\\
+  Input:
+  \begin{center}
+    \tt
+    hyperbola(x\^{}2 - 2*y\^{}2 - 1)
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.75\textwidth]{xcas-hyperbola1.png}
+  \end{center}
+  
+  \item \texttt{hyperbola} can take three parameters; either three
+  points or two points and a real number.  The first two points will
+  be the foci of the hyperbola and the third argument will be either a
+  point on the hyperbola or the length of the semi-major axis.
+  
+  \texttt{hyperbola} returns and draws the hyperbola.\\
+  Input:
+  \begin{center}
+    \tt
+    hyperbola(-i,i,i+1)
+  \end{center}
+  Output:
+  \begin{center}
+     \includegraphics[width=0.75\textwidth]{xcas-hyperbola2.png}
+  \end{center}
+  Input:
+  \begin{center}
+    \tt
+    hyperbola(-i,i,1/2)
+  \end{center}
+  Output:
+  \begin{center}
+     \includegraphics[width=0.75\textwidth]{xcas-hyperbola3.png}
+  \end{center}
+  Note that if the third argument is a point on the real axis, the
+  real affix of the point won't work, it needs to be specified with
+  the \texttt{point} command.
+\end{itemize}
+
+\subsection{The parabola: \texttt{parabola}\index{parabola}}
+\label{sec:2dparabola}
+
+%See section \ref{sec:3dparabola} for parabolas in space.
+
+The \texttt{parabola} command draws parabolas and other conic sections.
+
+\texttt{parabola} can take parameters in different forms.
+\begin{itemize}
+  \item \texttt{parabola} can take one parameter, a second degree equation in the 
+  variables $x$ and $y$ (or an expression which will be set to zero).
+  
+  \texttt{parabola} returns and draws the conic section given by the
+  equation.\\
+  Input:
+  \begin{center}
+    \tt
+    parabola(x\^{}2 - y - 1)
+  \end{center}
+  Output:
+  \begin{center}
+     \includegraphics[width=0.75\textwidth]{xcas-parabola1.png}
+  \end{center}
+  
+  \item \texttt{parabola} can take two parameters, both points.
+  The points will be the focus and vertex of a parabola.
+  
+  \texttt{parabola} returns and draws the parabola.\\
+  Input:
+  \begin{center}
+    \tt
+    parabola(0,i)
+  \end{center}
+  Output:
+  \begin{center}
+     \includegraphics[width=0.75\textwidth]{xcas-parabola2.png}
+  \end{center}
+
+  Note that if the second argument is a point on the real axis, the
+  real affix of the point won't work, it needs to be specified with
+  the \texttt{point} command.
+  
+  \item \texttt{parabola} can take two parameters, a point $(a,b)$ and
+  a real number $c$.
+  
+  \texttt{parabola} returns and draws the parabola 
+  $y = b + c(x - a)^2$.\\
+  Input:
+  \begin{center}
+    \tt
+    parabola(-i,1)
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.75\textwidth]{xcas-parabola3.png}
+  \end{center}
+  Input:
+  \begin{center}
+    \tt
+    parabola(-i,i,1/2)
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.75\textwidth]{xcas-parabola4.png}
+  \end{center}
+  Note that if the third argument is a point on the real axis, the
+  real affix of the point won't work, it needs to be specified with
+  the \texttt{point} command.
+\end{itemize}
+
+\section{Coordinates}
+
+\subsection{The affix of a point or vector: \texttt{affix}\index{affix}}
+
+The \texttt{affix} command takes a single argument, a point or a vector.
+
+\texttt{affix} returns the affix, the complex number corresponding to
+the point or vector.\\ 
+Input:
+\begin{center}
+  \tt
+  affix(point(2,3))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  2 + 3*i
+\end{center}
+Input:
+\begin{center}
+  \tt
+  affix(vector(-1,i))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  1+i
+\end{center}
+
+\subsection{The abscissa of a point or vector: \texttt{abscissa}\index{abscissa}}
+\label{sec:2dabscissa}
+
+%See section \ref{sec:3dabscissa} for abscissas in three-dimensional geometry.
+
+The \texttt{abscissa} command takes a point as argument.
+
+\texttt{abscissa} returns the abscissa ($x$-coordinate).\\
+Input:
+\begin{center}
+  \tt
+  abscissa(point(1 + 2*i))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  1
+\end{center}
+Input:
+\begin{center}
+  \tt
+  abscissa(point(i) - point(1 + 2*i))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  -1
+\end{center}
+Input:
+\begin{center}
+  \tt
+  abscissa(1 + 2*i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  1
+\end{center}
+Input:
+\begin{center}
+  \tt
+  abscissa([1,2])
+\end{center}
+Output:
+\begin{center}
+  \tt
+  1
+\end{center}
+
+\subsection{The ordinate of a point or vector: \texttt{ordinate}\index{ordinate}}
+\label{sec:2dordinate}
+
+%See section \ref{sec:3dordinate} for ordinates in three-dimensional geometry.
+
+The \texttt{ordinate} command takes a point as argument.
+
+\texttt{ordinate} returns the ordinate ($y$-coordinate).\\
+Input:
+\begin{center}
+  \tt
+  ordinate(point(1 + 2*i))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  2
+\end{center}
+Input:
+\begin{center}
+  \tt
+  ordinate(point(i) - point(1 + 2*i))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  -1
+\end{center}
+Input:
+\begin{center}
+  \tt
+  ordinate(1 + 2*i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  2
+\end{center}
+Input:
+\begin{center}
+  \tt
+  ordinate([1,2])
+\end{center}
+Output:
+\begin{center}
+  \tt
+  2
+\end{center}
+
+\subsection{The coordinates of a point, vector or line: \texttt{coordinates}\index{coordinates}}
+\label{sec:2dcoordinates}
+
+%See section \ref{sec:3dcoordinates} for coordinates in
+%three-dimensional geometry.
+
+The \texttt{coordinates} command takes as argument a point
+or line.
+
+If the argument is a point,
+\texttt{coordinates} returns a list consisting of the abscissa and
+ordinate.
+
+If the argument is a line, \texttt{coordinates} returns a list of
+two points on the line, in the order determined by the direction of
+the line.\\
+Input:
+\begin{center}
+  \tt
+  coordinates(1+2*i)
+\end{center}
+or:
+\begin{center}
+  \tt
+  coordinates(point(1+2*i))
+\end{center}
+or:
+\begin{center}
+  \tt
+  coordinates(vector(1+2*i))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  [1,2]
+\end{center}
+Input:
+\begin{center}
+  \tt
+  coordinates(point(1+2*i) - point(i))
+\end{center}
+or:
+\begin{center}
+  \tt
+  coordinates(vector(i,1+2*i))
+\end{center}
+or:
+\begin{center}
+  \tt
+  coordinates(vector(point(i),point(1+2*i)))
+\end{center}
+or:
+\begin{center}
+  \tt
+  coordinates(vector([0,1],[1,2]))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  [1,1]
+\end{center}
+Input:
+\begin{center}
+  \tt
+  d := line(-1+i,1+2*i)
+\end{center}
+or:
+\begin{center}
+  \tt
+  d := line(point(-1,1),point(1,2))
+\end{center}
+Input:
+\begin{center}
+  \tt
+  coordinates(d)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  [-1+i,1+2*i]
+\end{center}
+Input:
+\begin{center}
+  \tt
+  coordinates(line(y = (1/2 * x + 3/2)))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  [3*i/2, 1+2*i]
+\end{center}
+Input:
+\begin{center}
+  \tt
+  coordinates(line(x - 2*y + 3 = 0))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  [3*i/2, (-4 + i)/2]
+\end{center}
+
+\texttt{coordinates} can also take a sequence or list of points as an
+argument; it then returns a sequence or list of the coordinates of
+the points.\\
+Input:
+\begin{center}
+  \tt
+  coordinates(i,1+2*i)
+\end{center}
+or:
+\begin{center}
+  \tt
+  coordinates(point(i),point(1+2*i))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  [0,1], [1,2]
+\end{center}
+Note that if the argument is a list of real numbers, it is
+interpreted as a list of points on the real axis.\\
+Input:
+\begin{center}
+  \tt
+  coordinates([1,2])
+\end{center}
+Output:
+\begin{center}
+  \tt
+  [[1,0],[2,0]]
+\end{center}
+
+\subsection{The rectangular coordinates of a point: \texttt{rectangular\_coordinates}\index{rectangular\_coordinates}}
+
+The \texttt{rectangular\_coordinates} command takes as argument a
+point in polar coordinates.
+
+\texttt{rectangular\_coordinates} returns the the rectangular
+coordinates of the points.\\
+Input:
+\begin{center}
+  \tt
+  rectangular\_coordinates(2, pi/4)
+\end{center}
+or:
+\begin{center}
+  \tt
+  rectangular\_coordinates(polar\_point(2, pi/4))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  [sqrt(2), sqrt(2)]  
+\end{center}
+
+\subsection{The polar coordinates of a point: \texttt{polar\_coordinates}\index{polar\_coordinates}}
+
+The \texttt{polar\_coordinates} command takes as argument a
+point.
+
+\texttt{polar\_coordinates} returns the the polar
+coordinates of the points.\\
+Input:
+\begin{center}
+  \tt
+  polar\_coordinates(1 + i)
+\end{center}
+or:
+\begin{center}
+  \tt
+  polar\_coordinates(point(1 + i))
+\end{center}
+or:
+\begin{center}
+  \tt
+  polar\_coordinates([1,1])  
+\end{center}
+Output:
+\begin{center}
+  \tt
+  [sqrt(2), pi/4]  
+\end{center}
+
+\subsection{The Cartesian equation of a geometric object: \texttt{equation}\index{equation}}
+\label{sec:2dcarteq}
+
+%See section \ref{sec:3dcarteq} for Cartesian equations of
+%three-dimensional objects.
+
+The \texttt{equation} command takes as argument a geometric object.
+
+\texttt{equation} returns the Cartesian equation for the object.
+(Note that \texttt{x} and \texttt{y} must be formal variables, they
+might need to be purged with \texttt{purge(x)} and \texttt{purge(y)}).\\
+Input:
+\begin{center}
+  \tt
+  equation(line(-1,i))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  y = x + 1  
+\end{center}
+
+\subsection{The parametric equation of a geometric object: \texttt{parameq}\index{parameq}}
+\label{sec:2dparam}
+
+%See section \ref{sec:3dparam} for parametric equations in
+%three-dimensional geometry.
+
+The \texttt{parameq} command takes as argument a geometric object.
+
+\texttt{parameq} returns a parametric equation of the object, in the
+form \texttt{x(t) + i*y(t)}.  (Note that \texttt{t} must be a formal
+variable, it may be necessary to purge it with \texttt{purge(t)}.)\\
+Input:
+\begin{center}
+  \tt
+  parameq(line(-1,i))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ t + (1-t)*i 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  parameq(circle(-1,i))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  -1 + exp(i*t) 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  normal(parameq(ellipse(-1,1,i)))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  sqrt(2)*cos(t) + i*sin(t)
+\end{center}
+
+\section{Measurements}
+
+\subsection{Measurement and display:
+\texttt{distanceat}\index{distanceat}
+\texttt{distanceatraw}\index{distanceatraw}
+\texttt{angleat}\index{angleat} \texttt{angleatraw}\index{angleatraw}
+\texttt{areaat}\index{areaat} \texttt{areaatraw}\index{areaatraw}
+\texttt{perimeterat}\index{perimeterat} \texttt{perimeteratraw}\index{perimeteratraw}
+\texttt{slopeat}\index{slopeat} \texttt{slopeatraw}\index{slopeatraw}
+\texttt{extract\_measure}\index{extract\_measure}}
+\label{sec:measdisplay}
+
+Many commands to find measures have a version ending in \texttt{at}
+(or \texttt{atraw}) which are used to interactively find and display
+the appropriate measure in a two-dimensional geometry screen.  To use
+them, open a geometry screen with \texttt{Alt-G} and then select the
+appropriate measure from the \texttt{Mode $\blacktriangleright$
+Measure} menu.   Once the mode is selected, then clicking on the names of
+the appropriate objects (or, if a point is being selected, a name will
+be automatically generated if clicking on an open point) with the
+mouse and then clicking on another point will put the measurement at
+the point; if the mode is the version ending in \texttt{at}, then the
+measurement will have a label, if the mode is the version ending in
+\texttt{atraw}, then the measurement will appear without a label.
+
+The commands with \texttt{at} and \texttt{atraw} versions are:
+\begin{description}
+  \item[\texttt{distance},\texttt{distanceat},\texttt{distanceatraw}] 
+  This finds the distance between two points or other geometric objects.
+  (See section \ref{sec:2ddist}.)
+
+  \item[\texttt{angle},\texttt{angleat},\texttt{angleatraw}] This finds the measure of an angle $BAC$ given
+  points $A$, $B$ and $C$. (See section \ref{sec:2dangle}.)
+
+  \item[\texttt{area},\texttt{areaat},\texttt{areaatraw}] This finds the area of a circle or a polygon
+  which is star-shaped with respect to its first vertex.
+  (See section \ref{sec:area}.)
+
+  \item[\texttt{perimeter},\texttt{perimeterat},\texttt{perimeteratraw}] 
+  This finds the perimeter of a circle, circular arc  or a polygon.
+  (See section \ref{sec:perim}.)
+
+  \item[\texttt{slope},\texttt{slopeat},\texttt{slopeatraw}] 
+  This finds the slope of a line, segment, or
+  two points which determine a line.
+  (See section \ref{sec:slope}.)
+\end{description}
+
+These commands can also be used from the command line.  They are like
+the measurement command but take an extra argument, the point to
+display the measurement.  When using the version ending in
+\texttt{at}, use names for the objects
+rather create the objects within the measurement command.\\
+Input:
+\begin{center}
+  \tt
+  S1 := square(0,1); areaat(S1,1+i)
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-areaat.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  S2 := square(0,1); areaatraw(S2,1+i)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-areaatraw.png}
+\end{center}
+More sophisticated legends are created with the \texttt{legend} command.\\
+Input:
+\begin{center}
+  \tt
+  S := square(0,1); a := area(S); legend(1+i,"Area(S) = " + string(a),blue)
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-arealegend.png}
+\end{center}
+
+The \texttt{extract\_measure} command takes as argument a command
+which displays a measurement (one of the \texttt{at} or \texttt{atraw}
+commands) and returns the measurement.\\
+Input:
+\begin{center}
+  \tt
+  A := point(-1); B := point(1+i); C := point(i);
+\end{center}
+and then:
+\begin{center}
+  \tt
+  extract\_measure(angleat(A,B,C,0.2i))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ atan(1/3) 
+\end{center}
+
+\subsection{The distance between objects: \texttt{distance}\index{distance}}
+\label{sec:2ddist}
+%See section \ref{sec:3ddist} for distances in three-dimensional
+%geometry.
+
+The \texttt{distance} command takes two
+arguments; either two points or two geometric objects.
+
+\texttt{distance} returns the distance between the two arguments.\\
+Input:
+\begin{center}
+  \tt
+  distance(-1, 1+i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ sqrt(5) 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  distance(0, line(-1,1+i))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ sqrt(5)/5 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  distance(circle(0,1),line(-2,1+3*i))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ sqrt(2) - 1 
+\end{center}
+
+Note that when the distance calculation uses parameters, \texttt{Xcas}
+must be in real mode.  In real mode:\\
+Input:
+\begin{center}
+  \tt
+  assumes(a=[4,0,5,0.1]); A := point(0); B := point(a);
+\end{center}
+and then:
+\begin{center}
+  \tt
+  simplify(distance(A,B)); simplify(distance(B,A))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ |a|, |a| 
+\end{center}
+In complex mode:\\
+Input:
+\begin{center}
+  \tt
+  assumes(a=[4,0,5,0.1]); A := point(0); B := point(a);
+\end{center}
+and then:
+\begin{center}
+  \tt
+  simplify(distance(A,B)); simplify(distance(B,A))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ -a, a
+\end{center}
+
+The \texttt{distance} command has \texttt{distanceat} and
+\texttt{distanceatraw} versions (see section \ref{sec:measdisplay}).
+
+\subsection{The length squared of a segment: \texttt{distance2}\index{distance2}}
+\label{sec:2ddist2}
+
+%See section \ref{sec:3ddist2} for squares of lengths in
+%three-dimensional geometry.
+
+The \texttt{distance2} command takes as arguments two points.
+
+\texttt{distance2} returns the square of the distance between the
+points.\\
+Input:
+\begin{center}
+  \tt
+  distance2(-1, 1+i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  5 
+\end{center}
+
+\subsection{The measure of an angle: \texttt{angle}\index{angle}}
+\label{sec:2dangle}
+
+%See section \ref{sec:3dangle} for angle measures in three-dimensional
+%geometry.
+
+The \texttt{angle} command takes three mandatory arguments and one
+optional argument.  The mandatory arguments are points \texttt{A},
+\texttt{B} and \texttt{C}, which determine an angle \texttt{BAC}.  The
+optional argument is a string.
+
+\texttt{angle} returns the measure of the angle (in the units that
+\texttt{Xcas} is configured for).  If there is an
+optional fourth argument, the angle will be drawn indicated by a small
+arc and labeled with the string.  If the angle is a right angle, the
+indicator will be a corner rather than an arc.\\
+Input:
+\begin{center}
+  \tt
+  angle(0,1,1+i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  pi/4 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  angle(0,1,1+i,"a")
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-anglea.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  angle(0,1,1+i,"")
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-angleblank.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  angle(0,1,i,"A")
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-anglebigA.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  angle(0,1,i,"A")[0]
+\end{center}
+Output:
+\begin{center}
+  \tt
+  pi/2
+\end{center}
+
+The \texttt{angle} command has \texttt{angleat} and
+\texttt{angleatraw} versions (see section \ref{sec:measdisplay}).  For
+the command line versions of these commands, the optional fourth
+argument for \texttt{angle} is replaced by a mandatory fourth argument
+for the point to put the measurement.
+
+\subsection{The graphical representation of the area of a polygon:
+\texttt{plotarea}\index{plotarea}\texttt{areaplot}\index{areaplot}}
+
+The \texttt{plotarea} (or \texttt{areaplot}) command takes as argument
+a polygon.
+
+\texttt{plotarea} draws the filled polygon, with the signed area.
+(The area is positive if the polygon is counterclockwise, negative if
+it is clockwise.)\\
+Input:
+\begin{center}
+  \tt
+  plotarea(polygon(1,(1+i)/2,1+i)
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-plotarea1.png}  
+\end{center}
+Input:
+\begin{center}
+  \tt
+  plotarea(polygon(1,1+i,(1+i)/2)
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-plotarea2.png}  
+\end{center}
+The fill color can be changed as a local feature (see
+\ref{sec:localfeatures}) and the position of the legend can be
+changed (see \ref{sec:addlegend}).\\
+Input:
+\begin{center}
+  \tt
+  plotarea(polygon(1,1+i,(1+i)/2),display=red+quadrant2)
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-plotarea3.png}
+\end{center}
+
+\subsection{The area of a polygon: \texttt{area}\index{area}}
+\label{sec:area}
+
+The \texttt{area} command takes as argument a circle or polygon which
+is star-shaped with respect to its first vertex (i.e., the line
+segment from the first vertex to any point in the polygon lies within
+the polygon).
+
+\texttt{area} returns the area of the object.\\
+Input:
+\begin{center}
+  \tt
+  area(triangle(0,1,i))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  1/2
+\end{center}
+Input:
+\begin{center}
+  \tt
+  area(square(0,2))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 4 
+\end{center}
+
+The \texttt{area} command has \texttt{areaat} and
+\texttt{areaatraw} versions (see section \ref{sec:measdisplay}).
+
+\subsection{The perimeter of a polygon: \texttt{perimeter}\index{perimeter}}
+\label{sec:perim}
+
+See also \texttt{arcLen}, section \ref{sec:arclen}.
+
+The \texttt{perimeter} command takes as argument a circle, circular
+arc or a polygon.
+
+\texttt{perimeter} returns the perimeter of the object.\\
+Input:
+\begin{center}
+  \tt
+  perimeter(circle(0,1))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 2*pi 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  perimeter(circle(0,1,pi/4,pi))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 3*pi/4 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  perimeter(arc(0,pi/4,pi))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ pi\^{}2/8 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  perimeter(triangle(0,1,i))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 2+sqrt(2) 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  perimeter(square(0,2))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 8 
+\end{center}
+
+The \texttt{perimeter} command has \texttt{perimeterat} and
+\texttt{perimeteratraw} versions (see section \ref{sec:measdisplay}).
+
+\subsection{The slope of a line: \texttt{slope}\index{slope}}
+\label{sec:slope}
+
+The \texttt{slope} command takes as argument either a line, a line
+segment, or two points which determine a line.
+
+\texttt{slope} returns the slope of the line.\\
+Input:
+\begin{center}
+  \tt
+  slope(line(1,2i))
+\end{center}
+or:
+\begin{center}
+  \tt
+  slope(segment(1,2i))
+\end{center}
+or:
+\begin{center}
+  \tt
+  slope(1,2i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ -2 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  slope(line(x - 2y = 3))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1/2 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  slope(tangent(plotfunc(sin(x)),pi/4))
+\end{center}
+or:
+\begin{center}
+  \tt
+  slope(LineTan(sin(x),pi/4))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ sqrt(2)/2 
+\end{center}
+             
+The \texttt{slope} command has \texttt{slopeat} and
+\texttt{slopeatraw} versions (see section \ref{sec:measdisplay}).
+
+\subsection{The radius of a circle: \texttt{radius}\index{radius}}
+
+The \texttt{radius} command takes one argument, a circle.
+
+\texttt{radius} returns the radius of the circle.\\
+Input:
+\begin{center}
+  \tt
+  radius(circle(-1,point(i)))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ sqrt(2)/2 
+\end{center}
+
+\subsection{The length of a vector: \texttt{abs}\index{abs}}
+
+The \texttt{abs} command takes as argument either a complex number or
+a vector defined by two points.
+
+\texttt{abs} returns the absolute value of the complex number or the
+length of the vector.\\
+Input:
+\begin{center}
+  \tt
+  abs(1+i)
+\end{center}
+or:
+\begin{center}
+  \tt
+  abs(point(1+2*i) - point(i))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ sqrt(2) 
+\end{center}
+
+\subsection{The angle of a vector: \texttt{arg}\index{arg}}
+
+The \texttt{abs} command takes as argument a complex number or a
+vector defined by two points.
+
+\texttt{abs} returns the argument of the complex number or the angle
+between the positive $x$ direction and the vector.\\
+Input:
+\begin{center}
+  \tt
+  arg(1+i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ pi/4 
+\end{center}
+
+\subsection{Normale a complex number: \texttt{normalize}\index{normalize}}
+
+The \texttt{normalize} command takes as argument a non-zero complex number.
+
+\texttt{normalize} returns the normalized version of the complex
+number; the number divided by its absolute value.\\
+Input:
+\begin{center}
+  \tt
+  normalize(3+4*i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ (3 + 4*i)/5 
+\end{center}
+
+\section{Transformations}
+
+\subsection{General remarks}
+
+The transformations in this section operate on any geometric object.
+As arguments, they can take the parameters which
+specify the transformation.  With those arguments, they will return a
+new command which performs the transformation.  If they are given a
+geometric object as the final argument, they will return the
+transformed object.
+
+\subsection{Translations: \texttt{translation}\index{translation}}
+\label{sec:2dtranslations}
+
+%See section \ref{sec:3dtranslations} for translations in space.
+
+The \texttt{translation} command can take one or two arguments.
+
+If \texttt{translation} has a single argument, that argument is the
+translation vector.  The translation vector can be given as a vector,
+list of coordinates, a difference of points or a complex number.
+\texttt{translation}
+returns a new command which performs the translation.\\
+Input:
+\begin{center}
+  \tt
+  t := translation(1+i)
+\end{center}
+then:
+\begin{center}
+  \tt
+  t(-2)
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-translation1.png}
+\end{center}
+
+If \texttt{translation} has two arguments, the first argument is a
+translation vector as above, and the second argument is a geometric
+object.  \texttt{translation} returns and draws the translated object.\\
+Input:
+\begin{center}
+  \tt
+  translation([1,1],line(-2,-i))
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-translation2.png}
+\end{center}
+
+\subsection{Reflections: \texttt{reflection}\index{reflection}}
+\label{sec:2dreflections}
+
+%See section \ref{sec:3dreflections} for reflections in space.
+
+The \texttt{reflection} command can take one or two arguments.
+
+If \texttt{reflection} has a single argument, that argument is a point
+or line.  \texttt{reflection} returns a new command which performs the reflection
+with respect to the point or line.\\
+Input:
+\begin{center}
+  \tt
+  rf := reflection(-1)
+\end{center}
+then:
+\begin{center}
+  \tt
+  rf(1+i)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-reflection1.png}
+\end{center}
+
+If \texttt{reflection} has two arguments, the first argument is a
+point or line as above, and the second argument is a geometric
+object.  \texttt{reflection} returns and draws the reflection of the object.\\
+Input:
+\begin{center}
+  \tt
+  reflection(-1, 1+i)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-reflection2.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  reflection(line(-1,i),1+i)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-reflection3.png}
+\end{center}
+
+\subsection{Rotation: \texttt{rotation}\index{rotation}}
+\label{sec:2drotations}
+
+%See section \ref{sec:3drotations} for rotations in space.
+
+The \texttt{rotation} command can take two or three arguments.
+
+If \texttt{rotation} has two arguments, they are a point (the center
+of rotation) and a real number (the angle of rotation).
+\texttt{rotation} returns a new command which performs the rotation.\\
+Input:
+\begin{center}
+  \tt
+  r := rotation(i, -pi/2)
+\end{center}
+then:
+\begin{center}
+  \tt
+  r(1+i)
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-rotation1.png}
+\end{center}
+
+If \texttt{rotation} has three arguments, the first two arguments are a
+point and real number as above, and the third argument is a geometric
+object.  \texttt{rotation} returns and draws the rotated object.\\
+Input:
+\begin{center}
+  \tt
+  rotation(i, -pi/2, 1+i)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-rotation2.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  rotation(i, -pi/2, line(1+i,-1))
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-rotation3.png}
+\end{center}
+
+\subsection{Homothety: \texttt{homothety}\index{homothety}}
+\label{sec:2dhomothety}
+
+%See section \ref{sec:3dhomothety} for homotheties in space.
+
+A homothety is a dilation about a given point.
+The \texttt{homothety} command can take two or three arguments.
+
+If \texttt{homothety} has two arguments, they are a point (the center
+of the homothety) and a real number (the scaling ratio).
+\texttt{homothery} returns a new command which performs the dilation.\\
+Input:
+\begin{center}
+  \tt
+  h := homothety(i, 2)
+\end{center}
+then:
+\begin{center}
+  \tt
+  h(1+i)
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-homothety1.png}
+\end{center}
+
+If \texttt{homothety} has three arguments, the first two arguments are a
+point and real number as above, and the third argument is a geometric
+object.  \texttt{homothety} returns and draws the dilated object.\\
+Input:
+\begin{center}
+  \tt
+  homothety(i, 2, 1+i)
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-homothety2.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  homothety(i, 2, circle(1+i,1))
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-homothety3.png}
+\end{center}
+
+The \texttt{homothety} command can also take a complex number as the
+second argument.  In that case, the result will be a rotation as well
+as a dilation.
+
+\subsection{Similarity: \texttt{similarity}\index{similarity}}
+\label{sec:2dsimilarity}
+
+%See section \ref{sec:3dsimilarity} for similarities in space.
+
+The \texttt{similarity} command rotates and scales about a given
+point.  It takes three or four arguments.
+
+If \texttt{similarity} has three arguments, they are a point (the center
+of rotation), a real number (the scaling ratio)  and a real number
+(the angle of rotation).  \texttt{similarity} returns a new
+command which performs the transformation.\\
+Input:
+\begin{center}
+  \tt
+  s := similarity(i, 2, -pi/2)
+\end{center}
+then:
+\begin{center}
+  \tt
+   s(1+i)
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-similarity1.png}
+\end{center}
+then:
+\begin{center}
+  \tt
+  s(circle(1+i,1))
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-similarity2.png}
+\end{center}
+
+If \texttt{similarity} has four arguments, the first three arguments are a
+point and two numbers as above, and the fourth argument is a geometric
+object.  \texttt{similarity} returns and draws the transformed object.\\
+Input:
+\begin{center}
+  \tt
+  similarity(i, 2, -pi/2, 1 + i)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-similarity3.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  similarity(i, 2, -pi/2, circle(1+i,1))
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-similarity4.png}
+\end{center}
+
+Note that for a point \texttt{A} and numbers \texttt{k} and
+\texttt{a},  the command \texttt{similarity(A,k,a)} is the same as
+\texttt{homothety(A,k*exp(i*a))}.
+
+\subsection{Inversion: \texttt{inversion}\index{inversion}}
+\label{sec:2dinversion}
+
+%See section \ref{sec:3dinversion} for inversions in space.
+
+Given a circle $C$ with center $O$ and radius $r$, the \emph{inversion}
+of a point $A$ with respect to $C$ is the
+point $A'$ on the ray $\overrightarrow{OA}$ satisfying
+$\overline{OA}\cdot\overline{OA'} = r^2$.
+
+The \texttt{inversion} command takes two or three arguments.
+
+If \texttt{inversion} has two arguments, they are a point (the center
+of inversion) and a real number (the radius).
+\texttt{inversion} returns a new command which performs the
+inversion.\\
+Input:
+\begin{center}
+  \tt
+  inver := inversion(i, 2)
+\end{center}
+then:
+\begin{center}
+  \tt
+   inver(circle(1+i,1))
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-inversion1.png}
+\end{center}
+then:
+\begin{center}
+  \tt
+  inver(circle(1+i,1/2))
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-inversion2.png}
+\end{center}
+
+If \texttt{inversion} has three arguments, the first two arguments are a
+point and number as above, and the third argument is a geometric
+object.  \texttt{inversion} returns and draws the inverted object.\\
+Input:
+\begin{center}
+  \tt
+  inversion(i, 2, circle(1+i,1))
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-inversion3.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  inversion(i, 2, circle(1+i,1/2))
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-inversion4.png}
+\end{center}
+
+\subsection{Orthogonal projection: \texttt{projection}\index{projection}}
+\label{sec:2dprojection}
+
+%See section \ref{sec:3dprojection} for projections in space.
+
+The \texttt{projection} command takes one or two arguments.
+
+If \texttt{projection} has one argument, it is a geometric object.
+\texttt{projection} returns a new command which projects points onto
+the object.\\
+Input:
+\begin{center}
+  \tt
+  p1 := projection(line(-1,i))
+\end{center}
+then:
+\begin{center}
+  \tt
+   p1(i+1)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-projection1.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  p2 := projection(circle(-1,1))
+\end{center}
+then:
+\begin{center}
+  \tt
+  p2(i)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-projection2.png}
+\end{center}
+
+If \texttt{projection} has two arguments, the first arguments is a
+geometric object as above, and the second argument is a point.
+\texttt{projection} returns and draws the projection of the point onto
+the object.\\
+Input:
+\begin{center}
+  \tt
+  projection(line(-1, i), 1+i)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-projection3.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  projection(circle(-1,1), i)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-projection4.png}
+\end{center}
+
+\section{Properties}
+
+\subsection{Check if a point is on an object: \texttt{is\_element}\index{is\_element}}
+\label{sec:2diselem}
+
+%See section \ref{sec:3diselem} for checking elements in
+%three-dimensional geometry.
+
+The \texttt{is\_element} command takes two arguments, a point and a
+geometric object.
+
+\texttt{is\_element} returns \texttt{1} if the point is an element of
+the object and returns \texttt{0} otherwise.\\
+Input:
+\begin{center}
+  \tt
+  is\_element(-1-i, line(0,1+i))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  is\_element(i, line(0,1+i))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0 
+\end{center}
+
+\subsection{Check if three points are collinear: \texttt{is\_collinear}\index{is\_collinear}}
+\label{sec:2dcheckcollinear}
+
+%See section \ref{sec:3dcheckcollinear} for checking for collinearity in
+%three-dimensional geometry.
+
+The \texttt{is\_collinear} command is a Boolean function which takes as argument a list or
+sequence of points.
+
+\texttt{is\_collinear} returns \texttt{1} if the points are collinear
+and returns \texttt{0} otherwise.\\
+Input:
+\begin{center}
+  \tt
+  is\_collinear(0,1+i,-1-i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  is\_collinear(i/100, 1+i, -1-i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0 
+\end{center}
+
+\subsection{Check if four points are concyclic: \texttt{is\_concyclic}\index{is\_concyclic}}
+\label{sec:2dcheckconcycle}
+
+%See section \ref{sec:3dcheckconcycle} for checking for concyclicity in
+%three-dimensional geometry.
+
+The \texttt{is\_concyclic} command is a Boolean function which takes as argument a list or
+sequence of points.
+
+\texttt{is\_concyclic} returns \texttt{1} if the points are cyclic
+and returns \texttt{0} otherwise.\\
+Input:
+\begin{center}
+  \tt
+  is\_concyclic(1+i, -1+i, -1-i, 1-i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  is\_concyclic(i, -1+i, -1-i, 1-i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0 
+\end{center}
+
+\subsection{Check if a point is in a polygon or circle: \texttt{is\_inside}\index{is\_inside}}
+
+The \texttt{is\_inside} command is a Boolean function which takes two arguments, a point and a
+polygon or circle.
+
+\texttt{is\_inside} returns \texttt{1} if the point is inside the
+polygon or circle (including the boundary) and returns \texttt{0}
+otherwise.\\
+Input:
+\begin{center}
+  \tt
+  is\_inside(0,circle(-1,1))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  is\_inside(2,polygon([1,2-i,3+i]))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  is\_inside(1-i, triangle([1,2-i,3+i]))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0 
+\end{center}
+
+\subsection{Check if an object is an equilateral triangle: \texttt{is\_equilateral}\index{is\_equilateral}}
+\label{sec:2dcheckequilateral}
+
+%See section \ref{sec:3dcheckequilateral} for checking for equilateral
+%triangles in three-dimensional geometry.
+
+The \texttt{is\_equilateral} command is a Boolean function which takes
+as argument a geometric object or three points.
+
+\texttt{is\_equilateral} returns \texttt{1} if the object (or the
+triangle formed by the three points) is an equilateral triangle and
+returns \texttt{0} otherwise.\\
+Input:
+\begin{center}
+  \tt
+  is\_equilateral(0,2,1+i*sqrt(3))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  T := equilateral\_triangle(0,2,C)
+\end{center}
+then:
+\begin{center}
+  \tt
+  is\_equilateral(T[0])
+\end{center}
+Output:
+\begin{center}
+  \tt
+  1
+\end{center}
+Note that \texttt{T[0]} is a triangle since \texttt{T} is a list made
+of a triangle and the vertex \texttt{C}.  Entering \texttt{affix(C)}
+returns \texttt{1 + i*sqrt(3)}\\
+Input:
+\begin{center}
+  \tt
+  is\_equilateral(1+i, -1+i, -1-i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0 
+\end{center}
+
+\subsection{Check if an object is an isosceles triangle: \texttt{is\_isosceles}\index{is\_isosceles}}
+\label{sec:2dcheckisosceles}
+
+%See section \ref{sec:3dcheckisosceles} for checking for isosceles
+%triangles in three-dimensional geometry.
+
+The \texttt{is\_isosceles} command takes 
+as argument a geometric object or three points.
+
+\texttt{is\_isosceles} returns \texttt{1}, \texttt{2}, \texttt{3} 
+or \texttt{4} if the object (or triangle formed by the three points)
+is an isosceles triangle (the number indicates which vertex is on two
+equal sides) or a value of \texttt{4} means the triangle is equilateral.
+The command returns \texttt{0} if the object is not an isosceles
+triangle.\\
+Input:
+\begin{center}
+  \tt
+  is\_isosceles(0, 1+i,i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 2 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  T := isosceles\_triangle(0,1,pi/4)
+\end{center}
+then:
+\begin{center}
+  \tt
+  is\_isosceles(T)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  1
+\end{center}
+Input:
+\begin{center}
+  \tt
+  T := isosceles\_triangle(0,1,pi/4,C)
+\end{center}
+then:
+\begin{center}
+  \tt
+  is\_isosceles(T[0])  
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+Note that \texttt{T[0]} is a triangle since \texttt{T} is a list made
+of a triangle and the vertex \texttt{C}.  Entering \texttt{affix(C)}
+returns \texttt{sqrt(2)/2 + i*sqrt(2)/2}\\
+Input:
+\begin{center}
+  \tt
+  is\_isosceles(1+i, -1+i, -i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  3
+\end{center}
+Input:
+\begin{center}
+  \tt
+  is\_isosceles(0,2,1+i*sqrt(3))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  4
+\end{center}
+
+\subsection{Check if an object is a right triangle or a rectangle: \texttt{is\_rectangle}\index{is\_rectangle}}
+\label{sec:2dcheckrect}
+
+%See section \ref{sec:3dcheckrect} for checking for right triangles and rectangles
+%in three-dimensional geometry.
+
+The \texttt{is\_rectangle} command takes as argument a geometric object or a
+sequence of three or four points. 
+
+When the argument is a triangle or three points, \texttt{is\_rectangle} returns 
+\texttt{1}, \texttt{2} or \texttt{3} if the triangle is a right
+triangle; the number indicates which vertex has the right angle.
+When the argument is a quadrilateral or four points, \texttt{is\_rectangle} returns 
+\texttt{1} or \texttt{2} if the quadrilateral is a rectangle;
+\texttt{1} if it is a rectangle but not a square and \texttt{2} if it
+is a square.  The command returns \texttt{0} if the object is not a
+right triangle or rectangle.\\
+Input:
+\begin{center}
+  \tt
+  is\_rectangle(1,1+i,i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 2 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  is\_rectangle(1+i, -2+i, -2-i, 1-i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  R := rectangle(-2-i,1-i, 3, C, D)
+\end{center}
+then:
+\begin{center}
+  \tt
+  is\_rectangle(R[0])
+\end{center}
+Output:
+\begin{center}
+  \tt
+  1
+\end{center}
+Note that \texttt{R[0]} is a rectangle since \texttt{R} is a list made
+of a rectangle and vertices \texttt{C} and \texttt{D}.  Entering
+\texttt{affix(C,D)} returns \texttt{-2+8*i, 1+8*i}.
+
+\subsection{Check if an object is a square: \texttt{is\_square}\index{is\_square}}
+\label{sec:2dchecksquare}
+
+%See section \ref{sec:3dchecksquare} for checking for squares
+%in three-dimensional geometry.
+
+The \texttt{is\_square} command is a Boolean function which takes as
+argument a geometric object or four points.
+
+\texttt{is\_square} returns \texttt{1} if the object (or quadrilateral
+determined by the four points) is a square and returns \texttt{0}
+otherwise.\\
+Input:
+\begin{center}
+  \tt
+  is\_square(1+i, -1+i, -1-i, 1-i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  K := square(1+i, -1+i)
+\end{center}
+then:
+\begin{center}
+  \tt
+  is\_square(K)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  K := square(1+i, -1+i, C, D); is\_square(K[0])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+Note that \texttt{K[0]} is a square since \texttt{K} is a list made
+of a square and vertices \texttt{C} and \texttt{D}.  Entering 
+\texttt{affix(C,D)} returns \texttt{-1-i,1-i}.\\
+Input:
+\begin{center}
+  \tt
+  is\_square(i, -1+i, -1-i, 1-i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0 
+\end{center}
+
+\subsection{Check if an object is a rhombus: \texttt{is\_rhombus}\index{is\_rhombus}}
+\label{sec:2dcheckrhombus}
+
+%See section \ref{sec:3dcheckrhombus} for checking for rhombuses
+%in three-dimensional geometry.
+
+The \texttt{is\_rhombus} command takes as
+argument a geometric object or four points.
+
+\texttt{is\_rhombus} returns \texttt{1} or \texttt{2} if the object is
+a rhombus; it returns \texttt{1} if the object is a rhombus but not a
+square and \texttt{2} if the object is a square.  The command returns
+\texttt{0} if the object is not a rhombus.\\
+Input:
+\begin{center}
+  \tt
+  is\_rhombus(1+i, -1+i, -1-i, 1-i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  K := rhombus(1+i, -1+i, pi/4)
+\end{center}
+then:
+\begin{center}
+  \tt
+  is\_rhombus(K)
+\end{center}
+Input:
+\begin{center}
+  \tt
+  1
+\end{center}
+Input:
+\begin{center}
+  \tt
+  K := rhombus(1+i, -1+i, pi/4, C, D)
+\end{center}
+then:
+\begin{center}
+  \tt
+  is\_rhombus(K[0])
+\end{center}
+Input:
+\begin{center}
+  \tt
+  1
+\end{center}
+Note that \texttt{K[0]} is a rhombus since \texttt{K} is a list made
+of a rhombus and vertices \texttt{C} and \texttt{D}.  Entering 
+\texttt{affix(C,D)} returns \texttt{-sqrt(2)-i,-sqrt(2)+i}.\\
+Input:
+\begin{center}
+  \tt
+  is\_rhombus(i, -1+i, -1-i, 1-i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0 
+\end{center}
+
+\subsection{Check if an object is a parallelogram: \texttt{is\_parallelogram}\index{is\_parallelogram}}
+\label{sec:2dcheckparallelogram}
+
+%See section \ref{sec:3dcheckparallelogram} for checking for
+%parallelograms in three-dimensional geometry.
+
+The \texttt{is\_parallelogram} command takes as argument a geometric
+object or four points.
+
+\texttt{is\_parallelogram} returns \texttt{1}, \texttt{2}, \texttt{3}
+or \texttt{4} if the object is a parallelogram.  It returns \texttt{4}
+if the object is a square, \texttt{3} if the object is a rectangle but
+not a square, \texttt{2} if the object is a rhombus but not a
+rectangle, and returns \texttt{1} otherwise.  The command returns
+\texttt{0} if the object is not a parallelogram.\\
+Input:
+\begin{center}
+  \tt
+  is\_parallelogram(i, -1+i, -1-i, 1-i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  is\_parallelogram(1+i, -1+i, -1-i, 1-i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  1
+\end{center}
+Input:
+\begin{center}
+  \tt
+  Q := quadrilateral(1+i, -1+i, -1-i, 1-i)
+\end{center}
+then:
+\begin{center}
+  \tt
+  is\_parallelogram(Q)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 4 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  P := parallelogram(-1-i, 1-i, i, D)
+\end{center}
+then:
+\begin{center}
+  \tt
+  is\_parallelogram(P[0])
+\end{center}
+Output:
+\begin{center}
+  \tt
+  1
+\end{center}
+Note that \texttt{P[0]} is a parallelogram since \texttt{P} is a list made
+of a parallelogram and vertex \texttt{D}.  Entering 
+\texttt{affix(D)} returns \texttt{-2+i}.\\
+
+\subsection{Check it two lines are parallel: \texttt{is\_parallel}\index{is\_parallel}}
+\label{sec:2dcheckparallel}
+
+%See section \ref{sec:3dcheckparallel} for checking for parallels in
+%three-dimensional geometry.
+
+The \texttt{is\_parallel} command is a Boolean function which takes as
+argument two lines.
+
+\texttt{is\_parallel} returns \texttt{1} if the lines are parallel and
+returns \texttt{0} otherwise.\\
+Input:
+\begin{center}
+  \tt
+  is\_parallel(line(0,1+i),line(i,-1))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+Output:
+\begin{center}
+  \tt
+ is\_parallel(line(0,1+i),line(i,-1-i)) 
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0 
+\end{center}
+
+\subsection{Check if two lines are perpendicular: \texttt{is\_perpendicular}\index{is\_perpendicular}}
+\label{sec:3dcheckperp}
+
+%See section \ref{sec:2dcheckperp} for checking for perpendicularity in
+%two-dimensional geometry.
+
+The \texttt{is\_perpendicular} command is a Boolean function which takes as
+argument two lines.
+
+\texttt{is\_perpendicular} returns \texttt{1} if the lines are
+perpendicular and returns \texttt{0} otherwise.\\
+Input:
+\begin{center}
+  \tt
+  is\_perpendicular(line(0,1+i),line(i,1))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+Input:
+\begin{center}
+  \tt
+ is\_parallel(line(0,1+i),line(1+i,1)) 
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0 
+\end{center}
+
+\subsection{Check if two circles are orthogonal: \texttt{is\_orthogonal}\index{is\_orthogonal}}
+\label{sec:2dcheckorth}
+
+%See section \ref{sec:3dcheckorth} for checking for orthogonality in
+%three-dimensional geometry.
+
+The \texttt{is\_orthogonal} command is a Boolean function which takes as
+argument two lines or two circles.
+
+\texttt{is\_orthogonal} returns \texttt{1} if the objects are
+orthogonal and returns \texttt{0} otherwise.\\
+Input:
+\begin{center}
+  \tt
+  is\_orthogonal(line(0,1+i),line(i,1))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+Input:
+\begin{center}
+  \tt
+ is\_orthogonal(line(2,i),line(0,1+i)) 
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  is\_orthogonal(circle(0,1+i),circle(2,1+i))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  is\_orthogonal(circle(0,1),circle(2,1))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0 
+\end{center}
+
+\subsection{Check if elements are conjugates: \texttt{is\_conjugate}\index{is\_conjugate}}
+
+The \texttt{is\_conjugate} is a Boolean function which takes as
+arguments one of the following:
+\begin{itemize}
+  \item A circle followed by two more arguments, each of which is a
+  point or a line.\\
+  In this case, \texttt{is\_conjugate} returns \texttt{1} if the
+  last two arguments are conjugate with respect to the circle, it returns
+  \texttt{0} otherwise.\\
+Input:
+\begin{center}
+ \tt
+  is\_conjugate(circle(0,1+i),point(1-i), point(3+i))        
+\end{center}  
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+Input:
+\begin{center}
+ \tt
+  is\_conjugate(circle(0,1),point((1+i)/2), line(1+i,2))
+\end{center}  
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+Input:
+\begin{center}
+ \tt
+  is\_conjugate(circle(0,1), line(1+i,2), line((1+i)/2,0))
+\end{center}  
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+
+  \item Two lines or two points, followed by two more arguments, each of which is a
+  point or a line.\\
+  In this case, \texttt{is\_conjugate} returns \texttt{1} if the
+  last two arguments are conjugate with respect to the first two
+  arguments, it returns \texttt{0} otherwise.\\
+Input:
+\begin{center}
+  \tt
+  is\_conjugate(point(1+i),point(3+i),point(i),point(3/2+i))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  is\_conjugate(line(0,1+i),line(2,3+i),line(3,4+i),line(3/2,5/2+i))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+\end{itemize}
+
+\subsection{Check if four points form a harmonic division: \texttt{is\_harmonic}\index{is\_harmonic}}
+
+The \texttt{is\_harmonic} command is a Boolean function which takes as
+arguments four points.
+
+\texttt{is\_harmonic} returns \texttt{1} if the four points form a
+harmonic range and returns \texttt{0} otherwise.\\
+Input:
+\begin{center}
+  \tt
+  is\_harmonic(0,2,3/2,3)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  is\_harmonic(0,1+i,1,i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0
+\end{center}
+
+\subsection{Check if lines are in a bundle: \texttt{is\_harmonic\_line\_bundle}\index{is\_harmonic\_line\_bundle}}
+
+The \texttt{is\_harmonic\_line\_bundle} command takes as
+argument a list or sequence of lines.
+
+\texttt{is\_harmonic\_line\_bundle} returns
+\begin{enumerate}
+  \item \texttt{1} if the lines pass through a common point
+  \item \texttt{2} if the lines are parallel
+  \item \texttt{3} if the lines are the same
+  \item \texttt{0} otherwise
+\end{enumerate}
+Input:
+\begin{center}
+  \tt
+  is\_harmonic\_line\_bundle([line(0,1+i),line(0,2+i),line(0,3+i),line(0,1)])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+
+\subsection{Check if circles are in a bundle: \texttt{is\_harmonic\_circle\_bundle}\index{is\_harmonic\_circle\_bundle}}
+
+The \texttt{is\_harmonic\_circle\_bundle} command takes as
+argument a list or sequence of circles.
+
+\texttt{is\_harmonic\_circle\_bundle} returns
+\begin{enumerate}
+  \item \texttt{1} if the circles pass through a common point
+  \item \texttt{2} if the circles are concentric
+  \item \texttt{3} if the circles are the same
+  \item \texttt{0} otherwise
+\end{enumerate}
+Input:
+\begin{center}
+  \tt
+  is\_harmonic\_circle\_bundle([circle(0,i),circle(4,i),circle(0,1/2)])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1 
+\end{center}
+
+\section{Harmonic division}
+
+\subsection{Find a point dividing a segment in the harminic ratio $k$: \texttt{division\_point}\index{division\_point}}
+
+The \texttt{division\_point} command takes as argument two points
+$a$ and $b$ and a complex number $k$.
+
+\texttt{division\_point} returns and draws $z$ where
+$(z-a)/(z-b) = k$.\\
+Input:
+\begin{center}
+  \tt
+  division\_point(i,2+i,3+i)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-divpoint.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  affix(division\_point(i,2+i,3))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  3+i
+\end{center}
+
+\subsection{The cross ratio of four collinear points: \texttt{cross\_ratio}\index{cross\_ratio}}
+
+The \texttt{cross\_ratio} command takes as arguments four complex
+numbers $a,b,c,d$.
+
+\texttt{cross\_ratio} returns the cross ratio
+$[(c-a)/(c-b)]/[(d-a)/(d-b)]$.\\
+Input:
+\begin{center}
+  \tt
+  cross\_ratio(0,1,2,3)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 4/3 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  cross\_ratio(i,2+i,3/2 + i, 3+i)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ -1 
+\end{center}
+
+\subsection{Harmonic division: \texttt{harmonic\_division}\index{harmonic\_division}}
+
+Four collinear points $A$,$B$,$C$ and $D$ are in harmonic division if
+$\overline{CA}/\overline{CB} = \overline{DA}/\overline{DB} $.  In
+this case, $D$ is called the harmonic conjugate of $A$, $B$ and $C$.
+
+Four concurrent lines or four parallel lines are in harmonic division
+if the intersection of any fifth line with these four lines consists
+of four points in harmonic division.  The lines are also said to form a harmonic
+pencil.  The fourth line is called the harmonic conjugate of the first
+three.
+
+The \texttt{harmonic\_division} command takes as argument three
+collinear points or three concurrent lines and a variable name.
+
+\texttt{harmonic\_division} returns and draws the three points or
+lines along with a fourth so the four objects are in harmonic
+division, and assigns the fourth point or line to the variable name.\\
+Input:
+\begin{center}
+  \tt
+  harmonic\_division(0,2,3/2,D)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-harmdiv.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  harmonic\_division(point(0),point(2),point(3/2),D)
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-harmdiv2.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  affix(D)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 3 
+\end{center}
+
+\subsection{The harmonic conjugate: \texttt{harmonic\_conjugate}\index{harmonic\_conjugate}}
+
+The \texttt{harmonic\_conjugate} command takes as arguments three
+collinear points, three concurrent lines or three parallel lines.
+
+\texttt{harmonic\_conjugate} returns and draws the harmonic conjugate of the
+arguments.\\
+Input:
+\begin{center}
+  \tt
+  harmonic\_conjugate(0,2,3/2)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-harmconj.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  affix(harmonic\_conjugate(0,2,3/2))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  3
+\end{center}
+Input:
+\begin{center}
+  \tt
+  harmonic\_conjugate(line(0,1+i),line(0,3+i),line(0,i))
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-harmconj2.png}
+\end{center}
+
+\subsection{Pole and polar: \texttt{pole}\index{pole} \texttt{polar}\index{polar}}
+
+Given a circle centered at $O$, a point $A$ is a pole and a line $L$ is the corresponding
+polar if $L$ is the line passing through the inversion of $A$ with
+respect to the circle (see section \ref{sec:2dinversion}) passing
+through the line $\overleftrightarrow{OA}$.
+
+The \texttt{polar} command takes as argument a circle \texttt{C} and a
+point \texttt{a}.
+
+\texttt{polar} returns and draws the polar of the point \texttt{a}
+with respect to \texttt{C}.\\
+Input:
+\begin{center}
+  \tt
+  polar(circle(0,1),(i+1)/2)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-polar.png}
+\end{center}
+
+The \texttt{pole} command takes as argument a circle \texttt{C} and a
+line \texttt{L}.
+
+\texttt{pole} returns and draws the pole of the line \texttt{L}
+with respect to \texttt{C}.\\
+Input:
+\begin{center}
+  \tt
+  pole(circle(0,1),line(i,1))
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-pole.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  affix(pole(circle(0,1),line(i,1)))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  1+i 
+\end{center}
+
+\subsection{The polar reciprocal: \texttt{reciprocation}\index{reciprocation}}
+
+The \texttt{reciprocation} command takes as arguments a circle and
+list of points and lines.
+
+\texttt{reciprocation} returns the list formed by replaced each point
+or line by its polar or pole with respect to the circle.\\
+Input:
+\begin{center}
+  \tt
+  reciprocation(circle(0,1),[point((1+i)/2),line(1,-1+i)])
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-reciprocation.png}
+\end{center}
+
+\section{Loci and envelopes}
+
+\subsection{Loci: \texttt{locus}\index{locus}}
+
+The \texttt{locus} command draws the locus of points determined by
+geometric objects moving in the plane, where the object depends on a
+point moving along a curve.  It can draw
+a locus of points which depends on points on a curve, or 
+the envelope of a family of lines depending on points on a curve.
+
+\subsubsection{The locus of points depending on points on a curve.}
+
+For this, the \texttt{locus} command takes two mandatory arguments and two
+optional arguments.
+\begin{itemize}
+  \item The first mandatory argument is a variable name.  This variable
+  needs to already have been assigned to a point, and that point
+  should be a function of a second point which moves along a curve.
+  This second point is the second argument to \texttt{locus}. 
+  \item
+  The second mandatory argument is another variable name.  This
+  variable needs to already have been assigned to a point,
+  that point should be the result of the \texttt{element} command; for
+  example, defined by \texttt{element(C)} for a curve \texttt{C}.
+  (See section \ref{sec:element}.)
+  \item The optional third argument is used to set \texttt{t} to
+  an interval, where \texttt{t}  is the parameter
+  for the curve \texttt{C}.  (You can double check the
+  name of the parameter for a curve \texttt{C} with the command
+  \texttt{parameq(C)}.)
+  \item The optional fourth argument is used to set the value of
+  \texttt{tstep} for the parameter \texttt{t}.
+\end{itemize}
+
+\texttt{locus} will draw the locus of points formed by the first
+argument, as the second argument traces over the curve \texttt{C}.\\
+Input:
+\begin{center}
+  \tt
+  P := element(line(i, i+1))
+\end{center}
+then:
+\begin{center}
+  \tt
+  G := isobarycenter(-1,1,P)
+\end{center}
+then:
+\begin{center}
+  \tt
+  locus(G,P)
+\end{center}
+This will draw the set of isobarycenters of the triangles with vertices
+\texttt{-1}, \texttt{1} and \texttt{P}, where \texttt{P} ranges over
+the line through \texttt{i} and \texttt{i+1}.\\
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-locus1.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  parameq(C)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ t + i 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  locus(G,P,t=-3..3,tstep=0.1)
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-locus2.png}
+\end{center}
+
+\subsubsection{The envelope of a family of lines which depend on points on a
+curve.}
+
+For this, the \texttt{locus} command takes two mandatory arguments and
+two optional arguments.
+\begin{itemize}
+  \item The first mandatory argument is a variable name.  This variable
+  needs to already have been assigned to a line, and that line
+  should be a function of a point which moves along a curve.  This point is the
+  second argument to \texttt{locus}. 
+  \item
+  The second mandatory argument is another variable name.  This
+  variable needs to already have been assigned to a point,
+  that point should be the result of the \texttt{element} command; for
+  example, defined by \texttt{element(C)} for a curve \texttt{C}.
+  (See section \ref{sec:element}.)
+  \item The optional third argument is used to set \texttt{t} to
+  an interval, where \texttt{t}  is the parameter
+  for the curve \texttt{C}.  (You can double check the
+  name of the parameter for a curve \texttt{C} with the command
+  \texttt{parameq(C)}.)
+  \item The optional fourth argument is used to set the value of
+  \texttt{tstep} for the parameter \texttt{t}.
+\end{itemize}
+
+\texttt{locus} will draw the envelope of the lines formed by the first
+argument, as the second argument traces over the curve \texttt{C}.\\
+Input:
+\begin{center}
+  \tt
+  F := point(1)
+\end{center}
+then:
+\begin{center}
+  \tt
+  H := element(line(x=0))
+\end{center}
+then:
+\begin{center}
+  \tt
+  d := perpen\_bisector(F,H)
+\end{center}
+then:
+\begin{center}
+  \tt
+  locus(d,H)
+\end{center}
+This will draw the envelope of the family of perpendicular bisectors
+of the segments from the point \texttt{1} to the points on the line
+\texttt{x=0}.
+Output:
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-locus3.png}
+\end{center}
+
+To draw the envelope of a family of lines which depend on a parameter,
+such as the lines given by the equations
+\[
+  y + x \tan(t) - 2\sin(t)=0
+\]
+over the parameter $t$, the parameter can be regarded as the affixes
+of points on the line $y=0$.  \\
+Input:
+\begin{center}
+  \tt
+  H := element(line(y=0))
+\end{center}
+then:
+\begin{center}
+  \tt
+  D := line(y + x*tan(affix(H)) - 2*sin(affix(H)))
+\end{center}
+then:
+\begin{center}
+  \tt
+  locus(D,H)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-locus4.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  locus(D,H,t=0..pi)  
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-locus5.png}
+\end{center}
+
+\subsection{Envelopes: \texttt{envelope}\index{envelope}}
+
+The \texttt{envelope} command takes two arguments, the first argument is expression 
+\texttt{expr} in the variables \texttt{x}, \texttt{y} and a parameter
+such as \texttt{t}, and the second argument is the name of the
+parameter.
+
+\texttt{envelope} draws the envelope of the family of curves given by
+\texttt{expr=0} over the parameter \texttt{t}.\\
+Input:
+\begin{center}
+  \tt
+  envelope(y + x*tan(t) - 2*sin(t),t)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-envelope1.png}
+\end{center}
+
+The \texttt{envelope} command can use variables besides \texttt{x} and \texttt{y}.  In
+this case, the second argument needs to be a list of the two variables
+and the parameter.\\
+Input:
+\begin{center}
+  \tt
+  envelope(v + u*tan(s) - 2*sin(s),[u,v,s])  
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-envelope2.png}
+\end{center}
+
+% \subsection{The trace of a geometric object: \texttt{trace}\index{trace}}
+
+% The \texttt{trace} command takes as argument a geometric object which
+% depends on a parameter.
+
+% \texttt{trace} draws the trace of the object as the parameter varies.
 \end{document}

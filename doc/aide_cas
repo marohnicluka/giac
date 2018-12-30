@@ -17466,9 +17466,14 @@ random_network(3,4,0.75)
 # maxflow
 0 Graph(G),Vrtx(s),Vrtx(t)
 2 Returns the optimal value for the max flow problem for network G with the source s and sink t along with an optimal flow (as a matrix).
--1 is_network
--2 random_network
+-1 minimum_cut
 maxflow(digraph(%{[[1,2],2],[[2,3],4],[[3,4],3],[[1,5],3],[[5,2],1],[[5,4],2]%}),1,4)
+
+# minimum_cut
+0 Graph(G),Vrtx(s),Vrtx(t)
+2 Returns the list of edges forming a minimum cut in a directed graph G with the source s and sink t.
+-1 maxflow
+minimum_cut(digraph(%{[[1,2],2],[[2,3],4],[[3,4],3],[[1,5],3],[[5,2],1],[[5,4],2]%}),1,4)
 
 # is_cut_set
 0 Graph(G),Lst(E)

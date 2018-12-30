@@ -6218,7 +6218,7 @@ define_unary_function_ptr5(at_maxflow,alias_at_maxflow,&__maxflow,0,true)
 /* USAGE:   minimum_cut(G,s,t)
  *
  * Returns the list of edges forming a minimum cut in a directed graph G with
- * respect to source s and sink t.
+ * respect to the source s and sink t.
  */
 gen _minimum_cut(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;

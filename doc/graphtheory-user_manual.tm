@@ -816,24 +816,23 @@
   description of its functionality. Several examples are also supplied to
   illustrate the usage.
 
-  In calling syntax, the square brackets <verbatim|[> and <verbatim|]> are
-  used for specifying that an argument should be a list of particular
-  elements, as well as to indicate that an argument is optional. The
-  character <verbatim|\|> stands for <em|or>.
+  In calling syntax, the square brackets <verbatim|[> and <verbatim|]>
+  indicate that the respective argument should be a list of particular
+  elements or that the argument is optional. The character <verbatim|\|>
+  stands for <em|or>.
 
-  The algorithms in this library are implemented according to the relevant
+  The algorithms in this library are implemented according to relevant
   scientific publications. Although the development focus was on simplicity,
   the algorithms are reasonably fast. For some more difficult tasks, such as
-  solving traveling salesman problem, finding graph colorings and graph
+  for solving traveling salesman problem, finding graph colorings and graph
   isomorphism, freely available third party libraries are used, in particular
   <abbr|GNU> Linear Programming Kit (<samp|GLPK>) and <samp|nauty>. These
   libraries, included in <samp|Giac/Xcas> by default, are optional during the
-  compilation. Nevertheless, most commands have no dependencies save
-  <samp|Giac> itself.
+  compilation; most commands have no dependencies save <samp|Giac> itself.
 
   This library was written and documented by Luka Marohni¢<\footnote>
     Email: <verbatim|luka.marohnic@tvz.hr>
-  </footnote>. The author would like to thank Bernard Parisse,
+  </footnote>. The author would like to thank Bernard Parisse, the
   <samp|Giac/Xcas> project leader, for integrating the package and Jose Capco
   for suggesting <samp|nauty> integration.
 
@@ -962,34 +961,44 @@
   only argument. In that case the corresponding graph will be constructed and
   returned. The supported graphs are listed in
   Table<nbsp><reference|tab:special>.<\float|float|tbh>
-    <big-table|<tabular|<tformat|<cwith|1|1|4|5|cell-tborder|0ln>|<cwith|1|1|4|5|cell-bborder|1ln>|<cwith|2|2|4|5|cell-tborder|1ln>|<cwith|1|1|4|4|cell-lborder|0ln>|<cwith|1|1|3|3|cell-rborder|0ln>|<cwith|1|1|5|5|cell-rborder|0ln>|<cwith|1|1|1|2|cell-tborder|0ln>|<cwith|1|1|1|2|cell-bborder|1ln>|<cwith|2|2|1|2|cell-tborder|1ln>|<cwith|1|1|1|1|cell-lborder|0ln>|<cwith|1|1|2|2|cell-rborder|0ln>|<cwith|1|1|3|3|cell-lborder|0ln>|<cwith|2|2|2|2|cell-tborder|1ln>|<cwith|1|1|3|3|cell-width|1em>|<cwith|1|1|3|3|cell-hmode|exact>|<table|<row|<cell|<strong|special
+    <big-table|<tabular|<tformat|<cwith|1|1|4|5|cell-tborder|0ln>|<cwith|1|1|4|5|cell-bborder|1ln>|<cwith|1|1|4|4|cell-lborder|0ln>|<cwith|1|1|3|3|cell-rborder|0ln>|<cwith|1|1|5|5|cell-rborder|0ln>|<cwith|1|1|1|2|cell-tborder|0ln>|<cwith|1|1|1|1|cell-lborder|0ln>|<cwith|1|1|2|2|cell-rborder|0ln>|<cwith|1|1|3|3|cell-lborder|0ln>|<cwith|1|1|3|3|cell-width|1em>|<cwith|1|1|3|3|cell-hmode|exact>|<cwith|5|5|4|5|cell-tborder|0ln>|<cwith|4|4|4|5|cell-bborder|0ln>|<cwith|5|5|4|5|cell-bborder|0ln>|<cwith|6|6|4|5|cell-tborder|0ln>|<cwith|5|5|4|4|cell-lborder|0ln>|<cwith|5|5|3|3|cell-rborder|0ln>|<cwith|5|5|5|5|cell-rborder|0ln>|<cwith|2|2|1|2|cell-tborder|1ln>|<cwith|1|1|1|2|cell-bborder|1ln>|<cwith|2|2|1|2|cell-bborder|0ln>|<cwith|4|4|1|2|cell-tborder|0ln>|<cwith|2|2|1|1|cell-lborder|0ln>|<cwith|2|2|2|2|cell-rborder|0ln>|<cwith|2|2|3|3|cell-lborder|0ln>|<table|<row|<cell|<strong|special
     graph>>|<cell|<strong|name in> <samp|Giac>>|<cell|>|<cell|<strong|special
-    graph>>|<cell|<strong|name in> <samp|Giac>>>|<row|<cell|2<rsup|nd>
-    <hlink|<rigid|Blanu²a snark>|https://en.wikipedia.org/wiki/Blanu%C5%A1a_snarks>>|<cell|<verbatim|blanusa>>|<cell|>|<cell|<hlink|<rigid|Icosahedral
+    graph>>|<cell|<strong|name in> <samp|Giac>>>|<row|<cell|<hlink|<rigid|Bidiakis
+    cube>|https://en.wikipedia.org/wiki/Bidiakis_cube>>|<cell|<verbatim|bidiakis>>|<cell|>|<cell|<hlink|<rigid|Harries
+    graph>|https://en.wikipedia.org/wiki/Harries_graph>>|<cell|<with|font-family|tt|harries>>>|<row|<cell|<hlink|<rigid|Biggs-Smith
+    graph>|https://en.wikipedia.org/wiki/Biggs%E2%80%93Smith_graph>>|<cell|<verbatim|biggs-smith>>|<cell|>|<cell|<hlink|<rigid|Harries\UWong
+    graph>|https://en.wikipedia.org/wiki/Harries%E2%80%93Wong_graph>>|<cell|<with|font-family|tt|harries-wong>>>|<row|<cell|2<rsup|nd>
+    <hlink|<rigid|Blanu²a snark>|https://en.wikipedia.org/wiki/Blanu%C5%A1a_snarks>>|<cell|<verbatim|blanusa>>|<cell|>|<cell|<hlink|<rigid|Heawood
+    graph>|https://en.wikipedia.org/wiki/Heawood_graph>>|<cell|<with|font-family|tt|heawood>>>|<row|<cell|<hlink|<rigid|Bull
+    graph>|https://en.wikipedia.org/wiki/Bull_graph>>|<cell|<verbatim|bull>>|<cell|>|<cell|<hlink|<rigid|Herschel
+    graph>|https://en.wikipedia.org/wiki/Herschel_graph>>|<cell|<with|font-family|tt|herschel>>>|<row|<cell|<hlink|<rigid|Butterfly
+    graph>|https://en.wikipedia.org/wiki/Butterfly_graph>>|<cell|<verbatim|butterfly>>|<cell|>|<cell|<hlink|<rigid|Icosahedral
     graph>|https://en.wikipedia.org/wiki/Regular_icosahedron#Icosahedral_graph>>|<cell|<with|font-family|tt|icosahedron>>>|<row|<cell|<hlink|<rigid|Clebsch
     graph>|https://en.wikipedia.org/wiki/Clebsch_graph>>|<cell|<with|font-family|tt|clebsch>>|<cell|>|<cell|<hlink|<rigid|Levi
-    graph>|https://en.wikipedia.org/wiki/Levi_graph>>|<cell|<with|font-family|tt|levi>>>|<row|<cell|<hlink|<rigid|Coxeter
-    graph>|https://en.wikipedia.org/wiki/Coxeter_graph>>|<cell|<with|font-family|tt|coxeter>>|<cell|>|<cell|<hlink|<rigid|Ljubljana
-    graph>|https://en.wikipedia.org/wiki/Ljubljana_graph>>|<cell|<with|font-family|tt|ljubljana>>>|<row|<cell|<hlink|<rigid|Desargues
-    graph>|https://en.wikipedia.org/wiki/Desargues_graph>>|<cell|<with|font-family|tt|desargues>>|<cell|>|<cell|<hlink|<rigid|McGee
-    graph>|https://en.wikipedia.org/wiki/McGee_graph>>|<cell|<with|font-family|tt|mcgee>>>|<row|<cell|<hlink|<rigid|Dodecahedral
-    graph>|https://en.wikipedia.org/wiki/Regular_dodecahedron#Dodecahedral_graph>>|<cell|<with|font-family|tt|dodecahedron>>|<cell|>|<cell|<hlink|<rigid|Möbius\UKantor
-    graph>|https://en.wikipedia.org/wiki/M%C3%B6bius%E2%80%93Kantor_graph>>|<cell|<verbatim|mobius-kantor>>>|<row|<cell|<hlink|<rigid|Dürer
-    graph>|https://en.wikipedia.org/wiki/D%C3%BCrer_graph>>|<cell|<with|font-family|tt|durer>>|<cell|>|<cell|<hlink|<rigid|Nauru
-    graph>|https://en.wikipedia.org/wiki/Nauru_graph>>|<cell|<with|font-family|tt|nauru>>>|<row|<cell|<hlink|<rigid|Dyck
-    graph>|https://en.wikipedia.org/wiki/Dyck_graph>>|<cell|<with|font-family|tt|dyck>>|<cell|>|<cell|<hlink|<rigid|Octahedral
-    graph>|https://en.wikipedia.org/wiki/Platonic_graph>>|<cell|<with|font-family|tt|octahedron>>>|<row|<cell|<hlink|<rigid|Grinberg
-    graph>|https://en.wikipedia.org/wiki/Grinberg%27s_theorem>>|<cell|<with|font-family|tt|grinberg>>|<cell|>|<cell|<hlink|<rigid|Pappus
-    graph>|https://en.wikipedia.org/wiki/Pappus_graph>>|<cell|<with|font-family|tt|pappus>>>|<row|<cell|<hlink|<rigid|Grötzsch
-    graph>|https://en.wikipedia.org/wiki/Gr%C3%B6tzsch_graph>>|<cell|<with|font-family|tt|grotzsch>>|<cell|>|<cell|<hlink|<rigid|Petersen
-    graph>|https://en.wikipedia.org/wiki/Petersen_graph>>|<cell|<with|font-family|tt|petersen>>>|<row|<cell|<hlink|<rigid|Harries
-    graph>|https://en.wikipedia.org/wiki/Harries_graph>>|<cell|<with|font-family|tt|harries>>|<cell|>|<cell|<hlink|<rigid|Robertson
-    graph>|https://en.wikipedia.org/wiki/Robertson_graph>>|<cell|<with|font-family|tt|robertson>>>|<row|<cell|<hlink|<rigid|Harries\UWong
-    graph>|https://en.wikipedia.org/wiki/Harries%E2%80%93Wong_graph>>|<cell|<with|font-family|tt|harries-wong>>|<cell|>|<cell|<hlink|<rigid|Truncated
-    icosahedral graph>|https://en.wikipedia.org/wiki/Truncated_icosahedron#Truncated_icosahedral_graph>>|<cell|<verbatim|soccerball>>>|<row|<cell|<hlink|<rigid|Heawood
-    graph>|https://en.wikipedia.org/wiki/Heawood_graph>>|<cell|<with|font-family|tt|heawood>>|<cell|>|<cell|<hlink|<rigid|Shrikhande
-    graph>|https://en.wikipedia.org/wiki/Shrikhande_graph>>|<cell|<with|font-family|tt|shrikhande>>>|<row|<cell|<hlink|<rigid|Herschel
-    graph>|https://en.wikipedia.org/wiki/Herschel_graph>>|<cell|<with|font-family|tt|herschel>>|<cell|>|<cell|<hlink|<rigid|Tetrahedral
+    graph>|https://en.wikipedia.org/wiki/Levi_graph>>|<cell|<with|font-family|tt|levi>>>|<row|<cell|<hlink|<rigid|Chvátal
+    graph>|https://en.wikipedia.org/wiki/Chv%C3%A1tal_graph>>|<cell|<verbatim|chvatal>>|<cell|>|<cell|<hlink|<rigid|Ljubljana
+    graph>|https://en.wikipedia.org/wiki/Ljubljana_graph>>|<cell|<with|font-family|tt|ljubljana>>>|<row|<cell|<hlink|<rigid|Coxeter
+    graph>|https://en.wikipedia.org/wiki/Coxeter_graph>>|<cell|<with|font-family|tt|coxeter>>|<cell|>|<cell|<hlink|<rigid|McGee
+    graph>|https://en.wikipedia.org/wiki/McGee_graph>>|<cell|<with|font-family|tt|mcgee>>>|<row|<cell|<hlink|<rigid|Desargues
+    graph>|https://en.wikipedia.org/wiki/Desargues_graph>>|<cell|<with|font-family|tt|desargues>>|<cell|>|<cell|<hlink|<rigid|Moser
+    spindle>|https://en.wikipedia.org/wiki/Moser_spindle>>|<cell|<verbatim|moser>>>|<row|<cell|<hlink|<rigid|Diamond
+    graph>|https://en.wikipedia.org/wiki/Diamond_graph>>|<cell|<verbatim|diamond>>|<cell|>|<cell|<hlink|<rigid|Möbius\UKantor
+    graph>|https://en.wikipedia.org/wiki/M%C3%B6bius%E2%80%93Kantor_graph>>|<cell|<verbatim|mobius-kantor>>>|<row|<cell|<hlink|<rigid|Dodecahedral
+    graph>|https://en.wikipedia.org/wiki/Regular_dodecahedron#Dodecahedral_graph>>|<cell|<with|font-family|tt|dodecahedron>>|<cell|>|<cell|<hlink|<rigid|Nauru
+    graph>|https://en.wikipedia.org/wiki/Nauru_graph>>|<cell|<with|font-family|tt|nauru>>>|<row|<cell|<hlink|<rigid|Dürer
+    graph>|https://en.wikipedia.org/wiki/D%C3%BCrer_graph>>|<cell|<with|font-family|tt|durer>>|<cell|>|<cell|<hlink|<rigid|Octahedral
+    graph>|https://en.wikipedia.org/wiki/Platonic_graph>>|<cell|<with|font-family|tt|octahedron>>>|<row|<cell|<hlink|<rigid|Dyck
+    graph>|https://en.wikipedia.org/wiki/Dyck_graph>>|<cell|<with|font-family|tt|dyck>>|<cell|>|<cell|<hlink|<rigid|Pappus
+    graph>|https://en.wikipedia.org/wiki/Pappus_graph>>|<cell|<with|font-family|tt|pappus>>>|<row|<cell|<hlink|<rigid|Foster
+    graph>|https://en.wikipedia.org/wiki/Foster_graph>>|<cell|<verbatim|foster>>|<cell|>|<cell|<hlink|<rigid|Petersen
+    graph>|https://en.wikipedia.org/wiki/Petersen_graph>>|<cell|<with|font-family|tt|petersen>>>|<row|<cell|<hlink|<rigid|Franklin
+    graph>|https://en.wikipedia.org/wiki/Franklin_graph>>|<cell|<verbatim|franklin>>|<cell|>|<cell|<hlink|<rigid|Robertson
+    graph>|https://en.wikipedia.org/wiki/Robertson_graph>>|<cell|<with|font-family|tt|robertson>>>|<row|<cell|<hlink|<rigid|Frucht
+    graph>|https://en.wikipedia.org/wiki/Frucht_graph>>|<cell|<verbatim|frucht>>|<cell|>|<cell|<hlink|<rigid|Truncated
+    icosahedral graph>|https://en.wikipedia.org/wiki/Truncated_icosahedron#Truncated_icosahedral_graph>>|<cell|<verbatim|soccerball>>>|<row|<cell|<hlink|<rigid|Grinberg
+    graph>|https://en.wikipedia.org/wiki/Grinberg%27s_theorem>>|<cell|<with|font-family|tt|grinberg>>|<cell|>|<cell|<hlink|<rigid|Shrikhande
+    graph>|https://en.wikipedia.org/wiki/Shrikhande_graph>>|<cell|<with|font-family|tt|shrikhande>>>|<row|<cell|<hlink|<rigid|Grötzsch
+    graph>|https://en.wikipedia.org/wiki/Gr%C3%B6tzsch_graph>>|<cell|<with|font-family|tt|grotzsch>>|<cell|>|<cell|<hlink|<rigid|Tetrahedral
     graph>|https://en.wikipedia.org/wiki/Tetrahedron#Tetrahedral_graph>>|<cell|<with|font-family|tt|tehtrahedron>>>>>>|<label|tab:special>Special
     graphs>
   </float>
@@ -3341,7 +3350,7 @@
 
   <subsection|Graph products><label|graph-products>
 
-  There are two distinct operations for computing the product of two graphs:
+  There are two distinct operations for computing a product of two graphs:
   the <hlink|<rigid|Cartesian product>|https://en.wikipedia.org/wiki/Cartesian_product_of_graphs>
   and the <hlink|<rigid|tensor product>|https://en.wikipedia.org/wiki/Tensor_product_of_graphs>.
   These operations are available in <samp|Giac> as the commands
@@ -3768,8 +3777,8 @@
   weights <math|<around*|(|p<rsub|0>,p<rsub|1>,\<ldots\>,p<rsub|n-1>|)>> or
   as a weight function <math|f\<of\>\<bbb-N\>\<cup\><around*|{|0|}>\<rightarrow\><around*|[|0,+\<infty\>|\<rangle\>>>
   such that <math|f<around*|(|i|)>=p<rsub|i>> for <math|i=0,1,\<ldots\>,n-1>.
-  Any trailing zeros in the list of weights may be omitted. The numbers
-  <math|p<rsub|i>> are automatically scaled by
+  Trailing zeros in the list of weights, if present, may be omitted. The
+  numbers <math|p<rsub|i>> are automatically scaled by
   <math|1/<big|sum><rsub|i=1><rsup|n-1>p<rsub|i>> to achieve the sum of 1 and
   a graph with that precise distribution of vertex degrees is generated at
   random using the algorithm described in<nbsp><cite-detail|newman|pp.<nbsp>2567>
@@ -8235,7 +8244,7 @@
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      graph_automorphisms(lcf_graph([-5,-2,-4,2,5,-2,2,5,-2,-5,4,2]))
+      graph_automorphisms(graph("frucht"))
     <|unfolded-io>
       <\equation*>
         <around|{||}>
@@ -9818,14 +9827,14 @@
   graph <math|G<around*|(|V,E|)>> and the root node <math|r\<in\>V>. There
   are two possibilities for specifying the nodes to operate on: either the
   nodes <math|u,v\<in\>V> are given as the third and the fourth argument, or
-  a list of pairs of nodes in form <verbatim|[[u1,v1],[u2,v2],...,[uk,vk]]>,
+  a list of pairs of nodes <math|<around*|(|u<rsub|1>,v<rsub|1>|)>,<around*|(|u<rsub|2>,v<rsub|2>|)>,\<ldots\>,<around*|(|u<rsub|k>,v<rsub|k>|)>>,
   where <math|u<rsub|i>,v<rsub|i>\<in\>V> and
   <math|u<rsub|i>\<neq\>v<rsub|i>> for <math|i=1,2,\<ldots\>,k>, is given as
   the third argument. The command returns the <abbr|LCA> of <math|u> and
   <math|v> or the list containing <abbr|LCA> of every pair of nodes
   <math|u<rsub|i>,v<rsub|i>> for <math|i=1,2,\<ldots\>,k>. Note that this is
   much faster than calling <verbatim|lowest_common_ancestor> <math|k> times
-  with one pair <math|u<rsub|i>,v<rsub|i>> at a time.
+  with a single pair of vertices each time.
 
   The strategy is to use <name|Tarjan>'s offline <abbr|LCA>
   algorithm<nbsp><cite|lca>, which runs in nearly linear time.
@@ -11923,7 +11932,7 @@
 
   The first six positive integers are always mapped to the standard
   <samp|Xcas> colors, as indicated in Table<nbsp><reference|tab:colors>.<\float|float|tbh>
-    <big-table|<center|<tabular|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|1|1|-1|cell-tborder|0ln>|<cwith|1|1|1|-1|cell-bborder|1ln>|<cwith|2|2|1|-1|cell-tborder|1ln>|<cwith|1|1|1|1|cell-lborder|0ln>|<cwith|1|1|2|2|cell-rborder|0ln>|<table|<row|<cell|<em|value>>|<cell|<em|color>>>|<row|<cell|1>|<cell|red>>|<row|<cell|2>|<cell|green>>|<row|<cell|3>|<cell|yellow>>|<row|<cell|4>|<cell|blue>>|<row|<cell|5>|<cell|magenta>>|<row|<cell|6>|<cell|cyan>>|<row|<cell|7>|<cell|black>>>>>>|<label|tab:colors>interpretation
+    <big-table|<tabular|<tformat|<cwith|1|-1|2|-1|cell-halign|c>|<cwith|1|-1|1|1|cell-halign|r>|<cwith|1|-1|1|-1|cell-tborder|1ln>|<cwith|1|-1|1|-1|cell-bborder|1ln>|<cwith|1|-1|1|-1|cell-lborder|1ln>|<cwith|1|-1|1|-1|cell-rborder|1ln>|<table|<row|<cell|<em|value>>|<cell|1>|<cell|2>|<cell|3>|<cell|4>|<cell|5>|<cell|6>|<cell|7>>|<row|<cell|<em|color>>|<cell|red>|<cell|green>|<cell|yellow>|<cell|blue>|<cell|magenta>|<cell|cyan>|<cell|black>>>>>|<label|tab:colors>interpretation
     of abstract vertex/edge colors in <samp|Xcas>>
   </float> Note that the color 0 (black) and color 7 (white) are swapped; a
   vertex with color 0 is white (uncolored) and vertex with color 7 is black.
@@ -11932,9 +11941,9 @@
 
   <subsection|Minimal vertex coloring><label|minimal-coloring>
 
-  The vertex coloring of <math|G> is <strong|minimal> (or <strong|optimal>)
-  if the smallest possible number of colors is used. To obtain such a
-  coloring use the command <kbd|minimal_vertex_coloring><index|<kbd|minimal_vertex_coloring>>.
+  A vertex coloring of <math|G> is <strong|minimal> (or <strong|optimal>) if
+  the total number of used colors is minimal. To obtain such a coloring use
+  the command <kbd|minimal_vertex_coloring><index|<kbd|minimal_vertex_coloring>>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|minimal_coloring(G)>>>|<row|<cell|>|<cell|<verbatim|minimal_coloring(G,sto)>>>>>>
 
@@ -11994,7 +12003,7 @@
 
   Solving <abbr|MVCP> for different graphs of exactly the same size (but
   which do not share the same edge structure) may take quite different time
-  in each instance. Also note that, since vertex coloring problem is
+  in each instance. Also note that, since the vertex coloring problem is
   NP<nbsp>hard, the algorithm may take exponential time on some graphs.
 
   <subsection|Chromatic number>
@@ -12440,7 +12449,9 @@
   <subsection|Chromatic index>
 
   The command <verbatim|chromatic_index><index|<verbatim|chromatic_index>> is
-  used for computing the chromatic index of an undirected graph.
+  used for computing the <hlink|<rigid|chromatic
+  index>|https://en.wikipedia.org/wiki/Edge_coloring#Definitions> of an
+  undirected graph.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|chromatic_index(G)>>>|<row|<cell|>|<cell|<verbatim|chromatic_index(G,c)>>>>>>
 
@@ -15210,14 +15221,14 @@
     <associate|auto-325|<tuple|4.13|109>>
     <associate|auto-326|<tuple|4.13.1|109>>
     <associate|auto-327|<tuple|4.13.1|109>>
-    <associate|auto-328|<tuple|4.1|110>>
+    <associate|auto-328|<tuple|4.1|111>>
     <associate|auto-329|<tuple|4.13.2|110>>
     <associate|auto-33|<tuple|1.4.2|16>>
     <associate|auto-330|<tuple|4.13.2|110>>
     <associate|auto-331|<tuple|4.13.3|111>>
     <associate|auto-332|<tuple|4.13.3|111>>
-    <associate|auto-333|<tuple|4.13.4|112>>
-    <associate|auto-334|<tuple|4.13.4|112>>
+    <associate|auto-333|<tuple|4.13.4|111>>
+    <associate|auto-334|<tuple|4.13.4|111>>
     <associate|auto-335|<tuple|4.13.5|112>>
     <associate|auto-336|<tuple|4.13.5|112>>
     <associate|auto-337|<tuple|4.14|113>>
@@ -15466,7 +15477,7 @@
     <associate|st-ordering|<tuple|4.9.3|99>>
     <associate|st53|<tuple|3.1|59>>
     <associate|subgraph|<tuple|1.8.1|25>>
-    <associate|tab:colors|<tuple|4.1|110>>
+    <associate|tab:colors|<tuple|4.1|111>>
     <associate|tab:special|<tuple|1.1|10>>
     <associate|touchface|<tuple|6.3|130>>
     <associate|trail|<tuple|1.2.3|13>>

@@ -548,6 +548,15 @@ public:
     static const int ljubljana_graph_lcf[];
     static const int foster_graph_lcf[];
     static const int blanusa_graph[];
+    static const int bidiakis_cube_graph_lcf[];
+    static const int bull_graph[];
+    static const int butterfly_graph[];
+    static const int diamond_graph[];
+    static const int chvatal_graph[];
+    static const int franklin_graph_lcf[];
+    static const int frucht_graph_lcf[];
+    static const int biggs_smith_graph_lcf[];
+    static const int moser_spindle_graph[];
 
 private:
     const context *ctx;

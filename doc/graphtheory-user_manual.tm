@@ -3762,9 +3762,8 @@
   subdividing its edges is described in<nbsp><cite|andova>.
 
   Truncating the plane dual of <math|G> represents the <em|leapfrog>
-  operation on <math|G>, which can be used to obtain complex
-  <hlink|<rigid|fullerene graphs>|https://en.wikipedia.org/wiki/Fullerene#Other_buckyballs>
-  from the simple ones<nbsp><cite|andova>.
+  operation on <math|G>, which can be used for constructing
+  <hlink|<rigid|fullerene graphs>|https://en.wikipedia.org/wiki/Fullerene#Other_buckyballs><nbsp><cite|andova>.
 
   The algorithm requires computing a planar embedding of <math|G>, which is
   done by applying <name|Demoucron>'s algorithm. Hence its complexity is

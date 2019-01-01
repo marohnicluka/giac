@@ -1153,20 +1153,14 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         layout_best_rotation(x);
     } else if (name=="chvatal") {
         read_special(chvatal_graph);
-        /*
-        set_node_attribute(0,_GT_ATTRIB_POSITION,makevecteur(-4,4));
-        set_node_attribute(1,_GT_ATTRIB_POSITION,makevecteur(4,4));
-        set_node_attribute(5,_GT_ATTRIB_POSITION,makevecteur(4,-4));
-        set_node_attribute(2,_GT_ATTRIB_POSITION,makevecteur(-4,-4));
-        set_node_attribute(3,_GT_ATTRIB_POSITION,makevecteur(-1,2));
-        set_node_attribute(6,_GT_ATTRIB_POSITION,makevecteur(1,2));
-        set_node_attribute(7,_GT_ATTRIB_POSITION,makevecteur(2,1));
-        set_node_attribute(8,_GT_ATTRIB_POSITION,makevecteur(2,-1));
-        set_node_attribute(9,_GT_ATTRIB_POSITION,makevecteur(1,-2));
-        set_node_attribute(10,_GT_ATTRIB_POSITION,makevecteur(-1,-2));
-        set_node_attribute(11,_GT_ATTRIB_POSITION,makevecteur(-2,-1));
-        set_node_attribute(4,_GT_ATTRIB_POSITION,makevecteur(-2,1));
-        */
+        x.resize(12);
+        for (layout::iterator it=x.begin();it!=x.end();++it) it->resize(2);
+        x[0][0]=-4; x[0][1]=4; x[1][0]=4; x[1][1]=4;
+        x[5][0]=4; x[5][1]=-4; x[2][0]=-4; x[2][1]=-4;
+        x[3][0]=-1; x[3][1]=2; x[6][0]=1; x[6][1]=2;
+        x[7][0]=2; x[7][1]=1; x[8][0]=2; x[8][1]=-1;
+        x[9][0]=1; x[9][1]=-2; x[10][0]=-1; x[10][1]=-2;
+        x[11][0]=-2; x[11][1]=-1; x[4][0]=-2; x[4][1]=1;
     } else if (name=="dodecahedron") {
         read_special(dodecahedron_graph);
         for (int i=1;i<=5;++i) hull.push_back(node_index(i));
@@ -12109,6 +12103,49 @@ int graphe::vertex_connectivity() {
         }
     }
     return k;
+}
+
+/* truncate the graph, assuming that it is planar */
+void graphe::truncate(graphe &dest,const ivectors &faces) {
+    set_embedding(faces);
+    dest.clear();
+    int nv=node_count(),ne=edge_count(),n;
+    if (dest.supports_attributes()) {
+        vecteur V;
+        dest.make_default_labels(V,2*ne);
+        dest.add_nodes(V);
+    } else dest.add_nodes(2*ne);
+    int cnt=0,f;
+    ivector adj;
+    map<ipair,ivector> p;
+    for (int i=0;i<nv;++i) {
+        vertex &v=node(i);
+        n=v.neighbors().size();
+        ivector ngh;
+        adjacent_nodes(i,adj);
+        ngh.push_back(adj.back());
+        adj.pop_back();
+        while (!adj.empty()) {
+            f=v.edge_face(ngh.back());
+            ivector::iterator it=adj.begin();
+            for (;it!=adj.end() && f!=node(*it).edge_face(i);++it);
+            assert(it!=adj.end());
+            ngh.push_back(*it);
+            adj.erase(it);
+        }
+        for (int j=0;j<n;++j) {
+            p[make_pair(i<ngh[j]?i:ngh[j],i<ngh[j]?ngh[j]:i)].push_back(cnt+j);
+            dest.add_edge(cnt+j,cnt+(j+1)%n);
+        }
+        cnt+=n;
+    }
+    ipairs E;
+    get_edges_as_pairs(E);
+    for (ipairs_iter it=E.begin();it!=E.end();++it) {
+        const ivector &iv=p[*it];
+        assert(iv.size()==2);
+        dest.add_edge(iv.front(),iv.back());
+    }
 }
 
 #ifndef NO_NAMESPACE_GIAC

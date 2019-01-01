@@ -17712,3 +17712,11 @@ conjugate_equation(A*sin(t)+B*cos(t),[A,B],[1,0],t,0)
 -2 clique_stats
 tonnetz(3,4,5)
 tonnetz(2,3,3,4)
+
+# truncate_graph
+0 Graph(G)
+2 Returns the graph obtained by truncating the biconnected planar graph G.
+-1 is_biconnected
+-2 is_planar
+-3 plane_dual
+truncate_graph(graph("tetrahedron"))

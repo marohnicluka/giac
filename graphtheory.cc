@@ -1746,19 +1746,6 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 indices.erase(it);
             }
         }
-        if (!outer_vertices.empty()) {
-            if (nc>1)
-                return gt_err(_GT_ERR_CONNECTED_GRAPH_REQUIRED);
-            // get the outer face for circular drawing
-            int m=outer_vertices.size();
-            hull.resize(m);
-            for (const_iterateur it=outer_vertices.begin();it!=outer_vertices.end();++it) {
-                i=G.node_index(*it);
-                if (i==-1)
-                    return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
-                hull[it-outer_vertices.begin()]=i;
-            }
-        }
         layouts.resize(nc);
         vector<graphe::rectangle> bounding_rects(nc);
         bool check=method!=_GT_STYLE_DEFAULT;
@@ -1769,6 +1756,19 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
             i=it-components.begin();
             graphe C(contextptr);
             G.induce_subgraph(*it,C);
+            if (!outer_vertices.empty()) {
+                if (nc>1)
+                    return gt_err(_GT_ERR_CONNECTED_GRAPH_REQUIRED);
+                // get the outer face for circular drawing
+                int m=outer_vertices.size(),index;
+                hull.resize(m);
+                for (const_iterateur jt=outer_vertices.begin();jt!=outer_vertices.end();++jt) {
+                    index=C.node_index(*jt);
+                    if (index==-1)
+                        return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
+                    hull[jt-outer_vertices.begin()]=index;
+                }
+            }
             graphe::layout &x=layouts[i];
             if (it->size()<3)
                 comp_method=_GT_STYLE_SPRING;
@@ -1806,7 +1806,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                         hull.push_back(it->second.val);
                     }
                 }
-                C.make_circular_layout(x,hull,2.5);
+                C.make_circular_layout(x,hull,1.25);
                 hull.clear();
                 break;
             case _GT_STYLE_BIPARTITE:
@@ -6943,6 +6943,31 @@ gen _tonnetz(const gen &g,GIAC_CONTEXT) {
 static const char _tonnetz_s[]="tonnetz";
 static define_unary_function_eval(__tonnetz,&_tonnetz,_tonnetz_s);
 define_unary_function_ptr5(at_tonnetz,alias_at_tonnetz,&__tonnetz,0,true)
+
+/* USAGE:   truncate_graph(G)
+ *
+ * Returns the graph obtained by truncating the biconnected planar graph G.
+ */
+gen _truncate_graph(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr,false),H(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
+    if (G.is_empty())
+        return generr("graph is empty");
+    if (!G.is_biconnected())
+        return gt_err(_GT_ERR_BICONNECTED_GRAPH_REQUIRED);
+    graphe::ivectors faces;
+    if (!G.demoucron(faces))
+        return gt_err(_GT_ERR_NOT_PLANAR);
+    G.truncate(H,faces);
+    return H.to_gen();
+}
+static const char _truncate_graph_s[]="truncate_graph";
+static define_unary_function_eval(__truncate_graph,&_truncate_graph,_truncate_graph_s);
+define_unary_function_ptr5(at_truncate_graph,alias_at_truncate_graph,&__truncate_graph,0,true)
 
 void nexcom(int n,int k,int &h,int &t,vector<int> &r,bool &mtc) {
     int i;

@@ -1013,6 +1013,7 @@ public:
     gen transitivity();
     int edge_connectivity();
     int vertex_connectivity();
+    void truncate(graphe &dest,const ivectors &faces);
     static gen colon_label(int i,int j);
     static gen colon_label(int i,int j,int k);
     static size_t intersect_fast(ivector_iter min1,ivector_iter max1,ivector_iter min2,ivector_iter max2);

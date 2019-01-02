@@ -453,6 +453,15 @@ const int graphe::biggs_smith_graph_lcf[] = {
     27,-21,20,-37,39,-34,-44,-8,38,-21,25,15,-34,18,-28,-41,36,8,-29,-21,-48,-28,-20,-47,14,-8,-15,-27,38,24,-48,-18,25,
     38,31,-25,24,-46,-14,28,11,21,35,-39,43,36,-38,14,50,43,36,-11,-36,-24,45,8,19,-25,38,20,-24,-14,-21,-8,44,-31,-38,-28,37,0
 };
+const int graphe::folkman_graph_lcf[] = {
+    5,-7,-7,5,0
+};
+const int graphe::gray_graph_lcf[] = {
+    -25,7,-7,13,-13,25,0
+};
+const int graphe::tutte_12cage_lcf[] = {
+    17,27,-13,-59,-35,35,-11,13,-53,53,-27,21,57,11,-21,-57, 59,-17,0
+};
 const int graphe::blanusa_graph[] = {
     1,      2,6,8,-1,
     2,      3,12,-1,
@@ -508,6 +517,100 @@ const int graphe::moser_spindle_graph[] = {
     3,      4,7,-1,
     4,      5,6,-1,
     5,      6,-1,
+    -2
+};
+const int graphe::errera_graph[] = {
+    1,      2,3,4,14,15,-1,
+    2,      3,13,15,17,-1,
+    3,      13,14,16,-1,
+    4,      5,6,14,15,-1,
+    5,      6,7,14,16,-1,
+    6,      7,9,15,17,-1,
+    7,      8,9,10,-1,
+    8,      10,11,16,-1,
+    9,      10,12,17,-1,
+    10,     11,12,-1,
+    11,     13,16,-1,
+    12,     13,17,-1,
+    13,     16,17,-1,
+    14,     16,-1,
+    15,     17,-1,
+    -2
+};
+const int graphe::goldner_harary_graph[] = {
+    1,      2,3,4,5,6,9,10,11,-1,
+    2,      3,10,-1,
+    3,      4,7,8,9,10,-1,
+    4,      9,-1,
+    5,      9,11,-1,
+    6,      10,11,-1,
+    7,      9,11,-1,
+    8,      10,11,-1,
+    9,      11,-1,
+    10,     11,-1,
+    -2
+};
+const int graphe::golomb_graph[] = {
+    1,      2,3,4,-1,
+    2,      3,6,-1,
+    3,      8,-1,
+    4,      5,9,10,-1,
+    5,      6,10,-1,
+    6,      7,10,-1,
+    7,      8,10,-1,
+    8,      9,10,-1,
+    9,      10,-1,
+    -2
+};
+const int graphe::hoffman_graph_matrix[8][8] {
+    {1,1,1,1,0,0,0,0},
+    {1,1,1,0,1,0,0,0},
+    {1,0,0,1,0,1,1,0},
+    {0,1,0,1,0,1,0,1},
+    {0,0,1,1,0,0,1,1},
+    {1,0,0,0,1,1,1,0},
+    {0,1,0,0,1,1,0,1},
+    {0,0,1,0,1,0,1,1}
+};
+const int graphe::poussin_graph[] = {
+    1,      2,3,4,5,10,-1,
+    2,      3,5,7,9,15,-1,
+    3,      4,6,8,15,-1,
+    4,      6,10,-1,
+    5,      7,10,-1,
+    6,      8,10,11,12,-1,
+    7,      9,10,11,13,-1,
+    8,      12,14,15,-1,
+    9,      13,14,15,-1,
+    10,     11,-1,
+    11,     12,13,-1,
+    12,     13,14,-1,
+    13,     14,-1,
+    14,     15,-1,
+    -2
+};
+const int graphe::wagner_graph[] = {
+    1,      2,5,8,-1,
+    2,      3,6,-1,
+    3,      4,7,-1,
+    4,      5,8,-1,
+    5,      6,-1,
+    6,      7,-1,
+    7,      8,-1,
+    -2
+};
+const int graphe::tietze_graph[] = {
+    1,      2,5,9,-1,
+    2,      3,7,-1,
+    3,      4,11,-1,
+    4,      5,8,-1,
+    5,      6,-1,
+    6,      7,12,-1,
+    7,      8,-1,
+    8,      9,-1,
+    9,      10,-1,
+    10,     11,12,-1,
+    11,     12,-1,
     -2
 };
 
@@ -1165,6 +1268,17 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         read_special(dodecahedron_graph);
         for (int i=1;i<=5;++i) hull.push_back(node_index(i));
         make_circular_layout(x,hull,2.5);
+        layout_best_rotation(x);
+    } else if (name=="errera") {
+        read_special(errera_graph);
+        for (int i=0;i<3;++i) hull.push_back(i);
+        make_circular_layout(x,hull);
+        layout_best_rotation(x);
+    } else if (name=="poussin") {
+        read_special(poussin_graph);
+        for (int i=0;i<3;++i) hull.push_back(i);
+        make_circular_layout(x,hull);
+        layout_best_rotation(x);
     } else if (name=="franklin") {
         make_lcf_graph(franklin_graph_lcf,6);
         for (int i=0;i<node_count();++i) hull.push_back(i);
@@ -1184,9 +1298,33 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         read_special(dyck_graph);
         for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
+    } else if (name=="folkman") {
+        make_lcf_graph(folkman_graph_lcf,5);
+        for (int i=0;i<node_count();++i) hull.push_back(i);
+        make_circular_layout(x,hull);
+    } else if (name=="gray") {
+        make_lcf_graph(gray_graph_lcf,9);
+        for (int i=0;i<node_count();++i) hull.push_back(i);
+        make_circular_layout(x,hull);
     } else if (name=="grinberg") {
         read_special(grinberg_graph);
         make_planar_layout(x);
+        layout_best_rotation(x);
+    } else if (name=="goldner-harary") {
+        read_special(goldner_harary_graph);
+        make_planar_layout(x);
+        layout_best_rotation(x);
+    } else if (name=="golomb") {
+        read_special(golomb_graph);
+        for (int i=0;i<3;++i) hull.push_back(i);
+        add_temporary_edge(0,6);
+        add_temporary_edge(1,6);
+        add_temporary_edge(1,9);
+        add_temporary_edge(2,9);
+        add_temporary_edge(0,7);
+        add_temporary_edge(2,7);
+        make_circular_layout(x,hull);
+        remove_temporary_edges();
         layout_best_rotation(x);
     } else if (name=="grotzsch") {
         read_special(grotzsch_graph);
@@ -1205,6 +1343,17 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
     } else if (name=="herschel") {
         read_special(herschel_graph);
         make_planar_layout(x);
+        layout_best_rotation(x);
+    } else if (name=="hoffman") {
+        vecteur labels;
+        make_default_labels(labels,16);
+        add_nodes(labels);
+        for (int i=0;i<16;++i) for (int j=0;j<16;++j) {
+            if ((i<8 && j<8) || (i>=8 && j>=8)) continue;
+            if (hoffman_graph_matrix[i<j?j-8:i-8][i<j?i:j]==1)
+                add_edge(i,j);
+        }
+        make_spring_layout(x,2);
         layout_best_rotation(x);
     } else if (name=="icosahedron") {
         read_special(icosahedron_graph);
@@ -1265,6 +1414,25 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
     } else if (name=="tetrahedron") {
         read_special(tetrahedron_graph);
         make_planar_layout(x);
+        layout_best_rotation(x);
+    } else if (name=="tietze") {
+        read_special(tietze_graph);
+        hull.push_back(0); hull.push_back(1); hull.push_back(4);
+        hull.push_back(6); hull.push_back(2); hull.push_back(9);
+        hull.push_back(5); hull.push_back(8); hull.push_back(3);
+        make_circular_layout(x,hull);
+        layout_best_rotation(x);
+    } else if (name=="tutte12") {
+        make_lcf_graph(tutte_12cage_lcf,7);
+        for (int i=0;i<node_count();++i) hull.push_back(i);
+        make_circular_layout(x,hull);
+    } else if (name=="wagner") {
+        read_special(wagner_graph);
+        hull.push_back(0); hull.push_back(1);
+        hull.push_back(4); hull.push_back(6);
+        hull.push_back(2); hull.push_back(5);
+        hull.push_back(7); hull.push_back(3);
+        make_circular_layout(x,hull);
         layout_best_rotation(x);
     }
     if (!x.empty()) {

@@ -557,6 +557,16 @@ public:
     static const int frucht_graph_lcf[];
     static const int biggs_smith_graph_lcf[];
     static const int moser_spindle_graph[];
+    static const int errera_graph[];
+    static const int goldner_harary_graph[];
+    static const int golomb_graph[];
+    static const int hoffman_graph_matrix[8][8];
+    static const int poussin_graph[];
+    static const int wagner_graph[];
+    static const int folkman_graph_lcf[];
+    static const int gray_graph_lcf[];
+    static const int tutte_12cage_lcf[];
+    static const int tietze_graph[];
 
 private:
     const context *ctx;

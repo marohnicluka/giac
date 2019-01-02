@@ -3839,9 +3839,9 @@
     </unfolded-io>
   </session>
 
-  When drawing fullerenes, one may use the circular method which usually
-  gives the best result. Below is a commandline which uses a random face as
-  the outer face.
+  When drawing fullerenes, it is recommended to use the circular method since
+  it usually gives the best result. A random face can be chosen as the outer
+  face, as in the example below.
 
   <\session|giac|default>
     <\input>
@@ -10849,6 +10849,108 @@
 
   <center|<image|images/digraph11.eps|35%|||>>
 
+  To demonstrate how a parametrized <samp|st>-ordering can be useful, one can
+  use the following simple program in <samp|Giac> language.
+
+  <\verbatim-code>
+    FindPath:=proc(G,u,v,p)
+
+    \ \ local tmp,D,W;
+
+    \ \ if !has_edge(G,[u,v]) then
+
+    \ \ \ \ G:=add_edge(G,[u,v]);
+
+    \ \ \ \ tmp:=true;
+
+    \ \ else
+
+    \ \ \ \ tmp:=false;
+
+    \ \ fi;
+
+    \ \ purge(D);
+
+    \ \ st_ordering(G,u,v,D,p);
+
+    \ \ if tmp then
+
+    \ \ \ \ D:=delete_arc(D,[u,v]);
+
+    \ \ fi;
+
+    \ \ W:=is_weighted(G)?weight_matrix(G):adjacency_matrix(G);
+
+    \ \ D:=make_weighted(D,-W);
+
+    \ \ return bellman_ford(D,u,v)[0];
+
+    end:;
+  </verbatim-code>
+
+  The procedure <verbatim|FindPath> uses Bellman-Ford algorithm to find a
+  longest path in the graph <math|G<around*|(|V,E|)>> from the vertex
+  <math|u\<in\>V> to the vertex <math|v\<in\>V> in the <abbr|DAG> <math|D>
+  induced by a parametrized <samp|st>-ordering of <math|G> with parameter
+  <math|p\<in\><around*|[|0,1|]>>. To trick Bellman-Ford into finding a
+  longest path instead of the shortest one (which it was designed for), the
+  edges of <math|D> are weighted with negative weights. Since <math|D> is
+  acyclic, there are no negative cycles, so Bellman-Ford algorithm terminates
+  successfully.
+
+  For <math|p=0> one obtains a relatively short path, but usually not a
+  minimal one. For <math|p=1> one obtains near-Hamiltonian paths. For
+  <math|p\<in\><around*|(|0,1|)>> one obtains a path of length <math|l> which
+  roughly obeys the relation
+
+  <\equation*>
+    l\<approx\>l<rsub|0>+p*<around*|(|<around*|\||V|\|>-l<rsub|0>|)>,
+  </equation*>
+
+  where <math|l<rsub|0>> is the average path length for <math|p=0>.
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      G:=graph("soccerball")
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 60 vertices and 90 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      P1:=FindPath(G,3,33,0):; length(P1)
+    <|unfolded-io>
+      <\equation*>
+        <math-up|Done>,12
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      P2:=FindPath(G,3,33,0.5):; length(P2)
+    <|unfolded-io>
+      <\equation*>
+        <math-up|Done>,39
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      P3:=FindPath(G,3,33,1):; length(P3)
+    <|unfolded-io>
+      <\equation*>
+        <math-up|Done>,59
+      </equation*>
+    </unfolded-io>
+  </session>
+
   <section|Matching in graphs>
 
   <subsection|Maximum matching><label|maximum-matching>
@@ -15070,7 +15172,7 @@
 <\references>
   <\collection>
     <associate|a3|<tuple|A3|128>>
-    <associate|allpairs-distance|<tuple|4.8.2|95>>
+    <associate|allpairs-distance|<tuple|4.8.2|96>>
     <associate|articulation-points|<tuple|4.5.5|86>>
     <associate|assign-edge-weights|<tuple|1.10.9|47>>
     <associate|auto-1|<tuple|?|7>>
@@ -15192,8 +15294,8 @@
     <associate|auto-203|<tuple|4.1.7|66>>
     <associate|auto-204|<tuple|4.1.8|67>>
     <associate|auto-205|<tuple|4.1.8|67>>
-    <associate|auto-206|<tuple|4.1.9|67>>
-    <associate|auto-207|<tuple|4.1.9|67>>
+    <associate|auto-206|<tuple|4.1.9|68>>
+    <associate|auto-207|<tuple|4.1.9|68>>
     <associate|auto-208|<tuple|4.1.10|68>>
     <associate|auto-209|<tuple|4.1.10|68>>
     <associate|auto-21|<tuple|1.2.3|14>>
@@ -15221,8 +15323,8 @@
     <associate|auto-23|<tuple|1.3.1|14>>
     <associate|auto-230|<tuple|4.3.2|77>>
     <associate|auto-231|<tuple|4.3.2|77>>
-    <associate|auto-232|<tuple|4.3.3|77>>
-    <associate|auto-233|<tuple|4.3.3|77>>
+    <associate|auto-232|<tuple|4.3.3|78>>
+    <associate|auto-233|<tuple|4.3.3|78>>
     <associate|auto-234|<tuple|4.4|78>>
     <associate|auto-235|<tuple|4.4.1|78>>
     <associate|auto-236|<tuple|4.4.1|78>>
@@ -15256,12 +15358,12 @@
     <associate|auto-261|<tuple|4.5.7|87>>
     <associate|auto-262|<tuple|4.5.8|88>>
     <associate|auto-263|<tuple|4.5.8|88>>
-    <associate|auto-264|<tuple|4.5.9|88>>
-    <associate|auto-265|<tuple|4.5.9|88>>
-    <associate|auto-266|<tuple|4.5.9|88>>
-    <associate|auto-267|<tuple|4.6|89>>
-    <associate|auto-268|<tuple|4.6.1|89>>
-    <associate|auto-269|<tuple|4.6.1|89>>
+    <associate|auto-264|<tuple|4.5.9|89>>
+    <associate|auto-265|<tuple|4.5.9|89>>
+    <associate|auto-266|<tuple|4.5.9|89>>
+    <associate|auto-267|<tuple|4.6|90>>
+    <associate|auto-268|<tuple|4.6.1|90>>
+    <associate|auto-269|<tuple|4.6.1|90>>
     <associate|auto-27|<tuple|1.3.2|15>>
     <associate|auto-270|<tuple|4.6.2|90>>
     <associate|auto-271|<tuple|4.6.2|90>>
@@ -15282,8 +15384,8 @@
     <associate|auto-285|<tuple|4.8|95>>
     <associate|auto-286|<tuple|4.8.1|95>>
     <associate|auto-287|<tuple|4.8.1|95>>
-    <associate|auto-288|<tuple|4.8.2|95>>
-    <associate|auto-289|<tuple|4.8.2|95>>
+    <associate|auto-288|<tuple|4.8.2|96>>
+    <associate|auto-289|<tuple|4.8.2|96>>
     <associate|auto-29|<tuple|1.4.1|16>>
     <associate|auto-290|<tuple|4.8.3|97>>
     <associate|auto-291|<tuple|4.8.4|97>>
@@ -15299,51 +15401,51 @@
     <associate|auto-30|<tuple|1.4.1|16>>
     <associate|auto-300|<tuple|4.9.3|99>>
     <associate|auto-301|<tuple|4.9.3|99>>
-    <associate|auto-302|<tuple|4.10|99>>
-    <associate|auto-303|<tuple|4.10.1|99>>
-    <associate|auto-304|<tuple|4.10.1|99>>
-    <associate|auto-305|<tuple|4.10.2|100>>
-    <associate|auto-306|<tuple|4.10.2|100>>
-    <associate|auto-307|<tuple|4.11|101>>
-    <associate|auto-308|<tuple|4.11.1|101>>
-    <associate|auto-309|<tuple|4.11.1|101>>
+    <associate|auto-302|<tuple|4.10|100>>
+    <associate|auto-303|<tuple|4.10.1|100>>
+    <associate|auto-304|<tuple|4.10.1|100>>
+    <associate|auto-305|<tuple|4.10.2|101>>
+    <associate|auto-306|<tuple|4.10.2|101>>
+    <associate|auto-307|<tuple|4.11|102>>
+    <associate|auto-308|<tuple|4.11.1|102>>
+    <associate|auto-309|<tuple|4.11.1|102>>
     <associate|auto-31|<tuple|1.4.2|16>>
-    <associate|auto-310|<tuple|4.11.2|102>>
-    <associate|auto-311|<tuple|4.11.2|102>>
-    <associate|auto-312|<tuple|4.11.3|103>>
-    <associate|auto-313|<tuple|4.11.3|103>>
-    <associate|auto-314|<tuple|4.11.3|103>>
-    <associate|auto-315|<tuple|4.11.4|104>>
-    <associate|auto-316|<tuple|4.11.4|104>>
-    <associate|auto-317|<tuple|4.11.5|104>>
-    <associate|auto-318|<tuple|4.11.5|104>>
-    <associate|auto-319|<tuple|4.12|105>>
+    <associate|auto-310|<tuple|4.11.2|103>>
+    <associate|auto-311|<tuple|4.11.2|103>>
+    <associate|auto-312|<tuple|4.11.3|104>>
+    <associate|auto-313|<tuple|4.11.3|104>>
+    <associate|auto-314|<tuple|4.11.3|104>>
+    <associate|auto-315|<tuple|4.11.4|105>>
+    <associate|auto-316|<tuple|4.11.4|105>>
+    <associate|auto-317|<tuple|4.11.5|105>>
+    <associate|auto-318|<tuple|4.11.5|105>>
+    <associate|auto-319|<tuple|4.12|106>>
     <associate|auto-32|<tuple|1.4.2|16>>
-    <associate|auto-320|<tuple|4.12.1|105>>
-    <associate|auto-321|<tuple|4.12.1|105>>
-    <associate|auto-322|<tuple|4.12.2|106>>
-    <associate|auto-323|<tuple|4.12.2|106>>
-    <associate|auto-324|<tuple|4.12.3|108>>
-    <associate|auto-325|<tuple|4.12.3|108>>
-    <associate|auto-326|<tuple|4.13|109>>
-    <associate|auto-327|<tuple|4.13.1|109>>
-    <associate|auto-328|<tuple|4.13.1|109>>
-    <associate|auto-329|<tuple|4.1|111>>
+    <associate|auto-320|<tuple|4.12.1|106>>
+    <associate|auto-321|<tuple|4.12.1|106>>
+    <associate|auto-322|<tuple|4.12.2|107>>
+    <associate|auto-323|<tuple|4.12.2|107>>
+    <associate|auto-324|<tuple|4.12.3|109>>
+    <associate|auto-325|<tuple|4.12.3|109>>
+    <associate|auto-326|<tuple|4.13|110>>
+    <associate|auto-327|<tuple|4.13.1|110>>
+    <associate|auto-328|<tuple|4.13.1|110>>
+    <associate|auto-329|<tuple|4.1|112>>
     <associate|auto-33|<tuple|1.5|16>>
-    <associate|auto-330|<tuple|4.13.2|110>>
-    <associate|auto-331|<tuple|4.13.2|110>>
-    <associate|auto-332|<tuple|4.13.3|111>>
-    <associate|auto-333|<tuple|4.13.3|111>>
-    <associate|auto-334|<tuple|4.13.4|111>>
-    <associate|auto-335|<tuple|4.13.4|111>>
-    <associate|auto-336|<tuple|4.13.5|112>>
-    <associate|auto-337|<tuple|4.13.5|112>>
-    <associate|auto-338|<tuple|4.14|113>>
-    <associate|auto-339|<tuple|4.14.1|113>>
+    <associate|auto-330|<tuple|4.13.2|111>>
+    <associate|auto-331|<tuple|4.13.2|111>>
+    <associate|auto-332|<tuple|4.13.3|112>>
+    <associate|auto-333|<tuple|4.13.3|112>>
+    <associate|auto-334|<tuple|4.13.4|112>>
+    <associate|auto-335|<tuple|4.13.4|112>>
+    <associate|auto-336|<tuple|4.13.5|113>>
+    <associate|auto-337|<tuple|4.13.5|113>>
+    <associate|auto-338|<tuple|4.14|114>>
+    <associate|auto-339|<tuple|4.14.1|114>>
     <associate|auto-34|<tuple|1.5.1|16>>
-    <associate|auto-340|<tuple|4.14.1|113>>
-    <associate|auto-341|<tuple|4.14.2|114>>
-    <associate|auto-342|<tuple|4.14.2|114>>
+    <associate|auto-340|<tuple|4.14.1|114>>
+    <associate|auto-341|<tuple|4.14.2|115>>
+    <associate|auto-342|<tuple|4.14.2|115>>
     <associate|auto-343|<tuple|5|117>>
     <associate|auto-344|<tuple|5.1|117>>
     <associate|auto-345|<tuple|5.1.1|117>>
@@ -15462,7 +15564,7 @@
     <associate|auto-97|<tuple|1.9.9|33>>
     <associate|auto-98|<tuple|1.9.10|35>>
     <associate|auto-99|<tuple|1.9.10|35>>
-    <associate|automorphisms|<tuple|4.3.3|77>>
+    <associate|automorphisms|<tuple|4.3.3|78>>
     <associate|bib-afzal|<tuple|1|137>>
     <associate|bib-alonso|<tuple|2|137>>
     <associate|bib-andova|<tuple|3|137>>
@@ -15531,27 +15633,27 @@
     <associate|blockjoin|<tuple|6.1|129>>
     <associate|canonical-labeling|<tuple|4.3.2|77>>
     <associate|chordface|<tuple|6.2|130>>
-    <associate|clustering-coefficient|<tuple|4.12.2|106>>
+    <associate|clustering-coefficient|<tuple|4.12.2|107>>
     <associate|connected-components|<tuple|4.5.2|84>>
     <associate|departures-arrivals|<tuple|4.1.7|66>>
     <associate|digraph|<tuple|1.1.2|10>>
     <associate|draw-graph|<tuple|6.1|125>>
     <associate|eq:chromatic-poly|<tuple|4.1|80>>
     <associate|eq:flow-poly|<tuple|4.2|81>>
-    <associate|eq:reliability-poly|<tuple|4.3|81>>
+    <associate|eq:reliability-poly|<tuple|4.3|82>>
     <associate|footnote-1|<tuple|1|7>>
     <associate|footnote-1.1|<tuple|1.1|41>>
     <associate|footnote-2|<tuple|2|7>>
     <associate|footnote-3.1|<tuple|3.1|57>>
     <associate|footnote-3.2|<tuple|3.2|59>>
-    <associate|footnote-4.1|<tuple|4.1|78>>
+    <associate|footnote-4.1|<tuple|4.1|79>>
     <associate|footnote-5.1|<tuple|5.1|120>>
     <associate|footnr-1|<tuple|1|7>>
     <associate|footnr-1.1|<tuple|1.1|41>>
     <associate|footnr-2|<tuple|2|7>>
     <associate|footnr-3.1|<tuple|3.1|57>>
     <associate|footnr-3.2|<tuple|3.2|59>>
-    <associate|footnr-4.1|<tuple|4.1|78>>
+    <associate|footnr-4.1|<tuple|4.1|79>>
     <associate|footnr-5.1|<tuple|5.1|120>>
     <associate|frucht|<tuple|1.6.10|23>>
     <associate|graph|<tuple|1.1.1|9>>
@@ -15564,20 +15666,20 @@
     <associate|highlight-vertices|<tuple|6.3.1|133>>
     <associate|import-graph|<tuple|3.1.1|57>>
     <associate|induced-subgraph|<tuple|1.8.2|26>>
-    <associate|is-bipartite|<tuple|4.1.9|67>>
+    <associate|is-bipartite|<tuple|4.1.9|68>>
     <associate|is-isomorphic|<tuple|4.3.1|75>>
     <associate|is-network|<tuple|4.7.1|92>>
     <associate|is-regular|<tuple|4.1.5|64>>
     <associate|is-tournament|<tuple|4.1.8|67>>
-    <associate|is-tree|<tuple|4.6.1|89>>
+    <associate|is-tree|<tuple|4.6.1|90>>
     <associate|isomorphic-copy|<tuple|1.7.1|23>>
     <associate|laplacian-matrix|<tuple|4.2.2|70>>
     <associate|make-directed|<tuple|2.1.1|49>>
     <associate|make-weighted|<tuple|2.1.2|49>>
     <associate|maxflow|<tuple|4.7.2|93>>
-    <associate|maximum-matching|<tuple|4.10.1|99>>
-    <associate|minimal-coloring|<tuple|4.13.2|110>>
-    <associate|minimum-covering|<tuple|4.11.4|104>>
+    <associate|maximum-matching|<tuple|4.10.1|100>>
+    <associate|minimal-coloring|<tuple|4.13.2|111>>
+    <associate|minimum-covering|<tuple|4.11.4|105>>
     <associate|number-of-spanning-trees|<tuple|5.3.3|124>>
     <associate|random-graph|<tuple|1.10.1|37>>
     <associate|random-network|<tuple|1.10.8|46>>
@@ -15586,7 +15688,7 @@
     <associate|st-ordering|<tuple|4.9.3|99>>
     <associate|st53|<tuple|3.1|59>>
     <associate|subgraph|<tuple|1.8.1|25>>
-    <associate|tab:colors|<tuple|4.1|111>>
+    <associate|tab:colors|<tuple|4.1|112>>
     <associate|touchface|<tuple|6.3|130>>
     <associate|trail|<tuple|1.2.3|14>>
     <associate|traveling-salesman|<tuple|5.2.3|120>>

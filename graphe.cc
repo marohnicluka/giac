@@ -562,7 +562,7 @@ const int graphe::golomb_graph[] = {
     9,      10,-1,
     -2
 };
-const int graphe::hoffman_graph_matrix[8][8] {
+const int graphe::hoffman_graph_matrix[8][8] = {
     {1,1,1,1,0,0,0,0},
     {1,1,1,0,1,0,0,0},
     {1,0,0,1,0,1,1,0},

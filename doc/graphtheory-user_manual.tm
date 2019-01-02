@@ -3793,12 +3793,12 @@
 
   <center|<image|images/trunc.eps|35%|||>>
 
-  Truncating the plane dual of <math|G> represents the <em|leapfrog>
-  operation on <math|G>, which can be used for constructing
+  Truncating the plane dual of <math|G> represents the <strong|leapfrog
+  operation> on <math|G>, which can be used for constructing
   <hlink|<rigid|fullerene graphs>|https://en.wikipedia.org/wiki/Fullerene#Other_buckyballs><nbsp><cite|andova>.
-  By performing the leapfrog operation on a fullerene one obtains a larger
-  fullerene. For example, the dual of the Errera graph is a fullerene (see
-  <hlink|here|https://en.wikipedia.org/wiki/Errera_graph#Applications_in_chemistry>);
+  By performing the leapfrog operation on a fullerene graph one obtains a
+  larger fullerene. For example, the dual of the Errera graph is a fullerene
+  (see <hlink|here|https://en.wikipedia.org/wiki/Errera_graph#Applications_in_chemistry>);
   hence by truncating Errera graph (i.e.<nbsp>the dual of its dual) one
   obtains a fullerene.
 
@@ -3839,9 +3839,10 @@
     </unfolded-io>
   </session>
 
-  When drawing fullerenes, it is recommended to use the circular method since
-  it usually gives the best result. A random face can be chosen as the outer
-  face, as in the example below.
+  When drawing fullerenes, it is recommended to use the
+  <hlink|<rigid|circular method>|#circle-method> since it usually produces
+  best results. Any face of the planar embedding of a given fullerene be
+  chosen as the outer face, as in the example below.
 
   <\session|giac|default>
     <\input>
@@ -10888,20 +10889,20 @@
     end:;
   </verbatim-code>
 
-  The procedure <verbatim|FindPath> uses Bellman-Ford algorithm to find a
+  The procedure <verbatim|FindPath> uses the Bellman-Ford algorithm to find a
   longest path in the graph <math|G<around*|(|V,E|)>> from the vertex
   <math|u\<in\>V> to the vertex <math|v\<in\>V> in the <abbr|DAG> <math|D>
   induced by a parametrized <samp|st>-ordering of <math|G> with parameter
   <math|p\<in\><around*|[|0,1|]>>. To trick Bellman-Ford into finding a
   longest path instead of the shortest one (which it was designed for), the
   edges of <math|D> are weighted with negative weights. Since <math|D> is
-  acyclic, there are no negative cycles, so Bellman-Ford algorithm terminates
-  successfully.
+  acyclic, there are no negative cycles, so the Bellman-Ford algorithm
+  terminates successfully.
 
   For <math|p=0> one obtains a relatively short path, but usually not a
   minimal one. For <math|p=1> one obtains near-Hamiltonian paths. For
   <math|p\<in\><around*|(|0,1|)>> one obtains a path of length <math|l> which
-  roughly obeys the relation
+  obeys the relation
 
   <\equation*>
     l\<approx\>l<rsub|0>+p*<around*|(|<around*|\||V|\|>-l<rsub|0>|)>,
@@ -13693,11 +13694,11 @@
   which the layout exhibits the largest <em|symmetry score>, becomes
   vertical. Because symmetry detection is computationally quite expensive (up
   to <math|O<around*|(|<around*|\||V|\|><rsup|7>|)>> when using the symmetry
-  measure by <name|Purchase><nbsp><cite|welch>, for example), the algorithm
+  measure of <name|Purchase><nbsp><cite|welch>, for example), the algorithm
   accounts only the convex hull and the barycenter of the layout, which may
   not always be enough to produce the optimal result. Nevertheless, this
-  approach is fast and works (most of the time) for graphs with a high level
-  of symmetry.
+  approach is fast and works (most of the time) for highly symmetrical
+  graphs.
 
   For example, the following command lines produce a drawing of the tensor
   product of two graphs using the force-directed algorithm.
@@ -14029,7 +14030,7 @@
   In the above example, several redraws were required to obtain a good planar
   embedding.
 
-  <subsection|Circular graph drawings>
+  <subsection|Circular graph drawings><label|circle-method>
 
   The drawing method selected by specifying the option <verbatim|circle=L> or
   <verbatim|convexhull=L> when calling <verbatim|draw_graph> on a
@@ -14042,10 +14043,11 @@
   barycentric method, is applied to obtain the final layout.
 
   This approach gives best results for symmetrical graphs such as generalized
-  Petersen graphs. In addition, if the input graph is planar, the drawing
-  will also be planar (there is a possibility, however, that some very short
-  edges may cross each other as the number of force update iterations is
-  limited).
+  Petersen graphs. In addition, if the input graph is planar and
+  triconnected, and the outer hull represents a face in the respective planar
+  embedding, then the drawing will contain no edge crossings. There is a
+  possibility, however, that some very short edges may cross each other as
+  the number of force update iterations is limited.
 
   In the following example the Sierpi«ski graph <math|S<rsub|4><rsup|2>> is
   drawn using the above method. Note that the command lines below are
@@ -14070,6 +14072,39 @@
   </session>
 
   <center|<image|images/sg24.eps|35%|||>>
+
+  To draw a planar triconnected graph, one should pass one of its faces as
+  the outer hull.
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      G:=truncate_graph(graph("frucht"))
+    <|unfolded-io>
+      <\equation*>
+        <text|an undirected unweighted graph with 60 vertices and 90 edges>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      purge(F):; is_planar(G,F)
+    <|unfolded-io>
+      <\equation*>
+        <math-up|Done>,<text|true>
+      </equation*>
+    </unfolded-io>
+
+    <\input>
+      \<gtr\>\ 
+    <|input>
+      draw_graph(G,circle=rand(F),labels=false)
+    </input>
+  </session>
+
+  <center|<image|images/tfrucht.eps|35%|||>>
 
   <section|Vertex positions>
 
@@ -15633,6 +15668,7 @@
     <associate|blockjoin|<tuple|6.1|129>>
     <associate|canonical-labeling|<tuple|4.3.2|77>>
     <associate|chordface|<tuple|6.2|130>>
+    <associate|circle-method|<tuple|6.1.6|131>>
     <associate|clustering-coefficient|<tuple|4.12.2|107>>
     <associate|connected-components|<tuple|4.5.2|84>>
     <associate|departures-arrivals|<tuple|4.1.7|66>>

@@ -3809,14 +3809,45 @@
       G:=truncate_graph(graph("errera"))
     <|unfolded-io>
       <\equation*>
-        an undirected unweighted graph with 86 vertices and 129 edges
+        an undirected unweighted graph with 90 vertices and 135 edges
       </equation*>
     </unfolded-io>
 
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      is_planar(G,F)
+    <|unfolded-io>
+      <\equation*>
+        true
+      </equation*>
+    </unfolded-io>
+  </session>
+
+  Now <math|F> contains a list of faces of the graph <math|G>. Since <math|G>
+  is a fullerene, every face is a 5- or 6-cycle.
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      set[op(apply(length,F))]
+    <|unfolded-io>
+      <\equation*>
+        set[5,6]
+      </equation*>
+    </unfolded-io>
+  </session>
+
+  When drawing fullerenes, one may use the circular method which usually
+  gives the best result. Below is a commandline which uses a random face as
+  the outer face.
+
+  <\session|giac|default>
     <\input>
       \<gtr\>\ 
     <|input>
-      draw_graph(G,planar)
+      draw_graph(G,circle=rand(F))
     </input>
   </session>
 
@@ -3828,7 +3859,7 @@
 
   The commands <verbatim|random_graph><index|<verbatim|random_graph>> and
   <verbatim|random_digraph><index|<verbatim|random_digraph>> are used for
-  generating general (di)graphs at random according to a given model,
+  generating general (di)graphs at random according to various models,
   including <hlink|<rigid|preferential attachment>|https://en.wikipedia.org/wiki/Preferential_attachment>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<cwith|1|1|3|3|cell-valign|c>|<cwith|1|-1|3|3|cell-lsep|1em>|<cwith|5|5|3|3|cell-valign|c>|<cwith|7|7|3|3|cell-valign|c>|<cwith|5|5|3|3|cell-row-span|2>|<cwith|5|5|3|3|cell-col-span|1>|<cwith|1|1|3|3|cell-row-span|4>|<cwith|1|1|3|3|cell-col-span|1>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_graph(n\|L,p)>>|<cell|<very-small|Erd®s\URényi

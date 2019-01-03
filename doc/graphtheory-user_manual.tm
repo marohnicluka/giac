@@ -10855,35 +10855,26 @@
 
   <center|<image|images/digraph11.eps|35%|||>>
 
-  To demonstrate how a parametrized <samp|st>-ordering can be useful, one can
-  use the following simple program in <samp|Giac> language.
+  The following program demonstrates using the parametrized
+  <samp|st>-ordering algorithm in order to find a path between vertices
+  <math|u> and <math|v> in an undirected, biconnected graph
+  <math|G<around*|(|V,E|)>>. The path length is controllable by varying the
+  parameter <math|p\<in\><around*|[|0,1|]>>.
 
   <\verbatim-code>
     FindPath:=proc(G,u,v,p)
 
     \ \ local tmp,D,W;
 
-    \ \ if !has_edge(G,[u,v]) then
+    \ \ tmp:=!has_edge(G,[u,v]);
 
-    \ \ \ \ G:=add_edge(G,[u,v]);
-
-    \ \ \ \ tmp:=true;
-
-    \ \ else
-
-    \ \ \ \ tmp:=false;
-
-    \ \ fi;
+    \ \ if tmp then G:=add_edge(G,[u,v]); fi;
 
     \ \ purge(D);
 
     \ \ st_ordering(G,u,v,D,p);
 
-    \ \ if tmp then
-
-    \ \ \ \ D:=delete_arc(D,[u,v]);
-
-    \ \ fi;
+    \ \ if tmp then D:=delete_arc(D,[u,v]); fi;
 
     \ \ W:=is_weighted(G)?weight_matrix(G):adjacency_matrix(G);
 
@@ -10894,15 +10885,14 @@
     end:;
   </verbatim-code>
 
-  The procedure <verbatim|FindPath> uses the Bellman-Ford algorithm to find a
-  longest path in the graph <math|G<around*|(|V,E|)>> from the vertex
+  The procedure <verbatim|FindPath> uses the <hlink|Bellman-Ford
+  algorithm|#cheapest-paths> to find a longest path from the vertex
   <math|u\<in\>V> to the vertex <math|v\<in\>V> in the <abbr|DAG> <math|D>
   induced by a parametrized <samp|st>-ordering of <math|G> with parameter
-  <math|p\<in\><around*|[|0,1|]>>. To trick Bellman-Ford into finding a
-  longest path instead of the shortest one (which it was designed for), the
-  edges of <math|D> are weighted with negative weights. Since <math|D> is
-  acyclic, there are no negative cycles, so the Bellman-Ford algorithm
-  terminates successfully.
+  <math|p>. To trick Bellman-Ford into finding a longest path instead of the
+  shortest one (which it was designed for), the edges of <math|D> are
+  weighted with negative weights. Since <math|D> is acyclic, it contains no
+  negative cycles, so the Bellman-Ford algorithm terminates successfully.
 
   For <math|p=0> one obtains a relatively short path, but usually not a
   minimal one. For <math|p=1> one obtains near-Hamiltonian paths. For
@@ -13038,7 +13028,7 @@
 
   <center|<image|images/short.eps|35%|||>>
 
-  <subsection|Cheapest weighted paths>
+  <subsection|Cheapest weighted paths><label|cheapest-paths>
 
   The commands <with|font-family|tt|dijkstra><index|<with|font-family|tt|dijkstra>>
   and <verbatim|bellman_ford><index|<verbatim|bellman_ford>> are used for
@@ -15450,13 +15440,13 @@
     <associate|auto-308|<tuple|4.11.1|102>>
     <associate|auto-309|<tuple|4.11.1|102>>
     <associate|auto-31|<tuple|1.4.2|16>>
-    <associate|auto-310|<tuple|4.11.2|103>>
-    <associate|auto-311|<tuple|4.11.2|103>>
+    <associate|auto-310|<tuple|4.11.2|102>>
+    <associate|auto-311|<tuple|4.11.2|102>>
     <associate|auto-312|<tuple|4.11.3|104>>
     <associate|auto-313|<tuple|4.11.3|104>>
     <associate|auto-314|<tuple|4.11.3|104>>
-    <associate|auto-315|<tuple|4.11.4|105>>
-    <associate|auto-316|<tuple|4.11.4|105>>
+    <associate|auto-315|<tuple|4.11.4|104>>
+    <associate|auto-316|<tuple|4.11.4|104>>
     <associate|auto-317|<tuple|4.11.5|105>>
     <associate|auto-318|<tuple|4.11.5|105>>
     <associate|auto-319|<tuple|4.12|106>>
@@ -15470,12 +15460,12 @@
     <associate|auto-326|<tuple|4.13|110>>
     <associate|auto-327|<tuple|4.13.1|110>>
     <associate|auto-328|<tuple|4.13.1|110>>
-    <associate|auto-329|<tuple|4.1|112>>
+    <associate|auto-329|<tuple|4.1|111>>
     <associate|auto-33|<tuple|1.5|16>>
     <associate|auto-330|<tuple|4.13.2|111>>
     <associate|auto-331|<tuple|4.13.2|111>>
-    <associate|auto-332|<tuple|4.13.3|112>>
-    <associate|auto-333|<tuple|4.13.3|112>>
+    <associate|auto-332|<tuple|4.13.3|111>>
+    <associate|auto-333|<tuple|4.13.3|111>>
     <associate|auto-334|<tuple|4.13.4|112>>
     <associate|auto-335|<tuple|4.13.4|112>>
     <associate|auto-336|<tuple|4.13.5|113>>
@@ -15672,6 +15662,7 @@
     <associate|bib-wilf|<tuple|65|138>>
     <associate|blockjoin|<tuple|6.1|129>>
     <associate|canonical-labeling|<tuple|4.3.2|77>>
+    <associate|cheapest-paths|<tuple|5.2.2|119>>
     <associate|chordface|<tuple|6.2|130>>
     <associate|circle-method|<tuple|6.1.6|131>>
     <associate|clustering-coefficient|<tuple|4.12.2|107>>
@@ -15720,7 +15711,7 @@
     <associate|maxflow|<tuple|4.7.2|93>>
     <associate|maximum-matching|<tuple|4.10.1|100>>
     <associate|minimal-coloring|<tuple|4.13.2|111>>
-    <associate|minimum-covering|<tuple|4.11.4|105>>
+    <associate|minimum-covering|<tuple|4.11.4|104>>
     <associate|number-of-spanning-trees|<tuple|5.3.3|124>>
     <associate|random-graph|<tuple|1.10.1|37>>
     <associate|random-network|<tuple|1.10.8|46>>
@@ -15729,7 +15720,7 @@
     <associate|st-ordering|<tuple|4.9.3|99>>
     <associate|st53|<tuple|3.1|59>>
     <associate|subgraph|<tuple|1.8.1|25>>
-    <associate|tab:colors|<tuple|4.1|112>>
+    <associate|tab:colors|<tuple|4.1|111>>
     <associate|touchface|<tuple|6.3|130>>
     <associate|trail|<tuple|1.2.3|14>>
     <associate|traveling-salesman|<tuple|5.2.3|120>>

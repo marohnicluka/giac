@@ -922,8 +922,8 @@
   The command<index|<verbatim|graph>> <verbatim|graph> takes between one and
   three main arguments, each of them being one of the following structural
   elements of the resulting graph <math|G<around*|(|V,E|)>>. Throughout this
-  manual, we denote an edge <math|e\<in\>E> with endpoints <math|u,v\<in\>V>
-  as <math|e=u v>. Note that the order of the endpoints does not matter if
+  manual, an edge <math|e\<in\>E> with endpoints <math|u,v\<in\>V> is denoted
+  by <math|e=u v>. Note that the order of the endpoints does not matter if
   <math|G> is undirected; hence <math|u v=v u>. If <math|G> is directed,
   <math|u v> and <math|v u> are treated as separate edges.
 
@@ -966,54 +966,59 @@
   only argument. In that case the corresponding graph will be constructed and
   returned. The supported graphs are listed below.
 
-  <center|<tabular|<tformat|<cwith|1|1|4|5|cell-tborder|0ln>|<cwith|1|1|4|5|cell-bborder|1ln>|<cwith|1|1|4|4|cell-lborder|0ln>|<cwith|1|1|3|3|cell-rborder|0ln>|<cwith|1|1|5|5|cell-rborder|0ln>|<cwith|1|1|1|2|cell-tborder|0ln>|<cwith|1|1|1|1|cell-lborder|0ln>|<cwith|1|1|2|2|cell-rborder|0ln>|<cwith|1|1|3|3|cell-lborder|0ln>|<cwith|1|1|3|3|cell-width|1em>|<cwith|1|1|3|3|cell-hmode|exact>|<cwith|5|5|4|5|cell-tborder|0ln>|<cwith|4|4|4|5|cell-bborder|0ln>|<cwith|5|5|4|5|cell-bborder|0ln>|<cwith|7|7|4|5|cell-tborder|0ln>|<cwith|5|5|4|4|cell-lborder|0ln>|<cwith|5|5|3|3|cell-rborder|0ln>|<cwith|5|5|5|5|cell-rborder|0ln>|<cwith|2|2|1|2|cell-tborder|1ln>|<cwith|1|1|1|2|cell-bborder|1ln>|<cwith|2|2|1|2|cell-bborder|0ln>|<cwith|4|4|1|2|cell-tborder|0ln>|<cwith|2|2|1|1|cell-lborder|0ln>|<cwith|2|2|2|2|cell-rborder|0ln>|<cwith|2|2|3|3|cell-lborder|0ln>|<table|<row|<cell|<strong|special
+  <center|<tabular|<tformat|<cwith|1|1|4|5|cell-tborder|0ln>|<cwith|1|1|4|5|cell-bborder|1ln>|<cwith|1|1|4|4|cell-lborder|0ln>|<cwith|1|1|3|3|cell-rborder|0ln>|<cwith|1|1|5|5|cell-rborder|0ln>|<cwith|1|1|1|2|cell-tborder|0ln>|<cwith|1|1|1|1|cell-lborder|0ln>|<cwith|1|1|2|2|cell-rborder|0ln>|<cwith|1|1|3|3|cell-lborder|0ln>|<cwith|1|1|3|3|cell-width|1em>|<cwith|1|1|3|3|cell-hmode|exact>|<cwith|7|7|3|3|cell-rborder|0ln>|<cwith|4|4|1|2|cell-bborder|0ln>|<cwith|6|6|1|2|cell-tborder|0ln>|<cwith|4|4|1|1|cell-lborder|0ln>|<cwith|4|4|2|2|cell-rborder|0ln>|<cwith|4|4|3|3|cell-lborder|0ln>|<cwith|2|2|1|2|cell-tborder|1ln>|<cwith|1|1|1|2|cell-bborder|1ln>|<cwith|2|2|1|2|cell-bborder|0ln>|<cwith|4|4|1|2|cell-tborder|0ln>|<cwith|2|2|1|1|cell-lborder|0ln>|<cwith|2|2|2|2|cell-rborder|0ln>|<cwith|2|2|3|3|cell-lborder|0ln>|<cwith|6|6|4|5|cell-tborder|0ln>|<cwith|5|5|4|5|cell-bborder|0ln>|<cwith|6|6|4|5|cell-bborder|0ln>|<cwith|8|8|4|5|cell-tborder|0ln>|<cwith|6|6|4|4|cell-lborder|0ln>|<cwith|6|6|5|5|cell-rborder|0ln>|<table|<row|<cell|<strong|special
   graph>>|<cell|<strong|name in> <samp|Giac>>|<cell|>|<cell|<strong|special
-  graph>>|<cell|<strong|name in> <samp|Giac>>>|<row|<cell|<hlink|<rigid|Bidiakis
-  cube>|https://en.wikipedia.org/wiki/Bidiakis_cube>>|<cell|<verbatim|bidiakis>>|<cell|>|<cell|<hlink|<rigid|Harries
-  graph>|https://en.wikipedia.org/wiki/Harries_graph>>|<cell|<with|font-family|tt|harries>>>|<row|<cell|<hlink|<rigid|Biggs-Smith
-  graph>|https://en.wikipedia.org/wiki/Biggs%E2%80%93Smith_graph>>|<cell|<verbatim|biggs-smith>>|<cell|>|<cell|<hlink|<rigid|Harries\UWong
-  graph>|https://en.wikipedia.org/wiki/Harries%E2%80%93Wong_graph>>|<cell|<with|font-family|tt|harries-wong>>>|<row|<cell|2<rsup|nd>
-  <hlink|<rigid|Blanu²a snark>|https://en.wikipedia.org/wiki/Blanu%C5%A1a_snarks>>|<cell|<verbatim|blanusa>>|<cell|>|<cell|<hlink|<rigid|Heawood
-  graph>|https://en.wikipedia.org/wiki/Heawood_graph>>|<cell|<with|font-family|tt|heawood>>>|<row|<cell|<hlink|<rigid|Bull
-  graph>|https://en.wikipedia.org/wiki/Bull_graph>>|<cell|<verbatim|bull>>|<cell|>|<cell|<hlink|<rigid|Herschel
-  graph>|https://en.wikipedia.org/wiki/Herschel_graph>>|<cell|<with|font-family|tt|herschel>>>|<row|<cell|<hlink|<rigid|Butterfly
-  graph>|https://en.wikipedia.org/wiki/Butterfly_graph>>|<cell|<verbatim|butterfly>>|<cell|>|<cell|<hlink|<rigid|Hoffman
-  graph>|https://en.wikipedia.org/wiki/Hoffman_graph>>|<cell|<verbatim|hoffman>>>|<row|<cell|<hlink|<rigid|Clebsch
-  graph>|https://en.wikipedia.org/wiki/Clebsch_graph>>|<cell|<with|font-family|tt|clebsch>>|<cell|>|<cell|<hlink|<rigid|Icosahedral
-  graph>|https://en.wikipedia.org/wiki/Regular_icosahedron#Icosahedral_graph>>|<cell|<with|font-family|tt|icosahedron>>>|<row|<cell|<hlink|<rigid|Chvátal
-  graph>|https://en.wikipedia.org/wiki/Chv%C3%A1tal_graph>>|<cell|<verbatim|chvatal>>|<cell|>|<cell|<hlink|<rigid|Levi
-  graph>|https://en.wikipedia.org/wiki/Levi_graph>>|<cell|<with|font-family|tt|levi>>>|<row|<cell|<hlink|<rigid|Coxeter
-  graph>|https://en.wikipedia.org/wiki/Coxeter_graph>>|<cell|<with|font-family|tt|coxeter>>|<cell|>|<cell|<hlink|<rigid|Ljubljana
-  graph>|https://en.wikipedia.org/wiki/Ljubljana_graph>>|<cell|<with|font-family|tt|ljubljana>>>|<row|<cell|<hlink|<rigid|Desargues
-  graph>|https://en.wikipedia.org/wiki/Desargues_graph>>|<cell|<with|font-family|tt|desargues>>|<cell|>|<cell|<hlink|<rigid|McGee
-  graph>|https://en.wikipedia.org/wiki/McGee_graph>>|<cell|<with|font-family|tt|mcgee>>>|<row|<cell|<hlink|<rigid|Diamond
-  graph>|https://en.wikipedia.org/wiki/Diamond_graph>>|<cell|<verbatim|diamond>>|<cell|>|<cell|<hlink|<rigid|Moser
-  spindle>|https://en.wikipedia.org/wiki/Moser_spindle>>|<cell|<verbatim|moser>>>|<row|<cell|<hlink|<rigid|Dodecahedral
-  graph>|https://en.wikipedia.org/wiki/Regular_dodecahedron#Dodecahedral_graph>>|<cell|<with|font-family|tt|dodecahedron>>|<cell|>|<cell|<hlink|<rigid|Möbius\UKantor
-  graph>|https://en.wikipedia.org/wiki/M%C3%B6bius%E2%80%93Kantor_graph>>|<cell|<verbatim|mobius-kantor>>>|<row|<cell|<hlink|<rigid|Dürer
-  graph>|https://en.wikipedia.org/wiki/D%C3%BCrer_graph>>|<cell|<with|font-family|tt|durer>>|<cell|>|<cell|<hlink|<rigid|Nauru
-  graph>|https://en.wikipedia.org/wiki/Nauru_graph>>|<cell|<with|font-family|tt|nauru>>>|<row|<cell|<hlink|<rigid|Dyck
-  graph>|https://en.wikipedia.org/wiki/Dyck_graph>>|<cell|<with|font-family|tt|dyck>>|<cell|>|<cell|<hlink|<rigid|Octahedral
-  graph>|https://en.wikipedia.org/wiki/Platonic_graph>>|<cell|<with|font-family|tt|octahedron>>>|<row|<cell|<hlink|<rigid|Errera
-  graph>|https://en.wikipedia.org/wiki/Errera_graph>>|<cell|<verbatim|errera>>|<cell|>|<cell|<hlink|<rigid|Pappus
-  graph>|https://en.wikipedia.org/wiki/Pappus_graph>>|<cell|<with|font-family|tt|pappus>>>|<row|<cell|<hlink|<rigid|Folkman
-  graph>|https://en.wikipedia.org/wiki/Folkman_graph>>|<cell|<verbatim|folkman>>|<cell|>|<cell|<hlink|<rigid|Petersen
-  graph>|https://en.wikipedia.org/wiki/Petersen_graph>>|<cell|<with|font-family|tt|petersen>>>|<row|<cell|<hlink|<rigid|Foster
-  graph>|https://en.wikipedia.org/wiki/Foster_graph>>|<cell|<verbatim|foster>>|<cell|>|<cell|<hlink|<rigid|Poussin
-  graph>|https://en.wikipedia.org/wiki/Poussin_graph>>|<cell|<verbatim|poussin>>>|<row|<cell|<hlink|<rigid|Franklin
-  graph>|https://en.wikipedia.org/wiki/Franklin_graph>>|<cell|<verbatim|franklin>>|<cell|>|<cell|<hlink|<rigid|Robertson
-  graph>|https://en.wikipedia.org/wiki/Robertson_graph>>|<cell|<with|font-family|tt|robertson>>>|<row|<cell|<hlink|<rigid|Frucht
-  graph>|https://en.wikipedia.org/wiki/Frucht_graph>>|<cell|<verbatim|frucht>>|<cell|>|<cell|<hlink|<rigid|Truncated
-  icosahedral graph>|https://en.wikipedia.org/wiki/Truncated_icosahedron#Truncated_icosahedral_graph>>|<cell|<verbatim|soccerball>>>|<row|<cell|<hlink|<rigid|Goldner-Harary
-  graph>|https://en.wikipedia.org/wiki/Goldner%E2%80%93Harary_graph>>|<cell|<verbatim|goldner-harary>>|<cell|>|<cell|<hlink|<rigid|Shrikhande
-  graph>|https://en.wikipedia.org/wiki/Shrikhande_graph>>|<cell|<with|font-family|tt|shrikhande>>>|<row|<cell|<hlink|<rigid|Golomb
-  graph>|https://en.wikipedia.org/wiki/Golomb_graph>>|<cell|<verbatim|golomb>>|<cell|>|<cell|<hlink|<rigid|Tetrahedral
-  graph>|https://en.wikipedia.org/wiki/Tetrahedron#Tetrahedral_graph>>|<cell|<with|font-family|tt|tehtrahedron>>>|<row|<cell|<hlink|<rigid|Gray
-  graph>|https://en.wikipedia.org/wiki/Gray_graph>>|<cell|<verbatim|gray>>|<cell|>|<cell|<hlink|<rigid|Tietze
-  graph>|https://en.wikipedia.org/wiki/Tietze_graph>>|<cell|<verbatim|tietze>>>|<row|<cell|<hlink|<rigid|Grinberg
-  graph>|https://en.wikipedia.org/wiki/Grinberg%27s_theorem>>|<cell|<with|font-family|tt|grinberg>>|<cell|>|<cell|<hlink|<rigid|Tutte
-  12-cage>|https://en.wikipedia.org/wiki/Tutte_12-cage>>|<cell|<verbatim|tutte12>>>|<row|<cell|<hlink|<rigid|Grötzsch
-  graph>|https://en.wikipedia.org/wiki/Gr%C3%B6tzsch_graph>>|<cell|<with|font-family|tt|grotzsch>>|<cell|>|<cell|<hlink|<rigid|Wagner
+  graph>>|<cell|<strong|name in> <samp|Giac>>>|<row|<cell|<hlink|<rigid|Balaban
+  10-cage>|https://en.wikipedia.org/wiki/Balaban_10-cage>>|<cell|<verbatim|balaban10>>|<cell|>|<cell|<hlink|<rigid|Grötzsch
+  graph>|https://en.wikipedia.org/wiki/Gr%C3%B6tzsch_graph>>|<cell|<with|font-family|tt|grotzsch>>>|<row|<cell|<hlink|<rigid|Balaban
+  11-cage>|https://en.wikipedia.org/wiki/Balaban_11-cage>>|<cell|<verbatim|balaban11>>|<cell|>|<cell|<hlink|<rigid|Harries
+  graph>|https://en.wikipedia.org/wiki/Harries_graph>>|<cell|<with|font-family|tt|harries>>>|<row|<cell|<hlink|<rigid|Bidiakis
+  cube>|https://en.wikipedia.org/wiki/Bidiakis_cube>>|<cell|<verbatim|bidiakis>>|<cell|>|<cell|<hlink|<rigid|Harries\UWong
+  graph>|https://en.wikipedia.org/wiki/Harries%E2%80%93Wong_graph>>|<cell|<with|font-family|tt|harries-wong>>>|<row|<cell|<hlink|<rigid|Biggs-Smith
+  graph>|https://en.wikipedia.org/wiki/Biggs%E2%80%93Smith_graph>>|<cell|<verbatim|biggs-smith>>|<cell|>|<cell|<hlink|<rigid|Heawood
+  graph>|https://en.wikipedia.org/wiki/Heawood_graph>>|<cell|<with|font-family|tt|heawood>>>|<row|<cell|2<rsup|nd>
+  <hlink|<rigid|Blanu²a snark>|https://en.wikipedia.org/wiki/Blanu%C5%A1a_snarks>>|<cell|<verbatim|blanusa>>|<cell|>|<cell|<hlink|<rigid|Herschel
+  graph>|https://en.wikipedia.org/wiki/Herschel_graph>>|<cell|<with|font-family|tt|herschel>>>|<row|<cell|<hlink|<rigid|Bull
+  graph>|https://en.wikipedia.org/wiki/Bull_graph>>|<cell|<verbatim|bull>>|<cell|>|<cell|<hlink|<rigid|Hoffman
+  graph>|https://en.wikipedia.org/wiki/Hoffman_graph>>|<cell|<verbatim|hoffman>>>|<row|<cell|<hlink|<rigid|Butterfly
+  graph>|https://en.wikipedia.org/wiki/Butterfly_graph>>|<cell|<verbatim|butterfly>>|<cell|>|<cell|<hlink|<rigid|Icosahedral
+  graph>|https://en.wikipedia.org/wiki/Regular_icosahedron#Icosahedral_graph>>|<cell|<with|font-family|tt|icosahedron>>>|<row|<cell|<hlink|<rigid|Clebsch
+  graph>|https://en.wikipedia.org/wiki/Clebsch_graph>>|<cell|<with|font-family|tt|clebsch>>|<cell|>|<cell|<hlink|<rigid|Levi
+  graph>|https://en.wikipedia.org/wiki/Levi_graph> (Tutte
+  8-cage)>|<cell|<with|font-family|tt|levi>>>|<row|<cell|<hlink|<rigid|Chvátal
+  graph>|https://en.wikipedia.org/wiki/Chv%C3%A1tal_graph>>|<cell|<verbatim|chvatal>>|<cell|>|<cell|<hlink|<rigid|Ljubljana
+  graph>|https://en.wikipedia.org/wiki/Ljubljana_graph>>|<cell|<with|font-family|tt|ljubljana>>>|<row|<cell|<hlink|<rigid|Coxeter
+  graph>|https://en.wikipedia.org/wiki/Coxeter_graph>>|<cell|<with|font-family|tt|coxeter>>|<cell|>|<cell|<hlink|<rigid|McGee
+  graph>|https://en.wikipedia.org/wiki/McGee_graph>>|<cell|<with|font-family|tt|mcgee>>>|<row|<cell|<hlink|<rigid|Desargues
+  graph>|https://en.wikipedia.org/wiki/Desargues_graph>>|<cell|<with|font-family|tt|desargues>>|<cell|>|<cell|<hlink|<rigid|Moser
+  spindle>|https://en.wikipedia.org/wiki/Moser_spindle>>|<cell|<verbatim|moser>>>|<row|<cell|<hlink|<rigid|Diamond
+  graph>|https://en.wikipedia.org/wiki/Diamond_graph>>|<cell|<verbatim|diamond>>|<cell|>|<cell|<hlink|<rigid|Möbius\UKantor
+  graph>|https://en.wikipedia.org/wiki/M%C3%B6bius%E2%80%93Kantor_graph>>|<cell|<verbatim|mobius-kantor>>>|<row|<cell|<hlink|<rigid|Dodecahedral
+  graph>|https://en.wikipedia.org/wiki/Regular_dodecahedron#Dodecahedral_graph>>|<cell|<with|font-family|tt|dodecahedron>>|<cell|>|<cell|<hlink|<rigid|Nauru
+  graph>|https://en.wikipedia.org/wiki/Nauru_graph>>|<cell|<with|font-family|tt|nauru>>>|<row|<cell|<hlink|<rigid|Dürer
+  graph>|https://en.wikipedia.org/wiki/D%C3%BCrer_graph>>|<cell|<with|font-family|tt|durer>>|<cell|>|<cell|<hlink|<rigid|Octahedral
+  graph>|https://en.wikipedia.org/wiki/Platonic_graph>>|<cell|<with|font-family|tt|octahedron>>>|<row|<cell|<hlink|<rigid|Dyck
+  graph>|https://en.wikipedia.org/wiki/Dyck_graph>>|<cell|<with|font-family|tt|dyck>>|<cell|>|<cell|<hlink|<rigid|Pappus
+  graph>|https://en.wikipedia.org/wiki/Pappus_graph>>|<cell|<with|font-family|tt|pappus>>>|<row|<cell|<hlink|<rigid|Errera
+  graph>|https://en.wikipedia.org/wiki/Errera_graph>>|<cell|<verbatim|errera>>|<cell|>|<cell|<hlink|<rigid|Petersen
+  graph>|https://en.wikipedia.org/wiki/Petersen_graph>>|<cell|<with|font-family|tt|petersen>>>|<row|<cell|<hlink|<rigid|F26A
+  graph>|https://en.wikipedia.org/wiki/F26A_graph>>|<cell|<verbatim|f26a>>|<cell|>|<cell|<hlink|<rigid|Poussin
+  graph>|https://en.wikipedia.org/wiki/Poussin_graph>>|<cell|<verbatim|poussin>>>|<row|<cell|<hlink|<rigid|Folkman
+  graph>|https://en.wikipedia.org/wiki/Folkman_graph>>|<cell|<verbatim|folkman>>|<cell|>|<cell|<hlink|<rigid|Robertson
+  graph>|https://en.wikipedia.org/wiki/Robertson_graph>>|<cell|<with|font-family|tt|robertson>>>|<row|<cell|<hlink|<rigid|Foster
+  graph>|https://en.wikipedia.org/wiki/Foster_graph>>|<cell|<verbatim|foster>>|<cell|>|<cell|<hlink|<rigid|Truncated
+  icosahedral graph>|https://en.wikipedia.org/wiki/Truncated_icosahedron#Truncated_icosahedral_graph>>|<cell|<verbatim|soccerball>>>|<row|<cell|<hlink|<rigid|Franklin
+  graph>|https://en.wikipedia.org/wiki/Franklin_graph>>|<cell|<verbatim|franklin>>|<cell|>|<cell|<hlink|<rigid|Shrikhande
+  graph>|https://en.wikipedia.org/wiki/Shrikhande_graph>>|<cell|<with|font-family|tt|shrikhande>>>|<row|<cell|<hlink|<rigid|Frucht
+  graph>|https://en.wikipedia.org/wiki/Frucht_graph>>|<cell|<verbatim|frucht>>|<cell|>|<cell|<hlink|<rigid|Tetrahedral
+  graph>|https://en.wikipedia.org/wiki/Tetrahedron#Tetrahedral_graph>>|<cell|<with|font-family|tt|tehtrahedron>>>|<row|<cell|<hlink|<rigid|Goldner-Harary
+  graph>|https://en.wikipedia.org/wiki/Goldner%E2%80%93Harary_graph>>|<cell|<verbatim|goldner-harary>>|<cell|>|<cell|<hlink|<rigid|Tietze
+  graph>|https://en.wikipedia.org/wiki/Tietze_graph>>|<cell|<verbatim|tietze>>>|<row|<cell|<hlink|<rigid|Golomb
+  graph>|https://en.wikipedia.org/wiki/Golomb_graph>>|<cell|<verbatim|golomb>>|<cell|>|<cell|<hlink|<rigid|Tutte
+  graph>|https://en.wikipedia.org/wiki/Tutte_graph>>|<cell|<verbatim|tutte>>>|<row|<cell|<hlink|<rigid|Gray
+  graph>|https://en.wikipedia.org/wiki/Gray_graph>>|<cell|<verbatim|gray>>|<cell|>|<cell|<hlink|<rigid|Tutte
+  12-cage>|https://en.wikipedia.org/wiki/Tutte_12-cage>>|<cell|<verbatim|tutte12>>>|<row|<cell|<hlink|<rigid|Grinberg
+  graph>|https://en.wikipedia.org/wiki/Grinberg%27s_theorem>>|<cell|<with|font-family|tt|grinberg>>|<cell|>|<cell|<hlink|<rigid|Wagner
   graph>|https://en.wikipedia.org/wiki/Wagner_graph>>|<cell|<verbatim|wagner>>>>>>>
 
   <subsection|Directed graphs><label|digraph>

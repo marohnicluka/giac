@@ -535,6 +535,8 @@ public:
     static const int grotzsch_graph[];
     static const int harries_graph_lcf[];
     static const int harries_wong_graph_lcf[];
+    static const int balaban_10cage_lcf[];
+    static const int balaban_11cage_lcf[];
     static const int heawood_graph[];
     static const int herschel_graph[];
     static const int mcgee_graph[];
@@ -544,7 +546,6 @@ public:
     static const int tetrahedron_graph[];
     static const int octahedron_graph[];
     static const int icosahedron_graph[];
-    static const int levi_graph[];
     static const int ljubljana_graph_lcf[];
     static const int foster_graph_lcf[];
     static const int blanusa_graph[];
@@ -566,7 +567,10 @@ public:
     static const int folkman_graph_lcf[];
     static const int gray_graph_lcf[];
     static const int tutte_12cage_lcf[];
+    static const int tutte_8cage_lcf[];
+    static const int f26a_graph_lcf[];
     static const int tietze_graph[];
+    static const int tutte_fragment_graph[];
 
 private:
     const context *ctx;
@@ -924,6 +928,7 @@ public:
     void make_lcf_graph(const int *j,int e);
     void make_sierpinski_graph(int n,int k,bool triangle);
     void make_shrikhande_graph();
+    void make_tutte_graph();
     void make_complete_graph();
     void make_complete_multipartite_graph(const ivector &partition_sizes,layout *x=NULL);
     void make_petersen_graph(int n,int k,layout *x=NULL);

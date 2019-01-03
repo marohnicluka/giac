@@ -391,38 +391,6 @@ const int graphe::icosahedron_graph[] = {
     11,     12,-1,
     -2
 };
-const int graphe::levi_graph[] = {
-    1,      2,18,30,-1,
-    2,      3,23,-1,
-    3,      4,10,-1,
-    4,      5,27,-1,
-    5,      6,14,-1,
-    6,      7,19,-1,
-    7,      8,24,-1,
-    8,      9,29,-1,
-    9,      10,16,-1,
-    10,     11,-1,
-    11,     12,20,-1,
-    12,     13,25,-1,
-    13,     14,30,-1,
-    14,     15,-1,
-    15,     16,22,-1,
-    16,     17,-1,
-    17,     18,26,-1,
-    18,     19,-1,
-    19,     20,-1,
-    20,     21,-1,
-    21,     22,28,-1,
-    22,     23,-1,
-    23,     24,-1,
-    24,     25,-1,
-    25,     26,-1,
-    26,     27,-1,
-    27,     28,-1,
-    28,     29,-1,
-    29,     30,-1,
-    -2
-};
 const int graphe::ljubljana_graph_lcf[] = {
     47,-23,-31,39,25,-21,-31,-41,25,15,29,-41,-19,15,-49,33,39,-35,-21,17,-33,49,41,31,
     -15,-29,41,31,-15,-25,21,31,-51,-25,23,9,-17,51,35,-29,21,-51,-39,33,-9,-51,51,-47,
@@ -435,6 +403,17 @@ const int graphe::harries_wong_graph_lcf[] = {
     9,25,31,-17,17,33,9,-29,-15,-9,9,25,-25,29,17,-9,9,-27,35,-9,9,-17,21,27,-29,-9,-25,13,19,
     -9,-33,-17,19,-31,27,11,-25,29,-33,13,-13,21,-29,-21,25,9,-11,-19,29,9,-27,-19,-13,-35,-9,
     9,17,25,-9,9,27,-27,-21,15,-9,29,-29,33,-9,-25,0
+};
+const int graphe::balaban_10cage_lcf[] = {
+    -9,-25,-19,29,13,35,-13,-29,19,25,9,-29,29,17,33,21,9,-13,-31,-9,25,17,9,-31,27,-9,17,-19,-29,
+    27,-17,-9,-29,33,-25,25,-21,17,-17,29,35,-29,17,-17,21,-25,25,-33,29,9,17,-27,29,19,-17,9,-27,
+    31,-9,-17,-25,9,31,13,-9,-21,-33,-17,-29,29,0
+};
+const int graphe::balaban_11cage_lcf[] = {
+    44,26,-47,-15,35,-39,11,-27,38,-37,43,14,28,51,-29,-16,41,-11,-26,15,22,-51,-35,36,52,-14,-33,-26,-46,
+    52,26,16,43,33,-15,17,-53,23,-42,-35,-28,30,-22,45,-44,16,-38,-16,50,-55,20,28,-17,-43,47,34,-26,-41,11,
+    -36,-23,-16,41,17,-51,26,-33,47,17,-11,-20,-30,21,29,36,-43,-52,10,39,-28,-17,-52,51,26,37,-17,10,-10,
+    -45,-34,17,-26,27,-21,46,53,-10,29,-50,35,15,-47,-29,-41,26,33,55,-17,42,-26,-36,16,0
 };
 const int graphe::foster_graph_lcf[] = {
     17,-9,37,-37,9,-17,0
@@ -461,6 +440,12 @@ const int graphe::gray_graph_lcf[] = {
 };
 const int graphe::tutte_12cage_lcf[] = {
     17,27,-13,-59,-35,35,-11,13,-53,53,-27,21,57,11,-21,-57, 59,-17,0
+};
+const int graphe::tutte_8cage_lcf[] = {
+    -13,-9,7,-7,9,13,0
+};
+const int graphe::f26a_graph_lcf[] = {
+    -7,7,0
 };
 const int graphe::blanusa_graph[] = {
     1,      2,6,8,-1,
@@ -611,6 +596,23 @@ const int graphe::tietze_graph[] = {
     9,      10,-1,
     10,     11,12,-1,
     11,     12,-1,
+    -2
+};
+const int graphe::tutte_fragment_graph[] = {
+    1,      2,4,-1,
+    2,      3,5,-1,
+    3,      4,7,-1,
+    4,      8,-1,
+    5,      6,9,-1,
+    6,      7,10,-1,
+    7,      11,-1,
+    8,      11,15,-1,
+    9,      10,13,-1,
+    10,     12,-1,
+    11,     12,-1,
+    12,     14,-1,
+    13,     14,-1,
+    14,     15,-1,
     -2
 };
 
@@ -1330,12 +1332,24 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         read_special(grotzsch_graph);
         for (int i=1;i<=5;++i) hull.push_back(node_index(i));
         make_circular_layout(x,hull,2.5);
+    } else if (name=="f26a") {
+        make_lcf_graph(f26a_graph_lcf,13);
+        for (int i=0;i<node_count();++i) hull.push_back(i);
+        make_circular_layout(x,hull);
     } else if (name=="harries") {
         make_lcf_graph(harries_graph_lcf,5);
         for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
     } else if (name=="harries-wong") {
         make_lcf_graph(harries_wong_graph_lcf,1);
+        for (int i=0;i<node_count();++i) hull.push_back(i);
+        make_circular_layout(x,hull);
+    } else if (name=="balaban10") {
+        make_lcf_graph(balaban_10cage_lcf,1);
+        for (int i=0;i<node_count();++i) hull.push_back(i);
+        make_circular_layout(x,hull);
+    } else if (name=="balaban11") {
+        make_lcf_graph(balaban_11cage_lcf,1);
         for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
     } else if (name=="heawood") {
@@ -1360,7 +1374,7 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         make_planar_layout(x);
         layout_best_rotation(x);
     } else if (name=="levi") {
-        read_special(levi_graph);
+        make_lcf_graph(tutte_8cage_lcf,5);
         for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
     } else if (name=="ljubljana") {
@@ -1420,6 +1434,14 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         hull.push_back(0); hull.push_back(1); hull.push_back(4);
         hull.push_back(6); hull.push_back(2); hull.push_back(9);
         hull.push_back(5); hull.push_back(8); hull.push_back(3);
+        make_circular_layout(x,hull);
+        layout_best_rotation(x);
+    } else if (name=="tutte") {
+        make_tutte_graph();
+        vecteur l=makevecteur(28,12,15,13,42,45,43,27,30);
+        for (const_iterateur it=l.begin();it!=l.end();++it) {
+            hull.push_back(node_index(*it));
+        }
         make_circular_layout(x,hull);
         layout_best_rotation(x);
     } else if (name=="tutte12") {
@@ -5607,10 +5629,10 @@ void graphe::make_sierpinski_graph(int n,int k,bool triangle) {
 /* create the Shrikhande graph */
 void graphe::make_shrikhande_graph() {
     this->clear();
-    vecteur V;
-    make_default_labels(V,16);
+    vecteur labels;
+    make_default_labels(labels,16);
     reserve_nodes(16);
-    add_nodes(V);
+    add_nodes(labels);
     ipairs v(16);
     int k=0,m,n;
     for (int i=0;i<4;++i) {
@@ -5627,6 +5649,26 @@ void graphe::make_shrikhande_graph() {
             if ((m*n==0 && (m+n)%2!=0) || (m==n && (m*n)%2!=0))
                 add_edge(i,j);
         }
+    }
+}
+
+/* create the Tutte graph by joining three copies of Tutte's fragment */
+void graphe::make_tutte_graph() {
+    this->clear();
+    vecteur labels;
+    make_default_labels(labels,46);
+    reserve_nodes(46);
+    add_nodes(labels);
+    graphe fragment(ctx);
+    fragment.read_special(tutte_fragment_graph);
+    ipairs E;
+    fragment.get_edges_as_pairs(E);
+    for (int i=0;i<3;++i) {
+        for (ipairs_iter it=E.begin();it!=E.end();++it) {
+            add_edge(1+15*i+it->first,1+15*i+it->second);
+        }
+        add_edge(0,1+15*i);
+        add_edge(15*i+12,15*((i+1)%3)+13);
     }
 }
 

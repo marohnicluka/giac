@@ -6002,6 +6002,42 @@ void graphe::strongly_connected_components(ivectors &components,int sg) {
     }
 }
 
+/* create the condensation of tis graph by contracting strongly connected components */
+void graphe::condensation(graphe &G) {
+    assert(is_directed());
+    ivectors comp;
+    strongly_connected_components(comp);
+    int n=comp.size(),dir;
+    G.clear();
+    G.set_directed(true);
+    if (G.supports_attributes()) {
+        vecteur labels;
+        G.make_default_labels(labels,n);
+        G.add_nodes(labels);
+    } else G.add_nodes(n);
+    for (ivectors_iter it=comp.begin();it!=comp.end();++it) {
+        for (ivectors_iter jt=it+1;jt!=comp.end();++jt) {
+            dir=0;
+            for (ivector_iter kt=it->begin();kt!=it->end() && dir==0;++kt) {
+                for (ivector_iter lt=jt->begin();lt!=jt->end() && dir==0;++lt) {
+                    if (has_edge(*kt,*lt)) dir=1;
+                    else if (has_edge(*lt,*kt)) dir=-1;
+                }
+            }
+            switch (dir) {
+            case 1:
+                G.add_edge(it-comp.begin(),jt-comp.begin());
+                break;
+            case -1:
+                G.add_edge(jt-comp.begin(),it-comp.begin());
+                break;
+            default:
+                break;
+            }
+        }
+    }
+}
+
 /* return true iff the connected graph is not biconnected (i.e. has an articulation point) */
 bool graphe::has_cut_vertex(int sg,int i) {
     vertex &v=node(i);
@@ -12356,6 +12392,82 @@ void graphe::truncate(graphe &dest,const ivectors &faces) {
         assert(iv.size()==2);
         dest.add_edge(iv.front(),iv.back());
     }
+}
+
+/*
+ * CIRC_ENUM CLASS IMPLEMENTATION
+ *
+ * Implementation of Tarjan's algorithm published in SIAM J. Comp. 2(3), 1973
+ */
+
+graphe::circ_enum::circ_enum(graphe *gr) {
+    G=gr;
+    int n=G->node_count();
+    A.resize(n);
+    for (int i=0;i<n;++i) {
+        const vertex &v=G->node(i);
+        for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
+            A[i].push_back(*it);
+        }
+    }
+}
+
+void graphe::circ_enum::backtrack(int v,bool &f) {
+    bool g;
+    f=false;
+    point_stack.push_back(v);
+    mark[v]=true;
+    marked_stack.push(v);
+    int w,u;
+    for (int i=A[v].size();i-->0;) {
+        w=A[v][i];
+        if (w<s) A[v].erase(A[v].begin()+i);
+        else if (w==s) {
+            res.push_back(point_stack);
+            f=true;
+        } else if (!mark[w]) {
+            backtrack(w,g);
+            f=f||g;
+        }
+    }
+    /* f is true if an elementary circuit containing
+     * the partial path has been found */
+    if (f) {
+        while (marked_stack.top()!=v) {
+            u=marked_stack.top();
+            marked_stack.pop();
+            mark[u]=false;
+        }
+        marked_stack.pop();
+        mark[v]=false;
+    }
+    point_stack.pop_back();
+}
+
+/* return the list of all elementary cycles in the given digraph */
+graphe::ivectors graphe::circ_enum::find_cycles() {
+    int n=G->node_count(),u;
+    bool flag;
+    mark.resize(n,false);
+    for (s=0;s<n;++s) {
+        backtrack(s,flag);
+        while (!marked_stack.empty()) {
+            u=marked_stack.top();
+            mark[u]=false;
+            marked_stack.pop();
+        }
+    }
+    return res;
+}
+
+/*
+ * END OF CIRC_ENUM CLASS IMPLEMENTATION
+ */
+
+void graphe::elementary_cycles(ivectors &cyc) {
+    assert(is_directed());
+    circ_enum ce(this);
+    cyc=ce.find_cycles();
 }
 
 #ifndef NO_NAMESPACE_GIAC

@@ -217,6 +217,19 @@ public:
         void positioning(int apex);
     };
 
+    class circ_enum { // circuit enumeration in digraphs
+        graphe *G;
+        ivector point_stack;
+        std::stack<int> marked_stack;
+        ivectors A,res;
+        std::vector<bool> mark;
+        int s;
+        void backtrack(int v,bool &f);
+    public:
+        circ_enum(graphe *gr);
+        ivectors find_cycles();
+    };
+
 #ifdef HAVE_LIBGLPK
     class painter { // vertex painter
         graphe *G;
@@ -1029,6 +1042,8 @@ public:
     int edge_connectivity();
     int vertex_connectivity();
     void truncate(graphe &dest,const ivectors &faces);
+    void condensation(graphe &G);
+    void elementary_cycles(ivectors &cyc);
     static gen colon_label(int i,int j);
     static gen colon_label(int i,int j,int k);
     static size_t intersect_fast(ivector_iter min1,ivector_iter max1,ivector_iter min2,ivector_iter max2);

@@ -218,6 +218,7 @@ gen _maximum_independent_set(const gen &g,GIAC_CONTEXT);
 gen _independence_number(const gen &g,GIAC_CONTEXT);
 gen _strongly_connected_components(const gen &g,GIAC_CONTEXT);
 gen _is_strongly_connected(const gen &g,GIAC_CONTEXT);
+gen _condensation(const gen &g,GIAC_CONTEXT);
 gen _degree_sequence(const gen &g,GIAC_CONTEXT);
 gen _is_graphic_sequence(const gen &g,GIAC_CONTEXT);
 gen _sequence_graph(const gen &g,GIAC_CONTEXT);
@@ -273,6 +274,7 @@ gen _edge_connectivity(const gen &g,GIAC_CONTEXT);
 gen _vertex_connectivity(const gen &g,GIAC_CONTEXT);
 gen _tonnetz(const gen &g,GIAC_CONTEXT);
 gen _truncate_graph(const gen &g,GIAC_CONTEXT);
+gen _find_cycles(const gen &g,GIAC_CONTEXT);
 
 // GENERAL GIAC COMMANDS
 

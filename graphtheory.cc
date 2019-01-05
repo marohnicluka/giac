@@ -28,8 +28,6 @@ using namespace std;
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
-#define MAX_SIZE_TO_SORT 100
-
 /* error messages */
 static const char *gt_error_messages[] = {
     "Unknown error",                                                    //  0
@@ -311,6 +309,8 @@ bool parse_edge_with_weight(graphe &G,const vecteur &E) {
         return false;
     if (!G.is_weighted())
         G.set_weighted(true);
+    if (e.front()==e.back())
+        return false;
     G.add_edge(e.front(),e.back(),w);
     return true;
 }
@@ -320,9 +320,11 @@ bool parse_edges(graphe &G,const vecteur &E,bool is_set) {
         for (const_iterateur it=E.begin();it!=E.end();++it) {
             if (it->type!=_VECT || it->_VECTptr->size()!=2)
                 return false;
-            if (it->_VECTptr->front().type!=_VECT)
+            if (it->_VECTptr->front().type!=_VECT) {
+                if (it->_VECTptr->front()==it->_VECTptr->back())
+                    return false;
                 G.add_edge(it->_VECTptr->front(),it->_VECTptr->back());
-            else {
+            } else {
                 if (!parse_edge_with_weight(G,*it->_VECTptr))
                     return false;
             }
@@ -336,6 +338,8 @@ bool parse_edges(graphe &G,const vecteur &E,bool is_set) {
                 return false;
         } else {
             for (int i=0;i<n-1;++i) {
+                if (E[i]==E[i+1])
+                    return false;
                 G.add_edge(E[i],E[i+1]);
             }
         }
@@ -1402,7 +1406,7 @@ gen _maximum_matching(const gen &g,GIAC_CONTEXT) {
     for (graphe::ipairs_iter it=matching.begin();it!=matching.end();++it) {
         res.push_back(makevecteur(G.node_label(it->first),G.node_label(it->second)));
     }
-    return change_subtype(res.size()<=MAX_SIZE_TO_SORT?_sort(res,contextptr):res,_LIST__VECT);
+    return change_subtype(res,_LIST__VECT);
 }
 static const char _maximum_matching_s[]="maximum_matching";
 static define_unary_function_eval(__maximum_matching,&_maximum_matching,_maximum_matching_s);
@@ -1430,7 +1434,7 @@ gen _bipartite_matching(const gen &g,GIAC_CONTEXT) {
     for (graphe::ipairs_iter it=matching.begin();it!=matching.end();++it) {
         res[it-matching.begin()]=makevecteur(G.node_label(it->first),G.node_label(it->second));
     }
-    return change_subtype(res.size()<=MAX_SIZE_TO_SORT?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
+    return change_subtype(res,_LIST__VECT);
 }
 static const char _bipartite_matching_s[]="bipartite_matching";
 static define_unary_function_eval(__bipartite_matching,&_bipartite_matching,_bipartite_matching_s);
@@ -2357,9 +2361,8 @@ gen _biconnected_components(const gen &g,GIAC_CONTEXT) {
         U.biconnected_components(comp);
     } else G.biconnected_components(comp);
     vecteur res;
-    bool do_sort=G.node_count()<=MAX_SIZE_TO_SORT;
-    G.ivectors2vecteur(comp,res,do_sort);
-    return change_subtype(do_sort?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
+    G.ivectors2vecteur(comp,res,true);
+    return change_subtype(res,_LIST__VECT);
 }
 static const char _biconnected_components_s[]="biconnected_components";
 static define_unary_function_eval(__biconnected_components,&_biconnected_components,_biconnected_components_s);
@@ -2588,9 +2591,8 @@ gen _connected_components(const gen &g,GIAC_CONTEXT) {
         U.connected_components(comp);
     } else  G.connected_components(comp);
     vecteur res;
-    bool do_sort=G.node_count()<=MAX_SIZE_TO_SORT;
-    G.ivectors2vecteur(comp,res,do_sort);
-    return change_subtype(do_sort?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
+    G.ivectors2vecteur(comp,res,true);
+    return change_subtype(res,_LIST__VECT);
 }
 static const char _connected_components_s[]="connected_components";
 static define_unary_function_eval(__connected_components,&_connected_components,_connected_components_s);
@@ -4853,7 +4855,7 @@ gen _maximum_clique(const gen &g,GIAC_CONTEXT) {
     graphe::ivector clique;
     G.maximum_clique(clique);
     vecteur res=G.get_node_labels(clique);
-    return res.size()<=MAX_SIZE_TO_SORT?_sort(res,contextptr):res;
+    return _sort(res,contextptr);
 }
 static const char _maximum_clique_s[]="maximum_clique";
 static define_unary_function_eval(__maximum_clique,&_maximum_clique,_maximum_clique_s);
@@ -4902,9 +4904,8 @@ gen _clique_cover(const gen &g,GIAC_CONTEXT) {
     if (!G.clique_cover(cover,k))
         return vecteur(0);
     vecteur res;
-    bool do_sort=G.node_count()<=MAX_SIZE_TO_SORT;
-    G.ivectors2vecteur(cover,res,do_sort);
-    return change_subtype(do_sort?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
+    G.ivectors2vecteur(cover,res,true);
+    return change_subtype(res,_LIST__VECT);
 }
 static const char _clique_cover_s[]="clique_cover";
 static define_unary_function_eval(__clique_cover,&_clique_cover,_clique_cover_s);
@@ -4993,7 +4994,7 @@ gen _maximum_independent_set(const gen &g,GIAC_CONTEXT) {
     graphe::ivector clique;
     C.maximum_clique(clique);
     vecteur res=C.get_node_labels(clique);
-    return res.size()<=MAX_SIZE_TO_SORT?_sort(res,contextptr):res;
+    return _sort(res,contextptr);
 }
 static const char _maximum_independent_set_s[]="maximum_independent_set";
 static define_unary_function_eval(__maximum_independent_set,&_maximum_independent_set,_maximum_independent_set_s);
@@ -5031,13 +5032,31 @@ gen _strongly_connected_components(const gen &g,GIAC_CONTEXT) {
     graphe::ivectors comp;
     G.strongly_connected_components(comp);
     vecteur res(comp.size());
-    bool do_sort=G.node_count()<=MAX_SIZE_TO_SORT;
-    G.ivectors2vecteur(comp,res,do_sort);
-    return change_subtype(do_sort?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
+    G.ivectors2vecteur(comp,res,true);
+    return change_subtype(res,_LIST__VECT);
 }
 static const char _strongly_connected_components_s[]="strongly_connected_components";
 static define_unary_function_eval(__strongly_connected_components,&_strongly_connected_components,_strongly_connected_components_s);
 define_unary_function_ptr5(at_strongly_connected_components,alias_at_strongly_connected_components,&__strongly_connected_components,0,true)
+
+/* USAGE:   condensation(G)
+ *
+ * Returns the graph obtained by contracting strongly connected components of
+ * the digraph G to single vertices.
+ */
+gen _condensation(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr),H(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (!G.is_directed())
+        return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED);
+    G.condensation(H);
+    return H.to_gen();
+}
+static const char _condensation_s[]="condensation";
+static define_unary_function_eval(__condensation,&_condensation,_condensation_s);
+define_unary_function_ptr5(at_condensation,alias_at_condensation,&__condensation,0,true)
 
 /* USAGE:   is_strongly_connected(G)
  *
@@ -6241,7 +6260,7 @@ gen _minimum_cut(const gen &g,GIAC_CONTEXT) {
     graphe::ipairs cut;
     G.minimum_cut(s,flow,cut);
     vecteur res=G.ipairs2edges(cut);
-    return change_subtype(int(res.size())<=MAX_SIZE_TO_SORT?_sort(res,contextptr):res,_LIST__VECT);
+    return change_subtype(res,_LIST__VECT);
 }
 static const char _minimum_cut_s[]="minimum_cut";
 static define_unary_function_eval(__minimum_cut,&_minimum_cut,_minimum_cut_s);
@@ -6814,10 +6833,9 @@ gen _two_edge_connected_components(const gen &g,GIAC_CONTEXT) {
     }
     graphe::ivectors comp;
     G.connected_components(comp);
-    bool do_sort=G.node_count()<=MAX_SIZE_TO_SORT;
     vecteur res(comp.size());
-    G.ivectors2vecteur(comp,res,do_sort);
-    return change_subtype(do_sort?*_sort(res,contextptr)._VECTptr:res,_LIST__VECT);
+    G.ivectors2vecteur(comp,res,true);
+    return change_subtype(res,_LIST__VECT);
 }
 static const char _two_edge_connected_components_s[]="two_edge_connected_components";
 static define_unary_function_eval(__two_edge_connected_components,&_two_edge_connected_components,_two_edge_connected_components_s);
@@ -6968,6 +6986,29 @@ gen _truncate_graph(const gen &g,GIAC_CONTEXT) {
 static const char _truncate_graph_s[]="truncate_graph";
 static define_unary_function_eval(__truncate_graph,&_truncate_graph,_truncate_graph_s);
 define_unary_function_ptr5(at_truncate_graph,alias_at_truncate_graph,&__truncate_graph,0,true)
+
+/* USAGE:   find_cycles(G)
+ *
+ * Returns the list of elementary cycles in the digraph G.
+ */
+gen _find_cycles(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_empty())
+        return generr("graph is empty");
+    if (!G.is_directed())
+        return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED);
+    graphe::ivectors cyc;
+    G.elementary_cycles(cyc);
+    vecteur res;
+    G.ivectors2vecteur(cyc,res,false);
+    return change_subtype(res,_LIST__VECT);
+}
+static const char _find_cycles_s[]="find_cycles";
+static define_unary_function_eval(__find_cycles,&_find_cycles,_find_cycles_s);
+define_unary_function_ptr5(at_find_cycles,alias_at_find_cycles,&__find_cycles,0,true)
 
 void nexcom(int n,int k,int &h,int &t,vector<int> &r,bool &mtc) {
     int i;

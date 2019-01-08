@@ -1460,7 +1460,7 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
     if (!x.empty()) {
         double sep=1.0;
         scale_layout(x,sep*std::sqrt((double)node_count()));
-        rectangle rect=layout_bounding_rect(x,sep/PLASTIC_NUMBER_CUBED);
+        rectangle rect=layout_bounding_rect(x,sep/PLASTIC_NUMBER_3);
         translate_layout(x,make_point(-rect.x(),-rect.y()));
         store_layout(x);
     }
@@ -1901,18 +1901,17 @@ gen graphe::weight(int i,int j) const {
 }
 
 /* return weight matrix */
-matrice graphe::weight_matrix() const {
+void graphe::weight_matrix(matrice &W) const {
     assert(is_weighted());
     int n=node_count(),i,j;
-    matrice m=*_matrix(makesequence(n,n,0),context0)._VECTptr;
+    W=*_matrix(makesequence(n,n,0),context0)._VECTptr;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         i=it-nodes.begin();
         for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
             j=*jt;
-            m[i]._VECTptr->at(j)=weight(i,j);
+            W[i]._VECTptr->at(j)=weight(i,j);
         }
     }
-    return m;
 }
 
 /* return list of vertices (in the given subgraph) */
@@ -7233,7 +7232,7 @@ void graphe::make_random_planar(double p,int connectivity) {
     std::reverse(outer_face.begin(),outer_face.end());
     faces.push_back(outer_face);
     int k;
-    /* make random triangulated graph with n vertices */
+    /* create a random triangulated graph on n vertices */
     for (int i=3;i<n;++i) {
         k=rand_integer(faces.size());
         ivector &face_k=faces[k];
@@ -7769,7 +7768,7 @@ void graphe::pack_rectangles(vector<rectangle> &rectangles) {
                     bh=d;
             }
             /* find the embedding with the smallest perimeter (when scaled by the wasted ratio) */
-            if ((perim=(bw+PLASTIC_NUMBER_SQUARED*bh)*std::sqrt(bw*bh/total_area))<best_perim) {
+            if ((perim=(bw+PLASTIC_NUMBER_2*bh)*std::sqrt(bw*bh/total_area))<best_perim) {
                 best_perim=perim;
                 for (vector<rectangle>::const_iterator it=rectangles.begin();it!=rectangles.end();++it) {
                     dpair &p=best_embedding[it-rectangles.begin()];
@@ -8859,26 +8858,33 @@ void graphe::allpairs_distance(matrice &m) const {
 
 /* return the length of the shortest path from src to dest in weighted
 * graph (Dijkstra's algorithm), also fill shortest_path with the respective vertices */
-void graphe::dijkstra(int src,const ivector &dest,vecteur &path_weights,ivectors *cheapest_paths) {
+void graphe::dijkstra(int src,const ivector &dest,vecteur &path_weights,ivectors *cheapest_paths,int sg) {
     int n=node_count();
-    ivector Q(n),prev(n);
+    ivector Q;
     vecteur dist(n);
     bool isweighted=is_weighted();
-    for (int i=0;i<n;++i) {
-        Q[i]=i;
-        dist[i]=i==src?gen(0):plusinf();
-        prev[i]=-1;
+    if (sg>=0) {
+        assert(node(src).subgraph()==sg);
+        for (ivector_iter it=dest.begin();it!=dest.end();++it) {
+            assert(node(*it).subgraph()==sg);
+        }
     }
-    unvisit_all_nodes();
+    unset_all_ancestors(sg);
+    for (int i=0;i<n;++i) {
+        vertex &v=node(i);
+        if (sg>=0 && v.subgraph()!=sg) continue;
+        Q.push_back(i);
+        dist[i]=i==src?gen(0):plusinf();
+    }
+    unvisit_all_nodes(sg);
     gen min_dist,alt;
     int pos,u;
     while (!Q.empty()) {
         min_dist=plusinf();
         pos=-1;
         for (ivector_iter it=Q.begin();it!=Q.end();++it) {
-            const gen &d=dist[*it];
-            if (is_strictly_greater(min_dist,d,ctx)) {
-                min_dist=d;
+            if (is_strictly_greater(min_dist,dist[*it],ctx)) {
+                min_dist=dist[*it];
                 pos=it-Q.begin();
                 u=*it;
             }
@@ -8888,29 +8894,31 @@ void graphe::dijkstra(int src,const ivector &dest,vecteur &path_weights,ivectors
         vertex &v=node(u);
         v.set_visited(true);
         for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
-            if (node(*it).is_visited())
+            vertex &w=node(*it);
+            if ((sg>=0 && w.subgraph()!=sg) || w.is_visited())
                 continue;
             alt=dist[u]+(isweighted?weight(u,*it):gen(1));
             if (is_strictly_greater(dist[*it],alt,ctx)) {
                 dist[*it]=alt;
-                prev[*it]=u;
+                w.set_ancestor(u);
             }
         }
+    }
+    path_weights.resize(dest.size());
+    for (ivector_iter it=dest.begin();it!=dest.end();++it) {
+        path_weights[it-dest.begin()]=dist[*it];
     }
     if (cheapest_paths!=NULL) {
         cheapest_paths->resize(dest.size());
         for (ivector_iter it=dest.begin();it!=dest.end();++it) {
             ivector &path=cheapest_paths->at(it-dest.begin());
             path.clear();
+            if (is_inf(dist[*it])) continue;
             path.push_back(*it);
             int p=*it;
-            while ((p=prev[p])>=0) path.push_back(p);
+            while ((p=node(p).ancestor())>=0) path.push_back(p);
             std::reverse(path.begin(),path.end());
         }
-    }
-    path_weights.resize(dest.size());
-    for (ivector_iter it=dest.begin();it!=dest.end();++it) {
-        path_weights[it-dest.begin()]=dist[*it];
     }
 }
 
@@ -9211,7 +9219,7 @@ void graphe::assign_edge_directions_from_st() {
     bool isweighted=is_weighted();
     matrice W;
     if (isweighted)
-        W=weight_matrix();
+        weight_matrix(W);
     ipairs E;
     get_edges_as_pairs(E);
     for (ipairs_iter it=E.begin();it!=E.end();++it) {
@@ -9449,9 +9457,9 @@ void graphe::make_bipartite_layout(layout &x,const ivector &p1,const ivector &p2
     else if (n<5)
         aspect_ratio=PLASTIC_NUMBER;
     else if (n<8)
-        aspect_ratio=PLASTIC_NUMBER_SQUARED;
+        aspect_ratio=PLASTIC_NUMBER_2;
     else
-        aspect_ratio=PLASTIC_NUMBER_CUBED;
+        aspect_ratio=PLASTIC_NUMBER_3;
     double step1=aspect_ratio/(double)(n1-1),step2=aspect_ratio/(double)(n2-1),xpos=0.0,ypos=1.0;
     x.resize(node_count());
     for (ivector_iter it=p1.begin();it!=p1.end();++it) {
@@ -12468,6 +12476,65 @@ void graphe::elementary_cycles(ivectors &cyc) {
     assert(is_directed());
     circ_enum ce(this);
     cyc=ce.find_cycles();
+}
+
+/* find k shortest paths from src to dest using Yen's algorithm */
+void graphe::yen_ksp(int K,int src,int dest,ivectors &spaths) {
+    assert(supports_attributes());
+    vecteur pw;
+    ivectors cp;
+    spaths.clear();
+    dijkstra(src,ivector(1,dest),pw,&cp);
+    if (cp[0].empty()) return;
+    spaths.push_back(cp.front());
+    set<pair<gen,ivector>,kspaths_comparator> paths;
+    int n,spurnode;
+    ivector path;
+    matrice W;
+    if (!is_weighted()) {
+        adjacency_matrix(W);
+        make_weighted(W);
+    }
+    weight_matrix(W);
+    ipairs removed_edges;
+    gen wg;
+    save_subgraphs();
+    unset_subgraphs(1);
+    for (int k=1;k<K;++k) {
+        const ivector &prevpath=spaths[k-1];
+        n=prevpath.size();
+        for (int i=0;i<n-1;++i) {
+            removed_edges.clear();
+            spurnode=prevpath[i];
+            path=ivector(prevpath.begin(),prevpath.begin()+i+1);
+            for (ivectors_iter it=spaths.begin();it!=spaths.end();++it) {
+                if (it->size()>path.size() && path==ivector(it->begin(),it->begin()+i+1)) {
+                    set_edge_attribute(it->at(i),it->at(i+1),_GT_ATTRIB_WEIGHT,plusinf());
+                    removed_edges.push_back(make_pair(it->at(i),it->at(i+1)));
+                }
+            }
+            for (int j=0;j<i;++j) {
+                node(path[j]).set_subgraph(0);
+            }
+            dijkstra(spurnode,ivector(1,dest),pw,&cp,1);
+            if (!cp[0].empty()) {
+                path.insert(path.end(),cp[0].begin()+1,cp[0].end());
+                wg=pw.front();
+                for (int j=0;j<i;++j) wg+=weight(path[j],path[j+1]);
+                paths.insert(make_pair(wg,path));
+            }
+            for (ipairs_iter it=removed_edges.begin();it!=removed_edges.end();++it) {
+                set_edge_attribute(it->first,it->second,_GT_ATTRIB_WEIGHT,W[it->first][it->second]);
+            }
+            for (int j=0;j<i;++j) {
+                node(path[j]).set_subgraph(1);
+            }
+        }
+        if (paths.empty()) break;
+        spaths.push_back(paths.begin()->second);
+        paths.erase(paths.begin());
+    }
+    restore_subgraphs();
 }
 
 #ifndef NO_NAMESPACE_GIAC

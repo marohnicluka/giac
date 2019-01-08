@@ -40,10 +40,9 @@
 #define DBL_MAX 1.79769313486e+308
 #endif
 #define PLASTIC_NUMBER 1.32471795724
-#define PLASTIC_NUMBER_SQUARED 1.75487766625
-#define PLASTIC_NUMBER_CUBED 2.32471795724
+#define PLASTIC_NUMBER_2 1.75487766625
+#define PLASTIC_NUMBER_3 2.32471795724
 #define MARGIN_FACTOR 0.139680581996 // pow(PLASTIC_NUMBER,-7)
-#define NEGLIGIBILITY_FACTOR 0.0195106649868 // MARGIN_FACTOR^2
 
 #ifndef NO_NAMESPACE_GIAC
 namespace giac {
@@ -467,7 +466,7 @@ public:
         graphe *G;
         int maxsize;
         bool found;
-        double timeout; // in seconds
+        double timeout; // seconds
         ivector c,incumbent,clique_nodes;
         clock_t start;
         bool timed_out;
@@ -477,7 +476,7 @@ public:
         int maxclique(ivector &clique);
     };
 
-    struct edges_comparator { // sort edges by their weight
+    struct edges_comparator { // for sorting edges by their weight
         graphe *G;
         bool operator()(const ipair &a,const ipair &b) {
             return is_strictly_greater(G->weight(b),G->weight(a),G->giac_context());
@@ -485,13 +484,13 @@ public:
         edges_comparator(graphe *gr) { G=gr; }
     };
 
-    struct ivectors_comparator { // sort ivectors by their length
+    struct ivectors_comparator { // for sorting ivectors by their length
         bool operator()(const ivector &a,const ivector &b) {
             return a.size()<b.size();
         }
     };
 
-    struct degree_comparator { // sort vertices by their degrees
+    struct degree_comparator { // for sorting vertices by their degrees
         graphe *G;
         bool asc;
         bool operator()(int v,int w) {
@@ -501,7 +500,7 @@ public:
         degree_comparator(graphe *gr,bool ascending=true) { G=gr; asc=ascending; }
     };
 
-    struct ivectors_degree_comparator { // sort sets of vertices by ascending total degree
+    struct ivectors_degree_comparator { // for sorting sets of vertices by ascending total degree
         graphe *G;
         bool operator()(const ivector &a,const ivector &b) {
             int deg_a,deg_b;
@@ -514,6 +513,14 @@ public:
             return deg_a*b.size()>=deg_b*a.size();
         }
         ivectors_degree_comparator(graphe *gr) { G=gr; }
+    };
+
+    struct kspaths_comparator { // for sorting paths by their weight
+        bool operator()(const std::pair<gen,ivector> &a,const std::pair<gen,ivector> &b) const {
+            if (is_zero(a.first-b.first))
+                return a.second<b.second;
+            return is_strictly_greater(b.first,a.first,context0);
+        }
     };
 
     typedef std::vector<vertex>::const_iterator node_iter;
@@ -685,7 +692,6 @@ private:
     static int common_element(const ivector &v1,const ivector &v2,int offset=0);
     void embed_children_blocks(int i,ivectors &block_tree,std::vector<ivectors> &blocks_faces);
     void periphericity(const ivector &outer_face,ivector &p);
-    static void tree_layout2polar(layout &ly);
     void tree_height_dfs(int i,int level,int &depth);
     void make_product_nodes(const graphe &G,graphe &P) const;
     static void extract_path_from_cycle(const ivector &cycle,int i,int j,ivector &path);
@@ -789,7 +795,7 @@ public:
     bool read_dot(const std::string &filename);
     inline bool is_null() const { return nodes.empty(); }
     bool is_empty() const;
-    matrice weight_matrix() const;
+    void weight_matrix(matrice &W) const;
     gen weight(int i,int j) const;
     inline gen weight(const ipair &edge) const { return weight(edge.first,edge.second); }
     int edge_count(int sg=-1) const;
@@ -994,7 +1000,7 @@ public:
     void draw_labels(vecteur &drawing,const layout &x) const;
     void distance(int i,const ivector &J,ivector &dist,ivectors *shortest_paths=NULL);
     void allpairs_distance(matrice &m) const;
-    void dijkstra(int src,const ivector &dest,vecteur &path_weights,ivectors *cheapest_paths=NULL);
+    void dijkstra(int src,const ivector &dest,vecteur &path_weights,ivectors *cheapest_paths=NULL,int sg=-1);
     bool bellman_ford(int src,const ivector &dest,vecteur &path_weights,ivectors *cheapest_paths=NULL);
     bool topologic_sort(ivector &ordering);
     bool is_arborescence() const;
@@ -1044,6 +1050,7 @@ public:
     void truncate(graphe &dest,const ivectors &faces);
     void condensation(graphe &G);
     void elementary_cycles(ivectors &cyc);
+    void yen_ksp(int K,int src,int dest,ivectors &spaths);
     static gen colon_label(int i,int j);
     static gen colon_label(int i,int j,int k);
     static size_t intersect_fast(ivector_iter min1,ivector_iter max1,ivector_iter min2,ivector_iter max2);

@@ -275,6 +275,7 @@ gen _vertex_connectivity(const gen &g,GIAC_CONTEXT);
 gen _tonnetz(const gen &g,GIAC_CONTEXT);
 gen _truncate_graph(const gen &g,GIAC_CONTEXT);
 gen _find_cycles(const gen &g,GIAC_CONTEXT);
+gen _kspaths(const gen &g,GIAC_CONTEXT);
 
 // GENERAL GIAC COMMANDS
 

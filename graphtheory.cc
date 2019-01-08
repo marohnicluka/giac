@@ -1248,7 +1248,9 @@ gen _weight_matrix(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_null())
         return vecteur(0);
-    return change_subtype(G.weight_matrix(),_MATRIX__VECT);
+    matrice W;
+    G.weight_matrix(W);
+    return change_subtype(W,_MATRIX__VECT);
 }
 static const char _weight_matrix_s[]="weight_matrix";
 static define_unary_function_eval(__weight_matrix,&_weight_matrix,_weight_matrix_s);
@@ -1829,7 +1831,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
         graphe::point dx(method==_GT_STYLE_3D?3:2,0.0);
         for (int i=0;i<nc;++i) {
             graphe::rectangle &rect=bounding_rects[i];
-            rect=graphe::layout_bounding_rect(layouts[i],sep/PLASTIC_NUMBER_CUBED);
+            rect=graphe::layout_bounding_rect(layouts[i],sep/PLASTIC_NUMBER_3);
             dx[0]=-rect.x();
             dx[1]=-rect.y();
             graphe::translate_layout(layouts[i],dx);
@@ -6989,7 +6991,7 @@ define_unary_function_ptr5(at_truncate_graph,alias_at_truncate_graph,&__truncate
 
 /* USAGE:   find_cycles(G)
  *
- * Returns the list of elementary cycles in the digraph G.
+ * Returns the list of elementary cycles of the digraph G.
  */
 gen _find_cycles(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -7009,6 +7011,40 @@ gen _find_cycles(const gen &g,GIAC_CONTEXT) {
 static const char _find_cycles_s[]="find_cycles";
 static define_unary_function_eval(__find_cycles,&_find_cycles,_find_cycles_s);
 define_unary_function_ptr5(at_find_cycles,alias_at_find_cycles,&__find_cycles,0,true)
+
+/* USAGE:   kspaths(G,u,v,k)
+ *
+ * Returns the list of k shortest paths between vertices u and v in the
+ * (weighted) digraph G.
+ */
+gen _kspaths(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    const vecteur &gv=*g._VECTptr;
+    if (gv.size()!=4)
+        return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+    graphe G(contextptr);
+    if (!G.read_gen(gv.front()))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_empty())
+        return generr("graph is empty");
+    graphe::ivectors paths;
+    int k,src,dest;
+    src=G.node_index(gv[1]);
+    dest=G.node_index(gv[2]);
+    if (src<0 || dest<0)
+        return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
+    if (!gv.back().is_integer() || (k=gv.back().val)<=0)
+        return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
+    G.yen_ksp(k,src,dest,paths);
+    vecteur res;
+    G.ivectors2vecteur(paths,res);
+    return change_subtype(res,_LIST__VECT);
+}
+static const char _kspaths_s[]="kspaths";
+static define_unary_function_eval(__kspaths,&_kspaths,_kspaths_s);
+define_unary_function_ptr5(at_kspaths,alias_at_kspaths,&__kspaths,0,true)
 
 void nexcom(int n,int k,int &h,int &t,vector<int> &r,bool &mtc) {
     int i;

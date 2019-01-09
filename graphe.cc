@@ -1278,8 +1278,7 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         layout_best_rotation(x);
     } else if (name=="poussin") {
         read_special(poussin_graph);
-        for (int i=0;i<3;++i) hull.push_back(i);
-        make_circular_layout(x,hull);
+        make_planar_layout(x);
         layout_best_rotation(x);
     } else if (name=="franklin") {
         make_lcf_graph(franklin_graph_lcf,6);

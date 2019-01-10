@@ -107,9 +107,9 @@ void insert_column(matrice &m,const vecteur &c,int j) {
  */
 void append_column(matrice &m,const vecteur &c) {
     assert(m.size()==c.size());
-    for (int i=0;i<int(m.size());++i) {
-        m[i]._VECTptr->push_back(c[i]);
-    }
+    matrice mt=mtran(m);
+    mt.push_back(c);
+    m=mtran(mt);
 }
 
 /*
@@ -368,6 +368,13 @@ int lp_node::solve_relaxation() {
     ints cols(ncols),basis;
     vector<bool> is_slack(ncols,false);
     map<int,int> slack_cut;
+    bool is_mip=false;
+    for (int i=0;i<prob->nv();++i) {
+        if (prob->variables[i].is_integral) {
+            is_mip=true;
+            break;
+        }
+    }
     //determine upper and lower bounds
     for (int j=0;j<ncols;++j) {
         lp_variable &var=prob->variables[j];
@@ -378,11 +385,11 @@ int lp_node::solve_relaxation() {
             return _LP_INFEASIBLE;
     }
     //populate matrix with consraint coefficients
-    for (int i=0;i<nrows;++i) {
-        row=vecteur(*prob->constr.lhs[i]._VECTptr);
-        m.push_back(row);
+    m=*_matrix(makesequence(nrows,ncols+1,0),prob->ctx)._VECTptr;
+    for (int i=0;i<nrows;++i) for (int j=0;j<ncols;++j) {
+        m[i]._VECTptr->at(j)=prob->constr.lhs[i][j];
     }
-    b=vecteur(prob->constr.rhs);
+    b=prob->constr.rhs;
     //shift variables according to their lower bounds such that l<=x<=u becomes 0<=x'<=u'
     for (int j=0;j<ncols;++j) {
         b=subvecteur(b,multvecteur(l[j],jth_column(m,j)));
@@ -390,7 +397,9 @@ int lp_node::solve_relaxation() {
         obj_ct+=obj[j]*l[j];
         cols[j]=j;
     }
-    append_column(m,b);
+    for (int i=0;i<nrows;++i) {
+        m[i]._VECTptr->at(ncols)=b[i];
+    }
     //assure that the right-hand side column has nonnegative coefficients
     for (iterateur it=m.begin();it!=m.end();++it) {
         if (is_strictly_positive(-it->_VECTptr->back(),prob->ctx)) {
@@ -485,6 +494,7 @@ int lp_node::solve_relaxation() {
         if (is_inf(optimum))
             return _LP_UNBOUNDED; //solution is unbounded
         m.pop_back(); //remove bottom row
+        if (!is_mip) break;
         if (int(cut_indices.size())>=prob->settings.max_cuts)
             break;
         //try to generate Gomory mixed integer cut
@@ -1547,7 +1557,7 @@ void parse_limit(const gen &g,int &lim,GIAC_CONTEXT) {
 
 bool parse_options_and_bounds(const_iterateur &it,const_iterateur &itend,lp_problem &prob) {
     for (;it!=itend;++it) {
-        if (it->is_symb_of_sommet(at_maximize))
+        if (*it==at_maximize)
             prob.settings.maximize=true;
         else if (it->is_integer()) {
             switch(it->val) {

@@ -1316,13 +1316,26 @@ int lp_problem::glpk_branchcut(glp_prob *prob) {
     default:
         parm.br_tech=GLP_BR_DTH;
     }
+    switch (settings.nodeselect) {
+    case _LP_DEPTHFIRST:
+        parm.bt_tech=GLP_BT_DFS;
+        break;
+    case _LP_BREADTHFIRST:
+        parm.bt_tech=GLP_BT_BFS;
+        break;
+    case _LP_BEST_PROJECTION:
+        parm.bt_tech=GLP_BT_BPH;
+        break;
+    default:
+        parm.bt_tech=GLP_BT_BLB;
+    }
     return glp_intopt(prob,&parm);
 }
 
 #endif
 
 /*
- * Solve the problem using facilities from GLPK library.
+ * Solve the problem using the GLPK library.
  */
 int lp_problem::glpk_solve() {
 #ifndef HAVE_LIBGLPK
@@ -1754,8 +1767,9 @@ gen _lpsolve(const gen &args,GIAC_CONTEXT) {
     lp_problem prob(contextptr); //create LP problem with default settings
     bool is_matrix_form=false;
     if (it->type==_STRNG) { //problem is given in file
-        const char *fname=gen2string(*it).c_str();
-        if (!prob.glpk_load_from_file(fname))
+        int len=_size(*it,contextptr).val;
+        string fname(it->_STRNGptr->begin(),it->_STRNGptr->begin()+len);
+        if (!prob.glpk_load_from_file(fname.c_str()))
             return undef;
         ++it;
         if (it->type==_VECT)

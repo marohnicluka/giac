@@ -1,7 +1,6 @@
 #ifndef __LPSOLVE_H
 #define __LPSOLVE_H
-//#define HAVE_LIBGLPK 1
-//#define _GLIBCXX_USE_CXX11_ABI 0
+
 #include "config.h"
 #include "gen.h"
 #include "unary.h"
@@ -21,30 +20,6 @@ namespace giac {
 
 typedef std::vector<int> ints;
 
-/*
-//options below should be moved to dispatch.h
-//8<-------------
-enum lp_additional_options { // XCAS KEYWORD:         TYPE:
-    _LP_MAX_CUTS,            // lp_maxcuts            option
-    _LP_GAP_TOLERANCE,       // lp_gaptolerance       option
-    _LP_NODESELECT,          // lp_nodeselect         option
-    _LP_VARSELECT,           // lp_varselect          option
-    _LP_FIRSTFRACTIONAL,     // lp_firstfractional    value
-    _LP_LASTFRACTIONAL,      // lp_lastfractional     value
-    _LP_MOSTFRACTIONAL,      // lp_mostfractional     value
-    _LP_PSEUDOCOST,          // lp_pseudocost         value
-    _LP_DEPTHFIRST,          // lp_depthfirst         value
-    _LP_BREADTHFIRST,        // lp_breadthfirst       value
-    _LP_BEST_PROJECTION,     // lp_bestprojection     value
-    _LP_HYBRID,              // lp_hybrid             value
-    _LP_ITERATION_LIMIT,     // lp_iterationlimit     option
-    _LP_TIME_LIMIT,          // lp_timelimit          option
-    _LP_VERBOSE              // lp_verbose            option
-};
-//8<-------------
-*/
-
-//the following enums should stay here as they're used only internally
 enum lp_results {
     _LP_SOLVED,
     _LP_INFEASIBLE,

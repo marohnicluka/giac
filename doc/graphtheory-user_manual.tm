@@ -3023,7 +3023,8 @@
 
   The strategy is to use <name|Tarjan>'s algorithm for enumerating elementary
   circuits in a digraph<nbsp><cite|tarjan-elem>. The algorithm runs in
-  <math|O<around*|(|<around*|\||V|\|>+<around*|\||E|\|>|)>> time.
+  <math|O<around*|(|<around*|\||V|\|>*<around*|\||E|\|>*<around*|(|C+1|)>|)>>
+  time, where <math|C> is the number of cycles in <math|G>.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -12404,8 +12405,7 @@
   <hlink|<rigid|chromatic number>|https://en.wikipedia.org/wiki/Graph_coloring#Vertex_coloring>
   of a graph.
 
-  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|chromatic_number(G)>>>|<row|<cell|>|<cell|<verbatim|chromatic_number(G,c)>>>|<row|<cell|>|<cell|<verbatim|chromatic_number(G,approx
-  or interval)>>>>>>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|chromatic_number(G)>>>|<row|<cell|>|<cell|<verbatim|chromatic_number(G,c)>>>|<row|<cell|>|<cell|<verbatim|chromatic_number(G,approx\|interval)>>>>>>
 
   <verbatim|chromatic_number> takes one mandatory argument, a graph
   <math|G<around*|(|V,E|)>>, and optionally a second argument. To obtain only
@@ -14190,21 +14190,22 @@
   are drawn in green.
 
   This method of drawing planar graphs operates in
-  <math|O<around*|(|<around*|\||V|\|><rsup|2>|)>> time. Nevertheless, it is
-  quite fast for graphs up to 1000 vertices, usually producing results in
-  less than a second. A drawback of this method is that it sometimes creates
-  clusters of vertices which are very close to each other, resulting in a
-  very high ratio of the area of the largest inner face to the area of the
-  smallest inner face. However, if the result is not satisfactory, one can
-  simply redraw the graph and repeat the process until a better layout is
-  obtained. The planar embedding will in general be different each time if
-  the graph is not triconnected.
+  <math|O<around*|(|<around*|\||V|\|><rsup|2>|)>> time. However, it is quite
+  fast for graphs up to 1000 vertices, usually producing results in less than
+  a second. A drawback of this method is that it sometimes creates clusters
+  of vertices which are very close to each other, resulting in a very high
+  ratio of the area of the largest inner face to the area of the smallest
+  inner face. However, if the result is not satisfactory, one can simply
+  redraw the graph and repeat the process until a better layout is obtained.
+  The planar embedding will in general be different each time unless the
+  graph is triconnected.
 
   Another drawback of this method is that sparse planar graphs are sometimes
   drawn poorly.
 
-  The following example shows that the above described improvement of the
-  barycentric method handles non-triconnected graphs well.
+  The following examples show that the above described improvement of the
+  barycentric method handles non-triconnected graphs well. In the first
+  example, a biconnected graph is drawn.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -14228,15 +14229,15 @@
 
   Note that the inner diamond-like shape in the above drawing would end up
   flattened\Vmaking the two triangular faces invisible\Vif the input graph
-  was not augmented. It is so because the vertices with labels 11 and 12 are
+  was not augmented; since the vertices with labels 11 and 12 are
   \Pattracted\Q to each other (namely, the two large faces are \Pinflating\Q
-  themselves to become convex), causing them to merge eventually.
+  themselves to become convex), they would end up in the same position.
 
-  In the following example the input graph <math|G> is connected but not
-  biconnected (it has two articulation points). It is obtained by removing a
-  vertex from the Sierpi«ski triangle graph <math|S T<rsub|3><rsup|3>>. Note
-  that the syntax mode is set to <samp|Xcas> in this example, so the first
-  vertex label is zero.\ 
+  In the second example the input graph is connected but not biconnected (it
+  has two articulation points). It is obtained by removing a vertex from the
+  Sierpi«ski triangle graph <math|S T<rsub|3><rsup|3>>. Note that the syntax
+  mode is set to <samp|Xcas> in this example, so the first vertex label is
+  zero.\ 
 
   <\session|giac|default>
     <\unfolded-io>
@@ -14285,10 +14286,10 @@
 
   This approach gives best results for symmetrical graphs such as generalized
   Petersen graphs. In addition, if the input graph is planar and
-  triconnected, and the outer hull represents a face in the respective planar
-  embedding, then the drawing will contain no edge crossings. There is a
-  possibility, however, that some very short edges may cross each other as
-  the number of force update iterations is limited.
+  triconnected, and the outer hull represents a face in a planar embedding,
+  then the drawing will contain no edge crossings. There is a possibility,
+  however, that some very short edges may cross each other as the number of
+  force update iterations is limited.
 
   In the following example the Sierpi«ski graph <math|S<rsub|4><rsup|2>> is
   drawn using the above method. Note that the command lines below are

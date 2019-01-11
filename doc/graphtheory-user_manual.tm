@@ -205,8 +205,8 @@
     <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-75>>
 
-    <with|par-left|1tab|1.8.5.<space|2spc>Finding elementary cycles in
-    digraphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+    <with|par-left|1tab|1.8.5.<space|2spc>Finding cycles in digraphs
+    <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
     <no-break><pageref|auto-78>>
 
     1.9.<space|2spc>Operations on graphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
@@ -1360,13 +1360,14 @@
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|cycle_graph(n)>>>|<row|<cell|>|<cell|<verbatim|cycle_graph(V)>>>>>>
 
-  <kbd|cycle_graph> takes a positive integer <math|n> or a list of distinct
-  vertices <math|V> as its only argument and returns the graph consisting of
-  a single cycle on the specified vertices in the given order. If <math|n> is
-  specified it is assumed to be the desired number of vertices, in which case
-  they will be created and labeled with the first <math|n> integers (starting
-  from 0 in <samp|Xcas> mode and from 1 in <samp|Maple> mode). The resulting
-  graph will be given the name <kbd|Cn>, for example <kbd|C4> for <math|n=4>.
+  <kbd|cycle_graph> takes a positive integer <math|n> or a list of vertices
+  <math|V> (without repetitions) as its only argument and returns the graph
+  consisting of a single cycle on the specified vertices in the given order.
+  If <math|n> is specified it is assumed to be the desired number of
+  vertices, in which case they will be created and labeled with the first
+  <math|n> integers (starting from 0 in <samp|Xcas> mode and from 1 in
+  <samp|Maple> mode). The resulting graph will be given the name <kbd|Cn>,
+  for example <kbd|C4> for <math|n=4>.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -1416,9 +1417,9 @@
   they will be created and labeled with the first <math|n> integers (starting
   from 0 in <samp|Xcas> mode resp.<nbsp>from 1 in <samp|Maple> mode).
 
-  Note that a path cannot intersect itself. Paths that are allowed to cross
-  themselves are called <strong|trails> (see the command
-  <verbatim|<hlink|trail|#trail>>).
+  Note that a path, by definition, is a walk with no repeated vertices. Walks
+  with no repeated edges but possibly repeated vertices are called
+  <strong|trails> (see the command <verbatim|<hlink|trail|#trail>>).
 
   <\session|giac|default>
     <\unfolded-io>
@@ -1444,17 +1445,22 @@
 
   <subsection|Trails of edges><label|trail>
 
-  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|trail(v1,v2,..,vk)>>>|<row|<cell|>|<cell|<verbatim|trail2edges(T)>>>>>>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|trail(v1,v2,..,vn)>>>|<row|<cell|>|<cell|<verbatim|trail2edges(T)>>>>>>
 
   If the dummy command<index|<verbatim|trail>> <with|font-family|tt|trail> is
-  called with a sequence of vertices <math|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|k>>
+  called with a sequence of vertices <math|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|n>>
   as arguments, it returns the symbolic expression representing the
   <hlink|trail|https://en.wikipedia.org/wiki/Path_(graph_theory)#Definitions>
   which visits the specified vertices in the given order. The resulting
   symbolic object is recognizable by some commands, for example
   <verbatim|<hlink|graph|#graph>> and <verbatim|<hlink|digraph|#digraph>>.
-  Note that a trail may cross itself (some vertices may be repeated in the
-  sequence).
+
+  Note that a trail, by definition, is a walk with no repeated edges. Hence
+  some vertices in the sequence <math|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|k>>
+  may be repeated, but the sets <math|<around*|{|v<rsub|i>,v<rsub|i+1>|}>> in
+  undirected graphs resp.<nbsp>the pairs <math|<around*|(|v<rsub|i>,v<rsub|i+1>|)>>
+  in digraphs must be mutually distinct for <math|i=1,2,\<ldots\>,n-1>, since
+  they represent edges resp.<nbsp>arcs.
 
   Any trail <math|T> is easily converted to the corresponding list of edges
   by calling the <verbatim|trail2edges><index|<verbatim|trail2edges>>
@@ -1488,7 +1494,7 @@
   <subsection|Complete (multipartite) graphs>
 
   The command<index|<verbatim|complete_graph>>
-  <with|font-family|tt|complete_graph> is used for construction of
+  <with|font-family|tt|complete_graph> is used for constructing
   <hlink|complete|https://en.wikipedia.org/wiki/Complete_graph>
   (<hlink|multipartite|https://en.wikipedia.org/wiki/Multipartite_graph>)
   graphs.
@@ -1663,8 +1669,8 @@
   <subsection|Validating graphic sequences>
 
   The command<index|<verbatim|is_graphic_sequence>>
-  <with|font-family|tt|is_graphic_sequence> is used to check whether a list
-  of integers represents the degree sequence of some graph.
+  <with|font-family|tt|is_graphic_sequence> is used for determining whether a
+  list of integers represents the degree sequence of some graph.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_graphic_sequence(L)>>>>>>
 
@@ -1786,7 +1792,7 @@
 
   <center|<image|images/kneser.eps|35%|||>>
 
-  The command <with|font-family|tt|odd_graph> is used for creating
+  The command <with|font-family|tt|odd_graph> is used for constructing
   <strong|odd graphs>, i.e.<nbsp>Kneser graphs with parameters <math|n=2*d+1>
   and <math|k=d> for <math|d\<geqslant\>1>.
 
@@ -1812,7 +1818,7 @@
   <subsection|Hypercube graphs>
 
   The command<index|<verbatim|hypercube_graph>> <verbatim|hypercube_graph> is
-  used for construction of <hlink|<rigid|hypercube
+  used for constructing <hlink|<rigid|hypercube
   graphs>|https://en.wikipedia.org/wiki/Hypercube_graph>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|hypercube_graph(n)>>>>>>
@@ -1867,7 +1873,7 @@
   <subsection|Star graphs>
 
   The command<index|<verbatim|star_graph>> <with|font-family|tt|star_graph>
-  is used for construction of <hlink|<rigid|star
+  is used for constructing <hlink|<rigid|star
   graphs>|https://en.wikipedia.org/wiki/Star_(graph_theory)>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|star_graph(n)>>>>>>
@@ -1900,7 +1906,7 @@
   <subsection|Wheel graphs>
 
   The command<index|<verbatim|wheel_graph>> <with|font-family|tt|wheel_graph>
-  is used for construction of <hlink|<rigid|wheel
+  is used for constructing <hlink|<rigid|wheel
   graphs>|https://en.wikipedia.org/wiki/Wheel_graph>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|wheel_graph(n)>>>>>>
@@ -1931,7 +1937,7 @@
   <subsection|Web graphs>
 
   The command<index|<verbatim|web_graph>> <with|font-family|tt|web_graph> is
-  used for construction of web graphs.
+  used for constructing web graphs.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|web_graph(a,b)>>>>>>
 
@@ -1964,7 +1970,7 @@
   <subsection|Prism graphs>
 
   The command<index|<verbatim|prism_graph>> <with|font-family|tt|prism_graph>
-  is used for construction of <hlink|<rigid|prism
+  is used for constructing <hlink|<rigid|prism
   graphs>|https://en.wikipedia.org/wiki/Prism_graph>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|prism_graph(n)>>>>>>
@@ -1996,7 +2002,7 @@
   <subsection|Antiprism graphs>
 
   The command<index|<verbatim|antiprism_graph>>
-  <with|font-family|tt|antiprism_graph> is used for construction of
+  <with|font-family|tt|antiprism_graph> is used for constructing
   <hlink|<rigid|antiprism graphs>|https://en.wikipedia.org/wiki/Antiprism_graph>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|antiprism_graph(n)>>>>>>
@@ -2030,7 +2036,7 @@
 
   The command<index|<verbatim|grid_graph>> <with|font-family|tt|grid_graph>
   resp.<nbsp><verbatim|torus_grid_graph><index|<verbatim|torus_grid_graph>>
-  is used for construction of rectangular/triangular resp.<nbsp>torus
+  is used for constructing rectangular/triangular resp.<nbsp>torus
   <hlink|<rigid|grid graphs>|https://en.wikipedia.org/wiki/Lattice_graph>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<cwith|1|-1|3|3|cell-lsep|1em>|<cwith|1|-1|3|3|cell-valign|c>|<table|<row|<cell|Syntax:>|<cell|<verbatim|grid_graph(m,n)>>|<cell|<very-small|rectangular
@@ -2181,7 +2187,7 @@
   <subsection|Sierpi«ski graphs>
 
   The command<index|<verbatim|sierpinski_graph>>
-  <with|font-family|tt|sierpinski_graph> is used for construction of
+  <with|font-family|tt|sierpinski_graph> is used for constructing
   Sierpi«ski-type graphs <math|S<rsub|k><rsup|n>> and <math|S
   T<rsub|k><rsup|n>><nbsp><cite|hinz>.
 
@@ -2250,7 +2256,7 @@
   <subsection|Generalized Petersen graphs>
 
   The command<index|<verbatim|petersen_graph>>
-  <with|font-family|tt|petersen_graph> is used for construction of
+  <with|font-family|tt|petersen_graph> is used for constructing
   <hlink|<rigid|generalized Petersen graphs>|https://en.wikipedia.org/wiki/Generalized_Petersen_graph>
   <math|P<around*|(|n,k|)>>.
 
@@ -2322,7 +2328,7 @@
   <subsection|<abbr|LCF> graphs>
 
   The command<index|<verbatim|lcf_graph>> <verbatim|lcf_graph> is used for
-  construction of cubic Hamiltonian graphs from <hlink|<rigid|<abbr|LCF>
+  constructing cubic Hamiltonian graphs from <hlink|<rigid|<abbr|LCF>
   notation>|https://en.wikipedia.org/wiki/LCF_notation>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|lcf_graph(L)>>>|<row|<cell|>|<cell|<verbatim|lcf_graph(L,n)>>>>>>
@@ -3004,16 +3010,16 @@
     </unfolded-io>
   </session>
 
-  <subsection|Finding elementary cycles in digraphs>
+  <subsection|Finding cycles in digraphs>
 
-  The command <verbatim|find_cycles><index|<verbatim|find_cycles>> is used to
-  find all elementary cycles in a digraph.
+  The command <verbatim|find_cycles><index|<verbatim|find_cycles>> is used
+  for enumerating all cycles (elementary circuits) in a digraph.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|find_cycles(G)>>>>>>
 
   <verbatim|find_cycles> takes a digraph <math|G<around*|(|V,E|)>> as its
-  only argument and returns the list of all elementary cycles in <math|G>.
-  Each cycle is output as a list of its vertices.
+  only argument and returns the list of all cycles in <math|G>. Each cycle is
+  output as a list of its vertices.
 
   The strategy is to use <name|Tarjan>'s algorithm for enumerating elementary
   circuits in a digraph<nbsp><cite|tarjan-elem>. The algorithm runs in
@@ -3056,7 +3062,7 @@
   <subsection|Graph complement>
 
   The command <with|font-family|tt|graph_complement><index|<with|font-family|tt|graph_complement>>
-  is used for construction of <hlink|<rigid|complement
+  is used for constructing <hlink|<rigid|complement
   graphs>|https://en.wikipedia.org/wiki/Complement_graph>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|graph_complement(G)>>>>>>
@@ -3649,7 +3655,7 @@
   <subsection|Line graph>
 
   The command <verbatim|line_graph><index|<verbatim|line_graph>> is used for
-  construction of <hlink|<rigid|line graphs>|https://en.wikipedia.org/wiki/Line_graph>
+  constructing <hlink|<rigid|line graphs>|https://en.wikipedia.org/wiki/Line_graph>
   <cite-detail|godsil|pp.<nbsp>10>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|line_graph(G)>>>>>>
@@ -3696,9 +3702,9 @@
   <subsection|Plane dual graph>
 
   The command <verbatim|plane_dual><index|<verbatim|plane_dual>> is used for
-  construction of <hlink|<rigid|dual graphs>|https://en.wikipedia.org/wiki/Dual_graph>
-  from undirected biconnected <hlink|<rigid|planar
-  graphs>|https://en.wikipedia.org/wiki/Planar_graph>. To determine whether a
+  constructing the <hlink|<rigid|dual graph>|https://en.wikipedia.org/wiki/Dual_graph>
+  of an undirected biconnected <hlink|<rigid|planar
+  graph>|https://en.wikipedia.org/wiki/Planar_graph>. To determine whether a
   graph is planar <cite-detail|godsil|pp.<nbsp>12> use the command
   <verbatim|is_planar><index|<verbatim|is_planar>>.
 
@@ -3769,9 +3775,9 @@
   <verbatim|true> if <math|G> is planar and <verbatim|false> otherwise. If
   the second argument is given and <math|G> is planar and biconnected, the
   list of faces of <math|G> is stored to <verbatim|F>. Each face is
-  represented as a cycle (a list) of vertices. The strategy is to use the
-  algorithm of <name|Demoucron> et al.<nbsp><cite-detail|gibbons|pp.<nbsp>88>,
-  which runs in <math|O<around*|(|<around*|\||V|\|><rsup|2>|)>> time.
+  represented as a list of its vertices. The strategy is to use the algorithm
+  of <name|Demoucron> et al.<nbsp><cite-detail|gibbons|pp.<nbsp>88>, which
+  runs in <math|O<around*|(|<around*|\||V|\|><rsup|2>|)>> time.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -4755,7 +4761,7 @@
   <subsection|Random graphs from a given degree sequence>
 
   The command <verbatim|random_sequence_graph><index|<verbatim|random_sequence_graph>>
-  is used for generating a random undirected graph with a specified degree
+  is used for generating a random undirected graph from a given degree
   sequence.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_sequence_graph(L)>>>>>>
@@ -4823,7 +4829,7 @@
 
   The command <verbatim|random_regular_graph><index|<verbatim|random_regular_graph>>
   is used for generating random <hlink|<rigid|regular graphs>|#is-regular> on
-  a specified set of vertices.
+  a given set of vertices.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_regular_graph(n
   or L,d)>>>|<row|<cell|>|<cell|<verbatim|random_regular_graph(n or
@@ -4934,7 +4940,7 @@
   <subsection|Random network graphs><label|random-network>
 
   The command <verbatim|random_network><index|<verbatim|random_network>> is
-  used for generation of random <hlink|networks|#is-network>.
+  used for generating random <hlink|networks|#is-network>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|random_network(a,b,[opts])>>>|<row|<cell|>|<cell|<verbatim|random_network(a,b,p,[opts])>>>>>>
 
@@ -6098,8 +6104,8 @@
 
   <samp|Giac> has some basic support for <hlink|<rigid|<with|font-family|ss|dot>
   language>|https://www.graphviz.org/doc/info/lang.html>. Each <samp|dot>
-  file is used to hold exactly one graph and should consist of a single
-  instance of the following environment:
+  file should hold exactly one graph and should consist of a single instance
+  of the following environment:
 
   <\verbatim-code>
     strict? (graph \| digraph) name? {
@@ -6111,9 +6117,9 @@
 
   The keyword <with|font-family|tt|strict> may be omitted, as well as the
   <with|font-family|tt|name> of the graph, as indicated by the question
-  marks. The former is used to differentiate between simple graphs (strict)
-  and multigraphs (non-strict). Since <samp|Giac> supports only simple
-  graphs, <with|font-family|tt|strict> is redundant.
+  marks. The former is used for differentiating between simple graphs
+  (strict) and multigraphs (non-strict). Since <samp|Giac> supports only
+  simple graphs, <with|font-family|tt|strict> is redundant.
 
   For specifying undirected graphs the keyword <with|font-family|tt|graph> is
   used, while the <with|font-family|tt|digraph> keyword is used for
@@ -6948,7 +6954,7 @@
   <subsection|Vertex adjacency>
 
   The command <verbatim|has_edge><index|<verbatim|has_edge>> is used for
-  checking whether two vertices in an undirected graph are adjacent. For
+  determining whether two vertices in an undirected graph are adjacent. For
   digraphs, there is an analogous command
   <verbatim|has_arc><index|<verbatim|has_arc>>.
 
@@ -10792,8 +10798,9 @@
   <subsection|Acyclic graphs>
 
   The command <verbatim|is_acyclic><index|<verbatim|is_acyclic>> is used for
-  checking for absence of directed cycles in digraphs. A directed graph with
-  no directed cycle is said to be <strong|acyclic>.
+  determining whether there are no directed cycles (closed paths) in a
+  digraph. A directed graph with no directed cycle is said to be
+  <strong|acyclic>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_acyclic(G)>>>>>>
 
@@ -12979,15 +12986,13 @@
   corresponding Eulerian trail is stored to <verbatim|T>.
 
   A graph <math|G> is <strong|Eulerian> if it has a trail covering all its
-  edges. Such a trail is called <strong|Eulerian trail>. An Eulerian trail
-  may be closed, in which case it is called <strong|Eulerian cycle>. Note
-  that every edge <math|e\<in\>E> must be visited, i.e.<nbsp>\Pstrolled
-  through\Q, exactly once <cite-detail|godsil|pp.<nbsp>395>. The edge
-  endpoints (i.e.<nbsp>the vertices in <math|G>) may, however, be visited
-  more than once.
+  edges. Such a trail is called <strong|Eulerian trail>. Every edge
+  <math|e\<in\>E> must be visited, i.e.<nbsp>\Pstrolled through\Q, exactly
+  once <cite-detail|godsil|pp.<nbsp>395>. An Eulerian trail may be closed, in
+  which case it is an <strong|Eulerian circuit>.
 
   The strategy is to apply <name|Hierholzer>'s algorithm for finding an
-  Eulerian path<nbsp><cite|hierholzer>. It works by covering one cycle at a
+  Eulerian trail<nbsp><cite|hierholzer>. It works by covering one cycle at a
   time in the input graph. The required time is
   <math|O<around*|(|<around*|\||E|\|>|)>>.
 
@@ -13036,8 +13041,8 @@
   <subsection|Hamiltonian graphs>
 
   The command <verbatim|is_hamiltonian><index|<verbatim|is_hamiltonian>> is
-  used for checking hamiltonicity of an undirected graph. The command can
-  also construct a <hlink|<rigid|Hamiltonian
+  used for determining whether an undirected graph is Hamiltonian. The
+  command can also construct a <hlink|<rigid|Hamiltonian
   cycle>|https://en.wikipedia.org/wiki/Hamiltonian_path> in the input graph
   if the latter is Hamiltonian.
 
@@ -13836,8 +13841,8 @@
   of the style options. Note that edge weights will not be displayed when
   using <with|font-family|tt|plot3d> option when drawing a weighted graph.
 
-  When no style option is specified, the algorithm first checks if the graph
-  <math|G> is a tree or if it is bipartite, in which cases it is drawn
+  When no style option is specified, the algorithm first determines whether
+  <math|G> is a tree or a bipartite graph, in which cases it is drawn
   accordingly. Otherwise, the graph is drawn as if the option
   <with|font-family|tt|circle> was specified.
 
@@ -14146,16 +14151,16 @@
   The augmentation process consists of two parts. Firstly, the input graph
   <math|G> is decomposed into biconnected components (blocks) using the
   depth-first search <cite-detail|gibbons|pp.<nbsp>25>. Each block is then
-  decomposed into faces (represented by cycles of vertices) using
-  <name|Demoucron>'s algorithm (see <cite-detail|gibbons|pp.<nbsp>88> and
-  <cite|myrwold>). Embeddings obtained for each blocks are then combined by
-  adding one temporary edge for each articulation point, joining the two
-  corresponding blocks. Figure<nbsp><reference|blockjoin> shows the outer
-  faces of two blocks <math|B<rsub|1>> and <math|B<rsub|2>>, connected by an
-  articulation point (cut vertex). The temporary edge (shown in green) is
-  added to join <math|B<rsub|1>> and <math|B<rsub|2>> into a single block.
-  After \Pfolding up\Q the tree of blocks, the algorithm picks the largest
-  face in the resulting biconnected graph to be the outer face of the planar
+  decomposed into faces by using <name|Demoucron>'s algorithm (see
+  <cite-detail|gibbons|pp.<nbsp>88> and <cite|myrwold>). Embeddings obtained
+  for each blocks are then combined by adding one temporary edge for each
+  articulation point, joining the two corresponding blocks.
+  Figure<nbsp><reference|blockjoin> shows the outer faces of two blocks
+  <math|B<rsub|1>> and <math|B<rsub|2>>, connected by an articulation point
+  (cut vertex). The temporary edge (shown in green) is added to join
+  <math|B<rsub|1>> and <math|B<rsub|2>> into a single block. After \Pfolding
+  up\Q the tree of blocks, the algorithm picks the largest face in the
+  resulting biconnected graph to be the outer face of the planar
   embedding.<\float|float|tbh>
     <big-figure|<with|gr-mode|<tuple|group-edit|edit-props>|gr-frame|<tuple|scale|1cm|<tuple|0.5gw|0.5gh>>|gr-geometry|<tuple|geometry|1par|0.6par|top>|gr-auto-crop|true|gr-color|light
     grey|gr-line-width|2ln|<graphics||<point|-7.02714|4.71764>|<point|-7.27902|3.87308>|<point|-6.21221|2.99889>|<with|color|green|line-width|2ln|<line|<point|-5.9307|3.7101>|<point|-5.32321|2.76182>>>|<point|-5.9307|3.7101>|<point|-6.36038|4.55465>|<point|-6.74562|2.13952>|<point|-6.0196|1.26533>|<point|-5.11577|0.998627>|<point|-4.83425|2.02098>|<point|-5.32321|2.76182>|<line|<point|-7.02714|4.71764>|<point|-6.36038|4.55465>|<point|-5.9307|3.7101>|<point|-6.21221|2.99889>|<point|-7.27902|3.87308>|<point|-7.02714|4.71764>>|<line|<point|-6.21221|2.99889>|<point|-6.74562|2.13952>|<point|-6.0196|1.26533>|<point|-5.11577|0.998627>|<point|-4.83425|2.02098>|<point|-5.32321|2.76182>|<point|-6.21221|2.99889>>|<text-at|<math|B<rsub|1>>|<point|-6.86415200423336|3.87308175684614>>|<text-at|<math|B<rsub|2>>|<point|-5.93069519777748|1.90245072099484>>|<text-at|temp.<nbsp>edge|<point|-6.02040613837809|4.26236936102659>>|<with|dash-style|11100|<line|<point|-4.92621811732097|4.05921748908586>|<point|-5.44174163249107|3.28041076862019>>>>>|<label|blockjoin>Joining
@@ -14347,8 +14352,8 @@
   <subsection|Setting vertex positions><label|set-vertex-positions>
 
   The command <verbatim|set_vertex_positions><index|<verbatim|set_vertex_positions>>
-  is used to assign custom coordinates to vertices of a graph to be used when
-  drawing the graph.
+  is used for assigning custom coordinates to vertices of a graph to be used
+  when drawing the graph.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|set_vertex_positions(G,L)>>>>>>
 
@@ -14486,7 +14491,7 @@
   <subsection|Highlighting vertices><label|highlight-vertices>
 
   The command <verbatim|highlight_vertex><index|<verbatim|highlight_vertex>>
-  is used for changing color of one or more vertices in a graph.
+  changes color of one or more vertices in a graph.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|highlight_vertex(G,v)>>>|<row|<cell|>|<cell|<verbatim|highlight_vertex(G,v,c)>>>|<row|<cell|>|<cell|<verbatim|highlight_vertex(G,[v1,v2,..,vk])>>>|<row|<cell|>|<cell|<verbatim|highlight_vertex(G,[v1,v2,..,vk],c)>>>|<row|<cell|>|<cell|<verbatim|highlight_vertex(G,[v1,v2,..,vk],[c1,c2,..,ck])>>>>>>
 
@@ -16791,8 +16796,8 @@
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-75>>
 
-      <with|par-left|<quote|1tab>|1.8.5.<space|2spc>Finding elementary cycles
-      in digraphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <with|par-left|<quote|1tab>|1.8.5.<space|2spc>Finding cycles in
+      digraphs <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-78>>
 
       1.9.<space|2spc>Operations on graphs

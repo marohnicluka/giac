@@ -368,13 +368,7 @@ int lp_node::solve_relaxation() {
     ints cols(ncols),basis;
     vector<bool> is_slack(ncols,false);
     map<int,int> slack_cut;
-    bool is_mip=false;
-    for (int i=0;i<prob->nv();++i) {
-        if (prob->variables[i].is_integral) {
-            is_mip=true;
-            break;
-        }
-    }
+    bool is_mip=prob->has_integral_variables();
     //determine upper and lower bounds
     for (int j=0;j<ncols;++j) {
         lp_variable &var=prob->variables[j];

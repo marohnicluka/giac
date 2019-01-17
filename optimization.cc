@@ -3053,6 +3053,132 @@ int finitediff(const gen &f,const gen &x_idn,const gen &y_idn,const gen &dy_idn,
     return 1; // maximum number of iterations is exceeded
 }
 
+gen _bvpsolve(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    gen tk(undef);
+    int maxiter=RAND_MAX;
+    if (gv.size()<3 || gv[1].type!=_VECT || gv[2].type!=_VECT ||
+            gv[1]._VECTptr->size()!=2 || (gv[2]._VECTptr->size()!=2 && gv[2]._VECTptr->size()!=3))
+        return gensizeerr(contextptr);
+    gen &f=gv.front(),&t=gv[1]._VECTptr->front(),&y=gv[1]._VECTptr->back(),
+            y1=_evalf(gv[2]._VECTptr->at(0),contextptr),y2=_evalf(gv[2]._VECTptr->at(1),contextptr);
+    if (gv[2]._VECTptr->size()==3 && (tk=_evalf(gv[2]._VECTptr->at(2),contextptr)).type!=_DOUBLE_)
+        return gensizeerr(contextptr);
+    if (y.type!=_IDNT || !t.is_symb_of_sommet(at_equal) ||
+            t._SYMBptr->feuille._VECTptr->front().type!=_IDNT ||
+            !t._SYMBptr->feuille._VECTptr->back().is_symb_of_sommet(at_interval))
+        return gensizeerr(contextptr);
+    gen &x=t._SYMBptr->feuille._VECTptr->front();
+    vecteur &rng=*t._SYMBptr->feuille._VECTptr->back()._SYMBptr->feuille._VECTptr;
+    gen x1=_evalf(rng.front(),contextptr),x2=_evalf(rng.back(),contextptr);
+    if (x1.type!=_DOUBLE_ || x2.type!=_DOUBLE_ || y1.type!=_DOUBLE_ || y2.type!=_DOUBLE_ ||
+            !is_strictly_greater(x2,x1,contextptr))
+        return gensizeerr(contextptr);
+    int N=100;
+    /* parse options */
+    int output_type=_BVP_LIST;
+    for (const_iterateur it=gv.begin()+3;it!=gv.end();++it) {
+        if (it->is_symb_of_sommet(at_equal)) {
+            gen &lh=it->_SYMBptr->feuille._VECTptr->front();
+            gen &rh=it->_SYMBptr->feuille._VECTptr->back();
+            if (lh==at_output || lh==at_Output) {
+                if (rh==_MAPLE_LIST)
+                    output_type=_BVP_LIST;
+                else if (rh==at_derive)
+                    output_type=_BVP_DIFF;
+                else if (rh==at_piecewise)
+                    output_type=_BVP_PIECEWISE;
+                else if (rh==at_spline)
+                    output_type=_BVP_SPLINE;
+                else return gensizeerr(contextptr);
+            } else if (lh==at_limit) {
+                if (!rh.is_integer() || (maxiter=rh.val)<1)
+                    return gensizeerr(contextptr);
+            } else return gensizeerr(contextptr);
+        } else if (it->is_integer()) {
+            if ((N=it->val)<2)
+                return gensizeerr(contextptr);
+        } else return gensizeerr(contextptr);
+    }
+    gen dy=identificateur(" dy");
+    gen F=_subst(makesequence(f,_derive(makesequence(symb_of(y,x),x),contextptr),dy),contextptr);
+    F=_subst(makesequence(F,symb_of(y,x),y),contextptr);
+    vecteur X,Y,dY;
+    double tol=_evalf(_epsilon(change_subtype(vecteur(0),_SEQ__VECT),contextptr),contextptr).DOUBLE_val();
+    int ec=shooting(F,x,y,dy,tk,x1,x2,y1,y2,N,tol,maxiter,X,Y,dY,contextptr);
+    if (ec==1) {
+        *logptr(contextptr) << "Error: maximum number of iterations exceeded" << endl;
+        return undef;
+    }
+    if (ec==2) {
+        *logptr(contextptr) << "Error: the shooting method failed to converge";
+        if (is_undef(tk))
+            *logptr(contextptr) << ", try to set an initial guess for y'(a)";
+        *logptr(contextptr) << endl;
+        if (N>=3 && (output_type==_BVP_LIST || output_type==_BVP_PIECEWISE)) {
+            *logptr(contextptr) << "Trying the finite-difference method instead" << endl;
+            ec=finitediff(F,x,y,dy,x1,x2,y1,y2,N-1,tol,maxiter,X,Y,contextptr);
+            if (ec==2) {
+                *logptr(contextptr) << "Error: failed to converge" << endl;
+                return undef;
+            }
+            if (ec==1) {
+                *logptr(contextptr) << "Error: maximum number of iterations exceeded" << endl;
+                return undef;
+            }
+        } else return undef;
+    }
+    vecteur res,coeff;
+    matrice m=*_matrix(makesequence(4,4,0),contextptr)._VECTptr;
+    m[0]._VECTptr->at(3)=m[1]._VECTptr->at(3)=m[2]._VECTptr->at(2)=m[3]._VECTptr->at(2)=1;
+    switch (output_type) {
+    case _BVP_LIST:
+        res.reserve(N+1);
+        for (int i=0;i<=N;++i)
+            res.push_back(makevecteur(X[i],Y[i]));
+        break;
+    case _BVP_DIFF:
+        res.reserve(N+1);
+        for (int i=0;i<=N;++i)
+            res.push_back(makevecteur(X[i],Y[i],dY[i]));
+        break;
+    case _BVP_PIECEWISE:
+    case _BVP_SPLINE:
+        res.reserve(2*(N+1)+1);
+        for (int i=0;i<=N;++i) {
+            res.push_back(i<N?symb_inferieur_strict(x,X[i]):symb_inferieur_egal(x,X[i]));
+            if (i==0)
+                res.push_back(0);
+            else if (output_type==_BVP_PIECEWISE)
+                res.push_back(Y[i-1]+(x-X[i-1])*(Y[i]-Y[i-1])/(X[i]-X[i-1]));
+            else {
+                m[0]._VECTptr->at(0)=pow(X[i-1],3);
+                m[0]._VECTptr->at(1)=pow(X[i-1],2);
+                m[0]._VECTptr->at(2)=X[i-1];
+                m[1]._VECTptr->at(0)=pow(X[i],3);
+                m[1]._VECTptr->at(1)=pow(X[i],2);
+                m[1]._VECTptr->at(2)=X[i];
+                m[2]._VECTptr->at(0)=3*m[0][1];
+                m[2]._VECTptr->at(1)=2*X[i-1];
+                m[3]._VECTptr->at(0)=3*m[1][1];
+                m[3]._VECTptr->at(1)=2*X[i];
+                coeff=*_linsolve(makesequence(m,makevecteur(Y[i-1],Y[i],dY[i-1],dY[i])),contextptr)._VECTptr;
+                res.push_back(pow(x,3)*coeff[0]+pow(x,2)*coeff[1]+x*coeff[2]+coeff[3]);
+            }
+        }
+        res.push_back(0);
+        return symbolic(at_piecewise,change_subtype(res,_SEQ__VECT));
+    default:
+        break;
+    }
+    return res;
+}
+static const char _bvpsolve_s []="bvpsolve";
+static define_unary_function_eval (__bvpsolve,&_bvpsolve,_bvpsolve_s);
+define_unary_function_ptr5(at_bvpsolve,alias_at_bvpsolve,&__bvpsolve,0,true)
 
 gen strip_constants(const gen &g,GIAC_CONTEXT) {
     if (g.is_symb_of_sommet(at_neg))

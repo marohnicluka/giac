@@ -3997,7 +3997,7 @@
   edges/arcs chosen uniformly at random (<hlink|Erd®s\URényi|https://en.wikipedia.org/wiki/Erd%C5%91s%E2%80%93R%C3%A9nyi_model>
   model).
 
-  Erd®s\URényi model is implemented according to <name|Bagatelj> and
+  Erd®s\URényi model is implemented according to <name|Batagelj> and
   <name|Brandes><nbsp><cite-detail|bagatelj|algorithms<nbsp>1<nbsp>and<nbsp>2>.
   The corresponding algorithms run in linear time and are suitable for
   generating large graphs.
@@ -14739,7 +14739,7 @@
       <newblock><with|font-shape|italic|Ars Mathematica Contemporanea>,
       11:353\U379, 2016.<newblock>
 
-      <bibitem*|4><label|bib-bagatelj>Vladimir Bagatelj<localize| and >Ulrik
+      <bibitem*|4><label|bib-bagatelj>Vladimir Batagelj<localize| and >Ulrik
       Brandes. <newblock>Efficient generation of large random networks.
       <newblock><with|font-shape|italic|Physical Review E>, 71:036113,
       2005.<newblock>

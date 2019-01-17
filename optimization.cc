@@ -300,7 +300,7 @@ matrice critical_univariate(const gen &f,const gen &x,GIAC_CONTEXT) {
         cv=mergevecteur(cv,*_zeros(makesequence(den,x),contextptr)._VECTptr);
     }
     find_spikes(f,cv,contextptr);  // assuming that f is not differentiable on transitions
-    for (int i=cv.size()-1;i>=0;--i) {
+    for (int i=cv.size();i-->0;) {
         if (cv[i].is_symb_of_sommet(at_and))
             cv.erase(cv.begin()+i);
         else
@@ -328,6 +328,9 @@ vecteur global_extrema(gen &f,vecteur &g,vecteur &h,vecteur &vars,gen &mn,gen &m
         vecteur gg=subst(g,vars,tmpvars,false,contextptr);
         vecteur hh=subst(h,vars,tmpvars,false,contextptr);
         cv=solve_kkt(ff,gg,hh,tmpvars,contextptr);
+    }
+    for (const_iterateur it=tmpvars.begin();it!=tmpvars.end();++it) {
+        _purge(*it,contextptr);
     }
     if (cv.empty())
         return vecteur(0);
@@ -511,7 +514,7 @@ gen _minimize(const gen &args,GIAC_CONTEXT) {
     if (loc.empty())
         return undef;
     if (location)
-        return makesequence(_simplify(mn,contextptr),_simplify(loc,contextptr));
+        return makevecteur(_simplify(mn,contextptr),_simplify(loc,contextptr));
     return _simplify(mn,contextptr);
 }
 static const char _minimize_s []="minimize";
@@ -1304,90 +1307,93 @@ void find_local_extrema(gen_map &cpts,const gen &f,const vecteur &g,const vecteu
             if (!fsol.empty())
                 cv.push_back(fsol);
         }
-        if (cv.empty())
-            return;
-        if (nv==1) {
-            gen d,x=vars.front();
-            for (const_iterateur it=cv.begin();it!=cv.end();++it) {
-                gen &x0=it->_VECTptr->front();
-                cls=_CPCLASS_UNDECIDED;
-                for (int k=2;k<=order_size;++k) {
-                    d=_simplify(subst(_derive(makesequence(f,x,k),contextptr),x,x0,false,contextptr),contextptr);
-                    if (is_zero(d))
-                        continue;
-                    if ((k%2)!=0)
-                        cls=_CPCLASS_SADDLE;
-                    else cls=is_strictly_positive(d,contextptr)?_CPCLASS_MIN:_CPCLASS_MAX;
-                    break;
-                }
-                cpts[x0]=gen(cls);
-            }
-        } else {
-            vecteur fvars(vars);
-            fvars.resize(n);
-            ipd.hessian(hess);
-            for (int i=0;i<nv;++i) {
-                a[i]=identificateur(" a"+print_INT_(i));
-            }
-            for (const_iterateur it=cv.begin();it!=cv.end();++it) {
-                for (int j=0;j<nv;++j) {
-                    cpt_arr[arr[j]]=it->_VECTptr->at(j);
-                }
-                cpt_arr=subst(*_simplify(cpt_arr,contextptr)._VECTptr,tmpvars,vars,false,contextptr);
-                gen &cpt_class=cpts[cpt_arr];
-                if (order_size==1 || !is_zero(cpt_class))
-                    continue;
-                cls=_CPCLASS_UNDECIDED;
-                // apply the second partial derivative test
-                matrice H=*_evalf(subst(hess,vars,*it,false,contextptr),contextptr)._VECTptr;
-                vecteur eigvals(*_eigenvals(H,contextptr)._VECTptr);
-                gen e(0);
-                for (const_iterateur et=eigvals.begin();et!=eigvals.end();++et) {
-                    if (is_zero(*et)) {
-                        cls=_CPCLASS_UNDECIDED;
-                        break;
-                    } else if (is_zero(e)) {
-                        e=*et;
-                        cls=is_positive(e,contextptr)?_CPCLASS_MIN:_CPCLASS_MAX;
-                    } else if (is_strictly_positive(-e*(*et),contextptr))
-                        cls=_CPCLASS_SADDLE;
-                }
-                // if that's not enough, use the higher derivatives
-                if (cls==_CPCLASS_UNDECIDED && order_size>=2) {
+        if (!cv.empty()) {
+            if (nv==1) {
+                gen d,x=vars.front();
+                for (const_iterateur it=cv.begin();it!=cv.end();++it) {
+                    gen &x0=it->_VECTptr->front();
+                    cls=_CPCLASS_UNDECIDED;
                     for (int k=2;k<=order_size;++k) {
-                        if (int(taylor_terms.size())<k-1)
-                            taylor_terms.push_back(ipd.taylor_term(a,k));
-                        if (is_zero(taylor_terms.back()))
-                            break;
-                        gen p=expand(subst(taylor_terms[k-2],a,*it,false,contextptr),contextptr);  // homogeneous poly
-                        if (is_zero(p))
+                        d=_simplify(subst(_derive(makesequence(f,x,k),contextptr),x,x0,false,contextptr),contextptr);
+                        if (is_zero(d))
                             continue;
-                        gen pmin,pmax;
-                        gen sphere(-1);
-                        for (int j=0;j<n;++j) {
-                            sphere+=pow(vars[j]-it->_VECTptr->at(j),2);
-                        }
-                        vecteur gp,hp(1,sphere);
-                        if (global_extrema(p,gp,hp,fvars,pmin,pmax,contextptr).empty())
-                            break;
-                        if (is_zero(pmin) && is_zero(pmax)) // p is nullpoly
-                            continue;
-                        if ((k%2)!=0 || (is_strictly_positive(-pmin,contextptr) && is_strictly_positive(pmax,contextptr)))
+                        if ((k%2)!=0)
                             cls=_CPCLASS_SADDLE;
-                        else if (is_strictly_positive(pmin,contextptr))
-                            cls=_CPCLASS_MIN;
-                        else if (is_strictly_positive(-pmax,contextptr))
-                            cls=_CPCLASS_MAX;
-                        else if (is_zero(pmin))
-                            cls=_CPCLASS_POSSIBLE_MIN;
-                        else if (is_zero(pmax))
-                            cls=_CPCLASS_POSSIBLE_MAX;
+                        else cls=is_strictly_positive(d,contextptr)?_CPCLASS_MIN:_CPCLASS_MAX;
                         break;
                     }
+                    cpts[x0]=gen(cls);
                 }
-                cpt_class=gen(cls);
+            } else {
+                vecteur fvars(vars);
+                fvars.resize(n);
+                ipd.hessian(hess);
+                for (int i=0;i<nv;++i) {
+                    a[i]=identificateur(" a"+print_INT_(i));
+                }
+                for (const_iterateur it=cv.begin();it!=cv.end();++it) {
+                    for (int j=0;j<nv;++j) {
+                        cpt_arr[arr[j]]=it->_VECTptr->at(j);
+                    }
+                    cpt_arr=subst(*_simplify(cpt_arr,contextptr)._VECTptr,tmpvars,vars,false,contextptr);
+                    gen &cpt_class=cpts[cpt_arr];
+                    if (order_size==1 || !is_zero(cpt_class))
+                        continue;
+                    cls=_CPCLASS_UNDECIDED;
+                    // apply the second partial derivative test
+                    matrice H=*_evalf(subst(hess,vars,*it,false,contextptr),contextptr)._VECTptr;
+                    vecteur eigvals(*_eigenvals(H,contextptr)._VECTptr);
+                    gen e(0);
+                    for (const_iterateur et=eigvals.begin();et!=eigvals.end();++et) {
+                        if (is_zero(*et)) {
+                            cls=_CPCLASS_UNDECIDED;
+                            break;
+                        } else if (is_zero(e)) {
+                            e=*et;
+                            cls=is_positive(e,contextptr)?_CPCLASS_MIN:_CPCLASS_MAX;
+                        } else if (is_strictly_positive(-e*(*et),contextptr))
+                            cls=_CPCLASS_SADDLE;
+                    }
+                    // if that's not enough, use the higher derivatives
+                    if (cls==_CPCLASS_UNDECIDED && order_size>=2) {
+                        for (int k=2;k<=order_size;++k) {
+                            if (int(taylor_terms.size())<k-1)
+                                taylor_terms.push_back(ipd.taylor_term(a,k));
+                            if (is_zero(taylor_terms.back()))
+                                break;
+                            gen p=expand(subst(taylor_terms[k-2],a,*it,false,contextptr),contextptr);  // homogeneous poly
+                            if (is_zero(p))
+                                continue;
+                            gen pmin,pmax;
+                            gen sphere(-1);
+                            for (int j=0;j<n;++j) {
+                                sphere+=pow(vars[j]-it->_VECTptr->at(j),2);
+                            }
+                            vecteur gp,hp(1,sphere);
+                            if (global_extrema(p,gp,hp,fvars,pmin,pmax,contextptr).empty())
+                                break;
+                            if (is_zero(pmin) && is_zero(pmax)) // p is nullpoly
+                                continue;
+                            if ((k%2)!=0 || (is_strictly_positive(-pmin,contextptr) && is_strictly_positive(pmax,contextptr)))
+                                cls=_CPCLASS_SADDLE;
+                            else if (is_strictly_positive(pmin,contextptr))
+                                cls=_CPCLASS_MIN;
+                            else if (is_strictly_positive(-pmax,contextptr))
+                                cls=_CPCLASS_MAX;
+                            else if (is_zero(pmin))
+                                cls=_CPCLASS_POSSIBLE_MIN;
+                            else if (is_zero(pmax))
+                                cls=_CPCLASS_POSSIBLE_MAX;
+                            break;
+                        }
+                    }
+                    cpt_class=gen(cls);
+                }
             }
         }
+    }
+    for (const_iterateur it=tmpvars.begin();it!=tmpvars.end();++it) {
+        _purge(*it,contextptr);
     }
 }
 
@@ -1677,7 +1683,7 @@ gen _extrema(const gen &g,GIAC_CONTEXT) {
             break;
         }
     }
-    return makesequence(minv,maxv);
+    return makevecteur(minv,maxv);
 }
 static const char _extrema_s []="extrema";
 static define_unary_function_eval (__extrema,&_extrema,_extrema_s);

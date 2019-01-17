@@ -14326,7 +14326,7 @@ The expression {\tt obj} is minimized on the domain specified by constraints and
 
 Constraints may be given as equalities or inequalities, but also as expressions which are assumed to be equal to zero. If there is only one constraint, the list delimiters may be dropped. The same applies to the specification of variables.
 
-{\tt minimize} returns the minimal value. If it could not be obtained, it returns {\tt undef}. If {\tt location} is specified, the list of points where the minimum is achieved is also returned as the second element in a list. Keywords {\tt locus}, {\tt coordinates} and {\tt point} all have the same effect.
+{\tt minimize} returns minimal value. If it could not be obtained, it returns {\tt undef}. If {\tt location} is specified, the list of points where the minimum is achieved is also returned as the second member in a sequence. Keywords {\tt locus}, {\tt coordinates} and {\tt point} all have the same effect.
 
 The function {\tt maximize} takes the same parameters as {\tt minimize}. The difference is that it computes global maximum of {\tt obj} on the specified domain.
 
@@ -14465,7 +14465,7 @@ Local extrema of a univariate or multivariate differentiable function under equa
 \item {\tt vars} : list of variables
 \item {\tt order\_size=<positive integer>} or {\tt lagrange} (optional) : upper bound for the order of derivatives examined in the process (defaults to 5) or the specifier for the method of Lagrange multipliers
 \end{itemize}
-Function returns a list containing two lists of points: local minima and local maxima, respectively. Saddle and unclassified points are reported in the message area. Also, information about possible (non)strict extrema is printed out. If {\tt lagrange} is passed as an optional last argument, the method of Lagrange multipliers is used. Else, the problem is reduced to an unconstrained one by applying implicit differentiation.
+Function returns sequence of two lists of points: local minima and maxima, respectively. Saddle and unclassified points are reported in the message area. Also, information about possible (non)strict extrema is printed out. If {\tt lagrange} is passed as an optional last argument, the method of Lagrange multipliers is used. Else, the problem is reduced to an unconstrained one by applying implicit differentiation.
 
 A single constraint/variable can be specified without list delimiters. A constraint may be specified as an equality or expression which is assumed to be equal to zero.
 
@@ -23506,7 +23506,7 @@ separation is determined by the X-tick and Y-tick values on the
 graphic configuration screen.  Setting these values to 0 removes the
 axes.
 
-\subsection{Draw unit vectors:
+\subsection{Draw unit vectors in the plane:
 \texttt{Ox\_2d\_unit\_vector}\index{Ox\_2d\_unit\_vector}
 \texttt{Oy\_2d\_unit\_vector}\index{Oy\_2d\_unit\_vector}
 \texttt{frame\_2d}\index{frame\_2d}}
@@ -23616,6 +23616,7 @@ Unchecking \texttt{Show Axes} on the \texttt{cfg} screen removes the
 axes.
 
 \section{Display features of graphics}
+\label{sec:dispfeat}
 
 \subsection{Graphic features}
 
@@ -23776,6 +23777,7 @@ Input:
 \end{description}
 
 \subsubsection{Parameters for global features}
+\label{sec:globpar}
 
 Parameters set at the beginning of a line change features on the
 entire graphic screen.  It only takes effect
@@ -24102,7 +24104,7 @@ Also, the point \texttt{A} will be redefined as \texttt{point(Ax,Ay)}.
   \includegraphics[width=0.75\textwidth]{xcas-assumespoint.png}
 \end{center}
 
-\section{Points in plane geometry}
+\section{Points in the plane}
 
 \subsection{Points and complex numbers}
 
@@ -24113,7 +24115,7 @@ the points can be specified by a pair or by a complex number.
 \subsection{The point in the plane: \texttt{point}\index{point}}
 \label{sec:2dpoint}
 
-%See section \ref{sec:3dpoint} for points in space.
+See section \ref{sec:3dpoint} for points in space.
 
 In the 2-d geometry screen in point mode, clicking on a point with the
 left mouse button will choose that point.  Points chosen this are
@@ -24162,7 +24164,7 @@ or:
 will choose two points named \texttt{A}; one with affix $1$ and
 one with affix \texttt{2i}.
 
-\subsection{Define random points: \texttt{point2d}\index{point2d}}
+\subsection{Define random points in the plane: \texttt{point2d}\index{point2d}}
 
 The \texttt{point2d} command defines a random point whose
 coordinates are integers between -5 and 5.  This command takes a name
@@ -24208,11 +24210,11 @@ Input:
 \end{center}
 creates the same point as before.
 
-\subsection{Find a point of intersection of two objects: \texttt{single\_inter}\index{single\_inter} \texttt{line\_inter}\index{line\_inter}}
+\subsection{Find a point of intersection of two objects in the plane: \texttt{single\_inter}\index{single\_inter} \texttt{line\_inter}\index{line\_inter}}
 \label{sec:single2dintersection}
 
-%See section \ref{sec:single3dintersection} for single points of intersection of objects
-%in space.
+See section \ref{sec:3dsingleintersection} for single points of intersection of objects
+in space.
 
 The \texttt{single\_inter} (or the \texttt{line\_inter}) command takes
 two geometric objects as arguments
@@ -24250,11 +24252,12 @@ Input:
 \end{center}
 also draws the second point.
 
-\subsection{Find the points of intersection of two geometric objects: \texttt{inter}\index{inter}}
+\subsection{Find the points of intersection of two geometric objects
+in the plane: \texttt{inter}\index{inter}}
 \label{sec:2dintersection}
 
-%See section \ref{sec:3dintersection} for points of intersection of objects
-%in space.
+See section \ref{sec:3dintersection} for points of intersection of objects
+in space.
 
 The \texttt{inter} command takes
 two geometric objects as arguments
@@ -24285,7 +24288,7 @@ Input:
   inter(circle(0,1),line(1,i),i/2)
 \end{center}
 
-\subsection{Find the orthocenter of a triangle: \texttt{orthocenter}\index{orthocenter}}
+\subsection{Find the orthocenter of a triangle in the plane: \texttt{orthocenter}\index{orthocenter}}
 
 The \texttt{orthocenter} command take a triangle (or three
 points representing the vertices of a triangle) as argument and returns the
@@ -24304,20 +24307,20 @@ Input:
 draws the point $(0,0)$, the orthocenter of the
 triangle.
 
-\subsection{Find the midpoint of a segment: \texttt{midpoint}\index{midpoint}}
+\subsection{Find the midpoint of a segment in the plane: \texttt{midpoint}\index{midpoint}}
 \label{sec:2dmidpt}
 
-%See section \ref{sec:3dmidpt} for midpoints in space.
+See section \ref{sec:3dmidpt} for midpoints in space.
 
 The \texttt{midpoint} command takes two points (or a list of two
 points) as arguments and draws the midpoint of the segment
 determined by these points.  
 
-\subsection{The barycenter: \texttt{barycenter}\index{barycenter}}
+\subsection{The barycenter in the plane: \texttt{barycenter}\index{barycenter}}
 \label{sec:2dbarycenter}
 
-%See section \ref{sec:3dbarycenter} for barycenters of objects in
-%space.
+See section \ref{sec:3dbarycenter} for barycenters of objects in
+space.
 
 The \texttt{barycenter} command draws the barycenter of a set of
 weighted points.  The points and their weights (real numbers) can be
@@ -24358,17 +24361,17 @@ Output:
   \includegraphics[width=0.75\textwidth]{xcas-barycenter.png}
 \end{center}
 
-\subsection{The isobarycenter of $n$ points: \texttt{isobarycenter}\index{isobarycenter}}
+\subsection{The isobarycenter of $n$ points in the plane: \texttt{isobarycenter}\index{isobarycenter}}
 \label{sec:2disobarycenter}
 
-%See section \ref{sec:3disobarycenter} for isobarycenters of objects in
-%space.
+See section \ref{sec:3disobarycenter} for isobarycenters of objects in
+space.
 
 The \texttt{isobarycenter} command takes a list (or sequence) of
 points and draws the isobarycenter, which is the barycenter when all
 the points are equally weighted.
 
-\subsection{The center of a circle: \texttt{center}\index{center}}
+\subsection{The center of a circle in the plane: \texttt{center}\index{center}}
 
 The \texttt{center} command takes as argument a circle and returns and draws the
 center.\\
@@ -24382,7 +24385,7 @@ Output:
   \includegraphics[width=0.75\textwidth]{xcas-center.png}
 \end{center}
 
-\subsection{The vertices of a polygon: \texttt{vertices}\index{vertices} \texttt{vertices\_abc}\index{vertices\_abc}}
+\subsection{The vertices of a polygon in the plane: \texttt{vertices}\index{vertices} \texttt{vertices\_abc}\index{vertices\_abc}}
 
 The \texttt{vertices} command (or \texttt{vertices\_abc}) takes as argument a
 polygon.
@@ -24408,7 +24411,7 @@ Output:
   \includegraphics[width=0.75\textwidth]{xcas-vertices2.png}
 \end{center}
 
-\subsection{The vertices of a polygon, closed: \texttt{vertices\_abca}\index{vertices\_abca}}
+\subsection{The vertices of a polygon in the plane, closed: \texttt{vertices\_abca}\index{vertices\_abca}}
 
 The \texttt{vertices\_abca} command takes as argument a polygon.
 
@@ -24424,7 +24427,7 @@ Output:
   \includegraphics[width=0.75\textwidth]{xcas-vertices_abca.png}
 \end{center}
 
-\subsection{A point on a geometric object: \texttt{element}\index{element}}
+\subsection{A point on a geometric object in the plane: \texttt{element}\index{element}}
 \label{sec:element}
 
 The \texttt{element} command is most useful in a two-dimensional
@@ -24486,10 +24489,10 @@ this sum may not be on $C$.
 
 \section{Lines in plane geometry}
 
-\subsection{Lines and directed lines: \texttt{line}\index{line}}
+\subsection{Lines and directed lines in the plane: \texttt{line}\index{line}}
 \label{sec:2dlines}
 
-%See section \ref{sec:3dlines} for lines in space.
+See section \ref{sec:3dlines} for lines in space.
 
 The \texttt{line} command returns and draws a directed line given one of the
 following types of arguments:
@@ -24540,10 +24543,10 @@ line, to draw the line \texttt{blue} enter
 \texttt{line(op(L),color=blue)}; entering
 \texttt{line(L,color=blue)} results in an error.
 
-\subsection{Half-lines}
+\subsection{Half-lines in the plane}
 \label{sec:2dhalflines}
 
-%See section \ref{sec:3dhalfines} for half-lines in space.
+See section \ref{sec:3dhalflines} for half-lines in space.
 
 The \texttt{half\_line} command takes as argument two points or a list of two
 points.
@@ -24563,7 +24566,7 @@ Output:
 \subsection{Line segments in the plane: \texttt{segment}\index{segment} \texttt{Line}\index{Line}}
 \label{sec:2dsegments}
 
-%See section \ref{sec:3dsegments} for segments in space.
+See section \ref{sec:3dsegments} for segments in space.
 
 The \texttt{segment} command and the \texttt{Line} command draw line
 segments.  (The \texttt{segment} command can also draw vectors, see
@@ -24601,10 +24604,10 @@ Output:
   \includegraphics[width=0.75\textwidth]{xcas-segment.png}
 \end{center}
 
-\subsection{Vectors: \texttt{segment}\index{segment} \texttt{vector}\index{vector}}
+\subsection{Vectors in the plane: \texttt{segment}\index{segment} \texttt{vector}\index{vector}}
 \label{sec:2dvectors}
 
-%See section \ref{sec:3dvectors} for vectors in space.
+See section \ref{sec:3dvectors} for vectors in space.
 
 The \texttt{segment} and \texttt{vector} commands return and draw vectors.
 (The \texttt{segment} command can also draw line segments, see section
@@ -24654,10 +24657,10 @@ Output:
   \includegraphics[width=0.75\textwidth]{xcas-vect.png}
 \end{center}
 
-\subsection{Parallel lines: \texttt{parallel}\index{parallel}}
+\subsection{Parallel lines in the plane: \texttt{parallel}\index{parallel}}
 \label{sec:2dparallel}
 
-%See section \ref{sec:3dparallel} for parallel lines in space.
+See section \ref{sec:3dparallel} for parallel lines in space.
 
 The \texttt{parallel} command takes as argument a point and a line.
 
@@ -24673,10 +24676,10 @@ Output:
   \includegraphics[width=0.75\textwidth]{xcas-parallel.png}
 \end{center}
 
-\subsection{Perpendicular lines: \texttt{perpendicular}\index{perpendicular}}
+\subsection{Perpendicular lines in the plane: \texttt{perpendicular}\index{perpendicular}}
 \label{sec:2dperp}
 
-%See section \ref{sec:3dperp} for perpendicular lines in space.
+See section \ref{sec:3dperp} for perpendicular lines in space.
 
 The \texttt{perpendicular} command takes as arguments either a point and a line,
 or three points (the last two points determining a line).
@@ -24698,10 +24701,10 @@ Output:
   \includegraphics[width=0.75\textwidth]{xcas-perp.png}
 \end{center}
 
-\subsection{Tangents to curves: \texttt{tangent}\index{tangent}}
+\subsection{Tangents to curves in the plane: \texttt{tangent}\index{tangent}}
 \label{sec:2dtangents}
 
-%See section \ref{sec:3dtangents} for tangents in space.
+See section \ref{sec:3dtangents} for tangents in space.
 
 The \texttt{tangent} command takes as arguments either a curve and a point, or a
 point defined with \texttt{element} (see section \ref{sec:element}) using a curve and
@@ -24731,7 +24734,7 @@ Output:
 When \texttt{tangent} is called with an element,
 the tangent will change along with the point on the element.
 
-\subsection{The median of a triangle: \texttt{median\_line}\index{median\_line}}
+\subsection{The median of a triangle in the plane: \texttt{median\_line}\index{median\_line}}
 
 The \texttt{median\_line} command takes as argument three points representing the
 vertices of a triangle.
@@ -24767,10 +24770,10 @@ Output:
   \includegraphics[width=0.75\textwidth]{xcas-altitude.png}
 \end{center}
 
-\subsection{The perpendicular bisector of a segment: \texttt{perpen\_bisector}\index{perpen\_bisector}}
+\subsection{The perpendicular bisector of a segment in the plane: \texttt{perpen\_bisector}\index{perpen\_bisector}}
 \label{sec:2dperpbis}
 
-%See section \ref{sec:3dperpbis} for perpendicular bisectors in space.
+See section \ref{sec:3dperpbis} for perpendicular bisectors in space.
 
 The \texttt{perpen\_bisector} command takes as argument a line segment or two
 points representing the end points of a line segment.
@@ -24833,15 +24836,15 @@ Output:
   \includegraphics[width=0.75\textwidth]{xcas-exbisector.png}
 \end{center}
 
-\section{Triangles}
+\section{Triangles in the plane}
 
-%See section \ref{sec:3dtriangles} for triangles in space.
+See section \ref{sec:3dtriangles} for triangles in space.
 
-\subsection{Arbitrary triangles: \texttt{triangle}\index{triangle}}
+\subsection{Arbitrary triangles in the plane: \texttt{triangle}\index{triangle}}
 \label{sec:2dtricommand}
 
-%See section \ref{sec:3dtricommand} for the \texttt{triangle} command
-%in space.
+See section \ref{sec:3dtricommand} for the \texttt{triangle} command
+in space.
 
 The \texttt{triangle} command takes as arguments three points or a list of three
 points.  
@@ -24858,10 +24861,10 @@ Output:
   \includegraphics[width=0.75\textwidth]{xcas-triangle.png}
 \end{center}
 
-\subsection{Isosceles triangles: \texttt{isosceles\_triangle}\index{isosceles\_triangle}}
+\subsection{Isosceles triangles in the plane: \texttt{isosceles\_triangle}\index{isosceles\_triangle}}
 \label{sec:2disotriangles}
 
-%See section \ref{sec:3disotriangles} for isosceles triangles in space.
+See section \ref{sec:3disotriangles} for isosceles triangles in space.
 
 The \texttt{isosceles\_triangle} command takes three arguments and an optional
 fourth.  The three mandatory arguments are two points \texttt{A}
@@ -24902,10 +24905,10 @@ Output:
   -sqrt(2) + i
 \end{center}
 
-\subsection{Right triangles: \texttt{right\_triangle}\index{right\_triangle}}
+\subsection{Right triangles in the plane: \texttt{right\_triangle}\index{right\_triangle}}
 \label{sec:2dright}
 
-%See section \ref{sec:3dright} for right triangles in space.
+See section \ref{sec:3dright} for right triangles in space.
 
 The \texttt{right\_triangle} command takes three arguments and an optional fourth.
 The three mandatory arguments are two points \texttt{A} and
@@ -24957,10 +24960,10 @@ Output:
   4 + i
 \end{center}
 
-\subsection{Equilateral triangles: \texttt{equilateral\_triangle}\index{equilateral\_triangle}}
+\subsection{Equilateral triangles in the plane: \texttt{equilateral\_triangle}\index{equilateral\_triangle}}
 \label{sec:2dequi}
 
-%See section \ref{sec:3dequi} for equilateral triangles in space.
+See section \ref{sec:3dequi} for equilateral triangles in space.
 
 The \texttt{equilateral\_triangle} command takes two arguments and an optional
 third.  The two mandatory arguments are points \texttt{A} and
@@ -25000,15 +25003,15 @@ Output:
   i*sqrt(3) + 1
 \end{center}
 
-\section{Quadrilaterals}
+\section{Quadrilaterals in the plane}
 \label{sec:2dquad}
 
-%See section \ref{sec:3dquad} for quadrilaterals in space.
+See section \ref{sec:3dquad} for quadrilaterals in space.
 
-\subsection{Squares: \texttt{square}\index{square}}
+\subsection{Squares in the plane: \texttt{square}\index{square}}
 \label{sec:2dsquares}
 
-%See section \ref{sec:3dsquares} for squares in space.
+See section \ref{sec:3dsquares} for squares in space.
 
 The \texttt{square} command takes two mandatory arguments and one or
 two optional arguments.  The mandatory arguments are points \texttt{A} and
@@ -25049,10 +25052,10 @@ Output:
   2*i, -1 + i
 \end{center}
 
-\subsection{Rhombuses: \texttt{rhombus}\index{rhombus}}
+\subsection{Rhombuses in the plane: \texttt{rhombus}\index{rhombus}}
 \label{sec:2drhombuses}
 
-%See section \ref{sec:3drhombuses} for rhombuses in space.
+See section \ref{sec:3drhombuses} for rhombuses in space.
 
 The \texttt{rhombus} command takes three mandatory arguments and one
 or two optional arguments.  The three mandatory arguments are two
@@ -25094,10 +25097,10 @@ Output:
   sqrt(3) + i, 0
 \end{center}
 
-\subsection{Rectangles: \texttt{rectangle}\index{rectangle}}
+\subsection{Rectangles in the plane: \texttt{rectangle}\index{rectangle}}
 \label{sec:2drect}
 
-%See section \ref{sec:3drect} for rectangles in space.
+See section \ref{sec:3drect} for rectangles in space.
 
 The \texttt{rectangle} command takes three mandatory arguments and one
 or two optional arguments.  The mandatory arguments are two points
@@ -25164,10 +25167,10 @@ Output:
    \includegraphics[width=0.75\textwidth]{xcas-rectangle3.png}
 \end{center}
 
-\subsection{Parallelograms: \texttt{parallelogram}\index{parallelogram}}
+\subsection{Parallelograms in the plane: \texttt{parallelogram}\index{parallelogram}}
 \label{sec:2dparallelograms}
 
-%See section \ref{sec:3dparallelograms} for parallelograms in space.
+See section \ref{sec:3dparallelograms} for parallelograms in space.
 
 The \texttt{parallelogram} command takes three mandatory arguments and
 one optional argument.  The mandatory arguments are three points \texttt{A},
@@ -25207,7 +25210,7 @@ Output:
   1 + i
 \end{center}
 
-\subsection{Arbitrary quadrilaterals:
+\subsection{Arbitrary quadrilaterals in the plane:
 \texttt{quadrilateral}\index{quadrilateral}}
 \label{sec:2dquads}
 
@@ -25228,15 +25231,15 @@ Output:
   \includegraphics[width=0.75\textwidth]{xcas-quadrilateral.png}
 \end{center}
 
-\section{Other polygons}
+\section{Other polygons in the plane}
 \label{sec:2dpolygons}
 
-%See section \ref{sec:3dpolygons} for polygons in space.
+See section \ref{sec:3dpolygons} for polygons in space.
 
-\subsection{Regular hexagons: \texttt{hexagon}\index{hexagon}}
+\subsection{Regular hexagons in the plane: \texttt{hexagon}\index{hexagon}}
 \label{sec:2dhex}
 
-%See section \ref{sec:3dhex} for hexagons in space.
+See section \ref{sec:3dhex} for hexagons in space.
 
 The \texttt{hexagon} command takes two mandatory arguments and up to
 four optional arguments.
@@ -25278,10 +25281,10 @@ Output:
   3/2 + i*sqrt(3)/2, 1 + i*sqrt(3), i*sqrt(3), -1/2 + i*sqrt(3)/2
 \end{center}
 
-\subsection{Regular polygons: \texttt{isopolygon}\index{isopolygon}}
+\subsection{Regular polygons in the plane: \texttt{isopolygon}\index{isopolygon}}
 \label{sec:2dregpoly}
 
-%See section \ref{sec:3dregpoly} for regular polygons in space.
+See section \ref{sec:3dregpoly} for regular polygons in space.
 
 The \texttt{isopolygon} command takes three arguments; two points \texttt{A} and 
 \texttt{B} and a non-zero integer \texttt{k}.
@@ -25309,10 +25312,10 @@ Output:
   \includegraphics[width=0.75\textwidth]{xcas-isopolygon2.png}
 \end{center}
 
-\subsection{General polygons: \texttt{polygon}\index{polygon}}
+\subsection{General polygons in the plane: \texttt{polygon}\index{polygon}}
 \label{sec:2dgenpolygon}
 
-%See section \ref{sec:3dgenpolygon} for general polygons in space.
+See section \ref{sec:3dgenpolygon} for general polygons in space.
 
 The \texttt{polygon} command takes as argument a sequence or list of points.  
 
@@ -25336,10 +25339,10 @@ Output:
    \includegraphics[width=0.75\textwidth]{xcas-polygon2.png}
 \end{center}
 
-\subsection{Polygonal lines: \texttt{open\_polygon}\index{open\_polygon}}
+\subsection{Polygonal lines in the plane: \texttt{open\_polygon}\index{open\_polygon}}
 \label{sec:2dpolylines}
 
-%See section \ref{sec:3dpolylines} for polygonal lines in space.
+See section \ref{sec:3dpolylines} for polygonal lines in space.
 
 The \texttt{open\_polygon} command takes as argument a sequence or list of points.  
 
@@ -25396,11 +25399,11 @@ Output:
 
 \section{Circles}
 
-\subsection{Circles and arcs: \texttt{circle}\index{circle}}
+\subsection{Circles and arcs in the plane: \texttt{circle}\index{circle}}
 \label{sec:2dcircles}
 See also section \ref{sec:2darcs}.
 
-%See section \ref{sec:3dcircles} for circles in space.
+See section \ref{sec:3dcircles} for circles in space.
 
 The \texttt{circle} command returns and draws a circle or arc of a circle,
 depending on the arguments.  
@@ -25629,10 +25632,10 @@ Output:
 
 \section{Other conic sections}
 
-\subsection{The ellipse: \texttt{ellipse}\index{ellipse}}
+\subsection{The ellipse in the plane: \texttt{ellipse}\index{ellipse}}
 \label{sec:2dellipse}
 
-%See section \ref{sec:3dellipse} for ellipses in space.
+See section \ref{sec:3dellipse} for ellipses in space.
 
 The \texttt{ellipse} command draws ellipses and other conic sections.
 
@@ -25682,10 +25685,10 @@ The \texttt{ellipse} command draws ellipses and other conic sections.
   the \texttt{point} command.
 \end{itemize}
 
-\subsection{The hyperbola: \texttt{hyperbola}\index{hyperbola}}
+\subsection{The hyperbola in the plane: \texttt{hyperbola}\index{hyperbola}}
 \label{sec:2dhyperbola}
 
-%See section \ref{sec:3dhyperbola} for hyperbolas in space.
+See section \ref{sec:3dhyperbola} for hyperbolas in space.
 
 The \texttt{hyperbola} command draws hyperbolas and other conic sections.
 
@@ -25735,10 +25738,10 @@ The \texttt{hyperbola} command draws hyperbolas and other conic sections.
   the \texttt{point} command.
 \end{itemize}
 
-\subsection{The parabola: \texttt{parabola}\index{parabola}}
+\subsection{The parabola in the plane: \texttt{parabola}\index{parabola}}
 \label{sec:2dparabola}
 
-%See section \ref{sec:3dparabola} for parabolas in space.
+See section \ref{sec:3dparabola} for parabolas in space.
 
 The \texttt{parabola} command draws parabolas and other conic sections.
 
@@ -25805,7 +25808,7 @@ The \texttt{parabola} command draws parabolas and other conic sections.
   the \texttt{point} command.
 \end{itemize}
 
-\section{Coordinates}
+\section{Coordinates in the plane}
 
 \subsection{The affix of a point or vector: \texttt{affix}\index{affix}}
 
@@ -25834,10 +25837,10 @@ Output:
   1+i
 \end{center}
 
-\subsection{The abscissa of a point or vector: \texttt{abscissa}\index{abscissa}}
+\subsection{The abscissa of a point or vector in the plane: \texttt{abscissa}\index{abscissa}}
 \label{sec:2dabscissa}
 
-%See section \ref{sec:3dabscissa} for abscissas in three-dimensional geometry.
+See section \ref{sec:3dabscissa} for abscissas in three-dimensional geometry.
 
 The \texttt{abscissa} command takes a point as argument.
 
@@ -25883,10 +25886,10 @@ Output:
   1
 \end{center}
 
-\subsection{The ordinate of a point or vector: \texttt{ordinate}\index{ordinate}}
+\subsection{The ordinate of a point or vector in the plane: \texttt{ordinate}\index{ordinate}}
 \label{sec:2dordinate}
 
-%See section \ref{sec:3dordinate} for ordinates in three-dimensional geometry.
+See section \ref{sec:3dordinate} for ordinates in three-dimensional geometry.
 
 The \texttt{ordinate} command takes a point as argument.
 
@@ -25932,11 +25935,11 @@ Output:
   2
 \end{center}
 
-\subsection{The coordinates of a point, vector or line: \texttt{coordinates}\index{coordinates}}
+\subsection{The coordinates of a point, vector or line in the plane: \texttt{coordinates}\index{coordinates}}
 \label{sec:2dcoordinates}
 
-%See section \ref{sec:3dcoordinates} for coordinates in
-%three-dimensional geometry.
+See section \ref{sec:3dcoordinates} for coordinates in
+three-dimensional geometry.
 
 The \texttt{coordinates} command takes as argument a point
 or line.
@@ -26116,11 +26119,11 @@ Output:
   [sqrt(2), pi/4]  
 \end{center}
 
-\subsection{The Cartesian equation of a geometric object: \texttt{equation}\index{equation}}
+\subsection{The Cartesian equation of a geometric object in the plane: \texttt{equation}\index{equation}}
 \label{sec:2dcarteq}
 
-%See section \ref{sec:3dcarteq} for Cartesian equations of
-%three-dimensional objects.
+See section \ref{sec:3dcarteq} for Cartesian equations of
+three-dimensional objects.
 
 The \texttt{equation} command takes as argument a geometric object.
 
@@ -26138,11 +26141,11 @@ Output:
   y = x + 1  
 \end{center}
 
-\subsection{The parametric equation of a geometric object: \texttt{parameq}\index{parameq}}
+\subsection{The parametric equation of a geometric object in the plane: \texttt{parameq}\index{parameq}}
 \label{sec:2dparam}
 
-%See section \ref{sec:3dparam} for parametric equations in
-%three-dimensional geometry.
+See section \ref{sec:3dparam} for parametric equations in
+three-dimensional geometry.
 
 The \texttt{parameq} command takes as argument a geometric object.
 
@@ -26281,10 +26284,11 @@ Output:
  atan(1/3) 
 \end{center}
 
-\subsection{The distance between objects: \texttt{distance}\index{distance}}
+\subsection{The distance between objects in the plane: \texttt{distance}\index{distance}}
 \label{sec:2ddist}
-%See section \ref{sec:3ddist} for distances in three-dimensional
-%geometry.
+
+See section \ref{sec:3ddist} for distances in three-dimensional
+geometry.
 
 The \texttt{distance} command takes two
 arguments; either two points or two geometric objects.
@@ -26358,11 +26362,11 @@ Output:
 The \texttt{distance} command has \texttt{distanceat} and
 \texttt{distanceatraw} versions (see section \ref{sec:measdisplay}).
 
-\subsection{The length squared of a segment: \texttt{distance2}\index{distance2}}
+\subsection{The length squared of a segment in the plane: \texttt{distance2}\index{distance2}}
 \label{sec:2ddist2}
 
-%See section \ref{sec:3ddist2} for squares of lengths in
-%three-dimensional geometry.
+See section \ref{sec:3ddist2} for squares of lengths in
+three-dimensional geometry.
 
 The \texttt{distance2} command takes as arguments two points.
 
@@ -26379,11 +26383,11 @@ Output:
   5 
 \end{center}
 
-\subsection{The measure of an angle: \texttt{angle}\index{angle}}
+\subsection{The measure of an angle in the plane: \texttt{angle}\index{angle}}
 \label{sec:2dangle}
 
-%See section \ref{sec:3dangle} for angle measures in three-dimensional
-%geometry.
+See section \ref{sec:3dangle} for angle measures in three-dimensional
+geometry.
 
 The \texttt{angle} command takes three mandatory arguments and one
 optional argument.  The mandatory arguments are points \texttt{A},
@@ -26698,7 +26702,7 @@ Output:
  pi/4 
 \end{center}
 
-\subsection{Normale a complex number: \texttt{normalize}\index{normalize}}
+\subsection{Normalize a complex number: \texttt{normalize}\index{normalize}}
 
 The \texttt{normalize} command takes as argument a non-zero complex number.
 
@@ -26726,10 +26730,10 @@ new command which performs the transformation.  If they are given a
 geometric object as the final argument, they will return the
 transformed object.
 
-\subsection{Translations: \texttt{translation}\index{translation}}
+\subsection{Translations in the plane: \texttt{translation}\index{translation}}
 \label{sec:2dtranslations}
 
-%See section \ref{sec:3dtranslations} for translations in space.
+See section \ref{sec:3dtranslations} for translations in space.
 
 The \texttt{translation} command can take one or two arguments.
 
@@ -26766,10 +26770,10 @@ Output:
    \includegraphics[width=0.75\textwidth]{xcas-translation2.png}
 \end{center}
 
-\subsection{Reflections: \texttt{reflection}\index{reflection}}
+\subsection{Reflections in the plane: \texttt{reflection}\index{reflection}}
 \label{sec:2dreflections}
 
-%See section \ref{sec:3dreflections} for reflections in space.
+See section \ref{sec:3dreflections} for reflections in space.
 
 The \texttt{reflection} command can take one or two arguments.
 
@@ -26813,10 +26817,10 @@ Output:
   \includegraphics[width=0.75\textwidth]{xcas-reflection3.png}
 \end{center}
 
-\subsection{Rotation: \texttt{rotation}\index{rotation}}
+\subsection{Rotation in the plane: \texttt{rotation}\index{rotation}}
 \label{sec:2drotations}
 
-%See section \ref{sec:3drotations} for rotations in space.
+See section \ref{sec:3drotations} for rotations in space.
 
 The \texttt{rotation} command can take two or three arguments.
 
@@ -26860,10 +26864,10 @@ Output:
    \includegraphics[width=0.75\textwidth]{xcas-rotation3.png}
 \end{center}
 
-\subsection{Homothety: \texttt{homothety}\index{homothety}}
+\subsection{Homothety in the plane: \texttt{homothety}\index{homothety}}
 \label{sec:2dhomothety}
 
-%See section \ref{sec:3dhomothety} for homotheties in space.
+See section \ref{sec:3dhomothety} for homotheties in space.
 
 A homothety is a dilation about a given point.
 The \texttt{homothety} command can take two or three arguments.
@@ -26912,10 +26916,10 @@ The \texttt{homothety} command can also take a complex number as the
 second argument.  In that case, the result will be a rotation as well
 as a dilation.
 
-\subsection{Similarity: \texttt{similarity}\index{similarity}}
+\subsection{Similarity in the plane: \texttt{similarity}\index{similarity}}
 \label{sec:2dsimilarity}
 
-%See section \ref{sec:3dsimilarity} for similarities in space.
+See section \ref{sec:3dsimilarity} for similarities in space.
 
 The \texttt{similarity} command rotates and scales about a given
 point.  It takes three or four arguments.
@@ -26974,10 +26978,10 @@ Note that for a point \texttt{A} and numbers \texttt{k} and
 \texttt{a},  the command \texttt{similarity(A,k,a)} is the same as
 \texttt{homothety(A,k*exp(i*a))}.
 
-\subsection{Inversion: \texttt{inversion}\index{inversion}}
+\subsection{Inversion in the plane: \texttt{inversion}\index{inversion}}
 \label{sec:2dinversion}
 
-%See section \ref{sec:3dinversion} for inversions in space.
+See section \ref{sec:3dinversion} for inversions in space.
 
 Given a circle $C$ with center $O$ and radius $r$, the \emph{inversion}
 of a point $A$ with respect to $C$ is the
@@ -27036,10 +27040,10 @@ Output:
   \includegraphics[width=0.75\textwidth]{xcas-inversion4.png}
 \end{center}
 
-\subsection{Orthogonal projection: \texttt{projection}\index{projection}}
+\subsection{Orthogonal projection in the plane: \texttt{projection}\index{projection}}
 \label{sec:2dprojection}
 
-%See section \ref{sec:3dprojection} for projections in space.
+See section \ref{sec:3dprojection} for projections in space.
 
 The \texttt{projection} command takes one or two arguments.
 
@@ -27100,11 +27104,11 @@ Output:
 
 \section{Properties}
 
-\subsection{Check if a point is on an object: \texttt{is\_element}\index{is\_element}}
+\subsection{Check if a point is on an object in the plane: \texttt{is\_element}\index{is\_element}}
 \label{sec:2diselem}
 
-%See section \ref{sec:3diselem} for checking elements in
-%three-dimensional geometry.
+See section \ref{sec:3diselem} for checking elements in
+three-dimensional geometry.
 
 The \texttt{is\_element} command takes two arguments, a point and a
 geometric object.
@@ -27132,11 +27136,11 @@ Output:
  0 
 \end{center}
 
-\subsection{Check if three points are collinear: \texttt{is\_collinear}\index{is\_collinear}}
+\subsection{Check if three points are collinear in the plane: \texttt{is\_collinear}\index{is\_collinear}}
 \label{sec:2dcheckcollinear}
 
-%See section \ref{sec:3dcheckcollinear} for checking for collinearity in
-%three-dimensional geometry.
+See section \ref{sec:3dcheckcollinear} for checking for collinearity in
+three-dimensional geometry.
 
 The \texttt{is\_collinear} command is a Boolean function which takes as argument a list or
 sequence of points.
@@ -27164,11 +27168,11 @@ Output:
  0 
 \end{center}
 
-\subsection{Check if four points are concyclic: \texttt{is\_concyclic}\index{is\_concyclic}}
+\subsection{Check if four points are concyclic in the plane: \texttt{is\_concyclic}\index{is\_concyclic}}
 \label{sec:2dcheckconcycle}
 
-%See section \ref{sec:3dcheckconcycle} for checking for concyclicity in
-%three-dimensional geometry.
+See section \ref{sec:3dcheckconcycle} for checking for concyclicity in
+three-dimensional geometry.
 
 The \texttt{is\_concyclic} command is a Boolean function which takes as argument a list or
 sequence of points.
@@ -27235,11 +27239,11 @@ Output:
  0 
 \end{center}
 
-\subsection{Check if an object is an equilateral triangle: \texttt{is\_equilateral}\index{is\_equilateral}}
+\subsection{Check if an object is an equilateral triangle in the plane: \texttt{is\_equilateral}\index{is\_equilateral}}
 \label{sec:2dcheckequilateral}
 
-%See section \ref{sec:3dcheckequilateral} for checking for equilateral
-%triangles in three-dimensional geometry.
+See section \ref{sec:3dcheckequilateral} for checking for equilateral
+triangles in three-dimensional geometry.
 
 The \texttt{is\_equilateral} command is a Boolean function which takes
 as argument a geometric object or three points.
@@ -27286,11 +27290,11 @@ Output:
  0 
 \end{center}
 
-\subsection{Check if an object is an isosceles triangle: \texttt{is\_isosceles}\index{is\_isosceles}}
+\subsection{Check if an object in the plane is an isosceles triangle: \texttt{is\_isosceles}\index{is\_isosceles}}
 \label{sec:2dcheckisosceles}
 
-%See section \ref{sec:3dcheckisosceles} for checking for isosceles
-%triangles in three-dimensional geometry.
+See section \ref{sec:3dcheckisosceles} for checking for isosceles
+triangles in three-dimensional geometry.
 
 The \texttt{is\_isosceles} command takes 
 as argument a geometric object or three points.
@@ -27365,11 +27369,11 @@ Output:
   4
 \end{center}
 
-\subsection{Check if an object is a right triangle or a rectangle: \texttt{is\_rectangle}\index{is\_rectangle}}
+\subsection{Check if an object in the plane is a right triangle or a rectangle: \texttt{is\_rectangle}\index{is\_rectangle}}
 \label{sec:2dcheckrect}
 
-%See section \ref{sec:3dcheckrect} for checking for right triangles and rectangles
-%in three-dimensional geometry.
+See section \ref{sec:3dcheckrect} for checking for right triangles and rectangles
+in three-dimensional geometry.
 
 The \texttt{is\_rectangle} command takes as argument a geometric object or a
 sequence of three or four points. 
@@ -27421,11 +27425,11 @@ Note that \texttt{R[0]} is a rectangle since \texttt{R} is a list made
 of a rectangle and vertices \texttt{C} and \texttt{D}.  Entering
 \texttt{affix(C,D)} returns \texttt{-2+8*i, 1+8*i}.
 
-\subsection{Check if an object is a square: \texttt{is\_square}\index{is\_square}}
+\subsection{Check if an object in the plane is a square: \texttt{is\_square}\index{is\_square}}
 \label{sec:2dchecksquare}
 
-%See section \ref{sec:3dchecksquare} for checking for squares
-%in three-dimensional geometry.
+See section \ref{sec:3dchecksquare} for checking for squares
+in three-dimensional geometry.
 
 The \texttt{is\_square} command is a Boolean function which takes as
 argument a geometric object or four points.
@@ -27482,11 +27486,11 @@ Output:
  0 
 \end{center}
 
-\subsection{Check if an object is a rhombus: \texttt{is\_rhombus}\index{is\_rhombus}}
+\subsection{Check if an object in the plane is a rhombus: \texttt{is\_rhombus}\index{is\_rhombus}}
 \label{sec:2dcheckrhombus}
 
-%See section \ref{sec:3dcheckrhombus} for checking for rhombuses
-%in three-dimensional geometry.
+See section \ref{sec:3dcheckrhombus} for checking for rhombuses
+in three-dimensional geometry.
 
 The \texttt{is\_rhombus} command takes as
 argument a geometric object or four points.
@@ -27549,11 +27553,11 @@ Output:
  0 
 \end{center}
 
-\subsection{Check if an object is a parallelogram: \texttt{is\_parallelogram}\index{is\_parallelogram}}
+\subsection{Check if an object in the plane is a parallelogram: \texttt{is\_parallelogram}\index{is\_parallelogram}}
 \label{sec:2dcheckparallelogram}
 
-%See section \ref{sec:3dcheckparallelogram} for checking for
-%parallelograms in three-dimensional geometry.
+See section \ref{sec:3dcheckparallelogram} for checking for
+parallelograms in three-dimensional geometry.
 
 The \texttt{is\_parallelogram} command takes as argument a geometric
 object or four points.
@@ -27618,11 +27622,11 @@ Note that \texttt{P[0]} is a parallelogram since \texttt{P} is a list made
 of a parallelogram and vertex \texttt{D}.  Entering 
 \texttt{affix(D)} returns \texttt{-2+i}.\\
 
-\subsection{Check it two lines are parallel: \texttt{is\_parallel}\index{is\_parallel}}
+\subsection{Check it two lines in the plane are parallel: \texttt{is\_parallel}\index{is\_parallel}}
 \label{sec:2dcheckparallel}
 
-%See section \ref{sec:3dcheckparallel} for checking for parallels in
-%three-dimensional geometry.
+See section \ref{sec:3dcheckparallel} for checking for parallels in
+three-dimensional geometry.
 
 The \texttt{is\_parallel} command is a Boolean function which takes as
 argument two lines.
@@ -27650,11 +27654,11 @@ Output:
  0 
 \end{center}
 
-\subsection{Check if two lines are perpendicular: \texttt{is\_perpendicular}\index{is\_perpendicular}}
-\label{sec:3dcheckperp}
+\subsection{Check if two lines in the plane are perpendicular: \texttt{is\_perpendicular}\index{is\_perpendicular}}
+\label{sec:2dcheckperp}
 
-%See section \ref{sec:2dcheckperp} for checking for perpendicularity in
-%two-dimensional geometry.
+See section \ref{sec:3dcheckperp} for checking for perpendicularity in
+three-dimensional geometry.
 
 The \texttt{is\_perpendicular} command is a Boolean function which takes as
 argument two lines.
@@ -27682,11 +27686,11 @@ Output:
  0 
 \end{center}
 
-\subsection{Check if two circles are orthogonal: \texttt{is\_orthogonal}\index{is\_orthogonal}}
+\subsection{Check if two circles in the plane are orthogonal: \texttt{is\_orthogonal}\index{is\_orthogonal}}
 \label{sec:2dcheckorth}
 
-%See section \ref{sec:3dcheckorth} for checking for orthogonality in
-%three-dimensional geometry.
+See section \ref{sec:3dcheckorth} for checking for orthogonality in
+three-dimensional geometry.
 
 The \texttt{is\_orthogonal} command is a Boolean function which takes as
 argument two lines or two circles.
@@ -28287,4 +28291,3939 @@ Output:
 % depends on a parameter.
 
 % \texttt{trace} draws the trace of the object as the parameter varies.
+
+\chapter{Three-dimensional Graphics}
+
+\section{Introduction}
+
+The \texttt{Alt+H} command brings up a display screen for
+three-dimensional graphics.  This screen has its own menu and command
+lines.
+\begin{center}
+   \includegraphics[width=0.75\textwidth]{xcas-3dscreen.png}
+\end{center}
+This screen also automatically appears whenever there is a three-dimensional
+graphic command.
+
+The plane of vision for a three-dimensional graphic screen is
+perpendicular to the observer's line of vision.  The plane of
+vision is also indicated by dotted lines showing its intersection with
+the parallelepiped.
+The axis of vision for a three-dimensional graphic screen is
+
+The three-dimensional graphic screen starts with the image of a
+parallelepiped bounding the graphics and vectors in the $x$, $y$ and
+$z$ directions.  At the top of the screen is the equation of the plane
+of vision, which is a plane perpendicular to the observer's line of
+vision.  The plane of vision is shown graphically with dotted lines
+indicating where it intersects the plane of vision.
+
+Clicking in the graphic screen outside of the parallelepiped and
+dragging the mouse moves the $x$, $y$ and $z$ directions relative to
+the observer; these directions are also changed with the \texttt{x},
+\texttt{X}, \texttt{y}, \texttt{Y}, \texttt{z} and \texttt{Z} keys.
+Scrolling the mouse wheel moves the plane of vision along the line of
+vision.  The \texttt{in} and \texttt{out} buttons on the graphic
+screen menu zoom in and out of the picture.
+
+The graphical features available for two-dimensional graphics (see
+section \ref{sec:dispfeat})  are also available for three-dimensional
+graphics, but to see the points the markers must be squares with width
+(\texttt{point\_width}) at least \texttt{3}.
+
+The graphic screen menu has a \texttt{cfg} button which brings up a
+configuration screen.  Among other things, this screen has
+\begin{itemize}
+  \item An \texttt{Ortho proj} button, which determines whether the
+  drawing uses orthogonal projection or perspective
+  projection.
+  \item A \texttt{Lights} button, which determines whether the objects
+  are lit or not; the locations of eight points for lighting are
+  set using the buttons \texttt{L1}, \ldots, \texttt{L7}, which specify
+  the points with homogeneous coordinates.
+  \item A \texttt{Show axis} button, which determines whether or not
+  the outlining parallelepiped is visible.
+%  \item hidden3d 
+\end{itemize}
+
+\section{Change the view}
+
+The depictions of three-dimensional objects are made with a coordinate
+system $Oxyz$, where the $x$ axis is horizontal and directed right,
+the $y$ axis is vertical and directed up, and the $z$ axis is
+perpendicular to the screen and directed out of the screen.  The
+depictions can be transformed by changing to a different coordinate
+system by setting a quaternion.  (See section \ref{sec:globpar}.)
+
+\section{The axes}
+
+\subsection{Draw unit vectors:
+\texttt{Ox\_3d\_unit\_vector}\index{Ox\_3d\_unit\_vector}
+\texttt{Oy\_3d\_unit\_vector}\index{Oy\_3d\_unit\_vector}
+\texttt{Oz\_3d\_unit\_vector}\index{Oz\_3d\_unit\_vector}
+\texttt{frame\_3d}\index{frame\_3d}}
+
+The \texttt{Ox\_3d\_unit\_vector} command draws the unit vector in
+the $x$-direction on a three-dimensional graphic screen.\\
+Input:
+\begin{center}
+  \tt
+  Ox\_3d\_unit\_vector()
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.5\textwidth]{xcas-3dunit.png}
+\end{center}
+Similarly, the \texttt{Oy\_3d\_unit\_vector} and
+\texttt{Oz\_3d\_unit\_vector} commands draw the unit vector in the $y$
+and $z$ directions, respectively.
+
+These commands have no parameters, but can be decorated with the
+\texttt{legend} command.\\
+Input:
+\begin{center}
+  \tt
+  Ox\_3d\_unit\_vector(), legend(point([1,0,0]),"unit x vector",blue)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dunitblue.png}
+\end{center}
+
+The \texttt{frame\_3d} command draws all three vectors simultaneously.
+
+\section{Points in space}
+
+\subsection{Define a point in three-dimensions: \texttt{point}\index{point}}
+\label{sec:3dpoint}
+
+See section \ref{sec:2dpoint} for points in the plane.
+
+With the 3-d geometry screen in point mode, a click on a point with the
+left mouse button will choose that point.  Points chosen this way are
+automatically named, first with \texttt{A}, then \texttt{B}, etc.
+
+Alternatively, the \texttt{point} command chooses a point, where the
+point $(a,b,c)$ is specified by either the three coordinates
+\text{a,b,c} or a list \texttt{[a,b,c]} of the coordinates.  Many
+commands which takes points as arguments can either take them as
+\texttt{point(a,b,c)} or the list of coordinates \texttt{[a,b,c]}.\\
+Input:
+\begin{center}
+  \tt
+  point(1,2,5)
+\end{center}
+or:
+\begin{center}
+  \tt
+  point([1,2,5])
+\end{center}
+Output:
+\begin{center}
+  \tt
+  \includegraphics[width=0.5\textwidth]{xcas-3dpoint.png}
+\end{center}
+(The marker used to indicate the point can be changed; see section
+\ref{sec:localfeatures}.)
+
+\subsection{Define a random point in three-dimensions:
+\texttt{point3d}\index{point3d}}
+
+The \texttt{point3d} command takes as argument a sequence of names for
+points and assigns random points to each name; the random points have
+coordinates which are integers between -5 and 5.  For example,\\
+Input:
+\begin{center}
+  \tt
+  point3d(A,B,C)
+\end{center}
+then:
+\begin{center}
+  \tt
+  plane(A,B,C)
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.5\textwidth]{xcas-3dplane.png}
+\end{center}
+
+\subsection{Find an intersection point of two objects in space: \texttt{single\_inter}\index{single\_inter} \texttt{line\_inter}\index{line\_inter}}
+\label{sec:3dsingleintersection}
+
+See section \ref{sec:single2dintersection} for single points of
+intersection of objects in the plane.
+
+The \texttt{single\_inter} (or the \texttt{line\_inter}) command takes
+two geometric objects as arguments
+and returns one of the points of intersection of the two objects.
+
+The \texttt{single\_inter} command optionally takes a third
+argument, which can be a point or a list of points.  If the optional
+argument is
+a single point, then \texttt{single\_inter} returns the point of
+intersection \emph{closest} to the optional argument.  If the optional
+argument is a list of points, then \texttt{single\_inter} tries to
+return a point of intersection not in the list.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  A := single\_inter(plane(point(0,1,1),point(1,0,1),point(1,1,0)),\\
+  line(point(0,0,0),point(1,1,1)))
+\end{center}
+then:
+\begin{center}
+  \tt
+  coordinates(A)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ [2/3,2/3,2/3]
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  B := single\_inter(sphere(point(0,0,0),1),\\
+  line(point(0,0,0),point(1,1,1)))
+\end{center}
+then:
+\begin{center}
+  \tt
+  coordinates(B)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ [1/sqrt(3), 1/sqrt(3), 1/sqrt(3)]
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  B1 := single\_inter(sphere(point(0,0,0),1),\\
+  line(point(0,0,0),point(1,1,1)), point(-1,0,0))
+\end{center}
+then:
+\begin{center}
+  \tt
+  coordinates(B1)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ [-1/sqrt(3), -1/sqrt(3), -1/sqrt(3)]
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  C := single\_inter(sphere(point(0,0,0),1),\\
+  line(point(1,0,0),point(1,1,1)))
+\end{center}
+then:
+\begin{center}
+  \tt
+  coordinates(C)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ [1,0,0]
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  C1 := single\_inter(sphere(point(0,0,0),1),\\
+  line(point(1,0,0),point(1,1,1)),[point(1,0,0)])
+\end{center}
+then:
+\begin{center}
+  \tt
+  coordinates(C1)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ [1/3,2/3,2/3]
+\end{center}
+
+\subsection{Find the intersection points of two objects in space: \texttt{inter}\index{inter}}
+\label{sec:3dintersection}
+
+See section \ref{sec:2dintersection} for points of intersection of objects
+in the plane.
+
+The \texttt{inter} command takes
+two geometric objects as arguments
+and returns a list of the points of intersection or the curve of
+intersection of the two objects.
+
+The \texttt{inter} command optionally takes a point as a third argument.
+In this case, \texttt{inter} returns the point of intersection
+\emph{closest} to this argument.
+
+\noindent
+Input:
+\begin{center}
+    \tt
+    LA:=inter(plane(point(0,1,1),point(1,0,1),point(1,1,0)),\\
+    line(point(0,0,0),point(1,1,1)))
+\end{center}
+then:
+\begin{center}
+  \tt
+  coordinates(LA)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ [[2/3,2/3,2/3]]
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+    \tt
+    LB:=inter(sphere(point(0,0,0),1),line(point(0,0,0),point(1,1,1)))
+\end{center}
+then:
+\begin{center}
+  \tt
+  coordinates(LB)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ [[1/sqrt(3),1/sqrt(3),1/sqrt(3)],[-1/sqrt(3),-1/sqrt(3),-1/sqrt(3)]]
+\end{center}
+To get just one of the points, use the usual list indices.\\
+Input:
+\begin{center}
+  \tt
+  coordinates(LB[0])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ [1/sqrt(3),1/sqrt(3),1/sqrt(3)]
+\end{center}
+To get the point closest to $(1/2,1/2,1/2)$, enter\\
+Input:
+\begin{center}
+  \tt
+    LB1:=inter(sphere(point(0,0,0),1),\\
+    line(point(0,0,0),point(1,1,1)),point(1/2,1/2,1/2))
+\end{center}
+then:
+\begin{center}
+  \tt
+  coordinates(LB1)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ [1/sqrt(3),1/sqrt(3),1/sqrt(3)]
+\end{center}
+
+\subsection{Find the midpoint of a segment in space: \texttt{midpoint}\index{midpoint}}
+\label{sec:3dmidpt}
+
+See section \ref{sec:2dmidpt} for midpoints in the plane.
+
+The \texttt{midpoint} command takes two points (or a list of two
+points) as arguments and returns and  returns and draws the midpoint
+of the segment determined by these points.  \\
+Input:
+\begin{center}
+  \tt
+  MP := midpoint(point(1,4,0),point(1,-2,0))
+\end{center}
+then:
+\begin{center}
+  coordinates(MP)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ [1,1,0] 
+\end{center}
+
+\subsection{Find the isobarycenter of a set of points in space: \texttt{isobarycenter}\index{isobarycenter}}
+\label{sec:3disobarycenter}
+
+See section \ref{sec:2disobarycenter} for isobarycenters of objects in
+the plane.
+
+The \texttt{isobarycenter} command takes a list (or sequence) of
+points and returns and draws the isobarycenter, which is the barycenter when all
+the points are equally weighted.\\
+Input:
+\begin{center}
+  \tt
+  IB := isobarycenter(point(1,4,0),point(1,-2,0))
+\end{center}
+then:
+\begin{center}
+  \tt
+  coordinates(IB)
+\end{center}
+Output:
+\begin{center}
+   [1,1,0]    
+\end{center}
+
+\subsection{Find the barycenter of a set of points in space: \texttt{barycenter}\index{barycenter}}
+\label{sec:3dbarycenter}
+
+See section \ref{sec:2dbarycenter} for barycenters of objects in
+the plane.
+
+The \texttt{barycenter} command returns and draws the barycenter of a set of
+weighted points.  If the sum of the weights is zero, then this command
+returns an error.
+
+The points and their weights (real numbers) can be
+given in two different ways.
+\begin{enumerate}
+  \item A sequence of lists of length two.\\
+  The first element of each list is a point and the second element is
+  the weight of the point.
+  \item A matrix with two columns.\\
+  The first column of the matrix contains the points and the
+  second column contains the corresponding weights.
+  % \item A matrix with two rows and more than two columns.\\
+  % The first row contains the points and the second column the
+  % corresponding weights.
+\end{enumerate}
+Input:
+\begin{center}
+  \tt
+  BC := barycenter([point(1,4,0),1],[point(1,-2,0),1])
+\end{center}
+or:
+\begin{center}
+  \tt
+  BC := barycenter([[point(1,4,0),1],[point(1,-2,0),1]])
+\end{center}
+then:
+\begin{center}
+  \tt
+  coordinates(BC)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  [1,1,0]
+\end{center}
+
+\section{Lines in space}
+
+\subsection{Lines and directed lines in space: \texttt{line}\index{line}}
+\label{sec:3dlines}
+
+See section \ref{sec:2dlines} for lines in the plane.
+
+The \texttt{line} command returns and draws a directed line given one of the
+following types of arguments:
+\begin{itemize}
+  \item Two points or a list of two points.\\
+  The direction of the line is from the first point
+  to the second point.\\
+  Input:
+  \begin{center}
+    \tt
+    line([0,3,0],point(3,0,3))
+  \end{center}
+  Output:
+  \begin{center}
+     \includegraphics[width=0.5\textwidth]{xcas-3dline1.png}
+  \end{center}
+  \item A point and  direction vector (in the form
+    \texttt{[$u_1$,$u_2$,$u_3$]}).\\
+    The direction of the line is given by the direction vector.\\
+  Input:
+  \begin{center}
+    \tt
+    line([0,3,0],[3,0,3])
+  \end{center}
+  Output:
+  \begin{center}
+     \includegraphics[width=0.5\textwidth]{xcas-3dline2.png}
+  \end{center}
+  \item Two equations for planes.\\
+  The direction of the line is given by the cross-product of the
+  normals for the planes.  For example, the intersection of the planes
+  $x=y$ (normal $(1,-1,0)$) and $y=z$ (normal $(0,1,-1)$) will be
+  $(1,-1,0)\times (0,1,-1) = (1,1,1)$.
+    Input:
+    \begin{center}
+      \tt
+      line(x=y, y=z)
+  \end{center}
+  Output:
+  \begin{center}
+   \includegraphics[width=0.5\textwidth]{xcas-3dline3.png}
+  \end{center}
+\end{itemize}
+
+\subsection{Half lines in space: \texttt{half\_line}\index{half\_line}}
+\label{sec:3dhalflines}
+
+See section \ref{sec:2dhalflines} for half-lines in the plane.
+
+The \texttt{half\_line} command takes as argument two points.
+
+\texttt{half\_line} returns and draws the ray from the first point
+through the second.\\
+Input:
+\begin{center}
+  \tt
+  half\_line(point(0,0,0),point(1,1,1))
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dhalfline.png}
+\end{center}
+
+\subsection{Segments in space: \texttt{segment}\index{segment}}
+\label{sec:3dsegments}
+
+See section \ref{sec:2dsegments} for segments in the plane.
+
+The \texttt{segment} command takes as arguments two points.
+
+\texttt{segment} returns and draws the corresponding line segment.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  segment(point(0,0,0),point(1,1,1))
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dsegment.png}
+\end{center}
+
+\subsection{Vectors in space: \texttt{vector}\index{vector}}
+\label{sec:3dvectors}
+
+See section \ref{sec:2dvectors} for vectors in the plane.
+
+The \texttt{vector} command returns and draws vectors, given
+one of the following types of arguments:
+\begin{itemize}
+  \item A list of the coordinates of a vector.  The vector is drawn
+  beginning at the origin.\\
+  Input:
+  \begin{center}
+    \tt
+    vector([1,2,3])
+  \end{center}
+  Output:
+  \begin{center}
+     \includegraphics[width=0.5\textwidth]{xcas-3dvector1.png}
+  \end{center}
+  \item Two points or two lists of coordinates for points.\\
+  The vector is drawn from the first point to the second.\\
+  Input:
+  \begin{center}
+    \tt
+    vector(point(-1,0,0),point(0,1,2))
+  \end{center}
+  or:
+  \begin{center}
+    \tt
+    vector([-1,0,0],[0,1,2])
+  \end{center}
+  Output:
+  \begin{center}
+     \includegraphics[width=0.5\textwidth]{xcas-3dvector2.png}
+  \end{center}
+  \item A point and a vector.\\
+  The vector is drawn beginning at the point.\\
+  Input:
+  \begin{center}
+    \tt
+    V := vector([-1,0,0],[0,1,2])
+  \end{center}
+  then:
+  \begin{center}
+    \tt
+    vector(point(-1,2,0),V)
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{xcas-3dvector3.png}
+  \end{center}
+\end{itemize}
+
+\subsection{Parallel lines and planes in space: \texttt{parallel}\index{parallel}}
+\label{sec:3dparallel}
+
+See section \ref{sec:2dparallel} for parallel lines in the plane.
+
+The \texttt{parallel} command returns and draws a line or plane
+depending on the arguments.  The possible arguments are:
+\begin{itemize}
+  \item A point \texttt{A} and a line \texttt{L}.\\
+  \texttt{parallel(A,L)} returns and draws the line through \texttt{A}
+  parallel to \texttt{L}.\\
+  Input:
+  \begin{center}
+    \tt
+    parallel(point(1,1,1),line(point(0,0,0),point(0,0,1)))
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{xcas-3dparallel.png}
+  \end{center}
+  \item Two non-parallel lines \texttt{L1} and \texttt{L2}.\\
+  \texttt{parallel(L1,L2)} returns and draws the plane containing
+  \texttt{L2} that is parallel to \texttt{L1}.\\
+  Input:
+  \begin{center}
+    \tt
+    parallel(line(point(1,0,0),point(0,1,0)),\\
+    line(point(0,0,0),point(0,0,1)))
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{xcas-3dparallel2.png}
+  \end{center}
+  \item A point \texttt{A} and a plane \texttt{P}.\\
+  \texttt{parallel(A,P)} returns and draws the plane through
+  \texttt{A} that is parallel to \texttt{A}.\\
+  Input:
+  \begin{center}
+    \tt
+    parallel(point(0,0,0),plane(point(1,0,0),point(0,1,0),point(0,0,1)))
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{xcas-3dparallel3.png}
+  \end{center}
+  \item A point \texttt{A} and two non-parallel lines \texttt{L1} and
+  \texttt{L2}.\\
+  \texttt{parallel(A,L1,L2)} returns and draws the plane through
+  \texttt{A} that is parallel to \texttt{L1} and \texttt{L2}.\\
+  Input:
+  \begin{center}
+    \tt
+    parallel(point(1,1,1),line(point(0,0,0),point(0,0,1)),\\
+    line(point(1,0,0),point(0,1,0)))
+  \end{center}
+  Output:
+  \begin{center}
+     \includegraphics[width=0.5\textwidth]{xcas-3dparallel4.png}
+  \end{center}
+\end{itemize}
+
+\subsection{Perpendicular lines and planes in space: \texttt{perpendicular}\index{perpendicular}}
+\label{sec:3dperp}
+
+See section \ref{sec:2dperp} for perpendicular lines in the plane.
+
+The \texttt{perpendicular} command returns and draws a line or plane,
+depending on the arguments.  The possible arguments are:
+\begin{itemize}
+  \item A point \texttt{A} and a line \texttt{L}.\\
+  \texttt{perpendicular(A,L)} returns and draws the line through
+  \texttt{A} that is perpendicular to \texttt{L}.\\
+  Input:
+  \begin{center}
+    \tt
+    perpendicular(point(0,0,0),line(point(1,0,0),point(0,1,0)))
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{xcas-3dperp1.png}
+  \end{center}
+  \item A line \texttt{L} and a plane \texttt{P}.\\
+  \texttt{perpendicular(L,P)} returns and draws the plane containing
+  \texttt{L} that is perpendicular to \texttt{P}.\\
+  Input:
+  \begin{center}
+    \tt
+    perpendicular(line(point(0,0,0),point(1,1,0)),\\
+    plane(point(1,0,0),point(0,1,0),point(0,0,1)))
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{xcas-3dperp2.png}
+  \end{center}
+\end{itemize}
+
+\subsection{Planes orthogonal to lines and lines orthogonal to planes in space: \texttt{orthogonal}\index{orthogonal}}
+\label{sec:3dorthogonal}
+
+The \texttt{orthogonal} command returns and draws a line or plane,
+depending on the arguments.  The possible arguments are:
+\begin{itemize}
+  \item A point \texttt{A} and a line \texttt{L}.\\
+  \texttt{orthogonal(A,L)} returns and draws the plane through
+  \texttt{A} orthogonal to \texttt{L}.\\
+  Input:
+  \begin{center}
+    \tt
+    orthogonal(point(0,0,0),line(point(1,0,0),point(0,1,0)))
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{xcas-3dorthog1.png}
+  \end{center}
+  \item A line \texttt{L} and a plane \texttt{P}.\\
+  \texttt{perpendicular(L,P)} returns and draws the plane containing
+  \texttt{L} that is perpendicular to \texttt{P}.\\
+  Input:
+  \begin{center}
+    \tt
+    perpendicular(line(point(0,0,0),point(1,1,0)),\\
+    plane(point(1,0,0),point(0,1,0),point(0,0,1)))
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{xcas-3dorthog2.png}
+  \end{center}
+\end{itemize}
+
+\subsection{Common perpendiculars to lines in space: \texttt{common\_perpendicular}\index{common\_perpendicular}}
+
+The \texttt{common\_perpendicular} command takes as arguments two lines.
+
+\texttt{common\_perpendicular} returns and draws the common
+perpendicular to the two lines.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  L1 := line(point(1,1,0),point(0,1,1));\\
+  L2 := line(point(0,-1,0),point(1,-1,1))
+\end{center}
+then:
+\begin{center}
+  \tt
+  common\_perpendicular(L1,L2)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dcomperp.png}
+\end{center}
+
+\section{Planes in space}
+
+See also sections \ref{sec:3dperp} and \ref{sec:3dorthogonal}
+for planes perpendicular and orthogonal to lines and planes.
+
+\subsection{Planes in space: \texttt{plane}\index{plane}}
+
+The \texttt{plane} command draws and returns a plane.  It takes as
+argument one of the following:
+\begin{itemize}
+  \item Three points.
+  \item A point and a line.
+  \item The equation of a plane.
+\end{itemize}
+Input:
+\begin{center}
+  \tt
+  plane(point(0,0,5),point(0,5,0),point(0,0,5))
+\end{center}
+or:
+\begin{center}
+  \tt
+  plane(point(0,0,5),line(point(0,5,0),point(0,0,5)))
+\end{center}
+or:
+\begin{center}
+  \tt
+  plane(x + y + z = 5)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dplane1.png}
+\end{center}
+
+\subsection{The bisector plane in space: \texttt{perpen\_bisector}\index{perpen\_bisector}}
+\label{sec:3dperpbis}
+
+See section \ref{sec:2dperpbis} for perpendicular bisectors in the
+plane.
+
+The \texttt{perpen\_bisector} command takes as argument a segment or
+two points.
+
+\texttt{perpen\_bisector} returns and draws the perpendicular bisector
+plane of the segment.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  perpen\_bisector(point(0,0,0),point(4,4,4))
+\end{center}
+or:
+\begin{center}
+  \tt
+  perpen\_bisector(segment([0,0,0],[4,4,4])
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dplane2.png}
+\end{center}
+
+\subsection{Tangent planes in space: \texttt{tangent}\index{tangent}}
+\label{sec:3dtangents}
+
+See section \ref{sec:2dtangents} for tangents in the plane.
+
+The \texttt{tangent} command takes as argument a geometric object and
+a point on the object.
+
+\texttt{tangent} draws and returns the plane through the point tangent
+to the object.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  S: = sphere([0,0,0],3)
+\end{center}
+then:
+\begin{center}
+  \tt
+  tangent(S,[2,2,1])
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dspheretan.png}
+\end{center}
+
+If the geometric object is the graph of a function, then the second
+argument is a point in the domain of the function; the corresponding point
+on the graph will be used.\\
+Input:
+\begin{center}
+  \tt
+  G:=plotfunc(x\^{}2 + y\^{}2, [x,y])
+\end{center}
+then:
+\begin{center}
+  \tt
+  tangent(G,[2,2])
+\end{center}
+% or:
+% \begin{center}
+%   \tt
+%   tangent(G,[2,2,8])
+% \end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dgraphtan.png}
+\end{center}
+
+\section{Triangles in space}
+\label{sec:3dtriangles}
+
+\subsection{Draw a triangle in space: \texttt{triangle}\index{triangle}}
+\label{sec:3dtricommand}
+
+See section \ref{sec:2dtricommand} for the \texttt{triangle} command
+in the plane.
+
+The \texttt{triangle} takes as arguments three points.
+
+\texttt{triangle} returns and draws the triangle determined by these
+points.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  A := point(0,0,0); B := point(3,3,3); C := point(0,3,0)
+\end{center}
+then:
+\begin{center}
+  \tt
+  triangle(A,B,C)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dtriangle.png}
+\end{center}
+
+\subsection{Isosceles triangles in space: \texttt{isosceles\_triangle}\index{isosceles\_triangle}}
+\label{sec:3disotriangles}
+
+See section \ref{sec:2disotriangles} for isosceles triangles in the
+plane.
+
+The \texttt{isosceles\_triangle} command returns and draws an
+isosceles triangle.  It takes as arguments one of the following:
+\begin{itemize}
+  \item Three points, \texttt{A}, \texttt{B} and \texttt{P}.\\
+  The first two points \texttt{A} and \texttt{B} are vertices of the
+  triangle, the third point \texttt{P} determines the plane and
+  orientation of the triangle.  The orientation is so that angle
+  \texttt{BAP} is positive, and the equal interior angles of the
+  isosceles triangle are determined by angle \texttt{ABP}.\\
+  Input:
+  \begin{center}
+    \tt
+    A := point(0,0,0); B := point(3,3,3); P := point(0,0,3)
+  \end{center}
+  then:
+  \begin{center}
+    \tt
+    isosceles\_triangle(A,B,P);
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{xcas-3disotriangle.png}
+  \end{center}
+  \item Two points, \texttt{A} and \texttt{B}, and a list consisting
+  of a point \texttt{P}  and a real number \texttt{c}.\\
+  The points \texttt{A} and \texttt{B} are vertices of the triangle
+  and \texttt{P} determines the plane and orientation of the triangle
+  as above.  The number \texttt{c} is the measure of the equal
+  interior angles.\\
+  Input:
+  \begin{center}
+    \tt
+    isosceles\_triangle(A,B,[P,3*pi/4])
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{xcas-3disotriangle2.png}
+  \end{center}
+\end{itemize}
+
+\texttt{isosceles\_triangle} can take an optional fourth argument,
+which is a variable which will be assigned to the third vertex of the
+triangle.\\
+Input:
+\begin{center}
+  \tt
+  isosceles\_triangle(A,B,[P,3*pi/4],C)
+\end{center}
+then:
+\begin{center}
+  \tt
+  coordinates(C)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ [(-3*sqrt(2) - 3)/2, (-3*sqrt(2) -3)/2,\\
+ (-3*sqrt(2) + 6)/2]
+\end{center}
+
+\subsection{Right triangles in space: \texttt{right\_triangle}\index{right\_triangle}}
+\label{sec:3dright}
+
+See section \ref{sec:2dright} for right triangles in the plane.
+
+The \texttt{right\_triangle} command returns and draws a
+right triangle.  It takes as arguments one of the following:
+\begin{itemize}
+  \item Three points, \texttt{A}, \texttt{B} and \texttt{P}.\\
+  \texttt{right\_triangle(A,B,P)} returns and draws the right
+  triangle \texttt{BAC} with the right angle at vertex \texttt{A}.
+  The first two points \texttt{A} and \texttt{B} are vertices of the
+  triangle, the third point \texttt{P} determines the plane and
+  orientation of the triangle.  The orientation is so that angle
+  \texttt{BAP} is positive.  The length of \texttt{AC} equals the
+  length of \texttt{AP}.\\
+  Input:
+  \begin{center}
+    \tt
+    A := point(0,0,0); B := point(3,3,3);\\
+    P := point(0,0,3)
+  \end{center}
+  then:
+  \begin{center}
+    \tt
+    right\_triangle(A,B,P);
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{xcas-3drttriangle.png}
+  \end{center}
+  \item Two points, \texttt{A} and \texttt{B}, and a list consisting
+  of a point \texttt{P}  and a real number \texttt{k}.\\
+  \texttt{triangle\_rectangle(A,B,[P,k])} returns and draws the right
+  triangle \texttt{BAC} with the right angle at vertex \texttt{A}.
+  The first two points \texttt{A} and \texttt{B} are vertices of the
+  triangle, the third point \texttt{P} determines the plane and
+  orientation of the triangle as above.  The length of \texttt{AC}
+  is \texttt{|k|} times the length of \texttt{AP}. Angle \texttt{BAC}
+  has the same orientation as  \texttt{BAP} if \texttt{k} is positive,
+  angle \texttt{BAC} has opposite orientation as \texttt{BAP} if
+  \texttt{k} is negative.  So $\tan(\beta) = \texttt{k}$ if $\beta$ is
+  the angle \texttt{CAB}.\\
+  Input:
+  \begin{center}
+    \tt
+    right\_triangle(A,B,[P,2])
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{xcas-3drttriangle2.png}
+  \end{center}
+  Input:
+  \begin{center}
+    \tt
+    right\_triangle(A,B,[P,-2])
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{xcas-3drttriangle3.png}
+  \end{center}
+\end{itemize}
+
+\texttt{right\_triangle} can take an optional fourth argument,
+which is a variable which will be assigned to the third vertex of the
+triangle.\\
+Input:
+\begin{center}
+  \tt
+  right\_triangle(A,B,[P,2],C)
+\end{center}
+then:
+\begin{center}
+  \tt
+  coordinates(C)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ [-3*sqrt(2), -3*sqrt(2), 6*sqrt(2)]
+\end{center}
+
+\subsection{Equilateral triangles in space: \texttt{equilateral\_triangle}\index{equilateral\_triangle}}
+\label{sec:3dequi}
+
+See section \ref{sec:2dequi} for equilateral triangles in the plane.
+
+The \texttt{equilateral\_triangle} command takes as arguments three
+points, \texttt{A}, \texttt{B} and \texttt{P}.
+
+\texttt{equilateral\_triangle} returns and draws the equilateral triangle
+\texttt{ABC}, where \texttt{C} is in the same half plane as
+\texttt{P}.\\
+Input:
+\begin{center}
+  \tt
+  A := point(0,0,0); B := point(3,3,3);\\
+  P := point(0,0,3)
+\end{center}
+then:
+\begin{center}
+  \tt
+  equilateral\_triangle(A,B,P)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dequitriangle.png}
+\end{center}
+
+\texttt{triangle\_rectangle} can take an optional fourth argument,
+which is a variable which will be assigned to the third vertex of the
+triangle.\\
+Input:
+\begin{center}
+  \tt
+  triangle\_rectangle(A,B,P,C)
+\end{center}
+then:
+\begin{center}
+  \tt
+  simplify(coordinates(C))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ [(-3*sqrt(6)+6)/4,(-3*sqrt(6)+6)/4,(3*sqrt(6)+3)/2]
+\end{center}
+
+\section{Quadrilaterals in space}
+\label{sec:3dquad}
+
+See section \ref{sec:2dquad} for quadrilaterals in the plane.
+
+\subsection{Squares in space: \texttt{square}\index{square}}
+\label{sec:3dsquares}
+
+See section \ref{sec:2dsquares} for squares in the plane.
+
+The \texttt{square} command takes as arguments three points,
+\texttt{A}, \texttt{B} and \texttt{P}.
+
+\texttt{square} returns and draws and returns the square with one side
+\texttt{AB} and the remaining sides in the same half-plane as
+\texttt{P}.\\
+Input:
+\begin{center}
+  \tt
+  A := point(0,0,0); B := point(3,3,3); \\
+  P := point(0,0,3);
+\end{center}
+then:
+\begin{center}
+  \tt
+  square(A,B,P)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dsquare.png}
+\end{center}
+
+The \texttt{square} command also optionally takes two more arguments,
+variable names to assign to the two new vertices.\\
+Input:
+\begin{center}
+  \tt
+  square(A,B,P,C,D)
+\end{center}
+then:
+\begin{center}
+  \tt
+  cooridinates(C); coordinates(D)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ [-3*sqrt(2)/2+3,-3*sqrt(2)/2+3,3*sqrt(2)+3],\\{}
+ [-3*sqrt(2)/2,-3*sqrt(2)/2,3*sqrt(2)]
+\end{center}
+
+\subsection{Rhombuses in space: \texttt{rhombus}\index{rhombus}}
+\label{sec:3drhombuses}
+
+See section \ref{sec:2drhombuses} for rhombuses in the plane.
+
+The \texttt{rhombus} command returns and draws a rhombus.
+It takes as arguments one of the following:
+\begin{itemize}
+  \item Three points, \texttt{A}, \texttt{B} and \texttt{P}.\\
+  The first two points \texttt{A} and \texttt{B} are vertices of the
+  triangle, the third point \texttt{P} determines the plane and
+  orientation of the rhombus.  The orientation is so that angle
+  \texttt{BAP} is positive.  The command returns and draws rhombus
+  \texttt{ABCD}, where \texttt{D} is on the ray \texttt{AP} (and the
+  length of \texttt{AD} equals the length of \texttt{AB}).\\
+  Input:
+  \begin{center}
+    \tt
+    A := point(0,0,0); B := point(3,3,3);\\
+    P := point(0,0,3)
+  \end{center}
+  then:
+  \begin{center}
+    \tt
+    rhombus(A,B,P)
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{xcas-3drhombus.png}
+  \end{center}
+  \item Two points, \texttt{A} and \texttt{B}, and a list consisting
+  of a point \texttt{P}  and a real number \texttt{a}.\\
+  The points \texttt{A} and \texttt{B} are vertices of the rhombus
+  and \texttt{P} determines the plane and orientation of the rhombus
+  as above.  The command returns and draws rhombus \texttt{ABCD},
+  where angle \texttt{BAD} equals \texttt{a}.\\
+  Input:
+  \begin{center}
+    \tt
+    rhombus(A,B,[P,pi/3])
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{xcas-3drhombus2.png}
+  \end{center}
+\end{itemize}
+
+\texttt{rhombus} can take optional fourth and fifth
+arguments, which are variable names assigned to vertices
+\texttt{C} and \texttt{D}.\\
+Input:
+\begin{center}
+  \tt
+  rhombus(A,B,[P,pi/3],C,D)
+\end{center}
+then:
+\begin{center}
+  \tt
+  simplify(coordinates(C)); simplify(coordinates(D))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ [(-3*sqrt(6)+18)/4,(-3*sqrt(6)+18)/4,(3*sqrt(6)+9)/2],\\{}
+ [(-3*sqrt(6)+6)/4,(-3*sqrt(6)+6)/4,(3*sqrt(6)+3)/2]
+\end{center}
+
+\subsection{Rectangles in space: \texttt{rectangle}\index{rectangle}}
+\label{sec:3drect}
+
+See section \ref{sec:2drect} for rectangles in the plane.
+
+The \texttt{rectangle} command returns and draws a
+rectangle.  It takes as arguments one of the following:
+\begin{itemize}
+  \item Three points, \texttt{A}, \texttt{B} and \texttt{P}.\\
+  \texttt{rectangle(A,B,P)} returns and draws the rectangle
+  \texttt{ABCD}.
+  The first two points \texttt{A} and \texttt{B} are vertices of the
+  rectangle, the third point \texttt{P} determines the plane and
+  orientation of the rectangle.  The orientation is so that angle
+  \texttt{BAP} is positive.  The length of side \texttt{AD} equals the
+  length of \texttt{AP}.\\
+  Input:
+  \begin{center}
+    \tt
+    A := point(0,0,0); B := point(3,3,3);\\
+    P := point(0,0,3)
+  \end{center}
+  then:
+  \begin{center}
+    \tt
+    rectangle(A,B,P)
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{xcas-3drect.png}
+  \end{center}
+  \item Two points, \texttt{A} and \texttt{B}, and a list consisting
+  of a point \texttt{P}  and a real number \texttt{k}.\\
+  \texttt{rectangle(A,B,[P,k])} returns and draws the rectangle
+  \texttt{ABCD}.  The first two points \texttt{A} and \texttt{B} are vertices of the
+  rectangle, the third point \texttt{P} determines the plane and
+  orientation of the rectangle as above.  The length of \texttt{AD}
+  is \texttt{|k|} times the length of \texttt{AB}. Angle \texttt{BAD}
+  has the same orientation as  \texttt{BAP} if \texttt{k} is positive,
+  angle \texttt{BAD} has opposite orientation as \texttt{BAP} if
+  \texttt{k} is negative.\\
+  Input:
+  \begin{center}
+    \tt
+    rectangle(A,B,[P,1/2])
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{xcas-3drect2.png}
+  \end{center}
+\end{itemize}
+
+\texttt{rectangle} takes optional fourth and fifth arguments,
+which are variables assigned to vertices \texttt{C} and \texttt{D}.\\
+Input:
+\begin{center}
+  \tt
+  rectangle(A,B,P,C,D)
+\end{center}
+then:
+\begin{center}
+  \tt
+  simplify(coordinates(C)), simplify(coordinates(D))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ [-(sqrt(6))/2,-(sqrt(6))/2,sqrt(6)],\\{}
+ [(-(sqrt(6))+6)/2,(-(sqrt(6))+6)/2,sqrt(6)+3]
+\end{center}
+
+\subsection{Parallelograms in space: \texttt{parallelogram}\index{parallelogram}}
+\label{sec:3dparallelograms}
+
+See section \ref{sec:2dparallelograms} for parallelograms in the plane.
+
+The \texttt{parallelogram} command takes three points as arguments.
+
+The \texttt{parallelogram} command returns and draws a parallelogram.
+If the arguments are \texttt{A}, \texttt{B} and \texttt{C}, then the
+parallelogram has the form \texttt{ABCD}.\\
+Input:
+\begin{center}
+  \tt
+  A := point(0,0,0); B := point(3,3,3);\\
+  C := point(0,0,3)
+\end{center}
+then:
+\begin{center}
+  \tt
+  parallelogram(A,B,C)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dpar.png}
+\end{center}
+
+The \texttt{parallelogram} command takes an optional fourth argument,
+which is a variable the fourth vertex is assigned to.\\
+Input:
+\begin{center}
+  \tt
+  parallelogram(A,B,C,D)
+\end{center}
+then:
+\begin{center}
+  \tt
+  coordinates(D)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ [-3,-3,0]
+\end{center}
+
+% \subsection{Arbitrary quadrilaterals in space: \texttt{quadrilateral}\index{quadrilateral}}
+% \label{sec:3dquads}
+
+% See section \ref{sec:2dquads} for quadrilaterals in the plane.
+
+% The \texttt{quadrilateral} command takes as arguments four points.
+
+% \texttt{quadrilateral} returns and draws the quadrilateral whose
+% vertices are the given points.\\
+% Input:
+% \begin{center}
+%   \tt
+%   quadrilateral(point(0,0,0,0),point(0,1,0),point(0,2,2),point(1,0,2))
+% \end{center}
+% Output:
+% \begin{center}
+%   \includegraphics[width=0.5\textwidth]{xcas-3dquad.png}
+% \end{center}
+
+\section{Polygons in space}
+\label{sec:3dpolygons}
+
+See section \ref{sec:2dpolygons} for polygons in the plane.
+
+\subsection{Hexagons in space: \texttt{hexagon}\index{hexagon}}
+\label{sec:3dhex}
+
+See section \ref{sec:2dhex} for hexagons in the plane.
+
+The \texttt{hexagon} command takes as arguments
+three points, \texttt{A}, \texttt{B} and \texttt{P}.
+
+\texttt{hexagon} returns and draws a regular hexagon.
+The first two points \texttt{A} and \texttt{B} are vertices of the
+hexagon, the third point \texttt{P} determines the plane and
+orientation of the rectangle.\\
+Input:
+\begin{center}
+  \tt
+  A := point(0,0,0); B := point(3,3,3);\\
+  P := point(0,0,3)
+\end{center}
+then:
+\begin{center}
+  \tt
+  hexagon(A,B,P)
+\end{center}
+  Output:
+  \begin{center}
+     \includegraphics[width=0.5\textwidth]{xcas-3dhex.png}
+  \end{center}
+
+\texttt{hexagon} takes four optional arguments,
+which are variables assigned to the unnamed vertices.\\
+Input:
+\begin{center}
+  \tt
+  hexagon(A,B,P,C,D,E,F)
+\end{center}
+then:
+\begin{center}
+  \tt
+  simplify(coordinates(C))
+\end{center}
+Output:
+\begin{center}
+  \tt
+[(-3*sqrt(6)+18)/4,(-3*sqrt(6)+18)/4,(3*sqrt(6)+9)/2]
+\end{center}
+
+\subsection{Regular polygons in space: \texttt{isopolygon}\index{isopolygon}}
+\label{sec:3dregpoly}
+
+See section \ref{sec:2dregpoly} for regular polygons in the plane.
+
+The \texttt{isopolygon} command takes as arguments three points and an
+integer.
+
+\texttt{isopolygon} returns and draws a regular polygon.  The first
+two points are adjacent vertices of the polygon, the third determines
+the plane and orientation of the polygon.  The fourth argument, the
+integer, determines the number of sides of the polygon.  If the fourth
+argument is positive, then it is the number of sides of the polygon,
+which is positively oriented.  If the fourth argument is negative,
+then the polygon is negatively oriented and the absolute value of the
+argument is the number of sides.\\
+Input:
+\begin{center}
+  \tt
+  A := point(0,0,0); B := point(3,3,3); \\
+  P := point(0,0,3)
+\end{center}
+then:
+\begin{center}
+  \tt
+  isopolygon(A,B,P,5)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3disopoly.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  isopolygon(A,B,P,-5)
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.5\textwidth]{xcas-3disopoly2.png}
+\end{center}
+
+\subsection{General polygons in space: \texttt{polygon}\index{polygon}}
+\label{sec:3dgenpolygon}
+
+See section \ref{sec:2dgenpolygon} for general polygons in the plane.
+
+The \texttt{polygon} command takes as arguments a sequence of points.
+
+\texttt{polygon} returns and draws the polygon whose vertices are the
+given points.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  A := point(0,0,0); B := point(3,3,3);\\
+  C := point(0,0,3); D := point(-3,-3,0);\\
+  E := point(-3,-3,-3)
+\end{center}
+then:
+\begin{center}
+  \tt
+  polygon(A,B,C,D,E)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dpoly.png}
+\end{center}
+
+\subsection{Polygonal lines in space: \texttt{open\_polygon}\index{open\_polygon}}
+\label{sec:3dpolylines}
+
+See section \ref{sec:2dpolylines} for polygonal lines in the plane.
+
+The \texttt{open\_polygon} command takes as arguments a sequence of points.
+
+\texttt{open\_polygon} returns and draws the polygon line whose vertices are the
+given points.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  open\_polygon(point(0,0,0),point(0,1,0),\\
+  point(0,2,2),point(1,0,2))
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dopoly.png}
+\end{center}
+
+\section{Circles in space: \texttt{circle}\index{circle}}
+\label{sec:3dcircles}
+
+See section \ref{sec:2dcircles} for circles in the plane.
+
+The \texttt{circle} command returns and draws a circle.
+
+\texttt{circle} takes as arguments one of the following:
+\begin{itemize}
+  \item Three points, \texttt{A}, \texttt{B} and \texttt{C}.\\
+  \texttt{circle} will return and draw the circle with a diameter
+  \texttt{AB}, and the third point \texttt{C} determines the
+  plane.\\
+  Input:
+  \begin{center}
+    \tt
+    circle(point(0,0,1),point(0,1,0),point(0,2,2))
+  \end{center}
+  Output:
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{xcas-3dcircle.png}
+  \end{center}
+  \item A point \texttt{A}, a vector \texttt{v} and another point
+  \texttt{C}.\\
+  \texttt{circle} will return and draw the circle with center at
+  \texttt{A} and with \texttt{A+v} on the circle.  The point
+  \texttt{C} determines the plane.\\
+  Input:
+  \begin{center}
+    \tt
+    circle(point(0,0,1),vector(0,1,0),point(0,2,2))
+  \end{center}
+  Output:
+  \begin{center}
+      \includegraphics[width=0.5\textwidth]{xcas-3dcircle2.png}
+  \end{center}
+\end{itemize}
+In both cases, the first and third arguments can be the coordinates of
+the point.
+
+\section{Conics in space}
+
+\subsection{Ellipses in space: \texttt{ellipse}\index{ellipse}}
+\label{sec:3dellipse}
+
+See section \ref{sec:2dellipse} for ellipses in the plane.
+
+The \texttt{ellipse} command takes three non-collinear points as arguments; two
+points as the foci and a third point to determine the plane.
+
+\texttt{ellipse} returns and draws the ellipse with the two given foci
+and passing through the third argument.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  ellipse(point(-1,0,0),point(1,0,0),point(1,1,1))
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dellipse.png}
+\end{center}
+
+\subsection{Hyperbolas in space: \texttt{hyperbola}\index{hyperbola}}
+\label{sec:3dhyperbola}
+
+See section \ref{sec:2dhyperbola} for hyperbolas in the plane.
+
+The \texttt{hyperbola} command takes three non-collinear points as arguments; two
+points as the foci and a third point to determine the plane.
+
+\texttt{hyperbola} returns and draws the hyperbola with the two given foci
+and passing through the third argument.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  hyperbola(point(-1,0,0),point(1,0,0),point(1,1,1))
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dhyperbola.png}
+\end{center}
+
+\subsection{Parabolas in space: \texttt{parabola}\index{parabola}}
+\label{sec:3dparabola}
+
+See section \ref{sec:2dparabola} for parabolas in the plane.
+
+The \texttt{parabola} command takes three non-collinear points as
+arguments.  The first point is the focus, the second point is the
+vertex, and the third point determines the plane.
+
+\texttt{parabola} returns and draws the corresponding parabola.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  parabola(point(0,0,0),point(-1,0,0),point(1,1,1))
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dparabola.png}
+\end{center}
+
+\section{Three-dimensional coordinates}
+
+\subsection{The abscissa of a three-dimensional point: \texttt{abscissa}\index{abscissa}}
+\label{sec:3dabscissa}
+
+See section \ref{sec:2dabscissa} for abscissas in two-dimensional geometry.
+
+The \texttt{abscissa} command takes as argument a point.
+
+\texttt{abscissa} returns the abscissa ($x$-coordinate) of the point.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  abscissa(point(1,2,3))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+
+\subsection{The ordinate of a three-dimensional point: \texttt{ordinate}\index{ordinate}}
+\label{sec:3dordinate}
+
+See section \ref{sec:2dordinate} for ordinates in two-dimensional geometry.
+
+The \texttt{ordinate} command takes as argument a point.
+
+\texttt{ordinate} returns the ordinate ($y$-coordinate) of the point.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  ordinate(point(1,2,3))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  2
+\end{center}
+
+\subsection{The cote of a three-dimensional point: \texttt{cote}\index{cote}}
+
+The \texttt{cote} command takes as argument a point.
+
+\texttt{cote} returns the cote ($z$-coordinate) of the point.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  cote(point(1,2,3))
+\end{center}
+Output:
+\begin{center}
+  \tt
+   3
+\end{center}
+
+\subsection{The coordinates of a point, vector or line in space: \texttt{coordinates}\index{coordinates}}
+\label{sec:3dcoordinates}
+
+See section \ref{sec:2dcoordinates} for coordinates in
+two-dimensional geometry.
+
+The \texttt{coordinates} command takes as argument a point, vector or line.
+
+If the argument is a point,
+\texttt{coordinates} returns a list consisting of the abscissa,
+ordinate and cote.\\
+Input:
+\begin{center}
+  \tt
+  coordinates(point(1,2,3))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ [1,2,3]
+\end{center}
+
+If the argument is a vector, for example from point \texttt{A} to
+point \texttt{B}, then \texttt{coordinates} returns a list of the
+coordinates of \texttt{B-A}.\\
+Input:
+\begin{center}
+  \tt
+  coordinates(vector(point(1,2,3),point(2,4,7)))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ [1,2,4]
+\end{center}
+
+If the argument is a line, \texttt{coordinates} returns a list of
+two points on the line, in the order determined by the direction of
+the line.\\
+Input:
+\begin{center}
+  \tt
+  coordinates(line(point(-1,1,0),point(1,2,3)))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  [[-1,1,0],[1,2,3]]
+\end{center}
+Input:
+\begin{center}
+  \tt
+  coordinates(line(x-2*y+3=0, 6*x + 3*y - 5*z + 3 = 0))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  [[-1,1,0],[9,6,15]]
+\end{center}
+
+\texttt{coordinates} can also take a sequence or list of points as an
+argument; it then returns a sequence or list of the coordinates of
+the points.\\
+Input:
+\begin{center}
+  \tt
+  coordinates(point(0,1,2),point(1,2,4))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  [0,1,2], [1,2,4]
+\end{center}
+Note that if the argument is a list of real numbers, it is
+interpreted as a list of points on the real axis of the plane.\\
+Input:
+\begin{center}
+  \tt
+  coordinates([1,2,4])
+\end{center}
+Output:
+\begin{center}
+  \tt
+  [[1,0],[2,0],[4,0]]
+\end{center}
+
+\subsection{The Cartesian equation of an object in space: \texttt{equation}\index{equation}}
+\label{sec:3dcarteq}
+
+See section \ref{sec:2dcarteq} for Cartesian equations of
+two-dimensional objects.
+
+The \texttt{equation} command takes as argument a geometric object.
+
+\texttt{equation} returns Cartesian equations which specify the
+object.  The equations will involve \texttt{z}, \texttt{y} and
+\texttt{z}, so these variables must be unassigned.  If they have
+assignments, they can be unassigned with \texttt{purge(x,y,z)}.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  equation(line(point(0,1,0),point(1,2,3)))
+\end{center}
+Output:
+\begin{center}
+  \tt
+   x-y+1=0,3*x+3*y-2*z-3=0
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  equation(sphere(point(0,1,0),2))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ x\^{}2+y\^{}2+z\^{}2-2*y-3=0
+\end{center}
+
+\subsection{The parametric equation of an object in space: \texttt{parameq}\index{parameq}}
+\label{sec:3dparam}
+
+See section \ref{sec:2dparam} for parametric equations in
+two-dimensional geometry.
+
+The \texttt{parameq} command takes as argument a geometric object.
+
+\texttt{equation} returns a parameterization for the object.  For
+a curve, the parameter is \texttt{t}, for a surface, the parameters
+are \texttt{u} and \texttt{v}.  These variables must be unassigned.
+If they have assignments, they can be unassigned with
+\texttt{purge(t,u,v)}.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  parameq(line(point(0,1,0),point(1,2,3)))
+\end{center}
+Output:
+\begin{center}
+  \tt
+   [t,t+1,3*t]
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  parameq(sphere(point(0,1,0),2))
+\end{center}
+Output:
+\begin{center}
+  \tt
+   [2*cos(u)*cos(v),2*cos(u)*sin(v)+1,2*sin(u)]
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  normal(parameq(ellipse(point(-1,1,1),point(1,1,1),point(0,1,2))))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ [sqrt(2)*cos(t),1,sin(t)+1]
+\end{center}
+
+\subsection{The length of a segment in space: \texttt{distance}\index{distance}}
+\label{sec:3ddist}
+
+See section \ref{sec:2ddist} for distances in two-dimensional
+geometry.
+
+The \texttt{distance} command takes as arguments two points or two
+lists with the coordinates of the points.
+
+\texttt{distance} returns the distance between these two points.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  distance(point(-1,1,1),point(1,1,1))
+\end{center}
+or:
+\begin{center}
+  \tt
+  distance([-1,1,1],[1,1,1])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 2
+\end{center}
+
+\subsection{The length squared of a segment in space: \texttt{distance2}\index{distance2}}
+\label{sec:3ddist2}
+
+See section \ref{sec:2ddist2} for squares of lengths in
+two-dimensional geometry.
+
+The \texttt{distance2} command takes as arguments two points or two
+lists with the coordinates of the points.
+
+\texttt{distance2} returns the square of the distance between these two points.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  distance2(point(-1,1,1),point(1,1,1))
+\end{center}
+or:
+\begin{center}
+  \tt
+  distance2([-1,1,1],[1,1,1])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 4
+\end{center}
+
+\subsection{The measure of an angle in space: \texttt{angle}\index{angle}}
+\label{sec:3dangle}
+
+See section \ref{sec:2dangle} for angle measures in two-dimensional
+geometry.
+
+The \texttt{angle} command takes are arguments one of the following;\\
+\begin{itemize}
+  \item Three points, \texttt{A}, \texttt{B} and \texttt{C}.\\
+  \texttt{angle} returns the measure of the undirected angle
+  \texttt{BAC}.\\
+  Input:
+  \begin{center}
+    \tt
+    angle(point(0,0,0),point(1,0,0),point(0,0,1))
+  \end{center}
+  Output:
+  \begin{center}
+    \tt
+   pi/4
+  \end{center}
+  \item Two intersecting lines.\\
+  \texttt{angle} returns the measure of the angle between the lines.\\
+  Input:
+  \begin{center}
+    \tt
+    angle(line([0,0,0],[1,1,0]),line([0,0,0],[1,1,1]))
+  \end{center}
+  Output:
+  \begin{center}
+    \tt
+  acos((sqrt(6))/3)
+  \end{center}
+  \item  A line and a plane.\\
+  \texttt{angle} returns the measure of the angle between the line and
+  the plane.\\
+  Input:
+  \begin{center}
+    \tt
+    angle(line([0,0,0],[1,1,0]),plane(x+y+z=0))
+  \end{center}
+  Output:
+  \begin{center}
+    \tt
+  acos((sqrt(6))/3)
+  \end{center}
+\end{itemize}
+
+\section{Properties}
+
+\subsection{Check if an object in space is on another object: \texttt{is\_element}\index{is\_element}}
+\label{sec:3diselem}
+
+See section \ref{sec:2diselem} for checking elements in
+two-dimensional geometry.
+
+The \texttt{is\_element} command takes as arguments two geometric
+objects.
+
+\texttt{is\_element} returns 1 is the first object is contained in the
+second, it returns 0 otherwise.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  P := plane([0,0,0],[1,2,-3],[1,1,-2])
+\end{center}
+then:
+\begin{center}
+  \tt
+  is\_element(point(2,3,-5),P)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  L := line([2,3,-2],[-1,-1,-1]);\\
+  P := plane([-1,-1,-1],[1,2,-3],[1,1,-2])
+\end{center}
+then:
+\begin{center}
+  \tt
+  is\_element(L,P)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0
+\end{center}
+
+\subsection{Check if points and/or lines in space are coplanar: \texttt{is\_coplanar}\index{is\_coplanar}}
+
+The \texttt{is\_coplanar} command takes as arguments a list or
+sequence of points or lines.
+
+\texttt{is\_coplanar} returns \texttt{1} is the objects are coplanar;
+it returns \texttt{0} otherwise.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  is\_coplanar([0,0,0],[1,2,-3],[1,1,-2],[2,1,-3])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+Input:
+\begin{center}
+  \tt
+  is\_coplanar([-1,2,0],[1,2,-3],[1,1,-2],[2,1,-3])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  is\_coplanar([0,0,0],[1,2,-3],line([1,1,-2],[2,1,-3]))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+Input:
+\begin{center}
+  \tt
+  is\_coplanar(line([-1,2,0],[1,2,-3]),line([1,1,-2],[2,1,-3]))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0
+\end{center}
+
+
+\subsection{Check if lines and/or planes in space are parallel: \texttt{is\_parallel}\index{is\_parallel}}
+\label{sec:3dcheckparallel}
+
+See section \ref{sec:2dcheckparallel} for checking for parallels in
+two-dimensional geometry.
+
+The \texttt{is\_parallel} command takes as arguments two lines, two
+planes or a line and a plane.
+
+\texttt{is\_parallel} returns \texttt{1} is the objects are parallel;
+it returns \texttt{0} otherwise.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  L1 := line([0,0,0],[-1,-1,-1])\\
+  L2 := line([2,3,-2],[-1,-1,-1])
+\end{center}
+then:
+\begin{center}
+  \tt
+  is\_parallel(L1,L2)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  0
+\end{center}
+Input:
+\begin{center}
+  \tt
+  P := plane([-1,-1,-1],[1,2,-3],[0,0,0])
+\end{center}
+then:
+\begin{center}
+  \tt
+  is\_parallel(P,L2)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  P1 := plane([0,0,0],[1,2,-3],[1,1,-2])\\
+  P2 := plane([1,1,0],[2,3,-3],[2,2,-2])
+\end{center}
+then:
+\begin{center}
+  \tt
+  is\_parallel(P1,P2)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+
+\subsection{Check if lines and/or planes in space are perpendicular: \texttt{is\_perpendicular}\index{is\_perpendicular}}
+\label{sec:3dcheckperp}
+
+See section \ref{sec:2dcheckperp} for checking for perpendicularity in
+two-dimensional geometry.
+
+The \texttt{is\_perpendicular} command takes as arguments two lines, two
+planes or a line and a plane.
+
+\texttt{is\_perpendicular} returns \texttt{1} is the objects are
+perpendicular; it returns \texttt{0} otherwise.  (Note that two lines
+must be coplanar to be perpendicular.)
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  is\_perpendicular(line([2,3,-2],[-1,-1,-1]),line([1,0,0],[1,2,8]))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  0
+\end{center}
+Input:
+\begin{center}
+  \tt
+  P1 := plane([0,0,0],[1,2,-3],[1,1,-2])\\
+  P2 := plane([-1,-1,-1],1,2,-3],[0,0,0])
+\end{center}
+then:
+\begin{center}
+  \tt
+  is\_perpendicular(P1,P2)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  L := plane([2,3,-2],[-1,-1,-1])\\
+\end{center}
+then:
+\begin{center}
+  \tt
+  is\_perpendicular(L,P1)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0
+\end{center}
+
+\subsection{Check if two lines or two spheres in space are orthogonal: \texttt{is\_orthogonal}\index{is\_orthogonal}}
+\label{sec:3dcheckorth}
+
+See section \ref{sec:2dcheckorth} for checking for orthogonality in
+two-dimensional geometry.
+
+
+The \texttt{is\_orthogonal} command takes as arguments two lines, two
+spheres, two planes or a line and a plane.
+
+\texttt{is\_orthogonal} returns \texttt{1} is the objects are
+orthogonal; it returns \texttt{0} otherwise.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  is\_orthogonal(line([2,3,-2],[-1,-1,-1]),line([1,0,0],[1,2,8]))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  1
+\end{center}
+Input:
+\begin{center}
+  \tt
+  is\_orthogonal(line([2,3,-2],[-1,-1,-1]),\\
+  plane([-1,-1,-1],[-1,0,3],[-2,0,0]))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+Input:
+\begin{center}
+  \tt
+  is\_orthogonal(plane([0,0,0],[1,2,-3],[1,1,-2]),\\
+  plane([-1,-1,-1],[1,2,-3],[0,0,0]))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+Input:
+\begin{center}
+  \tt
+  is\_orthogonal(sphere([0,0,0],sqrt(2)),sphere([2,0,0],sqrt(2)))
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+
+
+\subsection{Check if three points in space are collinear: \texttt{is\_collinear}\index{is\_collinear}}
+\label{sec:3dcheckcollinear}
+
+See section \ref{sec:2dcheckcollinear} for checking for collinearity in
+two-dimensional geometry.
+
+The \texttt{is\_collinear} command takes as argument a list or
+sequence of points.
+
+\texttt{is\_collinear} returns 1 if the points are collinear, it
+returns 0 otherwise.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  is\_collinear([2,0,0],[0,2,0],[1,1,0])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+Input:
+\begin{center}
+  \tt
+  is\_collinear([2,0,0],[0,2,0],[0,1,1])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0
+\end{center}
+
+\subsection{Check if four points in space are cocyclic: \texttt{is\_concyclic}\index{is\_concyclic}}
+\label{sec:3dcheckconcycle}
+
+See section \ref{sec:2dcheckconcycle} for checking for concyclicity in
+two-dimensional geometry.
+
+The \texttt{is\_concyclic} command takes as argument a list or
+sequence of points.
+
+\texttt{is\_concyclic} returns 1 if the points are cocyclic, it
+returns 0 otherwise.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  is\_concyclic([2,0,0],[0,2,0],[sqrt(2),sqrt(2),0],\\{}
+  [0,0,2],[2/sqrt(3),2/sqrt(3),2/sqrt(3)])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+Input:
+\begin{center}
+  \tt
+  is\_concyclic([2,0,0],[0,2,0],[1,1,0],[0,0,2],[1,1,1])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0
+\end{center}
+
+\subsection{Check if five points in space are cospherical:
+\texttt{is\_cospherical}\index{is\_cospherical}}
+
+The \texttt{is\_cospherical} command takes as arguments a list or
+sequence of points.
+
+\texttt{is\_cospherical} returns \texttt{1} if the points are
+cospherical, it returns \texttt{0} if they are not.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  is\_cospherical([2,0,0],[0,2,0],[sqrt(2),sqrt(2),0],\\{}
+  [0,0,2],[2/sqrt(3),2/sqrt(3),2/sqrt(3)])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  is\_cospherical([2,0,0],[0,2,0],[1,1,0],[0,0,2],[1,1,1])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0
+\end{center}
+
+\subsection{Check if an object in space is an equilateral triangle: \texttt{is\_equilateral}\index{is\_equilateral}}
+\label{sec:3dcheckequilateral}
+
+See section \ref{sec:2dcheckequilateral} for checking for equilateral
+triangles in two-dimensional geometry.
+
+The \texttt{is\_equilateral} command takes as argument either three
+points or a geometric object.
+
+\texttt{is\_equilateral} returns 1 if the points are the vertices of
+an equilateral triangle or if the object is an equilateral triangle.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  is\_equilateral([2,0,0],[0,0,0],[1,sqrt(3),0])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+ T := triangle\_equilateral([2,0,0],[0,0,0],[1,sqrt(3),0])
+\end{center}
+then:
+\begin{center}
+  \tt
+  is\_equilateral(T)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  is\_equilateral([2,0,0],[0,2,0],[1,1,0])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0
+\end{center}
+
+\subsection{Check if an object in space is an isosceles triangle: \texttt{is\_isosceles}\index{is\_isosceles}}
+\label{sec:3dcheckisosceles}
+
+See section \ref{sec:2dcheckisosceles} for checking for isosceles
+triangles in two-dimensional geometry.
+
+The \texttt{is\_isosceles} command takes as argument either three
+points or a geometric object.
+
+\texttt{is\_equilateral} returns \texttt{1}, \texttt{2}, \texttt{3} or
+\texttt{4} is the points are the vertices of an isosceles triangle or
+if the object is an isosceles triangle, and returns \texttt{0}
+otherwise. Specifically,
+\begin{itemize}
+  \item It returns \texttt{4} if the object is an equilateral triangle
+  or if the points are the vertices of an equilateral triangle.
+  \item It returns \texttt{1}, \texttt{2} or \texttt{3}, respectively,
+  if the object is an isosceles triangle or if the  points are the
+  vertices of an isosceles triangle and the first, second or third
+  point is the vertex with equal sides.
+\end{itemize}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  is\_isosceles([2,0,0],[0,0,0],[0,2,0])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 2
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+ T := triangle\_isosceles([0,0,0],[2,2,0],[2,2,2])
+\end{center}
+then:
+\begin{center}
+  \tt
+  is\_isosceles(T)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  is\_isosceles([1,1,0],[-1,1,0],[-1,0,0])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0
+\end{center}
+
+\subsection{Check if an object in space is a right triangle or a rectangle: \texttt{is\_rectangle}\index{is\_rectangle}}
+\label{sec:3dcheckrect}
+
+See section \ref{sec:2dcheckrect} for checking for right triangles and rectangles
+in two-dimensional geometry.
+
+The \texttt{is\_rectangle} command checks for both right triangles and
+rectangles.  It takes as arguments either three points, four points,
+or a geometric object.
+
+If the arguments are three points or a triangle, then
+\texttt{is\_rectangle} returns \texttt{1}, \texttt{2} or \texttt{3} if
+the points form a right triangle which right angle at the first,
+second or third vertex.  It returns \texttt{0} otherwise.
+
+If the arguments are four points or a quadrilateral, then
+\texttt{is\_rectangle} returns \texttt{2} is the points form a square,
+\texttt{1} is they form a rectangle, and \texttt{0} otherwise.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  is\_rectangle([2,0,0],[2,2,0],[0,2,0])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 2
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  is\_rectangle([2,2,0],[-2,2,0],[-2,-1,0],[2,-1,0])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+
+\subsection{Check if an object in space is a square: \texttt{is\_square}\index{is\_square}}
+\label{sec:3dchecksquare}
+
+See section \ref{sec:2dchecksquare} for checking for squares
+in two-dimensional geometry.
+
+The \texttt{is\_square} command as arguments either four points
+or a geometric object.
+
+\texttt{is\_rectangle} returns \texttt{1} if the four points are the
+vertices of a square or if the geometric object is a square, it returns
+\texttt{0} otherwise.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  is\_square([2,2,0],[-2,2,0],[-2,-2,0],[2,-2,0])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  S := square([0,0,0],[2,0,0],[0,0,1])
+\end{center}
+then:
+\begin{center}
+  \tt
+  is\_square(S)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  is\_square([2,2,0],[-2,2,0],[-2,-1,0],[2,-1,0])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0
+\end{center}
+
+\subsection{Check if an object in space is a rhombus: \texttt{is\_rhombus}\index{is\_rhombus}}
+\label{sec:3dcheckrhombus}
+
+See section \ref{sec:2dcheckrhombus} for checking for rhombuses
+in two-dimensional geometry.
+
+The \texttt{is\_rhombus} command as arguments either four points
+or a geometric object.
+
+\texttt{is\_rhombus} returns \texttt{1} if the four points are the
+vertices of a rhombus or if the geometric object is a rhombus, it returns
+\texttt{0} otherwise.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  is\_rhombus([2,0,0],[0,1,0],[-2,0,0],[0,-1,0])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  R := rhombus([0,0,0],[2,0,0],[[0,0,1],pi/4])
+\end{center}
+then:
+\begin{center}
+  \tt
+  is\_rhombus(S)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  is\_rhombus([2,2,0],[-2,2,0],[-2,-1,0],[2,-1,0])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0
+\end{center}
+
+\subsection{Check if an object in space is a parallelogram: \texttt{is\_parallelogram}\index{is\_parallelogram}}
+\label{sec:3dcheckparallelogram}
+
+See section \ref{sec:2dcheckparallelogram} for checking for
+parallelograms in two-dimensional geometry.
+
+The \texttt{is\_parallelogram} command as arguments either four points
+or a geometric object.
+
+\texttt{is\_parallelogram} returns \texttt{4}, \texttt{3}, \texttt{2}
+or \texttt{1} if the four points are the vertices of a square,
+rectangle, rhombus or parallelogram, respectively, or if the geometric
+object is a square, rectangle, rhombus or parallelogram.
+It returns \texttt{0} otherwise.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  is\_parallelogram([0,0,0],[2,0,0],[3,1,0],[1,1,0])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  is\_parallelogram([-1,0,0],[0,1,0],[2,0,0],[0,-1,0])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  P := parallelogram([0,0,0],[2,0,0],[1,1,0])
+\end{center}
+then:
+\begin{center}
+  \tt
+  is\_parallelogram(P)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+
+Note that\\
+Input:
+\begin{center}
+  \tt
+    P := parallelogram([0,0,0],[2,0,0],[1,1,0],D)
+\end{center}
+defines \texttt{P} to be a list consisting of the parallelogram and
+the point \texttt{D}; to test if the object is a parallelogram, the
+first component of \texttt{P} needs to be tested.\\
+Input:
+\begin{center}
+  \tt
+  is\_parallelogram(P[0])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 1
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  is\_parallelogram([-1,0,0],[0,1,0],[2,0,0],[0,-1,0])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 0
+\end{center}
+
+\section{Transformations in space}
+
+\subsection{General remarks}
+
+The transformations in this section operate on any geometric object.
+They take as arguments parameters to specify the transformation.
+They can optionally take a geometric object as the last argument, in
+which case the transformed object is returned.  Without the geometric
+object as an argument, these transformations will return a new command
+which performs the transformation.  For example, to move an object \texttt{P}
+3 units up, either
+\begin{center}
+  \tt
+  translation([0,0,3],P)
+\end{center}
+or
+\begin{center}
+  \tt
+  t := translation([0,0,3])\\
+  t(P)
+\end{center}
+works.
+
+\subsection{Translation in space: \texttt{translation}\index{translation}}
+\label{sec:3dtranslations}
+
+See section \ref{sec:2dtranslations} for translations in the plane.
+
+The \texttt{translation} command takes one or two arguments.  The first
+argument is the translation vector given by a list of coordinates, the
+optional second argument is a geometric object.
+
+With one argument, \texttt{translation} returns a command which
+translates objects along the given vector.\\
+Input:
+\begin{center}
+  \tt
+  t := translation([1,1,1])
+\end{center}
+then:
+\begin{center}
+  \tt
+  t(point(1,2,3))
+\end{center}
+returns and draws the point at $(1,2,3)+(1,1,1) = (2,3,4)$.
+% Output:
+% \begin{center}
+%   % \includegraphics[width=0.5\textwidth]{}
+% \end{center}
+
+With two arguments, a vector and an object, \texttt{transformation}
+returns and draws the translated object.\\
+Input:
+\begin{center}
+  \tt
+  translation([1,1,1],line([0,0,0],[1,2,3]))
+\end{center}
+returns and draws the line through $(0,0,0)+(1,1,1)=(1,1,1)$ and
+$(1,2,3)+(1,1,1)=(2,3,4)$.
+% Output:
+% \begin{center}
+%   % \includegraphics[width=0.5\textwidth]{}
+% \end{center}
+
+\subsection{Reflection in space with respect to a plane, line or point: \texttt{reflection}\index{reflection} \texttt{symmetry}\index{symmetry}}
+\label{sec:3dreflections}
+
+See section \ref{sec:2dreflections} for reflections in the plane.
+
+The \texttt{reflection} command takes one or two arguments.  The first
+argument is a point, line or plane.  The second optional argument is a
+geometric object.
+
+With one argument, \texttt{reflection} returns a command which
+reflects an object across the point, line or plane.\\
+Input:
+\begin{center}
+  \tt
+  r := reflection([1,1,1])
+\end{center}
+then:
+\begin{center}
+  \tt
+  r(point(1,2,4))
+\end{center}
+returns and draws the reflection of the point $(1,2,4)$ across the
+point $(1,1,1)$; namely $(1,1,1) - [(1,2,4)-(1,1,1)] = (1,0,-2)$.
+% Output:
+% \begin{center}
+%   % \includegraphics[width=0.5\textwidth]{}
+% \end{center}
+
+Given a second argument of a geometric object, \texttt{reflection}
+returns and draws the reflected object.\\
+Input:
+\begin{center}
+  \tt
+  reflection(line([1,1,0],[-1,-3,0]),point(-1,2,4))
+\end{center}
+returns and draws the reflection of the point $(-1,2,4)$ across the
+line through $(1,1,0)$ and $(-1,-3,0)$; namely $(16/5,3/5,-4)$.
+% Output:
+% \begin{center}
+%   % \includegraphics[width=0.5\textwidth]{}
+% \end{center}
+
+\subsection{Rotation in space: \texttt{rotation}\index{rotation}}
+\label{sec:3drotations}
+
+See section \ref{sec:2drotations} for rotations in the plane.
+
+The \texttt{rotation} command takes two or three arguments.  The first
+argument is a line which is the axis of rotation and the second
+argument is a real number representing the angle of rotation.
+The third optional argument is a geometric object.
+
+With two arguments, \texttt{rotation} returns a command which
+rotates an object.\\
+Input:
+\begin{center}
+  \tt
+  r := rotation(line(point(0,0,0),point(1,1,1)), 2*pi/3)
+\end{center}
+then:
+\begin{center}
+  \tt
+  r(point(0,0,1))
+\end{center}
+returns and draws the result of rotating the point $(0,0,1)$ about the
+line through $(0,0,0)$ and $(1,1,1)$ through an angle of $2\pi/3$
+radians; namely $(1,0,0)$.
+% Output:
+% \begin{center}
+%   % \includegraphics[width=0.5\textwidth]{}
+% \end{center}
+
+Given a third argument of a geometric object, \texttt{rotation}
+returns and draws the rotated object.\\
+Input:
+\begin{center}
+  \tt
+  rotation(line(point(0,0,0),point(1,1,1)), 2*pi/3, point(0,0,1))
+\end{center}
+returns and draws the point $(1,0,0)$, as above.
+% Output:
+% \begin{center}
+%   % \includegraphics[width=0.5\textwidth]{}
+% \end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  rotation(line(point(0,0,0),point(1,1,1)), 2*pi/3,\\
+  line(point(1,0,0),point(0,1,0)))
+\end{center}
+returns and draws the result of rotating the line through $(1,0,0)$
+and $(0,1,0)$ about the line through $(0,0,0)$ and $(1,1,1)$ through
+an angle of $2\pi/3$ radians; namely the line through $(0,1,0)$ and
+$(0,0,1)$.
+% Output:
+% \begin{center}
+%   % \includegraphics[width=0.5\textwidth]{}
+% \end{center}
+
+\subsection{Homothety in space: \texttt{homothety}\index{homothety}}
+\label{sec:3dhomothety}
+
+See section \ref{sec:2dhomothety} for homotheties in the plane.
+
+The \texttt{homothety} command takes two or three arguments.  The
+first argument is a point, the center of the homothety.  The second
+argument is a real number, which is the scaling ratio.  The optional
+third argument is the object which is transformed.
+
+With two arguments, \texttt{homothery} returns a new command which
+performs the dilation.\\
+Input:
+\begin{center}
+  \tt
+  h := homothety(point(0,0,0), 2)
+\end{center}
+then:
+\begin{center}
+  \tt
+  h(point(0,0,1))
+\end{center}
+returns and draws the point $(0,0,2)$, which is the point $(0,0,1)$
+dilated by a factor of 2 away from $(0,0,0)$.
+% Output:
+% \begin{center}
+%   % \includegraphics[width=0.5\textwidth]{xcas-homothety1.png}
+% \end{center}
+
+With a third argument of a geometric object, \texttt{homothety}
+returns and draws the dilated object.\\
+Input:
+\begin{center}
+  \tt
+  homothety(point(0,0,0), 2, point(0,0,1))
+\end{center}
+returns and draws $(0,0,2)$, as above.
+% Output:
+% \begin{center}
+% %   \includegraphics[width=0.5\textwidth]{xcas-homothety2.png}
+% \end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  homothety(point(0,0,0), 2, sphere(point(0,0,0),1))
+\end{center}
+returns and draws the sphere of radius 2 centered at $(0,0,0)$.
+% Output:
+% \begin{center}
+%  %  \includegraphics[width=0.5\textwidth]{xcas-homothety3.png}
+% \end{center}
+
+\subsection{Similarity in space: \texttt{similarity}\index{similarity}}
+\label{sec:3dsimilarity}
+
+See section \ref{sec:2dsimilarity} for similarities in the plane.
+
+The \texttt{similarity} command takes three or four arguments.  The
+first argument is a line, the axis of rotation; the second
+argument is a real number, which is the scaling ratio, and the third
+argument is another real number, the angle of rotation.  If the
+scaling ratio is negative, then the direction of rotation is reversed.
+The optional fourth argument is the object which is transformed.
+
+With three arguments, \texttt{similarity} returns a new command which
+scales and rotated about the given axis.\\
+Input:
+\begin{center}
+  \tt
+  s := similarity(line(point(0,0,0),point(1,1,1)), 2, 2*pi/3)
+\end{center}
+then:
+\begin{center}
+  \tt
+  s(point(0,0,1))
+\end{center}
+returns and draws the point $(2,0,0)$, which is the point $(0,0,1)$
+rotated about the line through $(0,0,0)$ and $(1,1,1)$ through an
+angle of $2\pi/3$ radians and scaled away from the line by a factor of
+2.
+% Output:
+% \begin{center}
+%   % \includegraphics[width=0.5\textwidth]{xcas-homothety1.png}
+% \end{center}
+%Input:
+%\begin{center}
+%  \tt
+%  s(sphere(point(1,0,0),1))
+%\end{center}
+% Output:
+% \begin{center}
+%   % \includegraphics[width=0.5\textwidth]{}
+% \end{center}
+
+With a fourth argument of a geometric object, \texttt{similarity}
+returns and draws the transformed object.\\
+Input:
+\begin{center}
+  \tt
+  similarity(line(point(0,0,0),point(1,1,1)), 2, 2*pi/3, point(0,0,1))
+\end{center}
+returns and draws the point $(2,0,0)$, as above.
+% Output:
+% \begin{center}
+% %   \includegraphics[width=0.5\textwidth]{xcas-homothety2.png}
+% \end{center}
+% Input:
+% \begin{center}
+%   \tt
+%   similarity(line(point(0,0,0),point(1,1,1)), 2, 2*pi/3, sphere(point(1,0,0),1))
+% \end{center}
+% Output:
+% \begin{center}
+%  %  \includegraphics[width=0.5\textwidth]{xcas-homothety3.png}
+% \end{center}
+
+\subsection{Inversion in space: \texttt{inversion}\index{inversion}}
+\label{sec:3dinversion}
+
+See section \ref{sec:2dinversion} for inversions in the plane.
+
+Given a point $P$ and a real number $k$, the corresponding \emph{inversion}
+of a point $A$ is the point $A'$ on the ray $\overrightarrow{PA}$ satisfying
+$\overline{PA}\cdot\overline{PA'} = k^2$.
+
+The \texttt{inversion} command takes two or three arguments.  The
+first argument is a point, the center of inversion; the second
+argument is a real number, which is the inversion ratio.  The optional
+third argument is the object which is transformed.
+
+With two arguments, \texttt{inversion} returns a new command which
+does the inversion.\\
+Input:
+\begin{center}
+  \tt
+  inver := inversion(point(0,0,0), 2)
+\end{center}
+then:
+\begin{center}
+  \tt
+  inver(point(1,2,-2))
+\end{center}
+returns and draws the point $(2/9, 4/9, -4/9)$, which is the inversion
+of $(1,2,-2)$.
+% Output:
+% \begin{center}
+%   % \includegraphics[width=0.5\textwidth]{xcas-homothety1.png}
+% \end{center}
+% Input:
+% \begin{center}
+%   \tt
+%   inver(sphere(point(1,0,0),1))
+% \end{center}
+% Output:
+% \begin{center}
+%   % \includegraphics[width=0.5\textwidth]{}
+% \end{center}
+% Input:
+% \begin{center}
+%   \tt
+%   inver(sphere(point(1,0,0),1/2))
+% \end{center}
+% Output:
+% \begin{center}
+%   % \includegraphics[width=0.5\textwidth]{}
+% \end{center}
+
+With a third argument of a geometric object, \texttt{inversion}
+returns and draws the transformed object.\\\\
+Input:
+\begin{center}
+  \tt
+   inversion(point(0,0,0), 2, point(1,2,-2))
+\end{center}
+returns and draws $(2/9,4/9,-4/9)$, as above.
+% Input:
+% \begin{center}
+%   \tt
+%   inversion(point(0,0,0), 2, sphere(point(1,0,0),1))
+% \end{center}
+% Output:
+% \begin{center}
+% %   \includegraphics[width=0.5\textwidth]{xcas-homothety2.png}
+% \end{center}
+% Input:
+% \begin{center}
+%   \tt
+%   inversion(point(0,0,0), 2, sphere(point(1,0,0),1/2))
+% \end{center}
+% Output:
+% \begin{center}
+%  %  \includegraphics[width=0.5\textwidth]{xcas-homothety3.png}
+% \end{center}
+
+\subsection{Orthogonal projection in space: \texttt{projection}\index{projection}}
+\label{sec:3dprojection}
+
+See section \ref{sec:2dprojection} for projections in the plane.
+
+The \texttt{projection} command takes one or two arguments.  The
+first argument is a geometric object.  The second optional
+argument is a point.  The command will project the point onto the
+object.
+
+With one argument, \texttt{projection} returns a new command which
+projects a point.\\
+Input:
+\begin{center}
+  \tt
+  p1 := projection(line(point(0,0,0), point(1,1,1)))
+\end{center}
+then:
+\begin{center}
+  \tt
+  p1(point(1,0,0))
+\end{center}
+returns and draws the point $(1/3,1/3,1/3)$, which is the projection
+of $(1,0,0)$ onto the line.
+% Output:
+% \begin{center}
+%   % \includegraphics[width=0.5\textwidth]{xcas-homothety1.png}
+% \end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  p2 := projection(plane(point(1,0,0),point(0,0,0),point(1,1,1))
+\end{center}
+then:
+\begin{center}
+  \tt
+  p2(point(0,0,1))
+\end{center}
+returns and draws the point $(0,1/2,1/2)$, which is the projection of
+the point $(0,0,1)$ onto the plane.
+% Output:
+% \begin{center}
+%   % \includegraphics[width=0.5\textwidth]{}
+% \end{center}
+%
+%\noindent
+%Input:
+%\begin{center}
+%  \tt
+%  p3 := projection(sphere(point(1,0,0),1))
+%\end{center}
+%then:
+%\begin{center}
+%  \tt
+%  p3(point(0,0,1))
+%\end{center}
+%returns and draws the point, which is the projection of $(0,0,1)$ onto
+%the sphere.
+%Output:
+% \begin{center}
+%   % \includegraphics[width=0.5\textwidth]{}
+% \end{center}
+
+With a second argument of a point, \texttt{inversion}
+returns and draws the projection of the point.\\
+Input:
+\begin{center}
+  \tt
+  projection(line(point(0,0,0), point(1,1,1)), point(1,0,0))
+\end{center}
+returns and draws the point $(1/3,1/3,1/3)$, as above.
+% Output:
+% \begin{center}
+% %   \includegraphics[width=0.5\textwidth]{xcas-homothety2.png}
+% \end{center}
+% Input:
+% \begin{center}
+%   \tt
+%   projection(plane(point(1,0,0), point(0,0,0), point(1,1,1)), point(0,0,1))
+% \end{center}
+% Output:
+% \begin{center}
+%  %  \includegraphics[width=0.5\textwidth]{xcas-homothety3.png}
+% \end{center}
+% Input:
+% \begin{center}
+%   \tt
+%   projection(sphere(point(1,0,0),1),point(0,0,1))
+% \end{center}
+% Output:
+% \begin{center}
+%   % \includegraphics[width=0.5\textwidth]{}
+% \end{center}
+
+\section{Surfaces}
+
+\subsection{Cones: \texttt{cone}\index{cone}}
+
+The \texttt{cone} command takes as arguments a point \texttt{A}, a
+direction vector \texttt{v} and a real number \texttt{t}.
+
+\texttt{cone} returns and draws the cone with vertex \texttt{A}
+opening in the direction \texttt{v} with an aperture of \texttt{2t}.\\
+Input:
+\begin{center}
+  \tt
+  cone([0,1,0],[0,0,1],pi/3)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dcone.png}
+\end{center}
+
+\subsection{Half-cones: \texttt{half\_cone}\index{half\_cone}}
+
+The \texttt{half\_cone} command takes as arguments a point \texttt{A}, a
+direction vector \texttt{v} and a real number \texttt{t}.
+
+\texttt{half\_cone} returns and draws the half cone with vertex \texttt{A}
+opening in the direction \texttt{v} with an aperture of \texttt{2t}.\\
+Input:
+\begin{center}
+  \tt
+  half\_cone([0,1,0],[0,0,1],pi/3)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dhalfcone.png}
+\end{center}
+
+\subsection{Cylinders: \texttt{cylinder}\index{cylinder}}
+
+The \texttt{cylinder} command takes as arguments a point \texttt{A}, a
+direction vector \texttt{v} and a real number \texttt{r}.
+
+\texttt{cylinder} returns and draws the cylinder with axis through \texttt{A}
+in the direction \texttt{v} with a radius of \texttt{r}.\\
+Input:
+\begin{center}
+  \tt
+  cylinder([0,1,0],[0,0,1],3)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dcylinder.png}
+\end{center}
+
+\subsection{Spheres: \texttt{sphere}\index{sphere}}
+
+The \texttt{sphere} command takes two arguments; either two points or
+a point and a real number.
+
+With two points as arguments, \texttt{sphere} returns and draws the
+sphere with a diameter specified by the points.\\
+Input:
+\begin{center}
+  \tt
+  sphere([-2,0,0],[2,0,0])
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dsphere.png}
+\end{center}
+
+With a point and a real number as arguments, \texttt{sphere} returns
+and draws the sphere centered at the point with radius given by the
+number.\\
+Input:
+\begin{center}
+  \tt
+  sphere([0,0,0],2)
+\end{center}
+returns and draws the same sphere as above.
+% Output:
+% \begin{center}
+%   \includegraphics[width=0.5\textwidth]{}
+% \end{center}
+
+\subsection{The graph of a function of two variables: \texttt{funcplot}\index{funcplot}}
+
+The \texttt{funcplot} command takes two arguments, an expression with
+two variables and a list of the two variables.
+
+\texttt{funcplot} returns and draws the graph of the expression.\\
+Input:
+\begin{center}
+  \tt
+  funcplot(x\^{}2 + y\^{}2, [x,y])
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dfuncplot.png}
+\end{center}
+
+\subsection{The graph of parametric equations in space: \texttt{paramplot}\index{paramplot}}
+
+The \texttt{paramplot} command takes two arguments, a list of three
+expressions involving two parameters, and a list of the two parameters.
+
+\texttt{paramplot} returns and draws the parameterized surface; the
+command \texttt{paramplot([f(u,v),g(u,v),h(u,v)],[u,v])} will return
+and draw the surface given by \texttt{x=f(u,v)}, \texttt{y=g(u,v)},
+\texttt{z=h(u,v)}.\\
+Input:
+\begin{center}
+  \tt
+  paramplot([u*cos(v),u*sin(v),u],[u,v])
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dparamplot.png}
+\end{center}
+
+\section{Solids}
+
+\subsection{Cubes: \texttt{cube}\index{cube}}
+
+The \texttt{cube} command takes as arguments three points, \texttt{A},
+\texttt{B} and \texttt{C}.
+
+\texttt{cube} returns and draws the following cube:
+\begin{itemize}
+  \item One edge is \texttt{AB}.
+  \item One face is in the plane \texttt{ABC}, on the same side of
+  line \texttt{AB} as is \texttt{C}.
+  \item The cube is on the side of plane \texttt{ABC} that makes the
+  points \texttt{A}, \texttt{B} and \texttt{C} counterclockwise.
+\end{itemize}
+Input:
+\begin{center}
+  \tt
+  C1 := cube([0,0,0],[0,4,0],[0,0,1])
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dcube.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  c1,c2,c3,c4,c5,c6,c7,c8 := vertices(C1)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dcube2.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  faces(C1)
+\end{center}
+Output:
+\begin{center}
+  \tt
+  [[[0,0,0],[0,4,0],[0,4,4],[0,0,4]],\\{}
+   [[4,0,0],[4,4,0],[4,4,4],[4,0,4]],\\{}
+   [[0,0,0],[4,0,0],[4,0,4],[0,0,4]],\\{}
+   [[0,0,0],[0,4,0],[4,4,0],[4,0,0]],\\{}
+   [[0,4,0],[0,4,4],[4,4,4],[4,4,0]],\\{}
+   [[0,0,4],[4,0,4],[4,4,4],[0,4,4]]]
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  C2 := cube([0,0,0],[0,4,0],[0,0,-1])
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.5\textwidth]{xcas-3dcube3.png}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  a1,a2,a3,a4,a5,a6,a7,a8 := vertices(C2)
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dcube4.png}
+\end{center}
+
+\subsection{Tetrahedrons: \texttt{tetrahedron}\index{tetrahedron} \texttt{pyramid}\index{pyramid}}
+
+The \texttt{tetrahedron} (or \texttt{pyramid}) command takes as
+arguments three or four points.
+
+When given three points \texttt{A}, \texttt{B} and \texttt{C} as
+arguments, \texttt{tetrahedron} returns and draws the regular
+tetrahedron given by:\\
+\begin{itemize}
+  \item One edge is \texttt{AB}.
+  \item One face is in the plane \texttt{ABC}, on the same side of
+  line \texttt{AB} as is \texttt{C}.
+  \item The tetrahedron is on the side of plane \texttt{ABC} that makes the
+  points \texttt{A}, \texttt{B} and \texttt{C} counterclockwise.
+\end{itemize}
+Input:
+\begin{center}
+  \tt
+  tetrahedron([-2,0,0],[2,0,0],[0,2,0])
+\end{center}
+or:
+\begin{center}
+  \tt
+  pyramid([-2,0,0],[2,0,0],[0,2,0])
+\end{center}
+Output:
+\begin{center}
+   \includegraphics[width=0.5\textwidth]{xcas-3dtetra.png}
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  tetrahedron([-2,0,0],[2,0,0],[0,2,0],[0,0,2])
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dtetra2.png}
+\end{center}
+
+\subsection{Parallelepipeds: \texttt{parallelepiped}\index{parallelepiped}}
+
+The \texttt{parallelepiped} command takes as arguments four points,
+\texttt{A}, \texttt{B}, \texttt{C} and \texttt{D}.
+
+\texttt{parallelepiped} returns and draws the parallelepiped
+determined by the edges \texttt{AB}, \texttt{AC} and \texttt{AD}.\\
+Input:
+\begin{center}
+  \tt
+  parallelepiped([0,0,0],[5,0,0],[0,5,0],[0,0,5])
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dppiped.png}
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  p := parallelepiped([0,0,0],[5,0,0],[0,3,0],[0,0,2]):;
+\end{center}
+then:
+\begin{center}
+  \tt
+  c1, c2, c3, c4, c5, c6, c7, c8 := vertices(p);
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dppiped2.png}
+\end{center}
+
+\subsection{Prisms: \texttt{prism}\index{prism}}
+
+The \texttt{prism} command takes two arguments, a list of coplanar
+points \texttt{[A,B,...]} and an additional point \texttt{A1}.
+
+\texttt{prism} returns and draws the prism whose base is the polygon
+determined by the points \texttt{A}, \texttt{B}, \dots, and with edges
+parallel to \texttt{AA1}.\\
+Input:
+\begin{center}
+  \tt
+  prism([[0,0,0],[5,0,0],[0,5,0],[-5,5,0]],[0,0,5])
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dprism.png}
+\end{center}
+
+\subsection{Polyhedra: \texttt{polyhedron}\index{polyhedron}}
+
+The \texttt{polyhedron} command takes as argument a sequence of points.
+
+\texttt{polyhedron} returns and draws the convex polygon whose
+vertices are from the list of points such that the remaining points
+are inside or on the surface of the polyhedron.\\
+Input:
+\begin{center}
+  \tt
+  polyhedron([0,0,0],[-2,0,0],[2,0,0],[0,2,0],[0,0,2])
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dpolyhedron.png}
+\end{center}
+
+\subsection{Vertices: \texttt{vertices}\index{vertices}}
+
+The \texttt{vertices} command takes as argument a polyhedron.
+
+\texttt{vertices} returns and draws a list of the vertices of the
+polyhedron.\\
+Input:
+\begin{center}
+  \tt
+  V := vertices(polyhedron([0,0,0],[-2,0,0],[2,0,0],[0,2,0],[0,0,2]))
+\end{center}
+then:
+\begin{center}
+  \tt
+  coordinates(V)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ [[0,0,0],[-2,0,0],[2,0,0],[0,2,0],[0,0,2]] 
+\end{center}
+% Output:
+% \begin{center}
+%   % \includegraphics[width=0.5\textwidth]{}
+% \end{center}
+
+\subsection{Faces: \texttt{faces}\index{faces}}
+
+The \texttt{faces} command takes as argument a polyhedron.
+
+\texttt{faces} returns a list of the faces of the polyhedron.\\
+Input:
+\begin{center}
+  \tt
+  faces(polyhedron([1,-1,0],[1,1,0],[0,0,2],[0,0,-2],[-1,1,0],[-1,-1,0]))
+\end{center}
+Output:
+\begin{center}
+  \tt
+  [[[1,-1,0],[1,1,0],[0,0,2]],[[1,-1,0],[1,1,0],[0,0,-2]],\\{}
+   [[1,-1,0],[0,0,2],[-1,-1,0]],[[1,-1,0],[0,0,-2],[-1,-1,0]],\\{}
+   [[1,1,0],[0,0,2],[-1,1,0]],[[1,1,0],[0,0,-2],[-1,1,0]],\\{}
+   [[0,0,2],[-1,1,0],[-1,-1,0]],[[0,0,-2],[-1,1,0],[-1,-1,0]]]
+\end{center}
+% Output:
+% \begin{center}
+%   % \includegraphics[width=0.5\textwidth]{}
+% \end{center}
+
+\subsection{Edges: \texttt{line\_segments}\index{line\_segments}}
+
+The \texttt{line\_segments} command takes as argument a polyhedron.
+
+\texttt{line\_segments} returns and draws a list of the edges of the polyhedron.\\
+Input:
+\begin{center}
+  \tt
+  line\_segments(polyhedron([0,0,0],[-2,0,0],[2,0,0],[0,2,0],[0,0,2]))
+\end{center}
+Output:
+\begin{center}
+  % \includegraphics[width=0.5\textwidth]{}
+\end{center}
+Input:
+\begin{center}
+  \tt
+  line\_segments(polyhedron([0,0,0],[-2,0,0],[2,0,0],[0,2,0],[0,0,2]))[1]
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dlinesegs.png}
+\end{center}
+
+\section{Platonic solids}
+
+To specify a Platonic solid, \texttt{Xcas} works with the center, a vertex
+and a third point to specify a plane of symmetry.  
+To speed up calculations, it may be useful to use approximate
+calculations, which can be ensured with the \texttt{evalf} command.
+For example, instead of:\\
+Input:
+\begin{center}
+  \tt
+  centered\_cube([0,0,0],[3,2,1],[1,1,0])
+\end{center}
+it would typically be better to use:\\
+Input:
+\begin{center}
+  \tt
+  centered\_cube(evalf([0,0,0],[3,2,1],[1,1,0]))
+\end{center}
+
+\subsection{Centered tetrahedra: \texttt{centered\_tetrahedron}\index{centered\_tetrahedron}}
+
+The \texttt{centered\_tetrahedron} command takes as arguments three
+points, \texttt{A}, \texttt{B} and \texttt{C}.
+
+\texttt{centered\_tetrahedron} returns and draws the tetrahedron
+centered at \texttt{A}, with a vertex at \texttt{B} and another vertex
+on the plane \texttt{ABC}.\\
+Input:
+\begin{center}
+  \tt
+  centered\_tetrahedron([0,0,0],[0,0,6],[0,1,0])
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dctetra.png}
+\end{center}
+
+\subsection{Centered cubes: \texttt{centered\_cube}\index{centered\_cube}}
+
+The \texttt{centered\_cube} command takes as arguments three points,
+\texttt{A}, \texttt{B} and \texttt{C}.
+
+\texttt{centered\_cube} returns and draws the cube centered at
+\texttt{A} which has \texttt{B} as a vertex and \texttt{ABC} as a
+plane of symmetry.  This plane of symmetry has an edge of the
+cube containing \texttt{B}, the other endpoint of this edge is on the
+same side of line \texttt{AB} as \texttt{C} is.\\
+Input:
+\begin{center}
+  \tt
+  centered\_cube([0,0,0],[3,3,3],[0,1,0])
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dccube.png}
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  centered\_cube([0,0,0],[3,3,3],[0,-1,0])
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dccube2.png}
+\end{center}
+
+Note that there are two cubes centered at \texttt{A}, with a vertex at
+\texttt{B} and with a plane of symmetry \texttt{ABC}.  
+Each cube has an edge containing \texttt{B} that's contained in plane
+of symmetry, these edges are on opposite sides of the line \texttt{AB}. 
+The cube that \texttt{cube} returns is the cube whose edge is on the
+same side of \texttt{AB} as the point \texttt{C}.
+
+\subsection{Octahedra: \texttt{octahedron}\index{octahedron}}
+
+The \texttt{octahedron} command takes as arguments three points
+\texttt{A}, \texttt{B} and \texttt{C}.
+
+\texttt{octahedron} returns and draws the octahedron centered at
+\texttt{A} which has a vertex at \texttt{B} and with four vertices in
+the plane \texttt{ABC}.\\
+Input:
+\begin{center}
+  \tt
+  octahedron([0,0,0],[0,0,5],[0,1,0])
+\end{center}
+or:
+\begin{center}
+  \tt
+  octahedron([0,0,0],[0,5,0],[0,0,1])  
+\end{center}
+or:
+\begin{center}
+  \tt
+  octahedron([0,0,0],[5,0,0],[0,0,1])
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3doct.png}
+\end{center}
+
+\subsection{Dodecahedra: \texttt{dodecahedron}\index{dodecahedron}}
+
+The \texttt{dodecahedron} command takes as arguments three points,
+\texttt{A}, \texttt{B} and \texttt{C}.
+
+\texttt{dodecahedron} returns and draws the dodecahedron centered at
+\texttt{A} with a vertex at \texttt{B} and with an axis of symmetry in
+the plane \texttt{ABC}.  (Note that each face is a pentagon, but will
+be drawn with one of its diagonals and so will show up as a trapezoid
+and a triangle.\\
+Input:
+\begin{center}
+  \tt
+  dodecahedron([0,0,0],[0,0,5],[0,1,0])
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3ddod.png}
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  dodecahedron([0,0,0],[0,2,sqrt(5)/2 + 3/2], [0,0,1])
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3ddod2.png}
+\end{center}
+
+\subsection{Icosahedra: \texttt{icosahedron}\index{icosahedron}}
+
+The \texttt{icosahedron} command takes as arguments three points,
+\texttt{A}, \texttt{B} and \texttt{C}.
+
+\texttt{icosahedron} returns and draws the icosahedron centered at
+\texttt{A} with a vertex at \texttt{B} and such that 
+the plane \texttt{ABC} contains one of the vertices closest to
+\texttt{B}.\\
+Input:
+\begin{center}
+  \tt
+  icosahedron([0,0,0],[0,0,5],[0,1,0])
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dico.png}
+\end{center}
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  icosahedron([0,0,0],[0,0,sqrt(5)], [2,1,0])
+\end{center}
+Output:
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-3dico2.png}
+\end{center}
+
+% \section{Figures and proofs of exercises with \texttt{Xcas}}
+
+% \subsection{Exercise 1}
+
+% \subsection{Exercise 2}
+
+% \subsection{Exercise 3, extension of exercise 2}
+
+\chapter{Multimedia}
+
+\section{Sounds}
+
+\subsection{Reading a \texttt{wav} file: \texttt{readwav}\index{readwav}}
+
+The \texttt{readwav} command takes as argument a sound file stored in
+WAV format (file extension: \texttt{.wav}), given as a string.
+
+\texttt{readwav} returns a vector consisting of:
+\begin{itemize}
+  \item A list consisting of:
+  
+  \begin{itemize}
+    \item The number of channels (generally 1 for mono and 2 for
+    stereo).
+    \item The number of bits (generally 16).
+    \item The sampling frequency (44100 for a CD quality sound).
+    \item The number of bytes (excluding the header); i.e., the number
+    of seconds times the sampling frequency times the number of
+    bits/8 times the number of channels.
+  \end{itemize}
+  \item A list of digital sound data for each channel.
+\end{itemize}
+The result of \texttt{readwav} is typically stored in a variable.\\
+For example, if \texttt{sound.wav} is a sound file for a one-second
+sound in CD quality on a 16-bit channel:\\
+Input:
+\begin{center}
+  \tt
+  s := readwav("sound.wav")
+\end{center}
+then:
+\begin{center}
+  \tt
+  s[0]
+\end{center}
+Output:
+\begin{center}
+  \tt
+ [1,16,44100,88200] 
+\end{center}
+Input:
+\begin{center}
+  \tt
+  size(s)
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 2
+\end{center}
+which is the number of channels plus 1.\\
+Input:
+\begin{center}
+  \tt
+  size(s[1])
+\end{center}
+Output:
+\begin{center}
+  \tt
+ 44100 
+\end{center}
+
+\subsection{Writing a \texttt{wav} file: \texttt{writewav}\index{writewav}}
+
+The \texttt{writewav} command writes sound data to a WAV file.
+
+The \texttt{writewav} command takes two arguments; the name of a file
+and the sound data.  The sound data can either be in the same format
+as that returned by the \texttt{readwav} command or (for a mono sound) 
+a list of the digital data of the sound which will us the default
+parameters (16 bits, 44100 Hz).
+
+\texttt{writewav} writes the sound to the named file.
+
+\noindent
+Input:
+\begin{center}
+  \tt
+  writewav("la.wav",2\^{}14*sin(2*pi*440*soundsec(1)))
+\end{center}
+The file \texttt{la.wav} will then contain a sound of frequency 440 Hz
+sampled 44100 times per second.
+
+\subsection{Listening to a digital sound: \texttt{playsnd}\index{playsnd}}
+
+The \texttt{playsnd} command takes as argument digitized sound data,
+which can be read with the \texttt{readwav} command or generated with
+the help of \texttt{soundsec}.  The arguments are either in the format
+of the output of the \texttt{readwav} command or a list of sampled
+data for mono sound with the default settings of 1 channel, 16 bits
+and 44100 Hz.
+
+\texttt{playsnd} plays the given sound.
+
+\subsection{Preparing digital sound data: \texttt{soundsec}\index{soundsec}}
+
+The \texttt{soundsec} prepares sound data in the form of a vector.
+
+The \texttt{soundsec} command takes as argument a real number, and an
+optional second argument of another real number.
+
+\texttt{soundsec} returns sound data with duration (in seconds) given
+by the argument.  The optional second argument determines the sampling
+frequency.  The sound data is returned as a vector, whose $i$th
+element is the time corresponding to index $i$.\\
+Input:
+\begin{center}
+  \tt
+  soundsec(2.5)
+\end{center}
+returns sound data 2.5 seconds long sampled at the default frequency of
+44100 Hz.\\
+Input:
+\begin{center}
+  \tt
+  soundsec(1,22050)
+\end{center}
+returns sound data 1 second long sampled at the frequency of 22050 Hz.\\
+Input:
+\begin{center}
+  \tt
+  sin(2*pi*440*soundsec(1.3))
+\end{center}
+returns a sinusoid with frequency 440 Hz sampled 44100 times per
+second for 1.3 seconds.
+
+\section{Images}
+
+\subsection{Image structure in \texttt{Xcas}}
+\label{sec:imagestruct}
+
+An image in \texttt{Xcas} is a list with the following elements.
+\begin{itemize}
+  \item The first element is itself a list of three integers; the
+  number of channels (which will be 3 or 4), the number \texttt{n} of
+  rows and the number \texttt{p} of columns used for the dimension of
+  the image.  Each channel will be an \texttt{n$\times$p} matrix of
+  integers between 0 and 255.
+  \item A red channel.
+  \item A green channel.
+  \item A transparency channel.
+  \item A blue channel.
+\end{itemize}
+The color of the point at line \texttt{i} and column \texttt{j} is
+determined by the values of the \texttt{i},\texttt{j}th entry of
+the matrices.
+
+Note that the number of points in the structure isn't necessarily the
+same as the number of pixels on the screen when it is drawn.  It is
+possible that a single point in the structure is represented by a
+small rectangle of pixels when it is displayed on the screen.
+
+\subsection{Reading images: \texttt{readrgb}\index{readrgb}}
+
+The \texttt{readrgb} command takes as argument the name of an image
+file (it can be \texttt{.jpg}, \texttt{.png} or \texttt{.gif}).
+
+\texttt{readrgb} returns an \texttt{Xcas} image structure for the
+image (see section \ref{sec:imagestruct}).
+
+\subsection{Viewing images}
+
+\texttt{Xcas} can display images in rectangles in
+two-dimensions or on surfaces in three-dimensions with the
+\texttt{gl\_texture} property of the object.\\
+Input:
+\begin{center}
+  \tt
+  rectangle(0,200,1/2,gl\_texture="picture.jpg")
+\end{center}
+Input:
+\begin{center}
+  \tt
+  sphere([0,0,0],1,gl\_material=[gl\_texture,"picture.jpg"])
+\end{center}
+
+\subsection{Creating or recreating images: \texttt{writergb}\index{writergb}}
+
+The \texttt{writergb} writes images to \texttt{png} files; the image
+can either be read in with \texttt{readrgb} or created by
+\texttt{writergb} itself.
+
+\subsubsection{Writing images given in \texttt{Xcas} format}
+
+To write an existing image, the \texttt{writergb} command takes two
+arguments, a file name and an image in \texttt{Xcas} format (see 
+section \ref{sec:imagestruct}).  
+
+\texttt{writergb} writes the image to the given file.
+
+As an example, suppose the following image is stored in file
+\texttt{image1234.jpg}.
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-image1234.png}
+\end{center}
+Using \texttt{readrgb},\\
+\begin{center}
+  \tt
+  a := readrgb("image1234.jpg")
+\end{center}
+the variable \texttt{a} will contain a list,
+\begin{itemize}
+  \item \texttt{a[0]} will be \texttt{[4,250,500]}, the number of
+  channels, the height and the width of the image.
+  \item \texttt{a[1]}, the red channel,
+  \item \texttt{a[2]}, the green channel,
+  \item \texttt{a[3]}, the transparency channel,
+  \item \texttt{a[4]}, the blue channel.
+\end{itemize}
+The command\\
+Input:
+\begin{center}
+  \tt
+  writergb("image2134.png",[a[0],a[2],a[1],a[3],a[4]])
+\end{center}
+will produce an image file \texttt{image2134.png} which is simply
+\texttt{image1234.png} with the green and red colors switched.
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{xcas-image2134.png}
+\end{center}
+
+% The \texttt{Xcas} image format can be typed in by hand, but that isn't
+% feasible for large images.\\
+% Input:
+% \begin{center}
+%   \tt
+%   writergb("test.png",[[4,2,2],[[255,0],[0,0]],[[0,255],[0,0]],
+%   [[255,125],[255,255]],[[0,0],[255,0]]])
+% \end{center}
+
+\subsubsection{Creating images}
+
+The \texttt{Xcas} image format can be typed in by hand.\\
+Input:
+\begin{center}
+  \tt
+  writergb("image1.png",[[4,2,2],[[255,0],[0,0]],[[0,255],[0,0]],
+  [[255,125],[255,255]],[[0,0],[255,0]]])
+\end{center}
+creates a file \texttt{image1.png} containing an image 2 points by 2
+points, the upper left point is red, the upper right point is a muted
+green, the lower left point is blue, and the lower right point is black.
+The transparency value of \texttt{125} for the upper right point makes
+it partially transparent and mutes the color.
+
+For larger images, in some cases the matrix operations of
+\texttt{Xcas} can be used to create the channels.\\
+Input:
+\begin{center}
+  \tt
+  writergb("image2.png",[[4,300,300],makemat(0,300,300),
+  makemat(0,300,300), makemat(255,300,300),makemat(0,300,300) +
+  idn(300)*255])
+\end{center}
+\begin{center}
+  \includegraphics[width=0.5\textwidth]{xcas-image2.png}
+\end{center}
+
+The \texttt{writergb} command can also take as input a
+simplified version of the \texttt{Xcas} image description, which
+doesn't involve stating the number of channels, the size of the image,
+or the transparency.  There is a full color version of this simplified
+form and a grayscale version.
+
+To create a full color image, the \texttt{writergb} command takes four
+arguments, the name of the file to store the image, the red channel
+(matrix), the green channel and the blue channel.\\
+Input:
+\begin{center}
+  \tt
+  writergb("image2.png",[[255,250],[0,120]],[[0,255],[0,0]],[[0,0],[255,100]])
+\end{center}
+creates a file \texttt{image2.png} containing an image 2 points by 2
+points, the upper left point is red (rgb value (255,0,0)), the upper
+right point is yellow (rgb value (250,255,0)), the lower left point is
+blue (rgb value (0,0,255) and the lower right point is violet (rgb
+value (120,0,100)).
+
+To create a grayscale image, the \texttt{writergb} command takes two
+arguments, the name of the file to store the image and a matrix
+representing how dark each point is (where \texttt{0} is black and
+\texttt{255} is white).\\
+Input:
+\begin{center}
+  \tt
+  writergb("image3.png",[[65,125],[185,200]])
+\end{center}
+creates a file \texttt{image3.png} containing an image 2 points by 2
+points, the upper left point is dark gray, the upper
+right point is medium gray, the lower left point is
+light gray and the lower right point is even lighter gray.
+
 \end{document}

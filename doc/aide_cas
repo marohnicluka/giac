@@ -1609,13 +1609,13 @@ pade(exp(x),x,10,6)
 0 Pnt,Pnt,Pnt,Pnt
 is_coplanar([0,0,0],[1,2,-3],[1,1,-2],[2,1,-3])
 
-# is_cospheric
+# is_cospherical
 1 Teste si 5 points sont cosphériques.
 2 Test if 5 points are on the same sphere.
 3 Verifica si 5 puntos son coesferares.
 4 Ελέγχει, εάν 5 σημεία είναι στο ίδιο σφαίρα.
 0 Pnt,Pnt,Pnt,Pnt
-is_cospheric([-1,0,0],[1,0,0],[0,1,0],[0,-1,0],[0,0,1])
+is_cospherical([-1,0,0],[1,0,0],[0,1,0],[0,-1,0],[0,0,1])
 
 # is_included
 1 Teste l'inclusion de 2 ensembles ou de 2 listes.
@@ -14340,10 +14340,42 @@ f2nd((x^2+2*x+1)/(x^2-1))
 4 Βάση Groebner του ιδεώδους που παράγεται από τη λίστα των πολυωνύμων.
 0 LstPoly,LstVar,[order]
 -1 greduce
+-2 gbasis_max_pairs
+-3 gbasis_simult_primes
 gbasis([x^2-y^3,x+y^2],[x,y])
 gbasis([x1+x2+x3,x1*x2+x1*x3+x2*x3,x1*x2*x3-1],[x1,x2,x3])
-gbasis([x1+x2+x3,x1*x2+x1*x3+x2*x3,x1*x2*x3-1],[x1,x2,x3],tdeg,with_cocoa=false)
-gbasis([x1+x2+x3,x1*x2+x1*x3+x2*x3,x1*x2*x3-1],[x1,x2,x3],revlex,with_cocoa=true)
+gbasis([x1+x2+x3,x1*x2+x1*x3+x2*x3,x1*x2*x3-1],[x1,x2,x3],tdeg)
+gbasis([x1+x2+x3,x1*x2+x1*x3+x2*x3,x1*x2*x3-1],[x1,x2,x3],plex)
+gbasis([x1+x2+x3,x1*x2+x1*x3+x2*x3,x1*x2*x3-1] mod 29,[x1,x2,x3])
+
+# gbasis_max_pairs
+1 Reglage expert de gbasis: nombre maximal de S-paires reduites simultanement au cours de l'algorithme F4 (par defaut 32768, utiliser 0 pour ne pas le limiter). A diminuer si la memoire manque.
+2 Gbasis fine-tuning: maximal number of S-pairs to be reduced simultaneously inside F4 algorithm (default 32768, 0 means no limit). Set it to a smaller value if short in memory.
+0 Intg
+gbasis_max_pairs(4096)
+-1 gbasis
+-2 gbasis_simult_primes
+-3 gbasis_reinject
+gbasis_max_pairs(0)
+
+# gbasis_simult_primes
+1 Reglage expert de gbasis: nombre maximal de bases de Groebner modulo un nombre premier calcules simultanement pour reconstruire une base de Groebner sur Q (par defaut 16). A diminuer si la memoire manque.
+2 Gbasis fine-tuning: maximal number of Groebner basis modulo a prime that are computed simultaneously to rebuild a Groebner basis over Q (default 16). Set it to a smaller value if short in memory.
+0 Intg
+-1 gbasis
+-2 gbasis_max_pairs
+-3 gbasis_reinject 
+gbasis_simult_primes(3)
+
+# gbasis_reinject
+1 Reglage expert de gbasis: dans l'algorithme modulaire de calcul d'une base de Groebner sur Q, on reinjecte une partie reconstruite de la base dans les generateurs lorsque le ratio de nouveaux elements depasse a et la vitesse 2eme run/1er run >= b (par defaut a=0.2 et b=1/6.)
+2 Gbasis fine-tuning: in the modular algorithm of a gbasis over Q, adds a partial reconstruction of the basis if the ratio of new elements is greater than a and the speed ratio of the 2nd run/1st run is >= b (default a=0.2 and b=1/6.)
+0 Real(a),[Real(b)]
+-1 gbasis
+-2 gbasis_max_pairs
+-3 gbasis_reinject 
+gbasis_reinject(0.1)
+gbasis_reinject(0.1,0.05)
 
 # greduce
 1 Renvoie le reste de la division d'un polynôme par une base de Groebner.

@@ -390,10 +390,10 @@ int parse_varlist(const gen &g,vecteur &vars,vecteur &ineq,vecteur &initial,GIAC
 }
 
 /*
- * Function 'minimize' minimizes a multivariate continuous function on a
+ * Function 'minimize' minimizes a multivariate continuous real function on a
  * closed and bounded region using the method of Lagrange multipliers. The
- * feasible region is specified by bounding variables or by adding one or
- * more (in)equality constraints.
+ * feasible region is specified by bounding variables or by adding one or more
+ * (in)equality constraints.
  *
  * Usage
  * ^^^^^
@@ -511,8 +511,24 @@ gen _minimize(const gen &args,GIAC_CONTEXT) {
     gen &f=argv[0];
     gen mn,mx;
     vecteur loc(global_extrema(f,g,h,vars,mn,mx,contextptr));
-    if (loc.empty())
-        return undef;
+    if (loc.empty() || mn.is_approx()) {
+        /* try using nlpsolve for approx results */
+        gen asol=_nlpsolve(change_subtype(vecteur(argv.begin(),argv.begin()+nargs),_SEQ__VECT),contextptr);
+        if (asol.type==_VECT && asol._VECTptr->size()>1) {
+            mn=asol._VECTptr->front();
+            if (location) {
+                loc.resize(n);
+                gen pos=asol._VECTptr->at(1),v;
+                if (pos.type!=_VECT || pos._VECTptr->size()!=n) return undef;
+                for (const_iterateur it=pos._VECTptr->begin();it!=pos._VECTptr->end();++it) {
+                    if (!it->is_symb_of_sommet(at_equal)) return undef;
+                    const_iterateur jt=find(vars.begin(),vars.end(),it->_SYMBptr->feuille._VECTptr->front());
+                    if (jt==vars.end()) return undef;
+                    loc[jt-vars.begin()]=it->_SYMBptr->feuille._VECTptr->back();
+                }
+            }
+        } else return undef;
+    }
     if (location)
         return makevecteur(_simplify(mn,contextptr),_simplify(loc,contextptr));
     return _simplify(mn,contextptr);

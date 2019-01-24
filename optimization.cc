@@ -2535,9 +2535,9 @@ gen _triginterp(const gen &g,GIAC_CONTEXT) {
                (ab=_rhs(vararg,contextptr)).is_symb_of_sommet(at_interval)) {
         a=_lhs(ab,contextptr);
         b=_rhs(ab,contextptr);
-    } else if (args.size()==4 && (x=args.back()).type==_IDNT) {
-        a=args.at(1);
-        b=args.at(2);
+    } else if (args.size()==4 && (x=args[1]).type==_IDNT) {
+        a=args.at(2);
+        b=args.at(3);
     } else return gensizeerr(contextptr);
     gen tp=triginterp(data,a,b,*x._IDNTptr,contextptr);
     if (is_approx(data) || is_approx(a) || is_approx(b))

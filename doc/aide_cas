@@ -15454,7 +15454,7 @@ tpsolve([1,1,1,1],[1,1,1,1],[[10,12,9,11],[5,10,7,8],[12,14,13,11],[8,15,11,9]])
 1 Approximation rationnelle d'une liste de points par la methode de Thiele
 2 computes rational interpolation for the given list of points using Thiele's method with continued fractions
 0 [Data || Data_x],[Data_y],v 
- data_x:=[-1,-0.75,-0.5,-0.25,0,0.25,0.5,0.75,1,1.25,1.5,1.75,2];data_y:=[0.0,2.83341735599,2.88770329586,2.75030303645,2.71828182846,2.66568510781,2.24894558809,1.21863761951,0.0,-0.555711613283,-0.377871362418,-0.107135851128,-0.0136782294833]; thiele(data_x,data_y,x)
+ data_x:=[-1,-0.75,-0.5,-0.25,0,0.25,0.5,0.75,1,1.25,1.5,1.75,2]:;data_y:=[0.0,2.83341735599,2.88770329586,2.75030303645,2.71828182846,2.66568510781,2.24894558809,1.21863761951,0.0,-0.555711613283,-0.377871362418,-0.107135851128,-0.0136782294833]:;thiele(data_x,data_y,x)
 
 # lpsolve
 1 Resoud un probleme d'optimisation lineaire de fonction objectif o sous contraintes optionnelles c
@@ -15540,7 +15540,7 @@ extrema(-2*cos(x)-cos(x)^2,x)
 extrema((x^3-1)^4/(2x^3+1)^4,x=0..inf)
 extrema(x/2-2*sin(x/2),x=-12..12)
 extrema(x-ln(abs(x)),x)
- assume(a>=0);extrema(x^2+a*x,x)
+ assume(a>=0):;extrema(x^2+a*x,x)
 extrema(x^7+3x^6+3x^5+x^4+2x^2-x,x)
 extrema((x^2+x+1)/(x^4+1),x)
 extrema(x^2+exp(-x),x)
@@ -15559,7 +15559,7 @@ extrema(x*y,x^3+y^3=16,[x,y])
 extrema(x^2+y^2,x*y=1,[x=0..inf,y=0..inf])
 extrema(ln(x*y^2),2x^2+3y^2=8,[x,y])
 extrema(y^2+4y+2x-x^2,x+2y=2,[x,y])
- assume(a>0);extrema(x/a^2+a*y^2,x+y=a,[x,y])
+ assume(a>0):;extrema(x/a^2+a*y^2,x+y=a,[x,y])
 extrema(6x+3y+2z,4x^2+2y^2+z^2=70,[x,y,z])
 extrema(x*y*z,x+y+z=1,[x,y,z])
 extrema(x*y^2*z^2,x+y+z=5,[x,y,z])
@@ -15568,7 +15568,7 @@ extrema((x-3)^2+(y-1)^2+(z-1)^2,x^2+y^2+z^2=4,[x,y,z])
 extrema(x+3y-z,2x^2+y^2=z,[x,y,z])
 extrema(2x*y+2y*z+x*z,x*y*z=4,[x,y,z])
 extrema(x+y+z,[x^2+y^2=1,2x+z=1],[x,y,z])
- assume(a>0);extrema(x+y+z,[y^2-x^2=a,x+2z=1],[x,y,z])
+ assume(a>0):;extrema(x+y+z,[y^2-x^2=a,x+2z=1],[x,y,z])
 extrema((x-u)^2+(y-v)^2,[x^2/4+y^2/9=1,(u-3)^2+(v+5)^2=1],[u,v,x,y])
 extrema(x2^6+x1^3+4x1+4x2,x1^5+x2^4+x1+x2=0,[x1,x2])
 extrema(x*y,-2x^3+15x^2*y+11y^3-24y=0,[x,y])
@@ -15604,7 +15604,7 @@ createwav(duration=3.5)
 createwav(sin(2*pi*440*soundsec(2)),samplerate=48000)
 createwav(sin(2*pi*440*soundsec(2)),bit_depth=8)
 createwav(10*sin(2*pi*440*soundsec(2)),normalize=-3)
-t:=soundsec(3):;L,R:=sin(2*pi*440*t),sin(2*pi*445*t):;createwav([L,R])
+ t:=soundsec(3):;L,R:=sin(2*pi*440*t),sin(2*pi*445*t):;createwav([L,R])
 
 # stereo2mono
 0 Lst(clip)
@@ -15714,13 +15714,13 @@ convolution([1,2,3],[1,-1,1,-1])
 2 Returns the result of applying a simple first-order lowpass RC filter with cutoff frequency c (the default samplerate is 44100) to the given signal s.
 0 Lst(s),Real(c),[Intg(samplerate)]
 -1 highpass
-f:=unapply(periodic(sign(x),x,-1/880,1/880),x);s:=2^14*(apply(f,soundsec(1)));playsnd(lowpass(s,1000))
+ f:=unapply(periodic(sign(x),x,-1/880,1/880),x):;s:=2^14*(apply(f,soundsec(1))):;playsnd(lowpass(s,1000))
 
 # highpass
 2 Returns the result of applying a simple first-order highpass RC filter with cutoff frequency c (the default samplerate is 44100) to the given signal s.
 0 Lst(s),Real(c),[Intg(samplerate)]
 -1 highpass
-f:=unapply(periodic(sign(x),x,-1/880,1/880),x);s:=2^14*(apply(f,soundsec(1)));playsnd(highpass(s,5000))
+ f:=unapply(periodic(sign(x),x,-1/880,1/880),x):;s:=2^14*(apply(f,soundsec(1))):;playsnd(highpass(s,5000))
 
 # threshold
 2 Performs thresholding operations on a list of real or complex numbers.
@@ -15747,7 +15747,7 @@ threshold([-10,-5,0,5,10],7=a,abs=true)
 -12 triangle_window
 -13 tukey_window
 -14 welch_window
-scatterplot(bartlett_hann_window(randvector(1000,0..1)))
+ scatterplot(bartlett_hann_window(randvector(1000,0..1)))
 
 # blackman_harris_window
 2 Applies the Blackman-Harris windowing function to the given signal u (or to the elements with indices between n1 and n2) and returns the result in a new list.
@@ -15766,7 +15766,7 @@ scatterplot(bartlett_hann_window(randvector(1000,0..1)))
 -12 triangle_window
 -13 tukey_window
 -14 welch_window
-scatterplot(blackman_harris_window(randvector(1000,0..1)))
+ scatterplot(blackman_harris_window(randvector(1000,0..1)))
 
 # blackman_window
 2 Applies the Blackman windowing function with parameter a (by default a=0.16) to the given signal u (or to the elements with indices between n1 and n2) and returns the result in a new list.
@@ -15785,7 +15785,7 @@ scatterplot(blackman_harris_window(randvector(1000,0..1)))
 -12 triangle_window
 -13 tukey_window
 -14 welch_window
-scatterplot(blackman_window(randvector(1000,0..1)))
+ scatterplot(blackman_window(randvector(1000,0..1)))
 
 # bohman_window
 2 Applies the Bohman windowing function to the given signal u (or to the elements with indices between n1 and n2) and returns the result in a new list.
@@ -15804,7 +15804,7 @@ scatterplot(blackman_window(randvector(1000,0..1)))
 -12 triangle_window
 -13 tukey_window
 -14 welch_window
-scatterplot(bohman_window(randvector(1000,0..1)))
+ scatterplot(bohman_window(randvector(1000,0..1)))
 
 # cosine_window
 2 Applies the cosine windowing function with parameter a>0 (by default a=1 for sine window) to the given signal u (or to the elements with indices between n1 and n2) and returns the result in a new list.
@@ -15823,7 +15823,7 @@ scatterplot(bohman_window(randvector(1000,0..1)))
 -12 triangle_window
 -13 tukey_window
 -14 welch_window
-scatterplot(cosine_window(randvector(1000,0..1),1.5))
+ scatterplot(cosine_window(randvector(1000,0..1),1.5))
 
 # gaussian_window
 2 Applies the Gaussian windowing function with parameter 0<a<=0.5 (by default a=0.1) to the given signal u (or to the elements with indices between n1 and n2) and returns the result in a new list.
@@ -15842,7 +15842,7 @@ scatterplot(cosine_window(randvector(1000,0..1),1.5))
 -12 triangle_window
 -13 tukey_window
 -14 welch_window
-scatterplot(gaussian_window(randvector(1000,0..1),0.4))
+ scatterplot(gaussian_window(randvector(1000,0..1),0.4))
 
 # hamming_window
 2 Applies the Hamming windowing function to the given signal u (or to the elements with indices between n1 and n2) and returns the result in a new list.
@@ -15861,7 +15861,7 @@ scatterplot(gaussian_window(randvector(1000,0..1),0.4))
 -12 triangle_window
 -13 tukey_window
 -14 welch_window
-scatterplot(hamming_window(randvector(1000,0..1)))
+ scatterplot(hamming_window(randvector(1000,0..1)))
 
 # hann_poisson_window
 2 Applies the Hann-Poisson windowing function with parameter a (by default a=1) to the given signal u (or to the elements with indices between n1 and n2) and returns the result in a new list.
@@ -15880,7 +15880,7 @@ scatterplot(hamming_window(randvector(1000,0..1)))
 -12 triangle_window
 -13 tukey_window
 -14 welch_window
-scatterplot(hann_poisson_window(randvector(1000,0..1),2))
+ scatterplot(hann_poisson_window(randvector(1000,0..1),2))
 
 # hann_window
 2 Applies the Hann windowing function to the given signal u (or to the elements with indices between n1 and n2) and returns the result in a new list.
@@ -15899,7 +15899,7 @@ scatterplot(hann_poisson_window(randvector(1000,0..1),2))
 -12 triangle_window
 -13 tukey_window
 -14 welch_window
-scatterplot(hann_window(randvector(1000,0..1)))
+ scatterplot(hann_window(randvector(1000,0..1)))
 
 # parzen_window
 2 Applies the Parzen windowing function to the given signal u (or to the elements with indices between n1 and n2) and returns the result in a new list.
@@ -15918,7 +15918,7 @@ scatterplot(hann_window(randvector(1000,0..1)))
 -12 triangle_window
 -13 tukey_window
 -14 welch_window
-scatterplot(parzen_window(randvector(1000,0..1)))
+ scatterplot(parzen_window(randvector(1000,0..1)))
 
 # poisson_window
 2 Applies the Poisson windowing function with parameter a>0 (by default a=1) to the given signal u (or to the elements with indices between n1 and n2) and returns the result in a new list.
@@ -15937,7 +15937,7 @@ scatterplot(parzen_window(randvector(1000,0..1)))
 -12 triangle_window
 -13 tukey_window
 -14 welch_window
-scatterplot(poisson_window(randvector(1000,0..1),0.5))
+ scatterplot(poisson_window(randvector(1000,0..1),0.5))
 
 # riemann_window
 2 Applies the Riemann windowing function to the given signal u (or to the elements with indices between n1 and n2) and returns the result in a new list.
@@ -15956,7 +15956,7 @@ scatterplot(poisson_window(randvector(1000,0..1),0.5))
 -12 triangle_window
 -13 tukey_window
 -14 welch_window
-scatterplot(riemann_window(randvector(1000,0..1)))
+ scatterplot(riemann_window(randvector(1000,0..1)))
 
 # triangle_window
 2 Applies the triangular windowing function with parameter d in {-1,0,1} (by default L=0) to the given signal u (or to the elements with indices between n1 and n2) and returns the result in a new list.
@@ -15975,7 +15975,7 @@ scatterplot(riemann_window(randvector(1000,0..1)))
 -12 bartlett_hann_window
 -13 tukey_window
 -14 welch_window
-scatterplot(triangle_window(randvector(1000,0..1),1))
+ scatterplot(triangle_window(randvector(1000,0..1),1))
 
 # tukey_window
 2 Applies the Tukey windowing function with parameter a in [0,1] (by default a=0.5) to the given signal u (or to the elements with indices between n1 and n2) and returns the result in a new list.
@@ -15994,7 +15994,7 @@ scatterplot(triangle_window(randvector(1000,0..1),1))
 -12 triangle_window
 -13 bartlett_hann_window
 -14 welch_window
-scatterplot(tukey_window(randvector(1000,0..1),0.4))
+ scatterplot(tukey_window(randvector(1000,0..1),0.4))
 
 # welch_window
 2 Applies the Welch windowing function to the given signal u (or to the elements with indices between n1 and n2) and returns the result in a new list.
@@ -16013,7 +16013,7 @@ scatterplot(tukey_window(randvector(1000,0..1),0.4))
 -12 triangle_window
 -13 tukey_window
 -14 bartlett_hann_window
-scatterplot(welch_window(randvector(1000,0..1)))
+ scatterplot(welch_window(randvector(1000,0..1)))
 
 # trigsimplify
 2 Simplifies a trigonometric expression.
@@ -17638,8 +17638,8 @@ network_transitivity(graph(%{[1,2],[2,3],[2,4],[3,4],[4,1]%}))
 -1 random_variable
 -2 sample
 kernel_density([1,2,3,2],bandwidth=1/4,exact)
- X:=randvar(gammad,mean=5,stddev=2):; kernel_density(sample(X,500),bins=50)
- Y:=randvar(normal,mean=5,stddev=1.5):; plot(kernel_density(sample(Y,1000),bins=50,piecewise),x=0..10)
+ X:=randvar(gammad,mean=5,stddev=2):;kernel_density(sample(X,500),bins=50)
+ Y:=randvar(normal,mean=5,stddev=1.5):;plot(kernel_density(sample(Y,1000),bins=50,piecewise),x=0..10)
 
 # bandwidth
 0 Opt
@@ -17668,8 +17668,8 @@ kernel_density([1,2,3,2],bandwidth=1/4,exact)
 -10 randvector
 -11 randvar
 fitdistr(randvector(1000,weibulld,1/2,1),weibull)
- X:=randvar(normal,stddev=9.5):; Y:=randvar(normal,stddev=1.5):; S:=sample(eval(X/Y,0),1000):; Z:=fitdistr(S,cauchy)
- X:=randvar(normal,mean=5,variance=2):; S:=sample(exp(X),1000):; fitdistr(log(S),normal)
+ X:=randvar(normal,stddev=9.5):;Y:=randvar(normal,stddev=1.5):;S:=sample(eval(X/Y,0),1000):;Z:=fitdistr(S,cauchy)
+ X:=randvar(normal,mean=5,variance=2):;S:=sample(exp(X),1000):;fitdistr(log(S),normal)
 
 # bvpsolve
 0 Expr(f(x,y,y')),Lst(x=a..b,y),Lst(y(a),y(b),[y'(1)]),[options]

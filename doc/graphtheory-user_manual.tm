@@ -14164,7 +14164,7 @@
   embedding.<\float|float|tbh>
     <big-figure|<with|gr-mode|<tuple|group-edit|edit-props>|gr-frame|<tuple|scale|1cm|<tuple|0.5gw|0.5gh>>|gr-geometry|<tuple|geometry|1par|0.6par|top>|gr-auto-crop|true|gr-color|light
     grey|gr-line-width|2ln|<graphics||<point|-7.02714|4.71764>|<point|-7.27902|3.87308>|<point|-6.21221|2.99889>|<with|color|green|line-width|2ln|<line|<point|-5.9307|3.7101>|<point|-5.32321|2.76182>>>|<point|-5.9307|3.7101>|<point|-6.36038|4.55465>|<point|-6.74562|2.13952>|<point|-6.0196|1.26533>|<point|-5.11577|0.998627>|<point|-4.83425|2.02098>|<point|-5.32321|2.76182>|<line|<point|-7.02714|4.71764>|<point|-6.36038|4.55465>|<point|-5.9307|3.7101>|<point|-6.21221|2.99889>|<point|-7.27902|3.87308>|<point|-7.02714|4.71764>>|<line|<point|-6.21221|2.99889>|<point|-6.74562|2.13952>|<point|-6.0196|1.26533>|<point|-5.11577|0.998627>|<point|-4.83425|2.02098>|<point|-5.32321|2.76182>|<point|-6.21221|2.99889>>|<text-at|<math|B<rsub|1>>|<point|-6.86415200423336|3.87308175684614>>|<text-at|<math|B<rsub|2>>|<point|-5.93069519777748|1.90245072099484>>|<text-at|temp.<nbsp>edge|<point|-6.02040613837809|4.26236936102659>>|<with|dash-style|11100|<line|<point|-4.92621811732097|4.05921748908586>|<point|-5.44174163249107|3.28041076862019>>>>>|<label|blockjoin>Joining
-    two block by adding a temporary edge.>
+    blocks by adding a temporary edge.>
   </float>
 
   The second part of the augmentation process consists of recursively

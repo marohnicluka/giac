@@ -3239,6 +3239,148 @@ static const char _conjugate_equation_s []="conjugate_equation";
 static define_unary_function_eval (__conjugate_equation,&_conjugate_equation,_conjugate_equation_s);
 define_unary_function_ptr5(at_conjugate_equation,alias_at_conjugate_equation,&__conjugate_equation,0,true)
 
+static int cnst_count=0;
+
+/* return the (list of) Euler-Lagrange equation(s) for functional L(u,du,t) */
+gen _euler_lagrange(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    gen L,t=identificateur("x");
+    vecteur u=makevecteur(identificateur("y"));
+    if (g.type!=_VECT) {
+        L=g;
+        if (!contains(lidnt(g),t))
+            t=t__IDNT_e;
+    } else {
+        if (g.subtype!=_SEQ__VECT)
+            return gensizeerr(contextptr);
+        vecteur &gv=*g._VECTptr;
+        L=gv.front();
+        if (gv.size()>1) {
+            if (gv.size()==2 && gv[1].is_symb_of_sommet(at_of)) {
+                u.front()=gv[1]._SYMBptr->feuille._VECTptr->front();
+                t=gv[1]._SYMBptr->feuille._VECTptr->back();
+            } else if (gv.size()==2 && gv[1].type==_VECT && !gv[1]._VECTptr->empty()) {
+                u.clear();
+                t=undef;
+                for (const_iterateur it=gv[1]._VECTptr->begin();it!=gv[1]._VECTptr->end();++it) {
+                    if (!it->is_symb_of_sommet(at_of))
+                        return gensizeerr(contextptr);
+                    u.push_back(it->_SYMBptr->feuille._VECTptr->front());
+                    if (is_undef(t))
+                        t=it->_SYMBptr->feuille._VECTptr->back();
+                    else if (t!=it->_SYMBptr->feuille._VECTptr->back())
+                        return gensizeerr(contextptr);
+                }
+            } else t=gv[1];
+            if (t.type!=_IDNT)
+                return gensizeerr(contextptr);
+        }
+        if (gv.size()>2) {
+            if (gv[2].type==_IDNT)
+                u.front()=gv[2];
+            else if (gv[2].type==_VECT)
+                u=*gv[2]._VECTptr;
+            else return gensizeerr(contextptr);
+        }
+    }
+    L=idnteval(L,contextptr);
+    int n=u.size();
+    vecteur du(n),Du(n),Dut(n),DU(n),D2U(n),d2u(n),ut(n);
+    for (int i=0;i<n;++i) {
+        if (u[i].type!=_IDNT)
+            return gensizeerr(contextptr);
+        ut[i]=symb_of(u[i],t);
+        du[i]=identificateur(" du"+print_INT_(i));
+        d2u[i]=identificateur(" d2u"+print_INT_(i));
+        Du[i]=symbolic(at_derive,u[i]);
+        Dut[i]=symb_of(Du[i],t);
+        DU[i]=_derive(makesequence(ut[i],t),contextptr);
+        D2U[i]=_derive(makesequence(ut[i],t,2),contextptr);
+    }
+    L=subst(L,Dut,du,false,contextptr);
+    L=subst(L,Du,du,false,contextptr);
+    L=subst(L,DU,du,false,contextptr);
+    L=subst(L,ut,u,false,contextptr);
+    vecteur ret;
+    if (n==1 && !depend(L,*t._IDNTptr)) {
+        ret.push_back(symb_equal(_simplify(du[0]*_derive(makesequence(L,du[0]),contextptr)-L,contextptr),
+                identificateur("K_"+print_INT_(cnst_count++))));
+    }
+    for (int i=0;i<n;++i) {
+        if (!depend(L,*u[i]._IDNTptr)) {
+            ret.push_back(symb_equal(_simplify(_derive(makesequence(L,du[i]),contextptr),contextptr),
+                                     identificateur("K_"+print_INT_(cnst_count++))));
+        } else {
+            gen eq=_derive(makesequence(L,u[i]),contextptr),sol;
+            eq-=_derive(makesequence(subst(_derive(makesequence(L,du[i]),contextptr),makevecteur(du[i],u[i]),
+                                           makevecteur(DU[i],ut[i]),false,contextptr),t),contextptr);
+            eq=subst(eq,makevecteur(DU[i],D2U[i]),makevecteur(du[i],d2u[i]),false,contextptr);
+            eq=symb_equal(_simplify(subst(eq,ut[i],u[i],false,contextptr),contextptr),0);
+            if (depend(eq,*d2u[i]._IDNTptr) && (sol=_solve(makesequence(eq,d2u[i]),contextptr)).type==_VECT)
+                eq=symb_equal(d2u[i],_simplify(sol._VECTptr->front(),contextptr));
+            ret.push_back(eq);
+        }
+    }
+    ret=subst(ret,ut,u,false,contextptr);
+    ret=*radsimp(ret,contextptr)._VECTptr;
+    ret=subst(subst(ret,u,ut,false,contextptr),mergevecteur(du,d2u),mergevecteur(DU,D2U),false,contextptr);
+    return ret.size()==1?ret.front():ret;
+}
+static const char _euler_lagrange_s []="euler_lagrange";
+static define_unary_function_eval (__euler_lagrange,&_euler_lagrange,_euler_lagrange_s);
+define_unary_function_ptr5(at_euler_lagrange,alias_at_euler_lagrange,&__euler_lagrange,_QUOTE_ARGUMENTS,true)
+
+gen parse_functional(const gen &L,const gen &t,const gen &y,const gen &dy,GIAC_CONTEXT) {
+    assert(t.type==_IDNT && y.type==_IDNT && dy.type==_IDNT);
+    gen ret=subst(L,symb_of(symbolic(at_derive,y),t),dy,false,contextptr);
+    ret=subst(ret,symbolic(at_derive,y),dy,false,contextptr);
+    ret=subst(ret,_derive(makesequence(symb_of(y,t),t),contextptr),dy,false,contextptr);
+    ret=subst(ret,symb_of(y,t),y,false,contextptr);
+    return ret;
+}
+
+/* return the Jacobi equation(s) for the functional L(y,y',a<=t<=b) and stationary function Y,
+ * use h as unknown with h(a)=0 */
+gen _jacobi_equation(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    gen L,t,y,Y,h,a;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gensizeerr(contextptr);
+    vecteur &gv=*g._VECTptr;
+    L=gv.front();
+    if (gv.size()==5) {
+        if (!gv[1].is_symb_of_sommet(at_of))
+            return gensizeerr(contextptr);
+        y=gv[1]._SYMBptr->feuille._VECTptr->front();
+        t=gv[1]._SYMBptr->feuille._VECTptr->back();
+        Y=gv[2]; h=gv[3]; a=gv[4];
+    } else if (gv.size()==6) {
+        t=gv[1]; y=gv[2]; Y=gv[3]; h=gv[4]; a=gv[5];
+    } else return gensizeerr(contextptr);
+    if (t.type!=_IDNT || h.type!=_IDNT || y.type!=_IDNT || _evalf(a,contextptr).type!=_DOUBLE_)
+        return gensizeerr(contextptr);
+    L=idnteval(L,contextptr);
+    gen dy=identificateur(" dy");
+    L=parse_functional(L,t,y,dy,contextptr);
+    gen dY=_derive(makesequence(Y,t),contextptr);
+    gen Ldydy=subst(ratnormal(_derive(makesequence(L,dy,dy),contextptr),contextptr),makevecteur(y,dy),makevecteur(Y,dY),false,contextptr);
+    gen Lyy=subst(ratnormal(_derive(makesequence(L,y,y),contextptr),contextptr),makevecteur(y,dy),makevecteur(Y,dY),false,contextptr);
+    gen Lydy=subst(ratnormal(_derive(makesequence(L,y,dy),contextptr),contextptr),makevecteur(y,dy),makevecteur(Y,dY),false,contextptr);
+    gen d=ratnormal(Lyy-_derive(makesequence(Lydy,t),contextptr),contextptr);
+    if (is_zero(Ldydy))
+        return is_zero(d)?change_subtype(gen(0),_INT_BOOLEAN):symb_equal(h,0);
+    gen jeq=ratnormal(_derive(makesequence(Ldydy,t),contextptr),contextptr)*_derive(makesequence(symb_of(h,t),t),contextptr);
+    jeq+=Ldydy*_derive(makesequence(symb_of(h,t),t,2),contextptr)-d*symb_of(h,t);
+    jeq=symb_equal(jeq,0);
+    gen sol=_deSolve(makesequence(makevecteur(jeq,symb_equal(symb_of(h,a),0)),makevecteur(t,h)),contextptr);
+    if (sol.type==_VECT && sol._VECTptr->size()==1 && sol._VECTptr->front().type==_STRNG)
+        return jeq;
+    return makesequence(jeq,sol.is_symb_of_sommet(at_prod) || sol.is_symb_of_sommet(at_neg)?ratnormal(sol,contextptr):sol);
+}
+static const char _jacobi_equation_s []="jacobi_equation";
+static define_unary_function_eval (__jacobi_equation,&_jacobi_equation,_jacobi_equation_s);
+define_unary_function_ptr5(at_jacobi_equation,alias_at_jacobi_equation,&__jacobi_equation,_QUOTE_ARGUMENTS,true)
+
 #ifndef NO_NAMESPACE_GIAC
 }
 #endif // ndef NO_NAMESPACE_GIAC

@@ -3381,6 +3381,191 @@ static const char _jacobi_equation_s []="jacobi_equation";
 static define_unary_function_eval (__jacobi_equation,&_jacobi_equation,_jacobi_equation_s);
 define_unary_function_ptr5(at_jacobi_equation,alias_at_jacobi_equation,&__jacobi_equation,_QUOTE_ARGUMENTS,true)
 
+gen makevars(const gen &e,const gen &t,const vecteur &depvars,const vecteur &diffvars,GIAC_CONTEXT) {
+    if (e.is_symb_of_sommet(at_of) && e._SYMBptr->feuille._VECTptr->back()==t) {
+        gen &u=e._SYMBptr->feuille._VECTptr->front();
+        for (const_iterateur it=depvars.begin();it!=depvars.end();++it) {
+            if (*it==u) return u;
+            if (u==symbolic(at_derive,*it)) return diffvars[it-depvars.begin()];
+        }
+    } else if (e.is_symb_of_sommet(at_derive)) {
+        gen &feu=e._SYMBptr->feuille;
+        if (feu.type!=_VECT || (feu._VECTptr->size()==2 && feu._VECTptr->at(1)==t)) {
+            gen f=makevars(feu.type==_VECT?feu._VECTptr->front():feu,t,depvars,diffvars,contextptr);
+            for (const_iterateur it=depvars.begin();it!=depvars.end();++it) {
+                if (*it==f) return diffvars[it-depvars.begin()];
+            }
+        }
+    } else if (e.type==_SYMB) {
+        gen &feu=e._SYMBptr->feuille;
+        if (feu.type==_VECT) {
+            vecteur nf;
+            nf.reserve(feu._VECTptr->size());
+            for (const_iterateur it=feu._VECTptr->begin();it!=feu._VECTptr->end();++it) {
+                nf.push_back(makevars(*it,t,depvars,diffvars,contextptr));
+            }
+            return symbolic(e._SYMBptr->sommet,change_subtype(nf,_SEQ__VECT));
+        }
+        return symbolic(e._SYMBptr->sommet,makevars(feu,t,depvars,diffvars,contextptr));
+    }
+    return _eval(e,contextptr);
+}
+
+gen apply_sign(const gen &g,const gen &simp,GIAC_CONTEXT) {
+    gen e=_sign(g,contextptr);
+    if (!e.is_symb_of_sommet(at_sign))
+        return e;
+    gen arg=_apply(makesequence(simp,vecteur(1,e._SYMBptr->feuille)),contextptr)._VECTptr->front();
+    arg=_factor(arg,contextptr);
+    if (is_zero(_ratnormal(arg-g,contextptr)))
+        return e;
+    return apply_sign(arg,simp,contextptr);
+}
+
+/* return the sign of the expression, simplified */
+gen determine_sign(const gen &e_orig,const gen &simp,GIAC_CONTEXT) {
+    gen e=_apply(makesequence(simp,vecteur(1,e_orig)),contextptr)._VECTptr->front();
+    if (e.type==_SYMB)
+        return apply_sign(_factor(e,contextptr),simp,contextptr);
+    return _sign(e,contextptr);
+}
+
+gen strip_sign(const gen &g) {
+    if (g.is_symb_of_sommet(at_neg))
+        return -strip_sign(g._SYMBptr->feuille);
+    if (g.is_symb_of_sommet(at_sign))
+        return g._SYMBptr->feuille;
+    if (g.is_symb_of_sommet(at_prod) && g._SYMBptr->feuille.type==_VECT) {
+        gen ret(1);
+        vecteur &v=*g._SYMBptr->feuille._VECTptr;
+        for (const_iterateur it=v.begin();it!=v.end();++it)
+            ret=ret*strip_sign(*it);
+        return ret;
+    }
+    return g;
+}
+
+/* return the condition(s) under which the given function is convex */
+gen _convex(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    vecteur &gv=*g._VECTptr,vars;
+    gen f=gv.front(),t(undef);
+    if (gv.size()<2)
+        return gensizeerr(contextptr);
+    f=idnteval(f,contextptr);
+    if (gv[1].type==_VECT)
+        vars=*gv[1]._VECTptr;
+    else vars.push_back(gv[1]);
+    if (vars.empty())
+        return gensizeerr(contextptr);
+    gen simp_func=at_simplify;
+    if (gv.size()>2) {
+        gen lh,rh;
+        if (!gv[2].is_symb_of_sommet(at_equal) || (lh=gv[2]._SYMBptr->feuille._VECTptr->front())!=at_simplify ||
+                !(rh=gv[2]._SYMBptr->feuille._VECTptr->back()).is_integer() || rh.subtype!=_INT_BOOLEAN)
+            return false;
+        if (rh.val==0)
+            simp_func=at_ratnormal;
+    }
+    vecteur fvars,depvars;
+    for (iterateur it=vars.begin();it!=vars.end();++it) {
+        if (it->is_symb_of_sommet(at_of)) {
+            gen &u=it->_SYMBptr->feuille._VECTptr->front();
+            gen &v=it->_SYMBptr->feuille._VECTptr->back();
+            if (v.type!=_IDNT || u.type!=_IDNT)
+                return gensizeerr(contextptr);
+            if (is_undef(t))
+                t=v;
+            else if (t!=v)
+                return gensizeerr(contextptr);
+            if (is_zero(_contains(makesequence(depvars,u),contextptr)))
+                depvars.push_back(u);
+        } else if (it->type==_IDNT) {
+            if (is_zero(_contains(makesequence(fvars,*it),contextptr)))
+                    fvars.push_back(*it);
+        } else return gensizeerr(contextptr);
+    }
+    vecteur diffvars,diffs;
+    stringstream ss;
+    int cnt=0;
+    for (const_iterateur it=depvars.begin();it!=depvars.end();++it) {
+        ss.str(""); ss << " tmp" << ++cnt;
+        diffvars.push_back(identificateur(ss.str().c_str()));
+        diffs.push_back(_derive(makesequence(symb_of(*it,t),t),contextptr));
+    }
+    gen F=is_undef(t)?_eval(f,contextptr):makevars(f,t,depvars,diffvars,contextptr);
+    vecteur allvars=mergevecteur(fvars,mergevecteur(depvars,diffvars));
+    gen TRUE=change_subtype(1,_INT_BOOLEAN),FALSE=change_subtype(0,_INT_BOOLEAN);
+    if (allvars.size()==1) { // univariate function
+        if (is_undef(simp_func))
+            return _derive(makesequence(F,allvars.front(),2),contextptr);
+        gen e=determine_sign(_derive(makesequence(F,allvars.front(),2),contextptr),simp_func,contextptr);
+        if (is_one(e))
+            return TRUE;
+        if (is_minus_one(e))
+            return FALSE;
+        e=_apply(makesequence(simp_func,vecteur(1,strip_sign(e))),contextptr)._VECTptr->front();
+        return e.is_symb_of_sommet(at_neg)?symb_inferieur_egal(e._SYMBptr->feuille,0):symb_superieur_egal(e,0);
+    }
+    // multivariate case, compute the eigenvalues of the Hessian
+    int n=allvars.size(),N=std::pow(2,n);
+    matrice H=*_hessian(makesequence(F,allvars),contextptr)._VECTptr;
+    if (is_undef(simp_func))
+        return subst(H,diffvars,diffs,false,contextptr);
+    vecteur cond;
+    cond.reserve(N);
+    for (int i=1;i<N;++i) {
+        matrice m_tmp,m;
+        for (int j=0;j<n;++j) {
+            if (((int)std::pow(2,j) & i)==0) continue;
+            m_tmp.push_back(H[j]);
+        }
+        m_tmp=mtran(m_tmp);
+        for (int j=0;j<n;++j) {
+            if (((int)std::pow(2,j) & i)==0) continue;
+            m.push_back(m_tmp[j]);
+        }
+        cond.push_back(determine_sign(_det(m,contextptr),simp_func,contextptr));
+    }
+    vecteur res;
+    for (const_iterateur it=cond.begin();it!=cond.end();++it) {
+        if (is_minus_one(*it))
+            return FALSE;
+        if (is_one(*it) || is_zero(*it))
+            continue;
+        res.push_back(strip_sign(*it));
+    }
+    if (res.empty())
+        return TRUE;
+    for (int i=0;i<int(res.size());++i) {
+        for (int j=res.size();j-->i+1;) {
+            if (is_zero(_ratnormal(res[j]-res[i],contextptr)))
+                res.erase(res.begin()+j);
+        }
+    }
+    for (int i=res.size();i-->0;) {
+        if (res[i].is_integer() && res[i].subtype==_INT_BOOLEAN) {
+            if (res[i].val==1)
+                res.erase(res.begin()+i);
+            else if (res[i].val==0)
+                return FALSE;
+        }
+        gen &r=res[i];
+        r=_apply(makesequence(simp_func,vecteur(1,r)),contextptr)._VECTptr->front();
+        r=symb_superieur_egal(subst(r,diffvars,diffs,false,contextptr),0);
+    }
+    if (res.empty())
+        return TRUE;
+    if (res.size()==1)
+        return res.front();
+    return res;
+}
+static const char _convex_s []="convex";
+static define_unary_function_eval (__convex,&_convex,_convex_s);
+define_unary_function_ptr5(at_convex,alias_at_convex,&__convex,_QUOTE_ARGUMENTS,true)
+
 #ifndef NO_NAMESPACE_GIAC
 }
 #endif // ndef NO_NAMESPACE_GIAC

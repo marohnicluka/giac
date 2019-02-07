@@ -1,4 +1,4 @@
-<TeXmacs|1.99.7>
+<TeXmacs|1.99.9>
 
 <style|<tuple|mmxmanual|framed-session|giac>>
 
@@ -10721,7 +10721,7 @@
   <verbatim|odd_girth><index|<verbatim|odd_girth>> are used for computing the
   (odd) girth of an undirected unweighted graph.
 
-  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|girth(G)>>>>>>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|girth(G)>>>|<row|<cell|>|<cell|<verbatim|odd_girth(G)>>>>>>
 
   <verbatim|girth> resp.<nbsp><verbatim|odd_girth> takes a graph
   <math|G<around*|(|V,E|)>> as its only argument and returns the girth
@@ -14143,14 +14143,13 @@
   face are initially fixed somewhere the boundary of a convex polygon. In
   addition, to produce a more flexible layout, the outer face is duplicated
   such that the subgraph induced by the vertices on both the outer face and
-  its duplicate is a prism graph. Then only the duplicates of the outer face
-  vertices are fixed, allowing the outer face itself to take a more natural
-  shape. The duplicate of the outer face is removed after a layout is
-  produced.
+  its duplicate is a prism graph. The duplicates of the outer face vertices
+  are fixed, allowing the original outer face to take a more natural shape.
+  The duplicate of the outer face is removed after a layout is produced.
 
   The augmentation process consists of two parts. Firstly, the input graph
-  <math|G> is decomposed into biconnected components (blocks) using the
-  depth-first search <cite-detail|gibbons|pp.<nbsp>25>. Each block is then
+  <math|G> is decomposed into biconnected components (blocks) using
+  depth-first search <cite-detail|gibbons|pp.<nbsp>25>. Then, each block is
   decomposed into faces by using <name|Demoucron>'s algorithm (see
   <cite-detail|gibbons|pp.<nbsp>88> and <cite|myrwold>). Embeddings obtained
   for each blocks are then combined by adding one temporary edge for each
@@ -16229,18 +16228,18 @@
       plestenjak
     </associate>
     <\associate|figure>
-      <tuple|normal|<surround|<hidden|<tuple>>||drawing of the Sierpi«ski
-      graph <with|mode|<quote|math>|S T<rsub|3><rsup|5>> using
+      <tuple|normal|<surround|<hidden-binding|<tuple>|3.1>||drawing of the
+      Sierpi«ski graph <with|mode|<quote|math>|S T<rsub|3><rsup|5>> using
       L<rsup|<space|-0.8spc><move|A|0fn|-0.1fn>><space|-0.2spc>T<rsub|<space|-0.4spc><move|<resize|<with|math-level|<quote|0>|E>||||0.5fn>|0fn|-0.1fn>><space|-0.4spc>X
       and PSTricks>|<pageref|auto-176>>
 
-      <tuple|normal|<surround|<hidden|<tuple>>||Joining two block by adding a
-      temporary edge.>|<pageref|auto-379>>
+      <tuple|normal|<surround|<hidden-binding|<tuple>|6.1>||Joining blocks by
+      adding a temporary edge.>|<pageref|auto-379>>
 
-      <tuple|normal|<surround|<hidden|<tuple>>||A chorded face
+      <tuple|normal|<surround|<hidden-binding|<tuple>|6.2>||A chorded face
       <with|mode|<quote|math>|f>.>|<pageref|auto-380>>
 
-      <tuple|normal|<surround|<hidden|<tuple>>||Faces
+      <tuple|normal|<surround|<hidden-binding|<tuple>|6.3>||Faces
       <with|mode|<quote|math>|f> and <with|mode|<quote|math>|g> having two
       vertices but no edges in common.>|<pageref|auto-381>>
     </associate>
@@ -16622,8 +16621,8 @@
       <tuple|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|highlight_subgraph>>|<pageref|auto-394>>
     </associate>
     <\associate|table>
-      <tuple|normal|<surround|<hidden|<tuple>>||vertex/edge colors in
-      <with|font-family|<quote|ss>|Xcas>>|<pageref|auto-334>>
+      <tuple|normal|<surround|<hidden-binding|<tuple>|4.1>||vertex/edge
+      colors in <with|font-family|<quote|ss>|Xcas>>|<pageref|auto-334>>
     </associate>
     <\associate|toc>
       <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-shape|<quote|small-caps>|Introduction>

@@ -6297,7 +6297,7 @@ subs(x=2,1/(4+x^2))
 simult([[3,1],[3,2]],[[-2],[2]])
 simult([[3,1],[3,2]],[[-2,1],[2,-1]])
 
-# Pause
+# Pause sleep
 1 Pause; dans un programme permet de suspendre son exécution (ENTER permet de continuer l'exécution) [Pause n; suspend l'exécution pendant n secondes].
 2 Pause; in a program stopping its execution (the execution goes on if you press ENTER) [Pause n; stopping its execution during n seconds].
 3 Pause; en un programa que detiene su ejecución (la ejecución continua si se presiona ENTER) [Pause n; detiene su ejecución durante n segundos].
@@ -6305,6 +6305,13 @@ simult([[3,1],[3,2]],[[-2,1],[2,-1]])
 0 
 -1 WAIT
  Pause 3;
+sleep(2)
+
+# monotonic
+1 Renvoie un reel qui croit strictement en fonction du temps ecoule
+2 Returns a real that increases as time passes
+0 
+monotonic()
 
 # WAIT
 1 WAIT(n); dans un programme suspend son exécution pendant n secondes.
@@ -9339,9 +9346,19 @@ debug(pgcd(25,15))
 0 Poly(P),Var(Var)
 -1 valuation
 -2 size
+-3 total_degree
 degree(x^3+x)
 degree([1,0,1,0])
 degree(x^3+x*y,y)
+
+# total_degree
+1 Degré total du polynôme P par rapport à la liste de variable Vars.
+2 Total degree of the polynomial P with respect to the second argument.
+0 Poly(P),Lst(Vars)
+-1 valuation
+-2 size
+-3 degree
+total_degree(x^3*y+x*y,[x,y])
 
 # desolve deSolve dsolve
 1 Résout une équation différentielle ou un système différentiel linéaire à coefficients constants.
@@ -15714,13 +15731,21 @@ convolution([1,2,3],[1,-1,1,-1])
 2 Returns the result of applying a simple first-order lowpass RC filter with cutoff frequency c (the default samplerate is 44100) to the given signal s.
 0 Lst(s),Real(c),[Intg(samplerate)]
 -1 highpass
- f:=unapply(periodic(sign(x),x,-1/880,1/880),x):;s:=2^14*(apply(f,soundsec(1))):;playsnd(lowpass(s,1000))
+-2 moving_average
+ f:=unapply(periodic(sign(x),x,-1/880,1/880),x):;s:=createwav(apply(f,soundsec(1))):;playsnd(lowpass(s,1000))
 
 # highpass
 2 Returns the result of applying a simple first-order highpass RC filter with cutoff frequency c (the default samplerate is 44100) to the given signal s.
 0 Lst(s),Real(c),[Intg(samplerate)]
--1 highpass
- f:=unapply(periodic(sign(x),x,-1/880,1/880),x):;s:=2^14*(apply(f,soundsec(1))):;playsnd(highpass(s,5000))
+-1 lowpass
+-2 moving_average
+ f:=unapply(periodic(sign(x),x,-1/880,1/880),x):;s:=createwav(apply(f,soundsec(1))):;playsnd(highpass(s,5000))
+
+# moving_average
+2 Applies a moving average filter of length n to a signal sample A, and returns its result as an array of length nops(A)-n+1.
+0 Lst(A),Intg(n)
+-1 lowpass
+ snd:=soundsec(2):;data:=0.5*threshold(3*sin(2*pi*220*snd),[-1.0,1.0])+randvector(length(snd),normald,0,0.05):;moving_average(data,25)
 
 # threshold
 2 Performs thresholding operations on a list of real or complex numbers.

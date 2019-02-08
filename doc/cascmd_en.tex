@@ -8042,6 +8042,32 @@ For example, input :
 		playsnd(highpass(createwav(s),5000))}
 \end{center}
 
+\subsection{Apply a moving average filter to a signal : {\tt moving\_average\index{moving\_average}}}
+{\tt moving\_average} takes two arguments: an array $A$ of numeric values representing the sampled signal and a positive integer $n$. It returns an array $B$ obtained by applying a moving average filter of length $n$ to $A$. The elements of $B$ are defined by
+\[ B[i]=\frac{1}{n}\,\sum_{j=0}^{n-1}A[i+j] \]
+for $i=0,1,\dots,L-n+1$, where $L$ is the length of $A$.
+
+Moving average filters are fast and useful for smoothing time-encoded signals. For example, input :
+\begin{center}
+  {\tt snd:=soundsec(2):;\\
+  noise:=randvector(length(snd),normald,0,0.05):;\\
+  data:=0.5*threshold(3*sin(2*pi*220*snd),[-1.0,1.0])+noise:;\\
+  plotwav(createwav(data),range=[1000,1500])}
+\end{center}
+Output :
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{signalproc_mavg1.png}
+\end{center}
+Input :
+\begin{center}
+  {\tt fdata:=moving\_average(data,25):;\\
+  plotwav(createwav(fdata),range=[1000,1500])}
+\end{center}
+Output :
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{signalproc_mavg2.png}
+\end{center}
+
 \subsection{Perform thresholding operations on an array : {\tt threshold}\index{threshold}}
 {\tt threshold} changes the data in an array which does not meet some kind of minimality criterion. It takes the following parameters :
 \begin{itemize}

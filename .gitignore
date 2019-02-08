@@ -5,7 +5,7 @@
 *.creator.user*
 *.files
 *.pro
-*.pro.user
+*.pro.user*
 *.o
 *.includes
 *.autosave

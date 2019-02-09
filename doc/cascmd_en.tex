@@ -5964,6 +5964,94 @@ The right way to define a derivative is either with {\tt
 \end{center}
 \end{itemize}
 
+\subsection{Implicit differentiation : {\tt implicitdiff}}
+{\tt implicitdiff} is called with one of the following three sets of parameters :
+\begin{enumerate}
+\item {\tt expr}, {\tt constr}, {\tt depvars}, {\tt diffvars}
+\item {\tt constr}, {\tt [depvars]}, {\tt y}, {\tt diffvars}
+\item {\tt expr}, {\tt constr}, {\tt vars}, {\tt order\_size=k}, {\tt [pt]}
+\end{enumerate}
+Details on parameters :
+\begin{itemize}
+\item {\tt expr} : differentiable expression $ f(x_1,x_2,\dots,x_n,y_1,y_2,\dots,y_m) $
+\item {\tt constr} : (list of) equality constraint(s) $ g_i(x_1,\dots,x_n,y_1,\dots,y_m)=0 $ or vanishing expression(s) $ g_i $, where $ i=1,2,\dots,m $
+\item {\tt depvars} : (list of) dependent variable(s) $ y_1,y_2,\dots,y_m $, each of which may be entered as a symbol, e.g.~{\tt yi}, or a function of independent variable(s), e.g.~{\tt yi(x1,x2,..,xn)}
+\item {\tt diffvars} : sequence of variables $ x_{i_1},x_{i_2},\dots,x_{i_k} $ with respect to which is {\tt expr} differentiated
+\item {\tt vars} : independent and dependent variables entered as symbols in single list such that dependent variables come last, e.g.~{\tt [x1,..,xn,y1,..,ym]}
+\item {\tt y} : (list of) dependent variable(s) $ y_{j_1},y_{j_2},\dots,y_{j_l} $ that need to be differentiated
+\end{itemize}
+Dependent variables $ y_1,y_2,\dots,y_m $ are implicitly defined with $ m $ constraints in {\tt constr}. By implicit function theorem, the Jacobian matrix of $ \mathbf{g}=(g_1,g_2,\dots,g_m) $ has to be full rank.
+
+When calling {\tt implicitdiff}, first two sets of parameters are used when specific partial derivative is needed. In the first case, {\tt expr} is differentiated with respect to {\tt diffvars}.
+
+\noindent Input :
+\begin{center}
+{\tt implicitdiff(x*y,-2x\verb|^|3+15x\verb|^|2*y+11y\verb|^|3-24y=0,y(x),x)}
+\end{center}
+Output :
+\begin{center}
+{\tt (2*x\verb|^|3-5*x\verb|^|2*y+11*y\verb|^|3-8*y)/(5*x\verb|^|2+11*y\verb|^|2-8)}
+\end{center}
+In the second case (elements of) {\tt y} is differentiated. If {\tt y} is a list of symbols, a list containing their derivatives will be returned. The following examples compute $ \frac{\mathrm{d}\,y}{\mathrm{d}\,x} $.\\
+Input :
+\begin{center}
+{\tt implicitdiff(x\verb|^|2*y+y\verb|^|2=1,y,x)}
+\end{center}
+Output :
+\begin{center}
+{\tt -2*x*y/(x\verb|^|2+2*y)}
+\end{center}
+Input :
+\begin{center}
+{\tt implicitdiff([x\verb|^|2+y=z,x+y*z=1],[y(x),z(x)],y,x)}
+\end{center}
+Output :
+\begin{center}
+{\tt (-2*x*y-1)/(y+z)}
+\end{center}
+In the next example, $ \frac{\mathrm{d}\,y}{\mathrm{d}\,x} $ and $ \frac{\mathrm{d}\,z}{\mathrm{d}\,x} $ are computed.\\
+Input :
+\begin{center}
+{\tt implicitdiff([-2x*z+y\verb|^|2=1,x\verb|^|2-exp(x*z)=y],}\\
+{\tt [y(x),z(x)],[y,z],x)}
+\end{center}
+Output :
+\begin{center}
+{\tt [2*x/(y*exp(x*z)+1),}\\
+{\tt (2*x*y-y*z*exp(x*z)-z)/(x*y*exp(x*z)+x)]}
+\end{center}
+
+For the third case of input syntax, all partial derivatives of order equal to {\tt order\_size}, i.e.~$ k $, are computed. If $ k=1 $ they are returned in a single list, which represents the gradient of {\tt expr} with respect to independent variables. For $ k=2 $ the corresponding hessian matrix is returned. When $ k>2 $, a table with keys in form {\tt [k1,k2,..,kn]}, where $ \sum_{i=1}^nk_i=k $, is returned. Such key corresponds to \[ \frac{\partial^k f}{\partial x_1^{k_1}\,\partial x_2^{k_2}\,\cdots\,\partial x_n^{k_n}}. \]
+Input :
+\begin{center}
+{\tt f:=x*y*z; g:=-2x\verb|^|3+15x\verb|^|2*y+11y\verb|^|3-24y=0;}\\
+{\tt implicitdiff(f,g,[x,z,y],order\_size=1)}
+\end{center}
+Output :
+\begin{center}
+{\tt [(2*x\verb|^|3*z-5*x\verb|^|2*y*z+11*y\verb|^|3*z-8*y*z)/(5*x\verb|^|2+11*y\verb|^|2-8),}\\
+{\tt x*y]}
+\end{center}
+Input :
+\begin{center}
+{\tt implicitdiff(f,g,order\_size=2,[1,-1,0])}
+\end{center}
+Output :
+\begin{center}
+{\tt [[64/9,-2/3],[-2/3,0]]}
+\end{center}
+In the next example, the value of $ \frac{\partial^4 f}{\partial x^4} $ is computed at point $ (x=0,y=0,z) $.\\
+Input :
+\begin{center}
+{\tt pd:=implicitdiff(f,g,[x,z,y],order\_size=4,[0,z,0]);}\\
+{\tt pd[4,0]}
+\end{center}
+Output :
+\begin{center}
+{\tt -2*z}
+\end{center}
+
+
 \section{Integration}
 \subsection{Antiderivative and definite integral : {\tt integrate int Int}}\index{integrate}\index{Int}\index{int}
 \noindent{\tt integrate} (or {\tt int}) computes a primitive
@@ -17439,93 +17527,6 @@ Input :
 \begin{center}{\tt plotimplicit(x\verb|^|2+y\verb|^|2+z\verb|^|2-1,x=-1..1,y=-1..1,z=-1..1)}\end{center}
 Output :
 \begin{center}{\tt The unit sphere}\end{center}
-
-\subsection{Implicit differentiation : {\tt implicitdiff}}
-{\tt implicitdiff} is called with one of the following three sets of parameters :
-\begin{enumerate}
-\item {\tt expr}, {\tt constr}, {\tt depvars}, {\tt diffvars}
-\item {\tt constr}, {\tt [depvars]}, {\tt y}, {\tt diffvars}
-\item {\tt expr}, {\tt constr}, {\tt vars}, {\tt order\_size=k}, {\tt [pt]}
-\end{enumerate}
-Details on parameters :
-\begin{itemize}
-\item {\tt expr} : differentiable expression $ f(x_1,x_2,\dots,x_n,y_1,y_2,\dots,y_m) $
-\item {\tt constr} : (list of) equality constraint(s) $ g_i(x_1,\dots,x_n,y_1,\dots,y_m)=0 $ or vanishing expression(s) $ g_i $, where $ i=1,2,\dots,m $
-\item {\tt depvars} : (list of) dependent variable(s) $ y_1,y_2,\dots,y_m $, each of which may be entered as a symbol, e.g.~{\tt yi}, or a function of independent variable(s), e.g.~{\tt yi(x1,x2,..,xn)}
-\item {\tt diffvars} : sequence of variables $ x_{i_1},x_{i_2},\dots,x_{i_k} $ with respect to which is {\tt expr} differentiated
-\item {\tt vars} : independent and dependent variables entered as symbols in single list such that dependent variables come last, e.g.~{\tt [x1,..,xn,y1,..,ym]}
-\item {\tt y} : (list of) dependent variable(s) $ y_{j_1},y_{j_2},\dots,y_{j_l} $ that need to be differentiated
-\end{itemize}
-Dependent variables $ y_1,y_2,\dots,y_m $ are implicitly defined with $ m $ constraints in {\tt constr}. By implicit function theorem, the Jacobian matrix of $ \mathbf{g}=(g_1,g_2,\dots,g_m) $ has to be full rank.
-
-When calling {\tt implicitdiff}, first two sets of parameters are used when specific partial derivative is needed. In the first case, {\tt expr} is differentiated with respect to {\tt diffvars}.
-
-\noindent Input :
-\begin{center}
-{\tt implicitdiff(x*y,-2x\verb|^|3+15x\verb|^|2*y+11y\verb|^|3-24y=0,y(x),x)}
-\end{center}
-Output :
-\begin{center}
-{\tt (2*x\verb|^|3-5*x\verb|^|2*y+11*y\verb|^|3-8*y)/(5*x\verb|^|2+11*y\verb|^|2-8)}
-\end{center}
-In the second case (elements of) {\tt y} is differentiated. If {\tt y} is a list of symbols, a list containing their derivatives will be returned. The following examples compute $ \frac{\mathrm{d}\,y}{\mathrm{d}\,x} $.\\
-Input :
-\begin{center}
-{\tt implicitdiff(x\verb|^|2*y+y\verb|^|2=1,y,x)}
-\end{center}
-Output :
-\begin{center}
-{\tt -2*x*y/(x\verb|^|2+2*y)}
-\end{center}
-Input :
-\begin{center}
-{\tt implicitdiff([x\verb|^|2+y=z,x+y*z=1],[y(x),z(x)],y,x)}
-\end{center}
-Output :
-\begin{center}
-{\tt (-2*x*y-1)/(y+z)}
-\end{center}
-In the next example, $ \frac{\mathrm{d}\,y}{\mathrm{d}\,x} $ and $ \frac{\mathrm{d}\,z}{\mathrm{d}\,x} $ are computed.\\
-Input :
-\begin{center}
-{\tt implicitdiff([-2x*z+y\verb|^|2=1,x\verb|^|2-exp(x*z)=y],}\\
-{\tt [y(x),z(x)],[y,z],x)}
-\end{center}
-Output :
-\begin{center}
-{\tt [2*x/(y*exp(x*z)+1),}\\
-{\tt (2*x*y-y*z*exp(x*z)-z)/(x*y*exp(x*z)+x)]}
-\end{center}
-
-For the third case of input syntax, all partial derivatives of order equal to {\tt order\_size}, i.e.~$ k $, are computed. If $ k=1 $ they are returned in a single list, which represents the gradient of {\tt expr} with respect to independent variables. For $ k=2 $ the corresponding hessian matrix is returned. When $ k>2 $, a table with keys in form {\tt [k1,k2,..,kn]}, where $ \sum_{i=1}^nk_i=k $, is returned. Such key corresponds to \[ \frac{\partial^k f}{\partial x_1^{k_1}\,\partial x_2^{k_2}\,\cdots\,\partial x_n^{k_n}}. \]
-Input :
-\begin{center}
-{\tt f:=x*y*z; g:=-2x\verb|^|3+15x\verb|^|2*y+11y\verb|^|3-24y=0;}\\
-{\tt implicitdiff(f,g,[x,z,y],order\_size=1)}
-\end{center}
-Output :
-\begin{center}
-{\tt [(2*x\verb|^|3*z-5*x\verb|^|2*y*z+11*y\verb|^|3*z-8*y*z)/(5*x\verb|^|2+11*y\verb|^|2-8),}\\
-{\tt x*y]}
-\end{center}
-Input :
-\begin{center}
-{\tt implicitdiff(f,g,order\_size=2,[1,-1,0])}
-\end{center}
-Output :
-\begin{center}
-{\tt [[64/9,-2/3],[-2/3,0]]}
-\end{center}
-In the next example, the value of $ \frac{\partial^4 f}{\partial x^4} $ is computed at point $ (x=0,y=0,z) $.\\
-Input :
-\begin{center}
-{\tt pd:=implicitdiff(f,g,[x,z,y],order\_size=4,[0,z,0]);}\\
-{\tt pd[4,0]}
-\end{center}
-Output :
-\begin{center}
-{\tt -2*z}
-\end{center}
 
 
 \section{Parametric curves and surfaces : {\tt plotparam paramplot DrawParm}}\index{plotparam|textbf}\index{paramplot|textbf}\index{DrawParm|textbf}

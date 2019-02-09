@@ -749,12 +749,9 @@ bool nivelate(vecteur &data,int k,const gen &b,const gen &val,const unary_functi
             data[k]=val*data[k]/r;
             return true;
         }
-    }
-    else {
-        if (_eval(symbolic(comp,makevecteur(data[k],b)),contextptr).val!=0) {
-            data[k]=val;
-            return true;
-        }
+    } else if (_eval(symbolic(comp,makevecteur(data[k],b)),contextptr).val!=0) {
+        data[k]=val;
+        return true;
     }
     return false;
 }

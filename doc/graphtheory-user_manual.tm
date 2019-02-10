@@ -14746,11 +14746,11 @@
       <bibitem*|5><label|bib-bayati>Mohsen Bayati, Jeong<nbsp>Han
       Kim<localize|, and >Amin Saberi. <newblock>A Sequential Algorithm for
       Generating Random Graphs. <newblock><with|font-shape|italic|Algorithmica>,
-      58:860\U910, 2010.<newblock>
+      58(4):860\U910, 2010.<newblock>
 
       <bibitem*|6><label|bib-bellman>R.<nbsp>Bellman. <newblock>On a routing
       problem. <newblock><with|font-shape|italic|Quarterly of Applied
-      Mathematics>, 16:87\U90, 1958.<newblock>
+      Mathematics>, 16(1):87\U90, 1958.<newblock>
 
       <bibitem*|7><label|bib-biggs>Norman Biggs.
       <newblock><with|font-shape|italic|Algebraic graph theory>.
@@ -14773,7 +14773,7 @@
 
       <bibitem*|11><label|bib-brelaz>Daniel Brélaz. <newblock>New Methods to
       Color the Vertices of a Graph. <newblock><with|font-shape|italic|Communications
-      of the ACM>, 22:251\U256, 1979.<newblock>
+      of the ACM>, 22(4):251\U256, 1979.<newblock>
 
       <bibitem*|12><label|bib-buchheim>Cristoph Buchheim, Michael
       Jünger<localize|, and >Sebastian Leipert. <newblock>Improving Walker's
@@ -14797,12 +14797,12 @@
       <bibitem*|15><label|bib-melissa>Melissa DeLeon. <newblock>A Study of
       Sufficient Conditions for Hamiltonian Cycles.
       <newblock><with|font-shape|italic|Rose-Hulman Undergraduate Mathematics
-      Journal>, 1, Article 6, 2000. <newblock><slink|https://scholar.rose-hulman.edu/rhumj/vol1/iss1/6>.<newblock>
+      Journal>, 1(1), Article 6, 2000. <newblock><slink|https://scholar.rose-hulman.edu/rhumj/vol1/iss1/6>.<newblock>
 
       <bibitem*|16><label|bib-diaz>Isabel<nbsp>M.<nbsp>Díaz<localize| and
       >Paula Zabala. <newblock>A Branch-and-Cut Algorithm for Graph Coloring.
       <newblock><with|font-shape|italic|Discrete Applied Mathematics>,
-      154:826\U847, 2006.<newblock>
+      154(5):826\U847, 2006.<newblock>
 
       <bibitem*|17><label|bib-diestel>Reinhard Diestel.
       <newblock><with|font-shape|italic|Graph Theory>.
@@ -14822,13 +14822,13 @@
       <bibitem*|20><label|bib-edmonds-karp>Jack Edmonds<localize| and
       >Richard<nbsp>M.<nbsp>Karp. <newblock>Theoretical improvements in
       algorithmic efficiency for network flow problems.
-      <newblock><with|font-shape|italic|Journal of the ACM>, 19:248\U264,
+      <newblock><with|font-shape|italic|Journal of the ACM>, 19(2):248\U264,
       1972.<newblock>
 
       <bibitem*|21><label|bib-esfahanian>Abdol<nbsp>H.<nbsp>Esfahanian<localize|
       and >S.<nbsp>Louis Hakimi. <newblock>On computing the connectivities of
       graphs and digraphs. <newblock><with|font-shape|italic|Networks>,
-      14:355\U366, 1984.<newblock>
+      14(2):355\U366, 1984.<newblock>
 
       <bibitem*|22><label|bib-even-algorithms>Shimon Even.
       <newblock><with|font-shape|italic|Graph Algorithms>. <newblock>Computer
@@ -14836,7 +14836,7 @@
 
       <bibitem*|23><label|bib-floyd>Robert<nbsp>W.<nbsp>Floyd.
       <newblock>Algorithm 97: Shortest path.
-      <newblock><with|font-shape|italic|Communications of the ACM>, 5:345,
+      <newblock><with|font-shape|italic|Communications of the ACM>, 5(6):345,
       1962.<newblock>
 
       <bibitem*|24><label|bib-ford>L.<nbsp>R.<nbsp>Ford.
@@ -14846,7 +14846,7 @@
       <bibitem*|25><label|bib-fruchterman>T.<nbsp>M.<nbsp>J.<nbsp>Fruchterman<localize|
       and >E.<nbsp>M.<nbsp>Reingold. <newblock>Graph Drawing by
       Force-Directed Placement. <newblock><with|font-shape|italic|Software:
-      Practice and Experience>, 21:1129\U1164, 1991.<newblock>
+      Practice and Experience>, 21(11):1129\U1164, 1991.<newblock>
 
       <bibitem*|26><label|bib-gibbons>Alan Gibbons.
       <newblock><with|font-shape|italic|Algorithmic graph theory>.
@@ -14861,13 +14861,13 @@
       >Michael<nbsp>D.<nbsp>Grigoriadis. <newblock>A computational comparison
       of the dinic and network simplex methods for maximum flow.
       <newblock><with|font-shape|italic|Annals of Operations Research>,
-      13:81\U123, 1988.<newblock>
+      13(1):81\U123, 1988.<newblock>
 
       <bibitem*|29><label|bib-haggard>Gary Haggard,
       David<nbsp>J.<nbsp>Pearce<localize|, and >Gordon Royle.
       <newblock>Computing Tutte Polynomials.
       <newblock><with|font-shape|italic|ACM Transactions on Mathematical
-      Software>, 37, 2010. <newblock>Article No.<nbsp>24.<newblock>
+      Software>, 37(3), 2010. <newblock>Article No.<nbsp>24.<newblock>
 
       <bibitem*|30><label|bib-haggard2>Gary Haggard,
       David<nbsp>J.<nbsp>Pearce<localize|, and >Gordon Royle.
@@ -14882,26 +14882,26 @@
       1962.<newblock>
 
       <bibitem*|32><label|bib-helsgaun>Keld Helsgaun. <newblock>General
-      <math|k>-opt submoves for the Lin--Kernighan TSP heuristic.
+      <math|k>-opt submoves for the Lin\UKernighan TSP heuristic.
       <newblock><with|font-shape|italic|Math.<nbsp>Prog.<nbsp>Comp.>,
       1:119\U163, 2009.<newblock>
 
       <bibitem*|33><label|bib-hierholzer>Carl Hierholzer. <newblock>Ueber die
       möglichkeit, einen Linienzug ohne Wiederholung und ohne Unterbrechung
       zu umfahren. <newblock><with|font-shape|italic|Mathematische Annalen>,
-      6:30\U32, 1873.<newblock>
+      6(1):30\U32, 1873.<newblock>
 
       <bibitem*|34><label|bib-hinz>Andreas<nbsp>M.<nbsp>Hinz, Sandi
       Klavºar<localize|, and >Sara<nbsp>S.<nbsp>Zemlji£. <newblock>A survey
       and classification of Sierpi«ski-type graphs.
       <newblock><with|font-shape|italic|Discrete Applied Mathematics>,
-      217:565\U600, 2017.<newblock>
+      217(3):565\U600, 2017.<newblock>
 
       <bibitem*|35><label|bib-hopcroft>John<nbsp>E.<nbsp>Hopcroft<localize|
       and >Richard<nbsp>M.<nbsp>Karp. <newblock>An <math|n<rsup|5/2>>
       algorithm for maximum matchings in bipartite graphs.
       <newblock><with|font-shape|italic|SIAM Journal on Computing>,
-      2:225\U231, 1973.<newblock>
+      2(4):225\U231, 1973.<newblock>
 
       <bibitem*|36><label|bib-hu>Yifan Hu. <newblock>Efficient and High
       Quality Force-Directed Graph Drawing.
@@ -14911,12 +14911,12 @@
       <bibitem*|37><label|bib-hu2>Yifan Hu<localize| and >Jennifer Scott.
       <newblock>A Multilevel Algorithm for Wavefront Reduction.
       <newblock><with|font-shape|italic|SIAM Journal on Scientific
-      Computing>, 23:1352\U1375, 2001.<newblock>
+      Computing>, 23(4):1352\U1375, 2001.<newblock>
 
       <bibitem*|38><label|bib-kahn>Arthur<nbsp>B.<nbsp>Kahn.
       <newblock>Topological sorting of large networks.
       <newblock><with|font-shape|italic|Communications of the ACM>,
-      5:558\U562, 1962.<newblock>
+      5(11):558\U562, 1962.<newblock>
 
       <bibitem*|39><label|bib-latapy>Matthieu Latapy. <newblock>Main-memory
       triangle computations for very large (sparse (power-law)) graphs.
@@ -14936,7 +14936,7 @@
       <bibitem*|42><label|bib-myrwold>Wendy Myrwold<localize| and >Willian
       Kocay. <newblock>Errors in graph embedding algorithms.
       <newblock><with|font-shape|italic|Journal of Computer and System
-      Sciences>, 77:430\U438, 2011.<newblock>
+      Sciences>, 77(2):430\U438, 2011.<newblock>
 
       <bibitem*|43><label|bib-newman>M.<nbsp>E.<nbsp>Newman,
       D.<nbsp>J.<nbsp>Watts<localize|, and >S.<nbsp>H.<nbsp>Strogatz.
@@ -14956,12 +14956,12 @@
 
       <bibitem*|46><label|bib-otter>Richard Otter. <newblock>The Number of
       Trees. <newblock><with|font-shape|italic|The Annals of Mathematics, 2nd
-      Ser.>, 49:583\U599, 1948.<newblock>
+      Ser.>, 49(3):583\U599, 1948.<newblock>
 
       <bibitem*|47><label|bib-padberg>Manfred Padberg<localize| and >Giovanni
       Rinaldi. <newblock>A Branch-and-Cut Algorithm for the Resolution of
       Large-Scale Symmetric Traveling Salesman Problems.
-      <newblock><with|font-shape|italic|SIAM Review>, 33:60\U100,
+      <newblock><with|font-shape|italic|SIAM Review>, 33(1):60\U100,
       1991.<newblock>
 
       <bibitem*|48><label|bib-cpap>Charalampos Papamanthou<localize| and
@@ -14978,7 +14978,7 @@
       <bibitem*|50><label|bib-plestenjak>Bor Plestenjak. <newblock>An
       Algorithm for Drawing Planar Graphs.
       <newblock><with|font-shape|italic|Software: Practice and Experience>,
-      29:973\U984, 1999.<newblock>
+      29(11):973\U984, 1999.<newblock>
 
       <bibitem*|51><label|bib-schank2>T.<nbsp>Schank<localize| and
       >D.<nbsp>Wagner. <newblock>Finding, Counting and Listing All Triangles
@@ -14992,31 +14992,31 @@
       <bibitem*|52><label|bib-schank>Thomas Schank<localize| and >Dorothea
       Wagner. <newblock>Approximating Clustering Coefficient and
       Transitivity. <newblock><with|font-shape|italic|Journal of Graph
-      Algorithms and Applications>, 9:265\U275, 2005.<newblock>
+      Algorithms and Applications>, 9(2):265\U275, 2005.<newblock>
 
       <bibitem*|53><label|bib-steger>Angelika Steger<localize| and
       >Nicholas<nbsp>C.<nbsp>Wormald. <newblock>Generating random regular
       graphs quickly. <newblock><with|font-shape|italic|Combinatorics
-      Probability and Computing>, 8:377\U396, 1999.<newblock>
+      Probability and Computing>, 8(4):377\U396, 1999.<newblock>
 
       <bibitem*|54><label|bib-tarjan-elem>R.<nbsp>E.<nbsp>Tarjan.
       <newblock>Enumeration of the elementary circuits of a directed graph.
-      <newblock><with|font-shape|italic|SIAM J.<nbsp>Comput.>, 2:211\U216,
+      <newblock><with|font-shape|italic|SIAM J.<nbsp>Comput.>, 2(3):211\U216,
       1973.<newblock>
 
       <bibitem*|55><label|bib-tarjan72>R.<nbsp>E.<nbsp>Tarjan.
       <newblock>Depth-First Search and Linear Graph Algorithms.
-      <newblock><with|font-shape|italic|SIAM Journal on Comp.>, 1:146\U160,
-      1972.<newblock>
+      <newblock><with|font-shape|italic|SIAM Journal on Comp.>,
+      1(2):146\U160, 1972.<newblock>
 
       <bibitem*|56><label|bib-tarjan-bridges>R.<nbsp>E.<nbsp>Tarjan.
       <newblock>A note on finding the bridges of a graph.
       <newblock><with|font-shape|italic|Information Processing Letters>,
-      2:160\U161, 1974.<newblock>
+      2(6):160\U161, 1974.<newblock>
 
       <bibitem*|57><label|bib-lca>R.<nbsp>E.<nbsp>Tarjan.
       <newblock>Applications of path compression on balanced trees.
-      <newblock><with|font-shape|italic|Journal of the ACM>, 26:690\U715,
+      <newblock><with|font-shape|italic|Journal of the ACM>, 26(4):690\U715,
       1979.<newblock>
 
       <bibitem*|58><label|bib-tarjan86>R.<nbsp>E.<nbsp>Tarjan. <newblock>Two
@@ -15039,12 +15039,12 @@
 
       <bibitem*|61><label|bib-tutte>W.<nbsp>T.<nbsp>Tutte. <newblock>How to
       draw a graph. <newblock><with|font-shape|italic|Proceedings of the
-      London Mathematical Society>, s3-13:743\U767, 1963.<newblock>
+      London Mathematical Society>, s3-13(1):743\U767, 1963.<newblock>
 
       <bibitem*|62><label|bib-walker>John<nbsp>Q.<nbsp>Walker II. <newblock>A
       nodepositioning algorithm for general trees.
       <newblock><with|font-shape|italic|Software: Practice and Experience>,
-      20:685\U705, 1990.<newblock>
+      20(7):685\U705, 1990.<newblock>
 
       <bibitem*|63><label|bib-wasserman>Stanley Wasserman<localize| and
       >Katherine Faust. <newblock><with|font-shape|italic|Social Network
@@ -15054,7 +15054,7 @@
       <bibitem*|64><label|bib-welch>E.<nbsp>Welch<localize| and
       >S.<nbsp>Kobourov. <newblock>Measuring Symmetry in Drawings of Graphs.
       <newblock><with|font-shape|italic|Computer Graphics Forum>,
-      36:341\U351, 2017.<newblock>
+      36(3):341\U351, 2017.<newblock>
 
       <bibitem*|65><label|bib-west>Douglas<nbsp>B.<nbsp>West.
       <newblock><with|font-shape|italic|Introduction to Graph Theory>.
@@ -15066,7 +15066,7 @@
 
       <bibitem*|67><label|bib-yen>Jin<nbsp>Y.<nbsp>Yen. <newblock>Finding the
       k Shortest Loopless Paths in a Network.
-      <newblock><with|font-shape|italic|Management Science>, 17:712\U716,
+      <newblock><with|font-shape|italic|Management Science>, 17(11):712\U716,
       1971.<newblock>
     </bib-list>
   </bibliography>
@@ -15691,9 +15691,9 @@
     <associate|auto-299|<tuple|4.9.1|100>>
     <associate|auto-3|<tuple|1.1|9>>
     <associate|auto-30|<tuple|1.4.1|16>>
-    <associate|auto-300|<tuple|4.9.2|100>>
-    <associate|auto-301|<tuple|4.9.2|100>>
-    <associate|auto-302|<tuple|4.9.2|100>>
+    <associate|auto-300|<tuple|4.9.2|101>>
+    <associate|auto-301|<tuple|4.9.2|101>>
+    <associate|auto-302|<tuple|4.9.2|101>>
     <associate|auto-303|<tuple|4.9.3|101>>
     <associate|auto-304|<tuple|4.9.3|101>>
     <associate|auto-305|<tuple|4.9.4|102>>

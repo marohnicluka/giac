@@ -1145,7 +1145,7 @@ gen _has_edge(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     if (int(gv.back()._VECTptr->size())!=2)
         return gensizeerr(contextptr);
-    vecteur e(*gv.back()._VECTptr);
+    vecteur &e=*gv.back()._VECTptr;
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
@@ -1173,11 +1173,11 @@ gen _has_arc(const gen &g,GIAC_CONTEXT) {
     vecteur &gv = *g._VECTptr;
     if (int(gv.size())!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-    if (gv.back().type!=_VECT || !is_integer_vecteur(*gv.back()._VECTptr))
+    if (gv.back().type!=_VECT)
         return gentypeerr(contextptr);
     if (int(gv.back()._VECTptr->size())!=2)
         return gensizeerr(contextptr);
-    vecteur e(*gv.back()._VECTptr);
+    vecteur &e=*gv.back()._VECTptr;
     bool undirected=gv.back().subtype==_SET__VECT;
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))

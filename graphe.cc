@@ -3150,18 +3150,22 @@ void graphe::adjacent_nodes(int i,ivector &adj,bool include_temp_edges) const {
     adj.clear();
     adj.reserve(degree(i));
     int j;
+    iset s;
     for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
         j=*it;
         if (include_temp_edges || !is_temporary_edge(i,j))
-            adj.push_back(j);
+            s.insert(j);
     }
     if (is_directed()) {
         for (node_iter it=nodes.begin();it!=nodes.end();++it) {
-            if (i!=(j=it-nodes.begin()) && it->has_neighbor(i) &&
+            j=it-nodes.begin();
+            if (i!=j && it->has_neighbor(i) &&
                     (include_temp_edges || !is_temporary_edge(i,j)))
-                adj.push_back(j);
+                s.insert(j);
         }
-        std::sort(adj.begin(),adj.end());
+    }
+    for (iset::const_iterator it=s.begin();it!=s.end();++it) {
+        adj.push_back(*it);
     }
 }
 

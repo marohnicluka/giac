@@ -383,8 +383,8 @@ gen flights(const gen &g,bool arrive,bool all,GIAC_CONTEXT) {
             return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
     }
     vecteur res;
+    graphe::ivector adj;
     do {
-        graphe::ivector adj;
         G.adjacent_nodes(i,adj);
         vecteur v;
         for (graphe::ivector::const_iterator it=adj.begin();it!=adj.end();++it) {
@@ -392,7 +392,7 @@ gen flights(const gen &g,bool arrive,bool all,GIAC_CONTEXT) {
                 v.push_back(G.node_label(*it));
         }
         if (!all)
-            return v;
+            return _sort(v,contextptr);
         res.push_back(_sort(v,contextptr));
     } while (++i<G.node_count());
     return change_subtype(res,_LIST__VECT);

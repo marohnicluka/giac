@@ -2257,6 +2257,7 @@ bool graphe::dot_parse_attributes(ifstream &dotfile,attrib &attr) {
         if (key==-1 || dot_read_token(dotfile,token)!=1 || token!="=" ||
                 dot_read_token(dotfile,token)!=1 || dot_reading_value || !dot_token_is_id())
             return false;
+        if (key==_GT_ATTRIB_WEIGHT && !is_weighted()) set_weighted(true);
         insert_attribute(attr,key,str2gen(token,dot_token_type==_GT_DOT_TOKEN_TYPE_STRING));
     }
     return true;

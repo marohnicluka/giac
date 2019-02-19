@@ -6989,21 +6989,44 @@ static const char _truncate_graph_s[]="truncate_graph";
 static define_unary_function_eval(__truncate_graph,&_truncate_graph,_truncate_graph_s);
 define_unary_function_ptr5(at_truncate_graph,alias_at_truncate_graph,&__truncate_graph,0,true)
 
-/* USAGE:   find_cycles(G)
+/* USAGE:   find_cycles(G,[length=k||[lb,ub]])
  *
- * Returns the list of elementary cycles of the digraph G.
+ * Returns the list of elementary cycles of the digraph G. If length option is
+ * specified, only cycles of length k resp. of length between lb and ub are
+ * returned.
  */
 gen _find_cycles(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    int lb=-1,ub=-1;
+    if (g.subtype==_SEQ__VECT) {
+        if (g._VECTptr->size()!=2)
+            return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+        if (!g._VECTptr->at(1).is_symb_of_sommet(at_equal))
+            return gensizeerr(contextptr);
+        gen &opt=g._VECTptr->at(1);
+        if (opt._SYMBptr->feuille._VECTptr->front()!=at_length)
+            return gensizeerr(contextptr);
+        gen &val=opt._SYMBptr->feuille._VECTptr->back();
+        if (val.is_integer() && val.val>0)
+            lb=ub=val.val;
+        else if (val.type==_VECT && val._VECTptr->size()==2 && is_integer_vecteur(*val._VECTptr)) {
+            lb=val._VECTptr->front().val;
+            ub=val._VECTptr->back().val;
+            if (lb<0 || ub<0 || lb>ub)
+                return gensizeerr(contextptr);
+        }
+    }
     graphe G(contextptr);
-    if (!G.read_gen(g))
+    if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_empty())
         return generr("graph is empty");
     if (!G.is_directed())
         return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED);
     graphe::ivectors cyc;
-    G.elementary_cycles(cyc);
+    G.elementary_cycles(cyc,lb,ub);
     vecteur res;
     G.ivectors2vecteur(cyc,res,false);
     return change_subtype(res,_LIST__VECT);

@@ -222,10 +222,10 @@ public:
         std::stack<int> marked_stack;
         ivectors A,res;
         std::vector<bool> mark;
-        int s;
+        int s,lb,ub;
         void backtrack(int v,bool &f);
     public:
-        circ_enum(graphe *gr);
+        circ_enum(graphe *gr,int lo=-1,int hi=-1);
         ivectors find_cycles();
     };
 
@@ -1049,7 +1049,7 @@ public:
     int vertex_connectivity();
     void truncate(graphe &dest,const ivectors &faces);
     void condensation(graphe &G);
-    void elementary_cycles(ivectors &cyc);
+    void elementary_cycles(ivectors &cyc,int lo,int hi);
     void yen_ksp(int K,int src,int dest,ivectors &spaths);
     static gen colon_label(int i,int j);
     static gen colon_label(int i,int j,int k);

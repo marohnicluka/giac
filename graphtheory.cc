@@ -6989,7 +6989,7 @@ static const char _truncate_graph_s[]="truncate_graph";
 static define_unary_function_eval(__truncate_graph,&_truncate_graph,_truncate_graph_s);
 define_unary_function_ptr5(at_truncate_graph,alias_at_truncate_graph,&__truncate_graph,0,true)
 
-/* USAGE:   find_cycles(G,[length=k||[lb,ub]])
+/* USAGE:   find_cycles(G,[length=k||lb..ub])
  *
  * Returns the list of elementary cycles of the digraph G. If length option is
  * specified, only cycles of length k resp. of length between lb and ub are
@@ -7011,9 +7011,13 @@ gen _find_cycles(const gen &g,GIAC_CONTEXT) {
         gen &val=opt._SYMBptr->feuille._VECTptr->back();
         if (val.is_integer() && val.val>0)
             lb=ub=val.val;
-        else if (val.type==_VECT && val._VECTptr->size()==2 && is_integer_vecteur(*val._VECTptr)) {
-            lb=val._VECTptr->front().val;
-            ub=val._VECTptr->back().val;
+        else if (val.is_symb_of_sommet(at_interval)) {
+            gen &lo=val._SYMBptr->feuille._VECTptr->front();
+            gen &hi=val._SYMBptr->feuille._VECTptr->back();
+            if (!lo.is_integer() || !hi.is_integer())
+                return gensizeerr(contextptr);
+            lb=lo.val;
+            ub=hi.val;
             if (lb<0 || ub<0 || lb>ub)
                 return gensizeerr(contextptr);
         }

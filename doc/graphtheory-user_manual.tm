@@ -3015,11 +3015,14 @@
   The command <verbatim|find_cycles><index|<verbatim|find_cycles>> is used
   for enumerating all cycles (elementary circuits) in a digraph.
 
-  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|find_cycles(G)>>>>>>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|find_cycles(G)>>>|<row|<cell|>|<cell|<verbatim|find_cycles(G,length=k)>>>|<row|<cell|>|<cell|<verbatim|find_cycles(G,length=l..u)>>>>>>
 
   <verbatim|find_cycles> takes a digraph <math|G<around*|(|V,E|)>> as its
   only argument and returns the list of all cycles in <math|G>. Each cycle is
-  output as a list of its vertices.
+  output as a list of its vertices. If the argument <verbatim|length=k>
+  resp.<nbsp><verbatim|length=l..u> is given, where <math|k>, <math|l> and
+  <math|u> are positive integers, only cycles of length <math|k>
+  resp.<nbsp>of length between <math|l> and <math|u> are returned.\ 
 
   The strategy is to use <name|Tarjan>'s algorithm for enumerating elementary
   circuits in a digraph<nbsp><cite|tarjan-elem>. The algorithm runs in
@@ -3053,7 +3056,27 @@
       find_cycles(DG)
     <|unfolded-io>
       <\equation*>
-        <around*|{|<around|[|A,H,E,F|]>,<around|[|A,H,E,C,B,G,F|]>,<around|[|A,H,E,C,B,G,D,F|]>,<around|[|A,H,C,B,G,F|]>,<around|[|A,H,C,B,G,D,F|]>,<around|[|A,B,G,F|]>,<around|[|A,B,G,D,F|]>,<around|[|B,G,F,E,C|]>,<around|[|B,G,D,F,E,C|]>,<around|[|F,E|]>|}>
+        <around|{|<around|[|A,H,E,F|]>,<around|[|A,H,E,C,B,G,F|]>,<around|[|A,H,E,C,B,G,D,F|]>,<around|[|A,H,C,B,G,F|]>,<around|[|A,H,C,B,G,D,F|]>,<around|[|A,B,G,F|]>,<around|[|A,B,G,D,F|]>,<around|[|B,G,F,E,C|]>,<around|[|B,G,D,F,E,C|]>,<around|[|F,E|]>|}>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      find_cycles(DG,length=4)
+    <|unfolded-io>
+      <\equation*>
+        <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|3|3|cell-halign|c>|<cwith|1|-1|4|4|cell-halign|c>|<cwith|1|-1|4|4|cell-rborder|0ln>|<table|<row|<cell|A>|<cell|H>|<cell|E>|<cell|F>>|<row|<cell|A>|<cell|B>|<cell|G>|<cell|F>>>>>|)>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      find_cycles(DG,length=6..7)
+    <|unfolded-io>
+      <\equation*>
+        <around|{|<around|[|A,H,E,C,B,G,F|]>,<around|[|A,H,C,B,G,F|]>,<around|[|A,H,C,B,G,D,F|]>,<around|[|B,G,D,F,E,C|]>|}>
       </equation*>
     </unfolded-io>
   </session>

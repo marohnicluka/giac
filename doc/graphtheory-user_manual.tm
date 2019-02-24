@@ -1376,7 +1376,7 @@
       C5:=cycle_graph(5)
     <|unfolded-io>
       <\equation*>
-        <text|C5: an undirected unweighted graph with 5 vertices and 5 edges>
+        <text|an undirected unweighted graph with 5 vertices and 5 edges>
       </equation*>
     </unfolded-io>
 
@@ -1396,7 +1396,7 @@
       cycle_graph(["a","b","c","d","e"])
     <|unfolded-io>
       <\equation*>
-        <text|C5: an undirected unweighted graph with 5 vertices and 5 edges>
+        <text|an undirected unweighted graph with 5 vertices and 5 edges>
       </equation*>
     </unfolded-io>
   </session>
@@ -1553,7 +1553,7 @@
       edges(K3)
     <|unfolded-io>
       <\equation*>
-        <around|{|<around|[|a,b|]>,<around|[|a,c|]>,<around|[|b,c|]>|}>
+        <around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|2|2|cell-rborder|0ln>|<table|<row|<cell|a>|<cell|b>>|<row|<cell|a>|<cell|c>>|<row|<cell|b>|<cell|c>>>>>|)>
       </equation*>
     </unfolded-io>
 
@@ -1729,7 +1729,7 @@
     </input>
   </session>
 
-  <center|<image|images/intersect.png|35%|||>>
+  <center|<image|images/intersect.eps|35%|||>>
 
   <subsection|Kneser graphs>
 
@@ -3013,16 +3013,18 @@
   <subsection|Finding cycles in digraphs>
 
   The command <verbatim|find_cycles><index|<verbatim|find_cycles>> is used
-  for enumerating all cycles (elementary circuits) in a digraph.
+  for finding cycles (elementary circuits) in a digraph.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|find_cycles(G)>>>|<row|<cell|>|<cell|<verbatim|find_cycles(G,length=k)>>>|<row|<cell|>|<cell|<verbatim|find_cycles(G,length=l..u)>>>>>>
 
   <verbatim|find_cycles> takes a digraph <math|G<around*|(|V,E|)>> as its
-  only argument and returns the list of all cycles in <math|G>. Each cycle is
-  output as a list of its vertices. If the argument <verbatim|length=k>
+  first argument. If it is the only input given, <verbatim|find_cycles>
+  returns the list of all cycles in <math|G> where each cycle is output as a
+  list of its vertices. If an optional second argument <verbatim|length=k>
   resp.<nbsp><verbatim|length=l..u> is given, where <math|k>, <math|l> and
   <math|u> are positive integers, only cycles of length <math|k>
-  resp.<nbsp>of length between <math|l> and <math|u> are returned.\ 
+  resp.<nbsp>of length between <math|l> and <math|u> (inclusive) are
+  returned.
 
   The strategy is to use <name|Tarjan>'s algorithm for enumerating elementary
   circuits in a digraph<nbsp><cite|tarjan-elem>. The algorithm runs in

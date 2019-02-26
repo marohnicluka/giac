@@ -233,7 +233,7 @@ vecteur make_temp_vars(const vecteur &vars,const vecteur &ineq,GIAC_CONTEXT) {
  * Determine critical points of function f under constraints g<=0 and h=0 using
  * Karush-Kuhn-Tucker conditions.
  */
-vecteur solve_kkt(gen &f,vecteur &g,vecteur &h,vecteur &vars_orig,GIAC_CONTEXT) {
+vecteur solve_kkt(const gen &f,const vecteur &g,const vecteur &h,const vecteur &vars_orig,GIAC_CONTEXT) {
     int n=vars_orig.size(),m=g.size(),l=h.size();
     vecteur vars(vars_orig),gr_f(*_grad(makesequence(f,vars_orig),contextptr)._VECTptr),mug;
     matrice gr_g,gr_h;
@@ -314,7 +314,7 @@ matrice critical_univariate(const gen &f,const gen &x,GIAC_CONTEXT) {
  * conditions g<=0 and h=0. The list of points where global minimum is achieved
  * is returned.
  */
-vecteur global_extrema(gen &f,vecteur &g,vecteur &h,vecteur &vars,gen &mn,gen &mx,GIAC_CONTEXT) {
+vecteur global_extrema(const gen &f,const vecteur &g,const vecteur &h,const vecteur &vars,gen &mn,gen &mx,GIAC_CONTEXT) {
     int n=vars.size();
     matrice cv;
     vecteur tmpvars=make_temp_vars(vars,g,contextptr);
@@ -1325,7 +1325,8 @@ void find_local_extrema(gen_map &cpts,const gen &f,const vecteur &g,const vecteu
         }
         if (!cv.empty()) {
             if (nv==1) {
-                gen d,x=vars.front();
+                gen d;
+                const gen &x=vars.front();
                 for (const_iterateur it=cv.begin();it!=cv.end();++it) {
                     gen &x0=it->_VECTptr->front();
                     cls=_CPCLASS_UNDECIDED;
@@ -1357,14 +1358,13 @@ void find_local_extrema(gen_map &cpts,const gen &f,const vecteur &g,const vecteu
                         continue;
                     cls=_CPCLASS_UNDECIDED;
                     // apply the second partial derivative test
-                    matrice H=*_evalf(subst(hess,vars,*it,false,contextptr),contextptr)._VECTptr;
-                    vecteur eigvals(*_eigenvals(H,contextptr)._VECTptr);
-                    gen e(0);
+                    vecteur eigvals=*_eigenvals(_evalf(subst(hess,vars,*it,false,contextptr),contextptr),contextptr)._VECTptr;
+                    gen e=undef;
                     for (const_iterateur et=eigvals.begin();et!=eigvals.end();++et) {
-                        if (is_zero(*et)) {
+                        if (is_zero(*et,contextptr)) {
                             cls=_CPCLASS_UNDECIDED;
                             break;
-                        } else if (is_zero(e)) {
+                        } else if (is_undef(e)) {
                             e=*et;
                             cls=is_positive(e,contextptr)?_CPCLASS_MIN:_CPCLASS_MAX;
                         } else if (is_strictly_positive(-e*(*et),contextptr))
@@ -1377,29 +1377,33 @@ void find_local_extrema(gen_map &cpts,const gen &f,const vecteur &g,const vecteu
                                 taylor_terms.push_back(ipd.taylor_term(a,k));
                             if (is_zero(taylor_terms.back()))
                                 break;
-                            gen p=expand(subst(taylor_terms[k-2],a,*it,false,contextptr),contextptr);  // homogeneous poly
+                            gen p=_ratnormal(subst(taylor_terms[k-2],a,*it,false,contextptr),contextptr);
                             if (is_zero(p))
                                 continue;
-                            gen pmin,pmax;
-                            gen sphere(-1);
-                            for (int j=0;j<n;++j) {
-                                sphere+=pow(vars[j]-it->_VECTptr->at(j),2);
-                            }
-                            vecteur gp,hp(1,sphere);
-                            if (global_extrema(p,gp,hp,fvars,pmin,pmax,contextptr).empty())
-                                break;
-                            if (is_zero(pmin) && is_zero(pmax)) // p is nullpoly
-                                continue;
-                            if ((k%2)!=0 || (is_strictly_positive(-pmin,contextptr) && is_strictly_positive(pmax,contextptr)))
+                            else if (k%2!=0)
                                 cls=_CPCLASS_SADDLE;
-                            else if (is_strictly_positive(pmin,contextptr))
-                                cls=_CPCLASS_MIN;
-                            else if (is_strictly_positive(-pmax,contextptr))
-                                cls=_CPCLASS_MAX;
-                            else if (is_zero(pmin))
-                                cls=_CPCLASS_POSSIBLE_MIN;
-                            else if (is_zero(pmax))
-                                cls=_CPCLASS_POSSIBLE_MAX;
+                            else {
+                                gen pmin,pmax,sphere(-1);
+                                for (int j=0;j<n;++j) {
+                                    sphere+=pow(vars[j]-it->_VECTptr->at(j),2);
+                                }
+                                if (global_extrema(p,vecteur(0),vecteur(1,sphere),fvars,pmin,pmax,contextptr).empty())
+                                    break;
+                                pmin=_simplify(pmin,contextptr);
+                                pmax=_simplify(pmax,contextptr);
+                                if (is_zero(pmin,contextptr) && is_zero(pmax,contextptr)) // p is nullpoly
+                                    continue;
+                                if (is_zero(pmin,contextptr))
+                                    cls=_CPCLASS_POSSIBLE_MIN;
+                                else if (is_zero(pmax,contextptr))
+                                    cls=_CPCLASS_POSSIBLE_MAX;
+                                else if (is_strictly_positive(pmin,contextptr))
+                                    cls=_CPCLASS_MIN;
+                                else if (is_strictly_positive(pmax,contextptr))
+                                    cls=_CPCLASS_SADDLE;
+                                else
+                                    cls=_CPCLASS_MAX;
+                            }
                             break;
                         }
                     }
@@ -1870,8 +1874,8 @@ gen _minimax(const gen &g,GIAC_CONTEXT) {
             r.push_back(pow(gen(-1),i));
             m.push_back(r);
         }
-        vecteur sol(*_linsolve(makesequence(m,fv),contextptr)._VECTptr);
-        if (!_lname(sol,contextptr)._VECTptr->empty()) {
+        vecteur sol=*_linsolve(makesequence(_epsilon2zero(m,contextptr),fv),contextptr)._VECTptr;
+        if (sol.empty() || !_lname(sol,contextptr)._VECTptr->empty()) {
             // Solution is not unique, it contains a symbol.
             // Decrease n and start over.
             nodes=chebyshev_nodes(a,b,--n,contextptr);

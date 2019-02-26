@@ -14572,14 +14572,14 @@ Output :
 
 \subsection{Local extrema: {\tt extrema}}\index{extrema|textbf}
 
-Local extrema of a univariate or multivariate differentiable function under equality constraints can be obtained by using function {\tt extrema} which takes four arguments :
+Local extrema of a univariate or multivariate differentiable expression under equality constraints can be obtained by using function {\tt extrema} which takes four arguments :
 \begin{itemize}
 \item {\tt expr} : differentiable expression
 \item {\tt constr} (optional) : list of equality constraints
 \item {\tt vars} : list of variables
 \item {\tt order\_size=<positive integer>} or {\tt lagrange} (optional) : upper bound for the order of derivatives examined in the process (defaults to 5) or the specifier for the method of Lagrange multipliers
 \end{itemize}
-Function returns a list containing two lists of points: local minima and local maxima, respectively. Saddle and unclassified points are reported in the message area. Also, information about possible (non)strict extrema is printed out. If {\tt lagrange} is passed as an optional last argument, the method of Lagrange multipliers is used. Else, the problem is reduced to an unconstrained one by applying implicit differentiation.
+Function returns a list containing two lists of points: local minima and local maxima of {\tt expr}, respectively. Saddle and unclassified points are reported in the message area. Also, information about possible (non)strict extrema is printed out. If {\tt lagrange} is passed as an optional last argument, the method of Lagrange multipliers is used. Else, the problem is reduced to an unconstrained one by applying implicit differentiation.
 
 A single constraint/variable can be specified without list delimiters. A constraint may be specified as an equality or expression which is assumed to be equal to zero.
 
@@ -14646,14 +14646,6 @@ Input :
 Output :
 \begin{center}
 {\tt [[1,1]],[]}
-\end{center}
-Input :
-\begin{center}
-{\tt extrema(x2\verb|^|4-x1\verb|^|4-x2\verb|^|8+x1\verb|^|10,[x1,x2])}
-\end{center}
-Output :
-\begin{center}
-{\tt [[6250\verb|^|(1/6)/5,0],[-6250\verb|^|(1/6)/5,0]],[]}
 \end{center}
 Input :
 \begin{center}

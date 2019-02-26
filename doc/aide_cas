@@ -15444,19 +15444,19 @@ minimize((1+x^2+3y+5x-4*x*y)/(1+x^2+y^2),x^2/4+y^2/3=9,[x,y])
 minimize(cos(x)^2+cos(y)^2,x+y=pi/4,[x,y],locus)
 
 # minimax
-1 Approximation polynomiale de degré n d'une fonction continue bornée sur [a,b] par la méthode de Remez
-2 Implementation of Remez method for minimax polynomial approximation of degree n of a continuous bounded function on a..b
+1 Approximation polynomiale de degré n d'une fonction continue bornée sur [a,b] par la méthode de Remez.
+2 Implementation of Remez method for minimax polynomial approximation of degree n of a continuous bounded function on a..b.
 0 Expr,Var=a..b,n,[Options]
-minimax(x*exp(-x),x=0..10,24)
-minimax(x*sin(x),x=0..10,25)
+minimax(x*exp(-x),x=0..10,12)
+minimax(x*sin(x),x=0..10,15)
 minimax(ln(2+x-sin(x)^2),x=0..2*pi,20)
-minimax(cos(x^2-x+1),x=-2..2,40)
-minimax(atan(x),x=-5..5,25)
-minimax(tanh(sin(9x)),x=-1/2..1/2,40)
-minimax(abs(x),x=-1..1,20)
+minimax(cos(x^2-x+1),x=-2..2,17)
+minimax(atan(x),x=-5..5,30)
+minimax(tanh(sin(9x)),x=-1/2..1/2,15)
+minimax(abs(x),x=-1..1,25)
 minimax(abs(x)*sqrt(abs(x)),x=-2..2,15)
-minimax(min(1/cosh(3*sin(10x)),sin(9x)),x=-0.3..0.4,25)
-minimax(when(x==0,0,exp(-1/x^2)),x=-1..1,30)
+minimax(min(1/cosh(3*sin(x)),sin(9x/10)),x=-3..4,30)
+minimax(when(x==0,0,exp(-1/x^2)),x=-1..1,25)
 
 # tpsolve
 1 resolution d'un probleme de transport par la methode MODI
@@ -15548,7 +15548,7 @@ implicitdiff(x*y*z,-2x^3+15x^2*y+11y^3-24y=0,[x,z,y],order_size=2,[1,-1,0])
 1 Cree une expression periodique egale a Expr sur [a,b], periode b-a
 2 Make a periodic expression equal to Expr on a..b, period b-a
 0 Expr,Var,a,b
-periodic(x^2,x,0,1)
+periodic(x^2,x,-1,1)
 
 # extrema
 1 Recherche des extremas d'une expression

@@ -1324,6 +1324,7 @@ void find_local_extrema(gen_map &cpts,const gen &f,const vecteur &g,const vecteu
                 cv.push_back(fsol);
         }
         if (!cv.empty()) {
+            cv=*_epsilon2zero(cv,contextptr)._VECTptr;
             if (nv==1) {
                 gen d;
                 const gen &x=vars.front();

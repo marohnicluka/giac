@@ -981,8 +981,8 @@ public:
     void find_ears(ivectors &ears,int sg=-1);
     bool find_cycle(ivector &cycle,int sg=-1);
     bool find_path(int i,int j,ivector &path,int sg=-1,bool skip_embedded=false);
-    bool find_eulerian_path(ivector &path);
-    int eulerian_path_start(bool &iscycle) const;
+    bool find_eulerian_trail(ivector &path);
+    int eulerian_trail_start(bool &iscycle) const;
     bool fleury(int start,ivector &path);
     void hierholzer(ivector &path);
     bool is_multigraph() const;
@@ -1054,6 +1054,7 @@ public:
     void condensation(graphe &G);
     void elementary_cycles(ivectors &cyc,int lo,int hi);
     void yen_ksp(int K,int src,int dest,ivectors &spaths);
+    void compute_in_out_degrees(ivector &ind,ivector &outd) const;
     static gen colon_label(int i,int j);
     static gen colon_label(int i,int j,int k);
     static size_t intersect_fast(ivector_iter min1,ivector_iter max1,ivector_iter min2,ivector_iter max2);

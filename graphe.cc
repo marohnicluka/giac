@@ -1776,6 +1776,20 @@ int graphe::degree(int index,int sg) const {
     return out_degree(index,sg);
 }
 
+/* compute in and out degrees and store them */
+void graphe::compute_in_out_degrees(ivector &ind,ivector &outd) const {
+    int n=node_count();
+    ind.resize(n,0);
+    outd.resize(n);
+    for (int i=0;i<n;++i) {
+        const vertex &v=node(i);
+        outd[i]=v.neighbors().size();
+        for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
+            ++ind[*it];
+        }
+    }
+}
+
 /* return the maximum vertex degree */
 int graphe::maximum_degree() const {
     int maxdeg=0,d;
@@ -6314,14 +6328,16 @@ void graphe::hierholzer(ivector &path) {
 }
 
 /* return the node in which an eulerian trail may begin, or -1 if the graph has no such trail */
-int graphe::eulerian_path_start(bool &iscycle) const {
+int graphe::eulerian_trail_start(bool &iscycle) const {
     /* assuming that the graph is connected */
-    int n=node_count(),count=0,start_node=0;
+    int n=node_count(),count=0,start_node=-1,d;
     for (int i=0;i<n;++i) {
-        if (degree(i)%2!=0) {
+        d=degree(i);
+        if (d%2!=0) {
             ++count;
             start_node=i;
-        }
+        } else if (start_node<0 && d%2==0 && d>0)
+            start_node=i;
     }
     if (count!=0 && count!=2)
         return -1;
@@ -6330,10 +6346,16 @@ int graphe::eulerian_path_start(bool &iscycle) const {
 }
 
 /* attempt to find an eulerian trail in this graph, return true iff one exists */
-bool graphe::find_eulerian_path(ivector &path) {
+bool graphe::find_eulerian_trail(ivector &path) {
     int start;
     bool iscycle;
-    if (!is_connected() || (start=eulerian_path_start(iscycle))<0)
+    ivectors components;
+    connected_components(components);
+    int ic=0;
+    for (ivectors_iter it=components.begin();it!=components.end();++it) {
+        if (it->size()>1) ++ic;
+    }
+    if (ic!=1 || (start=eulerian_trail_start(iscycle))<0)
         return false;
     /* use Hierholzer's algorithm */
     assert(visited_edges.empty());
@@ -11407,7 +11429,7 @@ void graphe::tsp::christofides(ivector &hc) {
         T.add_edge(G->node_label(a.tail),G->node_label(a.head),attr);
     }
     ivector etrail; // eulerian trail
-    assert(T.find_eulerian_path(etrail) && etrail.front()==etrail.back());
+    assert(T.find_eulerian_trail(etrail) && etrail.front()==etrail.back());
     vector<bool> visited(n,false);
     for (ivector_iter it=etrail.begin();it!=etrail.end();++it) {
         if (visited[*it])

@@ -3952,7 +3952,7 @@ static const char _path_graph_s[]="path_graph";
 static define_unary_function_eval(__path_graph,&_path_graph,_path_graph_s);
 define_unary_function_ptr5(at_path_graph,alias_at_path_graph,&__path_graph,0,true)
 
-/* USAGE:   eulerian_path(G,[V])
+/* USAGE:   eulerian_trail(G,[V])
  *
  * Returns true iff graph G is eulerian, i.e. if it has eulerian trail. If
  * identifier V is specified as the second argument, that path is written to it.
@@ -3965,13 +3965,41 @@ gen _is_eulerian(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(has_path_idnt?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G.is_directed())
-        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
+    int n=G.node_count();
+    if (n==0) return gt_err(_GT_ERR_GRAPH_IS_NULL);
+    if (G.is_directed()) {
+        if (has_path_idnt) return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
+        int start=-1,finish=-1,ic=0;
+        graphe::ivector ind,outd;
+        G.compute_in_out_degrees(ind,outd);
+        for (int i=0;i<n;++i) {
+            if (outd[i]==ind[i]+1) {
+                if (start>=0) return graphe::FAUX;
+                start=i;
+            } else if (ind[i]==outd[i]+1) {
+                if (finish>=0) return graphe::FAUX;
+                finish=i;
+            } else if (ind[i]!=outd[i]) return graphe::FAUX;
+        }
+        if ((start>=0 && finish<0) || (start<0 && finish>=0)) return graphe::FAUX;
+        if (start>=0 && finish>=0) G.add_edge(finish,start);
+        graphe::ivectors sc;
+        G.strongly_connected_components(sc);
+        for (graphe::ivectors_iter it=sc.begin();it!=sc.end();++it) {
+            if (it->size()>1) ++ic;
+        }
+        if (ic!=1) return graphe::FAUX;
+        if (start>=0 && finish>=0)
+            *logptr(contextptr) << "Input digraph has an Eulerian trail starting at "
+                                << G.node_label(start) << " and ending at " << G.node_label(finish) << endl;
+        else *logptr(contextptr) << "Input digraph has an Eulerian circuit" << endl;
+        return graphe::VRAI;
+    }
     graphe::ivector path;
     bool iscycle; // dummy
-    if ((has_path_idnt && !G.find_eulerian_path(path)) ||
-            (!has_path_idnt && G.eulerian_path_start(iscycle)<0))
-        return graphe::boole(false);
+    if ((has_path_idnt && !G.find_eulerian_trail(path)) ||
+            (!has_path_idnt && G.eulerian_trail_start(iscycle)<0))
+        return graphe::FAUX;
     if (has_path_idnt) {
         if (g._VECTptr->size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
@@ -3986,7 +4014,7 @@ gen _is_eulerian(const gen &g,GIAC_CONTEXT) {
         }
         identifier_assign(*V._IDNTptr,P,contextptr);
     }
-    return graphe::boole(true);
+    return graphe::VRAI;
 }
 static const char _is_eulerian_s[]="is_eulerian";
 static define_unary_function_eval(__is_eulerian,&_is_eulerian,_is_eulerian_s);

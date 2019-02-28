@@ -12999,26 +12999,25 @@
   <subsection|Eulerian graphs>
 
   The command <verbatim|is_eulerian><index|<verbatim|is_eulerian>> is used
-  for determining whether an undirected graph contains an
-  <hlink|<rigid|Eulerian trail>|https://en.wikipedia.org/wiki/Eulerian_path>.
+  for determining whether a graph contains an <hlink|<rigid|Eulerian
+  trail>|https://en.wikipedia.org/wiki/Eulerian_path>, i.e.<nbsp>a trail
+  which passes through each of its edges exactly once
+  <cite-detail|godsil|pp.<nbsp>395>. A graph is <strong|Eulerian> if it has
+  such a trail. An Eulerian trail may be closed, in which case it is an
+  <strong|Eulerian circuit>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_eulerian(G)>>>|<row|<cell|>|<cell|<verbatim|is_eulerian(G,T)>>>>>>
 
-  <verbatim|is_eulerian> takes one or two arguments, an undirected graph
+  <verbatim|is_eulerian> takes one or two arguments, a (di)graph
   <math|G<around*|(|V,E|)>> and optionally an unassigned identifier
   <verbatim|T>, and returns <verbatim|true> if <math|G> is Eulerian and
-  <verbatim|false> otherwise. If the second argument is given, the
-  corresponding Eulerian trail is stored to <verbatim|T>.
+  <verbatim|false> otherwise. If the second argument is given and <math|G> is
+  undirected, an Eulerian trail is computed and stored to <verbatim|T>. This
+  is curently not supported for digraphs.
 
-  A graph <math|G> is <strong|Eulerian> if it has a trail covering all its
-  edges. Such a trail is called <strong|Eulerian trail>. Every edge
-  <math|e\<in\>E> must be visited, i.e.<nbsp>\Pstrolled through\Q, exactly
-  once <cite-detail|godsil|pp.<nbsp>395>. An Eulerian trail may be closed, in
-  which case it is an <strong|Eulerian circuit>.
-
-  The strategy is to apply <name|Hierholzer>'s algorithm for finding an
-  Eulerian trail<nbsp><cite|hierholzer>. It works by covering one cycle at a
-  time in the input graph. The required time is
+  The strategy for finding an Eulerian trail is to apply <name|Hierholzer>'s
+  algorithm<nbsp><cite|hierholzer>. It works by covering one cycle at a time
+  in the input graph. The required time is
   <math|O<around*|(|<around*|\||E|\|>|)>>.
 
   <\session|giac|default>
@@ -13057,6 +13056,70 @@
     <|unfolded-io>
       is_eulerian(graph("octahedron"))
     <|unfolded-io>
+      <\equation*>
+        <text|true>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      G:=digraph(%{[1,4],[1,3],[2,1],[3,2],[4,5],[5,1]%})
+    <|unfolded-io>
+      <\equation*>
+        <text|a directed unweighted graph with 5 vertices and 6 arcs>
+      </equation*>
+    </unfolded-io>
+
+    <\input>
+      \<gtr\>\ 
+    <|input>
+      draw_graph(G)
+    </input>
+  </session>
+
+  <center|<image|images/eulerian1.eps|35%|||>>
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      is_eulerian(G)
+    <|unfolded-io>
+      \ Input digraph has an Eulerian circuit
+
+      <\equation*>
+        <text|true>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      H:=digraph(%{[1,2],[2,3],[2,4],[3,4],[3,1],[4,5],[4,6],[5,1],[5,2],[6,3],[6,5]%})
+    <|unfolded-io>
+      <\equation*>
+        <text|a directed unweighted graph with 6 vertices and 11 arcs>
+      </equation*>
+    </unfolded-io>
+
+    <\input>
+      \<gtr\>\ 
+    <|input>
+      draw_graph(H,spring)
+    </input>
+  </session>
+
+  <center|<image|images/eulerian2.eps|35%|||>>
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      is_eulerian(H)
+    <|unfolded-io>
+      \ Input digraph has an Eulerian trail starting at 6 and ending at 1
+
       <\equation*>
         <text|true>
       </equation*>
@@ -15514,7 +15577,7 @@
 
 <\references>
   <\collection>
-    <associate|a3|<tuple|A3|132>>
+    <associate|a3|<tuple|A3|134>>
     <associate|allpairs-distance|<tuple|4.8.2|98>>
     <associate|articulation-points|<tuple|4.5.5|88>>
     <associate|assign-edge-weights|<tuple|1.10.9|48>>
@@ -15799,55 +15862,55 @@
     <associate|auto-35|<tuple|1.5.1|16>>
     <associate|auto-350|<tuple|5.1.1|121>>
     <associate|auto-351|<tuple|5.1.1|121>>
-    <associate|auto-352|<tuple|5.1.2|121>>
-    <associate|auto-353|<tuple|5.1.2|121>>
-    <associate|auto-354|<tuple|5.2|122>>
-    <associate|auto-355|<tuple|5.2.1|122>>
-    <associate|auto-356|<tuple|5.2.1|122>>
-    <associate|auto-357|<tuple|5.2.2|123>>
-    <associate|auto-358|<tuple|5.2.2|123>>
-    <associate|auto-359|<tuple|5.2.2|123>>
+    <associate|auto-352|<tuple|5.1.2|122>>
+    <associate|auto-353|<tuple|5.1.2|122>>
+    <associate|auto-354|<tuple|5.2|123>>
+    <associate|auto-355|<tuple|5.2.1|123>>
+    <associate|auto-356|<tuple|5.2.1|123>>
+    <associate|auto-357|<tuple|5.2.2|124>>
+    <associate|auto-358|<tuple|5.2.2|124>>
+    <associate|auto-359|<tuple|5.2.2|124>>
     <associate|auto-36|<tuple|1.5.2|17>>
     <associate|auto-360|<tuple|5.2.3|124>>
     <associate|auto-361|<tuple|5.2.3|124>>
-    <associate|auto-362|<tuple|5.2.4|124>>
-    <associate|auto-363|<tuple|5.2.4|124>>
+    <associate|auto-362|<tuple|5.2.4|125>>
+    <associate|auto-363|<tuple|5.2.4|125>>
     <associate|auto-364|<tuple|5.3|127>>
     <associate|auto-365|<tuple|5.3.1|127>>
     <associate|auto-366|<tuple|5.3.1|127>>
     <associate|auto-367|<tuple|5.3.2|128>>
     <associate|auto-368|<tuple|5.3.2|128>>
-    <associate|auto-369|<tuple|5.3.3|128>>
+    <associate|auto-369|<tuple|5.3.3|129>>
     <associate|auto-37|<tuple|1.5.2|17>>
-    <associate|auto-370|<tuple|5.3.3|128>>
-    <associate|auto-371|<tuple|6|129>>
-    <associate|auto-372|<tuple|6.1|129>>
-    <associate|auto-373|<tuple|6.1|129>>
-    <associate|auto-374|<tuple|6.1.1|129>>
-    <associate|auto-375|<tuple|6.1.2|130>>
-    <associate|auto-376|<tuple|6.1.3|130>>
-    <associate|auto-377|<tuple|6.1.4|132>>
-    <associate|auto-378|<tuple|6.1.5|133>>
-    <associate|auto-379|<tuple|6.1|133>>
+    <associate|auto-370|<tuple|5.3.3|129>>
+    <associate|auto-371|<tuple|6|131>>
+    <associate|auto-372|<tuple|6.1|131>>
+    <associate|auto-373|<tuple|6.1|131>>
+    <associate|auto-374|<tuple|6.1.1|131>>
+    <associate|auto-375|<tuple|6.1.2|132>>
+    <associate|auto-376|<tuple|6.1.3|132>>
+    <associate|auto-377|<tuple|6.1.4|134>>
+    <associate|auto-378|<tuple|6.1.5|135>>
+    <associate|auto-379|<tuple|6.1|135>>
     <associate|auto-38|<tuple|1.5.2|17>>
-    <associate|auto-380|<tuple|6.2|134>>
-    <associate|auto-381|<tuple|6.3|134>>
-    <associate|auto-382|<tuple|6.1.6|135>>
-    <associate|auto-383|<tuple|6.2|135>>
-    <associate|auto-384|<tuple|6.2.1|135>>
-    <associate|auto-385|<tuple|6.2.1|135>>
-    <associate|auto-386|<tuple|6.2.2|136>>
-    <associate|auto-387|<tuple|6.3|137>>
-    <associate|auto-388|<tuple|6.3.1|137>>
-    <associate|auto-389|<tuple|6.3.1|137>>
+    <associate|auto-380|<tuple|6.2|136>>
+    <associate|auto-381|<tuple|6.3|136>>
+    <associate|auto-382|<tuple|6.1.6|137>>
+    <associate|auto-383|<tuple|6.2|137>>
+    <associate|auto-384|<tuple|6.2.1|137>>
+    <associate|auto-385|<tuple|6.2.1|137>>
+    <associate|auto-386|<tuple|6.2.2|138>>
+    <associate|auto-387|<tuple|6.3|139>>
+    <associate|auto-388|<tuple|6.3.1|139>>
+    <associate|auto-389|<tuple|6.3.1|139>>
     <associate|auto-39|<tuple|1.6|17>>
-    <associate|auto-390|<tuple|6.3.2|137>>
-    <associate|auto-391|<tuple|6.3.2|137>>
-    <associate|auto-392|<tuple|6.3.2|137>>
-    <associate|auto-393|<tuple|6.3.3|138>>
-    <associate|auto-394|<tuple|6.3.3|138>>
-    <associate|auto-395|<tuple|6.3.3|141>>
-    <associate|auto-396|<tuple|67|143>>
+    <associate|auto-390|<tuple|6.3.2|139>>
+    <associate|auto-391|<tuple|6.3.2|139>>
+    <associate|auto-392|<tuple|6.3.2|139>>
+    <associate|auto-393|<tuple|6.3.3|140>>
+    <associate|auto-394|<tuple|6.3.3|140>>
+    <associate|auto-395|<tuple|6.3.3|143>>
+    <associate|auto-396|<tuple|67|145>>
     <associate|auto-4|<tuple|1.1.1|9>>
     <associate|auto-40|<tuple|1.6.1|17>>
     <associate|auto-41|<tuple|1.6.1|17>>
@@ -15915,83 +15978,83 @@
     <associate|auto-98|<tuple|1.9.9|34>>
     <associate|auto-99|<tuple|1.9.9|34>>
     <associate|automorphisms|<tuple|4.3.3|80>>
-    <associate|bib-afzal|<tuple|1|141>>
-    <associate|bib-alonso|<tuple|2|141>>
-    <associate|bib-andova|<tuple|3|141>>
-    <associate|bib-bagatelj|<tuple|4|141>>
-    <associate|bib-bayati|<tuple|5|141>>
-    <associate|bib-bellman|<tuple|6|141>>
-    <associate|bib-biggs|<tuple|7|141>>
-    <associate|bib-blanusa|<tuple|8|141>>
-    <associate|bib-bollobas|<tuple|9|141>>
-    <associate|bib-boot|<tuple|10|141>>
-    <associate|bib-brelaz|<tuple|11|141>>
-    <associate|bib-buchheim|<tuple|12|141>>
-    <associate|bib-christofides|<tuple|13|141>>
-    <associate|bib-cook|<tuple|14|141>>
-    <associate|bib-cpap|<tuple|48|142>>
-    <associate|bib-diaz|<tuple|16|141>>
-    <associate|bib-diestel|<tuple|17|141>>
-    <associate|bib-dijkstra|<tuple|18|141>>
-    <associate|bib-edmonds|<tuple|19|141>>
-    <associate|bib-edmonds-karp|<tuple|20|141>>
-    <associate|bib-esfahanian|<tuple|21|141>>
-    <associate|bib-even-algorithms|<tuple|22|141>>
-    <associate|bib-floyd|<tuple|23|141>>
-    <associate|bib-ford|<tuple|24|141>>
-    <associate|bib-fruchterman|<tuple|25|141>>
-    <associate|bib-gibbons|<tuple|26|141>>
-    <associate|bib-godsil|<tuple|27|141>>
-    <associate|bib-goldfarb|<tuple|28|141>>
-    <associate|bib-haggard|<tuple|29|141>>
-    <associate|bib-haggard2|<tuple|30|141>>
-    <associate|bib-hakimi|<tuple|31|141>>
-    <associate|bib-helsgaun|<tuple|32|141>>
-    <associate|bib-hierholzer|<tuple|33|141>>
-    <associate|bib-hinz|<tuple|34|141>>
-    <associate|bib-hopcroft|<tuple|35|142>>
-    <associate|bib-hu|<tuple|36|142>>
-    <associate|bib-hu2|<tuple|37|142>>
-    <associate|bib-kahn|<tuple|38|142>>
-    <associate|bib-krishnaiyan|<tuple|59|142>>
-    <associate|bib-latapy|<tuple|39|142>>
-    <associate|bib-lca|<tuple|57|142>>
-    <associate|bib-mckay|<tuple|40|142>>
-    <associate|bib-melissa|<tuple|15|141>>
-    <associate|bib-monagan|<tuple|41|142>>
-    <associate|bib-myrwold|<tuple|42|142>>
-    <associate|bib-newman|<tuple|43|142>>
-    <associate|bib-nijenhuis|<tuple|44|142>>
-    <associate|bib-ostergard|<tuple|45|142>>
-    <associate|bib-otter|<tuple|46|142>>
-    <associate|bib-padberg|<tuple|47|142>>
-    <associate|bib-pferschy|<tuple|49|142>>
-    <associate|bib-plestenjak|<tuple|50|142>>
-    <associate|bib-schank|<tuple|52|142>>
-    <associate|bib-schank2|<tuple|51|142>>
-    <associate|bib-steger|<tuple|53|142>>
-    <associate|bib-tarjan-bridges|<tuple|56|142>>
-    <associate|bib-tarjan-elem|<tuple|54|142>>
-    <associate|bib-tarjan72|<tuple|55|142>>
-    <associate|bib-tarjan86|<tuple|58|142>>
-    <associate|bib-tomita|<tuple|60|142>>
-    <associate|bib-tutte|<tuple|61|142>>
-    <associate|bib-walker|<tuple|62|142>>
-    <associate|bib-wasserman|<tuple|63|142>>
-    <associate|bib-welch|<tuple|64|142>>
-    <associate|bib-west|<tuple|65|142>>
-    <associate|bib-wilf|<tuple|66|142>>
-    <associate|bib-yen|<tuple|67|142>>
-    <associate|blockjoin|<tuple|6.1|133>>
+    <associate|bib-afzal|<tuple|1|143>>
+    <associate|bib-alonso|<tuple|2|143>>
+    <associate|bib-andova|<tuple|3|143>>
+    <associate|bib-bagatelj|<tuple|4|143>>
+    <associate|bib-bayati|<tuple|5|143>>
+    <associate|bib-bellman|<tuple|6|143>>
+    <associate|bib-biggs|<tuple|7|143>>
+    <associate|bib-blanusa|<tuple|8|143>>
+    <associate|bib-bollobas|<tuple|9|143>>
+    <associate|bib-boot|<tuple|10|143>>
+    <associate|bib-brelaz|<tuple|11|143>>
+    <associate|bib-buchheim|<tuple|12|143>>
+    <associate|bib-christofides|<tuple|13|143>>
+    <associate|bib-cook|<tuple|14|143>>
+    <associate|bib-cpap|<tuple|48|144>>
+    <associate|bib-diaz|<tuple|16|143>>
+    <associate|bib-diestel|<tuple|17|143>>
+    <associate|bib-dijkstra|<tuple|18|143>>
+    <associate|bib-edmonds|<tuple|19|143>>
+    <associate|bib-edmonds-karp|<tuple|20|143>>
+    <associate|bib-esfahanian|<tuple|21|143>>
+    <associate|bib-even-algorithms|<tuple|22|143>>
+    <associate|bib-floyd|<tuple|23|143>>
+    <associate|bib-ford|<tuple|24|143>>
+    <associate|bib-fruchterman|<tuple|25|143>>
+    <associate|bib-gibbons|<tuple|26|143>>
+    <associate|bib-godsil|<tuple|27|143>>
+    <associate|bib-goldfarb|<tuple|28|143>>
+    <associate|bib-haggard|<tuple|29|143>>
+    <associate|bib-haggard2|<tuple|30|143>>
+    <associate|bib-hakimi|<tuple|31|143>>
+    <associate|bib-helsgaun|<tuple|32|143>>
+    <associate|bib-hierholzer|<tuple|33|143>>
+    <associate|bib-hinz|<tuple|34|143>>
+    <associate|bib-hopcroft|<tuple|35|144>>
+    <associate|bib-hu|<tuple|36|144>>
+    <associate|bib-hu2|<tuple|37|144>>
+    <associate|bib-kahn|<tuple|38|144>>
+    <associate|bib-krishnaiyan|<tuple|59|144>>
+    <associate|bib-latapy|<tuple|39|144>>
+    <associate|bib-lca|<tuple|57|144>>
+    <associate|bib-mckay|<tuple|40|144>>
+    <associate|bib-melissa|<tuple|15|143>>
+    <associate|bib-monagan|<tuple|41|144>>
+    <associate|bib-myrwold|<tuple|42|144>>
+    <associate|bib-newman|<tuple|43|144>>
+    <associate|bib-nijenhuis|<tuple|44|144>>
+    <associate|bib-ostergard|<tuple|45|144>>
+    <associate|bib-otter|<tuple|46|144>>
+    <associate|bib-padberg|<tuple|47|144>>
+    <associate|bib-pferschy|<tuple|49|144>>
+    <associate|bib-plestenjak|<tuple|50|144>>
+    <associate|bib-schank|<tuple|52|144>>
+    <associate|bib-schank2|<tuple|51|144>>
+    <associate|bib-steger|<tuple|53|144>>
+    <associate|bib-tarjan-bridges|<tuple|56|144>>
+    <associate|bib-tarjan-elem|<tuple|54|144>>
+    <associate|bib-tarjan72|<tuple|55|144>>
+    <associate|bib-tarjan86|<tuple|58|144>>
+    <associate|bib-tomita|<tuple|60|144>>
+    <associate|bib-tutte|<tuple|61|144>>
+    <associate|bib-walker|<tuple|62|144>>
+    <associate|bib-wasserman|<tuple|63|144>>
+    <associate|bib-welch|<tuple|64|144>>
+    <associate|bib-west|<tuple|65|144>>
+    <associate|bib-wilf|<tuple|66|144>>
+    <associate|bib-yen|<tuple|67|144>>
+    <associate|blockjoin|<tuple|6.1|135>>
     <associate|canonical-labeling|<tuple|4.3.2|79>>
-    <associate|cheapest-paths|<tuple|5.2.2|123>>
-    <associate|chordface|<tuple|6.2|134>>
-    <associate|circle-method|<tuple|6.1.6|135>>
+    <associate|cheapest-paths|<tuple|5.2.2|124>>
+    <associate|chordface|<tuple|6.2|136>>
+    <associate|circle-method|<tuple|6.1.6|137>>
     <associate|clustering-coefficient|<tuple|4.12.2|110>>
     <associate|connected-components|<tuple|4.5.2|86>>
     <associate|departures-arrivals|<tuple|4.1.7|68>>
     <associate|digraph|<tuple|1.1.2|10>>
-    <associate|draw-graph|<tuple|6.1|129>>
+    <associate|draw-graph|<tuple|6.1|131>>
     <associate|eq:chromatic-poly|<tuple|4.1|82>>
     <associate|eq:flow-poly|<tuple|4.2|83>>
     <associate|eq:reliability-poly|<tuple|4.3|84>>
@@ -16002,7 +16065,7 @@
     <associate|footnote-3.2|<tuple|3.2|61>>
     <associate|footnote-4.1|<tuple|4.1|81>>
     <associate|footnote-4.2|<tuple|4.2|101>>
-    <associate|footnote-5.1|<tuple|5.1|124>>
+    <associate|footnote-5.1|<tuple|5.1|125>>
     <associate|footnr-1|<tuple|1|7>>
     <associate|footnr-1.1|<tuple|1.1|42>>
     <associate|footnr-2|<tuple|2|7>>
@@ -16010,16 +16073,16 @@
     <associate|footnr-3.2|<tuple|3.2|61>>
     <associate|footnr-4.1|<tuple|4.1|81>>
     <associate|footnr-4.2|<tuple|4.2|101>>
-    <associate|footnr-5.1|<tuple|5.1|124>>
+    <associate|footnr-5.1|<tuple|5.1|125>>
     <associate|frucht|<tuple|1.6.10|23>>
     <associate|graph|<tuple|1.1.1|9>>
     <associate|graph-equal|<tuple|4.1.3|64>>
     <associate|graph-products|<tuple|1.9.8|33>>
     <associate|graph-spectrum|<tuple|4.2.6|75>>
     <associate|graph-union|<tuple|1.9.4|31>>
-    <associate|highlight-subgraph|<tuple|6.3.3|138>>
-    <associate|highlight-trail|<tuple|6.3.2|137>>
-    <associate|highlight-vertices|<tuple|6.3.1|137>>
+    <associate|highlight-subgraph|<tuple|6.3.3|140>>
+    <associate|highlight-trail|<tuple|6.3.2|139>>
+    <associate|highlight-vertices|<tuple|6.3.1|139>>
     <associate|import-graph|<tuple|3.1.1|59>>
     <associate|induced-subgraph|<tuple|1.8.2|26>>
     <associate|is-bipartite|<tuple|4.1.9|70>>
@@ -16036,19 +16099,19 @@
     <associate|maximum-matching|<tuple|4.10.1|103>>
     <associate|minimal-coloring|<tuple|4.13.2|114>>
     <associate|minimum-covering|<tuple|4.11.4|107>>
-    <associate|number-of-spanning-trees|<tuple|5.3.3|128>>
+    <associate|number-of-spanning-trees|<tuple|5.3.3|129>>
     <associate|random-graph|<tuple|1.10.1|38>>
     <associate|random-network|<tuple|1.10.8|47>>
     <associate|random-planar|<tuple|1.10.4|44>>
-    <associate|set-vertex-positions|<tuple|6.2.1|135>>
+    <associate|set-vertex-positions|<tuple|6.2.1|137>>
     <associate|st-ordering|<tuple|4.9.3|101>>
     <associate|st53|<tuple|3.1|61>>
     <associate|strongly-connected-components|<tuple|4.5.6|88>>
     <associate|subgraph|<tuple|1.8.1|25>>
     <associate|tab:colors|<tuple|4.1|114>>
-    <associate|touchface|<tuple|6.3|134>>
+    <associate|touchface|<tuple|6.3|136>>
     <associate|trail|<tuple|1.2.3|14>>
-    <associate|traveling-salesman|<tuple|5.2.4|124>>
+    <associate|traveling-salesman|<tuple|5.2.4|125>>
     <associate|tutte-polynomial|<tuple|4.4.1|80>>
     <associate|underlying-graph|<tuple|1.8.3|26>>
     <associate|vertex-attribute|<tuple|2.4.2|56>>

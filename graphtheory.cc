@@ -6062,21 +6062,13 @@ gen _is_hamiltonian(const gen &g,GIAC_CONTEXT) {
     }
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G.is_directed())
-        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     graphe::ivector hc;
-    int res=G.is_hamiltonian(true,hc);
-    if (res==0 || (res!=-1 && is_undef(dest)))
-        return graphe::boole((bool)res);
-    double cost;
-    if (res!=1 || hc.empty())
-        res=G.find_hamiltonian_cycle(hc,cost);
-    if (res==0)
-        return graphe::FAUX;
-    if (res==-1)
-        return undef;
-    identifier_assign(*dest._IDNTptr,G.get_node_labels(hc),contextptr);
-    return graphe::VRAI;
+    bool res=G.is_hamiltonian(hc);
+    if (res && !is_undef(dest)) {
+        if (hc.empty()) assert(G.hamcycle(hc));
+        identifier_assign(*dest._IDNTptr,G.get_node_labels(hc),contextptr);
+    }
+    return graphe::boole(res);
 }
 static const char _is_hamiltonian_s[]="is_hamiltonian";
 static define_unary_function_eval(__is_hamiltonian,&_is_hamiltonian,_is_hamiltonian_s);
@@ -6117,7 +6109,7 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
-    if (G.is_hamiltonian(false,h)==0)
+    if (G.hamcond()==0)
         return generr("The input graph is not Hamiltonian");
     /* parse options */
     bool approximate=false,make_distances=false;
@@ -6151,9 +6143,9 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
             gt_err(_GT_ERR_WEIGHTED_GRAPH_REQUIRED);
         if (!G.is_clique())
             return generr("The input graph must be complete");
-        G.find_hamiltonian_cycle(h,cost,true);
+        G.traveling_salesman(h,cost,true);
     } else {
-        res=U.is_biconnected()?G.find_hamiltonian_cycle(h,cost):0;
+        res=U.is_biconnected()?G.traveling_salesman(h,cost):0;
         if (res==0)
             return generr("The input graph is not Hamiltonian");
         if (res==-1)

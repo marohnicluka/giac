@@ -705,7 +705,7 @@ private:
     static int pred(int i,int n);
     static int succ(int i,int n);
     static void arc_path(int i,int j,const ivector &cycle,ivector &path);
-    void fold_face(const ivector &face, bool subdivide,int &label);
+    void fold_face(const ivector &face,bool subdivide,int &label);
     void find_chords(const ivector &face,ipairs &chords);
     void augment(const ivectors &faces,int outer_face,bool subdivide=false);
     int saturation_degree(const vertex &v,std::set<int> &colors) const;
@@ -736,6 +736,7 @@ private:
     static inline gen harmonic_mean_exact(gen a,gen b,gen c) { return 3*a*b*c/(a*b+b*c+a*c); }
     static inline double harmonic_mean(double a,double b,double c) { return 3.0*a*b*c/(a*b+b*c+a*c); }
     void strec(int i,int t,int counter,int np,iset &Q,vecteur &timestamp,vecteur &l);
+    bool hamcycle_recurse(ivector &path,int pos);
 
 public:
     graphe(const context *contextptr=context0,bool support_attributes=true);
@@ -1034,8 +1035,10 @@ public:
     gen aut_generators() const;
     bool canonical_labeling(ivector &lab) const;
     bool bondy_chvatal_closure(graphe &G,ivector &d);
-    int is_hamiltonian(bool conclusive,ivector &hc,bool make_closure=true);
-    int find_hamiltonian_cycle(ivector &h,double &cost,bool approximate=false);
+    int hamcond(bool make_closure=true);
+    bool is_hamiltonian(ivector &hc);
+    bool hamcycle(ivector &path);
+    int traveling_salesman(ivector &h,double &cost,bool approximate=false);
     bool make_euclidean_distances();
     gen maxflow_edmonds_karp(int s,int t,std::vector<std::map<int,gen> > &flow,const gen &limit=plusinf());
     void minimum_cut(int s,const std::vector<std::map<int,gen> > &flow,ipairs &cut);

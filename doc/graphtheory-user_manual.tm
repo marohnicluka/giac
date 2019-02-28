@@ -13066,26 +13066,26 @@
   <subsection|Hamiltonian graphs>
 
   The command <verbatim|is_hamiltonian><index|<verbatim|is_hamiltonian>> is
-  used for determining whether an undirected graph is Hamiltonian. The
-  command can also construct a <hlink|<rigid|Hamiltonian
-  cycle>|https://en.wikipedia.org/wiki/Hamiltonian_path> in the input graph
-  if the latter is Hamiltonian.
+  used for determining whether a graph is Hamiltonian. The command can also
+  construct a <hlink|<rigid|Hamiltonian cycle>|https://en.wikipedia.org/wiki/Hamiltonian_path>
+  in the input graph if the latter is Hamiltonian.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|is_hamiltonian(G)>>>|<row|<cell|>|<cell|<verbatim|is_hamiltonian(G,hc)>>>>>>
 
-  <verbatim|is_hamiltonian> takes one or two arguments, an undirected graph
+  <verbatim|is_hamiltonian> takes one or two arguments, a (di)graph
   <math|G<around*|(|V,E|)>> and optionally an unassigned identifier
   <verbatim|hc>. The command returns <verbatim|true> if <math|G> is
-  Hamiltonian and <verbatim|false> otherwise. When failing to determine
-  whether <math|G> is Hamiltonian or not, <verbatim|is_hamiltonian> returns
-  <verbatim|undef>. If the second argument is given, a Hamiltonian cycle is
-  stored to <verbatim|hc>.
+  Hamiltonian and <verbatim|false> otherwise. If the second argument is
+  given, a Hamiltonian cycle is stored to <verbatim|hc>.
 
-  The strategy is to apply some hamiltonicity criteria presented by
-  <name|DeLeon> <cite|melissa> before resorting to the definitive but NP-hard
-  algorithm. If <math|G> is not biconnected, it is not Hamiltonian. Else, the
-  criterion of <name|Dirac> is applied: if
-  <math|\<delta\><around*|(|G|)>\<geqslant\><frac|<around*|\||V|\|>|2>>,
+  The strategy is to apply a simple backtracking algorithm for finding a
+  Hamiltonian cycle. If <math|G> is directed, vertex degrees are checked
+  first: <verbatim|is_hamiltonian> immediately returns false if a vertex with
+  zero in-degree or zero out-degree is found. If <math|G> is undirected then
+  some criteria for hamiltonicity, presented by <name|DeLeon> <cite|melissa>,
+  are applied prior to backtracking as follows. If <math|G> is not
+  biconnected, then <math|G> is not Hamiltonian. Else, the criterion of
+  <name|Dirac> is applied: if <math|\<delta\><around*|(|G|)>\<geqslant\><frac|<around*|\||V|\|>|2>>,
   where <math|\<delta\><around*|(|G|)>=min<around*|{|deg<around*|(|v|)>\<of\>v\<in\>V|}>>,
   then <math|G> is Hamiltonian. Else, if <math|G> is bipartite with vertex
   partition <math|V=V<rsub|1>\<cup\>V<rsub|2>> and
@@ -13105,9 +13105,7 @@
   edge density of <math|G> is large enough, the criterion of <name|Nash> and
   <name|Williams> is applied: if <math|\<delta\><around*|(|G|)>\<geqslant\>max<around*|{|<frac|n+2|3>,\<beta\>|}>>,
   where <math|\<beta\>> is the independence number of <math|G>, then <math|G>
-  is Hamiltonian. If all of the above criteria fail, the command
-  <verbatim|<hlink|traveling_salesman|#traveling-salesman>> is called, either
-  to find a Hamiltonian cycle in <math|G> or to determine that none exist.
+  is Hamiltonian.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -13165,15 +13163,43 @@
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>
-      is_hamiltonian(hypercube_graph(9))
+      is_hamiltonian(hypercube_graph(6))
     <|unfolded-io>
       <\equation*>
         <text|true>
       </equation*>
 
-      <timing|6.04 sec>
+      <timing|11.15 sec>
     </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      G:=digraph(%{[1,2],[1,3],[1,7],[2,1],[2,3],[3,2],[3,4],[4,1],[4,5],[5,2],[5,6],[6,2],[6,7],[7,3]%})
+    <|unfolded-io>
+      <\equation*>
+        <text|a directed unweighted graph with 7 vertices and 14 arcs>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      purge(hc):; is_hamiltonian(G,hc)
+    <|unfolded-io>
+      <\equation*>
+        <text|true>
+      </equation*>
+    </unfolded-io>
+
+    <\input>
+      \<gtr\>\ 
+    <|input>
+      draw_graph(highlight_trail(G,hc),spring)
+    </input>
   </session>
+
+  <center|<image|images/hamcyc.eps|35%|||>>
 
   <section|Optimal routing>
 
@@ -15786,11 +15812,11 @@
     <associate|auto-361|<tuple|5.2.3|124>>
     <associate|auto-362|<tuple|5.2.4|124>>
     <associate|auto-363|<tuple|5.2.4|124>>
-    <associate|auto-364|<tuple|5.3|126>>
-    <associate|auto-365|<tuple|5.3.1|126>>
-    <associate|auto-366|<tuple|5.3.1|126>>
-    <associate|auto-367|<tuple|5.3.2|127>>
-    <associate|auto-368|<tuple|5.3.2|127>>
+    <associate|auto-364|<tuple|5.3|127>>
+    <associate|auto-365|<tuple|5.3.1|127>>
+    <associate|auto-366|<tuple|5.3.1|127>>
+    <associate|auto-367|<tuple|5.3.2|128>>
+    <associate|auto-368|<tuple|5.3.2|128>>
     <associate|auto-369|<tuple|5.3.3|128>>
     <associate|auto-37|<tuple|1.5.2|17>>
     <associate|auto-370|<tuple|5.3.3|128>>

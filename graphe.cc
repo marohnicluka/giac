@@ -6890,8 +6890,8 @@ void graphe::walker::walk(int i,int pass,int level,double modsum) {
     } else if (pass==2) {
         if (node_counters[level]>0 && G->node(levels[level][node_counters[level]-1]).ancestor()!=v.ancestor())
             ++gap_counters[level];
-        levels[level][position[i]=node_counters[level]]=i;
-        ++node_counters[level];
+        position[i]=node_counters[level]++;
+        levels[level][position[i]]=i;
         if (children[i]>0) {
             gaps[i]=gap_counters[level];
             gap_counters[level]=0;

@@ -16940,6 +16940,7 @@ path_graph(5)
 is_eulerian(complete_graph(4))
 is_eulerian(complete_graph(5))
 is_eulerian(graph(trail(1,2,3,1,4,3,5,4)),T)
+is_eulerian(digraph(%{[1,4],[1,3],[2,1],[3,2],[4,5],[5,1]%}))
 
 # kneser_graph
 0 Intg(n),Intg(k)
@@ -17488,9 +17489,10 @@ trail2edges([1,2,3,4,1,3])
 
 # traveling_salesman
 0 Graph(G),[Mtrx(M)],[opts]
-2 Returns a Hamiltonian cycle in undirected unweighted graph G or solves traveling salesman problem if G is weighted (matrix M can be used for edge weights), returning a sequence containing the minimal cost and the corresponding Hamiltonian cycle.
+2 Returns a Hamiltonian cycle in an unweighted graph G or solves traveling salesman problem if G is weighted (matrix M can be used for edge weights), returning a sequence containing the minimal cost and the corresponding Hamiltonian cycle.
 -1 is_hamiltonian
 traveling_salesman(hypercube_graph(5))
+traveling_salesman(digraph(%{[[1,2],1],[[1,3],2],[[2,3],2],[[2,4],3],[[3,2],3],[[3,4],2],[[4,1],1]%}))
  M:=randmatrix(4,4,99); traveling_salesman(graph("tetrahedron"),M)
  G:=set_vertex_positions(complete_graph(42),[randvector(2,1000)$(k=1..42)]); traveling_salesman(G,vertex_distance)
  G:=set_vertex_positions(complete_graph(120),[randvector(2,1000)$(k=1..120)]); c,T:=traveling_salesman(G,vertex_distance,approx)
@@ -17501,6 +17503,7 @@ traveling_salesman(hypercube_graph(5))
 -1 traveling_salesman
 is_hamiltonian(graph("petersen"))
 is_hamiltonian(hypercube_graph(5),C)
+is_hamiltonian(digraph(%{[1,2],[1,3],[2,3],[2,4],[3,2],[3,4],[4,1]%}))
 
 # is_network
 0 Graph(G),[Vrtx(s),Vrtx(t)]

@@ -10040,19 +10040,32 @@ bool graphe::is_hamiltonian(ivector &hc) {
       case 1: return true;
       default: break;
       }
-    } else {   
+    } else {
+        ivectors components;
+        strongly_connected_components(components);  
+        if (components.size()>1) return false; // graph is not strongly connected
+        if (is_tournament()) return true;
+        vecteur dv=degree_sequence();
+        bool isham=true;
         int n=node_count();
-        vector<bool> has_in(n,false),has_out(n,false);
-        for (int i=0;i<n;++i) {
-            const vertex &v=node(i);
-            if (v.neighbors().size()>0) has_out[i]=true;
-            for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
-                has_in[*it]=true;
+        for (const_iterateur it=dv.begin();it!=dv.end();++it) {
+            if (it->val<n) {
+               isham=false;
+               break;
             }
         }
-        for (int i=0;i<n;++i) {
-            if (!has_in[i] || !has_out[i]) return false;
+        if (isham) return true;
+        isham=true;
+        for (int i=0;isham && i<n;++i) {
+            for (int j=0;j<n;++j) {
+                if (i==j) continue;
+                if (!has_edge(i,j) && !has_edge(j,i) && (dv[i]+dv[j]).val<2*n-1) {
+                    isham=false;
+                    break;
+                }
+            }
         }
+        if (isham) return true;
     }
     return hamcycle(hc);
 }
@@ -10525,20 +10538,33 @@ bool graphe::tsp::find_subgraph_subtours(ivectors &sv,solution_status &status) {
             append_sce(*it);
         }
         subtours.clear();
-        if ((lres=glp_simplex(mip,&lparm))==0 && glp_get_status(mip)==GLP_OPT)
+        /* solve */
+        if ((lres=glp_simplex(mip,&lparm))==0 &&
+            ((stat=glp_get_status(mip))==GLP_OPT || stat==GLP_FEAS))
             res=glp_intopt(mip,&parm);
-        else res=-1;
-        stat=glp_get_status(mip);
-        if (res==0 && stat==GLP_OPT)
-            status=_GT_TSP_OPTIMAL;
-        else if (lres==0 && stat==GLP_NOFEAS) {
-            status=_GT_TSP_NOT_HAMILTONIAN;
+        else if (lres!=0 || stat==GLP_UNDEF || stat==GLP_UNBND) {
+            status=_GT_TSP_ERROR;
             break;
         } else {
+            status=_GT_TSP_NOT_HAMILTONIAN;
+            break;
+        }
+        if (res!=0 || (stat=glp_mip_status(mip))==GLP_UNDEF) {
             status=_GT_TSP_ERROR;
             retval=false;
             break;
         }
+        switch (stat) {
+        case GLP_FEAS:
+            *logptr(G->giac_context()) << "Warning: the solution is not necessarily optimal" << endl;
+        case GLP_OPT:
+            status=_GT_TSP_OPTIMAL;
+            break;
+        case GLP_NOFEAS:
+            status=_GT_TSP_NOT_HAMILTONIAN;
+            break;
+        }
+        if (status==_GT_TSP_NOT_HAMILTONIAN) break;
         if (!get_subtours()) {
             status=_GT_TSP_NOT_HAMILTONIAN;
             break;
@@ -10626,7 +10652,7 @@ bool graphe::tsp::get_subtours() {
     ivector sol;
     int m=glp_get_num_cols(mip),i,j;
     for (i=0;i<m;++i) {
-        if (glp_mip_col_val(mip,i+1)!=0)
+        if (glp_mip_col_val(mip,i+1)>0.5)
             sol.push_back(i);
     }
     if (sg<0) {
@@ -11652,12 +11678,167 @@ void graphe::tsp::min_wpm_callback(glp_tree *tree,void *info) {
     }
 }
 
-#endif
 /*
 * END OF TSP CLASS IMPLEMENTATION
 */
 
-/* Try to find an optimal Hamiltonian circuit.
+/*
+ * ATSP CLASS (asymmetric traveling salesman problem)
+ */
+ 
+graphe::atsp::atsp(graphe *gr,const ipairs &must_include_arcs) {
+    G=gr;
+    mia=must_include_arcs;
+    mip=NULL;
+    isweighted=G->is_weighted();
+}
+
+graphe::atsp::~atsp() {
+    if (mip!=NULL) glp_delete_prob(mip);
+}
+
+bool graphe::atsp::solve(ivector &hc,double &cost) {
+    if (mip!=NULL) glp_erase_prob(mip);
+    else mip=glp_create_prob();
+    glp_set_obj_dir(mip,GLP_MIN);
+    int n=G->node_count(),nz=8+8*n*(n-2)+n*ft.size(),i,j,r,c=0;
+    int *u=new int[n];
+    int **x=new int*[n];
+    for (i=0;i<n;++i) x[i]=new int[n];
+    int *ia=new int[nz+1];
+    int *ja=new int[nz+1];
+    double *ar=new double[nz+1];
+    double w;
+    gen e;
+    ipairs E;
+    G->get_edges_as_pairs(E);
+    /* add variables */
+    for (ipairs_iter it=E.begin();it!=E.end();++it) {
+        i=it->first; j=it->second;
+        x[i][j]=glp_add_cols(mip,1);
+        if (find(mia.begin(),mia.end(),*it)!=mia.end())
+            glp_set_col_bnds(mip,x[i][j],GLP_FX,1,1);
+        else glp_set_col_kind(mip,x[i][j],GLP_BV);
+        if (isweighted) {
+            e=_evalf(G->weight(i,j),G->giac_context());
+            if (e.type!=_DOUBLE_) {
+                *logptr(G->giac_context()) << "Warning: arc weight " << e
+                                           << " is not numeric, replacing by 1" << endl;
+                w=1;
+            } else w=e.DOUBLE_val();
+        } else w=1;
+        glp_set_obj_coef(mip,x[i][j],w);
+    }
+    for (i=1;i<n;++i) {
+        u[i]=glp_add_cols(mip,1);
+        glp_set_col_bnds(mip,u[i],GLP_DB,2,n);
+    }
+    /* create the basic constraints */
+    for (i=0;i<n;++i) {
+        r=glp_add_rows(mip,2);
+        glp_set_row_bnds(mip,r,GLP_FX,1,1);
+        glp_set_row_bnds(mip,r+1,GLP_FX,1,1);
+        for (j=0;j<n;++j) {
+            if (i==j) continue;
+            if (G->has_edge(i,j)) { ia[++c]=x[i][j]; ja[c]=r; ar[c]=1; }
+            if (G->has_edge(j,i)) { ia[++c]=x[j][i]; ja[c]=r+1; ar[c]=1; }
+        }
+    }
+    /* SEC: an enhanced formulation of Miller et al. */
+    for (i=1;i<n;++i) {
+        for (j=1;j<n;++j) {
+            if (i==j) continue;
+            r=glp_add_rows(mip,1);
+            glp_set_row_bnds(mip,r,GLP_UP,0,n-1);
+            ia[++c]=u[i]; ja[c]=r; ar[c]=1;
+            ia[++c]=u[j]; ja[c]=r; ar[c]=-1;
+            if (G->has_edge(i,j)) { ia[++c]=x[i][j]; ja[c]=r; ar[c]=n; }
+            if (G->has_edge(j,i)) { ia[++c]=x[j][i]; ja[c]=r; ar[c]=n-2; }
+        }
+    }
+    /* forbid the specified tours */
+    for (ivectors_iter it=ft.begin();it!=ft.end();++it) {
+        r=glp_add_rows(mip,1);
+        glp_set_row_bnds(mip,r,GLP_UP,0,n-1);
+        for (int k=0;k<n;++k) {
+            i=it->at(k); j=it->at(k+1);
+            assert(G->has_edge(i,j));
+            ia[++c]=x[i][j]; ja[c]=r; ar[c]=1;
+        }
+    }
+    assert(c<=nz);
+    glp_load_matrix(mip,c,ja,ia,ar);
+    delete[] ia; delete[] ja; delete[] ar; delete[] u;
+    /* solve the problem */
+    glp_iocp parm;
+    glp_init_iocp(&parm);
+    parm.msg_lev=GLP_OFF;
+    parm.br_tech=GLP_BR_FFV;
+    parm.presolve=GLP_ON;
+    parm.gmi_cuts=GLP_ON;
+    parm.mir_cuts=GLP_ON;
+    parm.fp_heur=GLP_ON;
+    bool ret=false;
+    if (glp_intopt(mip,&parm)==0) {
+        ret=true;
+        switch(glp_mip_status(mip)) {
+        case GLP_FEAS:
+            *logptr(G->giac_context()) << "Warning: the solution is not necessarily optimal" << endl;
+        case GLP_OPT:
+            break;
+        case GLP_UNDEF:
+            *logptr(G->giac_context()) << "Warning: obtained an undefined solution" << endl;
+        case GLP_NOFEAS:
+            ret=false;
+            break;
+        }
+        if (ret) {
+            cost=glp_mip_obj_val(mip);
+            int n=G->node_count(),i,j,pos=0;
+            hc.resize(n+1,0);
+            while (pos<n) {
+                i=hc[pos];
+                for (j=0;j<n;++j) {
+                    if (i==j || !G->has_edge(i,j)) continue;
+                    if (glp_mip_col_val(mip,x[i][j])>0.5) {
+                        hc[++pos]=j;
+                        break;
+                    }
+                }
+                assert(j<n);
+            }
+            assert(hc.back()==hc.front());
+        }
+    }
+    for (i=0;i<n;++i) delete[] x[i];
+    delete[] x;
+    return ret;
+}
+
+void graphe::atsp::ksolve(int k,ivectors &hcv,dvector &costs) {
+    hcv.clear();
+    costs.clear();
+    ft.clear();
+    hcv.reserve(k);
+    costs.reserve(k);
+    ft.reserve(k-1);
+    ivector hc;
+    double cost;
+    for (int cnt=0;cnt<k;++cnt) {
+        if (!solve(hc,cost)) break;
+        hcv.push_back(hc);
+        costs.push_back(cost);
+        if (cnt<k-1) ft.push_back(hc);
+    }
+}
+
+/*
+* END OF ATSP CLASS IMPLEMENTATION
+*/
+
+#endif
+
+/* Try to find an optimal Hamiltonian cycle.
  * Return 0 if the graph is not Hamiltonian, else store the circuit in h
  * and return 1, if unable to solve return -1 */
 int graphe::traveling_salesman(ivector &h,double &cost,bool approximate) {
@@ -11674,6 +11855,19 @@ int graphe::traveling_salesman(ivector &h,double &cost,bool approximate) {
 #else
     message("Error: GLPK library is required for solving traveling salesman problem");
     return -1;
+#endif
+}
+
+/* find first k optimal tours in directed graph */
+bool graphe::find_directed_tours(int k,ivectors &hcv,dvector &costs,const ipairs &incl) {
+    assert(is_directed());
+#ifdef HAVE_LIBGLPK
+    atsp t(this,incl);
+    t.ksolve(k,hcv,costs);
+    return true;
+#else
+    message("Error: GLPK library is required for solving traveling salesman problem");
+    return false;
 #endif
 }
 
@@ -12191,12 +12385,6 @@ gen graphe::tutte_polynomial(const gen &x,const gen &y) {
             poly_mult(p,G.tutte_poly_recurse(1));
         }
     }
-    /*
-    cout << "Iterations: " << tutte_iter_count
-         << ", Hits: " << tutte_hits
-         << ", Cache size: " << cache.size()
-         << ", Matching time: " << tutte_matching_time << endl;
-         */
     /* clear the cache and return the Tutte polynomial p */
     for (map<ivector,vector<cpol> >::iterator it=cache.begin();it!=cache.end();++it) {
         for (vector<cpol>::const_iterator jt=it->second.begin();jt!=it->second.end();++jt) {

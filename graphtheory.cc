@@ -1082,6 +1082,16 @@ gen _import_graph(const gen &g,GIAC_CONTEXT) {
         gt_err(_GT_ERR_READING_FAILED);
         return undef;
     }
+    gen_map m;
+    gen l;
+    for (int i=0;i<G.node_count();++i) {
+        l=G.node_label(i);
+        if (!is_exactly_zero(m[l])) {
+            *logptr(contextptr) << "Warning: imported graph contains equally labeled vertices" << endl;
+            break;
+        }
+        m[l]=1;
+    }
     return G.to_gen();
 }
 static const char _import_graph_s[]="import_graph";
@@ -6135,8 +6145,54 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
     graphe::ivector h;
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G.is_directed())
-        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
+    if (!M.empty() && !G.is_weighted()) {
+        if (!is_squarematrix(M) || int(M.size())!=G.node_count())
+            return generrdim("The given weight matrix has invalid dimensions");
+        G.make_weighted(M);
+    }
+    if (G.is_directed()) {
+        /* solve ATSP */
+        graphe::ipairs incl;
+        int i,j,k=1;
+        for (const_iterateur it=options.begin();it!=options.end();++it) {
+            if (it==options.begin() && it->is_symb_of_sommet(at_equal) &&
+                it->_SYMBptr->feuille._VECTptr->front()==at_is_included &&
+                it->_SYMBptr->feuille._VECTptr->back().type==_VECT) {
+                const vecteur &v=*it->_SYMBptr->feuille._VECTptr->back()._VECTptr;
+                if (ckmatrix(v)) {
+                    incl.reserve(v.size());
+                    for (const_iterateur jt=v.begin();jt!=v.end();++jt) {
+                        if (jt->_VECTptr->size()!=2)
+                            return generr("Expected an edge");
+                        i=G.node_index(jt->_VECTptr->front());
+                        j=G.node_index(jt->_VECTptr->back());
+                        if (i<0 || j<0) return gt_err(_GT_ERR_EDGE_NOT_FOUND);
+                        incl.push_back(make_pair(i,j));
+                    }
+                } else if (v.size()==2) {
+                    i=G.node_index(v.front());
+                    j=G.node_index(v.back());
+                    if (i<0 || j<0) return gt_err(_GT_ERR_EDGE_NOT_FOUND);
+                    incl.push_back(make_pair(i,j));
+                } else return generr("Expected an edge or list of edges");
+            } else if (it->is_integer() && it->val>0) {
+                k=it->val;
+            } else return generr("Option not supported");
+        }
+        graphe::ivectors hcv;
+        graphe::dvector costs;
+        if (!G.find_directed_tours(k,hcv,costs,incl))
+            return undef;
+        if (hcv.empty())
+            return generr("Unable to find Hamiltonian cycle");
+        vecteur res;
+        G.ivectors2vecteur(hcv,res,false);
+        vecteur cv(costs.size());
+        for (iterateur it=cv.begin();it!=cv.end();++it) *it=gen(costs[it-cv.begin()]);
+        if (G.is_weighted())
+            return makesequence(k==1?cv.front():cv,k==1?res.front():res);
+        return k==1?res.front():res;
+    }
     if (G.hamcond()==0)
         return generr("The input graph is not Hamiltonian");
     /* parse options */
@@ -6147,16 +6203,16 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
             approximate=true;
         else if (approximate && it->is_integer())
             time_limit=it->val;
+        else if (approximate && it->is_symb_of_sommet(at_equal) &&
+                 it->_SYMBptr->feuille._VECTptr->front()==at_limit &&
+                 it->_SYMBptr->feuille._VECTptr->back().is_integer())
+            time_limit=it->_SYMBptr->feuille._VECTptr->back().val;
         else if (*it==at_vertex_distance && M.empty())
             make_distances=true;
+        else return generr("Option not supported");
     }
     if (time_limit<0)
         return generr("Expected a nonnegative integer");
-    if (!M.empty() && !G.is_weighted()) {
-        if (!is_squarematrix(M) || int(M.size())!=G.node_count())
-            return generrdim("The given weight matrix has invalid dimensions");
-        G.make_weighted(M);
-    }
     if (make_distances) {
         if (G.is_weighted())
             return gt_err(_GT_ERR_UNWEIGHTED_GRAPH_REQUIRED);

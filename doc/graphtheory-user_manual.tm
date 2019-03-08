@@ -8329,11 +8329,11 @@
   <subsection|Canonical labeling><label|canonical-labeling>
 
   Graph isomorphism testing in <samp|nauty> is based on computing the
-  canonical labelings for the input graphs. The <strong|canonical labeling>
-  of <math|G> is a particular ordering of the vertices of <math|G>.
-  Rearranging the vertices with respect to that ordering produces the
-  <strong|canonical representation> of <math|G>. Two graphs are isomorphic if
-  and only if their canonical representations share the same edge structure.
+  canonical labeling for the input graphs. The <strong|canonical labeling> of
+  <math|G> is a particular ordering of the vertices of <math|G>. Rearranging
+  the vertices with respect to that ordering produces the <strong|canonical
+  representation> of <math|G>. Two graphs are isomorphic if and only if their
+  canonical representations share the same edge structure.
 
   The command <verbatim|canonical_labeling><index|<verbatim|canonical_labeling>>
   is used for computing the canonical labeling as a permutation. One can
@@ -9892,7 +9892,7 @@
   </session>
 
   To visualize the bridges of <math|G>, one can highlight the edges of each
-  component. The remaining (unhighlighted) edges are the bridges.
+  component. The remaining (un-highlighted) edges are the bridges.
 
   <\session|giac|default>
     <\input>
@@ -13013,7 +13013,7 @@
   <verbatim|T>, and returns <verbatim|true> if <math|G> is Eulerian and
   <verbatim|false> otherwise. If the second argument is given and <math|G> is
   undirected, an Eulerian trail is computed and stored to <verbatim|T>. This
-  is curently not supported for digraphs.
+  is currently not supported for digraphs.
 
   The strategy for finding an Eulerian trail is to apply <name|Hierholzer>'s
   algorithm<nbsp><cite|hierholzer>. It works by covering one cycle at a time
@@ -13142,33 +13142,49 @@
   given, a Hamiltonian cycle is stored to <verbatim|hc>.
 
   The strategy is to apply a simple backtracking algorithm for finding a
-  Hamiltonian cycle. If <math|G> is directed, vertex degrees are checked
-  first: <verbatim|is_hamiltonian> immediately returns false if a vertex with
-  zero in-degree or zero out-degree is found. If <math|G> is undirected then
-  some criteria for hamiltonicity, presented by <name|DeLeon> <cite|melissa>,
-  are applied prior to backtracking as follows. If <math|G> is not
-  biconnected, then <math|G> is not Hamiltonian. Else, the criterion of
-  <name|Dirac> is applied: if <math|\<delta\><around*|(|G|)>\<geqslant\><frac|<around*|\||V|\|>|2>>,
-  where <math|\<delta\><around*|(|G|)>=min<around*|{|deg<around*|(|v|)>\<of\>v\<in\>V|}>>,
-  then <math|G> is Hamiltonian. Else, if <math|G> is bipartite with vertex
-  partition <math|V=V<rsub|1>\<cup\>V<rsub|2>> and
-  <math|<around*|\||V<rsub|1>|\|>\<neq\><around*|\||V<rsub|2>|\|>>, then
-  <math|G> is not Hamiltonian. Else, the criterion of <name|Ore> is applied:
-  if <math|deg<around*|(|u|)>+deg<around*|(|v|)>\<geqslant\>n> holds for
-  every pair <math|u,v> of non-adjacent vertices from <math|V>, then <math|G>
-  is Hamiltonian. Else, the theorem of <name|Bondy> and <name|Chvátal> is
-  applied: if the closure <math|cl<around*|(|G|)>> of <math|G> (obtained by
-  finding a pair <math|u,v> of non-adjacent vertices from <math|V> such that
-  <math|deg<around*|(|u|)>+deg<around*|(|v|)>\<geqslant\>n>, adding a new
-  edge <math|u v> to <math|E> and repeating the process until exhaustion) is
-  Hamiltonian, then <math|G> is Hamiltonian. (Note that in this case the
-  previously tried criteria are applied to <math|cl<around*|(|G|)>>; since
-  the vertex degrees in <math|cl<around*|(|G|)>> are generally higher than
-  those in <math|G>, the probability of success also rises.) Else, if the
-  edge density of <math|G> is large enough, the criterion of <name|Nash> and
-  <name|Williams> is applied: if <math|\<delta\><around*|(|G|)>\<geqslant\>max<around*|{|<frac|n+2|3>,\<beta\>|}>>,
-  where <math|\<beta\>> is the independence number of <math|G>, then <math|G>
-  is Hamiltonian.
+  Hamiltonian cycle. However, some known characterizations of
+  (non)hamiltonicity are checked first, as follows.
+
+  <\itemize-minus>
+    <item>If <math|G> is directed then the following criteria are applied. If
+    <math|G> is not strongly connected, then it is not Hamiltonian.
+    Otherwise, the criterion of <name|Ghouila> and <name|Houri> <cite|hao> is
+    applied: if <math|deg<around*|(|v|)>\<geqslant\><around*|\||V|\|>> for
+    all <math|v\<in\>V>, then <math|G> is Hamiltonian. Otherwise, the
+    criterion of <name|Meyniel> <cite|hao> is applied: if
+    <math|deg<around*|(|v|)>+deg<around*|(|w|)>\<geqslant\>2*n-1> for any
+    pair of non-adjacent vertices <math|v,w\<in\>V>, then <math|G> is
+    Hamiltonian.
+
+    <item>If <math|G> is undirected then the criteria presented by
+    <name|DeLeon> <cite|melissa> are applied. If <math|G> is not biconnected,
+    then <math|G> is not Hamiltonian. Otherwise, the criterion of
+    <name|Dirac> is applied: if <math|\<delta\><around*|(|G|)>\<geqslant\><frac|<around*|\||V|\|>|2>>,
+    where <math|\<delta\><around*|(|G|)>=min<around*|{|deg<around*|(|v|)>\<of\>v\<in\>V|}>>,
+    then <math|G> is Hamiltonian. Otherwise, if <math|G> is bipartite with
+    vertex partition <math|V=V<rsub|1>\<cup\>V<rsub|2>> and
+    <math|<around*|\||V<rsub|1>|\|>\<neq\><around*|\||V<rsub|2>|\|>>, then
+    <math|G> is not Hamiltonian. Otherwise, the criterion of <name|Ore> is
+    applied: if <math|deg<around*|(|u|)>+deg<around*|(|v|)>\<geqslant\>n>
+    holds for every pair <math|u,v> of non-adjacent vertices from <math|V>,
+    then <math|G> is Hamiltonian. Otherwise, the theorem of <name|Bondy> and
+    <name|Chvátal> is applied: if the closure <math|cl<around*|(|G|)>> of
+    <math|G> (obtained by finding a pair <math|u,v> of non-adjacent vertices
+    from <math|V> such that <math|deg<around*|(|u|)>+deg<around*|(|v|)>\<geqslant\>n>,
+    adding a new edge <math|u v> to <math|E> and repeating the process until
+    exhaustion) is Hamiltonian, then <math|G> is Hamiltonian. (Note that in
+    this case the previously tried criteria are applied to
+    <math|cl<around*|(|G|)>>; since the vertex degrees in
+    <math|cl<around*|(|G|)>> are generally higher than those in <math|G>, the
+    probability of success also rises.) Otherwise, if the edge density of
+    <math|G> is large enough, the criterion of <name|Nash> and
+    <name|Williams> is applied: if <math|\<delta\><around*|(|G|)>\<geqslant\>max<around*|{|<frac|n+2|3>,\<beta\>|}>>,
+    where <math|\<beta\>> is the independence number of <math|G>, then
+    <math|G> is Hamiltonian.
+  </itemize-minus>
+
+  The backtracking algorithm is space efficient, but may take a long time on
+  larger graphs.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -13479,10 +13495,11 @@
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|traveling_salesman(G,[opts])>>>|<row|<cell|>|<cell|<verbatim|traveling_salesman(G,M,[opts])>>>>>>
 
-  <verbatim|traveling_salesman> takes the following arguments: an undirected
-  graph <math|G<around*|(|V,E|)>>, a weight matrix <math|M> (optional) and a
+  <verbatim|traveling_salesman> takes the following arguments: a (di)graph
+  <math|G<around*|(|V,E|)>>, a weight matrix <math|M> (optional) and a
   sequence of options (optional). The supported options are <verbatim|approx>
-  and <verbatim|vertex_distance>.
+  and <verbatim|vertex_distance> for undirected graphs and
+  <verbatim|is_included=arc\|[arcs]> for directed graphs.
 
   If the input graph <math|G> is unweighted and <math|M> is not specified, a
   Hamiltonian cycle (tour) is returned (the adjacency matrix of <math|G> is
@@ -13498,31 +13515,45 @@
   required for each vertex in <math|G> to have a predefined position.
 
   If the option <verbatim|approx> is passed, a near-optimal tour is returned.
-  In this case it is required that <math|G> is a complete weighted graph. For
-  larger graphs, this is significantly faster than finding optimal tour.
-  Results thus obtained are usually only a few percent larger than the
+  In this case it is required that <math|G> is a complete undirected weighted
+  graph. For larger graphs, this is significantly faster than finding optimal
+  tour. Results thus obtained are usually only a few percent larger than the
   corresponding optimal values, despite the fact that the reported guarantee
   is generally much weaker (around 30%).
 
-  The strategy is to formulate <abbr|TSP> as a linear programming problem and
-  to solve it by branch-and-cut method, applying the hierarchical clustering
-  method of <name|Pferschy> and <name|Stan¥k><nbsp><cite|pferschy> to
-  generate subtour elimination constraints. The branching rule is implemented
-  according to <name|Padberg> and <name|Rinaldi><nbsp><cite|padberg>. In
-  addition, the algorithm combines the method of
-  <name|Christofides><nbsp><cite|christofides>, the method of farthest
-  insertion and a variant of the powerful tour improvement heuristic
+  If the option <verbatim|is_included=arc\|[arcs]> is passed, then the
+  algorithm finds a shortest Hamiltonian cycle in <math|G> which contains the
+  specified arc(s).
+
+  When <math|G> is a digraph, an optional argument <verbatim|k> may be
+  passed, which must be a positive integer. If <math|k\<gtr\>1> then the
+  first <math|k> shortest Hamiltonian cycles are returned (the return value
+  is a sequence containing the list of tour costs and the list of the
+  corresponding Hamiltonian cycles).
+
+  The strategy for undirected graphs is to formulate <abbr|TSP> as a linear
+  programming problem and to solve it by branch-and-cut method, applying the
+  hierarchical clustering method of <name|Pferschy> and
+  <name|Stan¥k><nbsp><cite|pferschy> to generate subtour elimination
+  constraints. The branching rule is implemented according to <name|Padberg>
+  and <name|Rinaldi><nbsp><cite|padberg>. In addition, the algorithm combines
+  the method of <name|Christofides><nbsp><cite|christofides>, the method of
+  farthest insertion and a variant of the powerful tour improvement heuristic
   developed by <name|Lin> and <name|Kernighan><nbsp><cite|helsgaun> to
   generate near-optimal feasible solutions during the branch-and-cut process.
 
   For Euclidean <abbr|TSP> instances, i.e.<nbsp>in cases when <math|G> is a
-  complete graph with vertex distances as the edge weights, the algorithm
-  usually finishes in a few seconds for <abbr|TSP> with up to, say, 42
-  cities. For problems with 100 or more cities, the option <verbatim|approx>
-  is recommended as finding the optimal value takes a long time. Note that
-  <abbr|TSP> is <abbr|NP>-hard, meaning that no polynomial time algorithm is
-  known. Hence the algorithm may take exponential time to find the optimum in
-  some instances.
+  complete undirected graph with vertex distances as edge weights, the
+  algorithm usually finishes in a few seconds for <abbr|TSP> with up to, say,
+  42 cities. For problems with 100 or more cities, the option
+  <verbatim|approx> is recommended as finding the optimal value takes a long
+  time. Note that <abbr|TSP> is <abbr|NP>-hard, meaning that no polynomial
+  time algorithm is known. Hence the algorithm may take exponential time to
+  find the optimum in some instances.
+
+  For directed graphs, a linear programming formulation of the problem, using
+  enhanced subtour elimination constraints of <name|Miller>, <name|Tucker>
+  and <name|Zemlin> <cite|sawik>, is solved by branch-and-cut method.
 
   The following example demonstrates finding a Hamiltonian cycle in the
   truncated icosahedral (\Psoccer ball\Q) graph. The result is visualized by
@@ -13591,6 +13622,61 @@
   </session>
 
   <center|<image|images/tsp4.eps|35%|||>>
+
+  The following examples demonstrate finding shortest Hamiltonian cycle(s) in
+  a weighted directed graph.
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      D:=digraph(%{[[1,2],2],[[1,3],3],[[2,3],2],[[2,5],4],[[3,2],3],[[3,5],5],[[4,1],2],[[4,1],1],[[4,2],4],[[5,4],3]%})
+    <|unfolded-io>
+      <\equation*>
+        <text|a directed weighted graph with 5 vertices and 9 arcs>
+      </equation*>
+    </unfolded-io>
+
+    <\input>
+      \<gtr\>\ 
+    <|input>
+      draw_graph(D,circle=[1,3,2,5,4])
+    </input>
+  </session>
+
+  <center|<image|images/diham.eps|35%|||>>
+
+  <\session|giac|default>
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      traveling_salesman(D)
+    <|unfolded-io>
+      <\equation*>
+        14.0,<around|[|1,2,3,5,4,1|]>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      traveling_salesman(D,is_included=[2,5])
+    <|unfolded-io>
+      <\equation*>
+        15.0,<around|[|1,3,2,5,4,1|]>
+      </equation*>
+    </unfolded-io>
+
+    <\unfolded-io>
+      \<gtr\>\ 
+    <|unfolded-io>
+      traveling_salesman(D,2)
+    <|unfolded-io>
+      <\equation*>
+        <around|[|14.0,15.0|]>,<around*|(|<tabular*|<tformat|<cwith|1|-1|1|1|cell-halign|c>|<cwith|1|-1|1|1|cell-lborder|0ln>|<cwith|1|-1|2|2|cell-halign|c>|<cwith|1|-1|3|3|cell-halign|c>|<cwith|1|-1|4|4|cell-halign|c>|<cwith|1|-1|5|5|cell-halign|c>|<cwith|1|-1|6|6|cell-halign|c>|<cwith|1|-1|6|6|cell-rborder|0ln>|<table|<row|<cell|1>|<cell|2>|<cell|3>|<cell|5>|<cell|4>|<cell|1>>|<row|<cell|1>|<cell|3>|<cell|2>|<cell|5>|<cell|4>|<cell|1>>>>>|)>
+      </equation*>
+    </unfolded-io>
+  </session>
 
   In the next example, an instance of Euclidean <abbr|TSP> with 42 cities is
   solved to optimality. The vertex positions are pairs of integers randomly
@@ -14836,7 +14922,7 @@
   <center|<image|images/sg2.eps|35%|||>>
 
   <\bibliography|bib|tm-plain|graphtheory>
-    <\bib-list|67>
+    <\bib-list|69>
       <bibitem*|1><label|bib-afzal>Shehzad Afzal<localize| and >Clemens
       Brand. <newblock>Recognizing triangulated Cartesian graph products.
       <newblock><with|font-shape|italic|Discrete Mathematics>, 312:188\U193,
@@ -15037,64 +15123,75 @@
       <newblock><with|font-shape|italic|Theor.<nbsp>Comput.<nbsp>Sci.>,
       407:458\U473, 2008.<newblock>
 
-      <bibitem*|40><label|bib-mckay>B.<nbsp>D.<nbsp>McKay<localize| and
+      <bibitem*|40><label|bib-hao>Hao Li, Evelyne Flandrin<localize|, and
+      >Jinlong Shu. <newblock>A sufficient condition for cyclability in
+      directed graphs. <newblock><with|font-shape|italic|Discrete
+      Mathematics>, 307(11\U12):1291\U1297, May 2007.<newblock>
+
+      <bibitem*|41><label|bib-mckay>B.<nbsp>D.<nbsp>McKay<localize| and
       >A.<nbsp>Piperno. <newblock>Practical Graph Isomorphism, II.
       <newblock><with|font-shape|italic|J.<nbsp>Symbolic Computation>,
       60:94\U112, 2013.<newblock>
 
-      <bibitem*|41><label|bib-monagan>Michael Monagan. <newblock>A new edge
+      <bibitem*|42><label|bib-monagan>Michael Monagan. <newblock>A new edge
       selection heuristic for computing Tutte polynomials.
       <newblock><localize|In ><with|font-shape|italic|Proceedings of FPSAC
       2012>, <localize|pages >839\U850.<newblock>
 
-      <bibitem*|42><label|bib-myrwold>Wendy Myrwold<localize| and >Willian
+      <bibitem*|43><label|bib-myrwold>Wendy Myrwold<localize| and >Willian
       Kocay. <newblock>Errors in graph embedding algorithms.
       <newblock><with|font-shape|italic|Journal of Computer and System
       Sciences>, 77(2):430\U438, 2011.<newblock>
 
-      <bibitem*|43><label|bib-newman>M.<nbsp>E.<nbsp>Newman,
+      <bibitem*|44><label|bib-newman>M.<nbsp>E.<nbsp>Newman,
       D.<nbsp>J.<nbsp>Watts<localize|, and >S.<nbsp>H.<nbsp>Strogatz.
       <newblock>Random graph models of social networks.
       <newblock><with|font-shape|italic|Proc Natl Acad Sci USA>,
       99:2566\U2572, 2002.<newblock>
 
-      <bibitem*|44><label|bib-nijenhuis>Albert Nijenhuis<localize| and
+      <bibitem*|45><label|bib-nijenhuis>Albert Nijenhuis<localize| and
       >Herbert<nbsp>S.<nbsp>Wilf. <newblock><with|font-shape|italic|Combinatorial
       Algorithms>. <newblock>Computer Science and Applied Mathematics.
       Academic Press, Second<localize| edition>, 1978.<newblock>
 
-      <bibitem*|45><label|bib-ostergard>Patric<nbsp>R.<nbsp>J.<nbsp>Östergård.
+      <bibitem*|46><label|bib-ostergard>Patric<nbsp>R.<nbsp>J.<nbsp>Östergård.
       <newblock>A fast algorithm for the maximum clique problem.
       <newblock><with|font-shape|italic|Discrete Applied Mathematics>,
       120:197\U207, 2002.<newblock>
 
-      <bibitem*|46><label|bib-otter>Richard Otter. <newblock>The Number of
+      <bibitem*|47><label|bib-otter>Richard Otter. <newblock>The Number of
       Trees. <newblock><with|font-shape|italic|The Annals of Mathematics, 2nd
       Ser.>, 49(3):583\U599, 1948.<newblock>
 
-      <bibitem*|47><label|bib-padberg>Manfred Padberg<localize| and >Giovanni
+      <bibitem*|48><label|bib-padberg>Manfred Padberg<localize| and >Giovanni
       Rinaldi. <newblock>A Branch-and-Cut Algorithm for the Resolution of
       Large-Scale Symmetric Traveling Salesman Problems.
       <newblock><with|font-shape|italic|SIAM Review>, 33(1):60\U100,
       1991.<newblock>
 
-      <bibitem*|48><label|bib-cpap>Charalampos Papamanthou<localize| and
+      <bibitem*|49><label|bib-cpap>Charalampos Papamanthou<localize| and
       >Ioannis<nbsp>G.<nbsp>Tollis. <newblock>Algorithms for computing a
       parametrized st-orientation. <newblock><with|font-shape|italic|Theoretical
       Computer Science>, 408:224\U240, 2008.<newblock>
 
-      <bibitem*|49><label|bib-pferschy>Ulrich Pferschy<localize| and
+      <bibitem*|50><label|bib-pferschy>Ulrich Pferschy<localize| and
       >Rostislav Stan¥k. <newblock>Generating subtour elimination constraints
       for the TSP from pure integer solutions.
       <newblock><with|font-shape|italic|Central European Journal of
       Operations Research>, 25:231\U260, 2017.<newblock>
 
-      <bibitem*|50><label|bib-plestenjak>Bor Plestenjak. <newblock>An
+      <bibitem*|51><label|bib-plestenjak>Bor Plestenjak. <newblock>An
       Algorithm for Drawing Planar Graphs.
       <newblock><with|font-shape|italic|Software: Practice and Experience>,
       29(11):973\U984, 1999.<newblock>
 
-      <bibitem*|51><label|bib-schank2>T.<nbsp>Schank<localize| and
+      <bibitem*|52><label|bib-sawik>Tadeusz Sawik. <newblock>A note on the
+      Miller-Tucker-Zemlin model for the asymmetric traveling salesman
+      problem. <newblock><with|font-shape|italic|Bulletin of the Polish
+      Academy of Sciences: Technical Sciences>, 64(3):517\U520, January
+      2016.<newblock>
+
+      <bibitem*|53><label|bib-schank2>T.<nbsp>Schank<localize| and
       >D.<nbsp>Wagner. <newblock>Finding, Counting and Listing All Triangles
       in Large Graphs, an Experimental Study. <newblock><localize|In
       >S.<nbsp>E.<nbsp>Nikoletseas<localize|, editor>,
@@ -15103,82 +15200,82 @@
       <localize|pages >606\U609. Springer, Berlin, Heidelberg,
       2005.<newblock>
 
-      <bibitem*|52><label|bib-schank>Thomas Schank<localize| and >Dorothea
+      <bibitem*|54><label|bib-schank>Thomas Schank<localize| and >Dorothea
       Wagner. <newblock>Approximating Clustering Coefficient and
       Transitivity. <newblock><with|font-shape|italic|Journal of Graph
       Algorithms and Applications>, 9(2):265\U275, 2005.<newblock>
 
-      <bibitem*|53><label|bib-steger>Angelika Steger<localize| and
+      <bibitem*|55><label|bib-steger>Angelika Steger<localize| and
       >Nicholas<nbsp>C.<nbsp>Wormald. <newblock>Generating random regular
       graphs quickly. <newblock><with|font-shape|italic|Combinatorics
       Probability and Computing>, 8(4):377\U396, 1999.<newblock>
 
-      <bibitem*|54><label|bib-tarjan-elem>R.<nbsp>E.<nbsp>Tarjan.
+      <bibitem*|56><label|bib-tarjan-elem>R.<nbsp>E.<nbsp>Tarjan.
       <newblock>Enumeration of the elementary circuits of a directed graph.
       <newblock><with|font-shape|italic|SIAM J.<nbsp>Comput.>, 2(3):211\U216,
       1973.<newblock>
 
-      <bibitem*|55><label|bib-tarjan72>R.<nbsp>E.<nbsp>Tarjan.
+      <bibitem*|57><label|bib-tarjan72>R.<nbsp>E.<nbsp>Tarjan.
       <newblock>Depth-First Search and Linear Graph Algorithms.
       <newblock><with|font-shape|italic|SIAM Journal on Comp.>,
       1(2):146\U160, 1972.<newblock>
 
-      <bibitem*|56><label|bib-tarjan-bridges>R.<nbsp>E.<nbsp>Tarjan.
+      <bibitem*|58><label|bib-tarjan-bridges>R.<nbsp>E.<nbsp>Tarjan.
       <newblock>A note on finding the bridges of a graph.
       <newblock><with|font-shape|italic|Information Processing Letters>,
       2(6):160\U161, 1974.<newblock>
 
-      <bibitem*|57><label|bib-lca>R.<nbsp>E.<nbsp>Tarjan.
+      <bibitem*|59><label|bib-lca>R.<nbsp>E.<nbsp>Tarjan.
       <newblock>Applications of path compression on balanced trees.
       <newblock><with|font-shape|italic|Journal of the ACM>, 26(4):690\U715,
       1979.<newblock>
 
-      <bibitem*|58><label|bib-tarjan86>R.<nbsp>E.<nbsp>Tarjan. <newblock>Two
+      <bibitem*|60><label|bib-tarjan86>R.<nbsp>E.<nbsp>Tarjan. <newblock>Two
       streamlined depth-first search algorithms.
       <newblock><with|font-shape|italic|Fundamenta Informaticae>, 9:85\U94,
       1986.<newblock>
 
-      <bibitem*|59><label|bib-krishnaiyan>K.<nbsp>Thulasiraman,
+      <bibitem*|61><label|bib-krishnaiyan>K.<nbsp>Thulasiraman,
       S.<nbsp>Arumugam, A.<nbsp>Brandstädt<localize|, and
       >T.<nbsp>Nishizeki<localize|, editors>.
       <newblock><with|font-shape|italic|Handbook of Graph Theory,
       Combinatorial Optimization, and Algorithms>. <newblock>CRC Press,
       2016.<newblock>
 
-      <bibitem*|60><label|bib-tomita>Etsuji Tomita, Akira Tanaka<localize|,
+      <bibitem*|62><label|bib-tomita>Etsuji Tomita, Akira Tanaka<localize|,
       and >Haruhisa Takahashi. <newblock>The worst-case time complexity for
       generating all maximal cliques and computational experiments.
       <newblock><with|font-shape|italic|Theoretical Computer Science>,
       363:28\U42, 2006.<newblock>
 
-      <bibitem*|61><label|bib-tutte>W.<nbsp>T.<nbsp>Tutte. <newblock>How to
+      <bibitem*|63><label|bib-tutte>W.<nbsp>T.<nbsp>Tutte. <newblock>How to
       draw a graph. <newblock><with|font-shape|italic|Proceedings of the
       London Mathematical Society>, s3-13(1):743\U767, 1963.<newblock>
 
-      <bibitem*|62><label|bib-walker>John<nbsp>Q.<nbsp>Walker II. <newblock>A
+      <bibitem*|64><label|bib-walker>John<nbsp>Q.<nbsp>Walker II. <newblock>A
       nodepositioning algorithm for general trees.
       <newblock><with|font-shape|italic|Software: Practice and Experience>,
       20(7):685\U705, 1990.<newblock>
 
-      <bibitem*|63><label|bib-wasserman>Stanley Wasserman<localize| and
+      <bibitem*|65><label|bib-wasserman>Stanley Wasserman<localize| and
       >Katherine Faust. <newblock><with|font-shape|italic|Social Network
       Analysis: Methods and Applications>. <newblock>Cambridge University
       Press, 1994.<newblock>
 
-      <bibitem*|64><label|bib-welch>E.<nbsp>Welch<localize| and
+      <bibitem*|66><label|bib-welch>E.<nbsp>Welch<localize| and
       >S.<nbsp>Kobourov. <newblock>Measuring Symmetry in Drawings of Graphs.
       <newblock><with|font-shape|italic|Computer Graphics Forum>,
       36(3):341\U351, 2017.<newblock>
 
-      <bibitem*|65><label|bib-west>Douglas<nbsp>B.<nbsp>West.
+      <bibitem*|67><label|bib-west>Douglas<nbsp>B.<nbsp>West.
       <newblock><with|font-shape|italic|Introduction to Graph Theory>.
       <newblock>Pearson Education, 2002.<newblock>
 
-      <bibitem*|66><label|bib-wilf>Herbert<nbsp>S.<nbsp>Wilf. <newblock>The
+      <bibitem*|68><label|bib-wilf>Herbert<nbsp>S.<nbsp>Wilf. <newblock>The
       Uniform Selection of Free Trees. <newblock><with|font-shape|italic|Journal
       of Algorithms>, 2:204\U207, 1981.<newblock>
 
-      <bibitem*|67><label|bib-yen>Jin<nbsp>Y.<nbsp>Yen. <newblock>Finding the
+      <bibitem*|69><label|bib-yen>Jin<nbsp>Y.<nbsp>Yen. <newblock>Finding the
       k Shortest Loopless Paths in a Network.
       <newblock><with|font-shape|italic|Management Science>, 17(11):712\U716,
       1971.<newblock>
@@ -15871,18 +15968,18 @@
     <associate|auto-358|<tuple|5.2.2|124>>
     <associate|auto-359|<tuple|5.2.2|124>>
     <associate|auto-36|<tuple|1.5.2|17>>
-    <associate|auto-360|<tuple|5.2.3|124>>
-    <associate|auto-361|<tuple|5.2.3|124>>
+    <associate|auto-360|<tuple|5.2.3|125>>
+    <associate|auto-361|<tuple|5.2.3|125>>
     <associate|auto-362|<tuple|5.2.4|125>>
     <associate|auto-363|<tuple|5.2.4|125>>
-    <associate|auto-364|<tuple|5.3|127>>
-    <associate|auto-365|<tuple|5.3.1|127>>
-    <associate|auto-366|<tuple|5.3.1|127>>
-    <associate|auto-367|<tuple|5.3.2|128>>
-    <associate|auto-368|<tuple|5.3.2|128>>
-    <associate|auto-369|<tuple|5.3.3|129>>
+    <associate|auto-364|<tuple|5.3|128>>
+    <associate|auto-365|<tuple|5.3.1|128>>
+    <associate|auto-366|<tuple|5.3.1|128>>
+    <associate|auto-367|<tuple|5.3.2|129>>
+    <associate|auto-368|<tuple|5.3.2|129>>
+    <associate|auto-369|<tuple|5.3.3|130>>
     <associate|auto-37|<tuple|1.5.2|17>>
-    <associate|auto-370|<tuple|5.3.3|129>>
+    <associate|auto-370|<tuple|5.3.3|130>>
     <associate|auto-371|<tuple|6|131>>
     <associate|auto-372|<tuple|6.1|131>>
     <associate|auto-373|<tuple|6.1|131>>
@@ -15910,7 +16007,7 @@
     <associate|auto-393|<tuple|6.3.3|140>>
     <associate|auto-394|<tuple|6.3.3|140>>
     <associate|auto-395|<tuple|6.3.3|143>>
-    <associate|auto-396|<tuple|67|145>>
+    <associate|auto-396|<tuple|69|145>>
     <associate|auto-4|<tuple|1.1.1|9>>
     <associate|auto-40|<tuple|1.6.1|17>>
     <associate|auto-41|<tuple|1.6.1|17>>
@@ -15992,7 +16089,7 @@
     <associate|bib-buchheim|<tuple|12|143>>
     <associate|bib-christofides|<tuple|13|143>>
     <associate|bib-cook|<tuple|14|143>>
-    <associate|bib-cpap|<tuple|48|144>>
+    <associate|bib-cpap|<tuple|49|144>>
     <associate|bib-diaz|<tuple|16|143>>
     <associate|bib-diestel|<tuple|17|143>>
     <associate|bib-dijkstra|<tuple|18|143>>
@@ -16009,6 +16106,7 @@
     <associate|bib-haggard|<tuple|29|143>>
     <associate|bib-haggard2|<tuple|30|143>>
     <associate|bib-hakimi|<tuple|31|143>>
+    <associate|bib-hao|<tuple|40|144>>
     <associate|bib-helsgaun|<tuple|32|143>>
     <associate|bib-hierholzer|<tuple|33|143>>
     <associate|bib-hinz|<tuple|34|143>>
@@ -16016,35 +16114,36 @@
     <associate|bib-hu|<tuple|36|144>>
     <associate|bib-hu2|<tuple|37|144>>
     <associate|bib-kahn|<tuple|38|144>>
-    <associate|bib-krishnaiyan|<tuple|59|144>>
+    <associate|bib-krishnaiyan|<tuple|61|144>>
     <associate|bib-latapy|<tuple|39|144>>
-    <associate|bib-lca|<tuple|57|144>>
-    <associate|bib-mckay|<tuple|40|144>>
+    <associate|bib-lca|<tuple|59|144>>
+    <associate|bib-mckay|<tuple|41|144>>
     <associate|bib-melissa|<tuple|15|143>>
-    <associate|bib-monagan|<tuple|41|144>>
-    <associate|bib-myrwold|<tuple|42|144>>
-    <associate|bib-newman|<tuple|43|144>>
-    <associate|bib-nijenhuis|<tuple|44|144>>
-    <associate|bib-ostergard|<tuple|45|144>>
-    <associate|bib-otter|<tuple|46|144>>
-    <associate|bib-padberg|<tuple|47|144>>
-    <associate|bib-pferschy|<tuple|49|144>>
-    <associate|bib-plestenjak|<tuple|50|144>>
-    <associate|bib-schank|<tuple|52|144>>
-    <associate|bib-schank2|<tuple|51|144>>
-    <associate|bib-steger|<tuple|53|144>>
-    <associate|bib-tarjan-bridges|<tuple|56|144>>
-    <associate|bib-tarjan-elem|<tuple|54|144>>
-    <associate|bib-tarjan72|<tuple|55|144>>
-    <associate|bib-tarjan86|<tuple|58|144>>
-    <associate|bib-tomita|<tuple|60|144>>
-    <associate|bib-tutte|<tuple|61|144>>
-    <associate|bib-walker|<tuple|62|144>>
-    <associate|bib-wasserman|<tuple|63|144>>
-    <associate|bib-welch|<tuple|64|144>>
-    <associate|bib-west|<tuple|65|144>>
-    <associate|bib-wilf|<tuple|66|144>>
-    <associate|bib-yen|<tuple|67|144>>
+    <associate|bib-monagan|<tuple|42|144>>
+    <associate|bib-myrwold|<tuple|43|144>>
+    <associate|bib-newman|<tuple|44|144>>
+    <associate|bib-nijenhuis|<tuple|45|144>>
+    <associate|bib-ostergard|<tuple|46|144>>
+    <associate|bib-otter|<tuple|47|144>>
+    <associate|bib-padberg|<tuple|48|144>>
+    <associate|bib-pferschy|<tuple|50|144>>
+    <associate|bib-plestenjak|<tuple|51|144>>
+    <associate|bib-sawik|<tuple|52|144>>
+    <associate|bib-schank|<tuple|54|144>>
+    <associate|bib-schank2|<tuple|53|144>>
+    <associate|bib-steger|<tuple|55|144>>
+    <associate|bib-tarjan-bridges|<tuple|58|144>>
+    <associate|bib-tarjan-elem|<tuple|56|144>>
+    <associate|bib-tarjan72|<tuple|57|144>>
+    <associate|bib-tarjan86|<tuple|60|144>>
+    <associate|bib-tomita|<tuple|62|144>>
+    <associate|bib-tutte|<tuple|63|144>>
+    <associate|bib-walker|<tuple|64|144>>
+    <associate|bib-wasserman|<tuple|65|144>>
+    <associate|bib-welch|<tuple|66|144>>
+    <associate|bib-west|<tuple|67|144>>
+    <associate|bib-wilf|<tuple|68|144>>
+    <associate|bib-yen|<tuple|69|144>>
     <associate|blockjoin|<tuple|6.1|135>>
     <associate|canonical-labeling|<tuple|4.3.2|79>>
     <associate|cheapest-paths|<tuple|5.2.2|124>>
@@ -16099,7 +16198,7 @@
     <associate|maximum-matching|<tuple|4.10.1|103>>
     <associate|minimal-coloring|<tuple|4.13.2|114>>
     <associate|minimum-covering|<tuple|4.11.4|107>>
-    <associate|number-of-spanning-trees|<tuple|5.3.3|129>>
+    <associate|number-of-spanning-trees|<tuple|5.3.3|130>>
     <associate|random-graph|<tuple|1.10.1|38>>
     <associate|random-network|<tuple|1.10.8|47>>
     <associate|random-planar|<tuple|1.10.4|44>>
@@ -16293,6 +16392,10 @@
 
       hierholzer
 
+      hao
+
+      hao
+
       melissa
 
       dijkstra
@@ -16314,6 +16417,8 @@
       christofides
 
       helsgaun
+
+      sawik
 
       west
 

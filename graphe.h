@@ -354,6 +354,20 @@ public:
         double approx(ivector &hc);
         double tour_cost(const ivector &hc);
     };
+    
+    class atsp { // asymmetric traveling salesman problem
+        graphe *G;
+        glp_prob *mip;
+        ipairs mia; // must include arcs
+        ivectors ft; // forbidden tours
+        bool isweighted;
+        void formulate_mip();
+    public:
+        atsp(graphe *gr,const ipairs &must_include_arcs);
+        ~atsp();
+        bool solve(ivector &hc,double &cost); // find shortest tour
+        void ksolve(int k,ivectors &hcv,dvector &costs); // find k shortest tours
+    };
 #endif
 
     class rectangle { // simple rectangle class
@@ -1039,6 +1053,7 @@ public:
     bool is_hamiltonian(ivector &hc);
     bool hamcycle(ivector &path);
     int traveling_salesman(ivector &h,double &cost,bool approximate=false);
+    bool find_directed_tours(int k,ivectors &hcv,dvector &costs,const ipairs &incl);
     bool make_euclidean_distances();
     gen maxflow_edmonds_karp(int s,int t,std::vector<std::map<int,gen> > &flow,const gen &limit=plusinf());
     void minimum_cut(int s,const std::vector<std::map<int,gen> > &flow,ipairs &cut);

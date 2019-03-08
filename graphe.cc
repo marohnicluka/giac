@@ -10044,7 +10044,6 @@ bool graphe::is_hamiltonian(ivector &hc) {
         ivectors components;
         strongly_connected_components(components);  
         if (components.size()>1) return false; // graph is not strongly connected
-        if (is_tournament()) return true;
         vecteur dv=degree_sequence();
         bool isham=true;
         int n=node_count();

@@ -12364,8 +12364,8 @@
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|minimal_coloring(G)>>>|<row|<cell|>|<cell|<verbatim|minimal_coloring(G,sto)>>>>>>
 
-  <kbd|minimal_vertex_coloring> takes one mandatory argument, a graph
-  <math|G<around*|(|V,E|)>> where <math|V=<around*|{|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|n>|}>>.
+  <kbd|minimal_vertex_coloring> takes one mandatory argument, an undirected
+  graph <math|G<around*|(|V,E|)>> where <math|V=<around*|{|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|n>|}>>.
   Optionally, a symbol <kbd|sto> may be passed as the second argument. The
   command returns the vertex colors <math|c<rsub|1>,c<rsub|2>,\<ldots\>,c<rsub|n>>
   in order of <kbd|vertices(G)> or, if the second argument is given, stores
@@ -12432,14 +12432,14 @@
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|chromatic_number(G)>>>|<row|<cell|>|<cell|<verbatim|chromatic_number(G,c)>>>|<row|<cell|>|<cell|<verbatim|chromatic_number(G,approx\|interval)>>>>>>
 
-  <verbatim|chromatic_number> takes one mandatory argument, a graph
-  <math|G<around*|(|V,E|)>>, and optionally a second argument. To obtain only
-  upper and lower bound for the chromatic number (which is much faster than
-  computing exactly) the option <verbatim|approx> or <verbatim|interval>
-  should be passed as the second argument. Alternatively, an unassigned
-  identifier <verbatim|c> is passed as the second argument; in that case the
-  corresponding coloring will be stored to it in form of a list of colors of
-  the individual vertices, ordered as in <verbatim|vertices(G)>.
+  <verbatim|chromatic_number> takes one mandatory argument, an undirected
+  graph <math|G<around*|(|V,E|)>>, and optionally a second argument. To
+  obtain only upper and lower bound for the chromatic number (which is much
+  faster than computing exactly) the option <verbatim|approx> or
+  <verbatim|interval> should be passed as the second argument. Alternatively,
+  an unassigned identifier <verbatim|c> is passed as the second argument; in
+  that case the corresponding coloring will be stored to it in form of a list
+  of colors of the individual vertices, ordered as in <verbatim|vertices(G)>.
 
   The command returns the chromatic number <math|\<chi\><rsub|G>> of the
   graph <math|G> in the case of exact computation. If the option

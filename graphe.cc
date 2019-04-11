@@ -10438,8 +10438,7 @@ void graphe::tsp::formulate_mip() {
             j=*rt;
             l=edge_index(isdirected?(k<nrows0?make_pair(j,i):make_pair(i,j)):make_edge(i,j));
             assert(l<m);
-            ia[++cnt]=k+1; ja[cnt]=l+1;
-            ar[cnt]=1.0;
+            ia[++cnt]=k+1; ja[cnt]=l+1; ar[cnt]=1;
         }
     }
     /* build MIP */
@@ -10451,8 +10450,7 @@ void graphe::tsp::formulate_mip() {
         double lb=lower_bound();
         glp_set_row_bnds(mip,r,GLP_LO,lb,DBL_MAX);
         for (i=0;i<m;++i) {
-            ia[++cnt]=r; ja[cnt]=i+1;
-            ar[cnt]=obj[i];
+            ia[++cnt]=r; ja[cnt]=i+1; ar[cnt]=obj[i];
         }
     }
     glp_add_cols(mip,ncols);
@@ -10462,8 +10460,7 @@ void graphe::tsp::formulate_mip() {
     }
     assert(cnt<=nonzeros);
     glp_load_matrix(mip,cnt,ia,ja,ar);
-    delete[] ia; delete[] ja;
-    delete[] ar;
+    delete[] ia; delete[] ja; delete[] ar;
 }
 
 /* compute lower bound for the objective function using minimal spanning tree */

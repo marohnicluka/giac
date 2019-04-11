@@ -5002,6 +5002,8 @@ gen _chromatic_number(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr,false);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     if (only_provide_bounds) {
         graphe::ipair bounds=G.chromatic_number_bounds();
         return symbolic(at_interval,makesequence(bounds.first,bounds.second));
@@ -5863,6 +5865,8 @@ gen _minimal_vertex_coloring(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     G.exact_vertex_coloring();
     graphe::ivector colors;
     G.get_node_colors(colors);
@@ -6066,6 +6070,8 @@ gen _chromatic_index(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     graphe::ivector colors;
     int ncolors;
     G.exact_edge_coloring(colors,&ncolors);

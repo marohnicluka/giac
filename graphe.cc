@@ -12733,63 +12733,154 @@ void graphe::elementary_cycles(ivectors &cyc,int lo,int hi) {
     cyc=ce.find_cycles();
 }
 
-/* find k shortest paths from src to dest using Yen's algorithm */
-void graphe::yen_ksp(int K,int src,int dest,ivectors &spaths) {
-    assert(supports_attributes());
-    vecteur pw;
-    ivectors cp;
-    spaths.clear();
-    dijkstra(src,ivector(1,dest),pw,&cp);
-    if (cp[0].empty()) return;
-    spaths.push_back(cp.front());
-    set<pair<gen,ivector>,kspaths_comparator> paths;
-    int n,spurnode;
-    ivector path;
-    matrice W;
-    if (!is_weighted()) {
-        adjacency_matrix(W);
-        make_weighted(W);
+/*
+ * YEN CLASS IMPLEMENTATION
+ */
+
+void graphe::yen::delete_children(tree_node *r) {
+    for (vector<tree_node*>::const_iterator it=r->children.begin();it!=r->children.end();++it) {
+        delete_children(*it);
+        delete *it;
     }
-    weight_matrix(W);
-    ipairs removed_edges;
-    gen wg;
-    save_subgraphs();
-    unset_subgraphs(1);
-    for (int k=1;k<K;++k) {
-        const ivector &prevpath=spaths[k-1];
-        n=prevpath.size();
-        for (int i=0;i<n-1;++i) {
-            removed_edges.clear();
-            spurnode=prevpath[i];
-            path=ivector(prevpath.begin(),prevpath.begin()+i+1);
-            for (ivectors_iter it=spaths.begin();it!=spaths.end();++it) {
-                if (it->size()>path.size() && path==ivector(it->begin(),it->begin()+i+1)) {
-                    set_edge_attribute(it->at(i),it->at(i+1),_GT_ATTRIB_WEIGHT,plusinf());
-                    removed_edges.push_back(make_pair(it->at(i),it->at(i+1)));
-                }
-            }
-            for (int j=0;j<i;++j) {
-                node(path[j]).set_subgraph(0);
-            }
-            dijkstra(spurnode,ivector(1,dest),pw,&cp,1);
-            if (!cp[0].empty()) {
-                path.insert(path.end(),cp[0].begin()+1,cp[0].end());
-                wg=pw.front();
-                for (int j=0;j<i;++j) wg+=weight(path[j],path[j+1]);
-                paths.insert(make_pair(wg,path));
-            }
-            for (ipairs_iter it=removed_edges.begin();it!=removed_edges.end();++it) {
-                set_edge_attribute(it->first,it->second,_GT_ATTRIB_WEIGHT,W[it->first][it->second]);
-            }
-            for (int j=0;j<i;++j) {
-                node(path[j]).set_subgraph(1);
+}
+
+graphe::yen::tree_node *graphe::yen::add_tree_node(tree_node *p) {
+    if (p==NULL) {
+        root=new tree_node;
+        root->parent=NULL;
+        root->i=src;
+        return root;
+    }
+    tree_node *t;
+    p->children.push_back(t=new tree_node);
+    t->parent=p;
+    return t;
+}
+
+graphe::yen::~yen() {
+    if (root!=NULL) {
+        delete_children(root);
+        delete root;
+    }
+}
+
+graphe::yen::tree_node *graphe::yen::store_path(const ivector &path,tree_node *r) {
+    tree_node *t=r,*next;
+    int i,j,n=path.size();
+    for (i=1;i<n;++i) {
+        next=NULL;
+        for (vector<tree_node*>::const_iterator it=t->children.begin();it!=t->children.end();++it) {
+            if ((*it)->i==path[i]) {
+                next=*it;
+                break;
             }
         }
-        if (paths.empty()) break;
-        spaths.push_back(paths.begin()->second);
-        paths.erase(paths.begin());
+        if (next!=NULL) {
+            t=next;
+            continue;
+        }
+        t=add_tree_node(t);
+        t->i=path[i];
+        t->selected=false;
     }
-    restore_subgraphs();
+    return t;
+}
+
+void graphe::yen::select_path(tree_node *p) {
+    kspaths.push_back(p);
+    tree_node *t=p;
+    while (t!=NULL) {
+        if (t->selected) break;
+        t->selected=true;
+        t=t->parent;
+    }
+}
+
+void graphe::yen::restore_path(tree_node *p,ivector &path) {
+    tree_node *t=p;
+    path.clear();
+    while (t!=NULL) {
+        path.push_back(t->i);
+        t=t->parent;
+    }
+    std::reverse(path.begin(),path.end());
+}
+
+void graphe::yen::find_kspaths(ivectors &paths) {
+    assert(G->supports_attributes());
+    ivectors cp;
+    vecteur pw;
+    matrice W;
+    if (!G->is_weighted()) {
+        G->adjacency_matrix(W);
+        G->make_weighted(W);
+    }
+    G->weight_matrix(W);
+    paths.clear();
+    G->dijkstra(src,ivector(1,dest),pw,&cp);
+    if (cp.front().empty()) return;
+    kspaths.clear();
+    tree_node *p=store_path(cp.front(),add_tree_node(NULL)),*t,*next;
+    select_path(p);
+    stack<ipair> removed_edges;
+    gen wg;
+    int i,j,spur_node,tail,head;
+    set<pair<gen,tree_node*>,kspaths_comparator> candidates;
+    set<pair<gen,tree_node*>,kspaths_comparator>::const_iterator cit;
+    ivector path;
+    path.reserve(G->node_count());
+    G->save_subgraphs();
+    G->unset_subgraphs(1);
+    for (int k=1;k<K;++k) {
+        restore_path(p,path);
+        t=root;
+        for (i=0;i+1<(int)path.size();++i) {
+            spur_node=path[i];
+            for (vector<tree_node*>::const_iterator it=t->children.begin();it!=t->children.end();++it) {
+                if ((*it)->selected) {
+                    head=(*it)->i; tail=(*it)->parent->i;
+                    G->set_edge_attribute(tail,head,_GT_ATTRIB_WEIGHT,plusinf());
+                    removed_edges.push(make_pair(tail,head));
+                    if (head==path[i+1]) next=*it;
+                }
+            }
+            G->dijkstra(spur_node,ivector(1,dest),pw,&cp,1);
+            if (!cp.front().empty()) {
+                wg=pw.front();
+                for (j=0;j<i;++j) wg+=W[path[j]][path[j+1]];
+                candidates.insert(make_pair(wg,store_path(cp.front(),t)));
+            }
+            G->node(spur_node).set_subgraph(0);
+            t=next;
+        }
+        for (ivector_iter it=path.begin();it+1!=path.end();++it) {
+            G->node(*it).set_subgraph(1);
+        }
+        while (!removed_edges.empty()) {
+            i=removed_edges.top().first; j=removed_edges.top().second;
+            G->set_edge_attribute(i,j,_GT_ATTRIB_WEIGHT,W[i][j]);
+            removed_edges.pop();
+        }
+        if (candidates.empty()) break;
+        cit=candidates.begin();
+        p=cit->second;
+        select_path(p);
+        candidates.erase(cit);
+    }
+    G->restore_subgraphs();
+    for (vector<tree_node*>::const_iterator it=kspaths.begin();it!=kspaths.end();++it) {
+        restore_path(*it,path);
+        paths.push_back(path);
+    }
+}
+
+/*
+ * END OF YEN CLASS
+ */
+
+void graphe::yen_ksp(int K,int src,int dest,ivectors &paths) {
+    yen Y(this,src,dest,K);
+    Y.find_kspaths(paths);
 }
 
 #ifndef NO_NAMESPACE_GIAC

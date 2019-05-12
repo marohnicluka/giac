@@ -7144,6 +7144,8 @@ gen _kspaths(const gen &g,GIAC_CONTEXT) {
     dest=G.node_index(gv[2]);
     if (src<0 || dest<0)
         return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
+    if (src==dest)
+        return generr("source and destination vertices must be different");
     if (!gv.back().is_integer() || (k=gv.back().val)<=0)
         return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
     G.yen_ksp(k,src,dest,paths);
@@ -7182,7 +7184,7 @@ label20:
  *
  * Returns the list of all decompositions of n into k parts (the order of parts
  * matters). If zeros is set to false, the compositions containing zero are
- * omitte (by default, zeros=true).
+ * omitted (by default, zeros=true).
  */
 gen _icomp(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;

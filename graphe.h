@@ -490,6 +490,35 @@ public:
         int maxclique(ivector &clique);
     };
 
+    class yen { // Yen's k shortest paths algorithm
+        typedef struct tree_node {
+            int i;
+            bool selected;
+            tree_node *parent;
+            std::vector<tree_node*> children;
+        } tree_node;
+        struct kspaths_comparator {
+            bool operator()(const std::pair<gen,tree_node*> &a,const std::pair<gen,tree_node*> &b) {
+                if (is_zero(a.first-b.first))
+                    return a.second<b.second;
+                return is_strictly_greater(b.first,a.first,context0);
+            }
+        };
+        graphe *G;
+        tree_node *root;
+        int src, dest, K;
+        std::vector<tree_node*> kspaths;
+        tree_node *add_tree_node(tree_node *p);
+        tree_node *store_path(const ivector &path,tree_node *r);
+        void select_path(tree_node *p);
+        void restore_path(tree_node *p,ivector &path);
+        void delete_children(tree_node *r);
+    public:
+        yen(graphe *gr,int s,int d,int k) { G=gr; src=s; dest=d; K=k; root=NULL; }
+        ~yen();
+        void find_kspaths(ivectors &paths);
+    };
+
     struct edges_comparator { // for sorting edges by their weight
         graphe *G;
         bool operator()(const ipair &a,const ipair &b) {
@@ -527,14 +556,6 @@ public:
             return deg_a*b.size()>=deg_b*a.size();
         }
         ivectors_degree_comparator(graphe *gr) { G=gr; }
-    };
-
-    struct kspaths_comparator { // for sorting paths by their weight
-        bool operator()(const std::pair<gen,ivector> &a,const std::pair<gen,ivector> &b) const {
-            if (is_zero(a.first-b.first))
-                return a.second<b.second;
-            return is_strictly_greater(b.first,a.first,context0);
-        }
     };
 
     typedef std::vector<vertex>::const_iterator node_iter;
@@ -1068,7 +1089,7 @@ public:
     void truncate(graphe &dest,const ivectors &faces);
     void condensation(graphe &G);
     void elementary_cycles(ivectors &cyc,int lo,int hi);
-    void yen_ksp(int K,int src,int dest,ivectors &spaths);
+    void yen_ksp(int K,int src,int dest,ivectors &paths);
     void compute_in_out_degrees(ivector &ind,ivector &outd) const;
     static gen colon_label(int i,int j);
     static gen colon_label(int i,int j,int k);

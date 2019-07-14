@@ -1436,8 +1436,10 @@ void find_local_extrema(gen_map &cpts,const gen &f,const vecteur &g,const vecteu
                                 cls=_CPCLASS_SADDLE;
                             else {
                                 gen tmp=_fsolve(makesequence(_grad(makesequence(p-l*sp,fvars),contextptr),fvars),contextptr);
-                                if (tmp.type != _VECT || tmp._VECTptr->empty() || !ckmatrix(tmp))
-                                  break;
+                                if (tmp.type!=_VECT || tmp._VECTptr->empty())
+                                    break;
+                                if (!ckmatrix(tmp))
+                                    tmp=vecteur(1,tmp);
                                 vecteur lst;
                                 for (const_iterateur mt=tmp._VECTptr->begin();mt!=tmp._VECTptr->end();++mt) {
                                     lst.push_back(_subst(makesequence(p,fvars,*mt->_VECTptr),contextptr));

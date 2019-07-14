@@ -83,7 +83,7 @@ public:
     /* store all partial derivatives of the specified order to pd_map */
     void partial_derivatives(int order,pd_map &pdmap);
     /* return 1/k!*(sum(i=1)^n (xi-ai)*d/dxi)^k f(x)|a */
-    gen taylor_term(const vecteur &a,int k);
+    gen taylor_term(const vecteur &a,int k,bool shift=true);
     /* return the Taylor polynomial, with the specified order, of J in the vicinity of a */
     gen taylor(const vecteur &a,int order);
     /* store grad(J) as vector res */

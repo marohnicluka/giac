@@ -13143,7 +13143,7 @@
 
   The strategy is to apply a simple backtracking algorithm for finding a
   Hamiltonian cycle. However, some known characterizations of
-  (non)hamiltonicity are checked first, as follows.
+  (non)hamiltonicity are applied first, as follows.
 
   <\itemize-minus>
     <item>If <math|G> is directed then the following criteria are applied. If
@@ -13444,8 +13444,8 @@
   containing a largest number not greater than <math|k> of shortest
   (cheapest) paths from <math|s> to <math|t>, sorted in ascending order with
   respect to their costs (weights). The cost of a path is equal to the sum of
-  weights of its edges if <math|G> is directed resp.<nbsp>to the number of
-  edges if <math|G> is undirected.
+  weights of its edges if <math|G> is weighted resp.<nbsp>to the number of
+  edges if <math|G> is unweighted.
 
   The strategy is to apply the algorithm of <name|Yen><nbsp><cite|yen> which
   uses <name|Dijkstra>'s algorithm<nbsp><cite|dijkstra> as a subroutine. The
@@ -14006,7 +14006,7 @@
     <with|font-family|tt|true>, i.e.<nbsp>the labels and weights are
     displayed).
 
-    <with|font-family|tt|spring><item*|>Apply a multilevel force-directed
+    <with|font-family|tt|spring><item*|>Apply the multilevel force-directed
     algorithm.
 
     <with|font-family|tt|tree[=r> or <with|font-family|tt|[r1,r2,...]]><item*|>Draw
@@ -14026,8 +14026,8 @@
     <with|font-family|tt|planar> or <with|font-family|tt|plane><item*|>Draw a
     planar graph <math|G> using a force-directed algorithm.
 
-    <with|font-family|tt|plot3d><item*|>Draw a connected graph <math|G> as if
-    the <with|font-family|tt|spring> option was enabled, but with vertex
+    <with|font-family|tt|plot3d><item*|>Draw a graph <math|G> as if the
+    <with|font-family|tt|spring> option was enabled, but with vertex
     positions in <abbr|3D> instead of <abbr|2D>.
   </description-dash>
 

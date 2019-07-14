@@ -1045,13 +1045,18 @@ void vars_arrangements(matrice J,ipdiff::ivectors &arrs,GIAC_CONTEXT) {
 matrice jacobian(vecteur &g,vecteur &vars,GIAC_CONTEXT) {
     matrice J;
     for (int i=0;i<int(g.size());++i) {
-        J.push_back(*_grad(makesequence(g[i],vars),contextptr)._VECTptr);
+        gen gr=_grad(makesequence(g[i],vars),contextptr);
+        if (gr.type==_VECT && gr._VECTptr->size()==vars.size())
+            J.push_back(*gr._VECTptr);
+        else return vecteur(0);
     }
     return J;
 }
 
 bool ck_jacobian(vecteur &g,vecteur &vars,GIAC_CONTEXT) {
     matrice J(jacobian(g,vars,contextptr));
+    if (!g.empty() && J.empty())
+        return false;
     int m=g.size();
     int n=vars.size()-m;
     if (_rank(J,contextptr).val<m)
@@ -1388,8 +1393,10 @@ void find_local_extrema(gen_map &cpts,const gen &f,const vecteur &g,const vecteu
                 fvars.push_back(l);
                 gen pmin,pmax,sp(-1);
                 for (int j=0;j<n;++j) sp+=pow(vars[j],2);
+                /*
                 if (order_size>1)
-                  ipd.hessian(hess);
+                    ipd.hessian(hess);
+                */
                 for (int i=0;i<nv;++i) {
                     a[i]=identificateur(" a"+print_INT_(i));
                 }
@@ -1401,7 +1408,8 @@ void find_local_extrema(gen_map &cpts,const gen &f,const vecteur &g,const vecteu
                     if (order_size==1 || !is_zero(cpt_class))
                         continue;
                     cls=_CPCLASS_UNDECIDED;
-                    // apply the second partial derivative test
+                    /*
+                    // apply the second partial derivative test with eigenvalues
                     vecteur eigvals=*_eigenvals(_evalf(subst(hess,vars,*it,false,contextptr),contextptr),contextptr)._VECTptr;
                     gen e=undef;
                     for (const_iterateur et=eigvals.begin();et!=eigvals.end();++et) {
@@ -1414,7 +1422,7 @@ void find_local_extrema(gen_map &cpts,const gen &f,const vecteur &g,const vecteu
                         } else if (is_strictly_positive(-e*(*et),contextptr))
                             cls=_CPCLASS_SADDLE;
                     }
-                    // if that's not enough, use the higher derivatives
+                    */
                     if (cls==_CPCLASS_UNDECIDED && order_size>=2) {
                         for (int k=2;k<=order_size;++k) {
                             if (int(taylor_terms.size())<k-1)
@@ -1424,7 +1432,7 @@ void find_local_extrema(gen_map &cpts,const gen &f,const vecteur &g,const vecteu
                             gen p=ratnormal(subst(taylor_terms[k-2],a,*it,false,contextptr),contextptr);
                             if (is_zero(p))
                                 continue;
-                            else if (k%2!=0)
+                            else if (k%2)
                                 cls=_CPCLASS_SADDLE;
                             else {
                                 gen tmp=_fsolve(makesequence(_grad(makesequence(p-l*sp,fvars),contextptr),fvars),contextptr);

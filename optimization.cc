@@ -1435,14 +1435,15 @@ void find_local_extrema(gen_map &cpts,const gen &f,const vecteur &g,const vecteu
                             else if (k%2)
                                 cls=_CPCLASS_SADDLE;
                             else {
-                                gen tmp=_fsolve(makesequence(_grad(makesequence(p-l*sp,fvars),contextptr),fvars),contextptr);
-                                if (tmp.type!=_VECT || tmp._VECTptr->empty())
+                                gen tmp=_solve(makesequence(_grad(makesequence(p-l*sp,fvars),contextptr),fvars),contextptr);
+                                if (tmp.type!=_VECT || tmp._VECTptr->empty() || !ckmatrix(tmp)) {
+                                    *logptr(contextptr) << "Warning: unable to find critical points of "
+                                                        << p << " on the unit sphere";
                                     break;
-                                if (!ckmatrix(tmp))
-                                    tmp=vecteur(1,tmp);
+                                }
                                 vecteur lst;
                                 for (const_iterateur mt=tmp._VECTptr->begin();mt!=tmp._VECTptr->end();++mt) {
-                                    lst.push_back(_subst(makesequence(p,fvars,*mt->_VECTptr),contextptr));
+                                    lst.push_back(simplify(_subst(makesequence(p,fvars,*mt->_VECTptr),contextptr),contextptr));
                                 }
                                 pmin=_min(lst,contextptr);
                                 pmax=_max(lst,contextptr);

@@ -71,6 +71,13 @@ gen _riemann_window(const gen &g,GIAC_CONTEXT);
 gen _triangle_window(const gen &g,GIAC_CONTEXT);
 gen _tukey_window(const gen &g,GIAC_CONTEXT);
 gen _welch_window(const gen &g,GIAC_CONTEXT);
+gen _fourier(const gen &g,GIAC_CONTEXT);
+gen _ifourier(const gen &g,GIAC_CONTEXT);
+gen _addtable(const gen &g,GIAC_CONTEXT);
+gen _rect(const gen &g,GIAC_CONTEXT);
+gen _boxcar(const gen &g,GIAC_CONTEXT);
+gen _tri(const gen &g,GIAC_CONTEXT);
+gen _sinc(const gen &g,GIAC_CONTEXT);
 
 extern const unary_function_ptr * const at_createwav;
 extern const unary_function_ptr * const at_plotwav;
@@ -101,6 +108,13 @@ extern const unary_function_ptr * const at_riemann_window;
 extern const unary_function_ptr * const at_triangle_window;
 extern const unary_function_ptr * const at_tukey_window;
 extern const unary_function_ptr * const at_welch_window;
+extern const unary_function_ptr * const at_fourier;
+extern const unary_function_ptr * const at_ifourier;
+extern const unary_function_ptr * const at_addtable;
+extern const unary_function_ptr * const at_rect;
+extern const unary_function_ptr * const at_boxcar;
+extern const unary_function_ptr * const at_tri;
+extern const unary_function_ptr * const at_sinc;
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

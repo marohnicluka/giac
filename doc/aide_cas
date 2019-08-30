@@ -5199,10 +5199,10 @@ StoPic(des3)
 -1 SortD
 -2 sorta
 -3 sort
-SortA [3,4,2]
-SortA 3,4,2
-SortA [3,4,2],[6,4,5]
-SortA [[3,4,2],[6,4,5]]
+ SortA [3,4,2]
+ SortA 3,4,2
+ SortA [3,4,2],[6,4,5]
+ SortA [[3,4,2],[6,4,5]]
 
 # SortD
 1 Trie, en modifiant la valeur de l'argument, les listes par ordre décroissant (comme TI) ou la 1ière ligne d'une matrice selon l'ordre décroissant en conservant les colonnes.
@@ -5213,10 +5213,10 @@ SortA [[3,4,2],[6,4,5]]
 -1 SortA
 -2 sortd
 -3 sort
-SortD [3,4,2]
-SortD 3,4,2
-SortD [[3,4,2],[6,4,5]]
-SortD [3,4,2],[6,4,5]
+ SortD [3,4,2]
+ SortD 3,4,2
+ SortD [[3,4,2],[6,4,5]]
+ SortD [3,4,2],[6,4,5]
 
 # sorta
 1 Trie les listes par ordre croissant ou la 1ière ligne d'une matrice selon l'ordre croissant en conservant les colonnes.
@@ -5427,10 +5427,10 @@ inputform("a=?",a,"b=?",b)
 inputform(a,b)
 
 # #
-1 Transforme (dans un programme) une chaîne en le nom d'une variable.
-2 Transforms (in a program) a string into the name of a variable.
-3 Transforma (en un programa) una cadena en el nombre de una variable.
-4 Μετατρέπει (σε ένα πρόγραμμα) ένα αλφαριθμητικό στο όνομα μιας μεταβλητής.
+1 Transforme (dans un programme Xcas) une chaîne en le nom d'une variable. Suppose que le programme commence par // pour desactiver la compatibilite Python.
+2 Transforms (in a Xcas program) a string into the name of a variable. Assumes the program begins with // in order to avoid Python compatibility check.
+3 Transforma (en un programa Xcas) una cadena en el nombre de una variable.
+4 Μετατρέπει (σε ένα πρόγραμμα Xcas) ένα αλφαριθμητικό στο όνομα μιας μεταβλητής.
 0 Str
 -1 input
  #("a")
@@ -13722,11 +13722,22 @@ syst2mat([x-y=1,x+2*y],[x,y])
 4 Πίνακας μιας συνάρτησης
 0 Expr,Var
 -1 tablefunc
+-2 tabsign
 tabvar(sin(x),x)
 tabvar(1/ln(x^2-1),x,diff=1)
 tabvar(x^2+x+1,x)
 tabvar(x^2,x,-3,5)
 tabvar([sin(2t),cos(3t)])
+
+# tabsign
+1 Tableau de signes d'une fonction (et graphe dans DispG)
+2 Table of sign of a function.
+0 Expr,Var
+-1 tablefunc
+-2 tabvar
+tabsign(x^2-x,x)
+tabsign(x^2,x,-3,5)
+tabsign(sin(x),x)
 
 # tablefunc
 1 Tableau de valeurs d'une fonction : on doit être dans un tableur.
@@ -15704,6 +15715,78 @@ plotwav(readwav("/some/file"),range=[10000,22000]) // range in samples
 plotspectrum(readwav("/some/file"))
 plotspectrum(readwav("/some/file"),range=100..1000)
 
+# boxcar
+2 Returns the value at x of the boxcar function corresponding to a and b.
+0 Real(a),Real(b),Expr(x)
+-1 rect
+-2 Heaviside
+boxcar(1,2,x)
+
+# rect
+2 Returns the value of the rectangle function at x.
+0 Expr(x)
+-1 boxcar
+-2 tri
+-3 Heaviside
+rect(x/2)
+
+# tri
+2 Returns the value of the triangle function at x.
+0 Expr(x)
+-1 rect
+-2 Heaviside
+tri(x-1)
+
+# sinc
+2 Returns the value of the cardinal sine function at x.
+0 Expr(x)
+-1 sin
+sinc(pi*x)
+
+# fourier
+2 Returns the Fourier transform F(s) of f(x).
+0 Expr(f(x)),[Var(x),[Var(s)]]
+-1 ifourier
+-2 fourier_cn
+-3 fft
+fourier(x/(x^3-19x+30),x,s)
+fourier((x^2+1)/(x^2-1),x,s)
+fourier(3x^2+2x+1,x,s)
+fourier(Dirac(x-1)+Dirac(x+1),x,s)
+fourier(exp(-2*abs(x-1)),x,s)
+fourier(atan(1/(2x^2)),x,s)
+fourier(BesselJ(3,x),x,s)
+fourier(sin(x)*sign(x),x,s)
+fourier(log(abs(x)),x,s)
+fourier(rect(x),x,s)
+fourier(exp(-abs(x))*sinc(x),x,s)
+fourier(1/sqrt(abs(x)),x,s)
+fourier(1/cosh(2x),x,s)
+fourier(Gamma(1+i*x/3),x,s)
+fourier(atan(x/4)/x,x,s)
+fourier(piecewise(x<=-1,exp(x+1),x<=1,1,exp(2-2x)),x,s)
+
+# ifourier
+2 Returns the inverse Fourier transform f(x) of F(s).
+0 Expr(F(s)),[Var(s),[Var(x)]]
+-1 fourier
+-2 fourier_cn
+-3 ifft
+ifourier(2*pi*(Dirac(s)-sign(s)*sin(s)),s,x)
+ifourier(-2/(s^2-1),s,x)
+ifourier(pi/(exp(pi*s/4)+exp(-pi*s/4)),s,x)
+ifourier(6*pi*exp(-exp(-3*s)-3*s),s,x)
+ifourier(pi*ugamma(0,4*abs(s)),s,x)
+ifourier(fourier(exp(-abs(x)),x,s)^2,s,x)
+ifourier(sinc(s),s,x)
+
+# addtable
+2 Stores an unknown Fourier/Laplace transform pair (f,F).
+0 fourier||laplace,f(x),F(s),Var(x),Var(s)
+-1 fourier
+-2 laplace
+addtable(fourier,y(x),Y(s),x,s)
+
 # cross_correlation
 2 Returns the cross_correlation of two signals u and v.
 0 cross_correlation(Lst(u),Lst(v))
@@ -15720,12 +15803,13 @@ cross_correlation([1,2],[3,4,5])
 auto_correlation([1,-1,0,2,1])
 
 # convolution
-1 Convolution de 2 signaux (liste) u et v
-2 Returns the convolution of two signals u and v.
+1 Convolution de 2 signaux (liste) ou fonctions causales u et v
+2 Returns the convolution of two signals or causal functions u and v.
 0 Lst(u),Lst(v)
 -1 fft
 -2 cross_correlation
 convolution([1,2,3],[1,-1,1,-1])
+convolution(25*exp(2*x),x*exp(-3*x),x)
 
 # lowpass
 2 Returns the result of applying a simple first-order lowpass RC filter with cutoff frequency c (the default samplerate is 44100) to the given signal s.

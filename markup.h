@@ -26,6 +26,7 @@ namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
 string export_latex(const gen &g, bool displayed, GIAC_CONTEXT);
+bool has_improved_latex_export(const gen &g,string &s,GIAC_CONTEXT);
 string export_mathml(const gen &g, GIAC_CONTEXT);
 string export_mathml_presentation(const gen &g, bool displayed, GIAC_CONTEXT);
 string export_mathml_content(const gen &g, GIAC_CONTEXT);

@@ -141,11 +141,11 @@ string mml_tag(const string &tag, const string &str, int idc = 0,
                const string &attr_key3 = "", const string &attr_val3 = "",
                const string &attr_key4 = "", const string &attr_val4 = "") {
   string r, attr1, attr2, attr3, attr4;
-  if (tag.front() == 'c' || tag == "apply" || tag == "vector" ||
+  if (tag[0] == 'c' || tag == "apply" || tag == "vector" ||
       tag == "matrix" || tag == "lambda" || tag == "piecewise" ||
       tag == "set" || tag == "list" || tag == "bind")
     r = "id";
-  else if (tag.front() == 'm')
+  else if (tag[0] == 'm')
     r = "xref";
   assert(!r.empty());
   if (!attr_key1.empty())
@@ -489,7 +489,7 @@ string constant2content(const string &s, int idc) {
 }
 
 string idnt2markup(const string &s_orig, bool tex, bool unit, int idc=0) {
-  if (unit && !s_orig.empty() && s_orig.front() == '_') {
+  if (unit && !s_orig.empty() && s_orig[0] == '_') {
     string s = s_orig.substr(1);
     if (s == "a0_")
       return tex ? "a_0" : mml_tag("msub", "<mi>a</mi><mn>0</mn>", idc);
@@ -638,7 +638,7 @@ string idnt2markup(const string &s_orig, bool tex, bool unit, int idc=0) {
     else if (s == "tonUK")
       return tex ? "\\mathrm{ton}_\\mathrm{UK}"
                  : mml_tag("msub", "<mi>ton</mi><mi>UK</mi>", idc, "class", "MathML-Unit");
-    else if (!s.empty() && s.back() != '_') {
+    else if (!s.empty() && s[s.size()-1] != '_') {
       string p;
       if (s.substr(0, 2) == "µ") {
         p = tex ? "\\mu " : "&mu;";
@@ -707,7 +707,7 @@ string idnt2markup(const string &s_orig, bool tex, bool unit, int idc=0) {
     } else
       mdf = "mathvariant";
   }
-  if (len > 3 && s.front() == '`' && s.at(1) == 32 && s.back() == '`')
+  if (len > 3 && s[0] == '`' && s.at(1) == 32 && s[s.size()-1] == '`')
     s = s.substr(2, len - 3);
   string ret=(len==1?(tex?s:mml_tag("mi",s,ssub.empty()?idc:0))
                     :(tex?"\\mathrm{"+s+"}":mml_tag("mi",s,ssub.empty()?idc:0,mdf,"bold")));
@@ -1101,7 +1101,7 @@ MarkupBlock gen2markup(const gen &g, int flags_orig, int &idc, GIAC_CONTEXT) {
           atof(str.substr(0, cpos).c_str()) != 0 && atof(str.substr(cpos + 2).c_str()) != 0) {
         ml.priority = _PRIORITY_MUL;
         string ex = str.substr(cpos + 2);
-        while (ex.front() == '0')
+        while (ex[0] == '0')
           ex.erase(ex.begin());
         if (mml_presentation)
           ml.markup =
@@ -1213,9 +1213,9 @@ MarkupBlock gen2markup(const gen &g, int flags_orig, int &idc, GIAC_CONTEXT) {
     } else {
       if (mml_content) {
         str=g.print(contextptr);
-        if (isunit && str.length() > 2 && str.front() == '_' && str.back() == '_')
+        if (isunit && str.length() > 2 && str[0] == '_' && str[str.size()-1] == '_')
           ml.content = constant2content(str.substr(1, str.length() - 2), ++idc);
-        else if (isunit && str.length() > 1 && str.front() == '_')
+        else if (isunit && str.length() > 1 && str[0] == '_')
           ml.content = unit2content(str.substr(1), ++idc);
         else
           ml.content = mml_tag("ci", str, ++idc);
@@ -2221,7 +2221,7 @@ MarkupBlock gen2markup(const gen &g, int flags_orig, int &idc, GIAC_CONTEXT) {
               ? "==" : (s == at_different ? "<neq/>"
                                           : (s == at_equal ? "<eq/>"
                                                            : (s == at_sto ? ":=" : "=&lt;"))));
-      if (csymb.front() != '<')
+      if (csymb[0] != '<')
         csymb = mml_tag("ci", csymb);
       if (mml_content)
         ml.content = mml_tag("apply", csymb + left.content + right.content, ++idc);
@@ -2804,7 +2804,7 @@ MarkupBlock gen2markup(const gen &g, int flags_orig, int &idc, GIAC_CONTEXT) {
         for (const_iterateur it = idx.begin(); it != idx.end(); ++it) {
           if ((!it->is_integer() || it->val < 1 || it->val > 9) &&
               (it->type != _IDNT ||
-                (((str = it->print(contextptr)).length() != 1 || !isalpha(str.front())) &&
+                (((str = it->print(contextptr)).length() != 1 || !isalpha(str[0])) &&
                  !is_greek_letter(str)))) {
             sep = "<mo>,</mo>";
             sept = ",";
@@ -2846,7 +2846,7 @@ MarkupBlock gen2markup(const gen &g, int flags_orig, int &idc, GIAC_CONTEXT) {
       string op(s.ptr()->s), opt;
       if (mml_content)
         ml.content = mml_tag("apply", mml_tag("ci", op) + left.content + right.content, ++idc);
-      if (op.length() == 1 && !isalpha(op.front()) && op.front() != '_') {
+      if (op.length() == 1 && !isalpha(op[0]) && op[0] != '_') {
         op = "<mo>" + op + "</mo>";
         opt = "\\mathbin{" + op + "}";
       } else {
@@ -2940,6 +2940,25 @@ string export_latex(const gen &g, bool displayed, GIAC_CONTEXT) {
   int idc = 0, flags = _MARKUP_TOPLEVEL | _MARKUP_ELEMPOW | _MARKUP_LATEX;
   ml = gen2markup(g, flags, idc, contextptr);
   return (displayed ? "\\[" : "\\(") + ml.latex + (displayed ? "\\]" : "\\)");
+}
+
+bool has_improved_latex_export(const gen &g,string &s,GIAC_CONTEXT) {
+  if (g.is_symb_of_sommet(at_pnt)) return false;
+  switch (g.type) {
+  case _POLY:
+  case _SPOL1:
+  case _EXT:
+  case _ROOT:
+  case _USER:
+  case _EQW:
+  case _GROB:
+  case _POINTER_:
+    return false;
+  default:
+    break;
+  }
+  s=export_latex(g,true,contextptr);
+  return true;
 }
 
 string export_mathml_content(const gen &g, GIAC_CONTEXT) {

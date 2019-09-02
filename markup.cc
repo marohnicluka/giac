@@ -27,7 +27,7 @@ inline bool is_graphe(const giac::gen &g, std::string &disp_out,
   return false;
 }
 #else
-#include "giac/graphtheory.h"
+#include "graphtheory.h"
 #endif
 
 using namespace std;
@@ -2935,11 +2935,11 @@ MarkupBlock gen2markup(const gen &g, int flags_orig, int &idc, GIAC_CONTEXT) {
   return ml;
 }
 
-string export_latex(const gen &g, bool displayed, GIAC_CONTEXT) {
+string export_latex(const gen &g, GIAC_CONTEXT) {
   MarkupBlock ml;
   int idc = 0, flags = _MARKUP_TOPLEVEL | _MARKUP_ELEMPOW | _MARKUP_LATEX;
   ml = gen2markup(g, flags, idc, contextptr);
-  return (displayed ? "\\[" : "\\(") + ml.latex + (displayed ? "\\]" : "\\)");
+  return ml.latex;
 }
 
 bool has_improved_latex_export(const gen &g,string &s,GIAC_CONTEXT) {
@@ -2957,7 +2957,7 @@ bool has_improved_latex_export(const gen &g,string &s,GIAC_CONTEXT) {
   default:
     break;
   }
-  s=export_latex(g,true,contextptr);
+  s=export_latex(g,contextptr);
   return true;
 }
 

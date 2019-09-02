@@ -1189,7 +1189,7 @@ MarkupBlock gen2markup(const gen &g, int flags_orig, int &idc, GIAC_CONTEXT) {
     string2markup(ml, *g._STRNGptr, flags | _MARKUP_QUOTE, idc);
     return ml;
   case _IDNT:
-    if (g == unsigned_inf) {
+    if (is_inf(g)) {
       if (mml_content)
         ml.content = insert_id("<infinity/>",++idc,true);
       if (mml_presentation)

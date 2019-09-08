@@ -2,6 +2,7 @@ My contributions to [Giac/Xcas](https://www-fourier.ujf-grenoble.fr/~parisse/gia
 
 - graph theory (a comprehensive set of algorithms with over 150 commands, see doc/graphtheory-user_manual.pdf for details)
 - signal processing and audio tools (creating wave files, convolution and (auto)correlation, filtering, windowing, resampling, noise removal)
+- continuous Fourier transform
 - optimization in multivariate calculus (finding local and global extrema)
 - calculus of variations
 - (mixed integer) linear programming, transportation problem solver
@@ -9,3 +10,4 @@ My contributions to [Giac/Xcas](https://www-fourier.ujf-grenoble.fr/~parisse/gia
 - simplification of trigonometric expressions
 - statistics (continuous and discrete random variables with sampling, kernel density estimation, maximum-likelihood fitting)
 - ordinary differential equations (an implementation of Kovacic's algorithm, a second-degree boundary value problems solver)
+- improved conversion to LaTeX (with TeXmacs compatibility) and MathML

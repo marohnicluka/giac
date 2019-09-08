@@ -18,19 +18,23 @@
 
 #ifndef MARKUP_H
 #define MARKUP_H
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include "first.h"
-#include "giacPCH.h"
-#include "giac.h"
+#include "gen.h"
 
 #ifndef NO_NAMESPACE_GIAC
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
-string export_latex(const gen &g, GIAC_CONTEXT);
+void enable_texmacs_compatible_latex_export(bool yes);
+string export_latex(const gen &g,GIAC_CONTEXT);
 bool has_improved_latex_export(const gen &g,string &s,GIAC_CONTEXT);
-string export_mathml(const gen &g, GIAC_CONTEXT);
-string export_mathml_presentation(const gen &g, bool displayed, GIAC_CONTEXT);
-string export_mathml_content(const gen &g, GIAC_CONTEXT);
+string export_mathml(const gen &g,GIAC_CONTEXT);
+string export_mathml_presentation(const gen &g,GIAC_CONTEXT);
+string export_mathml_content(const gen &g,GIAC_CONTEXT);
+gen _export_mathml(const gen &g,GIAC_CONTEXT);
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

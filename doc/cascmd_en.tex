@@ -1725,6 +1725,79 @@ information to make it a complete HTML document.
 You can translate an entire spreadsheet to MathML with the spreadsheet
 menu command \texttt{Table$\blacktriangleright$Save as mathml}.
 
+\subsection{Export to presentation or content MathML : {\tt export\_mathml}\index{export\_mathml}}
+The command {\tt export\_mathml} accepts one or two arguments: an expression and optionally the symbol {\tt content} or {\tt display}. If {\tt content} is specified, it converts the expression to content MathML, while for {\tt display} it converts it to presentation MathML. If the second argument is omitted, the return value contains both presentation and content MathML within a {\tt semantics} block. The return value in each case is a string containing a single {\tt math} block.
+
+In each of the following examples the return string is indented for better readability.\\
+Input :
+\begin{center}
+  \tt export\_mathml(a+2*b)
+\end{center}
+Output :
+\begin{verbatim}
+<math xmlns='http://www.w3.org/1998/Math/MathML'>
+  <semantics>
+    <mrow xref='id5'>
+      <mi xref='id1'>a</mi>
+      <mo>+</mo>
+      <mrow xref='id4'>
+        <mn xref='id2'>2</mn>
+        <mo>&it;</mo>
+        <mi xref='id3'>b</mi>
+      </mrow>
+    </mrow>
+    <annotation-xml encoding='MathML-Content'>
+      <apply id='id5'>
+        <plus/>
+        <ci id='id1'>a</ci>
+        <apply id='id4'>
+          <times/>
+          <cn id='id2' type='integer'>2</cn>
+          <ci id='id3'>b</ci>
+        </apply>
+      </apply>
+    </annotation-xml>
+    <annotation encoding='Giac'>a+2*b</annotation>
+  </semantics>
+</math>
+\end{verbatim}
+Input :
+\begin{center}
+  \tt export\_mathml(a+2*b,content)
+\end{center}
+Output :
+\begin{verbatim}
+<math xmlns='http://www.w3.org/1998/Math/MathML'>
+  <apply id='id5'>
+    <plus/>
+    <ci id='id1'>a</ci>
+    <apply id='id4'>
+      <times/>
+      <cn id='id2' type='integer'>2</cn>
+      <ci id='id3'>b</ci>
+    </apply>
+  </apply>
+</math>
+\end{verbatim}
+Input :
+\begin{center}
+  \tt export\_mathml(a+2*b,display)
+\end{center}
+Output :
+\begin{verbatim}
+<math xmlns='http://www.w3.org/1998/Math/MathML'>
+  <mrow>
+    <mi>a</mi>
+    <mo>+</mo>
+    <mrow>
+      <mn>2</mn>
+      <mo>&it;</mo>
+      <mi>b</mi>
+    </mrow>
+  </mrow>
+</math>
+\end{verbatim}
+
 \subsection{Translating a Maple\index{Maple} file to Xcas: \texttt{maple2xcas}}\index{maple2xcas}
 
 You can translate a file of Maple commands to the Xcas language with

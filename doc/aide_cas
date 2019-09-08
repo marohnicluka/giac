@@ -5650,8 +5650,18 @@ scale([[1,2],[3,4],[5,6]],12,0)
 3 Convierte la expresión en una cadena que permite mostrar matemáticas en la web.
 4 Μετατρέπει την παράσταση σε μια συμβολσειρά ώστε να μπορέσει να εμφανίσει τα μαθηματικά στο διαδίκτυο.
 0 Expr
--1 latex
+-1 export_mathml
+-2 latex
 mathml(1/2)
+
+# export_mathml
+2 Converts an expression to presentation or content MathML block.
+0 Expr,[display||content]
+-1 mathml
+-2 latex
+export_mathml(a+2*b)
+export_mathml(a+2*b,display)
+export_mathml(a+2*b,content)
 
 # fracmod iratrecon
 1 Retourne la fraction a/b tel que b*Xpr=a mod n, -sqrt(n)/2<a<=sqrt(n)/2 et 0<=b<sqrt(n)/2.

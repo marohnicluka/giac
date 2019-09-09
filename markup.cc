@@ -170,15 +170,55 @@ void enable_texmacs_compatible_latex_export(bool yes) {
   tex_itimes=(yes?" ":"\\,");  
 }
 
+#define NUM_MATHML_CONTENT_ELEMENTS 31
+const string mathml_content_elements[NUM_MATHML_CONTENT_ELEMENTS]={
+  "cn",
+  "ci",
+  "cs",
+  "csymbol",
+  "cerror",
+  "share",
+  "bind",
+  "bvar",
+  "semantics",
+  "apply",
+  "domainofapplication",
+  "interval",
+  "condition",
+  "lowlimit",
+  "uplimit",
+  "degree",
+  "momentabout",
+  "logbase",
+  "inverse",
+  "lambda",
+  "piecewise",
+  "piece",
+  "otherwise",
+  "set",
+  "list",
+  "vector",
+  "matrix",
+  "matrixrow",
+  "declare",
+  "reln",
+  "fn"
+};
+
+bool is_mathml_content_element(const string &s) {
+  for (int i=0;i<NUM_MATHML_CONTENT_ELEMENTS;++i) {
+    if (mathml_content_elements[i]==s) return true;
+  }
+  return false;
+}
+
 string mml_tag(const string &tag,const string &str,int idc=0,
                const string &attr_key1="",const string &attr_val1="",
                const string &attr_key2="",const string &attr_val2="",
                const string &attr_key3="",const string &attr_val3="",
                const string &attr_key4="",const string &attr_val4="") {
   string r,attr1,attr2,attr3,attr4;
-  if (tag[0]=='c' || tag=="apply" || tag=="vector" ||
-      tag=="matrix" || tag=="lambda" || tag=="piecewise" ||
-      tag=="set" || tag=="list" || tag=="bind")
+  if (tag[0]=='c' || is_mathml_content_element(tag))
     r="id";
   else if (tag[0]=='m')
     r="xref";
@@ -371,7 +411,8 @@ bool is_double_letter(const string &s) {
   return s.length()==2 && isalpha(s.at(0)) && s.at(0)==s.at(1);
 }
 
-const string unit_pairs[48][2]={
+#define NUM_UNIT_PAIRS 48
+const string unit_pairs[NUM_UNIT_PAIRS][2]={
   /* "units_imperial1" */
   { "acre","acre" },
   { "bar","bar" },
@@ -430,7 +471,8 @@ const string unit_pairs[48][2]={
   { "tonne","t" }
 };
 
-const string si_prefix_pairs[20][2]={
+#define NUM_SI_PREFIX_PAIRS 20
+const string si_prefix_pairs[NUM_SI_PREFIX_PAIRS][2]={
   { "yotta","Y" },
   { "zetta","Z" },
   { "exa","E" },
@@ -457,7 +499,7 @@ string unit2content(const string &s,int idc) {
   string ret,p,cd;
   bool has_prefix=false;
   int i,j;
-  for (i=0;i<27;++i) {
+  for (i=0;i<NUM_UNIT_PAIRS;++i) {
     if (s==unit_pairs[i][1]) {
       ret=unit_pairs[i][0];
       break;
@@ -466,14 +508,14 @@ string unit2content(const string &s,int idc) {
   if (ret.empty()) {
     int ofs=(s.substr(0,2)=="µ"?2:1);
     p=s.substr(0,ofs);
-    for (j=0;j<20;++j) {
+    for (j=0;j<NUM_SI_PREFIX_PAIRS;++j) {
       if (si_prefix_pairs[j][1].find(p)!=string::npos) {
         has_prefix=true;
         break;
       }
     }
     if (has_prefix) {
-      for (i=0;i<27;++i) {
+      for (i=0;i<NUM_UNIT_PAIRS;++i) {
         if (s==unit_pairs[i][1].substr(ofs)) {
           ret=unit_pairs[i][0];
           break;
@@ -1939,7 +1981,7 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
       }
     }
     if (g.is_symb_of_sommet(at_integrate) || g.is_symb_of_sommet(at_int) ||
-        g.is_symb_of_sommet(at_sum) || g.is_symb_of_sommet(at_somme) ||
+        g.is_symb_of_sommet(at_Int) || g.is_symb_of_sommet(at_sum) || g.is_symb_of_sommet(at_somme) ||
         g.is_symb_of_sommet(at_add) || g.is_symb_of_sommet(at_product) || g.is_symb_of_sommet(at_mul)) {
       bool has_ub=false,has_lb=false;
       bool isint=(g.is_symb_of_sommet(at_integrate) || g.is_symb_of_sommet(at_int)),
@@ -2029,7 +2071,7 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
         else if (has_lb && has_ub)
           str+=mml_tag("lowlimit",lb.content)+mml_tag("uplimit",ub.content);
         str+=e.content;
-        ml.content=mml_tag("apply",isint?"<int/>":(issum?"<sum/>":"<product/>")+str,++idc);
+        ml.content=mml_tag("apply",(isint?"<int/>":(issum?"<sum/>":"<product/>"))+str,++idc);
       }
       if (mml_presentation)
         ml.markup=mml_tag("mrow",big+e.markup+(isint?var.markup:""),idc);

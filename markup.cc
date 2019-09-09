@@ -85,9 +85,9 @@ string mml_d="<mi mathvariant='normal'>d</mi>";
 string mml_re="<mi>&realpart;</mi>";
 string mml_im="<mi>&imagpart;</mi>";
 
-string tex_itimes=" ";
+string tex_itimes="\\,";
 
-bool is_texmacs_compatible_latex_export=true;
+bool is_texmacs_compatible_latex_export=false;
 
 enum OperatorPrecedence {
   _PRIORITY_APPLY=1, // function application,array access

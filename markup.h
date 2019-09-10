@@ -30,7 +30,7 @@ namespace giac {
 
 void enable_texmacs_compatible_latex_export(bool yes);
 string export_latex(const gen &g,GIAC_CONTEXT);
-bool has_improved_latex_export(const gen &g,string &s,GIAC_CONTEXT);
+bool has_improved_latex_export(const gen &g,string &s,bool override_texmacs,GIAC_CONTEXT);
 string export_mathml(const gen &g,GIAC_CONTEXT);
 string export_mathml_presentation(const gen &g,GIAC_CONTEXT);
 string export_mathml_content(const gen &g,GIAC_CONTEXT);

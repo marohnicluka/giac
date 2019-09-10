@@ -41,36 +41,6 @@ using namespace std;
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
-bool is_substr(const string &s,const string &needle) {
-  return s.find(needle)!=string::npos;
-}
-
-bool is_prefix(const string &s,const string &p) {
-  return s.find(p)==0;
-}
-
-bool is_suffix(const string &s,const string &p) {
-  return s.rfind(p)+p.length()==s.length();
-}
-
-bool is_latex_command_suffix(const string &s,const string &com,bool delim=false) {
-  string c=com+"{";
-  size_t pos=s.rfind(c);
-  if (pos==string::npos || (delim && pos>0 && (isalnum(s[pos-1]) || s[pos-1]==32)))
-    return false;
-  pos+=c.length();
-  int level=1;
-  while (pos<s.length() && level>0) {
-    if (s[pos]=='{' && s[pos-1]!='\\')
-      ++level;
-    else if (s[pos]=='}' && s[pos-1]!='\\')
-      --level;
-    ++pos;
-  }
-  assert(level==0);
-  return pos==s.length();
-}
-
 string mml_itimes="<mo>&it;</mo>";
 string mml_cdot="<mo>&middot;</mo>";
 string mml_dot="<mo>.</mo>";
@@ -88,6 +58,7 @@ string mml_im="<mi>&imagpart;</mi>";
 string tex_itimes="\\,";
 
 bool is_texmacs_compatible_latex_export=false;
+bool force_legacy_conversion_to_latex=false;
 
 enum OperatorPrecedence {
   _PRIORITY_APPLY=1, // function application,array access
@@ -139,6 +110,78 @@ enum MarkupFlags {
   _MARKUP_ERROR=512
 };
 
+bool is_substr(const string &s,const string &needle) {
+  return s.find(needle)!=string::npos;
+}
+
+bool is_prefix(const string &s,const string &p) {
+  return s.find(p)==0;
+}
+
+bool is_suffix(const string &s,const string &p) {
+  return s.rfind(p)+p.length()==s.length();
+}
+
+bool is_latex_command_suffix(const string &s,const string &com,bool delim=false) {
+  string c=com+"{";
+  size_t pos=s.rfind(c);
+  if (pos==string::npos || (delim && pos>0 && (isalnum(s[pos-1]) || s[pos-1]==32)))
+    return false;
+  pos+=c.length();
+  int level=1;
+  while (pos<s.length() && level>0) {
+    if (s[pos]=='{' && s[pos-1]!='\\')
+      ++level;
+    else if (s[pos]=='}' && s[pos-1]!='\\')
+      --level;
+    ++pos;
+  }
+  assert(level==0);
+  return pos==s.length();
+}
+
+bool is_leading_bracket(const string &s) {
+  return is_prefix(s,"\\left(") || is_prefix(s,"\\left\\{") || is_prefix(s,"\\left[");
+}
+
+bool is_greek_letter(const string &s) {
+  switch (s.size()) {
+  case 2:
+    return s=="mu" || s=="nu" || s=="pi" || s=="Pi" || s=="xi" ||
+           s=="Xi";
+  case 3:
+    return s=="chi" || s=="phi" || s=="Phi" || s=="eta" || s=="rho" ||
+           s=="tau" || s=="psi" || s=="Psi";
+  case 4:
+    return s=="beta" || s=="zeta";
+  case 5:
+    return s=="alpha" || s=="delta" || s=="Delta" || s=="gamma" ||
+           s=="Gamma" || s=="kappa" || s=="theta" || s=="Theta" ||
+           s=="sigma" || s=="Sigma" || s=="Omega" || s=="omega";
+  case 6:
+    return s=="lambda" || s=="Lambda";
+  case 7:
+    return s=="epsilon";
+  default:
+    break;
+  }
+  return false;
+}
+
+bool is_tex_greek__suffix(const string &s) {
+  if (!is_suffix(s,"\\_")) return false;
+  int i;
+  for (i=s.size()-2;i-->0;) {
+    if (s[i]=='\\') break;
+  }
+  if (i<0) return false;
+  return is_greek_letter(s.substr(i+1,s.size()-i-3));
+}
+
+bool is_double_letter(const string &s) {
+  return s.length()==2 && isalpha(s.at(0)) && s.at(0)==s.at(1);
+}
+
 typedef struct {
   int priority;
   int type;
@@ -149,19 +192,27 @@ typedef struct {
   int split_pos;
   int split_pos_tex;
   bool appl;
-  bool ctype(int t) { return (type & t)!=0;}
+  bool ctype(int t) const { return (type & t)!=0; }
 } MarkupBlock;
 
 extern MarkupBlock gen2markup(const gen &g,int flags,int &idc,GIAC_CONTEXT);
 
 string tex_implmul(const MarkupBlock &ml,const MarkupBlock &prev) {
   if (is_texmacs_compatible_latex_export &&
-      (is_latex_command_suffix(prev.latex,"^",true) || is_latex_command_suffix(prev.latex,"_",true) ||
-       ((is_prefix(ml.latex,"\\mathrm{") || is_prefix(ml.latex,"\\operatorname{")) &&
+      (((is_latex_command_suffix(prev.latex,"^",true) || is_latex_command_suffix(prev.latex,"_",true)) &&
+        !is_leading_bracket(ml.latex)) ||
+       is_tex_greek__suffix(prev.latex) ||
+       (is_prefix(ml.latex,"\\mathrm{") &&
+        !is_substr(ml.latex.substr(8,ml.latex.find("}",8)-8),"\\_")) ||
+       (is_prefix(ml.latex,"\\operatorname{") &&
         !is_latex_command_suffix(prev.latex,"^") && !is_latex_command_suffix(prev.latex,"_")) ||
        is_latex_command_suffix(prev.latex,"\\mathrm") ||
        is_latex_command_suffix(prev.latex,"\\operatorname")))
     return "\\,";
+  else if (!is_texmacs_compatible_latex_export &&
+           (ml.ctype(_MLBLOCK_ELEMAPP) || is_prefix(ml.latex,"\\operatorname{") ||
+            is_leading_bracket(ml.latex)))
+    return " ";
   return tex_itimes;
 }
 
@@ -381,34 +432,6 @@ void string2markup(MarkupBlock &ml,const string &s_orig,int flags,int &idc) {
     if (err)
       ml.markup=mml_tag("merror",ml.markup,idc);
   }
-}
-
-bool is_greek_letter(const string &s) {
-  switch (s.size()) {
-  case 2:
-    return s=="mu" || s=="nu" || s=="pi" || s=="Pi" || s=="xi" ||
-           s=="Xi";
-  case 3:
-    return s=="chi" || s=="phi" || s=="Phi" || s=="eta" || s=="rho" ||
-           s=="tau" || s=="psi" || s=="Psi";
-  case 4:
-    return s=="beta" || s=="zeta";
-  case 5:
-    return s=="alpha" || s=="delta" || s=="Delta" || s=="gamma" ||
-           s=="Gamma" || s=="kappa" || s=="theta" || s=="Theta" ||
-           s=="sigma" || s=="Sigma" || s=="Omega" || s=="omega";
-  case 6:
-    return s=="lambda" || s=="Lambda";
-  case 7:
-    return s=="epsilon";
-  default:
-    break;
-  }
-  return false;
-}
-
-bool is_double_letter(const string &s) {
-  return s.length()==2 && isalpha(s.at(0)) && s.at(0)==s.at(1);
 }
 
 #define NUM_UNIT_PAIRS 48
@@ -743,13 +766,14 @@ string idnt2markup(const string &s_orig,bool tex,bool unit,int idc=0) {
   */
   size_t i,len,len_sub;
   string s,ssub,mdf="";
+  if (s_orig.rfind("_")==s_orig.size()-1 && is_greek_letter(s=s_orig.substr(0,s_orig.size()-1)))
+    return tex?"\\"+s+"\\_":"&"+s+";_";
   for (i=s_orig.size();i-->0;) {
     if (!isdigit(s_orig[i]))
       break;
   }
   s=s_orig.substr(0,i+1);
-  if (i<s_orig.size()-1 && (s=="log" || s.size()==1 ||
-                                is_greek_letter(s) || is_double_letter(s)))
+  if (i<s_orig.size()-1 && (s=="log" || s.size()==1 || is_greek_letter(s) || is_double_letter(s)))
     ssub=s_orig.substr(i+1);
   if (ssub.empty()) {
     size_t pos=s_orig.find("_");
@@ -1258,9 +1282,12 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
       ml.latex=left.latex+(right.neg?"-":"+")+(isone?"":right.latex+"\\,")+"\\mathrm{i}";
     return ml;
   case _FRAC:
-    ml.neg=!is_positive(g,contextptr);
     ml.type=_MLBLOCK_FRACTION;
     ml.priority=_PRIORITY_MUL;
+    if (!is_zero(im(g._FRACptr->num,contextptr)))
+      return gen2markup(symbolic(at_division,makesequence(g._FRACptr->num,g._FRACptr->den)),
+                        flags,idc,contextptr);
+    ml.neg=!is_positive(g,contextptr);
     ld=_abs(g._FRACptr->num,contextptr).print(contextptr);
     rd=_abs(g._FRACptr->den,contextptr).print(contextptr);
     if (mml_content)
@@ -3056,8 +3083,9 @@ string export_mathml(const gen &g,GIAC_CONTEXT) {
          "</annotation></semantics></math>";
 }
 
-bool has_improved_latex_export(const gen &g,string &s,GIAC_CONTEXT) {
-  if (g.is_symb_of_sommet(at_pnt)) return false;
+bool has_improved_latex_export(const gen &g,string &s,bool override_texmacs,GIAC_CONTEXT) {
+  if (force_legacy_conversion_to_latex || g.is_symb_of_sommet(at_pnt))
+    return false;
   switch (g.type) {
   case _POLY: case _SPOL1: case _EXT: case _ROOT:
   case _USER: case _EQW: case _GROB: case _POINTER_:
@@ -3065,7 +3093,14 @@ bool has_improved_latex_export(const gen &g,string &s,GIAC_CONTEXT) {
   default:
     break;
   }
+  bool use_texmacs_compatibility=is_texmacs_compatible_latex_export;
+  if (override_texmacs)
+    enable_texmacs_compatible_latex_export(false);
+  force_legacy_conversion_to_latex=true;
   s=export_latex(g,contextptr);
+  force_legacy_conversion_to_latex=false;
+  if (override_texmacs)
+    enable_texmacs_compatible_latex_export(use_texmacs_compatibility);
   return true;
 }
 

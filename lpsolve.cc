@@ -669,7 +669,7 @@ void lp_problem::set_objective(const vecteur &v, const gen &ft) {
  */
 void lp_problem::message(const char *msg, bool err) {
     if (err || settings.verbose)
-        *logptr(ctx) << msg << endl;
+        *logptr(ctx) << msg << "\n";
 }
 
 /*

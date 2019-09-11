@@ -630,7 +630,7 @@ define_unary_function_ptr5(at_moving_average,alias_at_moving_average,&__moving_a
 gen _resample(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
 #ifndef HAVE_LIBSAMPLERATE
-    *logptr(contextptr) << "Error: libsamplerate is required for resampling audio" << endl;
+    *logptr(contextptr) << "Error: libsamplerate is required for resampling audio\n";
     return vecteur(0);
 #else
     if (g.type!=_VECT)
@@ -2124,7 +2124,7 @@ gen fourier(const gen &f_orig,const identificateur &x,const identificateur &s,
                     }
                 }
                 *logptr(contextptr) << "Unable to determine Fourier transform of "
-                                    << f << ", resorting to integration" << endl;
+                                    << f << ", resorting to integration\n";
                 intgr+=cnst*eval(_Int(makesequence(exp(-cst_i*x*((neg?-s:s)-sh),contextptr)*
                                         pow(x,d.val)*f,x,minf,pinf),contextptr),0,contextptr);
                 continue;

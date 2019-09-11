@@ -247,7 +247,7 @@ vecteur make_temp_vars(const vecteur &vars,const vecteur &ineq,bool open,GIAC_CO
             if (s.type==_VECT)
                 as=*s._VECTptr;
             else {
-                *logptr(contextptr) << "Warning: failed to set bounds on variable " << *it << endl;
+                *logptr(contextptr) << "Warning: failed to set bounds on variable " << *it << "\n";
                 as.clear();
             }
         }
@@ -267,7 +267,7 @@ vecteur make_temp_vars(const vecteur &vars,const vecteur &ineq,bool open,GIAC_CO
                         s._SYMBptr->feuille._VECTptr->back()._SYMBptr->feuille._VECTptr->front()==*it) {
                 vmin=s._SYMBptr->feuille._VECTptr->front()._SYMBptr->feuille._VECTptr->back();
                 vmax=s._SYMBptr->feuille._VECTptr->back()._SYMBptr->feuille._VECTptr->back();
-            } else *logptr(contextptr) << "Warning: failed to set bounds on variable " << *it << endl;
+            } else *logptr(contextptr) << "Warning: failed to set bounds on variable " << *it << "\n";
         }
         gen v=identificateur(" var"+print_INT_(++var_index));
         if (!is_undef(vmax) && !is_undef(vmin))
@@ -292,7 +292,7 @@ vecteur solve_kkt(const gen &f,const vecteur &g,const vecteur &h,const vecteur &
     vars.resize(n+m+l);
     gen gr_f_tmp=_grad(makesequence(f,vars_orig),contextptr);
     if (gr_f_tmp.type!=_VECT || gr_f_tmp._VECTptr->size()!=vars_orig.size()) {
-        *logptr(contextptr) << "Error: failed to compute gradient of " << f << endl;
+        *logptr(contextptr) << "Error: failed to compute gradient of " << f << "\n";
         return vecteur(0);
     }
     vecteur &gr_f=*gr_f_tmp._VECTptr;
@@ -358,7 +358,7 @@ matrice critical_univariate(const gen &f,const gen &x,GIAC_CONTEXT) {
     gen z=_zeros(makesequence(df,x),contextptr);
     if (z.type==_VECT)
       cv=*z._VECTptr;
-    else *logptr(contextptr) << "Error: failed to compute zeros of " << df << endl;
+    else *logptr(contextptr) << "Error: failed to compute zeros of " << df << "\n";
     gen den(_denom(df,contextptr));
     if (!is_constant_wrt(den,x,contextptr)) {
         z=_zeros(makesequence(den,x),contextptr);
@@ -563,7 +563,7 @@ gen _minimize(const gen &args,GIAC_CONTEXT) {
                 g.push_back(it->is_symb_of_sommet(at_inferieur_egal)?s[0]-s[1]:s[1]-s[0]);
             } else if (it->type==_IDNT || it->type==_SYMB)
                 h.push_back(*it);
-            else *logptr(contextptr) << "Warning: ignoring constraint " << *it << endl;
+            else *logptr(contextptr) << "Warning: ignoring constraint " << *it << "\n";
         }
     }
     vecteur vars,initial;
@@ -1072,7 +1072,7 @@ matrice jacobian(vecteur &g,vecteur &vars,GIAC_CONTEXT) {
         if (gr.type==_VECT && gr._VECTptr->size()==vars.size())
             J.push_back(*gr._VECTptr);
         else {
-            *logptr(contextptr) << "Error: failed to compute gradient of " << g[i] << endl;
+            *logptr(contextptr) << "Error: failed to compute gradient of " << g[i] << "\n";
             return vecteur(0);
         }
     }
@@ -1414,11 +1414,11 @@ bool test_parameters(const vecteur &cpt,const vecteur &vars,const vecteur &ineq,
                 if (jt+1!=inqsol._VECTptr->end())
                     *logptr(contextptr) << " or ";
             }
-            *logptr(contextptr) << endl;
+            *logptr(contextptr) << "\n";
         }
     }
     if (!rest_conds.empty())
-        *logptr(contextptr) << "Warning: assuming " << rest_conds << endl;
+        *logptr(contextptr) << "Warning: assuming " << rest_conds << "\n";
     return true;
 }
 
@@ -1563,7 +1563,7 @@ void find_local_extrema(vecteur &cpts,const gen &f,const vecteur &g,const vecteu
                                 if (sub.type==_VECT && !sub._VECTptr->empty()) {
                                     *logptr(contextptr)
                                         << "Warning: assuming " << csts << " not in "
-                                        << simplify(sub,contextptr) << endl;
+                                        << simplify(sub,contextptr) << "\n";
                                 }
                             }
                             gen p=simplify(subst(taylor_terms[k-2],a,*it,false,contextptr),contextptr);
@@ -1948,16 +1948,16 @@ gen _extrema(const gen &g,GIAC_CONTEXT) {
             maxv.push_back(it->_VECTptr->front());
             break;
         case _CPCLASS_SADDLE:
-            *logptr(contextptr) << dispt << (nv==1?": inflection point":": saddle point") << endl;
+            *logptr(contextptr) << dispt << (nv==1?": inflection point":": saddle point") << "\n";
             break;
         case _CPCLASS_POSSIBLE_MIN:
-            *logptr(contextptr) << dispt << ": indeterminate critical point" << endl;
+            *logptr(contextptr) << dispt << ": indeterminate critical point\n";
             break;
         case _CPCLASS_POSSIBLE_MAX:
-            *logptr(contextptr) << dispt << ": indeterminate critical point" << endl;
+            *logptr(contextptr) << dispt << ": indeterminate critical point\n";
             break;
         case _CPCLASS_UNDECIDED:
-            *logptr(contextptr) << dispt << ": unclassified critical point" << endl;
+            *logptr(contextptr) << dispt << ": unclassified critical point\n";
             break;
         }
     }
@@ -2191,7 +2191,7 @@ gen _minimax(const gen &g,GIAC_CONTEXT) {
             break;
         }
     }
-    *logptr(contextptr) << "max. absolute error: " << best_emax << endl;
+    *logptr(contextptr) << "max. absolute error: " << best_emax << "\n";
     return best_p;
 }
 static const char _minimax_s []="minimax";
@@ -2431,7 +2431,7 @@ gen _tpsolve(const gen &g,GIAC_CONTEXT) {
     gen M(sy.size()==1 && sy[0].type==_IDNT?sy[0]:0);
     gen ts(_sum(supply,contextptr)),td(_sum(demand,contextptr));
     if (ts!=td) {
-        *logptr(contextptr) << "Warning: transportation problem is not balanced" << endl;
+        *logptr(contextptr) << "Warning: transportation problem is not balanced\n";
         if (is_greater(ts,td,contextptr)) {
             demand.push_back(ts-td);
             P=mtran(P);
@@ -2578,7 +2578,7 @@ gen _thiele(const gen &g,GIAC_CONTEXT) {
                 if (i<int(sing.size())-1)
                     *logptr(contextptr) << (i<int(sing.size())-2?", ":" and ");
             }
-            *logptr(contextptr) << endl;
+            *logptr(contextptr) << "\n";
         }
     }
     else
@@ -2707,7 +2707,7 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
         }
     }
     if (constr.empty()) {
-        *logptr(contextptr) << "Error: no contraints detected" << endl;
+        *logptr(contextptr) << "Error: no contraints detected\n";
         return gensizeerr(contextptr);
     }
     bool feasible=true;
@@ -2724,7 +2724,7 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
                 break;
             }
         } else {
-            *logptr(contextptr) << "Error: unrecognized constraint " << *it << endl;
+            *logptr(contextptr) << "Error: unrecognized constraint " << *it << "\n";
             return gentypeerr(contextptr);
         }
     }
@@ -2736,10 +2736,10 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
                 initp=*tmpinitp._VECTptr;
             else initp.clear();
             if (is_undef(initp) || initp.empty()) {
-                *logptr(contextptr) << "Error: unable to generate a feasible initial point" << endl;
+                *logptr(contextptr) << "Error: unable to generate a feasible initial point\n";
                 return undef;
             }
-            //*logptr(contextptr) << "Using a generated feasible initial point " << initp << endl;
+            //*logptr(contextptr) << "Using a generated feasible initial point " << initp << "\n";
         }
         gen args=makesequence(obj,constr,vars,initp,gen(eps),gen(maxiter));
         if (maximize)
@@ -2747,7 +2747,7 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
         else
             sol=_fMin(args,contextptr);
     } catch (std::runtime_error &err) {
-        *logptr(contextptr) << "Error: " << err.what() << endl;
+        *logptr(contextptr) << "Error: " << err.what() << "\n";
         return undef;
     }
     if (is_undef(sol))
@@ -2898,7 +2898,7 @@ gen kernel_density(const vector<double> &data,double bw,double sd,int bins,doubl
         if (n<=1000)
             bw=select_bandwidth_dpi(data,sd);
         else bw=select_bandwidth_dpi_bins(n,c,d,sd,contextptr);
-        *logptr(contextptr) << "selected bandwidth: " << bw << endl;
+        *logptr(contextptr) << "selected bandwidth: " << bw << "\n";
     }
     int L=std::min(bins-1,(int)std::floor(1+4*bw/d));
     vecteur k(2*L+1);
@@ -2931,7 +2931,7 @@ gen kernel_density(const vector<double> &data,double bw,double sd,int bins,doubl
             } else if (i==pos0) res=ratnormal(subst(p[i],X,x,false,contextptr),contextptr);
             if (i+1<bins && interp>1 && !_solve(makesequence(p[i],symb_equal(X,symb_interval(pos[i],pos[i+1]))),contextptr)._VECTptr->empty())
                 *logptr(contextptr) << "Warning: interpolated density has negative values in ["
-                                    << pos[i] << "," << pos[i+1] << "]" << endl;
+                                    << pos[i] << "," << pos[i+1] << "]\n";
         }
         if (x.type!=_IDNT) return res;
         args.push_back(0);
@@ -3037,7 +3037,7 @@ gen _kernel_density(const gen &g,GIAC_CONTEXT) {
     if (bw_method==_KDE_BW_METHOD_ROT) { // Silverman's rule of thumb
         double iqr=_evalf(_quartile3(data,contextptr)-_quartile1(data,contextptr),contextptr).DOUBLE_val();
         bw=1.06*std::min(sd,iqr/1.34)*std::pow(double(data.size()),-0.2);
-        *logptr(contextptr) << "selected bandwidth: " << bw << endl;
+        *logptr(contextptr) << "selected bandwidth: " << bw << "\n";
     }
     if (bins>0 && a==0 && b==0) {
         a=_evalf(_min(data,contextptr),contextptr).DOUBLE_val()-3*bw;
@@ -3403,23 +3403,23 @@ gen _bvpsolve(const gen &g,GIAC_CONTEXT) {
     double tol=_evalf(_epsilon(change_subtype(vecteur(0),_SEQ__VECT),contextptr),contextptr).DOUBLE_val();
     int ec=shooting(F,x,y,dy,tk,x1,x2,y1,y2,N,tol,maxiter,X,Y,dY,contextptr);
     if (ec==1) {
-        *logptr(contextptr) << "Error: maximum number of iterations exceeded" << endl;
+        *logptr(contextptr) << "Error: maximum number of iterations exceeded\n";
         return undef;
     }
     if (ec==2) {
         *logptr(contextptr) << "Error: the shooting method failed to converge";
         if (is_undef(tk))
             *logptr(contextptr) << ", try to set an initial guess for y'(a)";
-        *logptr(contextptr) << endl;
+        *logptr(contextptr) << "\n";
         if (N>=3 && (output_type==_BVP_LIST || output_type==_BVP_PIECEWISE)) {
-            *logptr(contextptr) << "Trying the finite-difference method instead" << endl;
+            *logptr(contextptr) << "Trying the finite-difference method instead\n";
             ec=finitediff(F,x,y,dy,x1,x2,y1,y2,N-1,tol,maxiter,X,Y,contextptr);
             if (ec==2) {
-                *logptr(contextptr) << "Error: failed to converge" << endl;
+                *logptr(contextptr) << "Error: failed to converge\n";
                 return undef;
             }
             if (ec==1) {
-                *logptr(contextptr) << "Error: maximum number of iterations exceeded" << endl;
+                *logptr(contextptr) << "Error: maximum number of iterations exceeded\n";
                 return undef;
             }
         } else return undef;

@@ -1087,7 +1087,7 @@ gen _import_graph(const gen &g,GIAC_CONTEXT) {
     for (int i=0;i<G.node_count();++i) {
         l=G.node_label(i);
         if (!is_exactly_zero(m[l])) {
-            *logptr(contextptr) << "Warning: imported graph contains equally labeled vertices" << endl;
+            *logptr(contextptr) << "Warning: imported graph contains equally labeled vertices\n";
             break;
         }
         m[l]=1;
@@ -4001,8 +4001,8 @@ gen _is_eulerian(const gen &g,GIAC_CONTEXT) {
         if (ic!=1) return graphe::FAUX;
         if (start>=0 && finish>=0)
             *logptr(contextptr) << "Input digraph has an Eulerian trail starting at "
-                                << G.node_label(start) << " and ending at " << G.node_label(finish) << endl;
-        else *logptr(contextptr) << "Input digraph has an Eulerian circuit" << endl;
+                                << G.node_label(start) << " and ending at " << G.node_label(finish) << "\n";
+        else *logptr(contextptr) << "Input digraph has an Eulerian circuit\n";
         return graphe::VRAI;
     }
     graphe::ivector path;
@@ -4788,7 +4788,7 @@ gen _bellman_ford(const gen &g,GIAC_CONTEXT) {
     }
     graphe::ivectors cheapest_paths;
     if (!G.bellman_ford(v,dest,path_weights,&cheapest_paths)) {
-        *logptr(contextptr) << "Error: graph contains a negative-weight cycle" << endl;
+        *logptr(contextptr) << "Error: graph contains a negative-weight cycle\n";
         return vecteur(0);
     }
     paths.resize(dest.size());

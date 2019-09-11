@@ -144,6 +144,10 @@ bool is_leading_bracket(const string &s) {
   return is_prefix(s,"\\left(") || is_prefix(s,"\\left\\{") || is_prefix(s,"\\left[");
 }
 
+bool is_closing_bracket(const string &s) {
+  return is_suffix(s,"\\right)") || is_suffix(s,"\\right\\}") || is_suffix(s,"\\right]");
+}
+
 bool is_greek_letter(const string &s) {
   switch (s.size()) {
   case 2:
@@ -205,13 +209,14 @@ string tex_implmul(const MarkupBlock &ml,const MarkupBlock &prev) {
        (is_prefix(ml.latex,"\\mathrm{") &&
         !is_substr(ml.latex.substr(8,ml.latex.find("}",8)-8),"\\_")) ||
        (is_prefix(ml.latex,"\\operatorname{") &&
+        (prev.latex.empty() || !isdigit(prev.latex[prev.latex.size()-1])) &&
         !is_latex_command_suffix(prev.latex,"^") && !is_latex_command_suffix(prev.latex,"_")) ||
        is_latex_command_suffix(prev.latex,"\\mathrm") ||
        is_latex_command_suffix(prev.latex,"\\operatorname")))
     return "\\,";
   else if (!is_texmacs_compatible_latex_export &&
            (ml.ctype(_MLBLOCK_ELEMAPP) || is_prefix(ml.latex,"\\operatorname{") ||
-            is_leading_bracket(ml.latex)))
+            is_leading_bracket(ml.latex) || is_closing_bracket(prev.latex)))
     return " ";
   return tex_itimes;
 }

@@ -1,4 +1,4 @@
-<TeXmacs|1.99.9>
+<TeXmacs|1.99.11>
 
 <style|<tuple|mmxmanual|framed-session|giac>>
 
@@ -13152,8 +13152,8 @@
     applied: if <math|deg<around*|(|v|)>\<geqslant\><around*|\||V|\|>> for
     all <math|v\<in\>V>, then <math|G> is Hamiltonian. Otherwise, the
     criterion of <name|Meyniel> <cite|hao> is applied: if
-    <math|deg<around*|(|v|)>+deg<around*|(|w|)>\<geqslant\>2*n-1> for any
-    pair of non-adjacent vertices <math|v,w\<in\>V>, then <math|G> is
+    <math|deg<around*|(|v|)>+deg<around*|(|w|)>\<geqslant\>2*<around*|\||V|\|>-1>
+    for any pair of non-adjacent vertices <math|v,w\<in\>V>, then <math|G> is
     Hamiltonian.
 
     <item>If <math|G> is undirected then the criteria presented by
@@ -13165,12 +13165,12 @@
     vertex partition <math|V=V<rsub|1>\<cup\>V<rsub|2>> and
     <math|<around*|\||V<rsub|1>|\|>\<neq\><around*|\||V<rsub|2>|\|>>, then
     <math|G> is not Hamiltonian. Otherwise, the criterion of <name|Ore> is
-    applied: if <math|deg<around*|(|u|)>+deg<around*|(|v|)>\<geqslant\>n>
+    applied: if <math|deg<around*|(|u|)>+deg<around*|(|v|)>\<geqslant\><around*|\||V|\|>>
     holds for every pair <math|u,v> of non-adjacent vertices from <math|V>,
     then <math|G> is Hamiltonian. Otherwise, the theorem of <name|Bondy> and
     <name|Chvátal> is applied: if the closure <math|cl<around*|(|G|)>> of
     <math|G> (obtained by finding a pair <math|u,v> of non-adjacent vertices
-    from <math|V> such that <math|deg<around*|(|u|)>+deg<around*|(|v|)>\<geqslant\>n>,
+    from <math|V> such that <math|deg<around*|(|u|)>+deg<around*|(|v|)>\<geqslant\><around*|\||V|\|>>,
     adding a new edge <math|u v> to <math|E> and repeating the process until
     exhaustion) is Hamiltonian, then <math|G> is Hamiltonian. (Note that in
     this case the previously tried criteria are applied to
@@ -13178,7 +13178,7 @@
     <math|cl<around*|(|G|)>> are generally higher than those in <math|G>, the
     probability of success also rises.) Otherwise, if the edge density of
     <math|G> is large enough, the criterion of <name|Nash> and
-    <name|Williams> is applied: if <math|\<delta\><around*|(|G|)>\<geqslant\>max<around*|{|<frac|n+2|3>,\<beta\>|}>>,
+    <name|Williams> is applied: if <math|\<delta\><around*|(|G|)>\<geqslant\>max<around*|{|<frac|<around*|\||V|\|>+2|3>,\<beta\>|}>>,
     where <math|\<beta\>> is the independence number of <math|G>, then
     <math|G> is Hamiltonian.
   </itemize-minus>
@@ -13531,9 +13531,9 @@
   is a sequence containing the list of tour costs and the list of the
   corresponding Hamiltonian cycles).
 
-  The strategy for undirected graphs is to formulate <abbr|TSP> as a linear
-  programming problem and to solve it by branch-and-cut method, applying the
-  hierarchical clustering method of <name|Pferschy> and
+  The strategy for undirected graphs is to formulate <abbr|TSP> as an integer
+  linear programming problem and to solve it by branch-and-cut method,
+  applying the hierarchical clustering method of <name|Pferschy> and
   <name|Stan¥k><nbsp><cite|pferschy> to generate subtour elimination
   constraints. The branching rule is implemented according to <name|Padberg>
   and <name|Rinaldi><nbsp><cite|padberg>. In addition, the algorithm combines
@@ -13551,9 +13551,10 @@
   time algorithm is known. Hence the algorithm may take exponential time to
   find the optimum in some instances.
 
-  For directed graphs, a linear programming formulation of the problem, using
-  enhanced subtour elimination constraints of <name|Miller>, <name|Tucker>
-  and <name|Zemlin> <cite|sawik>, is solved by branch-and-cut method.
+  For directed graphs, an integer linear programming formulation of the
+  problem, using enhanced subtour elimination constraints of <name|Miller>,
+  <name|Tucker> and <name|Zemlin> <cite|sawik>, is solved by branch-and-cut
+  method.
 
   The following example demonstrates finding a Hamiltonian cycle in the
   truncated icosahedral (\Psoccer ball\Q) graph. The result is visualized by

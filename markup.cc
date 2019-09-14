@@ -2766,24 +2766,43 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
         ml.latex=tmp.latex+"\\mathclose{"+string(g.is_symb_of_sommet(at_increment)?"++}":"--}");
       return ml;
     }
-    if (g.is_symb_of_sommet(at_when) && vectarg && g._SYMBptr->feuille._VECTptr->size()==3) {
+    if ((g.is_symb_of_sommet(at_when) || g.is_symb_of_sommet(at_piecewise)) &&
+        vectarg && g._SYMBptr->feuille._VECTptr->size()>=3) {
       const vecteur &args=*g._SYMBptr->feuille._VECTptr;
       ml.priority=_PRIORITY_COND;
-      tmp=gen2markup(args[0],flags,idc,contextptr);
-      prepend_minus(tmp,flags);
-      if (tmp.priority>=ml.priority)
-        parenthesize(tmp,flags);
-      get_leftright(makevecteur(args[1],args[2]),&ml,left,right,flags,idc,contextptr);
+      MarkupBlock otw;
+      int nargs=args.size();
+      bool has_otherwise=(nargs%2)!=0;
+      if (has_otherwise) {
+        otw=gen2markup(args.back(),flags,idc,contextptr);
+        prepend_minus(otw,flags);
+      }
+      for (int i=0;i<nargs/2;++i) {
+        get_leftright(makevecteur(args[2*i+1],args[2*i]),&ml,left,right,flags,idc,contextptr);
+        if (mml_content)
+          ml.content+=mml_tag("piece",left.content+right.content);
+        if (mml_presentation)
+          ml.markup+=mml_tag("mtr",mml_tag("mtd",left.markup+"<mo>,</mo>")+
+                                   mml_tag("mtd",right.markup));
+        if (tex)
+          ml.latex+=left.latex+",&"+right.latex+"\\\\";
+      }
+      if (has_otherwise) {
+        if (mml_content)
+          ml.content+=mml_tag("otherwise",otw.content);
+        if (mml_presentation)
+          ml.markup+=mml_tag("mtr",mml_tag("mtd",otw.markup+"<mo>,</mo>")+
+                                   mml_tag("mtd","<mi mathvariant='normal'>otherwise</mi>"));
+        if (tex)
+          ml.latex+=otw.latex+",&\\text{otherwise}";
+      }
       if (mml_content)
-        ml.content=mml_tag("piecewise",mml_tag("piece",left.content+tmp.content)+
-                                       mml_tag("otherwise",right.content),++idc);
+        ml.content=mml_tag("piecewise",ml.content,++idc);
       if (mml_presentation)
-        ml.markup=mml_tag(
-          "mrow",tmp.markup+"<mo lspace='mediummathspace' rspace='mediummathspace'>?</mo>"+
-                 left.markup+"<mo lspace='mediummathspace' rspace='mediummathspace'>:</mo>"+
-                 right.markup,idc);
+        ml.markup=mml_tag("mfenced",mml_tag("mtable",ml.markup,0,"columnalign","left"),
+                          idc,"open","{","close"," ");
       if (tex)
-        ml.latex=tmp.latex+"\\:\\mathord{?}\\:"+left.latex+"\\:\\mathord{:}\\:"+right.latex;
+        ml.latex="\\begin{cases}"+ml.latex+"\\end{cases}";
       return ml;
     }
     if (g.is_symb_of_sommet(at_factorial)) {

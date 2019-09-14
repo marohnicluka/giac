@@ -1728,10 +1728,9 @@ menu command \texttt{Table$\blacktriangleright$Save as mathml}.
 \subsection{Export to presentation or content MathML : {\tt export\_mathml}\index{export\_mathml}}
 The command {\tt export\_mathml} accepts one or two arguments: an expression and optionally the symbol {\tt content} or {\tt display}. If {\tt content} is specified, it converts the expression to content MathML, while for {\tt display} it converts it to presentation MathML. If the second argument is omitted, the return value contains both presentation and content MathML within a {\tt semantics} block. The return value in each case is a string containing a single {\tt math} block.
 
-In each of the following examples the return string is indented for better readability.\\
-Input :
+For example, input :
 \begin{center}
-  \tt export\_mathml(a+2*b)
+	\tt xml\_print(export\_mathml(a+2*b))
 \end{center}
 Output :
 \begin{verbatim}
@@ -1763,7 +1762,7 @@ Output :
 \end{verbatim}
 Input :
 \begin{center}
-  \tt export\_mathml(a+2*b,content)
+	\tt xml\_print(export\_mathml(a+2*b,content))
 \end{center}
 Output :
 \begin{verbatim}
@@ -1781,7 +1780,7 @@ Output :
 \end{verbatim}
 Input :
 \begin{center}
-  \tt export\_mathml(a+2*b,display)
+	\tt xml\_print(export\_mathml(a+2*b,display))
 \end{center}
 Output :
 \begin{verbatim}
@@ -1795,6 +1794,31 @@ Output :
       <mi>b</mi>
     </mrow>
   </mrow>
+</math>
+\end{verbatim}
+
+\subsection{Indent a XML string : {\tt xml\_print}\index{xml\_print}}
+{\tt xml\_print} takes a string as its only argument, assumes that it contains XML code and indents it for better readability. The indented code is returned as string. The default indent is two spaces.
+
+For example, input :
+\begin{center}
+	\tt s:=export\_mathml(1/(x\^{}2+1),display):;\\
+	    xml\_print(s)
+\end{center}
+Output :
+\begin{verbatim}
+<math mode='display' xmlns='http://www.w3.org/1998/Math/MathML'>
+  <mfrac>
+    <mn>1</mn>
+    <mrow>
+      <msup>
+        <mi>x</mi>
+        <mn>2</mn>
+      </msup>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </mfrac>
 </math>
 \end{verbatim}
 

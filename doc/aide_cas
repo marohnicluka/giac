@@ -5663,6 +5663,12 @@ export_mathml(a+2*b)
 export_mathml(a+2*b,display)
 export_mathml(a+2*b,content)
 
+# xml_print
+2 Indents a XML code given in a string (pretty print).
+0 Str
+-1 export_mathml
+xml_print(export_mathml(a+2*b))
+
 # fracmod iratrecon
 1 Retourne la fraction a/b tel que b*Xpr=a mod n, -sqrt(n)/2<a<=sqrt(n)/2 et 0<=b<sqrt(n)/2.
 2 Returns the fraction a/b such as b*Xpr=a mod n, -sqrt(n)/2<a<=sqrt(n)/2 and 0<=b<sqrt(n)/2.

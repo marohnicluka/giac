@@ -2839,9 +2839,8 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
     if (g.is_symb_of_sommet(at_l1norm) || g.is_symb_of_sommet(at_l2norm) ||
         g.is_symb_of_sommet(at_norm) || g.is_symb_of_sommet(at_maxnorm) ||
         g.is_symb_of_sommet(at_matrix_norm)) {
-      tmp=gen2markup(vectarg?g._SYMBptr->feuille._VECTptr->front()
-                              :g._SYMBptr->feuille,
-                       flags,idc,contextptr);
+      tmp=gen2markup(vectarg?g._SYMBptr->feuille._VECTptr->front():g._SYMBptr->feuille,
+                     flags,idc,contextptr);
       prepend_minus(tmp,flags);
       MarkupBlock d;
       int n=-2;
@@ -3080,12 +3079,106 @@ string export_latex(const gen &g,GIAC_CONTEXT) {
   return ml.latex;
 }
 
+// XML pretty printing
+#define XML_INDENT 2
+const string xml_element_name_end=" \t\n\r>";
+string trim_string(const string &s) {
+  size_t start,end;
+  for (start=0;start<s.size() && isspace(s[start]);start++);
+  for (end=s.size();end-->0 && isspace(s[end]););
+  return s.substr(start,end-start+1);
+}
+bool xml_read_element(const string &xml,size_t &pos,string &element,string &attrib,string &content) {
+  while (pos<xml.size() && isspace(xml[pos])) ++pos;
+  if (pos==xml.size()) {
+    element=attrib=content="";
+    return true;
+  }
+  if (xml[pos]!='<') return false;
+  size_t start=pos+1;
+  if (is_prefix(xml.substr(start),"--!")) {
+    pos=xml.find("-->",start);
+    if (pos==string::npos) return false;
+    element="";
+    content=xml.substr(start+3,pos-start-3);
+    pos+=3;
+    return true;
+  }
+  while (xml_element_name_end.find(xml[++pos])==string::npos) {
+    if (pos+1==xml.size()) return false;
+  }
+  string e=xml.substr(start,pos-start);
+  size_t astart=pos;
+  while (xml[pos++]!='>') {
+    if (pos==xml.size()) return false;
+  }
+  if (xml[pos-2]=='/') {
+    content=attrib="";
+    if (is_suffix(e,"/"))
+      e=e.substr(0,e.size()-1);
+    else attrib=trim_string(xml.substr(astart,pos-astart-2));
+  } else if (xml[pos-2]=='?' && e=="?xml" && pos-astart-2>0) {
+    content="xml preamble";
+    attrib=trim_string(xml.substr(astart,pos-astart-2));
+  } else {
+    size_t p=pos,cstart=pos,q;
+    int level=1;
+    while(p<xml.size()) {
+      if (xml[p]=='<') {
+        q=xml.find(">",p+1);
+        if (q==string::npos) return false;
+        if (xml[q-1]=='/') {
+          p=q+1;
+          continue;
+        }
+        if (xml[p+1]=='/') {
+          level--;
+          if (level==0 && is_prefix(xml.substr(p+2),e) &&
+              xml_element_name_end.find(xml[p+2+e.size()])!=string::npos) {
+            pos=q+1;
+            break;
+          }
+        } else level++;
+        p=q;
+      }
+      ++p;
+    }
+    if(p==xml.size()) return false;
+    attrib=trim_string(xml.substr(astart,cstart-astart-1));
+    content=trim_string(xml.substr(cstart,p-cstart));
+  }
+  element=e;
+  return true;
+}
+string xml_pretty_print(const string &xml,int level=0) {
+  size_t pos=0;
+  string element,attrib,content,indent=string(level*XML_INDENT,32),ret="";
+  while(pos!=xml.size()) {
+    if (!xml_read_element(xml,pos,element,attrib,content)) return xml;
+    if (!attrib.empty()) attrib=" "+attrib;
+    if (element.empty() && content.empty()) continue;
+    if (element.empty()) // the "element" is actually a comment
+      ret+=indent+"<--!"+content+"-->\n";
+    else if (content.empty()) // the element does not have content
+      ret+=indent+"<"+element+attrib+"/>\n";
+    else if (content=="xml preamble")
+      ret+=indent+"<"+element+attrib+"?>\n";
+    else
+      ret+=indent+"<"+element+attrib+">"+xml_pretty_print(content,level+1)+"</"+element+">\n";
+  }
+  if (level==0 && ret[ret.size()-1]=='\n')
+    ret=ret.substr(0,ret.size()-1);
+  return (level>0?"\n":"")+ret+(level>1?string((level-1)*XML_INDENT,32):"");
+}
+
+const string mathml_header_attributes="mode='display' xmlns='http://www.w3.org/1998/Math/MathML'";
+
 string export_mathml_content(const gen &g,GIAC_CONTEXT) {
   MarkupBlock ml;
   int idc=0,flags=_MARKUP_TOPLEVEL | _MARKUP_MATHML_CONTENT;
   ml=gen2markup(g,flags,idc,contextptr);
   prepend_minus(ml,flags);
-  return "<math xmlns='http://www.w3.org/1998/Math/MathML'>"+ml.content+"</math>";
+  return "<math "+mathml_header_attributes+">"+ml.content+"</math>";
 }
 
 string export_mathml_presentation(const gen &g,GIAC_CONTEXT) {
@@ -3093,7 +3186,7 @@ string export_mathml_presentation(const gen &g,GIAC_CONTEXT) {
   int idc=0,flags=_MARKUP_TOPLEVEL | _MARKUP_ELEMPOW | _MARKUP_MATHML_PRESENTATION;
   ml=gen2markup(g,flags,idc,contextptr);
   prepend_minus(ml,flags);
-  return "<math xmlns='http://www.w3.org/1998/Math/MathML'>"+ml.markup+"</math>";
+  return "<math "+mathml_header_attributes+">"+ml.markup+"</math>";
 }
 
 string export_mathml(const gen &g,GIAC_CONTEXT) {
@@ -3101,7 +3194,7 @@ string export_mathml(const gen &g,GIAC_CONTEXT) {
   int idc=0,flags=_MARKUP_TOPLEVEL | _MARKUP_MATHML_PRESENTATION | _MARKUP_MATHML_CONTENT;
   ml=gen2markup(g,flags,idc,contextptr);
   prepend_minus(ml,flags);
-  return "<math xmlns='http://www.w3.org/1998/Math/MathML'><semantics>"+ml.markup+
+  return "<math "+mathml_header_attributes+"><semantics>"+ml.markup+
          "<annotation-xml encoding='MathML-Content'>"+ml.content+"</annotation-xml>"+
          "<annotation encoding='Giac'>"+str_to_mml(g.print(contextptr),false)+
          "</annotation></semantics></math>";
@@ -3158,9 +3251,22 @@ gen _export_mathml(const gen &g,GIAC_CONTEXT) {
   }
   return string2gen(ret,false);
 }
-static const char _export_mathml_s []="export_mathml";
-static define_unary_function_eval (__export_mathml,&_export_mathml,_export_mathml_s);
+static const char _export_mathml_s[]="export_mathml";
+static define_unary_function_eval(__export_mathml,&_export_mathml,_export_mathml_s);
 define_unary_function_ptr5(at_export_mathml,alias_at_export_mathml,&__export_mathml,0,true)
+
+gen _xml_print(const gen &g,GIAC_CONTEXT) {
+  if (g.type!=_STRNG)
+    return gentypeerr(contextptr);
+  if (g.subtype==-1)
+    return g;
+  string s=g.print(contextptr);
+  s=s.substr(1,s.size()-2);
+  return string2gen(xml_pretty_print(s),false);
+}
+static const char _xml_print_s[]="xml_print";
+static define_unary_function_eval(__xml_print,&_xml_print,_xml_print_s);
+define_unary_function_ptr5(at_xml_print,alias_at_xml_print,&__xml_print,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

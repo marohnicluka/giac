@@ -35,6 +35,7 @@ string export_mathml(const gen &g,GIAC_CONTEXT);
 string export_mathml_presentation(const gen &g,GIAC_CONTEXT);
 string export_mathml_content(const gen &g,GIAC_CONTEXT);
 gen _export_mathml(const gen &g,GIAC_CONTEXT);
+gen _xml_print(const gen &g,GIAC_CONTEXT);
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

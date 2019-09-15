@@ -15561,9 +15561,9 @@ implicitdiff([-2x*z+y^2=1,x^2-exp(x*z)=y],[y(x),z(x)],[y,z],x)
 implicitdiff([a*sin(u*v)+b*cos(w*x)=c,u+v+w+x=z,u*v+w*x=z],[u(x,z),v(x,z),w(x,z)],u,z)
 implicitdiff(x*y,-2x^3+15x^2*y+11y^3-24y=0,y(x),x$2)
 implicitdiff((x-u)^2+(y-v)^2,[x^2/4+y^2/9=1,(u-3)^2+(v+5)^2=1],[v(u,x),y(u,x)],u,x)
-implicitdiff(x*y*z,-2x^3+15x^2*y+11y^3-24y=0,[x,z,y],order_size=1)
-implicitdiff(x*y*z,-2x^3+15x^2*y+11y^3-24y=0,[x,z,y],order_size=2,[1,-1,0])
- pd:=implicitdiff(x*y*z,-2x^3+15x^2*y+11y^3-24y=0,[x,z,y],order_size=4,[0,z,0]);pd[4,0,0]
+implicitdiff(x*y*z,-2x^3+15x^2*y+11y^3-24y=0,[x,z,y],order=1)
+implicitdiff(x*y*z,-2x^3+15x^2*y+11y^3-24y=0,[x,z,y],order=2,[1,-1,0])
+ pd:=implicitdiff(x*y*z,-2x^3+15x^2*y+11y^3-24y=0,[x,z,y],order=4,[0,z,0]);pd[4,0,0]
 
 # lp_assume lp_binary lp_binaryvariables lp_depthlimit lp_integer lp_integervariables lp_maximize lp_nonnegative lp_nonnegint lp_variables lp_nodelimit lp_integertolerance lp_method lp_simplex lp_interiorpoint lp_initialpoint lp_maxcuts lp_gaptolerance lp_nodeselect lp_varselect lp_firstfractional lp_lastfractional lp_mostfractional lp_pseudocost lp_depthfirst lp_breadthfirst lp_bestprojection lp_hybrid lp_iterationlimit lp_timelimit lp_verbose
 1 Options de la commande lpsolve
@@ -15616,7 +15616,7 @@ extrema(x+y+z,[x^2+y^2=1,2x+z=1],[x,y,z])
 extrema((x-u)^2+(y-v)^2,[x^2/4+y^2/9=1,(u-3)^2+(v+5)^2=1],[u,v,x,y])
 extrema(x2^6+x1^3+4x1+4x2,x1^5+x2^4+x1+x2=0,[x1,x2])
 extrema(x*y,-2x^3+15x^2*y+11y^3-24y=0,[x,y])
-extrema(x2^4-x1^4-x2^8+x1^10,[x1,x2],order_size=1)
+extrema(x2^4-x1^4-x2^8+x1^10,[x1,x2],order=1)
 extrema(x2^4-x1^4-x2^8+x1^10,[x1,x2])
 extrema(x2^6+x1^3+4x1+4x2,x1^5+x2^4+x1+x2=0,[x1,x2])
 extrema(x2^6+x1^3+2x1^2-x2^2+4x1+4x2,x1^5+x2^4+x1+x2=0,[x1,x2])

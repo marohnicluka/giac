@@ -1802,6 +1802,19 @@ Output :
 
 For example, input :
 \begin{center}
+  \tt xml\_print("<?xml version='1.0'?><root><child1>some content</child1><child2></child2><child3/></root>")
+\end{center}
+Output :
+\begin{verbatim}
+<?xml version='1.0'?>
+<root>
+  <child1>some content</child1>
+  <child2></child2>
+  <child3/>
+</root>
+\end{verbatim}
+Input :
+\begin{center}
 	\tt s:=export\_mathml(1/(x\^{}2+1),display):;\\
 	    xml\_print(s)
 \end{center}

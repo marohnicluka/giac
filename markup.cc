@@ -3115,12 +3115,14 @@ bool xml_read_element(const string &xml,size_t &pos,string &element,string &attr
   if (xml[pos-2]=='/') {
     content=attrib="";
     if (is_suffix(e,"/"))
-      e=e.substr(0,e.size()-1);
-    else attrib=trim_string(xml.substr(astart,pos-astart-2));
-  } else if (xml[pos-2]=='?' && e=="?xml" && pos-astart-2>0) {
-    content="xml preamble";
+      e="/"+e.substr(0,e.size()-1);
+    else {
+      attrib=trim_string(xml.substr(astart,pos-astart-2));
+      e="/"+e;
+    }
+  } else if (xml[pos-2]=='?' && e=="?xml" && pos-astart-2>0)
     attrib=trim_string(xml.substr(astart,pos-astart-2));
-  } else {
+  else {
     size_t p=pos,cstart=pos,q;
     int level=1;
     while(p<xml.size()) {
@@ -3159,14 +3161,16 @@ string xml_pretty_print(const string &xml,int level=0) {
     if (element.empty() && content.empty()) continue;
     if (element.empty()) // the "element" is actually a comment
       ret+=indent+"<--!"+content+"-->\n";
-    else if (content.empty()) // the element does not have content
-      ret+=indent+"<"+element+attrib+"/>\n";
-    else if (content=="xml preamble")
+    else if (element[0]=='?')
       ret+=indent+"<"+element+attrib+"?>\n";
+    else if (element[0]=='/')
+      ret+=indent+"<"+element.substr(1)+attrib+"/>\n";
     else
       ret+=indent+"<"+element+attrib+">"+xml_pretty_print(content,level+1)+"</"+element+">\n";
   }
-  if (level==0 && ret[ret.size()-1]=='\n')
+  if (trim_string(ret).empty())
+    return "";
+  if (level==0 && ret.size()>0 && ret[ret.size()-1]=='\n')
     ret=ret.substr(0,ret.size()-1);
   return (level>0?"\n":"")+ret+(level>1?string((level-1)*XML_INDENT,32):"");
 }

@@ -247,7 +247,7 @@ vecteur make_temp_vars(const vecteur &vars,const vecteur &ineq,bool open,GIAC_CO
             if (s.type==_VECT)
                 as=*s._VECTptr;
             else {
-                *logptr(contextptr) << "Warning: failed to set bounds on variable " << *it << "\n";
+                *logptr(contextptr) << "Warning: failed to set bounds for variable " << *it << "\n";
                 as.clear();
             }
         }
@@ -267,9 +267,9 @@ vecteur make_temp_vars(const vecteur &vars,const vecteur &ineq,bool open,GIAC_CO
                         s._SYMBptr->feuille._VECTptr->back()._SYMBptr->feuille._VECTptr->front()==*it) {
                 vmin=s._SYMBptr->feuille._VECTptr->front()._SYMBptr->feuille._VECTptr->back();
                 vmax=s._SYMBptr->feuille._VECTptr->back()._SYMBptr->feuille._VECTptr->back();
-            } else *logptr(contextptr) << "Warning: failed to set bounds on variable " << *it << "\n";
+            } else *logptr(contextptr) << "Warning: failed to set bounds for variable " << *it << "\n";
         }
-        gen v=identificateur(" var"+print_INT_(++var_index));
+        gen v=identificateur(" x"+print_INT_(++var_index));
         if (!is_undef(vmax) && !is_undef(vmin))
             assume_t_in_ab(v,vmin,vmax,open,open,contextptr);
         else if (!is_undef(vmin))
@@ -388,7 +388,13 @@ vecteur global_extrema(const gen &f,const vecteur &g,const vecteur &h,const vect
     if (n==1) {
         cv=critical_univariate(ff,tmpvars[0],contextptr);
         for (const_iterateur it=g.begin();it!=g.end();++it) {
-            cv.push_back(makevecteur(it->_SYMBptr->feuille._VECTptr->back()));
+            gen a,b;
+            if (!is_linear_wrt(*it,vars[0],a,b,contextptr) || is_zero(a)) {
+              *logptr(contextptr) << "Warning: expected a linear function in " << vars[0]
+                                  << ",  got " << *it << "\n";
+              continue;
+            }
+            cv.push_back(makevecteur(-b/a));
         }
     } else {
         vecteur gg=subst(g,vars,tmpvars,false,contextptr);

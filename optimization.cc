@@ -411,6 +411,15 @@ vecteur global_extrema(const gen &f,const vecteur &g,const vecteur &h,const vect
     matrice min_locations;
     for (const_iterateur it=cv.begin();it!=cv.end();++it) {
         gen val=_eval(subst(f,vars,*it,false,contextptr),contextptr);
+        if (is_inf(val)) {
+          *logptr(contextptr) << "Warning: the function is not bounded\n";
+          return vecteur(0);
+        }
+        if (is_undef(val)) {
+          *logptr(contextptr) << "Warning: failed to compute the function value at critical point "
+                              << (it->_VECTptr->size()==1?it->_VECTptr->front():*it) << "\n";
+          return vecteur(0);
+        }
         if (min_set && is_exactly_zero(ratnormal(val-mn,contextptr))) {
             if (find(min_locations.begin(),min_locations.end(),*it)==min_locations.end())
                 min_locations.push_back(*it);
@@ -580,7 +589,7 @@ gen _minimize(const gen &args,GIAC_CONTEXT) {
     gen mn,mx;
     vecteur loc(global_extrema(f,g,h,vars,mn,mx,contextptr));
     if (loc.empty() || mn.is_approx()) {
-        /* try using nlpsolve for approx results */
+        *logptr(contextptr) << "Warning: failed to find exact extrema, switching to approx mode\n";
         gen asol=_nlpsolve(change_subtype(vecteur(argv.begin(),argv.begin()+nargs),_SEQ__VECT),contextptr);
         if (asol.type==_VECT && asol._VECTptr->size()>1) {
             mn=asol._VECTptr->front();

@@ -142,13 +142,31 @@ int var_index=0;
  */
 vecteur solve2(const vecteur &e_orig,const vecteur &vars_orig,GIAC_CONTEXT) {
     int m=e_orig.size(),n=vars_orig.size(),i=0;
+    vecteur e_orig_simp(e_orig);
+    for (iterateur it=e_orig_simp.begin();it!=e_orig_simp.end();++it) {
+        if (it->is_symb_of_sommet(at_equal))
+            *it=equal2diff(*it);
+        gen f=_factor(*it,contextptr);
+        if (f.is_symb_of_sommet(at_neg))
+            f=f._SYMBptr->feuille;
+        if (f.is_symb_of_sommet(at_prod) && f._SYMBptr->feuille.type==_VECT) {
+            const vecteur &fv=*f._SYMBptr->feuille._VECTptr;
+            gen p(1);
+            for (const_iterateur jt=fv.begin();jt!=fv.end();++jt) {
+                if (jt->is_symb_of_sommet(at_exp))
+                  continue;
+                else p=*jt*p;
+            }
+            *it=p;
+        }
+    }
     for (;i<m;++i) {
-        if (!is_rational_wrt_vars(e_orig[i],vars_orig,contextptr))
+        if (!is_rational_wrt_vars(e_orig_simp[i],vars_orig,contextptr))
             break;
     }
     if (n==1 || i==m)
-        return solve_vect(e_orig,vars_orig,contextptr);
-    vecteur e(*halftan(_texpand(hyp2exp(e_orig,contextptr),contextptr),contextptr)._VECTptr);
+        return solve_vect(e_orig_simp,vars_orig,contextptr);
+    vecteur e(*halftan(_texpand(hyp2exp(e_orig_simp,contextptr),contextptr),contextptr)._VECTptr);
     vecteur lv(*exact(lvar(_evalf(lvar(e),contextptr)),contextptr)._VECTptr);
     vecteur deps(n),depvars(n,gen(0));
     vecteur vars(vars_orig);
@@ -170,7 +188,7 @@ vecteur solve2(const vecteur &e_orig,const vecteur &vars_orig,GIAC_CONTEXT) {
             break;
     }
     if (it!=lv.end() || find(depvars.begin(),depvars.end(),gen(0))!=depvars.end())
-        return solve_vect(e_orig,vars_orig,contextptr);
+        return solve_vect(e_orig_simp,vars_orig,contextptr);
     vecteur e_subs=subst(e,deps,depvars,false,contextptr);
     vecteur sol=solve_vect(e_subs,depvars,contextptr);
     vecteur ret;

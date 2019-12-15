@@ -141,18 +141,15 @@ bool is_cancellable(const gen &g,const vecteur &vars,GIAC_CONTEXT) {
         terms=*g._SYMBptr->feuille._VECTptr;
     else terms=makevecteur(g);
     bool has_exp=false;
-    gen fcf(0);
+    gen rest(0);
     for (const_iterateur it=terms.begin();it!=terms.end();++it) {
-        if (is_constant_wrt_vars(*it,vars,contextptr))
-            fcf+=*it;
-        else if (it->is_symb_of_sommet(at_exp) ||
-                 (it->is_symb_of_sommet(at_inv) && it->_SYMBptr->feuille.is_symb_of_sommet(at_exp)))
+        if (_lin(*it,contextptr).is_symb_of_sommet(at_exp))
             has_exp=true;
-        else return false;
+        else rest+=*it;
     }
     if (!has_exp)
         return false;
-    return is_positive(fcf,contextptr);
+    return is_positive(rest,contextptr);
 }
 
 gen simplify_with_cancelling(const gen &g,const vecteur &vars,GIAC_CONTEXT) {

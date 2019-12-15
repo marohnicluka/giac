@@ -135,6 +135,43 @@ vecteur solve_vect(const vecteur &e,const vecteur &v,GIAC_CONTEXT) {
 
 int var_index=0;
 
+bool is_cancellable(const gen &g,const vecteur &vars,GIAC_CONTEXT) {
+    vecteur terms(0);
+    if (g.is_symb_of_sommet(at_plus) && g._SYMBptr->feuille.type==_VECT)
+        terms=*g._SYMBptr->feuille._VECTptr;
+    else terms=makevecteur(g);
+    bool has_exp=false;
+    gen fcf(0);
+    for (const_iterateur it=terms.begin();it!=terms.end();++it) {
+        if (is_constant_wrt_vars(*it,vars,contextptr))
+            fcf+=*it;
+        else if (it->is_symb_of_sommet(at_exp) ||
+                 (it->is_symb_of_sommet(at_inv) && it->_SYMBptr->feuille.is_symb_of_sommet(at_exp)))
+            has_exp=true;
+        else return false;
+    }
+    if (!has_exp)
+        return false;
+    return is_positive(fcf,contextptr);
+}
+
+gen simplify_with_cancelling(const gen &g,const vecteur &vars,GIAC_CONTEXT) {
+    gen f(g);
+    if (f.is_symb_of_sommet(at_neg))
+        f=f._SYMBptr->feuille;
+    if (f.is_symb_of_sommet(at_prod) && f._SYMBptr->feuille.type==_VECT) {
+        const vecteur &fv=*f._SYMBptr->feuille._VECTptr;
+        gen p(1);
+        for (const_iterateur jt=fv.begin();jt!=fv.end();++jt) {
+            if (is_cancellable(*jt,vars,contextptr))
+              continue;
+            else p=*jt*p;
+        }
+        f=p;
+    }
+    return f;
+}
+
 /*
  * Solves a system of equations.
  * This function is based on _solve but handles cases where a variable
@@ -142,23 +179,14 @@ int var_index=0;
  */
 vecteur solve2(const vecteur &e_orig,const vecteur &vars_orig,GIAC_CONTEXT) {
     int m=e_orig.size(),n=vars_orig.size(),i=0;
-    vecteur e_orig_simp(e_orig);
+    vecteur e_orig_simp=*expexpand(expand(_pow2exp(e_orig,contextptr),contextptr),contextptr)._VECTptr;
     for (iterateur it=e_orig_simp.begin();it!=e_orig_simp.end();++it) {
         if (it->is_symb_of_sommet(at_equal))
             *it=equal2diff(*it);
         gen f=_factor(*it,contextptr);
-        if (f.is_symb_of_sommet(at_neg))
-            f=f._SYMBptr->feuille;
-        if (f.is_symb_of_sommet(at_prod) && f._SYMBptr->feuille.type==_VECT) {
-            const vecteur &fv=*f._SYMBptr->feuille._VECTptr;
-            gen p(1);
-            for (const_iterateur jt=fv.begin();jt!=fv.end();++jt) {
-                if (jt->is_symb_of_sommet(at_exp))
-                  continue;
-                else p=*jt*p;
-            }
-            *it=p;
-        }
+        gen num=simplify_with_cancelling(_numer(f,contextptr),vars_orig,contextptr);
+        gen den=simplify_with_cancelling(_denom(f,contextptr),vars_orig,contextptr);
+        *it=num/den;
     }
     for (;i<m;++i) {
         if (!is_rational_wrt_vars(e_orig_simp[i],vars_orig,contextptr))

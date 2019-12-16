@@ -135,7 +135,7 @@ vecteur solve_vect(const vecteur &e,const vecteur &v,GIAC_CONTEXT) {
 
 int var_index=0;
 
-bool is_cancellable(const gen &g,const vecteur &vars,GIAC_CONTEXT) {
+bool is_greater_than_zero(const gen &g,const vecteur &vars,GIAC_CONTEXT) {
     vecteur terms(0);
     if (g.is_symb_of_sommet(at_plus) && g._SYMBptr->feuille.type==_VECT)
         terms=*g._SYMBptr->feuille._VECTptr;
@@ -152,7 +152,7 @@ bool is_cancellable(const gen &g,const vecteur &vars,GIAC_CONTEXT) {
     return is_positive(rest,contextptr);
 }
 
-gen simplify_with_cancelling(const gen &g,const vecteur &vars,GIAC_CONTEXT) {
+gen remove_strictly_positive_factors(const gen &g,const vecteur &vars,GIAC_CONTEXT) {
     gen f(g);
     if (f.is_symb_of_sommet(at_neg))
         f=f._SYMBptr->feuille;
@@ -160,7 +160,7 @@ gen simplify_with_cancelling(const gen &g,const vecteur &vars,GIAC_CONTEXT) {
         const vecteur &fv=*f._SYMBptr->feuille._VECTptr;
         gen p(1);
         for (const_iterateur jt=fv.begin();jt!=fv.end();++jt) {
-            if (is_cancellable(*jt,vars,contextptr))
+            if (is_greater_than_zero(*jt,vars,contextptr))
               continue;
             else p=*jt*p;
         }
@@ -181,8 +181,8 @@ vecteur solve2(const vecteur &e_orig,const vecteur &vars_orig,GIAC_CONTEXT) {
         if (it->is_symb_of_sommet(at_equal))
             *it=equal2diff(*it);
         gen f=_factor(*it,contextptr);
-        gen num=simplify_with_cancelling(_numer(f,contextptr),vars_orig,contextptr);
-        gen den=simplify_with_cancelling(_denom(f,contextptr),vars_orig,contextptr);
+        gen num=remove_strictly_positive_factors(_numer(f,contextptr),vars_orig,contextptr);
+        gen den=remove_strictly_positive_factors(_denom(f,contextptr),vars_orig,contextptr);
         *it=num/den;
     }
     for (;i<m;++i) {
@@ -237,32 +237,55 @@ vecteur solve2(const vecteur &e_orig,const vecteur &vars_orig,GIAC_CONTEXT) {
     return ret;
 }
 
+bool is_ineq_x_a(const gen &g,const gen &var,gen &a,GIAC_CONTEXT) {
+    if ((g.is_symb_of_sommet(at_inferieur_egal) ||
+         g.is_symb_of_sommet(at_inferieur_strict) ||
+         g.is_symb_of_sommet(at_superieur_egal) ||
+         g.is_symb_of_sommet(at_superieur_strict)) &&
+        g._SYMBptr->feuille.type==_VECT &&
+        g._SYMBptr->feuille._VECTptr->front()==var &&
+        is_constant_wrt(g._SYMBptr->feuille._VECTptr->back(),var,contextptr))
+    {
+        a=g._SYMBptr->feuille._VECTptr->back();
+        return true;
+    }
+    return false;
+}
+
 /*
  * Traverse the tree of symbolic expression 'e' and collect all points of
- * transition in piecewise subexpressions, no matter of the inequality sign.
- * Nested piecewise expressions are not supported.
+ * transition in piecewise subexpressions.
  */
-void find_spikes(const gen &e,vecteur &cv,GIAC_CONTEXT) {
-    if (e.type!=_SYMB)
-        return;
-    gen &f=e._SYMBptr->feuille;
-    if (f.type==_VECT) {
-        for (const_iterateur it=f._VECTptr->begin();it!=f._VECTptr->end();++it) {
-            if (e.is_symb_of_sommet(at_piecewise) || e.is_symb_of_sommet(at_when)) {
-                if (it->is_symb_of_sommet(at_equal) ||
-                        it->is_symb_of_sommet(at_different) ||
-                        it->is_symb_of_sommet(at_inferieur_egal) ||
-                        it->is_symb_of_sommet(at_superieur_egal) ||
-                        it->is_symb_of_sommet(at_inferieur_strict) ||
-                        it->is_symb_of_sommet(at_superieur_strict)) {
-                    vecteur &w=*it->_SYMBptr->feuille._VECTptr;
-                    cv.push_back(w[0].type==_IDNT?w[1]:w[0]);
-                }
-            }
-            else find_spikes(*it,cv,contextptr);
+void collect_transition_points(const gen &e,const gen &var,vecteur &cv,GIAC_CONTEXT) {
+    if (e.type==_VECT) {
+        for (const_iterateur it=e._VECTptr->begin();it!=e._VECTptr->end();++it) {
+            collect_transition_points(*it,var,cv,contextptr);
         }
     }
-    else find_spikes(f,cv,contextptr);
+    else if ((e.is_symb_of_sommet(at_piecewise) || e.is_symb_of_sommet(at_when)) &&
+             e._SYMBptr->feuille.type==_VECT) {
+        const vecteur &f=*e._SYMBptr->feuille._VECTptr;
+        int sz=f.size();
+        for (int i=0;i<sz/2;++i) {
+            gen g=_solve(makesequence(f[2*i],var),contextptr);
+            if (g.type==_VECT) {
+                gen a,b;
+                for (const_iterateur it=g._VECTptr->begin();it!=g._VECTptr->end();++it) {
+                    if (is_ineq_x_a(*it,var,a,contextptr))
+                        cv.push_back(a);
+                    else if (it->is_symb_of_sommet(at_and) &&
+                             it->_SYMBptr->feuille.type==_VECT &&
+                             it->_SYMBptr->feuille._VECTptr->size()==2 &&
+                             is_ineq_x_a(it->_SYMBptr->feuille._VECTptr->front(),var,a,contextptr) &&
+                             is_ineq_x_a(it->_SYMBptr->feuille._VECTptr->back(),var,b,contextptr)) {
+                        cv.push_back(a);
+                        cv.push_back(b);
+                    }
+                }
+            }
+        }
+    } else if (e.type==_SYMB)
+        collect_transition_points(e._SYMBptr->feuille,var,cv,contextptr);
 }
 
 bool next_binary_perm(vector<bool> &perm,int to_end=0) {
@@ -408,7 +431,7 @@ matrice critical_univariate(const gen &f,const gen &x,GIAC_CONTEXT) {
         if (z.type==_VECT)
           cv=mergevecteur(cv,*z._VECTptr);
     }
-    find_spikes(f,cv,contextptr);  // assuming that f is not differentiable on transitions
+    collect_transition_points(f,x,cv,contextptr);
     for (int i=cv.size();i-->0;) {
         if (cv[i].is_symb_of_sommet(at_and))
             cv.erase(cv.begin()+i);

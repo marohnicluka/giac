@@ -176,22 +176,29 @@ gen remove_strictly_positive_factors(const gen &g,const vecteur &vars,GIAC_CONTE
  */
 vecteur solve2(const vecteur &e_orig,const vecteur &vars_orig,GIAC_CONTEXT) {
     int m=e_orig.size(),n=vars_orig.size(),i=0;
-    vecteur e_orig_simp=*expexpand(expand(_pow2exp(e_orig,contextptr),contextptr),contextptr)._VECTptr;
-    for (iterateur it=e_orig_simp.begin();it!=e_orig_simp.end();++it) {
-        if (it->is_symb_of_sommet(at_equal))
-            *it=equal2diff(*it);
-        gen f=_factor(*it,contextptr);
+    vecteur e_orig_simp=*expexpand(expand(_pow2exp(e_orig,contextptr),contextptr),contextptr)._VECTptr,ee;
+    for (int i=e_orig_simp.size();i-->0;) {
+        gen eq=e_orig_simp[i];
+        if (eq.is_symb_of_sommet(at_equal))
+            eq=equal2diff(eq);
+        if (is_constant_wrt_vars(eq,vars_orig,contextptr)) {
+            if (is_zero(_ratnormal(eq,contextptr)))
+                continue;
+            return vecteur(0);
+        }
+        gen f=_factor(eq,contextptr);
         gen num=remove_strictly_positive_factors(_numer(f,contextptr),vars_orig,contextptr);
         gen den=remove_strictly_positive_factors(_denom(f,contextptr),vars_orig,contextptr);
-        *it=num/den;
+        ee.push_back(num/den);
     }
+    m=ee.size();
     for (;i<m;++i) {
-        if (!is_rational_wrt_vars(e_orig_simp[i],vars_orig,contextptr))
+        if (!is_rational_wrt_vars(ee[i],vars_orig,contextptr))
             break;
     }
     if (n==1 || i==m)
-        return solve_vect(e_orig_simp,vars_orig,contextptr);
-    vecteur e(*halftan(_texpand(hyp2exp(e_orig_simp,contextptr),contextptr),contextptr)._VECTptr);
+        return solve_vect(ee,vars_orig,contextptr);
+    vecteur e(*halftan(_texpand(hyp2exp(ee,contextptr),contextptr),contextptr)._VECTptr);
     vecteur lv(*exact(lvar(_evalf(lvar(e),contextptr)),contextptr)._VECTptr);
     vecteur deps(n),depvars(n,gen(0));
     vecteur vars(vars_orig);
@@ -213,7 +220,7 @@ vecteur solve2(const vecteur &e_orig,const vecteur &vars_orig,GIAC_CONTEXT) {
             break;
     }
     if (it!=lv.end() || find(depvars.begin(),depvars.end(),gen(0))!=depvars.end())
-        return solve_vect(e_orig_simp,vars_orig,contextptr);
+        return solve_vect(ee,vars_orig,contextptr);
     vecteur e_subs=subst(e,deps,depvars,false,contextptr);
     vecteur sol=solve_vect(e_subs,depvars,contextptr);
     vecteur ret;
@@ -3606,8 +3613,6 @@ gen _euler_lagrange(const gen &g,GIAC_CONTEXT) {
     vecteur u=makevecteur(identificateur("y"));
     if (g.type!=_VECT) {
         L=g;
-        if (!contains(lidnt(g),t))
-            t=t__IDNT_e;
     } else {
         if (g.subtype!=_SEQ__VECT)
             return gensizeerr(contextptr);
@@ -3642,6 +3647,8 @@ gen _euler_lagrange(const gen &g,GIAC_CONTEXT) {
         }
     }
     L=idnteval(L,contextptr);
+    if (g.type!=_VECT && !contains(lidnt(L),t))
+        t=t__IDNT_e;
     int n=u.size();
     vecteur du(n),Du(n),Dut(n),DU(n),D2U(n),d2u(n),ut(n);
     for (int i=0;i<n;++i) {
@@ -3724,11 +3731,11 @@ gen _jacobi_equation(const gen &g,GIAC_CONTEXT) {
     gen dy=identificateur(" dy");
     L=parse_functional(L,t,y,dy,contextptr);
     gen dY=derive(Y,t,contextptr);
-    gen Ldydy=subst(ratnormal(derive(L,dy,dy,contextptr),contextptr),
+    gen Ldydy=subst(ratnormal(_derive(makesequence(L,dy,dy),contextptr),contextptr),
                     makevecteur(y,dy),makevecteur(Y,dY),false,contextptr);
-    gen Lyy=subst(ratnormal(derive(L,y,y,contextptr),contextptr),
+    gen Lyy=subst(ratnormal(_derive(makesequence(L,y,y),contextptr),contextptr),
                   makevecteur(y,dy),makevecteur(Y,dY),false,contextptr);
-    gen Lydy=subst(ratnormal(derive(L,y,dy,contextptr),contextptr),
+    gen Lydy=subst(ratnormal(_derive(makesequence(L,y,dy),contextptr),contextptr),
                    makevecteur(y,dy),makevecteur(Y,dY),false,contextptr);
     gen d=ratnormal(Lyy-derive(Lydy,t,contextptr),contextptr);
     if (is_zero(Ldydy))

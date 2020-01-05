@@ -1,6 +1,6 @@
-<TeXmacs|1.99.11>
+<TeXmacs|1.99.12>
 
-<style|<tuple|mmxmanual|framed-session|giac>>
+<style|<tuple|mmxmanual|framed-session|giac|old-dots>>
 
 <\body>
   <\hide-preamble>
@@ -3893,7 +3893,7 @@
 
   <center|<image|images/trunc.eps|35%|||>>
 
-  <paragraph|Constructing fullerene graphs>Truncating the plane dual of
+  <paragraph|Constructing fullerene graphs.>Truncating the plane dual of
   <math|G> represents the <strong|leapfrog operation> on <math|G>, which can
   be used for constructing <hlink|<rigid|fullerene
   graphs>|https://en.wikipedia.org/wiki/Fullerene#Other_buckyballs><nbsp><cite|andova>.
@@ -16450,7 +16450,7 @@
     <\associate|figure>
       <tuple|normal|<surround|<hidden-binding|<tuple>|3.1>||drawing of the
       Sierpi«ski graph <with|mode|<quote|math>|S T<rsub|3><rsup|5>> using
-      L<rsup|<space|-0.8spc><move|A|0fn|-0.1fn>><space|-0.2spc>T<rsub|<space|-0.4spc><move|<resize|<with|math-level|<quote|0>|E>||||0.5fn>|0fn|-0.1fn>><space|-0.4spc>X
+      L<rsup|<space|-0.8spc><move|A|0fn|-0.1fn>><space|-0.2spc>T<rsub|<space|-0.4spc><move|<resize|<with|math-level|0|E>||||0.5fn>|0fn|-0.1fn>><space|-0.4spc>X
       and PSTricks>|<pageref|auto-176>>
 
       <tuple|normal|<surround|<hidden-binding|<tuple>|6.1>||Joining blocks by
@@ -17200,7 +17200,7 @@
       <no-break><pageref|auto-173>>
 
       <with|par-left|<quote|1tab>|3.2.2.<space|2spc>Saving graph drawings in
-      L<rsup|<space|-0.8spc><move|A|0fn|-0.1fn>><space|-0.2spc>T<rsub|<space|-0.4spc><move|<resize|<with|math-level|<quote|0>|E>||||0.5fn>|0fn|-0.1fn>><space|-0.4spc>X
+      L<rsup|<space|-0.8spc><move|A|0fn|-0.1fn>><space|-0.2spc>T<rsub|<space|-0.4spc><move|<resize|<with|math-level|0|E>||||0.5fn>|0fn|-0.1fn>><space|-0.4spc>X
       format <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-175>>
 

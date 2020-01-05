@@ -25,7 +25,7 @@
 #ifdef __ANDROID__
 using std::vector;
 #endif
-#if defined GIAC_HAS_STO_38 || defined NSPIRE || defined NSPIRE_NEWLIB ||      \
+#if defined GIAC_HAS_STO_38 || defined NSPIRE || defined NSPIRE_NEWLIB || defined KHICAS ||     \
     defined FXCG || defined GIAC_GGB || defined USE_GMP_REPLACEMENTS
 inline bool is_graphe(const giac::gen &g,std::string &disp_out,
                       const giac::context *) {
@@ -94,7 +94,8 @@ enum MarkupBlockTypeFlags {
   _MLBLOCK_FUNC=1024,
   _MLBLOCK_POWER=2048,
   _MLBLOCK_DERIVATIVE=4096,
-  _MLBLOCK_HAS_SUBSCRIPT=8192
+  _MLBLOCK_HAS_SUBSCRIPT=8192,
+  _MLBLOCK_LEADING_DIGIT=16384
 };
 
 enum MarkupFlags {
@@ -124,7 +125,7 @@ bool is_suffix(const string &s,const string &p) {
 
 bool is_latex_command_suffix(const string &s,const string &com,bool delim=false) {
   string c=com+"{";
-  size_t pos=s.rfind(c);
+  size_t pos=s.find(c);
   if (pos==string::npos || (delim && pos>0 && (isalnum(s[pos-1]) || s[pos-1]==32)))
     return false;
   pos+=c.length();
@@ -204,8 +205,11 @@ extern MarkupBlock gen2markup(const gen &g,int flags,int &idc,GIAC_CONTEXT);
 string tex_implmul(const MarkupBlock &ml,const MarkupBlock &prev) {
   if (is_texmacs_compatible_latex_export &&
       (((is_latex_command_suffix(prev.latex,"^",true) || is_latex_command_suffix(prev.latex,"_",true)) &&
-        !is_leading_bracket(ml.latex)) ||
+        (!is_leading_bracket(ml.latex) ||
+         is_prefix(prev.latex,"\\mathrm{") ||
+         is_prefix(prev.latex,"\\mathbf{"))) ||
        is_tex_greek__suffix(prev.latex) ||
+       is_prefix(ml.latex,"\\mathbf{") ||
        (is_prefix(ml.latex,"\\mathrm{") &&
         !is_substr(ml.latex.substr(8,ml.latex.find("}",8)-8),"\\_")) ||
        (is_prefix(ml.latex,"\\operatorname{") &&
@@ -221,11 +225,13 @@ string tex_implmul(const MarkupBlock &ml,const MarkupBlock &prev) {
   return tex_itimes;
 }
 
+#ifndef KHICAS
 void enable_texmacs_compatible_latex_export(bool yes) {
   is_texmacs_compatible_latex_export=yes;
   tex_itimes=(yes?" ":"\\,");  
 }
-
+#endif
+  
 #define NUM_MATHML_CONTENT_ELEMENTS 31
 const string mathml_content_elements[NUM_MATHML_CONTENT_ELEMENTS]={
   "cn",
@@ -799,7 +805,7 @@ string idnt2markup(const string &s_orig,bool tex,bool unit,int idc=0) {
   }
   len_sub=ssub.size();
   if (!ssub.empty() && is_greek_letter(ssub)) {
-    ssub=tex?("\\"+s):("&"+ssub+";");
+    ssub=tex?("\\"+(ssub=="phi"?"varphi":ssub)):("&"+ssub+";");
     len_sub=1;
   }
   if (is_double_letter(s)) {
@@ -974,7 +980,7 @@ bool get_derive_vars(const vecteur &args,vecteur &vars) {
       case _IDNT:
         if (!vars.empty() && vars.back()._VECTptr->front()==g)
           vars.back()._VECTptr->back()+=1;
-        vars.push_back(makevecteur(g,1));
+        else vars.push_back(makevecteur(g,1));
         break;
       case _VECT:
         if (!get_derive_vars(*g._VECTptr,vars))
@@ -1199,6 +1205,7 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
       if (tex)
         ml.latex=str;
     }
+    ml.type|=_MLBLOCK_LEADING_DIGIT;
     return ml;
   case _DOUBLE_:
   case _REAL:
@@ -1224,12 +1231,15 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
         string ex=str.substr(cpos+2);
         while (ex[0]=='0')
           ex.erase(ex.begin());
+        string mant=str.substr(0,cpos);
+        if (mant.find('.')==string::npos)
+          mant+=".0";
         if (mml_presentation)
-          ml.markup=mml_tag("mrow","<mn>"+str.substr(0,cpos)+
+          ml.markup=mml_tag("mrow","<mn>"+mant+
                             "</mn><mo>&times;</mo><msup><mn>10</mn><mrow>"+
                             string(str[cpos+1]=='-'?mml_minus:"")+"<mn>"+ex+"</mn></mrow></msup>",idc);
         if (tex)
-          ml.latex=str.substr(0,cpos)+"\\times10^{"+string(str[cpos+1]=='-'?"-":"")+ex+"}";
+          ml.latex=mant+"\\times10^{"+string(str[cpos+1]=='-'?"-":"")+ex+"}";
       } else {
         if (mml_presentation)
           ml.markup=mml_tag("mn",str,idc);
@@ -1237,6 +1247,7 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
           ml.latex=str;
       }
     }
+    ml.type|=_MLBLOCK_LEADING_DIGIT;
     return ml;
   case _CPLX:
     if (is_zero(im(g,contextptr)))
@@ -1666,9 +1677,8 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
               (isinv && dc<den_count))))
           parenthesize(tmp,flags);
         is_cdot=
-            tmp.ctype(_MLBLOCK_NUMERIC_EXACT) || tmp.ctype(_MLBLOCK_NUMERIC_APPROX) ||
-            tmp.ctype(_MLBLOCK_SUBTYPE_IDNT) || tmp.ctype(_MLBLOCK_FACTORIAL) ||
-            prev.ctype(_MLBLOCK_SUBTYPE_IDNT) ||
+            tmp.ctype(_MLBLOCK_LEADING_DIGIT) || tmp.ctype(_MLBLOCK_SUBTYPE_IDNT) ||
+            tmp.ctype(_MLBLOCK_FACTORIAL) || prev.ctype(_MLBLOCK_SUBTYPE_IDNT) ||
             (tmp.ctype(_MLBLOCK_FRACTION) && prev.ctype(_MLBLOCK_FRACTION)) ||
             (prev.ctype(_MLBLOCK_ELEMAPP) && prev.appl);
         prod_sign=is_cdot?mml_cdot:mml_itimes;
@@ -1807,6 +1817,8 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
       tmp=gen2markup(g._SYMBptr->feuille,flags,idc,contextptr);
       if (isfactor && tmp.priority>_PRIORITY_MUL)
         parenthesize(tmp,flags);
+      if (tmp.ctype(_MLBLOCK_LEADING_DIGIT))
+        ml.type=_MLBLOCK_LEADING_DIGIT;
       ml.priority=_PRIORITY_UNARY;
       ml.neg=tmp.neg;
       if (mml_content)
@@ -1921,6 +1933,8 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
                      left.latex.substr(left.split_pos_tex);
         } else {
           ml.type=_MLBLOCK_POWER;
+          if (left.ctype(_MLBLOCK_LEADING_DIGIT))
+            ml.type|=_MLBLOCK_LEADING_DIGIT;
           if (left.appl || left.priority>=ml.priority)
             parenthesize(left,flags);
           if (mml_presentation)
@@ -3076,6 +3090,7 @@ string export_latex(const gen &g,GIAC_CONTEXT) {
   int idc=0,flags=_MARKUP_TOPLEVEL | _MARKUP_ELEMPOW | _MARKUP_LATEX;
   ml=gen2markup(g,flags,idc,contextptr);
   prepend_minus(ml,flags);
+  //*logptr(contextptr) << ml.latex << "\n";
   return ml.latex;
 }
 
@@ -3204,6 +3219,7 @@ string export_mathml(const gen &g,GIAC_CONTEXT) {
          "</annotation></semantics></math>";
 }
 
+  #ifndef KHICAS
 bool has_improved_latex_export(const gen &g,string &s,bool override_texmacs,GIAC_CONTEXT) {
   if (force_legacy_conversion_to_latex || g.is_symb_of_sommet(at_pnt))
     return false;
@@ -3224,7 +3240,8 @@ bool has_improved_latex_export(const gen &g,string &s,bool override_texmacs,GIAC
     enable_texmacs_compatible_latex_export(use_texmacs_compatibility);
   return true;
 }
-
+#endif
+  
 gen _export_mathml(const gen &g,GIAC_CONTEXT) {
   if (g.type==_STRNG && g.subtype==-1) return g;
   gen e;

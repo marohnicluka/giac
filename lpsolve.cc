@@ -17,9 +17,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "giacPCH.h"
+#include "giac.h"
 #include "lpsolve.h"
 #include "optimization.h"
-#include "giac.h"
 #include <ctime>
 
 #ifndef DBL_MAX

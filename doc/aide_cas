@@ -15448,18 +15448,31 @@ wilcoxons([1, 3, 4, 5, 7, 8, 8, 12, 15, 17] , 10)
 dayofweek(21,4,2014)
 dayofweek(15,10,1582)
 
-# minimize maximize
-1 Recherche du minimum ou maximum d'une fonction
-2 Minimizes a function.
+# minimize
+1 Recherche du minimum d'une fonction
+2 Finds the minimal value of a function.
 0 Expr,[Constr],Vars,[Options]
 minimize(sin(x),[x=0..4])
 minimize(x^4-x^2,x=-3..3,locus)
 minimize(piecewise(x<=-2,x+6,x<=1,x^2,3/2-x/2),x=-3..2)
 minimize(x^2-3x+y^2+3y+3,[x=2..4,y=-4..-2],point)
-minimize(2x^2-y^2+6y,x^2+y^2<=16,[x,y])
+minimize(2x^2-y^2+6y,[x^2+y^2<=16],[x,y])
 minimize(sqrt(x^2+y^2)-z,[x^2+y^2<=16,x+y+z=10],[x,y,z])
-minimize((1+x^2+3y+5x-4*x*y)/(1+x^2+y^2),x^2/4+y^2/3=9,[x,y])
-minimize(cos(x)^2+cos(y)^2,x+y=pi/4,[x,y],locus)
+minimize((1+x^2+3y+5x-4*x*y)/(1+x^2+y^2),[x^2/4+y^2/3=9],[x,y])
+minimize(cos(x)^2+cos(y)^2,[x+y=pi/4],[x,y],locus)
+
+# maximize
+1 Recherche du maximum d'une fonction
+2 Finds the maximal value of a function.
+0 Expr,[Constr],Vars,[Options]
+maximize(sin(x),[x=0..4])
+maximize(x^4-x^2,x=-3..3,locus)
+maximize(piecewise(x<=-2,x+6,x<=1,x^2,3/2-x/2),x=-3..2)
+maximize(x^2-3x+y^2+3y+3,[x=2..4,y=-4..-2],point)
+maximize(2x^2-y^2+6y,[x^2+y^2<=16],[x,y])
+maximize(sqrt(x^2+y^2)-z,[x^2+y^2<=16,x+y+z=10],[x,y,z])
+maximize((1+x^2+3y+5x-4*x*y)/(1+x^2+y^2),[x^2/4+y^2/3=9],[x,y])
+maximize(cos(x)^2+cos(y)^2,[x+y=pi/4],[x,y],locus)
 
 # minimax
 1 Approximation polynomiale de degré n d'une fonction continue bornée sur [a,b] par la méthode de Remez.

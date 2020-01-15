@@ -4118,6 +4118,8 @@ Output :
 
 \subsection{Random integers : {\tt rand}}\index{rand}
 \index{hasard}
+(See also subsection \ref{ssec:rand}.)
+
 \noindent{\tt rand} takes as argument an integer $n$ or no argument.
 \begin{itemize}
 \item {\tt rand(n)} returns a random integer $p$ such that $0 \leq p<n$.\\   
@@ -19943,7 +19945,22 @@ Output :
 \begin{center}{\tt [[0,y,0]]}\end{center} 
 
 \subsection{Laplacian : {\tt laplacian}}\index{laplacian}
-\noindent{\tt laplacian} takes two arguments : an 
+\noindent{\tt laplacian} takes one or two arguments.
+\begin{itemize}
+\item It can take an integer or floating-point integer $n$.\\
+\texttt{laplacian(n)} returns the $n\times n$ discrete Laplacian
+matrix; namely the $n \times n$ tridiagonal matrix with 2s on the
+main diagonal, $-1$s just above and below the main diagonal.\\
+Input :
+\begin{center}{\tt laplacian(3)}\end{center}
+Output :
+\begin{center}{\tt [[2,-1,0],[-1,2,-1],[0,-1,2]]}\end{center}
+Input :
+\begin{center}{\tt laplacian(2.0)}\end{center}
+Output :
+\begin{center}{\tt [[2.0,-1.0],[-1.0,2.0]]}\end{center}
+
+\item It can take an 
 expression $F$ of $n$ real variables and a vector of these variable names.\\
 {\tt laplacian} returns the Laplacian of$F$, that is the sum of all second
 partial derivatives, for example in dimension $n=3$:
@@ -19954,6 +19971,7 @@ Input :
 \begin{center}{\tt laplacian(2*x\verb|^|2*y-x*z\verb|^|3,[x,y,z])}\end{center}
 Output :
 \begin{center}{\tt 4*y+-6*x*z}\end{center}
+\end{itemize}
 
 \subsection{Hessian matrix : {\tt hessian}}\index{hessian}
 \noindent{\tt hessian}  takes two arguments : an 
@@ -23978,6 +23996,7 @@ you will get
 \section{Random numbers}
 
 \subsection{Producing uniformly distributed random numbers: \texttt{rand}\index{rand} \texttt{random}\index{random} \texttt{alea}\index{alea} \texttt{hasard}\index{hasard}}
+\label{ssec:rand}
 
 The \texttt{rand} (or \texttt{random}) command will produce a number in
 $[0,1)$ randomly and with equal probability.  If you enter

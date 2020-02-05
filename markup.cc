@@ -1047,7 +1047,7 @@ string func2markup(const gen &g,bool tex,bool content,int idc=0) {
       ret=tex?"\\Psi"
              :"<mi mathvariant='normal'>&Psi;</mi>";
     else if (g.is_symb_of_sommet(at_Zeta) && !content)
-      ret=tex?(is_texmacs_compatible_latex_export?tm_Zeta:"\\operatorname{\\zeta}")
+      ret=tex?(is_texmacs_compatible_latex_export?tm_Zeta:"\\zeta")
              :"<mi mathvariant='normal'>&zeta;</mi>";
     else {
       if (!tex && content)
@@ -1056,7 +1056,7 @@ string func2markup(const gen &g,bool tex,bool content,int idc=0) {
         ret=idnt2markup(g._SYMBptr->sommet.ptr()->s,tex,false,idc);
       has_id=true;
     }
-    if (tex)
+    if (tex && ret.length()>1 && isalpha(ret.at(0)))
       ret="\\operatorname{"+ret+"}";
   }
   if (!tex && !has_id)

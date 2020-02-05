@@ -2711,10 +2711,7 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
           ml.latex="\\left("+ml.latex+"\\right)\\mapsto "+tmp.latex;
       } else {
         get_leftright(
-          makevecteur(
-            args[0].type==_VECT?
-              (args[0]._VECTptr->empty()?change_subtype(vecteur(0),_SEQ__VECT):args[0]._VECTptr->front()):args[0],
-            args[2]),
+          makevecteur(args[0].type==_VECT && !args[0]._VECTptr->empty()?args[0]._VECTptr->front():args[0],args[2]),
           &ml,left,right,flags,idc,contextptr);
         if (mml_content)
           ml.content=mml_tag("lambda","<bvar>"+left.content+"</bvar>"+right.content,++idc);

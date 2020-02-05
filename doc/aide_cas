@@ -1251,7 +1251,7 @@ animation(seq(plotfunc(x^2-y^a,[x,y]),a=1..3))
 animation(seq(plotfunc((x+i*y)^a,[x,y],display=filled),a=1..10))
  plotfunc(x^2);animation([point(1),segment(1,1+i),point(1+i)],droite(y=2*x-1))
 
-# camembert
+# camembert pie
 1 Trace un ou des diagramme(s) en camembert d'une série statistique à 1 variable.
 2 Draws pie chart of a one variable statistical series.
 3 Muestra uno o varios gráfico(s) de torta de una serie estadística en una variable.
@@ -1262,7 +1262,7 @@ camembert([["France",6],["Allemagne",12],["Suisse",5]])
 camembert([3/2,2/3,5/4,4/5,7/6,6/7,9/8,8/9,11/10])
 camembert([[2,"xyz","abc"],["A",2,5],["B",5,6],["C",7,7]])
 
-# bar_plot
+# bar_plot barplot
 1 Trace un ou des diagrammes en bâtons d'une série statistique à 1 variable.
 2 Draws a barplot of a one variable statistical series.
 3 Muestra el gráfico de barras de una serie estadística en una variable.
@@ -15450,29 +15450,29 @@ dayofweek(15,10,1582)
 
 # minimize
 1 Recherche du minimum d'une fonction
-2 Finds the minimal value of a function.
+2 Minimizes a function.
 0 Expr,[Constr],Vars,[Options]
 minimize(sin(x),[x=0..4])
 minimize(x^4-x^2,x=-3..3,locus)
 minimize(piecewise(x<=-2,x+6,x<=1,x^2,3/2-x/2),x=-3..2)
 minimize(x^2-3x+y^2+3y+3,[x=2..4,y=-4..-2],point)
-minimize(2x^2-y^2+6y,[x^2+y^2<=16],[x,y])
+minimize(2x^2-y^2+6y,x^2+y^2<=16,[x,y])
 minimize(sqrt(x^2+y^2)-z,[x^2+y^2<=16,x+y+z=10],[x,y,z])
-minimize((1+x^2+3y+5x-4*x*y)/(1+x^2+y^2),[x^2/4+y^2/3=9],[x,y])
-minimize(cos(x)^2+cos(y)^2,[x+y=pi/4],[x,y],locus)
+minimize((1+x^2+3y+5x-4*x*y)/(1+x^2+y^2),x^2/4+y^2/3=9,[x,y])
+minimize(cos(x)^2+cos(y)^2,x+y=pi/4,[x,y],locus)
 
 # maximize
 1 Recherche du maximum d'une fonction
-2 Finds the maximal value of a function.
+2 Maximizes a function.
 0 Expr,[Constr],Vars,[Options]
 maximize(sin(x),[x=0..4])
 maximize(x^4-x^2,x=-3..3,locus)
 maximize(piecewise(x<=-2,x+6,x<=1,x^2,3/2-x/2),x=-3..2)
 maximize(x^2-3x+y^2+3y+3,[x=2..4,y=-4..-2],point)
-maximize(2x^2-y^2+6y,[x^2+y^2<=16],[x,y])
+maximize(2x^2-y^2+6y,x^2+y^2<=16,[x,y])
 maximize(sqrt(x^2+y^2)-z,[x^2+y^2<=16,x+y+z=10],[x,y,z])
-maximize((1+x^2+3y+5x-4*x*y)/(1+x^2+y^2),[x^2/4+y^2/3=9],[x,y])
-maximize(cos(x)^2+cos(y)^2,[x+y=pi/4],[x,y],locus)
+maximize((1+x^2+3y+5x-4*x*y)/(1+x^2+y^2),x^2/4+y^2/3=9,[x,y])
+maximize(cos(x)^2+cos(y)^2,x+y=pi/4,[x,y],locus)
 
 # minimax
 1 Approximation polynomiale de degré n d'une fonction continue bornée sur [a,b] par la méthode de Remez.
@@ -17804,7 +17804,7 @@ fitdistr(randvector(1000,weibulld,1/2,1),weibull)
  X:=randvar(normal,mean=5,variance=2):;S:=sample(exp(X),1000):;fitdistr(log(S),normal)
 
 # bvpsolve
-0 Expr(f(x,y,y')),Lst(x=a..b,y),Lst(y(a),y(b),[y'(a)]),[options]
+0 Expr(f(x,y,y')),Lst(x=a..b,y),Lst(y(a),y(b),[y'(1)]),[options]
 2 Returns an approximation of the function y (and optionally of y') on the interval a..b.
 -1 odesolve
 bvpsolve((32+2x^3-y*diff(y(x),x))/8,[x=1..3,y],[17,43/3],20)

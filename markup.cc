@@ -1,19 +1,19 @@
 /*  markup.cc
  *
-* copyright (c) 2019 Luka Marohnić
+ * copyright (c) 2019 Luka Marohnić
  *
-* This program is free software;you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation;either version 3 of the License,or
-* (at your option) any later version.
+ * This program is free software;you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation;either version 3 of the License,or
+ * (at your option) any later version.
  *
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY;without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY;without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
-* You should have received a copy of the GNU General Public License
-* along with this program. If not,see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not,see <http://www.gnu.org/licenses/>.
  */
 
 #include "giacPCH.h"
@@ -41,21 +41,28 @@ using namespace std;
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
-string mml_itimes="<mo>&it;</mo>";
-string mml_cdot="<mo>&middot;</mo>";
-string mml_dot="<mo>.</mo>";
-string mml_times="<mo>&times;</mo>";
-string mml_plus="<mo>+</mo>";
-string mml_minus="<mo>&minus;</mo>";
-string mml_apply="<mo>&af;</mo>";
-string mml_icomma="<mo>&ic;</mo>";
-string mml_i="<mi mathvariant='normal'>i</mi>";
-string mml_e="<mi mathvariant='normal'>e</mi>";
-string mml_d="<mi mathvariant='normal'>d</mi>";
-string mml_re="<mi>&realpart;</mi>";
-string mml_im="<mi>&imagpart;</mi>";
+const string mml_itimes="<mo>&it;</mo>";
+const string mml_cdot="<mo>&middot;</mo>";
+const string mml_dot="<mo>.</mo>";
+const string mml_times="<mo>&times;</mo>";
+const string mml_plus="<mo>+</mo>";
+const string mml_minus="<mo>&minus;</mo>";
+const string mml_apply="<mo>&af;</mo>";
+const string mml_icomma="<mo>&ic;</mo>";
+const string mml_i="<mi mathvariant='normal'>i</mi>";
+const string mml_e="<mi mathvariant='normal'>e</mi>";
+const string mml_d="<mi mathvariant='normal'>d</mi>";
+const string mml_re="<mi>&realpart;</mi>";
+const string mml_im="<mi>&imagpart;</mi>";
 
-string tex_itimes="\\,";
+string tex_itimes=" ";
+string tex_mathi="\\mathrm{i}";
+string tex_mathe="\\mathrm{e}";
+string tex_mathd="\\mathrm{d}";
+
+const string tm_Dirac="\\operatorname{\\updelta}";
+const string tm_Heaviside="\\operatorname{\\uptheta}";
+const string tm_Zeta="\\operatorname{\\upzeta}";
 
 bool is_texmacs_compatible_latex_export=false;
 bool force_legacy_conversion_to_latex=false;
@@ -123,32 +130,6 @@ bool is_suffix(const string &s,const string &p) {
   return s.rfind(p)+p.length()==s.length();
 }
 
-bool is_latex_command_suffix(const string &s,const string &com,bool delim=false) {
-  string c=com+"{";
-  size_t pos=s.find(c);
-  if (pos==string::npos || (delim && pos>0 && (isalnum(s[pos-1]) || s[pos-1]==32)))
-    return false;
-  pos+=c.length();
-  int level=1;
-  while (pos<s.length() && level>0) {
-    if (s[pos]=='{' && s[pos-1]!='\\')
-      ++level;
-    else if (s[pos]=='}' && s[pos-1]!='\\')
-      --level;
-    ++pos;
-  }
-  assert(level==0);
-  return pos==s.length();
-}
-
-bool is_leading_bracket(const string &s) {
-  return is_prefix(s,"\\left(") || is_prefix(s,"\\left\\{") || is_prefix(s,"\\left[");
-}
-
-bool is_closing_bracket(const string &s) {
-  return is_suffix(s,"\\right)") || is_suffix(s,"\\right\\}") || is_suffix(s,"\\right]");
-}
-
 bool is_greek_letter(const string &s) {
   switch (s.size()) {
   case 2:
@@ -173,16 +154,6 @@ bool is_greek_letter(const string &s) {
   return false;
 }
 
-bool is_tex_greek__suffix(const string &s) {
-  if (!is_suffix(s,"\\_")) return false;
-  int i;
-  for (i=s.size()-2;i-->0;) {
-    if (s[i]=='\\') break;
-  }
-  if (i<0) return false;
-  return is_greek_letter(s.substr(i+1,s.size()-i-3));
-}
-
 bool is_double_letter(const string &s) {
   return s.length()==2 && isalpha(s.at(0)) && s.at(0)==s.at(1);
 }
@@ -202,33 +173,13 @@ typedef struct {
 
 extern MarkupBlock gen2markup(const gen &g,int flags,int &idc,GIAC_CONTEXT);
 
-string tex_implmul(const MarkupBlock &ml,const MarkupBlock &prev) {
-  if (is_texmacs_compatible_latex_export &&
-      (((is_latex_command_suffix(prev.latex,"^",true) || is_latex_command_suffix(prev.latex,"_",true)) &&
-        (!is_leading_bracket(ml.latex) ||
-         is_prefix(prev.latex,"\\mathrm{") ||
-         is_prefix(prev.latex,"\\mathbf{"))) ||
-       is_tex_greek__suffix(prev.latex) ||
-       is_prefix(ml.latex,"\\mathbf{") ||
-       (is_prefix(ml.latex,"\\mathrm{") &&
-        !is_substr(ml.latex.substr(8,ml.latex.find("}",8)-8),"\\_")) ||
-       (is_prefix(ml.latex,"\\operatorname{") &&
-        (prev.latex.empty() || !isdigit(prev.latex[prev.latex.size()-1])) &&
-        !is_latex_command_suffix(prev.latex,"^") && !is_latex_command_suffix(prev.latex,"_")) ||
-       is_latex_command_suffix(prev.latex,"\\mathrm") ||
-       is_latex_command_suffix(prev.latex,"\\operatorname")))
-    return "\\,";
-  else if (!is_texmacs_compatible_latex_export &&
-           (ml.ctype(_MLBLOCK_ELEMAPP) || is_prefix(ml.latex,"\\operatorname{") ||
-            is_leading_bracket(ml.latex) || is_closing_bracket(prev.latex)))
-    return " ";
-  return tex_itimes;
-}
-
 #ifndef KHICAS
 void enable_texmacs_compatible_latex_export(bool yes) {
   is_texmacs_compatible_latex_export=yes;
-  tex_itimes=(yes?" ":"\\,");  
+  tex_itimes=(yes?"\\*":" ");
+  tex_mathi=(yes?"\\mathi ":"\\mathrm{i}");
+  tex_mathe=(yes?"\\mathe ":"\\mathrm{e}");
+  tex_mathd=(yes?"\\mathd ":"\\mathrm{d}");
 }
 #endif
   
@@ -822,7 +773,7 @@ string idnt2markup(const string &s_orig,bool tex,bool unit,int idc=0) {
                     :(tex?"\\mathrm{"+s+"}":mml_tag("mi",s,ssub.empty()?idc:0,mdf,"bold")));
   if (!ssub.empty()) {
     if (tex)
-      ret+="_{"+(len_sub==1 && !isdigit(ssub[0])?ssub:"\\mathrm{"+ssub+"}")+"}";
+      ret+="_{"+((len_sub==1 || atof(ssub.c_str())!=0)?ssub:"\\mathrm{"+ssub+"}")+"}";
     else
       ret=mml_tag("msub",ret+(ssub=="0" || atof(ssub.c_str())!=0?
                          "<mn>"+ssub+"</mn>":"<mi>"+ssub+"</mi>"),idc);
@@ -1016,6 +967,7 @@ bool is_elemfunc(const gen &g) {
 }
 
 string func2markup(const gen &g,bool tex,bool content,int idc=0) {
+  if (g.type==_FUNC) return func2markup(symbolic(*g._FUNCptr,vecteur(0)),tex,content,idc);
   string ret;
   bool has_id=false;
   if (g.is_symb_of_sommet(at_ln) || g.is_symb_of_sommet(at_LN))
@@ -1041,21 +993,27 @@ string func2markup(const gen &g,bool tex,bool content,int idc=0) {
   else if (g.is_symb_of_sommet(at_atan) || g.is_symb_of_sommet(at_ATAN))
     ret=tex?"\\arctan ":(content? "<arctan/>":"<mi>arctan</mi>");
   else if (g.is_symb_of_sommet(at_acot) || g.is_symb_of_sommet(at_ACOT))
-    ret=tex?"\\operatorname{\\mathrm{arccot} }":(content? "<arccot/>":"<mi>arccot</mi>");
+    ret=tex?"\\operatorname{arccot}"
+           :(content? "<arccot/>":"<mi>arccot</mi>");
   else if (g.is_symb_of_sommet(at_sec) || g.is_symb_of_sommet(at_SEC))
     ret=tex?"\\sec ":(content? "<sec/>":"<mi>sec</mi>");
   else if (g.is_symb_of_sommet(at_csc) || g.is_symb_of_sommet(at_CSC))
     ret=tex?"\\csc ":(content? "<csc/>":"<mi>csc</mi>");
   else if (g.is_symb_of_sommet(at_asec) || g.is_symb_of_sommet(at_ASEC))
-    ret=tex?"\\operatorname{\\mathrm{arcsec} }":(content? "<arcsec/>":"<mi>arcsec</mi>");
+    ret=tex?"\\operatorname{arcsec}"
+           :(content? "<arcsec/>":"<mi>arcsec</mi>");
   else if (g.is_symb_of_sommet(at_acsc) || g.is_symb_of_sommet(at_ACSC))
-    ret=tex?"\\operatorname{\\mathrm{arccsc} }":(content? "<arccsc/>":"<mi>arccsc</mi>");
+    ret=tex?"\\operatorname{arccsc}"
+           :(content? "<arccsc/>":"<mi>arccsc</mi>");
   else if (g.is_symb_of_sommet(at_asinh) || g.is_symb_of_sommet(at_ASINH))
-    ret=tex?"\\operatorname{\\mathrm{arsinh} }":(content? "<arcsinh/>":"<mi>arsinh</mi>");
+    ret=tex?"\\operatorname{arsinh}"
+           :(content? "<arcsinh/>":"<mi>arsinh</mi>");
   else if (g.is_symb_of_sommet(at_acosh) || g.is_symb_of_sommet(at_ACOSH))
-    ret=tex?"\\operatorname{\\mathrm{arcosh} }":(content? "<arccosh/>":"<mi>arcosh</mi>");
+    ret=tex?"\\operatorname{arcosh}"
+           :(content? "<arccosh/>":"<mi>arcosh</mi>");
   else if (g.is_symb_of_sommet(at_atanh) || g.is_symb_of_sommet(at_ATANH))
-    ret=tex?"\\operatorname{\\mathrm{artanh} }":(content? "<arctanh/>":"<mi>artanh</mi>");
+    ret=tex?"\\operatorname{artanh}"
+           :(content? "<arctanh/>":"<mi>artanh</mi>");
   else {
     if (g.is_symb_of_sommet(at_id) && content) ret="<ident/>";
     else if (g.is_symb_of_sommet(at_gcd) && content) ret="<gcd/>";
@@ -1066,25 +1024,31 @@ string func2markup(const gen &g,bool tex,bool content,int idc=0) {
     else if (g.is_symb_of_sommet(at_max) && content) ret="<max/>";
     else if (g.is_symb_of_sommet(at_min) && content) ret="<min/>";
     else if (g.is_symb_of_sommet(at_det) && content) ret="<determinant/>";
-    else if (g.is_symb_of_sommet(at_Dirac) && !content) ret=tex?"\\delta":"<mi>&delta;</mi>";
-    else if (g.is_symb_of_sommet(at_Heaviside) && !content) ret=tex?"\\Theta":"<mi>&Theta;</mi>";
+    else if (g.is_symb_of_sommet(at_Dirac) && !content)
+      ret=tex?(is_texmacs_compatible_latex_export?tm_Dirac:"\\operatorname{\\delta}"):"<mi>&delta;</mi>";
+    else if (g.is_symb_of_sommet(at_Heaviside) && !content)
+      ret=tex?(is_texmacs_compatible_latex_export?tm_Heaviside:"\\operatorname{\\theta}"):"<mi>&theta;</mi>";
     else if (g.is_symb_of_sommet(at_Gamma))
       ret=tex?"\\Gamma":(content?mml_csymbol("gamma","hypergeo0")
                                        :"<mi mathvariant='normal'>&Gamma;</mi>");
     else if (g.is_symb_of_sommet(at_Beta))
       ret=tex?"\\Beta":(content?mml_csymbol("beta","hypergeo0")
-                                     :"<mi mathvariant='normal'>&Beta;</mi>");
+                                      :"<mi mathvariant='normal'>&Beta;</mi>");
     else if (g.is_symb_of_sommet(at_euler))
       ret=tex?"\\phi":(content?mml_csymbol("euler","integer2")
                                      :"<mi mathvariant='normal'>&phi;</mi>");
     else if (g.is_symb_of_sommet(at_Airy_Ai))
-      ret=tex?"\\mathrm{Ai}":(content?mml_csymbol("Ai","airy"):"<mi>Ai</mi>");
+      ret=tex?"\\operatorname{Ai}"
+             :(content?mml_csymbol("Ai","airy"):"<mi>Ai</mi>");
     else if (g.is_symb_of_sommet(at_Airy_Bi))
-      ret=tex?"\\mathrm{Bi}":(content?mml_csymbol("Bi","airy"):"<mi>Bi</mi>");
+      ret=tex?"\\operatorname{Bi}"
+             :(content?mml_csymbol("Bi","airy"):"<mi>Bi</mi>");
     else if (g.is_symb_of_sommet(at_Psi) && !content)
-      ret=tex?"\\Psi":"<mi mathvariant='normal'>&Psi;</mi>";
+      ret=tex?"\\Psi"
+             :"<mi mathvariant='normal'>&Psi;</mi>";
     else if (g.is_symb_of_sommet(at_Zeta) && !content)
-      ret=tex?"\\zeta":"<mi mathvariant='normal'>&zeta;</mi>";
+      ret=tex?(is_texmacs_compatible_latex_export?tm_Zeta:"\\operatorname{\\zeta}")
+             :"<mi mathvariant='normal'>&zeta;</mi>";
     else {
       if (!tex && content)
         ret=mml_tag("ci",g._SYMBptr->sommet.ptr()->s,idc,"type","function");
@@ -1093,7 +1057,7 @@ string func2markup(const gen &g,bool tex,bool content,int idc=0) {
       has_id=true;
     }
     if (tex)
-      ret="\\operatorname{"+ret+" }";
+      ret="\\operatorname{"+ret+"}";
   }
   if (!tex && !has_id)
     ret=insert_id(ret,idc,content);
@@ -1260,7 +1224,7 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
         if (mml_presentation)
           ml.markup=insert_id(mml_i,idc,false);
         if (tex)
-          ml.latex="\\mathrm{i}";
+          ml.latex=tex_mathi;
         ml.neg=is_minus_one(im(g,contextptr));
       } else {
         tmp=gen2markup(im(g,contextptr),flags | _MARKUP_FACTOR,idc,contextptr);
@@ -1273,7 +1237,7 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
         if (mml_presentation)
           ml.markup=mml_tag("mrow",tmp.markup+mml_itimes+mml_i,idc);
         if (tex)
-          ml.latex=tmp.latex+"\\,\\mathrm{i}";
+          ml.latex=tmp.latex+tex_itimes+tex_mathi;
       }
       return ml;
     }
@@ -1295,7 +1259,7 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
                                (isone?"":right.markup+mml_itimes)+mml_i,
                         idc);
     if (tex)
-      ml.latex=left.latex+(right.neg?"-":"+")+(isone?"":right.latex+"\\,")+"\\mathrm{i}";
+      ml.latex=left.latex+(right.neg?"-":"+")+(isone?"":right.latex+tex_itimes)+tex_mathi;
     return ml;
   case _FRAC:
     ml.type=_MLBLOCK_FRACTION;
@@ -1332,14 +1296,14 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
       if (mml_presentation)
         ml.markup=mml_tag("mi","&pi;",idc);
       if (tex)
-        ml.latex="\\pi ";
+        ml.latex=(is_texmacs_compatible_latex_export?"\\mathpi ":"\\pi ");
     } else if (g==cst_euler_gamma) {
       if (mml_content)
         ml.content=insert_id("<eulergamma/>",++idc,true);
       if (mml_presentation)
         ml.markup=mml_tag("mi","&gamma;",idc);
       if (tex)
-        ml.latex="\\gamma ";
+        ml.latex=(is_texmacs_compatible_latex_export?"\\matheuler ":"\\gamma ");
     } else {
       if (mml_content) {
         str=g.print(contextptr);
@@ -1494,8 +1458,8 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
         ml.content=mml_tag("set",ml.content,++idc);
       ld="{";
       rd="}";
-      ld_tex="\\{";
-      rd_tex="\\}";
+      ld_tex=(is_texmacs_compatible_latex_export?"\\llbracket ":"\\{");
+      rd_tex=(is_texmacs_compatible_latex_export?"\\rrbracket ":"\\}");
       break;
     default:
       if (mml_content)
@@ -1515,6 +1479,15 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
     if (g.is_symb_of_sommet(at_neg)) {
       ml=gen2markup(g._SYMBptr->feuille,flags,idc,contextptr);
       ml.neg=!ml.neg;
+      return ml;
+    }
+    if (g.is_symb_of_sommet(at_epsilon)) {
+      if (tex)
+        ml.latex="\\varepsilon ";
+      if (mml_presentation)
+        ml.markup="&epsilon;";
+      if (mml_content)
+        ml.content=mml_tag("ci",g.print(contextptr),++idc);
       return ml;
     }
     if (g.is_symb_of_sommet(at_plus) || g.is_symb_of_sommet(at_pointplus)) {
@@ -1682,7 +1655,7 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
             (tmp.ctype(_MLBLOCK_FRACTION) && prev.ctype(_MLBLOCK_FRACTION)) ||
             (prev.ctype(_MLBLOCK_ELEMAPP) && prev.appl);
         prod_sign=is_cdot?mml_cdot:mml_itimes;
-        prod_sign_tex=is_cdot?"\\cdot ":tex_implmul(tmp,prev);
+        prod_sign_tex=is_cdot?"\\cdot ":tex_itimes;
         if (isinv) {
           pden=tmp;
           if (mml_content)
@@ -1837,7 +1810,7 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
         if (mml_presentation)
           ml.markup=insert_id(mml_e,idc,false);
         if (tex)
-          ml.latex="\\mathrm{e}";
+          ml.latex=tex_mathe;
       } else {
         tmp=gen2markup(g._SYMBptr->feuille,flags,idc,contextptr);
         prepend_minus(tmp,flags);
@@ -1848,7 +1821,7 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
         if (mml_presentation)
           ml.markup=mml_tag("msup",mml_e+tmp.markup,idc);
         if (tex)
-          ml.latex="\\mathrm{e}^{"+tmp.latex+"}";
+          ml.latex=tex_mathe+"^{"+tmp.latex+"}";
       }
       return ml;
     }
@@ -2067,7 +2040,7 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
             if (mml_presentation)
               var.markup=mml_itimes+mml_d+var.markup;
             if (tex)
-              var.latex="\\,\\mathrm{d}"+var.latex;
+              var.latex=(is_texmacs_compatible_latex_export?tex_itimes:"\\,")+tex_mathd+var.latex;
           }
         }
         if (!has_lb && args.size()>2) {
@@ -2121,8 +2094,13 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
       }
       if (mml_presentation)
         ml.markup=mml_tag("mrow",big+e.markup+(isint?var.markup:""),idc);
-      if (tex)
+      if (tex) {
         ml.latex=big_tex+e.latex+(isint?var.latex:"");
+        /*
+        if (is_texmacs_compatible_latex_export)
+          ml.latex+="\\bignone ";
+        */
+      }
       return ml;
     }
     if ((g.is_symb_of_sommet(at_limit) || g.is_symb_of_sommet(at_limite)) &&
@@ -2139,8 +2117,6 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
       else {
         if (mml_presentation)
           e.markup=mml_apply+e.markup;
-        if (tex)
-          e.latex="\\;"+e.latex;
       }
       if (args.size()>=2) {
         if (args[1].is_symb_of_sommet(at_equal)) {
@@ -2284,13 +2260,13 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
                               :mml_tag("mrow",mml_tag("mfrac",mml_d+mml_tag("mrow",var.markup))+
                                               mml_apply+tmp.markup,idc);
               if (tex)
-                ml.latex=simp?"\\frac{\\mathrm{d}"+tmp.latex+"}{\\mathrm{d}"+var.latex+"}"
-                             :"\\frac{\\mathrm{d}}{\\mathrm{d}"+var.latex+"}"+tex_itimes+tmp.latex;
+                ml.latex=simp?"\\frac{"+tex_mathd+tmp.latex+"}{"+tex_mathd+var.latex+"}"
+                             :"\\frac{"+tex_mathd+"}{"+tex_mathd+var.latex+"}"+tmp.latex;
               return ml;
             }
             if (vars.size()>0) {
               string ds(vars.size()>1?"<mo>&part;</mo>":mml_d);
-              string ds_tex(vars.size()>1?"\\partial ":"\\mathrm{d}");
+              string ds_tex(vars.size()>1?"\\partial ":tex_mathd);
               int c=0;
               gen N(0);
               for (const_iterateur it=vars.begin();it!=vars.end();++it) {
@@ -2327,7 +2303,7 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
                                               "<mrow>"+ml.markup+"</mrow>")+mml_apply+tmp.markup,idc);
               if (tex)
                 ml.latex=simp?"\\frac{"+ds_tex+"^{"+Ns+"}"+tmp.latex+"}{"+ml.latex+"}"
-                             :"\\frac{"+ds_tex+"^{"+Ns+"}}{"+ml.latex+"}"+tex_itimes+tmp.latex;
+                             :"\\frac{"+ds_tex+"^{"+Ns+"}}{"+ml.latex+"}"+tmp.latex;
               return ml;
             }
           }

@@ -10854,10 +10854,11 @@ void graphe::tsp::hierarchical_clustering_dfs(int i,ivectors &considered_sec,ive
 
 /* solve the original problem */
 int graphe::tsp::solve(ivector &hc,double &cost) {
+    mip=glp_create_prob();
+    ivectors cons,relevant,sec,sv;
+    /*
     make_hierarchical_clustering_forest();
     G->unset_subgraphs();
-    ivectors cons,relevant,sec,sv;
-    mip=glp_create_prob();
     num_nodes=0;
     for (ivectors_iter it=clustering_forest.begin();it!=clustering_forest.end();++it) {
         if (it->front()<0) { // we're in the root node of a tree in the HC forest
@@ -10866,6 +10867,7 @@ int graphe::tsp::solve(ivector &hc,double &cost) {
             sec.insert(sec.end(),relevant.begin(),relevant.end());
         }
     }
+    */
     solution_status status;
     sg=-1;
     G->unset_subgraphs();

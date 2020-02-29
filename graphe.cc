@@ -2562,7 +2562,7 @@ void graphe::complement(graphe &G) const {
     bool isdir=is_directed();
     G.set_directed(isdir);
     for (int i=0;i<n;++i) {
-        for (int j=G.is_directed()?0:i+1;j<n;++j) {
+        for (int j=isdir?0:i+1;j<n;++j) {
             if (!has_edge(i,j))
                 G.add_edge(i,j);
         }

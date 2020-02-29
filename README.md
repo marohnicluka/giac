@@ -11,3 +11,4 @@ My contributions to [Giac/Xcas](https://www-fourier.ujf-grenoble.fr/~parisse/gia
 - statistics (continuous and discrete random variables with sampling, kernel density estimation, maximum-likelihood fitting)
 - ordinary differential equations (an implementation of Kovacic's algorithm, a second-degree boundary value problems solver)
 - improved conversion to LaTeX (with TeXmacs compatibility) and MathML
+- improved Giac plugin for TeXmacs

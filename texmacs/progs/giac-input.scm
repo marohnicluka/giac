@@ -123,8 +123,8 @@
 	     (display "abs(")
 	     (plugin-input body)
 	     (display ")")))
-	  ((and (== opn "||")
-		(== cls "||"))
+	  ((and (== opn "<||>")
+		(== cls "<||>"))
 	   (begin
 	     (display "l2norm(")
 	     (plugin-input body)
@@ -378,6 +378,47 @@
 	(plugin-input (cadr args))
 	(display "))")))))
 
+(define (giac-input-mid arg)
+  (if (== "|" arg)
+    (display "$")
+    (plugin-input arg)))
+
+(define (giac-input-choice-rows args)
+  (if (nnull? args)
+    (let* ((r (car args))
+	   (e (cadadr r))
+	   (c (car (cdaddr r)))
+	   (f (cond ((and (string? e)
+			  (string-suffix? "," e))
+		     (string-drop-right e 1))
+		    ((and (list? e)
+			  (== 'concat (car e))
+			  (string? (car (reverse (cdr e)))))
+		     (let* ((lst (reverse (cdr e)))
+			    (str (car lst)))
+		       (cons 'concat
+			     (reverse (cons (if (string-suffix? "," str)
+					      (string-drop-right str 1)
+					      str)
+					    (cdr lst))))))
+		    (else e))))
+      (if (not (or (and (string? c)
+			(string-prefix? "otherwise" c))
+		   (and (list? c)
+			(== 'text (car c)))))
+	(begin
+	  (plugin-input c)
+	  (display ",")))
+      (plugin-input f)
+      (if (nnull? (cdr args))
+	(display ","))
+      (giac-input-choice-rows (cdr args)))))
+
+(define (giac-input-choice args)
+  (display "piecewise(")
+  (giac-input-choice-rows (cdadar args))
+  (display ")"))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Initialization
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -385,7 +426,10 @@
 (plugin-input-converters giac
   (rows giac-input-rows)
   (concat giac-input-concat)
+  (choice giac-input-choice)
+  (mid giac-input-mid)
   (frac giac-input-frac)
+  (frac* giac-input-frac)
   (binom giac-input-binom)
   (rprime giac-input-prime)
   (rsub giac-input-subscript)
@@ -431,6 +475,8 @@
   ("<leftarrow>" "=<")
   ("<longequal>" "==")
   ("<neq>" "!=")
+  ("<barsuchthat>" "$")
+  ("<in>" " in ")
   ("<b-up-a>" "aa")
   ("<b-up-b>" "bb")
   ("<b-up-c>" "cc")

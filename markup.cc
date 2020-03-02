@@ -1637,6 +1637,7 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
       rd_tex=rd="]";
       ld_scm="<llbracket>";
       rd_scm="<rrbracket>";
+      break;
     default:
       if (mml_content)
         ml.content=mml_tag("vector",ml.content,++idc);
@@ -2814,20 +2815,20 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
     }
     if (g.is_symb_of_sommet(at_dollar) && vectarg && isbinary) {
       const vecteur &args=*g._SYMBptr->feuille._VECTptr;
-      left=gen2markup(args.front(),flags,idc,contextptr);
-      prepend_minus(left,flags);
-      parenthesize(left,flags);
-      right=gen2markup(args.back(),flags,idc,contextptr);
-      prepend_minus(right,flags);
       ml.priority=_PRIORITY_EXP;
+      get_leftright(args,NULL,left,right,flags,idc,contextptr);
+      if (left.priority>ml.priority)
+        parenthesize(left,flags);
+      if (right.priority>ml.priority)
+        parenthesize(right,flags);
       if (mml_content)
         ml.content=mml_tag("apply","<ci>$</ci>"+left.content+right.content,++idc);
       if (mml_presentation)
-        ml.markup=mml_tag("msub",left.markup+right.markup,idc);
+        ml.markup=mml_tag("mrow",left.markup+"<mo>|</mo>"+right.markup,idc);
       if (tex)
-        ml.latex=left.latex+"_{"+right.latex+"}";
+        ml.latex=left.latex+"\\middle|"+right.latex;
       if (scm)
-        ml.scheme=scm_concat(left.scheme+" (rsub "+right.scheme+")");
+        ml.scheme=scm_concat(left.scheme+" (mid \"|\") "+right.scheme);
       return ml;
     }
     if (g.is_symb_of_sommet(at_re) || g.is_symb_of_sommet(at_im)) {

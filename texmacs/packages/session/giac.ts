@@ -23,26 +23,6 @@
   <assign|giac-output|<macro|body|<generic-output*|<arg|body>>>>
 
   \;
-
-  <with|mode|math|<assign|derive|<macro|x|n|f|<frac|\<mathd\><rsup|<arg|n>>|\<mathd\><space|0.2spc><arg|x><rsup|<arg|n>>><space|0.2spc><arg|f>>>>
-
-  \;
-
-  <with|mode|math|<assign|derivative|<macro|f|x|n|<frac|\<mathd\><rsup|<arg|n>><space|0.2spc><arg|f>|\<mathd\><space|0.2spc><arg|x><rsup|<arg|n>>>>>>
-
-  \;
-
-  <with|mode|math|<assign|limit|<macro|x|a|f|lim<rsub|<arg|x>\<rightarrow\><arg|a>><space|0.2spc><arg|f>>>>
-
-  \;
-
-  <with|mode|math|<assign|llimit|<macro|x|a|f|lim<rsub|<arg|x>\<uparrow\><arg|a>><space|0.2spc><arg|f>>>>
-
-  \;
-
-  <with|mode|math|<assign|rlimit|<macro|x|a|f|lim<rsub|<arg|x>\<downarrow\><arg|a>><space|0.2spc><arg|f>>>>
-
-  \;
 </body>
 
 <\initial>

@@ -651,13 +651,12 @@ private:
     std::string giac_version() const;
     inline vertex &node(int i) { return nodes[i]; }
     bool dot_parse_attributes(std::ifstream &dotfile,attrib &attr);
-    void dot_format_attribute(std::stringstream &ss,int index,const gen &val) const;
     static bool insert_attribute(attrib &attr,int key,const gen &val,bool overwrite=true);
     static bool remove_attribute(attrib &attr,int key);
     static bool genmap2attrib(const gen_map &m,attrib &attr);
     static void attrib2genmap(const attrib &attr,gen_map &m);
     static void copy_attributes(const attrib &src,attrib &dest);
-    void write_attrib(std::stringstream &ss,const attrib &attr) const;
+    void write_attrib(std::ofstream &dotfile,const attrib &attr) const;
     static ivector_iter binsearch(ivector_iter first,ivector_iter last,int a);
     static size_t sets_union(const iset &A,const iset &B,iset &U);
     static size_t sets_intersection(const iset &A,const iset &B,iset &I);
@@ -828,7 +827,7 @@ public:
     gen to_gen();
     int *to_array(int &sz,bool reduce=false) const;
     bool write_latex(const std::string &filename,const gen &drawing) const;
-    std::string to_dot(bool author) const;
+    bool write_dot(const std::string &filename) const;
     bool read_dot(const std::string &filename);
     inline bool is_null() const { return nodes.empty(); }
     bool is_empty() const;

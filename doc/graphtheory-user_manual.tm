@@ -12362,7 +12362,7 @@
   the total number of used colors is minimal. To obtain such a coloring use
   the command <kbd|minimal_vertex_coloring><index|<kbd|minimal_vertex_coloring>>.
 
-  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|minimal_coloring(G)>>>|<row|<cell|>|<cell|<verbatim|minimal_coloring(G,sto)>>>>>>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|minimal_vertex_coloring(G)>>>|<row|<cell|>|<cell|<verbatim|minimal_vertex_coloring(G,sto)>>>>>>
 
   <kbd|minimal_vertex_coloring> takes one mandatory argument, an undirected
   graph <math|G<around*|(|V,E|)>> where <math|V=<around*|{|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|n>|}>>.
@@ -17072,7 +17072,7 @@
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-105>>
 
-      <with|par-left|<quote|4tab>|Constructing fullerene graphs
+      <with|par-left|<quote|4tab>|Constructing fullerene graphs.
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-107><vspace|0.15fn>>
 

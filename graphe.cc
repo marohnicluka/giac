@@ -3658,7 +3658,7 @@ void graphe::augment(const ivectors &faces,int outer_face,bool subdivide) {
 /* add point b to point a */
 void graphe::add_point(point &a,const point &b) {
     int d=a.size();
-    assert(int(b.size())==d);
+    assert(int(b.size())>=d);
     for (int i=0;i<d;++i) {
         a[i]+=b[i];
     }
@@ -3667,7 +3667,7 @@ void graphe::add_point(point &a,const point &b) {
 /* subtract point b from point a */
 void graphe::subtract_point(point &a,const point &b) {
     int d=a.size();
-    assert(int(b.size())==d);
+    assert(int(b.size())>=d);
     for (int i=0;i<d;++i) {
         a[i]-=b[i];
     }
@@ -7933,7 +7933,7 @@ int graphe::largest_integer_label() const {
     return m;
 }
 
-/* return true iff two edges are incident to each other */
+/* return true iff two undirected edges are incident to each other */
 bool graphe::edges_incident(const ipair &e1,const ipair &e2) {
     return e1.first==e2.first || e1.first==e2.second || e1.second==e2.first || e1.second==e2.second;
 }
@@ -9784,6 +9784,8 @@ void graphe::line_graph(graphe &G,ipairs &E) const {
         get_edges_as_pairs(E);
     G.clear();
     G.reserve_nodes(E.size());
+    bool isdir=G.is_directed();
+    G.set_directed(isdir);
     if (G.supports_attributes()) {
         vecteur labels;
         gen label;
@@ -9796,9 +9798,10 @@ void graphe::line_graph(graphe &G,ipairs &E) const {
     int i,j;
     for (ipairs_iter it=E.begin();it!=E.end();++it) {
         i=it-E.begin();
-        for (ipairs_iter jt=it+1;jt!=E.end();++jt) {
+        for (ipairs_iter jt=(isdir?E.begin():it+1);jt!=E.end();++jt) {
             j=jt-E.begin();
-            if (edges_incident(*it,*jt))
+            if (i==j) continue;
+            if ((isdir && it->second==jt->first) || (!isdir && edges_incident(*it,*jt)))
                 G.add_edge(i,j);
         }
     }

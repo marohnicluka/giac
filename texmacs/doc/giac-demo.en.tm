@@ -409,7 +409,10 @@
     </unfolded-io-math>
 
     <\textput>
-      Integrals, sums and products are entered in the usual way.
+      Integrals, sums and products are entered in the usual way. Note that
+      the differential <math|\<mathd\> x> is entered as
+      <key|d><key|Tab><key|Tab><key|Space><key|x> and that multiplication
+      sign is used between the integrand and <math|\<mathd\> x>.
     </textput>
 
     <\unfolded-io-math>
@@ -426,12 +429,13 @@
     <\unfolded-io-math>
       \<gtr\>\ 
     <|unfolded-io-math>
-      <big|int><rsub|0><rsup|\<mathpi\>/4><sqrt|tan
-      <around*|\<nobracket\>|x|\<nobracket\>>>*\<mathd\> x
+      collect <around*|(|normal <around*|(|lncollect <around*|(|collect
+      <around*|(|<big|int><rsub|0><rsup|\<mathpi\>/4><sqrt|tan
+      <around*|\<nobracket\>|x|\<nobracket\>>>*\<mathd\> x|)>|)>|)>|)>
     <|unfolded-io-math>
       <\equation*>
-        <frac|\<mathpi\>*<sqrt|2>-<sqrt|2>*ln
-        <around*|(|<sqrt|2>+2|)>+<sqrt|2>*ln <around*|(|-<sqrt|2>+2|)>|4>
+        <frac|1|4>*<sqrt|2>*<around*|(|\<mathpi\>+ln
+        <around*|(|-2*<sqrt|2>+3|)>|)>
       </equation*>
     </unfolded-io-math>
 
@@ -925,10 +929,10 @@
       It can be shown that be shown that the series
       <math|<big|sum><rsub|n=0><rsup|\<infty\>>s <around*|(|n|)>>, where
       <math|s> is defined below, converges to <math|<frac|1|\<mathpi\>>>
-      (J.<nbsp>M.<nbsp>Borwein et al., 1989). We prove the convergence using
-      the criterion of D'Alembert and compute the number of significant
-      digits in the approximation of <math|\<mathpi\>> using the first 11
-      terms.
+      (J.<nbsp>M.<nbsp>Borwein et al., 1989). We prove the convergence by
+      using the criterion of D'Alembert and compute the number of significant
+      digits in the approximation of <math|\<mathpi\>> as the reciprocal of
+      sum of first 11 terms.
     </textput>
 
     <\unfolded-io-math>

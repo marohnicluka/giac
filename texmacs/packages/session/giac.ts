@@ -20,7 +20,11 @@
     </src-license>
   </src-title>>
 
-  <assign|giac-output|<macro|body|<generic-output*|<arg|body>>>>
+  <assign|giac-output|<\macro|body>
+    <\padded>
+      <generic-output*|<arg|body>>
+    </padded>
+  </macro>>
 
   \;
 </body>

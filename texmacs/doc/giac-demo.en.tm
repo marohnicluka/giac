@@ -1120,10 +1120,20 @@
     <\unfolded-io-math>
       \<gtr\>\ 
     <|unfolded-io-math>
-      <around*|(|f\<circ\>g|)><around*|(|4|)>
+      <around*|(|f\<circ\>g|)><around*|(|t|)>
     <|unfolded-io-math>
       <\equation*>
-        10
+        <around*|(|t-1|)><rsup|2>+1
+      </equation*>
+    </unfolded-io-math>
+
+    <\unfolded-io-math>
+      \<gtr\>\ 
+    <|unfolded-io-math>
+      <around*|(|g\<circ\>f|)><around*|(|t|)>
+    <|unfolded-io-math>
+      <\equation*>
+        t<rsup|2>
       </equation*>
     </unfolded-io-math>
 

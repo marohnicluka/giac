@@ -16,45 +16,45 @@
     fraction decomposition, linear algebra (vectors, matrices, row reduction
     to echelon form, eigenvalues and eigenvectors), permutations,
     combinatorial analysis, computing in <math|\<bbb-Z\>/p*\<bbb-Z\>> and
-    <math|\<bbb-Z\>/p*\<bbb-Z\><around*|[|x|]>><text-dots>
+    <math|\<bbb-Z\>/p*\<bbb-Z\><around*|[|x|]>>
 
     <item*|Calculus>Derivatives, integration, limits, series expansion,
     vector calculus, calculus of variations, implicit differentiation, curve
-    interpolation, differential equations, special functions<text-dots>
+    interpolation, differential equations, special functions
 
     <item*|<abbr|2D> and <abbr|3D> plotting>Function graphs, surfaces,
     plotting implicit curves, plotting the solution of a system of
     inequalities, polar and parametric plots, scatter and line plots, bar
-    plots, pie charts, histograms<text-dots>
+    plots, pie charts, histograms
 
     <item*|<abbr|2D> and <abbr|3D> geometry>Points, segments, lines,
     triangles, polygons, circles, conics, parametric curves, curve
-    intersection, tangents, planes, surfaces<text-dots>
+    intersection, tangents, planes, surfaces
 
     <item*|Probability and statistics>Probability distributions, random
     variables, efficient sampling, maximum-likelihood fitting, statistical
-    tests, kernel density estimation<text-dots>
+    tests, kernel density estimation
 
     <item*|Signal processing and audio tools>Convolution, (auto)correlation,
     continuous/fast Fourier transform, Fourier series, filtering, windowing,
     loading, creating and saving audio clips, audio playback, resampling,
-    noise removal, waveform plotting, spectrum plotting<text-dots>
+    noise removal, waveform plotting, spectrum plotting
 
     <item*|Optimization>Mixed integer linear programming, finding local and
-    global extrema, nonlinear programming, transportation problem<text-dots>
+    global extrema, nonlinear programming, transportation problem
 
     <item*|Graph theory>Creating (random) graphs and digraphs, operations on
     graphs, modifying graphs, importing and exporting graphs to
     <with|font-family|ss|dot> file format, examining properties of graphs,
     traversing graphs, vertex and edge coloring, graph isomorphism, graph
-    drawing<text-dots>
+    drawing
 
     <item*|Programming>Functions, local variables, conditionals, loops,
-    choice of syntax (C-like, Maple, Mupad, <abbr|TI89>)<text-dots>
+    choice of syntax (C-like, Maple, Mupad, <abbr|TI89>)
 
     <item*|Syntax compatibility with other systems>Maple compatibility, MuPAD
     compatibility, Python compatibility, MathML export (content and
-    presentation), <LaTeX> export<text-dots>
+    presentation), <LaTeX> export
   </description-dash>
 
   <name|Giac> output is rendered in <TeXmacs> from its Scheme tree

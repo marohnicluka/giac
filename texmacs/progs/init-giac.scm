@@ -17,10 +17,10 @@
   (:tab-completion #t)
   (:launch "giac --texmacs")
   (:session "Giac")
-  (:scripts "Giac")
-  (:use (dynamic scripts-kbd)))
+  (:scripts "Giac"))
 
 (when (supports-giac?)
+  (import-from (giac-kbd))
   (import-from (giac-menus))
   (lazy-input-converter (giac-input) giac)
   (plugin-approx-command-set! "giac" "approx")

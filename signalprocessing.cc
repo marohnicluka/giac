@@ -780,6 +780,8 @@ define_unary_function_ptr5(at_boxcar,alias_at_boxcar,&__boxcar,0,true)
 
 gen _rect(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type==_VECT && g.subtype==_SEQ__VECT && g._VECTptr->size()==2)
+      return g._VECTptr->front()*exp(g._VECTptr->back()*cst_i,contextptr);
     gen hf=fraction(1,2);
     return _boxcar(makesequence(-hf,hf,g),contextptr);
 }

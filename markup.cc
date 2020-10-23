@@ -605,9 +605,9 @@ string idnt2markup(const string &s_orig,int typ,bool unit=false,int idc=0) {
     else if (s=="alpha_")
       return tex?"\\alpha ":(scm?"<space><nosymbol><alpha><nosymbol>":mml_tag("mi","&alpha;",idc));
     else if (s=="c_")
-      return tex || scm?"<space><nosymbol>c<nosymbol>":mml_tag("mi","c",idc);
+      return tex?"c":(scm?"<space><nosymbol>c<nosymbol>":mml_tag("mi","c",idc));
     else if (s=="c3_")
-      return tex || scm?"<space><nosymbol>b<nosymbol>":mml_tag("mi","b",idc);
+      return tex?"b":(scm?"<space><nosymbol>b<nosymbol>":mml_tag("mi","b",idc));
     else if (s=="epsilon0_")
       return tex?"\\varepsilon_0"
                 :(scm?"(concat \"<space><nosymbol><varepsilon>\" (rsub \"0\") \"<nosymbol>\")"
@@ -621,23 +621,23 @@ string idnt2markup(const string &s_orig,int typ,bool unit=false,int idc=0) {
                 :(scm?"(concat \"<space><nosymbol><varepsilon>\" (rsub \"Si\") \"<nosymbol>\")"
                      :mml_tag("msub","<mi>&epsilon;</mi><mi>Si<mi>",idc));
     else if (s=="F_")
-      return tex || scm?"<space><nosymbol>F<nosymbol>":mml_tag("mi","F",idc);
+      return tex?"F":(scm?"<space><nosymbol>F<nosymbol>":mml_tag("mi","F",idc));
     else if (s=="f0_")
       return tex?"f_0":(scm?"(concat \"<space><nosymbol>f\" (rsub \"0\") \"<nosymbol>\")"
                            :mml_tag("msub","<mi>f</mi><mn>0</mn>",idc));
     else if (s=="g_")
-      return tex || scm?"<space><nosymbol>g<nosymbol>":mml_tag("mi","g",idc);
+      return tex?"g":(scm?"<space><nosymbol>g<nosymbol>":mml_tag("mi","g",idc));
     else if (s=="G_")
-      return tex || scm?"<space><nosymbol>G<nosymbol>":mml_tag("mi","G",idc);
+      return tex?"G":(scm?"<space><nosymbol>G<nosymbol>":mml_tag("mi","G",idc));
     else if (s=="h_")
-      return tex || scm?"<space><nosymbol>h<nosymbol>":mml_tag("mi","h",idc);
+      return tex?"h":(scm?"<space><nosymbol>h<nosymbol>":mml_tag("mi","h",idc));
     else if (s=="hbar_")
       return tex?"\\hslash ":(scm?"<space><nosymbol><hbar><nosymbol>":mml_tag("mi","&#x210f;",idc));
     else if (s=="I0_")
       return tex?"I_0":(scm?"(concat \"<space><nosymbol>I\" (rsub \"0\") \"<nosymbol>\")"
                            :mml_tag("msub","<mi>I</mi><mn>0</mn>",idc));
     else if (s=="k_")
-      return tex || scm?"<space><nosymbol>k<nosymbol>":mml_tag("mi","k",idc);
+      return tex?"k":(scm?"<space><nosymbol>k<nosymbol>":mml_tag("mi","k",idc));
     else if (s=="lambda0_")
       return tex?"\\lambda_0":(scm?"(concat \"<space><nosymbol><lambda>\" (rsub \"0\") \"<nosymbol>\")"
                                   :mml_tag("msub","<mi>&lambda;</mi><mn>0</mn>",idc));
@@ -677,7 +677,7 @@ string idnt2markup(const string &s_orig,int typ,bool unit=false,int idc=0) {
                 :(scm?"(concat \"<space><nosymbol>P\" (rsub \"<odot>\") \"<nosymbol>\")"
                      :mml_tag("msub","<mi>P</mi><mi>&odot;</mi>",idc));
     else if (s=="q_")
-      return tex || scm?"<space><nosymbol>q<nosymbol>":mml_tag("mi","q",idc);
+      return tex?"q":(scm?"<space><nosymbol>q<nosymbol>":mml_tag("mi","q",idc));
     else if (s=="R_")
       return tex || scm?"<space><nosymbol>R<nosymbol>":mml_tag("mi","R",idc);
     else if (s=="REarth_")

@@ -1,4 +1,4 @@
-<TeXmacs|1.99.12>
+<TeXmacs|1.99.13>
 
 <style|<tuple|mmxmanual|framed-session|giac|old-dots>>
 
@@ -1356,7 +1356,7 @@
   The command<index|<verbatim|cycle_graph>> <with|font-family|tt|cycle_graph>
   is used for constructing <hlink|<rigid|cycle
   graphs>|https://en.wikipedia.org/wiki/Cycle_graph>
-  <cite-detail|godsil|pp.<nbsp>4>.
+  <cite-detail|godsil|p.<nbsp>4>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|cycle_graph(n)>>>|<row|<cell|>|<cell|<verbatim|cycle_graph(V)>>>>>>
 
@@ -2053,7 +2053,7 @@
   <math|m*n> vertices defined as the underlying graph of the
   <hlink|<rigid|strong product>|https://en.wikipedia.org/wiki/Strong_product_of_graphs>
   of two directed path graphs with <math|m> and <math|n> vertices,
-  respectively<nbsp><cite-detail|afzal|Definition<nbsp>2, pp.<nbsp>189>.
+  respectively<nbsp><cite-detail|afzal|Definition<nbsp>2, p.<nbsp>189>.
   Strong product is defined as the <hlink|union|#graph-union> of Cartesian
   and tensor <hlink|products|#graph-products>.
 
@@ -2678,7 +2678,7 @@
   <math|G<around*|(|V,E|)>> and a list of vertices <math|L>. It returns the
   subgraph <math|G<rprime|'><around*|(|L,E<rprime|'>|)>> of <math|G>, where
   <math|E<rprime|'>\<subset\>E> contains all edges which have both endpoints
-  in <math|L> <cite-detail|godsil|pp.<nbsp>3>.
+  in <math|L> <cite-detail|godsil|p.<nbsp>3>.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -3682,7 +3682,7 @@
 
   The command <verbatim|line_graph><index|<verbatim|line_graph>> is used for
   constructing <hlink|<rigid|line graphs>|https://en.wikipedia.org/wiki/Line_graph>
-  <cite-detail|godsil|pp.<nbsp>10>.
+  <cite-detail|godsil|p.<nbsp>10>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|line_graph(G)>>>>>>
 
@@ -3737,7 +3737,7 @@
   constructing the <hlink|<rigid|dual graph>|https://en.wikipedia.org/wiki/Dual_graph>
   of an undirected biconnected <hlink|<rigid|planar
   graph>|https://en.wikipedia.org/wiki/Planar_graph>. To determine whether a
-  graph is planar <cite-detail|godsil|pp.<nbsp>12> use the command
+  graph is planar <cite-detail|godsil|p.<nbsp>12> use the command
   <verbatim|is_planar><index|<verbatim|is_planar>>.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|plane_dual(G)>>>|<row|<cell|>|<cell|<verbatim|plane_dual(F)>>>|<row|<cell|>|<cell|<verbatim|is_planar(G)>>>|<row|<cell|>|<cell|<verbatim|is_planar(G,F)>>>>>>
@@ -3808,7 +3808,7 @@
   the second argument is given and <math|G> is planar and biconnected, the
   list of faces of <math|G> is stored to <verbatim|F>. Each face is
   represented as a list of its vertices. The strategy is to use the algorithm
-  of <name|Demoucron> et al.<nbsp><cite-detail|gibbons|pp.<nbsp>88>, which
+  of <name|Demoucron> et al.<nbsp><cite-detail|gibbons|p.<nbsp>88>, which
   runs in <math|O<around*|(|<around*|\||V|\|><rsup|2>|)>> time.
 
   <\session|giac|default>
@@ -4043,7 +4043,7 @@
   numbers <math|p<rsub|i>> are automatically scaled by
   <math|1/<big|sum><rsub|i=1><rsup|n-1>p<rsub|i>> to achieve the sum of 1 and
   a graph with that precise distribution of vertex degrees is generated at
-  random using the algorithm described in<nbsp><cite-detail|newman|pp.<nbsp>2567>
+  random using the algorithm described in<nbsp><cite-detail|newman|p.<nbsp>2567>
   with some modifications. First, a degree sequence <math|d> is generated
   randomly by drawing samples from the given distribution and repeating the
   process until a graphic sequence is obtained. Then the algorithm for
@@ -4087,7 +4087,7 @@
   the user to control the <hlink|<rigid|clustering
   coefficient>|#clustering-coefficient> of <math|G>. This method is due to
   <name|Schank> and <name|Wagner><nbsp><cite-detail|schank|Algorithm<nbsp>2,
-  pp.<nbsp>271>. The time complexity of the implementation is
+  p.<nbsp>271>. The time complexity of the implementation is
   <math|O<around*|(|n<rsup|2>*d+n*k|)>>.
 
   <\session|giac|default>
@@ -4443,7 +4443,7 @@
   </itemize-minus>
 
   Rooted unlabeled trees are generated uniformly at random using
-  <abbr|RANRUT> algorithm <cite-detail|nijenhuis|pp.<nbsp>274>. The root of a
+  <abbr|RANRUT> algorithm <cite-detail|nijenhuis|p.<nbsp>274>. The root of a
   tree <math|T> generated this way, if not specified as <math|v>, is always
   the first vertex in the list returned by <verbatim|vertices>. The average
   time complexity of <abbr|RANRUT> algorithm is <math|O<around*|(|n*log
@@ -4452,13 +4452,13 @@
   Unrooted unlabeled trees, also called <strong|free> trees, are generated
   uniformly at random using <name|Wilf>'s algorithm<\footnote>
     The original <name|Wilf>'s algorithm has a minor flaw in the procedure
-    <verbatim|Free><nbsp><cite-detail|wilf|pp.<nbsp>207>. In the formula
+    <verbatim|Free><nbsp><cite-detail|wilf|p.<nbsp>207>. In the formula
     <math|p=<binom|1+a<rsub|n/2>|2>/a<rsub|n>> in step<nbsp>(T1) the
     denominator <math|a<rsub|n>> stands for the number of all rooted
     unlabeled trees on <math|n> vertices. However, one should divide by the
     number <math|t<rsub|n>> of all <em|unrooted> unlabeled trees instead,
     which can be obtained from <math|a<rsub|1>,a<rsub|2>,\<ldots\>,a<rsub|n>>
-    by applying the formula in <cite-detail|otter|pp.<nbsp>589>. This
+    by applying the formula in <cite-detail|otter|p.<nbsp>589>. This
     implementation includes the correction.
   </footnote><nbsp><cite|wilf>, which is based on <abbr|RANRUT> algorithm and
   runs in about the same time as <abbr|RANRUT> itself.
@@ -4553,7 +4553,7 @@
 
   To show that the algorithm also selects rooted trees on <math|n> vertices
   with equal probability, one can reproduce the example
-  in<nbsp><cite-detail|nijenhuis|pp.<nbsp>281>, in which <math|n=5>. First,
+  in<nbsp><cite-detail|nijenhuis|p.<nbsp>281>, in which <math|n=5>. First,
   all distinct rooted trees on 5 vertices are created and stored in
   <verbatim|trees>; there are exactly nine of them. Their root vertices are
   highlighted to be distinguishable. Then, 4500 rooted trees on 5 vertices
@@ -7575,7 +7575,7 @@
 
   The smallest eigenvalue of a Laplacian matrix of an undirected graph is
   always zero. Moreover, its multiplicity is equal to the number of connected
-  components in the corresponding graph <cite-detail|godsil|pp.<nbsp>280>.
+  components in the corresponding graph <cite-detail|godsil|p.<nbsp>280>.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -8421,8 +8421,8 @@
 
   <verbatim|graph_automorphisms> takes a graph <math|G> as its only argument
   and returns a list containing the generators of <math|Aut<around*|(|G|)>>,
-  the automorphism group of <math|G> (see <cite-detail|godsil|pp.<nbsp>4> and
-  <cite-detail|biggs|pp.<nbsp>115>). Each generator is given as a list of
+  the automorphism group of <math|G> (see <cite-detail|godsil|p.<nbsp>4> and
+  <cite-detail|biggs|p.<nbsp>115>). Each generator is given as a list of
   cycles, which can be turned to a permutation by calling the command
   <verbatim|cycles2permu>.
 
@@ -8516,8 +8516,8 @@
   graph <math|G<around*|(|V,E|)>> and optionally two variables or values
   <math|x> and <math|y>. It returns the the bivariate Tutte
   polynomial<\footnote>
-    See <cite|haggard>, <cite-detail|biggs|pp.<nbsp>97> and
-    <cite-detail|bollobas|pp.<nbsp>335>.
+    See <cite|haggard>, <cite-detail|biggs|p.<nbsp>97> and
+    <cite-detail|bollobas|p.<nbsp>335>.
   </footnote> <math|T<rsub|G>> of <math|G> or the value
   <math|T<rsub|G><around*|(|x,y|)>> if the optional arguments are given. If
   <math|G> is weighted, it is treated as a multigraph: the weight <math|w> of
@@ -8588,7 +8588,7 @@
     </unfolded-io>
   </session>
 
-  This result coincides with that in <cite-detail|biggs|pp.<nbsp>103>, which
+  This result coincides with that in <cite-detail|biggs|p.<nbsp>103>, which
   is supposed to be correct. Alternatively, it can be verified by applying
   the recursive definition with an arbitrary edge <math|e\<in\>E>, as below.
 
@@ -8635,7 +8635,7 @@
   </session>
 
   The value <math|T<rsub|G><around*|(|1,1|)>> is equal to the number of
-  spanning forests in <math|G> <cite-detail|bollobas|pp.<nbsp>345>\Vin this
+  spanning forests in <math|G> <cite-detail|bollobas|p.<nbsp>345>\Vin this
   case, the number of spanning trees in Petersen graph. For verification, the
   same number is computed by using the specialized command
   <hlink|<verbatim|number_of_spanning_trees>|#number-of-spanning-trees>,
@@ -8793,7 +8793,7 @@
 
   <math|P<rsub|G>> and the <hlink|Tutte polynomial|#tutte-polynomial>
   <math|T<rsub|G>> satisfy the following relation<nbsp>(see <cite|haggard>
-  and <cite-detail|bollobas|pp.<nbsp>346>):
+  and <cite-detail|bollobas|p.<nbsp>346>):
 
   <\equation>
     P<rsub|G><around*|(|t|)>=<around*|(|-1|)><rsup|<around*|\||V|\|>-\<kappa\><around*|(|G|)>>*t<rsup|\<kappa\><around*|(|G|)>>*T<rsub|G><around*|(|1-t,0|)>,<label|eq:chromatic-poly>
@@ -8858,7 +8858,7 @@
 
   <math|Q<rsub|G>> and the <hlink|Tutte polynomial|#tutte-polynomial>
   <math|T<rsub|G>> satisfy the following relation<nbsp>(see <cite|haggard>
-  and <cite-detail|biggs|pp.<nbsp>110>):
+  and <cite-detail|biggs|p.<nbsp>110>):
 
   <\equation>
     Q<rsub|G><around*|(|x|)>=<around*|(|-1|)><rsup|<around*|\||E|\|>-<around*|\||V|\|>+\<kappa\><around*|(|G|)>>*T<rsub|G><around*|(|0,1-x|)>,<label|eq:flow-poly>
@@ -8873,8 +8873,8 @@
   <math|G>. In such flows, the total flow <math|f<rsub|v>> entering and
   leaving vertex <math|v> is congruent modulo <math|k>, hence
   <math|f<rsub|v>\<in\><around*|{|1,2,\<ldots\>,k-1|}>> for all
-  <math|v\<in\>V> <cite-detail|bollobas|pp.<nbsp>347>. As shown in the
-  example below, Petersen graph has zero 4-flows and 240 5-flows.
+  <math|v\<in\>V> <cite-detail|bollobas|p.<nbsp>347>. As shown in the example
+  below, Petersen graph has zero 4-flows and 240 5-flows.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -9152,15 +9152,15 @@
 
   The strategy for checking 1- and 2-connectivity is to use
   <hlink|depth-first search|https://en.wikipedia.org/wiki/Depth-first_search><nbsp>(see
-  <cite-detail|gibbons|pp.<nbsp>20> and<nbsp><cite|tarjan72>). Both
-  algorithms run in <math|O<around*|(|<around*|\||V|\|>+<around*|\||E|\|>|)>>
-  time. The algorithm for checking 3-connectivity is quite simple but less
-  efficient: it works by choosing a vertex <math|v\<in\>V> and checking if
-  the subgraph induced by <math|V\<setminus\><around*|{|v|}>> is biconnected,
-  moving on to the next vertex if so, and repeating the process until all
-  vertices are visited exactly once or a non-biconnected subgraph is found
-  for some <math|v>. In the latter case the input graph is not triconnected.
-  The complexity of this algorithm is <math|O<around*|(|<around*|\||V|\|>*<around*|\||E|\|>|)>>.
+  <cite-detail|gibbons|p.<nbsp>20> and<nbsp><cite|tarjan72>). Both algorithms
+  run in <math|O<around*|(|<around*|\||V|\|>+<around*|\||E|\|>|)>> time. The
+  algorithm for checking 3-connectivity is quite simple but less efficient:
+  it works by choosing a vertex <math|v\<in\>V> and checking if the subgraph
+  induced by <math|V\<setminus\><around*|{|v|}>> is biconnected, moving on to
+  the next vertex if so, and repeating the process until all vertices are
+  visited exactly once or a non-biconnected subgraph is found for some
+  <math|v>. In the latter case the input graph is not triconnected. The
+  complexity of this algorithm is <math|O<around*|(|<around*|\||V|\|>*<around*|\||E|\|>|)>>.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -10520,7 +10520,7 @@
 
   The strategy is to use <hlink|breadth-first
   search|https://en.wikipedia.org/wiki/Breadth-first_search>
-  <cite-detail|gibbons|pp.<nbsp>35> starting from the source vertex.
+  <cite-detail|gibbons|p.<nbsp>35> starting from the source vertex.
   Therefore, the algorithm runs in <math|O<around*|(|<around*|\||V|\|>+<around*|\||E|\|>|)>>
   time.
 
@@ -11177,7 +11177,7 @@
 
   The command <verbatim|maximum_matching><index|<verbatim|maximum_matching>>
   is used for finding maximum <hlink|matchings|https://en.wikipedia.org/wiki/Matching_(graph_theory)>
-  <cite-detail|godsil|pp.<nbsp>43> in undirected unweighted graphs.
+  <cite-detail|godsil|p.<nbsp>43> in undirected unweighted graphs.
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|maximum_matching(G)>>>>>>
 
@@ -11969,9 +11969,9 @@
   graph <math|G<around*|(|V,E|)>> and optionally a vertex <math|v\<in\>V> or
   a list/sequence of vertices <math|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|k>\<in\>V>.
   If <math|G> is the only argument, the clustering coefficient
-  <math|c<around*|(|G|)>><nbsp><cite-detail|boot|pp.<nbsp>5> is returned.
+  <math|c<around*|(|G|)>><nbsp><cite-detail|boot|p.<nbsp>5> is returned.
   Otherwise, the local clustering coefficient <math|c<rsub|G><around*|(|v|)>>
-  <cite-detail|boot|pp.<nbsp>4> of <math|v> resp.<nbsp>a list of local
+  <cite-detail|boot|p.<nbsp>4> of <math|v> resp.<nbsp>a list of local
   clustering coefficients of <math|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|k>>
   is returned. The second argument may also be one of the following options:
 
@@ -12012,7 +12012,7 @@
   The time complexity of computing <math|c<around*|(|G|)>> is
   <math|O<around*|(|<around*|\||E|\|><rsup|3/2>|)>>, whereas the algorithm of
   <name|Schank> and <name|Wagner><nbsp><cite-detail|schank|Algorithm<nbsp>1,
-  pp.<nbsp>269> for approximating <math|c<around*|(|G|)>> runs in
+  p.<nbsp>269> for approximating <math|c<around*|(|G|)>> runs in
   <math|O<around*|(|log <around*|\||V|\|>|)>> time.
 
   Note that the command <verbatim|<hlink|random_graph|#random-graph>> is able
@@ -12131,8 +12131,8 @@
 
   <verbatim|network_transitivity> takes a graph <math|G> as its only argument
   and returns the transitivity <math|T<around*|(|G|)>> of
-  <math|G><nbsp><cite-detail|boot|pp.<nbsp>5>. By definition, it is a
-  rational number in the range <math|<around*|[|0,1|]>>:
+  <math|G><nbsp><cite-detail|boot|p.<nbsp>5>. By definition, it is a rational
+  number in the range <math|<around*|[|0,1|]>>:
 
   <\equation*>
     T<around*|(|G|)>=<frac|3*N<rsub|triangles>|N<rsub|triplets>>.
@@ -12146,7 +12146,7 @@
   <math|w> and <math|w> following <math|z>. The triplet
   <math|<around*|(|v,w,z|)>> is <strong|closed> if <math|v z\<in\>E>,
   i.e.<nbsp>if <math|v> also follows <math|z>
-  <cite-detail|wasserman|pp.<nbsp>243>. A closed triplet is called a
+  <cite-detail|wasserman|p.<nbsp>243>. A closed triplet is called a
   <strong|triangle>. If <math|G> is undirected, <math|N<rsub|triangles>> is
   the number of 3-cliques and <math|N<rsub|triplets>> is the number of
   two-edge paths in <math|V>.
@@ -12182,7 +12182,7 @@
   Observe that the above result is different than <math|c<around*|(|G|)>>
   obtained in Section<nbsp><reference|clustering-coefficient>. Hence
   <math|c<around*|(|G|)>\<neq\>T<around*|(|G|)>> in
-  general<nbsp><cite-detail|boot|pp.<nbsp>5>.
+  general<nbsp><cite-detail|boot|p.<nbsp>5>.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -12785,7 +12785,7 @@
   edges>|https://en.wikipedia.org/wiki/Edge_coloring> in a graph, satisfying
   the following two conditions: any two mutually incident edges are colored
   differently and the total number <math|n> of colors is minimal. The theorem
-  of <name|Vizing> <cite-detail|diestel|pp.<nbsp>103> implies that every
+  of <name|Vizing> <cite-detail|diestel|p.<nbsp>103> implies that every
   simple undirected graph falls into one of two categories: <em|1> if
   <math|n=\<Delta\>> or <em|2> if <math|n=\<Delta\>+1>, where
   <math|\<Delta\>> is the maximum degree of the graph.
@@ -13008,7 +13008,7 @@
   for determining whether a graph contains an <hlink|<rigid|Eulerian
   trail>|https://en.wikipedia.org/wiki/Eulerian_path>, i.e.<nbsp>a trail
   which passes through each of its edges exactly once
-  <cite-detail|godsil|pp.<nbsp>395>. A graph is <strong|Eulerian> if it has
+  <cite-detail|godsil|p.<nbsp>395>. A graph is <strong|Eulerian> if it has
   such a trail. An Eulerian trail may be closed, in which case it is an
   <strong|Eulerian circuit>.
 
@@ -13940,7 +13940,7 @@
 
   The strategy is to use <hlink|<rigid|<name|Kirchhoff>'s
   Theorem>|https://en.wikipedia.org/wiki/Kirchhoff%27s_theorem><nbsp><cite-detail|west|Theorem<nbsp>2.2.12,
-  pp.<nbsp>86>. The number of spanning trees is equal to the first principal
+  p.<nbsp>86>. The number of spanning trees is equal to the first principal
   minor of the <hlink|<rigid|Laplacian matrix>|#laplacian-matrix> of
   <math|G>.
 
@@ -14340,7 +14340,7 @@
   <math|G<rprime|'>>, which is homeomorphic to some triconnected graph, by
   adding temporary edges. The augmented graph <math|G<rprime|'>> is then
   drawn using <name|Tutte>'s barycentric method (see <cite|tutte> and
-  <cite-detail|godsil|pp.<nbsp>293>) which puts each vertex in the barycenter
+  <cite-detail|godsil|p.<nbsp>293>) which puts each vertex in the barycenter
   of its neighbors. It is guaranteed that a (non-strict) convex drawing will
   be produced, without edge crossings. In the end, the duplicate of the outer
   face and the temporary edges inserted during the augmentation stage are
@@ -14356,9 +14356,9 @@
 
   The augmentation process consists of two parts. Firstly, the input graph
   <math|G> is decomposed into biconnected components (blocks) using
-  depth-first search <cite-detail|gibbons|pp.<nbsp>25>. Then, each block is
+  depth-first search <cite-detail|gibbons|p.<nbsp>25>. Then, each block is
   decomposed into faces by using <name|Demoucron>'s algorithm (see
-  <cite-detail|gibbons|pp.<nbsp>88> and <cite|myrwold>). Embeddings obtained
+  <cite-detail|gibbons|p.<nbsp>88> and <cite|myrwold>). Embeddings obtained
   for each blocks are then combined by adding one temporary edge for each
   articulation point, joining the two corresponding blocks.
   Figure<nbsp><reference|blockjoin> shows the outer faces of two blocks
@@ -15672,6 +15672,7 @@
   <\collection>
     <associate|font|roman>
     <associate|font-base-size|10>
+    <associate|font-family|rm>
     <associate|math-font|roman>
     <associate|page-breaking|professional>
     <associate|page-medium|papyrus>
@@ -16456,7 +16457,7 @@
     <\associate|figure>
       <tuple|normal|<surround|<hidden-binding|<tuple>|3.1>||drawing of the
       Sierpi«ski graph <with|mode|<quote|math>|S T<rsub|3><rsup|5>> using
-      L<rsup|<space|-0.8spc><move|A|0fn|-0.1fn>><space|-0.2spc>T<rsub|<space|-0.4spc><move|<resize|<with|math-level|0|E>||||0.5fn>|0fn|-0.1fn>><space|-0.4spc>X
+      L<rsup|<space|-0.8spc><move|A|0fn|-0.1fn>><space|-0.2spc>T<rsub|<space|-0.4spc><move|<resize|<with|math-level|<quote|0>|E>||||0.5fn>|0fn|-0.1fn>><space|-0.4spc>X
       and PSTricks>|<pageref|auto-176>>
 
       <tuple|normal|<surround|<hidden-binding|<tuple>|6.1>||Joining blocks by
@@ -17206,7 +17207,7 @@
       <no-break><pageref|auto-173>>
 
       <with|par-left|<quote|1tab>|3.2.2.<space|2spc>Saving graph drawings in
-      L<rsup|<space|-0.8spc><move|A|0fn|-0.1fn>><space|-0.2spc>T<rsub|<space|-0.4spc><move|<resize|<with|math-level|0|E>||||0.5fn>|0fn|-0.1fn>><space|-0.4spc>X
+      L<rsup|<space|-0.8spc><move|A|0fn|-0.1fn>><space|-0.2spc>T<rsub|<space|-0.4spc><move|<resize|<with|math-level|<quote|0>|E>||||0.5fn>|0fn|-0.1fn>><space|-0.4spc>X
       format <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-175>>
 

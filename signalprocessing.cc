@@ -1413,7 +1413,9 @@ gen expand_Dirac_prod(const gen &f_orig,const identificateur &x,const gen &a,int
     return ret;
 }
 
-gen simplify_Dirac(const gen &g_orig,const identificateur &x,GIAC_CONTEXT) {
+gen simplify_Dirac(const gen &g_orig,const identificateur &x,int depth,GIAC_CONTEXT) {
+	if (depth>100)
+		return g_orig;
     gen g=expand(g_orig,contextptr),r,ret(0),rest(0);
     vecteur terms;
     if (g.is_symb_of_sommet(at_plus) && g._SYMBptr->feuille.type==_VECT)
@@ -1432,7 +1434,7 @@ gen simplify_Dirac(const gen &g_orig,const identificateur &x,GIAC_CONTEXT) {
         }
     }
     if (!is_zero(rest))
-        rest=simplify_Dirac(ratnormal(rest,contextptr),x,contextptr);
+        rest=simplify_Dirac(ratnormal(rest,contextptr),x,depth+1,contextptr);
     return ret+rest;
 }
 
@@ -2140,7 +2142,7 @@ gen fourier(const gen &f_orig,const identificateur &x,const identificateur &s,
     if (is_zero(recursive_normal(im(ret,contextptr),contextptr)))
         ret=re(ret,contextptr);
     ret=simplify_signs(ret,s,contextptr);
-    ret=simplify_Dirac(ret,s,contextptr);
+    ret=simplify_Dirac(ret,s,0,contextptr);
     ret=Heaviside2abs(ret,s,contextptr);
     gen rcn=recursive_normal(ret,contextptr);
     if (is_rational_wrt(rcn,s))

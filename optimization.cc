@@ -2836,7 +2836,7 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
         }
     }
     if (constr.empty()) {
-        *logptr(contextptr) << "Error: no contraints detected\n";
+        *logptr(contextptr) << "Error: no constraints detected\n";
         return gensizeerr(contextptr);
     }
     bool feasible=true;
@@ -3654,7 +3654,9 @@ gen _euler_lagrange(const gen &g,GIAC_CONTEXT) {
     vecteur u=makevecteur(identificateur("y"));
     if (g.type!=_VECT) {
         L=g;
-        if (!contains(lidnt(g),t))
+        if (L.type==_IDNT)
+            L=eval(L,contextptr);
+        if (!contains(lidnt(L),t))
             t=t__IDNT_e;
     } else {
         if (g.subtype!=_SEQ__VECT)
@@ -3736,7 +3738,7 @@ gen _euler_lagrange(const gen &g,GIAC_CONTEXT) {
     return ret.size()==1?ret.front():ret;
 }
 static const char _euler_lagrange_s []="euler_lagrange";
-static define_unary_function_eval (__euler_lagrange,&_euler_lagrange,_euler_lagrange_s);
+static define_unary_function_eval_quoted (__euler_lagrange,&_euler_lagrange,_euler_lagrange_s);
 define_unary_function_ptr5(at_euler_lagrange,alias_at_euler_lagrange,&__euler_lagrange,_QUOTE_ARGUMENTS,true)
 
 gen parse_functional(const gen &L,const gen &t,const gen &y,const gen &dy,GIAC_CONTEXT) {
@@ -3790,7 +3792,7 @@ gen _jacobi_equation(const gen &g,GIAC_CONTEXT) {
     return makesequence(jeq,sol.is_symb_of_sommet(at_prod) || sol.is_symb_of_sommet(at_neg)?simp(sol,contextptr):sol);
 }
 static const char _jacobi_equation_s []="jacobi_equation";
-static define_unary_function_eval (__jacobi_equation,&_jacobi_equation,_jacobi_equation_s);
+static define_unary_function_eval_quoted (__jacobi_equation,&_jacobi_equation,_jacobi_equation_s);
 define_unary_function_ptr5(at_jacobi_equation,alias_at_jacobi_equation,&__jacobi_equation,_QUOTE_ARGUMENTS,true)
 
 gen makevars(const gen &e,const gen &t,const vecteur &depvars,const vecteur &diffvars,GIAC_CONTEXT) {
@@ -3979,7 +3981,7 @@ gen _convex(const gen &g,GIAC_CONTEXT) {
     return res;
 }
 static const char _convex_s []="convex";
-static define_unary_function_eval (__convex,&_convex,_convex_s);
+static define_unary_function_eval_quoted (__convex,&_convex,_convex_s);
 define_unary_function_ptr5(at_convex,alias_at_convex,&__convex,_QUOTE_ARGUMENTS,true)
 
 #ifndef NO_NAMESPACE_GIAC

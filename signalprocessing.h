@@ -53,6 +53,7 @@ gen _auto_correlation(const gen &g,GIAC_CONTEXT);
 gen _lowpass(const gen &g,GIAC_CONTEXT);
 gen _highpass(const gen &g,GIAC_CONTEXT);
 gen _moving_average(const gen &g,GIAC_CONTEXT);
+gen _rms(const gen &g,GIAC_CONTEXT);
 gen _resample(const gen &g,GIAC_CONTEXT);
 gen _convolution(const gen &g,GIAC_CONTEXT);
 gen _threshold(const gen &g,GIAC_CONTEXT);

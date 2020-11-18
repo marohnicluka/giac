@@ -894,11 +894,11 @@ string idnt2markup(const string &s_orig,int typ,bool unit,int idc,bool &isname) 
 vecteur flatten_operands(const gen &g) {
   assert(g.type==_SYMB);
   vecteur ops;
-  gen &arg=g._SYMBptr->feuille;
+  const gen &arg=g._SYMBptr->feuille;
   if (arg.type!=_VECT)
     ops.push_back(arg);
   else {
-    vecteur &args=*arg._VECTptr;
+    const vecteur &args=*arg._VECTptr;
     for (int i=0;i<int(args.size());++i) {
       gen op=args[i];
       const_iterateur it;
@@ -997,7 +997,7 @@ void assoc2markup(const vecteur &args,MarkupBlock &ml,const string &op,
 void get_leftright(const gen &arg,MarkupBlock *ml,MarkupBlock &left,
                    MarkupBlock &right,int flags,int &idc,GIAC_CONTEXT) {
   assert(arg.type==_VECT);
-  vecteur &args=*arg._VECTptr;
+  const vecteur &args=*arg._VECTptr;
   left=gen2markup(args.front(),flags,idc,contextptr);
   prepend_minus(left,flags);
   if (ml!=NULL && left.priority>=ml->priority)

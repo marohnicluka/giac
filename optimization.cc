@@ -528,7 +528,7 @@ vecteur global_extrema(const gen &f,const vecteur &g,const vecteur &h,const vect
 }
 
 int parse_varlist(const gen &g,vecteur &vars,vecteur &ineq,vecteur &initial,GIAC_CONTEXT) {
-    vecteur varlist(g.type==_VECT ? *g._VECTptr : vecteur(1,g));
+    vecteur varlist(g.type==_VECT?*g._VECTptr:vecteur(1,g));
     int n=0;
     for (const_iterateur it=varlist.begin();it!=varlist.end();++it) {
         if (it->is_symb_of_sommet(at_equal)) {
@@ -670,7 +670,7 @@ gen _minimize(const gen &args,GIAC_CONTEXT) {
     int n;  // number of variables
     if ((n=parse_varlist(argv[nargs-1],vars,g,initial,contextptr))==0 || !initial.empty())
         return gensizeerr(contextptr);
-    gen &f=argv[0];
+    const gen &f=argv[0];
     gen mn,mx;
     vecteur loc;
     bool has_symb=false;
@@ -1290,8 +1290,8 @@ gen _implicitdiff(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT || g._VECTptr->size()<2)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
-    gen &f=gv[0];
+    const vecteur &gv=*g._VECTptr;
+    const gen &f=gv[0];
     if (int(gv.size())<3)
         return gensizeerr(contextptr);
     int ci=gv[0].type!=_VECT && !gv[0].is_symb_of_sommet(at_equal)?1:0;
@@ -1618,7 +1618,7 @@ void find_local_extrema(vecteur &cpts,const gen &f,const vecteur &g,const vecteu
                 gen d;
                 const gen &x=vars.front();
                 for (const_iterateur it=cv.begin();it!=cv.end();++it) {
-                    gen &x0=it->_VECTptr->front();
+                    const gen &x0=it->_VECTptr->front();
                     cls=_CPCLASS_UNDECIDED;
                     for (int k=2;k<=order_size;++k) {
                         d=simp(subst(derive(f,x,k,contextptr),x,x0,false,contextptr),contextptr);
@@ -1983,7 +1983,8 @@ gen _extrema(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr,constr;
+    const vecteur &gv=*g._VECTptr;
+    vecteur constr;
     int order_size=5; // will not compute the derivatives of order higher than 'order_size'
     int ngv=gv.size();
     bool approx_hp=true; // use nlpsolve to determine images of homogeneous polynomials on spheres
@@ -2207,7 +2208,7 @@ gen _minimax(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()<3)
         return gensizeerr(contextptr);
     if (!gv[1].is_symb_of_sommet(at_equal) || !is_integer(gv[2]))
@@ -2221,7 +2222,7 @@ gen _minimax(const gen &g,GIAC_CONTEXT) {
     gen a(_evalf(s[0],contextptr)),b(_evalf(s[1],contextptr));
     if (!is_strictly_greater(b,a,contextptr))
         return gentypeerr(contextptr);
-    gen &f=gv[0];
+    const gen &f=gv[0];
     int n=gv[2].val;
     gen threshold(1.02);  // threshold for stopping criterion
     // detect options
@@ -2545,7 +2546,7 @@ gen _tpsolve(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()<3)
         return gensizeerr(contextptr);
     if (gv[0].type!=_VECT || gv[1].type!=_VECT ||
@@ -2661,7 +2662,7 @@ gen _thiele(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()<2)
         return gensizeerr(contextptr);
     vecteur xv,yv;
@@ -2785,9 +2786,9 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT || g._VECTptr->size() < 2)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     vecteur constr,vars,initp;
-    gen &obj=gv.front();
+    const gen &obj=gv.front();
     add_identifiers(obj,vars,contextptr);
     const_iterateur it=gv.begin();
     bool maximize=false;
@@ -2803,8 +2804,8 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
         if (*it==at_maximize || (it->is_integer() && it->val==_NLP_MAXIMIZE))
             maximize=true;
         else if (it->is_symb_of_sommet(at_equal)) {
-            gen &lh=it->_SYMBptr->feuille._VECTptr->front();
-            gen &rh=it->_SYMBptr->feuille._VECTptr->back();
+            const gen &lh=it->_SYMBptr->feuille._VECTptr->front();
+            const gen &rh=it->_SYMBptr->feuille._VECTptr->back();
             if (lh==at_assume && rh.is_integer() && rh.val==_NLP_NONNEGATIVE) {
                 for (const_iterateur jt=vars.begin();jt!=vars.end();++jt) {
                     constr.push_back(symbolic(at_inferieur_egal,makevecteur(gen(0),*jt)));
@@ -2826,8 +2827,8 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
             else if(lh.is_integer() && lh.val==_NLP_PRECISION && rh.type==_DOUBLE_)
                 eps=rh.DOUBLE_val();
             else if (contains(vars,lh) && rh.is_symb_of_sommet(at_interval)) {
-                gen &lb=rh._SYMBptr->feuille._VECTptr->front();
-                gen &ub=rh._SYMBptr->feuille._VECTptr->back();
+                const gen &lb=rh._SYMBptr->feuille._VECTptr->front();
+                const gen &ub=rh._SYMBptr->feuille._VECTptr->back();
                 if (!is_inf(lh))
                     constr.push_back(symbolic(at_superieur_egal,makevecteur(lh,lb)));
                 if (!is_inf(rh))
@@ -3042,7 +3043,7 @@ gen kernel_density(const vector<double> &data,double bw,double sd,int bins,doubl
             if (xd<a || xd>=b || (pos0=std::floor((xd-a)/d))>bins-2)
                 return 0;
             if (interp==1) {
-                gen &y1=res._VECTptr->at(pos0),&y2=res._VECTptr->at(pos0+1),x1=a+pos0*d;
+                const gen &y1=res._VECTptr->at(pos0),&y2=res._VECTptr->at(pos0+1),x1=a+pos0*d;
                 return y1+(x-x1)*(y2-y1)/gen(d);
             }
         }
@@ -3071,7 +3072,7 @@ gen kernel_density(const vector<double> &data,double bw,double sd,int bins,doubl
 }
 
 bool parse_interval(const gen &feu,double &a,double &b,GIAC_CONTEXT) {
-    vecteur &v=*feu._VECTptr;
+    const vecteur &v=*feu._VECTptr;
     gen l=v.front(),r=v.back();
     if ((l=_evalf(l,contextptr)).type!=_DOUBLE_ || (r=_evalf(r,contextptr)).type!=_DOUBLE_ ||
             !is_strictly_greater(r,l,contextptr))
@@ -3091,8 +3092,8 @@ gen _kernel_density(const gen &g,GIAC_CONTEXT) {
         // parse options
         for (const_iterateur it=g._VECTptr->begin()+1;it!=g._VECTptr->end();++it) {
             if (it->is_symb_of_sommet(at_equal)) {
-                gen &opt=it->_SYMBptr->feuille._VECTptr->front();
-                gen &v=it->_SYMBptr->feuille._VECTptr->back();
+                const gen &opt=it->_SYMBptr->feuille._VECTptr->front();
+                const gen &v=it->_SYMBptr->feuille._VECTptr->back();
                 if (opt==_KDE_BANDWIDTH) {
                     if (v==at_select)
                         bw_method=_KDE_BW_METHOD_DPI;
@@ -3250,7 +3251,8 @@ gen _fitdistr(const gen &g,GIAC_CONTEXT) {
     int n=S.size(); // number of samples
     if (n<2)
         return gensizeerr(contextptr);
-    gen &dist=g._VECTptr->back(),N(n);
+    const gen &dist=g._VECTptr->back();
+    gen N(n);
     /* compute sample mean and variance */
     gen mean(0),var(0),ev;
     for (const_iterateur it=S.begin();it!=S.end();++it) {
@@ -3479,13 +3481,13 @@ gen _bvpsolve(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     gen tk(undef);
     int maxiter=RAND_MAX;
     if (gv.size()<3 || gv[1].type!=_VECT || gv[2].type!=_VECT ||
             gv[1]._VECTptr->size()!=2 || (gv[2]._VECTptr->size()!=2 && gv[2]._VECTptr->size()!=3))
         return gensizeerr(contextptr);
-    gen &f=gv.front(),&t=gv[1]._VECTptr->front(),&y=gv[1]._VECTptr->back(),
+    const gen &f=gv.front(),&t=gv[1]._VECTptr->front(),&y=gv[1]._VECTptr->back(),
             y1=_evalf(gv[2]._VECTptr->at(0),contextptr),y2=_evalf(gv[2]._VECTptr->at(1),contextptr);
     if (gv[2]._VECTptr->size()==3 && (tk=_evalf(gv[2]._VECTptr->at(2),contextptr)).type!=_DOUBLE_)
         return gensizeerr(contextptr);
@@ -3493,8 +3495,8 @@ gen _bvpsolve(const gen &g,GIAC_CONTEXT) {
             t._SYMBptr->feuille._VECTptr->front().type!=_IDNT ||
             !t._SYMBptr->feuille._VECTptr->back().is_symb_of_sommet(at_interval))
         return gensizeerr(contextptr);
-    gen &x=t._SYMBptr->feuille._VECTptr->front();
-    vecteur &rng=*t._SYMBptr->feuille._VECTptr->back()._SYMBptr->feuille._VECTptr;
+    const gen &x=t._SYMBptr->feuille._VECTptr->front();
+    const vecteur &rng=*t._SYMBptr->feuille._VECTptr->back()._SYMBptr->feuille._VECTptr;
     gen x1=_evalf(rng.front(),contextptr),x2=_evalf(rng.back(),contextptr);
     if (x1.type!=_DOUBLE_ || x2.type!=_DOUBLE_ || y1.type!=_DOUBLE_ || y2.type!=_DOUBLE_ ||
             !is_strictly_greater(x2,x1,contextptr))
@@ -3504,8 +3506,8 @@ gen _bvpsolve(const gen &g,GIAC_CONTEXT) {
     int output_type=_BVP_LIST;
     for (const_iterateur it=gv.begin()+3;it!=gv.end();++it) {
         if (it->is_symb_of_sommet(at_equal)) {
-            gen &lh=it->_SYMBptr->feuille._VECTptr->front();
-            gen &rh=it->_SYMBptr->feuille._VECTptr->back();
+            const gen &lh=it->_SYMBptr->feuille._VECTptr->front();
+            const gen &rh=it->_SYMBptr->feuille._VECTptr->back();
             if (lh==at_output || lh==at_Output) {
                 if (rh==_MAPLE_LIST)
                     output_type=_BVP_LIST;
@@ -3625,15 +3627,15 @@ gen _conjugate_equation(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()!=5)
         return gensizeerr(contextptr);
-    gen &y0=gv[0],&parm=gv[1],&pvals=gv[2],&t=gv[3],&a=gv[4];
+    const gen &y0=gv[0],&parm=gv[1],&pvals=gv[2],&t=gv[3],&a=gv[4];
     if (y0.type!=_SYMB || t.type!=_IDNT || parm.type!=_VECT || parm._VECTptr->size()!=2 ||
             pvals.type!=_VECT || pvals._VECTptr->size()!=2 ||
             _evalf(a,contextptr).type!=_DOUBLE_)
         return gensizeerr(contextptr);
-    gen &alpha=parm._VECTptr->front(),&beta=parm._VECTptr->back();
+    const gen &alpha=parm._VECTptr->front(),&beta=parm._VECTptr->back();
     if (alpha.type!=_IDNT || beta.type!=_IDNT)
         return gensizeerr(contextptr);
     gen y1=derive(y0,alpha,contextptr),y2=derive(y0,beta,contextptr);
@@ -3661,7 +3663,7 @@ gen _euler_lagrange(const gen &g,GIAC_CONTEXT) {
     } else {
         if (g.subtype!=_SEQ__VECT)
             return gensizeerr(contextptr);
-        vecteur &gv=*g._VECTptr;
+        const vecteur &gv=*g._VECTptr;
         L=gv.front();
         if (gv.size()>1) {
             if (gv.size()==2 && gv[1].is_symb_of_sommet(at_of)) {
@@ -3757,7 +3759,7 @@ gen _jacobi_equation(const gen &g,GIAC_CONTEXT) {
     gen L,t,y,Y,h,a;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gensizeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     L=gv.front();
     if (gv.size()==5) {
         if (!gv[1].is_symb_of_sommet(at_of))
@@ -3797,13 +3799,13 @@ define_unary_function_ptr5(at_jacobi_equation,alias_at_jacobi_equation,&__jacobi
 
 gen makevars(const gen &e,const gen &t,const vecteur &depvars,const vecteur &diffvars,GIAC_CONTEXT) {
     if (e.is_symb_of_sommet(at_of) && e._SYMBptr->feuille._VECTptr->back()==t) {
-        gen &u=e._SYMBptr->feuille._VECTptr->front();
+        const gen &u=e._SYMBptr->feuille._VECTptr->front();
         for (const_iterateur it=depvars.begin();it!=depvars.end();++it) {
             if (*it==u) return u;
             if (u==symbolic(at_derive,*it)) return diffvars[it-depvars.begin()];
         }
     } else if (e.is_symb_of_sommet(at_derive)) {
-        gen &feu=e._SYMBptr->feuille;
+        const gen &feu=e._SYMBptr->feuille;
         if (feu.type!=_VECT || (feu._VECTptr->size()==2 && feu._VECTptr->at(1)==t)) {
             gen f=makevars(feu.type==_VECT?feu._VECTptr->front():feu,t,depvars,diffvars,contextptr);
             for (const_iterateur it=depvars.begin();it!=depvars.end();++it) {
@@ -3811,7 +3813,7 @@ gen makevars(const gen &e,const gen &t,const vecteur &depvars,const vecteur &dif
             }
         }
     } else if (e.type==_SYMB) {
-        gen &feu=e._SYMBptr->feuille;
+        const gen &feu=e._SYMBptr->feuille;
         if (feu.type==_VECT) {
             vecteur nf;
             nf.reserve(feu._VECTptr->size());
@@ -3851,7 +3853,7 @@ gen strip_sign(const gen &g) {
         return g._SYMBptr->feuille;
     if (g.is_symb_of_sommet(at_prod) && g._SYMBptr->feuille.type==_VECT) {
         gen ret(1);
-        vecteur &v=*g._SYMBptr->feuille._VECTptr;
+        const vecteur &v=*g._SYMBptr->feuille._VECTptr;
         for (const_iterateur it=v.begin();it!=v.end();++it)
             ret=ret*strip_sign(*it);
         return ret;
@@ -3864,7 +3866,8 @@ gen _convex(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr,vars;
+    const vecteur &gv=*g._VECTptr;
+    vecteur vars;
     gen f=gv.front(),t(undef);
     if (gv.size()<2)
         return gensizeerr(contextptr);
@@ -3886,8 +3889,8 @@ gen _convex(const gen &g,GIAC_CONTEXT) {
     vecteur fvars,depvars;
     for (iterateur it=vars.begin();it!=vars.end();++it) {
         if (it->is_symb_of_sommet(at_of)) {
-            gen &u=it->_SYMBptr->feuille._VECTptr->front();
-            gen &v=it->_SYMBptr->feuille._VECTptr->back();
+            const gen &u=it->_SYMBptr->feuille._VECTptr->front();
+            const gen &v=it->_SYMBptr->feuille._VECTptr->back();
             if (v.type!=_IDNT || u.type!=_IDNT)
                 return gensizeerr(contextptr);
             if (is_undef(t))
@@ -3983,6 +3986,59 @@ gen _convex(const gen &g,GIAC_CONTEXT) {
 static const char _convex_s []="convex";
 static define_unary_function_eval_quoted (__convex,&_convex,_convex_s);
 define_unary_function_ptr5(at_convex,alias_at_convex,&__convex,_QUOTE_ARGUMENTS,true)
+
+gen _numdiff(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    const vecteur &gv=*g._VECTptr;
+    if (gv.size()<3)
+        return gensizeerr("Too few arguments");
+    if (gv.size()>4)
+        return gensizeerr("Too many arguments");
+    if (gv[0].type!=_VECT || gv[1].type!=_VECT)
+        return gentypeerr(contextptr);
+    if (gv[0]._VECTptr->size()!=gv[1]._VECTptr->size() || gv[0]._VECTptr->empty())
+        return gensizeerr("Badly sized X and Y");
+    const vecteur &X=*gv[0]._VECTptr,&Y=*gv[1]._VECTptr;
+    const gen &x0=gv[2];
+    int M=1,N=X.size()-1;
+    if (gv.size()==4) {
+        const gen &Mg=gv.back();
+        if (!Mg.is_integer() || is_positive(-Mg,contextptr))
+            return gentypeerr(contextptr);
+        M=Mg.val;
+    }
+    vecteur del((N+1)*(N+1)*(M+1),0);
+    del[0]=1;
+    gen c1(1),c2,c3;
+    for (int n=1;n<=N;++n) {
+        c2=1;
+        int m_max=n<M?n:M;
+        for (int ni=0;ni<n;++ni) {
+            c3=X[n]-X[ni];
+            c2=c2*c3;
+            for (int m=0;m<=m_max;++m) {
+                del[(n*(N+1)+ni)*(M+1)+m]=((X[n]-x0)*del[((n-1)*(N+1)+ni)*(M+1)+m]-
+                m*del[((n-1)*(N+1)+ni)*(M+1)+(m==0?m:m-1)])/c3;
+            }
+        }
+        for (int m=0;m<=m_max;++m) {
+            del[(n*(N+1)+n)*(M+1)+m]=c1/c2*(m*del[((n-1)*(N+1)+n-1)*(M+1)+(m==0?m:m-1)]-
+            (X[n-1]-x0)*del[((n-1)*(N+1)+n-1)*(M+1)+m]);
+        }
+        c1=c2;
+    }
+    gen d(0);
+    for (int ni=0;ni<=N;++ni) {
+        d+=del[(N*(N+1)+ni)*(M+1)+M]*Y[ni];
+    }
+    return d;
+}
+static const char _numdiff_s []="numdiff";
+static define_unary_function_eval (__numdiff,&_numdiff,_numdiff_s);
+define_unary_function_ptr5(at_numdiff,alias_at_numdiff,&__numdiff,0,true)
+
 
 #ifndef NO_NAMESPACE_GIAC
 }

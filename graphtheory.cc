@@ -209,7 +209,7 @@ bool vertices_from_integer_or_vecteur(const gen &g,graphe &G) {
 
 void parse_trail(graphe &G,const gen &g) {
     assert(g.is_symb_of_sommet(at_trail));
-    vecteur &trail=*g._SYMBptr->feuille._VECTptr;
+    const vecteur &trail=*g._SYMBptr->feuille._VECTptr;
     int n=trail.size();
     for (int i=0;i<n-1;++i) {
         G.add_edge(trail[i],trail[i+1]);
@@ -537,10 +537,10 @@ gen _foldl(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT  || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()<3)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-    gen &op=gv.front();
+    const gen &op=gv.front();
     gen arg=gv[1];
     for (const_iterateur it=gv.begin()+2;it!=gv.end();++it) {
         arg=symbolic(at_of,makesequence(op,makesequence(arg,*it)));
@@ -565,7 +565,7 @@ gen _foldr(const gen &g,GIAC_CONTEXT) {
     vecteur &gv=*g._VECTptr;
     if (gv.size()<3)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-    gen &op=gv.front();
+    const gen &op=gv.front();
     gen arg=gv[1];
     for (int i=gv.size();i-->2;) {
         arg=symbolic(at_of,makesequence(op,makesequence(gv[i],arg)));
@@ -598,7 +598,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     vecteur items,weights,categories;
     if (g.subtype==_SEQ__VECT) {
-        vecteur &gv=*g._VECTptr;
+        const vecteur &gv=*g._VECTptr;
         if (gv.front().type==_FUNC) {
             const_iterateur it=gv.begin()+1;
             for (;it!=gv.end();++it) {
@@ -624,12 +624,13 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
         }
         if (gv.size()<2)
             return gensizeerr(contextptr);
-        gen mean(undef),sdev(undef),a(undef),b(undef),&f=gv.front();
+        gen mean(undef),sdev(undef),a(undef),b(undef);
+        const gen &f=gv.front();
         int cnt=1,samples=0;
         for (const_iterateur it=gv.begin()+1;it!=gv.end();++it,++cnt) {
             if (it->is_symb_of_sommet(at_equal)) {
-                gen &lh=it->_SYMBptr->feuille._VECTptr->front();
-                gen &rh=it->_SYMBptr->feuille._VECTptr->back();
+                const gen &lh=it->_SYMBptr->feuille._VECTptr->front();
+                const gen &rh=it->_SYMBptr->feuille._VECTptr->back();
                 if (lh==at_mean)
                     mean=rh;
                 else if (lh==at_stddev)
@@ -886,12 +887,12 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
     } else {
         if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
             return gentypeerr(contextptr);
-        vecteur &args=*g._VECTptr;
+        const vecteur &args=*g._VECTptr;
         int nargs=args.size(),n=nargs-1;
         // parse options first
         bool weighted=false,size_err;
         while(args[n].is_symb_of_sommet(at_equal)) {
-            vecteur &sides=*args[n]._SYMBptr->feuille._VECTptr;
+            const vecteur &sides=*args[n]._SYMBptr->feuille._VECTptr;
             if (!sides.front().is_integer())
                 return generr("Unrecognized option");
             switch(sides.front().val) {
@@ -951,8 +952,8 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
                 parse_trail(G,arg);
             } else if (i>n && arg.is_symb_of_sommet(at_equal)) {
                 // option
-                gen &lh=arg._SYMBptr->feuille._VECTptr->front();
-                gen &rh=arg._SYMBptr->feuille._VECTptr->back();
+                const gen &lh=arg._SYMBptr->feuille._VECTptr->front();
+                const gen &rh=arg._SYMBptr->feuille._VECTptr->back();
                 if (lh.is_integer()) {
                     switch(lh.val) {
                     case _COLOR:
@@ -1021,10 +1022,10 @@ gen _export_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()<2 || gv.size()>3)
         return gensizeerr(contextptr);
-    gen &gr=gv.front(),&name=gv[1];
+    const gen &gr=gv.front(),&name=gv[1];
     bool to_latex=false;
     gen args=undef;
     if (gv.size()==3) {
@@ -1148,14 +1149,14 @@ gen _has_edge(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv = *g._VECTptr;
+    const vecteur &gv = *g._VECTptr;
     if (int(gv.size())!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (gv.back().type!=_VECT)
         return gentypeerr(contextptr);
     if (int(gv.back()._VECTptr->size())!=2)
         return gensizeerr(contextptr);
-    vecteur &e=*gv.back()._VECTptr;
+    const vecteur &e=*gv.back()._VECTptr;
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
@@ -1180,14 +1181,14 @@ gen _has_arc(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv = *g._VECTptr;
+    const vecteur &gv = *g._VECTptr;
     if (int(gv.size())!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (gv.back().type!=_VECT)
         return gentypeerr(contextptr);
     if (int(gv.back()._VECTptr->size())!=2)
         return gensizeerr(contextptr);
-    vecteur &e=*gv.back()._VECTptr;
+    const vecteur &e=*gv.back()._VECTptr;
     bool undirected=gv.back().subtype==_SET__VECT;
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
@@ -1293,7 +1294,7 @@ gen _subgraph(const gen &g,GIAC_CONTEXT) {
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT || int(g._VECTptr->size())!=2 ||
             g._VECTptr->back().type!=_VECT)
         return gentypeerr(contextptr);
-    vecteur &E=*g._VECTptr->back()._VECTptr;
+    const vecteur &E=*g._VECTptr->back()._VECTptr;
     graphe G(contextptr),S(contextptr);
     if (!G.read_gen(g._VECTptr->front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
@@ -1384,7 +1385,7 @@ gen _induced_subgraph(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g._VECTptr->front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    vecteur &V=*g._VECTptr->back()._VECTptr;
+    const vecteur &V=*g._VECTptr->back()._VECTptr;
     int i=0,index;
     vector<int> vi(V.size());
     for (const_iterateur it=V.begin();it!=V.end();++it) {
@@ -1461,7 +1462,7 @@ gen _make_directed(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     bool hasweights=g.subtype==_SEQ__VECT;
     if (hasweights && gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
@@ -1604,7 +1605,7 @@ gen _seidel_switch(const gen &g,GIAC_CONTEXT) {
     if (G.is_weighted())
         return gt_err(_GT_ERR_UNWEIGHTED_GRAPH_REQUIRED);
     int n=G.node_count();
-    vecteur &V=*g._VECTptr->back()._VECTptr;
+    const vecteur &V=*g._VECTptr->back()._VECTptr;
     vector<bool> vb(n,false);
     for (const_iterateur it=V.begin();it!=V.end();++it) {
         int index=G.node_index(*it);
@@ -1655,7 +1656,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     bool has_opts=g.subtype==_SEQ__VECT;
     graphe G_orig(contextptr);
     if (!G_orig.read_gen(has_opts?gv.front():g))
@@ -1673,8 +1674,8 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 coords_dest=opt;
                 opt_counter--;
             } else if (opt.is_symb_of_sommet(at_equal)) {
-                gen &lh=opt._SYMBptr->feuille._VECTptr->front();
-                gen &rh=opt._SYMBptr->feuille._VECTptr->back();
+                const gen &lh=opt._SYMBptr->feuille._VECTptr->front();
+                const gen &rh=opt._SYMBptr->feuille._VECTptr->back();
                 if (lh.is_integer()) {
                     switch (lh.val) {
                     case _GT_TREE:
@@ -1951,7 +1952,7 @@ gen _complete_graph(const gen &g,GIAC_CONTEXT) {
         G.make_complete_graph();
     } else if (g.type==_VECT && g.subtype==_SEQ__VECT) {
         // multipartite graph
-        vecteur &partition_sizes_gen=*g._VECTptr;
+        const vecteur &partition_sizes_gen=*g._VECTptr;
         vector<int> partition_sizes;
         for (const_iterateur it=partition_sizes_gen.begin();it!=partition_sizes_gen.end();++it) {
             if (!it->is_integer() || it->val<=0)
@@ -2050,7 +2051,7 @@ gen _random_bipartite_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (!is_strictly_positive(gv.back(),contextptr))
@@ -2065,7 +2066,7 @@ gen _random_bipartite_graph(const gen &g,GIAC_CONTEXT) {
         a=G.rand_integer(n-1)+1;
         b=n-a;
     } else if (gv.front().type==_VECT && gv.front()._VECTptr->size()==2) {
-        vecteur &ab=*gv.front()._VECTptr;
+        const vecteur &ab=*gv.front()._VECTptr;
         if (!ab.front().is_integer() || !ab.back().is_integer())
             return generrtype("Expected a pair of integers");
         a=ab.front().val;
@@ -2132,7 +2133,7 @@ gen _random_regular_graph(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     graphe G(contextptr);
     vecteur V;
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.front().is_integer())
         G.make_default_labels(V,gv.front().val);
     else if (gv.front().type==_VECT)
@@ -2205,7 +2206,7 @@ gen _random_tree(const gen &g,GIAC_CONTEXT) {
     if (g.is_integer()) {
         n=g.val;
     } else if (g.type==_VECT) {
-        vecteur &gv=*g._VECTptr;
+        const vecteur &gv=*g._VECTptr;
         if (g.subtype==_SEQ__VECT) {
             if (gv.size()!=2)
                 return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
@@ -2271,7 +2272,7 @@ gen _random_planar_graph(const gen &g,GIAC_CONTEXT) {
     if (g.is_integer() || (g.type==_VECT && g.subtype!=_SEQ__VECT))
         spec=g;
     else if (g.type==_VECT && g.subtype==_SEQ__VECT) {
-        vecteur &gv=*g._VECTptr;
+        const vecteur &gv=*g._VECTptr;
         if (gv.size()>1 && gv.size()<=3) {
             spec=gv.front();
             if (_evalf(gv[1],contextptr).type!=_DOUBLE_)
@@ -2308,7 +2309,7 @@ gen _assign_edge_weights(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
@@ -2389,7 +2390,7 @@ gen _add_arc(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (g._VECTptr->size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (gv.back().type!=_VECT)
@@ -2418,7 +2419,7 @@ gen _delete_arc(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (gv.back().type!=_VECT)
@@ -2447,7 +2448,7 @@ gen _add_edge(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (gv.back().type!=_VECT)
@@ -2476,7 +2477,7 @@ gen _delete_edge(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (gv.back().type!=_VECT)
@@ -2509,7 +2510,7 @@ gen _add_vertex(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g._VECTptr->front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    gen &V=g._VECTptr->back();
+    const gen &V=g._VECTptr->back();
     if (V.type==_VECT)
         G.add_nodes(*V._VECTptr);
     else
@@ -2533,7 +2534,7 @@ gen _delete_vertex(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr),H(contextptr);
     if (!G.read_gen(g._VECTptr->front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    gen &V=g._VECTptr->back();
+    const gen &V=g._VECTptr->back();
     graphe::iset s;
     if (V.type==_VECT) {
         G.labels2iset(*V._VECTptr,s);
@@ -2569,7 +2570,7 @@ gen _contract_edge(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
-    vecteur &E=*g._VECTptr->back()._VECTptr;
+    const vecteur &E=*g._VECTptr->back()._VECTptr;
     if (E.size()!=2)
         return gensizeerr(contextptr);
     int i=G.node_index(E.front()),j=G.node_index(E.back());
@@ -2730,7 +2731,8 @@ gen _set_graph_attribute(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr,attr;
+    const vecteur &gv=*g._VECTptr;
+    vecteur attr;
     graphe G(contextptr);
     if (!G.read_gen(g._VECTptr->front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
@@ -2763,7 +2765,8 @@ gen _set_vertex_attribute(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr,attr;
+    const vecteur &gv=*g._VECTptr;
+    vecteur attr;
     if (gv.size()<2)
         return gensizeerr(contextptr);
     graphe G(contextptr);
@@ -2800,7 +2803,8 @@ gen _set_edge_attribute(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr,attr;
+    const vecteur &gv=*g._VECTptr;
+    vecteur attr;
     if (gv.size()<2)
         return gensizeerr(contextptr);
     graphe G(contextptr);
@@ -2840,7 +2844,8 @@ gen _get_graph_attribute(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr,tags,values;
+    const vecteur &gv=*g._VECTptr;
+    vecteur tags,values;
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
@@ -2873,7 +2878,8 @@ gen _get_vertex_attribute(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr,tags,values;
+    const vecteur &gv=*g._VECTptr;
+    vecteur tags,values;
     if (gv.size()<2)
         return gensizeerr(contextptr);
     graphe G(contextptr);
@@ -2910,7 +2916,8 @@ gen _get_edge_attribute(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr,tags,values;
+    const vecteur &gv=*g._VECTptr;
+    vecteur tags,values;
     if (gv.size()<2)
         return gensizeerr(contextptr);
     graphe G(contextptr);
@@ -2958,7 +2965,8 @@ gen _discard_graph_attribute(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr,tags;
+    const vecteur &gv=*g._VECTptr;
+    vecteur tags;
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
@@ -2988,7 +2996,8 @@ gen _discard_vertex_attribute(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr,tags;
+    const vecteur &gv=*g._VECTptr;
+    vecteur tags;
     if (gv.size()<2)
         return gensizeerr(contextptr);
     graphe G(contextptr);
@@ -3022,7 +3031,8 @@ gen _discard_edge_attribute(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr,tags;
+    const vecteur &gv=*g._VECTptr;
+    vecteur tags;
     if (gv.size()<2)
         return gensizeerr(contextptr);
     graphe G(contextptr);
@@ -3076,7 +3086,7 @@ gen _list_vertex_attributes(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     graphe G(contextptr);
@@ -3101,7 +3111,7 @@ gen _list_edge_attributes(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     graphe G(contextptr);
@@ -3166,7 +3176,7 @@ gen _get_edge_weight(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (!G.is_weighted())
         return gt_err(_GT_ERR_WEIGHTED_GRAPH_REQUIRED);
-    gen &E=g._VECTptr->back();
+    const gen &E=g._VECTptr->back();
     if (E.type!=_VECT || E._VECTptr->size()!=2)
         return gt_err(_GT_ERR_INVALID_EDGE);
     int i=G.node_index(E._VECTptr->front()),j=G.node_index(E._VECTptr->back());
@@ -3192,7 +3202,7 @@ gen _set_edge_weight(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (!G.is_weighted())
         return gt_err(_GT_ERR_WEIGHTED_GRAPH_REQUIRED);
-    gen &E=g._VECTptr->at(1);
+    const gen &E=g._VECTptr->at(1);
     if (E.type!=_VECT || E._VECTptr->size()!=2)
         return gt_err(_GT_ERR_INVALID_EDGE);
     int i=G.node_index(E._VECTptr->front()),j=G.node_index(E._VECTptr->back());
@@ -3236,7 +3246,7 @@ gen _neighbors(const gen &g,GIAC_CONTEXT) {
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (g.subtype==_SEQ__VECT) {
-        gen &v=g._VECTptr->back();
+        const gen &v=g._VECTptr->back();
         int i=G.node_index(v);
         if (i==-1)
             return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
@@ -3378,7 +3388,7 @@ gen _isomorphic_copy(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     vecteur sigma(0);
     if (g.subtype==_SEQ__VECT) {
-        vecteur &gv=*g._VECTptr;
+        const vecteur &gv=*g._VECTptr;
         if (gv.size()<2)
             return gensizeerr(contextptr);
         if (is_zero(_is_permu(gv[1],contextptr)))
@@ -3418,7 +3428,7 @@ gen _permute_vertices(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     vecteur sigma(0);
     if (g.subtype==_SEQ__VECT) {
-        vecteur &gv=*g._VECTptr;
+        const vecteur &gv=*g._VECTptr;
         if (gv.size()<2)
             return gensizeerr(contextptr);
         if (gv[1].type!=_VECT)
@@ -3461,7 +3471,7 @@ gen _relabel_vertices(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()<2)
         return gensizeerr(contextptr);
     if (gv[1].type!=_VECT)
@@ -3469,7 +3479,7 @@ gen _relabel_vertices(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    vecteur &labels=*gv[1]._VECTptr;
+    const vecteur &labels=*gv[1]._VECTptr;
     if (int(labels.size())!=G.node_count())
         return generr("Invalid number of labels");
     if (!G.relabel_nodes(labels))
@@ -3540,7 +3550,7 @@ gen _tree_height(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     graphe G(contextptr);
@@ -3719,7 +3729,7 @@ gen _complete_kary_tree(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (!gv.front().is_integer() || !gv.back().is_integer())
@@ -3809,7 +3819,7 @@ gen _grid_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()<2 || gv.size()>3)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     bool trg=false;
@@ -3858,7 +3868,7 @@ gen _torus_grid_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (!gv.front().is_integer() || !gv.back().is_integer())
@@ -3882,7 +3892,7 @@ gen _web_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (!gv.front().is_integer() || !gv.back().is_integer())
@@ -3910,7 +3920,7 @@ gen _cartesian_product(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     graphe P(contextptr);
     if (!compute_product_of_graphs(gv,P,true,contextptr))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
@@ -3930,7 +3940,7 @@ gen _tensor_product(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     graphe P(contextptr);
     if (!compute_product_of_graphs(gv,P,false,contextptr))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
@@ -4040,7 +4050,7 @@ gen _kneser_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (!gv.front().is_integer() || !gv.back().is_integer())
@@ -4086,7 +4096,7 @@ gen _highlight_vertex(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()<2)
         return gensizeerr(contextptr);
     graphe G(contextptr);
@@ -4123,7 +4133,7 @@ gen _highlight_edges(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()<2)
         return gensizeerr(contextptr);
     graphe G(contextptr);
@@ -4131,7 +4141,7 @@ gen _highlight_edges(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (gv[1].type!=_VECT)
         return gt_err(_GT_ERR_INVALID_EDGE);
-    vecteur &E=*gv[1]._VECTptr;
+    const vecteur &E=*gv[1]._VECTptr;
     graphe::ipairs edges;
     bool notfound=false;
     if (!G.edges2ipairs(E,edges,notfound))
@@ -4156,7 +4166,7 @@ gen _highlight_subgraph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()<2)
         return gensizeerr(contextptr);
     if (gv[1].type!=_VECT)
@@ -4211,7 +4221,7 @@ gen _highlight_trail(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()<2)
         return gensizeerr(contextptr);
     if (gv.size()==3 && !gv.back().is_integer() && gv.back().type!=_VECT)
@@ -4304,7 +4314,7 @@ gen _graph_join(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     graphe G(contextptr),G1(contextptr),G2(contextptr);
@@ -4346,7 +4356,7 @@ gen _graph_equal(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     graphe G1(contextptr),G2(contextptr);
@@ -4388,7 +4398,7 @@ gen _interval_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     gen a,b;
     stringstream ss;
     int n=gv.size();
@@ -4433,13 +4443,13 @@ gen _subdivide_edges(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv[1].type!=_VECT)
         return gt_err(_GT_ERR_INVALID_EDGE);
     int r=1;
     if(gv.size()==3 && (!gv[2].is_integer() || (r=gv[2].val)<1))
         return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
-    vecteur &E=*gv[1]._VECTptr;
+    const vecteur &E=*gv[1]._VECTptr;
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
@@ -4485,7 +4495,7 @@ gen _graph_power(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     int k;
@@ -4529,7 +4539,7 @@ gen _vertex_distance(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()!=3)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     graphe G(contextptr);
@@ -4574,7 +4584,7 @@ gen _shortest_path(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()!=3)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     graphe G(contextptr);
@@ -4690,7 +4700,7 @@ gen _dijkstra(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()<2)
         return gensizeerr(contextptr);
     graphe G(contextptr);
@@ -4732,14 +4742,14 @@ gen _dijkstra(const gen &g,GIAC_CONTEXT) {
         }
     }
     if (gv.size()>2 && gv[2].type!=_VECT) {
-        gen &w=path_weights.front();
+        const gen &w=path_weights.front();
         return makevecteur(is_inf(w)?vecteur(0):paths.front(),w);
     }
     vecteur res(dest.size());
     i=0;
     for (const_iterateur it=paths.begin();it!=paths.end();++it) {
         vecteur &path=*(it->_VECTptr);
-        gen &w=path_weights[i];
+        const gen &w=path_weights[i];
         res[i++]=makevecteur(is_inf(w)?vecteur(0):path,w);
     }
     return change_subtype(res,_SEQ__VECT);
@@ -4764,7 +4774,7 @@ gen _bellman_ford(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()<2)
         return gensizeerr(contextptr);
     graphe G(contextptr);
@@ -4809,14 +4819,14 @@ gen _bellman_ford(const gen &g,GIAC_CONTEXT) {
         }
     }
     if (gv.size()>2 && gv[2].type!=_VECT) {
-        gen &w=path_weights.front();
+        const gen &w=path_weights.front();
         return makevecteur(is_inf(w)?vecteur(0):paths.front(),w);
     }
     vecteur res(dest.size());
     i=0;
     for (const_iterateur it=paths.begin();it!=paths.end();++it) {
         vecteur &path=*(it->_VECTptr);
-        gen &w=path_weights[i];
+        const gen &w=path_weights[i];
         res[i++]=makevecteur(is_inf(w)?vecteur(0):path,w);
     }
     return change_subtype(res,_SEQ__VECT);
@@ -4998,10 +5008,10 @@ gen _chromatic_number(const gen &g,GIAC_CONTEXT) {
     gen colors_dest=undef;
     bool only_provide_bounds=false;
     if (g.subtype==_SEQ__VECT) {
-        vecteur &gv=*g._VECTptr;
+        const vecteur &gv=*g._VECTptr;
         if (gv.size()!=2 || gv.size()>3)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-        gen &opt=g._VECTptr->back();
+        const gen &opt=g._VECTptr->back();
         if (opt==at_interval || opt==at_approx)
             only_provide_bounds=true;
         else if (opt.type==_IDNT)
@@ -5485,7 +5495,7 @@ gen _lowest_common_ancestor(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()<3)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     graphe G(contextptr);
@@ -5510,7 +5520,7 @@ gen _lowest_common_ancestor(const gen &g,GIAC_CONTEXT) {
         matrice &m=*gv.back()._VECTptr;
         int n=m.size(),i,j;
         for (int k=0;k<n;++k) {
-            vecteur &row=*m[k]._VECTptr;
+            const vecteur &row=*m[k]._VECTptr;
             i=G.node_index(row.front());
             j=G.node_index(row.back());
             if (i<0 || j<0)
@@ -5539,7 +5549,7 @@ gen _st_ordering(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()<3 && gv.size()>5)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     graphe G(contextptr);
@@ -5672,7 +5682,7 @@ gen _plane_dual(const gen &g,GIAC_CONTEXT) {
     } else {
         gen_map m;
         int k=0;
-        vecteur &gv=*g._VECTptr;
+        const vecteur &gv=*g._VECTptr;
         for (const_iterateur it=gv.begin();it!=gv.end();++it) {
             if (it->type!=_VECT)
                 return gentypeerr(contextptr);
@@ -5702,7 +5712,7 @@ gen _is_vertex_colorable(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()<2 || gv.size()>3)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     int k;
@@ -5741,7 +5751,7 @@ gen _set_vertex_positions(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (gv.back().type!=_VECT)
@@ -5788,11 +5798,11 @@ gen _clique_stats(const gen &g,GIAC_CONTEXT) {
             --len;
         }
         if (len==2) {
-            gen &opt=g._VECTptr->at(1);
+            const gen &opt=g._VECTptr->at(1);
             if (opt.is_integer() && (lb=opt.val)>0)
                 ub=opt.val;
             else if (opt.is_symb_of_sommet(at_interval)) {
-                vecteur &bnds=*opt._SYMBptr->feuille._VECTptr;
+                const vecteur &bnds=*opt._SYMBptr->feuille._VECTptr;
                 if (!bnds.front().is_integer() ||
                         !(bnds.back().is_integer() ||
                           (is_inf(bnds.back()) && is_positive(bnds.back(),contextptr))))
@@ -5918,11 +5928,11 @@ gen _transitive_closure(const gen &g,GIAC_CONTEXT) {
     if (g.subtype==_SEQ__VECT) {
         if (g._VECTptr->size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-        gen &opt=g._VECTptr->back();
+        const gen &opt=g._VECTptr->back();
         if (opt.is_integer() && opt.val==_GT_WEIGHTED)
             weighted=true;
         else if (opt.is_symb_of_sommet(at_equal)) {
-            vecteur &args=*opt._SYMBptr->feuille._VECTptr;
+            const vecteur &args=*opt._SYMBptr->feuille._VECTptr;
             if (!args.front().is_integer() ||
                     args.front().val!=_GT_WEIGHTED ||
                     !args.back().is_integer())
@@ -5951,7 +5961,7 @@ gen _is_isomorphic(const gen &g,GIAC_CONTEXT) {
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
     gen isom=undef;
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()<2 || gv.size()>3)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     graphe G1(contextptr),G2(contextptr);
@@ -6068,7 +6078,7 @@ gen _chromatic_index(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     gen colors_dest=undef;
     if (g.subtype==_SEQ__VECT) {
-        vecteur &gv=*g._VECTptr;
+        const vecteur &gv=*g._VECTptr;
         if (gv.size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         if ((colors_dest=g._VECTptr->back()).type!=_IDNT)
@@ -6145,7 +6155,7 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
     vecteur options;
     if (g.subtype==_SEQ__VECT) {
         int pos=1;
-        vecteur &gv=*g._VECTptr;
+        const vecteur &gv=*g._VECTptr;
         if (gv.size()<2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         if (gv.at(1).type==_VECT) {
@@ -6288,10 +6298,10 @@ gen _maxflow(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()<3)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-    gen &S=gv[1],&T=gv[2];
+    const gen &S=gv[1],&T=gv[2];
     gen M(undef);
     if (gv.size()==4) {
         M=gv[3];
@@ -6334,10 +6344,10 @@ gen _minimum_cut(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()!=3)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-    gen &S=gv[1],&T=gv[2];
+    const gen &S=gv[1],&T=gv[2];
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
@@ -6370,7 +6380,7 @@ gen _is_network(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     gen S=undef,T=undef;
     if (g.subtype==_SEQ__VECT) {
-        vecteur &gv=*g._VECTptr;
+        const vecteur &gv=*g._VECTptr;
         if (gv.size()!=3)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         S=gv[1];
@@ -6414,7 +6424,7 @@ gen _is_cut_set(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     graphe G(contextptr);
@@ -6422,7 +6432,7 @@ gen _is_cut_set(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (gv.back().type!=_VECT)
         return gentypeerr("Expected a list of edges");
-    vecteur &E=*gv.back()._VECTptr;
+    const vecteur &E=*gv.back()._VECTptr;
     graphe::ipairs edg;
     int i,j;
     for (const_iterateur it=E.begin();it!=E.end();++it) {
@@ -6461,7 +6471,7 @@ gen _random_network(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()<2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     int a,b;
@@ -6484,8 +6494,8 @@ gen _random_network(const gen &g,GIAC_CONTEXT) {
                 break;
             }
         } else if (it->is_symb_of_sommet(at_equal)) {
-            gen &lh=it->_SYMBptr->feuille._VECTptr->front();
-            gen &rh=it->_SYMBptr->feuille._VECTptr->back();
+            const gen &lh=it->_SYMBptr->feuille._VECTptr->front();
+            const gen &rh=it->_SYMBptr->feuille._VECTptr->back();
             if (lh.is_integer()) {
                 switch (lh.val) {
                 case _GT_ACYCLIC:
@@ -6587,7 +6597,7 @@ gen _tutte_polynomial(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     gen x=identificateur("x"),y=identificateur("y");
     if (g.subtype==_SEQ__VECT) {
-        vecteur &gv=*g._VECTptr;
+        const vecteur &gv=*g._VECTptr;
         if (gv.size()!=3)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         x=gv[1];
@@ -6625,7 +6635,7 @@ gen _flow_polynomial(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     gen y=identificateur("x");
     if (g.subtype==_SEQ__VECT) {
-        vecteur &gv=*g._VECTptr;
+        const vecteur &gv=*g._VECTptr;
         if (gv.size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         y=gv[1];
@@ -6661,7 +6671,7 @@ gen _chromatic_polynomial(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     gen x=identificateur("x");
     if (g.subtype==_SEQ__VECT) {
-        vecteur &gv=*g._VECTptr;
+        const vecteur &gv=*g._VECTptr;
         if (gv.size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         x=gv[1];
@@ -6698,7 +6708,7 @@ gen _reliability_polynomial(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     gen x=identificateur("x"),tmp=identificateur(" x");
     if (g.subtype==_SEQ__VECT) {
-        vecteur &gv=*g._VECTptr;
+        const vecteur &gv=*g._VECTptr;
         if (gv.size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         x=gv[1];
@@ -6738,7 +6748,7 @@ gen _laplacian_matrix(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     bool normalize=false;
     if (g.subtype==_SEQ__VECT) {
-        vecteur &gv=*g._VECTptr;
+        const vecteur &gv=*g._VECTptr;
         if (gv.size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         if (gv[1]==at_normal)
@@ -6844,7 +6854,7 @@ gen _clustering_coefficient(const gen &g,GIAC_CONTEXT) {
     vecteur V;
     bool apprx=false,exct=false;
     if (g.subtype==_SEQ__VECT) {
-        vecteur &gv=*g._VECTptr;
+        const vecteur &gv=*g._VECTptr;
         if (gv.size()<2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         for (const_iterateur it=gv.begin()+1;it!=gv.end();++it) {
@@ -7007,7 +7017,7 @@ gen _tonnetz(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &gv=*g._VECTptr;
+    const vecteur &gv=*g._VECTptr;
     if (gv.size()!=3 && gv.size()!=4)
         return gensizeerr(contextptr);
     for (const_iterateur it=gv.begin();it!=gv.end();++it) {
@@ -7094,15 +7104,15 @@ gen _find_cycles(const gen &g,GIAC_CONTEXT) {
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         if (!g._VECTptr->at(1).is_symb_of_sommet(at_equal))
             return gensizeerr(contextptr);
-        gen &opt=g._VECTptr->at(1);
+        const gen &opt=g._VECTptr->at(1);
         if (opt._SYMBptr->feuille._VECTptr->front()!=at_length)
             return gensizeerr(contextptr);
-        gen &val=opt._SYMBptr->feuille._VECTptr->back();
+        const gen &val=opt._SYMBptr->feuille._VECTptr->back();
         if (val.is_integer() && val.val>0)
             lb=ub=val.val;
         else if (val.is_symb_of_sommet(at_interval)) {
-            gen &lo=val._SYMBptr->feuille._VECTptr->front();
-            gen &hi=val._SYMBptr->feuille._VECTptr->back();
+            const gen &lo=val._SYMBptr->feuille._VECTptr->front();
+            const gen &hi=val._SYMBptr->feuille._VECTptr->back();
             if (!lo.is_integer() || !hi.is_integer())
                 return gensizeerr(contextptr);
             lb=lo.val;
@@ -7202,8 +7212,8 @@ gen _icomp(const gen &g,GIAC_CONTEXT) {
         return gensizeerr(contextptr);
     bool zer=true;
     if (gv.back().is_symb_of_sommet(at_equal)) {
-        gen &lh=gv.back()._SYMBptr->feuille._VECTptr->front();
-        gen &rh=gv.back()._SYMBptr->feuille._VECTptr->back();
+        const gen &lh=gv.back()._SYMBptr->feuille._VECTptr->front();
+        const gen &rh=gv.back()._SYMBptr->feuille._VECTptr->back();
         if (lh!=at_zeros || !rh.is_integer())
             return gensizeerr(contextptr);
         zer=(bool)rh.val;
@@ -7211,7 +7221,7 @@ gen _icomp(const gen &g,GIAC_CONTEXT) {
     }
     if (gv.size()!=2)
         return gensizeerr(contextptr);
-    gen &N=gv.front(),&K=gv.back();
+    const gen &N=gv.front(),&K=gv.back();
     if (!is_integer(N) || !is_integer(K) || N.val<=0 || K.val<=0 || K.val>N.val)
         return gensizeerr(contextptr);
     int n=N.val,k=K.val,h,t;

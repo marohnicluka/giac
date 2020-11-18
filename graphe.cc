@@ -8318,7 +8318,7 @@ void graphe::append_label(vecteur &drawing,const point &p,const gen &label,int q
 /* convert gen to point coordinates */
 bool graphe::gen2point(const gen &g,point &p) {
     if (g.type==_VECT || g.is_symb_of_sommet(at_point)) {
-        vecteur &v=g.type==_VECT?*g._VECTptr:*g._SYMBptr->feuille._VECTptr;
+        const vecteur &v=g.type==_VECT?*g._VECTptr:*g._SYMBptr->feuille._VECTptr;
         p.resize(v.size());
         for (const_iterateur it=v.begin();it!=v.end();++it) {
             if (!is_real_number(*it))
@@ -9334,7 +9334,7 @@ void graphe::strec(int i,int t,int counter,int np,iset &Q,vecteur &timestamp,vec
                 m[ts]=vecteur(1,*jt);
             else m[ts]._VECTptr->push_back(*jt);
         }
-        vecteur &cand=*m[counter<=np?max_ts:min_ts]._VECTptr;
+        const vecteur &cand=*m[counter<=np?max_ts:min_ts]._VECTptr;
         int choice=(cand.size()==1?cand.front():cand[rand_integer(cand.size())]).val;
         strec(choice,t,counter,np,Q,timestamp,l);
     }

@@ -62,7 +62,7 @@ int numdigits(unsigned i) {
  */
 bool is_realcons(const gen &g,GIAC_CONTEXT) {
     if (g.type==_VECT) {
-        vecteur &v = *g._VECTptr;
+        const vecteur &v = *g._VECTptr;
         for (const_iterateur it=v.begin();it!=v.end();++it) {
             if (!is_realcons(*it,contextptr))
                 return false;
@@ -79,7 +79,7 @@ bool is_realcons(const gen &g,GIAC_CONTEXT) {
 bool interval2pair(const gen &g,pair<gen,gen> &p,GIAC_CONTEXT) {
     if (g.type!=_SYMB || !g.is_symb_of_sommet(at_interval))
         return false;  //g is not an interval
-    vecteur &v=*g._SYMBptr->feuille._VECTptr;
+    const vecteur &v=*g._SYMBptr->feuille._VECTptr;
     p=make_pair(v[0],v[1]);
     return is_realcons(v,contextptr);
 }
@@ -1757,7 +1757,8 @@ gen _lpsolve(const gen &args,GIAC_CONTEXT) {
         g=makesequence(g);
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gensizeerr(contextptr);
-    vecteur &gv=*g._VECTptr,obj;
+    const vecteur &gv=*g._VECTptr;
+    vecteur obj;
     const_iterateur it=gv.begin(),itend=gv.end();
     lp_problem prob(contextptr); //create LP problem with default settings
     bool is_matrix_form=false;

@@ -134,6 +134,7 @@ gen _euler_lagrange(const gen &g,GIAC_CONTEXT);
 gen _jacobi_equation(const gen &g,GIAC_CONTEXT);
 gen _conjugate_equation(const gen &g,GIAC_CONTEXT);
 gen _convex(const gen &g,GIAC_CONTEXT);
+gen _numdiff(const gen &g,GIAC_CONTEXT);
 
 extern const unary_function_ptr * const at_implicitdiff;
 extern const unary_function_ptr * const at_minimize;

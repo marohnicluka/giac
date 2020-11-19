@@ -7642,7 +7642,7 @@ Output :
 \subsection{Numerical differentiation : {\tt numdiff}}\index{numdiff}
 {\tt numdiff} takes three mandatory arguments: lists $X=\{\alpha_0,\alpha_1,\dots,\alpha_n\}$, $Y=\{\beta_0,\beta_1,\dots,\beta_n\}$ of real numbers, where $n\geq 1$, and a real number $x_0$. The optional fourth argument is an integer $m$, which defaults to 1. The function returns an approximation of the $m$-th derivative of function $f$, given by $f(\alpha_k)=\beta_k$, $k=0,1,\dots,n$, at point $x_0$.
 
-The strategy is to use Fornberg's algorithm described in ``Generation of Finite Difference Formulas on Arbitrarily Spaced Grids'', {\it Mathematics of Computation}, 51(184):699--706, 1988. The complexity of this algorithm is $O(n^2m)$ in both time and space. To avoid numerical instability, {\tt numdiff} operates in exact arithmetic but uses floating point representation for results.
+The strategy is to use Fornberg's algorithm described in ``Generation of Finite Difference Formulas on Arbitrarily Spaced Grids'', {\it Mathematics of Computation}, 51(184):699--706, 1988. The complexity of this algorithm is $O(n^2m)$ in both time and space. To avoid numerical instability, {\tt numdiff} operates in exact arithmetic. Unless a symbolic variable is present in the input, the result is returned using the floating-point representation.
 
 Note that $\alpha_0,\alpha_1,\dots,\alpha_n$ do not have to be equally spaced, but they must be mutually different and input in ascending order. There are no restrictions on the choice of $x_0$.
 

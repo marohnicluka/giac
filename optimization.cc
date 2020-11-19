@@ -4042,8 +4042,10 @@ gen _numdiff(const gen &g,GIAC_CONTEXT) {
         }
         res[it-rest.begin()]=d;
     }
-    // return results in floating point representation
-    return _evalf(res.size()==1?res.front():res,contextptr);
+    gen result=res.size()==1?res.front():res;
+    if (_lname(result,contextptr)._VECTptr->empty() || g.is_approx())
+        result=_evalf(result,contextptr);
+    return result;
 }
 static const char _numdiff_s []="numdiff";
 static define_unary_function_eval (__numdiff,&_numdiff,_numdiff_s);

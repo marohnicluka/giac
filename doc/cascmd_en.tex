@@ -7645,7 +7645,7 @@ Output :
 Note that $\alpha_0,\alpha_1,\dots,\alpha_n$ do not have to be equally spaced, but they must be mutually different and input in ascending order. There are no restrictions on the choice of $x_0$.
 
 For example, let $f(x)=\sin(x)\mathrm{e}^{-x}$, $x\in[0,1]$. We sample this function at points
-\[ X=\{0,0.1,0.2,0.4,0.5,0.7,0.8,1\} \]
+\[ X=[0,0.1,0.2,0.4,0.5,0.7,0.8,1] \]
 by computing the list $Y=f(X)$. Input :
 \begin{center}
   \tt f:=unapply(sin(x)*exp(-x),x)\\X:=[0,0.1,0.2,0.4,0.5,0.7,0.8,1]; Y=apply(f,X)
@@ -7678,7 +7678,7 @@ Output :
 \end{center}
 The correct values are $f(\gamma)=0.249912571952$, $f'(\gamma)=0.649519026356$ and $f''(\gamma)=0.000393517946748$.
 
-{\tt numdiff} can be used for generating custom finite-difference stencils for approximation of derivatives. For example, let $X=\{-1,0,2,4\}$ and $x_0=1$. To obtain an approximation formula for the second derivative, input :
+{\tt numdiff} can be used for generating custom finite-difference stencils for approximation of derivatives. For example, let $X=[-1,0,2,4]$, $Y=[a,b,c,d]$ and $x_0=1$. To obtain an approximation formula for the second derivative, input :
 \begin{center}
 	\tt numdiff([-1,0,2,4],[a,b,c,d],1,2)
 \end{center}
@@ -7687,6 +7687,16 @@ Output :
 	\tt 2*a/5-b/2+d/10
 \end{center}
 The approximation is always a linear combination of elements in $Y$, regardless of $X$, $x_0$ and $m$.
+
+Given $X$ and $Y$, the Lagrange polynomial passing through points $(\alpha_k,\beta_k)$ where $k=0,1,\dots,n$ can be obtained by setting $m=0$ and entering a symbol for $x_0$. For example, letting $X=[-2,0,1]$ and $Y=[2,4,1]$ input :
+\begin{center}
+	\tt expand(numdiff([-2,0,1],[2,4,1],x,0))
+\end{center}
+Output :
+\begin{center}
+	\tt -4*x\verb|^|2/3-5*x/3+4
+\end{center}
+The same result is obtained by entering {\tt lagrange([-2,0,1],[2,4,1],x)}.
 
 \section{Integration}
 \subsection{Antiderivative and definite integral : {\tt integrate int Int}}\index{integrate}\index{Int}\index{int}

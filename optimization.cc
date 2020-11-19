@@ -3998,8 +3998,10 @@ gen _numdiff(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     if (gv[0]._VECTptr->size()!=gv[1]._VECTptr->size() || gv[0]._VECTptr->empty())
         return gensizeerr("Badly sized X and Y");
-    const vecteur &X=*gv[0]._VECTptr,&Y=*gv[1]._VECTptr;
-    gen x0=gv[2];
+    // avoid numerical instabilities by using exact arithmetic
+    vecteur X=*exact(gv[0],contextptr)._VECTptr;
+    vecteur Y=*exact(gv[1],contextptr)._VECTptr;
+    gen x0=exact(gv[2],contextptr);
     int M=1,N=X.size()-1;
     vecteur rest(1,M);
     if (gv.size()>=4) {
@@ -4011,6 +4013,7 @@ gen _numdiff(const gen &g,GIAC_CONTEXT) {
         M=_max(rest,contextptr).val;
     }
     vecteur res(rest.size());
+    // Fornberg's algorithm
     vecteur del((N+1)*(N+1)*(M+1),0);
     del[0]=1;
     gen c1(1),c2,c3;
@@ -4025,16 +4028,13 @@ gen _numdiff(const gen &g,GIAC_CONTEXT) {
                 m*del[((n-1)*(N+1)+ni)*(M+1)+(m==0?m:m-1)])/c3;
             }
         }
-        if (is_zero(_epsilon2zero(c2,contextptr))) {
-            *logptr(contextptr) << "Error: algorithm failed due to numerical instability\n";
-            return undef;
-        }
         for (int m=0;m<=m_max;++m) {
             del[(n*(N+1)+n)*(M+1)+m]=c1/c2*(m*del[((n-1)*(N+1)+n-1)*(M+1)+(m==0?m:m-1)]-
             (X[n-1]-x0)*del[((n-1)*(N+1)+n-1)*(M+1)+m]);
         }
         c1=c2;
     }
+    // compute approximations of the derivatives
     for (const_iterateur it=rest.begin();it!=rest.end();++it) {
         gen d(0);
         for (int ni=0;ni<=N;++ni) {
@@ -4042,7 +4042,8 @@ gen _numdiff(const gen &g,GIAC_CONTEXT) {
         }
         res[it-rest.begin()]=d;
     }
-    return res.size()==1?res.front():res;
+    // return results in floating point representation
+    return _evalf(res.size()==1?res.front():res,contextptr);
 }
 static const char _numdiff_s []="numdiff";
 static define_unary_function_eval (__numdiff,&_numdiff,_numdiff_s);

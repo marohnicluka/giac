@@ -3994,21 +3994,23 @@ gen _numdiff(const gen &g,GIAC_CONTEXT) {
     const vecteur &gv=*g._VECTptr;
     if (gv.size()<3)
         return gensizeerr("Too few arguments");
-    if (gv.size()>4)
-        return gensizeerr("Too many arguments");
     if (gv[0].type!=_VECT || gv[1].type!=_VECT)
         return gentypeerr(contextptr);
     if (gv[0]._VECTptr->size()!=gv[1]._VECTptr->size() || gv[0]._VECTptr->empty())
         return gensizeerr("Badly sized X and Y");
     const vecteur &X=*gv[0]._VECTptr,&Y=*gv[1]._VECTptr;
-    const gen &x0=gv[2];
+    gen x0=gv[2];
     int M=1,N=X.size()-1;
-    if (gv.size()==4) {
-        const gen &Mg=gv.back();
-        if (!Mg.is_integer() || is_positive(-Mg,contextptr))
-            return gentypeerr(contextptr);
-        M=Mg.val;
+    vecteur rest(1,M);
+    if (gv.size()>=4) {
+        rest=vecteur(gv.begin()+3,gv.end());
+        for (const_iterateur it=rest.begin();it!=rest.end();++it) {
+            if (!it->is_integer() || is_strictly_positive(-*it,contextptr))
+                return gentypeerr(contextptr);
+        }
+        M=_max(rest,contextptr).val;
     }
+    vecteur res(rest.size());
     vecteur del((N+1)*(N+1)*(M+1),0);
     del[0]=1;
     gen c1(1),c2,c3;
@@ -4023,17 +4025,24 @@ gen _numdiff(const gen &g,GIAC_CONTEXT) {
                 m*del[((n-1)*(N+1)+ni)*(M+1)+(m==0?m:m-1)])/c3;
             }
         }
+        if (is_zero(_epsilon2zero(c2,contextptr))) {
+            *logptr(contextptr) << "Error: algorithm failed due to numerical instability\n";
+            return undef;
+        }
         for (int m=0;m<=m_max;++m) {
             del[(n*(N+1)+n)*(M+1)+m]=c1/c2*(m*del[((n-1)*(N+1)+n-1)*(M+1)+(m==0?m:m-1)]-
             (X[n-1]-x0)*del[((n-1)*(N+1)+n-1)*(M+1)+m]);
         }
         c1=c2;
     }
-    gen d(0);
-    for (int ni=0;ni<=N;++ni) {
-        d+=del[(N*(N+1)+ni)*(M+1)+M]*Y[ni];
+    for (const_iterateur it=rest.begin();it!=rest.end();++it) {
+        gen d(0);
+        for (int ni=0;ni<=N;++ni) {
+            d+=del[(N*(N+1)+ni)*(M+1)+it->val]*Y[ni];
+        }
+        res[it-rest.begin()]=d;
     }
-    return d;
+    return res.size()==1?res.front():res;
 }
 static const char _numdiff_s []="numdiff";
 static define_unary_function_eval (__numdiff,&_numdiff,_numdiff_s);

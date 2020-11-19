@@ -2,7 +2,7 @@
 %\textwidth 11,8 cm
 %\textheight 17 cm
 \textheight 23 cm
-\usepackage{graphicx}
+\usepackage[dvipdfmx]{graphicx} \usepackage{bmpsize}  %\usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
@@ -7552,7 +7552,7 @@ The right way to define a derivative is either with {\tt
 \end{center}
 \end{itemize}
 
-\subsection{Implicit differentiation : {\tt implicitdiff}}
+\subsection{Implicit differentiation : {\tt implicitdiff}}\index{implicitdiff}
 {\tt implicitdiff} is called with one of the following three sets of parameters :
 \begin{enumerate}
 \item {\tt expr}, {\tt constr}, {\tt depvars}, {\tt diffvars}
@@ -7639,6 +7639,54 @@ Output :
 {\tt -2*z}
 \end{center}
 
+\subsection{Numerical differentiation : {\tt numdiff}}\index{numdiff}
+{\tt numdiff} takes three mandatory arguments: lists $X=\{\alpha_0,\alpha_1,\dots,\alpha_n\}$, $Y=\{\beta_0,\beta_1,\dots,\beta_n\}$ of real numbers, where $n\geq 1$, and a real number $x_0$. The optional fourth argument is an integer $m$, which defaults to 1. The function returns an approximation of the $m$-th derivative of function $f$, given by $f(\alpha_k)=\beta_k$, $k=0,1,\dots,n$, at point $x_0$. The strategy is to use Fornberg's algorithm described in ``Generation of Finite Difference Formulas on Arbitrarily Spaced Grids'', {\it Mathematics of Computation}, 51(184):699--706, 1988.
+
+Note that $\alpha_0,\alpha_1,\dots,\alpha_n$ do not have to be equally spaced, but they must be mutually different and input in ascending order. There are no restrictions on the choice of $x_0$.
+
+For example, let $f(x)=\sin(x)\mathrm{e}^{-x}$, $x\in[0,1]$. We sample this function at points
+\[ X=\{0,0.1,0.2,0.4,0.5,0.7,0.8,1\} \]
+by computing the list $Y=f(X)$. Input :
+\begin{center}
+  \tt f:=unapply(sin(x)*exp(-x),x)\\X:=[0,0.1,0.2,0.4,0.5,0.7,0.8,1]; Y=apply(f,X)
+\end{center}
+Now we approximate the second derivative at the point $x_0=\frac{1}{\pi}$. Input :
+\begin{center}
+  \tt x0:=1/pi:; d:=numdiff(X,Y,x0,2)
+\end{center}
+Finally, we compute the relative error of the obtained approximation. Input :
+\begin{center}
+  \tt abs(d-f''(x0))/abs(f''(x0))*100
+\end{center}
+Output :
+\begin{center}
+  \tt 2.82983388966e-05
+\end{center}
+The result is expressed in percentages.
+
+Optionally, a sequence of values of the parameter $m$ may be passed to {\tt numdiff}. In that case the function returns the list of approximations of the respective derivatives at $x_0$. This is faster than calling {\tt numdiff} to approximate one derivative at a time. For example, let us approximate the zeroth, first and second derivative of the function
+\[ f(x)=1-\frac{1}{1+x^2},\quad x\in[0,1], \]
+at point $x_0=\gamma$, where $\gamma\approx 0.57722$ is Euler-Mascheroni constant, by sampling $f$ at 21 equidistant points in the segment $[0,1]$. Input :
+\begin{center}
+	\tt f:=unapply(1-1/(1+x\verb|^|2),x)\\
+	X:=[(0.05*k)\$(k=0..20)]:; Y:=apply(f,X):;\\
+	numdiff(X,Y,euler\_gamma,0,1,2)
+\end{center}
+Output :
+\begin{center}
+	\tt [0.249912571952,0.649519026355,0.000393517939481]
+\end{center}
+The correct values are $f(\gamma)=0.249912571952$, $f'(\gamma)=0.649519026356$ and $f''(\gamma)=0.000393517946748$.
+
+{\tt numdiff} can be used for generating custom finite-difference stencils for approximation of derivatives. For example, let $X=\{-1,0,2,4\}$ and $x_0=1$. To obtain an approximation formula for the second derivative, input :
+\begin{center}
+	\tt numdiff([-1,0,2,4],[a,b,c,d],1,2)
+\end{center}
+Output :
+\begin{center}
+	\tt 2*a/5-b/2+d/10
+\end{center}
+The approximation is always a linear combination of elements in $Y$, regardless of $X$, $x_0$ and $m$.
 
 \section{Integration}
 \subsection{Antiderivative and definite integral : {\tt integrate int Int}}\index{integrate}\index{Int}\index{int}
@@ -10123,6 +10171,26 @@ Input :
 Output :
 \begin{center}
   \tt 1
+\end{center}
+
+\subsection{Root mean square : {\tt rms}}\index{rms}
+{\tt rms} takes one argument, a list $X$ of real or complex numbers $x_1,x_2,\dots,x_n$. The function returns the root mean square of $X$ which is defined by
+\[ \operatorname{RMS}(X)=\sqrt{\frac{\sum_{k=1}^n|x_k|^2}{n}}. \]
+For example, input :
+\begin{center}
+	\tt rms([1,2,5,8,3,6,7,9,-1])
+\end{center}
+Output :
+\begin{center}
+	\tt sqrt(30)
+\end{center}
+Input :
+\begin{center}
+	\tt rms([1,1-i,2+3i,5-2i])
+\end{center}
+Output :
+\begin{center}
+	\tt 3*sqrt(5)/2
 \end{center}
 
 \subsection{Cross-correlation of two signals : {\tt cross\_correlation}\index{cross\_correlation}}
@@ -26665,7 +26733,7 @@ Input :
 Output :
 \begin{center}{\tt0.739085133215 }\end{center}
 
-\subsection{Approximate computation of the derivative  number : {\tt nDeriv}}\index{nDeriv}
+\subsection{Approximate computation of the derivative number : {\tt nDeriv}}\index{nDeriv}
 \noindent{\tt nDeriv} takes as arguments : an expression {\tt ex}, the variable
 name of this expression (by default {\tt x}), and {\tt h} (by default 
 {\tt h=0.001}).\\

@@ -13046,54 +13046,59 @@ gen graphe::closeness_centrality(int k,bool harmonic) const {
 
 /* return the list of betweenness centrality measures for all vertices
  * using Brandes' algorithm */
- vecteur graphe::betweenness_centrality() const {
-     int n=node_count();
-     assert(n>1);
-     vecteur cb(n,0);
-     for (int s=0;s<n;++s) {
-         std::stack<int> S;
-         std::map<int,ivector> P;
-         ivector sigma(n,0);
-         sigma[s]=1;
-         ivector d(n,-1);
-         d[s]=0;
-         std::queue<int> Q;
-         Q.push(s);
-         while (!Q.empty()) {
-             int v=Q.front();
-             Q.pop();
-             S.push(v);
-             for (ivector_iter it=node(v).neighbors().begin();it!=node(v).neighbors().end();++it) {
-                 int w=*it;
-                 if (d[w]<0) {
-                     Q.push(w);
-                     d[w]=d[v]+1;
-                 }
-                 if (d[w]==d[v]+1) {
-                     sigma[w]+=sigma[v];
-                     P[w].push_back(v);
-                 }
-             }
-         }
-         vecteur delta(n,0);
-         while (!S.empty()) {
-             int w=S.top();
-             S.pop();
-             for (ivector_iter it=P[w].begin();it!=P[w].end();++it) {
-                 int v=*it;
-                 delta[v]+=gen(sigma[v])/gen(sigma[w])*(gen(1)+delta[w]);
-             }
-             if (w!=s)
-                 cb[w]+=delta[w];
-         }
-     }
-     if (!is_directed()) {
-         for (iterateur it=cb.begin();it!=cb.end();++it) {
-             *it=(*it)/gen(2);
-         }
-     }
-     return cb;
- }
+gen graphe::betweenness_centrality(int k) const {
+    int n=node_count();
+    assert(n>1 && (k<0 || k<n));
+    vecteur cb(n,0);
+    std::stack<int> S;
+    std::queue<int> Q;
+    std::map<int,ivector> P;
+    ivector sigma(n),d(n);
+    vecteur delta(n);
+    for (int s=0;s<n;++s) {
+        P.clear();
+        for (int i=0;i<n;++i) {
+            sigma[i]=i==s?1:0;
+            d[i]=i==s?0:-1;
+            delta[i]=0;
+        }
+        Q.push(s);
+        while (!Q.empty()) {
+            int v=Q.front();
+            Q.pop();
+            S.push(v);
+            for (ivector_iter it=node(v).neighbors().begin();it!=node(v).neighbors().end();++it) {
+                int w=*it;
+                if (d[w]<0) {
+                    Q.push(w);
+                    d[w]=d[v]+1;
+                }
+                if (d[w]==d[v]+1) {
+                    sigma[w]+=sigma[v];
+                    P[w].push_back(v);
+                }
+            }
+        }
+        while (!S.empty()) {
+            int w=S.top();
+            S.pop();
+            for (ivector_iter it=P[w].begin();it!=P[w].end();++it) {
+                int v=*it;
+                delta[v]+=gen(sigma[v])/gen(sigma[w])*(gen(1)+delta[w]);
+            }
+            if (w!=s)
+                cb[w]+=delta[w];
+        }
+    }
+    if (!is_directed()) {
+        for (iterateur it=cb.begin();it!=cb.end();++it) {
+            *it=(*it)/gen(2);
+        }
+    }
+    if (k>=0)
+       return cb[k];
+    return cb;
+}
  
  /* return the list of Katz centrality measures for all vertices,
   * where att is attenuation factor */

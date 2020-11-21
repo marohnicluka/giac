@@ -1095,7 +1095,7 @@ public:
     void yen_ksp(int K,int src,int dest,ivectors &paths);
     void compute_in_out_degrees(ivector &ind,ivector &outd) const;
     vecteur distances_from(int k);
-    vecteur betweenness_centrality() const;
+    gen betweenness_centrality(int k) const;
     gen closeness_centrality(int k,bool harmonic=false) const;
     gen degree_centrality(int k) const;
     vecteur katz_centrality(const gen &att) const;

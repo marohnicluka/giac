@@ -7399,10 +7399,7 @@ gen _betweenness_centrality(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_empty())
         return generr("graph is empty");
-    vecteur bc=G.betweenness_centrality();
-    if (k>=0)
-        return bc[k];
-    return bc;
+    return G.betweenness_centrality(k);
 }
 static const char _betweenness_centrality_s[]="betweenness_centrality";
 static define_unary_function_eval(__betweenness_centrality,&_betweenness_centrality,_betweenness_centrality_s);

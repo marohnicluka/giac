@@ -12335,10 +12335,11 @@
 
   where <math|B=<around*|(|L+J|)><rsup|-1>>, <math|L> is the Laplacian matrix
   of <math|G> and <math|J> is the <math|<around*|\||V|\|>\<times\><around*|\||V|\|>>
-  matrix in which every entry is 1 <cite|shan>. If the optional argument
-  <verbatim|approx> is given, the result is computed using the floating-point
-  arithmetic, which is faster. Note that information centrality takes edge
-  weights into account.
+  matrix in which every entry is 1 <cite|shan>. The graph <math|G> must be
+  undirected and connected (the matrix <math|B> does not exist if <math|G> is
+  disconnected). If the optional argument <verbatim|approx> is given, the
+  result is computed using the floating-point arithmetic, which is faster.
+  Note that information centrality takes edge weights into account.
 
   <hlink|Katz centrality|https://en.wikipedia.org/wiki/Katz_centrality>
   <cite|katz> is computed using the formula

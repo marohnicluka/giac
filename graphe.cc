@@ -1865,34 +1865,33 @@ void graphe::adjacency_sparse_matrix(sparsemat &sm) const {
 
 /* create the Laplacian matrix of this graph */
 void graphe::laplacian_matrix(matrice &m,bool normalize) const {
-    int n=node_count(),i,j;
-    bool isdir=is_directed();
+    int n=node_count();
     bool isweighted=is_weighted();
-    vecteur ds=degree_sequence();
-    ipairs E;
-    get_edges_as_pairs(E);
-    m=*_matrix(makesequence(n,n,0),ctx)._VECTptr;
-    if (!isweighted) {
-        for (i=0;i<n;++i) {
-            m[i]._VECTptr->at(i)=normalize?(is_zero(ds[i])?0:1):ds[i];
+    if (isweighted)
+        weight_matrix(m);
+    else adjacency_matrix(m);
+    vecteur D(n);
+    for (int i=0;i<n;++i) {
+        if (!isweighted)
+            D[i]=degree(i);
+        else {
+            edgeset E;
+            ivector V(1,i);
+            incident_edges(V,E);
+            gen w(0);
+            for (edgeset_iter it=E.begin();it!=E.end();++it) {
+                w+=weight(*it);
+            }
+            D[i]=w;
         }
     }
-    for (ipairs_iter it=E.begin();it!=E.end();++it) {
-        i=it->first; j=it->second;
-        if (isweighted) {
-            m[i]._VECTptr->at(i)+=weight(*it);
-            if (!isdir)
-                m[j]._VECTptr->at(j)+=weight(*it);
+    if (normalize) {
+        for (int i=0;i<n;++i) {
+            for (int j=0;j<n;++j) {
+                m[i]._VECTptr->at(j)=gen(i==j?1:0)-m[i][j]/sqrt(D[i]*D[j],ctx);
+            }
         }
-        if (isweighted) {
-            m[i]._VECTptr->at(j)=-weight(*it);
-            if (!isdir)
-                m[j]._VECTptr->at(i)=-weight(*it);
-        }
-        m[i]._VECTptr->at(j)=normalize?-fraction(1,sqrt(ds[i]*ds[j],ctx)):gen(-1);
-        if (!isdir)
-            m[j]._VECTptr->at(i)=m[i]._VECTptr->at(j);
-    }
+    } else m=subvecteur(*_diag(D,ctx)._VECTptr,m);
 }
 
 /* return incidence matrix of this graph */
@@ -5458,7 +5457,7 @@ void graphe::subdivide_edge(const ipair &e,int n,int &label) {
 }
 
 /* put all edges incident to nodes in V to set E */
-void graphe::incident_edges(const ivector &V,edgeset &E) {
+void graphe::incident_edges(const ivector &V,edgeset &E) const {
     if (is_directed()) {
         ivector adj;
         for (ivector_iter it=V.begin();it!=V.end();++it) {
@@ -5474,7 +5473,7 @@ void graphe::incident_edges(const ivector &V,edgeset &E) {
         int i,j;
         for (ivector_iter it=V.begin();it!=V.end();++it) {
             i=*it;
-            vertex &v=node(i);
+            const vertex &v=node(i);
             for (ivector_iter jt=v.neighbors().begin();jt!=v.neighbors().end();++jt) {
                 j=*jt;
                 E.insert(make_pair(i<j?i:j,i<j?j:i));
@@ -13021,7 +13020,7 @@ gen graphe::closeness_centrality(int k,bool harmonic) const {
                 hc=*_sum(apd,ctx)._VECTptr;
             } else {
                 hc=*_sum(apd,ctx)._VECTptr;
-                hc=*(gen(n-1)*_apply(makesequence(at_inv),ctx))._VECTptr;
+                hc=multvecteur(n-1,*_apply(makesequence(at_inv),ctx)._VECTptr);
             }
         }
     } else {
@@ -13090,13 +13089,10 @@ gen graphe::betweenness_centrality(int k) const {
                 cb[w]+=delta[w];
         }
     }
-    if (!is_directed()) {
-        for (iterateur it=cb.begin();it!=cb.end();++it) {
-            *it=(*it)/gen(2);
-        }
-    }
+    if (!is_directed())
+        cb=multvecteur(fraction(1,2),cb);
     if (k>=0)
-       return cb[k];
+        return cb[k];
     return cb;
 }
  

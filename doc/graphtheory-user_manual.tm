@@ -7503,17 +7503,20 @@
 
   <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<table|<row|<cell|Syntax:>|<cell|<verbatim|laplacian_matrix(G)>>>|<row|<cell|>|<cell|<verbatim|laplacian_matrix(G,normal)>>>>>>
 
-  <verbatim|laplacian_matrix> takes an undirected graph
-  <math|G<around*|(|V,E|)>>, where <math|V=<around*|{|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|n>|}>>,
-  and returns the symmetric matrix <math|L=D-A>, where <math|A> is the
+  <verbatim|laplacian_matrix> takes a graph <math|G<around*|(|V,E|)>>, where
+  <math|V=<around*|{|v<rsub|1>,v<rsub|2>,\<ldots\>,v<rsub|n>|}>>, and returns
+  the symmetric matrix <math|L=D-A>, where <math|A> is the (weighted)
   adjacency matrix of <math|G> and
 
   <\equation*>
     D=<matrix|<tformat|<table|<row|<cell|deg<around*|(|v<rsub|1>|)>>|<cell|0>|<cell|0>|<cell|\<cdots\>>|<cell|0>>|<row|<cell|0>|<cell|deg<around*|(|v<rsub|2>|)>>|<cell|0>|<cell|\<cdots\>>|<cell|0>>|<row|<cell|\<vdots\>>|<cell|\<vdots\>>|<cell|\<vdots\>>|<cell|\<ddots\>>|<cell|\<vdots\>>>|<row|<cell|0>|<cell|0>|<cell|0>|<cell|\<cdots\>>|<cell|deg<around*|(|v<rsub|n>|)>>>>>>.
   </equation*>
 
-  The option <verbatim|normal> may be passed as the second argument. In that
-  case, the <hlink|normalized Laplacian|https://en.wikipedia.org/wiki/Laplacian_matrix#Symmetric_normalized_Laplacian_2>
+  The number <math|deg<around*|(|v|)>> is computed by summing weights of all
+  edges incident to <math|v> (in unweighted graphs, edge weights are assumed
+  to be equal to 1). The option <verbatim|normal> may be passed as the second
+  argument. In that case, the <hlink|normalized
+  Laplacian|https://en.wikipedia.org/wiki/Laplacian_matrix#Symmetric_normalized_Laplacian_2>
 
   <\equation*>
     L<rsup|sym>\<assign\>I-D<rsup|-1/2>*A*D<rsup|-1/2>
@@ -7617,7 +7620,12 @@
         0,0,0,4,4,4,3,3,2
       </equation*>
     </unfolded-io>
+  </session>
 
+  Therefore, the multiplicity of zero eigenvalue is equal to 3. Indeed, that
+  is also the number of connected components in <math|H>:
+
+  <\session|giac|default>
     <\unfolded-io>
       \<gtr\>\ 
     <|unfolded-io>

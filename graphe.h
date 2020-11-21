@@ -1030,7 +1030,7 @@ public:
     void contract_edge(int i,int j,bool adjust_positions=true);
     inline void contract_edge(const ipair &e,bool adjust_pos=true) { contract_edge(e.first,e.second,adjust_pos); }
     void subdivide_edge(const ipair &e,int n,int &label);
-    void incident_edges(const ivector &V,edgeset &E);
+    void incident_edges(const ivector &V,edgeset &E) const;
     static bool edges_incident(const ipair &e1,const ipair &e2);
     void convex_hull(const layout &x,layout &hull);
     void edge_labels_placement(const layout &x);

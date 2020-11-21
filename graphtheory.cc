@@ -6765,8 +6765,6 @@ gen _laplacian_matrix(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_null())
         return gt_err(_GT_ERR_GRAPH_IS_NULL);
-    if (G.is_directed())
-        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     matrice L;
     G.laplacian_matrix(L,normalize);
     return change_subtype(_ratnormal(L,contextptr),_MATRIX__VECT);

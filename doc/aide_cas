@@ -17963,3 +17963,63 @@ rms([1,2,5,8,3,6,4])
 -2 diff
 numdiff([1,3,4],[3,0,1],2)
 f:=unapply(sin(x)*exp(-x),x):;X:=[0,0.1,0.2,0.4,0.5,0.7,0.8,1]:;Y:=apply(f,X):;abs(numdiff(X,Y,1/pi,2)-f''(1/pi))
+
+# degree_centrality
+0 Graph(G),[Vrtx(v)]
+2 Returns the degree centrality for vertex v in graph G or the list of degree centralities for each vertex in G.
+-1 betweenness_centrality
+-2 closeness_centrality
+-3 harmonic_centrality
+-4 information_centrality
+-5 katz_centrality
+degree_centrality(graph(6,%{[0,2],[0,5],[1,3],[1,5],[2,5],[3,4],[3,5],[4,5]%}))
+
+# betweenness_centrality
+0 Graph(G),[Vrtx(v)]
+2 Returns the betweenness centrality for vertex v in graph G or the list of betweenness centralities for each vertex in G.
+-1 degree_centrality
+-2 closeness_centrality
+-3 harmonic_centrality
+-4 information_centrality
+-5 katz_centrality
+betweenness_centrality(graph(6,%{[0,2],[0,5],[1,3],[1,5],[2,5],[3,4],[3,5],[4,5]%}))
+
+# closeness_centrality
+0 Graph(G),[Vrtx(v)]
+2 Returns the closeness centrality for vertex v in graph G or the list of closeness centralities for each vertex in G.
+-1 degree_centrality
+-2 betweenness_centrality
+-3 harmonic_centrality
+-4 information_centrality
+-5 katz_centrality
+closeness_centrality(graph(6,%{[0,2],[0,5],[1,3],[1,5],[2,5],[3,4],[3,5],[4,5]%}))
+
+# harmonic_centrality
+0 Graph(G),[Vrtx(v)]
+2 Returns the harmonic centrality for vertex v in graph G or the list of harmonic centralities for each vertex in G.
+-1 degree_centrality
+-2 betweenness_centrality
+-3 closeness_centrality
+-4 information_centrality
+-5 katz_centrality
+harmonic_centrality(graph(6,%{[0,2],[0,5],[1,3],[1,5],[2,5],[3,4],[3,5],[4,5]%}))
+
+# information_centrality
+0 Graph(G),[Vrtx(v)],[approx]
+2 Returns the information centrality for vertex v in graph G or the list of information centralities for each vertex in G.
+-1 degree_centrality
+-2 betweenness_centrality
+-3 closeness_centrality
+-4 harmonic_centrality
+-5 katz_centrality
+information_centrality(graph(6,%{[0,2],[0,5],[1,3],[1,5],[2,5],[3,4],[3,5],[4,5]%}))
+
+# katz_centrality
+0 Graph(G),Real(alpha),[Vrtx(v)]
+2 Returns the Katz centrality for vertex v in graph G or the list of Katz centralities for each vertex in G, where alpha is the attenuation factor.
+-1 degree_centrality
+-2 betweenness_centrality
+-3 closeness_centrality
+-4 harmonic_centrality
+-5 information_centrality
+katz_centrality(graph(6,%{[0,2],[0,5],[1,3],[1,5],[2,5],[3,4],[3,5],[4,5]%}),0.1)

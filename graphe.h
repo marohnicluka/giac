@@ -777,6 +777,9 @@ public:
     graphe(const context *contextptr=context0,bool support_attributes=true);
     graphe(const graphe &G);
     graphe(const std::string &name,const context *contextptr=context0);
+    graphe &operator =(const graphe &other);
+    
+    // methods
     inline int rand_integer(int n) const { assert(n>=0); return n==0?0:giac::giac_rand(ctx)%n; }
     inline double rand_uniform() const { return giac::giac_rand(ctx)/(RAND_MAX+1.0); }
     inline double rand_normal() const { return giac::randNorm(ctx); }
@@ -1091,13 +1094,20 @@ public:
     void elementary_cycles(ivectors &cyc,int lo,int hi);
     void yen_ksp(int K,int src,int dest,ivectors &paths);
     void compute_in_out_degrees(ivector &ind,ivector &outd) const;
+    vecteur distances_from(int k);
+    vecteur betweenness_centrality() const;
+    gen closeness_centrality(int k,bool harmonic=false) const;
+    gen degree_centrality(int k) const;
+    vecteur katz_centrality(const gen &att) const;
+    gen information_centrality(int k,bool approx=false) const;
+
+    // static methods
     static gen colon_label(int i,int j);
     static gen colon_label(int i,int j,int k);
     static size_t intersect_fast(ivector_iter min1,ivector_iter max1,ivector_iter min2,ivector_iter max2);
     static size_t intersect_linear(ivector_iter min1,ivector_iter max1,ivector_iter min2,ivector_iter max2);
     static size_t intersect_hybrid(ivector_iter min1,ivector_iter max1,ivector_iter min2,ivector_iter max2);
     static bool is_graphic_sequence(const ivector &s_orig);
-    graphe &operator =(const graphe &other);
 };
 
 #ifndef NO_NAMESPACE_GIAC

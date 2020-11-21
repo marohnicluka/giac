@@ -6739,8 +6739,13 @@ define_unary_function_ptr5(at_reliability_polynomial,alias_at_reliability_polyno
 
 /* USAGE:   laplacian_matrix(G,[normal])
  *
- * Returns the Laplacian matrix L=D-A of an undirected graph G where D resp. A
- * is the degree matrix resp. the adjacency matrix of G.
+ * Returns the Laplacian matrix L=D-A of an undirected graph G.
+ * For unweighted graphs, D resp. A is the diagonal degree matrix
+ * resp. the adjacency matrix of G. For weighted graphs, Di is
+ * equal to sum of weights of edges incident to i-th vertex, while
+ * A is the weighted adjacency matrix.
+ * If the option "normal" is given, the Laplacian is normalized. This
+ * works only for unweighted graphs.
  */
 gen _laplacian_matrix(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -7243,6 +7248,207 @@ gen _icomp(const gen &g,GIAC_CONTEXT) {
 static const char _icomp_s[]="icomp";
 static define_unary_function_eval(__icomp,&_icomp,_icomp_s);
 define_unary_function_ptr5(at_icomp,alias_at_icomp,&__icomp,0,true)
+
+/* USAGE:   information_centrality(G,[v],[approx])
+ *
+ * Returns the information centrality measure of vertex v in an
+ * undirected graph G. If v is omitted, the list of IC measures
+ * for all vertices is returned, in order as returned by vertices(G).
+ * If option "approx" is given, the computation is done with
+ * floating-point values.
+ */
+gen _information_centrality(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    int k=-1;
+    graphe G(contextptr);
+    bool approx=false;
+    if (g.type==_VECT && g.subtype==_SEQ__VECT) {
+        const vecteur &gv=*g._VECTptr;
+        if (gv.size()<2 || gv.size()>3)
+            return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+        if (gv.back()==at_approx)
+            approx=true;
+        if (!G.read_gen(gv.front()))
+            return gt_err(_GT_ERR_NOT_A_GRAPH);
+        if ((approx && gv.size()==3) || (!approx && gv.size()==2)) {
+            k=G.node_index(gv[1]);
+            if (k==-1)
+                return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
+        }
+    } else if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_empty())
+        return generr("graph is empty");
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
+    return G.information_centrality(k,approx);
+}
+static const char _information_centrality_s[]="information_centrality";
+static define_unary_function_eval(__information_centrality,&_information_centrality,_information_centrality_s);
+define_unary_function_ptr5(at_information_centrality,alias_at_information_centrality,&__information_centrality,0,true)
+
+/* USAGE:   degree_centrality(G,[v])
+ *
+ * Returns the degree centrality measure of vertex v in G.
+ * If v is omitted, the list of DC measures for all vertices
+ * is returned, in order as returned by vertices(G).
+ * Edge weights are ignored by this type of centrality.
+ */
+gen _degree_centrality(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    int k=-1;
+    graphe G(contextptr);
+    if (g.type==_VECT && g.subtype==_SEQ__VECT) {
+        const vecteur &gv=*g._VECTptr;
+        if (gv.size()!=2)
+            return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+        if (!G.read_gen(gv.front()))
+            return gt_err(_GT_ERR_NOT_A_GRAPH);
+        k=G.node_index(gv.back());
+        if (k==-1)
+            return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
+    } else if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_empty())
+        return generr("graph is empty");
+    return G.degree_centrality(k);
+}
+static const char _degree_centrality_s[]="degree_centrality";
+static define_unary_function_eval(__degree_centrality,&_degree_centrality,_degree_centrality_s);
+define_unary_function_ptr5(at_degree_centrality,alias_at_degree_centrality,&__degree_centrality,0,true)
+
+/* USAGE:   harmonic_centrality(G,[v])
+ *
+ * Returns the harmonic centrality measure of vertex v in G.
+ * If v is omitted, the list of HC measures for all vertices
+ * is returned, in order as returned by vertices(G).
+ */
+gen _harmonic_centrality(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    int k=-1;
+    graphe G(contextptr);
+    if (g.type==_VECT && g.subtype==_SEQ__VECT) {
+        const vecteur &gv=*g._VECTptr;
+        if (gv.size()!=2)
+            return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+        if (!G.read_gen(gv.front()))
+            return gt_err(_GT_ERR_NOT_A_GRAPH);
+        k=G.node_index(gv.back());
+        if (k==-1)
+            return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
+    } else if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_empty())
+        return generr("graph is empty");
+    return G.closeness_centrality(k,true);
+}
+static const char _harmonic_centrality_s[]="harmonic_centrality";
+static define_unary_function_eval(__harmonic_centrality,&_harmonic_centrality,_harmonic_centrality_s);
+define_unary_function_ptr5(at_harmonic_centrality,alias_at_harmonic_centrality,&__harmonic_centrality,0,true)
+
+/* USAGE:   closeness_centrality(G,[v])
+ *
+ * Returns the closeness centrality measure of vertex v in G.
+ * If v is omitted, the list of CC measures for all vertices
+ * is returned, in order as returned by vertices(G).
+ */
+gen _closeness_centrality(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    int k=-1;
+    graphe G(contextptr);
+    if (g.type==_VECT && g.subtype==_SEQ__VECT) {
+        const vecteur &gv=*g._VECTptr;
+        if (gv.size()!=2)
+            return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+        if (!G.read_gen(gv.front()))
+            return gt_err(_GT_ERR_NOT_A_GRAPH);
+        k=G.node_index(gv.back());
+        if (k==-1)
+            return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
+    } else if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_empty())
+        return generr("graph is empty");
+    return G.closeness_centrality(k,false);
+}
+static const char _closeness_centrality_s[]="closeness_centrality";
+static define_unary_function_eval(__closeness_centrality,&_closeness_centrality,_closeness_centrality_s);
+define_unary_function_ptr5(at_closeness_centrality,alias_at_closeness_centrality,&__closeness_centrality,0,true)
+
+/* USAGE:   betweenness_centrality(G,[v])
+ *
+ * Returns the betweenness centrality measure of vertex v in G.
+ * If v is omitted, the list of CC measures for all vertices
+ * is returned, in order as returned by vertices(G).
+ * Edge weights are ignored by this type of centrality.
+ */
+gen _betweenness_centrality(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    int k=-1;
+    graphe G(contextptr);
+    if (g.type==_VECT && g.subtype==_SEQ__VECT) {
+        const vecteur &gv=*g._VECTptr;
+        if (gv.size()!=2)
+            return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+        if (!G.read_gen(gv.front()))
+            return gt_err(_GT_ERR_NOT_A_GRAPH);
+        k=G.node_index(gv.back());
+        if (k==-1)
+            return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
+    } else if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_empty())
+        return generr("graph is empty");
+    vecteur bc=G.betweenness_centrality();
+    if (k>=0)
+        return bc[k];
+    return bc;
+}
+static const char _betweenness_centrality_s[]="betweenness_centrality";
+static define_unary_function_eval(__betweenness_centrality,&_betweenness_centrality,_betweenness_centrality_s);
+define_unary_function_ptr5(at_betweenness_centrality,alias_at_betweenness_centrality,&__betweenness_centrality,0,true)
+
+/* USAGE:   katz_centrality(G,alpha,[v])
+ *
+ * Returns the katz centrality measure of vertex v in G.
+ * If v is omitted, the list of KC measures for all vertices
+ * is returned, in order as returned by vertices(G).
+ * The parameter alpha is attenuation factor which must lie between
+ * 0 and 1. Setting it to a floating-point value will trigger
+ * computation with floating-point values, which is faster for
+ * larger networks.
+ * Edge weights are ignored by this type of centrality.
+ */
+gen _katz_centrality(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    int k=-1;
+    graphe G(contextptr);
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    const vecteur &gv=*g._VECTptr;
+    if (gv.size()<2 || gv.size()>3)
+        return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+    if (!G.read_gen(gv.front()))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_empty())
+        return generr("graph is empty");
+    const gen &alpha=gv[1];
+    if (_evalf(alpha,contextptr).type!=_DOUBLE_)
+        return gentypeerr(contextptr);
+    if (gv.size()==3) {
+        k=G.node_index(gv.back());
+        if (k==-1)
+            return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
+    }
+    vecteur kc=G.katz_centrality(alpha);
+    if (k>=0)
+        return kc[k];
+    return kc;
+}
+static const char _katz_centrality_s[]="katz_centrality";
+static define_unary_function_eval(__katz_centrality,&_katz_centrality,_katz_centrality_s);
+define_unary_function_ptr5(at_katz_centrality,alias_at_katz_centrality,&__katz_centrality,0,true)
+
 
 #ifndef NO_NAMESPACE_GIAC
 }

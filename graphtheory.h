@@ -276,6 +276,12 @@ gen _tonnetz(const gen &g,GIAC_CONTEXT);
 gen _truncate_graph(const gen &g,GIAC_CONTEXT);
 gen _find_cycles(const gen &g,GIAC_CONTEXT);
 gen _kspaths(const gen &g,GIAC_CONTEXT);
+gen _degree_centrality(const gen &g,GIAC_CONTEXT);
+gen _betweenness_centrality(const gen &g,GIAC_CONTEXT);
+gen _closeness_centrality(const gen &g,GIAC_CONTEXT);
+gen _katz_centrality(const gen &g,GIAC_CONTEXT);
+gen _information_centrality(const gen &g,GIAC_CONTEXT);
+gen _harmonic_centrality(const gen &g,GIAC_CONTEXT);
 
 // GENERAL GIAC COMMANDS
 

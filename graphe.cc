@@ -1867,18 +1867,31 @@ void graphe::adjacency_sparse_matrix(sparsemat &sm) const {
 void graphe::laplacian_matrix(matrice &m,bool normalize) const {
     int n=node_count(),i,j;
     bool isdir=is_directed();
+    bool isweighted=is_weighted();
     vecteur ds=degree_sequence();
     ipairs E;
     get_edges_as_pairs(E);
     m=*_matrix(makesequence(n,n,0),ctx)._VECTptr;
-    for (i=0;i<n;++i) {
-        m[i]._VECTptr->at(i)=normalize?(is_zero(ds[i])?0:1):ds[i];
+    if (!isweighted) {
+        for (i=0;i<n;++i) {
+            m[i]._VECTptr->at(i)=normalize?(is_zero(ds[i])?0:1):ds[i];
+        }
     }
     for (ipairs_iter it=E.begin();it!=E.end();++it) {
         i=it->first; j=it->second;
+        if (isweighted) {
+            m[i]._VECTptr->at(i)+=weight(*it);
+            if (!isdir)
+                m[j]._VECTptr->at(j)+=weight(*it);
+        }
+        if (isweighted) {
+            m[i]._VECTptr->at(j)=-weight(*it);
+            if (!isdir)
+                m[j]._VECTptr->at(i)=-weight(*it);
+        }
         m[i]._VECTptr->at(j)=normalize?-fraction(1,sqrt(ds[i]*ds[j],ctx)):gen(-1);
         if (!isdir)
-            m[j]._VECTptr->at(i)=normalize?-fraction(1,sqrt(ds[i]*ds[j],ctx)):gen(-1);
+            m[j]._VECTptr->at(i)=m[i]._VECTptr->at(j);
     }
 }
 
@@ -12884,6 +12897,211 @@ void graphe::yen::find_kspaths(ivectors &paths) {
 void graphe::yen_ksp(int K,int src,int dest,ivectors &paths) {
     yen Y(this,src,dest,K);
     Y.find_kspaths(paths);
+}
+
+/* 
+ * CENTRALITY MEASURES
+ */
+
+/* return the information centrality measure for k-th vertex,
+ * if k<0 return the list of IC measures for all vertices */
+gen graphe::information_centrality(int k,bool approx) const {
+    int n=node_count();
+    assert(n>1 && !is_directed());
+    matrice A;
+    laplacian_matrix(A);
+    for (int i=0;i<n;++i) {
+        for (int j=0;j<n;++j) {
+            A[i]._VECTptr->at(j)+=1;
+        }
+    }
+    if (approx)
+        A=*_evalf(A,ctx)._VECTptr;
+    gen dt=_det(A,ctx);
+    if (approx && dt.type!=_DOUBLE_) {
+        message("Error: input must be numerical");
+        return undef;
+    }
+    if (is_zero(dt)) {
+        message("Error: incremented Laplacian is singular");
+        return undef;
+    }
+    matrice B=*_inv(A,ctx)._VECTptr;
+    if (k>=0) {
+        assert(k<n);
+        gen num(n),den(0);
+        for (int i=0;i<n;++i) {
+            den+=B[i]._VECTptr->at(i)+B[k]._VECTptr->at(k)-2*B[i]._VECTptr->at(k);
+        }
+        return num/den;
+    }
+    vecteur ic(n,0);
+    for (int i=0;i<n;++i) {
+        for (int j=0;j<n;++j) {
+            ic[i]+=B[j]._VECTptr->at(j)+B[i]._VECTptr->at(i)-2*B[j]._VECTptr->at(i);
+        }
+        ic[i]=gen(n)/ic[i];
+    }
+    return ic;
+}
+
+/* return the normalized degree centrality measure for k-th vertex,
+ * if k<0 return the list of NDC measures for all vertices */
+gen graphe::degree_centrality(int k) const {
+    int n=node_count();
+    assert(n>1);
+    vecteur dv(n);
+    if (k>=0) {
+        assert(k<n);
+        return gen(degree(k))/gen(n-1);
+    }
+    for (int i=0;i<n;++i) {
+        dv[i]=gen(degree(i))/gen(n-1);
+    }
+    return dv;
+}
+
+/* return the list of shortest distances from
+ * k-th vertex to every other vertex */ 
+vecteur graphe::distances_from(int k) {
+    int n=node_count();
+    assert(k>=0 && k<n);
+    vecteur res(n);
+    if (is_weighted()) {
+        ivector dest;
+        for (int i=0;i<n;++i) {
+            dest.push_back(i);
+        }
+        dijkstra(k,dest,res);
+    } else {
+        bfs(k);
+        res[k]=0;
+        for (int i=0;i<n;++i) {
+            gen d(0);
+            if (i==k)
+                continue;
+            if (node(i).ancestor()<0)
+                res[i]=plusinf();
+            else {
+                int j=i;
+                while ((j=node(j).ancestor())>=0) {
+                    d+=1;
+                }
+                res[i]=d;
+            }
+        }
+    }
+    return res;
+}
+
+/* return the closeness centrality measure for k-th vertex,
+ * if k<0 return the list of HC measures for all vertices,
+ * if harmonic=true, return harmonic centrality */
+gen graphe::closeness_centrality(int k,bool harmonic) const {
+    int n=node_count();
+    assert(n>1);
+    if (k>=0) assert(k<n);
+    vecteur hc(n,0);
+    if (is_weighted()) {
+        if (k>=0) {
+            graphe H(*this);
+            if (is_directed())
+                reverse(H);
+            vecteur pw=H.distances_from(k);
+            pw.erase(pw.begin()+k);
+            if (harmonic)
+                hc[k]=_sum(_apply(makesequence(at_inv,pw),ctx),ctx);
+            else
+                hc[k]=gen(n-1)/_sum(pw,ctx);
+        } else {
+            matrice apd;
+            allpairs_distance(apd);
+            if (harmonic) {
+                apd=*_apply(makesequence(at_inv,apd),ctx)._VECTptr;
+                hc=*_sum(apd,ctx)._VECTptr;
+            } else {
+                hc=*_sum(apd,ctx)._VECTptr;
+                hc=*(gen(n-1)*_apply(makesequence(at_inv),ctx))._VECTptr;
+            }
+        }
+    } else {
+        graphe H(*this);
+        if (is_directed())
+            reverse(H);
+        for (int i=0;i<n;++i) {
+            if (k>=0 && i!=k)
+                continue;
+            vecteur dv=H.distances_from(i);
+            dv.erase(dv.begin()+i);
+            if (harmonic)
+                hc[i]=_sum(_apply(makesequence(at_inv,dv),ctx),ctx);
+            else
+                hc[i]=gen(n-1)/_sum(dv,ctx);
+        }
+    }
+    if (k>=0)
+        return hc[k];
+    return hc;
+}
+
+/* return the list of betweenness centrality measures for all vertices
+ * using Brandes' algorithm */
+ vecteur graphe::betweenness_centrality() const {
+     int n=node_count();
+     assert(n>1);
+     vecteur cb(n,0);
+     for (int s=0;s<n;++s) {
+         std::stack<int> S;
+         std::map<int,ivector> P;
+         ivector sigma(n,0);
+         sigma[s]=1;
+         ivector d(n,-1);
+         d[s]=0;
+         std::queue<int> Q;
+         Q.push(s);
+         while (!Q.empty()) {
+             int v=Q.front();
+             Q.pop();
+             S.push(v);
+             for (ivector_iter it=node(v).neighbors().begin();it!=node(v).neighbors().end();++it) {
+                 int w=*it;
+                 if (d[w]<0) {
+                     Q.push(w);
+                     d[w]=d[v]+1;
+                 }
+                 if (d[w]==d[v]+1) {
+                     sigma[w]+=sigma[v];
+                     P[w].push_back(v);
+                 }
+             }
+         }
+         vecteur delta(n,0);
+         while (!S.empty()) {
+             int w=S.top();
+             S.pop();
+             for (ivector_iter it=P[w].begin();it!=P[w].end();++it) {
+                 int v=*it;
+                 delta[v]+=gen(sigma[v])/gen(sigma[w])*(gen(1)+delta[w]);
+             }
+             if (w!=s)
+                 cb[w]+=delta[w];
+         }
+     }
+     if (!is_directed()) {
+         for (iterateur it=cb.begin();it!=cb.end();++it) {
+             *it=(*it)/gen(2);
+         }
+     }
+     return cb;
+ }
+ 
+ /* return the list of Katz centrality measures for all vertices,
+  * where att is attenuation factor */
+vecteur graphe::katz_centrality(const gen &att) const {
+    int n=node_count();
+    matrice A;
+    adjacency_matrix(A);
+    return *_sum(_tran(_inv(_idn(n,ctx)-att*_tran(A,ctx),ctx),ctx),ctx)._VECTptr;
 }
 
 #ifndef NO_NAMESPACE_GIAC

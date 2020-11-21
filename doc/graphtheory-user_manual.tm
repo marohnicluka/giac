@@ -1055,7 +1055,7 @@
 
   <subsection|Examples>
 
-  <paragraph|Creating vertices>A graph consisting only of vertices and no
+  <paragraph|Creating vertices.>A graph consisting only of vertices and no
   edges can be created simply by providing the number of vertices or the list
   of vertex labels.
 
@@ -1086,7 +1086,7 @@
   mode and 1-based in <samp|Maple> mode. Examples throughout this manual are
   made by using the default, <samp|Xcas> mode.\ 
 
-  <paragraph|Creating edges and arcs>Edges/arcs must be specified inside a
+  <paragraph|Creating edges and arcs.>Edges/arcs must be specified inside a
   set so that it can be distinguished from a (adjacency or weight) matrix. If
   only a set of edges/arcs is specified, the vertices needed to establish
   these will be created automatically. Note that, when constructing a
@@ -1135,7 +1135,7 @@
     </unfolded-io>
   </session>
 
-  <paragraph|Creating paths and trails>A directed graph can also be created
+  <paragraph|Creating paths and trails.>A directed graph can also be created
   from a list of <math|n> vertices and a permutation of order <math|n>. The
   resulting graph consists of a single directed cycle with the vertices
   ordered according to the permutation.
@@ -1222,7 +1222,7 @@
 
   <center|<image|images/trails.eps|35%|||>>
 
-  <paragraph|Specifying adjacency or weight matrix>A graph can be created
+  <paragraph|Specifying adjacency or weight matrix.>A graph can be created
   from a single square matrix <math|A=<around|[|a<rsub|i*j>|]><rsub|n>> of
   order <math|n>. If it contains only ones and zeros and has zeros on its
   diagonal, it is assumed to be the adjacency matrix for the desired graph.
@@ -1318,7 +1318,7 @@
     </unfolded-io>
   </session>
 
-  <paragraph|Creating special graphs>When a special graph is desired, one
+  <paragraph|Creating special graphs.>When a special graph is desired, one
   just needs to pass its name to the <with|font-family|tt|graph> command. An
   undirected unweighted graph will be returned.
 
@@ -7514,8 +7514,12 @@
 
   The option <verbatim|normal> may be passed as the second argument. In that
   case, the <hlink|normalized Laplacian|https://en.wikipedia.org/wiki/Laplacian_matrix#Symmetric_normalized_Laplacian_2>
-  <math|L<rsup|sym>\<assign\>I-D<rsup|-1/2>*A*D<rsup|-1/2>> of <math|G> is
-  returned.
+
+  <\equation*>
+    L<rsup|sym>\<assign\>I-D<rsup|-1/2>*A*D<rsup|-1/2>
+  </equation*>
+
+  of <math|G> is returned.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -7748,7 +7752,7 @@
   real number).
 
   Note that <math|tr <around*|(|M|)>=0>. Also, the weight matrix of an
-  undirected graph is always symmetrical.
+  undirected graph is always symmetric.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -16376,7 +16380,7 @@
     <associate|digraph|<tuple|1.1.2|14>>
     <associate|draw-graph|<tuple|6.1|149>>
     <associate|eq:chromatic-poly|<tuple|4.1|93>>
-    <associate|eq:flow-poly|<tuple|4.2|93>>
+    <associate|eq:flow-poly|<tuple|4.2|94>>
     <associate|eq:reliability-poly|<tuple|4.3|94>>
     <associate|footnote-1|<tuple|1|11>>
     <associate|footnote-1.1|<tuple|1.1|49>>
@@ -17114,23 +17118,23 @@
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-8>>
 
-      <with|par-left|<quote|4tab>|Creating vertices
+      <with|par-left|<quote|4tab>|Creating vertices.
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-9><vspace|0.15fn>>
 
-      <with|par-left|<quote|4tab>|Creating edges and arcs
+      <with|par-left|<quote|4tab>|Creating edges and arcs.
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-10><vspace|0.15fn>>
 
-      <with|par-left|<quote|4tab>|Creating paths and trails
+      <with|par-left|<quote|4tab>|Creating paths and trails.
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-11><vspace|0.15fn>>
 
-      <with|par-left|<quote|4tab>|Specifying adjacency or weight matrix
+      <with|par-left|<quote|4tab>|Specifying adjacency or weight matrix.
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-12><vspace|0.15fn>>
 
-      <with|par-left|<quote|4tab>|Creating special graphs
+      <with|par-left|<quote|4tab>|Creating special graphs.
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-13><vspace|0.15fn>>
 

@@ -83,6 +83,13 @@ enum gt_layout_style {
     _GT_STYLE_BIPARTITE
 };
 
+enum gt_vertex_cover_algorithm {
+    _GT_VC_APPROX_CLIQUE,
+    _GT_VC_APPROX_ALOM,
+    _GT_VC_APPROX_DFS,
+    _GT_VC_EXACT
+};
+
 class graphe {
 public:
     typedef std::vector<int> ivector;
@@ -106,6 +113,7 @@ public:
         int m_subgraph;
         // used for traversing
         bool m_visited;
+        bool m_leaf;
         int m_low;
         int m_disc;
         int m_ancestor;
@@ -148,6 +156,8 @@ public:
         inline int ancestor() const { return m_ancestor; }
         inline void set_color(int c) { m_color=c; }
         inline int color() const { return m_color; }
+        inline void set_leaf(bool yes) { m_leaf=yes; }
+        inline bool is_leaf() const { return m_leaf; }
         inline const attrib &attributes() const { assert(supports_attributes()); return *m_attributes; }
         inline attrib &attributes() { assert(supports_attributes()); return *m_attributes; }
         inline void set_attribute(int key,const gen &val) { assert(supports_attributes()); (*m_attributes)[key]=val; }
@@ -160,7 +170,7 @@ public:
         const attrib &neighbor_attributes(int i) const;
         inline bool has_neighbor(int i) const { return binary_search(m_neighbors.begin(),m_neighbors.end(),i); }
         void remove_neighbor(int i);
-        inline void clear_neighbors();
+        void clear_neighbors();
         void incident_faces(ivector &F) const;
         inline void add_edge_face(int nb,int f) { assert(m_faces.find(nb)==m_faces.end()); m_faces[nb]=f+1; }
         inline void clear_edge_faces() { m_faces.clear(); }
@@ -206,7 +216,8 @@ public:
         layout *x;
         double hsep,vsep;
         ivectors levels;
-        ivector node_counters,gap_counters,position,prelim,modifier,gaps,children;
+        ivector node_counters,gap_counters,position,gaps,children;
+        dvector prelim,modifier;
         std::queue<int> placed;
         int depth;
         void walk(int i,int pass,int level=0,double modsum=0);
@@ -368,6 +379,27 @@ public:
         bool solve(ivector &hc,double &cost); // find shortest tour
         void ksolve(int k,ivectors &hcv,dvector &costs); // find k shortest tours
     };
+
+    class mvc_solver { // exact and approx minimum vertex cover (MVC) problem solver
+        graphe *G;
+        glp_prob *ilp;
+        static void callback(glp_tree *tree,void *info);
+        void preprocess(glp_tree *tree);
+        void branch(glp_tree *tree);
+        int initial_heur();
+        int lower_bound(const ivector &component,int s);
+        double *heur_sol;
+        bool compute_heur;
+        bool is_k_vc;
+        ivector V,V_pos;
+        ipairs edges;
+        int sg;
+        int last_row;
+    public:
+        mvc_solver(graphe *gr,int s=-1);
+        ~mvc_solver();
+        int solve(ivector &cover,int k=-1);
+    };
 #endif
 
     class rectangle { // simple rectangle class
@@ -518,7 +550,7 @@ public:
         ~yen();
         void find_kspaths(ivectors &paths);
     };
-
+    
     struct edges_comparator { // for sorting edges by their weight
         graphe *G;
         bool operator()(const ipair &a,const ipair &b) {
@@ -638,7 +670,7 @@ private:
     std::stack<ipair> edge_stack;
     std::stack<int> node_stack;
     std::queue<int> node_queue;
-    ivectors visited_edges;
+    std::map<int,iset> visited_edges;
     ivectors maxcliques;
     std::stack<ivector> saved_subgraphs;
     bool m_supports_attributes;
@@ -772,6 +804,13 @@ private:
     static inline double harmonic_mean(double a,double b,double c) { return 3.0*a*b*c/(a*b+b*c+a*c); }
     void strec(int i,int t,int counter,int np,iset &Q,vecteur &timestamp,vecteur &l);
     bool hamcycle_recurse(ivector &path,int pos);
+    void grasp_construct(double aplha,ivector &Q,int sg);
+    void grasp_local(ivector &Q,int sg);
+    bool mvc_special(ivector &cover,const ivector &component,int sg);
+    void mvc_alom(ivector &cover,int sg=-1);
+    void mvc_dfs(ivector &cover,int sg=-1);
+    void mvc_bipartite(const ivector &U,const ivector &V,ivector &cover,int sg=-1);
+    ivector alom_candidates(const ivector &V,const vecteur &ds);
 
 public:
     graphe(const context *contextptr=context0,bool support_attributes=true);
@@ -943,10 +982,11 @@ public:
     bool relabel_nodes(const vecteur &labels);
     void induce_subgraph(const ivector &vi,graphe &G) const;
     void extract_subgraph(const ipairs &E,graphe &G) const;
+    void subgraph_indices(const graphe &S,const ivector &v,ivector &sv) const;
     bool is_subgraph(const graphe &G) const;
     void maximal_independent_set(ivector &ind) const;
     void find_maximum_matching(ipairs &M);
-    void find_maximal_matching(ipairs &matching) const;
+    void find_maximal_matching(ipairs &matching,int sg=-1) const;
     bool find_augmenting_path(ivector &ap,std::map<int,int> &matching);
     bool trail(const vecteur &v);
     bool demoucron(ivectors &faces,int sg=-1);
@@ -1100,14 +1140,21 @@ public:
     gen degree_centrality(int k) const;
     vecteur katz_centrality(const gen &att) const;
     gen information_centrality(int k,bool approx=false) const;
+    int splittance(int &m,ivector &vseq) const;
+    bool is_split_graph(ivector &clq,ivector &indp) const;
+    void contract_subgraph(graphe &G,const ivector &sg,const gen &lb) const;
+    void grasp_clique(int maxitr,ivector &clq,int sg=-1);
+    void mvc(ivector &cover,int vc_alg,int sg=-1);
+    int k_vertex_cover(ivector &cover,int k);
+    int vertex_cover_number();
 
     // static methods
     static gen colon_label(int i,int j);
     static gen colon_label(int i,int j,int k);
-    static size_t intersect_fast(ivector_iter min1,ivector_iter max1,ivector_iter min2,ivector_iter max2);
     static size_t intersect_linear(ivector_iter min1,ivector_iter max1,ivector_iter min2,ivector_iter max2);
-    static size_t intersect_hybrid(ivector_iter min1,ivector_iter max1,ivector_iter min2,ivector_iter max2);
     static bool is_graphic_sequence(const ivector &s_orig);
+    static ivector_iter insert_sorted(ivector &V,int val);
+    static bool erase_sorted(ivector &V,int val);
 };
 
 #ifndef NO_NAMESPACE_GIAC

@@ -781,7 +781,7 @@ void graphe::vertex::add_neighbor(int i,const attrib &attr) {
     if (m_neighbors.empty())
         m_neighbors.push_back(i);
     else {
-        ivector_iter it=std::lower_bound(m_neighbors.begin(),m_neighbors.end(),i);
+        ivector::iterator it=std::lower_bound(m_neighbors.begin(),m_neighbors.end(),i);
         if (it!=m_neighbors.end() && *it==i)
             return;
         m_neighbors.insert(it,i);
@@ -1100,7 +1100,7 @@ graphe::ivector_iter graphe::insert_sorted(ivector &V,int val) {
         V.push_back(val);
         return V.begin()+V.size()-1;
     }
-    ivector_iter it=std::lower_bound(V.begin(),V.end(),val);
+    ivector::iterator it=std::lower_bound(V.begin(),V.end(),val);
     int pos=it-V.begin();
     V.insert(it,val);
     return V.begin()+pos;
@@ -1111,7 +1111,7 @@ graphe::ivector_iter graphe::insert_sorted(ivector &V,int val) {
 bool graphe::erase_sorted(ivector &V,int val) {
     if (V.empty())
         return false;
-    ivector_iter it=std::lower_bound(V.begin(),V.end(),val);
+    ivector::iterator it=std::lower_bound(V.begin(),V.end(),val);
     if (it==V.end())
         return false;
     if (*it!=val)
@@ -13898,7 +13898,7 @@ void graphe::mvc_bipartite(const ivector &U,const ivector &V,ivector &cover,int 
     }
     while (true) {
         int u,v,w;
-        ipairs_iter it=E.begin();
+        ipairs::iterator it=E.begin();
         for (;it!=E.end();++it) {
             if (node(it->first).number()==2) {
                 u=it->first; v=it->second;

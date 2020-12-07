@@ -17962,7 +17962,7 @@ rms([1,2,5,8,3,6,4])
 -1 nDeriv
 -2 diff
 numdiff([1,3,4],[3,0,1],2)
-f:=unapply(sin(x)*exp(-x),x):;X:=[0,0.1,0.2,0.4,0.5,0.7,0.8,1]:;Y:=apply(f,X):;abs(numdiff(X,Y,1/pi,2)-f''(1/pi))
+ f:=unapply(sin(x)*exp(-x),x):;X:=[0,0.1,0.2,0.4,0.5,0.7,0.8,1]:;Y:=apply(f,X):;abs(numdiff(X,Y,1/pi,2)-f''(1/pi))
 
 # degree_centrality
 0 Graph(G),[Vrtx(v)]

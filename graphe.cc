@@ -13979,8 +13979,13 @@ int graphe::k_vertex_cover(ivector &cover,int k) {
         return 0;
     }
     /* size of V is larger than k, use exact solver */
+#ifdef HAVE_LIBGLPK
     mvc_solver mvcs(this);
     return mvcs.solve(cover,k);
+#else
+    *logptr(ctx) << "Error: GLPK library is required for exact solving\n";
+    return -1;
+#endif
 }
 
 /* return vertex cover number of this graph */

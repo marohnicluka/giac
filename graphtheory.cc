@@ -7711,7 +7711,10 @@ gen _vertex_cover_number(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     if (G.is_empty())
         return 0;
-    return G.vertex_cover_number();
+    int cn=G.vertex_cover_number();
+    if (cn<0)
+        return undef;
+    return cn;
 }
 static const char _vertex_cover_number_s[]="vertex_cover_number";
 static define_unary_function_eval(__vertex_cover_number,&_vertex_cover_number,_vertex_cover_number_s);

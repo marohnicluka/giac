@@ -21,7 +21,9 @@
   </src-title>>
 
   <assign|giac-output|<\macro|body>
-    <generic-output*|<arg|body>>
+  	<\padded-centered>
+    	<generic-output*|<arg|body>>
+    </padded-centered>
   </macro>>
 
   \;

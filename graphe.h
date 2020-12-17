@@ -578,7 +578,7 @@ public:
     struct ivectors_degree_comparator { // for sorting sets of vertices by ascending total degree
         graphe *G;
         bool operator()(const ivector &a,const ivector &b) {
-            int deg_a,deg_b;
+            int deg_a=0,deg_b=0;
             for (ivector_iter it=a.begin();it!=a.end();++it) {
                 deg_a+=G->degree(*it);
             }
@@ -820,7 +820,7 @@ public:
     
     // methods
     inline int rand_integer(int n) const { assert(n>=0); return n==0?0:giac::giac_rand(ctx)%n; }
-    inline double rand_uniform() const { return giac::giac_rand(ctx)/(RAND_MAX+1.0); }
+    double rand_uniform() const;
     inline double rand_normal() const { return giac::randNorm(ctx); }
     ivector rand_permu(int n) const;
     static bool is_real_number(const gen &g);

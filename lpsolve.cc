@@ -33,9 +33,6 @@ using namespace std;
 namespace giac {
 #endif //ndef NO_NAMESPACE_GIAC
 
-const gen inf=symbolic(at_plus,unsigned_inf);
-const gen minf=symbolic(at_neg,unsigned_inf);
-
 /*
  * Convert double to exact gen.
  */
@@ -150,15 +147,25 @@ vecteur integralize(const vecteur &v_orig,GIAC_CONTEXT) {
     return divvecteur(v,abs(_gcd(v,contextptr),contextptr));
 }
 
+void lp_variable::assign(const lp_variable &other) {
+    _is_integral=other._is_integral;
+    _sign_type=other._sign_type;
+    _range=other._range;
+    pseudocost[0]=other.pseudocost[0];
+    pseudocost[1]=other.pseudocost[1];
+    nbranch[0]=other.nbranch[0];
+    nbranch[1]=other.nbranch[1];
+}
+
 /*
  * LP variable constructor. By default, it is a nonnegative variable
  * unrestricted from above.
  */
 lp_variable::lp_variable() {
-    is_integral=false;
-    sign_type=_LP_VARSIGN_POS;
-    range=lp_range();
-    range.lbound=gen(0);
+    _is_integral=false;
+    _sign_type=_LP_VARSIGN_POS;
+    _range=lp_range();
+    _range.set_lb(0);
     fill_n(nbranch,2,0);
 }
 
@@ -175,19 +182,31 @@ void lp_variable::update_pseudocost(double delta, double fr, int dir) {
  * Return score, a positive value based on pseudocost values. Variable with the
  * best (highest) score is selected for branching.
  */
-double lp_variable::score(double fr) {
+double lp_variable::score(double fr) const {
     if (nbranch[0]==0 || nbranch[1]==0)
         return 0;
     double qlo=fr*pseudocost[0],qhi=(1-fr)*pseudocost[1];
     return (1-LP_SCORE_FACTOR)*std::min(qlo,qhi)+LP_SCORE_FACTOR*std::max(qlo,qhi);
 }
 
+/* Set the type of this variable. */
+void lp_variable::set_type(int t,GIAC_CONTEXT) {
+    switch (t) {
+    case _LP_BINARYVARIABLES:
+        _range.tighten_lbound(0,contextptr);
+        _range.tighten_ubound(1,contextptr);
+    case _LP_INTEGERVARIABLES:
+        _is_integral=true;
+        break;
+    }
+}
+
 /*
  * Range constructor: by default, it contains no restriction.
  */
 lp_range::lp_range () {
-    lbound=minf;
-    ubound=inf;
+    lbound=minus_inf;
+    ubound=plus_inf;
 }
 
 /*
@@ -204,10 +223,10 @@ lp_settings::lp_settings() {
     has_binary_vars=false;
     varselect=-1;
     nodeselect=_LP_BEST_PROJECTION;
-    depth_limit=RAND_MAX;
-    node_limit=RAND_MAX;
-    iteration_limit=RAND_MAX;
-    time_limit=RAND_MAX;
+    depth_limit=rand_max2;
+    node_limit=rand_max2;
+    iteration_limit=rand_max2;
+    time_limit=rand_max2;
     max_cuts=5;
 }
 
@@ -289,7 +308,7 @@ matrice simplex_reduce_bounded(const matrice &m_orig,const vecteur &u,vector<boo
         if (ev<0) //the current solution is optimal
             break;
         //determine which variable leaves the basis
-        mincoeff=inf;
+        mincoeff=plus_inf;
         lv=-1;
         bool hits_ub,ub_subs;
         for (int i=0;i<nr;++i) {
@@ -313,7 +332,7 @@ matrice simplex_reduce_bounded(const matrice &m_orig,const vecteur &u,vector<boo
             }
         }
         if (lv<0 && is_inf(u[ev])) { //solution is unbounded
-            optimum=inf;
+            optimum=plus_inf;
             return m;
         }
         if (is_zero(mincoeff))
@@ -374,12 +393,12 @@ int lp_node::solve_relaxation() {
     for (int j=0;j<ncols;++j) {
         lp_variable &var=prob->variables[j];
         lp_range &range=ranges[j];
-        l[j]=max(var.range.lbound,range.lbound,prob->ctx);
-        u[j]=min(var.range.ubound,range.ubound,prob->ctx);
+        l[j]=is_strictly_greater(var.range().lb(),range.lb(),prob->ctx)?var.range().lb():range.lb();
+        u[j]=is_strictly_greater(var.range().ub(),range.ub(),prob->ctx)?range.ub():var.range().ub();
         if (is_strictly_greater(l[j],u[j],prob->ctx))
             return _LP_INFEASIBLE;
     }
-    //populate matrix with consraint coefficients
+    //populate matrix with constraint coefficients
     m=*_matrix(makesequence(nrows,ncols+1,0),prob->ctx)._VECTptr;
     for (int i=0;i<nrows;++i) for (int j=0;j<ncols;++j) {
         m[i]._VECTptr->at(j)=prob->constr.lhs[i][j];
@@ -421,7 +440,7 @@ int lp_node::solve_relaxation() {
             row=multvecteur(gen(-1),row);
         m.push_back(row);
         l.push_back(gen(0));
-        u.push_back(inf);
+        u.push_back(plus_inf);
         is_slack.push_back(false);
         obj.push_back(gen(0));
         cols.push_back(ncols++);
@@ -437,11 +456,11 @@ int lp_node::solve_relaxation() {
         for (int i=bs;i<nrows;++i) {
             br=subvecteur(br,*m[i]._VECTptr);
             basis[i]=ncols+i;
-            u[ncols+i-bs]=inf;
+            u[ncols+i-bs]=plus_inf;
         }
         m.push_back(br);
         //phase 1: minimize the sum of artificial variables
-        m=simplex_reduce_bounded(m,u,is_slack,solution,optimum,basis,cols,RAND_MAX,prob->ctx);
+        m=simplex_reduce_bounded(m,u,is_slack,solution,optimum,basis,cols,rand_max2,prob->ctx);
         if (!is_zero(_simplify(optimum,prob->ctx)))
             return _LP_INFEASIBLE; //at least one artificial variable is basic and positive
         m.pop_back(); //remove bottom row
@@ -499,13 +518,13 @@ int lp_node::solve_relaxation() {
             vecteur eq(*m[i]._VECTptr);
             if (!is_zero(p) && !is_integer(eq.back())) {
                 gen f0(fracpart(eq.back())),fj,sp(0),eqnorm(0);
-                double away=_evalf(min(f0,gen(1)-f0,prob->ctx),prob->ctx).DOUBLE_val();
+                double away=_evalf(is_strictly_greater(f0,1-f0,prob->ctx)?1-f0:f0,prob->ctx).DOUBLE_val();
                 if (away<LP_MIN_AWAY)
                     continue; //too small away, discard this cut
                 eq.back()=gen(1);
                 for (int k=0;k<int(cols.size());++k) {
                     int j=cols[k];
-                    if (j<prob->nv() && prob->variables[j].is_integral) {
+                    if (j<prob->nv() && prob->variables[j].is_integral()) {
                         fj=fracpart(eq[k]);
                         eq[k]=(is_strictly_greater(fj,f0,prob->ctx)?(fj-1)/(f0-1):fj/f0);
                     }
@@ -562,7 +581,7 @@ int lp_node::solve_relaxation() {
         m.push_back(gmi_cut);
         slack_cut[ncols]=cut_indices.back();
         l.push_back(gen(0));
-        u.push_back(inf);
+        u.push_back(plus_inf);
         is_slack.push_back(false);
         obj.push_back(gen(0));
         cols.push_back(ncols++);
@@ -579,10 +598,10 @@ int lp_node::solve_relaxation() {
     most_fractional=-1;
     gen p,ifs,max_ifs(0);
     for (int i=0;i<prob->nv();++i) {
-        if (!prob->variables[i].is_integral)
+        if (!prob->variables[i].is_integral())
             continue;
         p=fracpart(solution[i]);
-        ifs=min(p,gen(1)-p,prob->ctx);
+        ifs=is_strictly_greater(p,1-p,prob->ctx)?1-p:p;
         if (is_zero(ifs))
             continue;
         fractional_vars[i]=gen2double(p,prob->ctx);
@@ -595,17 +614,36 @@ int lp_node::solve_relaxation() {
     return _LP_SOLVED;
 }
 
+double lp_node::get_fractional_var(int index) const {
+    if (fractional_vars.find(index)!=fractional_vars.end())
+        return fractional_vars.at(index);
+    return 0;
+}
+
+void lp_node::assign(const lp_node &other) {
+    prob=other.prob;
+    depth=other.depth;
+    ranges=other.ranges;
+    optimum=other.optimum;
+    solution=other.solution;
+    opt_approx=other.opt_approx;
+    infeas=other.infeas;
+    most_fractional=other.most_fractional;
+    fractional_vars=other.fractional_vars;
+    cut_indices=other.cut_indices;
+}
+
 /*
  * Return fractional part of g, i.e. [g]=g-floor(g). It is always 0<=[g]<1.
  */
-gen lp_node::fracpart(const gen &g) {
+gen lp_node::fracpart(const gen &g) const {
     return g-_floor(g,prob->ctx);
 }
 
 /*
  * Return true iff variable with specified index is fractional.
  */
-bool lp_node::is_var_fractional(int index) {
+bool lp_node::is_var_fractional(int index) const {
     for (map<int,double>::const_iterator it=fractional_vars.begin();it!=fractional_vars.end();++it) {
         if (it->first==index)
             return true;
@@ -632,7 +670,7 @@ lp_node lp_node::create_child() {
  */
 bool lp_problem::has_integral_variables() {
     for (vector<lp_variable>::const_iterator it=variables.begin();it!=variables.end();++it) {
-        if (it->is_integral)
+        if (it->is_integral())
             return true;
     }
     return false;
@@ -648,7 +686,7 @@ bool lp_problem::has_approx_coefficients() {
             is_approx(constr.rhs))
         return true;
     for (vector<lp_variable>::const_iterator it=variables.begin();it!=variables.end();++it) {
-        if (it->range.lbound.is_approx() || it->range.ubound.is_approx())
+        if (it->range().lb().is_approx() || it->range().ub().is_approx())
             return true;
     }
     return false;
@@ -810,7 +848,7 @@ void lp_problem::create_variables(int n) {
     nvars_initial=n;
     for (int i=0;i<n;++i) {
         lp_variable var;
-        var.range.lbound=minf; // default: no restrictions whatsoever
+        var.set_lb(minus_inf); // default: no restrictions whatsoever
         variables[i]=var;
     }
 }
@@ -820,8 +858,8 @@ void lp_problem::create_variables(int n) {
  */
 void lp_problem::tighten_variable_bounds(int i, const gen &l, const gen &u) {
     lp_variable &var=variables[i];
-    var.range.tighten_lbound(l,ctx);
-    var.range.tighten_ubound(u,ctx);
+    var.tighten_lbound(l,ctx);
+    var.tighten_ubound(u,ctx);
 }
 
 /*
@@ -879,7 +917,7 @@ void lp_problem::add_slack_variables() {
             for (int l=0;l<nv0;++l) {
                 if (is_zero(lh[l]))
                     continue;
-                if (!variables[l].is_integral) {
+                if (!variables[l].is_integral()) {
                     den=undef;
                     break;
                 }
@@ -889,7 +927,7 @@ void lp_problem::add_slack_variables() {
             if (!is_undef(den)) {
                 lh=multvecteur(den,lh);
                 rh=den*rh;
-                var.is_integral=true;
+                var.set_integral(true);
             }
         }
     }
@@ -904,20 +942,20 @@ void lp_problem::add_slack_variables() {
 void lp_problem::make_all_vars_bounded_below() {
     for (int i=nv()-1;i>=0;--i) {
         lp_variable &var=variables[i];
-        if (var.range.is_unrestricted_below()) {
-            if (var.range.is_unrestricted_above()) {
-                var.range.lbound=gen(0);
+        if (var.range().is_unrestricted_below()) {
+            if (var.range().is_unrestricted_above()) {
+                var.set_lb(0);
                 lp_variable negvar(var);
-                var.sign_type=_LP_VARSIGN_POS_PART;
-                negvar.sign_type=_LP_VARSIGN_NEG_PART;
+                var.set_sign_type(_LP_VARSIGN_POS_PART);
+                negvar.set_sign_type(_LP_VARSIGN_NEG_PART);
                 variables.insert(variables.begin()+i,negvar);
                 objective.first.insert(objective.first.begin()+i,-objective.first[i]);
                 constr.duplicate_column(i);
             }
             else {
-                var.range.lbound=-var.range.ubound;
-                var.range.ubound=inf;
-                var.sign_type=_LP_VARSIGN_NEG;
+                var.set_lb(-var.range().ub());
+                var.set_ub(plus_inf);
+                var.set_sign_type(_LP_VARSIGN_NEG);
                 objective.first[i]=-objective.first[i];
             }
             constr.negate_column(i);
@@ -934,8 +972,8 @@ void lp_problem::make_problem_exact() {
     constr.lhs=*exact(constr.lhs,ctx)._VECTptr;
     constr.rhs=*exact(constr.rhs,ctx)._VECTptr;
     for (vector<lp_variable>::iterator it=variables.begin();it!=variables.end();++it) {
-        it->range.lbound=exact(it->range.lbound,ctx);
-        it->range.ubound=exact(it->range.ubound,ctx);
+        it->set_lb(exact(it->range().lb(),ctx));
+        it->set_ub(exact(it->range().ub(),ctx));
     }
 }
 
@@ -972,20 +1010,20 @@ int lp_problem::solve() {
     optimum=undef;
     double opt_approx;
     lp_node root;
-    root.prob=this;
-    root.ranges=vector<lp_range>(nv());
-    root.depth=0;
+    root.set_prob(this);
+    root.resize_ranges(nv());
+    root.set_depth(0);
     if ((result=root.solve_relaxation())!=_LP_SOLVED)
         return result; //optimal solution does not exist
     if (root.is_integer_feasible()) {
-        solution=root.solution;
-        optimum=root.optimum;
+        solution=root.get_solution();
+        optimum=root.get_optimum();
     }
     if (is_undef(optimum)) {
         message("Applying branch&bound method to find integer feasible solutions...");
-        double root_optimum=_evalf(root.optimum,ctx).DOUBLE_val();
-        double root_infeas=_evalf(root.infeas,ctx).DOUBLE_val();
-        root.ranges.resize(nv());
+        double root_optimum=_evalf(root.get_optimum(),ctx).DOUBLE_val();
+        double root_infeas=_evalf(root.get_infeas(),ctx).DOUBLE_val();
+        root.resize_ranges(nv());
         vector<lp_node> active_nodes;
         active_nodes.push_back(root);
         clock_t t=clock(),t0=t,now;
@@ -1007,19 +1045,19 @@ int lp_problem::solve() {
             depth=-1;
             for (int i=0;i<n;++i) {
                 lp_node &node=active_nodes[i];
-                if (opt_lbound>node.opt_approx) {
-                    opt_lbound=node.opt_approx;
+                if (opt_lbound>node.get_opt_approx()) {
+                    opt_lbound=node.get_opt_approx();
                     k=i;
                 }
                 if (settings.nodeselect==_LP_BREADTHFIRST ||
                         (settings.nodeselect==_LP_HYBRID && !is_undef(optimum)) ||
-                        node.depth<depth)
+                        node.get_depth()<depth)
                     continue;
-                if (node.depth>depth) {
+                if (node.get_depth()>depth) {
                     candidates.clear();
-                    depth=node.depth;
+                    depth=node.get_depth();
                 }
-                candidates[node.opt_approx]=i;
+                candidates[node.get_opt_approx()]=i;
             }
             if (settings.nodeselect==_LP_DEPTHFIRST ||
                     (settings.nodeselect==_LP_HYBRID && is_undef(optimum)))
@@ -1028,8 +1066,8 @@ int lp_problem::solve() {
                 double bestproj=DBL_MAX,proj,iopt=is_undef(optimum)?0:_evalf(optimum,ctx).DOUBLE_val();
                 for (int i=0;i<n;++i) {
                     lp_node &node=active_nodes[i];
-                    proj=_evalf(node.optimum,ctx).DOUBLE_val()+
-                            (iopt-root_optimum)*_evalf(node.infeas,ctx).DOUBLE_val()/root_infeas;
+                    proj=_evalf(node.get_optimum(),ctx).DOUBLE_val()+
+                            (iopt-root_optimum)*_evalf(node.get_infeas(),ctx).DOUBLE_val()/root_infeas;
                     if (proj<bestproj) {
                         bestproj=proj;
                         k=i;
@@ -1047,7 +1085,7 @@ int lp_problem::solve() {
                     if (!active_nodes[k].is_var_fractional(i))
                         continue;
                     lp_variable &var=variables[i];
-                    double score=var.score(active_nodes[k].fractional_vars[i]);
+                    double score=var.score(active_nodes[k].get_fractional_var(i));
                     if (score==0) {
                         j=-1;
                         break;
@@ -1067,13 +1105,13 @@ int lp_problem::solve() {
                 case -1:
                 case _LP_MOSTFRACTIONAL:
                 case _LP_PSEUDOCOST:
-                    j=active_nodes[k].most_fractional;
+                    j=active_nodes[k].get_most_fractional();
                     break;
                 case _LP_FIRSTFRACTIONAL:
-                    j=active_nodes[k].fractional_vars.begin()->first;
+                    j=active_nodes[k].get_first_fractional_var();
                     break;
                 case _LP_LASTFRACTIONAL:
-                    j=active_nodes[k].fractional_vars.rbegin()->first;
+                    j=active_nodes[k].get_last_fractional_var();
                     break;
                 }
             }
@@ -1089,30 +1127,30 @@ int lp_problem::solve() {
                     break;
                 }
             }
-            fr=_evalf(active_nodes[k].solution[j],ctx).DOUBLE_val();
+            fr=_evalf(active_nodes[k].get_solution()[j],ctx).DOUBLE_val();
             lb=gen(int(std::ceil(fr)));
             ub=gen(int(std::floor(fr)));
             incumbent_updated=false;
             lp_node child_node;
             for (int i=0;i<2;++i) {
                 child_node=active_nodes[k].create_child();
-                if (child_node.depth>settings.depth_limit) {
+                if (child_node.get_depth()>settings.depth_limit) {
                     if (!depth_exceeded) {
                         message ("Warning: depth limit exceeded",true);
                         depth_exceeded=true;
                     }
                     break;
                 }
-                lp_range &range=child_node.ranges[j];
+                lp_range &range=child_node.get_range(j);
                 if (i==1) {
                     range.tighten_lbound(lb,ctx);
-                    if (is_strictly_positive(child_node.ranges[j].lbound,ctx)) {
-                        switch (variables[j].sign_type) {
+                    if (is_strictly_positive(child_node.get_range(j).lb(),ctx)) {
+                        switch (variables[j].sign_type()) {
                         case _LP_VARSIGN_POS_PART:
-                            child_node.ranges[j-1].ubound=gen(0);
+                            child_node.get_range(j-1).set_ub(0);
                             break;
                         case _LP_VARSIGN_NEG_PART:
-                            child_node.ranges[j+1].ubound=gen(0);
+                            child_node.get_range(j+1).set_ub(0);
                         }
                     }
                 }
@@ -1120,24 +1158,24 @@ int lp_problem::solve() {
                     range.tighten_ubound(ub,ctx);
                 ++stats.subproblems_examined;
                 if (child_node.solve_relaxation()==_LP_SOLVED) {
-                    double p=child_node.fractional_vars[j];
-                    variables[j].update_pseudocost(std::abs(child_node.opt_approx-active_nodes[k].opt_approx),
+                    double p=child_node.get_fractional_var(j);
+                    variables[j].update_pseudocost(std::abs(child_node.get_opt_approx()-active_nodes[k].get_opt_approx()),
                                                    i==0?p:1-p,i);
-                    if (!is_undef(optimum) && is_greater(child_node.optimum,optimum,ctx))
+                    if (!is_undef(optimum) && is_greater(child_node.get_optimum(),optimum,ctx))
                         continue;
                     if (child_node.is_integer_feasible()) {
                         //new potential incumbent found
-                        if (is_undef(optimum) || is_strictly_greater(optimum,child_node.optimum,ctx)) {
+                        if (is_undef(optimum) || is_strictly_greater(optimum,child_node.get_optimum(),ctx)) {
                             if (is_undef(optimum))
                                 report_status("Incumbent solution found",stats.subproblems_examined);
                             else {
                                 sprintf(buffer,"Incumbent solution updated, objective value improvement: %g%%",
-                                        (opt_approx-child_node.opt_approx)/std::abs(opt_approx)*100.0);
+                                        (opt_approx-child_node.get_opt_approx())/std::abs(opt_approx)*100.0);
                                 report_status(buffer,stats.subproblems_examined);
                             }
-                            solution=child_node.solution;
-                            optimum=child_node.optimum;
-                            opt_approx=child_node.opt_approx;
+                            solution=child_node.get_solution();
+                            optimum=child_node.get_optimum();
+                            opt_approx=child_node.get_opt_approx();
                             incumbent_updated=true;
                         }
                     }
@@ -1149,7 +1187,7 @@ int lp_problem::solve() {
             active_nodes.erase(active_nodes.begin()+k);
             if (incumbent_updated) {
                 for (int i=int(active_nodes.size())-1;i>=0;--i) {
-                    if (is_greater(active_nodes[i].optimum,optimum,ctx))
+                    if (is_greater(active_nodes[i].get_optimum(),optimum,ctx))
                         active_nodes.erase(active_nodes.begin()+i);
                 }
             }
@@ -1181,7 +1219,7 @@ int lp_problem::solve() {
     optimum+=objective.second;
     for (int i=nv()-1;i>=0;--i) {
         lp_variable &var=variables[i];
-        switch (var.sign_type) {
+        switch (var.sign_type()) {
         case _LP_VARSIGN_NEG:
             solution[i]=-solution[i];
             break;
@@ -1209,19 +1247,21 @@ glp_prob *lp_problem::glpk_initialize() {
         glp_set_obj_coef(glp,i,gen2double(i==0?objective.second:objective.first[i-1],ctx));
         if (i>0) {
             lp_variable &var=variables[i-1];
-            glp_set_col_kind(glp,i,var.is_integral?GLP_IV:GLP_CV);
+            glp_set_col_kind(glp,i,var.is_integral()?GLP_IV:GLP_CV);
             int bound_type=GLP_FR;
-            if (!var.range.is_unrestricted_below() && var.range.is_unrestricted_above())
+            if (!var.range().is_unrestricted_below() && var.range().is_unrestricted_above())
                 bound_type=GLP_LO;
-            else if (var.range.is_unrestricted_below() && !var.range.is_unrestricted_above())
+            else if (var.range().is_unrestricted_below() && !var.range().is_unrestricted_above())
                 bound_type=GLP_UP;
-            else if (!var.range.is_unrestricted_below() && !var.range.is_unrestricted_above())
+            else if (!var.range().is_unrestricted_below() && !var.range().is_unrestricted_above())
                 bound_type=GLP_DB;
-            else if (is_zero(var.range.ubound-var.range.lbound))
+            else if (is_zero(var.range().ub()-var.range().lb()))
                 bound_type=GLP_FX;
-            double lo=var.range.is_unrestricted_below()?0.0:gen2double(var.range.lbound,ctx);
-            double hi=var.range.is_unrestricted_above()?0.0:gen2double(var.range.ubound,ctx);
-            glp_set_col_bnds(glp,i,bound_type,lo,hi);
+            double lo=var.range().is_unrestricted_below()?0.0:gen2double(var.range().lb(),ctx);
+            double hi=var.range().is_unrestricted_above()?0.0:gen2double(var.range().ub(),ctx);
+            if (lo==0 && hi==1 && var.is_integral())
+                glp_set_col_kind(glp,i,GLP_BV);
+            else glp_set_col_bnds(glp,i,bound_type,lo,hi);
         }
     }
     int n=constr.nrows()*constr.ncols();
@@ -1336,10 +1376,9 @@ int lp_problem::glpk_solve() {
 #ifndef HAVE_LIBGLPK
     message("Warning: solving in floating-point arithmetic requires GLPK library",true);
     return solve();
-#endif
-#ifdef HAVE_LIBGLPK
+#else
     glp_prob *prob=glpk_initialize();
-    int result,solution_status;
+    int result=0,solution_status;
     bool is_mip=has_integral_variables();
     switch (settings.solver) {
     case _LP_SIMPLEX:
@@ -1459,17 +1498,17 @@ bool lp_problem::glpk_load_from_file(const char *fname) {
             lp_variable &var=variables[j];
             t=glp_get_col_type(prob,j+1);
             k=glp_get_col_kind(prob,j+1);
-            var.name=string(glp_get_col_name(prob,j+1));
-            variable_identifiers[j]=identificateur(var.name);
+            var.set_name(string(glp_get_col_name(prob,j+1)));
+            variable_identifiers[j]=identificateur(var.name());
             if (t!=GLP_UP && t!=GLP_FR)
-                var.range.lbound=double2fraction(glp_get_col_lb(prob,j+1),ctx);
+                var.set_lb(double2fraction(glp_get_col_lb(prob,j+1),ctx));
             if (t!=GLP_LO && t!=GLP_FR)
-                var.range.ubound=double2fraction(glp_get_col_ub(prob,j+1),ctx);
+                var.set_ub(double2fraction(glp_get_col_ub(prob,j+1),ctx));
             if (k!=GLP_CV)
-                var.is_integral=true;
+                var.set_integral(true);
             if (k==GLP_BV) {
-                var.range.tighten_lbound(gen(0),ctx);
-                var.range.tighten_ubound(gen(1),ctx);
+                var.tighten_lbound(0,ctx);
+                var.tighten_ubound(1,ctx);
             }
         }
         for (int i=nr;i>0;--i) {
@@ -1520,17 +1559,6 @@ bool lp_problem::glpk_load_from_file(const char *fname) {
 #endif
 }
 
-void lp_variable::set_type(int t,GIAC_CONTEXT) {
-    switch (t) {
-    case _LP_BINARYVARIABLES:
-        range.tighten_lbound(gen(0),contextptr);
-        range.tighten_ubound(gen(1),contextptr);
-    case _LP_INTEGERVARIABLES:
-        is_integral=true;
-        break;
-    }
-}
-
 bool assign_variable_types(const gen &g,int t,lp_problem &prob) {
     pair<gen,gen> range;
     int i,i0=array_start(prob.ctx);
@@ -1559,7 +1587,7 @@ void parse_limit(const gen &g,int &lim,GIAC_CONTEXT) {
         if (g.is_integer())
             lim=g.val;
         else if (is_inf(g))
-            lim=RAND_MAX;
+            lim=rand_max2;
     }
 }
 
@@ -1612,7 +1640,7 @@ bool parse_options_and_bounds(const_iterateur &it,const_iterateur &itend,lp_prob
                 case _LP_TIME_LIMIT:
                     if (is_strictly_positive(rh,prob.ctx)) {
                         if (is_inf(rh))
-                            prob.settings.time_limit=RAND_MAX;
+                            prob.settings.time_limit=rand_max2;
                         a=_evalf(rh,prob.ctx);
                         if (a.type==_DOUBLE_)
                             prob.settings.time_limit=int(a.DOUBLE_val()*1000.0);
@@ -1770,8 +1798,7 @@ gen _lpsolve(const gen &args,GIAC_CONTEXT) {
         ++it;
         if (it->type==_VECT)
             return gentypeerr(contextptr);
-    }
-    else { //problem is entered manually
+    } else { //problem is entered manually
         is_matrix_form=it->type==_VECT;
         if (is_matrix_form) {
             obj=*it->_VECTptr;
@@ -1779,8 +1806,7 @@ gen _lpsolve(const gen &args,GIAC_CONTEXT) {
                 prob.set_objective(obj,gen(0));
                 prob.create_variables(obj.size());
             }
-        }
-        else {
+        } else {
             prob.add_identifiers_from(*it);
             gen obj_ct;
             if (!prob.lincomb_coeff(*it,obj,obj_ct))
@@ -1801,14 +1827,14 @@ gen _lpsolve(const gen &args,GIAC_CONTEXT) {
             for (int i=0;i<prob.nv();++i) {
                 lp_variable &var=prob.variables[i];
                 vecteur row(prob.nv(),gen(0));
-                if (!is_inf(var.range.lbound)) {
+                if (!is_inf(var.range().lb())) {
                     row[i]=gen(1);
-                    prob.constr.append(row,var.range.lbound,_LP_GEQ);
+                    prob.constr.append(row,var.range().lb(),_LP_GEQ);
                     break;
                 }
-                else if (!is_inf(var.range.ubound)) {
+                else if (!is_inf(var.range().ub())) {
                     row[i]=gen(1);
-                    prob.constr.append(row,var.range.ubound,_LP_LEQ);
+                    prob.constr.append(row,var.range().ub(),_LP_LEQ);
                     break;
                 }
             }
@@ -1832,7 +1858,7 @@ gen _lpsolve(const gen &args,GIAC_CONTEXT) {
         case _LP_NONNEGINT:
             var.set_type(_LP_INTEGERVARIABLES,contextptr);
         case _LP_NONNEGATIVE:
-            var.range.tighten_lbound(gen(0),contextptr);
+            var.tighten_lbound(0,contextptr);
             break;
         }
     }
@@ -1850,7 +1876,7 @@ gen _lpsolve(const gen &args,GIAC_CONTEXT) {
     }
     vector<lp_variable>::const_iterator vt=prob.variables.begin();
     for (;vt!=prob.variables.end();++vt) {
-        if (vt->is_integral && is_zero(vt->range.lbound) && is_one(vt->range.ubound)) {
+        if (vt->is_integral() && is_zero(vt->range().lb()) && is_one(vt->range().ub())) {
             prob.settings.has_binary_vars=true;
             break;
         }
@@ -1862,7 +1888,7 @@ gen _lpsolve(const gen &args,GIAC_CONTEXT) {
         return vecteur(0);
     case _LP_UNBOUNDED:
         prob.message("Error: problem has unbounded solution",true);
-        return makevecteur(prob.settings.maximize?inf:minf,vecteur(0));
+        return makevecteur(prob.settings.maximize?plus_inf:minus_inf,vecteur(0));
     case _LP_ERROR:
         return undef;
     default: //_LP_SOLVED

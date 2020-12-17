@@ -83,27 +83,52 @@ struct lp_stats {
     lp_stats();
 };
 
-struct lp_range {
+class lp_range {
     gen lbound;
     gen ubound;
-    inline void tighten_lbound(const gen &l,GIAC_CONTEXT) { lbound=max(lbound,l,contextptr); }
-    inline void tighten_ubound(const gen &u,GIAC_CONTEXT) { ubound=min(ubound,u,contextptr); }
-    inline bool is_unrestricted_below() { return is_inf(lbound); }
-    inline bool is_unrestricted_above() { return is_inf(ubound); }
+    void assign(const lp_range &other) { lbound=other.lb(); ubound=other.ub(); }
+public:
     lp_range();
+    lp_range(const lp_range &other) { assign(other); }
+    ~lp_range() { }
+    lp_range &operator =(const lp_range &other) { assign(other); return *this; }
+    const gen &lb() const { return lbound; }
+    const gen &ub() const { return ubound; }
+    void set_lb(const gen &L) { lbound=L; }
+    void set_ub(const gen &U) { ubound=U; }
+    void tighten_lbound(const gen &l,GIAC_CONTEXT) { if (is_strictly_greater(l,lbound,contextptr)) lbound=l; }
+    void tighten_ubound(const gen &u,GIAC_CONTEXT) { if (is_strictly_greater(ubound,u,contextptr)) ubound=u; }
+    bool is_unrestricted_below() const { return is_inf(lbound); }
+    bool is_unrestricted_above() const { return is_inf(ubound); }
 };
 
-struct lp_variable {
-    bool is_integral;
-    int sign_type;
-    lp_range range;
-    std::string name;
+class lp_variable {
+    bool _is_integral;
+    int _sign_type;
+    lp_range _range;
+    std::string _name;
     double pseudocost[2];
     int nbranch[2];
+    void assign(const lp_variable &other);
+public:
     lp_variable();
+    lp_variable(const lp_variable &other) { assign(other); }
+    ~lp_variable() { }
+    lp_variable &operator =(const lp_variable &other) { assign(other); return *this; }
+    bool is_integral() const { return _is_integral; }
+    void set_integral(bool yes) { _is_integral = yes; }
+    int sign_type() const { return _sign_type; }
+    void set_sign_type(int type) { _sign_type=type; }
+    const lp_range &range() const { return _range; }
+    const std::string &name() const { return _name; }
+    void set_name(const std::string &s) { _name=s; }
     void set_type(int t,GIAC_CONTEXT);
+    void set_lb(const gen &L) { _range.set_lb(L); }
+    void set_ub(const gen &U) { _range.set_ub(U); }
+    void tighten_lbound(const gen &L,GIAC_CONTEXT) { _range.tighten_lbound(L,contextptr); }
+    void tighten_ubound(const gen &U,GIAC_CONTEXT) { _range.tighten_ubound(U,contextptr); }
     void update_pseudocost(double delta,double fr,int dir);
-    double score(double fr);
+    double score(double fr) const;
 };
 
 struct lp_constraints {
@@ -111,8 +136,8 @@ struct lp_constraints {
     vecteur rhs;
     ints rv;
     std::vector<double> score;
-    inline int nrows() { return lhs.size(); }
-    inline int ncols() { return lhs.empty()?0:lhs.front()._VECTptr->size(); }
+    int nrows() { return lhs.size(); }
+    int ncols() { return lhs.empty()?0:lhs.front()._VECTptr->size(); }
     void append(const vecteur &lh,const gen &rh,int relation_type);
     vecteur column(int index);
     void duplicate_column(int index);
@@ -126,7 +151,7 @@ struct lp_constraints {
     void remove(int index);
 };
 
-struct lp_node;
+class lp_node;
 
 struct lp_problem {
     const context *ctx;
@@ -146,8 +171,8 @@ struct lp_problem {
         ctx=contextptr;
         settings=lp_settings();
     }
-    inline int nc() { return constr.lhs.size(); }
-    inline int nv() { return variables.size(); }
+    int nc() { return constr.lhs.size(); }
+    int nv() { return variables.size(); }
     void message(const char* msg,bool err=false);
     void report_status(const char* msg,int count);
     void add_identifiers_from(const gen &g);
@@ -174,7 +199,7 @@ struct lp_problem {
     bool glpk_load_from_file(const char *fname);
 };
 
-struct lp_node {
+class lp_node {
     lp_problem *prob;
     int depth;
     std::vector<lp_range> ranges;
@@ -185,9 +210,30 @@ struct lp_node {
     int most_fractional;
     std::map<int,double> fractional_vars;
     ints cut_indices;
-    inline bool is_integer_feasible() { return is_zero(infeas); }
-    bool is_var_fractional(int index);
-    gen fracpart(const gen &g);
+    void assign(const lp_node &other);
+    gen fracpart(const gen &g) const;
+public:
+    lp_node() { }
+    lp_node(const lp_node &other) { assign(other); }
+    ~lp_node() { }
+    lp_node &operator =(const lp_node &other) { assign(other); return *this; }
+    lp_problem *get_prob() const { return prob; }
+    void set_prob(lp_problem *p) { prob=p; }
+    void resize_ranges(size_t s) { ranges.resize(s); }
+    const std::vector<lp_range> &get_ranges() const { return ranges; }
+    lp_range &get_range(int i) { return ranges[i]; }
+    int get_depth() const { return depth; }
+    void set_depth(int d) { depth=d; }
+    const vecteur &get_solution() const { return solution; }
+    const gen &get_optimum() const { return optimum; }
+    double get_opt_approx() const { return opt_approx; }
+    const gen &get_infeas() const { return infeas; }
+    bool is_integer_feasible() const { return is_zero(infeas); }
+    bool is_var_fractional(int index) const;
+    double get_fractional_var(int index) const;
+    int get_most_fractional() const { return most_fractional; }
+    int get_first_fractional_var() const { return fractional_vars.begin()->first; }
+    int get_last_fractional_var() const { return fractional_vars.rbegin()->first; }
     lp_node create_child();
     int solve_relaxation();
 };

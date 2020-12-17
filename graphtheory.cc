@@ -2230,7 +2230,7 @@ gen _random_tree(const gen &g,GIAC_CONTEXT) {
                 if ((maxd=gv.back().val)<2)
                     return generr("Maximum degree must be at least two");
             } else if (is_inf(gv.back()))
-                maxd=RAND_MAX;
+                maxd=rand_max2;
             else if (gv.back()==at_maple_root)
                 rooted=true;
             else if (gv.back().is_symb_of_sommet(at_equal) &&
@@ -5802,7 +5802,7 @@ gen _clique_stats(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT)
         return gentypeerr(contextptr);
-    int lb=0,ub=RAND_MAX;
+    int lb=0,ub=rand_max2;
     gen dest(undef);
     if (g.subtype==_SEQ__VECT) {
         int len=g._VECTptr->size();
@@ -5821,7 +5821,7 @@ gen _clique_stats(const gen &g,GIAC_CONTEXT) {
                           (is_inf(bnds.back()) && is_positive(bnds.back(),contextptr))))
                     return gentypeerr(contextptr);
                 lb=bnds.front().val;
-                ub=is_inf(bnds.back())?RAND_MAX:bnds.back().val;
+                ub=is_inf(bnds.back())?rand_max2:bnds.back().val;
                 if (lb<0 || ub<0 || lb>ub)
                     return gensizeerr(contextptr);
             } else return gentypeerr(contextptr);
@@ -6236,7 +6236,7 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
         return generr("The input graph is not Hamiltonian");
     /* parse options */
     bool approximate=false,make_distances=false;
-    int time_limit=RAND_MAX;
+    int time_limit=rand_max2;
     for (const_iterateur it=options.begin();it!=options.end();++it) {
         if (*it==at_approx)
             approximate=true;

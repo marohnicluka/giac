@@ -653,6 +653,10 @@ gen graphe::plusinf() {
     return symbolic(at_plus,_IDNT_infinity());
 }
 
+double graphe::rand_uniform() const {
+    return giac::giac_rand(ctx)/(rand_max2+1.0);
+}
+
 /* convert list of lists of integers into vecteur of vecteurs */
 void graphe::ivectors2vecteur(const ivectors &v,vecteur &res,bool sort_all) const {
     res.resize(v.size());
@@ -1797,7 +1801,7 @@ int graphe::maximum_degree() const {
 
 /* return the minimum vertex degree */
 int graphe::minimum_degree() const {
-    int mindeg=RAND_MAX,d;
+    int mindeg=rand_max2,d;
     for (int i=0;i<node_count();++i) {
         if ((d=degree(i))<mindeg)
             mindeg=d;
@@ -5565,7 +5569,7 @@ bool graphe::hakimi(const ivector &L) {
 * return -1 if there are no cycles */
 int graphe::girth(bool odd,int sg) {
     assert(node_queue.empty());
-    int g=RAND_MAX,h,i,j;
+    int g=rand_max2,h,i,j;
     bool hascycle=false;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         unvisit_all_nodes(sg);
@@ -6626,7 +6630,7 @@ bool graphe::demoucron(ivectors &faces,int sg) {
             }
         }
         /* select the first bridge with the smallest number of admissible faces */
-        n=RAND_MAX;
+        n=rand_max2;
         for (ipairs_iter it=admissible_faces.begin();it!=admissible_faces.end();++it) {
             if (it->first<n) {
                 k=it-admissible_faces.begin();
@@ -6862,7 +6866,7 @@ int graphe::planar_embedding(ivectors &faces) {
 void graphe::periphericity(const ivector &outer_face,ivector &p) {
     assert(node_queue.empty());
     int level,i,j;
-    std::fill(p.begin(),p.end(),RAND_MAX);
+    std::fill(p.begin(),p.end(),rand_max2);
     for (ivector_iter jt=outer_face.begin();jt!=outer_face.end();++jt) {
         p[*jt]=0;
     }
@@ -7338,7 +7342,7 @@ void graphe::make_random_planar(double p,int connectivity) {
     }
 }
 
-/* generate edges in this graph */
+/* generate random edges in this graph */
 void graphe::erdos_renyi(double p) {
     int n=node_count(),m=std::floor(p),i,j;
     bool isdir=is_directed();
@@ -7347,7 +7351,8 @@ void graphe::erdos_renyi(double p) {
         for (int k=0;k<(isdir?2:1);++k) {
             i=1; j=-1;
             while (i<n) {
-                j+=1+std::floor(std::log(1-rand_uniform())/std::log(1-p));
+                double r=rand_uniform();
+                j+=1+std::floor(std::log(1-r)/std::log(1-p));
                 while (j>=i && i<n) {
                     j-=i;
                     ++i;
@@ -8045,8 +8050,8 @@ gen graphe::ransampl::data() const {
 }
 
 int graphe::ransampl::generate() const {
-    double ran1=giac_rand(ctx)/(RAND_MAX+1.0);
-    double ran2=giac_rand(ctx)/(RAND_MAX+1.0);
+    double ran1=giac_rand(ctx)/(rand_max2+1.0);
+    double ran2=giac_rand(ctx)/(rand_max2+1.0);
     int i=std::floor(n*ran1);
     return is_strictly_greater(prob[i],ran2,ctx)?i:alias[i];
 }
@@ -8075,7 +8080,7 @@ graphe::bucketsampler::bucketsampler(const ivector &W,GIAC_CONTEXT) {
 }
 
 int graphe::bucketsampler::generate() {
-    int u=giac_rand(ctx)/(RAND_MAX+1.0)*double(total_weight),i;
+    int u=giac_rand(ctx)/(rand_max2+1.0)*double(total_weight),i;
     long cweight=0;
     for (map<int,ivector>::const_reverse_iterator it=levels.rbegin();it!=levels.rend();++it) {
         cweight+=level_weight[it->first];
@@ -8088,7 +8093,7 @@ int graphe::bucketsampler::generate() {
     double r,frac;
     int idx_in_level,idx,sz=level.size();
     do {
-        r=giac_rand(ctx)/(RAND_MAX+1.0)*double(sz);
+        r=giac_rand(ctx)/(rand_max2+1.0)*double(sz);
         idx_in_level=std::floor(r);
         frac=r-idx_in_level;
         idx=level[idx_in_level];
@@ -9732,9 +9737,9 @@ bool graphe::bipartite_matching_bfs(ivector &dist) {
         if (it->number()==0) {
             dist[u+1]=0;
             node_queue.push(u);
-        } else dist[u+1]=RAND_MAX;
+        } else dist[u+1]=rand_max2;
     }
-    dist.front()=RAND_MAX;
+    dist.front()=rand_max2;
     while (!node_queue.empty()) {
         u=node_queue.front();
         node_queue.pop();
@@ -9743,14 +9748,14 @@ bool graphe::bipartite_matching_bfs(ivector &dist) {
             for (ivector_iter it=U.neighbors().begin();it!=U.neighbors().end();++it) {
                 v=*it;
                 vertex &V=node(v);
-                if (dist[V.number()]==RAND_MAX) {
+                if (dist[V.number()]==rand_max2) {
                     dist[V.number()]=dist[u+1]+1;
                     node_queue.push(V.number()-1);
                 }
             }
         }
     }
-    return dist.front()!=RAND_MAX;
+    return dist.front()!=rand_max2;
 }
 
 bool graphe::bipartite_matching_dfs(int u,ivector &dist) {
@@ -9768,7 +9773,7 @@ bool graphe::bipartite_matching_dfs(int u,ivector &dist) {
                 }
             }
         }
-        dist[u]=RAND_MAX;
+        dist[u]=rand_max2;
         return false;
     }
     return true;
@@ -10025,7 +10030,7 @@ int graphe::hamcond(bool make_closure) {
     /* test biconnectivity, complexity O(n) */
     if (!is_biconnected())
         return 0;
-    int mindeg=RAND_MAX,deg,n=node_count(),m=edge_count();
+    int mindeg=rand_max2,deg,n=node_count(),m=edge_count();
     ivector d=vecteur_2_vector_int(degree_sequence());
     /* Dirac criterion, complexity O(n) */
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
@@ -10280,7 +10285,7 @@ int graphe::tsp::minimal_cut(int nn,int nedg,const ivector &beg,
     ivector &ADJ=mincut_data[11]; if (int(ADJ.size())<nn) ADJ.resize(nn);
     ivector &SUM=mincut_data[12]; if (int(SUM.size())<nn) SUM.resize(nn);
     ivector &CUT=mincut_data[13]; if (int(CUT.size())<nn) CUT.resize(nn);
-    min_cut=RAND_MAX;
+    min_cut=rand_max2;
     while (NV>1) {
         for (I=0;I<NV;I++) SUM[I]=0.0;
         for (I=1;I<=NV;I++) {
@@ -10553,7 +10558,7 @@ bool graphe::tsp::find_subgraph_subtours(ivectors &sv,solution_status &status) {
     parm.sr_heur=GLP_OFF;       // disable simple rounding heuristic (according to A. Makhorin)
     parm.cb_func=&callback;     // MIP callback
     parm.cb_info=static_cast<void*>(this);
-    parm.tm_lim=sg>=0?5000:RAND_MAX;            // time limit
+    parm.tm_lim=sg>=0?5000:rand_max2;            // time limit
     parm.bt_tech=sg<0?GLP_BT_BPH:GLP_BT_BLB;    // backtracking technique
     parm.mip_gap=sg<0?0.0:1e-4;  // MIP gap relative tolerance
     bool retval=true;
@@ -12561,7 +12566,7 @@ int graphe::edge_connectivity() {
     assert(n>=2 && !is_directed());
     set<int> D,A;
     vector<map<int,gen> > flow;
-    int p,lambda=RAND_MAX,d,v,w,lambda_vw,maxdeg,i;
+    int p,lambda=rand_max2,d,v,w,lambda_vw,maxdeg,i;
     /* set lambda to its upper bound */
     for (i=0;i<n;++i) {
         if ((d=degree(i))<lambda) {
@@ -12627,7 +12632,7 @@ int graphe::vertex_pair_connectivity(int v,int w) {
 
 /* return the vertex connectivity of an undirected graph */
 int graphe::vertex_connectivity() {
-    int n=node_count(),k=RAND_MAX,mindeg=RAND_MAX,deg,v;
+    int n=node_count(),k=rand_max2,mindeg=rand_max2,deg,v;
     for (int i=0;i<n;++i) {
         if ((deg=degree(i))<mindeg) {
             v=i;
@@ -13379,7 +13384,7 @@ int graphe::mvc_solver::solve(ivector &cover,int k) {
         else {
             graphe H(G->giac_context(),false);
             G->induce_subgraph(V,H);
-            H.find_maximum_matching(matching);
+            H.find_maximal_matching(matching);
         }
         glp_set_row_bnds(ilp,last_row,GLP_LO,matching.size(),0);
     }

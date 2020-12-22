@@ -3247,14 +3247,14 @@ void graphe::maximal_independent_set(ivector &ind) const {
 graphe::ipair graphe::forest_root_info(const ivector &forest,int v) {
     assert(v>=0 && v<int(forest.size()));
     int p=v,q,d=0;
-    do {
+    while (true) {
         q=forest[p];
         assert(q>-2);
         if (q>=0) {
             ++d;
             p=q;
-        }
-    } while (q>=0);
+        } else break;
+    }
     return make_pair(p,d);
 }
 
@@ -3263,12 +3263,12 @@ bool graphe::find_augmenting_path(ivector &ap,map<int,int> &matching) {
     ap.clear();
     int n=node_count();
     ivector forest(n,-2),blossom,part;
-    vector<bool> in_blossom(n,false);
-    ivectors blossom_adjacents;
-    ipairs blossom_matched_edges,blossom_inner_edges;
+    bvector in_blossom(n,false);
+    ivectors bls_adj;
+    ipairs bls_in_edg;
     unvisit_all_edges();
     unvisit_all_nodes();
-    /* make all matched edges visited */
+    /* mark all matched edges */
     map<int,int>::const_iterator mit;
     for (mit=matching.begin();mit!=matching.end();++mit) {
         set_edge_visited(mit->first,mit->second);
@@ -3307,7 +3307,7 @@ bool graphe::find_augmenting_path(ivector &ap,map<int,int> &matching) {
             }
             if (w<0) break;
             if (forest[w]==-2) {
-                /* w is not in forest, w is matched, add edges (v,w) and (w,x) to forest */
+                /* w is not in forest, w is matched to x, add edges (v,w) and (w,x) to forest */
                 assert(matching.find(w)!=matching.end());
                 forest[w]=v;
                 x=matching[w];
@@ -3320,7 +3320,7 @@ bool graphe::find_augmenting_path(ivector &ap,map<int,int> &matching) {
                     ;
                 } else {
                     if (root_info.first!=r) {
-                        /* found an augmenting path, report it */
+                        /* augmenting path found, report it */
                         int p=v;
                         do { ap.push_back(p); } while ((p=forest[p])>=0);
                         std::reverse(ap.begin(),ap.end());
@@ -3328,7 +3328,7 @@ bool graphe::find_augmenting_path(ivector &ap,map<int,int> &matching) {
                         do { ap.push_back(p); } while ((p=forest[p])>=0);
                         return true;
                     } else {
-                        /* blossom found, construct it and record all relevant edges */
+                        /* blossom found, record its vertices */
                         unvisit_all_nodes();
                         int p=v;
                         do {
@@ -3348,74 +3348,55 @@ bool graphe::find_augmenting_path(ivector &ap,map<int,int> &matching) {
                             in_blossom[*it]=true;
                         }
                         int bs=blossom.size(),u;
-                        for (int i=1;i<bs;i+=2) {
-                            assert(i+1<bs);
-                            blossom_matched_edges.push_back(make_pair(blossom[i],blossom[i+1]));
-                        }
                         set<int> adj;
                         for (ivector_iter it=blossom.begin();it!=blossom.end();++it) {
                             const vertex &V=node(*it);
-                            for (ivector_iter nt=V.neighbors().begin();nt!=V.neighbors().end();++nt) {
-                                if (!in_blossom[*nt])
-                                    adj.insert(*nt);
-                            }
-                            for (ivector_iter jt=it+1;jt!=blossom.end();++jt) {
-                                if (has_edge(*it,*jt))
-                                    blossom_inner_edges.push_back(make_pair(*it,*jt));
+                            for (ivector_iter jt=V.neighbors().begin();jt!=V.neighbors().end();++jt) {
+                                if (!in_blossom[*jt])
+                                    adj.insert(*jt);
+                                else if (find(bls_in_edg.begin(),bls_in_edg.end(),make_pair(*jt,*it))==bls_in_edg.end())
+                                    bls_in_edg.push_back(make_pair(*it,*jt));
                             }
                         }
                         for (set<int>::const_iterator it=adj.begin();it!=adj.end();++it) {
-                            ivector adjacents;
-                            adjacents.push_back(*it);
+                            ivector av;
+                            av.push_back(*it);
                             const vertex &V=node(*it);
-                            for (ivector_iter nt=V.neighbors().begin();nt!=V.neighbors().end();++nt) {
-                                if (in_blossom[*nt])
-                                    adjacents.push_back(*nt);
+                            for (ivector_iter jt=V.neighbors().begin();jt!=V.neighbors().end();++jt) {
+                                if (in_blossom[*jt])
+                                    av.push_back(*jt);
                             }
-                            blossom_adjacents.push_back(adjacents);
+                            bls_adj.push_back(av);
                         }
-                        /* contract the blossom */
+                        /* contract blossom and recurse */
                         for (int i=0;i<bs;++i) {
                             remove_edge(blossom[i],blossom[(i+1)%bs]);
                         }
-                        for (ipairs_iter it=blossom_inner_edges.begin();it!=blossom_inner_edges.end();++it) {
+                        for (ipairs_iter it=bls_in_edg.begin();it!=bls_in_edg.end();++it) {
                             remove_edge(*it);
                         }
                         r=blossom.front(); // the root of the blossom
-                        for (ivectors_iter it=blossom_adjacents.begin();it!=blossom_adjacents.end();++it) {
+                        for (ivectors_iter it=bls_adj.begin();it!=bls_adj.end();++it) {
                             u=it->front();
                             for (ivector_iter ait=it->begin()+1;ait!=it->end();++ait) {
                                 remove_edge(u,*ait);
                             }
                             add_edge(u,r);
                         }
-                        /* remove the contracted matched edges from matching and recurse */
-                        for (ipairs_iter it=blossom_matched_edges.begin();it!=blossom_matched_edges.end();++it) {
-                            assert((mit=matching.find(it->first))!=matching.end());
-                            assert(mit->second==it->second);
-                            matching.erase(it->first);
-                            assert((mit=matching.find(it->second))!=matching.end());
-                            assert(mit->second==it->first);
-                            matching.erase(it->second);
-                        }
                         bool res=find_augmenting_path(ap,matching);
-                        /* restore the blossom and all edges incident to it */
+                        /* restore blossom and all edges incident to it */
                         for (int i=0;i<bs;++i) {
                             add_edge(blossom[i],blossom[(i+1)%bs]);
                         }
-                        for (ivectors_iter it=blossom_adjacents.begin();it!=blossom_adjacents.end();++it) {
+                        for (ivectors_iter it=bls_adj.begin();it!=bls_adj.end();++it) {
                             u=it->front();
                             remove_edge(u,r);
                             for (ivector_iter jt=it->begin()+1;jt!=it->end();++jt) {
                                 add_edge(u,*jt);
                             }
                         }
-                        for (ipairs_iter it=blossom_inner_edges.begin();it!=blossom_inner_edges.end();++it) {
+                        for (ipairs_iter it=bls_in_edg.begin();it!=bls_in_edg.end();++it) {
                             add_edge(*it);
-                        }
-                        for (ipairs_iter it=blossom_matched_edges.begin();it!=blossom_matched_edges.end();++it) {
-                            matching[it->first]=it->second;
-                            matching[it->second]=it->first;
                         }
                         if (!res)
                             return false; // if contracted graph has no augmenting path then there is none in this graph
@@ -3427,15 +3408,14 @@ bool graphe::find_augmenting_path(ivector &ap,map<int,int> &matching) {
                             }
                         }
                         if (root<0)
-                            return true; // the augmenting path does not contain the blossom root
-                        if (root==0 || matching.find(r)->second==ap[root-1]) {
-                            std::reverse(ap.begin(),ap.end());
-                            root=ap.size()-1-root;
+                            return true; // augmenting path does not contain the blossom root
+                        if (root!=int(ap.size())-1) {
+                            if (root==0 || matching[r]==ap[root-1]) {
+                                std::reverse(ap.begin(),ap.end());
+                                root=ap.size()-1-root;
+                            }
                         }
-                        int pos,dir,i=0;
-                        for (;i+1!=root;++i);
-                        /* reached the blossom */
-                        const vertex &V=node(ap[i]);
+                        const vertex &V=node(ap[root-1]);
                         u=-1;
                         for (ivector_iter it=V.neighbors().begin();it!=V.neighbors().end();++it) {
                             if (in_blossom[*it]) {
@@ -3447,10 +3427,11 @@ bool graphe::find_augmenting_path(ivector &ap,map<int,int> &matching) {
                         if (u==r)
                             return true; // the blossom is avoided
                         /* lift the augmenting path */
+                        int pos,dir;
                         part.clear();
                         pos=find(blossom.begin(),blossom.end(),u)-blossom.begin();
                         assert(pos>0 && pos<bs);
-                        dir=matching[u]==blossom[pos-1]?-1:1;
+                        dir=(matching[u]==blossom[pos-1]?-1:1);
                         for (;pos>0 && pos<bs;pos+=dir) {
                             part.push_back(blossom[pos]);
                         }
@@ -3473,6 +3454,13 @@ void graphe::find_maximum_matching(ipairs &M) {
     map<int,int> matching;
     while (find_augmenting_path(ap,matching)) {
         n=ap.size();
+        assert(n%2==0);
+        for (int k=1;k<n-1;k+=2) {
+            i=ap[k];
+            j=ap[k+1];
+            matching.erase(i);
+            matching.erase(j);
+        }
         for (int k=0;k<n;k+=2) {
             i=ap[k];
             j=ap[k+1];
@@ -3494,7 +3482,7 @@ void graphe::find_maximal_matching(ipairs &matching,int sg) const {
     assert(!is_directed());
     int i,j,N=node_count(),n=sg<0?N:subgraph_size(sg);
     ivector match(n,-1),V,V_pos(N,-1);
-    vector<bool> node_marked(n,false);
+    bvector node_marked(n,false);
     if (sg>=0)
         get_subgraph(sg,V);
     else {
@@ -3628,7 +3616,7 @@ void graphe::fold_face(const ivector &face,bool subdivide,int &label) {
     if (k==0)
         return;
     if (subdivide) {
-        vector<bool> visited(n,false);
+        bvector visited(n,false);
         i=add_node(++label);
         for (ipairs_iter it=chords.begin();it!=chords.end();++it) {
             p=it->first;
@@ -4334,7 +4322,7 @@ void graphe::make_circular_layout(layout &x,const ivector &hull,double A,double 
     make_regular_polygon_layout(x,hull,1.0,elongate);
     if (n==int(hull.size())) // there are no vertices to place inside the circle
         return;
-    vector<bool> is_hull_vertex(n,false);
+    bvector is_hull_vertex(n,false);
     for (ivector_iter it=hull.begin();it!=hull.end();++it) {
         is_hull_vertex[*it]=true;
     }
@@ -4398,7 +4386,7 @@ void graphe::make_tutte_layout(layout &x,const ivector &outer_face) {
     make_regular_polygon_layout(x,outer_face);
     if (n==int(outer_face.size()))
         return; /* there are no vertices to place inside the circle */
-    vector<bool> is_outer(n,false);
+    bvector is_outer(n,false);
     for (ivector_iter it=outer_face.begin();it!=outer_face.end();++it) {
         is_outer[*it]=true;
     }
@@ -5210,13 +5198,14 @@ int graphe::exact_edge_coloring(ivector &colors,int *numcol) {
     ipairs E;
     line_graph(L,E);
     /* find the vertex with maximum degree in G (this graph) */
-    int m=E.size(),maxdeg=0,deg,i,j,k;
+    int m=E.size(),maxdeg=0,deg,i=-1,j,k;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         if ((deg=it->neighbors().size())>maxdeg) {
             maxdeg=deg;
             i=it-nodes.begin();
         }
     }
+    assert(i>=0);
     ivector icol(maxdeg);
     k=0;
     for (j=0;j<m;++j) {
@@ -5255,7 +5244,7 @@ bool graphe::clique_cover(ivectors &cover,int k) {
         int m=matching.size(),n=node_count(),i=0;
         if (k>0 && n-m>k)
             return false;
-        vector<bool> matched(n);
+        bvector matched(n);
         cover.resize(n-m);
         for (ipairs_iter it=matching.begin();it!=matching.end();++it) {
             ivector &clique=cover[i++];
@@ -5263,7 +5252,7 @@ bool graphe::clique_cover(ivectors &cover,int k) {
             matched[(clique.front()=it->first)]=true;
             matched[(clique.back()=it->second)]=true;
         }
-        for (vector<bool>::const_iterator it=matched.begin();it!=matched.end();++it) {
+        for (bvector::const_iterator it=matched.begin();it!=matched.end();++it) {
             if (!*it) {
                 ivector &clique=cover[i++];
                 clique.resize(1);
@@ -6012,7 +6001,7 @@ int graphe::connected_component_count(int sg) {
     return count;
 }
 
-void graphe::strongconnect_dfs(ivectors &components,vector<bool> &onstack,int i,int sg) {
+void graphe::strongconnect_dfs(ivectors &components,bvector &onstack,int i,int sg) {
     vertex &v=node(i);
     v.set_visited(true);
     v.set_disc(disc_time++);
@@ -6047,7 +6036,7 @@ void graphe::strongconnect_dfs(ivectors &components,vector<bool> &onstack,int i,
 void graphe::strongly_connected_components(ivectors &components,int sg) {
     assert(node_stack.empty());
     unvisit_all_nodes(sg);
-    vector<bool> onstack(node_count(),false);
+    bvector onstack(node_count(),false);
     disc_time=0;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         if ((sg<0 || it->subgraph()==sg) && !it->is_visited())
@@ -8252,7 +8241,7 @@ void graphe::layout_best_rotation(layout &x) {
         perim+=point_distance(p,q,tmp);
     }
     double a,b,c,d,tol,angle=0,half_perim=perim/2.0;
-    vector<bool> matched(hull.size());
+    bvector matched(hull.size());
     for (int i=0;i<n;++i) {
         const point &p=hull[i];
         for (int j=i+1;j<n;++j) {
@@ -9249,7 +9238,7 @@ void graphe::compute_st_numbering(int s,int t) {
     st_numbering_dfs(t,preorder);
     L.push_back(s);
     L.push_back(t);
-    vector<bool> sign(n);
+    bvector sign(n);
     ivector::iterator lit;
     bool sign_plus=true,sign_minus=false;
     sign[s]=sign_minus;
@@ -9936,7 +9925,13 @@ gen graphe::aut_generators() const {
     vecteur out(0);
     if (n>0) {
         int *adj=to_array(sz);
-        FILE *f=tmpfile();
+        char buf[L_tmpnam];
+        bool has_temp_file=(tmpnam(buf)!=NULL);
+        string tmpname(has_temp_file?buf:"nauty-autg");
+#ifdef _WIN32
+        tmpname=string("C:\\Users\\Public")+tmpname;
+#endif
+        FILE *f=fopen(tmpname.c_str(),"wb+");
         if (f==NULL) {
             message ("Error: failed to create temporary file");
             return undef;
@@ -9972,6 +9967,8 @@ gen graphe::aut_generators() const {
             ++i;
         }
         fclose(f);
+        if (remove(tmpname.c_str())!=0)
+            message("Warning: failed to remove temporary file");
         delete[] adj;
     }
     return gen(out,_LIST__VECT);
@@ -10695,7 +10692,7 @@ bool graphe::tsp::get_subtours() {
         if (sol==old_sol) return false;
         old_sol=sol;
     }
-    vector<bool> vst(sol.size(),false);
+    bvector vst(sol.size(),false);
     ivector subtour;
     subtour.reserve(sg<0?ne:sg_ne);
     arc a;
@@ -11023,7 +11020,7 @@ void graphe::tsp::farthest_insertion(int index,ivector &hc) {
 void graphe::tsp::perform_3opt_moves(ivector &hc) {
     int n=hc.size()-1,b1,e1,b2,e2,b3,e3,i1,j1,i2,j2,i3,j3,i,j,k,var,iter_count=0,moves_count=0;
     double opt_timeout=5.0+25.0*std::exp(-std::pow(std::max(0,1000-n),2)/2e5);
-    vector<bool> visited(nv);
+    bvector visited(nv);
     ivectors opt_moves;
     double sw,save,maxsave,wb1e1,wb2e2,wb3e3,wb1b2,wb1e2,we1e2;
     bool hb1e2,hb1b2,he1e2;
@@ -11162,7 +11159,7 @@ void graphe::tsp::straighten(ivector &hc) {
     ivectors opt_moves;
     int i,j,k,l,b1,b2,e1,e2,n=hc.size()-1,iter_count=0,moves_count=0;
     double w0;
-    vector<bool> visited(n+1);
+    bvector visited(n+1);
     ivector opt_move(4);
     while (true) {
         ++iter_count;
@@ -11421,9 +11418,8 @@ void graphe::tsp::min_weight_matching_bipartite(const ivector &eind,const dvecto
 }
 
 void graphe::tsp::min_wpm_heur(glp_tree *tree,const ivector &eind) {
-    vector<bool> vertex_matched(nv,false);
-    vector<bool> arc_matched(eind.size(),false);
-    set<int> V;
+    bvector vertex_matched(nv,false),arc_matched(eind.size(),false);
+    iset V;
     int i,j,k,n=eind.size();
     glp_prob *lp=glp_ios_get_prob(tree);
     for (i=0;i<n;++i) {
@@ -11448,7 +11444,7 @@ void graphe::tsp::min_wpm_heur(glp_tree *tree,const ivector &eind) {
         vertex_matched[i]=vertex_matched[j]=true;
     }
     int cnt=0;
-    for (vector<bool>::const_iterator it=arc_matched.begin();it!=arc_matched.end();++it) {
+    for (bvector::const_iterator it=arc_matched.begin();it!=arc_matched.end();++it) {
         if (*it) ++cnt;
         coeff[it-arc_matched.begin()+1]=*it?1.0:0.0;
     }
@@ -11498,7 +11494,7 @@ void graphe::tsp::christofides(ivector &hc) {
     }
     ivector etrail; // eulerian trail
     assert(T.find_eulerian_trail(etrail) && etrail.front()==etrail.back());
-    vector<bool> visited(n,false);
+    bvector visited(n,false);
     for (ivector_iter it=etrail.begin();it!=etrail.end();++it) {
         if (visited[*it])
             continue;
@@ -11600,13 +11596,14 @@ void graphe::tsp::select_branching_variable(glp_tree *tree) {
         assert(!I2.empty());
         N=I2.size();
         double dist,mindist=DBL_MAX;
-        int j0;
+        int j0=-1;
         for (int j=0;j<N;++j) {
             if ((dist=std::abs(0.5-xev[I2[j]]))<mindist) {
                 mindist=dist;
                 j0=j;
             }
         }
+        assert(j0>=0);
         x0=xev[I2[j0]];
         double c,maxc=0.0;
         for (ivector_iter it=I2.begin();it!=I2.end();++it) {
@@ -13184,7 +13181,7 @@ void graphe::contract_subgraph(graphe &G,const ivector &sg,const gen &lb) const 
     G.set_graph_attributes(attributes);
     G.reserve_nodes(node_count()-sg.size()+1);
     int cn=-1,n=node_count();
-    std::vector<bool> in_sg(n,false);
+    bvector in_sg(n,false);
     for (ivector_iter it=sg.begin();it!=sg.end();++it) {
         in_sg[*it]=true;
     }
@@ -13462,8 +13459,9 @@ int graphe::mvc_solver::solve(ivector &cover,int k) {
         }
         return 1;
     default:
-        assert(false);
+        break;
     }
+    assert(false);
 }
 
 void graphe::mvc_solver::branch(glp_tree *tree) {
@@ -13882,7 +13880,7 @@ void graphe::mvc_bipartite(const ivector &U,const ivector &V,ivector &cover,int 
         }
     }
     int n=sg<0?node_count():int(s.size());
-    std::vector<bool> matched(node_count(),false);
+    bvector matched(node_count(),false);
     for (ipairs_iter it=matching.begin();it!=matching.end();++it) {
         matched[it->first]=matched[it->second]=true;
     }

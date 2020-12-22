@@ -15,13 +15,14 @@ int pair_less(const void *p,const void *q) {
 
 void color_graph(int n,int *lab,int *ptn,int *col) {
     pair *lst=(pair*)malloc(n*sizeof(pair));
-    for (int i=0;i<n;++i) {
+    int i=0;
+    for (;i<n;++i) {
         pair *p=&lst[i];
         p->a=col[i];
         p->b=i;
     }
     qsort((void*)lst,(size_t)n,sizeof(pair),pair_less);
-    for (int i=0;i<n;++i) {
+    for (i=0;i<n;++i) {
         pair *p=&lst[i];
         lab[i]=p->b;
         ptn[i]=(i>=n-1 || p->a!=lst[i+1].a)?0:1;

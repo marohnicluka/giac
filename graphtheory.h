@@ -82,7 +82,6 @@ enum distribution_type {
 };
 
 bool is_graphe(const gen &g,std::string &disp_out,GIAC_CONTEXT);
-gen gt_command(gen (*gtfunc)(const gen &,const context *),const char *args,GIAC_CONTEXT);
 
 // GRAPH THEORY GIAC COMMANDS
 

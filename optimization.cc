@@ -80,7 +80,6 @@
 #include "giac.h"
 #include "optimization.h"
 #include "signalprocessing.h"
-#include <sstream>
 #include <bitset>
 
 using namespace std;
@@ -110,7 +109,7 @@ gen simp(const gen &g,GIAC_CONTEXT) {
  * Return true iff the expression 'e' is rational with respect to
  * variables in 'vars'.
  */
-bool is_rational_wrt_vars(const gen &e,const vecteur &vars,GIAC_CONTEXT) {
+bool is_rational_wrt_vars(const gen &e,const vecteur &vars) {
     for (const_iterateur it=vars.begin();it!=vars.end();++it) {
         vecteur l(rlvarx(e,*it));
         if (l.size()>1)
@@ -200,7 +199,7 @@ vecteur solve2(const vecteur &e_orig,const vecteur &vars_orig,GIAC_CONTEXT) {
         *it=num/den;
     }
     for (;i<m;++i) {
-        if (!is_rational_wrt_vars(e_orig_simp[i],vars_orig,contextptr))
+        if (!is_rational_wrt_vars(e_orig_simp[i],vars_orig))
             break;
     }
     if (n==1 || i==m)
@@ -527,7 +526,7 @@ vecteur global_extrema(const gen &f,const vecteur &g,const vecteur &h,const vect
     return min_locations;
 }
 
-int parse_varlist(const gen &g,vecteur &vars,vecteur &ineq,vecteur &initial,GIAC_CONTEXT) {
+int parse_varlist(const gen &g,vecteur &vars,vecteur &ineq,vecteur &initial) {
     vecteur varlist(g.type==_VECT?*g._VECTptr:vecteur(1,g));
     int n=0;
     for (const_iterateur it=varlist.begin();it!=varlist.end();++it) {
@@ -668,7 +667,7 @@ gen _minimize(const gen &args,GIAC_CONTEXT) {
     }
     vecteur vars,initial;
     int n;  // number of variables
-    if ((n=parse_varlist(argv[nargs-1],vars,g,initial,contextptr))==0 || !initial.empty())
+    if ((n=parse_varlist(argv[nargs-1],vars,g,initial))==0 || !initial.empty())
         return gensizeerr(contextptr);
     const gen &f=argv[0];
     gen mn,mx;
@@ -700,7 +699,7 @@ gen _minimize(const gen &args,GIAC_CONTEXT) {
             if (location) {
                 loc.resize(n);
                 gen pos=asol._VECTptr->at(1),v;
-                if (pos.type!=_VECT || pos._VECTptr->size()!=n) return undef;
+                if (pos.type!=_VECT || int(pos._VECTptr->size())!=n) return undef;
                 for (const_iterateur it=pos._VECTptr->begin();it!=pos._VECTptr->end();++it) {
                     if (!it->is_symb_of_sommet(at_equal)) return undef;
                     const_iterateur jt=find(vars.begin(),vars.end(),it->_SYMBptr->feuille._VECTptr->front());
@@ -2005,7 +2004,7 @@ gen _extrema(const gen &g,GIAC_CONTEXT) {
     int nv;
     vecteur vars,ineq,initial;
     // parse variables and their ranges, if given
-    if ((nv=parse_varlist(gv[ngv-1],vars,ineq,initial,contextptr))==0)
+    if ((nv=parse_varlist(gv[ngv-1],vars,ineq,initial))==0)
         return gentypeerr("Failed to parse variables");
     if (nv>32)
         return gendimerr("Too many variables");
@@ -3905,11 +3904,13 @@ gen _convex(const gen &g,GIAC_CONTEXT) {
         } else return gensizeerr(contextptr);
     }
     vecteur diffvars,diffs;
-    stringstream ss;
     int cnt=0;
+    char id_buf[16];
     for (const_iterateur it=depvars.begin();it!=depvars.end();++it) {
-        ss.str(""); ss << " tmp" << ++cnt;
-        diffvars.push_back(identificateur(ss.str().c_str()));
+        string id_name;
+        id_name+=" tmp";
+        id_name+=itoa(++cnt,id_buf,10);
+        diffvars.push_back(identificateur(id_name.c_str()));
         diffs.push_back(derive(symb_of(*it,t),t,contextptr));
     }
     gen F=is_undef(t)?_eval(f,contextptr):makevars(f,t,depvars,diffvars,contextptr);

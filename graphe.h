@@ -831,10 +831,9 @@ public:
     void make_default_labels(vecteur &labels,int n,int n0=0,int offset=-1) const;
     bool labels2iset(const vecteur &labels,iset &s);
     static gen boole(bool b) { return b?VRAI:FAUX; }
-    static gen word2gen(const std::string &word);
+    static std::string int2string(int i);
     static gen str2gen(const std::string &str,bool isstring=false);
     static std::string genstring2str(const gen &g);
-    static std::string gen2str(const gen &g);
     static gen plusinf();
     void ivectors2vecteur(const ivectors &v,vecteur &res,bool sort_all=false) const;
     void reserve_nodes(int n) { assert(nodes.empty()); nodes.reserve(n); }

@@ -86,9 +86,11 @@ gen gt_err(int code) {
 }
 
 gen gt_err(const gen &g,int code) {
-    stringstream ss;
-    ss << g << ": " << gt_error_messages[code];
-    return generr(ss.str().c_str());
+    string str;
+    str+=gen2string(g);
+    str+=": ";
+    str+=gt_error_messages[code];
+    return generr(str.c_str());
 }
 
 void identifier_assign(const identificateur &var,const gen &value,GIAC_CONTEXT) {
@@ -122,6 +124,9 @@ string strip_string(const string &str) {
 }
 
 string make_absolute_file_path(const string &relative_path) {
+#ifdef _WIN32
+    return relative_path;
+#else
     if (relative_path[0]=='/')
         return relative_path;
 #ifdef HAVE_NO_CWD
@@ -155,6 +160,7 @@ string make_absolute_file_path(const string &relative_path) {
             res=res+"/";
     }
     return res;
+#endif // _WIN32
 }
 
 /* returns true iff g is a graph and writes the basic info to 'display_str' */
@@ -182,11 +188,6 @@ bool is_graphe(const gen &g,string &disp_out,GIAC_CONTEXT) {
         disp_out=name+": ";
     disp_out=disp_out+(isdir?"a ":"an ")+dir_spec+" "+weight_spec+" graph with "+nvert+" and "+nedg;
     return true;
-}
-
-/* evaluates the given command with the given inputs and returns the result */
-gen gt_command(gen (*gtfunc)(const gen &,const context *),const char *args,GIAC_CONTEXT) {
-    return (*gtfunc)(graphe::str2gen(args),contextptr);
 }
 
 bool vertices_from_integer_or_vecteur(const gen &g,graphe &G) {
@@ -468,11 +469,12 @@ bool compute_product_of_graphs(const vecteur &gv,graphe &P,bool cartesian,GIAC_C
     return true;
 }
 
-void add_prefix_to_vertex_label(gen &label,int prefix, stringstream &ss) {
-    ss.str("");
-    ss << prefix << ":"
-       << (label.type==_STRNG?graphe::genstring2str(label):graphe::gen2str(label));
-    label=graphe::str2gen(ss.str(),true);
+void add_prefix_to_vertex_label(gen &label,int prefix) {
+    string str;
+    str+=graphe::int2string(prefix);
+    str+=":";
+    str+=label.type==_STRNG?graphe::genstring2str(label):giac::gen2string(label);
+    label=graphe::str2gen(str,true);
 }
 
 int graphunion(graphe &G,const vecteur &gv,bool disjoint) {
@@ -498,7 +500,7 @@ int graphunion(graphe &G,const vecteur &gv,bool disjoint) {
         vecteur V=Gk.vertices();
         for (iterateur it=V.begin();it!=V.end();++it) {
             if (disjoint)
-                add_prefix_to_vertex_label(*it,k,ss);
+                add_prefix_to_vertex_label(*it,k);
             G.add_node(*it,Gk.node_attributes(it-V.begin()));
         }
         Gk.get_edges_as_pairs(E);
@@ -1079,10 +1081,8 @@ gen _import_graph(const gen &g,GIAC_CONTEXT) {
     if (!has_suffix(filename,".dot") && !has_suffix(filename,".gv"))
         filename=filename+".dot";
     filename=make_absolute_file_path(filename);
-    if (!G.read_dot(filename)) {
+    if (!G.read_dot(filename))
         gt_err(_GT_ERR_READING_FAILED);
-        return undef;
-    }
     gen_map m;
     gen l;
     for (int i=0;i<G.node_count();++i) {
@@ -1523,11 +1523,6 @@ gen _cycle_graph(const gen &g,GIAC_CONTEXT) {
     if (G.node_count()<3)
         return generr("At least 3 vertices are required");
     G.make_cycle_graph();
-    /*
-    stringstream ss;
-    ss << "C" << G.node_count();
-    G.set_name(ss.str());
-    */
     return G.to_gen();
 }
 static const char _cycle_graph_s[]="cycle_graph";
@@ -4336,12 +4331,11 @@ gen _graph_join(const gen &g,GIAC_CONTEXT) {
     if (G1.is_weighted() || G2.is_weighted())
         return gt_err(_GT_ERR_UNWEIGHTED_GRAPH_REQUIRED);
     vecteur V=G1.vertices(),W=G2.vertices();
-    stringstream ss;
     for (iterateur it=V.begin();it!=V.end();++it) {
-        add_prefix_to_vertex_label(*it,1,ss);
+        add_prefix_to_vertex_label(*it,1);
     }
     for (iterateur it=W.begin();it!=W.end();++it) {
-        add_prefix_to_vertex_label(*it,2,ss);
+        add_prefix_to_vertex_label(*it,2);
     }
     graphunion(G,gv,true);
     for (const_iterateur it=V.begin();it!=V.end();++it) {
@@ -4411,7 +4405,6 @@ gen _interval_graph(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     const vecteur &gv=*g._VECTptr;
     gen a,b;
-    stringstream ss;
     int n=gv.size();
     vecteur V;
     V.reserve(n);
@@ -4422,9 +4415,11 @@ gen _interval_graph(const gen &g,GIAC_CONTEXT) {
         b=it->_SYMBptr->feuille._VECTptr->back();
         if (!graphe::is_real_number(a) || !graphe::is_real_number(b))
             return generrtype("Expected an interval of reals");
-        ss.str("");
-        ss << a << " .. " << b;
-        V.push_back(graphe::str2gen(ss.str(),true));
+        string str;
+        str+=gen2string(a);
+        str+="..";
+        str+=gen2string(b);
+        V.push_back(graphe::str2gen(str,true));
     }
     graphe G(contextptr);
     G.add_nodes(V);

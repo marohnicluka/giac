@@ -21,12 +21,12 @@
 #include "giac.h"
 #include "graphe.h"
 #include "graphtheory.h"
-#include <sstream>
 #include <ctype.h>
 #include <math.h>
 #include <ctime>
 #include <bitset>
 #include <stdio.h>
+#include <stdlib.h>
 #ifdef HAVE_LIBNAUTY
 #include "nautywrapper.h"
 #endif
@@ -1032,45 +1032,41 @@ void graphe::make_default_labels(vecteur &labels,int n,int n0,int offset) const 
 
 /* create identifier */
 gen graphe::make_idnt(const char* name,int index,bool intern) {
-    stringstream ss;
-    if (intern)
-        ss << " ";
-    ss << string(name);
-    if (index>=0)
-        ss << index;
-    return identificateur(ss.str().c_str());
+    string id;
+    if (intern) id+=" ";
+    id+=name;
+    if (index>=0) id+=int2string(index);
+    return identificateur(id.c_str());
 }
 
-/* convert word to gen of type string */
-gen graphe::word2gen(const string &word) {
-    stringstream ss;
-    gen g;
-    ss << "\"" << word << "\"";
-    ss >> g;
-    return g;
+/* convert integer to string */
+std::string graphe::int2string(int i) {
+    char buf[64];
+    return itoa(i,buf,10);
 }
 
 /* convert string to gen */
 gen graphe::str2gen(const string &str,bool isstring) {
-    stringstream ss(str);
     if (isstring) {
-        string buf;
         vector<string> words;
         gen space=_char(32,context0);
-        while (ss >> buf) {
-            words.push_back(buf);
+        char *cstr=new char[str.size()+1];
+        strcpy(cstr,str.c_str());
+        char *p=strtok(cstr," ");
+        while (p!=NULL) {
+            words.push_back(p);
+            p=strtok(NULL," ");
         }
         vecteur res;
         for (vector<string>::const_iterator it=words.begin();it!=words.end();++it) {
-            res.push_back(word2gen(*it));
+            res.push_back(string2gen(*it,false));
             if (it+1!=words.end())
                 res.push_back(space);
         }
+        delete[] cstr;
         return _cat(change_subtype(res,_SEQ__VECT),context0);
     }
-    gen g;
-    ss >> g;
-    return g;
+    return gen(str,context0);
 }
 
 /* convert gen string to std::string (no quotes) */
@@ -1078,13 +1074,6 @@ string graphe::genstring2str(const gen &g) {
     assert(g.type==_STRNG);
     int len=_size(g,context0).val;
     return string(g._STRNGptr->begin(),g._STRNGptr->begin()+len);
-}
-
-/* convert gen to string */
-string graphe::gen2str(const gen &g) {
-    stringstream ss;
-    ss << g;
-    return ss.str();
 }
 
 /* return random permutation of {0,1,..,n-1} */
@@ -1227,11 +1216,9 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         relabel_nodes(labels);
     } else if (name=="coxeter") {
         read_special(coxeter_graph);
-        stringstream ss;
         for (int i=1;i<=7;++i) {
-            ss.str("");
-            ss << "a" << i;
-            hull.push_back(node_index(str2gen(ss.str(),true)));
+            string ai=string("a")+int2string(i);
+            hull.push_back(node_index(str2gen(ai,true)));
         }
         make_circular_layout(x,hull,3.5);
     } else if (name=="desargues") {
@@ -8406,7 +8393,7 @@ void graphe::draw_edges(vecteur &drawing,const layout &x) {
             width=default_edge_width;
             if ((ait=attr.find(_GT_ATTRIB_STYLE))!=attr.end()) {
                 const gen &val=ait->second;
-                string s=val.type==_STRNG?genstring2str(val):gen2str(val);
+                string s=val.type==_STRNG?genstring2str(val):gen2string(val);
                 if (s=="dashed")
                     style=_DASH_LINE;
                 else if (s=="dotted")
@@ -8453,7 +8440,7 @@ void graphe::draw_nodes(vecteur &drawing,const layout &x) const {
         shape=_POINT_POINT;
         if ((ait=attr.find(_GT_ATTRIB_SHAPE))!=attr.end()) {
             const gen &val=ait->second;
-            string s=val.type==_STRNG?genstring2str(val):gen2str(val);
+            string s=val.type==_STRNG?genstring2str(val):gen2string(val);
             if (s=="box" || s=="square")
                 shape=_POINT_CARRE;
             else if (s=="triangle")
@@ -8787,20 +8774,15 @@ bool graphe::is_planar() {
 /* create set of vertices for product P of this graph and graph G */
 void graphe::make_product_nodes(const graphe &G,graphe &P) const {
     int n=node_count(),m=G.node_count();
-    stringstream ss;
     P.reserve_nodes(n*m);
     for (int i=0;i<n;++i) {
         for (int j=0;j<m;++j) {
             const gen &v=node_label(i),&w=G.node_label(j);
-            ss.str("");
-            if (v.type==_STRNG)
-                ss << genstring2str(v);
-            else ss << v;
-            ss << ":";
-            if (w.type==_STRNG)
-                ss << genstring2str(w);
-            else ss << w;
-            P.add_node(str2gen(ss.str(),true));
+            string str;
+            str+=v.type==_STRNG?genstring2str(v):gen2string(v);
+            str+=":";
+            str+=w.type==_STRNG?genstring2str(w):gen2string(w);
+            P.add_node(str2gen(str,true));
         }
     }
 }
@@ -9929,7 +9911,8 @@ gen graphe::aut_generators() const {
         bool has_temp_file=(tmpnam(buf)!=NULL);
         string tmpname(has_temp_file?buf:"nauty-autg");
 #ifdef _WIN32
-        tmpname=string("C:\\Users\\Public")+tmpname;
+        string tmpdir=getenv("TEMP")?getenv("TEMP"):"c:\\Users\\Public";
+        tmpname=tmpdir+tmpname;
 #endif
         FILE *f=fopen(tmpname.c_str(),"wb+");
         if (f==NULL) {
@@ -12025,13 +12008,13 @@ void graphe::minimum_cut(int s,const vector<map<int,gen> > &flow,ipairs &cut) {
 }
 
 gen graphe::make_colon_label(const ivector &v) {
-    stringstream ss;
+    string str;
     for (ivector_iter it=v.begin();it!=v.end();++it) {
-        ss << *it;
+        str+=int2string(*it);
         if (it+1!=v.end())
-            ss << ":";
+            str+=":";
     }
-    return graphe::str2gen(ss.str(),true);
+    return graphe::str2gen(str,true);
 }
 
 gen graphe::colon_label(int i, int j) {

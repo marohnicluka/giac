@@ -80,6 +80,7 @@
 #include "giac.h"
 #include "optimization.h"
 #include "signalprocessing.h"
+#include "graphe.h"
 #include <bitset>
 
 using namespace std;
@@ -2410,14 +2411,8 @@ void tprob::modi(const matrice &P_orig,matrice &X) {
     int m=X.size(),n=X.front()._VECTptr->size();
     vecteur u(m),v(n);
     if (M.type==_IDNT) {
-        gen largest(0);
-        for (int i=0;i<m;++i) {
-            for (int j=0;j<n;++j) {
-                if (is_greater(X[i][j],largest,ctx))
-                    largest=X[i][j];
-            }
-        }
-        P=subst(P,M,100*largest,false,ctx);
+        double inf=DBL_MAX/(m*n+1);
+        P=subst(P,M,inf,false,ctx);
     }
     for (int i=0;i<m;++i) {
         u[i]=i==0?gen(0):identificateur(" u"+print_INT_(++var_index));
@@ -3529,6 +3524,7 @@ gen _bvpsolve(const gen &g,GIAC_CONTEXT) {
     gen dy=identificateur(" dy");
     gen F=subst(f,derive(symb_of(y,x),x,contextptr),dy,false,contextptr);
     F=subst(F,symb_of(y,x),y,false,contextptr);
+    F=subst(F,symbolic(at_derive,y),dy,false,contextptr);
     vecteur X,Y,dY;
     double tol=_evalf(_epsilon(change_subtype(vecteur(0),_SEQ__VECT),contextptr),contextptr).DOUBLE_val();
     int ec=shooting(F,x,y,dy,tk,x1,x2,y1,y2,N,tol,maxiter,X,Y,dY,contextptr);
@@ -3539,7 +3535,7 @@ gen _bvpsolve(const gen &g,GIAC_CONTEXT) {
     if (ec==2) {
         *logptr(contextptr) << "Error: the shooting method failed to converge";
         if (is_undef(tk))
-            *logptr(contextptr) << ", try to set an initial guess for y'(a)";
+            *logptr(contextptr) << ", try to set an initial guess for " << y << "'(" << x1 << ")";
         *logptr(contextptr) << "\n";
         if (N>=3 && (output_type==_BVP_LIST || output_type==_BVP_PIECEWISE)) {
             *logptr(contextptr) << "Trying the finite-difference method instead\n";
@@ -3601,7 +3597,7 @@ gen _bvpsolve(const gen &g,GIAC_CONTEXT) {
 }
 static const char _bvpsolve_s []="bvpsolve";
 static define_unary_function_eval (__bvpsolve,&_bvpsolve,_bvpsolve_s);
-define_unary_function_ptr5(at_bvpsolve,alias_at_bvpsolve,&__bvpsolve,0,true)
+define_unary_function_ptr5(at_bvpsolve,alias_at_bvpsolve,&__bvpsolve,_QUOTE_ARGUMENTS,true)
 
 gen strip_constants(const gen &g,GIAC_CONTEXT) {
     if (g.is_symb_of_sommet(at_neg))
@@ -3775,15 +3771,15 @@ gen _jacobi_equation(const gen &g,GIAC_CONTEXT) {
     gen dy=identificateur(" dy");
     L=parse_functional(L,t,y,dy,contextptr);
     gen dY=derive(Y,t,contextptr);
-    gen Ldydy=subst(simp(derive(L,dy,dy,contextptr),contextptr),
+    gen Ldydy=subst(simp(derive(L,dy,2,contextptr),contextptr),
                     makevecteur(y,dy),makevecteur(Y,dY),false,contextptr);
-    gen Lyy=subst(simp(derive(L,y,y,contextptr),contextptr),
+    gen Lyy=subst(simp(derive(L,y,2,contextptr),contextptr),
                   makevecteur(y,dy),makevecteur(Y,dY),false,contextptr);
-    gen Lydy=subst(simp(derive(L,y,dy,contextptr),contextptr),
+    gen Lydy=subst(simp(derive(derive(L,y,contextptr),dy,contextptr),contextptr),
                    makevecteur(y,dy),makevecteur(Y,dY),false,contextptr);
     gen d=simp(Lyy-derive(Lydy,t,contextptr),contextptr);
     if (is_zero(Ldydy))
-        return is_zero(d)?change_subtype(gen(0),_INT_BOOLEAN):symb_equal(h,0);
+        return change_subtype(is_zero(d),_INT_BOOLEAN);
     gen jeq=simp(derive(Ldydy,t,contextptr),contextptr)*derive(symb_of(h,t),t,contextptr);
     jeq+=Ldydy*derive(symb_of(h,t),t,2,contextptr)-d*symb_of(h,t);
     jeq=symb_equal(jeq,0);
@@ -4008,7 +4004,7 @@ gen _numdiff(const gen &g,GIAC_CONTEXT) {
     if (gv.size()>=4) {
         rest=vecteur(gv.begin()+3,gv.end());
         for (const_iterateur it=rest.begin();it!=rest.end();++it) {
-            if (!it->is_integer() || is_strictly_positive(-*it,contextptr))
+            if (!it->is_integer() || it->val<0)
                 return gentypeerr(contextptr);
         }
         M=_max(rest,contextptr).val;
@@ -4044,7 +4040,7 @@ gen _numdiff(const gen &g,GIAC_CONTEXT) {
         res[it-rest.begin()]=d;
     }
     gen result=res.size()==1?res.front():res;
-    if (_lname(result,contextptr)._VECTptr->empty() || g.is_approx())
+    if (g.is_approx() && _lname(result,contextptr)._VECTptr->empty())
         result=_evalf(result,contextptr);
     return result;
 }

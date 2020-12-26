@@ -676,13 +676,13 @@ gen _resample(const gen &g,GIAC_CONTEXT) {
         vecteur ch=decode_chdata(*snd._VECTptr->at(i)._VECTptr,bd);
         chdata.push_back(ch);
     }
-    int nlen=((long)len*(long)nsr)/(long)sr;
     SRC_DATA data;
+    data.src_ratio=double(nsr)/double(sr);
+    int nlen=(int)std::floor(len*data.src_ratio);
     data.input_frames=len;
     data.output_frames=nlen;
     float *indata=new float[len*nc];
     data.data_out=new float[nlen*nc];
-    data.src_ratio=double(nsr)/double(sr);
     for (int i=0;i<len;++i) {
         for (int j=0;j<nc;++j) {
             indata[i*nc+j]=_evalf(chdata[j][i],contextptr).DOUBLE_val();

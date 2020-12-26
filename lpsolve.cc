@@ -904,7 +904,7 @@ void lp_problem::add_slack_variables() {
         variables.push_back(lp_variable()); //add slack variable
         posv.push_back(i);
     }
-    objective.first.resize(nv());
+    objective.first.resize(nv(),0);
     //determine types of slack variables
     vecteur lh;
     gen rh;
@@ -1243,8 +1243,10 @@ glp_prob *lp_problem::glpk_initialize() {
     glp_add_rows(glp,nc());
     glp_add_cols(glp,nv());
     glp_set_obj_dir(glp,settings.maximize?GLP_MAX:GLP_MIN);
+    const vecteur &obj=objective.first;
+    int obj_sz=obj.size();
     for (int i=0;i<=nv();++i) {
-        glp_set_obj_coef(glp,i,gen2double(i==0?objective.second:objective.first[i-1],ctx));
+        glp_set_obj_coef(glp,i,gen2double(i==0?objective.second:(i<=obj_sz?obj[i-1]:gen(0)),ctx));
         if (i>0) {
             lp_variable &var=variables[i-1];
             glp_set_col_kind(glp,i,var.is_integral()?GLP_IV:GLP_CV);
@@ -1810,7 +1812,7 @@ gen _lpsolve(const gen &args,GIAC_CONTEXT) {
             prob.add_identifiers_from(*it);
             gen obj_ct;
             if (!prob.lincomb_coeff(*it,obj,obj_ct))
-                return _LP_ERR_TYPE;
+                return gentypeerr(contextptr);
             prob.set_objective(obj,obj_ct);
         }
         ++it;

@@ -615,7 +615,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
                 }
                 if (gv.front()==at_normal) {
                     if (args._VECTptr->size()==2)
-                        return symbolic(at_exponentiald,args._VECTptr->front());
+                        return symbolic(at_normald,args);
                     return gensizeerr(contextptr);
                 }
                 gen dist=symbolic(gv.front()._SYMBptr->sommet,args);

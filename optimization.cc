@@ -3903,9 +3903,8 @@ gen _convex(const gen &g,GIAC_CONTEXT) {
     int cnt=0;
     char id_buf[16];
     for (const_iterateur it=depvars.begin();it!=depvars.end();++it) {
-        string id_name;
-        id_name+=" tmp";
-        id_name+=itoa(++cnt,id_buf,10);
+        string id_name(" tmp");
+        id_name+=printint(++cnt);
         diffvars.push_back(identificateur(id_name.c_str()));
         diffs.push_back(derive(symb_of(*it,t),t,contextptr));
     }

@@ -1041,8 +1041,7 @@ gen graphe::make_idnt(const char* name,int index,bool intern) {
 
 /* convert integer to string */
 std::string graphe::int2string(int i) {
-    char buf[64];
-    return itoa(i,buf,10);
+    return printint(i);
 }
 
 /* convert string to gen */

@@ -170,7 +170,7 @@ bool is_double_letter(const string &s) {
   return s.length()==2 && isalpha(s.at(0)) && s.at(0)==s.at(1);
 }
 
-typedef struct {
+typedef struct markup_block {
   int priority;
   int type;
   bool neg;
@@ -1293,9 +1293,31 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
     }
     ml.type|=_MLBLOCK_LEADING_DIGIT;
     return ml;
-  case _DOUBLE_:
-  case _REAL:
   case _FLOAT_:
+  case _REAL:
+    ml.type=_MLBLOCK_NUMERIC_APPROX;
+    str=g.print(contextptr);
+    if (mml_content)
+      ml.content=mml_tag("cn",str,++idc,"type","double");
+    if (tex)
+      ml.latex=str;
+    if (scm)
+      ml.scheme=scm_quote(str);
+    if (mml_presentation) {
+      if (*str.begin()=='[' && *str.rbegin()==']' && (cpos=str.find(".."))!=string::npos) {
+        string lb_str=str.substr(1,cpos-1),ub_str=str.substr(cpos+2,str.size()-cpos-3);
+        if (*lb_str.begin()=='-')
+            lb_str="<mrow>"+mml_minus+"<mn>"+lb_str.substr(1)+"</mn></mrow>";
+        else lb_str="<mn>"+lb_str+"</mn>";
+        if (*ub_str.begin()=='-')
+            ub_str="<mrow>"+mml_minus+"<mn>"+ub_str.substr(1)+"</mn></mrow>";
+        else ub_str="<mn>"+ub_str+"</mn>";
+        string opts="open=\"[\" close=\"]\" separators=\"&nldr;\"";
+        ml.markup=mml_tag("mrow","<mfenced "+opts+">"+lb_str+ub_str+"</mfenced>",idc);
+      } else ml.markup=mml_tag("mn",str,idc);
+    }
+    return ml;
+  case _DOUBLE_:
     ml.type=_MLBLOCK_NUMERIC_APPROX;
     ml.neg=!is_positive(g,contextptr);
     if (isunit && is_zero(fPart(g,contextptr))) {

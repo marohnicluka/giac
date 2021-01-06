@@ -1312,7 +1312,7 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
         if (*ub_str.begin()=='-')
             ub_str="<mrow>"+mml_minus+"<mn>"+ub_str.substr(1)+"</mn></mrow>";
         else ub_str="<mn>"+ub_str+"</mn>";
-        string opts="open=\"[\" close=\"]\" separators=\"&nldr;\"";
+        string opts="open='[' close=']' separators='&nldr;'";
         ml.markup=mml_tag("mrow","<mfenced "+opts+">"+lb_str+ub_str+"</mfenced>",idc);
       } else ml.markup=mml_tag("mn",str,idc);
     }

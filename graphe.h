@@ -496,17 +496,17 @@ public:
     class unionfind { // disjoint-set data structure
         struct element {
             int id,parent,rank;
-            element() { id=-1; }
         };
         int sz;
         element *elements;
     public:
-        unionfind(int n) { sz=n; elements=new element[n]; }
+        unionfind(int n);
         ~unionfind() { delete[] elements; }
         void make_set(int id);
-        bool is_stored(int id);
         int find(int id);
         void unite(int id1,int id2);
+        void select(int id);
+        void clear();
     };
 
     class ostergard { // clique maximizer
@@ -550,6 +550,34 @@ public:
         yen(graphe *gr,int s,int d,int k) { G=gr; src=s; dest=d; K=k; root=NULL; }
         ~yen();
         void find_kspaths(ivectors &paths);
+    };
+
+    class mm { // An efficient implementation of Edmonds' blossom algorithm
+        enum label_t { EVEN=0, ODD=1 };
+        graphe *G;
+        int *mate;
+        int *label;
+        int *pred;
+        int *bridge;
+        std::queue<int> Q;
+        int V;
+        int s;
+        unionfind *ds;
+        ivector ap;
+        bool alternating_forest();
+        bool alternating_tree(int v);
+        bool examine(int v,int w);
+        void extend_tree(int v,int w);
+        void shrink_blossom(int v,int w);
+        void shrink_path(int b,int v,int w);
+        void augmenting_path(int v,int w);
+        ivector find_path(int s,int t);
+        int find_base(int v,int w);
+        int find_root(int v);
+    public:
+        mm(graphe *g);
+        ~mm();
+        void find_maximum_matching(ipairs &matching,int sg=-1);
     };
     
     struct edges_comparator { // for sorting edges by their weight
@@ -766,7 +794,7 @@ private:
     static void generate_nk_sets(int n,int k,std::vector<ulong> &v);
     void strongconnect_dfs(ivectors &components,bvector &onstack,int i,int sg);
     bool degrees_equal(const ivector &v,int deg=0) const;
-    void lca_recursion(int u,const ipairs &p,ivector &lca_recursion,unionfind &ds);
+    void lca_recursion(int u,const ipairs &p,ivector &lca,unionfind &ds);
     void st_numbering_dfs(int i,ivector &preorder);
     void rdfs(int i,ivector &d,bool rec,int sg,bool skip_embedded);
     bool is_descendant(int v,int anc) const;
@@ -782,7 +810,6 @@ private:
     void remove_maximal_clique(iset &V) const;
     bool bipartite_matching_bfs(ivector &dist);
     bool bipartite_matching_dfs(int u,ivector &dist);
-    static ipair forest_root_info(const ivector &forest,int v);
     static gen make_colon_label(const ivector &v);
     void simplify(graphe &G,bool color_temp_vertices=false) const;
     intpoly tutte_poly_recurse(int vc);
@@ -818,6 +845,7 @@ public:
     graphe(const graphe &G);
     graphe(const std::string &name,const context *contextptr=context0);
     graphe &operator =(const graphe &other);
+    bool is_simple() const;
     
     // methods
     int rand_integer(int n) const { assert(n>=0); return n==0?0:giac::giac_rand(ctx)%n; }
@@ -987,7 +1015,6 @@ public:
     void maximal_independent_set(ivector &ind) const;
     void find_maximum_matching(ipairs &M);
     void find_maximal_matching(ipairs &matching,int sg=-1) const;
-    bool find_augmenting_path(ivector &ap,std::map<int,int> &matching);
     bool trail(const vecteur &v);
     bool demoucron(ivectors &faces,int sg=-1);
     void create_random_layout(layout &x,int dim);

@@ -288,6 +288,8 @@ gen _greedy_independent_set(const gen &g,GIAC_CONTEXT);
 gen _minimum_vertex_cover(const gen &g,GIAC_CONTEXT);
 gen _find_vertex_cover(const gen &g,GIAC_CONTEXT);
 gen _vertex_cover_number(const gen &g,GIAC_CONTEXT);
+gen _is_reachable(const gen &g,GIAC_CONTEXT);
+gen _reachable(const gen &g,GIAC_CONTEXT);
 
 // GENERAL GIAC COMMANDS
 

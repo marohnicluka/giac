@@ -14011,6 +14011,52 @@ int graphe::vertex_cover_number() {
     return res;
 }
 
+/* return true iff v is reachable from u */
+bool graphe::is_reachable(int u,int v) {
+    int n=node_count(),w;
+    assert(u>=0 && u<n && v>=0 && v<n);
+    std::queue<int> q;
+    q.push(u);
+    unvisit_all_nodes();
+    while (!q.empty()) {
+        w=q.front();
+        q.pop();
+        const ivector &ngh=node(w).neighbors();
+        for (ivector_iter it=ngh.begin();it!=ngh.end();++it) {
+            if (node(*it).is_visited())
+                continue;
+            if (*it==v)
+                return true;
+            q.push(*it);
+            node(*it).set_visited(true);
+        }
+    }
+    return false;
+}
+
+/* fill r with vertices reachable from u */
+void graphe::reachable(int u,ivector &r) {
+    int n=node_count(),w;
+    assert(u>=0 && u<n);
+    std::queue<int> q;
+    q.push(u);
+    unvisit_all_nodes();
+    r.clear();
+    r.reserve(n-1);
+    while (!q.empty()) {
+        w=q.front();
+        q.pop();
+        const ivector &ngh=node(w).neighbors();
+        for (ivector_iter it=ngh.begin();it!=ngh.end();++it) {
+            if (node(*it).is_visited())
+                continue;
+            r.push_back(*it);
+            q.push(*it);
+            node(*it).set_visited(true);
+        }
+    }
+}
+
 #ifndef NO_NAMESPACE_GIAC
 }
 #endif // ndef NO_NAMESPACE_GIAC

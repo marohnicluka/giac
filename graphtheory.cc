@@ -7715,6 +7715,60 @@ static const char _vertex_cover_number_s[]="vertex_cover_number";
 static define_unary_function_eval(__vertex_cover_number,&_vertex_cover_number,_vertex_cover_number_s);
 define_unary_function_ptr5(at_vertex_cover_number,alias_at_vertex_cover_number,&__vertex_cover_number,0,true)
 
+/* USAGE:   is_reachable(G,u,v)
+ *
+ * Returns true iff v is reachable from u in G.
+ */
+gen _is_reachable(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    const vecteur &gv=*g._VECTptr;
+    if (gv.size()!=3)
+        return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+    graphe G(contextptr);
+    if (!G.read_gen(gv.front()))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    const gen &u=gv[1],&v=gv[2];
+    int i=G.node_index(u),j=G.node_index(v);
+    if (i<0)
+        return gt_err(u,_GT_ERR_VERTEX_NOT_FOUND);
+    if (j<0)
+        return gt_err(v,_GT_ERR_VERTEX_NOT_FOUND);
+    if (i==j || G.is_reachable(i,j))
+        return graphe::VRAI;
+    return graphe::FAUX;
+}
+static const char _is_reachable_s[]="is_reachable";
+static define_unary_function_eval(__is_reachable,&_is_reachable,_is_reachable_s);
+define_unary_function_ptr5(at_is_reachable,alias_at_is_reachable,&__is_reachable,0,true)
+
+/* USAGE:   reachable(G,u)
+ *
+ * Returns the list of vertices which are reachable from u.
+ */
+gen _reachable(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    const vecteur &gv=*g._VECTptr;
+    if (gv.size()!=2)
+        return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+    graphe G(contextptr);
+    if (!G.read_gen(gv.front()))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    const gen &u=gv.back();
+    int i=G.node_index(u);
+    if (i<0)
+        return gt_err(u,_GT_ERR_VERTEX_NOT_FOUND);
+    graphe::ivector v;
+    G.reachable(i,v);
+    return G.get_node_labels(v);
+}
+static const char _reachable_s[]="reachable";
+static define_unary_function_eval(__reachable,&_reachable,_reachable_s);
+define_unary_function_ptr5(at_reachable,alias_at_reachable,&__reachable,0,true)
+
 #ifndef NO_NAMESPACE_GIAC
 }
 #endif // ndef NO_NAMESPACE_GIAC

@@ -1174,6 +1174,8 @@ public:
     void mvc(ivector &cover,int vc_alg,int sg=-1);
     int k_vertex_cover(ivector &cover,int k);
     int vertex_cover_number();
+    bool is_reachable(int u,int v);
+    void reachable(int u,ivector &r);
 
     // static methods
     static gen colon_label(int i,int j);

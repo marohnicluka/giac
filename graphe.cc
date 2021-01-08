@@ -2226,7 +2226,7 @@ int dot_read_token(ifstream &dotfile,string &token) {
                 dot_comment_type=1;
             if (nc=='*')
                 dot_comment_type=2;
-            return 0;
+            continue;
         }
         if (token.empty() && (isalpha(c) || c=='_')) {
             dot_token_type=_GT_DOT_TOKEN_TYPE_IDENTIFIER;

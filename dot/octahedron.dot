@@ -1,4 +1,8 @@
-# octahedral graph
+/* Octahedral graph
+ * ----------------
+ * Description: octahedral graph
+ * describes one of Platonic solids.
+ */
 graph "octahedron" {
   1 -- {3 6 5 4};
   2 -- {3 4 5 6};

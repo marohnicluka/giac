@@ -14043,6 +14043,8 @@ void graphe::reachable(int u,ivector &r) {
     unvisit_all_nodes();
     r.clear();
     r.reserve(n-1);
+    r.push_back(u);
+    node(u).set_visited(true);
     while (!q.empty()) {
         w=q.front();
         q.pop();

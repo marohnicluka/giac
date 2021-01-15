@@ -7575,7 +7575,7 @@ define_unary_function_ptr5(at_greedy_clique,alias_at_greedy_clique,&__greedy_cli
  */
 gen _greedy_independent_set(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    graphe G(contextptr),C(contextptr);
+    graphe G(contextptr);
     int n=5;
     if (g.type==_VECT && g.subtype==_SEQ__VECT) {
         const vecteur &gv=*g._VECTptr;
@@ -7594,9 +7594,8 @@ gen _greedy_independent_set(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     if (n<2)
         return generr("number of iterations must be at least 2");
-    G.complement(C);
     graphe::ivector Q;
-    C.grasp_clique(n,Q);
+    G.grasp_clique(n,Q,true);
     return G.get_node_labels(Q);
 }
 static const char _greedy_independent_set_s[]="greedy_independent_set";

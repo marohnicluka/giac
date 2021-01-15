@@ -387,8 +387,13 @@ public:
         static void callback(glp_tree *tree,void *info);
         void preprocess(glp_tree *tree);
         void branch(glp_tree *tree);
-        int initial_heur();
-        int lower_bound(const ivector &component,int s);
+        int heuristic(glp_tree *tree);
+        int lower_bound(int s);
+        bool is_vertex_fixed(glp_prob *p,int j,bool &in_cover);
+        void make_vertex_fixed(glp_prob *p,int j,bool in_cover);
+        void find_mirrors(int v);
+        void packing(glp_tree *tree);
+        ivector mirrors;
         double *heur_sol;
         bool compute_heur;
         bool is_k_vc;
@@ -724,6 +729,7 @@ private:
     static size_t sets_intersection(const ivector &A,const iset &B,iset &I);
     static size_t sets_difference(const iset &A,const iset &B,iset &D);
     static size_t sets_difference(const iset &A,const ivector &B,iset &D);
+    static size_t sets_difference(const ivector &A,const ivector &B,iset &D);
     static point make_point(double x,double y) { point p(2,x); p.back()=y; return p; }
     static point make_point(double x,double y,double z) { point p(3,x); p[1]=y; p.back()=z; return p; }
     static void add_point(point &a,const point &b);
@@ -832,13 +838,19 @@ private:
     static double harmonic_mean(double a,double b,double c) { return 3.0*a*b*c/(a*b+b*c+a*c); }
     void strec(int i,int t,int counter,int np,iset &Q,vecteur &timestamp,vecteur &l);
     bool hamcycle_recurse(ivector &path,int pos);
-    void grasp_construct(double aplha,ivector &Q,int sg);
-    void grasp_local(ivector &Q,int sg);
+    void grasp_construct(double aplha, ivector &Q,bool cmpl,int sg);
+    void grasp_local(ivector &Q,bool cmpl,int sg);
     bool mvc_special(ivector &cover,const ivector &component,int sg);
+    bool mvc_is_unconfined(int i,int sg=0) const;
+    bool mvc_is_dominant(int v,int sg) const;
+    void mvc_reduce_basic(int &sg,bool assert_conn=false);
+    void mvc_half_integral(int sg, ivector &in_cover, ivector &out_cover);
     void mvc_alom(ivector &cover,int sg=-1);
     void mvc_dfs(ivector &cover,int sg=-1);
     void mvc_bipartite(const ivector &U,const ivector &V,ivector &cover,int sg=-1);
     ivector alom_candidates(const ivector &V,const vecteur &ds);
+    int count_edges_in_Nv(int v,int sg=-1) const;
+    int count_edges(const ivector &V) const;
 
 public:
     graphe(const context *contextptr=context0,bool support_attributes=true);
@@ -1170,8 +1182,8 @@ public:
     int splittance(int &m,ivector &vseq) const;
     bool is_split_graph(ivector &clq,ivector &indp) const;
     void contract_subgraph(graphe &G,const ivector &sg,const gen &lb) const;
-    void grasp_clique(int maxitr,ivector &clq,int sg=-1);
-    void mvc(ivector &cover,int vc_alg,int sg=-1);
+    void grasp_clique(int maxitr,ivector &clq,bool cmpl=false,int sg=-1);
+    void mvc(ivector &cover,int vc_alg,int sg=0);
     int k_vertex_cover(ivector &cover,int k);
     int vertex_cover_number();
     bool is_reachable(int u,int v);

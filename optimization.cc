@@ -2943,6 +2943,94 @@ static const char _triginterp_s []="triginterp";
 static define_unary_function_eval (__triginterp,&_triginterp,_triginterp_s);
 define_unary_function_ptr5(at_triginterp,alias_at_triginterp,&__triginterp,0,true)
 
+/* Compute a rational interpolation of the given points using
+ * the method of Floater and Hormann.
+ * Usage: ratinterp(Mtrx(M) || Vect(X),[Vect(Y)],[Var(x) || Vect(P)],[d])
+ * - If P is given, then the interpolant is evaluated at these points
+ * - d is a nonnegative integer not larger than |X| (default: d=|X|)
+ */
+gen _ratinterp(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    vecteur X,Y;
+    gen x=identificateur(" x"),x0=identificateur("x");
+    int d=-1,opts_at=2;
+    /* parse input arguments */
+    if (g.subtype==_SEQ__VECT) {
+        const vecteur &gv=*g._VECTptr;
+        if (gv.front().type!=_VECT)
+            return gentypeerr(contextptr);
+        if (ckmatrix(*gv.front()._VECTptr,false)) {
+            const matrice &M=*gv.front()._VECTptr;
+            if (M.empty() || M.front()._VECTptr->size()!=2)
+                return gensizeerr(contextptr);
+            matrice tM=mtran(M);
+            X=*tM.front()._VECTptr;
+            Y=*tM.back()._VECTptr;
+            opts_at=1;
+        } else {
+            if (gv.size()<2)
+                return gensizeerr(contextptr);
+            if (gv[1].type!=_VECT)
+                return gentypeerr(contextptr);
+            X=*gv[0]._VECTptr;
+            Y=*gv[1]._VECTptr;
+            if (X.empty() || X.size()!=Y.size())
+                return gensizeerr(contextptr);
+        }
+        if (gv.size()-opts_at>=1)
+            x0=gv[opts_at];
+        if (gv.size()-opts_at>=2) {
+            const gen &arg=gv[opts_at+1];
+            if (!arg.is_integer() || arg.val<0 || arg.val>=int(X.size()))
+                return gensizeerr(contextptr);
+            d=arg.val;
+        }
+    } else {
+        if (!ckmatrix(*g._VECTptr,false))
+            return gentypeerr(contextptr);
+        const matrice &M=*g._VECTptr;
+        if (M.empty() || M.front()._VECTptr->size()!=2)
+            return gensizeerr(contextptr);
+        matrice tM=mtran(M);
+        X=*tM.front()._VECTptr;
+        Y=*tM.back()._VECTptr;
+    }
+    int n=X.size()-1;
+    if (d<0)
+        d=std::min(n,3);
+    /* compute the interpolant corresponding to d in barycentric form */
+    vecteur w(n+1,0);
+    vecteur D(n+1);
+    for (int k=0;k<=n;++k) {
+        for (int i=0;i<=n-d;++i) {
+            if (k-d<=i && i<=k) {
+                gen p(i%2?-1:1);
+                for (int j=i;j<=i+d;++j) {
+                    if (j!=k)
+                        p=p*_inv(X[k]-X[j],contextptr);
+                }
+                w[k]+=p;
+            }
+        }
+        D[k]=w[k]/(x-X[k]);
+    }
+    gen N=scalarproduct(D,Y,contextptr),r=N/_sum(D,contextptr);
+    if (x0.type==_VECT) {
+        vecteur res;
+        res.reserve(x0._VECTptr->size());
+        for (const_iterateur it=x0._VECTptr->begin();it!=x0._VECTptr->end();++it) {
+            res.push_back(simp(subst(r,x,*it,false,contextptr),contextptr));
+        }
+        return res;
+    }
+    return simp(subst(r,x,x0,false,contextptr),contextptr);
+}
+static const char _ratinterp_s []="ratinterp";
+static define_unary_function_eval (__ratinterp,&_ratinterp,_ratinterp_s);
+define_unary_function_ptr5(at_ratinterp,alias_at_ratinterp,&__ratinterp,0,true)
+
 /* select a good bandwidth for kernel density estimation using a direct plug-in method (DPI),
  * Gaussian kernel is assumed */
 double select_bandwidth_dpi(const vector<double> &data,double sd) {

@@ -127,6 +127,7 @@ gen _tpsolve(const gen &g,GIAC_CONTEXT);
 gen _nlpsolve(const gen &g,GIAC_CONTEXT);
 gen _thiele(const gen &g,GIAC_CONTEXT);
 gen _triginterp(const gen &g,GIAC_CONTEXT);
+gen _ratinterp(const gen &g,GIAC_CONTEXT);
 gen _kernel_density(const gen &g,GIAC_CONTEXT);
 gen _fitdistr(const gen &g,GIAC_CONTEXT);
 gen _bvpsolve(const gen &g,GIAC_CONTEXT);
@@ -135,6 +136,7 @@ gen _jacobi_equation(const gen &g,GIAC_CONTEXT);
 gen _conjugate_equation(const gen &g,GIAC_CONTEXT);
 gen _convex(const gen &g,GIAC_CONTEXT);
 gen _numdiff(const gen &g,GIAC_CONTEXT);
+gen _isolve(const gen &g,GIAC_CONTEXT);
 
 extern const unary_function_ptr * const at_implicitdiff;
 extern const unary_function_ptr * const at_minimize;
@@ -145,11 +147,14 @@ extern const unary_function_ptr * const at_tpsolve;
 extern const unary_function_ptr * const at_nlpsolve;
 extern const unary_function_ptr * const at_thiele;
 extern const unary_function_ptr * const at_triginterp;
+extern const unary_function_ptr * const at_ratinterp;
 extern const unary_function_ptr * const at_kernel_density;
 extern const unary_function_ptr * const at_fitdistr;
 extern const unary_function_ptr * const at_bvpsolve;
 extern const unary_function_ptr * const at_euler_lagrange;
 extern const unary_function_ptr * const at_convex;
+extern const unary_function_ptr * const at_numdiff;
+extern const unary_function_ptr * const at_isolve;
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

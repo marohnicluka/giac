@@ -24713,9 +24713,9 @@ The \texttt{thiele} command finds the rational interpolation.
     contains the $x$ coordinates and the second column contains the
     corresponding $y$ coordinates.\\
     Instead of a single matrix, the data can be given as a vector of
-    $x$ coordinates and a vector of $y$ coordinates.
-    \item \textit{v}, an identifier, number or any symbolic
-        expression.
+		  $x$ coordinates and a vector of $y$ coordinates (in which casethe call to \texttt{thiele} has three arguments).
+    \item \textit{v}, an identifier, number or symbolic
+	    expression (default: $x$).
   \end{itemize}
   \item \texttt{thiele(}\textit{data,v}\texttt{)} returns
     $R(v)$ where $R$ is the rational interpolant.
@@ -24789,6 +24789,37 @@ the $x$ coordinates.
 % \end{tabular}
 % \end{center}
 \end{itemize}
+
+\subsection{Rational interpolation without poles: \texttt{ratinterp}\index{ratinterp}}
+
+\texttt{ratinterp} takes up to three arguments:
+\begin{itemize}
+	\item Matrix with 2 columns with rows corresponding to points $(x_k,y_k)$, $k=0,1,\dots,n$, or the sequence of lists $[x_0,x_1,\dots,x_n]$ and $[y_0,y_1,\dots,y_n]$, where $a=x_0<x_1<\cdots<x_n=b$,
+	\item an identifier, number, symbolic expression or list of numbers $a$ (optional, by default $x$),
+	\item an integer $d$ such that $0\leq d\leq n$ (optional, by default $\min\{3,n\}$).
+\end{itemize}
+\texttt{ratinterp} returns a rational interpolation $r(a)$ of the given points using the method of Floater and Hormann (2006). If $a$ is a list of numbers $a_1,a_2,\dots,a_m$, then the list $[r(a_1)\dots,r(a_m)]$ is returned. The rational function $r$ is guaranteed to have no poles in $r$.
+
+The method in fact provides a family of at most $n+1$ interpolants which can be specified by varying the parameter $d$.
+
+Rational interpolation usually gives better results than the classic polynomial interpolation, which may oscillate highly in some cases.
+
+For example, input:
+\begin{center}
+	\tt ratinterp([1,3,5,8],[2,-1,3,4],x,1)
+\end{center}
+Output:
+\begin{center}
+	\tt (-19*x\verb|^|3+288*x\verb|^|2-1133*x+1200)/(6*x\verb|^|2-48*x+210)
+\end{center}
+Input:
+\begin{center}
+	\tt ratinterp([1,3,5,8],[2,-1,3,4],x,2)
+\end{center}
+Output:
+\begin{center}
+	\tt -29*x\verb|^|3/168+17*x\verb|^|2/7-1507*x/168+61/7
+\end{center}
 
 \section{Arithmetic and polynomials}
 

@@ -2619,8 +2619,8 @@ gen thiele(int k,vecteur &xv,vecteur &yv,identificateur &var,map<tprob::ipair,ge
  *
  * Usage
  * ^^^^^
- *      thiele(data,v)
- * or   thiele(data_x,data_y,v)
+ *      thiele(data,[v])
+ * or   thiele(data_x,data_y,[v])
  *
  * Parameters
  * ^^^^^^^^^^
@@ -2654,60 +2654,75 @@ gen thiele(int k,vecteur &xv,vecteur &yv,identificateur &var,map<tprob::ipair,ge
  */
 gen _thiele(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+    if (g.type!=_VECT)
         return gentypeerr(contextptr);
-    const vecteur &gv=*g._VECTptr;
-    if (gv.size()<2)
-        return gensizeerr(contextptr);
     vecteur xv,yv;
-    gen x;
-    if (gv[0].type!=_VECT)
-        return gentypeerr(contextptr);
-    if (ckmatrix(gv[0])) {
-        matrice m(mtran(*gv[0]._VECTptr));
+    gen x0=identificateur("x");
+    int opt_pos=1;
+    if (g.subtype==_SEQ__VECT) {
+        const vecteur &gv=*g._VECTptr;
+        if (gv[0].type!=_VECT)
+            return gentypeerr(contextptr);
+        if (ckmatrix(gv[0],false)) {
+            matrice m(mtran(*gv[0]._VECTptr));
+            if (m.size()!=2)
+                return gensizeerr(contextptr);
+            xv=*m[0]._VECTptr;
+            yv=*m[1]._VECTptr;
+        } else {
+            if (gv.size()<2)
+                return gensizeerr(contextptr);
+            if (gv[1].type!=_VECT)
+                return gentypeerr(contextptr);
+            if (gv[0]._VECTptr->size()!=gv[1]._VECTptr->size())
+                return gensizeerr(contextptr);
+            xv=*gv[0]._VECTptr;
+            yv=*gv[1]._VECTptr;
+            opt_pos=2;
+        }
+        if (gv.size()-opt_pos>=1)
+            x0=gv[opt_pos];
+    } else {
+        if (!ckmatrix(*g._VECTptr,false))
+            return gentypeerr(contextptr);
+        matrice m(mtran(*g._VECTptr));
         if (m.size()!=2)
             return gensizeerr(contextptr);
         xv=*m[0]._VECTptr;
         yv=*m[1]._VECTptr;
-        x=gv[1];
     }
-    else {
-        if (gv[1].type!=_VECT)
-            return gentypeerr(contextptr);
-        if (gv[0]._VECTptr->size()!=gv[1]._VECTptr->size())
-            return gensizeerr(contextptr);
-        xv=*gv[0]._VECTptr;
-        yv=*gv[1]._VECTptr;
-        x=gv[2];
-    }
-    gen var(x.type==_IDNT?x:identificateur(" x"));
+    gen x=identificateur(" x");
     map<tprob::ipair,gen> invdiff;
-    gen rat(yv[0]+thiele(1,xv,yv,*var._IDNTptr,invdiff,contextptr));
-    if (x.type==_IDNT) {
-        // detect singularities
-        gen den(_denom(rat,contextptr));
-        matrice sing;
-        if (*_lname(den,contextptr)._VECTptr==vecteur(1,x)) {
-            for (int i=0;i<int(xv.size())-1;++i) {
-                gen y1(_evalf(subst(den,x,xv[i],false,contextptr),contextptr));
-                gen y2(_evalf(subst(den,x,xv[i+1],false,contextptr),contextptr));
-                if (is_positive(-y1*y2,contextptr))
-                    sing.push_back(makevecteur(xv[i],xv[i+1]));
-            }
-        }
-        if (!sing.empty()) {
-            *logptr(contextptr) << "Warning, interpolant has singularities in ";
-            for (int i=0;i<int(sing.size());++i) {
-                *logptr(contextptr) << "(" << sing[i][0] << "," << sing[i][1] << ")";
-                if (i<int(sing.size())-1)
-                    *logptr(contextptr) << (i<int(sing.size())-2?", ":" and ");
-            }
-            *logptr(contextptr) << "\n";
+    gen rat(yv[0]+thiele(1,xv,yv,*x._IDNTptr,invdiff,contextptr));
+    // detect singularities
+    gen den(_denom(rat,contextptr));
+    matrice sing;
+    if (*_lname(den,contextptr)._VECTptr==vecteur(1,x)) {
+        for (int i=0;i<int(xv.size())-1;++i) {
+            gen y1(_evalf(subst(den,x,xv[i],false,contextptr),contextptr));
+            gen y2(_evalf(subst(den,x,xv[i+1],false,contextptr),contextptr));
+            if (is_positive(-y1*y2,contextptr))
+                sing.push_back(makevecteur(xv[i],xv[i+1]));
         }
     }
-    else
-        rat=simp(subst(rat,var,x,false,contextptr),contextptr);
-    return simp(rat,contextptr);
+    if (!sing.empty()) {
+        *logptr(contextptr) << "Warning, interpolant has singularities in ";
+        for (int i=0;i<int(sing.size());++i) {
+            *logptr(contextptr) << "(" << sing[i][0] << "," << sing[i][1] << ")";
+            if (i<int(sing.size())-1)
+                *logptr(contextptr) << (i<int(sing.size())-2?", ":" and ");
+        }
+        *logptr(contextptr) << "\n";
+    }
+    if (x0.type==_VECT) {
+        vecteur res;
+        res.reserve(x0._VECTptr->size());
+        for (const_iterateur it=x0._VECTptr->begin();it!=x0._VECTptr->end();++it) {
+            res.push_back(simp(subst(rat,x,x0,false,contextptr),contextptr));
+        }
+        return res;
+    }
+    return simp(subst(rat,x,x0,false,contextptr),contextptr);
 }
 static const char _thiele_s []="thiele";
 static define_unary_function_eval (__thiele,&_thiele,_thiele_s);

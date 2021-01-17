@@ -15497,7 +15497,7 @@ dayofweek(15,10,1582)
 
 # minimize
 1 Recherche du minimum d'une fonction
-2 Minimizes a function.
+2 Finds the global minimum of a function.
 0 Expr,[Constr],Vars,[Options]
 minimize(sin(x),[x=0..4])
 minimize(x^4-x^2,x=-3..3,locus)
@@ -15510,7 +15510,7 @@ minimize(cos(x)^2+cos(y)^2,x+y=pi/4,[x,y],locus)
 
 # maximize
 1 Recherche du maximum d'une fonction
-2 Maximizes a function.
+2 Finds the global maximum of a function.
 0 Expr,[Constr],Vars,[Options]
 maximize(sin(x),[x=0..4])
 maximize(x^4-x^2,x=-3..3,locus)
@@ -15523,7 +15523,7 @@ maximize(cos(x)^2+cos(y)^2,x+y=pi/4,[x,y],locus)
 
 # minimax
 1 Approximation polynomiale de degré n d'une fonction continue bornée sur [a,b] par la méthode de Remez.
-2 Implementation of Remez method for minimax polynomial approximation of degree n of a continuous bounded function on a..b.
+2 Returns polynomial approximation of degree n of a continuous bounded function on a..b using Remez algorithm.
 0 Expr,Var=a..b,n,[Options]
 minimax(x*exp(-x),x=0..10,12)
 minimax(x*sin(x),x=0..10,15)
@@ -15539,7 +15539,7 @@ minimax(when(x==0,0,exp(-1/x^2)),x=-1..1,25)
 # tpsolve
 1 resolution d'un probleme de transport par la methode MODI
 2 Solves a transportation problem using MODI method.
-0 supply,demand,cost_matrix
+0 List(supply),List(demand),Mtrx(cost_matrix)
 tpsolve([12,17,11],[10,10,10,10],[[500,750,300,450],[650,800,400,600],[400,700,500,550]])
 tpsolve([7,10,8,8,9,6],[9,6,12,8,10],[[36,40,32,43,29],[28,27,29,40,38],[34,35,41,29,31],[41,42,35,27,36],[25,28,40,34,38],[31,30,43,38,40]])
 tpsolve([95,70,165,165],[195,150,30,45,75],[[15,M,45,M,0],[12,40,M,M,0],[0,15,25,25,0],[M,0,M,12,0]])
@@ -15547,9 +15547,20 @@ tpsolve([1,1,1,1],[1,1,1,1],[[10,12,9,11],[5,10,7,8],[12,14,13,11],[8,15,11,9]])
 
 # thiele
 1 Approximation rationnelle d'une liste de points par la methode de Thiele
-2 Computes rational interpolation for the given list of points using Thiele's method with continued fractions.
-0 [Data || Data_x],[Data_y],v 
- data_x:=[-1,-0.75,-0.5,-0.25,0,0.25,0.5,0.75,1,1.25,1.5,1.75,2]:;data_y:=[0.0,2.83341735599,2.88770329586,2.75030303645,2.71828182846,2.66568510781,2.24894558809,1.21863761951,0.0,-0.555711613283,-0.377871362418,-0.107135851128,-0.0136782294833]:;thiele(data_x,data_y,x)
+2 Computes rational interpolation of the given points using Thiele's method.
+0 [Mtrx(P) || List(X)],[List(Y)],[Var(x)]
+-1 ratinterp
+-2 lagrange
+-3 triginterp
+ X:=[-1,-0.75,-0.5,-0.25,0,0.25,0.5,0.75,1,1.25,1.5,1.75,2]:;Y:=[0.0,2.83341735599,2.88770329586,2.75030303645,2.71828182846,2.66568510781,2.24894558809,1.21863761951,0.0,-0.555711613283,-0.377871362418,-0.107135851128,-0.0136782294833]:;thiele(X,Y,x)
+
+# ratinterp
+0 [Mtrx(P) || List(X)],[List(Y)],[Var(x)],[Intg(d)])
+2 Computes rational interpolation without poles of the given points.
+-1 thiele
+-2 lagrange
+-3 triginterp
+ratinterp([1,3,5,8],[2,-1,3,4],x)
 
 # lpsolve
 1 Resoud un probleme d'optimisation lineaire de fonction objectif o sous contraintes optionnelles c
@@ -15624,7 +15635,7 @@ implicitdiff(x*y*z,-2x^3+15x^2*y+11y^3-24y=0,[x,z,y],order=2,[1,-1,0])
 
 # periodic
 1 Cree une expression periodique egale a Expr sur [a,b], periode b-a
-2 Makes a periodic expression equal to Expr on a..b, period b-a.
+2 Returns the periodic expression equal to Expr on a..b, period b-a.
 0 Expr,Var,a,b
 periodic(x^2,x,-1,1)
 

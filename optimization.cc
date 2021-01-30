@@ -777,6 +777,27 @@ static const char _maximize_s []="maximize";
 static define_unary_function_eval (__maximize,&_maximize,_maximize_s);
 define_unary_function_ptr5(at_maximize,alias_at_maximize,&__maximize,0,true)
 
+gen _vbnds(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT || g._VECTptr->size()!=2)
+        return gentypeerr(contextptr);
+    const vecteur &gv=*g._VECTptr;
+    if (gv.front().type!=_VECT || gv.back().type!=_VECT)
+        return gentypeerr(contextptr);
+    const vecteur &x=*gv.front()._VECTptr;
+    const vecteur &b=*gv.back()._VECTptr;
+    if (x.empty() || b.empty() || !ckmatrix(b,false))
+        return gentypeerr(contextptr);
+    if (b.size()!=x.size() || b.front()._VECTptr->size()!=2)
+        return gensizeerr(contextptr);
+    matrice B=mtran(b);
+    gen intrv=_zip(makesequence(at_interval,B.front(),B.back()),contextptr);
+    return _zip(makesequence(at_equal,x,intrv),contextptr);
+}
+static const char _vbnds_s []="vbnds";
+static define_unary_function_eval (__vbnds,&_vbnds,_vbnds_s);
+define_unary_function_ptr5(at_vbnds,alias_at_vbnds,&__vbnds,0,true)
+
 int ipdiff::sum_ivector(const ivector &v,bool drop_last) {
     int res=0;
     for (ivector_iter it=v.begin();it!=v.end()-drop_last?1:0;++it) {
@@ -1990,7 +2011,7 @@ gen _extrema(const gen &g,GIAC_CONTEXT) {
     vecteur constr;
     int order_size=5; // will not compute the derivatives of order higher than 'order_size'
     int ngv=gv.size();
-    bool approx_hp=true; // use nlpsolve to determine images of homogeneous polynomials on spheres
+    bool approx_hp=false; // use nlpsolve to determine images of homogeneous polynomials on spheres
     if (gv.back()==at_lagrange) {
         order_size=0; // use Lagrange method
         --ngv;

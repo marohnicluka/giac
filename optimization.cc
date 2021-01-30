@@ -82,6 +82,9 @@
 #include "signalprocessing.h"
 #include "graphe.h"
 #include <bitset>
+#ifdef HAVE_PARI_PARI_H
+#include <pari/pari.h>
+#endif
 
 using namespace std;
 
@@ -691,7 +694,7 @@ gen _minimize(const gen &args,GIAC_CONTEXT) {
     if (loc.empty()) {
         if (has_symb)
             return undef;
-        //*logptr(contextptr) << "Warning: switching to approx mode\n";
+        //*logptr(contextptr) << "Failed to find global extrema, switching to local search\n";
         gen asol=_nlpsolve(makesequence(f,mergevecteur(
           *_zip(makesequence(at_inferieur_egal,g,vecteur(g.size(),0)),contextptr)._VECTptr,
           *_zip(makesequence(at_equal,h,vecteur(h.size(),0)),contextptr)._VECTptr),vars),contextptr);
@@ -2691,6 +2694,8 @@ gen _thiele(const gen &g,GIAC_CONTEXT) {
         xv=*m[0]._VECTptr;
         yv=*m[1]._VECTptr;
     }
+    if (xv.size()<2)
+        return gensizeerr("At least two sample points are required.");
     gen x=identificateur(" x");
     map<tprob::ipair,gen> invdiff;
     gen rat(yv[0]+thiele(1,xv,yv,*x._IDNTptr,invdiff,contextptr));
@@ -2718,7 +2723,7 @@ gen _thiele(const gen &g,GIAC_CONTEXT) {
         vecteur res;
         res.reserve(x0._VECTptr->size());
         for (const_iterateur it=x0._VECTptr->begin();it!=x0._VECTptr->end();++it) {
-            res.push_back(simp(subst(rat,x,x0,false,contextptr),contextptr));
+            res.push_back(simp(subst(rat,x,*it,false,contextptr),contextptr));
         }
         return res;
     }
@@ -2845,10 +2850,6 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
             }
         }
     }
-    if (constr.empty()) {
-        *logptr(contextptr) << "Error: no constraints detected\n";
-        return gensizeerr(contextptr);
-    }
     bool feasible=true;
     for (it=constr.begin();it!=constr.end();++it) {
         if (it->is_symb_of_sommet(at_equal)) {
@@ -2857,7 +2858,10 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
                 feasible=false;
                 break;
             }
-        } else if (it->is_symb_of_sommet(at_inferieur_egal) || it->is_symb_of_sommet(at_superieur_egal)) {
+        } else if (it->is_symb_of_sommet(at_inferieur_egal) ||
+                   it->is_symb_of_sommet(at_inferieur_strict) ||
+                   it->is_symb_of_sommet(at_superieur_egal) ||
+                   it->is_symb_of_sommet(at_superieur_strict)) {
             if (_evalb(_subs(makesequence(*it,vars,initp),contextptr),contextptr).val==0) {
                 feasible=false;
                 break;
@@ -3013,8 +3017,10 @@ gen _ratinterp(const gen &g,GIAC_CONTEXT) {
         Y=*tM.back()._VECTptr;
     }
     int n=X.size()-1;
+    if (n<1)
+        return gensizeerr("At least two sample points are required.");
     if (d<0)
-        d=std::min(n,3);
+        d=std::min(3,n/2);
     /* compute the interpolant corresponding to d in barycentric form */
     vecteur w(n+1,0);
     vecteur D(n+1);
@@ -4004,7 +4010,6 @@ gen _convex(const gen &g,GIAC_CONTEXT) {
     }
     vecteur diffvars,diffs;
     int cnt=0;
-    char id_buf[16];
     for (const_iterateur it=depvars.begin();it!=depvars.end();++it) {
         string id_name(" tmp");
         id_name+=printint(++cnt);
@@ -4149,7 +4154,6 @@ gen _numdiff(const gen &g,GIAC_CONTEXT) {
 static const char _numdiff_s []="numdiff";
 static define_unary_function_eval (__numdiff,&_numdiff,_numdiff_s);
 define_unary_function_ptr5(at_numdiff,alias_at_numdiff,&__numdiff,0,true)
-
 
 #ifndef NO_NAMESPACE_GIAC
 }

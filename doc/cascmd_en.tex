@@ -10,7 +10,7 @@
 \usepackage{amssymb}
 \usepackage{stmaryrd}
 \usepackage{makeidx}
-\usepackage{times}
+\usepackage{stix}
 \usepackage{hevea}
 %\usepackage{mathptmx}
 %HEVEA \newcommand{\leftsetbracket}{\@print@u{X27E6}}
@@ -41796,8 +41796,8 @@ algorithm to avoid them.
 \index{minimize|textbf}
 \index{maximize|textbf}}
 
-The \texttt{minimize} command finds the smallest value of an
-expression, possibly restricted to a specific domain.
+\texttt{minimize} attempts to find the smallest value of an
+expression defined on a compact domain, using analytical methods.
 \begin{itemize}
   \item \texttt{minimize} takes two mandatory arguments and two
   optional arguments:
@@ -41819,9 +41819,9 @@ specified by constraints and/or bounding variables, or (if
 \textit{location} is specified) a list consisting of the minimum value
 and the list of points where the minimum is achieved.
 
-The domain must be closed and bounded and \textit{obj} must be
-continuous in every point of it, otherwise the final result may be
-incorrect or meaningless.  If the minimal value could not be obtained,
+The domain must be closed and bounded (i.e.~compact) and \textit{obj}
+must be continuous; otherwise the final result may be incorrect or
+meaningless.  If the minimal value could not be obtained,
 \texttt{undef} is returned.
 \end{itemize}
 
@@ -42030,8 +42030,9 @@ the specified domain.
 \subsection{Local extrema: \texttt{extrema}
 \index{extrema|textbf}}
 
-The \texttt{extrema} command finds the local extrema of a univariate
-or multivariate differentiable expression under equality constraints.
+\texttt{extrema} attempts to find local extrema of a
+univariate/multivariate differentiable expression under equality
+constraints, using analytical methods.
 \begin{itemize}
   \item \texttt{extrema} which takes two mandatory arguments and two
   optional arguments:
@@ -42186,10 +42187,10 @@ guaranteed.
 % \end{center}
 \end{itemize}
 
-\subsection{Global extrema without using derivatives: \texttt{nlpsolve}
+\subsection{Local derivative-free optimization: \texttt{nlpsolve}
 \index{nlpsolve}}
 
-The \texttt{nlpsolve} command computes the optimum of a (not necessarily
+\texttt{nlpsolve} computes the optimum of a (not necessarily
 differentiable) nonlinear (multivariate) objective function, subject
 to a set of nonlinear equality and/or inequality constraints, using
 the COBYLA algorithm.
@@ -42209,11 +42210,10 @@ the COBYLA algorithm.
          \texttt{maximize=false}.)
        \item \texttt{nlp\_initialpoint=}\textit{pt}, where \textit{pt}
        is a point given in the form $[x=x_{0},y=y_{0},\ldots]$.  
-       \textit{pt} doesn't have to be feasible, but it can't be zero.
-
-       If this isn't given or isn't feasible, then a feasible starting
+       \textit{pt} does not have to be feasible, but it must not be zero.
+       If none is given or the given point is not feasible, then a feasible starting
        guess is automatically generated. Note that choosing a good
-       initial point is needed for obtaining a correct solution in some cases.
+       initial point is required for obtaining a correct solution in some cases.
        \item \texttt{nlp\_iterationlimit=$n$} for an integer $n$.
        \item \texttt{assume=nlp\_nonnegative}
        \item \texttt{nlp\_precision=$\epsilon$} for some $\epsilon > 0$.
@@ -42225,10 +42225,6 @@ the COBYLA algorithm.
   is the optimal value of \textit{obj} and \textit{optobj}
   is a list of of optimal values of the decision variables.
 \end{itemize}
-
-The input syntax for \texttt{nlpsolve} resembles that of Maple's
-\texttt{NLPSolve} (entering the objective as a function (univariate
-case) is not supported, however).
 
 
 \smallskip

@@ -153,10 +153,9 @@ vecteur solve_vect(const vecteur &e,const vecteur &v,GIAC_CONTEXT) {
 int var_index=0;
 
 bool is_greater_than_zero(const gen &g,const vecteur &vars,GIAC_CONTEXT) {
-    vecteur terms(0);
+    vecteur terms(1,g);
     if (g.is_symb_of_sommet(at_plus) && g._SYMBptr->feuille.type==_VECT)
         terms=*g._SYMBptr->feuille._VECTptr;
-    else terms=makevecteur(g);
     bool has_exp=false;
     gen rest(0);
     for (const_iterateur it=terms.begin();it!=terms.end();++it) {
@@ -313,9 +312,10 @@ bool next_binary_perm(vector<bool> &perm,int to_end=0) {
     return perm[end]?true:next_binary_perm(perm,to_end+1);
 }
 
-vecteur make_temp_vars(const vecteur &vars,const vecteur &ineq,bool open,GIAC_CONTEXT) {
+vecteur make_temp_vars(const vecteur &vars,const vecteur &ineq,vecteur &bnds,bool open,GIAC_CONTEXT) {
     gen t,a,b,vmin,vmax;
     vecteur tmpvars;
+    bnds.resize(vars.size(),vecteur(2,undef));
     for (const_iterateur it=vars.begin();it!=vars.end();++it) {
         vecteur as;
         vmin=vmax=undef;
@@ -335,7 +335,7 @@ vecteur make_temp_vars(const vecteur &vars,const vecteur &ineq,bool open,GIAC_CO
             }
         }
         if (as.size()==1) {
-            const gen &s = as.front();
+            const gen &s=as.front();
             if (s.is_symb_of_sommet(at_inferieur_egal) &&
                     s._SYMBptr->feuille._VECTptr->front()==*it)
                 vmax=s._SYMBptr->feuille._VECTptr->back();
@@ -353,12 +353,18 @@ vecteur make_temp_vars(const vecteur &vars,const vecteur &ineq,bool open,GIAC_CO
             } else *logptr(contextptr) << "Warning: failed to set bounds for variable " << *it << "\n";
         }
         gen v=identificateur(" "+it->print(contextptr));
-        if (!is_undef(vmax) && !is_undef(vmin))
+        if (!is_undef(vmax) && !is_undef(vmin)) {
             assume_t_in_ab(v,vmin,vmax,open,open,contextptr);
-        else if (!is_undef(vmin))
+            vecteur &bnd=*bnds[it-vars.begin()]._VECTptr;
+            bnd.front()=vmin;
+            bnd.back()=vmax;
+        } else if (!is_undef(vmin)) {
             giac_assume(open?symb_superieur_strict(v,vmin):symb_superieur_egal(v,vmin),contextptr);
-        else if (!is_undef(vmax))
+            bnds[it-vars.begin()]._VECTptr->front()=vmin;
+        } else if (!is_undef(vmax)) {
             giac_assume(open?symb_inferieur_strict(v,vmax):symb_inferieur_egal(v,vmax),contextptr);
+            bnds[it-vars.begin()]._VECTptr->back()=vmax;
+        }
         tmpvars.push_back(v);
     }
     return tmpvars;
@@ -368,20 +374,18 @@ vecteur make_temp_vars(const vecteur &vars,const vecteur &ineq,bool open,GIAC_CO
  * Determine critical points of function f under constraints g<=0 and h=0 using
  * Karush-Kuhn-Tucker conditions.
  */
-vecteur solve_kkt(const gen &f,const vecteur &g,const vecteur &h,const vecteur &vars_orig,GIAC_CONTEXT) {
-    int n=vars_orig.size(),m=g.size(),l=h.size();
+vecteur solve_kkt(const gen &f,const vecteur &g,const vecteur &h,const vecteur &vars_orig,const vecteur &bnds,GIAC_CONTEXT) {
+    int n=vars_orig.size(),m=g.size(),l=h.size(),ineq_constr_threshold=10;
     vecteur vars(vars_orig),mug;
     matrice gr_g,gr_h;
     vars.resize(n+m+l);
-    gen gr_f_tmp=_grad(makesequence(f,vars_orig),contextptr);
-    if (gr_f_tmp.type!=_VECT || gr_f_tmp._VECTptr->size()!=vars_orig.size()) {
-        *logptr(contextptr) << "Error: failed to compute gradient of " << f << "\n";
-        return vecteur(0);
-    }
-    vecteur &gr_f=*gr_f_tmp._VECTptr;
+    vecteur gr_f=*_grad(makesequence(f,vars_orig),contextptr)._VECTptr;
+    bool enu_all=m<=ineq_constr_threshold;
     for (int i=0;i<m;++i) {
         vars[n+i]=identificateur(" mu"+print_INT_(++var_index));
-        giac_assume(symb_superieur_strict(vars[n+i],gen(0)),contextptr); // dual feasibility
+        if (enu_all)
+            giac_assume(symb_superieur_strict(vars[n+i],gen(0)),contextptr);
+        else giac_assume(symb_superieur_egal(vars[n+i],gen(0)),contextptr);
         gr_g.push_back(*_grad(makesequence(g[i],vars_orig),contextptr)._VECTptr);
     }
     for (int i=0;i<l;++i) {
@@ -389,15 +393,16 @@ vecteur solve_kkt(const gen &f,const vecteur &g,const vecteur &h,const vecteur &
         gr_h.push_back(*_grad(makesequence(h[i],vars_orig),contextptr)._VECTptr);
     }
     vecteur eqv;
+    bool ne;
     for (int i=0;i<n;++i) {
-        gen eq(gr_f[i]);
+        gen eq(gr_f[i]),rest(0);
         for (int j=0;j<m;++j) {
-            eq+=vars[n+j]*gr_g[j][i];
+            rest+=vars[n+j]*gr_g[j][i];
         }
         for (int j=0;j<l;++j) {
-            eq+=vars[n+m+j]*gr_h[j][i];
+            rest+=vars[n+m+j]*gr_h[j][i];
         }
-        eqv.push_back(eq);
+        eqv.push_back(eq+rest);
     }
     eqv=mergevecteur(eqv,h); // primal feasibility
     vector<bool> is_mu_zero(m,false);
@@ -409,14 +414,13 @@ vecteur solve_kkt(const gen &f,const vecteur &g,const vecteur &h,const vecteur &
             if (is_mu_zero[i]) {
                 e=subst(e,v[n+i],gen(0),false,contextptr);
                 v.erase(v.begin()+n+i);
-            }
-            else
-                e.push_back(g[i]); // complementary slackness
+            } else e.push_back(enu_all?g[i]:v[n+i]*g[i]); // complementary slackness
         }
         gen res=solve2(e,v,contextptr);
-        if (res.type==_VECT)
+        if (res.type==_VECT && !res._VECTptr->empty()) {
             cv=mergevecteur(cv,*res._VECTptr);
-    } while(next_binary_perm(is_mu_zero));
+        }
+    } while(enu_all && next_binary_perm(is_mu_zero));
     for (const_iterateur it=vars.begin()+n;it!=vars.end();++it) {
         _purge(*it,contextptr);
     }
@@ -432,7 +436,7 @@ vecteur solve_kkt(const gen &f,const vecteur &g,const vecteur &h,const vecteur &
         }
     }
     cpt_simp(cv,vars,f,contextptr);
-    return cv;
+    return *_epsilon2zero(cv,contextptr)._VECTptr;
 }
 
 /*
@@ -468,10 +472,10 @@ matrice critical_univariate(const gen &f,const gen &x,GIAC_CONTEXT) {
  * conditions g<=0 and h=0. The list of points where global minimum is achieved
  * is returned.
  */
-vecteur global_extrema(const gen &f,const vecteur &g,const vecteur &h,const vecteur &vars,gen &mn,gen &mx,GIAC_CONTEXT) {
+vecteur global_extrema(const gen &f,vecteur &g,const vecteur &h,const vecteur &vars,gen &mn,gen &mx,GIAC_CONTEXT) {
     int n=vars.size();
-    matrice cv;
-    vecteur tmpvars=make_temp_vars(vars,g,false,contextptr);
+    matrice cv,bnds;
+    vecteur tmpvars=make_temp_vars(vars,g,bnds,false,contextptr);
     gen ff=subst(f,vars,tmpvars,false,contextptr);
     if (n==1) {
         cv=critical_univariate(ff,tmpvars[0],contextptr);
@@ -486,8 +490,22 @@ vecteur global_extrema(const gen &f,const vecteur &g,const vecteur &h,const vect
         }
     } else {
         vecteur gg=subst(g,vars,tmpvars,false,contextptr);
+#if 0
+        for (int i=gg.size();i-->0;) {
+            gen evb=_evalb(symbolic(at_inferieur_egal,makevecteur(gg[i],0)),contextptr);
+            if (evb.is_integer() && evb.subtype==_INT_BOOLEAN) {
+                bool yes=(bool)evb.val;
+                if (yes)
+                    gg.erase(gg.begin()+i);
+                else {
+                    *logptr(contextptr) << "Error: the problem is infeasible\n";
+                    return vecteur(0);
+                }
+            }
+        }
+#endif
         vecteur hh=subst(h,vars,tmpvars,false,contextptr);
-        cv=solve_kkt(ff,gg,hh,tmpvars,contextptr);
+        cv=solve_kkt(ff,gg,hh,tmpvars,bnds,contextptr);
     }
     for (const_iterateur it=tmpvars.begin();it!=tmpvars.end();++it) {
         if (find(vars.begin(),vars.end(),*it)==vars.end())
@@ -606,7 +624,7 @@ int parse_varlist(const gen &g,vecteur &vars,vecteur &ineq,vecteur &initial) {
  * minimize(x^2+cos(x),x=0..3)
  *    >> 1
  * minimize(x^4-x^2,x=-3..3,locus)
- *    >> -1/4,[-sqrt(2)/2]
+ *    >> [-1/4,[(sqrt(2))/2,-(sqrt(2))/2]]
  * minimize(abs(x),x=-1..1)
  *    >> 0
  * minimize(x-abs(x),x=-1..1)
@@ -694,7 +712,7 @@ gen _minimize(const gen &args,GIAC_CONTEXT) {
     if (loc.empty()) {
         if (has_symb)
             return undef;
-        //*logptr(contextptr) << "Failed to find global extrema, switching to local search\n";
+        *logptr(contextptr) << "Failed to find global extrema, switching to local search\n";
         gen asol=_nlpsolve(makesequence(f,mergevecteur(
           *_zip(makesequence(at_inferieur_egal,g,vecteur(g.size(),0)),contextptr)._VECTptr,
           *_zip(makesequence(at_equal,h,vecteur(h.size(),0)),contextptr)._VECTptr),vars),contextptr);
@@ -732,7 +750,7 @@ define_unary_function_ptr5(at_minimize,alias_at_minimize,&__minimize,0,true)
  * maximize(piecewise(x<=-2,x+6,x<=1,x^2,3/2-x/2),x=-3..2)
  *    >> 4
  * minimize(x-abs(x),x=-1..1)
- *    >> 0
+ *    >> -2
  * maximize(x^2-3x+y^2+3y+3,[x=2..4,y=-4..-2])
  *    >> 11
  * maximize(x*y*z,x^2+2*y^2+3*z^2<=1,[x,y,z],point)
@@ -777,7 +795,7 @@ static const char _maximize_s []="maximize";
 static define_unary_function_eval (__maximize,&_maximize,_maximize_s);
 define_unary_function_ptr5(at_maximize,alias_at_maximize,&__maximize,0,true)
 
-gen _vbnds(const gen &g,GIAC_CONTEXT) {
+gen _box_constraints(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT || g._VECTptr->size()!=2)
         return gentypeerr(contextptr);
@@ -794,9 +812,9 @@ gen _vbnds(const gen &g,GIAC_CONTEXT) {
     gen intrv=_zip(makesequence(at_interval,B.front(),B.back()),contextptr);
     return _zip(makesequence(at_equal,x,intrv),contextptr);
 }
-static const char _vbnds_s []="vbnds";
-static define_unary_function_eval (__vbnds,&_vbnds,_vbnds_s);
-define_unary_function_ptr5(at_vbnds,alias_at_vbnds,&__vbnds,0,true)
+static const char _box_constraints_s []="box_constraints";
+static define_unary_function_eval (__box_constraints,&_box_constraints,_box_constraints_s);
+define_unary_function_ptr5(at_box_constraints,alias_at_box_constraints,&__box_constraints,0,true)
 
 int ipdiff::sum_ivector(const ivector &v,bool drop_last) {
     int res=0;
@@ -1568,7 +1586,8 @@ bool test_parameters(const vecteur &cpt,const vecteur &vars,const vecteur &ineq,
 void find_local_extrema(vecteur &cpts,const gen &f,const vecteur &g,const vecteur &vars,const ipdiff::ivector &arr,const vecteur &ineq,const vecteur &initial,int order_size,bool approx_hompol,GIAC_CONTEXT) {
     assert(order_size>=0);
     int nv=vars.size(),m=g.size(),n=nv-m,cls;
-    vecteur tmpvars=make_temp_vars(vars,ineq,true,contextptr);
+    vecteur bnds;
+    vecteur tmpvars=make_temp_vars(vars,ineq,bnds,true,contextptr);
     if (order_size==0 && m>0) { // apply the method of Lagrange
         gen L(f);
         vecteur multipliers(m),allinitial;

@@ -119,7 +119,7 @@ public:
 };
 
 gen _implicitdiff(const gen &g,GIAC_CONTEXT);
-gen _vbnds(const gen &g,GIAC_CONTEXT);
+gen _box_constraints(const gen &g,GIAC_CONTEXT);
 gen _minimize(const gen &g,GIAC_CONTEXT);
 gen _maximize(const gen &g,GIAC_CONTEXT);
 gen _extrema(const gen &g,GIAC_CONTEXT);
@@ -140,7 +140,7 @@ gen _numdiff(const gen &g,GIAC_CONTEXT);
 gen _isolve(const gen &g,GIAC_CONTEXT);
 
 extern const unary_function_ptr * const at_implicitdiff;
-extern const unary_function_ptr * const at_vbnds;
+extern const unary_function_ptr * const at_box_constraints;
 extern const unary_function_ptr * const at_minimize;
 extern const unary_function_ptr * const at_maximize;
 extern const unary_function_ptr * const at_extrema;

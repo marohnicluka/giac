@@ -15495,7 +15495,7 @@ wilcoxons([1, 3, 4, 5, 7, 8, 8, 12, 15, 17] , 10)
 dayofweek(21,4,2014)
 dayofweek(15,10,1582)
 
-# vbnds
+# box_constraints
 2 Converts variable bounds, given in matrix form, to interval form x=a..b,y=c..d,...
 0 Vect(x),Mtrx(bounds)
 -1 nlpsolve

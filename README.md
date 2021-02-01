@@ -7,9 +7,9 @@ My contributions to [Giac/Xcas](https://www-fourier.ujf-grenoble.fr/~parisse/gia
 - calculus of variations
 - numerical differentiation (Fornberg's algorithm)
 - (mixed integer) linear programming, transportation problem solver
-- curve interpolation (Thiele's algorithm, trigonometric polynomial fitting, Remez algorithm)
+- curve interpolation (Thiele's algorithm, Floater and Hormann's algorithm, trigonometric polynomial fitting, Remez algorithm)
 - simplification of trigonometric expressions
-- statistics (continuous and discrete random variables with sampling, kernel density estimation, maximum-likelihood fitting)
+- statistics (discrete random variables with sampling, kernel density estimation, maximum-likelihood fitting)
 - ordinary differential equations (an implementation of Kovacic's algorithm, a second-degree boundary value problems solver)
 - improved conversion to LaTeX (with TeXmacs compatibility) and MathML
 - improved Giac plugin for TeXmacs

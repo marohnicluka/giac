@@ -10,7 +10,7 @@
 \usepackage{amssymb}
 \usepackage{stmaryrd}
 \usepackage{makeidx}
-\usepackage{stix}
+%\usepackage{stix}
 \usepackage{hevea}
 %\usepackage{mathptmx}
 %HEVEA \newcommand{\leftsetbracket}{\@print@u{X27E6}}
@@ -24365,7 +24365,8 @@ since the default argument of \texttt{lagrange}
 would be global, hence not the same as the local
 variable used for the definition of \texttt{g}.
 
-\subsection{Trigonometric interpolation: \texttt{triginterp}}
+\subsection{Trigonometric interpolation: \texttt{triginterp}
+\index{triginterp|textbf}}
 
 The \texttt{triginterp} command computes a trigonometric polynomial
 which interpolates given data.
@@ -24404,7 +24405,7 @@ measuring the temperature every three hours:
 \begin{center}
 	\begin{tabular}{|r|c|c|c|c|c|c|c|c|}
 		\hline hour of the day&0&3&6&9&12&15&18&21\\
-		\hline temperature (deg~C)&11&10&17&24&32&26&23&19\\\hline
+		\hline temperature (${}^\circ$C)&11&10&17&24&32&26&23&19\\\hline
 	\end{tabular}
 \end{center}
 Furthermore, assume that an estimate of the temperature at 13:45 is
@@ -24790,36 +24791,45 @@ the $x$ coordinates.
 % \end{center}
 \end{itemize}
 
-\subsection{Rational interpolation without poles: \texttt{ratinterp}\index{ratinterp}}
+\subsection{Rational interpolation without poles: \texttt{ratinterp}
+\index{ratinterp|textbf}}
 
-\texttt{ratinterp} takes up to three arguments:
+The \texttt{ratinterp} command computes a family of pole-free rational functions which interpolate given data.
+Rational interpolation usually gives better results than the classic polynomial interpolation, which may oscillate highly in some cases.
 \begin{itemize}
-	\item Matrix with 2 columns with rows corresponding to points $(x_k,y_k)$, $k=0,1,\dots,n$, or the sequence of lists $[x_0,x_1,\dots,x_n]$ and $[y_0,y_1,\dots,y_n]$, where $a=x_0<x_1<\cdots<x_n=b$,
-	\item an identifier, number, symbolic expression or list of numbers $a$ (optional, by default $x$),
+\item \texttt{ratinterp} takes up to three arguments:
+\begin{itemize}
+	\item Matrix \textit{data} with 2 columns with rows corresponding to points $(x_k,y_k)$, $k=0,1,\dots,n$, or the sequence of lists $\textit{data\_x}=[x_0,x_1,\dots,x_n]$ and $\textit{data\_y}=[y_0,y_1,\dots,y_n]$, where $a=x_0<x_1<\cdots<x_n=b$,
+	\item an identifier \textit{var}, which may also be a number, symbolic expression or list of numbers $a$ (optional, by default $x$),
 	\item an integer $d$ such that $0\leq d\leq n$ (optional, by default $\min\{3,n\}$).
 \end{itemize}
-\texttt{ratinterp} returns a rational interpolation $r(a)$ of the given points using the method of Floater and Hormann (2006). If $a$ is a list of numbers $a_1,a_2,\dots,a_m$, then the list $[r(a_1)\dots,r(a_m)]$ is returned. The rational function $r$ is guaranteed to have no poles in $r$.
+\item \texttt{ratinterp(}\textit{data}$\langle,\textit{var},d\rangle$\texttt{)} or \texttt{ratinterp(}\textit{data\_x},\textit{data\_y}$\langle,\textit{var},d\rangle$\texttt{)} returns a rational interpolation $r(a)$ of the given points using the method of Floater and Hormann (2006). If $a$ is a list of numbers $a_1,a_2,\dots,a_m$, then the list $[r(a_1)\dots,r(a_m)]$ is returned. There are at most $n+1$ distinct interpolants which can be specified by varying the parameter $d$.
+\end{itemize}
 
-The method in fact provides a family of at most $n+1$ interpolants which can be specified by varying the parameter $d$.
+\smallskip
 
-Rational interpolation usually gives better results than the classic polynomial interpolation, which may oscillate highly in some cases.
-
-For example, input:
+\noindent
+\textbf{Examples.}
+\begin{itemize}
+\item
+Input:
 \begin{center}
 	\tt ratinterp([1,3,5,8],[2,-1,3,4],x,1)
 \end{center}
 Output:
-\begin{center}
-	\tt (-19*x\verb|^|3+288*x\verb|^|2-1133*x+1200)/(6*x\verb|^|2-48*x+210)
-\end{center}
+\[
+	\frac{-19 x^{3}+288 x^{2}-1133 x+1200}{6 x^{2}-48 x+210}
+\]
+\item
 Input:
 \begin{center}
 	\tt ratinterp([1,3,5,8],[2,-1,3,4],x,2)
 \end{center}
 Output:
-\begin{center}
-	\tt -29*x\verb|^|3/168+17*x\verb|^|2/7-1507*x/168+61/7
-\end{center}
+\[
+	-\frac{29 x^{3}}{168}+\frac{17 x^{2}}{7}-\frac{1507 x}{168}+\frac{61}{7}
+\]
+\end{itemize}
 
 \section{Arithmetic and polynomials}
 

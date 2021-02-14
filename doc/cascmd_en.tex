@@ -31119,6 +31119,38 @@ to a number to the smallest interval which contains the number.
 % \end{center}
 \end{itemize}
 
+\subsection{Converting box constraints from matrix to interval form: \texttt{box\_constraints}
+\index{box\_constraints}
+\label{ssec:numb2intvl}}
+
+The \texttt{box\_constraints} command
+can convert bounds of given variables from the matrix form to interval form.
+\begin{itemize}
+  \item \texttt{box\_constraints} takes two mandatory arguments:
+  \begin{itemize}
+    \item \textit{vars}, a list of variables $[x_1,x_2,\dots,x_n]$.
+    \item \textit{bnds}, a matrix with $n$ rows and two columns in which the $k$-th row contains the lower and upper bound $l_k$ and $u_k$ of $x_k$, respectively.
+  \end{itemize}
+  \item \texttt{box\_constraints(}\textit{vars},\textit{bnds}\texttt{)}
+   returns the list $[x_1=l_1\ldots u_1,x_2=l_2\ldots u_2,\dots,x_n=l_n\ldots u_n]$.
+\end{itemize}
+
+\smallskip
+
+\noindent
+\textbf{Examples.}
+\begin{itemize}
+\item 
+\textit{Input:}
+\begin{center}
+  \texttt{box\_constraints([x,y],[[-2,2],[-5,5]])}
+\end{center}
+\textit{Output:}
+\[
+\left[x=-2\ldots 2,y=-5\ldots 5\right]
+\]
+\end{itemize}
+
 \section{Sequences and lists\label{sec:seq}}
 
 \subsection{Defining a sequence or a list: \texttt{seq[ ]}  \texttt{()}

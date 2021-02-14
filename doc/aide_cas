@@ -11992,21 +11992,21 @@ plotimplicit(y^3=x^3-x^2,[x,y],xstep=0.1,ystep=0.1)
 plotimplicit((x+5)^2+(y+4)^2-1,x=-6..-4,y=-5..-3)
 plotimplicit((x+5)^2+(y+4)^2-1,[x=-6..-4,y=-5..-3])
 
-# fieldplot plotfield
-1 fieldplot(f(t,y),[t,y]) trace le champ des tangentes (normalisé ou non selon l'option) de l'equa diff y'=f(t,y).
-2 fieldplot(f(t,y),[t,y]) draws the plotfield of the diff equation y'=f(t,y).
-3 fieldplot(f(t,y),[t,y]) traza el campo de las tangentes (normalizadas o no según la opción) de la ecuación diferencial y'=f(t,y).
-4 fieldplot(f(t,y),[t,y]) σχεδιάζει το πεδίο κλίσεων της διαφορικής εξίσωσης y'=f(t,y).
+# plotfield fieldplot
+1 plotfield(f(t,y),[t,y]) trace le champ des tangentes (normalisé ou non selon l'option) de l'equa diff y'=f(t,y).
+2 plotfield(f(t,y),[t,y]) draws the plotfield of the diff equation y'=f(t,y).
+3 plotfield(f(t,y),[t,y]) traza el campo de las tangentes (normalizadas o no según la opción) de la ecuación diferencial y'=f(t,y).
+4 plotfield(f(t,y),[t,y]) σχεδιάζει το πεδίο κλίσεων της διαφορικής εξίσωσης y'=f(t,y).
 0 Expr,VectVar,[Opt]
 -1 interactive_plotode
 -2 odeplot
 -3 odesolve
 -4 desolve
-fieldplot(sin(t*y),[t=-5..5,y=-3..3],xstep=0.5,ystep=0.5)
-fieldplot(-t*y,[t,y])
-fieldplot(-t*y,[t,y],normalize)
-fieldplot(-t*y,[t,y],normalize,xstep=0.5,ystep=0.5)
-fieldplot(-t*y,[t=-6.868..6.868,y=-6.868..6.868],normalize)
+plotfield(sin(t*y),[t=-5..5,y=-3..3],xstep=0.5,ystep=0.5)
+plotfield(-t*y,[t,y])
+plotfield(-t*y,[t,y],normalize)
+plotfield(-t*y,[t,y],normalize,xstep=0.5,ystep=0.5)
+plotfield(-t*y,[t=-6.868..6.868,y=-6.868..6.868],normalize)
 
 # interactive_plotode interactive_odeplot
 1 Trace (dans DispG) une solution pour chaque point t0+i*y0 désigné par la souris (Esc=arrêt).
@@ -12021,23 +12021,23 @@ fieldplot(-t*y,[t=-6.868..6.868,y=-6.868..6.868],normalize)
 interactive_plotode(sin(t*y),[t,y])
 interactive_plotode(-t*y,[t,y])
 
-# odeplot plotode
-1 odeplot(f(t,y),[t,y],[t0,y0]) trace la solution de y'=f(t,y) et y(t0)=y0 ou du système [x'=g(t,x,y),y'=h(t,x,y)] avec x(t0)=x0 et y(t0)=y0.
-2 odeplot(f(t,y),[t,y],[t0,y0]) draws the solution of y'=f(t,y) and y(t0)=y0 or of the system [x'=g(t,x,y),y'=h(t,x,y)] with x(t0)=x0 and y(t0)=y0.
-3 odeplot(f(t,y),[t,y],[t0,y0])) traza la solución de y'=f(t,y) con y(t0)=y0.
-4 odeplot(f(t,y),[t,y],[t0,y0)) σχεδιάζει τη λύση της y'=f(t,y) με y(t0)=y0.
+# plotode odeplot 
+1 plotode(f(t,y),[t,y],[t0,y0]) trace la solution de y'=f(t,y) et y(t0)=y0 ou du système [x'=g(t,x,y),y'=h(t,x,y)] avec x(t0)=x0 et y(t0)=y0.
+2 plotode(f(t,y),[t,y],[t0,y0]) draws the solution of y'=f(t,y) and y(t0)=y0 or of the system [x'=g(t,x,y),y'=h(t,x,y)] with x(t0)=x0 and y(t0)=y0.
+3 plotode(f(t,y),[t,y],[t0,y0])) traza la solución de y'=f(t,y) con y(t0)=y0.
+4 plotode(f(t,y),[t,y],[t0,y0)) σχεδιάζει τη λύση της y'=f(t,y) με y(t0)=y0.
 0 Expr,VectVar,VectInitCond
 -1 interactive_plotode
 -2 fieldplot
 -3 odesolve
 -4 desolve
-odeplot(sin(t*y),[t,y],[0,1])
-odeplot(sin(t*y),[t=-10..10,y],[0,1])
-odeplot(sin(t*y),[t=-3..3,y],[0,1],tstep=0.1,color=vert)
-odeplot([x-0.3*x*y, 0.3*x*y-y], [t,x,y],[0,0.3,0.7])
-odeplot([x-0.3*x*y, 0.3*x*y-y], [t,x,y],[0,0.3,0.7],plan)
-odeplot([-y+b,-1+(x-a)^2+(y-b)^2],[t=-3..3,x,y],[0,a+1,b+0.5],plan)
-odeplot(5*[-y,x],[t=0..1,x,y],[0,0.3,0.7],tstep=0.05,plan)
+plotode(sin(t*y),[t,y],[0,1])
+plotode(sin(t*y),[t=-10..10,y],[0,1])
+plotode(sin(t*y),[t=-3..3,y],[0,1],tstep=0.1,color=vert)
+plotode([x-0.3*x*y, 0.3*x*y-y], [t,x,y],[0,0.3,0.7])
+plotode([x-0.3*x*y, 0.3*x*y-y], [t,x,y],[0,0.3,0.7],plan)
+plotode([-y+b,-1+(x-a)^2+(y-b)^2],[t=-3..3,x,y],[0,a+1,b+0.5],plan)
+plotode(5*[-y,x],[t=0..1,x,y],[0,0.3,0.7],tstep=0.05,plan)
 
 # pmin
 1 Renvoie le polynôme minimal de la matrice A ou le polynôme minimal du nombre algébrique a.
@@ -15495,14 +15495,6 @@ wilcoxons([1, 3, 4, 5, 7, 8, 8, 12, 15, 17] , 10)
 dayofweek(21,4,2014)
 dayofweek(15,10,1582)
 
-# box_constraints
-2 Converts variable bounds, given in matrix form, to interval form x=a..b,y=c..d,...
-0 Vect(x),Mtrx(bounds)
--1 nlpsolve
--2 minimize
--3 maximize
-box_constraints([x,y],[[-2,2],[-5,5]])
-
 # minimize
 1 Recherche du minimum d'une fonction
 2 Finds the global minimum of a function.
@@ -18113,3 +18105,12 @@ vertex_cover_number(graph_complement(complete_graph(3,4)))
 -1 is_reachable
 -2 shortest_path
  G:=graph_complement(complete_graph(3,4)):;reachable(G,3)
+
+# box_constraints
+2 Converts variable bounds, given in matrix form, to interval form x=a..b,y=c..d,...
+0 Vect(x),Mtrx(bounds)
+-1 nlpsolve
+-2 minimize
+-3 maximize
+box_constraints([x,y],[[-2,2],[-5,5]])
+

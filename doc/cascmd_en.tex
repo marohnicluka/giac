@@ -24801,7 +24801,7 @@ Rational interpolation usually gives better results than the classic polynomial 
 \begin{itemize}
 	\item Matrix \textit{data} with 2 columns with rows corresponding to points $(x_k,y_k)$, $k=0,1,\dots,n$, or the sequence of lists $\textit{data\_x}=[x_0,x_1,\dots,x_n]$ and $\textit{data\_y}=[y_0,y_1,\dots,y_n]$, where $a=x_0<x_1<\cdots<x_n=b$,
 	\item an identifier \textit{var}, which may also be a number, symbolic expression or list of numbers $a$ (optional, by default $x$),
-	\item an integer $d$ such that $0\leq d\leq n$ (optional, by default $\min\{3,n\}$).
+	\item an integer $d$ such that $0\leq d\leq n$ (optional, by default $\min\{3,\lfloor n/2\rfloor\}$).
 \end{itemize}
 \item \texttt{ratinterp(}\textit{data}$\langle,\textit{var},d\rangle$\texttt{)} or \texttt{ratinterp(}\textit{data\_x},\textit{data\_y}$\langle,\textit{var},d\rangle$\texttt{)} returns a rational interpolation $r(a)$ of the given points using the method of Floater and Hormann (2006). If $a$ is a list of numbers $a_1,a_2,\dots,a_m$, then the list $[r(a_1)\dots,r(a_m)]$ is returned. There are at most $n+1$ distinct interpolants which can be specified by varying the parameter $d$.
 \end{itemize}

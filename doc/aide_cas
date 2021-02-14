@@ -15501,7 +15501,7 @@ dayofweek(15,10,1582)
 -1 nlpsolve
 -2 minimize
 -3 maximize
-vbnds([x,y],[[-2,2],[-5,5]])
+box_constraints([x,y],[[-2,2],[-5,5]])
 
 # minimize
 1 Recherche du minimum d'une fonction

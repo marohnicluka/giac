@@ -15633,6 +15633,12 @@ implicitdiff(x*y*z,-2x^3+15x^2*y+11y^3-24y=0,[x,z,y],order=2,[1,-1,0])
 0 Opt
 -1 lpsolve
 
+# nlp_initialpoint nlp_iterationlimit nlp_nonnegative nlp_precision
+1 Options de la commande nlpsolve
+2 Options for nlpsolve command.
+0 Opt
+-1 nlpsolve
+
 # periodic
 1 Cree une expression periodique egale a Expr sur [a,b], periode b-a
 2 Returns the periodic expression equal to Expr on a..b, period b-a.

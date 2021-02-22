@@ -2933,9 +2933,12 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
         *logptr(contextptr) << "Error: " << err.what() << "\n";
         return undef;
     }
-    if (is_undef(sol))
-        return undef;
-    optval=_subs(makesequence(obj,vars,sol),contextptr);
+    if (sol.type!=_VECT || sol._VECTptr->empty())
+        return sol;
+    if (sol._VECTptr->front().type==_STRNG) {
+        optval=sol._VECTptr->front();
+        sol=sol._VECTptr->back();
+    } else optval=_subs(makesequence(obj,vars,sol),contextptr);
     return gen(makevecteur(optval,_zip(makesequence(at_equal,vars,sol),contextptr)),_LIST__VECT);
 }
 static const char _nlpsolve_s []="nlpsolve";

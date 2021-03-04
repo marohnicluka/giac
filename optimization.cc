@@ -2842,7 +2842,7 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     const vecteur &gv=*g._VECTptr;
     vecteur constr,vars,initp;
-    const gen &obj=gv.front();
+    gen obj=gv.front();
     add_identifiers(obj,vars,contextptr);
     const_iterateur it=gv.begin();
     bool maximize=false;
@@ -2911,6 +2911,35 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
             return gentypeerr(contextptr);
         }
     }
+    std::vector<int> fxvars_indices;
+    vecteur fxvars_values;
+    vecteur fxvars_names;
+    vecteur old_vars=vars;
+    for (int i=constr.size();i-->0;) {
+        const gen &c=constr[i];
+        if (c.is_symb_of_sommet(at_equal)) {
+            const gen &lh=c._SYMBptr->feuille._VECTptr->front();
+            const gen &rh=c._SYMBptr->feuille._VECTptr->back();
+            gen a,b;
+            for (iterateur it=vars.begin();it!=vars.end();++it) {
+                if (is_linear_wrt(lh-rh,*it,a,b,contextptr) && !is_zero(a) &&
+                        _evalf(a,contextptr).type==_DOUBLE_ && _evalf(b,contextptr).type==_DOUBLE_) {
+                    fxvars_indices.push_back(std::find(old_vars.begin(),old_vars.end(),*it)-old_vars.begin());
+                    fxvars_values.push_back(-b/a);
+                    fxvars_names.push_back(*it);
+                    vars.erase(it);
+                    constr.erase(constr.begin()+i);
+                    break;
+                }
+            }
+        }
+    }
+    for (int i=initp.size();i-->0;) {
+        if (std::find(fxvars_indices.begin(),fxvars_indices.end(),i)!=fxvars_indices.end())
+            initp.erase(initp.begin()+i);
+    }
+    obj=subst(obj,fxvars_names,fxvars_values,false,contextptr);
+    constr=subst(constr,fxvars_names,fxvars_values,false,contextptr);
     gen sol,optval;
     try {
         if (!feasible) {
@@ -2939,7 +2968,16 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
         optval=sol._VECTptr->front();
         sol=sol._VECTptr->back();
     } else optval=_subs(makesequence(obj,vars,sol),contextptr);
-    return gen(makevecteur(optval,_zip(makesequence(at_equal,vars,sol),contextptr)),_LIST__VECT);
+    vecteur complete_sol(old_vars.size(),undef);
+    for (int i=fxvars_indices.size();i-->0;) {
+        complete_sol[fxvars_indices[i]]=fxvars_values[i];
+    }
+    int i=0;
+    for (const_iterateur it=sol._VECTptr->begin();it!=sol._VECTptr->end();++it) {
+        while (!is_undef(complete_sol[i])) ++i;
+        complete_sol[i]=*it;
+    }
+    return gen(makevecteur(optval,_zip(makesequence(at_equal,old_vars,complete_sol),contextptr)),_LIST__VECT);
 }
 static const char _nlpsolve_s []="nlpsolve";
 static define_unary_function_eval (__nlpsolve,&_nlpsolve,_nlpsolve_s);

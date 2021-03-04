@@ -2911,9 +2911,7 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
             return gentypeerr(contextptr);
         }
     }
-    std::vector<int> fxvars_indices;
-    vecteur fxvars_values;
-    vecteur fxvars_names;
+    std::map<int,gen> fxvars;
     vecteur old_vars=vars;
     for (int i=constr.size();i-->0;) {
         const gen &c=constr[i];
@@ -2924,9 +2922,8 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
             for (iterateur it=vars.begin();it!=vars.end();++it) {
                 if (is_linear_wrt(lh-rh,*it,a,b,contextptr) && !is_zero(a) &&
                         _evalf(a,contextptr).type==_DOUBLE_ && _evalf(b,contextptr).type==_DOUBLE_) {
-                    fxvars_indices.push_back(std::find(old_vars.begin(),old_vars.end(),*it)-old_vars.begin());
-                    fxvars_values.push_back(-b/a);
-                    fxvars_names.push_back(*it);
+                    int vidx=std::find(old_vars.begin(),old_vars.end(),*it)-old_vars.begin();
+                    fxvars[vidx]=makevecteur(*it,-b/a);
                     vars.erase(it);
                     constr.erase(constr.begin()+i);
                     break;
@@ -2934,12 +2931,11 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
             }
         }
     }
-    for (int i=initp.size();i-->0;) {
-        if (std::find(fxvars_indices.begin(),fxvars_indices.end(),i)!=fxvars_indices.end())
-            initp.erase(initp.begin()+i);
+    for (std::map<int,gen>::const_reverse_iterator it=fxvars.rbegin();it!=fxvars.rend();++it) {
+        initp.erase(initp.begin()+it->first);
+        obj=subst(obj,it->second._VECTptr->front(),it->second._VECTptr->back(),false,contextptr);
+        constr=subst(constr,it->second._VECTptr->front(),it->second._VECTptr->back(),false,contextptr);
     }
-    obj=subst(obj,fxvars_names,fxvars_values,false,contextptr);
-    constr=subst(constr,fxvars_names,fxvars_values,false,contextptr);
     gen sol,optval;
     try {
         if (!feasible) {
@@ -2969,8 +2965,8 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
         sol=sol._VECTptr->back();
     } else optval=_subs(makesequence(obj,vars,sol),contextptr);
     vecteur complete_sol(old_vars.size(),undef);
-    for (int i=fxvars_indices.size();i-->0;) {
-        complete_sol[fxvars_indices[i]]=fxvars_values[i];
+    for (std::map<int,gen>::const_iterator it=fxvars.begin();it!=fxvars.end();++it) {
+        complete_sol[it->first]=it->second._VECTptr->back();
     }
     int i=0;
     for (const_iterateur it=sol._VECTptr->begin();it!=sol._VECTptr->end();++it) {

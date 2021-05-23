@@ -1,4 +1,4 @@
-<TeXmacs|1.99.16>
+<TeXmacs|1.99.20>
 
 <style|source>
 
@@ -21,9 +21,9 @@
   </src-title>>
 
   <assign|giac-output|<\macro|body>
-  	<\padded-centered>
-    	<generic-output*|<arg|body>>
-    </padded-centered>
+    <\padded>
+      <generic-output*|<arg|body>>
+    </padded>
   </macro>>
 
   \;

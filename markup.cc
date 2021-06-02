@@ -160,6 +160,8 @@ bool is_greek_letter(const string &s) {
     return s=="lambda" || s=="Lambda";
   case 7:
     return s=="epsilon";
+  case 10:
+    return s=="varepsilon";
   default:
     break;
   }
@@ -819,8 +821,11 @@ string idnt2markup(const string &s_orig,int typ,bool unit,int idc,bool &isname) 
   */
   size_t i,len,len_sub;
   string s,ssub,mdf="";
-  if (s_orig.rfind("_")==s_orig.size()-1 && is_greek_letter(s=s_orig.substr(0,s_orig.size()-1)))
+  if (s_orig.rfind("_")==s_orig.size()-1 && is_greek_letter(s=s_orig.substr(0,s_orig.size()-1))) {
+    if (s=="phi" || s=="epsilon")
+      s="var"+s;
     return tex?"\\"+s+"\\_":(scm?"<"+s+">_":"&"+s+";_");
+  }
   for (i=s_orig.size();i-->0;) {
     if (!isdigit(s_orig[i]))
       break;
@@ -843,15 +848,15 @@ string idnt2markup(const string &s_orig,int typ,bool unit,int idc,bool &isname) 
     s=s_orig;
   len=s.size();
   if (is_greek_letter(s)) {
-    if ((tex || scm) && s=="phi")
-      s="varphi";
+    if ((tex || scm) && (s=="phi" || s=="epsilon"))
+      s="var"+s;
     s=tex?"\\"+s:(scm?"<"+s+">":"&"+s+";");
     len=1;
   }
   len_sub=ssub.size();
   if (!ssub.empty() && is_greek_letter(ssub)) {
-    if ((tex || scm) && ssub=="phi")
-      ssub="varphi";
+    if ((tex || scm) && (ssub=="phi" || ssub=="epsilon"))
+      ssub="var"+ssub;
     ssub=tex?"\\"+ssub:(scm?"<"+ssub+">":"&"+ssub+";");
     len_sub=1;
   }
@@ -1696,13 +1701,13 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
     }
     if (g.is_symb_of_sommet(at_epsilon)) {
       if (tex)
-        ml.latex="\\varepsilon ";
+        ml.latex="\\epsilon ";
       if (mml_presentation)
         ml.markup="&epsilon;";
       if (mml_content)
         ml.content=mml_tag("ci",g.print(contextptr),++idc);
       if (scm)
-        ml.scheme=scm_quote("<varepsilon>");
+        ml.scheme=scm_quote("<epsilon>");
       return ml;
     }
     if (g.is_symb_of_sommet(at_plus) || g.is_symb_of_sommet(at_pointplus)) {

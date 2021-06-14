@@ -4256,6 +4256,21 @@ bool parse_equations(const gen &eq,vecteur &eqv) {
     return true;
 }
 
+static int integer_placeholder_count=-1;
+
+gen make_integer_placeholder(const string &base,GIAC_CONTEXT) {
+    if (integer_placeholder_count<0)
+        integer_placeholder_count=array_start(contextptr);
+    gen ph=identificateur(string("_")+base+print_INT_(integer_placeholder_count++));
+    return ph;
+}
+
+/* return true iff a is divisible by b */
+bool is_divisible(const gen &a,const gen &b,GIAC_CONTEXT) {
+    assert(a.is_integer() && b.is_integer());
+    return is_zero(_irem(makesequence(a,b),contextptr));
+}
+
 /* if g is a homogeneous polynomial in vars of degree d>0, return d, else return 0 */
 int is_homogeneous_poly(const gen &g_orig,const vecteur &vars,gen_map *coef,GIAC_CONTEXT) {
     gen g=expand(g_orig,contextptr);
@@ -4313,31 +4328,37 @@ gen square_part(const gen &g,GIAC_CONTEXT) {
     return ret;
 }
 
-/* return true iff g = a*x^2 + b*x*y + c*y^2 + d, where a != 0 */
-bool is_binary_quadratic_form(const gen &g,const gen &x,const gen &y,gen &a,gen &b,gen &c,gen &d,GIAC_CONTEXT) {
+/* return true iff g = a*x^2 + b*x*y + c*y^2 + d*x + e*y + f */
+bool is_binary_quadratic_wrt(const gen &g,const gen &x,const gen &y,
+                             gen &a,gen &b,gen &c,gen &d,gen &e,gen &f,GIAC_CONTEXT) {
     gen A,B,C,D,E,F;
-    if (!is_quadratic_wrt(g,x,A,B,C,contextptr))
-        return false;
-    if (!is_constant_wrt(A,y,contextptr))
+    if (!is_quadratic_wrt(g,x,A,B,C,contextptr)) {
+        A=0;
+        if (!is_linear_wrt(g,x,B,C,contextptr) || is_exactly_zero(B))
+            return false;
+    } else if (!is_constant_wrt(A,y,contextptr))
         return false;
     a=A;
     if (!is_exactly_zero(B)) {
-        if (!is_linear_wrt(B,y,D,E,contextptr)
-                || is_exactly_zero(D) || !is_exactly_zero(E))
+        if (!is_linear_wrt(B,y,D,E,contextptr))
             return false;
         b=D;
-    } else b=0;
+        d=E;
+    } else b=d=0;
     if (!is_exactly_zero(C)) {
         if (is_constant_wrt(C,y,contextptr)) {
+            c=e=0;
+            f=C;
+        } else if (is_linear_wrt(C,y,D,E,contextptr)) {
             c=0;
-            d=C;
-        } else {
-            if (!is_quadratic_wrt(C,y,D,E,F,contextptr) || !is_exactly_zero(E))
-                return false;
+            e=D;
+            f=E;
+        } else if (is_quadratic_wrt(C,y,D,E,F,contextptr)) {
             c=D;
-            d=F;
-        }
-    } else c=d=0;
+            e=E;
+            f=F;
+        } else return false;
+    } else c=e=f=0;
     return true;
 }
 
@@ -4491,7 +4512,7 @@ vecteur solve_pell_equation(const gen &d,bool rhs_positive,int nsols,GIAC_CONTEX
         if (i>0) {
             /* found a solution */
             if (rhs_positive) {
-                if (is_zero(_irem(makesequence(2*a,c),contextptr)))
+                if (is_divisible(2*a,c,contextptr))
                     sols.push_back(makevecteur(2*a*a/c+gen((i+1)%2!=0?-1:1),2*a*b/c));
             } else if (i%2!=0 && is_one(c))
                 sols.push_back(makevecteur(a,b));
@@ -4721,7 +4742,7 @@ bool is_thue_equation(const gen &g,const gen &x,const gen &y,gen &P,gen &a,GIAC_
 bool is_soluble(const gen &A,const gen &B,GIAC_CONTEXT) {
     gen x(0);
     for (;is_strictly_greater(B,x,contextptr);x=x+1) {
-        if (is_zero(_irem(makesequence(x*x+A,B),contextptr)))
+        if (is_divisible(x*x+A,B,contextptr))
             return true;
     }
     return false;
@@ -4742,7 +4763,7 @@ bool is_locally_soluble_everywhere(const gen &a,const gen &b,const gen &c,GIAC_C
         for (int y=0;!is_soluble_in_Q2 && y<8;++y) {
             for (int z=0;z<8;++z) {
                 gen X(x),Y(y),Z(z);
-                if (is_zero(_irem(makesequence(a*X*X+b*Y*Y+c*Z*Z,8),contextptr))) {
+                if (is_divisible(a*X*X+b*Y*Y+c*Z*Z,8,contextptr)) {
                     is_soluble_in_Q2=true;
                     break;
                 }
@@ -4769,7 +4790,7 @@ vecteur descent(const gen &A,const gen &B,GIAC_CONTEXT) {
         return makevecteur(0,1,1);
     gen ub=abs(B,contextptr)/gen(2),r(0);
     for (;is_greater(ub,r,contextptr);r=r+1) {
-        if (is_zero(_irem(makesequence(r*r-A,B),contextptr)))
+        if (is_divisible(r*r-A,B,contextptr))
             break;
     }
     assert(is_greater(ub,r,contextptr));
@@ -4852,13 +4873,64 @@ gen solve_ternary_quadratic_form(const gen &Q,const vecteur &vars,const vecteur 
     return divvecteur(multvecteur(Z3,gsol),_Gcd(change_subtype(gsol,_SEQ__VECT),contextptr));
 }
 
-static int integer_placeholder_count=-1;
-
-gen make_integer_placeholder(const string &base,GIAC_CONTEXT) {
-    if (integer_placeholder_count<0)
-        integer_placeholder_count=array_start(contextptr);
-    gen ph=identificateur(string("_")+base+print_INT_(integer_placeholder_count++));
-    return ph;
+/* solve general binary quadratic equation using the methods of Dario Alejandro Alpern at
+ * https://www.alpertron.com.ar/METHODS.HTM */
+gen solve_binary_quadratic(const vecteur &cf,const gen &ph,GIAC_CONTEXT) {
+    gen a=cf[0],b=cf[1],c=cf[2],d=cf[3],e=cf[4],f=cf[5];
+    if (is_zero(a) && is_zero(b) && is_zero(c)) {
+        /* linear case */
+        gen g=_gcd(makesequence(d,e),contextptr);
+        if (!is_divisible(f,g,contextptr))
+            return vecteur(0); // no solutions
+        d=d/g; e=e/g; f=f/g;
+        gen uv=_iabcuv(makesequence(d,e,-f),contextptr);
+        assert(uv.type==_VECT && uv._VECTptr->size()==2);
+        gen u=uv._VECTptr->front(),v=uv._VECTptr->back();
+        gen Z=is_undef(ph)?make_integer_placeholder("Z",contextptr):ph;
+        return makevecteur(u+e*Z,v-d*Z);
+    }
+    vecteur sol;
+    if (is_zero(a) && is_zero(c) && !is_zero(b)) {
+        /* simple hyperbolic case */
+        if (is_zero(d*e-b*f)) {
+            bool c1=is_divisible(e,b,contextptr),c2=is_divisible(d,b,contextptr);
+            if (!c1 && !c2)
+                return vecteur(0); // no solutions
+            gen Z=is_undef(ph)?make_integer_placeholder("Z",contextptr):ph;
+            if (c1) sol.push_back(makevecteur(-e/b,Z));
+            if (c2) sol.push_back(makevecteur(Z,-d/b));
+        } else {
+            vecteur dv=*_idivis(d*e-b*f,contextptr)._VECTptr;
+            for (const_iterateur it=dv.begin();it!=dv.end();++it) {
+                const gen &D=*it;
+                gen x=(D-e)/b,y=((d*e-b*f)/D-d)/b;
+                if (x.is_integer() && y.is_integer())
+                    sol.push_back(makevecteur(x,y));
+            }
+        }
+        return sol;
+    }
+    gen dsc=b*b-4*a*c;
+    if (is_strictly_positive(-dsc,contextptr)) {
+        /* elliptical case */
+        gen A=dsc,B=2*(b*e-2*c*d),C=e*e-4*c*f;
+        dsc=B*B-4*A*C;
+        if (!is_positive(dsc,contextptr))
+            return vecteur(0); // no solutions
+        gen r1=(-B-sqrt(dsc,contextptr))/(2*A),r2=(-B+sqrt(dsc,contextptr))/(2*A);
+        for (gen x=_ceil(r1,contextptr);is_greater(r2,x,contextptr);x=x+1) {
+            A=c; B=e+b*x; C=A*x*x+d+f;
+            if (!is_positive(dsc=B*B-4*A*C,contextptr))
+                continue;
+            gen y1=(-B-sqrt(dsc,contextptr))/(2*A),y2=(-B+sqrt(dsc,contextptr))/(2*A);
+            if (y1.is_integer())
+                sol.push_back(makevecteur(x,y1));
+            if (!is_zero(dsc) && y2.is_integer())
+                sol.push_back(makevecteur(x,y2));
+        }
+        return sol;
+    }
+    return undef; // unable to solve the equation
 }
 
 /* Diophantine equation solver, which can solve:
@@ -4885,7 +4957,7 @@ gen _isolve(const gen &g,GIAC_CONTEXT) {
     if (!parse_equations(eq,eqv))
         return gentypeerr(contextptr);
     vars=*_sort(_lname(eqv,contextptr),contextptr)._VECTptr;
-    gen a,b,c,d,sol(undef);
+    gen a,b,c,d,e,f,sol(undef);
     matrice A;
     vecteur Fr;
     bool find_alternate_sols=false;
@@ -4916,7 +4988,7 @@ gen _isolve(const gen &g,GIAC_CONTEXT) {
             if (!sol._VECTptr->at(i).is_integer())
                 sol._VECTptr->erase(sol._VECTptr->begin()+i);
         }
-    } else if (is_linear_system(eqv,vars,A,Fr,contextptr)) {
+    } else if (is_linear_system(eqv,vars,A,Fr,contextptr) && (n>2 || m>1)) {
         gen rk=_rank(A,contextptr);
         if (!rk.is_integer() || rk.val<m)
             return gensizeerr("System matrix is not full rank.");
@@ -4933,106 +5005,109 @@ gen _isolve(const gen &g,GIAC_CONTEXT) {
                           false,contextptr);
             }
         }
-        if (!sol._VECTptr->empty())
-            sol=_zip(makesequence(at_equal,vars,sol),contextptr);
     } else if (n==2 && m==1) {
-        cout << "Single equation in two variables" << endl;
-        gen &x=vars.front(),&y=vars.back(),&e=eqv.front();
-        vecteur t(2);
+        //cout << "Single equation in two variables" << endl;
+        gen &x=vars.front(),&y=vars.back(),&eq=eqv.front();
+        vecteur t(6);
         int pd1=0,pd2=0;
         bool y_first=false;
-        if ((pd1=is_pell_equation(e,x,y,d,contextptr))!=0 ||
-                (pd2=is_pell_equation(e,y,x,d,contextptr))!=0) {
-            cout << "Solving Pell equation" << endl;
+        if ((pd1=is_pell_equation(eq,x,y,d,contextptr))!=0 ||
+                (pd2=is_pell_equation(eq,y,x,d,contextptr))!=0) {
+            //cout << "Solving Pell equation" << endl;
             sol=solve_pell_equation(d,pd1+pd2>0,nsols,contextptr);
             if (pd1==0)
                 sol=_apply(makesequence(at_revlist,sol),contextptr);
-        } else if ((is_binary_quadratic_form(e,x,y,a,b,c,d,contextptr) ||
-                    is_binary_quadratic_form(e,y,x,c,b,a,d,contextptr)) &&
-                integralize(makevecteur(a,b,c,d),t,contextptr)) {
-            cout << "Solving binary quadratic form" << endl;
-            gen dsc=t[1]*t[1]-4*t[0]*t[2];
-            cout << t << ", dsc: " << dsc << endl;
-            bool defn=!is_positive(dsc,contextptr);
-            if (defn && !is_positive(t[0],contextptr))
-                t=multvecteur(-1,t);
-            if (defn || !is_perfect_square(dsc)) {
-#ifdef HAVE_LIBPARI
-                GEN pa=gen2GEN(t[0],vecteur(0),contextptr);
-                GEN pb=gen2GEN(t[1],vecteur(0),contextptr);
-                GEN pc=gen2GEN(t[2],vecteur(0),contextptr);
-                GEN pd=gen2GEN(-t[3],vecteur(0),contextptr);
-                sol=GEN2gen(qfbsolve(Qfb0(pa,pb,pc,0,DEFAULTPREC),pd,3),vecteur(0));
-                find_alternate_sols=true;
-#else
-                *logptr(contextptr) << "PARI library is required for solving quadratic forms\n";
-#endif
-            } else {
-                /* apply factorization according to Buchmann and Vollmer
-                 * -- "Binary Quadratic Forms" (2007) */
-                cout << "Applying Buchmann-Vollmer factorization" << endl;
-                d=sqrt(dsc,contextptr);
-                gen cont=_gcd(vecteur(t.begin(),t.begin()+3),contextptr);
-                if (!is_one(cont)) {
-                    d=d/cont;
-                    for (int i=0;i<3;++i) t[i]=t[i]/cont;
+        } else if (is_binary_quadratic_wrt(eq,x,y,a,b,c,d,e,f,contextptr) &&
+                   integralize(makevecteur(a,b,c,d,e,f),t,contextptr)) {
+            a=t[0]; b=t[1]; c=t[2]; d=t[3]; e=t[4]; f=t[5];
+            gen ph(fvars.empty()?undef:fvars.front());
+            if ((!is_zero(a) || !is_zero(c)) && is_zero(d) && is_zero(e)) {
+                //cout << "Solving binary quadratic form" << endl;
+                gen dsc=b*b-4*a*c;
+                bool defn=!is_positive(dsc,contextptr);
+                if (defn && !is_positive(a,contextptr)) {
+                    t=multvecteur(-1,t);
+                    a=-a; b=-b; c=-c; f=-f;
                 }
-                gen p=(t[1]+d)/2,q=(t[1]-d)/2;
-                gen cd1=_gcd(makesequence(t[0],p),contextptr);
-                gen cd2=_gcd(makesequence(t[0],q),contextptr);
-                matrice ab;
-                ab.push_back(makevecteur(t[0]/cd1,p/cd1));
-                ab.push_back(makevecteur(t[0]/cd2,q/cd2));
-                assert(is_integer_matrice(ab,true));
-                vecteur c_div=*_divis(cont,contextptr)._VECTptr;
-                bool dneg=is_strictly_positive(t[3],contextptr);
-                d=_abs(t[3],contextptr);
-                vecteur d_div=*_divis(d,contextptr)._VECTptr,lsol;
-                matrice M(2);
-                sol=vecteur(0);
-                gen ph(fvars.empty()?undef:fvars.front()),C;
-                for (const_iterateur it=c_div.begin();it!=c_div.end();++it) {
-                    c=*it;
-                    for (const_iterateur jt=d_div.begin();jt!=d_div.end();++jt) {
-                        a=*jt;
-                        b=is_zero(a)?a:d/a;
-                        if (dneg) b=-b;
-                        for (int i=0;i<2;++i) {
-                            M[0]=is_zero(a)?ab[i]:multvecteur(c,*ab[0]._VECTptr);
-                            M[1]=is_zero(a)?M[0]:multvecteur(cont/c,*ab[1]._VECTptr);
-                            lsol=*_linsolve(makesequence(M,makevecteur(a,b)),contextptr)._VECTptr;
-                            if (lsol.empty())
-                                continue;
-                            if (is_integer_vecteur(lsol,true) && !contains(*sol._VECTptr,lsol))
-                                sol._VECTptr->push_back(lsol);
-                            else if ((C=lsol.back()).type==_IDNT) {
-                                gen k,l,r(undef),rest;
-                                assert(is_linear_wrt(lsol.front(),C,k,l,contextptr));
-                                if (k.is_integer() && l.is_integer())
-                                    r=C;
-                                else if (k.type==_FRAC && l.is_integer())
-                                    r=C*k._FRACptr->den;
-                                else if (k.type==_FRAC && l.type==_FRAC && (rest=_inv(k,contextptr)*l).is_integer())
-                                    r=C*k._FRACptr->den-rest;
-                                if (!is_undef(r)) {
-                                    lsol=*simplify(subst(lsol,C,r,false,contextptr),contextptr)._VECTptr;
-                                    if (!contains(*sol._VECTptr,lsol))
-                                        sol._VECTptr->push_back(lsol);
+                if (defn || !is_perfect_square(dsc)) {
+    #if 0 // HAVE_LIBPARI
+                    GEN pa=gen2GEN(a,vecteur(0),contextptr);
+                    GEN pb=gen2GEN(b,vecteur(0),contextptr);
+                    GEN pc=gen2GEN(c,vecteur(0),contextptr);
+                    GEN pf=gen2GEN(-f,vecteur(0),contextptr);
+                    sol=GEN2gen(qfbsolve(Qfb0(pa,pb,pc,0,DEFAULTPREC),pf,3),vecteur(0));
+                    find_alternate_sols=true;
+    #else
+                    sol=solve_binary_quadratic(t,ph,contextptr);
+    #endif
+                } else {
+                    /* apply factorization according to Buchmann and Vollmer
+                    * -- "Binary Quadratic Forms" (2007) */
+                    //cout << "Applying Buchmann-Vollmer factorization" << endl;
+                    d=sqrt(dsc,contextptr);
+                    gen cont=_gcd(makevecteur(a,b,c),contextptr);
+                    d=d/cont;
+                    a=a/cont; b=b/cont; c=c/cont;
+                    gen p=(b+d)/2,q=(b-d)/2;
+                    gen cd1=_gcd(makesequence(a,p),contextptr);
+                    gen cd2=_gcd(makesequence(a,q),contextptr);
+                    matrice ab;
+                    ab.push_back(makevecteur(a/cd1,p/cd1));
+                    ab.push_back(makevecteur(a/cd2,q/cd2));
+                    assert(is_integer_matrice(ab,true));
+                    vecteur c_div=*_idivis(cont,contextptr)._VECTptr;
+                    bool dneg=is_strictly_positive(f,contextptr);
+                    d=_abs(f,contextptr);
+                    vecteur d_div=*_idivis(d,contextptr)._VECTptr,lsol;
+                    matrice M(2);
+                    sol=vecteur(0);
+                    gen C;
+                    for (const_iterateur it=c_div.begin();it!=c_div.end();++it) {
+                        c=*it;
+                        for (const_iterateur jt=d_div.begin();jt!=d_div.end();++jt) {
+                            a=*jt;
+                            b=is_zero(a)?a:d/a;
+                            if (dneg) b=-b;
+                            for (int i=0;i<2;++i) {
+                                M[0]=is_zero(a)?ab[i]:multvecteur(c,*ab[0]._VECTptr);
+                                M[1]=is_zero(a)?M[0]:multvecteur(cont/c,*ab[1]._VECTptr);
+                                lsol=*_linsolve(makesequence(M,makevecteur(a,b)),contextptr)._VECTptr;
+                                if (lsol.empty())
+                                    continue;
+                                if (is_integer_vecteur(lsol,true) && !contains(*sol._VECTptr,lsol))
+                                    sol._VECTptr->push_back(lsol);
+                                else if ((C=lsol.back()).type==_IDNT) {
+                                    gen k,l,r(undef),rest;
+                                    assert(is_linear_wrt(lsol.front(),C,k,l,contextptr));
+                                    if (k.is_integer() && l.is_integer())
+                                        r=C;
+                                    else if (k.type==_FRAC && l.is_integer())
+                                        r=C*k._FRACptr->den;
+                                    else if (k.type==_FRAC && l.type==_FRAC && (rest=_inv(k,contextptr)*l).is_integer())
+                                        r=C*k._FRACptr->den-rest;
+                                    if (!is_undef(r)) {
+                                        lsol=*simplify(subst(lsol,C,r,false,contextptr),contextptr)._VECTptr;
+                                        if (!contains(*sol._VECTptr,lsol))
+                                            sol._VECTptr->push_back(lsol);
+                                    }
                                 }
+                                a=-a;
+                                b=-b;
                             }
-                            a=-a;
-                            b=-b;
                         }
                     }
+                    if (!(C=_lname(sol,contextptr))._VECTptr->empty()) {
+                        gen repl=is_undef(ph)?make_integer_placeholder("Z",contextptr):ph;
+                        sol=subst(sol,C._VECTptr->front(),repl,false,contextptr);
+                    }
                 }
-                if (!(C=_lname(sol,contextptr))._VECTptr->empty()) {
-                    gen repl=is_undef(ph)?make_integer_placeholder("Z",contextptr):ph;
-                    sol=subst(sol,C._VECTptr->front(),repl,false,contextptr);
-                }
+            } else {
+                // cout << "Solving non-homogeneous quadratic" << endl;
+                sol=solve_binary_quadratic(t,ph,contextptr);
             }
-        } else if (is_thue_equation(e,x,y,t[0],t[1],contextptr) ||
-                   (y_first=is_thue_equation(e,y,x,t[0],t[1],contextptr))) {
-            cout << "Solving Thue equation" << endl;
+        } else if (is_thue_equation(eq,x,y,t[0],t[1],contextptr) ||
+                   (y_first=is_thue_equation(eq,y,x,t[0],t[1],contextptr))) {
+            //cout << "Solving Thue equation" << endl;
             vecteur Pcf=*_coeff(makesequence(t[0],y_first?y:x),contextptr)._VECTptr,cf_int;
             Pcf.push_back(t[1]);
             assert(integralize(Pcf,cf_int,contextptr));
@@ -5070,8 +5145,8 @@ gen _isolve(const gen &g,GIAC_CONTEXT) {
 #endif
             if (sol.type==_VECT && y_first)
                 sol=_apply(makesequence(at_revlist,sol),contextptr);
-        } else if (is_tengely(e,x,y,t[0],t[1],contextptr) || (y_first=is_tengely(e,y,x,t[0],t[1],contextptr))) {
-            cout << "Solving polynomial equation of type f(x)=g(y)" << endl;
+        } else if (is_tengely(e,x,y,t[0],t[1],contextptr) || (y_first=is_tengely(eq,y,x,t[0],t[1],contextptr))) {
+            //cout << "Solving polynomial equation of type f(x)=g(y)" << endl;
             sol=solve_tengely(t[0],t[1],y_first?y:x,y_first?x:y,contextptr);
             if (y_first)
                 sol=_apply(makesequence(at_revlist,sol),contextptr);
@@ -5094,15 +5169,13 @@ gen _isolve(const gen &g,GIAC_CONTEXT) {
         }
     } else if (n==3 && m==1) {
         /* three variables, single equation */
-        const gen &e=eqv.front();
-        if (is_homogeneous_poly(e,vars,NULL,contextptr)==2) {
+        const gen &eq=eqv.front();
+        if (is_homogeneous_poly(eq,vars,NULL,contextptr)==2) {
             /* ternary quadratic form */
             while (fvars.size()<3) {
                 fvars.push_back(make_integer_placeholder("Z",contextptr));
             }
-            sol=solve_ternary_quadratic_form(e,vars,fvars,contextptr);
-            if (!sol._VECTptr->empty())
-                sol=_zip(makesequence(at_equal,vars,sol),contextptr);
+            sol=solve_ternary_quadratic_form(eq,vars,fvars,contextptr);
         }
     }
     if (is_undef(sol)) {
@@ -5139,14 +5212,15 @@ gen _isolve(const gen &g,GIAC_CONTEXT) {
             }
         } else return gentypeerr("Equation type is not supported.");
     }
-    if (n>1 && sol.type==_VECT &&
-            ckmatrix(*sol._VECTptr,false) && int(sol._VECTptr->front()._VECTptr->size())==n) {
-        for (iterateur it=sol._VECTptr->begin();it!=sol._VECTptr->end();++it) {
-            *it=_zip(makesequence(at_equal,vars,*it),contextptr);
-        }
-    }
-    if (sol.type==_VECT)
+    if (n>1 && sol.type==_VECT) {
+        if (ckmatrix(*sol._VECTptr,false) && int(sol._VECTptr->front()._VECTptr->size())==n) {
+            for (iterateur it=sol._VECTptr->begin();it!=sol._VECTptr->end();++it) {
+                *it=_zip(makesequence(at_equal,vars,*it),contextptr);
+            }
+        } else if (!sol._VECTptr->empty())
+            sol=_zip(makesequence(at_equal,vars,sol),contextptr);
         sol=change_subtype(sol,_LIST__VECT);
+    }
     return sol;
 }
 static const char _isolve_s []="isolve";

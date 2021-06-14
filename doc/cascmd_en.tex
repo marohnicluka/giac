@@ -7175,7 +7175,98 @@ two squares.  The \texttt{pa2b2} command finds such a decomposition.
 % \begin{center}
 %   \texttt{[4,1]}
 % \end{center}
-indeed $17=4^2+1^2$
+indeed, $17=4^2+1^2$.
+
+\subsection{Solving Diophantine equations: \texttt{isolve}\index{isolve}}
+
+The \texttt{isolve} command attempts to solve the given equations over the integers.
+Note that it automatically solves for all of the indeterminates present in the equations.
+\begin{itemize}
+ \item \texttt{isolve} takes one mandatory argument: an equation or list of equations.
+ \item The following optional arguments may be given.
+ \begin{itemize}
+  \item a positive integer, which is the desired number of solutions to output when solving Pell equations,
+  \item a (sequence or list of) symbol(s), which are used as the names for global variables present in the solution. These names default to $\mathrm{\_Z0}$, $\mathrm{\_Z1}$ etc.
+ \end{itemize}
+ \item \texttt{isolve} can solve the following types of equations:
+ \begin{itemize}
+  \item (systems of) linear equation(s), using the ABS algorithm of Esmaeili et al. (2001),
+  \item Pell equations, using the algorithm of Junod (2015),
+  \item Thue equations, using PARI,
+  \item nonhomogeneous binary quadratic forms, using PARI and Buchmann-Vollmer factorization (2007),
+  \item homogeneous ternary quadratic forms, using the method of Smart (1998),
+  \item equations of the form $f(x)=g(y)$ where $f,g\in\mathbb{Z}[X]$ are monic polynomials
+  with degrees $m$ and $n$ such that $\mathrm{gcd}(m,n)>1$ and $f(x)-g(y)$ is irreducible
+  in $\mathbb{Q}[X,Y]$, using the algorithm of Tengely (2003).
+ \end{itemize}
+\end{itemize}
+
+\smallskip
+
+\noindent
+\textbf{Examples.}\\
+\begin{itemize}
+\item \textit{Input:}
+\begin{center}
+  \texttt{isolve(3x-4y=7)}
+\end{center}
+\textit{Output:}
+\[ \left[x=4\mathrm{\_Z0}-4\mathrm{\_Z1}-7,y=3\mathrm{\_Z0}-3\mathrm{\_Z1}-7\right] \]
+\item When solving Pell equations, only the smallest solution is returned by default, as in the following example (Junod, 2015).\\
+\textit{Input:}
+\begin{center}
+  \texttt{isolve(x\^{}2-23y\^{}2=1)}
+\end{center}
+\textit{Output:}
+\[ \left[[x=24,y=5]\right] \]
+To obtain the first $n$ solutions, pass $n$ as the second argument.
+The following example demonstrates this for $n=4$.\\
+\textit{Input:}
+\begin{center}
+  \texttt{isolve(x\^{}2-23y\^{}2=1,4)}
+\end{center}
+\textit{Output:}
+\[ \left[[x=24,y=5],[x=1151,y=240],[x=55224,y=11515],[x=2649601,y=552480]\right] \]
+The smallest solution can be very large.\\
+\textit{Input:}
+\begin{center}
+  \texttt{isolve(x\^{}2-313y\^{}2=1)}
+\end{center}
+\textit{Output:}
+\[ \left[[x=32188120829134849,y=1819380158564160]\right] \]
+\item Binary and ternary quadratic forms can be solved.\\
+\textit{Input:}
+\begin{center}
+ \texttt{isolve(x\^{}2-5x*y+4y\^{}2=16)}
+\end{center}
+\textit{Output:}
+\[ \left[\left[x=-4,y=-5\right],\left[x=4,y=5\right],\left[x=21,y=5\right],\left[x=-21,y=-5\right]\right] \]
+The following example is due to Buchmann and Vollmer (2007).\\
+\textit{Input:}
+\begin{center}
+ \texttt{isolve(x\^{}2-11101y\^{}2=-4)}
+\end{center}
+\textit{Output:}
+{\footnotesize
+\begin{align*}
+ [&[x=18253909681995,y=173250639377],[x=18253909681995,y=-173250639377],\\ &[x=6082297967325469235597574586256095195860,y=57728017179791239410259847236783483802],\\ &[x=-6082297967325469235597574586256095195860,y=57728017179791239410259847236783483802],\\ &[x=6082297967325469235597574586256095195860,y=-57728017179791239410259847236783483802],\\ &[x=-6082297967325469235597574586256095195860,y=-57728017179791239410259847236783483802],\\ &[x=-18253909681995,y=-173250639377], [x=-18253909681995,y=173250639377]]
+\end{align*}
+}
+\textit{Input:}
+\begin{center}
+ \texttt{isolve(x\^{}2+11y\^{}2+6x*y-3z\^{}2=0,a,b,c)}
+\end{center}
+\textit{Output:}
+\[ \left[x=c \left(-44 a^{2}+12 b^{2}\right),y=c \left(13 a^{2}-3 b^{2}-6 a b\right),z=c \left(-11 a^{2}-3 b^{2}+2 a b\right)\right] \]
+The components of the above solution can be divided by the GCD of $-44 a^{2}+12 b^{2}$, $13 a^{2}-3 b^{2}-6 a b$, and $-11 a^{2}-3 b^{2}+2 a b$, possibly producing additional solutions.
+\item All integer solutions to certain polynomial equations of the type $f(x)=g(y)$ can be found, as in the following example (Tengely, 2003).\\
+\textit{Input:}
+\begin{center}
+ \texttt{isolve(x\^{}2-3x+5=y\^{}8-y\^{}7+9y\^{}6-7y\^{}5+4y\^{}4-y\^{}3)}
+\end{center}
+\textit{Output:}
+\[\left[\begin{array}{ll}x=-3&y=-1\\x=6&y=-1\\x=0&y=1\\x=3&y=1\\x=660&y=5\\x=-657&y=5\end{array}\right]\]
+\end{itemize}
 
 \subsection{The Euler indicatrix: \texttt{euler} \texttt{phi}
 \index{euler}
@@ -16950,7 +17041,7 @@ To implicitly differentiate dependent variables:
     \item \textit{constraints}, an equation or list of equations which
     implicitly define the dependent variables as functions of the
     independent variables; these will be of the form
-    $g_i(x_{1},\ldots,x_{n},y_{1},\ldots,y_{m})=0$
+    \[g_i(x_{1},\ldots,x_{n},y_{1},\ldots,y_{m})=0\]
     for
     $i=1,2,\ldots,m$, where $x_{1},ldots,x_{n}$ are the
     independent variables and $y_{1},\ldots,y_{m}$ are the
@@ -17013,7 +17104,7 @@ implicitly defined functions:
     \item \textit{constraints}, an equation or list of equations which
     implicitly define the dependent variables as functions of the
     independent variables; these will be of the form
-    $g_i(x_{1},\ldots,x_{n},y_{1},\ldots,y_{m})=0$
+    \[g_i(x_{1},\ldots,x_{n},y_{1},\ldots,y_{m})=0\]
     for
     $i=1,2,\ldots,m$.
     \item \textit{depvars}, the dependent variable or list of dependent
@@ -17059,7 +17150,7 @@ involving implicitly defined functions:
   \item \textit{constraints}, an equation or list of equations which
      implicitly define the dependent variables as functions of the
      independent variables; these will be of the form
-     $g_i(x_{1},\ldots,x_{n},y_{1},\ldots,y_{m})=0$ for
+     \[g_i(x_{1},\ldots,x_{n},y_{1},\ldots,y_{m})=0\] for
      $i=1,2,\ldots,m$.
   \item \texttt{vars}, a list $[x_{1},\ldots,x_{n},y_{1},\ldots, y_{m}]$
      of the independent and dependent variables
@@ -17325,8 +17416,8 @@ the segment $[0,1]$.\\
 \textit{Input:}
 \begin{center}
 \begin{tabular}{l}
-  \texttt{f:=unapply(1-1/(1+x\^{}2),x)}
-  \texttt{X:=[(0.05*k)\$(k=0..20)]:; Y:=apply(f,X):;}
+  \texttt{f:=unapply(1-1/(1+x\^{}2),x)}\\
+  \texttt{X:=[(0.05*k)\$(k=0..20)]:; Y:=apply(f,X):;}\\
   \texttt{numdiff(X,Y,euler\_gamma,0,1,2)}
 \end{tabular}
 \end{center}

@@ -11,5 +11,6 @@ My contributions to [Giac/Xcas](https://www-fourier.ujf-grenoble.fr/~parisse/gia
 - simplification of trigonometric expressions
 - statistics (discrete random variables with sampling, kernel density estimation, maximum-likelihood fitting)
 - ordinary differential equations (an implementation of Kovacic's algorithm, a second-degree boundary value problems solver)
+- Diophantine equations
 - improved conversion to LaTeX (with TeXmacs compatibility) and MathML
 - improved Giac plugin for TeXmacs

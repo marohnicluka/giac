@@ -14226,6 +14226,12 @@ iegcd(45,75)
 iegcd(21,28)
 iegcd(30,49)
 
+# bezoutian
+1 Matrice de Bezout pour 2 polynomes
+2 Bezoutian matrix of 2 polynomials
+0 Poly,Poly
+bezoutian(5x^3-x,3x^2+1)
+
 # acos2asin
 1 Remplace arccos(x) par pi/2-arcsin(x) dans l'argument.
 2 Replaces arccos(x) by pi/2-arcsin(x) in the argument.
@@ -14651,7 +14657,7 @@ display(red+filled);square(0,1);
  F:=display(point(2+1.5*i),point_point)
  F:=display(point(2+1.5*i),rhombus_point)
 
-# hidden_name nom_cache
+# hidden_name
 1 Option de la commande affichage (ou display) pour ne pas afficher le nom.
 2 Option of the display command to hide the name.
 3 Opción de la instrucción display para esconder el nombre.
@@ -14763,6 +14769,14 @@ fmod(10.0,pi)
 pa2b2(17)
 pa2b2(209)
 pa2b2(229)
+
+# isolve
+2 Solve diophantine equation.
+0 Eqn||List(Eqn),[Intg(n)||(Idnt(Z1),Idnt(Z2),...)]
+isolve(4x-3y=7)
+isolve(x^2-23y^2=1,3)
+isolve(x^2+11y^2-3z^2=0,A,B,C)
+isolve(x^9-2y^9=1)
 
 # permu2cycles
 1 Convertit une permutation en un produit de cycles disjoints.

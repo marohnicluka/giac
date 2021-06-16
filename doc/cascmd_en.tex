@@ -7182,18 +7182,13 @@ indeed, $17=4^2+1^2$.
 The \texttt{isolve} command attempts to solve the given equations over the integers. Note that it automatically solves for all of the indeterminates present in the equations.
 \begin{itemize}
  \item \texttt{isolve} takes one mandatory argument: an equation or list of equations.
- \item The following optional arguments may be given:
- \begin{itemize}
-  \item a positive integer, which is the desired number of solutions to output when solving Pell equations,
-  \item a (sequence or list of) symbol(s), which are used as the names for global variables present in the solution. These names default to $\mathrm{\_Z0}$, $\mathrm{\_Z1}$ etc.
- \end{itemize}
+ \item Optionally, a (sequence or list of) symbol(s), which are used as the names for global variables present in the solution, can be passed as the second argument. These names default to $\mathrm{\_Z0},\mathrm{\_Z1},\dots$ for general integers and to $\mathrm{\_N0},\mathrm{\_N1},\dots$ for positive integers.
  \item \texttt{isolve} can solve the following types of equations:
  \begin{itemize}
   \item (systems of) linear equation(s)
-  \item Pell equations
-  \item Thue equations
   \item general quadratic equations with two indeterminates
   \item equations of the type $Q(x,y,z)=0$, where $Q$ is a ternary quadratic form
+  \item Thue equations
   \item equations of the type $f(x)=g(y)$, where $f,g\in\mathbb{Z}[X]$ are monic polynomials with degrees $m$ and $n$ such that $\mathrm{gcd}(m,n)>1$ and $f(x)-g(y)$ is irreducible in $\mathbb{Q}[X,Y]$
  \end{itemize}
 \end{itemize}
@@ -7211,28 +7206,31 @@ The \texttt{isolve} command attempts to solve the given equations over the integ
 \[
   \left[x=-10+42\mathrm{\_Z0},y=1-5\mathrm{\_Z0}\right]
 \]
-\item When solving Pell equations, only the smallest solution is returned by default, as in the following example.\\
+\item Here we find the general solution to Pell equation $x^2-23y^2=1$.\\
 \textit{Input:}
 \begin{center}
-  \texttt{isolve(x\^{}2-23y\^{}2=1)}
+  \texttt{sol:=isolve(x\^{}2-23y\^{}2=1,n)}
 \end{center}
 \textit{Output:}
-\[ \left[[x=24,y=5]\right] \]
-To obtain the first $n$ solutions, pass $n$ as the second argument.
-The following example demonstrates this for $n=3$.\\
-\textit{Input:}
+\[
+  \left[x=\frac{\left(24+5 \sqrt{23}\right)^n+\left(24-5 \sqrt{23}\right)^n}{2},y=\frac{\left(24+5 \sqrt{23}\right)^n-\left(24-5 \sqrt{23}\right)^n}{2 \sqrt{23}}\right]
+\]
+To check that it is indeed the solution, enter:
 \begin{center}
-  \texttt{isolve(x\^{}2-23y\^{}2=1,3)}
+  \texttt{simplify(subs(x\^{}2-23y\^{}2-1,sol))}
 \end{center}
 \textit{Output:}
-\[ \left[[x=24,y=5],[x=1151,y=240],[x=55224,y=11515]\right] \]
-The smallest solution can be very large.\\
-\textit{Input:}
+\[
+0
+\]
+Now to obtain e.g.~the first four solutions, enter:
 \begin{center}
-  \texttt{isolve(x\^{}2-313y\^{}2=1)}
+  \texttt{simplify(apply(unapply(apply(rhs,sol),n),[1,2,3,4]))}
 \end{center}
 \textit{Output:}
-\[ \left[[x=32188120829134849,y=1819380158564160]\right] \]
+\[
+  \left[[24,5],[1151,240],[55224,11515],[2649601,552480]\right]
+\]
 \item The following two examples demonstrate solving quadratic equations with two indeterminates.\\
 \textit{Input:}
 \begin{center}

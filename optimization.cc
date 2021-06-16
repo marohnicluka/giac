@@ -4257,11 +4257,19 @@ bool parse_equations(const gen &eq,vecteur &eqv) {
 }
 
 static int integer_placeholder_count=-1;
+static int positive_integer_placeholder_count=-1;
 
 gen make_integer_placeholder(const string &base,GIAC_CONTEXT) {
     if (integer_placeholder_count<0)
         integer_placeholder_count=array_start(contextptr);
     gen ph=identificateur(string("_")+base+print_INT_(integer_placeholder_count++));
+    return ph;
+}
+
+gen make_positive_integer_placeholder(const string &base,GIAC_CONTEXT) {
+    if (positive_integer_placeholder_count<0)
+        positive_integer_placeholder_count=array_start(contextptr);
+    gen ph=identificateur(string("_")+base+print_INT_(positive_integer_placeholder_count++));
     return ph;
 }
 
@@ -4529,6 +4537,51 @@ vecteur solve_pell_equation(const gen &d,bool rhs_positive,int nsols,GIAC_CONTEX
     if (i>=maxiter)
         *logptr(contextptr) << "Warning: maximum number of iterations exceeded\n";
     return sols;
+}
+
+bool is_negative_pell_insoluble(const gen &d,const gen &u1,GIAC_CONTEXT) {
+    if (is_one(_is_prime(d,contextptr)))
+        return !is_divisible(d-1,4,contextptr);
+    if (is_divisible(d-1,4,contextptr) || is_divisible(d-2,4,contextptr))
+        return !is_divisible(u1+1,2*d,contextptr);
+    return false;
+}
+
+gen pell_fundamental(const gen &d,bool rhs_positive,GIAC_CONTEXT) {
+    if (!rhs_positive) {
+        vecteur fs=solve_pell_equation(d,true,1,contextptr);
+        if (fs.empty())
+            return undef;
+        if (is_negative_pell_insoluble(d,fs.front(),contextptr))
+            return vecteur(0);
+    }
+    vecteur sols=solve_pell_equation(d,rhs_positive,1,contextptr);
+    if (sols.empty())
+        return undef;
+    return sols.front();
+}
+
+gen pell_general(const gen &d,bool rhs_positive,const gen &ph,vecteur *fac,GIAC_CONTEXT) {
+    gen fund=pell_fundamental(d,rhs_positive,contextptr);
+    if (is_undef(fund) || (fund.type==_VECT && fund._VECTptr->empty()))
+        return fund;
+    gen n=is_undef(ph)?make_positive_integer_placeholder("N",contextptr):ph;
+    const gen &u1=fund._VECTptr->front(),&v1=fund._VECTptr->back();
+    vecteur sol(2);
+    gen sqr_d=sqrt(d,contextptr),f1,f2;
+    if (rhs_positive) {
+        f1=pow(u1+v1*sqr_d,n,contextptr); f2=pow(u1-v1*sqr_d,n,contextptr);
+        sol[0]=(f1+f2)/2;
+        sol[1]=(f1-f2)/(2*sqr_d);
+    } else {
+        f1=pow(u1+v1*sqr_d,2*n+1,contextptr); f2=pow(u1-v1*sqr_d,2*n+1,contextptr);
+        sol[0]=(f1+f2)/2;
+        sol[1]=(f1-f2)/(2*sqr_d);
+    }
+    if (fac!=NULL) {
+        (*fac)[0]=f1; (*fac)[1]=f2;
+    }
+    return sol;
 }
 
 vecteur tengely_zeros(const gen &F,const gen &u,const gen &t,const gen &x,const gen &p,GIAC_CONTEXT) {
@@ -4873,6 +4926,38 @@ gen solve_ternary_quadratic_form(const gen &Q,const vecteur &vars,const vecteur 
     return divvecteur(multvecteur(Z3,gsol),_Gcd(change_subtype(gsol,_SEQ__VECT),contextptr));
 }
 
+vecteur solve_general_pell_equation_brute_force(const gen &D,const gen &N,GIAC_CONTEXT) {
+    vecteur fund=solve_pell_equation(D,true,1,contextptr);
+    if (fund.empty())
+        return vecteur(0);
+    const gen &u1=fund.front()._VECTptr->front();
+    gen x_ub=_simplify(sqrt((_abs(N,contextptr)*u1+N)/2,contextptr),contextptr);
+    gen y_ub=_simplify(sqrt((_abs(N,contextptr)*u1-N)/(2*D),contextptr),contextptr);
+    vecteur sols;
+    cout << "Brute force: need to test about " << _ceil(2*x_ub*y_ub,contextptr) << " combinations\n";
+    for (gen x=_ceil(-x_ub,contextptr);is_greater(x_ub,x,contextptr);x=x+1) {
+        for (gen y=1;is_greater(y_ub,y,contextptr);y=y+1) {
+            if (is_zero(x*x-D*y*y-N))
+                sols.push_back(makevecteur(x,y));
+        }
+    }
+    if (sols.empty())
+        return vecteur(0);
+    /* remove solutions associated with some other solution
+     * using the criterion of Andreescu (2015, p. 56) */
+    int nsols=sols.size();
+    for (int i=0;i<nsols;++i) {
+        const vecteur s1=*sols[i]._VECTptr;
+        for (int j=nsols;j-->i+1;) {
+            const vecteur s2=*sols[j]._VECTptr;
+            gen a=(s1[0]*s2[0]-D*s1[1]*s2[1])/N,b=(s1[1]*s2[0]-s1[0]*s2[1])/N;
+            if (a.is_integer() && b.is_integer())
+                sols.erase(sols.begin()+j);
+        }
+    }
+    return sols;
+}
+
 /* solve general binary quadratic equation using the methods of Dario Alejandro Alpern at
  * https://www.alpertron.com.ar/METHODS.HTM */
 gen solve_binary_quadratic(const vecteur &cf,gen &ph,bool set_ph,bool &alt_sols,GIAC_CONTEXT) {
@@ -4980,16 +5065,22 @@ gen solve_binary_quadratic(const vecteur &cf,gen &ph,bool set_ph,bool &alt_sols,
         /* tedious hyperbolic case */
         if (is_zero(d) && is_zero(e)) { // binary quadratic form
             if (!is_perfect_square(dsc)) { // the difficult case
-#ifdef HAVE_LIBPARI
-                GEN pa=gen2GEN(a,vecteur(0),contextptr);
-                GEN pb=gen2GEN(b,vecteur(0),contextptr);
-                GEN pc=gen2GEN(c,vecteur(0),contextptr);
-                GEN pf=gen2GEN(-f,vecteur(0),contextptr);
-                sol=*GEN2gen(qfbsolve(Qfb0(pa,pb,pc,0,DEFAULTPREC),pf,3),vecteur(0))._VECTptr;
-                alt_sols=true;
-#else
-                *logptr(contextptr) << "Warning: PARI library is required for hyperbolic case" << endl;
-#endif
+                vecteur psols=solve_general_pell_equation_brute_force(dsc,-4*a*f,contextptr),fac(2);
+                if (!psols.empty()) {
+                    gen gp=pell_general(dsc,true,ph,&fac,contextptr);
+                    if (is_undef(gp)) {
+                        *logptr(contextptr) << "Error: failed to find general solution to Pell resolvent\n";
+                        return undef;
+                    }
+                    const gen &un=gp._VECTptr->front(),&vn=gp._VECTptr->back();
+                    for (const_iterateur it=psols.begin();it!=psols.end();++it) {
+                        gen alpha=it->_VECTptr->front(),beta=it->_VECTptr->back();
+                        gen A=(alpha-b*beta)/(2*a),B=(b*alpha-dsc*beta)/(2*a);
+                        gen x=_collect(makesequence(A*un-B*vn,fac[0],fac[1]),contextptr);
+                        gen y=_collect(makesequence(beta*un+alpha*vn,fac[0],fac[1]),contextptr);
+                        sol.push_back(makevecteur(x,y));
+                    }
+                }
             } else { // simple factorization
                 if (is_zero(a)) {
                     gen s=solve_binary_quadratic(makevecteur(c,b,a,f),ph,false,alt_sols,contextptr);
@@ -5075,15 +5166,13 @@ gen _isolve(const gen &g,GIAC_CONTEXT) {
     matrice A;
     vecteur Fr;
     bool find_alternate_sols=false;
-    int n=vars.size(),m=eqv.size(),nsols=1;
+    int n=vars.size(),m=eqv.size();
     /* parse options */
     for (const_iterateur it=opts.begin();it!=opts.end();++it) {
         if (it->is_symb_of_sommet(at_equal)) {
             const gen &ls=it->_SYMBptr->feuille._VECTptr->front();
             const gen &rs=it->_SYMBptr->feuille._VECTptr->back();
             ;
-        } else if (it->is_integer() && it->val>0) {
-            nsols=it->val;
         } else if (it->type==_IDNT) {
             fvars.push_back(*it);
         } else if (it->type==_VECT) {
@@ -5129,7 +5218,8 @@ gen _isolve(const gen &g,GIAC_CONTEXT) {
         if ((pd1=is_pell_equation(eq,x,y,d,contextptr))!=0 ||
                 (pd2=is_pell_equation(eq,y,x,d,contextptr))!=0) {
             /* Pell equation */
-            sol=solve_pell_equation(d,pd1+pd2>0,nsols,contextptr);
+            gen ph=fvars.empty()?undef:fvars.front();
+            sol=pell_general(d,pd1+pd2>0,ph,NULL,contextptr);
             if (pd1==0)
                 sol=_apply(makesequence(at_revlist,sol),contextptr);
         } else if (is_binary_quadratic_wrt(eq,x,y,a,b,c,d,e,f,contextptr) &&

@@ -5393,9 +5393,10 @@ gen _isolve(const gen &g,GIAC_CONTEXT) {
                 sol=GEN2gen(thue(tnf,alpha,NULL),vecteur(0));
                 find_alternate_sols=true;
 #else
-            *logptr(contextptr) << "Warning: PARI library is required for solving Thue equations\n";
+                *logptr(contextptr) << "Warning: PARI library is required for solving Thue equations\n";
 #endif
-            *logptr(contextptr) << "Error: failed to solve Thue equation\n";
+#else
+                *logptr(contextptr) << "Error: failed to solve Thue equation\n";
 #endif
             }
             if (sol.type==_VECT && y_first)

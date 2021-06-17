@@ -4561,27 +4561,21 @@ gen pell_fundamental(const gen &d,bool rhs_positive,GIAC_CONTEXT) {
     return sols.front();
 }
 
-gen pell_general(const gen &d,bool rhs_positive,const gen &ph,vecteur *fac,GIAC_CONTEXT) {
+gen pell_general(const gen &d,bool rhs_positive,const gen &ph,bool output_components,GIAC_CONTEXT) {
     gen fund=pell_fundamental(d,rhs_positive,contextptr);
     if (is_undef(fund) || (fund.type==_VECT && fund._VECTptr->empty()))
         return fund;
     gen n=is_undef(ph)?make_positive_integer_placeholder("N",contextptr):ph;
     const gen &u1=fund._VECTptr->front(),&v1=fund._VECTptr->back();
-    vecteur sol(2);
     gen sqr_d=sqrt(d,contextptr),f1,f2;
     if (rhs_positive) {
         f1=pow(u1+v1*sqr_d,n,contextptr); f2=pow(u1-v1*sqr_d,n,contextptr);
-        sol[0]=(f1+f2)/2;
-        sol[1]=(f1-f2)/(2*sqr_d);
     } else {
         f1=pow(u1+v1*sqr_d,2*n+1,contextptr); f2=pow(u1-v1*sqr_d,2*n+1,contextptr);
-        sol[0]=(f1+f2)/2;
-        sol[1]=(f1-f2)/(2*sqr_d);
     }
-    if (fac!=NULL) {
-        (*fac)[0]=f1; (*fac)[1]=f2;
-    }
-    return sol;
+    if (output_components)
+        return makevecteur(f1,f2,sqr_d);
+    return makevecteur((f1+f2)/2,(f1-f2)/(2*sqr_d));
 }
 
 vecteur tengely_zeros(const gen &F,const gen &u,const gen &t,const gen &x,const gen &p,GIAC_CONTEXT) {
@@ -4883,7 +4877,7 @@ bool ternary_quadratic_normal_form(const gen &g_orig,const vecteur &vars,vecteur
 }
 
 /* return the general solution of Q(x,y,z)=0, where Q is a ternary quadratic form */
-gen solve_ternary_quadratic_form(const gen &Q,const vecteur &vars,const vecteur &fvars,GIAC_CONTEXT) {
+gen solve_ternary_quadratic_form(const gen &Q,const vecteur &vars,const vecteur &fvars,bool all_sols,GIAC_CONTEXT) {
     assert(fvars.size()>=2);
     const gen &p=fvars[0],&q=fvars[1],&Z3=fvars[2];
     /* normalize the quadratic form Q */
@@ -4893,74 +4887,183 @@ gen solve_ternary_quadratic_form(const gen &Q,const vecteur &vars,const vecteur 
         return undef;
     }
     const gen &a=R[0],&b=R[1],&c=R[2];
-    //cout << "Normalized form has coefficients a=" << a << ", b=" << b << " and c=" << c << endl;
     /* check local solubility */
     if (!is_locally_soluble_everywhere(a,b,c,contextptr))
         return vecteur(0);
     /* find a particular integral solution */
     vecteur s0=descent(-a*c,-b*c,contextptr),sol;
     s0[2]=s0[2]/c; //get z from w
-    //cout << "Lagrange descent method solution: " << s0 << endl;
     s0=*_linsolve(makesequence(P,s0),contextptr)._VECTptr;
     if (!integralize(s0,sol,contextptr)) {
         *logptr(contextptr) << "Error: particular solution is not rational\n";
         return undef;
     }
-    //cout << "Particular solution to the original equation is " << sol << endl;
-    /* find the general solution */
-    gen r=identificateur(" r"),A,B;
-    gen pol=_ratnormal(subst(Q,vars,makevecteur(r*sol[0],r*sol[1]+p,r*sol[2]+q),false,contextptr),contextptr);
-    assert(is_linear_wrt(pol,r,A,B,contextptr));
-    vecteur cr(5),ci;
-    cr[0]=-_coeff(makesequence(A,p,1),contextptr);
-    cr[1]=-_coeff(makesequence(A,q,1),contextptr);
-    cr[2]=_coeff(makesequence(B,p,2),contextptr);
-    cr[3]=_coeff(makesequence(B,makevecteur(p,q),makevecteur(1,1)),contextptr);
-    cr[4]=_coeff(makesequence(B,q,2),contextptr);
-    assert(integralize(cr,ci,contextptr));
-    vecteur gsol(3);
-    gen p2=pow(p,2,contextptr),q2=pow(q,2,contextptr);
-    gsol[0]=sol[0]*ci[2]*p2+sol[0]*ci[3]*p*q+sol[0]*ci[4]*q2;
-    gsol[1]=(ci[2]*sol[1]+ci[0])*p2+(ci[3]*sol[1]+ci[1])*p*q+ci[4]*sol[1]*q2;
-    gsol[2]=ci[2]*sol[2]*p2+(ci[3]*sol[2]+ci[0])*p*q+(ci[4]*sol[2]+ci[1])*q2;
-    return divvecteur(multvecteur(Z3,gsol),_Gcd(change_subtype(gsol,_SEQ__VECT),contextptr));
+    if (all_sols) {
+        /* find the general solution */
+        gen r=identificateur(" r"),A,B;
+        gen pol=_ratnormal(subst(Q,vars,makevecteur(r*sol[0],r*sol[1]+p,r*sol[2]+q),false,contextptr),contextptr);
+        assert(is_linear_wrt(pol,r,A,B,contextptr));
+        vecteur cr(5),ci;
+        cr[0]=-_coeff(makesequence(A,p,1),contextptr);
+        cr[1]=-_coeff(makesequence(A,q,1),contextptr);
+        cr[2]=_coeff(makesequence(B,p,2),contextptr);
+        cr[3]=_coeff(makesequence(B,makevecteur(p,q),makevecteur(1,1)),contextptr);
+        cr[4]=_coeff(makesequence(B,q,2),contextptr);
+        assert(integralize(cr,ci,contextptr));
+        vecteur gsol(3);
+        gen p2=pow(p,2,contextptr),q2=pow(q,2,contextptr);
+        gsol[0]=sol[0]*ci[2]*p2+sol[0]*ci[3]*p*q+sol[0]*ci[4]*q2;
+        gsol[1]=(ci[2]*sol[1]+ci[0])*p2+(ci[3]*sol[1]+ci[1])*p*q+ci[4]*sol[1]*q2;
+        gsol[2]=ci[2]*sol[2]*p2+(ci[3]*sol[2]+ci[0])*p*q+(ci[4]*sol[2]+ci[1])*q2;
+        return divvecteur(multvecteur(Z3,gsol),_Gcd(change_subtype(gsol,_SEQ__VECT),contextptr));
+    }
+    return sol;
 }
 
-vecteur solve_general_pell_equation_brute_force(const gen &D,const gen &N,GIAC_CONTEXT) {
-    vecteur fund=solve_pell_equation(D,true,1,contextptr);
-    if (fund.empty())
-        return vecteur(0);
-    const gen &u1=fund.front()._VECTptr->front();
-    gen x_ub=_simplify(sqrt((_abs(N,contextptr)*u1+N)/2,contextptr),contextptr);
-    gen y_ub=_simplify(sqrt((_abs(N,contextptr)*u1-N)/(2*D),contextptr),contextptr);
-    vecteur sols;
-    cout << "Brute force: need to test about " << _ceil(2*x_ub*y_ub,contextptr) << " combinations\n";
-    for (gen x=_ceil(-x_ub,contextptr);is_greater(x_ub,x,contextptr);x=x+1) {
-        for (gen y=1;is_greater(y_ub,y,contextptr);y=y+1) {
-            if (is_zero(x*x-D*y*y-N))
-                sols.push_back(makevecteur(x,y));
+/* remove solutions of x^2+bxy+cy^2+f=0 associated with the other ones
+ * by using the criterion of Andreescu (2015, p. 56) */
+void purge_nonfundamental_solutions(vecteur &sols,const gen &a,const gen &b,const gen &c,const gen &f,GIAC_CONTEXT) {
+    gen D=b*b-4*a*c,N=-4*a*f;
+    for (int i=0;i<int(sols.size());++i) {
+        const gen &x1=sols[i]._VECTptr->front(),&y1=sols[i]._VECTptr->back();
+        gen u1=2*a*x1+b*y1,v1=y1;
+        for (int j=sols.size();j-->i+1;) {
+            const gen &x2=sols[j]._VECTptr->front(),&y2=sols[j]._VECTptr->back();
+            gen u2=2*a*x2+b*y2,v2=y2;
+            if (is_divisible(u1*u2-D*v1*v2,N,contextptr) && is_divisible(v1*u2-u1*v2,N,contextptr)) {
+                if (is_positive(v1,contextptr) && (!is_positive(v2,contextptr) || is_greater(v2,v1,contextptr)))
+                    sols.erase(sols.begin()+j);
+                else {
+                    sols.erase(sols.begin()+i);
+                    --i;
+                    break;
+                }
+            }
         }
     }
-    if (sols.empty())
-        return vecteur(0);
-    /* remove solutions associated with some other solution
-     * using the criterion of Andreescu (2015, p. 56) */
-    int nsols=sols.size();
-    for (int i=0;i<nsols;++i) {
-        const vecteur s1=*sols[i]._VECTptr;
-        for (int j=nsols;j-->i+1;) {
-            const vecteur s2=*sols[j]._VECTptr;
-            gen a=(s1[0]*s2[0]-D*s1[1]*s2[1])/N,b=(s1[1]*s2[0]-s1[0]*s2[1])/N;
-            if (a.is_integer() && b.is_integer())
-                sols.erase(sols.begin()+j);
+}
+
+/* find continued fraction expansion of a quadratic irrationality g, double the period if odd-length */
+vecteur contfrac_expansion(const gen &g,GIAC_CONTEXT) {
+    assert(!is_rational(g));
+    int k=0;
+    vecteur ex,period;
+    while (true) {
+        ex=*_dfc(makesequence(g,pow(10,++k,contextptr)),contextptr)._VECTptr;
+        if (ex.back().type==_VECT) {
+            period=*ex.back()._VECTptr;
+            ex.pop_back();
+            break;
+        } // note that the loop will go forever if g is not a quadratic irrationality!
+    }
+    if (period.size()%2==0)
+        return ex;
+    return mergevecteur(ex,period);
+}
+
+/* find solutions to ax^2+bxy+cy^2+f=0 where 4f^2<b^2-4ac and b^2-4ac>0 is not a perfect square */
+vecteur solve_contfrac(const gen &a,const gen &b,const gen &c,const gen &f,bool only_first,GIAC_CONTEXT) {
+    gen d=b*b-4*a*c,sqr_d=sqrt(d,contextptr);
+    assert(is_strictly_positive(d,contextptr) && !sqr_d.is_integer() && is_strictly_greater(d,4*f*f,contextptr));
+    vecteur t=makevecteur((-b+sqr_d)/(2*a),(-b-sqr_d)/(2*a)),sols;
+    for (const_iterateur it=t.begin();it!=t.end();++it) {
+        vecteur ex=contfrac_expansion(*it,contextptr),p,q;
+        int n=ex.size();
+        p.resize(n+2,0); q.resize(n+2,0);
+        p[1]=q[0]=1;
+        for (int k=0;k<n;++k) {
+            gen x=ex[k]*p[k+1]+p[k],y=ex[k]*q[k+1]+q[k],g=gcd(x,y);
+            x=x/g; y=y/g;
+            if (is_zero(a*x*x+b*x*y+c*y*y+f)) {
+                if (only_first)
+                    return makevecteur(x,y);
+                sols.push_back(makevecteur(x,y));
+            }
+            p[k+2]=x;
+            q[k+2]=y;
         }
     }
     return sols;
 }
 
+/* find solutions to ax^2+bxy+cy^2+f=0 where b^2-4ac>0 is not a perfect square, 4f^2>=b^2-4ac and gcd(a,b,f)=1 */
+vecteur solve_abf_coprime(const gen &a,const gen &b,const gen &c,const gen &f,GIAC_CONTEXT) {
+    vecteur sols;
+    for (gen s=0;is_strictly_greater(_abs(f,contextptr),s,contextptr);s=s+1) {
+        if (is_divisible(a*s*s+b*s+c,f,contextptr)) {
+            vecteur sol=solve_contfrac((a*s*s+b*s+c)/f,-2*a*s-b,a*f,1,false,contextptr);
+            for (const_iterateur it=sol.begin();it!=sol.end();++it) {
+                const vecteur yz=*(it->_VECTptr);
+                gen x=s*yz[0]-f*yz[1],y=yz[0];
+                sols.push_back(makevecteur(x,y));
+            }
+        }
+    }
+    return mergevecteur(sols,multvecteur(-1,sols));
+}
+
+/* find solutions to ax^2+bxy+cy^2+f=0 where b^2-4ac>0 is not a perfect square */
+vecteur solve_homogeneous_binary_quadratic(const vecteur &cf,GIAC_CONTEXT) {
+    gen a=cf[0],b=cf[1],c=cf[2],f=cf[3];
+    gen d=b*b-4*a*c,g=_gcd(makesequence(a,b,c),contextptr);
+    if (!is_divisible(f,g,contextptr))
+        return vecteur(0); // no solutions
+    a=a/g; b=b/g; c=c/g; f=f/g;
+    if (is_strictly_greater(d,4*f*f,contextptr))
+        return solve_contfrac(a,b,c,f,false,contextptr);
+    vecteur dv=*_idivis(f,contextptr)._VECTptr,sols,sol;
+    for (const_iterateur it=dv.begin();it!=dv.end();++it) {
+        if (!is_perfect_square(*it))
+            continue;
+        gen F=f/(*it),i,m;
+        if (is_strictly_greater(d,4*F*F,contextptr)) {
+            sol=solve_contfrac(a,b,c,F,false,contextptr);
+        } else if (is_one(_gcd(makesequence(a,b,F),contextptr))) {
+            sol=solve_abf_coprime(a,b,c,F,contextptr);
+        } else if (is_one(_gcd(makesequence(b,c,F),contextptr))) {
+            sol=solve_abf_coprime(c,b,a,F,contextptr);
+            sol=*_apply(makesequence(at_revlist,sol),contextptr)._VECTptr;
+        } else {
+            bool found=false;
+            for (i=0;!found && is_strictly_greater(_abs(F,contextptr),i,contextptr);i=i+1) {
+                for (m=0;is_greater(i+1,m,contextptr);m=m+1) {
+                    if (is_one(gcd(i,m)) && is_one(gcd(a*i*i+b*i*m+c*m*m,F))) {
+                        found=true;
+                        break;
+                    }
+                }
+            }
+            if (found) {
+                vecteur nj=*_iabcuv(makesequence(i,-m,1),contextptr)._VECTptr;
+                const gen &n=nj.front(),&j=nj.back();
+                sol=solve_abf_coprime(a*i*i+b*i*m+c*m*m,2*a*i*j+b*i*n+b*j*m+2*c*m*n,a*j*j+b*j*n+c*n*n,F,contextptr);
+                for (iterateur jt=sol.begin();jt!=sol.end();++jt) {
+                    gen X=jt->_VECTptr->front(),Y=jt->_VECTptr->back();
+                    *jt=makevecteur(i*X+j*Y,m*X+n*Y);
+                }
+            }
+        }
+        if (!sol.empty())
+            sols=mergevecteur(sols,multvecteur(sqrt(*it,contextptr),sol));
+    }
+    return sols;
+}
+
+vecteur solve_linrec(const vecteur &r1,const vecteur &r2,const gen &x1,const gen &y1,const gen &n,GIAC_CONTEXT) {
+    gen u=identificateur(" u"),v=identificateur(" v");
+    gen un=symbolic(at_of,makesequence(u,n)),vn=symbolic(at_of,makesequence(v,n));
+    gen unp=symbolic(at_of,makesequence(u,n+1)),vnp=symbolic(at_of,makesequence(v,n+1));
+    gen u1=symbolic(at_of,makesequence(u,1)),v1=symbolic(at_of,makesequence(v,1));
+    gen rec1=symbolic(at_equal,makesequence(unp,r1[0]*un+r1[1]*vn+r1[2]));
+    gen rec2=symbolic(at_equal,makesequence(vnp,r2[0]*un+r2[1]*vn+r2[2]));
+    gen icond1=symbolic(at_equal,makesequence(u1,x1)),icond2=symbolic(at_equal,makesequence(v1,y1));
+    gen args=makesequence(makevecteur(rec1,rec2),makevecteur(un,vn),makevecteur(icond1,icond2));
+    return *_rsolve(args,contextptr)._VECTptr->front()._VECTptr;
+}
+
 /* solve general binary quadratic equation using the methods of Dario Alejandro Alpern at
  * https://www.alpertron.com.ar/METHODS.HTM */
-gen solve_binary_quadratic(const vecteur &cf,gen &ph,bool set_ph,bool &alt_sols,GIAC_CONTEXT) {
+gen solve_binary_quadratic(const vecteur &cf,gen &ph,bool set_ph,bool &alt_sols,bool fund_only,GIAC_CONTEXT) {
     gen a=cf[0],b=cf[1],c=cf[2],d=cf[3],e=cf[4],f=cf[5];
     if (is_zero(a) && is_zero(b) && is_zero(c)) {
         /* linear case */
@@ -5037,12 +5140,12 @@ gen solve_binary_quadratic(const vecteur &cf,gen &ph,bool set_ph,bool &alt_sols,
                 return vecteur(0); // no solutions
             gen u1=(-d+sqrt(dsc,contextptr))/(2*sqr_a*g),u2=(-d-sqrt(dsc,contextptr))/(2*sqr_a*g);
             if (u1.is_integer()) {
-                gen s=solve_binary_quadratic(makevecteur(0,0,0,sqr_a,sqr_c,-u1),ph,true,alt_sols,contextptr);
+                gen s=solve_binary_quadratic(makevecteur(0,0,0,sqr_a,sqr_c,-u1),ph,true,alt_sols,false,contextptr);
                 if (s.type==_VECT && !s._VECTptr->empty())
                     sol.push_back(s);
             }
             if (!is_zero(dsc) && u2.is_integer()) {
-                gen s=solve_binary_quadratic(makevecteur(0,0,0,sqr_a,sqr_c,-u2),ph,false,alt_sols,contextptr);
+                gen s=solve_binary_quadratic(makevecteur(0,0,0,sqr_a,sqr_c,-u2),ph,false,alt_sols,false,contextptr);
                 if (s.type==_VECT && !s._VECTptr->empty())
                     sol.push_back(s);
             }
@@ -5064,35 +5167,37 @@ gen solve_binary_quadratic(const vecteur &cf,gen &ph,bool set_ph,bool &alt_sols,
     if (is_strictly_positive(dsc,contextptr)) {
         /* tedious hyperbolic case */
         if (is_zero(d) && is_zero(e)) { // binary quadratic form
-            if (!is_perfect_square(dsc)) { // the difficult case
-                vecteur psols=solve_general_pell_equation_brute_force(dsc,-4*a*f,contextptr),fac(2);
+            if (!is_perfect_square(dsc)) {
+                vecteur psols=solve_homogeneous_binary_quadratic(makevecteur(a,b,c,f),contextptr);
                 if (!psols.empty()) {
-                    gen gp=pell_general(dsc,true,ph,&fac,contextptr);
-                    if (is_undef(gp)) {
-                        *logptr(contextptr) << "Error: failed to find general solution to Pell resolvent\n";
-                        return undef;
-                    }
-                    const gen &un=gp._VECTptr->front(),&vn=gp._VECTptr->back();
+                    purge_nonfundamental_solutions(psols,a,b,c,f,contextptr);
+                    gen n;
+                    if (!fund_only)
+                        n=is_undef(ph)?make_integer_placeholder("Z",contextptr):ph;
                     for (const_iterateur it=psols.begin();it!=psols.end();++it) {
-                        gen alpha=it->_VECTptr->front(),beta=it->_VECTptr->back();
-                        gen A=(alpha-b*beta)/(2*a),B=(b*alpha-dsc*beta)/(2*a);
-                        gen x=_collect(makesequence(A*un-B*vn,fac[0],fac[1]),contextptr);
-                        gen y=_collect(makesequence(beta*un+alpha*vn,fac[0],fac[1]),contextptr);
+                        gen x=it->_VECTptr->front(),y=it->_VECTptr->back();
+                        if (!fund_only) {
+                            /* find other solutions by solving a system of linear recurrences */
+                            vecteur rs=solve_contfrac(1,b,a*c,-1,true,contextptr);
+                            const gen &r=rs.front(),&s=rs.back();
+                            vecteur rsol=solve_linrec(makevecteur(r,-c*s,0),makevecteur(a*s,r+b*s,0),x,y,n,contextptr);
+                            x=rsol.front(); y=rsol.back();
+                        }
                         sol.push_back(makevecteur(x,y));
                     }
                 }
             } else { // simple factorization
                 if (is_zero(a)) {
-                    gen s=solve_binary_quadratic(makevecteur(c,b,a,f),ph,false,alt_sols,contextptr);
+                    gen s=solve_binary_quadratic(makevecteur(c,b,a,f),ph,false,alt_sols,false,contextptr);
                     if (s.type==_VECT)
                         sol=*_apply(makesequence(at_revlist,s),contextptr)._VECTptr;
                 } else {
                     gen k=sqrt(dsc,contextptr);
                     if (is_zero(f)) {
-                        gen s=solve_binary_quadratic(makevecteur(0,0,0,2*a,b+k,0),ph,true,alt_sols,contextptr);
+                        gen s=solve_binary_quadratic(makevecteur(0,0,0,2*a,b+k,0),ph,true,alt_sols,false,contextptr);
                         if (s.type==_VECT && !s._VECTptr->empty())
                             sol.push_back(s);
-                        s=solve_binary_quadratic(makevecteur(0,0,0,2*a,b-k,0),ph,false,alt_sols,contextptr);
+                        s=solve_binary_quadratic(makevecteur(0,0,0,2*a,b-k,0),ph,false,alt_sols,false,contextptr);
                         if (s.type==_VECT && !s._VECTptr->empty())
                             sol.push_back(s);
                     } else {
@@ -5108,13 +5213,14 @@ gen solve_binary_quadratic(const vecteur &cf,gen &ph,bool set_ph,bool &alt_sols,
                 }
             }
         } else { // the non-homogeneous case
-            gen g=_gcd(makesequence(dsc,2*a*e-b*d),contextptr);
+            gen G=2*a*e-b*d,s,g;
+            g=_gcd(makesequence(dsc,G),contextptr);
             gen F=4*a*(-f*dsc-a*e*e+b*d*e-c*d*d)/g;
-            gen s=solve_binary_quadratic(makevecteur(-dsc/g,0,g,0,0,F),ph,false,alt_sols,contextptr);
+            s=solve_binary_quadratic(makevecteur(-dsc/g,0,g,0,0,F),ph,false,alt_sols,true,contextptr);
             if (s.type==_VECT) {
                 for (const_iterateur it=s._VECTptr->begin();it!=s._VECTptr->end();++it) {
                     const gen &x1=it->_VECTptr->front(),&y1=it->_VECTptr->back();
-                    gen y=-(g*y1-2*a*e+b*d)/dsc;
+                    gen y=-(g*y1-G)/dsc;
                     gen x=(x1-b*y-d)/(2*a);
                     vecteur Z=*_lname(makevecteur(x,y),contextptr)._VECTptr;
                     if (Z.empty()) {
@@ -5124,7 +5230,6 @@ gen solve_binary_quadratic(const vecteur &cf,gen &ph,bool set_ph,bool &alt_sols,
                         assert(Z.size()==1); // there should be exactly one global variable
                         const gen &t=Z.front();
                         gen A,B,C,D;
-                        // x and y should both be linear in t
                         assert(is_linear_wrt(x,t,A,B,contextptr) && is_linear_wrt(y,t,C,D,contextptr));
                         if (!B.is_integer() || !D.is_integer())
                             continue;
@@ -5133,6 +5238,29 @@ gen solve_binary_quadratic(const vecteur &cf,gen &ph,bool set_ph,bool &alt_sols,
                         A=pA/_gcd(makesequence(pA,qA),contextptr);
                         C=pC/_gcd(makesequence(pC,qC),contextptr);
                         sol.push_back(makevecteur(A*t+B,C*t+D));
+                    }
+                }
+                if (!fund_only && !is_perfect_square(dsc) && !sol.empty()) {
+                    /* find other solutions by solving a system of linear recurrences */
+                    gen n=is_undef(ph)?make_integer_placeholder("Z",contextptr):ph;
+                    for (iterateur it=sol.begin();it!=sol.end();++it) {
+                        gen x=it->_VECTptr->front(),y=it->_VECTptr->back();
+                        vecteur rsv=solve_contfrac(1,b,a*c,-1,false,contextptr);
+                        gen P,Q,R,S,K,L,r,s;
+                        for (const_iterateur jt=rsv.begin();jt!=rsv.end();++jt) {
+                            r=jt->_VECTptr->front(); s=jt->_VECTptr->back();
+                            P=r,Q=-c*s; R=a*s; S=r+b*s;
+                            K=-(c*d*(P+S-2)+e*(b-b*r-2*a*c*s))/dsc;
+                            L=d*s-(d*(b-b*r-2*a*c*s)+a*e*(P+S-2))/dsc;
+                            if (K.is_integer() && L.is_integer())
+                                break;
+                        }
+                        if (!K.is_integer() || !L.is_integer()) {
+                            r=rsv.front()._VECTptr->front(); s=rsv.front()._VECTptr->back();
+                            P=r*r-a*c*s*s; Q=-c*s*(2*r+b*s); K=-c*d*s*s-e*r*s;
+                            R=a*s*(2*r+b*s); S=r*r+2*b*r*s+(b*b-a*c)*s*s; L=d*s*(r+b*s)-a*e*s*s;
+                        }
+                        *it=solve_linrec(makevecteur(P,Q,K),makevecteur(R,S,L),x,y,n,contextptr);
                     }
                 }
             }
@@ -5165,14 +5293,15 @@ gen _isolve(const gen &g,GIAC_CONTEXT) {
     gen sol(undef);
     matrice A;
     vecteur Fr;
-    bool find_alternate_sols=false;
+    bool find_alternate_sols=false,output_sequences=true;
     int n=vars.size(),m=eqv.size();
     /* parse options */
     for (const_iterateur it=opts.begin();it!=opts.end();++it) {
         if (it->is_symb_of_sommet(at_equal)) {
             const gen &ls=it->_SYMBptr->feuille._VECTptr->front();
             const gen &rs=it->_SYMBptr->feuille._VECTptr->back();
-            ;
+            if (ls==at_seq && rs.is_integer() && rs.subtype==_INT_BOOLEAN)
+                output_sequences=(bool)rs.val;
         } else if (it->type==_IDNT) {
             fvars.push_back(*it);
         } else if (it->type==_VECT) {
@@ -5218,14 +5347,16 @@ gen _isolve(const gen &g,GIAC_CONTEXT) {
         if ((pd1=is_pell_equation(eq,x,y,d,contextptr))!=0 ||
                 (pd2=is_pell_equation(eq,y,x,d,contextptr))!=0) {
             /* Pell equation */
-            gen ph=fvars.empty()?undef:fvars.front();
-            sol=pell_general(d,pd1+pd2>0,ph,NULL,contextptr);
+            if (output_sequences) {
+                gen ph=fvars.empty()?undef:fvars.front();
+                sol=pell_general(d,pd1+pd2>0,ph,false,contextptr);
+            } else sol=pell_fundamental(d,pd1+pd2>0,contextptr);
             if (pd1==0)
                 sol=_apply(makesequence(at_revlist,sol),contextptr);
         } else if (is_binary_quadratic_wrt(eq,x,y,a,b,c,d,e,f,contextptr) &&
                    integralize(makevecteur(a,b,c,d,e,f),t,contextptr)) {
             gen ph(fvars.empty()?undef:fvars.front());
-            sol=solve_binary_quadratic(t,ph,false,find_alternate_sols,contextptr);
+            sol=solve_binary_quadratic(t,ph,false,find_alternate_sols,!output_sequences,contextptr);
         } else if (is_thue_equation(eq,x,y,t[0],t[1],contextptr) ||
                    (y_first=is_thue_equation(eq,y,x,t[0],t[1],contextptr))) {
             /* Thue equation */
@@ -5251,9 +5382,9 @@ gen _isolve(const gen &g,GIAC_CONTEXT) {
                     }
                     sol._VECTptr->push_back(makevecteur(a,b));
                 }
-            }
+            } else {
+#ifdef __MINGW_H
 #ifdef HAVE_LIBPARI
-            else {
                 GEN alpha=gen2GEN(cf_int.back(),vecteur(0),contextptr);
                 cf_int.pop_back();
                 gen R=expand(_r2e(makesequence(cf_int,x),contextptr),contextptr);
@@ -5261,10 +5392,12 @@ gen _isolve(const gen &g,GIAC_CONTEXT) {
                 GEN tnf=thueinit(P,1,DEFAULTPREC);
                 sol=GEN2gen(thue(tnf,alpha,NULL),vecteur(0));
                 find_alternate_sols=true;
-            }
 #else
             *logptr(contextptr) << "Warning: PARI library is required for solving Thue equations\n";
 #endif
+            *logptr(contextptr) << "Error: failed to solve Thue equation\n";
+#endif
+            }
             if (sol.type==_VECT && y_first)
                 sol=_apply(makesequence(at_revlist,sol),contextptr);
         } else if (is_tengely(eq,x,y,t[0],t[1],contextptr) || (y_first=is_tengely(eq,y,x,t[0],t[1],contextptr))) {
@@ -5296,7 +5429,7 @@ gen _isolve(const gen &g,GIAC_CONTEXT) {
             while (fvars.size()<3) {
                 fvars.push_back(make_integer_placeholder("Z",contextptr));
             }
-            sol=solve_ternary_quadratic_form(eq,vars,fvars,contextptr);
+            sol=solve_ternary_quadratic_form(eq,vars,fvars,output_sequences,contextptr);
         }
     }
     if (is_undef(sol)) {

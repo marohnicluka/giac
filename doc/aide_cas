@@ -14774,9 +14774,11 @@ pa2b2(229)
 2 Solve diophantine equation.
 0 Eqn||List(Eqn),[Intg(n)||(Idnt(Z1),Idnt(Z2),...)]
 isolve(4x-3y=7)
+isolve([x+y-z=4,x-2y+3z=3],m)
 isolve(x^2-23y^2=1,n)
+isolve(x^2-23y^2=1,seq=false)
 isolve(x^2+11y^2-3z^2=0,A,B,C)
-isolve(x^9-2y^9=1)
+isolve(x^2-3x*y+y^2-x=3,n)
 
 # permu2cycles
 1 Convertit une permutation en un produit de cycles disjoints.

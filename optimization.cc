@@ -5364,10 +5364,10 @@ gen _isolve(const gen &g,GIAC_CONTEXT) {
             Pcf.push_back(t[1]);
             assert(integralize(Pcf,cf_int,contextptr));
             if (is_zero(cf_int.back())) {
-                gen m=cf_int.back();
                 cf_int.pop_back();
                 gen P=_r2e(makesequence(cf_int,x),contextptr);
                 gen rsol=_rationalroot(P,contextptr);
+                gen ph=fvars.empty()?undef:fvars.front();
                 sol=vecteur(0);
                 if (rsol.type==_VECT) for (const_iterateur it=rsol._VECTptr->begin();it!=rsol._VECTptr->end();++it) {
                     if (is_zero(*it))
@@ -5375,12 +5375,12 @@ gen _isolve(const gen &g,GIAC_CONTEXT) {
                     if (it->is_integer()) {
                         a=*it; b=1;
                     } else {
-                        assert(it->type==_FRAC);
-                        a=it->_FRACptr->num;
-                        b=it->_FRACptr->den;
-                        assert(a.is_integer() && b.is_integer());
+                        a=_numer(*it,contextptr);
+                        b=_denom(*it,contextptr);
                     }
-                    sol._VECTptr->push_back(makevecteur(a,b));
+                    if (is_undef(ph))
+                        ph=make_integer_placeholder("Z",contextptr);
+                    sol._VECTptr->push_back(makevecteur(a*ph,b*ph));
                 }
             } else {
 #ifdef __MINGW_H
@@ -5391,7 +5391,6 @@ gen _isolve(const gen &g,GIAC_CONTEXT) {
                 GEN P=gen2GEN(R,vecteur(1,x),contextptr);
                 GEN tnf=thueinit(P,1,DEFAULTPREC);
                 sol=GEN2gen(thue(tnf,alpha,NULL),vecteur(0));
-                find_alternate_sols=true;
 #else
                 *logptr(contextptr) << "Warning: PARI library is required for solving Thue equations\n";
 #endif
@@ -5401,6 +5400,7 @@ gen _isolve(const gen &g,GIAC_CONTEXT) {
             }
             if (sol.type==_VECT && y_first)
                 sol=_apply(makesequence(at_revlist,sol),contextptr);
+            find_alternate_sols=true;
         } else if (is_tengely(eq,x,y,t[0],t[1],contextptr) || (y_first=is_tengely(eq,y,x,t[0],t[1],contextptr))) {
             /* polynomial equation of type f(x)=g(y) */
             sol=solve_tengely(t[0],t[1],y_first?y:x,y_first?x:y,contextptr);

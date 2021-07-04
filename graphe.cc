@@ -46,576 +46,6 @@ int graphe::default_highlighted_edge_color=_RED;
 int graphe::default_highlighted_vertex_color=_GREEN;
 int graphe::default_vertex_color=_YELLOW;
 int graphe::default_vertex_label_color=_BLACK;
-/*
- * Special graphs are initialized with adjacency lists of integers or strings.
- * Each list starts with the corresponding vertex, followed by its neighbors,
- * and ends with -1 or an empty string. The graph specification terminates with
- * -2 (for integers) or NULL (for strings).
- */
-const int graphe::clebsch_graph[] = {
-    0,      1,2,4,8,15,-1,
-    1,      3,5,9,14,-1,
-    2,      3,6,10,13,-1,
-    3,      7,11,12,-1,
-    4,      5,6,11,12,-1,
-    5,      7,10,13,-1,
-    6,      7,9,14,-1,
-    7,      8,15,-1,
-    8,      9,10,12,-1,
-    9,      11,13,-1,
-    10,     11,14,-1,
-    11,     15,-1,
-    12,     13,14,-1,
-    13,     15,-1,
-    14,     15,-1,
-    -2
-};
-const char* graphe::coxeter_graph[] = {
-    "a1",       "a2","a7","z1","",
-    "a2",       "a3","z2","",
-    "a3",       "a4","z3","",
-    "a4",       "a5","z4","",
-    "a5",       "a6","z5","",
-    "a6",       "a7","z6","",
-    "a7",       "z7","",
-    "b1",       "b3","b6","z1","",
-    "b2",       "b4","b7","z2","",
-    "b3",       "b5","z3","",
-    "b4",       "b6","z4","",
-    "b5",       "b7","z5","",
-    "b6",       "z6","",
-    "b7",       "z7","",
-    "c1",       "c4","c5","z1","",
-    "c2",       "c5","c6","z2","",
-    "c3",       "c6","c7","z3","",
-    "c4",       "c7","z4","",
-    "c5",       "z5","",
-    "c6",       "z6","",
-    "c7",       "z7","",
-    NULL
-};
-const int graphe::dyck_graph[] = {
-    1,      2,20,32,-1,
-    2,      3,7,-1,
-    3,      4,30,-1,
-    4,      5,17,-1,
-    5,      6,24,-1,
-    6,      7,11,-1,
-    7,      8,-1,
-    8,      9,21,-1,
-    9,      10,28,-1,
-    10,     11,15,-1,
-    11,     12,-1,
-    12,     13,25,-1,
-    13,     14,32,-1,
-    14,     15,19,-1,
-    15,     16,-1,
-    16,     17,29,-1,
-    17,     18,-1,
-    18,     19,23,-1,
-    19,     20,-1,
-    20,     21,-1,
-    21,     22,-1,
-    22,     23,27,-1,
-    23,     24,-1,
-    24,     25,-1,
-    25,     26,-1,
-    26,     27,31,-1,
-    27,     28,-1,
-    28,     29,-1,
-    29,     30,-1,
-    30,     31,-1,
-    31,     32,-1,
-    -2
-};
-const int graphe::grinberg_graph[] = {
-    1,      2,3,4,-1,
-    2,      5,7,-1,
-    3,      6,10,-1,
-    4,      8,9,-1,
-    5,      6,21,-1,
-    6,      22,-1,
-    7,      8,30,-1,
-    8,      29,-1,
-    9,      10,14,-1,
-    10,     13,-1,
-    11,     12,13,14,-1,
-    12,     15,17,-1,
-    13,     16,-1,
-    14,     18,-1,
-    15,     16,39,-1,
-    16,     46,-1,
-    17,     18,40,-1,
-    18,     45,-1,
-    19,     20,21,22,-1,
-    20,     23,25,-1,
-    21,     24,-1,
-    22,     26,-1,
-    23,     24,36,-1,
-    24,     44,-1,
-    25,     26,37,-1,
-    26,     46,-1,
-    27,     28,29,30,-1,
-    28,     31,33,-1,
-    29,     32,-1,
-    30,     34,-1,
-    31,     32,42,-1,
-    32,     45,-1,
-    33,     34,43,-1,
-    34,     44,-1,
-    35,     36,43,44,-1,
-    36,     37,-1,
-    37,     38,-1,
-    38,     39,46,-1,
-    39,     40,-1,
-    40,     41,-1,
-    41,     42,45,-1,
-    42,     43,-1,
-    -2
-};
-const int graphe::grotzsch_graph[] = {
-    1,      2,5,7,10,-1,
-    2,      3,6,8,-1,
-    3,      4,7,9,-1,
-    4,      5,8,10,-1,
-    5,      6,9,-1,
-    6,      11,-1,
-    7,      11,-1,
-    8,      11,-1,
-    9,      11,-1,
-    10,     11,-1,
-    -2
-};
-const int graphe::heawood_graph[] = {
-    1,      2,6,14,-1,
-    2,      3,11,-1,
-    3,      4,8,-1,
-    4,      5,13,-1,
-    5,      6,10,-1,
-    6,      7,-1,
-    7,      8,12,-1,
-    8,      9,-1,
-    9,      10,14,-1,
-    10,     11,-1,
-    11,     12,-1,
-    12,     13,-1,
-    13,     14,-1,
-    -2
-};
-const int graphe::herschel_graph[] = {
-    1,      2,4,5,-1,
-    2,      3,6,7,-1,
-    3,      4,8,-1,
-    4,      9,10,-1,
-    5,      6,10,-1,
-    6,      11,-1,
-    7,      8,11,-1,
-    8,      9,-1,
-    9,      11,-1,
-    10,     11,-1,
-    -2
-};
-const int graphe::mcgee_graph[] = {
-    1,      2,13,24,-1,
-    2,      3,9,-1,
-    3,      4,20,-1,
-    4,      5,16,-1,
-    5,      6,12,-1,
-    6,      7,23,-1,
-    7,      8,19,-1,
-    8,      9,15,-1,
-    9,      10,-1,
-    10,     11,22,-1,
-    11,     12,18,-1,
-    12,     13,-1,
-    13,     14,-1,
-    14,     15,21,-1,
-    15,     16,-1,
-    16,     17,-1,
-    17,     18,24,-1,
-    18,     19,-1,
-    19,     20,-1,
-    20,     21,-1,
-    21,     22,-1,
-    22,     23,-1,
-    23,     24,-1,
-    -2
-};
-const int graphe::pappus_graph[] = {
-    1,      2,6,18,-1,
-    2,      3,9,-1,
-    3,      4,14,-1,
-    4,      5,11,-1,
-    5,      6,16,-1,
-    6,      7,-1,
-    7,      8,12,-1,
-    8,      9,15,-1,
-    9,      10,-1,
-    10,     11,17,-1,
-    11,     12,-1,
-    12,     13,-1,
-    13,     14,18,-1,
-    14,     15,-1,
-    15,     16,-1,
-    16,     17,-1,
-    17,     18,-1,
-    -2
-};
-const int graphe::robertson_graph[] = {
-    1,      2,5,9,19,-1,
-    2,      3,7,13,-1,
-    3,      4,10,15,-1,
-    4,      5,8,18,-1,
-    5,      6,12,-1,
-    6,      7,14,17,-1,
-    7,      8,11,-1,
-    8,      9,16,-1,
-    9,      10,14,-1,
-    10,     11,17,-1,
-    11,     12,19,-1,
-    12,     13,16,-1,
-    13,     14,18,-1,
-    14,     15,-1,
-    15,     16,19,-1,
-    16,     17,-1,
-    17,     18,-1,
-    18,     19,-1,
-    -2
-};
-const int graphe::soccer_ball_graph[] = {
-    1,      2,5,6,-1,
-    2,      3,11,-1,
-    3,      4,16,-1,
-    4,      5,21,-1,
-    5,      26,-1,
-    6,      7,10,-1,
-    7,      8,30,-1,
-    8,      9,49,-1,
-    9,      10,53,-1,
-    10,     12,-1,
-    11,     12,15,-1,
-    12,     13,-1,
-    13,     14,54,-1,
-    14,     15,58,-1,
-    15,     17,-1,
-    16,     17,20,-1,
-    17,     18,-1,
-    18,     19,59,-1,
-    19,     20,38,-1,
-    20,     22,-1,
-    21,     22,25,-1,
-    22,     23,-1,
-    23,     24,39,-1,
-    24,     25,43,-1,
-    25,     27,-1,
-    26,     27,30,-1,
-    27,     28,-1,
-    28,     29,44,-1,
-    29,     30,48,-1,
-    31,     32,35,36,-1,
-    32,     33,41,-1,
-    33,     34,46,-1,
-    34,     35,51,-1,
-    35,     56,-1,
-    36,     37,40,-1,
-    37,     38,60,-1,
-    38,     39,-1,
-    39,     40,-1,
-    40,     42,-1,
-    41,     42,45,-1,
-    42,     43,-1,
-    43,     44,-1,
-    44,     45,-1,
-    45,     47,-1,
-    46,     47,50,-1,
-    47,     48,-1,
-    48,     49,-1,
-    49,     50,-1,
-    50,     52,-1,
-    51,     52,55,-1,
-    52,     53,-1,
-    53,     54,-1,
-    54,     55,-1,
-    55,     57,-1,
-    56,     57,60,-1,
-    57,     58,-1,
-    58,     59,-1,
-    59,     60,-1,
-    -2
-};
-const int graphe::tetrahedron_graph[] = {
-    1,      2,3,4,-1,
-    2,      3,4,-1,
-    3,      4,-1,
-    -2
-};
-const int graphe::octahedron_graph[] = {
-    1,      3,6,5,4,-1,
-    2,      3,4,5,6,-1,
-    3,      5,6,-1,
-    4,      5,6,-1,
-    -2
-};
-const int graphe::dodecahedron_graph[] = {
-    1,      2,5,6,-1,
-    2,      3,7,-1,
-    3,      4,8,-1,
-    4,      5,9,-1,
-    5,      10,-1,
-    6,      11,15,-1,
-    7,      11,12,-1,
-    8,      12,13,-1,
-    9,      13,14,-1,
-    10,     14,15,-1,
-    11,     16,-1,
-    12,     17,-1,
-    13,     18,-1,
-    14,     19,-1,
-    15,     20,-1,
-    16,     17,20,-1,
-    17,     18,-1,
-    18,     19,-1,
-    19,     20,-1,
-    -2
-};
-const int graphe::icosahedron_graph[] = {
-    1,      2,3,4,5,9,-1,
-    2,      3,5,6,7,-1,
-    3,      7,8,9,-1,
-    4,      5,9,10,11,-1,
-    5,      6,10,-1,
-    6,      7,10,12,-1,
-    7,      8,12,-1,
-    8,      9,11,12,-1,
-    9,      11,-1,
-    10,     11,12,-1,
-    11,     12,-1,
-    -2
-};
-const int graphe::ljubljana_graph_lcf[] = {
-    47,-23,-31,39,25,-21,-31,-41,25,15,29,-41,-19,15,-49,33,39,-35,-21,17,-33,49,41,31,
-    -15,-29,41,31,-15,-25,21,31,-51,-25,23,9,-17,51,35,-29,21,-51,-39,33,-9,-51,51,-47,
-    -33,19,51,-21,29,21,-31,-39,0
-};
-const int graphe::harries_graph_lcf[] = {
-    -35,-27,27,-23,15,-15,-9,-35,23,-27,27,9,15,-15,0
-};
-const int graphe::harries_wong_graph_lcf[] = {
-    9,25,31,-17,17,33,9,-29,-15,-9,9,25,-25,29,17,-9,9,-27,35,-9,9,-17,21,27,-29,-9,-25,13,19,
-    -9,-33,-17,19,-31,27,11,-25,29,-33,13,-13,21,-29,-21,25,9,-11,-19,29,9,-27,-19,-13,-35,-9,
-    9,17,25,-9,9,27,-27,-21,15,-9,29,-29,33,-9,-25,0
-};
-const int graphe::balaban_10cage_lcf[] = {
-    -9,-25,-19,29,13,35,-13,-29,19,25,9,-29,29,17,33,21,9,-13,-31,-9,25,17,9,-31,27,-9,17,-19,-29,
-    27,-17,-9,-29,33,-25,25,-21,17,-17,29,35,-29,17,-17,21,-25,25,-33,29,9,17,-27,29,19,-17,9,-27,
-    31,-9,-17,-25,9,31,13,-9,-21,-33,-17,-29,29,0
-};
-const int graphe::balaban_11cage_lcf[] = {
-    44,26,-47,-15,35,-39,11,-27,38,-37,43,14,28,51,-29,-16,41,-11,-26,15,22,-51,-35,36,52,-14,-33,-26,-46,
-    52,26,16,43,33,-15,17,-53,23,-42,-35,-28,30,-22,45,-44,16,-38,-16,50,-55,20,28,-17,-43,47,34,-26,-41,11,
-    -36,-23,-16,41,17,-51,26,-33,47,17,-11,-20,-30,21,29,36,-43,-52,10,39,-28,-17,-52,51,26,37,-17,10,-10,
-    -45,-34,17,-26,27,-21,46,53,-10,29,-50,35,15,-47,-29,-41,26,33,55,-17,42,-26,-36,16,0
-};
-const int graphe::foster_graph_lcf[] = {
-    17,-9,37,-37,9,-17,0
-};
-const int graphe::bidiakis_cube_graph_lcf[] = {
-    -6,4,-4,0
-};
-const int graphe::franklin_graph_lcf[] = {
-    5,-5,0
-};
-const int graphe::frucht_graph_lcf[] = {
-    -5,-2,-4,2,5,-2,2,5,-2,-5,4,2,0
-};
-const int graphe::biggs_smith_graph_lcf[] = {
-    16,24,-38,17,34,48,-19,41,-35,47,-20,34,-36,21,14,48,-16,-36,-43,28,-17,21,29,-43,46,-24,28,-38,-14,-50,-45,21,8,
-    27,-21,20,-37,39,-34,-44,-8,38,-21,25,15,-34,18,-28,-41,36,8,-29,-21,-48,-28,-20,-47,14,-8,-15,-27,38,24,-48,-18,25,
-    38,31,-25,24,-46,-14,28,11,21,35,-39,43,36,-38,14,50,43,36,-11,-36,-24,45,8,19,-25,38,20,-24,-14,-21,-8,44,-31,-38,-28,37,0
-};
-const int graphe::folkman_graph_lcf[] = {
-    5,-7,-7,5,0
-};
-const int graphe::gray_graph_lcf[] = {
-    -25,7,-7,13,-13,25,0
-};
-const int graphe::tutte_12cage_lcf[] = {
-    17,27,-13,-59,-35,35,-11,13,-53,53,-27,21,57,11,-21,-57, 59,-17,0
-};
-const int graphe::tutte_8cage_lcf[] = {
-    -13,-9,7,-7,9,13,0
-};
-const int graphe::f26a_graph_lcf[] = {
-    -7,7,0
-};
-const int graphe::blanusa_graph[] = {
-    1,      2,6,8,-1,
-    2,      3,12,-1,
-    3,      4,13,-1,
-    4,      5,14,-1,
-    5,      6,18,-1,
-    6,      7,-1,
-    7,      9,17,-1,
-    8,      17,18,-1,
-    9,      10,18,-1,
-    10,     11,16,-1,
-    11,     13,14,-1,
-    12,     14,15,-1,
-    13,     15,-1,
-    15,     16,-1,
-    16,     17,-1,
-    -2
-};
-const int graphe::bull_graph[] = {
-    1,      2,3,-1,
-    2,      3,4,-1,
-    3,      5,-1,
-    -2
-};
-const int graphe::butterfly_graph[] = {
-    1,      2,3,4,5,-1,
-    2,      3,-1,
-    4,      5,-1,
-    -2
-};
-const int graphe::diamond_graph[] = {
-    1,      2,3,4,-1,
-    2,      3,-1,
-    3,      4,-1,
-    -2
-};
-const int graphe::chvatal_graph[] = {
-    1,      2,4,5,12,-1,
-    2,      3,6,7,-1,
-    3,      4,8,9,-1,
-    4,      10,11,-1,
-    5,      6,8,9,-1,
-    6,      11,10,-1,
-    7,      8,10,11,-1,
-    8,      12,-1,
-    9,      10,12,-1,
-    11,     12,-1,
-    -2
-};
-const int graphe::moser_spindle_graph[] = {
-    1,      2,5,6,7,-1,
-    2,      3,7,-1,
-    3,      4,7,-1,
-    4,      5,6,-1,
-    5,      6,-1,
-    -2
-};
-const int graphe::errera_graph[] = {
-    1,      2,3,4,14,15,-1,
-    2,      3,13,15,17,-1,
-    3,      13,14,16,-1,
-    4,      5,6,14,15,-1,
-    5,      6,7,8,14,16,-1,
-    6,      7,9,15,17,-1,
-    7,      8,9,10,-1,
-    8,      10,11,16,-1,
-    9,      10,12,17,-1,
-    10,     11,12,-1,
-    11,     12,13,16,-1,
-    12,     13,17,-1,
-    13,     16,17,-1,
-    14,     16,-1,
-    15,     17,-1,
-    -2
-};
-const int graphe::goldner_harary_graph[] = {
-    1,      2,3,4,5,6,9,10,11,-1,
-    2,      3,10,-1,
-    3,      4,7,8,9,10,-1,
-    4,      9,-1,
-    5,      9,11,-1,
-    6,      10,11,-1,
-    7,      9,11,-1,
-    8,      10,11,-1,
-    9,      11,-1,
-    10,     11,-1,
-    -2
-};
-const int graphe::golomb_graph[] = {
-    1,      2,3,4,-1,
-    2,      3,6,-1,
-    3,      8,-1,
-    4,      5,9,10,-1,
-    5,      6,10,-1,
-    6,      7,10,-1,
-    7,      8,10,-1,
-    8,      9,10,-1,
-    9,      10,-1,
-    -2
-};
-const int graphe::hoffman_graph_matrix[8][8] = {
-    {1,1,1,1,0,0,0,0},
-    {1,1,1,0,1,0,0,0},
-    {1,0,0,1,0,1,1,0},
-    {0,1,0,1,0,1,0,1},
-    {0,0,1,1,0,0,1,1},
-    {1,0,0,0,1,1,1,0},
-    {0,1,0,0,1,1,0,1},
-    {0,0,1,0,1,0,1,1}
-};
-const int graphe::poussin_graph[] = {
-    1,      2,3,4,5,10,-1,
-    2,      3,5,7,9,15,-1,
-    3,      4,6,8,15,-1,
-    4,      6,10,-1,
-    5,      7,10,-1,
-    6,      8,10,11,12,-1,
-    7,      9,10,11,13,-1,
-    8,      12,14,15,-1,
-    9,      13,14,15,-1,
-    10,     11,-1,
-    11,     12,13,-1,
-    12,     13,14,-1,
-    13,     14,-1,
-    14,     15,-1,
-    -2
-};
-const int graphe::wagner_graph[] = {
-    1,      2,5,8,-1,
-    2,      3,6,-1,
-    3,      4,7,-1,
-    4,      5,8,-1,
-    5,      6,-1,
-    6,      7,-1,
-    7,      8,-1,
-    -2
-};
-const int graphe::tietze_graph[] = {
-    1,      2,5,9,-1,
-    2,      3,7,-1,
-    3,      4,11,-1,
-    4,      5,8,-1,
-    5,      6,-1,
-    6,      7,12,-1,
-    7,      8,-1,
-    8,      9,-1,
-    9,      10,-1,
-    10,     11,12,-1,
-    11,     12,-1,
-    -2
-};
-const int graphe::tutte_fragment_graph[] = {
-    1,      2,4,-1,
-    2,      3,5,-1,
-    3,      4,7,-1,
-    4,      8,-1,
-    5,      6,9,-1,
-    6,      7,10,-1,
-    7,      11,-1,
-    8,      11,15,-1,
-    9,      10,13,-1,
-    10,     12,-1,
-    11,     12,-1,
-    12,     14,-1,
-    13,     14,-1,
-    14,     15,-1,
-    -2
-};
 
 /* messages */
 
@@ -1229,11 +659,17 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         make_circular_layout(x,hull,3.5);
     } else if (name=="desargues") {
         make_petersen_graph(10,3,&x);
+    } else if (name=="barnette-bosak-lederberg") {
+        read_special(barnette_bosak_lederberg_graph);
+        make_planar_layout(x);
+        layout_best_rotation(x);
     } else if (name=="bidiakis") {
-        make_lcf_graph(bidiakis_cube_graph_lcf,4);
+        make_lcf_graph(bidiakis_cube_graph_lcf);
         for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
         layout_best_rotation(x);
+    } else if (name=="brinkmann") {
+        read_special(brinkmann_graph);
     } else if (name=="bull") {
         read_special(bull_graph);
         make_spring_layout(x,2);
@@ -1254,10 +690,16 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         add_temporary_edge(4,15);
         make_circular_layout(x,hull,2.5,0.005,0.618);
         remove_temporary_edges();
+    } else if (name=="brouwer-haemers") {
+        make_brouwer_haemers_graph();
     } else if (name=="diamond") {
         read_special(diamond_graph);
         make_spring_layout(x,2);
         layout_best_rotation(x);
+    } else if (name=="double-star") {
+        read_special(double_star_snark);
+    } else if (name=="doyle") {
+        read_special(doyle_graph);
     } else if (name=="chvatal") {
         read_special(chvatal_graph);
         x.resize(12);
@@ -1269,10 +711,9 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         x[9][0]=1; x[9][1]=-2; x[10][0]=-1; x[10][1]=-2;
         x[11][0]=-2; x[11][1]=-1; x[4][0]=-2; x[4][1]=1;
     } else if (name=="dodecahedron") {
-        read_special(dodecahedron_graph);
-        for (int i=1;i<=5;++i) hull.push_back(node_index(i));
-        make_circular_layout(x,hull,2.5);
-        layout_best_rotation(x);
+        make_petersen_graph(10,2,&x);
+        hull=vecteur_2_vector_int(makevecteur(0,1,2,12,10));
+        make_circular_layout(x,hull);
     } else if (name=="errera") {
         read_special(errera_graph);
         for (int i=0;i<3;++i) hull.push_back(i);
@@ -1283,30 +724,32 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         make_planar_layout(x);
         layout_best_rotation(x);
     } else if (name=="franklin") {
-        make_lcf_graph(franklin_graph_lcf,6);
+        make_lcf_graph(franklin_graph_lcf);
         for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
         layout_best_rotation(x);
     } else if (name=="frucht") {
-        make_lcf_graph(frucht_graph_lcf,1);
+        make_lcf_graph(frucht_graph_lcf);
         make_planar_layout(x);
         layout_best_rotation(x);
     } else if (name=="biggs-smith") {
-        make_lcf_graph(biggs_smith_graph_lcf,1);
+        make_lcf_graph(biggs_smith_graph_lcf);
         for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
-    } else if (name=="durer") {
+    } else if (name=="duerer") {
         make_petersen_graph(6,2,&x);
     } else if (name=="dyck") {
         read_special(dyck_graph);
         for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
     } else if (name=="folkman") {
-        make_lcf_graph(folkman_graph_lcf,5);
+        make_lcf_graph(folkman_graph_lcf);
         for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
+    } else if (name=="gewirtz") {
+        make_gewirtz_graph();
     } else if (name=="gray") {
-        make_lcf_graph(gray_graph_lcf,9);
+        make_lcf_graph(gray_graph_lcf);
         for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
     } else if (name=="grinberg") {
@@ -1329,36 +772,44 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         make_circular_layout(x,hull);
         remove_temporary_edges();
         layout_best_rotation(x);
+    } else if (name=="gosset") {
+        make_gosset_graph();
     } else if (name=="grotzsch") {
         read_special(grotzsch_graph);
         for (int i=1;i<=5;++i) hull.push_back(node_index(i));
         make_circular_layout(x,hull,2.5);
     } else if (name=="f26a") {
-        make_lcf_graph(f26a_graph_lcf,13);
+        make_lcf_graph(f26a_graph_lcf);
         for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
     } else if (name=="harries") {
-        make_lcf_graph(harries_graph_lcf,5);
+        make_lcf_graph(harries_graph_lcf);
         for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
     } else if (name=="harries-wong") {
-        make_lcf_graph(harries_wong_graph_lcf,1);
+        make_lcf_graph(harries_wong_graph_lcf);
         for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
     } else if (name=="balaban10") {
-        make_lcf_graph(balaban_10cage_lcf,1);
+        make_lcf_graph(balaban_10cage_lcf);
         for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
     } else if (name=="balaban11") {
-        make_lcf_graph(balaban_11cage_lcf,1);
+        make_lcf_graph(balaban_11cage_lcf);
         for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
+    } else if (name=="harborth") {
+        read_special(harborth_graph);
+        make_spring_layout(x,2);
+        layout_best_rotation(x);
     } else if (name=="heawood") {
         read_special(heawood_graph);
     } else if (name=="herschel") {
         read_special(herschel_graph);
         make_planar_layout(x);
         layout_best_rotation(x);
+    } else if (name=="higman-sims") {
+        make_higman_sims_graph();
     } else if (name=="hoffman") {
         vecteur labels;
         make_default_labels(labels,16);
@@ -1370,25 +821,39 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         }
         make_spring_layout(x,2);
         layout_best_rotation(x);
+    } else if (name=="hoffman-singleton") {
+        make_hoffman_singleton_graph();
     } else if (name=="icosahedron") {
-        read_special(icosahedron_graph);
+        read_special(icosahedral_graph);
         make_planar_layout(x);
         layout_best_rotation(x);
     } else if (name=="levi") {
-        make_lcf_graph(tutte_8cage_lcf,5);
+        make_lcf_graph(tutte_8cage_lcf);
         for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
     } else if (name=="ljubljana") {
-        make_lcf_graph(ljubljana_graph_lcf,2);
+        make_lcf_graph(ljubljana_graph_lcf);
     } else if (name=="foster") {
-        make_lcf_graph(foster_graph_lcf,15);
+        make_lcf_graph(foster_graph_lcf);
         for (int i=0;i<node_count();++i) hull.push_back(i);
+        make_circular_layout(x,hull);
+    } else if (name=="kittel") {
+        read_special(kittel_graph);
+        for (int i=0;i<3;++i) hull.push_back(i);
+        make_circular_layout(x,hull);
+    } else if (name=="krackhardt") {
+        read_special(krackhardt_kite_graph);
+        hull=vecteur_2_vector_int(makevecteur(0,1,5,4,8,9));
         make_circular_layout(x,hull);
     } else if (name=="mcgee") {
         read_special(mcgee_graph);
         for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
-    } else if (name=="mobius-kantor") {
+    } else if (name=="meredith") {
+        read_special(meredith_graph);
+    } else if (name=="meringer") {
+        read_special(meringer_graph);
+    } else if (name=="moebius-kantor") {
         make_petersen_graph(8,3,&x);
     } else if (name=="moser") {
         read_special(moser_spindle_graph);
@@ -1397,23 +862,37 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
     } else if (name=="nauru") {
         make_petersen_graph(12,5,&x);
     } else if (name=="octahedron") {
-        read_special(octahedron_graph);
+        read_special(octahedral_graph);
         make_planar_layout(x);
         layout_best_rotation(x);
     } else if (name=="pappus") {
         read_special(pappus_graph);
         for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
+    } else if (name=="perkel") {
+        read_special(perkel_graph);
     } else if (name=="petersen") {
         make_petersen_graph(5,2,&x);
     } else if (name=="robertson") {
         read_special(robertson_graph);
         for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
+    } else if (name=="robertson-wegner") {
+        read_special(robertson_wegner_graph);
+    } else if (name=="schlaefli") {
+        make_schlaefli_graph();
     } else if (name=="soccerball") {
-        read_special(soccer_ball_graph);
-        for (int i=16;i<=20;++i) hull.push_back(node_index(i));
+        graphe G;
+        G.read_special(icosahedral_graph);
+        ivectors faces;
+        assert(G.demoucron(faces));
+        G.truncate(*this,faces);
+        hull=vecteur_2_vector_int(makevecteur(4,0,1,2,3));
         make_circular_layout(x,hull,2.5);
+    } else if (name=="sousselier") {
+        read_special(sousselier_graph);
+        hull=vecteur_2_vector_int(mergevecteur(makevecteur(13,15,8,7,9,2,0,1),makevecteur(5,4,6,12,10,11,14)));
+        make_circular_layout(x,hull);
     } else if (name=="shrikhande") {
         make_shrikhande_graph();
         for (int i=0;i<4;++i) {
@@ -1427,16 +906,11 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         make_circular_layout(x,hull);
         remove_temporary_edges();
     } else if (name=="tetrahedron") {
-        read_special(tetrahedron_graph);
+        read_special(tetrahedral_graph);
         make_planar_layout(x);
         layout_best_rotation(x);
     } else if (name=="tietze") {
-        read_special(tietze_graph);
-        hull.push_back(0); hull.push_back(1); hull.push_back(4);
-        hull.push_back(6); hull.push_back(2); hull.push_back(9);
-        hull.push_back(5); hull.push_back(8); hull.push_back(3);
-        make_circular_layout(x,hull);
-        layout_best_rotation(x);
+        make_flower_snark(3,&x);
     } else if (name=="tutte") {
         make_tutte_graph();
         vecteur l=makevecteur(28,12,15,13,42,45,43,27,30);
@@ -1446,7 +920,7 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         make_circular_layout(x,hull);
         layout_best_rotation(x);
     } else if (name=="tutte12") {
-        make_lcf_graph(tutte_12cage_lcf,7);
+        make_lcf_graph(tutte_12cage_lcf);
         for (int i=0;i<node_count();++i) hull.push_back(i);
         make_circular_layout(x,hull);
     } else if (name=="wagner") {
@@ -1457,6 +931,18 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         hull.push_back(7); hull.push_back(3);
         make_circular_layout(x,hull);
         layout_best_rotation(x);
+    } else if (name=="walther") {
+        read_special(walther_graph);
+    } else if (name=="watkins") {
+        read_special(watkins_snark);
+    } else if (name=="wells") {
+        read_special(wells_graph);
+    } else if (name=="wiener-araya") {
+        read_special(wiener_araya_graph);
+        hull=vecteur_2_vector_int(makevecteur(37,38,36,39));
+        make_circular_layout(x,hull,0.5);
+    } else if (name=="wong") {
+        read_special(wong_graph);
     }
     if (!x.empty()) {
         double sep=1.0;
@@ -1467,6 +953,152 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
     }
 }
 
+/* construct Hoffman-Singleton graph by joining five pentagons and five pentagrams together */
+void graphe::make_hoffman_singleton_graph() {
+    vecteur labels;
+    make_default_labels(labels,50);
+    add_nodes(labels);
+    /* make pentagons */
+    for (int i=0;i<10;++i) {
+        for (int j=0;j<5;++j) {
+            add_edge(5*i+j,5*i+((j+1)%5));
+        }
+    }
+    /* join pentagons */
+    for (int h=0;h<5;++h) { // pentagons P_h
+        for (int i=0;i<5;++i) { // pentagrams Q_i
+            for (int j=0;j<5;++j) { // j-th vertex of P_h
+                int k=(h*i+j)%5; // corresponding vertex in Q_i
+                /* join these two vertices */
+                add_edge(5*h+j,25+5*i+((k*2)%5));
+            }
+        }
+    }
+}
+
+/* construct Higman-Sims graph from the independent sets of size 15 in Hoffman-Singleton graph */
+void graphe::make_higman_sims_graph() {
+    graphe G("hoffman-singleton"),GC;
+    G.complement(GC);
+    ivectors clq;
+    clq.reserve(100);
+    GC.find_maximal_cliques();
+    for (ivectors_iter it=GC.maximal_cliques().begin();it!=GC.maximal_cliques().end();++it) {
+        if (it->size()==15)
+            clq.push_back(*it);
+    }
+    assert(clq.size()==100);
+    for (ivectors::iterator it=clq.begin();it!=clq.end();++it) {
+        sort(it->begin(),it->end());
+    }
+    vecteur labels;
+    make_default_labels(labels,100);
+    add_nodes(labels);
+    for (int i=0;i<100;++i) {
+        for (int j=i+1;j<100;++j) {
+            int sz=intersect_linear(clq[i].begin(),clq[i].end(),clq[j].begin(),clq[j].end());
+            if (sz==0 || sz==8)
+                add_edge(i,j);
+        }
+    }
+}
+
+/* construct Brouwer-Haemers graph from the finite field of order 81 */
+void graphe::make_brouwer_haemers_graph() {
+    vecteur labels;
+    make_default_labels(labels,81);
+    add_nodes(labels);
+    gen g=identificateur(" g"),k=identificateur(" k"),K=identificateur(" K");
+    gen G=_galois_field(makesequence(3,4,makevecteur(k,K,g)),ctx),a,b;
+    for (int i=-1;i<80;++i) {
+        a=i<0?gen(0):_eval(pow(g,i),ctx);
+        for (int j=i+1;j<80;++j) {
+            b=_eval(pow(g,j),ctx);
+            if (is_one(_eval(pow(a-b,20),ctx)))
+                add_edge(i+1,j+1);
+        }
+    }
+}
+
+/* construct Gewirtz graph from the list of 56 words with 6 letters each */
+void graphe::make_gewirtz_graph() {
+    vecteur labels;
+    make_default_labels(labels,56);
+    add_nodes(labels);
+    for (int i=0;i<56;++i) {
+        const char *wi=gewirtz_words[i];
+        for (int j=i+1;j<56;++j) {
+            const char *wj=gewirtz_words[j];
+            bool dis=true;
+            for (int k=0;dis && k<6;++k) {
+                for (int l=0;l<6;++l) {
+                    if (wi[k]==wj[l]) {
+                        dis=false;
+                        break;
+                    }
+                }
+            }
+            if (dis) add_edge(i,j);
+        }
+    }
+}
+
+void graphe::make_schlaefli_graph() {
+    vecteur v1=makevecteur(0,0,0,0,0,0,1,0);
+    vecteur v2=makevecteur(0,0,0,0,0,0,0,1);
+    vecteur v3(8,fraction(1,2));
+    vecteur v,w;
+    for (int i=0;i<6;++i) {
+        w=v1;
+        w[i]=1;
+        v.push_back(w);
+        w=v2;
+        w[i]=1;
+        v.push_back(w);
+    }
+    for (int i=0;i<5;++i) {
+        for (int j=i+1;j<6;++j) {
+            w=v3;
+            w[i]=-w[i];
+            w[j]=-w[j];
+            v.push_back(w);
+        }
+    }
+    assert(v.size()==27);
+    vecteur labels;
+    make_default_labels(labels,27);
+    add_nodes(labels);
+    for (int i=0;i<27;++i) {
+        for (int j=i+1;j<27;++j) {
+            if (is_one(scalarproduct(*v[i]._VECTptr,*v[j]._VECTptr,ctx)))
+                add_edge(i,j);
+        }
+    }
+}
+
+void graphe::make_gosset_graph() {
+    vecteur v,w,v0(8,-1);
+    for (int i=0;i<8;++i) {
+        for (int j=i+1;j<8;++j) {
+            w=v0;
+            w[i]=w[j]=3;
+            v.push_back(w);
+            v.push_back(-w);
+        }
+    }
+    assert(v.size()==56);
+    vecteur labels;
+    make_default_labels(labels,56);
+    add_nodes(labels);
+    for (int i=0;i<56;++i) {
+        for (int j=i+1;j<56;++j) {
+            if (is_zero(scalarproduct(*v[i]._VECTptr,*v[j]._VECTptr,ctx)-8))
+                add_edge(i,j);
+        }
+    }
+}
+
+/* return true iff this graph is simple */
 bool graphe::is_simple() const {
     int i;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
@@ -1858,11 +1490,13 @@ void graphe::adjacency_matrix(matrice &m) const {
 }
 
 /* create the adjacency matrix as a sparse matrix */
-void graphe::adjacency_sparse_matrix(sparsemat &sm) const {
+void graphe::adjacency_sparse_matrix(sparsemat &sm,bool diag_ones) const {
     sm.clear();
     int i,j;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         i=it-nodes.begin();
+        if (diag_ones)
+            sm[i][i]=make_pair(1,1);
         for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
             j=*jt;
             sm[i][j]=make_pair(1,1);
@@ -2880,7 +2514,8 @@ bool graphe::labels2iset(const vecteur &labels,iset &s) {
 /* return vector of node labels */
 vecteur graphe::get_node_labels(const ivector &v) const {
     assert(supports_attributes());
-    vecteur V(v.size());
+    vecteur V;
+    V.resize(v.size());
     for (ivector_iter it=v.begin();it!=v.end();++it) {
         V[it-v.begin()]=node_label(*it);
     }
@@ -4960,17 +4595,63 @@ int graphe::painter::color_vertices(ivector &colors,const ivector &icol,int max_
 
 /* find optimal vertex coloring using an exact algorithm, requires GLPK */
 int graphe::exact_vertex_coloring(int max_colors) {
-    int ncolors=0;
-#ifndef HAVE_LIBGLPK
-    message("Error: GLPK library is required for graph coloring");
-#else
-    int n=node_count();
+    int ncolors=0,n=node_count();
     if (is_clique()) {
         for (int i=0;i<n;++i) {
             set_node_color(i,i+1);
         }
         return n;
     }
+    ivector smp;
+    find_simplicial_vertices(smp);
+    if (!smp.empty()) {
+        uncolor_all_nodes();
+        ivector nsv,vcols,colors;
+        int sz=n-smp.size();
+        if (sz>0) {
+            nsv.reserve(sz);
+            for (int i=0;i<n;++i) {
+                if (find(smp.begin(),smp.end(),i)==smp.end())
+                    nsv.push_back(i);
+            }
+            graphe G(ctx,false);
+            induce_subgraph(nsv,G);
+            ncolors=G.exact_vertex_coloring(max_colors);
+            if (ncolors==0)
+                return 0;
+            colors.resize(ncolors);
+            if (!colors.empty())
+                G.get_node_colors(vcols);
+            for (int i=0;i<sz;++i) {
+                int c=G.node(i).color();
+                set_node_color(nsv[i],c);
+                colors[c-1]=c;
+            }
+        }
+        for (ivector_iter it=smp.begin();it!=smp.end();++it) {
+            bool colored=false;
+            const ivector &ngh=node(*it).neighbors();
+            for (ivector_iter ct=colors.begin();!colored && ct!=colors.end();++ct) {
+                ivector_iter jt=ngh.begin();
+                for (;jt!=ngh.end();++jt) {
+                    if (node(*jt).color()==*ct)
+                        break;
+                }
+                if (jt==ngh.end()) {
+                    set_node_color(*it,*ct);
+                    colored=true;
+                }
+            }
+            if (!colored) { // add new color
+                colors.push_back(++ncolors);
+                set_node_color(*it,ncolors);
+            }
+        }
+        return ncolors;
+    }
+#ifndef HAVE_LIBGLPK
+    message("Error: GLPK library is required for graph coloring");
+#else
     painter pt(this);
     ivector colors,clique;
     ostergard ost(this,5.0);
@@ -5408,14 +5089,14 @@ void graphe::make_lcf_graph(const ivector &jumps,int e) {
 }
 
 /* create LCF graph from int pointer (list must end with 0) */
-void graphe::make_lcf_graph(const int *j,int e) {
+void graphe::make_lcf_graph(const int *j) {
     ivector jumps;
     const int *it=j;
     while (*it!=0) {
         jumps.push_back(*it);
         ++it;
     }
-    make_lcf_graph(jumps,e);
+    make_lcf_graph(jumps,*(++it));
 }
 
 /* create Sierpinski (triangle) graph */
@@ -5681,6 +5362,48 @@ void graphe::make_wheel_graph(int n,layout *x) {
         for (int i=0;i<n;++i) hull[i]=i;
         make_circular_layout(*x,hull);
     }
+}
+
+/* create n-th flower snark, where n>=3 is odd */
+bool graphe::make_flower_snark(int n,layout *x) {
+    if (n<3 || n%2==0)
+        return false;
+    ivector A(n),B(n),C(n),D(n);
+    this->clear();
+    vecteur V;
+    make_default_labels(V,4*n);
+    reserve_nodes(4*n);
+    add_nodes(V);
+    for (int i=0;i<4*n;++i) {
+        switch (i%4) {
+        case 0: A[i/4]=i; break;
+        case 1: B[i/4]=i; break;
+        case 2: C[i/4]=i; break;
+        case 3: D[i/4]=i; break;
+        default: assert(false);
+        }
+    }
+    for (int i=0;i<n;++i) {
+        add_edge(A[i],B[i]);
+        add_edge(A[i],C[i]);
+        add_edge(A[i],D[i]);
+    }
+    for (int i=0;i<n;++i) add_edge(B[i],B[(i+1)%n]);
+    for (int i=0;i<n-1;++i) add_edge(C[i],C[i+1]);
+    for (int i=0;i<n-1;++i) add_edge(D[i],D[i+1]);
+    add_edge(C[n-1],D[0]);
+    add_edge(D[n-1],C[0]);
+    if (x!=NULL) {
+        ivector hull(3*n);
+        int cc=1,dc=0;
+        for (int i=0;i<n;++i) {
+            hull[3*i]=A[i];
+            hull[3*i+1]=(i%2==0)?D[dc++]:C[cc++];
+            hull[3*i+2]=i==n-1?C[0]:((i%2==0)?D[dc++]:C[cc++]);
+        }
+        make_circular_layout(*x,hull);
+    }
+    return true;
 }
 
 /* create antiprism graph of order n (with 2n vertices and 4n edges) */
@@ -13118,6 +12841,33 @@ gen graphe::betweenness_centrality(int k) const {
         return cb[k];
     return cb;
 }
+
+/* return the list of communicability betweenness centrality for all vertices */
+gen graphe::communicability_betweenness_centrality(int k) const {
+    int n=node_count();
+    matrice A;
+    vecteur row(n),col(n),res(n,0),nullvec(n,0);
+    adjacency_matrix(A);
+    matrice eA=*exp(_evalf(A,ctx),ctx)._VECTptr;
+    for (int r=0;r<n;++r) {
+        if (k>=0 && r!=k) continue;
+        row=*A[r]._VECTptr;
+        A[r]=nullvec;
+        matrice eAk=*exp(_evalf(A,ctx),ctx)._VECTptr;
+        for (int p=0;p<n;++p) {
+            if (p==r) continue;
+            for (int q=0;q<n;++q) {
+                if (q==p || q==r) continue;
+                res[r]+=1-eAk[p][q]/eA[p][q];
+            }
+        }
+        A[r]=row;
+    }
+    res=divvecteur(res,(n-1)*(n-2));
+    if (k>=0)
+        return res[k];
+    return res;
+}
  
 /* return the list of Katz centrality measures for all vertices,
  * where att is attenuation factor */
@@ -14376,6 +14126,1146 @@ void graphe::reachable(int u,ivector &r) {
         }
     }
 }
+
+/* find all simplicial vertices and store them in res (in order found) */
+void graphe::find_simplicial_vertices(ivector &res) const {
+    sparsemat A,A2;
+    adjacency_sparse_matrix(A,true);
+    multiply_sparse_matrices(A,A,A2,node_count(),true);
+    ipair val;
+    res.clear();
+    res.reserve(node_count());
+    for (int i=0;i<node_count();++i) {
+        int a=sparse_matrix_element(A2,i,i,val)?val.first:0;
+        bool smp=true;
+        const ivector &ngh=node(i).neighbors();
+        for (ivector_iter it=ngh.begin();smp && it!=ngh.end();++it) {
+            int b=sparse_matrix_element(A2,i,*it,val)?val.first:0;
+            if (a!=b) smp=false;
+        }
+        if (smp) res.push_back(i);
+    }
+}
+
+/* SPECIAL GRAPHS */
+
+/*
+ * Special graphs are initialized with adjacency lists of integers or strings.
+ * Each list starts with the corresponding vertex, followed by its neighbors,
+ * and ends with -1 or an empty string. The graph specification terminates with
+ * -2 (for integers) or NULL (for strings).
+ */
+const int graphe::clebsch_graph[] = {
+    0,      1,2,4,8,15,-1,
+    1,      3,5,9,14,-1,
+    2,      3,6,10,13,-1,
+    3,      7,11,12,-1,
+    4,      5,6,11,12,-1,
+    5,      7,10,13,-1,
+    6,      7,9,14,-1,
+    7,      8,15,-1,
+    8,      9,10,12,-1,
+    9,      11,13,-1,
+    10,     11,14,-1,
+    11,     15,-1,
+    12,     13,14,-1,
+    13,     15,-1,
+    14,     15,-1,
+    -2
+};
+const char* graphe::coxeter_graph[] = {
+    "a1",       "a2","a7","z1","",
+    "a2",       "a3","z2","",
+    "a3",       "a4","z3","",
+    "a4",       "a5","z4","",
+    "a5",       "a6","z5","",
+    "a6",       "a7","z6","",
+    "a7",       "z7","",
+    "b1",       "b3","b6","z1","",
+    "b2",       "b4","b7","z2","",
+    "b3",       "b5","z3","",
+    "b4",       "b6","z4","",
+    "b5",       "b7","z5","",
+    "b6",       "z6","",
+    "b7",       "z7","",
+    "c1",       "c4","c5","z1","",
+    "c2",       "c5","c6","z2","",
+    "c3",       "c6","c7","z3","",
+    "c4",       "c7","z4","",
+    "c5",       "z5","",
+    "c6",       "z6","",
+    "c7",       "z7","",
+    NULL
+};
+const int graphe::dyck_graph[] = {
+    1,      2,20,32,-1,
+    2,      3,7,-1,
+    3,      4,30,-1,
+    4,      5,17,-1,
+    5,      6,24,-1,
+    6,      7,11,-1,
+    7,      8,-1,
+    8,      9,21,-1,
+    9,      10,28,-1,
+    10,     11,15,-1,
+    11,     12,-1,
+    12,     13,25,-1,
+    13,     14,32,-1,
+    14,     15,19,-1,
+    15,     16,-1,
+    16,     17,29,-1,
+    17,     18,-1,
+    18,     19,23,-1,
+    19,     20,-1,
+    20,     21,-1,
+    21,     22,-1,
+    22,     23,27,-1,
+    23,     24,-1,
+    24,     25,-1,
+    25,     26,-1,
+    26,     27,31,-1,
+    27,     28,-1,
+    28,     29,-1,
+    29,     30,-1,
+    30,     31,-1,
+    31,     32,-1,
+    -2
+};
+const int graphe::grinberg_graph[] = {
+    1,      2,3,4,-1,
+    2,      5,7,-1,
+    3,      6,10,-1,
+    4,      8,9,-1,
+    5,      6,21,-1,
+    6,      22,-1,
+    7,      8,30,-1,
+    8,      29,-1,
+    9,      10,14,-1,
+    10,     13,-1,
+    11,     12,13,14,-1,
+    12,     15,17,-1,
+    13,     16,-1,
+    14,     18,-1,
+    15,     16,39,-1,
+    16,     46,-1,
+    17,     18,40,-1,
+    18,     45,-1,
+    19,     20,21,22,-1,
+    20,     23,25,-1,
+    21,     24,-1,
+    22,     26,-1,
+    23,     24,36,-1,
+    24,     44,-1,
+    25,     26,37,-1,
+    26,     46,-1,
+    27,     28,29,30,-1,
+    28,     31,33,-1,
+    29,     32,-1,
+    30,     34,-1,
+    31,     32,42,-1,
+    32,     45,-1,
+    33,     34,43,-1,
+    34,     44,-1,
+    35,     36,43,44,-1,
+    36,     37,-1,
+    37,     38,-1,
+    38,     39,46,-1,
+    39,     40,-1,
+    40,     41,-1,
+    41,     42,45,-1,
+    42,     43,-1,
+    -2
+};
+const int graphe::grotzsch_graph[] = {
+    1,      2,5,7,10,-1,
+    2,      3,6,8,-1,
+    3,      4,7,9,-1,
+    4,      5,8,10,-1,
+    5,      6,9,-1,
+    6,      11,-1,
+    7,      11,-1,
+    8,      11,-1,
+    9,      11,-1,
+    10,     11,-1,
+    -2
+};
+const int graphe::heawood_graph[] = {
+    1,      2,6,14,-1,
+    2,      3,11,-1,
+    3,      4,8,-1,
+    4,      5,13,-1,
+    5,      6,10,-1,
+    6,      7,-1,
+    7,      8,12,-1,
+    8,      9,-1,
+    9,      10,14,-1,
+    10,     11,-1,
+    11,     12,-1,
+    12,     13,-1,
+    13,     14,-1,
+    -2
+};
+const int graphe::herschel_graph[] = {
+    1,      2,4,5,-1,
+    2,      3,6,7,-1,
+    3,      4,8,-1,
+    4,      9,10,-1,
+    5,      6,10,-1,
+    6,      11,-1,
+    7,      8,11,-1,
+    8,      9,-1,
+    9,      11,-1,
+    10,     11,-1,
+    -2
+};
+const int graphe::mcgee_graph[] = {
+    1,      2,13,24,-1,
+    2,      3,9,-1,
+    3,      4,20,-1,
+    4,      5,16,-1,
+    5,      6,12,-1,
+    6,      7,23,-1,
+    7,      8,19,-1,
+    8,      9,15,-1,
+    9,      10,-1,
+    10,     11,22,-1,
+    11,     12,18,-1,
+    12,     13,-1,
+    13,     14,-1,
+    14,     15,21,-1,
+    15,     16,-1,
+    16,     17,-1,
+    17,     18,24,-1,
+    18,     19,-1,
+    19,     20,-1,
+    20,     21,-1,
+    21,     22,-1,
+    22,     23,-1,
+    23,     24,-1,
+    -2
+};
+const int graphe::pappus_graph[] = {
+    1,      2,6,18,-1,
+    2,      3,9,-1,
+    3,      4,14,-1,
+    4,      5,11,-1,
+    5,      6,16,-1,
+    6,      7,-1,
+    7,      8,12,-1,
+    8,      9,15,-1,
+    9,      10,-1,
+    10,     11,17,-1,
+    11,     12,-1,
+    12,     13,-1,
+    13,     14,18,-1,
+    14,     15,-1,
+    15,     16,-1,
+    16,     17,-1,
+    17,     18,-1,
+    -2
+};
+const int graphe::robertson_graph[] = {
+    1,      2,5,9,19,-1,
+    2,      3,7,13,-1,
+    3,      4,10,15,-1,
+    4,      5,8,18,-1,
+    5,      6,12,-1,
+    6,      7,14,17,-1,
+    7,      8,11,-1,
+    8,      9,16,-1,
+    9,      10,14,-1,
+    10,     11,17,-1,
+    11,     12,19,-1,
+    12,     13,16,-1,
+    13,     14,18,-1,
+    14,     15,-1,
+    15,     16,19,-1,
+    16,     17,-1,
+    17,     18,-1,
+    18,     19,-1,
+    -2
+};
+const int graphe::tetrahedral_graph[] = {
+    1,      2,3,4,-1,
+    2,      3,4,-1,
+    3,      4,-1,
+    -2
+};
+const int graphe::octahedral_graph[] = {
+    1,      3,6,5,4,-1,
+    2,      3,4,5,6,-1,
+    3,      5,6,-1,
+    4,      5,6,-1,
+    -2
+};
+const int graphe::icosahedral_graph[] = {
+    1,      2,3,4,5,9,-1,
+    2,      3,5,6,7,-1,
+    3,      7,8,9,-1,
+    4,      5,9,10,11,-1,
+    5,      6,10,-1,
+    6,      7,10,12,-1,
+    7,      8,12,-1,
+    8,      9,11,12,-1,
+    9,      11,-1,
+    10,     11,12,-1,
+    11,     12,-1,
+    -2
+};
+const int graphe::ljubljana_graph_lcf[] = {
+    47,-23,-31,39,25,-21,-31,-41,25,15,29,-41,-19,15,-49,33,39,-35,-21,17,-33,49,41,31,
+    -15,-29,41,31,-15,-25,21,31,-51,-25,23,9,-17,51,35,-29,21,-51,-39,33,-9,-51,51,-47,
+    -33,19,51,-21,29,21,-31,-39,0,2
+};
+const int graphe::harries_graph_lcf[] = {
+    -35,-27,27,-23,15,-15,-9,-35,23,-27,27,9,15,-15,0,5
+};
+const int graphe::harries_wong_graph_lcf[] = {
+    9,25,31,-17,17,33,9,-29,-15,-9,9,25,-25,29,17,-9,9,-27,35,-9,9,-17,21,27,-29,-9,-25,13,19,
+    -9,-33,-17,19,-31,27,11,-25,29,-33,13,-13,21,-29,-21,25,9,-11,-19,29,9,-27,-19,-13,-35,-9,
+    9,17,25,-9,9,27,-27,-21,15,-9,29,-29,33,-9,-25,0,1
+};
+const int graphe::balaban_10cage_lcf[] = {
+    -9,-25,-19,29,13,35,-13,-29,19,25,9,-29,29,17,33,21,9,-13,-31,-9,25,17,9,-31,27,-9,17,-19,-29,
+    27,-17,-9,-29,33,-25,25,-21,17,-17,29,35,-29,17,-17,21,-25,25,-33,29,9,17,-27,29,19,-17,9,-27,
+    31,-9,-17,-25,9,31,13,-9,-21,-33,-17,-29,29,0,1
+};
+const int graphe::balaban_11cage_lcf[] = {
+    44,26,-47,-15,35,-39,11,-27,38,-37,43,14,28,51,-29,-16,41,-11,-26,15,22,-51,-35,36,52,-14,-33,-26,-46,
+    52,26,16,43,33,-15,17,-53,23,-42,-35,-28,30,-22,45,-44,16,-38,-16,50,-55,20,28,-17,-43,47,34,-26,-41,11,
+    -36,-23,-16,41,17,-51,26,-33,47,17,-11,-20,-30,21,29,36,-43,-52,10,39,-28,-17,-52,51,26,37,-17,10,-10,
+    -45,-34,17,-26,27,-21,46,53,-10,29,-50,35,15,-47,-29,-41,26,33,55,-17,42,-26,-36,16,0,1
+};
+const int graphe::foster_graph_lcf[] = {
+    17,-9,37,-37,9,-17,0,15
+};
+const int graphe::bidiakis_cube_graph_lcf[] = {
+    -6,4,-4,0,4
+};
+const int graphe::franklin_graph_lcf[] = {
+    5,-5,0,6
+};
+const int graphe::frucht_graph_lcf[] = {
+    -5,-2,-4,2,5,-2,2,5,-2,-5,4,2,0,1
+};
+const int graphe::biggs_smith_graph_lcf[] = {
+    16,24,-38,17,34,48,-19,41,-35,47,-20,34,-36,21,14,48,-16,-36,-43,28,-17,21,29,-43,46,-24,28,-38,-14,-50,-45,21,8,
+    27,-21,20,-37,39,-34,-44,-8,38,-21,25,15,-34,18,-28,-41,36,8,-29,-21,-48,-28,-20,-47,14,-8,-15,-27,38,24,-48,-18,25,
+    38,31,-25,24,-46,-14,28,11,21,35,-39,43,36,-38,14,50,43,36,-11,-36,-24,45,8,19,-25,38,20,-24,-14,-21,-8,44,-31,-38,-28,37,0,1
+};
+const int graphe::folkman_graph_lcf[] = {
+    5,-7,-7,5,0,5
+};
+const int graphe::gray_graph_lcf[] = {
+    -25,7,-7,13,-13,25,0,9
+};
+const int graphe::tutte_12cage_lcf[] = {
+    17,27,-13,-59,-35,35,-11,13,-53,53,-27,21,57,11,-21,-57, 59,-17,0,7
+};
+const int graphe::tutte_8cage_lcf[] = {
+    -13,-9,7,-7,9,13,0,5
+};
+const int graphe::f26a_graph_lcf[] = {
+    -7,7,0,13
+};
+const int graphe::blanusa_graph[] = {
+    1,      2,6,8,-1,
+    2,      3,12,-1,
+    3,      4,13,-1,
+    4,      5,14,-1,
+    5,      6,18,-1,
+    6,      7,-1,
+    7,      9,17,-1,
+    8,      17,18,-1,
+    9,      10,18,-1,
+    10,     11,16,-1,
+    11,     13,14,-1,
+    12,     14,15,-1,
+    13,     15,-1,
+    15,     16,-1,
+    16,     17,-1,
+    -2
+};
+const int graphe::bull_graph[] = {
+    1,      2,3,-1,
+    2,      3,4,-1,
+    3,      5,-1,
+    -2
+};
+const int graphe::butterfly_graph[] = {
+    1,      2,3,4,5,-1,
+    2,      3,-1,
+    4,      5,-1,
+    -2
+};
+const int graphe::diamond_graph[] = {
+    1,      2,3,4,-1,
+    2,      3,-1,
+    3,      4,-1,
+    -2
+};
+const int graphe::chvatal_graph[] = {
+    1,      2,4,5,12,-1,
+    2,      3,6,7,-1,
+    3,      4,8,9,-1,
+    4,      10,11,-1,
+    5,      6,8,9,-1,
+    6,      11,10,-1,
+    7,      8,10,11,-1,
+    8,      12,-1,
+    9,      10,12,-1,
+    11,     12,-1,
+    -2
+};
+const int graphe::moser_spindle_graph[] = {
+    1,      2,5,6,7,-1,
+    2,      3,7,-1,
+    3,      4,7,-1,
+    4,      5,6,-1,
+    5,      6,-1,
+    -2
+};
+const int graphe::errera_graph[] = {
+    1,      2,3,4,14,15,-1,
+    2,      3,13,15,17,-1,
+    3,      13,14,16,-1,
+    4,      5,6,14,15,-1,
+    5,      6,7,8,14,16,-1,
+    6,      7,9,15,17,-1,
+    7,      8,9,10,-1,
+    8,      10,11,16,-1,
+    9,      10,12,17,-1,
+    10,     11,12,-1,
+    11,     12,13,16,-1,
+    12,     13,17,-1,
+    13,     16,17,-1,
+    14,     16,-1,
+    15,     17,-1,
+    -2
+};
+const int graphe::goldner_harary_graph[] = {
+    1,      2,3,4,5,6,9,10,11,-1,
+    2,      3,10,-1,
+    3,      4,7,8,9,10,-1,
+    4,      9,-1,
+    5,      9,11,-1,
+    6,      10,11,-1,
+    7,      9,11,-1,
+    8,      10,11,-1,
+    9,      11,-1,
+    10,     11,-1,
+    -2
+};
+const int graphe::golomb_graph[] = {
+    1,      2,3,4,-1,
+    2,      3,6,-1,
+    3,      8,-1,
+    4,      5,9,10,-1,
+    5,      6,10,-1,
+    6,      7,10,-1,
+    7,      8,10,-1,
+    8,      9,10,-1,
+    9,      10,-1,
+    -2
+};
+const int graphe::hoffman_graph_matrix[8][8] = {
+    {1,1,1,1,0,0,0,0},
+    {1,1,1,0,1,0,0,0},
+    {1,0,0,1,0,1,1,0},
+    {0,1,0,1,0,1,0,1},
+    {0,0,1,1,0,0,1,1},
+    {1,0,0,0,1,1,1,0},
+    {0,1,0,0,1,1,0,1},
+    {0,0,1,0,1,0,1,1}
+};
+const int graphe::poussin_graph[] = {
+    1,      2,3,4,5,10,-1,
+    2,      3,5,7,9,15,-1,
+    3,      4,6,8,15,-1,
+    4,      6,10,-1,
+    5,      7,10,-1,
+    6,      8,10,11,12,-1,
+    7,      9,10,11,13,-1,
+    8,      12,14,15,-1,
+    9,      13,14,15,-1,
+    10,     11,-1,
+    11,     12,13,-1,
+    12,     13,14,-1,
+    13,     14,-1,
+    14,     15,-1,
+    -2
+};
+const int graphe::wagner_graph[] = {
+    1,      2,5,8,-1,
+    2,      3,6,-1,
+    3,      4,7,-1,
+    4,      5,8,-1,
+    5,      6,-1,
+    6,      7,-1,
+    7,      8,-1,
+    -2
+};
+const int graphe::tutte_fragment_graph[] = {
+    1,      2,4,-1,
+    2,      3,5,-1,
+    3,      4,7,-1,
+    4,      8,-1,
+    5,      6,9,-1,
+    6,      7,10,-1,
+    7,      11,-1,
+    8,      11,15,-1,
+    9,      10,13,-1,
+    10,     12,-1,
+    11,     12,-1,
+    12,     14,-1,
+    13,     14,-1,
+    14,     15,-1,
+    -2
+};
+const int graphe::brinkmann_graph[] = {
+    1,      2,3,4,5,-1,
+    2,      1,12,17,19,-1,
+    3,      1,13,16,18,-1,
+    4,      1,10,14,21,-1,
+    5,      1,11,15,20,-1,
+    6,      16,17,20,21,-1,
+    7,      9,15,18,21,-1,
+    8,      9,14,19,20,-1,
+    9,      7,8,12,13,-1,
+    10,     4,12,18,20,-1,
+    11,     5,13,19,21,-1,
+    12,     2,9,10,16,-1,
+    13,     3,9,11,17,-1,
+    14,     4,8,15,17,-1,
+    15,     5,7,14,16,-1,
+    16,     3,6,12,15,-1,
+    17,     2,6,13,14,-1,
+    18,     3,7,10,19,-1,
+    19,     2,8,11,18,-1,
+    20,     5,6,8,10,-1,
+    21,     4,6,7,11,-1,
+    -2    
+};
+const int graphe::barnette_bosak_lederberg_graph[] = {
+    1,		2,3,4,-1,
+    2,		1,34,38,-1,
+    3,		1,33,37,-1,
+    4,		1,35,36,-1,
+    5,		9,15,19,-1,
+    6,		10,16,20,-1,
+    7,		10,11,18,-1,
+    8,		9,12,17,-1,
+    9,		5,8,14,-1,
+    10,		6,7,13,-1,
+    11,		7,13,22,-1,
+    12,		8,14,21,-1,
+    13,		10,11,25,-1,
+    14,		9,12,26,-1,
+    15,		5,17,31,-1,
+    16,		6,18,32,-1,
+    17,		8,15,24,-1,
+    18,		7,16,23,-1,
+    19,		5,26,30,-1,
+    20,		6,25,29,-1,
+    21,		12,24,28,-1,
+    22,		11,23,27,-1,
+    23,		18,22,36,-1,
+    24,		17,21,35,-1,
+    25,		13,20,34,-1,
+    26,		14,19,33,-1,
+    27,		22,28,38,-1,
+    28,		21,27,37,-1,
+    29,		20,32,34,-1,
+    30,		19,31,33,-1,
+    31,		15,30,35,-1,
+    32,		16,29,36,-1,
+    33,		3,26,30,-1,
+    34,		2,25,29,-1,
+    35,		4,24,31,-1,
+    36,		4,23,32,-1,
+    37,		3,28,38,-1,
+    38,		2,27,37,-1,
+    -2
+};
+const int graphe::double_star_snark[] = {
+    1,		2,3,4,-1,
+    2,		1,25,28,-1,
+    3,		1,27,30,-1,
+    4,		1,26,29,-1,
+    5,		8,9,16,-1,
+    6,		7,12,15,-1,
+    7,		6,11,16,-1,
+    8,		5,10,15,-1,
+    9,		5,13,17,-1,
+    10,		8,14,18,-1,
+    11,		7,13,18,-1,
+    12,		6,14,17,-1,
+    13,		9,11,21,-1,
+    14,		10,12,22,-1,
+    15,		6,8,27,-1,
+    16,		5,7,26,-1,
+    17,		9,12,28,-1,
+    18,		10,11,28,-1,
+    19,		22,24,30,-1,
+    20,		21,23,29,-1,
+    21,		13,20,30,-1,
+    22,		14,19,29,-1,
+    23,		20,25,27,-1,
+    24,		19,25,26,-1,
+    25,		2,23,24,-1,
+    26,		4,16,24,-1,
+    27,		3,15,23,-1,
+    28,		2,17,18,-1,
+    29,		4,20,22,-1,
+    30,		3,19,21,-1,
+    -2
+};
+const int graphe::doyle_graph[] = {
+    1,		2,3,4,5,-1,
+    2,		1,20,22,27,-1,
+    3,		1,21,23,26,-1,
+    4,		1,16,19,24,-1,
+    5,		1,17,18,25,-1,
+    6,		7,8,24,25,-1,
+    7,		6,14,19,27,-1,
+    8,		6,15,18,26,-1,
+    9,		12,13,16,17,-1,
+    10,		12,14,24,26,-1,
+    11,		13,15,25,27,-1,
+    12,		9,10,15,21,-1,
+    13,		9,11,14,20,-1,
+    14,		7,10,13,22,-1,
+    15,		8,11,12,23,-1,
+    16,		4,9,23,25,-1,
+    17,		5,9,22,24,-1,
+    18,		5,8,21,27,-1,
+    19,		4,7,20,26,-1,
+    20,		2,13,19,23,-1,
+    21,		3,12,18,22,-1,
+    22,		2,14,17,21,-1,
+    23,		3,15,16,20,-1,
+    24,		4,6,10,17,-1,
+    25,		5,6,11,16,-1,
+    26,		3,8,10,19,-1,
+    27,		2,7,11,18,-1,
+    -2
+};
+const int graphe::meringer_graph[] = {
+    1,		2,3,4,5,6,-1,
+    2,		1,15,21,24,25,-1,
+    3,		1,18,23,26,30,-1,
+    4,		1,17,19,22,28,-1,
+    5,		1,16,20,27,29,-1,
+    6,		1,11,12,13,14,-1,
+    7,		8,15,23,27,28,-1,
+    8,		7,19,25,29,30,-1,
+    9,		10,17,20,21,26,-1,
+    10,		9,16,18,22,24,-1,
+    11,		6,15,18,19,20,-1,
+    12,		6,21,22,23,29,-1,
+    13,		6,17,24,27,30,-1,
+    14,		6,16,25,26,28,-1,
+    15,		2,7,11,16,17,-1,
+    16,		5,10,14,15,30,-1,
+    17,		4,9,13,15,29,-1,
+    18,		3,10,11,28,29,-1,
+    19,		4,8,11,24,26,-1,
+    20,		5,9,11,23,25,-1,
+    21,		2,9,12,28,30,-1,
+    22,		4,10,12,25,27,-1,
+    23,		3,7,12,20,24,-1,
+    24,		2,10,13,19,23,-1,
+    25,		2,8,14,20,22,-1,
+    26,		3,9,14,19,27,-1,
+    27,		5,7,13,22,26,-1,
+    28,		4,7,14,18,21,-1,
+    29,		5,8,12,17,18,-1,
+    30,		3,8,13,16,21,-1,
+    -2
+};
+const int graphe::robertson_wegner_graph[] = {
+    1,		2,3,4,5,6,-1,
+    2,		1,11,22,23,28,-1,
+    3,		1,12,17,26,30,-1,
+    4,		1,13,16,27,29,-1,
+    5,		1,14,19,21,24,-1,
+    6,		1,15,18,20,25,-1,
+    7,		16,18,21,28,30,-1,
+    8,		17,19,20,28,29,-1,
+    9,		10,23,24,26,29,-1,
+    10,		9,22,25,27,30,-1,
+    11,		2,20,21,26,27,-1,
+    12,		3,15,24,27,28,-1,
+    13,		4,14,25,26,28,-1,
+    14,		5,13,15,23,30,-1,
+    15,		6,12,14,22,29,-1,
+    16,		4,7,17,22,24,-1,
+    17,		3,8,16,23,25,-1,
+    18,		6,7,19,23,27,-1,
+    19,		5,8,18,22,26,-1,
+    20,		6,8,11,24,30,-1,
+    21,		5,7,11,25,29,-1,
+    22,		2,10,15,16,19,-1,
+    23,		2,9,14,17,18,-1,
+    24,		5,9,12,16,20,-1,
+    25,		6,10,13,17,21,-1,
+    26,		3,9,11,13,19,-1,
+    27,		4,10,11,12,18,-1,
+    28,		2,7,8,12,13,-1,
+    29,		4,8,9,15,21,-1,
+    30,		3,7,10,14,20,-1,
+    -2
+};
+const int graphe::wong_graph[] = {
+    1,		2,3,4,5,6,-1,
+    2,		1,11,22,23,24,-1,
+    3,		1,18,28,29,30,-1,
+    4,		1,14,17,19,26,-1,
+    5,		1,13,16,21,25,-1,
+    6,		1,12,15,20,27,-1,
+    7,		11,15,16,17,18,-1,
+    8,		12,19,22,25,28,-1,
+    9,		13,20,24,26,30,-1,
+    10,		14,21,23,27,29,-1,
+    11,		2,7,12,13,14,-1,
+    12,		6,8,11,26,29,-1,
+    13,		5,9,11,27,28,-1,
+    14,		4,10,11,25,30,-1,
+    15,		6,7,21,24,28,-1,
+    16,		5,7,19,23,30,-1,
+    17,		4,7,20,22,29,-1,
+    18,		3,7,25,26,27,-1,
+    19,		4,8,16,24,27,-1,
+    20,		6,9,17,23,25,-1,
+    21,		5,10,15,22,26,-1,
+    22,		2,8,17,21,30,-1,
+    23,		2,10,16,20,28,-1,
+    24,		2,9,15,19,29,-1,
+    25,		5,8,14,18,20,-1,
+    26,		4,9,12,18,21,-1,
+    27,		6,10,13,18,19,-1,
+    28,		3,8,13,15,23,-1,
+    29,		3,10,12,17,24,-1,
+    30,		3,9,14,16,22,-1,
+    -2
+};
+const char* const graphe::gewirtz_words[] = {
+    "abcilu", "abdfrs", "abejop", "abgmnq", "acdghp", "acfjnt", "ackmos",
+    "ademtu", "adjklq", "aefgik", "aehlns", "afhoqu", "aglort", "ahijmr",
+    "aipqst", "aknpru", "bcdekn", "bchjqs", "bcmprt", "bdgijt", "bdhlmo",
+    "beflqt", "beghru", "bfhinp", "bfjkmu", "bgklps", "bikoqr", "bnostu",
+    "cdfimq", "cdjoru", "cefpsu", "cegjlm", "cehiot", "cfhklr", "cginrs",
+    "cgkqtu", "clnopq", "degoqs", "deilpr", "dfglnu", "dfkopt", "dhiksu",
+    "dhnqrt", "djmnps", "efmnor", "ehkmpq", "eijnqu", "ejkrst", "fghmst",
+    "fgjpqr", "fijlos", "ghjkno", "gimopu", "hjlptu", "iklmnt", "lmqrsu"
+};
+const int graphe::harborth_graph[] = {
+    1,		2,3,4,5,-1,
+    2,		1,3,47,52,-1,
+    3,		1,2,46,52,-1,
+    4,		1,5,50,51,-1,
+    5,		1,4,48,49,-1,
+    6,		7,10,43,51,-1,
+    7,		6,10,11,50,-1,
+    8,		11,12,13,50,-1,
+    9,		19,27,42,50,-1,
+    10,		6,7,11,43,-1,
+    11,		7,8,10,12,-1,
+    12,		8,11,13,14,-1,
+    13,		8,12,14,42,-1,
+    14,		12,13,41,42,-1,
+    15,		36,38,39,48,-1,
+    16,		34,35,37,48,-1,
+    17,		18,19,20,41,-1,
+    18,		17,20,21,41,-1,
+    19,		9,17,20,27,-1,
+    20,		17,18,19,21,-1,
+    21,		18,20,22,23,-1,
+    22,		21,23,26,31,-1,
+    23,		21,22,25,26,-1,
+    24,		25,28,29,30,-1,
+    25,		23,24,26,30,-1,
+    26,		22,23,25,31,-1,
+    27,		9,19,31,34,-1,
+    28,		24,29,30,35,-1,
+    29,		24,28,32,35,-1,
+    30,		24,25,28,34,-1,
+    31,		22,26,27,34,-1,
+    32,		29,33,35,37,-1,
+    33,		32,36,37,38,-1,
+    34,		16,27,30,31,-1,
+    35,		16,28,29,32,-1,
+    36,		15,33,38,39,-1,
+    37,		16,32,33,38,-1,
+    38,		15,33,36,37,-1,
+    39,		15,36,40,45,-1,
+    40,		39,44,45,49,-1,
+    41,		14,17,18,42,-1,
+    42,		9,13,14,41,-1,
+    43,		6,10,46,51,-1,
+    44,		40,45,47,49,-1,
+    45,		39,40,44,47,-1,
+    46,		3,43,51,52,-1,
+    47,		2,44,45,52,-1,
+    48,		5,15,16,49,-1,
+    49,		5,40,44,48,-1,
+    50,		4,7,8,9,-1,
+    51,		4,6,43,46,-1,
+    52,		2,3,46,47,-1,
+    -2
+};
+const int graphe::kittel_graph[] = {
+    1,		2,3,5,21,23,-1,
+    2,		1,3,4,5,9,-1,
+    3,		1,2,4,21,22,-1,
+    4,		2,3,9,10,22,-1,
+    5,		1,2,9,18,23,-1,
+    6,		7,11,16,21,23,-1,
+    7,		6,8,12,16,21,-1,
+    8,		7,12,17,21,22,-1,
+    9,		2,4,5,10,18,-1,
+    10,		4,9,18,20,22,-1,
+    11,		6,13,16,19,23,-1,
+    12,		7,8,14,16,17,-1,
+    13,		11,14,15,16,19,-1,
+    14,		12,13,15,16,17,-1,
+    15,		13,14,17,19,20,-1,
+    16,		6,7,11,12,13,14,-1,
+    17,		8,12,14,15,20,22,-1,
+    18,		5,9,10,19,20,23,-1,
+    19,		11,13,15,18,20,23,-1,
+    20,		10,15,17,18,19,22,-1,
+    21,		1,3,6,7,8,22,23,-1,
+    22,		3,4,8,10,17,20,21,-1,
+    23,		1,5,6,11,18,19,21,-1,
+    -2
+};
+const int graphe::krackhardt_kite_graph[] = {
+    1,		2,-1,
+    2,		1,5,-1,
+    3,		6,8,10,-1,
+    4,		7,9,10,-1,
+    5,		2,8,9,-1,
+    6,		3,7,8,10,-1,
+    7,		4,6,9,10,-1,
+    8,		3,5,6,9,10,-1,
+    9,		4,5,7,8,10,-1,
+    10,		3,4,6,7,8,9,-1,
+    -2    
+};
+const int graphe::meredith_graph[] = {
+    1,		2,3,4,5,-1,
+    2,		1,65,69,70,-1,
+    3,		1,66,69,70,-1,
+    4,		1,68,69,70,-1,
+    5,		1,67,69,70,-1,
+    6,		7,38,39,40,-1,
+    7,		6,41,42,43,-1,
+    8,		13,62,63,64,-1,
+    9,		12,62,63,64,-1,
+    10,		15,41,42,43,-1,
+    11,		14,38,39,40,-1,
+    12,		9,16,20,21,-1,
+    13,		8,17,18,19,-1,
+    14,		11,16,20,21,-1,
+    15,		10,17,18,19,-1,
+    16,		12,14,22,23,-1,
+    17,		13,15,24,25,-1,
+    18,		13,15,24,25,-1,
+    19,		13,15,24,25,-1,
+    20,		12,14,22,23,-1,
+    21,		12,14,22,23,-1,
+    22,		16,20,21,26,-1,
+    23,		16,20,21,27,-1,
+    24,		17,18,19,28,-1,
+    25,		17,18,19,29,-1,
+    26,		22,32,33,34,-1,
+    27,		23,32,33,34,-1,
+    28,		24,35,36,37,-1,
+    29,		25,35,36,37,-1,
+    30,		31,32,33,34,-1,
+    31,		30,35,36,37,-1,
+    32,		26,27,30,48,-1,
+    33,		26,27,30,48,-1,
+    34,		26,27,30,48,-1,
+    35,		28,29,31,49,-1,
+    36,		28,29,31,49,-1,
+    37,		28,29,31,49,-1,
+    38,		6,11,44,45,-1,
+    39,		6,11,44,45,-1,
+    40,		6,11,44,45,-1,
+    41,		7,10,46,47,-1,
+    42,		7,10,46,47,-1,
+    43,		7,10,46,47,-1,
+    44,		38,39,40,52,-1,
+    45,		38,39,40,53,-1,
+    46,		41,42,43,50,-1,
+    47,		41,42,43,51,-1,
+    48,		32,33,34,55,-1,
+    49,		35,36,37,54,-1,
+    50,		46,56,57,58,-1,
+    51,		47,56,57,58,-1,
+    52,		44,59,60,61,-1,
+    53,		45,59,60,61,-1,
+    54,		49,59,60,61,-1,
+    55,		48,56,57,58,-1,
+    56,		50,51,55,67,-1,
+    57,		50,51,55,67,-1,
+    58,		50,51,55,67,-1,
+    59,		52,53,54,68,-1,
+    60,		52,53,54,68,-1,
+    61,		52,53,54,68,-1,
+    62,		8,9,65,66,-1,
+    63,		8,9,65,66,-1,
+    64,		8,9,65,66,-1,
+    65,		2,62,63,64,-1,
+    66,		3,62,63,64,-1,
+    67,		5,56,57,58,-1,
+    68,		4,59,60,61,-1,
+    69,		2,3,4,5,-1,
+    70,		2,3,4,5,-1,
+    -2    
+};
+const int graphe::perkel_graph[] = {
+    1,		2,3,4,5,6,7,-1,
+    2,		1,28,32,33,34,35,-1,
+    3,		1,31,40,41,44,45,-1,
+    4,		1,36,39,47,52,55,-1,
+    5,		1,37,38,46,53,54,-1,
+    6,		1,29,43,49,50,57,-1,
+    7,		1,30,42,48,51,56,-1,
+    8,		23,25,27,28,55,57,-1,
+    9,		22,24,26,28,54,56,-1,
+    10,		12,14,17,31,54,57,-1,
+    11,		13,15,16,31,55,56,-1,
+    12,		10,13,19,35,40,50,-1,
+    13,		11,12,18,34,41,51,-1,
+    14,		10,20,24,36,38,44,-1,
+    15,		11,21,25,37,39,45,-1,
+    16,		11,19,22,30,36,49,-1,
+    17,		10,18,23,29,37,48,-1,
+    18,		13,17,25,30,33,38,-1,
+    19,		12,16,24,29,32,39,-1,
+    20,		14,23,26,40,42,47,-1,
+    21,		15,22,27,41,43,46,-1,
+    22,		9,16,21,42,50,53,-1,
+    23,		8,17,20,43,51,52,-1,
+    24,		9,14,19,34,46,52,-1,
+    25,		8,15,18,35,47,53,-1,
+    26,		9,20,27,32,45,48,-1,
+    27,		8,21,26,33,44,49,-1,
+    28,		2,8,9,29,30,31,-1,
+    29,		6,17,19,28,45,53,-1,
+    30,		7,16,18,28,44,52,-1,
+    31,		3,10,11,28,42,43,-1,
+    32,		2,19,26,37,51,55,-1,
+    33,		2,18,27,36,50,54,-1,
+    34,		2,13,24,43,45,47,-1,
+    35,		2,12,25,42,44,46,-1,
+    36,		4,14,16,33,37,43,-1,
+    37,		5,15,17,32,36,42,-1,
+    38,		5,14,18,45,49,56,-1,
+    39,		4,15,19,44,48,57,-1,
+    40,		3,12,20,49,53,55,-1,
+    41,		3,13,21,48,52,54,-1,
+    42,		7,20,22,31,35,37,-1,
+    43,		6,21,23,31,34,36,-1,
+    44,		3,14,27,30,35,39,-1,
+    45,		3,15,26,29,34,38,-1,
+    46,		5,21,24,35,51,57,-1,
+    47,		4,20,25,34,50,56,-1,
+    48,		7,17,26,39,41,50,-1,
+    49,		6,16,27,38,40,51,-1,
+    50,		6,12,22,33,47,48,-1,
+    51,		7,13,23,32,46,49,-1,
+    52,		4,23,24,30,41,53,-1,
+    53,		5,22,25,29,40,52,-1,
+    54,		5,9,10,33,41,55,-1,
+    55,		4,8,11,32,40,54,-1,
+    56,		7,9,11,38,47,57,-1,
+    57,		6,8,10,39,46,56,-1,
+    -2
+};
+const int graphe::sousselier_graph[] = {
+    1,		9,10,16,-1,
+    2,		8,11,16,-1,
+    3,		6,14,16,-1,
+    4,		7,15,16,-1,
+    5,		12,13,16,-1,
+    6,		3,7,13,-1,
+    7,		4,6,12,-1,
+    8,		2,9,14,-1,
+    9,		1,8,15,-1,
+    10,		1,13,14,-1,
+    11,		2,12,15,-1,
+    12,		5,7,11,14,-1,
+    13,		5,6,10,15,-1,
+    14,		3,8,10,12,-1,
+    15,		4,9,11,13,-1,
+    16,		1,2,3,4,5,-1,
+    -2
+};
+const int graphe::walther_graph[] = {
+    1,		25,-1,
+    2,		10,-1,
+    3,		9,-1,
+    4,		23,24,-1,
+    5,		21,24,-1,
+    6,		22,23,-1,
+    7,		19,20,-1,
+    8,		21,22,-1,
+    9,		3,18,-1,
+    10,		2,17,-1,
+    11,		16,24,25,-1,
+    12,		16,20,25,-1,
+    13,		16,19,21,-1,
+    14,		15,19,22,-1,
+    15,		14,17,18,-1,
+    16,		11,12,13,-1,
+    17,		10,15,23,-1,
+    18,		9,15,20,-1,
+    19,		7,13,14,-1,
+    20,		7,12,18,-1,
+    21,		5,8,13,-1,
+    22,		6,8,14,-1,
+    23,		4,6,17,-1,
+    24,		4,5,11,-1,
+    25,		1,11,12,-1,
+    -2
+};
+const int graphe::watkins_snark[] = {
+    1,		2,3,4,-1,
+    2,		1,47,48,-1,
+    3,		1,45,50,-1,
+    4,		1,46,49,-1,
+    5,		6,7,44,-1,
+    6,		5,37,39,-1,
+    7,		5,36,38,-1,
+    8,		9,33,35,-1,
+    9,		8,14,15,-1,
+    10,		23,26,34,-1,
+    11,		24,25,34,-1,
+    12,		15,21,40,-1,
+    13,		20,22,40,-1,
+    14,		9,21,29,-1,
+    15,		9,12,16,-1,
+    16,		15,20,29,-1,
+    17,		25,31,32,-1,
+    18,		19,31,33,-1,
+    19,		18,25,30,-1,
+    20,		13,16,21,-1,
+    21,		12,14,20,-1,
+    22,		13,23,27,-1,
+    23,		10,22,28,-1,
+    24,		11,26,28,-1,
+    25,		11,17,19,-1,
+    26,		10,24,27,-1,
+    27,		22,26,43,-1,
+    28,		23,24,43,-1,
+    29,		14,16,41,-1,
+    30,		19,32,42,-1,
+    31,		17,18,42,-1,
+    32,		17,30,41,-1,
+    33,		8,18,39,-1,
+    34,		10,11,38,-1,
+    35,		8,36,37,-1,
+    36,		7,35,39,-1,
+    37,		6,35,38,-1,
+    38,		7,34,37,-1,
+    39,		6,33,36,-1,
+    40,		12,13,48,-1,
+    41,		29,32,46,-1,
+    42,		30,31,46,-1,
+    43,		27,28,45,-1,
+    44,		5,45,47,-1,
+    45,		3,43,44,-1,
+    46,		4,41,42,-1,
+    47,		2,44,50,-1,
+    48,		2,40,49,-1,
+    49,		4,48,50,-1,
+    50,		3,47,49,-1,
+    -2
+};
+const int graphe::wells_graph[] = {
+    1,		2,3,4,5,6,-1,
+    2,		1,13,24,25,26,-1,
+    3,		1,20,30,31,32,-1,
+    4,		1,14,17,21,27,-1,
+    5,		1,16,18,23,29,-1,
+    6,		1,15,19,22,28,-1,
+    7,		12,13,17,18,19,-1,
+    8,		12,20,27,28,29,-1,
+    9,		12,14,23,26,30,-1,
+    10,		12,15,21,24,32,-1,
+    11,		12,16,22,25,31,-1,
+    12,		7,8,9,10,11,-1,
+    13,		2,7,14,15,16,-1,
+    14,		4,9,13,29,32,-1,
+    15,		6,10,13,27,31,-1,
+    16,		5,11,13,28,30,-1,
+    17,		4,7,23,24,28,-1,
+    18,		5,7,22,26,27,-1,
+    19,		6,7,21,25,29,-1,
+    20,		3,8,21,22,23,-1,
+    21,		4,10,19,20,26,-1,
+    22,		6,11,18,20,24,-1,
+    23,		5,9,17,20,25,-1,
+    24,		2,10,17,22,30,-1,
+    25,		2,11,19,23,32,-1,
+    26,		2,9,18,21,31,-1,
+    27,		4,8,15,18,30,-1,
+    28,		6,8,16,17,32,-1,
+    29,		5,8,14,19,31,-1,
+    30,		3,9,16,24,27,-1,
+    31,		3,11,15,26,29,-1,
+    32,		3,10,14,25,28,-1,
+    -2
+};
+const int graphe::wiener_araya_graph[] = {
+    1,		20,22,30,-1,
+    2,		19,21,29,-1,
+    3,		5,15,30,-1,
+    4,		6,16,29,-1,
+    5,		3,24,27,-1,
+    6,		4,23,28,-1,
+    7,		12,24,26,-1,
+    8,		11,23,25,-1,
+    9,		14,17,26,-1,
+    10,		13,18,25,-1,
+    11,		8,13,28,-1,
+    12,		7,14,27,-1,
+    13,		10,11,34,-1,
+    14,		9,12,33,-1,
+    15,		3,20,35,-1,
+    16,		4,19,36,-1,
+    17,		9,21,38,-1,
+    18,		10,22,37,-1,
+    19,		2,16,38,-1,
+    20,		1,15,37,-1,
+    21,		2,17,41,-1,
+    22,		1,18,42,-1,
+    23,		6,8,40,-1,
+    24,		5,7,39,-1,
+    25,		8,10,42,-1,
+    26,		7,9,41,-1,
+    27,		5,12,35,-1,
+    28,		6,11,36,-1,
+    29,		2,4,40,-1,
+    30,		1,3,39,-1,
+    31,		32,35,37,-1,
+    32,		31,36,38,-1,
+    33,		14,35,38,-1,
+    34,		13,36,37,-1,
+    35,		15,27,31,33,-1,
+    36,		16,28,32,34,-1,
+    37,		18,20,31,34,-1,
+    38,		17,19,32,33,-1,
+    39,		24,30,41,42,-1,
+    40,		23,29,41,42,-1,
+    41,		21,26,39,40,-1,
+    42,		22,25,39,40,-1,
+    -2
+};
 
 #ifndef NO_NAMESPACE_GIAC
 }

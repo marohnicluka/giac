@@ -650,7 +650,6 @@ public:
     // special graphs
     static const int clebsch_graph[];
     static const char* coxeter_graph[];
-    static const int dodecahedron_graph[];
     static const int dyck_graph[];
     static const int grinberg_graph[];
     static const int grotzsch_graph[];
@@ -664,9 +663,9 @@ public:
     static const int pappus_graph[];
     static const int robertson_graph[];
     static const int soccer_ball_graph[];
-    static const int tetrahedron_graph[];
-    static const int octahedron_graph[];
-    static const int icosahedron_graph[];
+    static const int tetrahedral_graph[];
+    static const int octahedral_graph[];
+    static const int icosahedral_graph[];
     static const int ljubljana_graph_lcf[];
     static const int foster_graph_lcf[];
     static const int blanusa_graph[];
@@ -690,8 +689,25 @@ public:
     static const int tutte_12cage_lcf[];
     static const int tutte_8cage_lcf[];
     static const int f26a_graph_lcf[];
-    static const int tietze_graph[];
     static const int tutte_fragment_graph[];
+    static const int brinkmann_graph[];
+    static const int barnette_bosak_lederberg_graph[];
+    static const int double_star_snark[];
+    static const int doyle_graph[];
+    static const int meringer_graph[];
+    static const int robertson_wegner_graph[];
+    static const int wong_graph[];
+    static const char* const gewirtz_words[];
+    static const int harborth_graph[];
+    static const int kittel_graph[];
+    static const int krackhardt_kite_graph[];
+    static const int meredith_graph[];
+    static const int perkel_graph[];
+    static const int sousselier_graph[];
+    static const int walther_graph[];
+    static const int watkins_snark[];
+    static const int wells_graph[];
+    static const int wiener_araya_graph[];
 
 private:
     const context *ctx;
@@ -851,6 +867,12 @@ private:
     ivector alom_candidates(const ivector &V,const vecteur &ds);
     int count_edges_in_Nv(int v,int sg=-1) const;
     int count_edges(const ivector &V) const;
+    void make_hoffman_singleton_graph();
+    void make_higman_sims_graph();
+    void make_brouwer_haemers_graph();
+    void make_gewirtz_graph();
+    void make_schlaefli_graph();
+    void make_gosset_graph();
 
 public:
     graphe(const context *contextptr=context0,bool support_attributes=true);
@@ -944,7 +966,7 @@ public:
     void isolate_nodes(const iset &V);
     const vertex &node(int i) const { assert(i>=0 && i<node_count()); return nodes[i]; }
     const gen node_label(int i) const { assert(i>=0 && i<node_count()); return nodes[i].label(); }
-    vecteur get_node_labels(const ivector &v) const;
+    vecteur get_node_labels(const ivector &v=ivector(0)) const;
     int node_index(const gen &v) const;
     int edge_index(const ipair &e) const;
     int largest_integer_label() const;
@@ -990,7 +1012,7 @@ public:
     vecteur degree_sequence(int sg=-1) const;
     void sort_by_degrees();
     void adjacency_matrix(matrice &m) const;
-    void adjacency_sparse_matrix(sparsemat &sm) const;
+    void adjacency_sparse_matrix(sparsemat &sm,bool diag_ones=false) const;
     void laplacian_matrix(matrice &m,bool normalize=false) const;
     void incidence_matrix(matrice &m) const;
     void set_graph_attribute(int key,const gen &val) { attributes[key]=val; }
@@ -1013,6 +1035,7 @@ public:
     void make_directed() { set_directed(true); }
     void make_unweighted();
     void randomize_edge_weights(double a,double b,bool integral_weights=false);
+    void make_lcf_graph(const ivector &jumps,int e);
     int is_regular(int d) const;
     bool is_strongly_regular(ipair &sig);
     bool is_equal(const graphe &G) const;
@@ -1061,8 +1084,7 @@ public:
     void preferential_attachment(int d,int o);
     void molloy_reed(const vecteur &p);
     void make_plane_dual(const ivectors &faces);
-    void make_lcf_graph(const ivector &jumps,int e);
-    void make_lcf_graph(const int *j,int e);
+    void make_lcf_graph(const int *j);
     void make_sierpinski_graph(int n,int k,bool triangle);
     void make_shrikhande_graph();
     void make_tutte_graph();
@@ -1077,6 +1099,7 @@ public:
     void make_wheel_graph(int n,layout *x=NULL);
     void make_antiprism_graph(int n,layout *x=NULL);
     void make_complete_kary_tree(int k,int d);
+    bool make_flower_snark(int n,layout *x=NULL);
     void make_random_tree(int maxd=0);
     void make_random_rooted_tree();
     void make_random_free_tree();
@@ -1175,6 +1198,7 @@ public:
     void compute_in_out_degrees(ivector &ind,ivector &outd) const;
     vecteur distances_from(int k);
     gen betweenness_centrality(int k) const;
+    gen communicability_betweenness_centrality(int k) const;
     gen closeness_centrality(int k,bool harmonic=false) const;
     gen degree_centrality(int k) const;
     vecteur katz_centrality(const gen &att) const;
@@ -1188,6 +1212,7 @@ public:
     int vertex_cover_number();
     bool is_reachable(int u,int v);
     void reachable(int u,ivector &r);
+    void find_simplicial_vertices(ivector &res) const;
 
     // static methods
     static gen colon_label(int i,int j);

@@ -3918,6 +3918,25 @@ static const char _web_graph_s[]="web_graph";
 static define_unary_function_eval(__web_graph,&_web_graph,_web_graph_s);
 define_unary_function_ptr5(at_web_graph,alias_at_web_graph,&__web_graph,0,true)
 
+/* USAGE:   flower_snark(n)
+ *
+ * Returns the n-th flower snark, where n>=3 is odd.
+ */
+gen _flower_snark(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    int n=5;
+    if (!g.is_integer() || (n=g.val)<3 || n%2==0)
+        return generr("Expected an odd integer greater than two");
+    graphe G(contextptr);
+    graphe::layout x;
+    G.make_flower_snark(n,&x);
+    G.store_layout(x);
+    return G.to_gen();
+}
+static const char _flower_snark_s[]="flower_snark";
+static define_unary_function_eval(__flower_snark,&_flower_snark,_flower_snark_s);
+define_unary_function_ptr5(at_flower_snark,alias_at_flower_snark,&__flower_snark,0,true)
+
 /* USAGE:   cartesian_product(G1,G2,...)
  *
  * Returns Cartesian product of graphs G1, G2, ... Vertices in the resulting
@@ -5786,14 +5805,14 @@ static const char _set_vertex_positions_s[]="set_vertex_positions";
 static define_unary_function_eval(__set_vertex_positions,&_set_vertex_positions,_set_vertex_positions_s);
 define_unary_function_ptr5(at_set_vertex_positions,alias_at_set_vertex_positions,&__set_vertex_positions,0,true)
 
-/* USAGE:   clique_stats(G,[k or m..n])
+/* USAGE:   find_cliques(G,[k or m..n])
  *
  * Returns the list of numbers of maximal cliques of size s in the graph G for
  * each s. If parameter k is given, the number of k-cliques is returned. If an
  * interval m..n is given, only cliques with size between m and n (inclusive)
  * are counted (m also may be +infinity).
  */
-gen _clique_stats(const gen &g,GIAC_CONTEXT) {
+gen _find_cliques(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT)
         return gentypeerr(contextptr);
@@ -5867,9 +5886,9 @@ gen _clique_stats(const gen &g,GIAC_CONTEXT) {
     }
     return res;
 }
-static const char _clique_stats_s[]="clique_stats";
-static define_unary_function_eval(__clique_stats,&_clique_stats,_clique_stats_s);
-define_unary_function_ptr5(at_clique_stats,alias_at_clique_stats,&__clique_stats,0,true)
+static const char _find_cliques_s[]="find_cliques";
+static define_unary_function_eval(__find_cliques,&_find_cliques,_find_cliques_s);
+define_unary_function_ptr5(at_find_cliques,alias_at_find_cliques,&__find_cliques,0,true)
 
 /* USAGE:   minimal_vertex_coloring(G,[sto])
  *
@@ -7021,7 +7040,7 @@ define_unary_function_ptr5(at_vertex_connectivity,alias_at_vertex_connectivity,&
 
 /* USAGE:   tonnetz(a,b,c,[d])
  *
- * Returns the neo.Riemannian style tone network corresponding to the pitch
+ * Returns the neo-Riemannian style tone network corresponding to the pitch
  * class [a,b,c] resp. [a,b,c,d], where n=a+b+c[+d] is the octave range.
  * Vertices of the resulting graph are elements of the cyclic group Zn, i.e.
  * 0,1,...,n-1. The neighbors of vertex v are: v+a, v-a, v+b, v-b, v+c, v-c,
@@ -7414,6 +7433,43 @@ static const char _betweenness_centrality_s[]="betweenness_centrality";
 static define_unary_function_eval(__betweenness_centrality,&_betweenness_centrality,_betweenness_centrality_s);
 define_unary_function_ptr5(at_betweenness_centrality,alias_at_betweenness_centrality,&__betweenness_centrality,0,true)
 
+/* USAGE:   communicability_betweenness_centrality(G,[v])
+ *
+ * Returns the communicability betweenness centrality measure of vertex v in G.
+ * If v is omitted, the list of CBC measures for all vertices is returned,
+ * in order as returned by vertices(G).
+ * Edge weights are ignored by this type of centrality.
+ */
+gen _communicability_betweenness_centrality(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    int k=-1;
+    graphe G(contextptr);
+    if (g.type==_VECT && g.subtype==_SEQ__VECT) {
+        const vecteur &gv=*g._VECTptr;
+        if (gv.size()!=2)
+            return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+        if (!G.read_gen(gv.front()))
+            return gt_err(_GT_ERR_NOT_A_GRAPH);
+        k=G.node_index(gv.back());
+        if (k==-1)
+            return gt_err(gv.back(),_GT_ERR_VERTEX_NOT_FOUND);
+    } else if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_empty())
+        return generr("graph is empty");
+    if (G.is_directed()) {
+        graphe::ivectors components;
+        G.strongly_connected_components(components);
+        if (components.size()>1)
+            return generr("digraph must be strongly connected");
+    } else if (!G.is_connected())
+        return gt_err(_GT_ERR_CONNECTED_GRAPH_REQUIRED);
+    return G.communicability_betweenness_centrality(k);
+}
+static const char _communicability_betweenness_centrality_s[]="communicability_betweenness_centrality";
+static define_unary_function_eval(__communicability_betweenness_centrality,&_communicability_betweenness_centrality,_communicability_betweenness_centrality_s);
+define_unary_function_ptr5(at_communicability_betweenness_centrality,alias_at_communicability_betweenness_centrality,&__communicability_betweenness_centrality,0,true)
+
 /* USAGE:   katz_centrality(G,alpha,[v])
  *
  * Returns the katz centrality measure of vertex v in G.
@@ -7767,6 +7823,25 @@ gen _reachable(const gen &g,GIAC_CONTEXT) {
 static const char _reachable_s[]="reachable";
 static define_unary_function_eval(__reachable,&_reachable,_reachable_s);
 define_unary_function_ptr5(at_reachable,alias_at_reachable,&__reachable,0,true)
+
+/* USAGE:   simplicial_vertices(G)
+ *
+ * Returns the list of simplicial vertices in an undirected graph G.
+ */
+gen _simplicial_vertices(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
+    graphe::ivector smp;
+    G.find_simplicial_vertices(smp);
+    return G.get_node_labels(smp);
+}
+static const char _simplicial_vertices_s[]="simplicial_vertices";
+static define_unary_function_eval(__simplicial_vertices,&_simplicial_vertices,_simplicial_vertices_s);
+define_unary_function_ptr5(at_simplicial_vertices,alias_at_simplicial_vertices,&__simplicial_vertices,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

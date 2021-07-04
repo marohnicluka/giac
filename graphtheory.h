@@ -177,6 +177,7 @@ gen _web_graph(const gen &g,GIAC_CONTEXT);
 gen _wheel_graph(const gen &g,GIAC_CONTEXT);
 gen _kneser_graph(const gen &g,GIAC_CONTEXT);
 gen _odd_graph(const gen &g,GIAC_CONTEXT);
+gen _flower_snark(const gen &g,GIAC_CONTEXT);
 gen _random_graph(const gen &g,GIAC_CONTEXT);
 gen _random_digraph(const gen &g,GIAC_CONTEXT);
 gen _random_regular_graph(const gen &g,GIAC_CONTEXT);
@@ -241,7 +242,7 @@ gen _greedy_color(const gen &g,GIAC_CONTEXT);
 gen _is_vertex_colorable(const gen &g,GIAC_CONTEXT);
 gen _plane_dual(const gen &g,GIAC_CONTEXT);
 gen _set_vertex_positions(const gen &g,GIAC_CONTEXT);
-gen _clique_stats(const gen &g,GIAC_CONTEXT);
+gen _find_cliques(const gen &g,GIAC_CONTEXT);
 gen _minimal_vertex_coloring(const gen &g,GIAC_CONTEXT);
 gen _transitive_closure(const gen &g,GIAC_CONTEXT);
 gen _line_graph(const gen &g,GIAC_CONTEXT);
@@ -277,6 +278,7 @@ gen _find_cycles(const gen &g,GIAC_CONTEXT);
 gen _kspaths(const gen &g,GIAC_CONTEXT);
 gen _degree_centrality(const gen &g,GIAC_CONTEXT);
 gen _betweenness_centrality(const gen &g,GIAC_CONTEXT);
+gen _communicability_betweenness_centrality(const gen &g,GIAC_CONTEXT);
 gen _closeness_centrality(const gen &g,GIAC_CONTEXT);
 gen _katz_centrality(const gen &g,GIAC_CONTEXT);
 gen _information_centrality(const gen &g,GIAC_CONTEXT);
@@ -290,6 +292,7 @@ gen _find_vertex_cover(const gen &g,GIAC_CONTEXT);
 gen _vertex_cover_number(const gen &g,GIAC_CONTEXT);
 gen _is_reachable(const gen &g,GIAC_CONTEXT);
 gen _reachable(const gen &g,GIAC_CONTEXT);
+gen _simplicial_vertices(const gen &g,GIAC_CONTEXT);
 
 // GENERAL GIAC COMMANDS
 

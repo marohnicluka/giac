@@ -32,6 +32,7 @@
 #include <queue>
 #include <stack>
 #include <set>
+#include <bitset>
 #ifdef HAVE_LIBGLPK
 #include <glpk.h>
 #endif
@@ -43,6 +44,7 @@
 #define PLASTIC_NUMBER_2 1.75487766625
 #define PLASTIC_NUMBER_3 2.32471795724
 #define MARGIN_FACTOR 0.139680581996 // pow(PLASTIC_NUMBER,-7)
+#define SIP_NBITS 64
 
 #ifndef NO_NAMESPACE_GIAC
 namespace giac {
@@ -101,7 +103,8 @@ public:
     typedef std::vector<dpair> dpairs;
     typedef std::vector<double> point;
     typedef std::vector<point> layout;
-    typedef std::map<int,std::map<int,ipair> > sparsemat;
+    typedef std::map<int,ipair> sparsematrow;
+    typedef std::map<int,sparsematrow> sparsemat;
     typedef std::set<ipair> edgeset;
     typedef std::vector<std::map<int,int> > edgemap;
     typedef std::vector<std::map<int,double> > edgemapd;
@@ -109,6 +112,9 @@ public:
     typedef std::vector<double> dvector;
     typedef std::set<int> iset;
     typedef std::vector<bool> bvector;
+    typedef std::vector<bvector> bvectors;
+    typedef std::vector<std::bitset<SIP_NBITS> > bitrow;
+    typedef std::vector<bitrow> bitmatrix;
 
     class vertex { // vertex class
         int m_subgraph;
@@ -517,11 +523,10 @@ public:
     class ostergard { // clique maximizer
         graphe *G;
         int maxsize;
-        bool found;
+        bool found,timed_out;
         double timeout; // seconds
         ivector c,incumbent,clique_nodes;
         clock_t start;
-        bool timed_out;
         void recurse(ivector &U,int size,ivector &position);
     public:
         ostergard(graphe *gr,double max_time=0) { G=gr; timeout=max_time; }
@@ -560,13 +565,8 @@ public:
     class mm { // An efficient implementation of Edmonds' blossom algorithm
         enum label_t { EVEN=0, ODD=1 };
         graphe *G;
-        int *mate;
-        int *label;
-        int *pred;
-        int *bridge;
+        int *mate,*label,*pred,*bridge,V,s;
         std::queue<int> Q;
-        int V;
-        int s;
         unionfind *ds;
         ivector ap;
         bool alternating_forest();
@@ -583,6 +583,33 @@ public:
         mm(graphe *g);
         ~mm();
         void find_maximum_matching(ipairs &matching,int sg=-1);
+    };
+
+    class sip { // subgraph isomorphism via Ullmann's algorithm
+        int N,n,max_sg,nb;
+        bitmatrix A,AT,M;
+        bvectors B;
+        bvector used_cols;
+        ivectors found;
+        bool induced,dir,isom;
+        ipairs changes;
+        std::stack<ipairs> snapshots;
+        static void clear_bitrow(bitrow &row);
+        static bool get_j(const bitrow &row,int j) { return row[j/SIP_NBITS].test(j%SIP_NBITS); }
+        static bool get_ij(const bitmatrix &mat,int i,int j) { return get_j(mat[i],j); }
+        static void set_ij(bitmatrix &mat,int i,int j,bool val) { mat[i][j/SIP_NBITS].set(j%SIP_NBITS,val); }
+        bool mult_bitrows(const bitrow &r,const bitrow &c);
+        bool M_has_empty_row();
+        bool recurse(int i=0);
+        void prune();
+        void edit(int i,int j) { set_ij(M,i,j,false); changes.push_back(make_pair(i,j)); }
+        void push_changes() { snapshots.push(changes); changes.clear(); }
+        void revert_changes();
+        bool is_isomorphism();
+    public:
+        sip(const graphe &G,const graphe &P,int max_sg_in=1);
+        int find_subgraphs(bool only_induced=true);
+        const ivector &get_subgraph(int i) const { return found[i]; }
     };
     
     struct edges_comparator { // for sorting edges by their weight
@@ -624,6 +651,7 @@ public:
         ivectors_degree_comparator(graphe *gr) { G=gr; }
     };
 
+    /* iterators */
     typedef std::vector<vertex>::const_iterator node_iter;
     typedef std::map<int,attrib>::const_iterator neighbor_iter;
     typedef attrib::const_iterator attrib_iter;
@@ -636,6 +664,7 @@ public:
     typedef dvector::const_iterator dvector_iter;
     typedef iset::const_iterator iset_iter;
 
+    /* static variables and constants */
     static const gen FAUX;
     static const gen VRAI;
     static bool verbose;
@@ -769,6 +798,7 @@ private:
     static void point2polar(point &p,double &r,double &phi);
     static bool sparse_matrix_element(const sparsemat &A,int i,int j,ipair &val);
     static void multiply_sparse_matrices(const sparsemat &A,const sparsemat &B,sparsemat &P,int ncols,bool symmetric=false);
+    static gen sparse_product_element(const sparsemat &A, const sparsemat &B,int i,int j);
     static void transpose_sparsemat(const sparsemat &A,sparsemat &T);
     void multilevel_recursion(layout &x,int d,double R,double K,double tol,int depth=0);
     int mdeg(const ivector &V,int i) const;
@@ -867,7 +897,9 @@ private:
     ivector alom_candidates(const ivector &V,const vecteur &ds);
     int count_edges_in_Nv(int v,int sg=-1) const;
     int count_edges(const ivector &V) const;
+    bool is_simplicial(int i,const sparsemat &A,double D=0.0);
     void make_hoffman_singleton_graph();
+    void make_sylvester_graph();
     void make_higman_sims_graph();
     void make_brouwer_haemers_graph();
     void make_gewirtz_graph();
@@ -1012,7 +1044,7 @@ public:
     vecteur degree_sequence(int sg=-1) const;
     void sort_by_degrees();
     void adjacency_matrix(matrice &m) const;
-    void adjacency_sparse_matrix(sparsemat &sm,bool diag_ones=false) const;
+    void adjacency_sparse_matrix(sparsemat &sm,bool diag_ones=false,int sg=-1) const;
     void laplacian_matrix(matrice &m,bool normalize=false) const;
     void incidence_matrix(matrice &m) const;
     void set_graph_attribute(int key,const gen &val) { attributes[key]=val; }
@@ -1158,7 +1190,8 @@ public:
     int greedy_vertex_coloring(const ivector &p);
     int exact_vertex_coloring(int max_colors=0);
     int exact_edge_coloring(ivector &colors,int *numcol=NULL);
-    void get_node_colors(ivector &colors);
+    int get_node_color(int i) const;
+    void get_node_colors(ivector &colors) const;
     bool is_bipartite(ivector &V1,ivector &V2,int sg=-1);
     bool is_vertex_colorable(int k);
     void dsatur();
@@ -1171,7 +1204,7 @@ public:
     int bipartite_matching(const ivector &p1,const ivector &p2,ipairs &matching);
     void line_graph(graphe &G,ipairs &E) const;
     void transitive_closure(graphe &G,bool weighted=false);
-    int is_isomorphic(const graphe &other,std::map<int,int> &isom) const;
+    bool is_isomorphic(graphe &other,std::map<int,int> &isom);
     gen aut_generators() const;
     bool canonical_labeling(ivector &lab) const;
     bool bondy_chvatal_closure(graphe &G,ivector &d);
@@ -1212,7 +1245,8 @@ public:
     int vertex_cover_number();
     bool is_reachable(int u,int v);
     void reachable(int u,ivector &r);
-    void find_simplicial_vertices(ivector &res) const;
+    void find_simplicial_vertices(ivector &res);
+    void subgraph_isomorphism(graphe &P,int max_sg,bool induced,ivectors &res) const;
 
     // static methods
     static gen colon_label(int i,int j);

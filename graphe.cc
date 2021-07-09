@@ -24,7 +24,6 @@
 #include <ctype.h>
 #include <math.h>
 #include <ctime>
-#include <bitset>
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef HAVE_LIBNAUTY
@@ -893,6 +892,8 @@ graphe::graphe(const string &name,GIAC_CONTEXT) {
         read_special(sousselier_graph);
         hull=vecteur_2_vector_int(mergevecteur(makevecteur(13,15,8,7,9,2,0,1),makevecteur(5,4,6,12,10,11,14)));
         make_circular_layout(x,hull);
+    } else if (name=="sylvester") {
+        make_sylvester_graph();
     } else if (name=="shrikhande") {
         make_shrikhande_graph();
         for (int i=0;i<4;++i) {
@@ -974,6 +975,24 @@ void graphe::make_hoffman_singleton_graph() {
             }
         }
     }
+}
+
+/* construct Sylvester graph from Hoffman-Singleton graph */
+void graphe::make_sylvester_graph() {
+    graphe G(ctx,supports_attributes());
+    G.make_hoffman_singleton_graph();
+    const vertex &v1=G.node(0),&v2=G.node(v1.neighbors().front());
+    iset V;
+    V.insert(0); V.insert(v1.neighbors().front());
+    for (ivector_iter it=v1.neighbors().begin();it!=v1.neighbors().end();++it) {
+        V.insert(*it);
+    }
+    for (ivector_iter it=v2.neighbors().begin();it!=v2.neighbors().end();++it) {
+        V.insert(*it);
+    }
+    assert(V.size()==14);
+    G.isolate_nodes(V);
+    G.remove_isolated_nodes(V,*this);
 }
 
 /* construct Higman-Sims graph from the independent sets of size 15 in Hoffman-Singleton graph */
@@ -1159,17 +1178,9 @@ int *graphe::to_array(int &sz,bool reduce) const {
         sz/=2;
     }
     sz+=2*node_count();
-    int *res=new int[sz];
-    int i=0,c;
-    attrib_iter ait;
+    int *res=new int[sz],i=0;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
-        if (supports_attributes()) {
-            c=default_vertex_color;
-            if ((ait=it->attributes().find(_GT_ATTRIB_COLOR))!=it->attributes().end()) {
-                c=ait->second.val;
-            }
-        } else c=it->color();
-        res[i++]=c;
+        res[i++]=get_node_color(it-nodes.begin());
         for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
             if (!reduce || *jt>int(it-nodes.begin()))
                 res[i++]=*jt;
@@ -1478,28 +1489,30 @@ void graphe::sort_by_degrees() {
 
 /* create the adjacency matrix of this graph */
 void graphe::adjacency_matrix(matrice &m) const {
-    int n=node_count(),i,j;
-    m=*_matrix(makesequence(n,n),context0)._VECTptr;
+    int n=node_count();
+    m=*_matrix(makesequence(n,n,0),context0)._VECTptr;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
-        i=it-nodes.begin();
+        vecteur &row=*m[it-nodes.begin()]._VECTptr;
         for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
-            j=*jt;
-            m[i]._VECTptr->at(j)=1;
+            row[*jt]=1;
         }
     }
 }
 
 /* create the adjacency matrix as a sparse matrix */
-void graphe::adjacency_sparse_matrix(sparsemat &sm,bool diag_ones) const {
+void graphe::adjacency_sparse_matrix(sparsemat &sm,bool diag_ones,int sg) const {
     sm.clear();
     int i,j;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
+        if (sg>=0 && it->subgraph()!=sg)
+            continue;
         i=it-nodes.begin();
         if (diag_ones)
             sm[i][i]=make_pair(1,1);
         for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
             j=*jt;
-            sm[i][j]=make_pair(1,1);
+            if (sg<0 || node(j).subgraph()==sg)
+                sm[i][j]=make_pair(1,1);
         }
     }
 }
@@ -3526,13 +3539,13 @@ void graphe::multiply_sparse_matrices(const sparsemat &A,const sparsemat &B,spar
     gen elm;
     for (sparsemat::const_iterator it=A.begin();it!=A.end();++it) {
         i=it->first;
-        map<int,ipair> &row=P[i];
+        sparsematrow &row=P[i];
         isempty=true;
         for (int j=symmetric?i:0;j<ncols;++j) {
             elm=0;
-            for (map<int,ipair>::const_iterator jt=it->second.begin();jt!=it->second.end();++jt) {
+            for (sparsematrow::const_iterator jt=it->second.begin();jt!=it->second.end();++jt) {
                 if (sparse_matrix_element(B,jt->first,j,p))
-                    elm+=fraction(jt->second.first*p.first,jt->second.second*p.second);
+                    elm+=ipair2rat(jt->second)*ipair2rat(p);
             }
             if (!is_exactly_zero(elm)) {
                 isempty=false;
@@ -3544,6 +3557,23 @@ void graphe::multiply_sparse_matrices(const sparsemat &A,const sparsemat &B,spar
         if (isempty)
             P.erase(P.find(i));
     }
+}
+
+/* return the scalar product of i-th row in A and j-th column in B */
+gen graphe::sparse_product_element(const sparsemat &A,const sparsemat &B, int i, int j) {
+    sparsemat::const_iterator it=A.find(i),rt;
+    sparsematrow::const_iterator jt,bt;
+    if (it==A.end())
+        return 0;
+    const sparsematrow &row=it->second;
+    int r,c;
+    gen res(0);
+    for (jt=row.begin();jt!=row.end();++jt) {
+        c=jt->first;
+        if ((rt=B.find(c))!=B.end() && (bt=rt->second.find(j))!=rt->second.end())
+            res+=ipair2rat(jt->second)*ipair2rat(bt->second);
+    }
+    return res;
 }
 
 /* store the transposition of A in T */
@@ -5383,16 +5413,19 @@ bool graphe::make_flower_snark(int n,layout *x) {
         default: assert(false);
         }
     }
+    /* create n star graphs on four vertices */
     for (int i=0;i<n;++i) {
         add_edge(A[i],B[i]);
         add_edge(A[i],C[i]);
         add_edge(A[i],D[i]);
     }
+    /* create cycles */
     for (int i=0;i<n;++i) add_edge(B[i],B[(i+1)%n]);
     for (int i=0;i<n-1;++i) add_edge(C[i],C[i+1]);
     for (int i=0;i<n-1;++i) add_edge(D[i],D[i+1]);
     add_edge(C[n-1],D[0]);
     add_edge(D[n-1],C[0]);
+    /* layout */
     if (x!=NULL) {
         ivector hull(3*n);
         int cc=1,dc=0;
@@ -5401,7 +5434,7 @@ bool graphe::make_flower_snark(int n,layout *x) {
             hull[3*i+1]=(i%2==0)?D[dc++]:C[cc++];
             hull[3*i+2]=i==n-1?C[0]:((i%2==0)?D[dc++]:C[cc++]);
         }
-        make_circular_layout(*x,hull);
+        make_circular_layout(*x,hull,n==3?1.5:-1.5);
     }
     return true;
 }
@@ -8994,8 +9027,22 @@ int graphe::greedy_vertex_coloring(const ivector &p) {
     return c;
 }
 
+/* get color of the i-th node, either as attribute or from vertex */
+int graphe::get_node_color(int i) const {
+    int c;
+    const vertex &v=node(i);
+    attrib_iter it;
+    if (supports_attributes()) {
+        c=default_vertex_color;
+        if ((it=v.attributes().find(_GT_ATTRIB_COLOR))!=v.attributes().end()) {
+            c=it->second.val;
+        }
+    } else c=v.color();
+    return c;
+}
+
 /* extract colors of the vertices and return them in order */
-void graphe::get_node_colors(ivector &colors) {
+void graphe::get_node_colors(ivector &colors) const {
     colors.resize(node_count());
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         colors[it-nodes.begin()]=it->color();
@@ -9425,12 +9472,12 @@ void graphe::transitive_closure(graphe &G,bool weighted) {
 }
 
 /* return true iff this graph is isomorphic to other, also obtain an isomorphism */
-int graphe::is_isomorphic(const graphe &other,map<int,int> &isom) const {
-#if defined HAVE_LIBNAUTY && defined HAVE_NAUTY_NAUTUTIL_H
+bool graphe::is_isomorphic(graphe &other,map<int,int> &isom) {
     assert(is_directed()==other.is_directed());
     int n=node_count(),sz;
-    if (other.node_count()!=n)
+    if (other.node_count()!=n || other.edge_count()!=edge_count())
         return 0;
+#if defined HAVE_LIBNAUTY && defined HAVE_NAUTY_NAUTUTIL_H
     int *adj1=to_array(sz);
     int *adj2=other.to_array(sz);
     int *sigma=new int[n];
@@ -9449,7 +9496,17 @@ int graphe::is_isomorphic(const graphe &other,map<int,int> &isom) const {
     delete[] sigma;
     return res;
 #else
-    return -1;
+    /* use Ullmann's algorithm */
+    ivectors uv;
+    subgraph_isomorphism(other,1,true,uv);
+    if (uv.empty())
+        return false;
+    else {
+        for (int i=0;i<n;++i) {
+            isom[uv.front()[i]]=i;
+        }
+        return true;
+    }
 #endif
 }
 
@@ -14127,23 +14184,278 @@ void graphe::reachable(int u,ivector &r) {
     }
 }
 
-/* find all simplicial vertices and store them in res (in order found) */
-void graphe::find_simplicial_vertices(ivector &res) const {
-    sparsemat A,A2;
-    adjacency_sparse_matrix(A,true);
-    multiply_sparse_matrices(A,A,A2,node_count(),true);
-    ipair val;
-    res.clear();
+/* return true iff the i-th vertex is simplicial and mark
+ * high-degree neighbors (deg>D) as visited */
+bool graphe::is_simplicial(int i,const sparsemat &A,double D) {
+    gen aii=sparse_product_element(A,A,i,i);
+    bool yes=true;
+    const vertex &v=node(i);
+    for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
+        if (yes && !is_zero(aii-sparse_product_element(A,A,i,*it)))
+            yes=false;
+        if (D>0.5 && node(*it).degree()>D)
+            node(*it).set_visited(true);
+    }
+    return yes;
+}
+
+/* find all simplicial vertices and store them in res,
+ * using the algorithm of Kloks et al. (worst case complexity |E|^3/2) */
+void graphe::find_simplicial_vertices(ivector &res) {
+    res.clear();    
     res.reserve(node_count());
-    for (int i=0;i<node_count();++i) {
-        int a=sparse_matrix_element(A2,i,i,val)?val.first:0;
-        bool smp=true;
-        const ivector &ngh=node(i).neighbors();
-        for (ivector_iter it=ngh.begin();smp && it!=ngh.end();++it) {
-            int b=sparse_matrix_element(A2,i,*it,val)?val.first:0;
-            if (a!=b) smp=false;
+    int n=node_count(),m=edge_count();
+    double alpha=1+std::log(m)/std::log(n);
+    double D=std::pow(m,(alpha-1)*(alpha+1));
+    sparsemat A;
+    adjacency_sparse_matrix(A,true);
+    unset_subgraphs(0);
+    for (int i=0;i<n;++i) {
+        vertex &v=node(i);
+        if (v.degree()<=D) { // low degree vertex
+            if (is_simplicial(i,A,D))
+                res.push_back(i);
+        } else v.set_subgraph(1);
+    }
+    adjacency_sparse_matrix(A,true,1);
+    ivector s;
+    get_subgraph(1,s);
+    for (ivector_iter it=s.begin();it!=s.end();++it) {
+        if (!node(*it).is_visited() && is_simplicial(*it,A))
+            res.push_back(*it);
+    }
+}
+
+/* SIP CLASS IMPLEMENTATION */
+
+/* constructor */
+graphe::sip::sip(const graphe &G,const graphe &P,int max_sg_in) {
+    N=G.node_count();
+    n=P.node_count();
+    isom=(n==N && G.edge_count()==P.edge_count());
+    dir=G.is_directed();
+    assert(P.is_directed()==dir);
+    max_sg=max_sg_in;
+    /* initialize adjacency matrices (A is transposed) */
+    matrice PA;
+    P.adjacency_matrix(PA);
+    B.resize(n);
+    for (int i=0;i<n;++i) {
+        B[i].resize(n);
+        for (int j=0;j<n;++j) {
+            B[i][j]=is_one(PA[i][j]);
         }
-        if (smp) res.push_back(i);
+    }
+    used_cols.resize(N,false);
+    A.resize(N); AT.resize(N);
+    nb=N/SIP_NBITS;
+    if (N%SIP_NBITS) ++nb;
+    for (int i=0;i<N;++i) {
+        A[i].resize(nb);
+        AT[i].resize(nb);
+    }
+    for (int i=0;i<N;++i) {
+        const vertex &v=G.node(i);
+        for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
+            set_ij(A,*it,i,true);
+            set_ij(AT,i,*it,true);
+        }
+    }
+    /* initialize M */
+    M.resize(n);
+    bool cond;
+    for (int i=0;i<n;++i) {
+        M[i].resize(nb);
+        for (int j=0;j<N;++j) {
+            if (isom) {
+                if (dir)
+                    cond=P.in_degree(i)==G.in_degree(j) && P.out_degree(i)==G.out_degree(j);
+                else cond=P.degree(i)==G.degree(j);
+            } else {
+                if (dir)
+                    cond=P.in_degree(i)<=G.in_degree(j) && P.out_degree(i)<=G.out_degree(j);
+                else cond=P.degree(i)<=G.degree(j);
+            }
+            set_ij(M,i,j,cond && P.get_node_color(i)==G.get_node_color(j));
+        }
+    }
+}
+
+/* scalar product of r and c, it is assumed that r has exactly one 1 */
+bool graphe::sip::mult_bitrows(const bitrow &r,const bitrow &c) {
+    for (int i=0;i<N;++i) {
+        if (r[i].any())
+            return (r[i] & c[i]).any();
+    }
+    assert(false);
+}
+
+/* fill row with zeros */
+void graphe::sip::clear_bitrow(bitrow &row) {
+    for (bitrow::iterator it=row.begin();it!=row.end();++it) {
+        it->reset();
+    }
+}
+
+/* check if M defines an isomorphism */
+bool graphe::sip::is_isomorphism() {
+    bitmatrix prod(n);
+    for (int i=0;i<n;++i) {
+        prod[i].resize(nb);
+        const bitrow &r=M[i];
+        for (int j=0;j<N;++j) {
+            if (mult_bitrows(r,A[j]))
+                set_ij(prod,i,j,true);
+        }
+    }
+    for (int i=0;i<n;++i) {
+        const bitrow &r=M[i];
+        for (int j=0;j<n;++j) {
+            bool p=mult_bitrows(r,prod[j]),q=B[j][i];
+            if ((induced && p!=q) || (!induced && q && !p))
+                return false;
+        }
+    }
+    return true;
+}
+
+/* prune matrix M */
+void graphe::sip::prune() {
+    bool changed=true;
+    while (changed) {
+        changed=false;
+        for (int i=0;i<n;++i) {
+            for (int j=0;j<N;++j) {
+                if (get_ij(M,i,j)) {
+                    for (int c=0;c<n;++c) {
+                        const bitrow &r=AT[j],&s=A[j],&m=M[c];
+                        int k=0,sz=r.size();
+                        if (B[i][c]) {
+                            for (k=0;k<sz;++k) {
+                                if ((r[k] & m[k]).any())
+                                    break;
+                            }
+                        }
+                        if (dir && k<sz && B[c][i]) {
+                            for (k=0;k<sz;++k) {
+                                if ((s[k] & m[k]).any())
+                                    break;
+                            }
+                        }
+                        if (k==sz) {
+                            edit(i,j);
+                            changed=true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/* undo the last set of changes to M */
+void graphe::sip::revert_changes() {
+    const ipairs &ch=snapshots.top();
+    for (ipairs_iter it=ch.begin();it!=ch.end();++it) {
+        set_ij(M,it->first,it->second,true);
+    }
+    snapshots.pop();
+}
+
+/* return true iff there is a zero-row in M */
+bool graphe::sip::M_has_empty_row() {
+    int k=0;
+    for (;k<n;++k) {
+        const bitrow &mr=M[k];
+        bitrow::const_iterator it=mr.begin();
+        for (;it!=mr.end();++it) {
+            if (it->any())
+                break;
+        }
+        if (it==mr.end())
+            break;
+    }
+    return k<n;
+}
+
+/* main recursion procedure */
+bool graphe::sip::recurse(int i) {
+    if (i==n) {
+        if (is_isomorphism()) {
+            ivector sg(n);
+            for (int k=0;k<n;++k) {
+                int l=0;
+                for (;l<N;++l) {
+                    if (get_ij(M,k,l))
+                        break;
+                }
+                assert(l<N);
+                sg[k]=l;
+            }
+            found.push_back(sg);
+        }
+    } else {
+        prune();
+        push_changes();
+        if (!M_has_empty_row()) {
+            bitrow row=M[i];
+            clear_bitrow(M[i]);
+            int res;
+            for (int j=0;j<N;++j) {
+                if (!get_j(row,j) || used_cols[j])
+                    continue;
+                set_ij(M,i,j,true);
+                used_cols[j]=true;
+                res=recurse(i+1);
+                used_cols[j]=false;
+                set_ij(M,i,j,false);
+                if (max_sg>0 && res==max_sg)
+                    break;
+            }
+            M[i]=row;
+        }
+        revert_changes(); // revert pruning
+    }
+    return found.size();
+}
+
+int graphe::sip::find_subgraphs(bool only_induced) {
+    found.clear();
+    while (!snapshots.empty()) snapshots.pop();
+    induced=only_induced;
+    if (M_has_empty_row())
+        return 0;
+    int res=recurse();
+    assert(snapshots.empty());
+    return res;
+}
+
+/* END OF SIP CLASS */
+
+void graphe::subgraph_isomorphism(graphe &P,int max_sg,bool induced,ivectors &res) const {
+    graphe Q(ctx);
+    int m=P.node_count();
+    ipairs d(m);
+    for (int i=0;i<m;++i) {
+        d[i]=std::make_pair(P.node(i).degree(),i);
+    }
+    std::sort(d.begin(),d.end());
+    ivector sigma(m);
+    for (int i=0;i<m;++i) {
+        sigma[i]=d[i].second;
+    }
+    P.isomorphic_copy(Q,sigma); // high-degree vertices first
+    sip finder(*this,Q,max_sg);
+    int n=finder.find_subgraphs(induced);
+    res.resize(n);
+    ivector sg;
+    for (int i=0;i<n;++i) {
+        sg=finder.get_subgraph(i);
+        res[i].resize(m);
+        for (int j=0;j<m;++j) {
+            res[i][sigma[j]]=sg[j];
+        }
     }
 }
 

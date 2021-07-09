@@ -3439,9 +3439,11 @@ gen _permute_vertices(const gen &g,GIAC_CONTEXT) {
         const vecteur &gv=*g._VECTptr;
         if (gv.size()<2)
             return gensizeerr(contextptr);
-        if (gv[1].type!=_VECT)
-            return generrtype("Expected a list of vertices");
-        sigma=*gv[1]._VECTptr;
+        if (gv[1]==at_randperm || gv[1]==at_shuffle)
+            ;
+        else if (gv[1].type==_VECT)
+            sigma=*gv[1]._VECTptr;
+        else return generrtype("Expected a list of vertices");
     }
     graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
@@ -6001,11 +6003,8 @@ gen _is_isomorphic(const gen &g,GIAC_CONTEXT) {
             return generrtype("Expected an identifier");
     }
     map<int,int> clab;
-    int res=G1.is_isomorphic(G2,clab);
-    if (res==0)
+    if (!G1.is_isomorphic(G2,clab))
         return graphe::FAUX;
-    if (res<0) // nauty not found
-        return generr("nauty library is required for finding graph isomorphism");
     if (!is_undef(isom)) {
         vecteur mapping;
         int n=G1.node_count();
@@ -6019,6 +6018,55 @@ gen _is_isomorphic(const gen &g,GIAC_CONTEXT) {
 static const char _is_isomorphic_s[]="is_isomorphic";
 static define_unary_function_eval(__is_isomorphic,&_is_isomorphic,_is_isomorphic_s);
 define_unary_function_ptr5(at_is_isomorphic,alias_at_is_isomorphic,&__is_isomorphic,0,true)
+
+/* USAGE:   is_subgraph_isomorphic(G1,G2,[S])
+ *
+ * Returns true if graph G1 is isomorphic to some subgraph of G2, else returns
+ * false. If an identifier 'S' is given, the found subgraph of G2 is stored there.
+ */
+gen _is_subgraph_isomorphic(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    gen S=undef;
+    bool induced=false;
+    const vecteur &gv=*g._VECTptr;
+    if (gv.size()<2)
+        return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+    graphe G1(contextptr),G2(contextptr);
+    if (!G1.read_gen(gv[0]) || !G2.read_gen(gv[1]))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G1.is_directed()!=G2.is_directed())
+        return generr("Both graphs must be (un)directed");
+    for (const_iterateur it=gv.begin()+2;it!=gv.end();++it) {
+        if (it->type==_IDNT)
+            S=*it;
+        if (*it==at_induced_subgraph)
+            induced=true;
+    }
+    if (G1.node_count()>G2.node_count() || G1.edge_count()>G2.edge_count())
+        return graphe::FAUX;
+    graphe::ivectors res;
+    G2.subgraph_isomorphism(G1,1,induced,res);
+    if (res.empty())
+        return graphe::FAUX;
+    if (!is_undef(S)) {
+        const graphe::ivector &m=res.front();
+        graphe::ipairs edges;
+        G1.get_edges_as_pairs(edges);
+        for (graphe::ipairs::iterator it=edges.begin();it!=edges.end();++it) {
+            it->first=m[it->first];
+            it->second=m[it->second];
+        }
+        graphe H;
+        G2.extract_subgraph(edges,H);
+        identifier_assign(*S._IDNTptr,H.to_gen(),contextptr);
+    }
+    return graphe::VRAI;
+}
+static const char _is_subgraph_isomorphic_s[]="is_subgraph_isomorphic";
+static define_unary_function_eval(__is_subgraph_isomorphic,&_is_subgraph_isomorphic,_is_subgraph_isomorphic_s);
+define_unary_function_ptr5(at_is_subgraph_isomorphic,alias_at_is_subgraph_isomorphic,&__is_subgraph_isomorphic,0,true)
 
 /* USAGE:   graph_automorphisms(G)
  *
@@ -7108,7 +7156,7 @@ gen _truncate_graph(const gen &g,GIAC_CONTEXT) {
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     if (G.is_empty())
-        return generr("graph is empty");
+        return generr("Graph is empty");
     if (!G.is_biconnected())
         return gt_err(_GT_ERR_BICONNECTED_GRAPH_REQUIRED);
     graphe::ivectors faces;
@@ -7158,7 +7206,7 @@ gen _find_cycles(const gen &g,GIAC_CONTEXT) {
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_empty())
-        return generr("graph is empty");
+        return generr("Graph is empty");
     if (!G.is_directed())
         return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED);
     graphe::ivectors cyc;
@@ -7187,7 +7235,7 @@ gen _kspaths(const gen &g,GIAC_CONTEXT) {
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_empty())
-        return generr("graph is empty");
+        return generr("Graph is empty");
     graphe::ivectors paths;
     int k,src,dest;
     src=G.node_index(gv[1]);
@@ -7195,7 +7243,7 @@ gen _kspaths(const gen &g,GIAC_CONTEXT) {
     if (src<0 || dest<0)
         return gt_err(src<0?gv[1]:gv[2],_GT_ERR_VERTEX_NOT_FOUND);
     if (src==dest)
-        return generr("source and destination vertices must be different");
+        return generr("Source and destination vertices must be different");
     if (!gv.back().is_integer() || (k=gv.back().val)<=0)
         return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
     G.yen_ksp(k,src,dest,paths);
@@ -7306,7 +7354,7 @@ gen _information_centrality(const gen &g,GIAC_CONTEXT) {
     } else if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_empty())
-        return generr("graph is empty");
+        return generr("Graph is empty");
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     return G.information_centrality(k,approx);
@@ -7338,7 +7386,7 @@ gen _degree_centrality(const gen &g,GIAC_CONTEXT) {
     } else if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_empty())
-        return generr("graph is empty");
+        return generr("Graph is empty");
     return G.degree_centrality(k);
 }
 static const char _degree_centrality_s[]="degree_centrality";
@@ -7367,7 +7415,7 @@ gen _harmonic_centrality(const gen &g,GIAC_CONTEXT) {
     } else if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_empty())
-        return generr("graph is empty");
+        return generr("Graph is empty");
     return G.closeness_centrality(k,true);
 }
 static const char _harmonic_centrality_s[]="harmonic_centrality";
@@ -7396,7 +7444,7 @@ gen _closeness_centrality(const gen &g,GIAC_CONTEXT) {
     } else if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_empty())
-        return generr("graph is empty");
+        return generr("Graph is empty");
     return G.closeness_centrality(k,false);
 }
 static const char _closeness_centrality_s[]="closeness_centrality";
@@ -7426,7 +7474,7 @@ gen _betweenness_centrality(const gen &g,GIAC_CONTEXT) {
     } else if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_empty())
-        return generr("graph is empty");
+        return generr("Graph is empty");
     return G.betweenness_centrality(k);
 }
 static const char _betweenness_centrality_s[]="betweenness_centrality";
@@ -7456,12 +7504,12 @@ gen _communicability_betweenness_centrality(const gen &g,GIAC_CONTEXT) {
     } else if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_empty())
-        return generr("graph is empty");
+        return generr("Graph is empty");
     if (G.is_directed()) {
         graphe::ivectors components;
         G.strongly_connected_components(components);
         if (components.size()>1)
-            return generr("digraph must be strongly connected");
+            return generr("Digraph must be strongly connected");
     } else if (!G.is_connected())
         return gt_err(_GT_ERR_CONNECTED_GRAPH_REQUIRED);
     return G.communicability_betweenness_centrality(k);
@@ -7493,7 +7541,7 @@ gen _katz_centrality(const gen &g,GIAC_CONTEXT) {
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_empty())
-        return generr("graph is empty");
+        return generr("Graph is empty");
     const gen &alpha=gv[1];
     if (_evalf(alpha,contextptr).type!=_DOUBLE_)
         return gentypeerr(contextptr);
@@ -7530,11 +7578,11 @@ gen _is_split_graph(const gen &g,GIAC_CONTEXT) {
             return gt_err(_GT_ERR_NOT_A_GRAPH);
         if (gv.back()==at_part)
             decomp=true;
-        else return generr("unrecognized option");
+        else return generr("Unrecognized option");
     } else if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_empty())
-        return generr("graph is empty");
+        return generr("Graph is empty");
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     graphe::ivector clq,indp;
@@ -7569,7 +7617,7 @@ gen _contract_subgraph(const gen &g,GIAC_CONTEXT) {
     if (!G.read_gen(gv.front()))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_empty())
-        return generr("graph is empty");
+        return generr("Graph is empty");
     if (gv[1].type!=_VECT)
         return gentypeerr(contextptr);
     const vecteur &S=*gv[1]._VECTptr;
@@ -7612,11 +7660,11 @@ gen _greedy_clique(const gen &g,GIAC_CONTEXT) {
     } else if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_empty())
-        return generr("graph is empty");
+        return generr("Graph is empty");
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     if (n<1)
-        return generr("the number of iterations must be positive");
+        return generr("Number of iterations must be positive");
     graphe::ivector Q;
     G.grasp_clique(n,Q);
     return G.get_node_labels(Q);
@@ -7645,11 +7693,11 @@ gen _greedy_independent_set(const gen &g,GIAC_CONTEXT) {
     } else if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_empty())
-        return generr("graph is empty");
+        return generr("Graph is empty");
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     if (n<2)
-        return generr("number of iterations must be at least 2");
+        return generr("Number of iterations must be at least 2");
     graphe::ivector Q;
     G.grasp_clique(n,Q,true);
     return G.get_node_labels(Q);
@@ -7719,7 +7767,7 @@ gen _find_vertex_cover(const gen &g,GIAC_CONTEXT) {
             k=gv.back()._SYMBptr->feuille._VECTptr->back().val;
         else return gentypeerr(contextptr);
         if (k<0)
-            return generr("expected a nonnegative integer");
+            return generr("Expected a nonnegative integer");
         if (k>G.node_count()) {
             *logptr(contextptr) << "Warning: k exceeds the number of vertices in G\n";
             return graphe::FAUX;

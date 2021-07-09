@@ -1574,7 +1574,7 @@ droite_tangente(x^2-x,1)
  0 xor 1
  0 xor 0
 
-# reverse_rsolve
+# reverse_rsolve berlekamp_massey
 1 Si v=[v_0 ... v_(2n-1)], renvoie [b_n,...,b_0] tel que b_n*v_{n+k}+...+b_0*v_k=0 pour k=0..n-1.
 2 If v=[v_0 ... v_(2n-1)], returns [b_n,...,b_0] such that b_n*v_{n+k}+...+b_0*v_k=0 for k=0..n-1.
 3 Si v=[v_0 ... v_(2n-1)], devuelve [b_n,...,b_0] tal que b_n*v_{n+k}+...+b_0*v_k=0 para k=0..n-1.
@@ -14422,8 +14422,8 @@ f2nd(42/12)
 f2nd((x^2+2*x+1)/(x^2-1))
 
 # gbasis
-1 Base de Groebner de l'idéal engendré par la liste de polynômes.
-2 Groebner basis of the ideal spanned by the list of polynomials.
+1 Base de Groebner de l'idéal engendré par la liste de polynômes. L'argument optionel rur permet de calculer une representation rationnelle univariee.
+2 Groebner basis of the ideal spanned by the list of polynomials. The optional rur argument may be used to compute a rational univariate representation.
 3 Base Groebner del ideal generado por la lista de polinomios.
 4 Βάση Groebner του ιδεώδους που παράγεται από τη λίστα των πολυωνύμων.
 0 LstPoly,LstVar,[order]
@@ -14435,6 +14435,7 @@ gbasis([x1+x2+x3,x1*x2+x1*x3+x2*x3,x1*x2*x3-1],[x1,x2,x3])
 gbasis([x1+x2+x3,x1*x2+x1*x3+x2*x3,x1*x2*x3-1],[x1,x2,x3],tdeg)
 gbasis([x1+x2+x3,x1*x2+x1*x3+x2*x3,x1*x2*x3-1],[x1,x2,x3],plex)
 gbasis([x1+x2+x3,x1*x2+x1*x3+x2*x3,x1*x2*x3-1] mod 29,[x1,x2,x3])
+gbasis([x1+x2+x3,x1*x2+x1*x3+x2*x3,x1*x2*x3-1],[x1,x2,x3],rur)
 
 # gbasis_max_pairs
 1 Reglage expert de gbasis: nombre maximal de S-paires reduites simultanement au cours de l'algorithme F4 (par defaut 32768, utiliser 0 pour ne pas le limiter). A diminuer si la memoire manque.
@@ -14464,6 +14465,22 @@ gbasis_simult_primes(3)
 -3 gbasis_reinject 
 gbasis_reinject(0.1)
 gbasis_reinject(0.1,0.05)
+
+# rur_gbasis
+1 Reglage expert de gbasis; dans l'algorithme modulaire de calcul d'une rur sur Q, on calcule une base de Groebner sur Q au prealable si n=1, ou si le nombre de monomes de la base de Groebner est <n si n>1. Si n=0 on ne reconstruit pas la base sur Q.
+2 Gbasis fine-tuning; in the modular algorithm of a rur over Q, reconstruct a gbasis over Q if n=1, or if the number of monomials of the gbasis is <n if n>1. If n=0 no gbasis reconstruction over Q
+0 Intg(n)
+-1 gbasis
+-2 rur_certify
+ rur_gbasis(0); gbasis([x1+x2+x3,x1*x2+x1*x3+x2*x3,x1*x2*x3-1],[x1,x2,x3],rur)
+
+# rur_certify
+1 Certification de la rur si l'argument n vaut 1, des equations de degre inferieure ou egales a n si n>1, ou pas de certification si l'argument vaut 0. Fixe a -n le nombre maximal de threads utilise pour la certification si n<0.
+2 Rur certification if argument n is 1, of equations of degree <= n if n>1 or no certification if n=0. If n<0, set maximal number of threads for certification to -n.
+0 Intg(n)
+-1 gbasis
+-2 rur_gbasis
+ rur_certify(2); gbasis([x1+x2+x3,x1*x2+x1*x3+x2*x3,x1*x2*x3-1],[x1,x2,x3],rur)
 
 # greduce
 1 Renvoie le reste de la division d'un polynôme par une base de Groebner.
@@ -17138,6 +17155,12 @@ kneser_graph(5,2)
 -1 kneser_graph
 odd_graph(3)
 
+# flower_snark
+0 Intg(n)
+2 Returns the n-th flower snark, where n>2 is odd.
+-1 petersen_graph
+flower_snark(5)
+
 # highlight_vertex
 0 Graph(G),Vrtx(v)||Lst(V),[Color(c)||Lst(C)]
 2 Changes the color of vertex v resp. colors of vertices from V in G to c resp. C (green by default) and returns the modified copy of G.
@@ -17326,6 +17349,13 @@ clique_cover(graph_complement(complete_graph(3,4)))
 clique_cover_number(graph("petersen"))
 clique_cover_number(cycle_graph(5))
 clique_cover_number(graph_complement(complete_graph(3,4)))
+
+# simplicial_vertices
+0 Graph(G)
+2 Returns the list of simplicial vertices in an undirected graph G.
+-1 is_clique
+-2 neighbors
+simplicial_vertices(graph("goldner-harary"))
 
 # chromatic_number
 0 Graph(G)
@@ -17630,6 +17660,13 @@ transitive_closure(digraph([1,2,3,4,5,6],%{[1,2],[2,3],[2,4],[4,5],[3,5]%}),weig
 -1 isomorphic_copy
 -2 permute_vertices
  G1:=graph("petersen"); G2:=kneser_graph(5,2); is_isomorphic(G1,G2,I)
+
+# is_subgraph_isomorphic
+0 Graph(G1),Graph(G2),[opts]
+2 Returns true if G1 is isomorphic to a subgraph in G2, else returns false.
+-1 is_isomorphic
+-2 subgraph
+is_subgraph_isomorphic(cycle_graph(5),flower_snark(5))
 
 # graph_automorphisms
 0 Graph(G)
@@ -17977,9 +18014,24 @@ condensation(digraph(%{[1,2],[1,3],[3,1],[1,4],[2,3],[4,3],[4,5],[5,3],[5,6],[7,
 0 Graph(G,[length=k||l..u])
 2 Returns the list of elementary cycles of the digraph G. If option "length" is specified, only cycles of length k resp. of length between l and u are returned.
 -1 is_acyclic
+-2 cycle_basis
 find_cycles(digraph(%{[1,2],[1,3],[3,1],[1,4],[2,3],[4,3],[4,5],[5,3],[5,6],[7,6],[8,6],[8,7]%}))
 find_cycles(digraph(%{[1,2],[1,3],[3,1],[1,4],[2,3],[4,3],[4,5],[5,3],[5,6],[7,6],[8,6],[8,7]%}),length=3)
 find_cycles(digraph(%{[1,2],[1,3],[3,1],[1,4],[2,3],[4,3],[4,5],[5,3],[5,6],[7,6],[8,6],[8,7]%}),length=3..4)
+
+# fundamental_cycle
+0 Graph(G)
+2 Returns the fundamental cycle of an unicyclic undirected connected graph G.
+-1 cycle_basis
+-2 find_cycles
+fundamental_cycle(graph(trail(1,2,3,4,5,2,6)))
+
+# cycle_basis
+0 Graph(G)
+2 Returns the list of fundamental cycles in an undirected graph G.
+-1 find_cycles
+-2 fundamental_cycle
+cycle_basis(graph("octahedron"))
 
 # kspaths
 0 Graph(G),Vrtx(s),Vrtx(t),Intg(k)

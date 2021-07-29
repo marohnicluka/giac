@@ -604,7 +604,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
         if (gv.front().type==_FUNC) {
             const_iterateur it=gv.begin()+1;
             for (;it!=gv.end();++it) {
-                if (!graphe::is_real_number(*it) && it->type!=_IDNT) break;
+                if (!graphe::is_real_number(*it,contextptr) && it->type!=_IDNT) break;
             }
             if (it==gv.end()) {
                 gen args=change_subtype(vecteur(gv.begin()+1,gv.end()),_SEQ__VECT);
@@ -805,7 +805,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
     if (!items.empty() && items.size()!=weights.size())
         return gendimerr(contextptr);
     for (const_iterateur it=weights.begin();it!=weights.end();++it) {
-        if (!graphe::is_real_number(*it) || !is_positive(*it,contextptr))
+        if (!graphe::is_real_number(*it,contextptr) || !is_positive(*it,contextptr))
             return gensizeerr(contextptr);
     }
     graphe::ransampl rs(weights,contextptr);
@@ -1028,16 +1028,22 @@ gen _export_graph(const gen &g,GIAC_CONTEXT) {
     if (gv.size()<2 || gv.size()>3)
         return gensizeerr(contextptr);
     const gen &gr=gv.front(),&name=gv[1];
-    bool to_latex=false;
-    gen args=undef;
-    if (gv.size()==3) {
-        if (gv.back()==at_latex)
+    bool to_latex=false,export_style=true;
+    gen latex_parm=undef;
+    if (gv.size()>=3) for (const_iterateur it=gv.begin()+2;it!=gv.end();++it) {
+        if (*it==at_latex)
             to_latex=true;
-        else if (gv.back().is_symb_of_sommet(at_equal)) {
-            if (gv.back()._SYMBptr->feuille._VECTptr->front()!=at_latex)
-                return generrtype("Option not supported, expected \"latex\"");
-            to_latex=true;
-            args=gv.back()._SYMBptr->feuille._VECTptr->back();
+        else if (it->is_symb_of_sommet(at_equal)) {
+            const gen &lhs=it->_SYMBptr->feuille._VECTptr->front();
+            const gen &rhs=it->_SYMBptr->feuille._VECTptr->back();
+            if (lhs==at_latex) {
+                to_latex=true;
+                latex_parm=rhs;
+            } else if (lhs.is_integer() && lhs.val==_STYLE) {
+                if (!rhs.is_integer())
+                    return gentypeerr(contextptr);
+                export_style=(bool)rhs.val;
+            }
         } else return gentypeerr(contextptr);
     }
     graphe G(contextptr);
@@ -1050,16 +1056,18 @@ gen _export_graph(const gen &g,GIAC_CONTEXT) {
     if (to_latex) {
         if (!has_suffix(filename,".tex"))
             filename=filename+".tex";
-        if (args.type==_VECT)
-            args._VECTptr->insert(args._VECTptr->begin(),gr);
-        else if (!is_undef(args))
-            args=vecteur(1,args);
-        gen drawing=_draw_graph(args.type==_VECT?change_subtype(args,_SEQ__VECT):gr,contextptr);
-        return G.write_latex(filename,drawing);
+        if (latex_parm.type==_VECT)
+            latex_parm._VECTptr->insert(latex_parm._VECTptr->begin(),gr);
+        else if (!is_undef(latex_parm))
+            latex_parm=vecteur(1,latex_parm);
+        gen drawing=_draw_graph(latex_parm.type==_VECT?change_subtype(latex_parm,_SEQ__VECT):gr,contextptr);
+        return G.write_latex(filename,drawing)?1:0;
     }
-    if (!has_suffix(filename,".dot") && !has_suffix(filename,".gv"))
-        filename=filename+".dot";
-    return G.write_dot(filename)?1:0;
+    if (has_suffix(filename,".dot") || has_suffix(filename,".gv"))
+        return G.write_dot(filename,export_style)?1:0;
+    if (has_suffix(filename,".lst"))
+        return G.write_lst(filename)?1:0;
+    return generr("File format not recognized");
 }
 static const char _export_graph_s[]="export_graph";
 static define_unary_function_eval(__export_graph,&_export_graph,_export_graph_s);
@@ -1072,26 +1080,100 @@ define_unary_function_ptr5(at_export_graph,alias_at_export_graph,&__export_graph
  */
 gen _import_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type!=_STRNG)
-        return gentypeerr(contextptr);
+    string filename;
+    bool eval_labels=false,eval_weights=false,import_style=true;
+    if (g.type==_VECT && g.subtype==_SEQ__VECT) {
+        const vecteur &gv=*g._VECTptr;
+        if (gv.front().type==_STRNG)
+            filename=graphe::genstring2str(gv.front());
+        else return generrtype("Expected a string");
+        /* parse options */
+        for (const_iterateur it=gv.begin()+1;it!=gv.end();++it) {
+            if (it->is_symb_of_sommet(at_equal)) {
+                const gen &lhs=it->_SYMBptr->feuille._VECTptr->front();
+                const gen &rhs=it->_SYMBptr->feuille._VECTptr->back();
+                if (lhs==at_eval) {
+                    if (!rhs.is_integer())
+                        return gentypeerr(contextptr);
+                    switch(rhs.val) {
+                    case _GT_WEIGHTS: eval_weights=true; break;
+                    case _LABELS: eval_labels=true; break;
+                    case _GT_WEIGHTS+_LABELS: eval_weights=eval_labels=true; break;
+                    default: return gensizeerr(contextptr);
+                    }
+                } else if (lhs.is_integer() && lhs.val==_STYLE) {
+                    if (!rhs.is_integer())
+                        return gentypeerr(contextptr);
+                    import_style=(bool)rhs.val;
+                }
+            }
+        }
+    } else if (g.type==_STRNG)
+        filename=graphe::genstring2str(g);
+    else return generrtype("Expected a string");
     graphe G(contextptr);
-    string filename=graphe::genstring2str(g);
     if (filename.empty())
         return undef;
-    if (!has_suffix(filename,".dot") && !has_suffix(filename,".gv"))
-        filename=filename+".dot";
+    int f=-1; // dot: 0, lst: 1
+    if (has_suffix(filename,".dot") || has_suffix(filename,".gv"))
+        f=0;
+    else if (has_suffix(filename,".lst"))
+        f=1;
+    else return generr("File format not recognized");
     filename=make_absolute_file_path(filename);
-    if (!G.read_dot(filename))
+    if ((f==0 && !G.read_dot(filename)) || (f==1 && !G.read_lst(filename)))
         gt_err(_GT_ERR_READING_FAILED);
-    gen_map m;
-    gen l;
-    for (int i=0;i<G.node_count();++i) {
-        l=G.node_label(i);
-        if (!is_exactly_zero(m[l])) {
-            *logptr(contextptr) << "Warning: imported graph contains equally labeled vertices\n";
-            break;
+    if (f==0) {
+        gen_map m;
+        gen l;
+        for (int i=0;i<G.node_count();++i) {
+            l=G.node_label(i);
+            if (m.find(l)!=m.end())
+                return generr("Imported graph contains vertices with equal labels");
+            m[l]=1;
         }
-        m[l]=1;
+        int n=G.node_count();
+        graphe::attrib::iterator a;
+        for (int i=0;i<n;++i) {
+            graphe::attrib &va=G.node_attributes(i);
+            if (!import_style) {
+                if ((a=va.find(_GT_ATTRIB_COLOR))!=va.end()) va.erase(a);
+                if ((a=va.find(_GT_ATTRIB_SHAPE))!=va.end()) va.erase(a);
+                if ((a=va.find(_GT_ATTRIB_STYLE))!=va.end()) va.erase(a);
+                if ((a=va.find(_GT_ATTRIB_POSITION))!=va.end()) va.erase(a);
+            } else if ((a=va.find(_GT_ATTRIB_POSITION))!=va.end()) {
+                std::string str=a->second.type==_STRNG?*a->second._STRNGptr:a->second.print(contextptr);
+                if (str.back()=='!') str.pop_back();
+                a->second=gen(graphe::genstring2str(a->second),contextptr);
+                if (a->second.type==_VECT || a->second.type==_CPLX)
+                    a->second=symbolic(at_point,a->second);
+            }
+            if (eval_labels) {
+                if ((a=va.find(_GT_ATTRIB_LABEL))!=va.end() && a->second.type==_STRNG)
+                    a->second=gen(graphe::genstring2str(a->second),contextptr);
+            }
+            if (eval_weights) {
+                if ((a=va.find(_GT_ATTRIB_WEIGHT))!=va.end() && a->second.type==_STRNG)
+                    a->second=gen(graphe::genstring2str(a->second),contextptr);
+            }
+        }
+        graphe::ipairs E;
+        G.get_edges_as_pairs(E);
+        for (graphe::ipairs_iter it=E.begin();it!=E.end();++it) {
+            graphe::attrib &ea=G.edge_attributes(*it);
+            if (!import_style) {
+                if ((a=ea.find(_GT_ATTRIB_COLOR))!=ea.end()) ea.erase(a);
+                if ((a=ea.find(_GT_ATTRIB_STYLE))!=ea.end()) ea.erase(a);
+            }
+            if (eval_labels) {
+                if ((a=ea.find(_GT_ATTRIB_LABEL))!=ea.end() && a->second.type==_STRNG)
+                    a->second=gen(graphe::genstring2str(a->second),contextptr);
+            }
+            if (eval_weights) {
+                if ((a=ea.find(_GT_ATTRIB_WEIGHT))!=ea.end() && a->second.type==_STRNG)
+                    a->second=gen(graphe::genstring2str(a->second),contextptr);
+            }
+        }
     }
     return G.to_gen();
 }
@@ -1423,7 +1505,7 @@ gen _maximum_matching(const gen &g,GIAC_CONTEXT) {
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     graphe::ipairs matching;
-    G.find_maximum_matching(matching);
+    G.maximum_matching(matching);
     vecteur res;
     for (graphe::ipairs_iter it=matching.begin();it!=matching.end();++it) {
         res.push_back(makevecteur(G.node_label(it->first),G.node_label(it->second)));
@@ -1442,21 +1524,54 @@ define_unary_function_ptr5(at_maximum_matching,alias_at_maximum_matching,&__maxi
 gen _bipartite_matching(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     graphe G(contextptr);
-    if (!G.read_gen(g))
+    int dir=0;
+    double eps=1e-5;
+    if (g.type==_VECT && g.subtype==_SEQ__VECT) {
+        const vecteur &gv=*g._VECTptr;
+        if (!G.read_gen(gv.front()))
+            return gt_err(_GT_ERR_NOT_A_GRAPH);
+        if (gv.size()<2)
+            return gensizeerr(contextptr);
+        if (gv[1]==at_maximize)
+            dir=1;
+        else if (gv[1]==at_minimize)
+            dir=-1;
+        else *logptr(contextptr) << "Warning: unknown optional argument\n";
+        if (gv.size()>2 && gv[2].is_symb_of_sommet(at_equal) &&
+                gv[2]._SYMBptr->feuille._VECTptr->front()==at_epsilon) {
+            gen val=_evalf(gv[2]._SYMBptr->feuille._VECTptr->back(),contextptr);
+            if (val.type!=_DOUBLE_ || (eps=val.DOUBLE_val())<=0)
+                return generr("Expected a positive real number");
+        }
+    } else if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
-    if (G.is_weighted())
-        return gt_err(_GT_ERR_UNWEIGHTED_GRAPH_REQUIRED);
+    if (dir!=0 && !G.is_weighted())
+        return gt_err(_GT_ERR_WEIGHTED_GRAPH_REQUIRED);
     graphe::ivector p1,p2;
-    if (!G.is_bipartite(p1,p2))
+    G.connected_components_to_subgraphs();
+    if (!G.is_bipartite(p1,p2,-1,_GT_CC_COMPONENTS_ARE_SUBGRAPHS))
         return gt_err(_GT_ERR_NOT_BIPARTITE);
     graphe::ipairs matching;
-    vecteur res(G.bipartite_matching(p1,p2,matching));
+    gen w(0);
+    if (dir==0)
+        G.bipartite_matching(p1,p2,matching,-1,_GT_CC_COMPONENTS_ARE_SUBGRAPHS);
+    else {
+        if (!G.weighted_bipartite_matching(p1,p2,matching,dir==-1,eps,-1,_GT_CC_COMPONENTS_ARE_SUBGRAPHS))
+            return vecteur(0);
+        for (graphe::ipairs_iter it=matching.begin();it!=matching.end();++it) {
+            w+=G.weight(*it);
+        }
+    }
+    vecteur res(matching.size());
     for (graphe::ipairs_iter it=matching.begin();it!=matching.end();++it) {
         res[it-matching.begin()]=makevecteur(G.node_label(it->first),G.node_label(it->second));
     }
-    return change_subtype(res,_LIST__VECT);
+    gen ret=change_subtype(res,_LIST__VECT);
+    if (dir==0)
+        return ret;
+    return makesequence(w,ret);
 }
 static const char _bipartite_matching_s[]="bipartite_matching";
 static define_unary_function_eval(__bipartite_matching,&_bipartite_matching,_bipartite_matching_s);
@@ -1573,17 +1688,9 @@ gen _hypercube_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (!g.is_integer() || g.val<=0)
         return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
-    int n=g.val,N=std::pow(2,n);
+    int n=g.val;
     graphe G(contextptr);
-    for (int i=0;i<N;++i) {
-        G.add_node(graphe::to_binary(i,n));
-    }
-    for (int i=0;i<N;++i) {
-        for (int j=i+1;j<N;++j) {
-            if (_hamdist(makesequence(i,j),contextptr).val==1)
-                G.add_edge(i,j);
-        }
-    }
+    G.make_hypercube_graph(n);
     return G.to_gen();
 }
 static const char _hypercube_graph_s[]="hypercube_graph";
@@ -1641,19 +1748,24 @@ define_unary_function_ptr5(at_seidel_switch,alias_at_seidel_switch,&__seidel_swi
  *
  * Supported options are:
  *
- *  - spring: use force-directed method to draw graph G (the default)
+ *  - spring: use force-directed method to draw graph G
  *  - tree[=r or [r1,r2,...]]: draw tree or forest G [with optional
  *    specification of root nodes]
  *  - bipartite: draw the bipartite graph G keeping the partitions separated
  *  - plane or planar: draw planar graph G
  *  - circle[=<cycle>]: draw graph G as circular using the leading cycle,
  *    otherwise one must be specified or all vertices are placed on a circle
+ *    (this is the default method)
  *  - plot3d: draw 3D representation of graph G (possible only with the
  *    spring method and with G connected)
  *  - labels=true or false: draw (the default) or suppress node labels and
  *    weights
+ *  - point||VECT: set the top-left corner of the layout
+ *  - size=VECT: set the size of the layout (width, height, [depth])
+ *  - scale=REAL: scale the layout
+ *  - title=STRING: title of the layout (to be printed above the top-left corner)
  *
- * An exception is raised if a method is specified but the corresponding
+ * An error is returned if a method is specified but the corresponding
  * necessary conditions are not met.
  */
 gen _draw_graph(const gen &g,GIAC_CONTEXT) {
@@ -1666,8 +1778,8 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     if (!G_orig.read_gen(has_opts?gv.front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     bool labels=G_orig.node_count()<=60,isdir=G_orig.is_directed();
-    vecteur root_nodes,outer_vertices;
-    gen coords_dest=undef;
+    vecteur root_nodes,outer_vertices,ar,pos;
+    gen coords_dest=undef,title=undef,sc=undef;
     int method=_GT_STYLE_DEFAULT,opt_counter=0;
     if (has_opts) {
         // parse options
@@ -1695,13 +1807,28 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                         labels=(bool)rh.val;
                         opt_counter--;
                         break;
+                    case _TITLE:
+                        if (rh.type!=_STRNG)
+                            return generrtype("Expected a string");
+                        title=rh;
+                        opt_counter--;
+                        break;
+                    default: return generrtype("Unrecognized option");
                     }
                 } else if (lh==at_cercle || lh==at_convexhull) {
                     if (rh.type!=_VECT)
-                        return gentypeerr(contextptr);
+                        return generrtype("Expected a list of vertices");
                     outer_vertices=*rh._VECTptr;
                     method=_GT_STYLE_CIRCLE;
-                }
+                } else if (lh==at_size) {
+                    if (rh.type!=_VECT || rh._VECTptr->size()!=2)
+                        return gentypeerr(contextptr);
+                    ar=*rh._VECTptr;
+                    opt_counter--;
+                } else if (lh==at_scale) {
+                    sc=rh;
+                    opt_counter--;
+                } else return generrtype("Unrecognized option");
             } else if (opt==at_cercle || opt==at_convexhull)
                 method=_GT_STYLE_CIRCLE;
             else if (opt==at_plan)
@@ -1721,12 +1848,23 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                     break;
                 case _GT_PLANAR:
                     method=_GT_STYLE_PLANAR;
+                    break;
+                default: return generrtype("Unrecognized drawing method");
                 }
-            }
+            } else if (opt.type==_VECT) {
+                pos=*opt._VECTptr;
+                opt_counter--;
+            } else return generrtype("Unrecognized option");
         }
         if (opt_counter>1)
             return gt_err(_GT_ERR_INVALID_DRAWING_METHOD);
     }
+    if (is_undef(title)) {
+        gen gname;
+        if (G_orig.get_graph_attribute(_GT_ATTRIB_NAME,gname))
+            title=gname;
+    }
+    bool in_3d=method==_GT_STYLE_3D;
     graphe G(contextptr);
     G_orig.underlying(G);
     int i,comp_method=method;
@@ -1811,10 +1949,10 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
             case _GT_STYLE_TREE:
                 if (check && !C.is_tree())
                     return gt_err(_GT_ERR_NOT_A_TREE);
-                C.make_tree_layout(x,sep,roots.empty()?0:C.node_index(roots[i]));
+                C.make_tree_layout(x,sep,roots.empty()?C.tree_height(-1):C.node_index(roots[i]));
                 break;
             case _GT_STYLE_PLANAR:
-                if (!C.make_planar_layout(x))
+                if (!C.make_best_planar_layout(x,(int)std::ceil(300/std::sqrt(C.node_count()))))
                     return gt_err(_GT_ERR_NOT_PLANAR);
                 break;
             case _GT_STYLE_CIRCLE:
@@ -1843,7 +1981,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
             Cv.push_back(C);
         }
         // combine component layouts
-        graphe::point dx(method==_GT_STYLE_3D?3:2,0.0);
+        graphe::point dx(in_3d?3:2,0.0);
         for (int i=0;i<nc;++i) {
             graphe::rectangle &rect=bounding_rects[i];
             rect=graphe::layout_bounding_rect(layouts[i],sep/PLASTIC_NUMBER_3);
@@ -1878,12 +2016,75 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
             }
         }
     }
+    /* scale and/or translate the main layout */
+    if (!pos.empty() || !ar.empty() || !is_undef(sc)) {
+        graphe::rectangle br_xy=graphe::layout_bounding_rect(main_layout);
+        double x0=br_xy.x(),y0=br_xy.y(),z0=0.0;
+        double lw=br_xy.width(),lh=br_xy.height(),ld=0.0;
+        if (in_3d) {
+            graphe::rectangle br_yz=graphe::layout_bounding_rect(main_layout,0,1);
+            z0=br_yz.y();
+            ld=br_yz.height();
+        }
+        if (!is_undef(sc)) {
+            gen d=_evalf(sc,contextptr);
+            if (d.type!=_DOUBLE_)
+                return gentypeerr(contextptr);
+            graphe::scale_layout(main_layout,d.DOUBLE_val());
+        }
+        if (!ar.empty()) {
+            if ((in_3d && ar.size()!=3) || (method!=_GT_STYLE_3D && ar.size()!=2))
+                return gendimerr(contextptr);
+            graphe::point s(in_3d?3:2);
+            for (const_iterateur it=ar.begin();it!=ar.end();++it) {
+                if (!is_positive(*it,contextptr))
+                    return gentypeerr(contextptr);
+                int i=it-ar.begin();
+                gen d=_evalf(*it,contextptr);
+                if (d.type!=_DOUBLE_)
+                    return gentypeerr(contextptr);
+                double l=(i==0?lw:(i==1?lh:ld));
+                s[i]=is_exactly_zero(*it)?-1:(l==0.0?1.0:d.DOUBLE_val()/l);
+            }
+            if ((in_3d && s[0]*s[1]*s[2]<0) || (!in_3d && s[0]<0 && s[1]<0))
+                return gensizeerr(contextptr);
+            double def_sc=-1;
+            for (graphe::point::const_iterator it=s.begin();it!=s.end();++it) {
+                if (*it>0) { def_sc=*it; break; }
+            }
+            for (graphe::point::iterator it=s.begin();it!=s.end();++it) {
+                if (*it<0) *it=def_sc;
+            }
+            for (graphe::layout::iterator it=main_layout.begin();it!=main_layout.end();++it) {
+                for (graphe::point::const_iterator jt=s.begin();jt!=s.end();++jt) {
+                    int i=jt-s.begin();
+                    double c=(i==0?x0:(i==1?y0:z0));
+                    it->at(i)=c+(it->at(i)-c)*(*jt);
+                }
+            }
+        }
+        if (!pos.empty()) {
+            graphe::point dp(in_3d?3:2,0.0);
+            if (pos.size()!=dp.size())
+                return gendimerr(contextptr);
+            for (const_iterateur it=pos.begin();it!=pos.end();++it) {
+                int i=it-pos.begin();
+                gen c=_evalf(*it,contextptr);
+                if (c.type!=_DOUBLE_)
+                    return gentypeerr(contextptr);
+                dp[i]=c.DOUBLE_val()-(i==0?x0:(i==1?y0:z0));
+            }
+            graphe::translate_layout(main_layout,dp);
+        }
+    }
+    /* make Giac drawing */
+    graphe::rectangle br_xy=graphe::layout_bounding_rect(main_layout);
     vecteur drawing,coords;
     if (!is_undef(coords_dest)) {
         // store vertex coordinates to coords_dest
         coords.resize(main_layout.size());
         for (graphe::layout_iter it=main_layout.begin();it!=main_layout.end();++it) {
-            coords[it-main_layout.begin()]=method==_GT_STYLE_3D?
+            coords[it-main_layout.begin()]=in_3d?
                         makevecteur(it->at(0),it->at(1),it->at(2)) :
                         makecomplex(it->front(),it->back());
         }
@@ -1894,6 +2095,13 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
     if (method!=_GT_STYLE_3D) {
         drawing.push_back(symb_equal(change_subtype(gen(_AXES),_INT_PLOT),0));
         drawing.push_back(symb_equal(change_subtype(gen(_GL_ORTHO),_INT_PLOT),1));
+    }
+    if (!is_undef(title) && !in_3d) {
+        graphe::point tpos(2);
+        tpos.front()=br_xy.x(); tpos.back()=br_xy.y()+br_xy.height()*1.138;
+        G_orig.append_label(drawing,tpos,title,_QUADRANT1);
+        gen white_dot=graphe::customize_display(_POINT_POINT|_POINT_WIDTH_2|_WHITE);
+        drawing.push_back(_point(makesequence(tpos.front(),tpos.back(),white_dot),contextptr));
     }
     G_orig.draw_edges(drawing,main_layout);
     G_orig.draw_nodes(drawing,main_layout);
@@ -1926,6 +2134,8 @@ gen _sierpinski_graph(const gen &g,GIAC_CONTEXT) {
         if (g._VECTptr->size()>2 && g._VECTptr->at(2)==at_triangle)
             trng=true;
     }
+    if (trng && k<3)
+        return generr("For Sierpinski triangle graphs it must be k>2");
     graphe G(contextptr);
     G.make_sierpinski_graph(n,k,trng);
     return G.to_gen();
@@ -1997,6 +2207,8 @@ gen _petersen_graph(const gen &g,GIAC_CONTEXT) {
         if (n<=0 || k<=0)
             return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
     }
+    if (n<3 || k<1 || k>(n-1)/2)
+        return generr("The condition n>=3 and 1<=k<=(n-1)/2 is not satisfied");
     graphe G(contextptr);
     graphe::layout x;
     G.make_petersen_graph(n,k,&x);
@@ -2067,8 +2279,7 @@ gen _random_bipartite_graph(const gen &g,GIAC_CONTEXT) {
         n=gv.front().val;
         if (n<1)
             return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
-        a=G.rand_integer(n-1)+1;
-        b=n-a;
+        a=b=-1;
     } else if (gv.front().type==_VECT && gv.front()._VECTptr->size()==2) {
         const vecteur &ab=*gv.front()._VECTptr;
         if (!ab.front().is_integer() || !ab.back().is_integer())
@@ -2083,10 +2294,24 @@ gen _random_bipartite_graph(const gen &g,GIAC_CONTEXT) {
     if (gv.back().is_integer()) {
         if ((m=gv.back().val)<1)
             return generr("Expected a positive integer");
+        if (a<0 && b<0) do {
+            a=G.rand_integer(n-1)+1;
+            b=n-a;
+        } while (m>a*b);
         if (m>a*b)
             return generr("Number of edges too large");
+        if (m==a*b)
+            return _complete_graph(makesequence(a,b),contextptr);
         p=m;
-    } else p=gv.back().DOUBLE_val();
+    } else {
+        if (a<0 && b<0) {
+            a=G.rand_integer(n-1)+1;
+            b=n-a;
+        }
+        p=gv.back().DOUBLE_val();
+        if (p<=0 || p>=1)
+            return generr("Expected a a real in (0,1)");
+    }
     G.make_default_labels(V,a,0);
     G.make_default_labels(W,b,a);
     G.reserve_nodes(a+b);
@@ -2330,7 +2555,7 @@ gen _assign_edge_weights(const gen &g,GIAC_CONTEXT) {
             return generrtype("Expected an interval");
         gen a=gv.back()._SYMBptr->feuille._VECTptr->front(),
                 b=gv.back()._SYMBptr->feuille._VECTptr->back();
-        if (!graphe::is_real_number(a) || !graphe::is_real_number(b))
+        if (!graphe::is_real_number(a,contextptr) || !graphe::is_real_number(b,contextptr))
             return generrtype("Expected an interval of reals");
         G.randomize_edge_weights(_evalf(a,contextptr).DOUBLE_val(),_evalf(b,contextptr).DOUBLE_val(),false);
     }
@@ -2786,11 +3011,25 @@ gen _set_vertex_attribute(const gen &g,GIAC_CONTEXT) {
     else if (gv.size()==4 && gv[2].type==_VECT && gv[3].type==_VECT)
         attr=*_zip(makesequence(at_equal,gv[2],gv[3]),contextptr)._VECTptr;
     else attr=vecteur(gv.begin()+2,gv.end());
+    bool dup_label=false;
     for (const_iterateur it=attr.begin();it!=attr.end();++it) {
         if (!it->is_symb_of_sommet(at_equal) || it->_SYMBptr->feuille._VECTptr->front().type!=_STRNG)
             return gt_err(_GT_ERR_TAGVALUE_PAIR_EXPECTED);
         key=G.tag2index(graphe::genstring2str(it->_SYMBptr->feuille._VECTptr->front()));
-        G.set_node_attribute(v,key,it->_SYMBptr->feuille._VECTptr->back());
+        const gen &val=it->_SYMBptr->feuille._VECTptr->back();
+        if (key==_GT_ATTRIB_LABEL) {
+            gen a;
+            for (int i=0;i<G.node_count();++i) {
+                if (i!=v && G.get_node_attribute(i,key,a) && a==val) {
+                    dup_label=true;
+                    break;
+                }
+            }
+        }
+        if (dup_label) {
+            *logptr(contextptr) << "Warning: already have a vertex labeled " << val << "\n";
+            dup_label=false;
+        } else G.set_node_attribute(v,key,val);
     }
     return G.to_gen();
 }
@@ -3552,28 +3791,36 @@ static const char _is_tournament_s[]="is_tournament";
 static define_unary_function_eval(__is_tournament,&_is_tournament,_is_tournament_s);
 define_unary_function_ptr5(at_is_tournament,alias_at_is_tournament,&__is_tournament,0,true)
 
-/* USAGE:   tree_height(T,r)
+/* USAGE:   tree_height(T,[r])
  *
  * Returns the height of the tree T with r as the root node.
+ * If r is not given, the minimum depth is returned, followed by the first admissible root vertex.
  */
 gen _tree_height(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
-        return gentypeerr(contextptr);
-    const vecteur &gv=*g._VECTptr;
-    if (gv.size()!=2)
-        return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     graphe G(contextptr);
-    if (!G.read_gen(gv.front()))
+    int root=-1,height,res;
+    if (g.type==_VECT && g.subtype==_SEQ__VECT) {
+        const vecteur &gv=*g._VECTptr;
+        if (gv.size()!=2)
+            return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+        if (!G.read_gen(gv.front()))
+            return gt_err(_GT_ERR_NOT_A_GRAPH);
+        if ((root=G.node_index(gv.back()))<0)
+            return gt_err(gv.back(),_GT_ERR_VERTEX_NOT_FOUND);
+        return G.tree_height(root);
+    } else if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    if (G.node_count()==1)
-        return 0;
     if (!G.is_tree())
         return gt_err(_GT_ERR_NOT_A_TREE);
-    int root;
-    if ((root=G.node_index(gv.back()))<0)
-        return gt_err(gv.back(),_GT_ERR_VERTEX_NOT_FOUND);
-    return G.tree_height(root);
+    if (G.node_count()==1)
+        height=0;
+    else res=G.tree_height(root);
+    if (root<0) {
+        height=G.tree_height(res);
+        return makesequence(height,symbolic(at_equal,makevecteur(at_maple_root,res)));
+    }
+    return res;
 }
 static const char _tree_height_s[]="tree_height";
 static define_unary_function_eval(__tree_height,&_tree_height,_tree_height_s);
@@ -3607,7 +3854,7 @@ gen _number_of_triangles(const gen &g,GIAC_CONTEXT) {
         vecteur triangles;
         for (graphe::ivectors_iter it=lst.begin();it!=lst.end();++it) {
             triangles.push_back(_sort(G.get_node_labels(*it),contextptr));
-            identifier_assign(*dest._IDNTptr,triangles,contextptr);
+            identifier_assign(*dest._IDNTptr,change_subtype(triangles,_LIST__VECT),contextptr);
         }
     }
     return cnt;
@@ -3707,7 +3954,7 @@ gen _is_planar(const gen &g,GIAC_CONTEXT) {
         for (graphe::ivectors_iter it=faces.begin();it!=faces.end();++it) {
             res.push_back(G.get_node_labels(*it));
         }
-        identifier_assign(*F._IDNTptr,res,contextptr);
+        identifier_assign(*F._IDNTptr,change_subtype(res,_LIST__VECT),contextptr);
     }
     return G.boole(U.is_planar());
 }
@@ -3844,26 +4091,7 @@ gen _grid_graph(const gen &g,GIAC_CONTEXT) {
     if (m<2 || n<2)
         return generr("Expected an integer greater than one");
     graphe G(contextptr);
-    if (trg) {
-        /* create triangulated grid using strong product of digraphs */
-        graphe X(contextptr),Y(contextptr);
-        vecteur Xlab,Ylab;
-        X.make_default_labels(Xlab,m);
-        Y.make_default_labels(Ylab,n);
-        X.add_nodes(Xlab);
-        Y.add_nodes(Ylab);
-        X.make_directed();
-        Y.make_directed();
-        for (int i=0;i<m-1;++i) X.add_edge(i,i+1);
-        for (int i=0;i<n-1;++i) Y.add_edge(i,i+1);
-        gen seq=makesequence(X.to_gen(),Y.to_gen());
-        return _underlying_graph(_graph_union(makesequence(
-                                                  _cartesian_product(seq,contextptr),
-                                                  _tensor_product(seq,contextptr)),
-                                              contextptr),
-                                 contextptr);
-    }
-    G.make_grid_graph(m,n,false);
+    G.make_grid_graph(m,n,trg?1:0);
     return G.to_gen();
 }
 static const char _grid_graph_s[]="grid_graph";
@@ -3887,7 +4115,7 @@ gen _torus_grid_graph(const gen &g,GIAC_CONTEXT) {
     if (m<3 || n<3)
         return generr("Expected an integer greater than two");
     graphe G(contextptr);
-    G.make_grid_graph(m,n,true);
+    G.make_grid_graph(m,n,2);
     return G.to_gen();
 }
 static const char _torus_grid_graph_s[]="torus_grid_graph";
@@ -3922,22 +4150,89 @@ define_unary_function_ptr5(at_web_graph,alias_at_web_graph,&__web_graph,0,true)
 
 /* USAGE:   flower_snark(n)
  *
- * Returns the n-th flower snark, where n>=3 is odd.
+ * Returns the flower snark Jn, where n>=3 is odd.
  */
 gen _flower_snark(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    int n=5;
-    if (!g.is_integer() || (n=g.val)<3 || n%2==0)
-        return generr("Expected an odd integer greater than two");
+    int n;
+    if (g.is_integer()) {
+        if ((n=g.val)<3 || n%2==0)
+            return generr("Expected an odd integer greater than two");
+    } else if (g.type==_VECT && g._VECTptr->empty())
+        n=5;
+    else return gentypeerr(contextptr);
     graphe G(contextptr);
     graphe::layout x;
-    G.make_flower_snark(n,&x);
+    assert(G.make_flower_snark(n,&x));
     G.store_layout(x);
     return G.to_gen();
 }
 static const char _flower_snark_s[]="flower_snark";
 static define_unary_function_eval(__flower_snark,&_flower_snark,_flower_snark_s);
 define_unary_function_ptr5(at_flower_snark,alias_at_flower_snark,&__flower_snark,0,true)
+
+/* USAGE:   goldberg_snark(n)
+ *
+ * Returns the Goldberg snark on 8*n vertices, where n>=3 is odd.
+ */
+gen _goldberg_snark(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    int n;
+    if (g.is_integer()) {
+        if ((n=g.val)<3 || n%2==0)
+            return generr("Expected an odd integer greater than two");
+    } else if (g.type==_VECT && g._VECTptr->empty())
+        n=5;
+    else return gentypeerr(contextptr);
+    graphe G(contextptr);
+    assert(G.make_goldberg_snark(n));
+    return G.to_gen();
+}
+static const char _goldberg_snark_s[]="goldberg_snark";
+static define_unary_function_eval(__goldberg_snark,&_goldberg_snark,_goldberg_snark_s);
+define_unary_function_ptr5(at_goldberg_snark,alias_at_goldberg_snark,&__goldberg_snark,0,true)
+
+/* USAGE:   haar_graph(n)
+ *
+ * Returns the n-th Haar graph, where n>=1.
+ */
+gen _haar_graph(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    int n=0;
+    if (!g.is_integer() || (n=g.val)<1)
+        return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
+    graphe G(contextptr);
+    if (G.make_haar_graph(n))
+        return G.to_gen();
+    return generr("Failed to construct Haar graph");
+}
+static const char _haar_graph_s[]="haar_graph";
+static define_unary_function_eval(__haar_graph,&_haar_graph,_haar_graph_s);
+define_unary_function_ptr5(at_haar_graph,alias_at_haar_graph,&__haar_graph,0,true)
+
+/* USAGE:   paley_graph(n)
+ *
+ * Returns the Paley graph for prime p and positive integer k.
+ */
+gen _paley_graph(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    int p,k=1;
+    if (g.is_integer()) {
+        p=g.val;
+    } else if (g.type==_VECT && g.subtype==_SEQ__VECT && g._VECTptr->size()==2) {
+        if (!g._VECTptr->front().is_integer() || !g._VECTptr->back().is_integer() ||
+            (p=g._VECTptr->front().val)<1 || (k=g._VECTptr->back().val)<1)
+            return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
+    } else return gentypeerr(contextptr);
+    if (is_zero(_is_prime(p,contextptr)) || p==2)
+        return generr("Odd prime number is required");
+    graphe G(contextptr);
+    G.make_paley_graph(p,k);
+    return G.to_gen();
+}
+static const char _paley_graph_s[]="paley_graph";
+static define_unary_function_eval(__paley_graph,&_paley_graph,_paley_graph_s);
+define_unary_function_ptr5(at_paley_graph,alias_at_paley_graph,&__paley_graph,0,true)
 
 /* USAGE:   cartesian_product(G1,G2,...)
  *
@@ -4088,7 +4383,7 @@ gen _kneser_graph(const gen &g,GIAC_CONTEXT) {
     if (n<2 || n>20 || k<1 || k>=n)
         return generr("Failed to satisfy 2<n<=20 and 1<=k<n");
     graphe G(contextptr);
-    if (!G.make_kneser_graph(n,k))
+    if (!G.make_intersection_graph(n,k,0,true))
         return gensizeerr(contextptr);
     return G.to_gen();
 }
@@ -4096,20 +4391,48 @@ static const char _kneser_graph_s[]="kneser_graph";
 static define_unary_function_eval(__kneser_graph,&_kneser_graph,_kneser_graph_s);
 define_unary_function_ptr5(at_kneser_graph,alias_at_kneser_graph,&__kneser_graph,0,true)
 
+/* USAGE:   johnson_graph(n,k)
+ *
+ * Returns Johnson graph K(n,k) with comb(n,k) vertices. The largest acceptable
+ * value of n is 20. Johnson graphs with more than 10000 vertices will not be
+ * created.
+ */
+gen _johnson_graph(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    const vecteur &gv=*g._VECTptr;
+    if (gv.size()!=2)
+        return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
+    if (!gv.front().is_integer() || !gv.back().is_integer())
+        return generrtype("Expected an integer");
+    int n=gv.front().val,k=gv.back().val;
+    if (n<2 || n>20 || k<1 || k>=n)
+        return generr("Failed to satisfy 2<n<=20 and 1<=k<n");
+    graphe G(contextptr);
+    if (!G.make_intersection_graph(n,k,k-1,false))
+        return gensizeerr(contextptr);
+    return G.to_gen();
+}
+static const char _johnson_graph_s[]="johnson_graph";
+static define_unary_function_eval(__johnson_graph,&_johnson_graph,_johnson_graph_s);
+define_unary_function_ptr5(at_johnson_graph,alias_at_johnson_graph,&__johnson_graph,0,true)
+
 /* USAGE:   odd_graph(n)
  *
  * Returns odd graph of order n as Kneser graph K(2n-1,n-1). The largest
- * acceptable value of n is 8.
+ * acceptable value of n is 10.
  */
 gen _odd_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (!g.is_integer() || !is_strictly_positive(g,contextptr))
         return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
     int n=g.val;
-    if (n<2 || n>8)
-        return generr("Failed to satisfy 2<n<=8");
+    if (n<2 || n>10)
+        return generr("Failed to satisfy 2<n<=10");
     graphe G(contextptr);
-    assert(G.make_kneser_graph(2*n-1,n-1));
+    if (!G.make_intersection_graph(2*n-1,n-1,0,false))
+        return gensizeerr(contextptr);
     return G.to_gen();
 }
 static const char _odd_graph_s[]="odd_graph";
@@ -4434,7 +4757,7 @@ gen _interval_graph(const gen &g,GIAC_CONTEXT) {
             return generrtype("Expected an interval");
         a=it->_SYMBptr->feuille._VECTptr->front();
         b=it->_SYMBptr->feuille._VECTptr->back();
-        if (!graphe::is_real_number(a) || !graphe::is_real_number(b))
+        if (!graphe::is_real_number(a,contextptr) || !graphe::is_real_number(b,contextptr))
             return generrtype("Expected an interval of reals");
         string str;
         str+=gen2string(a);
@@ -5177,7 +5500,7 @@ gen _degree_sequence(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr,false);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    return G.degree_sequence();
+    return vector_int_2_vecteur(G.degree_sequence());
 }
 static const char _degree_sequence_s[]="degree_sequence";
 static define_unary_function_eval(__degree_sequence,&_degree_sequence,_degree_sequence_s);
@@ -5678,8 +6001,8 @@ gen _is_bipartite(const gen &g,GIAC_CONTEXT) {
         return G.boole(false);
     if (!is_undef(P)) {
         identifier_assign(*P._IDNTptr,
-                          makevecteur(_sort(G.get_node_labels(V1),contextptr),
-                                      _sort(G.get_node_labels(V2),contextptr)),
+                          change_subtype(makevecteur(_sort(G.get_node_labels(V1),contextptr),
+                                                    _sort(G.get_node_labels(V2),contextptr)),_LIST__VECT),
                           contextptr);
     }
     return G.boole(true);
@@ -5791,10 +6114,11 @@ gen _set_vertex_positions(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     int n,d=0;
     if ((n=vp.size())!=G.node_count())
-        return generr("Number of positions must match the number of vertices");
+        return generr("Number of points must match the number of vertices");
     graphe::layout x(n);
     for (int i=0;i<n;++i) {
-        graphe::gen2point(vp[i],x[i]);
+        if (!graphe::gen2point(vp[i],x[i],contextptr))
+            return generr("Invalid point specification");
         if (d==0)
             d=x[i].size();
         else if (int(x[i].size())!=d)
@@ -5877,7 +6201,7 @@ gen _find_cliques(const gen &g,GIAC_CONTEXT) {
             cg.push_back(it->second);
         }
         assert(!cg.empty());
-        identifier_assign(*dest._IDNTptr,cg.size()>1?cg:cg.front(),contextptr);
+        identifier_assign(*dest._IDNTptr,change_subtype(cg.size()>1?cg:cg.front(),_LIST__VECT),contextptr);
     }
     if (lb==ub)
         return stats[lb];
@@ -6067,6 +6391,112 @@ gen _is_subgraph_isomorphic(const gen &g,GIAC_CONTEXT) {
 static const char _is_subgraph_isomorphic_s[]="is_subgraph_isomorphic";
 static define_unary_function_eval(__is_subgraph_isomorphic,&_is_subgraph_isomorphic,_is_subgraph_isomorphic_s);
 define_unary_function_ptr5(at_is_subgraph_isomorphic,alias_at_is_subgraph_isomorphic,&__is_subgraph_isomorphic,0,true)
+
+/* USAGE:   identify_graph(G,[opts])
+ *
+ * Returns the list of special graphs which are isomorphic to G.
+ * - option haar_graph=false or haar_graph=Intg(n)
+ */
+gen _identify_graph(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    graphe G(contextptr);
+    int haar_limit=25;
+    if (g.type==_VECT && g.subtype==_SEQ__VECT) {
+        const vecteur &gv=*g._VECTptr;
+        if (!G.read_gen(gv.front()))
+            return gt_err(_GT_ERR_NOT_A_GRAPH);
+        /* parse options */
+        for (const_iterateur it=gv.begin()+1;it!=gv.end();++it) {
+            if (it->is_symb_of_sommet(at_equal)) {
+                const gen &lhs=it->_SYMBptr->feuille._VECTptr->front();
+                const gen &rhs=it->_SYMBptr->feuille._VECTptr->back();
+                if (lhs==at_haar_graph) {
+                    if (!rhs.is_integer() || rhs.val<0 || rhs.val>64)
+                        return generr("Expected an integer between 0 and 64");
+                    haar_limit=rhs.val;
+                }
+            }
+        }
+    } else if (!G.read_gen(g))
+        return gt_err(_GT_ERR_NOT_A_GRAPH);
+    graphe::ivectors spec;
+    G.identify_from_sequences(spec,haar_limit);
+    vecteur res;
+    for (graphe::ivectors_iter it=spec.begin();it!=spec.end();++it) {
+        graphe::ivector iparm(it->begin()+1,it->end());
+        vecteur parm=vector_int_2_vecteur(iparm);
+        switch(it->front()) {
+        case _GT_SEQ_ANTIPRISM:
+            res.push_back(makevecteur(at_antiprism_graph,parm[0]));
+            break;
+        case _GT_SEQ_COMPLETE:
+            parm.insert(parm.begin(),at_complete_graph);
+            res.push_back(parm);
+            break;
+        case _GT_SEQ_CYCLE:
+            res.push_back(makevecteur(at_cycle_graph,parm[0]));
+            break;
+        case _GT_SEQ_FLOWER:
+            res.push_back(makevecteur(at_flower_snark,parm[0]));
+            break;
+        case _GT_SEQ_GOLDBERG:
+            res.push_back(makevecteur(at_goldberg_snark,parm[0]));
+            break;
+        case _GT_SEQ_GRID:
+            if (iparm[2]<2)
+                res.push_back(makevecteur(at_grid_graph,parm[0],parm[1],graphe::boole(iparm[2]==1)));
+            else res.push_back(makevecteur(at_torus_grid_graph,parm[0],parm[1]));
+            break;
+        case _GT_SEQ_HAAR:
+            res.push_back(makevecteur(at_haar_graph,parm[0]));
+            break;
+        case _GT_SEQ_HYPERCUBE:
+            res.push_back(makevecteur(at_hypercube_graph,parm[0]));
+            break;
+        case _GT_SEQ_JOHNSON:
+            res.push_back(makevecteur(at_johnson_graph,parm[0],parm[1]));
+            break;
+        case _GT_SEQ_KNESER:
+            res.push_back(makevecteur(at_kneser_graph,parm[0],parm[1]));
+            break;
+        case _GT_SEQ_ODD:
+            res.push_back(makevecteur(at_odd_graph,parm[0]));
+            break;
+        case _GT_SEQ_PALEY:
+            res.push_back(makevecteur(at_paley_graph,parm[0],parm[1]));
+            break;
+        case _GT_SEQ_PATH:
+            res.push_back(makevecteur(at_path_graph,parm[0]));
+            break;
+        case _GT_SEQ_PETERSEN:
+            res.push_back(makevecteur(at_petersen_graph,parm[0],parm[1]));
+            break;
+        case _GT_SEQ_PRISM:
+            res.push_back(makevecteur(at_prism_graph,parm[0]));
+            break;
+        case _GT_SEQ_SIERPINSKI:
+            res.push_back(makevecteur(at_sierpinski_graph,parm[0],parm[1],graphe::boole(iparm[2]==1)));
+            break;
+        case _GT_SEQ_STAR:
+            res.push_back(makevecteur(at_star_graph,parm[0]));
+            break;
+        case _GT_SEQ_WEB:
+            res.push_back(makevecteur(at_web_graph,parm[0],parm[1]));
+            break;
+        case _GT_SEQ_WHEEL:
+            res.push_back(makevecteur(at_wheel_graph,parm[0]));
+            break;
+        default: break;
+        }
+    }
+    const char *name=G.identify();
+    if (name!=NULL)
+        res.push_back(makevecteur(at_graph,string2gen(name,false)));
+    return change_subtype(res,_LIST__VECT);
+}
+static const char _identify_graph_s[]="identify_graph";
+static define_unary_function_eval(__identify_graph,&_identify_graph,_identify_graph_s);
+define_unary_function_ptr5(at_identify_graph,alias_at_identify_graph,&__identify_graph,0,true)
 
 /* USAGE:   graph_automorphisms(G)
  *
@@ -6867,7 +7297,7 @@ gen _fundamental_cycle(const gen &g,GIAC_CONTEXT) {
     if (!G.is_connected())
         return gt_err(_GT_ERR_CONNECTED_GRAPH_REQUIRED);
     graphe::ivectors cycles;
-    G.fundamental_cycles(cycles,-1,false);
+    G.fundamental_cycles(cycles);
     if (cycles.size()!=1)
         return generr("The graph is not unicyclic");
     graphe::ivector &fc=cycles.front();
@@ -7734,8 +8164,7 @@ gen _minimum_vertex_cover(const gen &g,GIAC_CONTEXT) {
     if (G.is_empty())
         return vecteur(0);
     graphe::ivector cover;
-    G.mvc(cover,approx?_GT_VC_APPROX_CLIQUE:_GT_VC_EXACT);
-    if (cover.empty())
+    if (!G.mvc(cover,approx?_GT_VC_APPROX_CLIQUE:_GT_VC_EXACT))
         return undef; // an error occurred
     return G.get_node_labels(cover);
 }
@@ -7890,6 +8319,44 @@ gen _simplicial_vertices(const gen &g,GIAC_CONTEXT) {
 static const char _simplicial_vertices_s[]="simplicial_vertices";
 static define_unary_function_eval(__simplicial_vertices,&_simplicial_vertices,_simplicial_vertices_s);
 define_unary_function_ptr5(at_simplicial_vertices,alias_at_simplicial_vertices,&__simplicial_vertices,0,true)
+
+/* USAGE:   pruefer_code(T|S)
+ *
+ * Returns the Pruefer sequence for the tree T or converts the sequence S into a corresponding tree.
+ */
+gen _pruefer_code(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    graphe G(contextptr);
+    graphe::ivector code;
+    if (g.subtype==_GRAPH__VECT) {
+        if (!G.read_gen(g))
+            return gt_err(_GT_ERR_NOT_A_GRAPH);
+        if (G.is_directed())
+            return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
+        if (!G.pruefer_encode(code,true))
+            return generrtype("Graph is not a tree");
+        for (graphe::ivector::iterator it=code.begin();it!=code.end();++it) {
+            *it+=array_start(contextptr);
+        }
+        return vector_int_2_vecteur(code);
+    } else {
+        code=vecteur_2_vector_int(*g._VECTptr);
+        int n=code.size()+2;
+        graphe::ivector::iterator it=code.begin();
+        for (;it!=code.end();++it) {
+            *it-=array_start(contextptr);
+            if (*it<0 || *it>=n) break;
+        }
+        if (it!=code.end() || !G.pruefer_decode(code))
+            return generrtype("The sequence is not a Pruefer code");
+        return G.to_gen();
+    }
+}
+static const char _pruefer_code_s[]="pruefer_code";
+static define_unary_function_eval(__pruefer_code,&_pruefer_code,_pruefer_code_s);
+define_unary_function_ptr5(at_pruefer_code,alias_at_pruefer_code,&__pruefer_code,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

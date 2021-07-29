@@ -17147,6 +17147,7 @@ is_eulerian(digraph(%{[1,4],[1,3],[2,1],[3,2],[4,5],[5,1]%}))
 0 Intg(n),Intg(k)
 2 Returns the Kneser graph K(n,k) with comb(n,k) vertices (n<=20).
 -1 odd_graph
+-2 johnson_graph
 kneser_graph(5,2)
 
 # odd_graph
@@ -17155,11 +17156,45 @@ kneser_graph(5,2)
 -1 kneser_graph
 odd_graph(3)
 
+# johnson_graph
+0 Intg(n),Intg(k)
+2 Returns the Johnson graph J(n,k) with comb(n,k) vertices (n<=20).
+-1 kneser_graph
+johnson_graph(5,2)
+
 # flower_snark
 0 Intg(n)
 2 Returns the n-th flower snark, where n>2 is odd.
--1 petersen_graph
+-1 goldberg_snark
 flower_snark(5)
+
+# goldberg_snark
+0 Intg(n)
+2 Returns the Goldberg snark on 8n vertices, where n>2 is odd.
+-1 flower_snark
+goldberg_snark(5)
+
+# haar_graph
+0 Intg(n)
+2 Returns the n-th Haar graph.
+-1 graph
+-2 is_bipartite
+haar_graph(7)
+ is_isomorphic(haar_graph(133),graph("moebius-kantor"))
+
+# paley_graph
+0 Intg(p),[Intg(k)]
+2 Returns the Paley (di)graph on p^k vertices, where p>2 is prime and k>0.
+-1 graph
+paley_graph(3,2)
+paley_graph(3,3)
+
+# pruefer_code
+0 Vect(S)|Graph(T)
+2 Returns the Pruefer code for the tree T or converts the Pruefer sequence S into the corresponding tree.
+-1 is_tree
+pruefer_code([5,6,0,4,1,2,10,3,8,11]) // xcas mode
+pruefer_code(graph(%{[1,8],[2,3],[2,7],[4,6],[5,6],[6,7],[6,8],[7,9],[8,10]%}))
 
 # highlight_vertex
 0 Graph(G),Vrtx(v)||Lst(V),[Color(c)||Lst(C)]
@@ -17615,14 +17650,14 @@ is_vertex_colorable(graph("petersen"),3,cols)
 -1 draw_graph
  G:=graph([1,2,3,4,5,6],%{[1,2],[1,4],[4,5],[2,5],[2,3],[3,6],[5,6]%}); G:=set_vertex_positions(G,[[0,0],[0.5,0],[1,0],[0,0.5],[0.5,0.5],[1,0.5]])
 
-# clique_stats
+# find_cliques
 0 Graph(G),[Intg(k)||Intrv(m..n)]
 2 Returns the list of numbers of maximal cliques of size s in G for each s. If parameter k is given, the number of k-cliques is returned. If an interval m..n is given, only cliques with size between m and n (inclusive) are counted (m also may be +infinity).
 -1 maximum_clique
 -2 clique_cover
-clique_stats(random_graph(50,0.5))
-clique_stats(random_graph(50,0.5),5)
-clique_stats(random_graph(50,0.5),3..5)
+find_cliques(random_graph(50,0.5))
+find_cliques(random_graph(50,0.5),5)
+find_cliques(random_graph(50,0.5),3..5)
 
 # minimal_vertex_coloring
 0 Graph(G),[sto]
@@ -17667,6 +17702,13 @@ transitive_closure(digraph([1,2,3,4,5,6],%{[1,2],[2,3],[2,4],[4,5],[3,5]%}),weig
 -1 is_isomorphic
 -2 subgraph
 is_subgraph_isomorphic(cycle_graph(5),flower_snark(5))
+
+# identify_graph
+0 Graph(G)
+2 Returns the list of named graphs known to Giac which are isomorphic to G.
+-1 is_isomorphic
+-2 graph
+identify_graph(graph("petersen"))
 
 # graph_automorphisms
 0 Graph(G)
@@ -17992,7 +18034,7 @@ conjugate_equation(A*sin(t)+B*cos(t),[A,B],[1,0],t,0)
 0 Intg(a),Intg(b),Intg(c),[Intg(d)]
 2 Returns the graph corresponding to the [a,b,c] resp. [a,b,c,d] tone network (tonnetz) used in neo-Riemannian music theory.
 -1 is_regular
--2 clique_stats
+-2 find_cliques
 tonnetz(3,4,5)
 tonnetz(2,3,3,4)
 

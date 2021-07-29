@@ -1,7 +1,0 @@
-graph {
-O -- {E F N};
-E -- {A D};
-N -- {G M};
-D -- {B C};
-M -- {H I J K L};
-}

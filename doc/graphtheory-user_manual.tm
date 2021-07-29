@@ -6118,7 +6118,7 @@
   format. It takes a string <with|font-family|tt|filename> as its only
   argument and returns the graph constructed from instructions written in the
   file <with|font-family|tt|filename>, or an error. The passed string should
-  contain the path to a file in DOT or LST format. The format iz recognized
+  contain the path to a file in DOT or LST format. The format is recognized
   from the extension: the DOT format is associated with extensions
   <verbatim|.dot> and <verbatim|.gv><\footnote>
     Although it is recommended to use <verbatim|.gv> as the extension for
@@ -10079,7 +10079,7 @@
   determining whether a graph is a <hlink|forest|https://en.wikipedia.org/wiki/Tree_(graph_theory)#Forest>.
   It takes the a <math|G<around*|(|V,E|)>> as its only argument and returns
   <verbatim|true> if each connected component of <math|G> is a tree.
-  Othrwise, it returns <verbatim|false>.
+  Otherwise, it returns <verbatim|false>.
 
   The algorithm runs in <math|O<around*|(|<around*|\||V|\|>+<around*|\||E|\|>|)>>
   time.
@@ -14982,7 +14982,8 @@
   embedding.<\float|float|tbh>
     <big-figure|<tabular*|<tformat|<cwith|1|1|1|-1|cell-valign|b>|<cwith|1|-1|1|-1|cell-lsep|2fn>|<cwith|1|-1|1|-1|cell-rsep|2fn>|<table|<row|<cell|<with|gr-mode|<tuple|group-edit|edit-props>|gr-frame|<tuple|scale|1cm|<tuple|0.5gw|0.5gh>>|gr-geometry|<tuple|geometry|1par|0.6par|top>|gr-auto-crop|true|gr-color|light
     grey|gr-line-width|2ln|<graphics||<point|-7.02714|4.71764>|<point|-7.27902|3.87308>|<point|-6.21221|2.99889>|<with|color|green|line-width|2ln|<line|<point|-5.9307|3.7101>|<point|-5.32321|2.76182>>>|<point|-5.9307|3.7101>|<point|-6.36038|4.55465>|<point|-6.74562|2.13952>|<point|-6.0196|1.26533>|<point|-5.11577|0.998627>|<point|-4.83425|2.02098>|<point|-5.32321|2.76182>|<line|<point|-7.02714|4.71764>|<point|-6.36038|4.55465>|<point|-5.9307|3.7101>|<point|-6.21221|2.99889>|<point|-7.27902|3.87308>|<point|-7.02714|4.71764>>|<line|<point|-6.21221|2.99889>|<point|-6.74562|2.13952>|<point|-6.0196|1.26533>|<point|-5.11577|0.998627>|<point|-4.83425|2.02098>|<point|-5.32321|2.76182>|<point|-6.21221|2.99889>>|<text-at|<math|B<rsub|1>>|<point|-6.86415200423336|3.87308175684614>>|<text-at|<math|B<rsub|2>>|<point|-5.93069519777748|1.90245072099484>>|<text-at|temp.<nbsp>edge|<point|-6.02040613837809|4.26236936102659>>|<with|dash-style|11100|<line|<point|-4.92621811732097|4.05921748908586>|<point|-5.44174163249107|3.28041076862019>>>>>>|<cell|<with|gr-mode|<tuple|group-edit|edit-props>|gr-frame|<tuple|scale|1cm|<tuple|0.5gw|0.5gh>>|gr-geometry|<tuple|geometry|1par|0.6par|top>|gr-auto-crop|true|gr-color|light
-    grey|gr-line-width|2ln|<graphics||<with|color|green|line-width|2ln|<line|<point|-7.03767|3.2286>|<point|-6.0|3.6>>>|<point|-6|3.6>|<text-at|<math|f>|<point|-5.7|2.8>>|<with|color|red|line-width|2ln|<line|<point|-6.59316708559333|4.25095912157693>|<point|-4.25833443577193|4.01635467654452>>>|<point|-6.59316708559333|4.25095912157693>|<point|-4.91887154385501|2.01362614102394>|<point|-6.51908321206509|2.36922873395952>|<point|-7.0376703267628|3.22860166688715>|<with|color|green|line-width|2ln|<line|<point|-5.22142|3.45332>|<point|-4.18425056224368|2.8902797989152>>>|<point|-5.22142479163911|3.45331723772986>|<line|<point|-6.59316708559333|4.25095912157693>|<point|-7.0376703267628|3.22860166688715>|<point|-6.51908321206509|2.36922873395952>|<point|-4.91887154385501|2.01362614102394>|<point|-4.18425056224368|2.8902797989152>|<point|-4.25833443577193|4.01635467654452>|<point|-5.22142479163911|3.45331723772986>|<point|-6.0|3.6>|<point|-6.59316708559333|4.23614234687128>>|<point|-4.18425056224368|2.8902797989152>|<point|-4.25833443577193|4.01635467654452>|<text-at|chord|<point|-5.82891255457071|5.08316245535124>>|<with|dash-style|11100|<line|<point|-5.36484654054769|4.95510318825241>|<point|-5.3399589892843|4.31269017065749>>>>>>|<cell|<with|gr-mode|<tuple|group-edit|edit-props>|gr-frame|<tuple|scale|1cm|<tuple|0.5gw|0.5gh>>|gr-geometry|<tuple|geometry|1par|0.6par|top>|gr-auto-crop|true|gr-color|light
+    grey|gr-line-width|2ln|<graphics||<with|color|green|line-width|2ln|<line|<point|-7.03767|3.2286>|<point|-6.0|3.6>>>|<point|-6|3.6>|<text-at|<math|f>|<point|-5.7|2.8>>|<with|color|red|line-width|2ln|<line|<point|-6.59316708559333|4.25095912157693>|<point|-4.25833443577193|4.01635467654452>>>|<point|-6.59316708559333|4.25095912157693>|<point|-4.91887154385501|2.01362614102394>|<point|-6.51908321206509|2.36922873395952>|<point|-7.0376703267628|3.22860166688715>|<with|color|green|line-width|2ln|<line|<point|-5.22142|3.45332>|<point|-4.18425056224368|2.8902797989152>>>|<point|-5.22142479163911|3.45331723772986>|<line|<point|-6.59316708559333|4.25095912157693>|<point|-7.0376703267628|3.22860166688715>|<point|-6.51908321206509|2.36922873395952>|<point|-4.91887154385501|2.01362614102394>|<point|-4.18425056224368|2.8902797989152>|<point|-4.25833443577193|4.01635467654452>|<point|-5.22142479163911|3.45331723772986>|<point|-6.0|3.6>|<point|-6.59316708559333|4.23614234687128>>|<point|-4.18425056224368|2.8902797989152>|<point|-4.25833443577193|4.01635467654452>|<text-at|a
+    chord|<point|-5.82891255457071|5.08316245535124>>|<with|dash-style|11100|<line|<point|-5.36484654054769|4.95510318825241>|<point|-5.3399589892843|4.31269017065749>>>>>>|<cell|<with|gr-mode|<tuple|group-edit|edit-props>|gr-frame|<tuple|scale|1cm|<tuple|0.5gw|0.5gh>>|gr-geometry|<tuple|geometry|1par|0.6par|top>|gr-auto-crop|true|gr-color|light
     grey|gr-line-width|2ln|<graphics||<with|color|green|line-width|2ln|<line|<point|-7.47976|3.22362>|<point|-6.31419|3.16188>>>|<with|color|green|line-width|2ln|<line|<point|-5.73634|3.17669>|<point|-4.96587|4.11015>>>|<with|color|red|<line|<point|-7.12912|2.64329>|<point|-7.47975922741103|3.22362415663448>|<point|-7.61807|3.87308>|<point|-7.04022|4.45094>|<point|-5.95859|4.64355>|<point|-4.96587|4.11015>|<point|-5.14367|2.99889>|<point|-5.73634|3.17669>|<point|-6.31419|3.16188>|<point|-7.12912|2.64329>>>|<with|color|green|line-width|2ln|<line|<point|-7.24765|2.09507>|<point|-6.71425|2.33214>>>|<with|color|green|line-width|2ln|<line|<point|-5.57336|2.53957>|<point|-4.53618|2.33214>>>|<with|color|blue|<line|<point|-7.12912|2.64329>|<point|-7.24765|2.09507>|<point|-7.17357|1.39868>|<point|-6.37346|0.89491>|<point|-5.42519|0.835643>|<point|-4.62508|1.51721>|<point|-4.53618|2.33214>|<point|-5.14367|2.99889>|<point|-5.57336|2.53957>|<point|-6.03268|2.22842>|<point|-6.71425|2.33214>|<point|-7.12912|2.64329>>>|<point|-7.04022|4.45094>|<point|-7.61807|3.87308>|<point|-7.12912|2.64329>|<point|-6.31419|3.16188>|<point|-5.73634|3.17669>|<point|-5.14367|2.99889>|<point|-4.96587|4.11015>|<point|-5.95859|4.64355>|<point|-7.24765|2.09507>|<point|-7.17357|1.39868>|<point|-6.37346|0.89491>|<point|-5.42519|0.835643>|<point|-4.62508|1.51721>|<point|-4.53618|2.33214>|<point|-5.57336|2.53957>|<point|-6.03268|2.22842>|<point|-6.71425|2.33214>|<text-at|<math|f>|<point|-6.37346209816113|3.7397307844953>>|<text-at|<math|g>|<point|-5.82524143405212|1.50239780394232>>|<text-at|<math|v<rsub|l>>|<point|-4.94369294880275|3.06221060986903>>|<text-at|<math|v<rsub|k>>|<point|-7.6551627199365|2.48435639634872>>|<point|-7.47975922741103|3.22362415663448>>>>>|<row|<cell|<small|(a)>>|<cell|<small|(b)>>|<cell|<small|(c)>>>>>>|<label|augment>(a)
     Joining blocks by adding a temporary edge, (b) A chorded face <math|f>,
     (c) Faces <math|f> and <math|g> having two vertices but no edges in
@@ -15007,13 +15008,18 @@
   for graphs with up to several thousands vertices. A drawback of this method
   is that it sometimes creates clusters of vertices which are very close to
   each other, resulting in a very high ratio of the area of the largest inner
-  face to the area of the smallest inner face. However, if the result is not
-  satisfactory, one can simply redraw the graph and repeat the process until
-  a better layout is obtained. The planar embedding will in general be
-  different each time unless the graph is triconnected.
-
-  Another drawback of this method is that sparse planar graphs are often
-  drawn poorly.
+  face to the area of the smallest inner face (not considering the outer,
+  infinite-area face). In order to cope with this issue,
+  <verbatim|draw_graph> redraws the layout several times (unless the graph is
+  triconnected), each time randomizing the graph augmentation, in order to
+  minimize the above ratio. The number of redraws scales with
+  <math|<frac|1|<around*|\||V|\|>>>, hence <verbatim|draw_graph> does not
+  hang on large graphs. For <math|<around*|\||V|\|>\<less\>500>, at least two
+  redraws are performed. Of course, one can always call <verbatim|draw_graph>
+  repeatedly in attempt to obtain a better result. This strategy usually
+  works well for biconnected graphs; however, non-biconnected, sparse graphs
+  are often drawn poorly. In such cases consider using the <verbatim|spring>
+  option.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -15074,9 +15080,6 @@
     </unfolded-io>
   </session>
 
-  Note that several redraws were required to obtain a visually acceptable
-  planar embedding.
-
   <subsection|Circular graph drawings><label|circle-method>
 
   The drawing method selected by specifying the option <verbatim|circle=L> or
@@ -15092,9 +15095,9 @@
   This approach gives best results for symmetrical graphs such as generalized
   Petersen graphs. In addition, if the input graph is planar and triconnected
   and the outer hull represents a face in a planar embedding, then the
-  drawing will contain no edge crossings. There is a possibility, however,
-  that some very short edges may cross each other as the number of force
-  update iterations is limited.
+  drawing will contain no edge crossings. Some very short edges may, however,
+  end up crossing each other since the number of force-update iterations is
+  limited.
 
   The following example is entered in <samp|xcas> mode, where the vertices
   are numbered starting from 0.
@@ -15202,8 +15205,8 @@
   Graph drawings may be moved around, scaled, and resized using optional
   arguments. This is useful for combining several drawings in one figure or
   adding graph drawings to larger graphical scenes. Individual drawings may
-  also be titled. Note that the graph attribute <verbatim|name>, when one is
-  provided, is used as the title in case the latter is not set.
+  also be given a title. Note that the graph attribute <verbatim|name>, when
+  one is provided, is used as the title in case the latter is not set.
 
   Below we draw the first two discovered snarks in one figure.
 
@@ -17032,7 +17035,7 @@
     <associate|auto-423|<tuple|6.2|169>>
     <associate|auto-424|<tuple|6.2.1|169>>
     <associate|auto-425|<tuple|<with|font-family|<quote|tt>|language|<quote|verbatim>|set_vertex_positions>|169>>
-    <associate|auto-426|<tuple|6.2.2|169>>
+    <associate|auto-426|<tuple|6.2.2|170>>
     <associate|auto-427|<tuple|6.2.3|170>>
     <associate|auto-428|<tuple|6.3|173>>
     <associate|auto-429|<tuple|6.3.1|173>>

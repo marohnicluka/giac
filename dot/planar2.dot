@@ -1,8 +1,0 @@
-graph {
-a -- b -- c -- d -- e -- f -- g -- a;
-g -- h -- i -- j -- h;
-d -- n -- m -- l -- n;
-k -- { a c l d e f g j };
-#i -- a;
-#m -- c;
-}

@@ -10157,7 +10157,7 @@ bool graphe::weighted_bipartite_matching(const ivector &p1,const ivector &p2,ipa
                 W[*it]._VECTptr->at(*jt)=f;
         }
     }
-#if 0 //def HAVE_LIBGLPK
+#ifdef HAVE_LIBGLPK
     /* integralize the weight matrix */
     if (!is_integer_matrice(W,true))
         W=*_apply(makesequence(at_round,divvecteur(W,eps)),ctx)._VECTptr;

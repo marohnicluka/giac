@@ -14790,12 +14790,14 @@ pa2b2(229)
 # isolve
 2 Solve diophantine equation.
 0 Eqn||List(Eqn),[Intg(n)||(Idnt(Z1),Idnt(Z2),...)]
+-1 solve
+-2 rsolve
 isolve(4x-3y=7)
 isolve([x+y-z=4,x-2y+3z=3],m)
 isolve(x^2-23y^2=1,n)
 isolve(x^2-23y^2=1,seq=false)
 isolve(x^2+11y^2-3z^2=0,A,B,C)
-isolve(x^2-3x*y+y^2-x=3,n)
+isolve(x^2-3x*y+y^2-x=2,n)
 
 # permu2cycles
 1 Convertit une permutation en un produit de cycles disjoints.
@@ -16310,16 +16312,16 @@ digraph(%{[1,2],[2,3],[3,4],[4,1]%})
 digraph([a,b,c,d],%{[[a,b],1.0],[[a,c],2.3],[[b,d],3.1],[[c,d],4]%})
 
 # export_graph
-0 Graph(G),Str("path/to/graphname")
-1 Exporte le graphe G vers le fichier "graphname.dot" du repertoire indique au format dot. Renvoie 1 en cas de succes, 0 en cas d'echec.
-2 Writes G to the file 'graphname.dot' in directory 'path/to' in dot format, returns 1 on success and 0 on failure.
+0 Graph(G),Str("filename"),[opts]
+1 Exporte le graphe G vers le fichier "filename" du repertoire indique au format dot/lst/LaTeX. Renvoie 1 en cas de succes, 0 en cas d'echec.
+2 Writes G to the file 'filename' in dot/lst/LaTeX format, returns 1 on success and 0 on failure.
 -1 import_graph
-export_graph(complete_graph(5),"K5")
+export_graph(complete_graph(5),"K5.dot")
 
 # import_graph
-0 Str("path/to/graphname[.dot]")
-1 Renvoie le graphe decrit par les instructions du fichier graphname.dot au format dot, ou "undef" en cas d'echec.
-2 Returns the graph constructed from instructions in the file 'path/to/graphname.dot' (in dot format), or "undef" on failure.
+0 Str("filename"),[opts]
+1 Renvoie le graphe decrit par les instructions du fichier "filename" au format dot/lst, ou "undef" en cas d'echec.
+2 Returns the graph constructed from instructions in the file 'filename' in dot/lst format, or "undef" on failure.
 import_graph("K5.dot")
 
 # graph_vertices
@@ -16346,7 +16348,7 @@ edges(complete_graph(4))
 # has_edge
 0 Graph(G),Edge(e)
 1 Renvoie vrai si l'arete e=[i,j] est contenue dans le graphe non oriente G.
-2 Returns true iff the edge e=[i,j] is contained in undirected graph G.
+2 Returns true iff the edge e=[i,j] is contained in an undirected graph G.
 -1 edges
 -2 has_arc
 has_edge(graph(trail(1,2,3,4,1)),[2,4])
@@ -16362,7 +16364,7 @@ has_arc(digraph(trail(1,2,3,4,1)),%{4,2%})
 # adjacency_matrix
 0 Graph(G)
 1 Renvoie la matrice d'adjacence du graphe G (lignes/colonnes numerotees par des sommets).
-2 Returns the adjacency matrix of G (rows and columns are indexed by the vertices).
+2 Returns the adjacency matrix of G (rows and columns correspond to vertex indices).
 -1 neighbors
 adjacency_matrix(graph(trail(1,2,3,4,2,5,1,3)))
 
@@ -16449,14 +16451,14 @@ maximal_independent_set(graph("petersen"))
 
 # maximum_matching
 0 Graph(G)
-2 Returns the list of edges representing maximum matching in G.
+2 Returns the list of edges representing a maximum matching in G.
 -1 maximum_independent_set
  G:=graph("soccerball"); draw_graph(highlight_edges(G,maximum_matching(G)))
 
 # make_directed
 0 Graph(G),[Mrtx(A)]
 1 Renvoie une copie orientee du graphe non oriente G.
-2 Returns the copy of undirected graph G in which every edge is converted to a pair of arcs [and with weights specified by matrix A].
+2 Returns a copy of an undirected graph G in which every edge is converted to a pair of arcs [with weights specified by matrix A].
 -1 is_directed
 -2 make_weighted
 -3 underlying_graph
@@ -16464,7 +16466,7 @@ make_directed(cycle_graph(4),[[0,0,0,1],[2,0,1,3],[0,1,0,4],[5,0,4,0]])
 
 # underlying_graph
 0 Graph(G)
-2 Returns the graph obtained by stripping directions and weights from arcs (pairs of arcs connecting the same vertices are merged to a single edge).
+2 Returns the graph obtained by stripping directions and weights from arcs in G (pairs of arcs connecting the same vertices are merged to a single edge).
 -1 is_directed
 -2 is_weighted
 -3 make_directed
@@ -16474,7 +16476,7 @@ underlying_graph(digraph(trail(1,2,3,4,1)))
 # cycle_graph
 0 Intg(n)||Lst(V)
 1 Renvoie un graphe cyclique ayant n sommets (ou avec les sommets de la liste V).
-2 Returns a cyclic graph with n vertices (or with vertices from list V).
+2 Returns a cyclic graph on n vertices (or with vertices from list V).
 -1 graph
 -2 path_graph
 cycle_graph(4)
@@ -16482,14 +16484,14 @@ cycle_graph(["one","two","three","four","five"])
 
 # lcf_graph
 0 Lst(J),[Intg(k)]
-2 Returns the graph constructed from LCF notation J[^k] given the list of integers J [and a positive integer k, by default 1].
+2 Returns a graph constructed from the LCF notation J[^k] given the list of integers J [and a positive integer k, by default 1].
 -1 graph
 lcf_graph([-3,3],4)
 
 # hypercube_graph
 0 Intg(n)
 1 Construit et renvoie le graphe hypercube en dimension n (avec 2^n sommets).
-2 Constructs and returns the hypercube graph in dimension n (with 2^n vertices).
+2 Constructs and returns a hypercube graph in dimension n (with 2^n vertices).
 -1 graph
 hypercube_graph(3)
 
@@ -16517,7 +16519,7 @@ draw_graph(graph("soccerball"))
 
 # sierpinski_graph
 0 Intg(n),Intg(k),[triangle]
-2 Returns Sierpiński (triangle) graph S(n,k) (resp. ST(n,k)).
+2 Returns the Sierpiński (triangle) graph S(n,k) (resp. ST(n,k)).
 -1 graph
 sierpinski_graph(2,4)
 sierpinski_graph(4,3)
@@ -16543,7 +16545,7 @@ petersen_graph(10,2)
 
 # random_graph
 0 Intg(n)||Lst(V),Real(p)||Intg(m)
-2 Returns a random undirected unweighted graph with n vertices (list V of labels may be specified) where two vertices are connected with probability p or where m edges are created at random.
+2 Returns a random undirected unweighted graph on n vertices (list V of labels may be specified) where two vertices are connected with probability p or where m edges are created at random.
 -1 random_bipartite_graph
 -2 random_digraph
 -3 random_planar_graph
@@ -16556,7 +16558,7 @@ random_graph(8,10)
 
 # random_digraph
 0 Intg(n)||Lst(V),Real(p)||Intg(m)
-2 Returns a random directed unweighted graph with n vertices (list V of labels may me specified) where two vertices are connected with probability p or where m edges are created at random.
+2 Returns a random directed unweighted graph on n vertices (list V of labels may me specified) where two vertices are connected with probability p or where m edges are created at random.
 -1 random_bipartite_graph
 -2 random_graph
 -3 random_planar_graph
@@ -16569,7 +16571,7 @@ random_digraph(8,10)
 
 # random_bipartite_graph
 0 Intg(n)||Lst(a,b),Real(p)||Intg(m)
-2 Returns a random undirected unweighted bipartite graph with n vertices where each possible edge is present with probability p or where m edges are created at random. When the first argument is list [a,b] of integers, two groups of vertices with sizes a and b are created.
+2 Returns a random undirected unweighted bipartite graph on n vertices where each possible edge is present with probability p or where m edges are created at random. When the first argument is list [a,b] of integers, two groups of vertices with sizes a and b are created.
 -1 random_digraph
 -2 random_graph
 -3 random_planar_graph
@@ -16582,7 +16584,7 @@ random_bipartite_graph([2,3],1.0)
 
 # random_tournament
 0 Intg(n)||Lst(V)
-2 Returns a random tournament graph with n vertices, which may be specified as list V of their labels.
+2 Returns a random tournament graph on n vertices, which may be specified as list V of their labels.
 -1 random_bipartite_graph
 -2 random_digraph
 -3 random_graph
@@ -16618,7 +16620,7 @@ random_sequence_graph([1,3,3,2,1,2,2,2,3,3])
 
 # random_tree
 0 Intg(n)||Lst(V),[Intg(d)||root[=Vrtx(v)]]
-2 Returns a random tree graph with n vertices, which may be specified as list V of their labels [with the upper bound d (positive integer) for the degree of graph or 'root' for rooted trees].
+2 Returns a random tree graph on n vertices, which may be specified as list V of their labels [with the upper bound d (positive integer) for the degree of graph or 'root' for rooted trees].
 -1 random_bipartite_graph
 -2 random_digraph
 -3 random_graph
@@ -16640,7 +16642,7 @@ random_sequence_graph([1,3,3,2,1,2,2,2,3,3])
 
 # assign_edge_weights
 0 Graph(G),Seq(m,n)||Intrv(a..b)
-2 Assigns random edge weights to the edges of G and returns a modified copy of G. If integers n and m such that n>=m are specified, weights are integers randomly chosen in [m,n]. If an interval a..b is specified, weights are uniformly distributed in the interval [a,b).
+2 Assigns random edge weights to the edges in G and returns a modified copy of G. If integers n and m such that n>=m are specified, then the weights are integers randomly chosen in [m,n]. If an interval a..b is specified, then the weights are uniformly distributed in the interval [a,b).
 -1 set_edge_weight
 -2 get_edge_weight
 -3 weight_matrix
@@ -16651,7 +16653,7 @@ assign_edge_weights(digraph(trail(1,2,3,4,1)),0..1)
 
 # articulation_points
 0 Graph(G)
-2 Returns the list of articulation points (cut vertices) of G.
+2 Returns the list of articulation points (cut vertices) in G.
 -1 biconnected_components
 -2 is_biconnected
 -3 is_connected
@@ -16661,7 +16663,7 @@ articulation_points(cycle_graph(5))
 
 # biconnected_components
 0 Graph(G)
-2 Returns the biconnected components of G as a list of lists of vertices.
+2 Returns a list of lists of vertices, each sublist representing a biconnected component of G.
 -1 articulation_points
 -2 is_biconnected
 -3 is_connected
@@ -16670,7 +16672,7 @@ biconnected_components(graph(trail(1,2,3,4,2),trail(4,5,6,7,5)))
 
 # add_arc
 0 Graph(G),Edge(e)||Trail(T)||Lst(E)
-2 Returns a modified copy of digraph G with added arc e (or trail T or list of arcs E).
+2 Returns a modified copy of a digraph G with the arc e (or trail T or list of arcs E) added to G.
 -1 add_edge
 -2 delete_arc
 -3 digraph
@@ -16681,7 +16683,7 @@ add_arc(digraph(trail(1,2,3,4,5,1)),[[1,3],[2,4]])
 
 # delete_arc
 0 Graph(G),Edge(e)||Trail(T)||Lst(E)
-2 Returns a modified copy of digraph G with arc e (or trail T or list of arcs E) removed.
+2 Returns a modified copy of a digraph G with the arc e (or trail T or list of arcs E) removed from G.
 -1 add_arc
 -2 delete_edge
 -3 digraph
@@ -16692,7 +16694,7 @@ delete_arc(digraph(trail(1,2,3,4,5,1)),[5,1])
 
 # add_edge
 0 Graph(G),Edge(e)||Trail(T)||Lst(E)
-2 Returns a modified copy of undirected graph G with added edge e (or trail T or list of edges E).
+2 Returns a modified copy of an undirected graph G with the edge e (or trail T or list of edges E) added to G.
 -1 add_arc
 -2 delete_edge
 -3 edges
@@ -16703,7 +16705,7 @@ add_edge(graph(trail(1,2,3,4)),[4,1])
 
 # delete_edge
 0 Graph(G),Edge(e)||Trail(T)||Lst(E)
-2 Returns a modified copy of undirected graph G with edge e (or trail T or list of edges E) removed.
+2 Returns a modified copy of an undirected graph G with the edge e (or trail T or list of edges E) removed from G.
 -1 add_edge
 -2 delete_arc
 -3 edges
@@ -16714,7 +16716,7 @@ delete_edge(cycle_graph(4),[1,2])
 
 # add_vertex
 0 Graph(G),Vrtx(v)||Lst(V)
-2 Returns a modified copy of G with added vertex v [or vertices from list V].
+2 Returns a modified copy of G with vertex v [or vertices from list V] added to G.
 -1 add_arc
 -2 add_edge
 -3 delete_vertex
@@ -16722,14 +16724,14 @@ add_vertex(cycle_graph(5),["a","b"])
 
 # delete_vertex
 0 Graph(G),Vrtx(v)||Lst(V)
-2 Returns a modified copy of G with vertex v (or vertices from V) removed.
+2 Returns a modified copy of G with the vertex v (or vertices from V) removed.
 -1 add_vertex
 -2 induced_subgraph
 delete_vertex(cycle_graph(5),[1,4])
 
 # contract_edge
 0 Graph(G),Edge(e)
-2 Returns a modified copy of undirected graph G with edge e contracted (to contract more edges apply the foldl command).
+2 Returns a modified copy of an undirected graph G with the edge e contracted into one of its endpoints (to contract more edges apply the foldl command).
 -1 delete_edge
 -2 delete_vertex
 -3 foldl
@@ -16747,19 +16749,19 @@ connected_components(graph_complement(cycle_graph(4)))
 
 # departures
 0 Graph(G),[Vrtx(v)]
-2 Returns the list of vertices of digraph G which are connected by v with arcs such that tails are in v. If v is omitted, a list of departures is computed for every vertex in G.
+2 Returns the list of vertices of digraph G which are connected to v with arcs pointing away from v. If v is omitted, a list of departures is computed for every vertex in G.
 -1 out_degree
 departures(digraph(%{[1,2],[1,3],[2,3]%}),1)
 
 # arrivals
 0 Graph(G),[Vrtx(v)]
-2 Returns the list of vertices in digraph G which are connected by v with arcs such that heads are in v. If v is omitted, a list of arrivals is computed for every vertex in G.
+2 Returns the list of vertices in a digraph G which are connected to v with arcs pointing to v. If v is omitted, the list of arrivals is computed for every vertex in G.
 -1 in_degree
 arrivals(digraph(%{[1,2],[1,3],[2,3]%}),1)
 
 # incident_edges
 0 Graph(G),Vrtx(v)
-2 Returns the list of all edges incident to the vertex v of G (or to the vertices in the list v).
+2 Returns the list of all edges incident to the vertex v in G (or to the vertices in the list v).
 -1 adjacency_matrix
 -2 vertex_degree
 -3 incidence_matrix
@@ -16768,7 +16770,7 @@ incident_edges(cycle_graph(8),[1,5,7])
 
 # make_weighted
 0 Graph(G),[Mrtx(M)]
-2 Returns a copy of G with edge/arc weights set as specified by matrix M. If M is omitted, a square matrix of ones is used. If G is undirected, M is assumed to be symmetric.
+2 Returns a copy of G with edge/arc weights set as specified by matrix M. If M is omitted, then a square matrix of ones is used. If G is undirected, then M is assumed to be symmetric.
 -1 get_edge_weight
 -2 is_weighted
 -3 make_directed
@@ -16779,7 +16781,7 @@ make_weighted(cycle_graph(3),[[0,2,3],[2,0,1],[3,1,0]])
 
 # set_graph_attribute
 0 Graph(G),Seq(tag1=value1,tag2=value2,..)
-2 Stores the attributes where each tag is a string, and returns the modified copy of G.
+2 Stores the attributes where each tag is a string, and returns a modified copy of G.
 -1 discard_graph_attribute
 -2 get_graph_attribute
 -3 list_graph_attributes
@@ -16795,7 +16797,7 @@ get_graph_attribute(cycle_graph(3),"name")
 
 # discard_graph_attribute
 0 Graph(G),Seq(tag1=value1,tag2=value2,..)
-2 Discards the graph attributes with tags tag1, tag2, ... and returns the modified copy of G.
+2 Discards the graph attributes with tags tag1, tag2, ... and returns a modified copy of G.
 -1 get_graph_attribute
 -2 set_graph_attribute
 -3 list_graph_attributes
@@ -16803,7 +16805,7 @@ discard_graph_attribute(cycle_graph(3),"name")
 
 # set_vertex_attribute
 0 Graph(G),Vrtx(v),Seq(tag1=value1,tag2=value2,..)
-2 Stores the attributes to vertex v and returns the modified copy of G.
+2 Stores the attributes to the vertex v and returns a modified copy of G.
 -1 discard_vertex_attribute
 -2 get_vertex_attribute
 -3 list_vertex_attributes
@@ -16811,7 +16813,7 @@ set_vertex_attribute(cycle_graph(3),1,"supply"=27)
 
 # get_vertex_attribute
 0 Graph(G),Vrtx(v),Seq(tag1=value1,tag2=value2,..)
-2 Returns the attributes tag1, tag2, ... assigned to vertex v in G as a sequence of the corresponding values.
+2 Returns the attributes tag1, tag2, ... assigned to the vertex v in G as a sequence of the corresponding values.
 -1 discard_vertex_attribute
 -2 set_vertex_attribute
 -3 list_vertex_attributes
@@ -16819,7 +16821,7 @@ get_vertex_attribute(cycle_graph(3),1,"supply")
 
 # discard_vertex_attribute
 0 Graph(G),Vrtx(v),Seq(tag1=value1,tag2=value2,..)
-2 Discards the attributes with tags tag1, tag2, ... assigned to vertex v in G and returns the modified copy of G.
+2 Discards the attributes with tags tag1, tag2, ... assigned to the vertex v in G and returns a modified copy of G.
 -1 get_vertex_attribute
 -2 set_vertex_attribute
 -3 list_vertex_attributes
@@ -16827,7 +16829,7 @@ discard_vertex_attribute(cycle_graph(3),1,"supply")
 
 # set_edge_attribute
 0 Graph(G),Edge(e),Seq(tag1=value1,tag2=value2,..)
-2 Stores the attributes to edge e and returns the modified copy of G.
+2 Stores the attributes to the edge e and returns a modified copy of G.
 -1 discard_edge_attribute
 -2 get_edge_attribute
 -3 list_edge_attributes
@@ -16843,7 +16845,7 @@ get_edge_attribute(cycle_graph(3),[1,2],"cost")
 
 # discard_edge_attribute
 0 Graph(G),Edge(e),Seq(tag1=value1,tag2=value2,..)
-2 Discards the attributes with tags tag1, tag2, ... assigned to edge e in G and returns the modified copy of G.
+2 Discards the attributes with tags tag1, tag2, ... assigned to the edge e in G and returns a modified copy of G.
 -1 get_edge_attribute
 -2 set_edge_attribute
 -3 list_edge_attributes
@@ -16851,42 +16853,42 @@ discard_edge_attribute(cycle_graph(3),[1,2],"cost")
 
 # list_graph_attributes
 0 Graph(G)
-2 Returns the list of graph attributes of G in form tag=value.
+2 Returns the list of graph attributes of G. Each attribute has the form tag=value.
 -1 set_graph_attribute
 -2 get_graph_attribute
 -3 discard_graph_attribute
 
 # list_vertex_attributes
 0 Graph(G),Vrtx(v)
-2 Returns the list of attributes assigned to vertex v of G in form tag=value.
+2 Returns the list of attributes assigned to the vertex v in G. Each attribute has the form tag=value.
 -1 set_vertex_attribute
 -2 get_vertex_attribute
 -3 discard_vertex_attribute
 
 # list_edge_attributes
 0 Graph(G),Edge(e)
-2 Returns the list of attributes assigned to edge e of G in form tag=value.
+2 Returns the list of attributes assigned to the edge e in G. Each attribute has the form tag=value.
 -1 set_edge_attribute
 -2 get_edge_attribute
 -3 discard_edge_attribute
 
 # number_of_edges
 0 Graph(G)
-2 Returns the number of edges/arcs of G.
+2 Returns the number of edges/arcs in G.
 -1 edges
 -2 number_of_vertices
 number_of_edges(complete_graph(5))
 
 # number_of_vertices
 0 Graph(G)
-2 Returns the number of vertices of G.
+2 Returns the number of vertices in G.
 -1 graph_vertices
 -2 number_of_edges
 number_of_vertices(graph("petersen"))
 
 # get_edge_weight
 0 Graph(G),Edge(e)
-2 Returns the weight of the edge e in the weighted graph G.
+2 Returns the weight of the edge e in a weighted graph G.
 -1 is_weighted
 -2 make_weighted
 -3 set_edge_weight
@@ -16895,7 +16897,7 @@ get_edge_weight(graph(%{[[1,2],5],[[2,3],6]%}),[1,2])
 
 # set_edge_weight
 0 Graph(G),Edge(e),Real(w)
-2 Sets the weight of the edge e in the weighted graph G to w and returns the modified copy of G.
+2 Sets the weight of the edge e in the weighted graph G to w and returns a modified copy of G.
 -1 is_weighted
 -2 get_edge_weight
 -3 make_weighted
@@ -16904,7 +16906,7 @@ set_edge_weight(graph(%{[1,2],[2,3]%}),[1,2],5)
 
 # is_directed
 0 Graph(G)
-2 Returns true iff G is directed.
+2 Returns true iff G is a digraph.
 -1 is_weighted
 -2 digraph
 -3 make_directed
@@ -16921,21 +16923,21 @@ neighbors(digraph(trail(1,2,3,4,5,6,4,7,8,2)),4)
 
 # minimum_degree
 0 Graph(G)
-2 Returns the smallest degree among the vertices of G.
+2 Returns the smallest degree of a vertex in G.
 -1 maximum_degree
 -2 vertex_degree
 minimum_degree(digraph(trail(1,2,3,4,5,6,4,7,8,2)))
 
 # maximum_degree
 0 Graph(G)
-2 Returns the largest degree among the vertices of G.
+2 Returns the largest degree of a vertex in G.
 -1 minimum_degree
 -2 vertex_degree
 maximum_degree(digraph(trail(1,2,3,4,5,6,4,7,8,2)))
 
 # is_regular
 0 Graph(G)
-2 Returns true iff max and min degrees of G are equal (if G is directed then out- and in-degrees must be equal for each vertex of G).
+2 Returns true iff the max and min degrees of G are equal (if G is directed then out- and in-degrees must be pairwise equal for each vertex of G).
 -1 degree_sequence
 -2 maximum_degree
 -3 minimum_degree
@@ -16945,7 +16947,7 @@ is_regular(complete_graph(5))
 
 # isomorphic_copy
 0 Graph(G),Permu(sigma)
-2 Returns a copy of G with neighbors structure reordered according to sigma.
+2 Returns a copy of G with the neighborhood structure of each vertex reordered according to sigma.
 -1 graph_vertices
 -2 permute_vertices
 -3 relabel_vertices
@@ -16953,7 +16955,7 @@ isomorphic_copy(cycle_graph(5),randperm(5))
 
 # permute_vertices
 0 Graph(G),Lst(V)
-2 Returns a copy of G with vertices reordered according to the order in the list V.
+2 Returns a copy of G with vertices reordered according to the order in V.
 -1 graph_vertices
 -2 isomorphic_copy
 -3 relabel_vertices
@@ -16961,7 +16963,7 @@ permute_vertices(graph([a,b,c]),[a,c,b])
 
 # relabel_vertices
 0 Graph(G),Lst(L)
-2 Returns a copy of G with vertex labels changed to those in the list L.
+2 Returns a copy of G with vertex labels changed to those in L.
 -1 graph_vertices
 -2 isomorphic_copy
 -3 permute_vertices
@@ -16991,8 +16993,8 @@ is_forest(graph(trail(1,2,3,4),trail(5,2,6,7),trail(8,9,10)))
 is_tournament(digraph(%{[1,2],[2,3],[3,1]%}))
 
 # tree_height
-0 Graph(T),Vrtx(r)
-2 Returns the height of the tree graph T with r as the root node.
+0 Graph(T),[Vrtx(r)]
+2 Returns the height of a tree graph T with r as the root node, or the minimal height and the corresponding root node if r is omitted.
 -1 is_tree
 -2 random_tree
 tree_height(graph(%{[1,2],[2,3],[2,4],[4,5]%}),1)
@@ -17053,7 +17055,7 @@ is_planar(complete_graph(5))
 
 # complete_binary_tree
 0 Intg(n)
-2 Returns the complete binary tree with depth n.
+2 Returns a complete binary tree with depth n.
 -1 complete_kary_tree
 -2 is_tree
 -3 random_tree
@@ -17061,7 +17063,7 @@ complete_binary_tree(3)
 
 # complete_kary_tree
 0 Intg(n)
-2 Returns the complete k-ary tree with depth n.
+2 Returns a complete k-ary tree with depth n.
 -1 complete_binary_tree
 -2 is_tree
 -3 random_tree
@@ -17076,13 +17078,13 @@ prism_graph(5)
 
 # antiprism_graph
 0 Intg(n)
-2 Returns the antiprism graph of order n.
+2 Returns an antiprism graph of order n.
 -1 prism_graph
 antiprism_graph(5)
 
 # star_graph
 0 Intg(n)
-2 Returns the complete bipartite graph complete_graph(1,n).
+2 Returns a complete bipartite graph complete_graph(1,n).
 -1 complete_graph
 -2 wheel_graph
 star_graph(5)
@@ -17115,13 +17117,13 @@ web_graph(5,3)
 
 # cartesian_product
 0 Seq(G1,G2,..)
-2 Returns the Cartesian product of graphs G1, G2, ... with vertices labelled as "u:v:..." where u, v, ... are vertices from G1, G2, ..., respectively.
+2 Returns the Cartesian product of graphs G1, G2, ... with vertices labeled as "u:v:..." where u, v, ... are vertices from G1, G2, ..., respectively.
 -1 tensor_product
 cartesian_product(graph(trail(1,2,3,4,5,2)),star_graph(3))
 
 # tensor_product
 0 Seq(G1,G2,..)
-2 Returns the tensor product of the input graphs G1, G2, ... with vertices labelled as "u:v:..." where u, v, ... are vertices from G1, G2, ..., respectively.
+2 Returns the tensor product of the input graphs G1, G2, ... with vertices labeled as "u:v:..." where u, v, ... are vertices from G1, G2, ..., respectively.
 -1 cartesian_product
 tensor_product(graph(trail(1,2,3,4,5,2)),star_graph(3))
 
@@ -17135,7 +17137,7 @@ path_graph(5)
 
 # is_eulerian
 0 Graph(G),[Var(T)]
-2 Returns true iff G is eulerian [and writes the corresponding eulerian trail to T].
+2 Returns true iff G is Eulerian [and writes the corresponding Eulerian trail to T].
 -1 path_graph
 -2 trail
 is_eulerian(complete_graph(4))
@@ -17176,7 +17178,7 @@ goldberg_snark(5)
 
 # haar_graph
 0 Intg(n)
-2 Returns the n-th Haar graph.
+2 Returns the Haar graph with index n.
 -1 graph
 -2 is_bipartite
 haar_graph(7)
@@ -17191,14 +17193,14 @@ paley_graph(3,3)
 
 # pruefer_code
 0 Vect(S)|Graph(T)
-2 Returns the Pruefer code for the tree T or converts the Pruefer sequence S into the corresponding tree.
+2 Returns the Pruefer code for a tree graph T or converts a Pruefer sequence S into the corresponding tree.
 -1 is_tree
 pruefer_code([5,6,0,4,1,2,10,3,8,11]) // xcas mode
 pruefer_code(graph(%{[1,8],[2,3],[2,7],[4,6],[5,6],[6,7],[6,8],[7,9],[8,10]%}))
 
 # highlight_vertex
 0 Graph(G),Vrtx(v)||Lst(V),[Color(c)||Lst(C)]
-2 Changes the color of vertex v resp. colors of vertices from V in G to c resp. C (green by default) and returns the modified copy of G.
+2 Changes the color of vertex v resp. colors of vertices from V in G to c resp. C (green by default) and returns a modified copy of G.
 -1 highlight_edges
 -2 highlight_subgraph
 -3 highlight_trail
@@ -17206,7 +17208,7 @@ pruefer_code(graph(%{[1,8],[2,3],[2,7],[4,6],[5,6],[6,7],[6,8],[7,9],[8,10]%}))
 
 # highlight_edges
 0 Graph(G),Edge(e)||Lst(E),[Color(c)||Lst(C)]
-2 Changes color of edge e resp. colors of edges in E of the input graph V to c resp C (by default red) and returns the modified copy of G.
+2 Changes color of edge e resp. colors of edges in E of the input graph G to c resp. C (by default red) and returns a modified copy of G.
 -1 highlight_vertex
 -2 highlight_subgraph
 -3 highlight_trail
@@ -17214,7 +17216,7 @@ pruefer_code(graph(%{[1,8],[2,3],[2,7],[4,6],[5,6],[6,7],[6,8],[7,9],[8,10]%}))
 
 # highlight_trail
 0 Graph(G),Trail(t)||Lst(T),[Color(c)||Lst(C)]
-2 Changes colors of edges in G which lie along the trail t resp. trails in T to c resp. C (by default red) and returns the modified copy of G.
+2 Changes colors of edges in G which lie along the trail t resp. trails in T to c resp. C (by default red) and returns a modified copy of G.
 -1 highlight_edges
 -2 highlight_subgraph
 -3 highlight_vertex
@@ -17222,7 +17224,7 @@ pruefer_code(graph(%{[1,8],[2,3],[2,7],[4,6],[5,6],[6,7],[6,8],[7,9],[8,10]%}))
 
 # highlight_subgraph
 0 Graph(G),Graph(S)||Lst(S1,S2,..),Seq(c1,c2)
-2 Changes colors of edges and vertices from the sugbraph S or list of subgraphs S1, S2, ... of G to c1 and c2, respectively (red and green by default), and returns the modified copy of G.
+2 Changes colors of edges and vertices from a sugbraph S or a list of subgraphs S1, S2, ... of G to c1 and c2, respectively (red and green by default), and returns the modified copy of G.
 -1 highlight_edges
 -2 highlight_vertex
 -3 highlight_trail
@@ -17237,41 +17239,41 @@ is_connected(disjoint_union(cycle_graph(5),path_graph(4)))
 
 # graph_union
 0 Seq(G1,G2,...)
-2 Returns the union of the graphs G1, G2, ... The set of vertices of the resulting graph is the union of the sets of vertices of the input graphs and the set of edges of the resulting graph is the union of sets of edges of the input graphs. If the input graphs are weighted, the weight of any common edge is the sum of the weights of that edge in G1, G2, ...
+2 Returns the union of graphs G1, G2, ... The set of vertices of the resulting graph is the union of the sets of vertices of the input graphs and the set of edges of the resulting graph is the union of sets of edges of the input graphs. If the input graphs are weighted, the weight of any common edge is the sum of the weights of that edge in G1, G2, ...
 -1 disjoint_union
 -2 graph_join
 edges(graph_union(cycle_graph(4),path_graph(5)))
 
 # graph_join
 0 Graph(G),Graph(H)
-2 Returns the graph obtained by connecting every vertex from G with every vertex from H. The vertex labels in the resulting graph are strings of form "1:u" and "2:v" where u and v are vertices from G and H, respectively.
+2 Returns the graph obtained by connecting every vertex in G with every vertex in H. The vertex labels in the resulting graph are strings of form "1:u" and "2:v" where u and v are vertices from G and H, respectively.
 -1 disjoint_union
 -2 graph_union
 edges(graph_join(cycle_graph(3),graph(2)))
 
 # graph_equal
 0 Graph(G1),Graph(G2)
-2 Returns true iff the input graphs G1 and G2 are equal, that is when the sets of vertices and edges of G1 and G2, as well as the orderings of vertices in both graphs, mutually coincide. If the graphs are weighted (they must both be (un)weighted and (un)directed), weights given to the same edge in two graphs must be equal.
+2 Returns true iff input graphs G1 and G2 are equal, that is when the sets of vertices and edges of G1 and G2, as well as the orderings of vertices in both graphs, coincide. If the graphs are weighted (they must both be (un)weighted and (un)directed), weights given to the same edge in two graphs must be equal.
 -1 edges
 -2 graph_vertices
 graph_equal(graph([1,2,3],%{[1,2],[2,3],[3,1]%}),graph(trail(1,2,3,1)))
 
 # reverse_graph
 0 Graph(G)
-2 Returns the copy of G with the directions of all edges reversed.
+2 Returns a copy of G in which the directions of all edges are reversed.
 -1 digraph
 reverse_graph(digraph(%{[1,2],[1,3],[2,3]%}))
 
 # interval_graph
 0 Seq||Lst(a..b,c..d,...)
-2 Returns the interval graph with respect to intervals a..b, c..d, ... on the real line. It has one vertex per interval and two vertices are connected iff the corresponding intervals intersect.
+2 Returns the interval graph with respect to the intervals a..b, c..d, ... on the real line. It has one vertex per interval and two vertices are connected iff the corresponding intervals intersect.
 -1 graph
 -2 kneser_graph
 interval_graph([0..8,1..pi,exp(1)..20,7..18,11..14,17..24,23..25])
 
 # subdivide_edges
 0 Graph(G),Lst(E),[Intg(r)]
-2 Inserts r (by default 1) new vertices to each edge/arc in G contained in the list E (which may be a single edge/arc) and returns the modified copy of G. New vertices are labelled with smallest available integers.
+2 Inserts r (by default 1) new vertices to each edge/arc in G contained in the list E (which may be a single edge/arc) and returns a modified copy of G. New vertices are labeled using the smallest available integers.
 -1 edges
 subdivide_edges(complete_graph(2,3),[[1,3],[1,4]],2)
 
@@ -17285,7 +17287,7 @@ edges(graph_power(path_graph(5),3))
 
 # vertex_distance
 0 Graph(G),Vrtx(s),Vrtx(t)||Lst(T)
-2 Returns the number of edges in the shortest path from vertex s to vertex t in G. If such path does not exist, returns +infinity. For vector T of vertices from G returns the list of distances from s to each vertex t in T.
+2 Returns the number of edges in the shortest path from vertex s to vertex t in G. If such path does not exist, returns +infinity. For a vector T of vertices from G returns the list of distances from s to each vertex t in T.
 -1 allpairs_distance
 -2 graph_diameter
 -3 dijkstra
@@ -17295,7 +17297,7 @@ vertex_distance(graph("petersen"),1,[2,4])
 
 # shortest_path
 0 Graph(G),Vrtx(s),Vrtx(t)||Lst(T)
-2 Returns the shortest path from vertex s to vertex t in G. If such path does not exist, returns an empty list. If vector T of vertices from G is given, the list of shortest paths from s to each t int T is returned.
+2 Returns the shortest path from vertex s to vertex t in G. If such path does not exist, returns an empty list. If vector T of vertices from G is given, then the list of shortest paths from s to each t int T is returned.
 -1 dijkstra
 -2 vertex_distance
 shortest_path(cycle_graph(6),1,5)
@@ -17319,7 +17321,7 @@ graph_diameter(graph("petersen"))
 
 # dijkstra
 0 Graph(G),Vrtx(v),[Vrtx(w)||Lst(W)]
-2 Returns the cheapest weighted path from vertex v to w (or to vertices from W) in undirected graph G. Output is in the form [[v1,v2,...,vk],d] (or list of these) where v1,v2,...,vk are vertices along each path and d is the weight of the path.
+2 Returns the cheapest weighted path from vertex v to w (or to vertices from W) in an undirected graph G. Output is in the form [[v1,v2,...,vk],d] (or list of these) where v1,v2,...,vk are vertices along each path and d is the weight of the path.
 -1 allpairs_distance
 -2 shortest_path
 dijkstra(graph(%{[[1,2],1],[[2,3],3],[[3,4],7],[[4,5],3],[[5,6],3],[[1,6],3]%}),1,4)
@@ -17333,21 +17335,21 @@ bellman_ford(graph(%{[[1,2],-1],[[2,3],-3],[[3,4],-7],[[4,5],-3],[[5,6],-3],[[1,
 
 # topologic_sort topological_sort
 0 Graph(G)
-2 Returns the list of vertices sorted according to the topological ordering in the directed acyclic graph G.
+2 Returns the list of vertices sorted according to the topological ordering in a directed acyclic graph G.
 -1 digraph
 -2 is_acyclic
 topologic_sort(digraph(%{[c,a],[c,b],[c,d],[a,d],[b,d],[a,b]%}))
 
 # is_acyclic
 0 Graph(G)
-2 Returns true iff digraph G has no topological ordering.
+2 Returns true iff a digraph G has no topological ordering.
 -1 topologic_sort
 -2 topological_sort
 is_acyclic(digraph(%{[c,a],[c,b],[c,d],[a,d],[b,d],[a,b]%}))
 
 # is_clique
 0 Graph(G)
-2 Returns true iff undirected graph G is a clique (a complete graph).
+2 Returns true iff an undirected graph G is complete.
 -1 clique_number
 -2 induced_subgraph
 -3 maximum_clique
@@ -17355,7 +17357,7 @@ is_clique(complete_graph(3))
 
 # maximum_clique
 0 Graph(G)
-2 Returns the maximum clique of undirected graph G as a list of vertices.
+2 Returns the maximum clique in an undirected graph G as a list of vertices.
 -1 clique_number
 -2 is_clique
 -3 maximum_independent_set
@@ -17399,7 +17401,7 @@ chromatic_number(graph("petersen"))
 
 # maximum_independent_set
 0 Graph(G)
-2 Returns the maximum independent vertex set of G.
+2 Returns the maximum independent vertex set in G.
 -1 clique_number
 -2 graph_complement
 -3 independence_number
@@ -17417,7 +17419,7 @@ independence_number(complete_graph(3,4))
 
 # strongly_connected_components
 0 Graph(G)
-2 Returns the list of strongly connected components in digraph G.
+2 Returns the list of strongly connected components in a digraph G.
 -1 connected_components
 -2 is_connected
 -3 is_strongly_connected
@@ -17425,7 +17427,7 @@ strongly_connected_components(digraph([1,2,3],%{[1,2],[1,3],[2,3],[3,2]%}))
 
 # is_strongly_connected
 0 Graph(G)
-2 Returns true iff digraph G is strongly connected.
+2 Returns true iff a digraph G is strongly connected.
 -1 connected_components
 -2 is_connected
 -3 strongly_connected_components
@@ -17433,7 +17435,7 @@ is_strongly_connected(digraph([1,2,3],%{[1,2],[1,3],[2,3],[3,2]%}))
 
 # degree_sequence
 0 Graph(G)
-2 Returns the list of degrees of vertices of G (arc directions are ignored).
+2 Returns the list of degrees of the vertices of G (arc directions are ignored).
 -1 is_graphic_sequence
 -2 is_regular
 -2 sequence_graph
@@ -17442,35 +17444,35 @@ degree_sequence(graph(trail(1,2,3,4,2)))
 
 # is_graphic_sequence
 0 Lst(L)
-2 Returns true iff there exists a graph with degree sequence equal to the list L.
+2 Returns true iff there exists a graph with degree sequence equal to L.
 -1 degree_sequence
 -2 sequence_graph
 is_graphic_sequence([3,2,4,2,3,4,5,7])
 
 # sequence_graph
 0 Lst(L)
-2 Returns an undirected graph with the degree sequence equal to the list L.
+2 Returns an undirected graph with degree sequence equal to L.
 -1 degree_sequence
 -2 is_graphic_sequence
 degree_sequence(sequence_graph([3,2,4,2,3,4,5,7]))
 
 # girth
 0 Graph(G)
-2 Returns the length of the shortest cycle in the undirected unweighted graph G.
+2 Returns the length of the shortest cycle in an undirected unweighted graph G.
 -1 odd_girth
 girth(graph("petersen"))
 girth(hypercube_graph(3))
 
 # odd_girth
 0 Graph(G)
-2 Returns the length of the shortest odd cycle in the undirected unweighted graph G.
+2 Returns the length of the shortest odd cycle in an undirected unweighted graph G.
 -1 girth
 odd_girth(graph("petersen"))
 odd_girth(hypercube_graph(3))
 
 # is_arborescence
 0 Graph(G)
-2 Returns true iff the directed and unweighted graph G is an arborescence.
+2 Returns true iff a directed graph G is an arborescence.
 -1 is_acyclic
 -2 is_forest
 -3 is_tree
@@ -17509,7 +17511,7 @@ seidel_spectrum(graph("clebsch"))
 
 # graph_charpoly
 0 Graph(G),[Var(x)]
-2 Returns the value p(x) of the characteristic polynomial p of G. If x is omitted, a list of coefficients of p is returned.
+2 Returns the value p(x) of the characteristic polynomial p of G. If x is omitted, the list of coefficients of p is returned.
 -1 graph_spectrum
 -2 charpoly
 graph_charpoly(graph(%{[1,2],[2,3]%}))
@@ -17523,7 +17525,7 @@ is_integer_graph(graph("levi"))
 
 # spanning_tree
 0 Graph(G),[Vrtx(r)]
-2 Returns a spanning tree of undirected graph G [with the vertex r as the root node].
+2 Returns a spanning tree of an undirected graph G [with r as the root node].
 -1 number_of_spanning_trees
 -2 minimal_spanning_tree
 spanning_tree(graph("petersen"))
@@ -17531,20 +17533,20 @@ spanning_tree(graph("petersen"),5)
 
 # number_of_spanning_trees
 0 Graph(G)
-2 Returns the number of spanning trees in undirected graph G.
+2 Returns the number of spanning trees in an undirected graph G.
 -1 spanning_tree
 number_of_spanning_trees(complete_graph(4))
 number_of_spanning_trees(graph(trail(1,2,3,4,1,3)))
 
 # minimal_spanning_tree
 0 Graph(G)
-2 Returns the minimal spanning tree of undirected graph G.
+2 Returns the minimal spanning tree of an undirected graph G.
 -1 spanning_tree
 minimal_spanning_tree(graph([[0,1,0,4,0,0],[1,0,1,0,4,0],[0,1,0,3,0,1],[4,0,3,0,1,0],[0,4,0,1,0,4],[0,0,1,0,4,0]]))
 
 # graph_rank
 0 Graph(G),[Lst(E)]
-2 Returns the graph rank of G. If optional set E of edges is given, the rank of the spanning subgraph of G with edge set E is returned.
+2 Returns the graph rank of G. If an optional set E of edges is given, the rank of the spanning subgraph of G with edge set E is returned.
 -1 connected_components
 -2 number_of_vertices
 graph_rank(graph(%{[1,2],[3,4],[4,5]%}))
@@ -17552,7 +17554,7 @@ graph_rank(graph(%{[1,2],[3,4],[4,5]%}),[[1,2],[3,4])
 
 # lowest_common_ancestor
 0 Graph(T),Vrtx(r),Seq(u,v)||Lst([u1,v1],[u2,v2],...)
-2 Returns the lowest common ancestor of nodes u and v in the tree graph T with root r, or the list of lowest common ancestors of all pairs [uk,vk].
+2 Returns the lowest common ancestor of nodes u and v in a tree graph T with root r, or the list of lowest common ancestors of all pairs [uk,vk].
 -1 is_tree
 -2 tree_height
  T:=random_tree(30); lowest_common_ancestor(T,15,10,20)
@@ -17612,7 +17614,7 @@ graph_rank(graph(%{[1,2],[3,4],[4,5]%}),[[1,2],[3,4])
 
 # st_ordering
 0 Graph(G),Vrtx(s),Vrtx(t)
-2 Returns ST numbering for the biconnected graph G with source s and sink (target) t.
+2 Returns ST numbering for a biconnected graph G with source s and sink (target) t.
 -1 is_biconnected
 st_ordering(graph("petersen"),1,2)
 
@@ -17625,20 +17627,20 @@ greedy_color(graph("petersen"))
 
 # is_bipartite
 0 Graph(G),[Var(P)]
-2 Returns true iff G is bipartite graph [and assign to P the list of partitions represented as lists of vertices].
+2 Returns true iff G is a bipartite graph [and assign to P the corresponding vertex partition].
 -1 random_bipartite_graph
 -2 draw_graph
 is_bipartite(graph("desargues"))
 
 # plane_dual
 0 Graph(G)||Lst(F)
-2 Returns the plane dual of the biconnected planar graph G or constructed from the list of faces F.
+2 Returns the plane dual of a biconnected planar graph G or constructed from the list F of its faces.
 -1 is_planar
 plane_dual(hypercube_graph(3))
 
 # is_vertex_colorable
 0 Graph(G),Intg(k),[Var(col)]
-2 Returns true iff the vertices of G can be colored by using at most k colors. If true is returned and an identifier col is given, the colors of the vertices are stored in it.
+2 Returns true iff the vertices of G can be colored by using at most k colors. If true is returned and an identifier col is given, the colors of the vertices are stored there.
 -1 greedy_color
 -2 chromatic_number
 is_vertex_colorable(graph("petersen"),2)
@@ -17646,13 +17648,13 @@ is_vertex_colorable(graph("petersen"),3,cols)
 
 # set_vertex_positions
 0 Graph(G),Lst(vp)
-2 Sets the coordinates, given in the list vp, to the vertices of G and returns the modified copy of G.
+2 Sets the coordinates, given in the list vp, to the vertices of G and returns a modified copy of G.
 -1 draw_graph
  G:=graph([1,2,3,4,5,6],%{[1,2],[1,4],[4,5],[2,5],[2,3],[3,6],[5,6]%}); G:=set_vertex_positions(G,[[0,0],[0.5,0],[1,0],[0,0.5],[0.5,0.5],[1,0.5]])
 
 # find_cliques
 0 Graph(G),[Intg(k)||Intrv(m..n)]
-2 Returns the list of numbers of maximal cliques of size s in G for each s. If parameter k is given, the number of k-cliques is returned. If an interval m..n is given, only cliques with size between m and n (inclusive) are counted (m also may be +infinity).
+2 Returns the list of numbers of maximal cliques of size s in an undirected graph G for each s. If parameter k is given, the number of k-cliques is returned. If an interval m..n is given, only cliques with size between m and n (inclusive) are counted (m also may be +infinity).
 -1 maximum_clique
 -2 clique_cover
 find_cliques(random_graph(50,0.5))
@@ -17661,15 +17663,15 @@ find_cliques(random_graph(50,0.5),3..5)
 
 # minimal_vertex_coloring
 0 Graph(G),[sto]
-2 Computes the minimal vertex coloring for G and returns the colors in the order of vertices. If optional parameter "sto" is given, the colors are assigned to vertices and the modified copy of G is returned.
+2 Computes the minimal vertex coloring for G and returns the colors in the order of vertices. If optional parameter "sto" is given, the colors are assigned to vertices and a modified copy of G is returned.
 -1 chromatic_number
 -2 is_vertex_colorable
 minimal_vertex_coloring(graph("petersen"))
  draw_graph(minimal_vertex_coloring(graph("petersen"),sto))
 
 # bipartite_matching
-0 Graph(G)
-2 Returns the list of edges in a maximum matching of the undirected unweighted bipartite graph G.
+0 Graph(G,[maximize||minimize,[epsilon=Real(eps)]])
+2 Returns the list of edges in a maximum matching of an undirected bipartite graph G. If G is weighted, output either minimum or maximum weighted matching, depending on the second attribute.
 -1 is_bipartite
 -2 maximum_matching
 bipartite_matching(graph("desargues"))
@@ -17698,7 +17700,7 @@ transitive_closure(digraph([1,2,3,4,5,6],%{[1,2],[2,3],[2,4],[4,5],[3,5]%}),weig
 
 # is_subgraph_isomorphic
 0 Graph(G1),Graph(G2),[opts]
-2 Returns true if G1 is isomorphic to a subgraph in G2, else returns false.
+2 Returns true iff G1 is isomorphic to a subgraph in G2.
 -1 is_isomorphic
 -2 subgraph
 is_subgraph_isomorphic(cycle_graph(5),flower_snark(5))
@@ -17727,7 +17729,7 @@ canonical_labeling(graph("petersen"))
 
 # minimal_edge_coloring
 0 Graph(G),[sto]
-2 Finds the minimal edge coloring of G and returns the sequence n,L where n is the class of G (1 for D colors and 2 for D+1 colors) and L is the list of colors of edges of G as returned by the edges command, or a copy of G with colored edges if the option 'sto' is specified.
+2 Finds a minimal edge coloring of G and returns the sequence n,L where n is the class of G (1 for D colors and 2 for D+1 colors) and L is the list of colors of edges of G as returned by the edges command, or a copy of G with colored edges if the option 'sto' is specified.
 -1 chromatic_index
 -2 minimal_vertex_coloring
 -3 edges
@@ -17736,7 +17738,7 @@ minimal_edge_coloring(graph("petersen"))
 
 # chromatic_index
 0 Graph(G),[Lst(cols)]
-2 Returns the number of colors in the minimal edge coloring of G. If an unassigned identifier cols is given, the coloring is stored to it.
+2 Returns the number of colors in a minimal edge coloring of G. If an unassigned identifier cols is given, the coloring is stored there.
 -1 minimal_edge_coloring
 -2 chromatic_number
 chromatic_index(graph("petersen"))
@@ -17762,7 +17764,7 @@ traveling_salesman(digraph(%{[[1,2],1],[[1,3],2],[[2,3],2],[[2,4],3],[[3,2],3],[
 
 # is_hamiltonian
 0 Graph(G),[Var(hc)]
-2 Returns true if G is a Hamiltonian graph (and stores the Hamiltonian circuit in hc if unassigned identifier is given), else returns false.
+2 Returns true iff G is a Hamiltonian graph (and stores the Hamiltonian circuit in hc if unassigned identifier is given).
 -1 traveling_salesman
 is_hamiltonian(graph("petersen"))
 is_hamiltonian(hypercube_graph(5),C)
@@ -17770,7 +17772,7 @@ is_hamiltonian(digraph(%{[1,2],[1,3],[2,3],[2,4],[3,2],[3,4],[4,1]%}))
 
 # is_network
 0 Graph(G),[Vrtx(s),Vrtx(t)]
-2 Returns true if G is a network with the source s and sink t, else returns false. If s,t are not given, the output is a sequence of two sets of vertices: sources and sinks.
+2 Returns true iff G is a network with the source s and sink t. If s,t are not given, the output is a sequence of two sets of vertices: sources and sinks.
 -1 random_network
 -2 maxflow
 is_network(digraph(trail(1,2,3,4,5,6,4,7)))
@@ -17779,7 +17781,7 @@ is_network(digraph(trail(1,2,3,4,5,6,4,1)))
 
 # random_network
 0 Intg(a),Intg(b),[Real(p)],[opts]
-2 Returns a random network with b grid frames of size a*a in which every edge appears with the probability p (by default 0.5).
+2 Returns a random network with b frames of size a*a in which every edge appears with the probability p (by default 0.5).
 -1 is_network
 -2 maxflow
 random_network(3,3)
@@ -17788,19 +17790,19 @@ random_network(3,4,0.75)
 
 # maxflow
 0 Graph(G),Vrtx(s),Vrtx(t)
-2 Returns the optimal value for the max flow problem for network G with the source s and sink t along with an optimal flow (as a matrix).
+2 Returns the optimal value for a max flow problem in network G with source s and sink t along with an optimal flow (as a matrix).
 -1 minimum_cut
 maxflow(digraph(%{[[1,2],2],[[2,3],4],[[3,4],3],[[1,5],3],[[5,2],1],[[5,4],2]%}),1,4)
 
 # minimum_cut
 0 Graph(G),Vrtx(s),Vrtx(t)
-2 Returns the list of edges forming a minimum cut in a directed graph G with the source s and sink t.
+2 Returns the list of edges forming a minimum cut in a directed graph G with source s and sink t.
 -1 maxflow
 minimum_cut(digraph(%{[[1,2],2],[[2,3],4],[[3,4],3],[[1,5],3],[[5,2],1],[[5,4],2]%}),1,4)
 
 # is_cut_set
 0 Graph(G),Lst(E)
-2 Returns true if removing edges in the list E from G increases the number of connected components of G, else returns false.
+2 Returns true iff removing edges in the list E from G increases the number of connected components of G.
 -1 connected_components
 -2 delete_edge
 is_cut_set(graph(trail(1,2,3,4,5,6,4,1,3)),[[1,4],[3,4]])
@@ -17821,7 +17823,7 @@ is_strongly_regular(graph("shrikhande"),s); s
 
 # laplacian_matrix
 0 Graph(G),[normal]
-2 Returns the Laplacian matrix L=D-A of undirected graph G where D resp. A is the degree matrix resp. the adjacency matrix of G.
+2 Returns the Laplacian matrix L=D-A of an undirected graph G where D resp. A is the degree matrix resp. the adjacency matrix of G.
 -1 adjacency_matrix
 -2 degree_sequence
 -3 number_of_spanning_trees
@@ -17830,7 +17832,7 @@ laplacian_matrix(graph(trail(1,2,3,4,5,2)),normal)
 
 # tutte_polynomial
 0 Graph(G),[Var(x),Var(y)]
-2 Returns the Tutte polynomial [or its value at point (x,y)] of undirected graph G. If G is weighted, all weights must be positive integers and are interpreted as edge multiplicities.
+2 Returns the Tutte polynomial [or its value at point (x,y)] of an undirected graph G. If G is weighted, then all weights must be positive integers which are interpreted as edge multiplicities.
 -1 chromatic_polynomial
 -2 flow_polynomial
 -3 reliability_polynomial
@@ -17841,7 +17843,7 @@ tutte_polynomial(graph("tetrahedron"),1,1)
 
 # flow_polynomial
 0 Graph(G),[Var(x)]
-2 Returns the flow polynomial [or its value at point x] of undirected unweighted graph G.
+2 Returns the flow polynomial [or its value at point x] of an undirected unweighted graph G.
 -1 chromatic_polynomial
 -2 reliability_polynomial
 -3 tutte_polynomial
@@ -17850,7 +17852,7 @@ flow_polynomial(graph("tetrahedron"),5)
 
 # chromatic_polynomial
 0 Graph(G),[Var(t)]
-2 Returns the chromatic polynomial [or its value at point t] of undirected unweighted graph G.
+2 Returns the chromatic polynomial [or its value at point t] of an undirected unweighted graph G.
 -1 flow_polynomial
 -2 reliability_polynomial
 -3 tutte_polynomial
@@ -17859,7 +17861,7 @@ chromatic_polynomial(graph("petersen"),3)
 
 # reliability_polynomial
 0 Graph(G),[Var(p)]
-2 Returns the reliability polynomial [or its value at point p] of undirected graph G. If G is weighted, all weights must be positive integers and are interpreted as edge multiplicities.
+2 Returns the reliability polynomial [or its value at point p] of an undirected graph G. If G is weighted, then all weights must be positive integers which are interpreted as edge multiplicities.
 -1 chromatic_polynomial
 -2 flow_polynomial
 -3 tutte_polynomial
@@ -17868,7 +17870,7 @@ reliability_polynomial(graph("petersen"),0.5)
 
 # mycielski
 0 Graph(G)
-2 Returns the Mycielskian of undirected graph G.
+2 Returns the Mycielskian of an undirected graph G.
 -1 chromatic_number
 -2 number_of_triangles
 mycielski(graph("petersen"))
@@ -17876,7 +17878,7 @@ mycielski(graph("petersen"))
 
 # edge_connectivity
 0 graph(G)
-2 Returns the largest integer k for which G is k-edge connected, meaning that G remains connected after fewer than k edges are removed.
+2 Returns the largest integer k such that an undirected connected graph G remains connected after fewer than k edges are removed.
 -1 is_two_edge_connected
 -2 is_edge_cut
 -3 vertex_connectivity
@@ -17886,7 +17888,7 @@ edge_connectivity(complete_graph(5))
 
 # vertex_connectivity
 0 Graph(G)
-2 Returns the largest integer k such that undirected connected graph G remains connected when fewer than k vertices are removed.
+2 Returns the largest integer k such that an undirected connected graph G remains connected when fewer than k vertices are removed.
 -1 edge_connectivity
 -2 is_connected
 vertex_connectivity(graph("petersen"))
@@ -17895,7 +17897,7 @@ vertex_connectivity(complete_graph(5))
 
 # is_two_edge_connected
 0 Graph(G)
-2 Returns true iff undirected graph G is two-edge-connected (has no bridges).
+2 Returns true iff an undirected graph G contains no bridges.
 -1 two_edge_connected_components
 -2 edge_connectivity
 is_two_edge_connected(cycle_graph(4))
@@ -17903,14 +17905,14 @@ is_two_edge_connected(path_graph(4))
 
 # two_edge_connected_components
 0 Graph(G)
-2 Returns the list of two-edge-connected components of undirected graph G, each of them represented by the list of its vertices.
+2 Returns the list of two-edge-connected components of an undirected graph G, each of them represented by the list of its vertices.
 -1 is_two_edge_connected
 -2 connected_components
 two_edge_connected_components(graph(trail(1,2,3,4,5,3,1),trail(5,6,7,8,6)))
 
 # clustering_coefficient
 0 Graph(G),[Vrtx(v)]
-2 Returns the average clustering coefficient of undirected graph G, or the local clustering coefficient of the vertex v in G.
+2 Returns the average clustering coefficient of an undirected graph G, or the local clustering coefficient of the vertex v in G.
 -1 network_transitivity
 -2 number_of_triangles
 clustering_coefficient(graph(%{[1,2],[2,3],[2,4],[3,4],[4,1]%}))
@@ -17918,7 +17920,7 @@ clustering_coefficient(graph(%{[1,2],[2,3],[2,4],[3,4],[4,1]%}),2)
 
 # network_transitivity
 0 Graph(G)
-2 Returns the transitivity (also called triangle density or global clustering coefficient) of G.
+2 Returns the transitivity (also called triangle density or global clustering coefficient) of a network G.
 -1 clustering_coefficient
 -2 number_of_triangles
 network_transitivity(graph(%{[1,2],[2,3],[2,4],[3,4],[4,1]%}))

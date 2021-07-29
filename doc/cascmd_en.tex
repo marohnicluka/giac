@@ -7262,11 +7262,11 @@ To obtain only the fundamental solution, enter:
 \]
 \textit{Input:}
 \begin{center}
-  \texttt{isolve(x\^{}2-3x*y+y\^{}2-x=3,n)}
+  \texttt{isolve(x\^{}2-3x*y+y\^{}2-x=2,n)}
 \end{center}
 \textit{Output:}
 \begin{align*}
-  [[x&=\frac{1}{10} \left(-9 \sqrt{5}+37\right) \left(\frac{-\sqrt{5}-3}{2}\right)^{n}+\frac{1}{10} \left(9 \sqrt{5}+37\right) \left(\frac{\sqrt{5}-3}{2}\right)^{n}-\frac{2}{5},\\y&=\frac{1}{10} \left(5 \sqrt{5}+33\right) \left(\frac{-\sqrt{5}-3}{2}\right)^{n}+\frac{1}{10} \left(-5 \sqrt{5}+33\right) \left(\frac{\sqrt{5}-3}{2}\right)^{n}-\frac{3}{5}]]
+  [[x&=\frac{\left(\frac{\sqrt{5}-3}{2}\right)^{n} \left(-15 \sqrt{5}-33\right)}{10}+\frac{\left(\frac{-\sqrt{5}-3}{2}\right)^{n} \left(15 \sqrt{5}-33\right)}{10}-\frac{2}{5},\\y&=\frac{\left(\frac{\sqrt{5}-3}{2}\right)^{n} \left(-3 \sqrt{5}-6\right)}{5}+\frac{\left(\frac{-\sqrt{5}-3}{2}\right)^{n} \left(3 \sqrt{5}-6\right)}{5}-\frac{3}{5}]]
 \end{align*}
 \textit{Input:}
 \begin{center}
@@ -7283,7 +7283,7 @@ To obtain only the fundamental solution, enter:
 \end{center}
 \textit{Output:}
 \[ \left[x=c \left(-44 a^{2}+12 b^{2}\right),y=c \left(13 a^{2}-3 b^{2}-6 a b\right),z=c \left(-11 a^{2}-3 b^{2}+2 a b\right)\right] \]
-The components of the above solution can be divided by the GCD of $-44 a^{2}+12 b^{2}$, $13 a^{2}-3 b^{2}-6 a b$, and $-11 a^{2}-3 b^{2}+2 a b$, thus producing a parametrization for the primitive solutions given $c=1$.
+The components of the above solution can be divided by the GCD of $-44 a^{2}+12 b^{2}$, $13 a^{2}-3 b^{2}-6 a b$, and $-11 a^{2}-3 b^{2}+2 a b$, thus producing a parametrization for the pairwise-coprime solutions given $c=1$.
 \item Certain polynomial equations of the type $f(x)=g(y)$ can be fully solved, as in the following example.\\
 \textit{Input:}
 \begin{center}

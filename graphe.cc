@@ -8380,7 +8380,6 @@ bool graphe::make_best_planar_layout(layout &x,int iter) {
         if (!make_planar_layout(y,&s))
             return false;
         if (s==0) { // the graph is 3-connected
-            cout << "graph is 3-connected" << endl;
             x=y;
             break;
         }

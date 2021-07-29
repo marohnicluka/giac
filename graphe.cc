@@ -8337,8 +8337,8 @@ bool graphe::make_planar_layout(layout &x,double *score) {
         return false; // the graph is not planar
     /* subdivide the concave faces */
     augment(faces,of,false);
-    bool is_3conn=edge_count()==ec;
-    ivector &outer_face=faces[of];
+    bool is_3conn=edge_count()==ec; // no temporary edges were added
+    const ivector &outer_face=faces[of];
     m=outer_face.size();
     /* create a fake outer face */
     ivector fake_outer_face(m);
@@ -8352,6 +8352,8 @@ bool graphe::make_planar_layout(layout &x,double *score) {
         double fa_min=DBL_MAX,fa_max=0;
         ivectors_iter it=faces.begin();
         for (;it!=faces.end();++it) {
+            if (int(it-faces.begin())==of)
+                continue; // skip the outer face since its area is infinitely large
             int fs=it->size(),i=0;
             for (;i<fs && !is_temporary_edge(it->at(i),it->at((i+1)%fs));++i);
             if (i==fs) {
@@ -10157,7 +10159,7 @@ bool graphe::weighted_bipartite_matching(const ivector &p1,const ivector &p2,ipa
                 W[*it]._VECTptr->at(*jt)=f;
         }
     }
-#ifdef HAVE_LIBGLPK
+#if 0 //def HAVE_LIBGLPK
     /* integralize the weight matrix */
     if (!is_integer_matrice(W,true))
         W=*_apply(makesequence(at_round,divvecteur(W,eps)),ctx)._VECTptr;

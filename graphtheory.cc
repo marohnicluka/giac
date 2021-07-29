@@ -1952,7 +1952,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 C.make_tree_layout(x,sep,roots.empty()?C.tree_height(-1):C.node_index(roots[i]));
                 break;
             case _GT_STYLE_PLANAR:
-                if (!C.make_best_planar_layout(x,(int)std::ceil(300/std::sqrt(C.node_count()))))
+                if (!C.make_best_planar_layout(x,(int)std::ceil(500/double(C.node_count()))))
                     return gt_err(_GT_ERR_NOT_PLANAR);
                 break;
             case _GT_STYLE_CIRCLE:

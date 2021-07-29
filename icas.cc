@@ -231,6 +231,63 @@ void texmacs_next_input () {
   flush_stdout();
 }
 
+bool texmacs_graph_lr_margins(const string &fname,int &val,bool init=true,int width=0) {
+  char buffer[1024];
+  int left,w;
+#ifdef __MINGW_H
+  string devnull=" 2>nul";
+#else
+  string devnull=" 2>/dev/null";
+#endif
+  FILE *pipe=popen(((init?"pdfcrop --verbose ":"pdfinfo ")+fname+devnull).c_str(),"r");
+  if (!pipe) return false;
+  try {
+    int i=-1,j;
+    while(fgets(buffer,sizeof(buffer),pipe)!=NULL) {
+      string line(buffer);
+      if (init) {
+        if (line.substr(2,12)=="BoundingBox:") {
+          line=line.substr(15);
+          i=line.find_first_of(' ');
+          left=atoi(line.substr(0,i).c_str());
+          j=line.find_first_of(' ',i+1)+1;
+          i=line.find_last_of(' ');
+          w=atoi(line.substr(j,i-j).c_str());
+          break;
+        }
+      } else {
+        if (line.substr(0,10)=="Page size:") {
+          for (i=10;line[i]==' ';++i);
+          for (j=i;line[j]!=' ';++j);
+          val=atoi(line.substr(i,j-i).c_str())-width;
+          break;
+        }
+      }
+    }
+    if (i<0)
+      return false;
+  } catch (...) {
+    pclose(pipe);
+    return false;
+  }
+  pclose(pipe);
+  if (init) {
+    int right;
+    if (!texmacs_graph_lr_margins(fname,right,false,w))
+      return false;
+    val=(left+right)/2;
+  }
+  return true;
+}
+
+bool system_status_ok(int status) {
+  return status!=-1
+#ifndef __MINGW_H
+		&& WEXITSTATUS(status)==0
+#endif
+    ;
+}
+
 void texmacs_graph_output(const giac::gen & g,giac::gen & gg,std::string & figfilename,int file_type,const giac::context * contextptr){
 #if 1 // changes by L. Marohnić
   char buf[L_tmpnam];
@@ -238,7 +295,7 @@ void texmacs_graph_output(const giac::gen & g,giac::gen & gg,std::string & figfi
   string tmpname(has_temp_file?buf:"casgraph");
 #ifdef _WIN32
   string tmpdir=getenv("TEMP")?getenv("TEMP"):"c:\\Users\\Public";
-  tmpname=tmpdir+tmpname;
+  tmpname=tmpdir+"\\"+tmpname;
 #endif
   string ext=".eps",extc=".pdf";
   if (!xcas::fltk_view(g,gg,tmpname+ext,figfilename,file_type,contextptr)){
@@ -262,35 +319,65 @@ void texmacs_graph_output(const giac::gen & g,giac::gen & gg,std::string & figfi
     flush_stdout();
   }
   else {
-    bool cleaned=false;
+    bool cleaned=false,cropped=false,no_pdfcrop=true;
 #ifdef HAVE_SYSTEM
     if (system(NULL)) {
-      int status;
-      status=system(("eps2eps "+tmpname+ext+" - | ps2pdf -dEPSCrop - "+tmpname+extc).c_str());
-      if (status!=-1
-#ifndef __MINGW_H
-			&& WEXITSTATUS(status)==0
+#ifdef __MINGW_H
+      no_pdfcrop=system("where pdfcrop >nul") || system("where pdfinfo >nul");
+#else
+      no_pdfcrop=system("which pdfcrop >/dev/null 2>&1") || system("which pdfinfo >/dev/null 2>&1");
 #endif
-		)
-        cleaned=true;
+      stringstream ss;
+      int lr,status;
+#ifdef __MINGW_H
+      cleaned=system_status_ok(system(("eps2eps "+tmpname+ext+" "+tmpname+"-cleaned"+ext).c_str())) &&
+              system_status_ok(system(("ps2pdf -dEPSCrop "+tmpname+"-cleaned"+ext+" "+tmpname+extc).c_str()));
+#else
+      status=system(("eps2eps "+tmpname+ext+" - | ps2pdf -dEPSCrop - "+tmpname+extc).c_str());
+      cleaned=system_status_ok(status);
+#endif
+      if (cleaned && !no_pdfcrop) {
+        if (!texmacs_graph_lr_margins(tmpname+extc,lr))
+          no_pdfcrop=true;
+        else ss << lr << " 0 " << lr << " 0";
+      }
+      string mrg=ss.str();
+      if (cleaned && !no_pdfcrop) {
+#ifdef __MINGW_H
+        string devnull=" >nul";
+#else
+        string devnull=" >/dev/null 2>&1";
+#endif
+        status=system(("pdfcrop --margins '"+mrg+"' "+tmpname+extc+" "+tmpname+"-cropped"+extc+devnull).c_str());
+        cropped=system_status_ok(status);
+      }
     }
 #endif
+    usleep(10000);
     putchar(TEXMACS_DATA_BEGIN);
     printf("scheme:(htab \"\")");
     putchar(TEXMACS_DATA_END);
     putchar(TEXMACS_DATA_BEGIN);
-    printf("file:%s", (tmpname+(cleaned?extc:ext)).c_str());
+    printf("file:%s", (tmpname+(cropped?"-cropped":"")+(cleaned?extc:ext)).c_str());
     putchar(TEXMACS_DATA_END);
     putchar(TEXMACS_DATA_BEGIN);
     printf("scheme:(htab \"\")");
     putchar(TEXMACS_DATA_END);
     flush_stdout(200);
-    // remove temporary files:
+    // remove temporary files
     bool remove_fail=false;
     if (remove((tmpname+ext).c_str())!=0)
       remove_fail=true;
     if (cleaned) {
+#ifdef __MINGW_H
+      if (remove((tmpname+"-cleaned"+ext).c_str())!=0)
+        remove_fail=true;
+#endif
       if (remove((tmpname+extc).c_str())!=0)
+        remove_fail=true;
+    }
+    if (cropped) {
+      if (remove((tmpname+"-cropped"+extc).c_str())!=0)
         remove_fail=true;
     }
     if (remove_fail)
@@ -1166,9 +1253,9 @@ int main(int ARGC, char *ARGV[]){
   //signal(SIGUSR1,data_signal_handler);
   //signal(SIGUSR2,plot_signal_handler);
   giac::child_id=1;
-  bool intexmacs=((ARGC>=2) && std::string(ARGV[1])=="--texmacs");
   bool inemacs=((ARGC>=2) && std::string(ARGV[1])=="--emacs");
   bool insage=((ARGC>=2) && std::string(ARGV[1])=="--sage");
+  bool intexmacs=((ARGC>=2) && std::string(ARGV[1])=="--texmacs");
   if (inemacs){
     putchar(EMACS_DATA_BEGIN);
     putchar(EMACS_ERROR);

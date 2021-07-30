@@ -1164,6 +1164,7 @@ gen _import_graph(const gen &g,GIAC_CONTEXT) {
             if (!import_style) {
                 if ((a=ea.find(_GT_ATTRIB_COLOR))!=ea.end()) ea.erase(a);
                 if ((a=ea.find(_GT_ATTRIB_STYLE))!=ea.end()) ea.erase(a);
+                if ((a=ea.find(_GT_ATTRIB_WIDTH))!=ea.end()) ea.erase(a);
             }
             if (eval_labels) {
                 if ((a=ea.find(_GT_ATTRIB_LABEL))!=ea.end() && a->second.type==_STRNG)
@@ -6431,6 +6432,11 @@ gen _identify_graph(const gen &g,GIAC_CONTEXT) {
             break;
         case _GT_SEQ_COMPLETE:
             parm.insert(parm.begin(),at_complete_graph);
+            res.push_back(parm);
+            break;
+        case _GT_SEQ_COMPLETE_TREE:
+            if (iparm[0]==2) parm.erase(parm.begin());
+            parm.insert(parm.begin(),iparm[0]==2?at_complete_binary_tree:at_complete_kary_tree);
             res.push_back(parm);
             break;
         case _GT_SEQ_CYCLE:

@@ -67,6 +67,7 @@ enum gt_attribute {
     _GT_ATTRIB_COLOR,
     _GT_ATTRIB_SHAPE,
     _GT_ATTRIB_STYLE,
+    _GT_ATTRIB_WIDTH,
     _GT_ATTRIB_DIRECTED,
     _GT_ATTRIB_WEIGHTED,
     _GT_ATTRIB_POSITION,
@@ -843,6 +844,7 @@ private:
     static double layout_min(const layout &x,int d);
     static double layout_diameter(const layout &x);
     static void point2polar(point &p,double &r,double &phi);
+    vecteur draw_edge(int i,int j,const layout &x) const;
     static bool sparse_matrix_element(const sparsemat &A,int i,int j,ipair &val);
     static void multiply_sparse_matrices(const sparsemat &A,const sparsemat &B,sparsemat &P,int ncols,bool symmetric=false);
     static gen sparse_product_element(const sparsemat &A, const sparsemat &B,int i,int j);
@@ -1149,7 +1151,7 @@ public:
     bool is_planar(int sg=-1);
     bool is_clique(int sg=-1) const;
     gen triangle_count(ivectors *dest=NULL,bool ccoeff=false,bool exact=true);
-    int tree_height(int root);
+    int tree_height(int root=-1);
     void clique_stats(std::map<int,int> &m,int mode=0);
     int maximum_clique(ivector &clique);
     void greedy_neighborhood_clique_cover_numbers(ivector &cover_numbers);

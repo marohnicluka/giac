@@ -1453,6 +1453,8 @@ int graphe::tag2index(const string &tag) {
         return _GT_ATTRIB_COLOR;
     if (tag=="style")
         return _GT_ATTRIB_STYLE;
+    if (tag=="width")
+        return _GT_ATTRIB_WIDTH;
     if (tag=="shape")
         return _GT_ATTRIB_SHAPE;
     if (tag=="pos")
@@ -1478,6 +1480,8 @@ string graphe::index2tag(int index) const {
         return "color";
     case _GT_ATTRIB_STYLE:
         return "style";
+    case _GT_ATTRIB_WIDTH:
+        return "width";
     case _GT_ATTRIB_SHAPE:
         return "shape";
     case _GT_ATTRIB_WEIGHT:
@@ -1940,7 +1944,7 @@ void graphe::write_attrib(ofstream &dotfile,const attrib &attr,bool style) const
     bool comma=false;
     for (attrib_iter it=attr.begin();it!=attr.end();++it) {
         if (!style && (it->first==_GT_ATTRIB_COLOR || it->first==_GT_ATTRIB_SHAPE ||
-                       it->first==_GT_ATTRIB_STYLE || it->first==_GT_ATTRIB_POSITION))
+                       it->first==_GT_ATTRIB_STYLE || it->first==_GT_ATTRIB_WIDTH || it->first==_GT_ATTRIB_POSITION))
             continue;
         if (comma) dotfile << ",";
         const gen &val=it->second;
@@ -5196,7 +5200,7 @@ bool graphe::clique_cover(ivectors &cover,int k) {
     return true;
 }
 
-/* return true iff the graph is complete (i.e., a clique) */
+/* return true iff the graph is complete */
 bool graphe::is_clique(int sg) const {
     int n=node_count();
     bool isdir=is_directed();
@@ -8566,52 +8570,90 @@ bool graphe::get_node_position(const attrib &attr,point &p,GIAC_CONTEXT) {
     return gen2point(it->second,p,contextptr);
 }
 
+/* add a single edge to the drawing */
+vecteur graphe::draw_edge(int i,int j,const layout &x) const {
+    int color,width,style;
+    const attrib &attr=node(i).neighbor_attributes(j);
+    color=default_edge_color;
+    attrib_iter ait;
+    if ((ait=attr.find(_GT_ATTRIB_COLOR))!=attr.end() && ait->second.is_integer()) {
+        color=ait->second.val;
+    } else if ((ait=attr.find(_GT_ATTRIB_TEMPORARY))!=attr.end() && is_one(ait->second))
+        color=29; // gray
+    style=0;
+    width=default_edge_width;
+    if ((ait=attr.find(_GT_ATTRIB_STYLE))!=attr.end()) {
+        const gen &val=ait->second;
+        string s=val.type==_STRNG?genstring2str(val):gen2string(val);
+        if (s=="dashed")
+            style=_DASH_LINE;
+        else if (s=="dotted")
+            style=_DOT_LINE;
+        else if (s=="bold")
+            width=bold_edge_width;
+    }
+    if ((ait=attr.find(_GT_ATTRIB_WIDTH))!=attr.end()) {
+        const gen &val=ait->second;
+        string s=val.type==_STRNG?genstring2str(val):gen2string(val);
+        if (s=="thin" || s=="1")
+            width=_LINE_WIDTH_1;
+        else if (s=="normal" || s=="2")
+            style=_LINE_WIDTH_2;
+        else if (s=="thicker" || s=="3")
+            width=_LINE_WIDTH_3;
+        else if (s=="thick" || s=="4")
+            width=_LINE_WIDTH_4;
+        else if (s=="very thick" || s=="5")
+            width=_LINE_WIDTH_5;
+        else if (s=="6")
+            width=_LINE_WIDTH_6;
+        else if (s=="7")
+            width=_LINE_WIDTH_7;
+        else if (s=="8")
+            width=_LINE_WIDTH_8;
+    }
+    vecteur res;
+    point r(x.front().size());
+    const point &p=x[i],&q=x[j];
+    if (is_directed()) {
+        assert((ait=attr.find(_GT_ATTRIB_POSITION))!=attr.end());
+        double d=to_double(ait->second,ctx);
+        point_lincomb(p,q,d,1-d,r);
+        append_segment(res,p,r,color,width,style,true);
+        append_segment(res,r,q,color,width,style,false);
+    } else
+        append_segment(res,p,q,color,style,width);
+    return res;
+}
+
 /* append line segments representing edges (arcs) of the graph to vecteur v */
 void graphe::draw_edges(vecteur &drawing,const layout &x) {
     if (x.empty())
         return;
-    int i,j,color,width,style;
-    bool isdir=is_directed();
-    double d;
-    point r(x.front().size());
+    ipairs E,white,standard,highlighted,other;
+    get_edges_as_pairs(E);
     attrib_iter ait;
-    for (node_iter it=nodes.begin();it!=nodes.end();++it) {
-        i=it-nodes.begin();
-        const point &p=x[i];
-        for (ivector_iter jt=it->neighbors().begin();jt!=it->neighbors().end();++jt) {
-            j=*jt;
-            if (!isdir && j<i)
-                continue;
-            const point &q=x[j];
-            const attrib &attr=it->neighbor_attributes(j);
-            color=default_edge_color;
-            if ((ait=attr.find(_GT_ATTRIB_COLOR))!=attr.end() && ait->second.is_integer()) {
-                color=ait->second.val;
-                if (color==7)
-                    color=0; /* draw white (invisible) edges as black */
-            } else if ((ait=attr.find(_GT_ATTRIB_TEMPORARY))!=attr.end() && is_one(ait->second))
-                color=29; // gray
-            style=0;
-            width=default_edge_width;
-            if ((ait=attr.find(_GT_ATTRIB_STYLE))!=attr.end()) {
-                const gen &val=ait->second;
-                string s=val.type==_STRNG?genstring2str(val):gen2string(val);
-                if (s=="dashed")
-                    style=_DASH_LINE;
-                else if (s=="dotted")
-                    style=_DOT_LINE;
-                else if (s=="bold")
-                    width=bold_edge_width;
-            }
-            if (isdir) {
-                assert((ait=attr.find(_GT_ATTRIB_POSITION))!=attr.end());
-                d=to_double(ait->second,ctx);
-                point_lincomb(p,q,d,1-d,r);
-                append_segment(drawing,p,r,color,width,style,true);
-                append_segment(drawing,r,q,color,width,style,false);
-            } else
-                append_segment(drawing,p,q,color,style,width);
-        }
+    for (ipairs_iter it=E.begin();it!=E.end();++it) {
+        const attrib &attr=node(it->first).neighbor_attributes(it->second);
+        if ((ait=attr.find(_GT_ATTRIB_COLOR))!=attr.end() && ait->second.is_integer()) {
+            if (ait->second.val==default_highlighted_edge_color)
+                highlighted.push_back(*it);
+            else if (ait->second.val==default_edge_color)
+                standard.push_back(*it);
+            else if (ait->second.val==_WHITE)
+                white.push_back(*it);
+            else other.push_back(*it);
+        } else if ((ait=attr.find(_GT_ATTRIB_TEMPORARY))!=attr.end() && is_one(ait->second))
+            other.push_back(*it);
+        else standard.push_back(*it);
+    }
+    E=white;
+    E.insert(E.end(),standard.begin(),standard.end());
+    E.insert(E.end(),other.begin(),other.end());
+    E.insert(E.end(),highlighted.begin(),highlighted.end());
+    for (ipairs_iter it=E.begin();it!=E.end();++it) {
+        vecteur res=draw_edge(it->first,it->second,x);
+        drawing=mergevecteur(drawing,res);
     }
 }
 
@@ -14934,7 +14976,7 @@ int graphe::vertex_cover_number(int sg) {
     for (;s<=cmp;++s) {
         get_subgraph(s,V);
         ivector cov;
-        if (mvc_special(cov,sg)) {
+        if (mvc_special(cov,s)) {
             res+=cov.size();
         } else if (is_bipartite(V1,V2,s,_GT_CC_CONNECTED)) {
             /* apply Kőnig's theorem */
@@ -15439,6 +15481,27 @@ void graphe::identify_from_sequences(ivectors &spec,int haar_limit) {
                 std::sort(res.begin()+1,res.end());
                 std::reverse(res.begin()+1,res.end());
                 spec.push_back(res);
+            }
+        }
+        /* complete trees */
+        if (conn && is_tree()) {
+            map<int,int> deg_count;
+            for (node_iter it=nodes.begin();it!=nodes.end();++it)
+                deg_count[it->degree()]++;
+            if (deg_count.size()>1 && deg_count.size()<=3 && deg_count.begin()->first==1) {
+                ivector d(deg_count.size()),cnt(deg_count.size());
+                int i=0,k,n;
+                for (map<int,int>::const_iterator it=deg_count.begin();it!=deg_count.end();++it) {
+                    d[i]=it->first;
+                    cnt[i++]=it->second;
+                }
+                if (cnt[1]==1 && deg_count.size()==2)
+                    spec.push_back(make_ivector(3,_GT_SEQ_COMPLETE_TREE,d[1],1));
+                else if (cnt[1]==1 && (k=d[1])>1 && d[2]==k+1 && _logb(makesequence(cnt[0],k),ctx).is_integer()) {
+                    n=_logb(makesequence(cnt[0],k),ctx).val;
+                    if (tree_height(tree_height())==n && cnt[2]==((int)std::pow(k,n)-1)/(k-1)-1)
+                        spec.push_back(make_ivector(3,_GT_SEQ_COMPLETE_TREE,k,n));
+                }
             }
         }
         /* Kneser, odd and Johnson graphs */

@@ -50,26 +50,26 @@ int graphe::default_vertex_label_color=_BLACK;
 
 void graphe::message(const char *str) const {
     if (verbose)
-        *logptr(ctx) << str << "\n";
+        *logptr(ctx) << gettext(str) << "\n";
 }
 
 void graphe::message(const char *format,int a) const {
     char buffer[256];
-    sprintf(buffer,format,a);
+    sprintf(buffer,gettext(format),a);
     if (verbose)
         *logptr(ctx) << buffer << "\n";
 }
 
 void graphe::message(const char *format,int a,int b) const {
     char buffer[256];
-    sprintf(buffer,format,a,b);
+    sprintf(buffer,gettext(format),a,b);
     if (verbose)
         *logptr(ctx) << buffer << "\n";
 }
 
 void graphe::message(const char *format,int a,int b,int c) const {
     char buffer[256];
-    sprintf(buffer,format,a,b,c);
+    sprintf(buffer,gettext(format),a,b,c);
     if (verbose)
         *logptr(ctx) << buffer << "\n";
 }
@@ -858,10 +858,6 @@ graphe::graphe(const string &name,GIAC_CONTEXT,bool support_attributes) {
         if (support_attributes) {
             make_planar_layout(x);
             layout_best_rotation(x);
-            point &cp=x[0],&lp=x[6],&rp=x[7];
-            lp[0]=(2*cp[0]+lp[0])/3;
-            rp[0]=(2*cp[0]+rp[0])/3;
-            scale_layout_2d(x,2,1);
         }
     } else if (name=="golomb") {
         read_special(golomb_graph);
@@ -5122,6 +5118,10 @@ int graphe::exact_edge_coloring(ivector &colors,int *numcol) {
     graphe L(ctx,false);
     ipairs E;
     line_graph(L,E);
+    if (E.empty()) {
+        *numcol=0;
+        return 2;
+    }
     /* find the vertex with maximum degree in G (this graph) */
     int m=E.size(),maxdeg=0,deg,i=-1,j,k;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
@@ -10232,7 +10232,7 @@ bool graphe::weighted_bipartite_matching(const ivector &p1,const ivector &p2,ipa
                 offsetof(wbm_v_data,set),offsetof(wbm_a_data,cost),NULL,offsetof(wbm_a_data,x));
     if (res!=0) {
         if (verbose)
-            *logptr(ctx) << "Error: GLPK solver error " << res << "\n";
+            message("Error: GLPK solver error %d",res);
         glp_delete_graph(G);
         return false;
     }
@@ -11090,7 +11090,7 @@ bool graphe::tsp::find_subgraph_subtours(ivectors &sv,solution_status &status) {
         }
         switch (stat) {
         case GLP_FEAS:
-            *logptr(G->giac_context()) << "Warning: the solution is not necessarily optimal\n";
+            G->message("Warning: the solution is not necessarily optimal");
         case GLP_OPT:
             status=_GT_TSP_OPTIMAL;
             break;
@@ -12260,8 +12260,7 @@ bool graphe::atsp::solve(ivector &hc,double &cost) {
         if (isweighted) {
             e=_evalf(G->weight(i,j),G->giac_context());
             if (!is_real_number(e,G->giac_context())) {
-                *logptr(G->giac_context()) << "Warning: arc weight " << e
-                                           << " is not numeric, replacing by 1\n";
+                G->message("Warning: arc weight is not numeric, replacing by 1");
                 w=1;
             } else w=to_double(e,G->giac_context());
         } else w=1;
@@ -12321,11 +12320,11 @@ bool graphe::atsp::solve(ivector &hc,double &cost) {
         ret=true;
         switch(glp_mip_status(mip)) {
         case GLP_FEAS:
-            *logptr(G->giac_context()) << "Warning: the solution is not necessarily optimal\n";
+            G->message("Warning: the solution is not necessarily optimal");
         case GLP_OPT:
             break;
         case GLP_UNDEF:
-            *logptr(G->giac_context()) << "Warning: obtained an undefined solution\n";
+            G->message("Warning: obtained an undefined solution");
         case GLP_NOFEAS:
             ret=false;
             break;
@@ -14203,7 +14202,7 @@ int graphe::mvc_solver::solve(ivector &cover,int k) {
     case GLP_ENODFS:
     case GLP_EFAIL:
         if (k<0 || res==GLP_EFAIL) {
-            *logptr(G->giac_context()) << "Error: MIP solver failure\n";
+            G->message("Error: MIP solver failure");
             return -1;
         }
         return 1;
@@ -14213,7 +14212,7 @@ int graphe::mvc_solver::solve(ivector &cover,int k) {
     switch (glp_mip_status(ilp)) {
     case GLP_FEAS:
         if (k<0)
-            *logptr(G->giac_context()) << "Warning: the solution is not necessarily optimal\n";
+            G->message("Warning: the solution is not necessarily optimal");
     case GLP_OPT:
         /* extract solution */
         for (int i=0;i<n;++i) {
@@ -14222,11 +14221,11 @@ int graphe::mvc_solver::solve(ivector &cover,int k) {
         }
         return 0;
     case GLP_UNDEF:
-        *logptr(G->giac_context()) << "Error: solution is undefined\n";
+        G->message("Error: solution is undefined");
         return -1;
     case GLP_NOFEAS:
         if (k<0) {
-            *logptr(G->giac_context()) << "Error: unable to find a feasible solution\n";
+            G->message("Error: unable to find a feasible solution");
             return -1;
         }
         return 1;
@@ -14508,7 +14507,6 @@ bool graphe::mvc_special(ivector &cover,int sg) {
     get_subgraph(sg,s);
     if (ec==sz-1) {
         /* tree component detected */
-        //*logptr(ctx) << "Tree with " << ec << " edges detected\n";
         while (ec>0) {
             for (ivector_iter jt=s.begin();jt!=s.end();++jt) {
                 vertex &vl=node(*jt);
@@ -14530,7 +14528,6 @@ bool graphe::mvc_special(ivector &cover,int sg) {
     }
     if (mind==2 && maxd==2) {
         /* cycle component detected */
-        //*logptr(ctx) << "Cycle with " << component.size() << " vertices detected\n";
         int v=s.front();
         ivector V;
         dfs(v,true,true,&V,sg);
@@ -14541,7 +14538,6 @@ bool graphe::mvc_special(ivector &cover,int sg) {
     }
     if (mind==sz-1) {
         /* clique component detected */
-        //*logptr(ctx) << "Clique with " << component.size() << " vertices detected\n";
         cover.insert(cover.end(),s.begin()+1,s.end());
         return true;
     }
@@ -15869,8 +15865,8 @@ const int graphe::errera_graph[] = {
     13,16,0,12,13,17,0,13,16,17,0,14,16,0,15,17,0,-1
 };
 const int graphe::goldner_harary_graph[] = {
-    1,2,3,4,5,6,9,10,11,0,2,3,10,0,3,4,7,8,9,10,0,4,9,0,5,9,11,0,6,10,11,
-    0,7,9,11,0,8,10,11,0,9,11,0,10,11,0,-1
+    1,7,9,10,0,2,8,9,11,0,3,8,10,11,0,4,7,9,11,0,5,7,10,11,0,6,8,9,10,0,
+    7,9,10,11,0,8,9,10,11,0,9,10,11,0,10,11,0,-1
 };
 const int graphe::golomb_graph[] = {
     1,2,3,4,0,2,3,6,0,3,8,0,4,5,9,10,0,5,6,10,0,6,7,10,0,7,8,10,0,8,9,10,
@@ -16037,28 +16033,9 @@ const int graphe::wiener_araya_graph[] = {
     37,0,39,41,42,0,40,41,42,0,-1
 };
 const int graphe::markstroem_graph[] = {
-    1,2,9,10,0,
-    2,3,10,0,
-    3,4,13,0,
-    4,5,24,0,
-    5,6,24,0,
-    6,7,18,0,
-    7,8,23,0,
-    8,9,23,0,
-    9,21,0,
-    10,11,0,
-    11,12,13,0,
-    12,13,14,0,
-    14,15,16,0,
-    15,16,17,0,
-    16,20,0,
-    17,18,19,0,
-    18,19,0,
-    19,24,0,
-    20,21,22,0,
-    21,22,0,
-    22,23,0,
-    -1
+    1,2,9,10,0,2,3,10,0,3,4,13,0,4,5,24,0,5,6,24,0,6,7,18,0,7,8,23,0,8,9,23,0,
+    9,21,0,10,11,0,11,12,13,0,12,13,14,0,14,15,16,0,15,16,17,0,16,20,0,17,18,
+    19,0,18,19,0,19,24,0,20,21,22,0,21,22,0,22,23,0,-1
 };
 
 /* the list of all special graphs alongside with the dimensions |V| and |E| */
@@ -16090,7 +16067,7 @@ const graphe::spcgraph graphe::special_graph[] = {
     {"franklin", 12, 18},
     {"frucht", 12, 18},
     {"gewirtz", 56, 280},
-    {"goldner-harary", 11, 26},
+    {"goldner-harary", 11, 27},
     {"golomb", 10, 18},
     {"gosset", 56, 756},
     {"gray", 54, 81},

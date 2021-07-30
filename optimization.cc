@@ -2462,10 +2462,8 @@ void tprob::modi(const matrice &P_orig,matrice &X) {
     matrice P(P_orig);
     int m=X.size(),n=X.front()._VECTptr->size();
     vecteur u(m),v(n);
-    if (M.type==_IDNT) {
-        double inf=_inv(eps,ctx).DOUBLE_val();
-        P=subst(P,M,inf,false,ctx);
-    }
+    if (M.type==_IDNT)
+        P=subst(P,M,_inv(eps,ctx).DOUBLE_val(),false,ctx);
     for (int i=0;i<m;++i)
         u[i]=i==0?gen(0):temp_symb("u",++var_index,ctx);
     for (int j=0;j<n;++j)
@@ -2598,16 +2596,16 @@ gen _tpsolve(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     vecteur supply(*gv[0]._VECTptr),demand(*gv[1]._VECTptr);
     if (!is_integer_vecteur(supply,true) || !is_integer_vecteur(demand,true))
-        return gentypeerr("Supply and demand quantites must be integers");
+        return gentypeerr(gettext("Supply and demand quantites must be integers."));
     matrice P(*gv[2]._VECTptr);
     if (is_strictly_greater(0,_min(_min(P,contextptr),contextptr),contextptr))
         return gensizeerr("All costs must be non-negative");
     vecteur sy(*_lname(P,contextptr)._VECTptr);
     if (sy.size()>1)
-        return gensizeerr("At most one symbol is allowed in the cost matrix");
+        return gensizeerr(gettext("At most one symbol is allowed in the cost matrix."));
     int m=supply.size(),n=demand.size();
     if (m!=int(P.size()) || n!=int(P.front()._VECTptr->size()))
-        return gendimerr("Cost matrix dimensions do not match supply and demand");
+        return gendimerr(gettext("Cost matrix dimensions do not match supply and demand."));
     gen M(sy.size()==1 && sy[0].type==_IDNT?sy[0]:0);
     gen ts(_sum(supply,contextptr)),td(_sum(demand,contextptr));
     if (ts!=td) {
@@ -2636,6 +2634,8 @@ gen _tpsolve(const gen &g,GIAC_CONTEXT) {
             cost+=P[i][j]*X[i][j];
         }
     }
+    if (contains(*_lname(cost,contextptr)._VECTptr,M))
+        return gensizeerr(gettext("The problem has no feasible solution."));
     return makesequence(cost,X);
 }
 static const char _tpsolve_s []="tpsolve";
@@ -2916,10 +2916,8 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
                 feasible=false;
                 break;
             }
-        } else {
-            *logptr(contextptr) << "Error: unrecognized constraint " << *it << "\n";
-            return gentypeerr(contextptr);
-        }
+        } else
+            return gensizeerr((gettext("Unrecognized constraint: ")+it->print(contextptr)).c_str());
     }
     std::vector<int> fxvars_indices;
     vecteur fxvars_values;
@@ -3109,7 +3107,7 @@ gen _ratinterp(const gen &g,GIAC_CONTEXT) {
     }
     int n=X.size()-1;
     if (n<1)
-        return gensizeerr("At least two sample points are required.");
+        return gensizeerr(gettext("At least two sample points are required."));
     if (d<0)
         d=std::min(3,n/2);
     /* compute the interpolant corresponding to d in barycentric form */

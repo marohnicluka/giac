@@ -61,36 +61,41 @@ static const char *gt_error_messages[] = {
     "Wrong number of arguments",                                        // 28
     "Positive integer required",                                        // 29
     "Invalid vertex specification",                                     // 30
+    "Expected an unassigned identifier",                                // 31
 };
 
-gen generr(const char* msg) {
-    string m(msg);
-    m.append("\n");
+gen generr(const char* msg,bool translate=true) {
+    string m(translate?gettext(msg):msg);
+    m.append(".");
     return gensizeerr(m.c_str());
 }
 
 gen generrtype(const char* msg) {
-    string m(msg);
-    m.append("\n");
+    string m(gettext(msg));
+    m.append(".");
     return gentypeerr(m.c_str());
 }
 
 gen generrdim(const char* msg) {
-    string m(msg);
-    m.append("\n");
+    string m(gettext(msg));
+    m.append(".");
     return gendimerr(m.c_str());
 }
 
 gen gt_err(int code) {
-    return generr((string(gt_error_messages[code])).c_str());
+    return generr(gettext((string(gt_error_messages[code])).c_str()),false);
 }
 
 gen gt_err(const gen &g,int code) {
     string str;
     str+=gen2string(g);
     str+=": ";
-    str+=gt_error_messages[code];
-    return generr(str.c_str());
+    str+=gettext(gt_error_messages[code]);
+    return generr(str.c_str(),false);
+}
+
+bool is_unassigned_identifier(const gen &g,GIAC_CONTEXT) {
+    return g.type==_IDNT && _eval(g,contextptr)==g;
 }
 
 void identifier_assign(const identificateur &var,const gen &value,GIAC_CONTEXT) {
@@ -377,6 +382,8 @@ gen flights(const gen &g,bool arrive,bool all,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (!G.is_directed())
         return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED);
+    if (G.is_null())
+        return gt_err(_GT_ERR_GRAPH_IS_NULL);
     int i=0;
     if (!all) {
         i=G.node_index(g._VECTptr->at(1));
@@ -1299,7 +1306,7 @@ gen _adjacency_matrix(const gen &g,GIAC_CONTEXT) {
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_null())
-        return vecteur(0);
+        return gt_err(_GT_ERR_GRAPH_IS_NULL);
     matrice m;
     G.adjacency_matrix(m);
     return change_subtype(m,_MATRIX__VECT);
@@ -1322,6 +1329,10 @@ gen _incidence_matrix(const gen &g,GIAC_CONTEXT) {
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_null())
+        return gt_err(_GT_ERR_GRAPH_IS_NULL);
+    if (G.is_empty())
+        return generr("Graph is empty");
+    if (G.is_null())
         return vecteur(0);
     matrice M;
     G.incidence_matrix(M);
@@ -1341,7 +1352,7 @@ gen _weight_matrix(const gen &g,GIAC_CONTEXT) {
     if (!G.read_gen(g) || !G.is_weighted())
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_null())
-        return vecteur(0);
+        return gt_err(_GT_ERR_GRAPH_IS_NULL);
     matrice W;
     G.weight_matrix(W);
     return change_subtype(W,_MATRIX__VECT);
@@ -1787,7 +1798,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
         for (const_iterateur it=gv.begin()+1;it!=gv.end();++it) {
             opt_counter++;
             const gen &opt=*it;
-            if (opt.type==_IDNT) {
+            if (is_unassigned_identifier(opt,contextptr)) {
                 coords_dest=opt;
                 opt_counter--;
             } else if (opt.is_symb_of_sommet(at_equal)) {
@@ -1925,7 +1936,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 for (const_iterateur jt=outer_vertices.begin();jt!=outer_vertices.end();++jt) {
                     index=C.node_index(*jt);
                     if (index==-1)
-                        return gt_err(_GT_ERR_VERTEX_NOT_FOUND);
+                        return gt_err(*jt,_GT_ERR_VERTEX_NOT_FOUND);
                     hull[jt-outer_vertices.begin()]=index;
                 }
             }
@@ -1950,7 +1961,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
             case _GT_STYLE_TREE:
                 if (check && !C.is_tree())
                     return gt_err(_GT_ERR_NOT_A_TREE);
-                C.make_tree_layout(x,sep,roots.empty()?C.tree_height(-1):C.node_index(roots[i]));
+                C.make_tree_layout(x,sep,roots.empty()?C.tree_height():C.node_index(roots[i]));
                 break;
             case _GT_STYLE_PLANAR:
                 if (!C.make_best_planar_layout(x,(int)std::ceil(500/double(C.node_count()))))
@@ -3579,7 +3590,7 @@ gen _is_regular(const gen &g,GIAC_CONTEXT) {
         if (arg.is_integer()) {
             if ((d=arg.val)<0)
                 return generr("Expected a nonnegative integer");
-        } else if (arg.type!=_IDNT)
+        } else if (!is_unassigned_identifier(arg,contextptr))
             return gentypeerr(contextptr);
     }
     dd=G.is_regular(d);
@@ -3605,8 +3616,8 @@ gen _is_strongly_regular(const gen &g,GIAC_CONTEXT) {
     if (g.subtype==_SEQ__VECT) {
         if (g._VECTptr->size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-        if ((srg=g._VECTptr->back()).type!=_IDNT)
-            return generr("Expected an identifier");
+        if (!is_unassigned_identifier(srg=g._VECTptr->back(),contextptr))
+            return gt_err(_GT_ERR_UNASSIGNED_IDENTIFIER_EXPECTED);
     }
     graphe G(contextptr,false);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
@@ -3800,28 +3811,29 @@ define_unary_function_ptr5(at_is_tournament,alias_at_is_tournament,&__is_tournam
 gen _tree_height(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     graphe G(contextptr);
-    int root=-1,height,res;
+    gen root(undef);
+    int height,res;
     if (g.type==_VECT && g.subtype==_SEQ__VECT) {
         const vecteur &gv=*g._VECTptr;
         if (gv.size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-        if (!G.read_gen(gv.front()))
-            return gt_err(_GT_ERR_NOT_A_GRAPH);
-        if ((root=G.node_index(gv.back()))<0)
-            return gt_err(gv.back(),_GT_ERR_VERTEX_NOT_FOUND);
-        return G.tree_height(root);
-    } else if (!G.read_gen(g))
+        root=gv.back();
+    }
+    if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (!G.is_tree())
         return gt_err(_GT_ERR_NOT_A_TREE);
-    if (G.node_count()==1)
+    int r=is_undef(root)?-1:G.node_index(root);
+    if (!is_undef(root) && r<0)
+        return gt_err(root,_GT_ERR_VERTEX_NOT_FOUND);
+    if (G.node_count()==1) {
         height=0;
-    else res=G.tree_height(root);
-    if (root<0) {
-        height=G.tree_height(res);
-        return makesequence(height,symbolic(at_equal,makevecteur(at_maple_root,res)));
+        res=0;
+    } else {
+        res=G.tree_height(r);
+        height=r<0?G.tree_height(res):res;
     }
-    return res;
+    return is_undef(root)?makesequence(height,symbolic(at_equal,makevecteur(at_maple_root,G.node_label(res)))):height;
 }
 static const char _tree_height_s[]="tree_height";
 static define_unary_function_eval(__tree_height,&_tree_height,_tree_height_s);
@@ -3841,8 +3853,8 @@ gen _number_of_triangles(const gen &g,GIAC_CONTEXT) {
         if (g._VECTptr->size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         dest=g._VECTptr->back();
-        if (dest.type!=_IDNT)
-            return generr("Expected an unassigned identifier");
+        if (!is_unassigned_identifier(dest,contextptr))
+            return gt_err(_GT_ERR_UNASSIGNED_IDENTIFIER_EXPECTED);
     }
     graphe G(contextptr,!is_undef(dest));
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
@@ -3873,6 +3885,8 @@ gen _is_connected(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr,false);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_null())
+        return gt_err(_GT_ERR_GRAPH_IS_NULL);
     return graphe::boole(G.is_connected());
 }
 static const char _is_connected_s[]="is_connected";
@@ -3888,6 +3902,10 @@ gen _is_biconnected(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr,false);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_null())
+        return gt_err(_GT_ERR_GRAPH_IS_NULL);
+    if (G.node_count()==1)
+        return graphe::FAUX;
     return graphe::boole(G.is_biconnected());
 }
 static const char _is_biconnected_s[]="is_biconnected";
@@ -3903,6 +3921,8 @@ gen _is_triconnected(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr,false);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_null())
+        return gt_err(_GT_ERR_GRAPH_IS_NULL);
     return graphe::boole(G.is_triconnected());
 }
 static const char _is_triconnected_s[]="is_triconnected";
@@ -3937,8 +3957,8 @@ gen _is_planar(const gen &g,GIAC_CONTEXT) {
     if (g.subtype==_SEQ__VECT) {
         if (g._VECTptr->size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-        if (g._VECTptr->back().type!=_IDNT)
-            return generrtype("Expected an identifier");
+        if (!is_unassigned_identifier(g._VECTptr->back(),contextptr))
+            return gt_err(_GT_ERR_UNASSIGNED_IDENTIFIER_EXPECTED);
         F=g._VECTptr->back();
     }
     graphe G(contextptr,!is_undef(F)),U(contextptr,!is_undef(F));
@@ -4350,8 +4370,8 @@ gen _is_eulerian(const gen &g,GIAC_CONTEXT) {
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         // output path as vecteur V
         gen V=g._VECTptr->back();
-        if (V.type!=_IDNT)
-            return generrtype("Expected an identifier");
+        if (!is_unassigned_identifier(V,contextptr))
+            return gt_err(_GT_ERR_UNASSIGNED_IDENTIFIER_EXPECTED);
         vecteur P(path.size());
         int i=0;
         for (graphe::ivector_iter it=path.begin();it!=path.end();++it) {
@@ -5243,6 +5263,8 @@ gen _is_clique(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr,false);
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_null())
+        return gt_err(_GT_ERR_GRAPH_IS_NULL);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     return graphe::boole(G.is_clique());
@@ -5365,7 +5387,7 @@ gen _chromatic_number(const gen &g,GIAC_CONTEXT) {
         const gen &opt=g._VECTptr->back();
         if (opt==at_interval || opt==at_approx)
             only_provide_bounds=true;
-        else if (opt.type==_IDNT)
+        else if (is_unassigned_identifier(opt,contextptr))
             colors_dest=opt;
         else return gentypeerr(contextptr);
     }
@@ -5374,6 +5396,8 @@ gen _chromatic_number(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
+    if (G.is_null())
+        return 0;
     if (only_provide_bounds) {
         graphe::ipair bounds=G.chromatic_number_bounds();
         return symbolic(at_interval,makesequence(bounds.first,bounds.second));
@@ -5652,6 +5676,8 @@ gen _seidel_spectrum(const gen &g,GIAC_CONTEXT) {
     if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     int n=G.node_count();
+    if (n<2)
+        return generr("Input graph must have at least two vertices");
     matrice A,I,J,res;
     G.adjacency_matrix(A);
     I=*_idn(n,contextptr)._VECTptr;
@@ -5927,8 +5953,8 @@ gen _st_ordering(const gen &g,GIAC_CONTEXT) {
     else G.parametrized_st_orientation(s,t,p);
     vecteur st=G.get_st_numbering();
     if ((gv.size()==4 && p<0) || (gv.size()==5 && p>=0)) {
-        if (gv[3].type!=_IDNT)
-            return generrtype("Expected an identifier");
+        if (!is_unassigned_identifier(gv[3],contextptr))
+            return gt_err(_GT_ERR_UNASSIGNED_IDENTIFIER_EXPECTED);
         G.assign_edge_directions_from_st();
         identifier_assign(*gv[3]._IDNTptr,G.to_gen(),contextptr);
     }
@@ -5991,8 +6017,8 @@ gen _is_bipartite(const gen &g,GIAC_CONTEXT) {
     if (g.subtype==_SEQ__VECT) {
         if (g._VECTptr->size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-        if ((P=g._VECTptr->back()).type!=_IDNT)
-            return generrtype("Expected an identifier");
+        if (!is_unassigned_identifier(P=g._VECTptr->back(),contextptr))
+            return gt_err(_GT_ERR_UNASSIGNED_IDENTIFIER_EXPECTED);
     }
     graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
@@ -6028,9 +6054,13 @@ gen _plane_dual(const gen &g,GIAC_CONTEXT) {
         graphe G(contextptr);
         if (!G.read_gen(g))
             return gt_err(_GT_ERR_NOT_A_GRAPH);
+        if (G.is_null())
+            return gt_err(_GT_ERR_GRAPH_IS_NULL);
+        if (G.node_count()<3)
+            return generr("Input graph must have at least three vertices");
         if (!G.is_biconnected())
             return gt_err(_GT_ERR_BICONNECTED_GRAPH_REQUIRED);
-        if (!G.demoucron(faces))
+        else if (!G.demoucron(faces))
             return gt_err(_GT_ERR_NOT_PLANAR);
     } else {
         gen_map m;
@@ -6073,8 +6103,8 @@ gen _is_vertex_colorable(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
     gen colors_dest=undef;
     if (gv.size()>2) {
-        if (gv.back().type!=_IDNT)
-            return generrtype("Expected an identifier");
+        if (!is_unassigned_identifier(gv.back(),contextptr))
+            return gt_err(_GT_ERR_UNASSIGNED_IDENTIFIER_EXPECTED);
         colors_dest=gv.back();
     }
     graphe G(contextptr,false);
@@ -6147,7 +6177,7 @@ gen _find_cliques(const gen &g,GIAC_CONTEXT) {
     gen dest(undef);
     if (g.subtype==_SEQ__VECT) {
         int len=g._VECTptr->size();
-        if (g._VECTptr->back().type==_IDNT) {
+        if (is_unassigned_identifier(g._VECTptr->back(),contextptr)) {
             dest=g._VECTptr->back();
             --len;
         }
@@ -6324,8 +6354,8 @@ gen _is_isomorphic(const gen &g,GIAC_CONTEXT) {
     if (G1.is_directed()!=G2.is_directed())
         return graphe::FAUX;
     if (gv.size()>2) {
-        if ((isom=gv.back()).type!=_IDNT)
-            return generrtype("Expected an identifier");
+        if (!is_unassigned_identifier(isom=gv.back(),contextptr))
+            return gt_err(_GT_ERR_UNASSIGNED_IDENTIFIER_EXPECTED);
     }
     map<int,int> clab;
     if (!G1.is_isomorphic(G2,clab))
@@ -6364,7 +6394,7 @@ gen _is_subgraph_isomorphic(const gen &g,GIAC_CONTEXT) {
     if (G1.is_directed()!=G2.is_directed())
         return generr("Both graphs must be (un)directed");
     for (const_iterateur it=gv.begin()+2;it!=gv.end();++it) {
-        if (it->type==_IDNT)
+        if (is_unassigned_identifier(*it,contextptr))
             S=*it;
         if (*it==at_induced_subgraph)
             induced=true;
@@ -6592,8 +6622,8 @@ gen _chromatic_index(const gen &g,GIAC_CONTEXT) {
         const vecteur &gv=*g._VECTptr;
         if (gv.size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-        if ((colors_dest=g._VECTptr->back()).type!=_IDNT)
-            return generrtype("Expected an identifier");
+        if (!is_unassigned_identifier(colors_dest=g._VECTptr->back(),contextptr))
+            return gt_err(_GT_ERR_UNASSIGNED_IDENTIFIER_EXPECTED);
     }
     graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
@@ -6602,10 +6632,9 @@ gen _chromatic_index(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     graphe::ivector colors;
     int ncolors;
-    G.exact_edge_coloring(colors,&ncolors);
-    if (ncolors==0)
+    if (G.exact_edge_coloring(colors,&ncolors)==0)
         return undef;
-    if (!is_undef(colors_dest)) { // store the coloring
+    if (ncolors>0 && !is_undef(colors_dest)) { // store the coloring
         identifier_assign(*colors_dest._IDNTptr,vector_int_2_vecteur(colors),contextptr);
     }
     return ncolors;
@@ -6629,8 +6658,8 @@ gen _is_hamiltonian(const gen &g,GIAC_CONTEXT) {
         if (g._VECTptr->size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         dest=g._VECTptr->back();
-        if (dest.type!=_IDNT)
-            return generrtype("Expected an identifier");
+        if (!is_unassigned_identifier(dest,contextptr))
+            return gt_err(_GT_ERR_UNASSIGNED_IDENTIFIER_EXPECTED);
     }
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
@@ -6819,8 +6848,8 @@ gen _maxflow(const gen &g,GIAC_CONTEXT) {
     gen M(undef);
     if (gv.size()==4) {
         M=gv[3];
-        if (M.type!=_IDNT)
-            return generr("Expected an identifier");
+        if (!is_unassigned_identifier(M,contextptr))
+            return gt_err(_GT_ERR_UNASSIGNED_IDENTIFIER_EXPECTED);
     }
     graphe G(contextptr);
     if (!G.read_gen(gv.front()))
@@ -6903,6 +6932,8 @@ gen _is_network(const gen &g,GIAC_CONTEXT) {
     graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_null())
+        return gt_err(_GT_ERR_GRAPH_IS_NULL);
     if (!G.is_directed())
         return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED);
     bool con=G.is_connected();

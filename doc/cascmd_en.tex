@@ -41849,7 +41849,7 @@ $c_{ij}\in\mathbb{R}^{+}$ is the cost of transporting one
 unit of product from the $i$th source to the $j$th destination, for 
 $i=1,2,\dots,m$ and $j=1,2,\dots,n$.   
 \end{itemize}
-The optimal solution is represented as matrix 
+An optimal solution is represented by the matrix 
 $\mathbf{X}^*=(x^*_{ij})$, where $x^*_{ij}$ is number of
 units that must be transported from the $i$th source to the $j$th
 destination for $i=1,2,\dots,m$ and $j=1,2,\dots,n$.   
@@ -41893,7 +41893,7 @@ The \texttt{tpsolve} command solves the transportation problem.
 If the total supply and total demand are equal, i.e.~if 
 $\sum_{i=1}^m s_i=\sum_{j=1}^n d_j$ holds, the transportation problem
 is said to be \emph{closed} or \emph{balanced}, otherwise it is 
-said to be\emph{unbalanced}. The excess
+said to be \emph{unbalanced}. The excess
 supply/demand is covered by adding a dummy demand/supply point with
 zero cost of ``transportation'' from/to that point. The 
 \texttt{tpsolve} command handles such cases automatically.
@@ -41923,11 +41923,12 @@ zero cost of ``transportation'' from/to that point. The
 \smallskip
 
 Sometimes it is desirable to forbid transportation on certain routes.
-That is usually achieved by setting very high cost to these routes,
-represented by the symbol $M$. If \texttt{tpsolve} detects this symbol in
-the cost matrix and assigns it 100 times the largest numeric element
-of $ \mathbf{C} $ to the corresponding routes, which forces the
-algorithm to avoid them. 
+That is usually achieved by setting a very high cost,
+represented by a symbol (usually $M$), to these routes.
+Hence all instances of a symbol in the cost matrix are automatically replaced
+by a practically infinite number (precisely
+$(m n + 1)/\varepsilon$, where $\varepsilon$ is returned
+by \texttt{epsilon}), which forces the algorithm to avoid the associated routes. 
 
 \smallskip
 

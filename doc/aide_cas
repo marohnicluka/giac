@@ -18101,7 +18101,7 @@ numdiff([1,3,4],[3,0,1],2)
 
 # degree_centrality
 0 Graph(G),[Vrtx(v)]
-2 Returns the degree centrality for vertex v in graph G or the list of degree centralities for each vertex in G.
+2 Returns the degree centrality of a vertex v in a graph G or the list of degree centralities of vertices in G.
 -1 betweenness_centrality
 -2 closeness_centrality
 -3 harmonic_centrality
@@ -18111,7 +18111,7 @@ degree_centrality(graph(6,%{[0,2],[0,5],[1,3],[1,5],[2,5],[3,4],[3,5],[4,5]%}))
 
 # betweenness_centrality
 0 Graph(G),[Vrtx(v)]
-2 Returns the betweenness centrality for vertex v in graph G or the list of betweenness centralities for each vertex in G.
+2 Returns the betweenness centrality of a vertex v in a graph G or the list of betweenness centralities of vertices in G.
 -1 degree_centrality
 -2 closeness_centrality
 -3 harmonic_centrality
@@ -18121,7 +18121,7 @@ betweenness_centrality(graph(6,%{[0,2],[0,5],[1,3],[1,5],[2,5],[3,4],[3,5],[4,5]
 
 # closeness_centrality
 0 Graph(G),[Vrtx(v)]
-2 Returns the closeness centrality for vertex v in graph G or the list of closeness centralities for each vertex in G.
+2 Returns the closeness centrality of a vertex v in a graph G or the list of closeness centralities of vertices in G.
 -1 degree_centrality
 -2 betweenness_centrality
 -3 harmonic_centrality
@@ -18131,7 +18131,7 @@ closeness_centrality(graph(6,%{[0,2],[0,5],[1,3],[1,5],[2,5],[3,4],[3,5],[4,5]%}
 
 # harmonic_centrality
 0 Graph(G),[Vrtx(v)]
-2 Returns the harmonic centrality for vertex v in graph G or the list of harmonic centralities for each vertex in G.
+2 Returns the harmonic centrality of a vertex v in a graph G or the list of harmonic centralities of vertices in G.
 -1 degree_centrality
 -2 betweenness_centrality
 -3 closeness_centrality
@@ -18141,7 +18141,7 @@ harmonic_centrality(graph(6,%{[0,2],[0,5],[1,3],[1,5],[2,5],[3,4],[3,5],[4,5]%})
 
 # information_centrality
 0 Graph(G),[Vrtx(v)],[approx]
-2 Returns the information centrality for vertex v in graph G or the list of information centralities for each vertex in G.
+2 Returns the information centrality of a vertex v in a graph G or the list of information centralities of vertices in G.
 -1 degree_centrality
 -2 betweenness_centrality
 -3 closeness_centrality
@@ -18151,7 +18151,7 @@ information_centrality(graph(6,%{[0,2],[0,5],[1,3],[1,5],[2,5],[3,4],[3,5],[4,5]
 
 # katz_centrality
 0 Graph(G),Real(alpha),[Vrtx(v)]
-2 Returns the Katz centrality for vertex v in graph G or the list of Katz centralities for each vertex in G, where alpha is the attenuation factor.
+2 Returns the Katz centrality of a vertex v in a graph G or the list of Katz centralities of vertices in G, where alpha is the attenuation factor.
 -1 degree_centrality
 -2 betweenness_centrality
 -3 closeness_centrality
@@ -18161,7 +18161,7 @@ katz_centrality(graph(6,%{[0,2],[0,5],[1,3],[1,5],[2,5],[3,4],[3,5],[4,5]%}),0.1
 
 # is_split_graph
 0 Graph(G),[part]
-2 Returns true iff the vertex set of G can be partitioned into a clique and an independent set. These are also returned if the optional argument is given.
+2 Returns true iff the vertex set of G can be partitioned into a clique and an independent set. These are also returned if the keyword 'part' is provided.
 -1 degree_sequence
 -2 maximum_clique
 -3 maximum_independent_set
@@ -18169,7 +18169,7 @@ is_split_graph(graph(5,%{[0,1],[0,2],[1,2],[1,3],[2,3],[3,4]%}),part)
 
 # contract_subgraph
 0 Graph(G),Lst(S),[lb]
-2 Returns a copy of G with the subgraph induced by S contracted into a single vertex (optionally with label lb).
+2 Returns a copy of G in which the subgraph induced by S is contracted into a single vertex (optionally labeled by lb).
 -1 contract_edge
 -2 condensation
 -3 delete_vertex
@@ -18178,19 +18178,19 @@ contract_subgraph(cycle_graph(6),[0,1,5],"newLabel")
 
 # greedy_clique
 0 Graph(G),[Intg(n)]
-2 Returns a large clique in undirected graph G using GRASP algorithm with n iterations (default 5).
+2 Returns a large clique in an undirected graph G using the GRASP algorithm with n iterations (default 5).
 -1 maximum_clique
 greedy_clique(random_regular_graph(100,30))
 
 # greedy_independent_set
 0 Graph(G),[Intg(n)]
-2 Returns a large independent set in undirected graph G using GRASP algorithm with n iterations (default 5).
+2 Returns a large independent set in an undirected graph G using the GRASP algorithm with n iterations (default 5).
 -1 maximum_independent_set
 greedy_independent_set(random_regular_graph(100,30))
 
 # find_vertex_cover
 0 Graph(G),[Intg(k)]
-2 Returns a list of vertices (of size k) which comprise a vertex cover in undirected graph G.
+2 Returns a list of (k) vertices which comprise a vertex cover in an undirected graph G.
 -1 minimum_vertex_cover
 -2 vertex_cover_number
 find_vertex_cover(complete_graph(3,4))
@@ -18198,20 +18198,20 @@ find_vertex_cover(complete_graph(3,4),4)
 
 # minimum_vertex_cover
 0 Graph(G),[approx]
-2 Returns a list of vertices which comprise a minimum vertex cover in undirected graph G.
+2 Returns a list of vertices which comprise a minimum vertex cover in an undirected graph G.
 -1 vertex_cover_number
 -2 find_vertex_cover
 minimum_vertex_cover(graph_complement(complete_graph(3,4)))
 
 # vertex_cover_number
 0 Graph(G)
-2 Returns the size of a minimum vertex cover in undirected graph G.
+2 Returns the size of a minimum vertex cover in an undirected graph G.
 -1 minimum_vertex_cover
 vertex_cover_number(graph_complement(complete_graph(3,4)))
 
 # is_reachable
 0 Graph(G),Vrtx(u),Vrtx(v)
-2 Returns true if there exists a path from u to v in (di)graph G, else returns false.
+2 Returns true iff there exists a path from u to v in a (di)graph G.
 -1 reachable
 -2 shortest_path
  G:=graph_complement(complete_graph(3,4)):;is_reachable(G,3,2)
@@ -18225,7 +18225,7 @@ vertex_cover_number(graph_complement(complete_graph(3,4)))
  G:=graph_complement(complete_graph(3,4)):;reachable(G,3)
 
 # box_constraints
-2 Converts variable bounds, given in matrix form, to interval form x=a..b,y=c..d,...
+2 Converts variable bounds, given in matrix form, into interval form x=a..b,y=c..d,...
 0 Vect(x),Mtrx(bounds)
 -1 nlpsolve
 -2 minimize

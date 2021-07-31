@@ -303,10 +303,24 @@ line by choosing it with your arrow keys or clicking on it with a
 mouse.  The TeXmacs interface also has a menu containing \texttt{giac}
 commands.
 
+Note that a \texttt{giac} session in TeXmacs may be started directly from
+a terminal using the script \texttt{xgiac} available in the \texttt{src}
+subdirectory of the \texttt{giac} source. 
+
 Within TeXmacs, you can combine \texttt{giac} commands and their
 output with ordinary text.  To enter normal text within a
 \texttt{giac} session, use the menu item
 \texttt{Focus$\blacktriangleright$Insert Text Field Above}.
+
+You can also use mathematical input when entering commands, which allows
+for fast typing of complex formulas. For details, see the \texttt{giac} plugin
+documentation in TeXmacs. Also, any command output in a TeXmacs session (or a
+part of it) may be copied back to an input field, thanks to the conversion
+routines between \texttt{giac} syntax and TeXmacs Scheme.
+
+Graphics created by \texttt{giac} are converted to PDF and embedded
+into TeXmacs sessions. Note that this requires the Ghostscript package to
+be installed on your system.
 
 \subsection{Checking the version of \texttt{giac} that you are using: \texttt{version} \texttt{giac}
 \index{version}

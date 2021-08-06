@@ -2029,7 +2029,7 @@ bool graphe::write_dot(const string &filename,bool style) const {
 bool graphe::write_lst(const string &filename) const {
     assert(!is_directed());
     ofstream file;
-    file.open(filename);
+    file.open(filename.c_str());
     if (!file.is_open()) {
         message("Error: failed to open file for writing");
         return false;
@@ -2394,7 +2394,7 @@ bool graphe::read_dot(const string &filename) {
 bool graphe::read_lst(const string &filename) {
     ifstream file;
     string word;
-    file.open(filename);
+    file.open(filename.c_str());
     if (!file.is_open()) {
         message("Error: failed to open file for reading");
         return false;
@@ -5930,13 +5930,12 @@ bool graphe::make_goldberg_snark(int n) {
 }
 
 /* construct Haar graph with index n */
-bool graphe::make_haar_graph(ulong n) {
-    if (n<1) return false;
-    int k=1+int(std::floor(std::log2(n)));
+bool graphe::make_haar_graph(const gen &n) {
+    if (!n.is_integer() || is_strictly_greater(1,n,ctx))
+        return false;
+    int k=1+_floor(_logb(makesequence(n,2),ctx),ctx).val;
     this->clear();
     vecteur V,be=*_convert(makesequence(n,_BASE,2),ctx)._VECTptr;
-    if (int(be.size())!=k)
-        return false;
     reserve_nodes(2*k);
     if (supports_attributes()) {
         make_default_labels(V,2*k);

@@ -1150,7 +1150,7 @@ gen _import_graph(const gen &g,GIAC_CONTEXT) {
                 if ((a=va.find(_GT_ATTRIB_POSITION))!=va.end()) va.erase(a);
             } else if ((a=va.find(_GT_ATTRIB_POSITION))!=va.end()) {
                 std::string str=a->second.type==_STRNG?*a->second._STRNGptr:a->second.print(contextptr);
-                if (str.back()=='!') str.pop_back();
+                if (str[str.size()-1]=='!') str=str.substr(0,str.size()-1);
                 a->second=gen(graphe::genstring2str(a->second),contextptr);
                 if (a->second.type==_VECT || a->second.type==_CPLX)
                     a->second=symbolic(at_point,a->second);
@@ -4219,13 +4219,10 @@ define_unary_function_ptr5(at_goldberg_snark,alias_at_goldberg_snark,&__goldberg
  */
 gen _haar_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    int n=0;
-    if (!g.is_integer() || (n=g.val)<1)
-        return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
     graphe G(contextptr);
-    if (G.make_haar_graph(n))
-        return G.to_gen();
-    return generr("Failed to construct Haar graph");
+    if (!G.make_haar_graph(g))
+        return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
+    return G.to_gen();
 }
 static const char _haar_graph_s[]="haar_graph";
 static define_unary_function_eval(__haar_graph,&_haar_graph,_haar_graph_s);

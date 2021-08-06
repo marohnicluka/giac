@@ -19,6 +19,8 @@
 
 #ifndef __GRAPHE_H
 #define __GRAPHE_H
+#include <time.h>
+#include <stdarg.h>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -1179,7 +1181,7 @@ public:
     void make_complete_kary_tree(int k,int d);
     bool make_flower_snark(int n,layout *x=NULL);
     bool make_goldberg_snark(int n);
-    bool make_haar_graph(ulong n);
+    bool make_haar_graph(const gen &n);
     void make_paley_graph(int p,int k);
     void make_hypercube_graph(int n);
     void make_random_tree(int maxd=0);

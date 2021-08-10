@@ -48,14 +48,14 @@ double gen2double(const gen &g,GIAC_CONTEXT) {
 }
 
 /*
- * Return number of digits of an unsigned integer.
+ * Return the number of digits of an unsigned integer.
  */
 int numdigits(unsigned i) {
     return 1+(i>0?(int)std::log10((double)i):0);
 }
 
 /*
- * Return true iff g is a (vector of) real number or +infinity or -infinity.
+ * Return true iff g is a (vector of) real number(s), +inf, or -inf.
  */
 bool is_realcons(const gen &g,GIAC_CONTEXT) {
     if (g.type==_VECT) {
@@ -70,8 +70,8 @@ bool is_realcons(const gen &g,GIAC_CONTEXT) {
 }
 
 /*
- * If g is an interval, store its bounds to pair p and return true. If g is not
- * an interval, return false.
+ * If g is an interval, store its bounds to pair p and return true.
+ * If g is not an interval, return false.
  */
 bool interval2pair(const gen &g,pair<gen,gen> &p,GIAC_CONTEXT) {
     if (g.type!=_SYMB || !g.is_symb_of_sommet(at_interval))
@@ -82,58 +82,60 @@ bool interval2pair(const gen &g,pair<gen,gen> &p,GIAC_CONTEXT) {
 }
 
 /*
- * Make singleton vector (with one at position j and zeros at other positions).
+ * Make a singleton vector (with 1 at position j and 0 at other positions).
  */
 vecteur singleton(int n,int j) {
-    vecteur v(n,gen(0));
-    v[j]=gen(1);
+    vecteur v(n,0);
+    v[j]=1;
     return v;
 }
 
 /*
- * Insert column in matrix at position j.
+ * Insert column c in matrix at position j.
  */
 void insert_column(matrice &m,const vecteur &c,int j) {
     assert(m.size()==c.size());
-    for (int i=0;i<int(m.size());++i) {
-        m[i]._VECTptr->insert(j>=0?m[i]._VECTptr->begin()+j:m[i]._VECTptr->end()+j,c[i]);
+    for (iterateur it=m.begin();it!=m.end();++it) {
+        it->_VECTptr->insert(j>=0?it->_VECTptr->begin()+j:it->_VECTptr->end()+j,c[it-m.begin()]);
     }
 }
 
 /*
- * Append column to matrix.
+ * Append a column c to matrix m.
  */
 void append_column(matrice &m,const vecteur &c) {
     assert(m.size()==c.size());
-    matrice mt=mtran(m);
-    mt.push_back(c);
-    m=mtran(mt);
-}
-
-/*
- * Remove jth column from matrix. If j<0, count from last column towards the first.
- */
-void remove_column(matrice &m,int j) {
-    for (int i=0;i<int(m.size());++i) {
-        m[i]._VECTptr->erase(j+(j>=0?m[i]._VECTptr->begin():m.end()));
+    for (iterateur it=m.begin();it!=m.end();++it) {
+        it->_VECTptr->push_back(c[it-m.begin()]);
     }
 }
 
 /*
- * Get jth column from matrix. If j<0, count from last column towards the first.
+ * Remove the jth column from the matrix m.
+ * If j<0, count from the last column towards the first.
+ */
+void remove_column(matrice &m,int j) {
+    for (iterateur it=m.begin();it!=m.end();++it) {
+        it->_VECTptr->erase(j+(j>=0?it->_VECTptr->begin():it->_VECTptr->end()));
+    }
+}
+
+/*
+ * Get the jth column from matrix m.
+ * If j<0, count from the last column towards the the first.
  */
 vecteur jth_column(const matrice &m,int j) {
     int n=m.front()._VECTptr->size();
     vecteur col(m.size());
-    for (int i=0;i<int(m.size());++i) {
-        col[i]=m[i][j>=0?j:n+j];
+    for (const_iterateur it=m.begin();it!=m.end();++it) {
+        col[it-m.begin()]=it->_VECTptr->at(j>=0?j:n+j);
     }
     return col;
 }
 
 /*
- * Multiply coefficients by LCM of denominators and then divide them by their
- * GCD.
+ * Multiply the coefficients in v_orig by LCM of
+ * denominators and then divide by their GCD.
  */
 vecteur integralize(const vecteur &v_orig,GIAC_CONTEXT) {
     vecteur v(v_orig),vd;
@@ -247,10 +249,12 @@ lp_stats::lp_stats() {
 void pivot_ij(matrice &m,int I,int J,bool negate=false) {
     int nr=m.size(),nc=m.front()._VECTptr->size();
     gen a(m[I][J]),b;
-    m[I]=divvecteur(*m[I]._VECTptr,a);
+    for (iterateur it=m[I]._VECTptr->begin();it!=m[I]._VECTptr->end();++it) {
+        *it=(*it)/a;
+    }
     vecteur col(jth_column(m,J)),&pv=*m[I]._VECTptr;
-    for (int i=0;i<nr;++i) {
-        m[i]._VECTptr->at(J)=(i==I?gen(negate?-1:1)/a:gen(0));
+    for (iterateur it=m.begin();it!=m.end();++it) {
+        it->_VECTptr->at(J)=(int(it-m.begin())==I?gen(negate?-1:1)/a:gen(0));
     }
     for (int i=0;i<nr;++i) {
         b=col[i];
@@ -267,34 +271,33 @@ void pivot_ij(matrice &m,int I,int J,bool negate=false) {
  * Simplex algorithm that handles upper bounds of the variables. The solution x
  * satisfies 0<=x<=u. An initial basis must be provided.
  *
- * Basis is a vector of integers B and B[i]=j means that jth variable is basic
- * and appears in ith row (constraint). Basic columns are not kept in matrix,
+ * Basis is a vector of integers B and B[i]=j means that j-th variable is basic
+ * and appears in i-th row (constraint). Basic columns are not kept in matrix,
  * which contains only the columns of nonbasic variables. A nonbasic variable
  * is assigned to the respective column with integer vector 'cols': cols[i]=j
  * means that ith column of the matrix is associated with the jth variable. The
- * algorithm uses upper-bounding technique when pivoting and uses an adaptation
- * of Bland's rule to prevent cycling. ith element of 'is_slack' is true iff
- * ith (nonbasic) variable is at its upper bound.
+ * algorithm uses the upper-bounding technique when pivoting and an adaptation
+ * of Bland's rule to prevent cycling. i-th element of 'is_slack' is true iff
+ * the i-th (nonbasic) variable is at its upper bound.
  *
- * If limit>0, simplex algorithm will terminate after that many iterations.
+ * If limit>0, the simplex algorithm will terminate after that many iterations.
  */
-matrice simplex_reduce_bounded(const matrice &m_orig,const vecteur &u,vector<bool> &is_slack,vecteur &bfs,gen &optimum,
-                               ints &basis,ints &cols,int limit,GIAC_CONTEXT) {
-    matrice m(m_orig);
-    //ev, lv: indices of entering and leaving variables
-    //ec, lr: 'entering' column and 'leaving' row in matrix m, respectively
+void simplex_reduce_bounded(matrice &m,const vecteur &u,vector<bool> &is_slack,vecteur &bfs,gen &optimum,
+                            ints &basis,ints &cols,int limit,GIAC_CONTEXT) {
+    // ev, lv: indices of entering and leaving variables
+    // ec, lr: 'entering' column and 'leaving' row in matrix m, respectively
     int nr=basis.size(),nc=cols.size(),nv=nr+nc,ec,ev,lr,lv,icount=0;
     gen a,b,ratio,mincoeff,opt;
-    //iterate the simplex method
+    // iterate the simplex method
     bool choose_first=false;
     optimum=undef;
     while ((icount++)<limit) {
         opt=m.back()._VECTptr->back();
-        //determine which variable enters the basis
-        mincoeff=gen(0);
+        // determine which variable enters the basis
+        mincoeff=0;
         ev=-1;
         m.back()=_eval(m.back(),contextptr);
-        vecteur &last=*m.back()._VECTptr;
+        const vecteur &last=*m.back()._VECTptr;
         for (int j=0;j<nc;++j) {
             int k=cols[j];
             if ((choose_first && is_strictly_positive(-last[j],contextptr) &&
@@ -305,9 +308,9 @@ matrice simplex_reduce_bounded(const matrice &m_orig,const vecteur &u,vector<boo
                 mincoeff=last[j];
             }
         }
-        if (ev<0) //the current solution is optimal
+        if (ev<0) // the current solution is optimal
             break;
-        //determine which variable leaves the basis
+        // determine which variable leaves the basis
         mincoeff=plus_inf;
         lv=-1;
         bool hits_ub,ub_subs;
@@ -331,12 +334,12 @@ matrice simplex_reduce_bounded(const matrice &m_orig,const vecteur &u,vector<boo
                 ub_subs=hits_ub;
             }
         }
-        if (lv<0 && is_inf(u[ev])) { //solution is unbounded
+        if (lv<0 && is_inf(u[ev])) { // the solution is unbounded
             optimum=plus_inf;
-            return m;
+            return;
         }
-        if (is_zero(mincoeff))
-            choose_first=true; //switch on Bland's rule
+        if (!choose_first && is_zero(mincoeff))
+            choose_first=true; // switch the Bland's rule on
         if (lv<0 || is_greater(mincoeff,u[ev],contextptr)) {
             for (iterateur it=m.begin();it!=m.end();++it) {
                 it->_VECTptr->back()-=u[ev]*(a=it->_VECTptr->at(ec));
@@ -346,7 +349,7 @@ matrice simplex_reduce_bounded(const matrice &m_orig,const vecteur &u,vector<boo
                 is_slack[ev]=!is_slack[ev];
             continue;
         }
-        //swap variables: basic leaves, nonbasic enters
+        // swap variables: basic leaves, nonbasic enters
         if (ub_subs) {
             m[lr]._VECTptr->back()-=u[lv];
             if (lv<nv)
@@ -356,9 +359,9 @@ matrice simplex_reduce_bounded(const matrice &m_orig,const vecteur &u,vector<boo
         basis[lr]=ev;
         cols[ec]=lv;
     }
-    m=*_eval(m,contextptr)._VECTptr;
+    //m=*_eval(m,contextptr)._VECTptr;
     optimum=m[nr][nc];
-    bfs=vecteur(nv,gen(0));
+    bfs=vecteur(nv,0);
     for (int i=0;i<nr;++i) {
         bfs[basis[i]]=m[i][nc];
     }
@@ -366,7 +369,6 @@ matrice simplex_reduce_bounded(const matrice &m_orig,const vecteur &u,vector<boo
         if (is_slack[j])
             bfs[j]=u[j]-bfs[j];
     }
-    return m;
 }
 
 /*
@@ -389,7 +391,7 @@ int lp_node::solve_relaxation() {
     vector<bool> is_slack(ncols,false);
     map<int,int> slack_cut;
     bool is_mip=prob->has_integral_variables();
-    //determine upper and lower bounds
+    // determine the upper and the lower bound
     for (int j=0;j<ncols;++j) {
         lp_variable &var=prob->variables[j];
         lp_range &range=ranges[j];
@@ -398,37 +400,38 @@ int lp_node::solve_relaxation() {
         if (is_strictly_greater(l[j],u[j],prob->ctx))
             return _LP_INFEASIBLE;
     }
-    //populate matrix with constraint coefficients
+    // populate matrix with constraint coefficients
     m=*_matrix(makesequence(nrows,ncols+1,0),prob->ctx)._VECTptr;
     for (int i=0;i<nrows;++i) for (int j=0;j<ncols;++j) {
         m[i]._VECTptr->at(j)=prob->constr.lhs[i][j];
     }
     b=prob->constr.rhs;
-    //shift variables according to their lower bounds such that l<=x<=u becomes 0<=x'<=u'
+    // shift the variables according to their lower bounds such that l<=x<=u becomes 0<=x'<=u'
     for (int j=0;j<ncols;++j) {
         b=subvecteur(b,multvecteur(l[j],jth_column(m,j)));
         u[j]-=l[j];
         obj_ct+=obj[j]*l[j];
         cols[j]=j;
     }
+    // append the column b to the tableau
     for (int i=0;i<nrows;++i) {
         m[i]._VECTptr->at(ncols)=b[i];
     }
-    //assure that the right-hand side column has nonnegative coefficients
+    // assure that the right-hand side column has nonnegative coefficients
     for (iterateur it=m.begin();it!=m.end();++it) {
         if (is_strictly_positive(-it->_VECTptr->back(),prob->ctx)) {
             *it=-*it;
         }
     }
-    //append cuts inherited from parent node
+    // append cuts inherited from the parent node
     for (ints::const_iterator it=cut_indices.begin();it!=cut_indices.end();++it) {
-        insert_column(m,vecteur(nrows,gen(0)),-1);
+        insert_column(m,vecteur(nrows,0),-1);
         slack_cut[ncols]=*it;
         prob->cuts.get_lr(*it,lh,rh);
         for (int i=0;i<prob->nv();++i) {
             rh-=lh[i]*l[i];
         }
-        row=vecteur(cols.size(),gen(0));
+        row=vecteur(cols.size(),0);
         for (int i=0;i<int(cols.size());++i) {
             int j=cols.at(i);
             if (j<prob->nv())
@@ -436,20 +439,44 @@ int lp_node::solve_relaxation() {
         }
         row.push_back(gen(-1));
         row.push_back(rh);
-        if (is_strictly_positive(-rh,prob->ctx))
-            row=multvecteur(gen(-1),row);
+        if (is_strictly_positive(-rh,prob->ctx)) {
+            for (iterateur jt=row.begin();jt!=row.end();++jt) {
+                *jt=-(*jt);
+            }
+        }
         m.push_back(row);
-        l.push_back(gen(0));
+        l.push_back(0);
         u.push_back(plus_inf);
         is_slack.push_back(false);
-        obj.push_back(gen(0));
+        obj.push_back(0);
         cols.push_back(ncols++);
         ++nrows;
     }
-    //optimize-add cut-reoptimize-add cut...
-    //repeat until no more cuts are generated or max_cuts limit is reached
+    // delete linearly dependent constraints, if any
+    int rnk;
+    if ((rnk=_rank(m,prob->ctx).val)<nrows) {
+        matrice r=mtran(*_rref(mtran(m),prob->ctx)._VECTptr);
+        ints ri;
+        int k=0;
+        for (const_iterateur it=r.begin();it!=r.end();++it) {
+            int i=0;
+            for (;is_zero(it->_VECTptr->at(i));++i);
+            if (i==k && is_one(it->_VECTptr->at(k))) {
+                ri.push_back(it-r.begin());
+                if (++k==rnk) break;
+            }
+        }
+        matrice M;
+        for (ints::const_iterator it=ri.begin();it!=ri.end();++it) {
+            M.push_back(m[*it]);
+        }
+        m=M;
+        nrows=rnk;
+    }
+    // optimize-add cut-reoptimize-add cut...
+    // repeat until no more cuts are generated or the max_cuts limit is reached
     while (true) {
-        br=vecteur(int(cols.size())+1,gen(0));
+        br=vecteur(int(cols.size())+1,0);
         bs=basis.size();
         basis.resize(nrows);
         u.resize(ncols+nrows-bs);
@@ -459,16 +486,16 @@ int lp_node::solve_relaxation() {
             u[ncols+i-bs]=plus_inf;
         }
         m.push_back(br);
-        //phase 1: minimize the sum of artificial variables
-        m=simplex_reduce_bounded(m,u,is_slack,solution,optimum,basis,cols,rand_max2,prob->ctx);
+        // phase 1: minimize the sum of artificial variables
+        simplex_reduce_bounded(m,u,is_slack,solution,optimum,basis,cols,rand_max2,prob->ctx);
         if (!is_zero(_simplify(optimum,prob->ctx)))
-            return _LP_INFEASIBLE; //at least one artificial variable is basic and positive
-        m.pop_back(); //remove bottom row
+            return _LP_INFEASIBLE; // at least one artificial variable is basic and positive
+        m.pop_back(); // remove the bottom row
         for (int i=0;i<nrows;++i) {
             int j=basis[i];
             if (j<ncols)
                 continue;
-            //ith basic variable is artificial, push it out of the basis
+            // the i-th basic variable is artificial, push it out of the basis
             int k=0;
             for (;k<ncols && (is_zero(m[i][k]) || cols[k]>=ncols);++k);
             if (k==ncols)
@@ -477,14 +504,14 @@ int lp_node::solve_relaxation() {
             basis[i]=cols[k];
             cols[k]=j;
         }
-        //phase 1 finished, remove artificial columns from m
-        for (int j=int(cols.size())-1;j>=0;--j) {
+        // remove artificial columns from m
+        for (int j=cols.size();j-->0;) {
             if (cols[j]>=ncols) {
                 remove_column(m,j);
                 cols.erase(cols.begin()+j);
             }
         }
-        //append bottom row to maximize -obj
+        // append the bottom row to maximize -obj
         br=vecteur(ncols-nrows+1);
         for (int j=0;j<ncols-nrows;++j) {
             int k=cols[j];
@@ -502,16 +529,15 @@ int lp_node::solve_relaxation() {
         }
         m.push_back(br);
         u.resize(ncols);
-        //phase 2: optimize the objective
-        m=simplex_reduce_bounded(m,u,is_slack,solution,optimum,basis,cols,
-                                 prob->settings.iteration_limit,prob->ctx);
+        // phase 2: optimize the objective
+        simplex_reduce_bounded(m,u,is_slack,solution,optimum,basis,cols,prob->settings.iteration_limit,prob->ctx);
         if (is_inf(optimum))
-            return _LP_UNBOUNDED; //solution is unbounded
-        m.pop_back(); //remove bottom row
+            return _LP_UNBOUNDED; // the solution is unbounded
+        m.pop_back(); // remove the bottom row
         if (!is_mip) break;
         if (int(cut_indices.size())>=prob->settings.max_cuts)
             break;
-        //try to generate Gomory mixed integer cut
+        // try to generate a GMI cut
         gmi_cut.clear();
         for (int i=0;i<nrows;++i) {
             gen p(fracpart(solution[basis[i]]));
@@ -520,8 +546,8 @@ int lp_node::solve_relaxation() {
                 gen f0(fracpart(eq.back())),fj,sp(0),eqnorm(0);
                 double away=_evalf(is_strictly_greater(f0,1-f0,prob->ctx)?1-f0:f0,prob->ctx).DOUBLE_val();
                 if (away<LP_MIN_AWAY)
-                    continue; //too small away, discard this cut
-                eq.back()=gen(1);
+                    continue; // too small away, discard this cut
+                eq.back()=1;
                 for (int k=0;k<int(cols.size());++k) {
                     int j=cols[k];
                     if (j<prob->nv() && prob->variables[j].is_integral()) {
@@ -537,11 +563,11 @@ int lp_node::solve_relaxation() {
                 }
                 double dsp=_evalf(sp,prob->ctx).DOUBLE_val(),deqnorm=_evalf(eqnorm,prob->ctx).DOUBLE_val();
                 if (std::abs(dsp/(prob->objective_norm*std::sqrt(deqnorm)))<LP_MIN_PARALLELISM)
-                    continue; //this cut is not parallel enough to the objective
-                eq=integralize(eq,prob->ctx); //turn cut into an equivalent integral representation
+                    continue; // this cut is not parallel enough to the objective
+                eq=integralize(eq,prob->ctx); // convert the cut into an equivalent integral representation
                 mgn=_max(_abs(eq,prob->ctx),prob->ctx);
                 if (_evalf(mgn,prob->ctx).DOUBLE_val()>LP_MAX_MAGNITUDE)
-                    continue; //this cut has too large coefficients
+                    continue; // this cut has too large coefficients
                 if (gmi_cut.empty() || is_strictly_greater(minmgn,mgn,prob->ctx)) {
                     minmgn=mgn;
                     gmi_cut=eq;
@@ -549,9 +575,9 @@ int lp_node::solve_relaxation() {
             }
         }
         if (gmi_cut.empty())
-            break; //no acceptable cut was generated, so there's no need to reoptimize further
-        //store GMI cut
-        lh=vecteur(ncols,gen(0));
+            break; // no acceptable cut was generated; there's no need to reoptimize further
+        // store the GMI cut
+        lh=vecteur(ncols,0);
         rh=gmi_cut.back();
         for (int k=0;k<int(cols.size());++k) {
             int j=cols[k];
@@ -575,15 +601,15 @@ int lp_node::solve_relaxation() {
         cut_indices.push_back(prob->cuts.nrows());
         prob->cuts.append(lh,rh,_LP_GEQ);
         ++prob->stats.cuts_applied;
-        //append GMI cut to simplex tableau and reoptimize
+        // append GMI cut to the simplex tableau and reoptimize
         gmi_cut.insert(gmi_cut.end()-1,gen(-1));
-        insert_column(m,vecteur(nrows,gen(0)),-1);
+        insert_column(m,vecteur(nrows,0),-1);
         m.push_back(gmi_cut);
         slack_cut[ncols]=cut_indices.back();
-        l.push_back(gen(0));
+        l.push_back(0);
         u.push_back(plus_inf);
         is_slack.push_back(false);
-        obj.push_back(gen(0));
+        obj.push_back(0);
         cols.push_back(ncols++);
         ++nrows;
     }
@@ -592,9 +618,9 @@ int lp_node::solve_relaxation() {
     }
     solution.resize(prob->nv());
     optimum=obj_ct-optimum;
-    //compute some data useful during branch&bound
+    // compute some useful data for branch&bound
     opt_approx=gen2double(optimum,prob->ctx);
-    infeas=gen(0);
+    infeas=0;
     most_fractional=-1;
     gen p,ifs,max_ifs(0);
     for (int i=0;i<prob->nv();++i) {
@@ -881,7 +907,7 @@ bool lp_problem::lincomb_coeff(const gen &g,vecteur &varcoeffs,gen &freecoeff) {
     gen e(g),a;
     varcoeffs.clear();
     for (const_iterateur it=variable_identifiers.begin();it!=variable_identifiers.end();++it) {
-        a=gen(0);
+        a=0;
         if (is_constant_wrt(e,*it,ctx) || (is_linear_wrt(e,*it,a,e,ctx) && is_realcons(a,ctx)))
             varcoeffs.push_back(a);
         else return false;
@@ -925,7 +951,9 @@ void lp_problem::add_slack_variables() {
                     den=_lcm(makesequence(den,_denom(lh[l],ctx)),ctx);
             }
             if (!is_undef(den)) {
-                lh=multvecteur(den,lh);
+                for (iterateur it=lh.begin();it!=lh.end();++it) {
+                    *it=(*it)*den;
+                }
                 rh=den*rh;
                 var.set_integral(true);
             }
@@ -1305,7 +1333,7 @@ glp_prob *lp_problem::glpk_initialize() {
 int lp_problem::glpk_simplex(glp_prob *prob) {
     glp_smcp parm;
     glp_init_smcp(&parm);
-    parm.msg_lev=settings.verbose?GLP_MSG_ALL:GLP_MSG_ERR;
+    parm.msg_lev=settings.verbose?GLP_MSG_ON:GLP_MSG_ERR;
     parm.it_lim=settings.iteration_limit;
     parm.tm_lim=settings.time_limit;
     parm.presolve=settings.presolve?GLP_ON:GLP_OFF;
@@ -1318,7 +1346,7 @@ int lp_problem::glpk_simplex(glp_prob *prob) {
 int lp_problem::glpk_interior_point(glp_prob *prob) {
     glp_iptcp parm;
     glp_init_iptcp(&parm);
-    parm.msg_lev=settings.verbose?GLP_MSG_ALL:GLP_MSG_ERR;
+    parm.msg_lev=settings.verbose?GLP_MSG_ON:GLP_MSG_ERR;
     return glp_interior(prob,&parm);
 }
 
@@ -1328,7 +1356,7 @@ int lp_problem::glpk_interior_point(glp_prob *prob) {
 int lp_problem::glpk_branchcut(glp_prob *prob) {
     glp_iocp parm;
     glp_init_iocp(&parm);
-    parm.msg_lev=settings.verbose?GLP_MSG_ALL:GLP_MSG_ERR;
+    parm.msg_lev=settings.verbose?GLP_MSG_ON:GLP_MSG_ERR;
     parm.tm_lim=settings.time_limit;
     parm.out_frq=(int)(1000.0/settings.status_report_freq);
     parm.mip_gap=settings.relative_gap_tolerance;
@@ -1369,6 +1397,11 @@ int lp_problem::glpk_branchcut(glp_prob *prob) {
     return glp_intopt(prob,&parm);
 }
 
+int lp_problem::term_hook(void *info,const char *s) {
+    *static_cast<std::ostream*>(info) << s;
+    return true;
+}
+
 #endif
 
 /*
@@ -1379,6 +1412,10 @@ int lp_problem::glpk_solve() {
     message("Warning: solving in floating-point arithmetic requires GLPK library",true);
     return solve();
 #else
+    /* redirect GLPK output to logptr */
+    if (settings.verbose)
+        glp_term_hook(term_hook,static_cast<void*>(logptr(ctx)));
+    else glp_term_out(GLP_OFF);
     glp_prob *prob=glpk_initialize();
     int result=0,solution_status;
     bool is_mip=has_integral_variables();
@@ -1741,7 +1778,7 @@ int parse_constraints(bool is_matrix_form,const_iterateur &it,const_iterateur &i
         if (prob.nv()==0)
             return _LP_ERR_SIZE;
         if (prob.objective.first.empty())
-            prob.set_objective(vecteur(prob.nv(),gen(0)),gen(0));
+            prob.set_objective(vecteur(prob.nv(),0),0);
     }
     else { //the problem is given in symbolic form
         if (it->type==_VECT) {
@@ -1805,7 +1842,7 @@ gen _lpsolve(const gen &args,GIAC_CONTEXT) {
         if (is_matrix_form) {
             obj=*it->_VECTptr;
             if (!obj.empty()) {
-                prob.set_objective(obj,gen(0));
+                prob.set_objective(obj,0);
                 prob.create_variables(obj.size());
             }
         } else {
@@ -1828,14 +1865,14 @@ gen _lpsolve(const gen &args,GIAC_CONTEXT) {
         if (prob.nc()==0) {
             for (int i=0;i<prob.nv();++i) {
                 lp_variable &var=prob.variables[i];
-                vecteur row(prob.nv(),gen(0));
+                vecteur row(prob.nv(),0);
                 if (!is_inf(var.range().lb())) {
-                    row[i]=gen(1);
+                    row[i]=1;
                     prob.constr.append(row,var.range().lb(),_LP_GEQ);
                     break;
                 }
                 else if (!is_inf(var.range().ub())) {
-                    row[i]=gen(1);
+                    row[i]=1;
                     prob.constr.append(row,var.range().ub(),_LP_LEQ);
                     break;
                 }

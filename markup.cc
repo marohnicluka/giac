@@ -1927,7 +1927,7 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
         ml.markup=mml_tag("mrow",num,idc);
       else if (mml_presentation) {
         ml.type=_MLBLOCK_FRACTION;
-        ml.markup=mml_tag("mfrac",num+den,idc);
+        ml.markup=mml_tag("mfrac",(nc>1?mml_tag("mrow",num):num)+(dc>1?mml_tag("mrow",den):den),idc);
       }
       if (tex && dent.empty())
         ml.latex=numt;
@@ -3656,7 +3656,7 @@ string export_mathml(const gen &g,GIAC_CONTEXT) {
   prepend_minus(ml,flags);
   return "<math "+mathml_header_attributes+"><semantics>"+ml.markup+
          "<annotation-xml encoding='MathML-Content'>"+ml.content+"</annotation-xml>"+
-         "<annotation encoding='Giac'>"+str_to_mml(g.print(contextptr),false)+
+         "<annotation encoding='giac'>"+str_to_mml(g.print(contextptr),false)+
          "</annotation></semantics></math>";
 }
 

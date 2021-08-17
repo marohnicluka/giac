@@ -143,6 +143,11 @@ double graphe::poly_area(const layout &x) {
     return fabs(a)/2;
 }
 
+int graphe::term_hook(void *info,const char *s) {
+    *static_cast<std::ostream*>(info) << s;
+    return true;
+}
+
 /* make a list of integers and return it */
 graphe::ivector graphe::make_ivector(int n,...) {
     va_list lst;
@@ -4972,7 +4977,7 @@ int graphe::painter::select_branching_variable(glp_tree *tree) {
     return j;
 }
 
-int graphe::painter::color_vertices(ivector &colors,const ivector &icol,int max_colors) {
+int graphe::painter::color_vertices(ivector &colors,const ivector &icol,int max_colors,int tm_lim,double gap_tol,bool verbose) {
     compute_bounds(icol,max_colors);
     if (ub<lb)
         return 0;
@@ -4985,7 +4990,7 @@ int graphe::painter::color_vertices(ivector &colors,const ivector &icol,int max_
     glp_simplex(mip,&lparm);
     glp_iocp parm;
     glp_init_iocp(&parm);
-    parm.msg_lev=GLP_MSG_OFF;
+    parm.msg_lev=GLP_MSG_ON;
     parm.gmi_cuts=GLP_OFF;
     parm.mir_cuts=GLP_OFF;
     parm.clq_cuts=GLP_ON;
@@ -4995,6 +5000,9 @@ int graphe::painter::color_vertices(ivector &colors,const ivector &icol,int max_
     parm.cb_size=sizeof(int);
     parm.cb_func=&callback;
     parm.cb_info=static_cast<void*>(this);
+    if (tm_lim>0)
+        parm.tm_lim=tm_lim;
+    parm.mip_gap=gap_tol;
     branch_candidates.resize(n);
     fracts.resize(n);
     maxiter=std::ceil(15.0*std::exp(-std::pow(n,2)*0.000321887582487));
@@ -5003,6 +5011,10 @@ int graphe::painter::color_vertices(ivector &colors,const ivector &icol,int max_
     row_coeffs=new double[nxcols+ub-lb+1];
     best_indices=new int[nxcols+ub-lb+1];
     best_coeffs=new double[nxcols+ub-lb+1];
+    int term_old=0;
+    if (verbose)
+        glp_term_hook(term_hook,static_cast<void*>(logptr(G->giac_context())));
+    else term_old=glp_term_out(GLP_OFF);
     int ncolors=0,res=glp_intopt(mip,&parm);
     if (res==0) {
         switch (glp_get_status(mip)) { // solution status:
@@ -5027,6 +5039,9 @@ int graphe::painter::color_vertices(ivector &colors,const ivector &icol,int max_
         }
     } // else G->message("Error: MIP solver failure");
     glp_delete_prob(mip);
+    if (verbose)
+        glp_term_hook(NULL,NULL);
+    else glp_term_out(term_old);
     delete[] heur;
     delete[] row_indices;
     delete[] row_coeffs;
@@ -5041,7 +5056,7 @@ int graphe::painter::color_vertices(ivector &colors,const ivector &icol,int max_
 */
 
 /* find optimal vertex coloring using an exact algorithm, requires GLPK */
-int graphe::exact_vertex_coloring(int max_colors) {
+int graphe::exact_vertex_coloring(int max_colors,int tm_lim,double gap_tol,bool verbose) {
     int ncolors=0,n=node_count();
     if (is_clique()) {
         for (int i=0;i<n;++i) {
@@ -5103,7 +5118,7 @@ int graphe::exact_vertex_coloring(int max_colors) {
     ivector colors,clique;
     ostergard ost(this,5.0);
     ost.maxclique(clique);
-    ncolors=pt.color_vertices(colors,clique,max_colors);
+    ncolors=pt.color_vertices(colors,clique,max_colors,tm_lim,gap_tol,verbose);
     if (ncolors>0 && find(colors.begin(),colors.end(),0)!=colors.end()) {
         uncolor_all_nodes();
         ncolors=0;
@@ -5114,7 +5129,7 @@ int graphe::exact_vertex_coloring(int max_colors) {
 
 /* color the edges of this graph using D or D+1 colors,
 * return 1 in the former case, 2 in the latter, 0 on error */
-int graphe::exact_edge_coloring(ivector &colors,int *numcol) {
+int graphe::exact_edge_coloring(ivector &colors,int *numcol,int tm_lim,double gap_tol,bool verbose) {
     graphe L(ctx,false);
     ipairs E;
     line_graph(L,E);
@@ -5122,7 +5137,7 @@ int graphe::exact_edge_coloring(ivector &colors,int *numcol) {
         *numcol=0;
         return 2;
     }
-    /* find the vertex with maximum degree in G (this graph) */
+    /* find the vertex with maximum degree in this graph */
     int m=E.size(),maxdeg=0,deg,i=-1,j,k;
     for (node_iter it=nodes.begin();it!=nodes.end();++it) {
         if ((deg=it->neighbors().size())>maxdeg) {
@@ -5141,11 +5156,13 @@ int graphe::exact_edge_coloring(ivector &colors,int *numcol) {
     assert(k==maxdeg);
 #ifdef HAVE_LIBGLPK
     painter pt(&L);
-    int ncolors=pt.color_vertices(colors,icol,maxdeg+1);
+    int ncolors=pt.color_vertices(colors,icol,maxdeg+1,tm_lim,gap_tol,verbose);
 #else
     message("Error: GLPK library is required for graph coloring");
     int ncolors=0;
 #endif
+    if (colors.empty()) // infeasible or time limit reached
+        return 0;
     for (k=0;k<maxdeg;++k) {
         colors[icol[k]]=k+1;
     }
@@ -8598,9 +8615,9 @@ vecteur graphe::draw_edge(int i,int j,const layout &x) const {
             width=_LINE_WIDTH_1;
         else if (s=="normal" || s=="2")
             style=_LINE_WIDTH_2;
-        else if (s=="thicker" || s=="3")
+        else if (s=="thick" || s=="3")
             width=_LINE_WIDTH_3;
-        else if (s=="thick" || s=="4")
+        else if (s=="thicker" || s=="4")
             width=_LINE_WIDTH_4;
         else if (s=="very thick" || s=="5")
             width=_LINE_WIDTH_5;
@@ -10685,9 +10702,9 @@ int graphe::tsp::max_flow(int nn,int nedg,const ivector &beg,
     delete[] aa;
     glp_set_obj_dir(lp,GLP_MAX);
     glp_set_obj_coef(lp,nedg+1,1.0);
-    glp_term_out(0);
+    int old_term=glp_term_out(GLP_OFF);
     glp_adv_basis(lp,0);
-    glp_term_out(1);
+    glp_term_out(old_term);
     glp_init_smcp(&smcp);
     smcp.msg_lev=GLP_MSG_OFF;
     assert(glp_simplex(lp,&smcp)==0);
@@ -10841,9 +10858,11 @@ int graphe::tsp::minimal_cut(int nn,int nedg,const ivector &beg,
 }
 
 /* TSP constructor */
-graphe::tsp::tsp(graphe *gr) {
+graphe::tsp::tsp(graphe *gr,double gap_tolerance,bool is_verbose) {
     G=gr;
     sg=-1;
+    verbose=is_verbose;
+    gap_tol=gap_tolerance;
     isdirected=G->is_directed();
     isweighted=G->is_weighted();
     ipairs E;
@@ -11045,25 +11064,29 @@ bool graphe::tsp::find_subgraph_subtours(ivectors &sv,solution_status &status) {
     formulate_mip();
     glp_smcp lparm;             // LP solver settings
     glp_init_smcp(&lparm);
-    lparm.msg_lev=GLP_MSG_OFF;  // do not output any messages
+    lparm.msg_lev=GLP_MSG_OFF;
     glp_iocp parm;              // MIP solver settings
     glp_init_iocp(&parm);
-    parm.msg_lev=GLP_MSG_OFF;   // do not output any messages
-    parm.gmi_cuts=GLP_ON;       // generate Gomory cuts
-    parm.br_tech=GLP_BR_MFV;    // choose the most fractional variable (the fallback branching rule)
-    parm.fp_heur=GLP_ON;        // enable feasibility pump heuristic
-    parm.sr_heur=GLP_OFF;       // disable simple rounding heuristic (according to A. Makhorin)
-    parm.cb_func=&callback;     // MIP callback
+    parm.msg_lev=GLP_MSG_ON;
+    parm.gmi_cuts=GLP_ON;
+    parm.cov_cuts=GLP_ON;
+    parm.br_tech=GLP_BR_PCH;
+    parm.bt_tech=GLP_BT_BPH;
+    parm.sr_heur=GLP_OFF;
+    parm.cb_func=&callback;
     parm.cb_info=static_cast<void*>(this);
-    parm.tm_lim=sg>=0?5000:rand_max2;            // time limit
-    parm.bt_tech=sg<0?GLP_BT_BPH:GLP_BT_BLB;    // backtracking technique
-    parm.mip_gap=sg<0?0.0:1e-4;  // MIP gap relative tolerance
+    if (sg>=0) parm.tm_lim=5000;
+    parm.mip_gap=sg<0?gap_tol:std::max(1e-4,gap_tol);
     bool retval=true;
     int iter_count=0,res,lres,stat;
     is_symmetric_tsp=is_undir_weighted && G->is_clique(sg);
     heur_type=is_symmetric_tsp?_GT_TSP_CHRISTOFIDES_SA:
                                (is_undir_weighted?_GT_TSP_FARTHEST_INSERTION_HEUR:
                                                   _GT_TSP_NO_HEUR);
+    int term_old;
+    if (verbose)
+        glp_term_hook(term_hook,static_cast<void*>(logptr(G->giac_context())));
+    else term_old=glp_term_out(GLP_OFF);
     do {
         ++iter_count;
         /* append subtour elimination constraints */
@@ -11082,7 +11105,7 @@ bool graphe::tsp::find_subgraph_subtours(ivectors &sv,solution_status &status) {
             status=_GT_TSP_NOT_HAMILTONIAN;
             break;
         }
-        if (res!=0 || (stat=glp_mip_status(mip))==GLP_UNDEF) {
+        if ((res!=0 && res!=GLP_EMIPGAP) || (stat=glp_mip_status(mip))==GLP_UNDEF) {
             status=_GT_TSP_ERROR;
             retval=false;
             break;
@@ -11107,7 +11130,12 @@ bool graphe::tsp::find_subgraph_subtours(ivectors &sv,solution_status &status) {
             if (iter_count>25)
                 break;
         }
+        if (subtours.size()>1 && verbose)
+            G->message("Excluded %d subtours",subtours.size());
     } while (subtours.size()>1);
+    if (verbose)
+        glp_term_hook(NULL,NULL);
+    else glp_term_out(term_old);
     ++num_nodes;
     if (sg<0 && status==_GT_TSP_OPTIMAL)
         lift_subtours(sv);
@@ -11227,7 +11255,6 @@ bool graphe::tsp::get_subtours() {
     return true;
 }
 
-#if 0
 /* construct hierarhical clustering forest */
 void graphe::tsp::make_hierarchical_clustering_forest() {
     int k;
@@ -11267,7 +11294,6 @@ void graphe::tsp::make_hierarchical_clustering_forest() {
         clustering_forest.push_back(p);
     }
 }
-#endif
 
 /* return canonical representation of the subtour (starting with the lowest edge index) */
 graphe::ivector graphe::tsp::canonical_subtour(const ivector &subtour) {
@@ -11285,7 +11311,6 @@ graphe::ivector graphe::tsp::canonical_subtour(const ivector &subtour) {
     return res;
 }
 
-#if 0
 /* traverse the hierarhical clustering forest and collect all relevant SEC */
 void graphe::tsp::hierarchical_clustering_dfs(int i,ivectors &considered_sec,ivectors &relevant_sec) {
     if (i<0)
@@ -11338,10 +11363,11 @@ void graphe::tsp::hierarchical_clustering_dfs(int i,ivectors &considered_sec,ive
             considered_sec.push_back(*it);
     }
 }
-#endif
 
 /* solve the original problem */
 int graphe::tsp::solve(ivector &hc,double &cost) {
+    int n=G->node_count(),ssz;
+    mip=glp_create_prob();
 #if 0
     make_hierarchical_clustering_forest();
     G->unset_subgraphs();
@@ -11350,12 +11376,19 @@ int graphe::tsp::solve(ivector &hc,double &cost) {
     for (ivectors_iter it=clustering_forest.begin();it!=clustering_forest.end();++it) {
         if (it->front()<0) { // we're in the root node of a tree in the HC forest
             hierarchical_clustering_dfs(it-clustering_forest.begin(),cons,relevant);
-            sec.insert(sec.end(),cons.begin(),cons.end());
-            sec.insert(sec.end(),relevant.begin(),relevant.end());
+            for (ivectors_iter jt=cons.begin();jt!=cons.end();++jt) {
+                ssz=jt->size();
+                if (ssz<n && ssz>2)
+                    sec.push_back(*jt);
+            }
+            for (ivectors_iter jt=relevant.begin();jt!=relevant.end();++jt) {
+                ssz=jt->size();
+                if (ssz<n && ssz>2)
+                    sec.push_back(*jt);
+            }
         }
     }
 #endif
-    mip=glp_create_prob();
     ivectors sv;
     solution_status status;
     sg=-1;
@@ -11370,7 +11403,6 @@ int graphe::tsp::solve(ivector &hc,double &cost) {
     case _GT_TSP_OPTIMAL:
         if (sv.size()==1) {
             const ivector &t=sv.front();
-            int n=G->node_count();
             assert(int(t.size())==n);
             hc.clear();
             const arc &first=arcs[t.front()],&last=arcs[t.back()];
@@ -11390,8 +11422,16 @@ int graphe::tsp::solve(ivector &hc,double &cost) {
                     hc.push_back(k=a.tail);
                 }
             }
-            improve_tour(hc);
             cost=tour_cost(hc);
+            if (gap_tol>0) {
+                if (verbose)
+                    G->message("Attempting to improve the tour...");
+                improve_tour(hc);
+                double imp_cost=tour_cost(hc);
+                if (verbose)
+                    *logptr(G->giac_context()) << "Relative improvement: " << 100*(cost-imp_cost)/cost << "%\n";
+                cost=imp_cost;
+            }
             retval=1; // success
         } else retval=0;
         break;
@@ -11433,8 +11473,11 @@ void graphe::tsp::heur(glp_tree *tree) {
         return;
     int n=sg<0?nv:sg_nv,m=sg<0?ne:sg_ne,i,j,k;
     if (heur_type==_GT_TSP_CHRISTOFIDES_SA) { // symmetric TSP
-        christofides(tour);
         heur_type=_GT_TSP_FARTHEST_INSERTION_RANDOM;
+        if (!christofides(tour)) {
+            heur(tree);
+            return;
+        }
     } else { // weighted undirected TSP
         /* choose the initial arc a by random such that weight(e) >= median weight,
          * in the first pass try to construct a tour starting from heaviest edge */
@@ -11852,7 +11895,7 @@ lk7:
 
 /* find minimum weight perfect matching in an undirected bipartite graph with
  * even number of vertices, edge set E and edge weights W */
-void graphe::tsp::min_weight_matching_bipartite(const ivector &eind,const dvector &weights,ivector &matched_arcs) {
+bool graphe::tsp::min_weight_matching_bipartite(const ivector &eind,const dvector &weights,ivector &matched_arcs,bool msg) {
     set<int> Vset; // set of vertices
     for (ivector_iter it=eind.begin();it!=eind.end();++it) {
         const arc &a=arcs[*it];
@@ -11892,29 +11935,41 @@ void graphe::tsp::min_weight_matching_bipartite(const ivector &eind,const dvecto
     delete[] ia; delete[] ja;
     delete[] ar;
     glp_smcp lparm;
-    glp_iocp parm;
     glp_init_smcp(&lparm);
     lparm.msg_lev=GLP_MSG_OFF;
+    glp_iocp parm;
     glp_init_iocp(&parm);
-    parm.br_tech=GLP_BR_MFV;
-    parm.bt_tech=GLP_BT_BLB;
+    parm.br_tech=GLP_BR_PCH;
+    parm.bt_tech=GLP_BT_BPH;
     parm.gmi_cuts=GLP_ON;
     parm.mir_cuts=GLP_ON;
-    parm.msg_lev=GLP_MSG_OFF;
+    parm.clq_cuts=GLP_ON;
+    parm.cov_cuts=GLP_ON;
+    parm.msg_lev=GLP_MSG_ON;
     parm.fp_heur=GLP_ON;
-    parm.sr_heur=GLP_OFF;
+    parm.sr_heur=GLP_ON;
     parm.cb_func=&min_wpm_callback;
     pair<const ivector*,tsp*> info;
     info.first=&eind;
     info.second=this;
     parm.cb_info=static_cast<void*>(&info);
-    assert(glp_simplex(wp,&lparm)==0 && glp_get_status(wp)==GLP_OPT);
-    assert(glp_intopt(wp,&parm)==0 && glp_get_status(wp)==GLP_OPT);
+    if (msg) // TSP approximation
+        parm.mip_gap=gap_tol;
+    int term_old,res;
+    if (msg)
+        glp_term_hook(term_hook,static_cast<void*>(logptr(G->giac_context())));
+    else term_old=glp_term_out(GLP_OFF);
+    if (glp_simplex(wp,&lparm)!=0 || ((res=glp_intopt(wp,&parm))!=0 && res!=GLP_EMIPGAP))
+        return false;
     for (int j=0;j<m;++j) {
         if (glp_mip_col_val(wp,j+1)!=0)
             matched_arcs.push_back(j);
     }
     glp_delete_prob(wp);
+    if (msg)
+        glp_term_hook(NULL,NULL);
+    else glp_term_out(term_old);
+    return true;
 }
 
 void graphe::tsp::min_wpm_heur(glp_tree *tree,const ivector &eind) {
@@ -11953,10 +12008,12 @@ void graphe::tsp::min_wpm_heur(glp_tree *tree,const ivector &eind) {
 }
 
 /* construct a tour using the method of Christofides for symmetric TSP */
-void graphe::tsp::christofides(ivector &hc) {
+bool graphe::tsp::christofides(ivector &hc,bool show_progress) {
     hc.clear();
     int n=sg<0?nv:sg_nv,m=sg<0?ne:sg_ne,ei;
     /* create spanning tree T of the subgraph with index sg */
+    if (show_progress)
+        G->message("Finding a minimal spanning tree...");
     graphe T(G->giac_context());
     G->minimal_spanning_tree(T,sg);
     ivector V;
@@ -11965,7 +12022,8 @@ void graphe::tsp::christofides(ivector &hc) {
             V.push_back(G->node_index(T.node_label(i)));
     }
     /* the number of odd degree vertices in T must be even */
-    assert(V.size()>0 && (V.size()%2)==0);
+    if (V.size()<=0 || (V.size()%2)!=0)
+        return false;
     /* get edges in SG\T connecting the vertices from V,
      * these form a bipartite graph B(V,E) */
     ivector eind,matched_arcs;
@@ -11981,10 +12039,14 @@ void graphe::tsp::christofides(ivector &hc) {
             weights.push_back(weight(a.tail,a.head));
         }
     }
+    if (show_progress)
+        G->message("Finding a minimum weight matching in a bipartite graph with %d edges...",eind.size());
+    bool has_mwm=true;
     if (eind.size()==1)
         matched_arcs.resize(1,0);
-    else min_weight_matching_bipartite(eind,weights,matched_arcs);
-    assert(2*matched_arcs.size()==V.size());
+    else has_mwm=min_weight_matching_bipartite(eind,weights,matched_arcs,show_progress);
+    if (!has_mwm || 2*matched_arcs.size()!=V.size())
+        return false;
     /* add matched edges to T and find Eulerian circuit,
      * such exists because T now has all vertex degrees even */
     for (ivector_iter it=matched_arcs.begin();it!=matched_arcs.end();++it) {
@@ -11993,7 +12055,8 @@ void graphe::tsp::christofides(ivector &hc) {
         T.add_edge(G->node_label(a.tail),G->node_label(a.head),attr);
     }
     ivector etrail; // eulerian trail
-    assert(T.find_eulerian_trail(etrail) && etrail.front()==etrail.back());
+    if (!T.find_eulerian_trail(etrail) || etrail.front()!=etrail.back())
+        return false;
     bvector visited(n,false);
     for (ivector_iter it=etrail.begin();it!=etrail.end();++it) {
         if (visited[*it])
@@ -12002,24 +12065,40 @@ void graphe::tsp::christofides(ivector &hc) {
         visited[*it]=true;
     }
     hc.push_back(hc.front());
+    return true;
 }
 
 /* improve the tour hc by making k-opt moves */
-void graphe::tsp::improve_tour(ivector &hc) {
+void graphe::tsp::improve_tour(ivector &hc,bool do_3opt) {
     lin_kernighan(hc);
-    perform_3opt_moves(hc);
+    if (do_3opt) perform_3opt_moves(hc);
     straighten(hc);
 }
 
 /* construct an approximate tour, G must be a complete graph */
-double graphe::tsp::approx(ivector &hc) {
+bool graphe::tsp::approx(ivector &hc,double &ratio) {
     assert(is_undir_weighted);
     sg=-1;
-    christofides(hc);
+    if (!christofides(hc,verbose)) {
+        if (verbose)
+            G->message("Error: failed to construct Christofides tour");
+        return false;
+    }
     double old_cost=tour_cost(hc),imp_cost;
-    improve_tour(hc);
-    imp_cost=tour_cost(hc);
-    return (1.5*imp_cost/old_cost);
+    if (verbose)
+        *logptr(G->giac_context()) << "Constructed a tour with weight " << old_cost << "\n";
+    if (old_cost==0)
+        ratio=0;
+    else {
+        if (verbose)
+            G->message("Attempting to improve the tour...");
+        improve_tour(hc);
+        imp_cost=tour_cost(hc);
+        if (verbose)
+            *logptr(G->giac_context()) << "Relative improvement: " << 100.0*(old_cost-imp_cost)/old_cost << "%\n";
+        ratio=(1+gap_tol)*1.5*imp_cost/old_cost;
+    }
+    return true;
 }
 
 /* compute the mean and the standard deviation of the given sample */
@@ -12185,7 +12264,7 @@ void graphe::tsp::callback(glp_tree *tree,void *info) {
         tsprob->heur(tree);
         break;
     case GLP_IBRANCH:
-        if (tsprob->is_undir_weighted)
+        if (tsprob->is_undir_weighted && _rand(makesequence(0,1),tsprob->G->giac_context()).DOUBLE_val()<0.14)
             tsprob->select_branching_variable(tree);
         break;
     case GLP_IROWGEN:
@@ -12234,7 +12313,7 @@ graphe::atsp::~atsp() {
     if (mip!=NULL) glp_delete_prob(mip);
 }
 
-bool graphe::atsp::solve(ivector &hc,double &cost) {
+bool graphe::atsp::solve(ivector &hc,double &cost,double gap_tol) {
     if (mip!=NULL) glp_erase_prob(mip);
     else mip=glp_create_prob();
     glp_set_obj_dir(mip,GLP_MIN);
@@ -12308,12 +12387,13 @@ bool graphe::atsp::solve(ivector &hc,double &cost) {
     /* solve the problem */
     glp_iocp parm;
     glp_init_iocp(&parm);
-    parm.msg_lev=GLP_OFF;
+    parm.msg_lev=GLP_MSG_ON;
     parm.br_tech=GLP_BR_FFV;
     parm.presolve=GLP_ON;
     parm.gmi_cuts=GLP_ON;
     parm.mir_cuts=GLP_ON;
     parm.fp_heur=GLP_ON;
+    parm.mip_gap=gap_tol;
     bool ret=false;
     if (glp_intopt(mip,&parm)==0) {
         ret=true;
@@ -12351,7 +12431,7 @@ bool graphe::atsp::solve(ivector &hc,double &cost) {
     return ret;
 }
 
-void graphe::atsp::ksolve(int k,ivectors &hcv,dvector &costs) {
+void graphe::atsp::ksolve(int k,ivectors &hcv,dvector &costs,double gap_tol,bool verbose) {
     hcv.clear();
     costs.clear();
     ft.clear();
@@ -12360,12 +12440,20 @@ void graphe::atsp::ksolve(int k,ivectors &hcv,dvector &costs) {
     ft.reserve(k-1);
     ivector hc;
     double cost;
+    int term_old;
+    if (verbose)
+        glp_term_hook(term_hook,static_cast<void*>(logptr(G->giac_context())));
+    else term_old=glp_term_out(GLP_OFF);
     for (int cnt=0;cnt<k;++cnt) {
         if (!solve(hc,cost)) break;
+        if (verbose) G->message("Found the tour %d",cnt+1);
         hcv.push_back(hc);
         costs.push_back(cost);
         if (cnt<k-1) ft.push_back(hc);
     }
+    if (verbose)
+        glp_term_hook(NULL,NULL);
+    else glp_term_out(term_old);
 }
 
 /*
@@ -12377,15 +12465,18 @@ void graphe::atsp::ksolve(int k,ivectors &hcv,dvector &costs) {
 /* Try to find an optimal Hamiltonian cycle.
  * Return 0 if the graph is not Hamiltonian, else store the circuit in h
  * and return 1, if unable to solve return -1 */
-int graphe::traveling_salesman(ivector &h,double &cost,bool approximate) {
+int graphe::traveling_salesman(ivector &h,double &cost,bool approximate,double gap_tol,bool verbose) {
 #ifdef HAVE_LIBGLPK
-    tsp t(this);
+    tsp t(this,gap_tol,verbose);
     if (approximate) {
-        double ratio=t.approx(h);
-        message("The tour cost is within %d%% of the optimal value",
-                std::floor((ratio-1.0)*100.0+.5));
-        cost=t.tour_cost(h);
-        return 1;
+        double ratio;
+        if (t.approx(h,ratio)) {
+            message("The tour cost is within %d%% of the optimal value",
+                    std::floor((ratio-1.0)*100.0+.5));
+            cost=t.tour_cost(h);
+            return 1;
+        }
+        return -1;
     }
     return t.solve(h,cost);
 #else
@@ -12394,12 +12485,15 @@ int graphe::traveling_salesman(ivector &h,double &cost,bool approximate) {
 #endif
 }
 
-/* find first k optimal tours in directed graph */
-bool graphe::find_directed_tours(int k,ivectors &hcv,dvector &costs,const ipairs &incl) {
-    assert(is_directed());
+/* find first k optimal tours in a directed graph */
+bool graphe::find_directed_tours(int k,ivectors &hcv,dvector &costs,const ipairs &incl,double gap_tol,bool verbose) {
+    if (!is_directed()) {
+        message("Error: the graph must be directed");
+        return false;
+    }
 #ifdef HAVE_LIBGLPK
     atsp t(this,incl);
-    t.ksolve(k,hcv,costs);
+    t.ksolve(k,hcv,costs,gap_tol,verbose);
     return true;
 #else
     message("Error: GLPK library is required for solving traveling salesman problem");
@@ -14120,7 +14214,7 @@ graphe::mvc_solver::~mvc_solver() {
 }
 
 /* exact algorithm for minimal vertex cover */
-int graphe::mvc_solver::solve(ivector &cover,int k) {
+int graphe::mvc_solver::solve(ivector &cover,int k,int tm_lim,double gap_tol,bool verbose) {
     /* formulate MVCP as ILP */
     G->get_edges_as_pairs(edges,sg);
     if (sg>=0) {
@@ -14170,7 +14264,7 @@ int graphe::mvc_solver::solve(ivector &cover,int k) {
     lparm.msg_lev=GLP_MSG_OFF;
     glp_iocp parm;
     glp_init_iocp(&parm);
-    parm.msg_lev=GLP_MSG_OFF;
+    parm.msg_lev=GLP_MSG_ON;
     parm.presolve=GLP_OFF;
     parm.sr_heur=GLP_ON;
     parm.fp_heur=GLP_OFF;
@@ -14184,12 +14278,21 @@ int graphe::mvc_solver::solve(ivector &cover,int k) {
     parm.cb_func=&callback;
     parm.cb_info=static_cast<void*>(this);
     parm.cb_size=sizeof(int);
+    if (tm_lim>0) parm.tm_lim=tm_lim;
+    parm.mip_gap=gap_tol;
     compute_heur=k<0;
     is_k_vc=k>=0;
     /* solve */
+    int term_old;
+    if (verbose)
+        glp_term_hook(term_hook,static_cast<void*>(logptr(G->giac_context())));
+    else term_old=glp_term_out(GLP_OFF);
     if (parm.presolve==GLP_OFF)
         glp_simplex(ilp,&lparm);
     int res=glp_intopt(ilp,&parm);
+    if (verbose)
+        glp_term_hook(NULL,NULL);
+    else glp_term_out(term_old);
     delete[] ia;
     delete[] ja;
     delete[] ar;
@@ -14370,7 +14473,6 @@ void graphe::mvc_solver::preprocess(glp_tree *tree) {
                 }
                 ++pos;
             }
-            //if (cnt>0) std::cout << "Fixed " << cnt << " mirrors\n";
         }
     }
     /* get already fixed vertices */
@@ -14454,7 +14556,6 @@ void graphe::mvc_solver::packing(glp_tree *tree) {
             }
         }
     }
-    //if (cnt>0) std::cout << "Added " << cnt << " packing constraints\n";
     delete[] ind;
     delete[] val;
 }
@@ -14695,7 +14796,7 @@ void graphe::mvc_half_integral(int sg,ivector &in_cover,ivector &out_cover) {
 
 /* find a (minimum) vertex cover (of subgraph sg) with respect to
  * the algorithm specification vc_alg */
-bool graphe::mvc(ivector &cover,int vc_alg,int sg) {
+bool graphe::mvc(ivector &cover,int vc_alg,int sg,int tm_lim,double gap_tol,bool verbose) {
     cover.clear();
     if (is_null())
         return true;
@@ -14751,7 +14852,7 @@ bool graphe::mvc(ivector &cover,int vc_alg,int sg) {
                 else {
 #ifdef HAVE_LIBGLPK
                     mvc_solver m(this,s);
-                    m.solve(cover);
+                    m.solve(cover,-1,tm_lim,gap_tol,verbose);
 #else
                     message("Error: GLPK library is required for exact solving");
                     return false;
@@ -14847,7 +14948,7 @@ void graphe::mvc_alom(ivector &cover,int sg) {
 void graphe::mvc_bipartite(const ivector &U,const ivector &V,ivector &cover,int sg,bool conn) {
     ipairs matching;
     ivector s;
-    /* find maximal matching */
+    /* find a maximal matching */
     if (sg>=0) get_subgraph(sg,s);
     bipartite_matching(U,V,matching,sg,conn?_GT_CC_CONNECTED:_GT_CC_FIND_COMPONENTS);
     int n=sg<0?node_count():int(s.size());
@@ -14855,7 +14956,7 @@ void graphe::mvc_bipartite(const ivector &U,const ivector &V,ivector &cover,int 
     for (ipairs_iter it=matching.begin();it!=matching.end();++it) {
         matched[it->first]=matched[it->second]=true;
     }
-    /* create alternating forest */
+    /* create the alternating forest */
     for (int i=0;i<n;++i) {
         node(sg<0?i:s[i]).set_number(0);
     }

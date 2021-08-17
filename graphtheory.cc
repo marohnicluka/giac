@@ -6244,30 +6244,57 @@ static const char _find_cliques_s[]="find_cliques";
 static define_unary_function_eval(__find_cliques,&_find_cliques,_find_cliques_s);
 define_unary_function_ptr5(at_find_cliques,alias_at_find_cliques,&__find_cliques,0,true)
 
-/* USAGE:   minimal_vertex_coloring(G,[sto])
+void parse_lp_options(const_iterateur opt_start,const_iterateur opt_end,bool *store,int &tm_lim,double &gap_tol,bool &verbose,GIAC_CONTEXT) {
+    for (const_iterateur it=opt_start;it!=opt_end;++it) {
+        if (store!=NULL && *it==at_sto)
+            *store=true;
+        else if (it->is_integer() && it->subtype==_INT_MAPLECONVERSION && it->val==_LP_VERBOSE)
+            verbose=true;
+        else if (it->is_symb_of_sommet(at_equal)) {
+            const gen &lhs=it->_SYMBptr->feuille._VECTptr->front();
+            const gen &rhs=it->_SYMBptr->feuille._VECTptr->back();
+            if (lhs.is_integer()) {
+                switch (lhs.val) {
+                case _LP_TIME_LIMIT:
+                    if (!rhs.is_integer() || rhs.val<=0)
+                        generr("Expected a positive integer");
+                    tm_lim=rhs.val;
+                    break;
+                case _LP_GAP_TOLERANCE:
+                    if (_evalf(rhs,contextptr).type!=_DOUBLE_ || !is_positive(rhs,contextptr))
+                        generr("Expected a nonnegative real number");
+                    gap_tol=rhs.to_double(contextptr);
+                    break;
+                default: gentypeerr(contextptr);
+                }
+            } else gentypeerr(contextptr);
+        } else gentypeerr(contextptr);
+    }
+}
+
+/* USAGE:   minimal_vertex_coloring(G,[opts])
  *
  * Computes minimal vertex coloring for graph G and returns the colors in order
- * of vertices. If optional parameter "sto" is given, the colors are assigned
+ * of vertices. If the keyword "sto" is given in opts, the colors are assigned
  * to vertices and the modified copy of G is returned.
+ * Other options include lp_timelimit=Intg(L), lp_gaptolerance=Real(tol), and lp_verbose.
  */
 gen _minimal_vertex_coloring(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT)
         return gentypeerr(contextptr);
-    bool store=false;
-    if (g.subtype==_SEQ__VECT) {
-        if (g._VECTptr->size()!=2)
-            return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-        if (g._VECTptr->back()!=at_sto)
-            return gentypeerr(contextptr);
-        store=true;
-    }
+    bool store=false,verbose=false;
+    int tm_lim=0;
+    double gap_tol=0;
+    if (g.subtype==_SEQ__VECT) try {
+        parse_lp_options(g._VECTptr->begin()+1,g._VECTptr->end(),&store,tm_lim,gap_tol,verbose,contextptr);
+    } catch (giac::gen &e) { return e; }
     graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
-    G.exact_vertex_coloring();
+    G.exact_vertex_coloring(0,tm_lim,gap_tol,verbose);
     graphe::ivector colors;
     G.get_node_colors(colors);
     vecteur cols=vector_int_2_vecteur(colors);
@@ -6582,19 +6609,19 @@ gen _minimal_edge_coloring(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT)
         return gentypeerr(contextptr);
-    bool store=false;
-    if (g.subtype==_SEQ__VECT) {
-        if (g._VECTptr->size()!=2)
-            return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-        if (g._VECTptr->back()!=at_sto)
-            return generr("Expected 'sto' as the second argument");
-        store=true;
-    }
+    bool store=false,verbose=false;
+    int tm_lim=0;
+    double gap_tol=0;
+    if (g.subtype==_SEQ__VECT) try {
+        parse_lp_options(g._VECTptr->begin()+1,g._VECTptr->end(),&store,tm_lim,gap_tol,verbose,contextptr);
+    } catch (giac::gen &e) { return e; }
     graphe G(contextptr);
     if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_directed())
+        return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     graphe::ivector colors;
-    int typ=G.exact_edge_coloring(colors);
+    int typ=G.exact_edge_coloring(colors,NULL,tm_lim,gap_tol,verbose);
     if (typ==0)
         return undef;
     if (store)
@@ -6690,6 +6717,8 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     matrice M;
     vecteur options;
+    bool verbose=false;
+    double gap_tol=0;
     if (g.subtype==_SEQ__VECT) {
         int pos=1;
         const vecteur &gv=*g._VECTptr;
@@ -6715,36 +6744,44 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
         graphe::ipairs incl;
         int i,j,k=1;
         for (const_iterateur it=options.begin();it!=options.end();++it) {
-            if (it==options.begin() && it->is_symb_of_sommet(at_equal) &&
-                it->_SYMBptr->feuille._VECTptr->front()==at_is_included &&
-                it->_SYMBptr->feuille._VECTptr->back().type==_VECT) {
-                const vecteur &v=*it->_SYMBptr->feuille._VECTptr->back()._VECTptr;
-                if (ckmatrix(v)) {
-                    incl.reserve(v.size());
-                    for (const_iterateur jt=v.begin();jt!=v.end();++jt) {
-                        const vecteur &vec=*(jt->_VECTptr);
-                        if (vec.size()!=2)
-                            return generr("Expected an edge");
-                        i=G.node_index(vec.front());
-                        j=G.node_index(vec.back());
+            if (it->is_symb_of_sommet(at_equal)) {
+                const gen &lhs=it->_SYMBptr->feuille._VECTptr->front();
+                const gen &rhs=it->_SYMBptr->feuille._VECTptr->back();
+                if (lhs==at_is_included && rhs.type==_VECT) {
+                    const vecteur &v=*rhs._VECTptr;
+                    if (ckmatrix(v)) {
+                        incl.reserve(v.size());
+                        for (const_iterateur jt=v.begin();jt!=v.end();++jt) {
+                            const vecteur &vec=*(jt->_VECTptr);
+                            if (vec.size()!=2)
+                                return generr("Expected an edge");
+                            i=G.node_index(vec.front());
+                            j=G.node_index(vec.back());
+                            if (i<0 || j<0)
+                                return gt_err(i<0?vec.front():vec.back(),_GT_ERR_VERTEX_NOT_FOUND);
+                            incl.push_back(make_pair(i,j));
+                        }
+                    } else if (v.size()==2) {
+                        i=G.node_index(v.front());
+                        j=G.node_index(v.back());
                         if (i<0 || j<0)
-                            return gt_err(i<0?vec.front():vec.back(),_GT_ERR_VERTEX_NOT_FOUND);
+                            return gt_err(i<0?v.front():v.back(),_GT_ERR_VERTEX_NOT_FOUND);
                         incl.push_back(make_pair(i,j));
-                    }
-                } else if (v.size()==2) {
-                    i=G.node_index(v.front());
-                    j=G.node_index(v.back());
-                    if (i<0 || j<0)
-                        return gt_err(i<0?v.front():v.back(),_GT_ERR_VERTEX_NOT_FOUND);
-                    incl.push_back(make_pair(i,j));
-                } else return generr("Expected an edge or list of edges");
+                    } else return generr("Expected an edge or list of edges");
+                } else if (lhs.is_integer() && lhs.subtype==_INT_MAPLECONVERSION && lhs.val==_LP_GAP_TOLERANCE) {
+                    if (_evalf(rhs,contextptr).type!=_DOUBLE_ || is_strictly_greater(0,rhs,contextptr))
+                        return generr("Expected a nonnegative real number");
+                    gap_tol=_evalf(rhs,contextptr).DOUBLE_val();
+                } else return generr("Option not supported");
             } else if (it->is_integer() && it->val>0) {
-                k=it->val;
+                if (it->subtype==_INT_MAPLECONVERSION && it->val==_LP_VERBOSE)
+                    verbose=true;
+                else k=it->val;
             } else return generr("Option not supported");
         }
         graphe::ivectors hcv;
         graphe::dvector costs;
-        if (!G.find_directed_tours(k,hcv,costs,incl))
+        if (!G.find_directed_tours(k,hcv,costs,incl,gap_tol,verbose))
             return undef;
         if (hcv.empty())
             return generr("Unable to find Hamiltonian cycle");
@@ -6764,14 +6801,20 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
     for (const_iterateur it=options.begin();it!=options.end();++it) {
         if (*it==at_approx)
             approximate=true;
-        else if (approximate && it->is_integer())
-            time_limit=it->val;
-        else if (approximate && it->is_symb_of_sommet(at_equal) &&
-                 it->_SYMBptr->feuille._VECTptr->front()==at_limit &&
-                 it->_SYMBptr->feuille._VECTptr->back().is_integer())
-            time_limit=it->_SYMBptr->feuille._VECTptr->back().val;
-        else if (*it==at_vertex_distance && M.empty())
+        else if (it->is_symb_of_sommet(at_equal)) {
+            const gen &lhs=it->_SYMBptr->feuille._VECTptr->front();
+            const gen &rhs=it->_SYMBptr->feuille._VECTptr->back();
+            if (approximate && lhs==at_limit && rhs.is_integer())
+                time_limit=rhs.val;
+            else if (lhs.is_integer() && lhs.subtype==_INT_MAPLECONVERSION && lhs==_LP_GAP_TOLERANCE) {
+                if (_evalf(rhs,contextptr).type!=_DOUBLE_ || is_strictly_greater(0,rhs,contextptr))
+                    return generr("Expected a nonnegative real number");
+                gap_tol=_evalf(rhs,contextptr).DOUBLE_val();
+            }
+        } else if (*it==at_vertex_distance && M.empty())
             make_distances=true;
+        else if (it->is_integer() && it->subtype==_INT_MAPLECONVERSION && it->val==_LP_VERBOSE)
+            verbose=true;
         else return generr("Option not supported");
     }
     if (time_limit<0)
@@ -6790,9 +6833,9 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
             gt_err(_GT_ERR_WEIGHTED_GRAPH_REQUIRED);
         if (!G.is_clique())
             return generr("The input graph must be complete");
-        G.traveling_salesman(h,cost,true);
+        G.traveling_salesman(h,cost,true,gap_tol,verbose);
     } else {
-        res=U.is_biconnected()?G.traveling_salesman(h,cost):0;
+        res=U.is_biconnected()?G.traveling_salesman(h,cost,false,gap_tol,verbose):0;
         if (res==0)
             return generr("The input graph is not Hamiltonian");
         if (res==-1)
@@ -8177,20 +8220,24 @@ define_unary_function_ptr5(at_greedy_independent_set,alias_at_greedy_independent
 gen _minimum_vertex_cover(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     graphe G(contextptr);
-    bool approx=false;
+    bool approx=false,verbose=false;
+    int tm_lim=0;
+    double gap_tol=0;
     if (g.type==_VECT && g.subtype==_SEQ__VECT) {
         const vecteur &gv=*g._VECTptr;
-        if (gv.size()!=2)
+        if (gv.size()<2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         if (!G.read_gen(gv.front()))
             return gt_err(_GT_ERR_NOT_A_GRAPH);
-        if (gv.back()==at_approx)
+        if (gv[1]==at_approx)
             approx=true;
-        else if (gv.back().is_symb_of_sommet(at_equal) &&
-                 gv.back()._SYMBptr->feuille._VECTptr->front()==at_approx &&
-                 gv.back()._SYMBptr->feuille._VECTptr->back().subtype==_INT_BOOLEAN)
-            approx=(bool)gv.back()._SYMBptr->feuille._VECTptr->back().val;
-        else return gentypeerr(contextptr);
+        else if (gv[1].is_symb_of_sommet(at_equal) &&
+                 gv[1]._SYMBptr->feuille._VECTptr->front()==at_approx &&
+                 gv[1]._SYMBptr->feuille._VECTptr->back().subtype==_INT_BOOLEAN)
+            approx=(bool)gv[1]._SYMBptr->feuille._VECTptr->back().val;
+        else try {
+            parse_lp_options(gv.begin()+1,gv.end(),NULL,tm_lim,gap_tol,verbose,contextptr);
+        } catch (gen &e) { return e; }
     } else if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G.is_directed())
@@ -8198,7 +8245,7 @@ gen _minimum_vertex_cover(const gen &g,GIAC_CONTEXT) {
     if (G.is_empty())
         return vecteur(0);
     graphe::ivector cover;
-    if (!G.mvc(cover,approx?_GT_VC_APPROX_CLIQUE:_GT_VC_EXACT))
+    if (!G.mvc(cover,approx?_GT_VC_APPROX_CLIQUE:_GT_VC_EXACT,-1,tm_lim,gap_tol,verbose))
         return undef; // an error occurred
     return G.get_node_labels(cover);
 }
@@ -8229,8 +8276,6 @@ gen _find_vertex_cover(const gen &g,GIAC_CONTEXT) {
                  gv.back()._SYMBptr->feuille._VECTptr->back().is_integer())
             k=gv.back()._SYMBptr->feuille._VECTptr->back().val;
         else return gentypeerr(contextptr);
-        if (k<0)
-            return generr("Expected a nonnegative integer");
         if (k>G.node_count()) {
             *logptr(contextptr) << "Warning: k exceeds the number of vertices in G\n";
             return graphe::FAUX;

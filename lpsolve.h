@@ -194,6 +194,7 @@ struct lp_problem {
     int glpk_simplex(glp_prob *prob);
     int glpk_interior_point(glp_prob *prob);
     int glpk_branchcut(glp_prob *prob);
+    static int term_hook(void *info,const char *s);
 #endif
     int glpk_solve();
     bool glpk_load_from_file(const char *fname);

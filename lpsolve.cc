@@ -1235,6 +1235,8 @@ int lp_problem::solve() {
                 t=clock();
             }
         }
+        if (active_nodes.empty())
+            report_status("Tree is empty",stats.subproblems_examined);
         //show branch&bound summary
         sprintf(buffer,"Summary:\n * %d subproblem(s) examined\n * max. tree size: %d nodes\n * %d Gomory cut(s) applied",
                 stats.subproblems_examined,stats.max_active_nodes,stats.cuts_applied);
@@ -1413,9 +1415,10 @@ int lp_problem::glpk_solve() {
     return solve();
 #else
     /* redirect GLPK output to logptr */
+    int term_old;
     if (settings.verbose)
         glp_term_hook(term_hook,static_cast<void*>(logptr(ctx)));
-    else glp_term_out(GLP_OFF);
+    else term_old=glp_term_out(GLP_OFF);
     glp_prob *prob=glpk_initialize();
     int result=0,solution_status;
     bool is_mip=has_integral_variables();
@@ -1486,6 +1489,9 @@ int lp_problem::glpk_solve() {
         }
     }
     glp_delete_prob(prob);
+    if (settings.verbose)
+        glp_term_hook(NULL,NULL);
+    else glp_term_out(term_old);
     if (result==0)
         return solution_status;
     return _LP_ERROR;
@@ -1634,7 +1640,7 @@ bool parse_options_and_bounds(const_iterateur &it,const_iterateur &itend,lp_prob
     for (;it!=itend;++it) {
         if (*it==at_maximize)
             prob.settings.maximize=true;
-        else if (it->is_integer()) {
+        else if (it->is_integer() && it->subtype==_INT_MAPLECONVERSION) {
             switch(it->val) {
             case _LP_MAXIMIZE:
                 prob.settings.maximize=true;
@@ -1657,7 +1663,7 @@ bool parse_options_and_bounds(const_iterateur &it,const_iterateur &itend,lp_prob
                 prob.settings.maximize=(bool)rh.to_int();
             else if (lh==at_assume && rh.is_integer())
                 prob.settings.assumption=rh.val;
-            else if (lh.is_integer()) {
+            else if (lh.is_integer() && lh.subtype==_INT_MAPLECONVERSION) {
                 switch(lh.val) {
                 case _LP_INTEGERVARIABLES:
                 case _LP_BINARYVARIABLES:
@@ -1698,7 +1704,7 @@ bool parse_options_and_bounds(const_iterateur &it,const_iterateur &itend,lp_prob
                         prob.settings.precision=_LP_EXACT;
                     else if (rh==at_float)
                         prob.settings.precision=_LP_INEXACT;
-                    else if (rh.is_integer() && rh.val==_LP_INTERIOR_POINT) {
+                    else if (rh.is_integer() && rh.subtype==_INT_MAPLECONVERSION && rh.val==_LP_INTERIOR_POINT) {
                         prob.settings.precision=_LP_INEXACT;
                         prob.settings.solver=_LP_INTERIOR_POINT;
                     }

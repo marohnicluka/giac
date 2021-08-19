@@ -313,7 +313,6 @@ public:
             /* arc struct holds only the edge information relevant for TSP */
             int head;
             int tail;
-            int sg_index;
         };
         enum solution_status {
             _GT_TSP_OPTIMAL,
@@ -326,51 +325,28 @@ public:
             _GT_TSP_FARTHEST_INSERTION_HEUR     = 2,
             _GT_TSP_FARTHEST_INSERTION_RANDOM   = 3
         };
-        graphe *G;                              // the graph
-        glp_prob *mip;                          // integer programming problem
-        bool isdirected;                        // true iff G is directed
-        bool isweighted;                        // true iff G is weighted
-        int sg;                                 // current subgraph index
-        std::set<ivector> subtours;             // subtours collected in during solving the last MIP
-        ivectors clustering_forest;             // hierarchical clustering forest of subgraphs
-        ivector tour,old_sol;                   // a tour, old mip solution
-        double *coeff;                          // coefficients to be passed to MIP solver
-        int *indices;                           // indices of row entries to be passed to MIP solver
-        bool *visited;                          // used to mark vertices as visited
-        arc *arcs;                              // arcs of G
-        int *sg_vertices;                       // list of sg_nv vertices of subgraph with index sg
-        int *sg_edges;                          // indices of edges belonging to the subgraph with index sg
-        int sg_nv;                              // number of vertices in subgraph with index sg
-        int sg_ne;                              // number of edges in subgraph with index sg
-        int nv;                                 // total number of vertices
-        int ne;                                 // total number of edges
-        int heur_type;                          // the type of heuristic to be applied
-        bool is_undir_weighted;                 // true iff G is undirected and weighted
-        bool is_symmetric_tsp;                  // true if G is undirected weighted clique
-        int num_nodes;                          // counting the hierarhical clustering forest nodes
-        solution_status status;                 // status of the solution
-        std::map<int,std::map<int,double> > weight_map;
-        std::map<int,std::map<int,double> > rlx_sol_map;
+        graphe *G;
+        glp_prob *mip;
+        bool isweighted,*visited,is_symmetric_tsp,verbose;
+        std::set<ivector> subtours;
+        ivector tour,old_sol;
+        double *coeff,gap_tol;
+        arc *arcs;
+        int *indices,nv,ne,heur_type;
+        solution_status status;
+        std::map<int,std::map<int,double> > weight_map,rlx_sol_map;
         std::map<int,std::map<int,int> > loc_map;
-        dvector xev;
-        dvector obj;
+        dvector xev,obj;
         bvector can_branch;
-        bool verbose;
-        double gap_tol;
         void formulate_mip();
         bool get_subtours();
         void add_subtours(const ivectors &sv);
-        void lift_subtours(ivectors &sv) const;
-        bool find_subgraph_subtours(ivectors &sv,solution_status &status);
+        bool find_subgraph_subtours(int k,ivectors &sv,solution_status &status);
         bool subtours_equal(const ivector &st1,const ivector &st2);
         ivector canonical_subtour(const ivector &subtour);
         void append_sce(const ivector &subtour);
-        void make_hierarchical_clustering_forest();
-        void hierarchical_clustering_dfs(int i,ivectors &considered_sec,ivectors &relevant_sec);
         ipair make_edge(int i,int j) const;
-        void make_sg_edges();
         int edge_index(const ipair &e);
-        int vertex_index(int i);
         double weight(int i,int j);
         double weight(const ipair &e) { return weight(e.first,e.second); }
         double lower_bound();
@@ -403,6 +379,7 @@ public:
     public:
         tsp(graphe *gr,double gap_tolerance=0,bool is_verbose=false);
         ~tsp();
+        int solve(int k,ivectors &hcv,dvector &costs);
         int solve(ivector &hc,double &cost);
         bool approx(ivector &hc,double &ratio);
         double tour_cost(const ivector &hc);
@@ -413,13 +390,15 @@ public:
         glp_prob *mip;
         ipairs mia; // must include arcs
         ivectors ft; // forbidden tours
-        bool isweighted;
+        bool isweighted,select_blb,verbose;
+        double gap_tol;
         void formulate_mip();
+        static void callback(glp_tree *tree,void *info);
     public:
-        atsp(graphe *gr,const ipairs &must_include_arcs);
+        atsp(graphe *gr,const ipairs &must_include_arcs,double gap_tolerance=0,bool is_verbose=false);
         ~atsp();
-        bool solve(ivector &hc,double &cost,double gap_tol=0); // find the shortest tour
-        void ksolve(int k,ivectors &hcv,dvector &costs,double gap_tol=0,bool verbose=false); // find k shortest tours
+        bool solve(ivector &hc,double &cost); // find the shortest tour
+        void ksolve(int k,ivectors &hcv,dvector &costs); // find k shortest tours
     };
 
     class mvc_solver { // exact and approx minimum vertex cover (MVC) problem solver
@@ -1264,7 +1243,7 @@ public:
     int hamcond(bool make_closure=true);
     bool is_hamiltonian(ivector &hc);
     bool hamcycle(ivector &path);
-    int traveling_salesman(ivector &h,double &cost,bool approximate=false,double gap_tol=0,bool verbose=true);
+    int traveling_salesman(int k,ivectors &hcv,dvector &costs,double gap_tol=0,bool verbose=true);
     bool find_directed_tours(int k,ivectors &hcv,dvector &costs,const ipairs &incl,double gap_tol=0,bool verbose=false);
     bool make_euclidean_distances();
     gen maxflow_edmonds_karp(int s,int t,std::vector<std::map<int,gen> > &flow,const gen &limit=plusinf());

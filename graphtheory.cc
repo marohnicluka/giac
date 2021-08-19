@@ -6699,17 +6699,13 @@ static const char _is_hamiltonian_s[]="is_hamiltonian";
 static define_unary_function_eval(__is_hamiltonian,&_is_hamiltonian,_is_hamiltonian_s);
 define_unary_function_ptr5(at_is_hamiltonian,alias_at_is_hamiltonian,&__is_hamiltonian,0,true)
 
-/* USAGE: traveling_salesman(G,[M])
+/* USAGE: traveling_salesman(G,[M],[opts])
  *
  * Returns a sequence of two objects, optimal cost for traveling salesman
  * problem and the corresponding Hamiltonian cycle in the undirected input
  * graph G. If G is not weighted, its adjacency matrix is used instead.
- * Alternatively, weight matrix may be passed as the optional parameter M. If G
- * is not Hamiltonian, an error is returned. A number of options may be passed
- * at the end of sequence of arguments: 'approx' for approximate solution, a
- * nonnegative integer representing the time limit (in milliseconds) or
- * 'vertex_distance' to automatically determine distances between the vertices
- * using their positions.
+ * Alternatively, weight matrix may be passed as the optional parameter M.
+ * If G is not Hamiltonian, an error is returned.
  */
 gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -6739,10 +6735,13 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
             return generrdim("The given weight matrix has invalid dimensions");
         G.make_weighted(M);
     }
+    int k=1;
+    graphe::ivectors hcv;
+    graphe::dvector costs;
     if (G.is_directed()) {
         /* solve ATSP */
         graphe::ipairs incl;
-        int i,j,k=1;
+        int i,j;
         for (const_iterateur it=options.begin();it!=options.end();++it) {
             if (it->is_symb_of_sommet(at_equal)) {
                 const gen &lhs=it->_SYMBptr->feuille._VECTptr->front();
@@ -6779,71 +6778,72 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
                 else k=it->val;
             } else return generr("Option not supported");
         }
-        graphe::ivectors hcv;
-        graphe::dvector costs;
         if (!G.find_directed_tours(k,hcv,costs,incl,gap_tol,verbose))
             return undef;
         if (hcv.empty())
-            return generr("Unable to find Hamiltonian cycle");
-        vecteur res;
-        G.ivectors2vecteur(hcv,res,false);
-        vecteur cv(costs.size());
-        for (iterateur it=cv.begin();it!=cv.end();++it) *it=gen(costs[it-cv.begin()]);
-        if (G.is_weighted())
-            return makesequence(k==1?cv.front():cv,k==1?res.front():res);
-        return k==1?res.front():res;
-    }
-    if (G.hamcond()==0)
-        return generr("The input graph is not Hamiltonian");
-    /* parse options */
-    bool approximate=false,make_distances=false;
-    int time_limit=rand_max2;
-    for (const_iterateur it=options.begin();it!=options.end();++it) {
-        if (*it==at_approx)
-            approximate=true;
-        else if (it->is_symb_of_sommet(at_equal)) {
-            const gen &lhs=it->_SYMBptr->feuille._VECTptr->front();
-            const gen &rhs=it->_SYMBptr->feuille._VECTptr->back();
-            if (approximate && lhs==at_limit && rhs.is_integer())
-                time_limit=rhs.val;
-            else if (lhs.is_integer() && lhs.subtype==_INT_MAPLECONVERSION && lhs==_LP_GAP_TOLERANCE) {
-                if (_evalf(rhs,contextptr).type!=_DOUBLE_ || is_strictly_greater(0,rhs,contextptr))
-                    return generr("Expected a nonnegative real number");
-                gap_tol=_evalf(rhs,contextptr).DOUBLE_val();
-            }
-        } else if (*it==at_vertex_distance && M.empty())
-            make_distances=true;
-        else if (it->is_integer() && it->subtype==_INT_MAPLECONVERSION && it->val==_LP_VERBOSE)
-            verbose=true;
-        else return generr("Option not supported");
-    }
-    if (time_limit<0)
-        return generr("Expected a nonnegative integer");
-    if (make_distances) {
-        if (G.is_weighted())
-            return gt_err(_GT_ERR_UNWEIGHTED_GRAPH_REQUIRED);
-        if (!G.make_euclidean_distances())
-            return generr("Some vertex positions are invalid");
-    }
-    G.underlying(U);
-    int res;
-    double cost;
-    if (approximate) {
-        if (!G.is_weighted())
-            gt_err(_GT_ERR_WEIGHTED_GRAPH_REQUIRED);
-        if (!G.is_clique())
-            return generr("The input graph must be complete");
-        G.traveling_salesman(h,cost,true,gap_tol,verbose);
+            return generr("Unable to find a Hamiltonian cycle");
     } else {
-        res=U.is_biconnected()?G.traveling_salesman(h,cost,false,gap_tol,verbose):0;
-        if (res==0)
+        if (G.hamcond()==0)
             return generr("The input graph is not Hamiltonian");
-        if (res==-1)
-            return undef;
+        /* parse options */
+        bool approximate=false,make_distances=false;
+        int time_limit=rand_max2;
+        for (const_iterateur it=options.begin();it!=options.end();++it) {
+            if (*it==at_approx)
+                approximate=true;
+            else if (it->is_symb_of_sommet(at_equal)) {
+                const gen &lhs=it->_SYMBptr->feuille._VECTptr->front();
+                const gen &rhs=it->_SYMBptr->feuille._VECTptr->back();
+                if (approximate && lhs==at_limit && rhs.is_integer())
+                    time_limit=rhs.val;
+                else if (lhs.is_integer() && lhs.subtype==_INT_MAPLECONVERSION && lhs==_LP_GAP_TOLERANCE) {
+                    if (_evalf(rhs,contextptr).type!=_DOUBLE_ || is_strictly_greater(0,rhs,contextptr))
+                        return generr("Expected a nonnegative real number");
+                    gap_tol=_evalf(rhs,contextptr).DOUBLE_val();
+                }
+            } else if (*it==at_vertex_distance && M.empty())
+                make_distances=true;
+            else if (it->is_integer() && it->val>0) {
+                if (it->subtype==_INT_MAPLECONVERSION && it->val==_LP_VERBOSE)
+                    verbose=true;
+                else k=it->val;
+            } else return generr("Option not supported");
+        }
+        if (time_limit<0)
+            return generr("Expected a nonnegative integer");
+        if (make_distances) {
+            if (G.is_weighted())
+                return gt_err(_GT_ERR_UNWEIGHTED_GRAPH_REQUIRED);
+            if (!G.make_euclidean_distances())
+                return generr("Some vertex positions are invalid");
+        }
+        G.underlying(U);
+        int res;
+        double cost;
+        if (approximate) {
+            if (!G.is_weighted())
+                gt_err(_GT_ERR_WEIGHTED_GRAPH_REQUIRED);
+            if (!G.is_clique())
+                return generr("The input graph must be complete");
+            G.traveling_salesman(k=0,hcv,costs,gap_tol,verbose);
+        } else {
+            res=U.is_biconnected()?G.traveling_salesman(k=1,hcv,costs,gap_tol,verbose):0;
+            if (res==0)
+                return generr("The input graph is not Hamiltonian");
+            if (res==-1)
+                return undef;
+        }
     }
-    /* success! */
-    return G.is_weighted()?makesequence(!G.is_weighted()?gen(int(std::floor(cost+.5))):gen(cost),G.get_node_labels(h)):
-                           G.get_node_labels(h);
+    /* success */
+    vecteur res;
+    G.ivectors2vecteur(hcv,res,false);
+    vecteur cv(costs.size());
+    for (iterateur it=cv.begin();it!=cv.end();++it) {
+        *it=gen(costs[it-cv.begin()]);
+    }
+    if (G.is_weighted())
+        return makesequence(k<=1?cv.front():cv,k<=1?res.front():res);
+    return k==1?res.front():res;
 }
 static const char _traveling_salesman_s[]="traveling_salesman";
 static define_unary_function_eval(__traveling_salesman,&_traveling_salesman,_traveling_salesman_s);

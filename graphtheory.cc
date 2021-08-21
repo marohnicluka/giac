@@ -6624,9 +6624,10 @@ gen _minimal_edge_coloring(const gen &g,GIAC_CONTEXT) {
     int typ=G.exact_edge_coloring(colors,NULL,tm_lim,gap_tol,verbose);
     if (typ==0)
         return undef;
+    vecteur cols=vector_int_2_vecteur(colors);
     if (store)
-        return G.to_gen();
-    return makesequence(typ,vector_int_2_vecteur(colors));
+        return _highlight_edges(makesequence(g._VECTptr->front(),G.edges(false),cols),contextptr);
+    return makesequence(typ,cols);
 }
 static const char _minimal_edge_coloring_s[]="minimal_edge_coloring";
 static define_unary_function_eval(__minimal_edge_coloring,&_minimal_edge_coloring,_minimal_edge_coloring_s);
@@ -6639,28 +6640,19 @@ define_unary_function_ptr5(at_minimal_edge_coloring,alias_at_minimal_edge_colori
  */
 gen _chromatic_index(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type!=_VECT)
-        return gentypeerr(contextptr);
-    gen colors_dest=undef;
-    if (g.subtype==_SEQ__VECT) {
-        const vecteur &gv=*g._VECTptr;
-        if (gv.size()!=2)
-            return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-        if (!is_unassigned_identifier(colors_dest=g._VECTptr->back(),contextptr))
-            return gt_err(_GT_ERR_UNASSIGNED_IDENTIFIER_EXPECTED);
-    }
     graphe G(contextptr);
-    if (!G.read_gen(g.subtype==_SEQ__VECT?g._VECTptr->front():g))
+    if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
+    if (G.is_null() || G.is_empty())
+        return 0;
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
-    graphe::ivector colors;
+    graphe::ivector a,b;
     int ncolors;
-    if (G.exact_edge_coloring(colors,&ncolors)==0)
+    if (G.is_bipartite(a,b))
+        ncolors=G.maximum_degree();
+    else if (G.exact_edge_coloring(a,&ncolors)==0)
         return undef;
-    if (ncolors>0 && !is_undef(colors_dest)) { // store the coloring
-        identifier_assign(*colors_dest._IDNTptr,vector_int_2_vecteur(colors),contextptr);
-    }
     return ncolors;
 }
 static const char _chromatic_index_s[]="chromatic_index";

@@ -5130,6 +5130,16 @@ int graphe::exact_vertex_coloring(int max_colors,int tm_lim,double gap_tol,bool 
 /* color the edges of this graph using D or D+1 colors,
 * return 1 in the former case, 2 in the latter, 0 on error */
 int graphe::exact_edge_coloring(ivector &colors,int *numcol,int tm_lim,double gap_tol,bool verbose) {
+    assert(!is_directed());
+    /* apply heuristic */
+    if (edge_coloring_heuristic(colors)) {
+        if (numcol!=NULL)
+            *numcol=maximum_degree();
+        if (verbose)
+            message("Solution found by heuristic");
+        return 1;
+    }
+    /* exact edge coloring */
     graphe L(ctx,false);
     ipairs E;
     line_graph(L,E);
@@ -5175,6 +5185,48 @@ int graphe::exact_edge_coloring(ivector &colors,int *numcol,int tm_lim,double ga
     if (numcol!=NULL)
         *numcol=ncolors;
     return ncolors-maxdeg+1;
+}
+
+/* edge-coloring heuristic by finding maximum matching iteratively,
+ * returns true iff this graph is in class 1 */
+bool graphe::edge_coloring_heuristic(ivector &colors) {
+    assert(!is_directed());
+    int maxdeg=maximum_degree();
+    ivector sigma=vecteur_2_vector_int(*_randperm(node_count(),ctx)._VECTptr);
+    graphe G(ctx);
+    if (!isomorphic_copy(G,sigma,true))
+        return false;
+    vector<ipairs> matchings;
+    while (int(matchings.size())<maxdeg) {
+        matchings.resize(matchings.size()+1);
+        ipairs &matching=matchings.back();
+        G.maximum_matching(matching);
+        for (ipairs_iter it=matching.begin();it!=matching.end();++it) {
+            G.remove_edge(*it);
+        }
+        if (G.is_empty())
+            break;
+    }
+    assert(int(matchings.size())==maxdeg);
+    if (!G.is_empty())
+        return false;
+    colors.resize(edge_count());
+    ipairs E;
+    get_edges_as_pairs(E);
+    int col=1;
+    for (vector<ipairs>::iterator it=matchings.begin();it!=matchings.end();++it) {
+        for (ipairs::iterator jt=it->begin();jt!=it->end();++jt) {
+            jt->first=sigma[jt->first];
+            jt->second=sigma[jt->second];
+            if (jt->first>jt->second)
+                *jt=make_pair(jt->second,jt->first);
+            ipairs_iter kt=find(E.begin(),E.end(),*jt);
+            assert(kt!=E.end());
+            colors[kt-E.begin()]=col;
+        }
+        col++;
+    }
+    return true;
 }
 
 /* returns true iff there is a clique cover of order not larger than k and finds that cover */
@@ -11219,7 +11271,8 @@ int graphe::tsp::solve(int k,ivectors &hcv,dvector &costs) {
                     hc.push_back(k=a.tail);
                 }
             }
-            improve_tour(hc);
+            if (gap_tol>0)
+                improve_tour(hc);
             hcv.push_back(hc);
             costs.push_back(tour_cost(hc));
         }
@@ -12327,19 +12380,19 @@ bool graphe::find_directed_tours(int k,ivectors &hcv,dvector &costs,const ipairs
 
 /* for each edge of the graph, assign the distance between endpoints as a weight */
 bool graphe::make_euclidean_distances() {
-    assert(!is_weighted() && !is_directed());
     layout x;
-    if (!has_stored_layout(x))
+    if (is_directed() || !has_stored_layout(x))
         return false;
     if (!x.empty()) {
         int n=node_count();
         set_weighted(true);
         point pq(x.front().size());
         for (int i=0;i<n;++i) {
+            const vertex &v=node(i);
             const point &p=x[i];
-            for (int j=i+1;j<n;++j) {
-                const point &q=x[j];
-                set_edge_attribute(i,j,_GT_ATTRIB_WEIGHT,gen(point_distance(p,q,pq)));
+            for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
+                const point &q=x[*it];
+                set_edge_attribute(i,*it,_GT_ATTRIB_WEIGHT,gen(point_distance(p,q,pq)));
             }
         }
     }

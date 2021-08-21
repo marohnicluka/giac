@@ -1220,6 +1220,7 @@ public:
     int greedy_vertex_coloring(const ivector &p);
     int exact_vertex_coloring(int max_colors=0,int tm_lim=0,double gap_tol=0,bool verbose=false);
     int exact_edge_coloring(ivector &colors,int *numcol=NULL,int tm_lim=0,double gap_tol=0,bool verbose=false);
+    bool edge_coloring_heuristic(ivector &colors);
     int get_node_color(int i) const;
     void get_node_colors(ivector &colors) const;
     bool is_bipartite(ivector &V1,ivector &V2,int sg=-1,gt_conn_check cc=_GT_CC_FIND_COMPONENTS);

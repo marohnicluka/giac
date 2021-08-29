@@ -289,7 +289,7 @@ public:
         ivector cover_number,initially_colored,branch_candidates,temp_colors,ordering;
         std::set<int> used_colors;
         int lb,ub,maxiter,nxcols;
-        bool generate_clique_cuts;
+        bool generate_clique_cuts,select_blb;
         glp_prob *mip;
         double timeout,*heur,*row_coeffs,*best_coeffs;
         int *row_indices,*best_indices;
@@ -303,7 +303,7 @@ public:
         static void callback(glp_tree *tree,void *info);
     public:
         painter(graphe *gr) { G=gr; }
-        int color_vertices(ivector &colors,const ivector &icol,int max_colors=0,int tm_lim=0,double gap_tol=0,bool verbose=false);
+        int color_vertices(ivector &colors,const ivector &icol,int max_colors=0,int tm_lim=0,bool verbose=false);
         int select_branching_variable(glp_tree *tree);
         void heur_solution(glp_tree *tree);
     };
@@ -327,7 +327,7 @@ public:
         };
         graphe *G;
         glp_prob *mip;
-        bool isweighted,*visited,is_symmetric_tsp,verbose;
+        bool isweighted,*visited,is_symmetric_tsp,verbose,cancellable;
         std::set<ivector> subtours;
         ivector tour,old_sol;
         double *coeff,gap_tol;
@@ -341,7 +341,7 @@ public:
         void formulate_mip();
         bool get_subtours();
         void add_subtours(const ivectors &sv);
-        bool find_subgraph_subtours(int k,ivectors &sv,solution_status &status);
+        bool find_tours(int k,ivectors &sv,solution_status &status);
         bool subtours_equal(const ivector &st1,const ivector &st2);
         ivector canonical_subtour(const ivector &subtour);
         void append_sce(const ivector &subtour);
@@ -350,11 +350,10 @@ public:
         double weight(int i,int j);
         double weight(const ipair &e) { return weight(e.first,e.second); }
         double lower_bound();
-        void perform_3opt_moves(ivector &hc);
-        void straighten(ivector &hc);
         bool is_move_feasible(int k,const ivector &t,const ipairs &x);
-        void lin_kernighan(ivector &hc);
-        bool make_3opt_moves(ivector &hc);
+        bool lin_kernighan(ivector &hc);
+        bool perform_3opt_moves(ivector &hc);
+        void straighten(ivector &hc);
         void improve_tour(ivector &hc,bool do_3opt=true);
         void farthest_insertion(int index,ivector &hc);
         bool christofides(ivector &hc,bool show_progress=false);
@@ -390,7 +389,7 @@ public:
         glp_prob *mip;
         ipairs mia; // must include arcs
         ivectors ft; // forbidden tours
-        bool isweighted,select_blb,verbose;
+        bool isweighted,select_blb,verbose,terminated;
         double gap_tol;
         void formulate_mip();
         static void callback(glp_tree *tree,void *info);
@@ -1134,7 +1133,7 @@ public:
     void clique_stats(std::map<int,int> &m,int mode=0);
     int maximum_clique(ivector &clique);
     void greedy_neighborhood_clique_cover_numbers(ivector &cover_numbers);
-    bool clique_cover(ivectors &cover,int k=0);
+    bool clique_cover(ivectors &cover,int k=0,int tm_lim=0,bool verbose=false);
     int maximum_independent_set(ivector &v) const;
     int girth(bool odd=false,int sg=-1);
     bool hakimi(const ivector &L);
@@ -1218,8 +1217,8 @@ public:
     void parametrized_st_orientation(int s,int t,double p);
     void greedy_vertex_coloring_biggs(ivector &ordering);
     int greedy_vertex_coloring(const ivector &p);
-    int exact_vertex_coloring(int max_colors=0,int tm_lim=0,double gap_tol=0,bool verbose=false);
-    int exact_edge_coloring(ivector &colors,int *numcol=NULL,int tm_lim=0,double gap_tol=0,bool verbose=false);
+    int exact_vertex_coloring(int max_colors=0,int tm_lim=0,bool verbose=false);
+    int exact_edge_coloring(ivector &colors,int *numcol=NULL,int tm_lim=0,bool verbose=false);
     bool edge_coloring_heuristic(ivector &colors);
     int get_node_color(int i) const;
     void get_node_colors(ivector &colors) const;
@@ -1306,6 +1305,7 @@ public:
     static ivector make_ivector(int n,...);
     static double poly_area(const layout &x);
     static int term_hook(void *info,const char *s);
+    static bool is_interrupted();
 };
 
 #ifndef NO_NAMESPACE_GIAC

@@ -148,6 +148,14 @@ int graphe::term_hook(void *info,const char *s) {
     return true;
 }
 
+bool graphe::is_interrupted() {
+    if (interrupted || ctrl_c) {
+        interrupted=ctrl_c=false;
+        return true;
+    }
+    return false;
+}
+
 /* make a list of integers and return it */
 graphe::ivector graphe::make_ivector(int n,...) {
     va_list lst;
@@ -834,24 +842,12 @@ graphe::graphe(const string &name,GIAC_CONTEXT,bool support_attributes) {
         make_petersen_graph(6,2,support_attributes?&x:NULL);
     } else if (name=="dyck") {
         read_special(dyck_graph);
-        if (support_attributes) {
-            for (int i=0;i<node_count();++i) hull.push_back(i);
-            make_circular_layout(x,hull);
-        }
     } else if (name=="folkman") {
         make_lcf_graph(folkman_graph_lcf);
-        if (support_attributes) {
-            for (int i=0;i<node_count();++i) hull.push_back(i);
-            make_circular_layout(x,hull);
-        }
     } else if (name=="gewirtz") {
         make_gewirtz_graph();
     } else if (name=="gray") {
         make_lcf_graph(gray_graph_lcf);
-        if (support_attributes) {
-            for (int i=0;i<node_count();++i) hull.push_back(i);
-            make_circular_layout(x,hull);
-        }
     } else if (name=="grinberg") {
         read_special(grinberg_graph);
         if (support_attributes) {
@@ -880,34 +876,14 @@ graphe::graphe(const string &name,GIAC_CONTEXT,bool support_attributes) {
         }
     } else if (name=="f26a") {
         make_lcf_graph(f26a_graph_lcf);
-        if (support_attributes) {
-            for (int i=0;i<node_count();++i) hull.push_back(i);
-            make_circular_layout(x,hull);
-        }
     } else if (name=="harries") {
         make_lcf_graph(harries_graph_lcf);
-        if (support_attributes) {
-            for (int i=0;i<node_count();++i) hull.push_back(i);
-            make_circular_layout(x,hull);
-        }
     } else if (name=="harries-wong") {
         make_lcf_graph(harries_wong_graph_lcf);
-        if (support_attributes) {
-            for (int i=0;i<node_count();++i) hull.push_back(i);
-            make_circular_layout(x,hull);
-        }
     } else if (name=="balaban10") {
         make_lcf_graph(balaban_10cage_lcf);
-        if (support_attributes) {
-            for (int i=0;i<node_count();++i) hull.push_back(i);
-            make_circular_layout(x,hull);
-        }
     } else if (name=="balaban11") {
         make_lcf_graph(balaban_11cage_lcf);
-        if (support_attributes) {
-            for (int i=0;i<node_count();++i) hull.push_back(i);
-            make_circular_layout(x,hull);
-        }
     } else if (name=="harborth") {
         read_special(harborth_graph);
         if (support_attributes) {
@@ -949,18 +925,10 @@ graphe::graphe(const string &name,GIAC_CONTEXT,bool support_attributes) {
         }
     } else if (name=="levi") {
         make_lcf_graph(tutte_8cage_lcf);
-        if (support_attributes) {
-            for (int i=0;i<node_count();++i) hull.push_back(i);
-            make_circular_layout(x,hull);
-        }
     } else if (name=="ljubljana") {
         make_lcf_graph(ljubljana_graph_lcf);
     } else if (name=="foster") {
         make_lcf_graph(foster_graph_lcf);
-        if (support_attributes) {
-            for (int i=0;i<node_count();++i) hull.push_back(i);
-            make_circular_layout(x,hull);
-        }
     } else if (name=="kittell") {
         read_special(kittell_graph);
         if (support_attributes) {
@@ -981,10 +949,6 @@ graphe::graphe(const string &name,GIAC_CONTEXT,bool support_attributes) {
         }
     } else if (name=="mcgee") {
         read_special(mcgee_graph);
-        if (support_attributes) {
-            for (int i=0;i<node_count();++i) hull.push_back(i);
-            make_circular_layout(x,hull);
-        }
     } else if (name=="meredith") {
         read_special(meredith_graph);
     } else if (name=="meringer") {
@@ -1007,10 +971,6 @@ graphe::graphe(const string &name,GIAC_CONTEXT,bool support_attributes) {
         }
     } else if (name=="pappus") {
         read_special(pappus_graph);
-        if (support_attributes) {
-            for (int i=0;i<node_count();++i) hull.push_back(i);
-            make_circular_layout(x,hull);
-        }
     } else if (name=="perkel") {
         read_special(perkel_graph);
     } else if (name=="petersen") {
@@ -1079,10 +1039,6 @@ graphe::graphe(const string &name,GIAC_CONTEXT,bool support_attributes) {
         }
     } else if (name=="tutte12") {
         make_lcf_graph(tutte_12cage_lcf);
-        if (support_attributes) {
-            for (int i=0;i<node_count();++i) hull.push_back(i);
-            make_circular_layout(x,hull);
-        }
     } else if (name=="wagner") {
         read_special(wagner_graph);
         if (support_attributes) {
@@ -4760,24 +4716,32 @@ void graphe::painter::formulate_mip() {
 }
 
 void graphe::painter::callback(glp_tree *tree,void *info) {
+    if (is_interrupted()) {
+        glp_ios_terminate(tree);
+        return;
+    }
     painter *pt=static_cast<painter*>(info);
     int j;
     switch (glp_ios_reason(tree)) {
+    case GLP_ISELECT:
+        if (pt->select_blb)
+            glp_ios_select_node(tree,glp_ios_best_node(tree));
+        break;
     case GLP_IBRANCH:
-        /* select the branching variable */
-        if ((j=pt->select_branching_variable(tree))>0)
+        if (//_rand(makesequence(0,1),pt->G->giac_context()).DOUBLE_val()<0.1 &&
+                (j=pt->select_branching_variable(tree))>0)
             glp_ios_branch_upon(tree,j,GLP_DN_BRNCH);
         break;
     case GLP_IHEUR:
-        /* obtain a heuristic solution */
         pt->heur_solution(tree);
         break;
     case GLP_IROWGEN:
-        /* generate clique and block color inequalities */
         pt->generate_rows(tree);
         break;
+    case GLP_IBINGO:
+        pt->select_blb=true;
+        break;
     default:
-        /* ignore call for other reasons */
         break;
     }
 }
@@ -4977,10 +4941,13 @@ int graphe::painter::select_branching_variable(glp_tree *tree) {
     return j;
 }
 
-int graphe::painter::color_vertices(ivector &colors,const ivector &icol,int max_colors,int tm_lim,double gap_tol,bool verbose) {
+int graphe::painter::color_vertices(ivector &colors,const ivector &icol,int max_colors,int tm_lim,bool verbose) {
     compute_bounds(icol,max_colors);
-    if (ub<lb)
+    if (ub<lb) {
+        if (verbose)
+            G->message("Error: there are no feasible solutions");
         return 0;
+    }
     int n=G->node_count();
     make_values();
     formulate_mip();
@@ -4996,13 +4963,14 @@ int graphe::painter::color_vertices(ivector &colors,const ivector &icol,int max_
     parm.clq_cuts=GLP_ON;
     parm.cov_cuts=GLP_ON;
     parm.presolve=GLP_OFF;
+    parm.fp_heur=GLP_ON;
+    parm.sr_heur=GLP_ON;
+    parm.br_tech=GLP_BR_MFV;
     parm.bt_tech=GLP_BT_DFS;
     parm.cb_size=sizeof(int);
     parm.cb_func=&callback;
     parm.cb_info=static_cast<void*>(this);
-    if (tm_lim>0)
-        parm.tm_lim=tm_lim;
-    parm.mip_gap=gap_tol;
+    if (tm_lim>0) parm.tm_lim=tm_lim;
     branch_candidates.resize(n);
     fracts.resize(n);
     maxiter=std::ceil(15.0*std::exp(-std::pow(n,2)*0.000321887582487));
@@ -5011,18 +4979,21 @@ int graphe::painter::color_vertices(ivector &colors,const ivector &icol,int max_
     row_coeffs=new double[nxcols+ub-lb+1];
     best_indices=new int[nxcols+ub-lb+1];
     best_coeffs=new double[nxcols+ub-lb+1];
+    select_blb=false;
     int term_old=0;
     if (verbose)
         glp_term_hook(term_hook,static_cast<void*>(logptr(G->giac_context())));
     else term_old=glp_term_out(GLP_OFF);
     int ncolors=0,res=glp_intopt(mip,&parm);
-    if (res==0) {
-        switch (glp_get_status(mip)) { // solution status:
+    if (res==0 || res==GLP_ETMLIM || res==GLP_ESTOP) {
+        switch (glp_mip_status(mip)) { // solution status:
         case GLP_UNDEF:
-            G->message("Error: MIP solution undefined");
+            if (verbose)
+                G->message("Error: undefined solution");
             break;
         case GLP_FEAS: // feasible but not necessarily optimal
-            G->message("Warning: optimality of the solution is not guaranteed");
+            if (verbose)
+                G->message("Warning: the solution is not necessarily optimal");
         case GLP_OPT: // optimal
             ncolors=lb+glp_mip_obj_val(mip);
             /* color the vertices */
@@ -5034,10 +5005,12 @@ int graphe::painter::color_vertices(ivector &colors,const ivector &icol,int max_
             G->get_node_colors(colors);
             break;
         case GLP_NOFEAS: // not feasible
-            G->message("Error: MIP has no feasible solutions");
+            if (verbose)
+                G->message("Error: there are no feasible solutions");
             break;
         }
-    } // else G->message("Error: MIP solver failure");
+    } else if (verbose)
+        G->message("Error: solver failure");
     glp_delete_prob(mip);
     if (verbose)
         glp_term_hook(NULL,NULL);
@@ -5056,7 +5029,7 @@ int graphe::painter::color_vertices(ivector &colors,const ivector &icol,int max_
 */
 
 /* find optimal vertex coloring using an exact algorithm, requires GLPK */
-int graphe::exact_vertex_coloring(int max_colors,int tm_lim,double gap_tol,bool verbose) {
+int graphe::exact_vertex_coloring(int max_colors,int tm_lim,bool verbose) {
     int ncolors=0,n=node_count();
     if (is_clique()) {
         for (int i=0;i<n;++i) {
@@ -5078,7 +5051,7 @@ int graphe::exact_vertex_coloring(int max_colors,int tm_lim,double gap_tol,bool 
             }
             graphe G(ctx,false);
             induce_subgraph(nsv,G);
-            ncolors=G.exact_vertex_coloring(max_colors);
+            ncolors=G.exact_vertex_coloring(max_colors,tm_lim,verbose);
             if (ncolors==0)
                 return 0;
             colors.resize(ncolors);
@@ -5118,7 +5091,7 @@ int graphe::exact_vertex_coloring(int max_colors,int tm_lim,double gap_tol,bool 
     ivector colors,clique;
     ostergard ost(this,5.0);
     ost.maxclique(clique);
-    ncolors=pt.color_vertices(colors,clique,max_colors,tm_lim,gap_tol,verbose);
+    ncolors=pt.color_vertices(colors,clique,max_colors,tm_lim,verbose);
     if (ncolors>0 && find(colors.begin(),colors.end(),0)!=colors.end()) {
         uncolor_all_nodes();
         ncolors=0;
@@ -5129,7 +5102,7 @@ int graphe::exact_vertex_coloring(int max_colors,int tm_lim,double gap_tol,bool 
 
 /* color the edges of this graph using D or D+1 colors,
 * return 1 in the former case, 2 in the latter, 0 on error */
-int graphe::exact_edge_coloring(ivector &colors,int *numcol,int tm_lim,double gap_tol,bool verbose) {
+int graphe::exact_edge_coloring(ivector &colors,int *numcol,int tm_lim,bool verbose) {
     assert(!is_directed());
     /* apply heuristic */
     if (edge_coloring_heuristic(colors)) {
@@ -5166,7 +5139,7 @@ int graphe::exact_edge_coloring(ivector &colors,int *numcol,int tm_lim,double ga
     assert(k==maxdeg);
 #ifdef HAVE_LIBGLPK
     painter pt(&L);
-    int ncolors=pt.color_vertices(colors,icol,maxdeg+1,tm_lim,gap_tol,verbose);
+    int ncolors=pt.color_vertices(colors,icol,maxdeg+1,tm_lim,verbose);
 #else
     message("Error: GLPK library is required for graph coloring");
     int ncolors=0;
@@ -5230,7 +5203,7 @@ bool graphe::edge_coloring_heuristic(ivector &colors) {
 }
 
 /* returns true iff there is a clique cover of order not larger than k and finds that cover */
-bool graphe::clique_cover(ivectors &cover,int k) {
+bool graphe::clique_cover(ivectors &cover,int k,int tm_lim,bool verbose) {
     if (triangle_count()==0) {
         /* clique cover consists of matched edges and singleton vertex sets */
         ipairs matching;
@@ -5255,10 +5228,43 @@ bool graphe::clique_cover(ivectors &cover,int k) {
         }
         return true;
     }
+    if (k>0) { // GRASP clique heuristic
+        int sg=1;
+        unset_subgraphs(0);
+        bool success=true;
+        ivector clq;
+        while (subgraph_size(0)>0) {
+            if (sg>k) {
+                success=false;
+                break;
+            }
+            grasp_clique(5,clq,false,0);
+            set_subgraph(clq,sg++);
+        }
+        if (success) {
+            cover.clear();
+            cover.reserve(sg-1);
+            for (int s=1;s<sg;++s) {
+                get_subgraph(s,clq);
+                cover.push_back(clq);
+            }
+            unset_subgraphs();
+            if (verbose)
+                message("Solution found by GRASP heuristic");
+            return true;
+        } else unset_subgraphs();
+    }
     graphe C(ctx,false);
     complement(C);
-    int ncliques=C.exact_vertex_coloring();
-    if (ncliques==0 || (k>0 && ncliques>k))
+    int ncliques;
+    /* DSATUR heuristic */
+    if (k>0)
+        C.dsatur();
+    if (k<=0 || (ncliques=C.color_count())>k)
+        ncliques=C.exact_vertex_coloring(k,tm_lim,verbose);
+    else if (verbose)
+        message("Solution found by DSATUR heuristic");
+    if (ncliques==0)
         return false;
     cover.clear();
     cover.resize(ncliques);
@@ -9968,8 +9974,7 @@ bool graphe::is_partially_colored() const {
     return false;
 }
 
-/* a heuristic algorithm by D.Bre1az for nearly optimal vertex coloring (time complexity O(n*m)),
-* operates on a partially colored graph, returns the number of colors */
+/* heuristic algorithm by Brelaz for nearly optimal vertex coloring, complexity O(n*m) */
 void graphe::dsatur() {
     int col,i,sat,maxsat,deg,maxdeg=0;
     std::set<int> colors,maxcolors;
@@ -10931,6 +10936,7 @@ graphe::tsp::tsp(graphe *gr,double gap_tolerance,bool is_verbose) {
     indices=new int[ne+1];
     visited=new bool[nv];
     arcs=new arc[ne];
+    cancellable=false;
     int i;
     for (ipairs_iter it=E.begin();it!=E.end();++it) {
         i=it-E.begin();
@@ -11049,7 +11055,7 @@ double graphe::tsp::lower_bound() {
 }
 
 /* find the subtours (sv) in the subgraph induced by vertices in v */
-bool graphe::tsp::find_subgraph_subtours(int k,ivectors &sv,solution_status &status) {
+bool graphe::tsp::find_tours(int k,ivectors &sv,solution_status &status) {
     sv.clear();
     if (k<=0)
         return true;
@@ -11057,10 +11063,10 @@ bool graphe::tsp::find_subgraph_subtours(int k,ivectors &sv,solution_status &sta
     glp_erase_prob(mip);
     glp_set_obj_dir(mip,GLP_MIN);
     formulate_mip();
-    glp_smcp lparm;             // LP solver settings
+    glp_smcp lparm;
     glp_init_smcp(&lparm);
     lparm.msg_lev=GLP_MSG_OFF;
-    glp_iocp parm;              // MIP solver settings
+    glp_iocp parm;
     glp_init_iocp(&parm);
     parm.msg_lev=GLP_MSG_ON;
     parm.gmi_cuts=GLP_ON;
@@ -11097,7 +11103,8 @@ bool graphe::tsp::find_subgraph_subtours(int k,ivectors &sv,solution_status &sta
                 status=_GT_TSP_NOT_HAMILTONIAN;
                 break;
             }
-            if ((res!=0 && res!=GLP_EMIPGAP) || (stat=glp_mip_status(mip))==GLP_UNDEF) {
+            stat=glp_mip_status(mip);
+            if ((res!=0 && res!=GLP_EMIPGAP && res!=GLP_ESTOP) || stat==GLP_UNDEF) {
                 status=_GT_TSP_ERROR;
                 retval=false;
                 break;
@@ -11119,7 +11126,7 @@ bool graphe::tsp::find_subgraph_subtours(int k,ivectors &sv,solution_status &sta
             }
             if (subtours.size()>1 && verbose)
                 G->message("Excluded %d subtours",subtours.size());
-        } while (subtours.size()>1);
+        } while (subtours.size()>1 && res!=GLP_ESTOP);
         if (status==_GT_TSP_ERROR)
             break;
         if (status==_GT_TSP_NOT_HAMILTONIAN) {
@@ -11127,6 +11134,8 @@ bool graphe::tsp::find_subgraph_subtours(int k,ivectors &sv,solution_status &sta
                 status=_GT_TSP_OPTIMAL;
             break;
         }
+        if (subtours.size()>1) // the solver was terminated
+            break;
         sv.push_back(*subtours.begin());
         if (verbose)
             G->message("Found tour %d",sv.size());
@@ -11246,7 +11255,7 @@ int graphe::tsp::solve(int k,ivectors &hcv,dvector &costs) {
     ivectors sv;
     ivector hc; hc.reserve(nv);
     solution_status status;
-    if (!find_subgraph_subtours(k,sv,status))
+    if (!find_tours(k,sv,status))
         return -1;
     int retval;
     switch (status) {
@@ -11414,7 +11423,7 @@ void graphe::tsp::farthest_insertion(int index,ivector &hc) {
 }
 
 /* try to lower the cost of the tour hc */
-void graphe::tsp::perform_3opt_moves(ivector &hc) {
+bool graphe::tsp::perform_3opt_moves(ivector &hc) {
     int n=hc.size()-1,b1,e1,b2,e2,b3,e3,i1,j1,i2,j2,i3,j3,i,j,k,var,iter_count=0,moves_count=0;
     double opt_timeout=5.0+25.0*std::exp(-std::pow(std::max(0,1000-n),2)/2e5);
     bvector visited(nv);
@@ -11427,6 +11436,8 @@ void graphe::tsp::perform_3opt_moves(ivector &hc) {
     bool triplet_found=false;
     bool timed_out=false;
     do {
+        if (cancellable && is_interrupted())
+            return false;
         ++iter_count;
         opt_moves.clear();
         std::fill(visited.begin(),visited.end(),false);
@@ -11479,7 +11490,7 @@ void graphe::tsp::perform_3opt_moves(ivector &hc) {
                 break;
         }
         if (opt_moves.empty()) break;
-        for (ivectors_iter it=opt_moves.begin(); it!=opt_moves.end();++it) {
+        for (ivectors_iter it=opt_moves.begin();it!=opt_moves.end();++it) {
             const ivector &opt_move=*it;
             i1=find(hc.begin(),hc.end(),opt_move[0])-hc.begin();
             i2=find(hc.begin(),hc.end(),opt_move[1])-hc.begin();
@@ -11550,6 +11561,7 @@ void graphe::tsp::perform_3opt_moves(ivector &hc) {
             }
         }
     } while (!timed_out);
+    return true;
 }
 
 void graphe::tsp::straighten(ivector &hc) {
@@ -11559,6 +11571,8 @@ void graphe::tsp::straighten(ivector &hc) {
     bvector visited(n+1);
     ivector opt_move(4);
     while (true) {
+        if (cancellable && is_interrupted())
+            break;
         ++iter_count;
         opt_moves.clear();
         std::fill(visited.begin(),visited.end(),false);
@@ -11632,7 +11646,7 @@ bool graphe::tsp::is_move_feasible(int k,const ivector &t,const ipairs &x) {
 }
 
 /* Lin-Kernighan backtracking k-opt heuristic for tour improvement */
-void graphe::tsp::lin_kernighan(ivector &hc) {
+bool graphe::tsp::lin_kernighan(ivector &hc) {
     int n=hc.size()-1;
     int i,choice,j,j0,j_next,pos,ypos,t1,t2,t3,t4,t5,t2i,t2ip,dir;
     static ipairs x,y,y_tmp;
@@ -11649,7 +11663,8 @@ lk2:
     /* Let i:=1. Choose t[1] and let x1:=(t[1],t[2]=succ(t[1])) in hc.
      * Initialize alternatives for y1. */
     i=1;
-    if (t1_alt.empty()) return; // no more alternatives for t[1]
+    if (cancellable && is_interrupted()) return false; // cancelled
+    if (t1_alt.empty()) return true; // no more alternatives for t[1]
     choice=t1_alt.size()==1?0:G->rand_integer(t1_alt.size());
     t1=t[1]=t1_alt[choice]; t1_alt.erase(t1_alt.begin()+choice);
     x[1]=make_pair(t1,t2=t[2]=(t1+1)%n);
@@ -11813,17 +11828,21 @@ bool graphe::tsp::min_weight_matching_bipartite(const ivector &eind,const dvecto
     if (msg)
         glp_term_hook(term_hook,static_cast<void*>(logptr(G->giac_context())));
     else term_old=glp_term_out(GLP_OFF);
-    if (glp_simplex(wp,&lparm)!=0 || ((res=glp_intopt(wp,&parm))!=0 && res!=GLP_EMIPGAP))
+    if (glp_simplex(wp,&lparm)!=0 || ((res=glp_intopt(wp,&parm))!=0 && res!=GLP_EMIPGAP && res!=GLP_ESTOP))
         return false;
-    for (int j=0;j<m;++j) {
-        if (glp_mip_col_val(wp,j+1)!=0)
-            matched_arcs.push_back(j);
-    }
+    int stat=glp_mip_status(wp);
+    bool ret=true;
+    if (stat==GLP_OPT || stat==GLP_FEAS) {
+        for (int j=0;j<m;++j) {
+            if (glp_mip_col_val(wp,j+1)!=0)
+                matched_arcs.push_back(j);
+        }
+    } else ret=false;
     glp_delete_prob(wp);
     if (msg)
         glp_term_hook(NULL,NULL);
     else glp_term_out(term_old);
-    return true;
+    return ret;
 }
 
 void graphe::tsp::min_wpm_heur(glp_tree *tree,const ivector &eind) {
@@ -11922,9 +11941,11 @@ bool graphe::tsp::christofides(ivector &hc,bool show_progress) {
 
 /* improve the tour hc by making k-opt moves */
 void graphe::tsp::improve_tour(ivector &hc,bool do_3opt) {
-    lin_kernighan(hc);
-    if (do_3opt) perform_3opt_moves(hc);
-    straighten(hc);
+    cancellable=true;
+    if (lin_kernighan(hc))
+        if (!do_3opt || perform_3opt_moves(hc))
+            straighten(hc);
+    cancellable=false;
 }
 
 /* construct an approximate tour, G must be a complete graph */
@@ -12109,6 +12130,10 @@ void graphe::tsp::rowgen(glp_tree *tree) {
 
 /* MIP callback routine */
 void graphe::tsp::callback(glp_tree *tree,void *info) {
+    if (is_interrupted()) {
+        glp_ios_terminate(tree);
+        return;
+    }
     tsp *tsprob=static_cast<tsp*>(info);
     switch (glp_ios_reason(tree)) {
     case GLP_IHEUR:
@@ -12129,6 +12154,10 @@ void graphe::tsp::callback(glp_tree *tree,void *info) {
 
 /* min weight perfect matching solver callback routine */
 void graphe::tsp::min_wpm_callback(glp_tree *tree,void *info) {
+    if (is_interrupted()) {
+        glp_ios_terminate(tree);
+        return;
+    }
     pair<const ivector*,tsp*> *origin=static_cast<pair<const ivector*,tsp*>*>(info);
     const ivector *eind=origin->first;
     tsp *tsprob=origin->second;
@@ -12251,7 +12280,7 @@ bool graphe::atsp::solve(ivector &hc,double &cost) {
     parm.cb_info=static_cast<void*>(this);
     select_blb=false;
     bool ret=false;
-    if ((res=glp_intopt(mip,&parm))==0 || res==GLP_EMIPGAP) {
+    if ((res=glp_intopt(mip,&parm))==0 || res==GLP_EMIPGAP || res==GLP_ESTOP) {
         ret=true;
         switch(glp_mip_status(mip)) {
         case GLP_FEAS:
@@ -12284,6 +12313,7 @@ bool graphe::atsp::solve(ivector &hc,double &cost) {
             assert(hc.back()==hc.front());
         }
     }
+    terminated=(res==GLP_ESTOP);
     for (i=0;i<n;++i) delete[] x[i];
     delete[] x;
     return ret;
@@ -12291,6 +12321,10 @@ bool graphe::atsp::solve(ivector &hc,double &cost) {
 
 /* MIP callback routine */
 void graphe::atsp::callback(glp_tree *tree,void *info) {
+    if (is_interrupted()) {
+        glp_ios_terminate(tree);
+        return;
+    }
     atsp *atsprob=static_cast<atsp*>(info);
     switch (glp_ios_reason(tree)) {
     case GLP_ISELECT:
@@ -12318,7 +12352,8 @@ void graphe::atsp::ksolve(int k,ivectors &hcv,dvector &costs) {
     if (verbose)
         glp_term_hook(term_hook,static_cast<void*>(logptr(G->giac_context())));
     else term_old=glp_term_out(GLP_OFF);
-    for (int cnt=0;cnt<k;++cnt) {
+    terminated=false;
+    for (int cnt=0;!terminated && cnt<k;++cnt) {
         if (!solve(hc,cost)) break;
         if (verbose)
             G->message("Found the tour %d",cnt+1);
@@ -12874,24 +12909,17 @@ gen graphe::tutte_polynomial(const gen &x,const gen &y) {
     intpoly p;
     graphe G(ctx,false);
     ivector sigma;
-    if (is_connected()) {
-        copy(G);
+    p=poly_one();
+    ivectors comp;
+    connected_components(comp);
+    for (ivectors::iterator it=comp.begin();it!=comp.end();++it) {
+        if (it->size()<2)
+            continue;
+        sort(it->begin(),it->end());
+        induce_subgraph(*it,G);
         G.sort_by_degrees(sigma);
         G.sharc_order();
-        p=G.tutte_poly_recurse(1);
-    } else {
-        p=poly_one();
-        ivectors comp;
-        connected_components(comp);
-        for (ivectors::iterator it=comp.begin();it!=comp.end();++it) {
-            if (it->size()<2)
-                continue;
-            sort(it->begin(),it->end());
-            induce_subgraph(*it,G);
-            G.sort_by_degrees(sigma);
-            G.sharc_order();
-            poly_mult(p,G.tutte_poly_recurse(1));
-        }
+        poly_mult(p,G.tutte_poly_recurse(1));
     }
     /* clear the cache and return the Tutte polynomial p */
     for (map<ivector,vector<cpol> >::iterator it=cache.begin();it!=cache.end();++it) {
@@ -13904,7 +13932,7 @@ void graphe::grasp_construct(double alpha,ivector &Q,bool cmpl,int sg) {
     for (int i=0;i<n;++i) {
         C[i]=sg<0?i:V[i];
     }
-    int u,d,dg,d_min,d_max,s=sg;
+    int u,d,dg,d_min,d_max,s=max_subgraph_index();
     ivector rcl;
     rcl.reserve(n);
     while (!C.empty()) {
@@ -13952,10 +13980,12 @@ void graphe::grasp_local(ivector &Q,bool cmpl,int sg) {
     if (cmpl) for (node_iter it=nodes.begin();it!=nodes.end();++it)
         if (sg<0 || it->subgraph()==sg)
             V.insert(it-nodes.begin());
+    int tmp_sg=max_subgraph_index()+1;
+    save_subgraphs();
     if (sg<0) {
         unset_subgraphs(0);
         set_subgraph(Q,1);
-    } else set_subgraph(Q,sg+1);
+    } else set_subgraph(Q,tmp_sg);
     while (true) {
         lv.clear();
         for (ivector_iter it=Q.begin();it!=Q.end();++it) {
@@ -14007,16 +14037,14 @@ void graphe::grasp_local(ivector &Q,bool cmpl,int sg) {
         if (H.empty())
             break;
         const ivector &h=H[_rand(H.size(),ctx).val];
-        node(h[0]).set_subgraph(sg<0?1:sg+1);
-        node(h[1]).set_subgraph(sg<0?1:sg+1);
+        node(h[0]).set_subgraph(sg<0?1:tmp_sg);
+        node(h[1]).set_subgraph(sg<0?1:tmp_sg);
         node(h[2]).set_subgraph(sg<0?0:sg);
         erase_sorted(Q,h[2]);
         insert_sorted(Q,h[0]);
         insert_sorted(Q,h[1]);
     }
-    if (sg<0)
-        unset_subgraphs();
-    else set_subgraph(Q,sg);
+    restore_subgraphs();
 }
 
 /* GRASP clique finding algorithm (Abello & Pardalos, 1998) with
@@ -14181,16 +14209,19 @@ int graphe::mvc_solver::solve(ivector &cover,int k,int tm_lim,double gap_tol,boo
     case GLP_ENODFS:
     case GLP_EFAIL:
         if (k<0 || res==GLP_EFAIL) {
-            G->message("Error: MIP solver failure");
+            if (verbose)
+                G->message("Error: MIP solver failure");
             return -1;
         }
         return 1;
+    case GLP_ESTOP:
+        return -1;
     default:
         break;
     }
     switch (glp_mip_status(ilp)) {
     case GLP_FEAS:
-        if (k<0)
+        if (k<0 && verbose)
             G->message("Warning: the solution is not necessarily optimal");
     case GLP_OPT:
         /* extract solution */
@@ -14200,11 +14231,13 @@ int graphe::mvc_solver::solve(ivector &cover,int k,int tm_lim,double gap_tol,boo
         }
         return 0;
     case GLP_UNDEF:
-        G->message("Error: solution is undefined");
+        if (verbose)
+            G->message("Error: solution is undefined");
         return -1;
     case GLP_NOFEAS:
         if (k<0) {
-            G->message("Error: unable to find a feasible solution");
+            if (verbose)
+                G->message("Error: unable to find a feasible solution");
             return -1;
         }
         return 1;
@@ -14438,6 +14471,10 @@ void graphe::mvc_solver::packing(glp_tree *tree) {
 }
 
 void graphe::mvc_solver::callback(glp_tree *tree,void *info) {
+    if (is_interrupted()) {
+        glp_ios_terminate(tree);
+        return;
+    }
     mvc_solver *mvcs=static_cast<mvc_solver*>(info);
     switch (glp_ios_reason(tree)) {
     case GLP_IBRANCH:
@@ -14729,7 +14766,8 @@ bool graphe::mvc(ivector &cover,int vc_alg,int sg,int tm_lim,double gap_tol,bool
                 else {
 #ifdef HAVE_LIBGLPK
                     mvc_solver m(this,s);
-                    m.solve(cover,-1,tm_lim,gap_tol,verbose);
+                    if (m.solve(cover,-1,tm_lim,gap_tol,verbose)!=0)
+                        return false;
 #else
                     message("Error: GLPK library is required for exact solving");
                     return false;
@@ -14957,7 +14995,8 @@ int graphe::vertex_cover_number(int sg) {
             bipartite_matching(V1,V2,m,s,_GT_CC_CONNECTED);
             res+=m.size();
         } else {
-            mvc(cov,_GT_VC_EXACT,s);
+            if (!mvc(cov,_GT_VC_EXACT,s))
+                return -1;
             res+=cov.size();
         }
         if (sg>=0) renumber_subgraph(s,sg);

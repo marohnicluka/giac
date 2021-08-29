@@ -41086,8 +41086,8 @@ To enter a problem symbolically:
   \item Optionally, \textit{opts}, a sequence of solver settings in
   form \textit{option=value}, where \texttt{option} may be one of:
   \begin{itemize}
-  \item \texttt{assume}, which specifies a global constraint on
-  variables and whose value can be one of:
+  \item \texttt{lp\_assume} (or \texttt{assume}), which specifies a global
+  constraint on variables and whose value can be one of:
   \begin{itemize}
     \item \texttt{lp\_nonnegative} (all variables are nonnegative)
     \item \texttt{lp\_integer} or \texttt{integer} (all variables are integers)
@@ -41116,26 +41116,30 @@ To enter a problem symbolically:
   \item \texttt{lp\_nodelimit}, whose value can be a positive integer,
   which sets the maximum number of nodes in the branch-and-bound tree
   (by default, \textit{unlimited}).
-  \item \texttt{lp\_iterationlimit}, whose value can be positive integer
+  \item \texttt{lp\_iterationlimit}, whose value can be a positive integer
     setting the  maximum iterations of the simplex
     algorithm (by default, \textit{unlimited}).\\
    If the maximum number of iterations is reached, the current
    feasible solution (not necessarily an optimal one) is returned.
-  \item \texttt{lp\_timelimit}, whose value can be a positive number,
+  \item \texttt{lp\_timelimit}, whose value can be a positive real number,
   setting the maximum solving time in milliseconds (by default, \textit{unlimited}).
   \item \texttt{lp\_maxcuts}, whose value can be a nonnegative integer
-  setting the maximum GMI cuts per node, (by default 5). 
+  setting the maximum GMI cuts per node (by default 5). 
   \item \texttt{lp\_gaptolerance}, whose value can be a positive
     number, setting the relative integrality gap threshold (by default 0).
+  \item \texttt{lp\_presolve}, whose value can be either \texttt{true} or
+    \texttt{false}, enabling/disabling the preprocessing step (by default
+    \texttt{true}).
   \item \texttt{lp\_nodeselect}, which sets the branching node
   selection strategy and whose value can be one of:
   \begin{itemize}
     \item \texttt{lp\_depthfirst}
     \item \texttt{lp\_breadthfirst}
+    \item \texttt{lp\_bestlocalbound}
     \item \texttt{lp\_hybrid}
     \item \texttt{lp\_bestprojection}
   \end{itemize}
-  (by default, \texttt{lp\_nodeselect=lp\_hybrid}).
+  (by default, \texttt{lp\_nodeselect=lp\_bestlocalbound}).
   \item \texttt{lp\_varselect}, which sets the branching variable
   selection strategy, whose value can be one of
   \begin{itemize}
@@ -41338,14 +41342,11 @@ To enter a problem in matrix form:
 Only the primal simplex method is implemented for \texttt{lpsolve}
 and it uses the upper-bounding technique. Basic columns are not kept
 in the simplex tableau, which therefore contains only the columns of
-non-basic variables. To prevent cycling, an adaptation of the Bland's
-rule is used. In constraint  matrices which do not have full rank,
-the linearly dependent rows are removed.
-
-Note that this implementation is rather elementary and not very efficient
-for larger problems. Additionally, all computation is done using the arbitrary
-precision integer arithmetic, which is always exact but significantly slower
-than the floating-point arithmetic.
+non-basic variables. To prevent cycling, an adaptation of Bland's
+rule is used. A preprocessing routine, helping to reduce the size of the problem,
+is available and enabled by default. All computation is done using the arbitrary
+precision integer arithmetic, which is always exact but slower than the
+floating-point arithmetic.
 
 
 \subsubsection{Solving MIP (Mixed Integer Programming) problems}
@@ -41478,18 +41479,18 @@ an optimal solution.
 A node-selection strategy can be chosen by using the
 \texttt{lp\_nodeselect} option. Possible values are:
 \begin{itemize}
-  \item \texttt{lp\_breadthfirst}, which chooses an active node having the best bound for the objective value, 
-  \item \texttt{lp\_depthfirst}, which chooses a deepest active node
-  and breaks ties by selecting a node having the best bound for the objective value, 
+  \item \texttt{lp\_bestlocalbound}, which chooses an active node having the best bound for the objective value,
+\item \texttt{lp\_depthfirst}, which chooses the newest active node,
   \item \texttt{lp\_hybrid}, which combines the above two strategies,
+  \item \texttt{lp\_breadthfirst}, which chooses the oldest active node,
   \item \texttt{lp\_bestprojection}, which chooses a node with the best simple projection.
 \end{itemize}
-By default, the \texttt{lp\_bestprojection} strategy is used. Another
-sophisticated strategy is \texttt{lp\_hybrid}: until an incumbent
+By default, the \texttt{lp\_bestlocalbound} strategy is used. The
+\texttt{lp\_hybrid} strategy works as follows: until an incumbent
 solution is found, the solver uses the \texttt{lp\_depthfirst} strategy,
 ``diving'' into the tree as an incumbent solution is more likely to be
 located deeply. When an incumbent is found, the solver switches to the
-\texttt{lp\_breadthfirst} strategy in attempt to close the integrality gap
+\texttt{lp\_bestlocalbound} strategy in attempt to close the integrality gap
 as quickly as possible.
 
 \paragraph{Variable-selection strategies.}
@@ -41505,22 +41506,19 @@ A variable-selection strategy can be chosen by using the
         previous branchings.
 \end{itemize}
 By default, the \texttt{lp\_pseudocost} strategy is used. However,
-since pseudocost-based choice cannot be made until all integer
+since a pseudocost-based choice cannot be made until all integer
 variables have been branched upon at least one time in each direction,
 the \texttt{lp\_mostfractional} strategy is used until that condition is
 fulfilled.
 
-Using the right combination of node/variable selection strategies may
+Using an appropriate combination of node/variable selection strategies may
 significantly reduce the number of subproblems needed to be examined
-when solving a particular MIP problem. However, what is ``right'' varies
-from problem to problem. Default strategies, which use the available data
-most extensively, are the most sophisticated and usually the most effective
-ones. But that is not always the case, as illustrated by the following example.
+when solving a particular MIP problem, as illustrated in the following example.
 \smallskip
 
 \noindent
 \textbf{Example.}\\
-Minimize $\mathbf{c}\cdot\mathbf{x}$ subject to 
+Minimize $z=\mathbf{c}\cdot\mathbf{x}$ subject to 
 $\mathbf{A}\,\mathbf{x}=\mathbf{b}$, where 
 $\mathbf{x}\in\mathbb{Z}_+^8$ and  
 \[ 
@@ -41539,12 +41537,20 @@ $\mathbf{x}\in\mathbb{Z}_+^8$ and
   2 \\10 \\13 \\17 \\7 \\5 \\7 \\3
   \end{bmatrix}. 
 \]
-When using the default settings, about 24000 subproblems need to be
-examined before an optimal solution is found. When
-\texttt{lp\_nodeselect} is set to \texttt{lp\_breadthfirst} the solver
-needs to examine only about 20000 subproblems, but when set to
-\texttt{lp\_hybrid} (a strategy which in general performs better) it
-examines about 111000 nodes in total.
+The optimal solution is $z^\ast=1854$,
+$\mathbf{x}^\ast=(24,15,19,11,3,99,4,226)$. In the following table,
+different strategies are compared according to the number of examined nodes
+and total solving time (in seconds).
+
+\begin{center}
+  \begin{tabular}{|l|l|l|l|}\hline
+    \textbf{Node selection} & \textbf{Variable selection} & \textbf{Nodes examined} & \textbf{Time}\\\hline
+    Best local bound & Last fractional & 13102 & 5.9\\\hline
+    Best projection & Pseudocost & 23528 & 14.2\\\hline
+    Hybrid & Most fractional & 43410 & 21.7\\\hline
+    Breadth-first & Pseudocost & 77034 & 100.8\\\hline
+  \end{tabular}
+\end{center}
 
 \paragraph{Cutting planes.} 
 Strong Gomory mixed integer cuts are generated at every node of the
@@ -41639,50 +41645,50 @@ be very fast and to handle large problems. Choosing between the
 available solvers is done by setting \texttt{lp\_method} option.
 
 By default, \texttt{lp\_method} is set to \texttt{lp\_simplex}, which
-solves the problem using primal simplex method, but performing exact
-computation only when all problem coefficients are exact. If at least
-one of them is approximative (a floating-point number), then the GLPK solver is
-used instead (see below).
+solves the problem by using the native solver, but only if all problem
+coefficients are exact. If at least one of them is approximative
+(a floating-point number), then the GLPK solver is used instead.
 
 Setting \texttt{lp\_method} to \texttt{exact} forces the solver to
 perform exact computation even when some coefficients are inexact
 (they are converted to rational equivalents before applying the simplex
-method).
+method). In this case the native solver is used.
 
-Specifying \texttt{lp\_method=float} forces \texttt{lpsolve} to use
-the floating-point solver. If a MIP problem is given, it is combined with
-the branch-and-cut algorithm. The GLPK simplex solver parameters can be
-controlled by setting the \texttt{lp\_timelimit},
-\texttt{lp\_gaptolerance}, \texttt{lp\_maxcuts}, \texttt{lp\_verbose}, \texttt{lp\_nodeselect}, and \texttt{lp\_varselect} options. If \texttt{lp\_varselect} is not set, then the Driebeek--Tomlin heuristic is used, and if \texttt{lp\_nodeselect} is not set, then the best local bound selection method is used (see
-the GLPK manual for details). If \texttt{lp\_maxcuts} is greater than
+Setting \texttt{lp\_method} to \texttt{float} forces \texttt{lpsolve} to use
+the GLPK simplex solver. If a (mixed) integer problem is given, then the branch-and-cut algorithm in GLPK is used. The parameters can be
+controlled by setting the \texttt{lp\_timelimit}, \texttt{lp\_iterationlimit},
+\texttt{lp\_gaptolerance}, \texttt{lp\_maxcuts}, \texttt{lp\_verbose},
+\texttt{lp\_nodeselect}, and \texttt{lp\_varselect} options. If
+\texttt{lp\_varselect} is not set, then the Driebeek--Tomlin heuristic is used,
+and if \texttt{lp\_nodeselect} is not set, then the best-local-bound selection
+method is used. If \texttt{lp\_maxcuts} is greater than
 zero, then GMI/MIR cut generation is enabled, else it is disabled. If
 the problem contains binary variables, then cover/clique cut generation
 is enabled, else it is disabled. Finally, \texttt{lp\_verbose=true}
 enables GLPK messages, which are useful for monitoring the solver's progress.
 
 Setting \texttt{lp\_method} to \texttt{lp\_interiorpoint} uses
-the primal-dual interior-point algorithm which is a part of GLPK. The only
+the primal-dual interior-point algorithm in GLPK. The only
 optional argument that affects this kind of solver is \texttt{lp\_verbose}.
+The interior-point algorithm is faster than the simplex method for large
+and sparse LP problems. Note, however, that it does not support integrality
+constraints.
 
-For example, we solve the following LP problem using the default
-settings.
+For example, we solve the following LP problem using the default settings.
 \begin{center}
 	Minimize $ 1.06\,x_1+0.56\,x_2+3.0\,x_3	$
 \end{center}
 subject to
 \begin{align*}
-1.06\,x1+0.015\,x3 &\geq 729824.87\\
+1.06\,x_1+0.015\,x_3 &\geq 729824.87\\
 0.56\,x_2+0.649\,x_3 &\geq 1522188.03\\
-x_3 &\geq 1680.05\\
-x_k &\geq 0\quad\text{for}\ k=1,2,3
+x_3 &\geq 1680.05
 \end{align*}
 \textit{Input:}
 \begin{center}
 \begin{tabular}{l}
    \texttt{lpsolve(1.06x1+0.56x2+3x3,}\\
-   \texttt{~~[1.06x1+0.015x3>=729824.87,0.56x2+0.649x3>=1522188.03,x3>=1680.05],}\\
-   \texttt{~~assume=lp\_nonnegative)}
-\end{tabular}
+   \texttt{~~[1.06x1+0.015x3>=729824.87,0.56x2+0.649x3>=1522188.03,x3>=1680.05])}\end{tabular}
 \end{center}
 \textit{Output:}
 \[
@@ -41691,34 +41697,32 @@ x_k &\geq 0\quad\text{for}\ k=1,2,3
 % \begin{center}
 % \texttt{[2255937.4968,[x1=688490.254009,x2=2716245.85277,x3=1680.05]]}
 % \end{center}
-If \texttt{assume=nonnegint} is used for the same problem, 
-i.e.~when $x_k\in\mathbb{Z}_+$ for $k=1,2,3$, the following result is
-obtained by the MIP solver in GLPK: 
+If the requirement $x_k\in\mathbb{Z}$ for $k=1,2$, the following result is
+obtained from the MIP solver in GLPK.\\
 \textit{Input:}
 \begin{center}
 \begin{tabular}{l}
    \texttt{lpsolve(1.06x1+0.56x2+3x3,}\\
    \texttt{~~[1.06x1+0.015x3>=729824.87,0.56x2+0.649x3>=1522188.03,x3>=1680.05],}\\
-   \texttt{~~assume=nonnegint)}
+   \texttt{~~lp\_integervariables=[0,1])}
 \end{tabular}
 \end{center}
 \textit{Output:}
 \[
-\left[2255940.66,\left[x_{1}=688491.0,x_{2}=2716245.0,x_{3}=1681.0\right]\right]
+\left[2255938.37,\left[x_{1}=688491,x_{2}=2716246,x_{3}=1680.05\right]\right]
 \]
 % \begin{center}
 % 	\texttt{[2255940.66,[x1=688491.0,x2=2716245.0,x3=1681.0]]}
 % \end{center}
 The solution of the original problem can also be obtained with
-the interior-point solver by including
-\texttt{lp\_method=lp\_interiorpoint} after
-\texttt{assume=lp\_nonnegative}:   
+the interior-point solver by using the
+\texttt{lp\_method=lp\_interiorpoint} option.\\
 \textit{Input:}
 \begin{center}
 \begin{tabular}{l}
    \texttt{lpsolve(1.06x1+0.56x2+3x3,}\\
    \texttt{~~[1.06x1+0.015x3>=729824.87,0.56x2+0.649x3>=1522188.03,x3>=1680.05],}\\
-   \texttt{~~assume=lp\_nonnegative,lp\_method=lp\_interiorpoint)}
+   \texttt{~~lp\_method=lp\_interiorpoint)}
 \end{tabular}
 \end{center}
 \textit{Output:}
@@ -41732,83 +41736,47 @@ the interior-point solver by including
 
 \subsubsection{Loading a problem from a file}
 
-Linear (integer) programming problems can be loaded from MPS or CPLEX
-LP format files (these formats are described in the GLPK manual,
-Appendices B and C). The file name should be a string passed as
+Linear (integer) programming problems can be loaded from MPS\footnote{\url{http://web.mit.edu/lpsolve/doc/mps-format.htm}} or CPLEX
+LP\footnote{\url{http://web.mit.edu/lpsolve/doc/CPLEX-format.htm}} format files. The file name should be a string passed as
 the \textit{obj} parameter. If the file name has extension \texttt{.lp}, then CPLEX LP format is assumed. If the extension is \texttt{.mps} resp.~\texttt{.gz}, then MPS resp.~gzipped MPS format is assumed.
 
-For example, assume that \texttt{somefile.lp} file is stored in
-directory \texttt{/path/to/file} and contains the following lines of text:
+For example, assume that the file \texttt{somefile.lp} is stored in
+the working directory and that it contains the following lines of text:
 \begin{verbatim}
-\* Problem: short *\
-
 Maximize
- obj: + 0.6 x1 + 0.5 x2
-
+ obj: x1 + 2 x2 + 3 x3 + x4
 Subject To
- c1: + x1 + 2 x2 <= 1
- c2: + 3 x1 + x2 <= 2
-
+ c1: - x1 + x2 + x3 + 10 x4 <= 20
+ c2: x1 - 3 x2 + x3 <= 30
+ c3: x2 - 3.5 x4 = 0
 Bounds
- x1 free
- x2 free
-
+ 0 <= x1 <= 40
+ 2 <= x4 <= 3
+General
+ x4
 End
 \end{verbatim}
-% \begin{verbatim}
-% Maximize
-% obj: x1 + 2 x2 + 3 x3 + x4
-% Subject To
-% c1: - x1 + x2 + x3 + 10 x4 <= 20
-% c2: x1 - 3 x2 + x3 <= 30
-% c3: x2 - 3.5 x4 = 0
-% Bounds
-% 0 <= x1 <= 40
-% 2 <= x4 <= 3
-% End
-% \end{verbatim}
-To find an optimal solution to the linear program specified in this file,
-you just needs to enter:\\
+To find an optimal solution to the linear program specified in this file, enter:\\
 \textit{Input:}
 \begin{center}
-	\texttt{lpsolve("/path/to/file/somefile.lp")}
+	\texttt{lpsolve("somefile.lp")}
 \end{center}
 \textit{Output:}
 \[
-\left[ 0, \left[x_1=\frac{3}{5},x_2=\frac{1}{5}\right]\right]
+\left[116,\left[x_{1}=38,x_{2}=9,x_{3}=19,x_{4}=3\right]\right]
 \]
-% \begin{center}
-% \begin{tabular}{l}
-% \verb|Reading problem data from '/path/to/file/somefile.lp'...|\\
-% \verb|3 rows, 4 columns, 9 non-zeros|\\
-% \verb|10 lines were read|
-% \end{tabular}
-% \end{center}
-% \[
-% 	\left[116,\left[x_1=38,x_2=9,x_3=19,x_4=3\right]\right]
-% \]
 You can provide additional variable bounds and options alongside the
-file name. Note that the original constraints (those which are read
-from file) cannot be removed.\\
+file name, as in the example below.
+Note that the original constraints (those which are read from file)
+cannot be removed.\\
 \textit{Input:}
 \begin{center}
-\texttt{lpsolve("/path/to/file/somefile.lp",assume=integer)}
-% \begin{tabular}{l}
-%   \texttt{lpsolve("/path/to/file/somefile.lp",x2=1..8,x3=-10..10,}\\
-%   \texttt{lp\_integervariables=[x4])}
-% \end{tabular}
+\texttt{lpsolve("somefile.lp",x2=1..7,x3=20..25)}
 \end{center}
 \textit{Output:}
 \[
-\left[ 0, \left[ x_1=1,x_2=-1\right]\right]
+\left[104,\left[x_{1}=27,x_{2}=6,x_{3}=21,x_{4}=2\right]\right]
 \]
-%\[
-%\left[82,\left[x_{1}=38,x_{2}=6,x_{3}=10,x_{4}=2\right]\right]
-%\]
-% \begin{center}
-% 	\texttt{[82,[x1=38,x2=6,x3=10,x4=2]]}
-% \end{center}
-
 It is advisable to use only (capital) letters, digits and underscores
 when naming variables in an LP file, although the corresponding format
 allows many more characters. That is because these names are converted
@@ -41817,9 +41785,9 @@ to \texttt{giac} identifiers during the loading process.
 \smallskip
 
 \noindent
-\textbf{Warning!} Problems that are too large won't be loaded. More precisely,
-those with $ n_v\cdot n_c>10^5$, where $n_v$ is the number of variables and $n_c$ is
-the number of constraints, won't be loaded.  
+\textbf{Warning!} Problems that are too large will not be loaded. Precisely,
+those with $ n_v\cdot n_c>10^6$, where $n_v$ is the number of variables and $n_c$
+is the number of constraints, will not be loaded.  
 
 % if $n_v\cdot n_c>10^5$, where $n_v$ is the number of variables and
 % $n_c$ is the number of constraints, then loading will be aborted. Many MPS

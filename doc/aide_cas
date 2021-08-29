@@ -15662,7 +15662,7 @@ implicitdiff(x*y*z,-2x^3+15x^2*y+11y^3-24y=0,[x,z,y],order=1)
 implicitdiff(x*y*z,-2x^3+15x^2*y+11y^3-24y=0,[x,z,y],order=2,[1,-1,0])
  pd:=implicitdiff(x*y*z,-2x^3+15x^2*y+11y^3-24y=0,[x,z,y],order=4,[0,z,0]);pd[4,0,0]
 
-# lp_assume lp_binary lp_binaryvariables lp_depthlimit lp_integer lp_integervariables lp_maximize lp_nonnegative lp_nonnegint lp_variables lp_nodelimit lp_integertolerance lp_method lp_simplex lp_interiorpoint lp_initialpoint lp_maxcuts lp_gaptolerance lp_nodeselect lp_varselect lp_firstfractional lp_lastfractional lp_mostfractional lp_pseudocost lp_depthfirst lp_breadthfirst lp_bestprojection lp_hybrid lp_iterationlimit lp_timelimit lp_verbose
+# lp_assume lp_binary lp_binaryvariables lp_depthlimit lp_integer lp_integervariables lp_maximize lp_nonnegative lp_nonnegint lp_nodelimit lp_method lp_simplex lp_interiorpoint lp_maxcuts lp_gaptolerance lp_nodeselect lp_varselect lp_firstfractional lp_lastfractional lp_mostfractional lp_pseudocost lp_depthfirst lp_breadthfirst lp_bestlocalbound lp_bestprojection lp_hybrid lp_iterationlimit lp_timelimit lp_verbose lp_presolve lp_nonnegint nonnegint
 1 Options de la commande lpsolve
 2 Options for lpsolve command.
 0 Opt
@@ -17737,12 +17737,11 @@ minimal_edge_coloring(graph("petersen"))
  G:=minimal_edge_coloring(graph("dodecahedron"),sto); draw_graph(G)
 
 # chromatic_index
-0 Graph(G),[Lst(cols)]
-2 Returns the number of colors in a minimal edge coloring of G. If an unassigned identifier cols is given, the coloring is assigned to it.
+0 Graph(G)
+2 Returns the number of colors in a minimal edge coloring of G.
 -1 minimal_edge_coloring
 -2 chromatic_number
 chromatic_index(graph("petersen"))
-chromatic_index(graph("dodecahedron"),colors)
 
 # trail2edges
 0 Trail(T)

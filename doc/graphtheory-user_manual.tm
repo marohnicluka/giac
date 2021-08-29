@@ -12088,24 +12088,38 @@
 
   <subsection|Minimum clique cover><label|minimum-covering>
 
-  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<twith|table-bsep|0.5fn>|<table|<row|<cell|<verbatim|clique_cover(G,\<#3008\>b\<#3009\>)>>>>>>
+  <tabular|<tformat|<cwith|1|1|1|1|cell-lsep|0>|<twith|table-bsep|0.5fn>|<table|<row|<cell|<verbatim|clique_cover(G,\<#3008\>opts\<#3009\>)>>>>>>
 
   <no-break-here*>A <strong|minimum clique cover> for an undirected graph
   <math|G> is any minimal set <math|S=<around*|{|C<rsub|1>,C<rsub|2>,\<ldots\>,C<rsub|k>|}>>
   of cliques in <math|G> such that for every vertex <math|v> in <math|G>
   there exists <math|i\<leqslant\>k> such that <math|v\<in\>C<rsub|i>>. Such
-  a cover can be obtained by calling the <kbd|clique_cover><index|<kbd|clique_cover>>
+  a cover can be obtained by using the <kbd|clique_cover><index|<kbd|clique_cover>>
   command. It takes an undirected graph <math|G<around*|(|V,E|)>> as its
-  mandatory argument and returns the smallest possible cover. Optionally, a
-  positive integer <math|b> may be passed as the second argument. In that
-  case the requirement <math|k\<leqslant\>b> is set. If no such cover is
-  found, then an empty list is returned.
+  mandatory argument and returns the smallest possible cover. A sequence of
+  options <verbatim|opts> may be passed as the second argument, each of which
+  is one of the following.
+
+  <\itemize>
+    <item><verbatim|b> (positive integer) \V sets the upper bound
+    <math|k\<leqslant\>b>, which enables the heuristic procedures
+
+    <item><verbatim|lp_timelimit=L> \V the solver will be terminated after
+    <math|L> milliseconds
+
+    <item><verbatim|lp_verbose> \V prints detailed messages from the solver
+    (useful for monitoring the progress)
+  </itemize>
 
   The strategy is to find a minimal vertex coloring in the complement
   <math|G<rsup|c>> of <math|G>. Each set of equally colored vertices in
   <math|G<rsup|c>> corresponds to a clique in <math|G>. Therefore, the color
   classes of <math|G<rsup|c>> correspond to the elements
   <math|C<rsub|1>,\<ldots\>,C<rsub|k>> of a minimal clique cover in <math|G>.
+  If the upper bound <math|b> is set, then finding a cover by using
+  <abbr|GRASP> (see Section<nbsp><reference|sec:grasp>) and <abbr|DSATUR>
+  (see Section<nbsp><reference|minimal-coloring>) heuristics is attempted
+  before resorting to the exact algorithm.
 
   There is a special case in which <math|G> is triangle-free
   (i.e.<nbsp>contains no 3-cliques), which is computed separately by the
@@ -13030,9 +13044,6 @@
     <item><verbatim|lp_timelimit=L> \V the solver will be terminated after
     <math|L> milliseconds, where <math|L\<in\>\<bbb-N\>>
 
-    <item><verbatim|lp_gaptolerance=t> \V the solver will be terminated if
-    the integrality gap is below <math|t\<in\><around*|\<langle\>|0,1|\<rangle\>>>
-
     <item><verbatim|lp_verbose> \V show detailed messages from the solver
     (useful for monitoring the progress)
   </itemize>
@@ -13048,7 +13059,7 @@
   Simplicial vertices are removed prior to the conversion, to be handled
   afterwards. The lower resp.<nbsp>the upper bound for the number <math|n> of
   colors is obtained by finding a maximal clique (<math|n> cannot be smaller
-  than its cardinality) resp.<nbsp>by applying the heuristic proposed by
+  than its cardinality) resp.<nbsp>by applying the <abbr|DSATUR> heuristic by
   <name|Brélaz> in<nbsp><cite|brelaz> (which will use at least <math|n>
   colors). Note that the algorithm performs some randomization when applying
   heuristics, hence coloring a graph generally does not take the same amount
@@ -13108,8 +13119,8 @@
   in the case of exact computation. To approximate the chromatic number, the
   algorithm establishes the lower bound by finding a maximum clique. If no
   maximum clique is found in less than 5 seconds, then the largest clique
-  found is used. An upper bound is established using the heuristic proposed
-  by <name|Brélaz> in<nbsp><cite|brelaz>.
+  found is used. An upper bound is established using the <abbr|DSATUR>
+  heuristic by <name|Brélaz> in<nbsp><cite|brelaz>.
 
   <\session|giac|default>
     <\unfolded-io>
@@ -13310,9 +13321,6 @@
 
     <item><verbatim|lp_timelimit=L> \V the solver will be terminated after
     <math|L> milliseconds, where <math|L\<in\>\<bbb-N\>>
-
-    <item><verbatim|lp_gaptolerance=t> \V the solver will be terminated if
-    the integrality gap is below <math|t\<in\><around*|\<langle\>|0,1|\<rangle\>>>
 
     <item><verbatim|lp_verbose> \V show detailed messages from the solver
     (useful for monitoring the progress)
@@ -16992,7 +17000,6 @@
     <associate|footnote-1|<tuple|1|11>>
     <associate|footnote-1.1|<tuple|1.1|46>>
     <associate|footnote-1.2|<tuple|1.2|53>>
-    <associate|footnote-3.1|<tuple|3.1|71>>
     <associate|footnote-4.1|<tuple|4.1|98>>
     <associate|footnote-4.2|<tuple|4.2|111>>
     <associate|footnote-4.3|<tuple|4.3|120>>
@@ -17000,7 +17007,6 @@
     <associate|footnr-1|<tuple|1|11>>
     <associate|footnr-1.1|<tuple|1.1|46>>
     <associate|footnr-1.2|<tuple|1.2|53>>
-    <associate|footnr-3.1|<tuple|3.1|71>>
     <associate|footnr-4.1|<tuple|4.1|98>>
     <associate|footnr-4.2|<tuple|4.2|111>>
     <associate|footnr-4.3|<tuple|4.3|120>>

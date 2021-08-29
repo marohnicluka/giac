@@ -34,13 +34,6 @@ namespace giac {
 #endif //ndef NO_NAMESPACE_GIAC
 
 /*
- * Convert double to exact gen.
- */
-gen double2fraction(double d,GIAC_CONTEXT) {
-    return exact(double2gen(d),contextptr);
-}
-
-/*
  * Return the number of digits of an unsigned integer.
  */
 int numdigits(unsigned i) {
@@ -169,7 +162,7 @@ lp_variable::lp_variable() {
 /*
  * Update lower (dir=0) or upper (dir=1) pseudocost.
  */
-void lp_variable::update_pseudocost(double delta, double fr, int dir) {
+void lp_variable::update_pseudocost(double delta,double fr,int dir) {
     double sigma=pseudocost[dir]*nbranch[dir];
     sigma+=delta/(dir==0?fr:(1-fr));
     pseudocost[dir]=sigma/(++nbranch[dir]);
@@ -323,9 +316,9 @@ void simplex_reduce_bounded(matrice &m,const vecteur &u,vector<bool> &is_slack,v
             optimum=plus_inf;
             return;
         }
-        if (!choose_first && is_zero(mincoeff)) {
+        if (is_zero(mincoeff)) {
             choose_first=true; // switch Bland's rule on
-        }
+        } else choose_first=false; // switch back to Dantzig's rule
         if (lv<0 || is_greater(mincoeff,u[ev],contextptr)) {
             for (const_iterateur it=m.begin();it!=m.end();++it) {
                 a=it->_VECTptr->at(ec);
@@ -698,7 +691,7 @@ bool lp_problem::has_approx_coefficients() {
 /*
  * Set objective function parameters.
  */
-void lp_problem::set_objective(const vecteur &v, const gen &ft) {
+void lp_problem::set_objective(const vecteur &v,const gen &ft) {
     objective.first=v;
     objective.second=ft;
     for (const_iterateur it=v.begin();it!=v.end();++it) {
@@ -709,8 +702,8 @@ void lp_problem::set_objective(const vecteur &v, const gen &ft) {
 /*
  * Display a message.
  */
-void lp_problem::message(const char *msg, bool err) {
-    if (err || settings.verbose)
+void lp_problem::message(const char *msg,bool force_print) {
+    if (force_print || settings.verbose)
         *logptr(ctx) << msg << "\n";
 }
 
@@ -746,7 +739,7 @@ void lp_constraints::subtract_from_rhs_column(const vecteur &v) {
 /*
  * Append constraint "lh rel rh".
  */
-void lp_constraints::append(const vecteur &lh, const gen &rh, int relation_type) {
+void lp_constraints::append(const vecteur &lh,const gen &rh,int relation_type) {
     assert(nrows()==0 || int(lh.size())==ncols());
     lhs.push_back(lh);
     rhs.push_back(rh);
@@ -756,7 +749,7 @@ void lp_constraints::append(const vecteur &lh, const gen &rh, int relation_type)
 /*
  * Set the constraint with specified index.
  */
-void lp_constraints::set(int index, const vecteur &lh, const gen &rh, int relation_type) {
+void lp_constraints::set(int index,const vecteur &lh,const gen &rh,int relation_type) {
     assert(index<nrows());
     lhs[index]=lh;
     rhs[index]=rh;
@@ -766,7 +759,7 @@ void lp_constraints::set(int index, const vecteur &lh, const gen &rh, int relati
 /*
  * Get left and right side of the constraint with specified index.
  */
-void lp_constraints::get_lr(int index, vecteur &lh, gen &rh) {
+void lp_constraints::get_lr(int index,vecteur &lh,gen &rh) {
     assert(index<nrows());
     lh=*lhs[index]._VECTptr;
     rh=rhs[index];
@@ -775,7 +768,7 @@ void lp_constraints::get_lr(int index, vecteur &lh, gen &rh) {
 /*
  * Get the constraint with specified index.
  */
-void lp_constraints::get(int index, vecteur &lh, gen &rh, int &relation_type) {
+void lp_constraints::get(int index,vecteur &lh,gen &rh,int &relation_type) {
     get_lr(index,lh,rh);
     relation_type=rv[index];
 }
@@ -783,7 +776,7 @@ void lp_constraints::get(int index, vecteur &lh, gen &rh, int &relation_type) {
 /*
  * Divide the constraint by g.
  */
-void lp_constraints::div(int index, const gen &g,GIAC_CONTEXT) {
+void lp_constraints::div(int index,const gen &g,GIAC_CONTEXT) {
     assert(index<nrows() && !is_zero(g));
     lhs[index]=divvecteur(*lhs[index]._VECTptr,g);
     rhs[index]=rhs[index]/g;
@@ -794,7 +787,7 @@ void lp_constraints::div(int index, const gen &g,GIAC_CONTEXT) {
 /*
  * Subtract vector from the constraint.
  */
-void lp_constraints::subtract(int index, const vecteur &v, const gen &g) {
+void lp_constraints::subtract(int index,const vecteur &v,const gen &g) {
     assert(index<nrows());
     lhs[index]=subvecteur(*lhs[index]._VECTptr,v);
     rhs[index]-=g;
@@ -867,7 +860,7 @@ void lp_problem::create_variables(int n) {
 /*
  * Tighten both upper and lower bound of the variable.
  */
-void lp_problem::tighten_variable_bounds(int i, const gen &l, const gen &u) {
+void lp_problem::tighten_variable_bounds(int i,const gen &l,const gen &u) {
     lp_variable &var=variables[i];
     var.tighten_lbound(l,ctx);
     var.tighten_ubound(u,ctx);
@@ -993,7 +986,7 @@ void lp_problem::make_problem_exact() {
 /*
  * Report status.
  */
-void lp_problem::report_status(const char *msg, int count) {
+void lp_problem::report_status(const char *msg,int count) {
     char buf[16];
     std::sprintf(buf,"%d: ",count);
     int nd=numdigits((unsigned)count);
@@ -1024,9 +1017,10 @@ bool lp_problem::has_infeasible_var() const {
 void lp_problem::remove_variable(int j) {
     const lp_variable &var=variables[j];
     vecteur &obj=objective.first;
-    objective.second+=obj[j]*var.get_subs_coef(-1);
+    if (var.has_subs_coef(-1))
+        objective.second+=obj[j]*var.get_subs_coef(-1);
     for (int k=0;k<constr.ncols();++k) {
-        if (k!=j)
+        if (k!=j && var.has_subs_coef(k))
             obj[k]+=obj[j]*var.get_subs_coef(k);
     }
     removed_vars.push(var);
@@ -1148,6 +1142,7 @@ int lp_problem::preprocess() {
                     remove_variable(j);
                     constr.remove(i);
                     changed=true;
+                    break;
                 } else { // tighten bounds on var
                     if (var.tighten_lbound(l,ctx) || var.tighten_ubound(u,ctx))
                         changed=true;
@@ -1187,17 +1182,20 @@ int lp_problem::preprocess() {
  * Postprocess, affecting the solution.
  */
 void lp_problem::postprocess() {
+    int vs=variables.size();
     while (!removed_cols.empty()) {
         int j=removed_cols.top();
-        variables.insert(variables.begin()+j,removed_vars.top());
-        const lp_variable &var=variables[j];
-        solution.insert(solution.begin()+j,var.get_subs_coef(-1));
+        vs++;
+        lp_variable &var=removed_vars.top();
+        solution.insert(solution.begin()+j,var.has_subs_coef(-1)?var.get_subs_coef(-1):0);
+        for (int k=vs;k-->0;) {
+            if (k!=j && var.has_subs_coef(k)) {
+                solution[j]+=solution[k]*var.get_subs_coef(k);
+            }
+        }
+        variables.insert(variables.begin()+j,var);
         removed_cols.pop();
         removed_vars.pop();
-        for (int k=variables.size();k-->0;) {
-            if (k!=j)
-                solution[j]+=solution[k]*var.get_subs_coef(k);
-        }        
     }
 }
 
@@ -1495,6 +1493,12 @@ glp_prob *lp_problem::glpk_initialize() {
                 bound_type=GLP_FX;
             double lo=var.range().is_unrestricted_below()?0:var.lb().to_double(ctx);
             double hi=var.range().is_unrestricted_above()?0:var.ub().to_double(ctx);
+            if (var.is_integral()) {
+                lo=ceil(lo);
+                hi=floor(hi);
+                if (bound_type==GLP_DB && lo==hi)
+                    bound_type=GLP_FX;
+            }
             if (lo==0 && hi==1 && var.is_integral())
                 glp_set_col_kind(glp,i,GLP_BV);
             else glp_set_col_bnds(glp,i,bound_type,lo,hi);
@@ -1570,9 +1574,8 @@ void lp_problem::glpk_callback(glp_tree *tree,void *info) {
             glp_ios_select_node(tree,glp_ios_best_node(tree));
         break;
     case GLP_IBINGO:
-        if (prob->settings.nodeselect==_LP_HYBRID) {
-            if (!prob->use_blb)
-                prob->message("Switching to best-local-bound node selection");
+        if (prob->settings.nodeselect==_LP_HYBRID && !prob->use_blb) {
+            prob->message("Switching to best-local-bound node selection");
             prob->use_blb=true;
         }
         break;
@@ -1702,7 +1705,7 @@ int lp_problem::glpk_solve() {
             break;
         }
         if (solution_status==_LP_SOLVED) { //get solution and optimum
-            solution=vecteur(nv());
+            solution.resize(nv());
             switch (settings.solver) {
             case _LP_SIMPLEX:
                 if (is_mip) {
@@ -1728,6 +1731,23 @@ int lp_problem::glpk_solve() {
                 break;
             }
         }
+    } else switch (result) { // GLPK returned an error
+    case GLP_EBADB:   message("Error (GLPK): invalid basis",true); break;
+    case GLP_ESING:   message("Error (GLPK): singular matrix",true); break;
+    case GLP_ECOND:   message("Error (GLPK): ill-conditioned matrix",true); break;
+    case GLP_EBOUND:  message("Error (GLPK): invalid bounds",true); break;
+    case GLP_EFAIL:   message("Error (GLPK): solver failed",true); break;
+    case GLP_EOBJLL:  message("Error (GLPK): objective lower limit reached",true); break;
+    case GLP_EOBJUL:  message("Error (GLPK): objective upper limit reached",true); break;
+    case GLP_ENOPFS:  message("Error (GLPK): no primal feasible solution",true); break;
+    case GLP_ENODFS:  message("Error (GLPK): no dual feasible solution",true); break;
+    case GLP_EROOT:   message("Error (GLPK): root LP optimum not provided",true); break;
+    case GLP_ENOFEAS: message("Error (GLPK): no primal/dual feasible solution",true); break;
+    case GLP_ENOCVG:  message("Error (GLPK): no convergence",true); break;
+    case GLP_EINSTAB: message("Error (GLPK): numerical instability",true); break;
+    case GLP_EDATA:   message("Error (GLPK): invalid data",true); break;
+    case GLP_ERANGE:  message("Error (GLPK): result out of range",true); break;
+    default:          message("Error (GLPK): unknown error",true); break;
     }
     glp_delete_prob(prob);
     if (settings.verbose)
@@ -1742,8 +1762,8 @@ int lp_problem::glpk_solve() {
 /*
  * Load problem from file in LP or (possibly gzipped) MPS format. File types
  * are distinguished by examining the filename extension. If it is .gz or .mps,
- * it is assumed that the file is in (gzipped) MPS format. Else, it is assumed
- * that file is in LP format.
+ * it is assumed that the file is in (gzipped) MPS format. If it is .lp, it is
+ * assumed that file is in LP format.
  */
 bool lp_problem::glpk_load_from_file(const char *fname) {
 #ifndef HAVE_LIBGLPK
@@ -1752,14 +1772,22 @@ bool lp_problem::glpk_load_from_file(const char *fname) {
 #endif
 #ifdef HAVE_LIBGLPK
     glp_prob *prob=glp_create_prob();
-    int result;
+    bool print_messages=true;
+    int result,term_old;
     string str(fname);
     string ext(str.substr(str.find_last_of(".") + 1));
-    if (ext=="mps" || ext=="gz") //MPS format (modern)
+    if (print_messages)
+        glp_term_hook(term_hook,static_cast<void*>(logptr(ctx)));
+    else term_old=glp_term_out(GLP_OFF);
+    if (ext=="mps" || ext=="gz") // MPS format (modern)
         result=glp_read_mps(prob,GLP_MPS_FILE,NULL,fname);
-    else //LP format
+    else if (ext=="lp") // CPLEX LP format
         result=glp_read_lp(prob,NULL,fname);
-    if (result==0) { //successfully loaded
+    else {
+        message("Error: file format not supported",true);
+        result=1;
+    }
+    if (result==0) { // successfully loaded
         char buffer[256];
         int obj_dir=glp_get_obj_dir(prob),len,t,k;
         int nr=glp_get_num_rows(prob),n=glp_get_num_cols(prob);
@@ -1775,19 +1803,19 @@ bool lp_problem::glpk_load_from_file(const char *fname) {
         constr.rv=ints(nr);
         variable_identifiers=vecteur(nv());
         settings.maximize=(obj_dir==GLP_MAX);
-        objective.second=double2fraction(glp_get_obj_coef(prob,0),ctx);
+        objective.second=glp_get_obj_coef(prob,0);
         objective.first=vecteur(nv());
         for (int j=0;j<nv();++j) {
-            objective.first[j]=double2fraction(glp_get_obj_coef(prob,j+1),ctx);
+            objective.first[j]=glp_get_obj_coef(prob,j+1);
             lp_variable &var=variables[j];
             t=glp_get_col_type(prob,j+1);
             k=glp_get_col_kind(prob,j+1);
             var.set_name(string(glp_get_col_name(prob,j+1)));
             variable_identifiers[j]=identificateur(var.name());
             if (t!=GLP_UP && t!=GLP_FR)
-                var.set_lb(double2fraction(glp_get_col_lb(prob,j+1),ctx));
+                var.set_lb(glp_get_col_lb(prob,j+1));
             if (t!=GLP_LO && t!=GLP_FR)
-                var.set_ub(double2fraction(glp_get_col_ub(prob,j+1),ctx));
+                var.set_ub(glp_get_col_ub(prob,j+1));
             if (k!=GLP_CV)
                 var.set_integral(true);
             if (k==GLP_BV) {
@@ -1799,7 +1827,7 @@ bool lp_problem::glpk_load_from_file(const char *fname) {
             if ((len=glp_get_mat_row(prob,i,ind,val))>0) {
                 vecteur &row=*constr.lhs[i-1]._VECTptr;
                 for (int j=1;j<=len;++j) {
-                    row[ind[j]-1]=double2fraction(val[j],ctx);
+                    row[ind[j]-1]=val[j];
                 }
             }
             t=glp_get_row_type(prob,i);
@@ -1810,33 +1838,30 @@ bool lp_problem::glpk_load_from_file(const char *fname) {
                 continue;
             }
             if (t==GLP_FX) {
-                constr.rhs[i-1]=double2fraction(glp_get_row_lb(prob,i),ctx);
+                constr.rhs[i-1]=glp_get_row_lb(prob,i);
                 constr.rv[i-1]=_LP_EQ;
             }
             else {
                 if (t==GLP_LO || t==GLP_DB) {
-                    constr.rhs[i-1]=double2fraction(glp_get_row_lb(prob,i),ctx);
+                    constr.rhs[i-1]=glp_get_row_lb(prob,i);
                     constr.rv[i-1]=_LP_GEQ;
                 }
                 if (t==GLP_DB)
-                    constr.append(*constr.lhs[i-1]._VECTptr,double2fraction(glp_get_row_ub(prob,i),ctx),_LP_LEQ);
+                    constr.append(*constr.lhs[i-1]._VECTptr,glp_get_row_ub(prob,i),_LP_LEQ);
                 if (t==GLP_UP || t==GLP_DB) {
-                    constr.rhs[i-1]=double2fraction(glp_get_row_ub(prob,i),ctx);
+                    constr.rhs[i-1]=glp_get_row_ub(prob,i);
                     constr.rv[i-1]=_LP_LEQ;
                 }
             }
         }
         delete [] ind;
         delete [] val;
-        const char* name=glp_get_prob_name(prob);
-        if (name==NULL)
-            sprintf(buffer,"Successfully loaded a problem with %d variables and %d constraints",nv(),nc());
-        else
-            sprintf(buffer,"Successfully loaded the problem '%s' with %d variables and %d constraints",name,nv(),nc());
-        message(buffer);
     }
     glp_delete_prob(prob);
-    return !(bool)result;
+    if (print_messages)
+        glp_term_hook(NULL,NULL);
+    else glp_term_out(term_old);
+    return result==0;
 #endif
 }
 

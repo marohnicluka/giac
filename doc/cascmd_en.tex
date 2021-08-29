@@ -41060,12 +41060,12 @@ at $(0,1,0,2)$ ($x=0$, $y=1$, $z=0$ and $t=2$).
 \subsection{Solving general linear programming problems: \texttt{lpsolve}
 \index{lpsolve|textbf}}
 
-The \texttt{lpsolve} command can solve linear programming problems
-(where a multivariate linear function needs to be maximized or
-minimized subject to linear (in)equality constraints), as well as
-(mixed) integer programming problems.  You can enter a problem 
-directly (in symbolic or matrix form) load it from a file in LP or
-(gzipped) MPS format.
+The \texttt{lpsolve} command can solve linear programming problems,
+where a multivariate linear function needs to be maximized or
+minimized subject to linear (in)equality constraints, as well as
+(mixed) integer programming problems.  You can either enter a problem 
+directly (in symbolic or matrix form) or load it from a file in LP or
+(compressed) MPS format.
 
 \subsubsection{Solving an LP problem in symbolic form}
 
@@ -41339,13 +41339,14 @@ To enter a problem in matrix form:
 \end{itemize}
 
 \paragraph{Simplex method implementation.}
-Only the primal simplex method is implemented for \texttt{lpsolve}
+Only the two-phase primal simplex method is implemented for \texttt{lpsolve}
 and it uses the upper-bounding technique. Basic columns are not kept
 in the simplex tableau, which therefore contains only the columns of
 non-basic variables. To prevent cycling, an adaptation of Bland's
 rule is used. A preprocessing routine, helping to reduce the size of the problem,
-is available and enabled by default. All computation is done using the arbitrary
-precision integer arithmetic, which is always exact but slower than the
+is available and enabled by default (you can disable it by typing
+\texttt{lp\_presolve=false}). All computation is done by using
+arbitrary-precision integer arithmetic, which is always exact but slower than the
 floating-point arithmetic.
 
 
@@ -41464,16 +41465,18 @@ You can also specify a range of indices instead of a list when there is too much
 
 \paragraph{Branch-and-bound implementation.}
 
-The branch-and-bound algorithm, by definition, generates a binary tree of
-subproblems by branching on integer variables with fractional values. The
-\texttt{lpsolve} command features an implementation which stores only active
-nodes of a branch-and-bound tree in a list.
-Additionally, since the bounds of the variables are the only parameters that
-change during the branch-and-bound algorithm, the number of constraints does not
-change, which is a benefit of the upper-bounding technique built in the simplex
-algorithm. This makes the algorithm space-efficient, allowing for solving
-problems that require many nodes to be generated before finding
-an optimal solution.
+The branch-and-bound algorithm generates a binary tree of subproblems,
+called \emph{nodes}, by branching on integer variables with fractional values.
+Leaf nodes of the tree, called \emph{active nodes}, are stored in a list.
+In each iteration of the algorithm, an active node is selected, branched on a
+particular variable into two new nodes, and subsequently removed from
+the list. A node in which no branching is possible represents a feasible
+solution. The corresponding objective value is used to fathom nodes which cannot
+possibly lead to a better solution. The algorithm terminates when there is no
+space left for improvement. Since the bounds of the problem variables are the
+only parameters that change accross the subproblems, the number of constraints
+does not change, which is a benefit of the upper-bounding technique built in the
+simplex algorithm. This makes the algorithm space-efficient.
 
 \paragraph{Node-selection strategies.} 
 A node-selection strategy can be chosen by using the
@@ -41551,6 +41554,14 @@ and total solving time (in seconds).
     Breadth-first & Pseudocost & 77034 & 100.8\\\hline
   \end{tabular}
 \end{center}
+
+Note that the above comparison is problem-specific; it does not mean that
+\texttt{lp\_bestlocalbound}+\texttt{lp\_lastfractional} is always the best
+strategy. Usually one needs to experiment with different combinations to
+find which one is optimal for the given problem. However, the strategies
+which use larger amounts of information generally perform better.
+Therefore, it is reasonable to assume that \texttt{lp\_bestlocalbound} will be
+more appropriate than~\texttt{lp\_breadthfirst}, for instance.
 
 \paragraph{Cutting planes.} 
 Strong Gomory mixed integer cuts are generated at every node of the
@@ -41635,7 +41646,7 @@ minimal. The solver shows all progress and summary messages.
 % 	\texttt{[1916,[x1=1009,x2=907]]}
 % \end{center}
 
-\subsubsection{Solving problems in floating-point arithmetic}
+\subsubsection{Solving problems in floating-point arithmetic}\label{sec:lp-float}
 
 The \texttt{lpsolve} command provides, in addition to its own exact solver
 implementing the primal simplex method with the upper-bounding technique, an
@@ -41744,16 +41755,13 @@ For example, assume that the file \texttt{somefile.lp} is stored in
 the working directory and that it contains the following lines of text:
 \begin{verbatim}
 Maximize
- obj: x1 + 2 x2 + 3 x3 + x4
+ obj: 2x1 + 4x2 + 3x3
 Subject To
- c1: - x1 + x2 + x3 + 10 x4 <= 20
- c2: x1 - 3 x2 + x3 <= 30
- c3: x2 - 3.5 x4 = 0
-Bounds
- 0 <= x1 <= 40
- 2 <= x4 <= 3
+ c1: 3x1 + 5x2 + 2x3 <= 60
+ c2: 2x1 + x2 + 2x3 <= 40
+ c3: x1 + 3x2 + 2x3 <= 80
 General
- x4
+ x1 x3
 End
 \end{verbatim}
 To find an optimal solution to the linear program specified in this file, enter:\\
@@ -41763,43 +41771,39 @@ To find an optimal solution to the linear program specified in this file, enter:
 \end{center}
 \textit{Output:}
 \[
-\left[116,\left[x_{1}=38,x_{2}=9,x_{3}=19,x_{4}=3\right]\right]
+\left[71.8,\left[x_{1}=0,x_{2}=5.2,x_{3}=17\right]\right]
 \]
-You can provide additional variable bounds and options alongside the
-file name, as in the example below.
+You can provide additional variable bounds, assumptions, and options
+alongside the file name, as in the examples below.
 Note that the original constraints (those which are read from file)
 cannot be removed.\\
 \textit{Input:}
 \begin{center}
-\texttt{lpsolve("somefile.lp",x2=1..7,x3=20..25)}
+\texttt{lpsolve("somefile.lp",x2=5.4..inf,lp\_method=exact)}
 \end{center}
 \textit{Output:}
 \[
-\left[104,\left[x_{1}=27,x_{2}=6,x_{3}=21,x_{4}=2\right]\right]
+\left[\frac{352}{5},\left[x_{1}=0,x_{2}=\frac{28}{5},x_{3}=16\right]\right]
 \]
+Next we force all variables to integral values.\\
+\textit{Input:}
+\begin{center}
+\texttt{lpsolve("somefile.lp",x2=5.4..inf,assume=integer)}
+\end{center}
+\textit{Output:}
+\[
+\left[69.0,\left[x_{1}=0,x_{2}=6,x_{3}=15\right]\right]
+\]
+
 It is advisable to use only (capital) letters, digits and underscores
 when naming variables in an LP file, although the corresponding format
 allows many more characters. That is because these names are converted
 to \texttt{giac} identifiers during the loading process.
 
-\smallskip
-
-\noindent
-\textbf{Warning!} Problems that are too large will not be loaded. Precisely,
-those with $ n_v\cdot n_c>10^6$, where $n_v$ is the number of variables and $n_c$
-is the number of constraints, will not be loaded.  
-
-% if $n_v\cdot n_c>10^5$, where $n_v$ is the number of variables and
-% $n_c$ is the number of constraints, then loading will be aborted. Many MPS
-% files available, for example, in the Netlib repository
-% (\texttt{http://www.netlib.org/}), contain very large problems with
-% thousands of variables and constraints. Trying to load them to Xcas
-% without a safety limit could easily eat up huge amounts of available
-% memory, probably freezing the whole system. If a large LP problem
-% needs to be solved, you might want to consider using a GLPK standalone
-% solver\footnote{See \texttt{https://www.gnu.org/software/glpk/} for
-% installing GLPK in Linux or \texttt{http://winglpk.sourceforge.net/}
-% for MS~Windows.}.
+Note that the coefficients of a problem loaded from file are always
+floating-point values. Therefore, to solve the problem with the native solver,
+you have to use the option \texttt{lp\_method=exact}
+(see Section~\ref{sec:lp-float}).
 
 \subsection{Solving the transportation problems: \texttt{tpsolve}
 \index{tpsolve|textbf}}
@@ -42470,7 +42474,7 @@ approximation due to the roundoff errors.
 \end{center}
 \textit{Output:}
 \begin{align*}
- &\texttt{max. absolute error: 5.85231264871e-01}\\
+ &\texttt{max. absolute error: 5.85231264871e-06}\\
  &5.85141928628\times10^{-6}+0.999777263417 x+0.001400152516 x^{2}\\
 &\quad -0.170089663468 x^{3}+0.0042684302281 x^{4}+0.00525794778108 x^{5}\\
 &\quad +0.00135760211866 x^{6}-0.000570502070425 x^{7}\\

@@ -17,7 +17,7 @@ namespace giac {
 #define LP_MIN_AWAY 0.08
 #define LP_MIN_PARALLELISM 0.86
 #define LP_MAX_MAGNITUDE 1e6
-#define LP_CONSTR_MAXSIZE 1e6
+#define LP_CONSTR_MAXSIZE 1e8
 
 typedef vector<int> ints;
 
@@ -137,7 +137,8 @@ public:
     void update_pseudocost(double delta,double fr,int dir);
     double score(double fr) const;
     void set_subs_coef(int j,const gen &g) { _subs_coef[j]=g; }
-    gen get_subs_coef(int j) const { return _subs_coef.find(j)!=_subs_coef.end()?_subs_coef.at(j):0; }
+    bool has_subs_coef(int j) const { return _subs_coef.find(j)!=_subs_coef.end(); }
+    const gen &get_subs_coef(int j) const { return _subs_coef.at(j); }
     int find_opt_free(const gen &c,gen &val,GIAC_CONTEXT) const;
 };
 

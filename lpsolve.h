@@ -62,6 +62,7 @@ struct lp_settings {
     int assumption;
     int iteration_limit;
     bool has_binary_vars;
+    bool acyclic;
     //branch&bound parameters
     int varselect;
     int nodeselect;
@@ -230,8 +231,12 @@ class lp_node {
     int most_fractional;
     map<int,double> fractional_vars;
     ints cut_indices;
+    bool use_bland;
     void assign(const lp_node &other);
     gen fracpart(const gen &g) const;
+    bool change_basis(matrice &m,const vecteur &u,vector<bool> &is_slack,ints &basis,ints &cols);
+    void simplex_reduce_bounded(matrice &m,const vecteur &u,vector<bool> &is_slack,
+                                ints &basis,ints &cols,int phase,const gen &obj_ct);
 public:
     lp_node(lp_problem *p) { prob=p; }
     lp_node(const lp_node &other) { assign(other); }

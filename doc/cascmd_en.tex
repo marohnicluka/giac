@@ -41123,12 +41123,15 @@ To enter a problem symbolically:
    feasible solution (not necessarily an optimal one) is returned.
   \item \texttt{lp\_timelimit}, whose value can be a positive real number,
   setting the maximum solving time in milliseconds (by default, \textit{unlimited}).
+  \item \texttt{acyclic}, whose value can be either \texttt{true} or
+    \texttt{false}, enabling/disabling the Bland rule safeguarding
+    (by default, \texttt{true}).
   \item \texttt{lp\_maxcuts}, whose value can be a nonnegative integer
   setting the maximum GMI cuts per node (by default 5). 
   \item \texttt{lp\_gaptolerance}, whose value can be a positive
-    number, setting the relative integrality gap threshold (by default 0).
+    number, setting the relative integrality gap threshold (by default, 0).
   \item \texttt{lp\_presolve}, whose value can be either \texttt{true} or
-    \texttt{false}, enabling/disabling the preprocessing step (by default
+    \texttt{false}, enabling/disabling the preprocessing step (by default,
     \texttt{true}).
   \item \texttt{lp\_nodeselect}, which sets the branching node
   selection strategy and whose value can be one of:
@@ -41349,6 +41352,11 @@ is available and enabled by default (you can disable it by typing
 arbitrary-precision integer arithmetic, which is always exact but slower than the
 floating-point arithmetic.
 
+Cycling in simplex algorithm may happen, although it is rare in practice.
+Bland rule safeguarding is used by default in order to prevent cycling. However,
+Bland's pivoting rule is known to converge slowly; therefore it may slow
+down the computation in problems which would otherwise not cycle. To disable
+the safeguarding, use the option \texttt{acyclic=false}.
 
 \subsubsection{Solving MIP (Mixed Integer Programming) problems}
 
@@ -41557,7 +41565,7 @@ and total solving time (in seconds).
 
 Note that the above comparison is problem-specific; it does not mean that
 \texttt{lp\_bestlocalbound}+\texttt{lp\_lastfractional} is always the best
-strategy. Usually one needs to experiment with different combinations to
+strategy. Usually, one has to experiment with different combinations to
 find which one is optimal for the given problem. However, the strategies
 which use larger amounts of information generally perform better.
 Therefore, it is reasonable to assume that \texttt{lp\_bestlocalbound} will be
@@ -41602,22 +41610,36 @@ returned as the result, else the problem is declared to be infeasible.
 \paragraph{Displaying detailed output.}
 Typing \texttt{lp\_verbose=true} or \texttt{lp\_verbose} when
 specifying options for \texttt{lpsolve} causes detailed messages to be printed
-during and after solving an MIP problem. During the branch-and-bound algorithm
-a status report in form
+during and after solving a LP problem. During the simplex algorithm, a status
+report in form
 \begin{center}
-\texttt{$n$: $m$ nodes active, lower bound: $lb\,\langle$ integrality gap: $g\rangle$}
+\texttt{$n$  obj: $z$}
+\end{center}
+is printed every two seconds, where $n$ is the number of simplex iterations and
+$z$ is the current objective value. If the line is prefixed with the asterisk
+character (\texttt{*}), it means that the solver is optimizing the given objective
+(Phase 2); otherwise, the solver is searching for a feasible basis (Phase 1),
+in which case $z$ is a relative value in percentages (when it reaches zero,
+Phase 2 is initiated). Note that values of $z$ reported in Phase 2 may not
+correspond to the actual values if presolving is enabled. 
+
+If the problem contains integrality constraints, then the simplex
+algorithm messages are not printed. Instead, during the branch-and-bound
+algorithm, a status report in form
+\begin{center}
+\texttt{$n$: $m$ nodes active, bound: $b\,\langle$ gap: $g\rangle$}
 \end{center}
 is displayed every 5 seconds, where $n$ is the number of
-already examined subproblems. Also, a report is printed every time
-the incumbent solution is found or updated, as well as when the solver
-switches to pseudocost-based branching. After the algorithm is
-finished, a summary is displayed containing the total number of examined
-subproblems, the number of most nodes being active at the same time and the
-number of applied Gomory mixed integer cuts.       
+already examined subproblems, $b$ is the lower resp.~upper bound (for
+minimization resp.~maximization), and $g$ is the relative integrality gap.
+Also, a message is printed every time the incumbent solution is found or updated,
+as well as when the solver switches to pseudocost-based branching. After the
+algorithm is finished, a summary is displayed containing the total number of
+examined subproblems, the number of most nodes being active at the same time and
+the number of applied Gomory mixed integer cuts.       
 
-In the following example, two nonnegative integers $x_1$ and $x_2$
-are found such that $1867\,x_1+1913\,x_2=3618894$ and $x_1+x_2$ is
-minimal. The solver shows all progress and summary messages.
+In the following example, we solve the MIP given above.
+The solver shows all progress and summary messages.
 
 \smallskip
 
@@ -41625,22 +41647,32 @@ minimal. The solver shows all progress and summary messages.
 \textbf{Example.}\\
 \textit{Input:}
 \begin{center}
- \texttt{lpsolve(x1+x2,[1867*x1+1913*x2=3618894], assume=nonnegint,lp\_verbose=true)}
+ \texttt{A:=[[22,13,26,33,21,3,14,26],[39,16,22,28,26,30,23,24], 
+        [18,14,29,27,30,38,26,26],[41,26,28,36,18,38,16,26]]:;}\\
+ \texttt{b:=[7872,10466,11322,12058]:;c:=[2,10,13,17,7,5,7,3]:;}\\
+ \texttt{lpsolve(c,[[],[],A,b],assume=nonnegint, lp\_nodeselect=lp\_bestprojection,lp\_verbose)}
 \end{center}
 \textit{Output:}
 \begin{center}
 \begin{tabular}{l}
-\verb|Optimizing...|\\
-\verb|Applying branch&bound method to find integer feasible solutions...|\\
-\verb|    3937: Incumbent solution found|\\
-\verb|Summary:|\\
-\verb| * 3938 subproblem(s) examined|\\
-\verb| * max. tree size: 1 nodes|\\
-\verb| * 0 Gomory cut(s) applied|
+\texttt{Constraint matrix has 4 rows, 8 columns, and 36 nonzeros}\\
+\texttt{Preprocessing...}\\
+\texttt{Constraint matrix has 4 rows, 8 columns, and 36 nonzeros}\\
+\texttt{Optimizing...}\\
+\texttt{Applying branch \& bound method...}\\
+\texttt{~~~~~~76: Switched to pseudocost based branching}\\
+\texttt{~~~~8906: 909 nodes active, bound: 1574.31}\\
+\texttt{~~~~9999: Incumbent solution found}\\
+\texttt{~~~17052: 598 nodes active, bound: 1706.09, gap: 7.9779\%}\\
+\texttt{~~~23528: Tree is empty}\\
+\texttt{Summary:}\\
+\texttt{~* 23528 subproblem(s) examined}\\
+\texttt{~* max. tree size: 1021 nodes}\\
+\texttt{~* 398 Gomory cut(s) applied}
 \end{tabular}
 \end{center}
 \[
-\left[1916,\left[x_{1}=1009,x_{2}=907\right]\right]
+\left[1854,\left[24,15,19,11,3,99,4,226\right]\right]
 \]
 % \begin{center}
 % 	\texttt{[1916,[x1=1009,x2=907]]}
@@ -41676,7 +41708,7 @@ method is used. If \texttt{lp\_maxcuts} is greater than
 zero, then GMI/MIR cut generation is enabled, else it is disabled. If
 the problem contains binary variables, then cover/clique cut generation
 is enabled, else it is disabled. Finally, \texttt{lp\_verbose=true}
-enables GLPK messages, which are useful for monitoring the solver's progress.
+enables GLPK messages, which are useful for monitoring solver's progress.
 
 Setting \texttt{lp\_method} to \texttt{lp\_interiorpoint} uses
 the primal-dual interior-point algorithm in GLPK. The only

@@ -22,6 +22,7 @@
 #include "lpsolve.h"
 #include "optimization.h"
 #include <ctime>
+#include <set>
 
 #ifndef DBL_MAX
 #define DBL_MAX 1.79769313486e+308
@@ -209,6 +210,7 @@ lp_settings::lp_settings() {
     precision=_LP_PROB_DEPENDENT;
     presolve=true;
     maximize=false;
+    acyclic=true;
     relative_gap_tolerance=0.0;
     has_binary_vars=false;
     varselect=-1;
@@ -245,6 +247,81 @@ void pivot_ij(matrice &m,int I,int J,bool negate=false) {
             m[i]=subvecteur(*m[i]._VECTptr,multvecteur(c[i],pv));
 }
 
+static clock_t srbt;
+
+bool lp_node::change_basis(matrice &m,const vecteur &u,vector<bool> &is_slack,ints &basis,ints &cols) {
+    // ev, lv: indices of entering and leaving variables
+    // ec, lr: 'entering' column and 'leaving' row in matrix m, respectively
+    int ec,ev,lr,lv,nc=cols.size(),nr=basis.size(),nv=nr+nc;
+    gen a,b,ratio,mincoeff=0;
+    // choose a variable to enter the basis
+    ev=-1;
+    const vecteur &last=*m.back()._VECTptr;
+    for (int j=0;j<nc;++j) {
+        int k=cols[j];
+        const gen &l=last[j];
+        if ((use_bland && is_strictly_positive(-l,prob->ctx) &&
+                (ev<0 || k+(is_slack[k]?nv:0)<ev+(is_slack[ev]?nv:0))) ||
+                (!use_bland && is_strictly_greater(mincoeff,l,prob->ctx))) {
+            ec=j;
+            ev=k;
+            mincoeff=l;
+        }
+    }
+    if (ev<0) // the current solution is optimal
+        return true;
+    // choose a variable to leave the basis
+    mincoeff=plus_inf;
+    lv=-1;
+    bool hits_ub,ub_subs;
+    for (int i=0;i<nr;++i) {
+        a=m[i][ec];
+        b=m[i]._VECTptr->back();
+        int j=basis[i];
+        if (is_strictly_positive(a,prob->ctx) && is_greater(mincoeff,ratio=b/a,prob->ctx))
+            hits_ub=false;
+        else if (is_strictly_positive(-a,prob->ctx) && !is_inf(u[j]) &&
+                    is_greater(mincoeff,ratio=(b-u[j])/a,prob->ctx))
+            hits_ub=true;
+        else continue;
+        if (is_strictly_greater(mincoeff,ratio,prob->ctx)) {
+            lv=-1;
+            mincoeff=ratio;
+        }
+        if (lv<0 || (use_bland && j+(is_slack[j]?nv:0)<lv+(is_slack[lv]?nv:0))) {
+            lv=j;
+            lr=i;
+            ub_subs=hits_ub;
+        }
+    }
+    if (lv<0 && is_inf(u[ev])) { // the solution is unbounded
+        optimum=minus_inf;
+        return true;
+    }
+    if (prob->settings.acyclic)
+        use_bland=is_zero(mincoeff); // Bland's rule
+    if (lv<0 || is_greater(mincoeff,u[ev],prob->ctx)) {
+        for (const_iterateur it=m.begin();it!=m.end();++it) {
+            a=it->_VECTptr->at(ec);
+            it->_VECTptr->back()-=u[ev]*a;
+            it->_VECTptr->at(ec)=-a;
+        }
+        if (ev<nv)
+            is_slack[ev]=!is_slack[ev];
+        return false;
+    }
+    // swap variables: basic leaves, nonbasic enters
+    if (ub_subs) {
+        m[lr]._VECTptr->back()-=u[lv];
+        if (lv<nv)
+            is_slack[lv]=!is_slack[lv];
+    }
+    pivot_ij(m,lr,ec,ub_subs);
+    basis[lr]=ev;
+    cols[ec]=lv;
+    return false;
+}
+
 /*
  * Simplex algorithm that handles upper bounds of the variables. The solution x
  * satisfies 0<=x<=u. An initial basis must be provided.
@@ -253,101 +330,58 @@ void pivot_ij(matrice &m,int I,int J,bool negate=false) {
  * and appears in i-th row (constraint). Basic columns are not kept in matrix,
  * which contains only the columns of nonbasic variables. A nonbasic variable
  * is assigned to the respective column with integer vector 'cols': cols[i]=j
- * means that ith column of the matrix is associated with the jth variable. The
+ * means that i-th column of the matrix is associated with the j-th variable. The
  * algorithm uses the upper-bounding technique when pivoting and an adaptation
  * of Bland's rule to prevent cycling. i-th element of 'is_slack' is true iff
  * the i-th (nonbasic) variable is at its upper bound.
  *
  * If limit>0, the simplex algorithm will terminate after that many iterations.
  */
-void simplex_reduce_bounded(matrice &m,const vecteur &u,vector<bool> &is_slack,vecteur &bfs,gen &optimum,
-                            ints &basis,ints &cols,int limit,int &icount,GIAC_CONTEXT) {
-    // ev, lv: indices of entering and leaving variables
-    // ec, lr: 'entering' column and 'leaving' row in matrix m, respectively
-    int nr=basis.size(),nc=cols.size(),nv=nr+nc,ec,ev,lr,lv;
-    gen a,b,ratio,mincoeff;
+void lp_node::simplex_reduce_bounded(matrice &m,const vecteur &u,vector<bool> &is_slack,
+                                     ints &basis,ints &cols,int phase,const gen &obj_ct) {
+    int nr=basis.size(),nc=cols.size(),nv=nr+nc;
+    int limit=prob->settings.iteration_limit;
+    int &icount=prob->iteration_count;
     // iterate the simplex method
-    bool choose_first=false;
+    use_bland=false;
     optimum=undef;
-    while (limit==0 || (++icount)<=limit) {
-        // determine which variable enters the basis
-        mincoeff=0;
-        ev=-1;
-        const vecteur &last=*m.back()._VECTptr;
-        for (int j=0;j<nc;++j) {
-            int k=cols[j];
-            const gen &l=last[j];
-            if ((choose_first && is_strictly_positive(-l,contextptr) &&
-                 (ev<0 || k+(is_slack[k]?nv:0)<ev+(is_slack[ev]?nv:0))) ||
-                    (!choose_first && is_strictly_greater(mincoeff,l,contextptr))) {
-                ec=j;
-                ev=k;
-                mincoeff=l;
-            }
-        }
-        if (ev<0) // the current solution is optimal
+    char buffer[256],numbuf[8];
+    double obj0=-1;
+    while (true) {
+        ++icount;
+        if (limit>0 && icount>limit)
             break;
-        // determine which variable leaves the basis
-        mincoeff=plus_inf;
-        lv=-1;
-        bool hits_ub,ub_subs;
+        if (phase>0) {
+            clock_t now=clock();
+            double obj=_evalf(phase==1?-m[nr][nc]:(prob->settings.maximize?-1:1)*(obj_ct-m[nr][nc]),prob->ctx).DOUBLE_val();
+            if (phase==1 && obj0<obj) {
+                if (is_zero(m[nr][nc]))
+                    break;
+                obj0=obj;
+            }
+            if (CLOCKS_PER_SEC/double(now-srbt)<=0.5) { // display progress info
+                sprintf(numbuf,"%d",icount);
+                string ns(numbuf);
+                while (ns.length()<7) ns.insert(0,1,' ');
+                sprintf(buffer," %s %s  obj: %g%s",phase==1?" ":"*",ns.c_str(),phase==1?100*obj/obj0:obj,phase==1?"%":"");
+                prob->message(buffer);
+                srbt=now;
+            }
+        }
+        if (change_basis(m,u,is_slack,basis,cols) || (std::abs(phase)==1 && is_zero(m[nr][nc])))
+            break; // the solution is optimal
+    }
+    if (is_undef(optimum)) {
+        optimum=m[nr][nc];
+        solution=vecteur(nv,0);
         for (int i=0;i<nr;++i) {
-            const vecteur &row=*m[i]._VECTptr;
-            a=row[ec];
-            b=row.back();
-            int j=basis[i];
-            if (is_strictly_positive(a,contextptr) && is_greater(mincoeff,ratio=b/a,contextptr))
-                hits_ub=false;
-            else if (is_strictly_positive(-a,contextptr) && !is_inf(u[j]) &&
-                     is_greater(mincoeff,ratio=(b-u[j])/a,contextptr))
-                hits_ub=true;
-            else continue;
-            if (is_strictly_greater(mincoeff,ratio,contextptr)) {
-                lv=-1;
-                mincoeff=ratio;
-            }
-            if (lv<0 || (choose_first && j+(is_slack[j]?nv:0)<lv+(is_slack[lv]?nv:0))) {
-                lv=j;
-                lr=i;
-                ub_subs=hits_ub;
-            }
+            assert(basis[i]<nv);
+            solution[basis[i]]=m[i][nc];
         }
-        if (lv<0 && is_inf(u[ev])) { // the solution is unbounded
-            optimum=plus_inf;
-            return;
+        for (int j=0;j<nv;++j) {
+            if (is_slack[j])
+                solution[j]=u[j]-solution[j];
         }
-        if (is_zero(mincoeff)) {
-            choose_first=true; // switch Bland's rule on
-        } else choose_first=false; // switch back to Dantzig's rule
-        if (lv<0 || is_greater(mincoeff,u[ev],contextptr)) {
-            for (const_iterateur it=m.begin();it!=m.end();++it) {
-                a=it->_VECTptr->at(ec);
-                it->_VECTptr->back()-=u[ev]*a;
-                it->_VECTptr->at(ec)=-a;
-            }
-            if (ev<nv)
-                is_slack[ev]=!is_slack[ev];
-            continue;
-        }
-        // swap variables: basic leaves, nonbasic enters
-        if (ub_subs) {
-            m[lr]._VECTptr->back()-=u[lv];
-            if (lv<nv)
-                is_slack[lv]=!is_slack[lv];
-        }
-        pivot_ij(m,lr,ec,ub_subs);
-        basis[lr]=ev;
-        cols[ec]=lv;
-    }
-    optimum=m[nr][nc];
-    bfs=vecteur(nv,0);
-    for (int i=0;i<nr;++i) {
-        assert(basis[i]<nv);
-        bfs[basis[i]]=m[i][nc];
-    }
-    for (int j=0;j<nv;++j) {
-        if (is_slack[j])
-            bfs[j]=u[j]-bfs[j];
     }
 }
 
@@ -433,14 +467,16 @@ int lp_node::solve_relaxation() {
     }
     // delete linearly dependent constraints, if any
     int rnk;
-    if ((rnk=_rank(m,prob->ctx).to_int())<nrows) {
-        matrice r=mtran(*_rref(mtran(m),prob->ctx)._VECTptr);
+    matrice mf=*_evalf(m,prob->ctx)._VECTptr;
+    rnk=_rank(mf,prob->ctx).to_int();
+    if (rnk<nrows) {
+        matrice r=mtran(*_rref(mtran(mf),prob->ctx)._VECTptr);
         ints ri;
-        int k=0;
+        int k=0,old_rc=r.size();
         for (const_iterateur it=r.begin();it!=r.end();++it) {
             int i=0;
             for (;is_zero(it->_VECTptr->at(i));++i);
-            if (i>=k && is_one(it->_VECTptr->at(i))) {
+            if (i>=k && is_one(exact(it->_VECTptr->at(i),prob->ctx))) {
                 ri.push_back(it-r.begin());
                 k=i+1;
                 if (k>=rnk) break;
@@ -452,9 +488,11 @@ int lp_node::solve_relaxation() {
         }
         m=M;
         nrows=rnk;
+        assert(int(m.size())==nrows);
     }
     // optimize-add cut-reoptimize-add cut...
     // repeat until no more cuts are generated or the max_cuts limit is reached
+    srbt=clock();
     while (true) {
         br=vecteur(int(cols.size())+1,0);
         bs=basis.size();
@@ -467,11 +505,10 @@ int lp_node::solve_relaxation() {
         }
         m.push_back(br);
         // phase 1: minimize the sum of artificial variables
-        simplex_reduce_bounded(m,u,is_slack,solution,optimum,basis,cols,
-                                prob->settings.iteration_limit,prob->iteration_count,prob->ctx);
+        simplex_reduce_bounded(m,u,is_slack,basis,cols,is_mip || !prob->settings.verbose?-1:1,obj_ct);
         if (!is_zero(optimum))
             return _LP_INFEASIBLE; // at least one artificial variable is basic and positive
-        m.pop_back(); // remove the bottom row
+        m.pop_back();
         for (int i=0;i<nrows;++i) {
             int j=basis[i];
             if (j<ncols)
@@ -511,14 +548,12 @@ int lp_node::solve_relaxation() {
         m.push_back(br);
         u.resize(ncols);
         // phase 2: optimize the objective
-        simplex_reduce_bounded(m,u,is_slack,solution,optimum,basis,cols,
-                                prob->settings.iteration_limit,prob->iteration_count,prob->ctx);
+        simplex_reduce_bounded(m,u,is_slack,basis,cols,is_mip || !prob->settings.verbose?-2:2,obj_ct);
         if (is_inf(optimum))
             return _LP_UNBOUNDED; // the solution is unbounded
-        m.pop_back(); // remove the bottom row
-        if (!is_mip) break;
-        if (int(cut_indices.size())>=prob->settings.max_cuts)
+        if (!is_mip || int(cut_indices.size())>=prob->settings.max_cuts)
             break;
+        m.pop_back(); // remove the bottom row
         // try to generate a GMI cut
         gmi_cut.clear();
         for (int i=0;i<nrows;++i) {
@@ -988,7 +1023,7 @@ void lp_problem::make_problem_exact() {
  */
 void lp_problem::report_status(const char *msg,int count) {
     char buf[16];
-    std::sprintf(buf,"%d: ",count);
+    sprintf(buf,"%d: ",count);
     int nd=numdigits((unsigned)count);
     string str(msg);
     str.insert(0,buf);
@@ -1251,7 +1286,7 @@ int lp_problem::solve() {
                 solution=root.get_solution();
                 optimum=root.get_optimum();
             } else {
-                message("Applying branch & bound method to find integer feasible solutions...");
+                message("Applying branch & bound method...");
                 double root_optimum=root.get_optimum().to_double(ctx);
                 double root_infeas=root.get_infeas().to_double(ctx);
                 root.resize_ranges(nv());
@@ -1416,12 +1451,11 @@ int lp_problem::solve() {
                         break;
                     }
                     if (CLOCKS_PER_SEC/double(now-t)<=settings.status_report_freq) { //report status
-                        std::sprintf(buffer,"%d nodes active, %s bound: %g",
-                                     (int)active_nodes.size(),settings.maximize?"upper":"lower",
-                                     opt_lbound*(settings.maximize?-1:1));
+                        std::sprintf(buffer,"%d nodes active, bound: %g",
+                                     (int)active_nodes.size(),opt_lbound*(settings.maximize?-1:1));
                         string str(buffer);
                         if (stats.mip_gap>=0) {
-                            std::sprintf(buffer,", integrality gap: %g%%",stats.mip_gap*100);
+                            std::sprintf(buffer,", gap: %g%%",stats.mip_gap*100);
                             str+=string(buffer);
                         }
                         report_status(str.c_str(),stats.subproblems_examined);
@@ -2006,6 +2040,13 @@ bool parse_options_and_bounds(const_iterateur &it,const_iterateur &itend,lp_prob
                 case _LP_PRESOLVE:
                     if (rh.is_integer() && rh.subtype==_INT_BOOLEAN)
                         prob.settings.presolve=(bool)rh.to_int();
+                    else return false;
+                    break;
+                case _GT_ACYCLIC:
+                    if (rh.is_integer() && rh.subtype==_INT_BOOLEAN)
+                        prob.settings.acyclic=(bool)rh.to_int();
+                    else return false;
+                    break;
                 default:
                     break;
                 }

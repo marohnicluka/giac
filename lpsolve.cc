@@ -419,7 +419,7 @@ int lp_node::solve_relaxation() {
             return _LP_INFEASIBLE;
     }
     // populate matrix with constraint coefficients
-    m=*_matrix(makesequence(nrows,ncols+1,0),prob->ctx)._VECTptr;
+    m=*_matrix(makesequence(nrows,ncols,0),prob->ctx)._VECTptr;
     for (int i=0;i<nrows;++i) for (int j=0;j<ncols;++j)
         m[i]._VECTptr->at(j)=prob->constr.lhs[i][j];
     b=prob->constr.rhs;
@@ -430,14 +430,11 @@ int lp_node::solve_relaxation() {
         obj_ct+=obj[j]*l[j];
         cols[j]=j;
     }
-    // append the column b to the tableau
-    for (int i=0;i<nrows;++i) {
-        m[i]._VECTptr->at(ncols)=b[i];
-    }
+    append_column(m,b);
     // assure that the right-hand side column has nonnegative coefficients
     for (iterateur it=m.begin();it!=m.end();++it) {
-        if (is_strictly_positive(-it->_VECTptr->back(),prob->ctx)) {
-            *it=-*it;
+        if (!is_positive(it->_VECTptr->back(),prob->ctx)) {
+            *it=multvecteur(-1,*(it->_VECTptr));
         }
     }
     // append cuts inherited from the parent node
@@ -669,8 +666,8 @@ gen lp_node::fracpart(const gen &g) const {
 lp_node lp_node::create_child() {
     lp_node node(prob);
     node.depth=depth+1;
-    node.ranges=vector<lp_range>(ranges);
-    node.cut_indices=ints(cut_indices);
+    node.ranges=this->ranges;
+    node.cut_indices=this->cut_indices;
     return node;
 }
 
@@ -822,23 +819,25 @@ void lp_constraints::remove(int index) {
 int lp_constraints::remove_linearly_dependent(GIAC_CONTEXT) {
     matrice m;
     ints pos;
+    std::set<int> ri,found;
     for (int i=0;i<nrows();++i) {
         if (rv[i]==_LP_EQ) {
             pos.push_back(i);
             m.push_back(mergevecteur(*lhs[i]._VECTptr,vecteur(1,rhs[i])));
         }
     }
-    matrice mf=mtran(*_rref(mtran(*_evalf(m,contextptr)._VECTptr),contextptr)._VECTptr);
-    std::set<int> ri,found;
-    for (const_iterateur it=mf.begin();it!=mf.end();++it) {
-        int i=0;
-        for (;i<=ncols() && is_zero(it->_VECTptr->at(i));++i);
-        if (i<=ncols() && is_one(it->_VECTptr->at(i)) && found.find(i)==found.end())
-            found.insert(i);
-        else ri.insert(it-mf.begin());
-    }
-    for (std::set<int>::const_reverse_iterator it=ri.rbegin();it!=ri.rend();++it) {
-        remove(pos[*it]);
+    if (!pos.empty()) {
+        matrice mf=mtran(*_rref(mtran(*_evalf(m,contextptr)._VECTptr),contextptr)._VECTptr);
+        for (const_iterateur it=mf.begin();it!=mf.end();++it) {
+            int i=0;
+            for (;i<=ncols() && is_zero(it->_VECTptr->at(i));++i);
+            if (i<=ncols() && is_one(it->_VECTptr->at(i)) && found.find(i)==found.end())
+                found.insert(i);
+            else ri.insert(it-mf.begin());
+        }
+        for (std::set<int>::const_reverse_iterator it=ri.rbegin();it!=ri.rend();++it) {
+            remove(pos[*it]);
+        }
     }
     return ri.size();
 }

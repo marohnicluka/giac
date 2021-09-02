@@ -249,6 +249,10 @@ void pivot_ij(matrice &m,int I,int J,bool negate=false) {
 
 static clock_t srbt;
 
+/*
+ * Change basis by choosing entering and leaving variables and swapping them.
+ * Return true iff there is no need to change basis any further.
+ */
 bool lp_node::change_basis(matrice &m,const vecteur &u,vector<bool> &is_slack,ints &basis,ints &cols) {
     // ev, lv: indices of entering and leaving variables
     // ec, lr: 'entering' column and 'leaving' row in matrix m, respectively
@@ -369,7 +373,7 @@ void lp_node::simplex_reduce_bounded(matrice &m,const vecteur &u,vector<bool> &i
             }
         }
         if (change_basis(m,u,is_slack,basis,cols) || (std::abs(phase)==1 && is_zero(m[nr][nc])))
-            break; // the solution is optimal
+            break;
     }
     if (is_undef(optimum)) {
         optimum=m[nr][nc];
@@ -464,31 +468,6 @@ int lp_node::solve_relaxation() {
         obj.push_back(0);
         cols.push_back(ncols++);
         ++nrows;
-    }
-    // delete linearly dependent constraints, if any
-    int rnk;
-    matrice mf=*_evalf(m,prob->ctx)._VECTptr;
-    rnk=_rank(mf,prob->ctx).to_int();
-    if (rnk<nrows) {
-        matrice r=mtran(*_rref(mtran(mf),prob->ctx)._VECTptr);
-        ints ri;
-        int k=0,old_rc=r.size();
-        for (const_iterateur it=r.begin();it!=r.end();++it) {
-            int i=0;
-            for (;is_zero(it->_VECTptr->at(i));++i);
-            if (i>=k && is_one(exact(it->_VECTptr->at(i),prob->ctx))) {
-                ri.push_back(it-r.begin());
-                k=i+1;
-                if (k>=rnk) break;
-            }
-        }
-        matrice M;
-        for (ints::const_iterator it=ri.begin();it!=ri.end();++it) {
-            M.push_back(m[*it]);
-        }
-        m=M;
-        nrows=rnk;
-        assert(int(m.size())==nrows);
     }
     // optimize-add cut-reoptimize-add cut...
     // repeat until no more cuts are generated or the max_cuts limit is reached
@@ -835,6 +814,33 @@ void lp_constraints::remove(int index) {
     lhs.erase(lhs.begin()+index);
     rhs.erase(rhs.begin()+index);
     rv.erase(rv.begin()+index);
+}
+
+/*
+ * Delete linearly independent equality constraints, if any.
+ */
+int lp_constraints::remove_linearly_dependent(GIAC_CONTEXT) {
+    matrice m;
+    ints pos;
+    for (int i=0;i<nrows();++i) {
+        if (rv[i]==_LP_EQ) {
+            pos.push_back(i);
+            m.push_back(mergevecteur(*lhs[i]._VECTptr,vecteur(1,rhs[i])));
+        }
+    }
+    matrice mf=mtran(*_rref(mtran(*_evalf(m,contextptr)._VECTptr),contextptr)._VECTptr);
+    std::set<int> ri,found;
+    for (const_iterateur it=mf.begin();it!=mf.end();++it) {
+        int i=0;
+        for (;i<=ncols() && is_zero(it->_VECTptr->at(i));++i);
+        if (i<=ncols() && is_one(it->_VECTptr->at(i)) && found.find(i)==found.end())
+            found.insert(i);
+        else ri.insert(it-mf.begin());
+    }
+    for (std::set<int>::const_reverse_iterator it=ri.rbegin();it!=ri.rend();++it) {
+        remove(pos[*it]);
+    }
+    return ri.size();
 }
 
 /*
@@ -1240,6 +1246,11 @@ void lp_problem::postprocess() {
 int lp_problem::solve() {
     stats=lp_stats();
     char buffer[256];
+    int rr=constr.remove_linearly_dependent(ctx);
+    if (rr>0) {
+        std::sprintf(buffer,"Removed %d linearly dependent equality constraints",rr);
+        message(buffer);
+    }
     std::sprintf(buffer,"Constraint matrix has %d rows, %d columns, and %d nonzeros",constr.nrows(),constr.ncols(),constr.nonzeros());
     message(buffer);
     make_problem_exact();

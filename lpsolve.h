@@ -160,6 +160,7 @@ struct lp_constraints {
     void div(int index,const gen &g,GIAC_CONTEXT);
     void subtract(int index,const vecteur &v,const gen &g);
     void remove(int index);
+    int remove_linearly_dependent(GIAC_CONTEXT);
 };
 
 class lp_node;

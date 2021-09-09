@@ -8684,7 +8684,7 @@
   sequence of parameters.
 
   The optional argument <verbatim|haar_graph=\<less\>n\<gtr\>>, where
-  <math|n> is an integer between 0 and 64 (by default <math|n=25>), is used
+  <math|n> is an integer between 0 and 60 (by default <math|n=25>), is used
   for setting an upper limit for the number of vertices in each partition of
   a Haar graph. Haar graphs with more than <math|2*n> vertices will not be
   tested for an isomorphism. If <math|n=0>, then Haar graphs are not tested

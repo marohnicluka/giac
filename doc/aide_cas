@@ -17062,12 +17062,12 @@ is_planar(complete_graph(5))
 complete_binary_tree(3)
 
 # complete_kary_tree
-0 Intg(n)
+0 Intg(k),Intg(n)
 2 Returns a complete k-ary tree with depth n.
 -1 complete_binary_tree
 -2 is_tree
 -3 random_tree
-complete_kary_tree(3,3)
+complete_kary_tree(2,3)
 
 # prism_graph
 0 Intg(n)

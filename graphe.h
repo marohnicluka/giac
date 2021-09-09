@@ -55,6 +55,8 @@ namespace giac {
 
 typedef unsigned long ulong;
 
+#define _GT_HAAR_LIMIT 60
+
 enum gt_dot_token_type {
     _GT_DOT_TOKEN_TYPE_IDENTIFIER = 1,
     _GT_DOT_TOKEN_TYPE_NUMBER = 2,
@@ -96,34 +98,35 @@ enum gt_vertex_cover_algorithm {
     _GT_VC_EXACT
 };
 
-enum gt_named_graph_sequence {
-    _GT_SEQ_CYCLE,
-    _GT_SEQ_PATH,
-    _GT_SEQ_COMPLETE,
-    _GT_SEQ_COMPLETE_TREE,
-    _GT_SEQ_KNESER,
-    _GT_SEQ_ODD,
-    _GT_SEQ_JOHNSON,
-    _GT_SEQ_HYPERCUBE,
-    _GT_SEQ_STAR,
-    _GT_SEQ_WHEEL,
-    _GT_SEQ_WEB,
-    _GT_SEQ_PRISM,
-    _GT_SEQ_ANTIPRISM,
-    _GT_SEQ_GRID,
-    _GT_SEQ_SIERPINSKI,
-    _GT_SEQ_PETERSEN,
-    _GT_SEQ_FLOWER,
-    _GT_SEQ_GOLDBERG,
-    _GT_SEQ_PALEY,
-    _GT_SEQ_HAAR
-};
-
 enum gt_conn_check {
     _GT_CC_CONNECTED, // current subgraph is connected
     _GT_CC_COMPONENTS_ARE_SUBGRAPHS, // components are subgraphs with indices 1,2,...
     _GT_CC_FIND_COMPONENTS // split graph to connected components and iterate
 };
+
+/* special graph constructors */
+extern const unary_function_ptr * const at_graph;
+extern const unary_function_ptr * const at_cycle_graph;
+extern const unary_function_ptr * const at_path_graph;
+extern const unary_function_ptr * const at_complete_graph;
+extern const unary_function_ptr * const at_complete_binary_tree;
+extern const unary_function_ptr * const at_complete_kary_tree;
+extern const unary_function_ptr * const at_kneser_graph;
+extern const unary_function_ptr * const at_odd_graph;
+extern const unary_function_ptr * const at_johnson_graph;
+extern const unary_function_ptr * const at_star_graph;
+extern const unary_function_ptr * const at_wheel_graph;
+extern const unary_function_ptr * const at_web_graph;
+extern const unary_function_ptr * const at_prism_graph;
+extern const unary_function_ptr * const at_antiprism_graph;
+extern const unary_function_ptr * const at_grid_graph;
+extern const unary_function_ptr * const at_torus_grid_graph;
+extern const unary_function_ptr * const at_sierpinski_graph;
+extern const unary_function_ptr * const at_petersen_graph;
+extern const unary_function_ptr * const at_flower_snark;
+extern const unary_function_ptr * const at_goldberg_snark;
+extern const unary_function_ptr * const at_paley_graph;
+extern const unary_function_ptr * const at_haar_graph;
 
 class graphe {
 public:
@@ -921,14 +924,6 @@ private:
     int count_edges_in_Nv(int v,int sg=-1) const;
     int count_edges(const ivector &V) const;
     bool is_simplicial(int i,const sparsemat &A,double D=0.0);
-    void make_hoffman_singleton_graph();
-    void make_sylvester_graph();
-    void make_higman_sims_graph();
-    void make_brouwer_haemers_graph();
-    void make_gewirtz_graph();
-    void make_schlaefli_graph();
-    void make_gosset_graph();
-    void make_szerekes_snark();
 
 public:
     graphe(const context *contextptr=context0,bool support_attributes=true);
@@ -1158,8 +1153,17 @@ public:
     bool make_flower_snark(int n,layout *x=NULL);
     bool make_goldberg_snark(int n);
     bool make_haar_graph(const gen &n);
+    bool make_haar_graph(ulong n);
     void make_paley_graph(int p,int k);
     void make_hypercube_graph(int n);
+    void make_hoffman_singleton_graph();
+    void make_sylvester_graph();
+    void make_higman_sims_graph();
+    void make_brouwer_haemers_graph();
+    void make_gewirtz_graph();
+    void make_schlaefli_graph();
+    void make_gosset_graph();
+    void make_szerekes_snark();
     void make_random_tree(int maxd=0);
     void make_random_rooted_tree();
     void make_random_free_tree();
@@ -1282,7 +1286,7 @@ public:
     bool pruefer_encode(ivector &code,bool check_tree=false);
     bool pruefer_decode(const ivector &code);
     const char* identify();
-    void identify_from_sequences(ivectors &spec,int haar_limit=25);
+    void identify_from_sequences(vecteur &spec,int haar_limit=25);
 
     // static methods
     static double to_double(const gen &g,GIAC_CONTEXT);

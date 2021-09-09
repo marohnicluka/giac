@@ -6471,93 +6471,23 @@ gen _identify_graph(const gen &g,GIAC_CONTEXT) {
                 const gen &lhs=it->_SYMBptr->feuille._VECTptr->front();
                 const gen &rhs=it->_SYMBptr->feuille._VECTptr->back();
                 if (lhs==at_haar_graph) {
-                    if (!rhs.is_integer() || rhs.val<0 || rhs.val>64)
-                        return generr("Expected an integer between 0 and 64");
+                    if (!rhs.is_integer() || rhs.val<=0 || rhs.val>_GT_HAAR_LIMIT) {
+                        char buf[80];
+                        sprintf(buf,"Expected an integer between 1 and %d",_GT_HAAR_LIMIT);
+                        return generr(buf);
+                    }
                     haar_limit=rhs.val;
                 }
             }
         }
     } else if (!G.read_gen(g))
         return gt_err(_GT_ERR_NOT_A_GRAPH);
-    graphe::ivectors spec;
+    vecteur spec;
     G.identify_from_sequences(spec,haar_limit);
-    vecteur res;
-    for (graphe::ivectors_iter it=spec.begin();it!=spec.end();++it) {
-        graphe::ivector iparm(it->begin()+1,it->end());
-        vecteur parm=vector_int_2_vecteur(iparm);
-        switch(it->front()) {
-        case _GT_SEQ_ANTIPRISM:
-            res.push_back(makevecteur(at_antiprism_graph,parm[0]));
-            break;
-        case _GT_SEQ_COMPLETE:
-            parm.insert(parm.begin(),at_complete_graph);
-            res.push_back(parm);
-            break;
-        case _GT_SEQ_COMPLETE_TREE:
-            if (iparm[0]==2) parm.erase(parm.begin());
-            parm.insert(parm.begin(),iparm[0]==2?at_complete_binary_tree:at_complete_kary_tree);
-            res.push_back(parm);
-            break;
-        case _GT_SEQ_CYCLE:
-            res.push_back(makevecteur(at_cycle_graph,parm[0]));
-            break;
-        case _GT_SEQ_FLOWER:
-            res.push_back(makevecteur(at_flower_snark,parm[0]));
-            break;
-        case _GT_SEQ_GOLDBERG:
-            res.push_back(makevecteur(at_goldberg_snark,parm[0]));
-            break;
-        case _GT_SEQ_GRID:
-            if (iparm[2]<2)
-                res.push_back(makevecteur(at_grid_graph,parm[0],parm[1],graphe::boole(iparm[2]==1)));
-            else res.push_back(makevecteur(at_torus_grid_graph,parm[0],parm[1]));
-            break;
-        case _GT_SEQ_HAAR:
-            res.push_back(makevecteur(at_haar_graph,parm[0]));
-            break;
-        case _GT_SEQ_HYPERCUBE:
-            res.push_back(makevecteur(at_hypercube_graph,parm[0]));
-            break;
-        case _GT_SEQ_JOHNSON:
-            res.push_back(makevecteur(at_johnson_graph,parm[0],parm[1]));
-            break;
-        case _GT_SEQ_KNESER:
-            res.push_back(makevecteur(at_kneser_graph,parm[0],parm[1]));
-            break;
-        case _GT_SEQ_ODD:
-            res.push_back(makevecteur(at_odd_graph,parm[0]));
-            break;
-        case _GT_SEQ_PALEY:
-            res.push_back(makevecteur(at_paley_graph,parm[0],parm[1]));
-            break;
-        case _GT_SEQ_PATH:
-            res.push_back(makevecteur(at_path_graph,parm[0]));
-            break;
-        case _GT_SEQ_PETERSEN:
-            res.push_back(makevecteur(at_petersen_graph,parm[0],parm[1]));
-            break;
-        case _GT_SEQ_PRISM:
-            res.push_back(makevecteur(at_prism_graph,parm[0]));
-            break;
-        case _GT_SEQ_SIERPINSKI:
-            res.push_back(makevecteur(at_sierpinski_graph,parm[0],parm[1],graphe::boole(iparm[2]==1)));
-            break;
-        case _GT_SEQ_STAR:
-            res.push_back(makevecteur(at_star_graph,parm[0]));
-            break;
-        case _GT_SEQ_WEB:
-            res.push_back(makevecteur(at_web_graph,parm[0],parm[1]));
-            break;
-        case _GT_SEQ_WHEEL:
-            res.push_back(makevecteur(at_wheel_graph,parm[0]));
-            break;
-        default: break;
-        }
-    }
     const char *name=G.identify();
     if (name!=NULL)
-        res.push_back(makevecteur(at_graph,string2gen(name,false)));
-    return change_subtype(res,_LIST__VECT);
+        spec.push_back(makevecteur(at_graph,string2gen(name,false)));
+    return change_subtype(spec,_LIST__VECT);
 }
 static const char _identify_graph_s[]="identify_graph";
 static define_unary_function_eval(__identify_graph,&_identify_graph,_identify_graph_s);

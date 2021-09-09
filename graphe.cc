@@ -3944,7 +3944,7 @@ gen graphe::sparse_product_element(const sparsemat &A,const sparsemat &B, int i,
     if (it==A.end())
         return 0;
     const sparsematrow &row=it->second;
-    int r,c;
+    int c;
     gen res(0);
     for (jt=row.begin();jt!=row.end();++jt) {
         c=jt->first;
@@ -6019,6 +6019,27 @@ bool graphe::make_haar_graph(const gen &n) {
     for (int i=0;i<k;++i) {
         for (int j=k;j<2*k;++j) {
             if (is_one(be[(j-i)%k]))
+                add_edge(i,j);
+        }
+    }
+    return true;
+}
+
+bool graphe::make_haar_graph(ulong n) {
+    if (n==0)
+        return false;
+    int k=1+int(std::floor(std::log2(n)));
+    this->clear();
+    bitset<64> be(n);
+    vecteur V;
+    reserve_nodes(2*k);
+    if (supports_attributes()) {
+        make_default_labels(V,2*k);
+        add_nodes(V);
+    } else add_nodes(2*k);
+    for (int i=0;i<k;++i) {
+        for (int j=k;j<2*k;++j) {
+            if (be.test((j-i)%k))
                 add_edge(i,j);
         }
     }
@@ -10969,7 +10990,7 @@ int graphe::tsp::edge_index(const ipair &e) {
 /* formulate TSP as MIP, initially without any subtour elimination constraints */
 void graphe::tsp::formulate_mip() {
     ivectors rows;
-    int nonzeros=0,i,j,k,l,cnt=0,nrows,ncols,nrows0;
+    int nonzeros=0,i,j,k,l,cnt=0,nrows,ncols;
     for (j=0;j<ne;++j) {
         const arc &a=arcs[j];
         obj[j]=isweighted?weight(a.tail,a.head):1.0;
@@ -13315,7 +13336,7 @@ graphe::yen::~yen() {
 
 graphe::yen::tree_node *graphe::yen::store_path(const ivector &path,tree_node *r) {
     tree_node *t=r,*next;
-    int i,j,n=path.size();
+    int i,n=path.size();
     for (i=1;i<n;++i) {
         next=NULL;
         for (vector<tree_node*>::const_iterator it=t->children.begin();it!=t->children.end();++it) {
@@ -14714,7 +14735,7 @@ bool graphe::mvc(ivector &cover,int vc_alg,int sg,int tm_lim,double gap_tol,bool
     cover.clear();
     if (is_null())
         return true;
-    int c=-1,last_cov_size=0,cov_size,s,s0,cmp;
+    int c=-1,s,s0,cmp;
     bool changed=true;
     while (changed) {
         s0=c<0?(sg<0?1:1+max_subgraph_index()):c+3;
@@ -15433,7 +15454,7 @@ const char* graphe::identify() {
  * Return true iff an isomorphic special graph is found.
  * Parameters of each found isomorphic graph are stored in spec as follows:
  * [SPECIAL_GRAPH_ID, param1, param2, ...] */
-void graphe::identify_from_sequences(ivectors &spec,int haar_limit) {
+void graphe::identify_from_sequences(vecteur &spec,int haar_limit) {
     spec.clear();
     int nv=node_count(),ne=edge_count();
     if (nv<=1)
@@ -15449,7 +15470,7 @@ void graphe::identify_from_sequences(ivectors &spec,int haar_limit) {
                 if ((p-3)%4==0) {
                     G.make_paley_graph(p,k);
                     if (is_isomorphic(G,isom,false))
-                        spec.push_back(make_ivector(3,_GT_SEQ_PALEY,p,k));
+                        spec.push_back(makevecteur(at_paley_graph,p,k));
                 }
             }
         }
@@ -15464,16 +15485,16 @@ void graphe::identify_from_sequences(ivectors &spec,int haar_limit) {
         GC.connected_components(gc_components);
         /* cycle graphs */
         if (conn && reg && nv>2 && nv==ne && maxdeg==2)
-            spec.push_back(make_ivector(2,_GT_SEQ_CYCLE,nv));
+            spec.push_back(makevecteur(at_cycle_graph,nv));
         /* path graphs */
         if (conn && nv>2 && ne==nv-1 && maxdeg==2)
-            spec.push_back(make_ivector(2,_GT_SEQ_PATH,nv));
+            spec.push_back(makevecteur(at_path_graph,nv));
         /* complete graphs */
         if (conn && nv>2 && 2*ne==nv*(nv-1))
-            spec.push_back(make_ivector(2,_GT_SEQ_COMPLETE,nv));
+            spec.push_back(makevecteur(at_complete_graph,nv));
         /* complete bipartite graphs */
         if (conn && nv>2 && bp && ne==n1*n2)
-            spec.push_back(make_ivector(3,_GT_SEQ_COMPLETE,n1,n2));
+            spec.push_back(makevecteur(at_complete_graph,n1,n2));
         /* complete multipartite graphs */
         if (conn && gc_components.size()>2 && int(gc_components.size())<nv) {
             GC.unset_subgraphs();
@@ -15486,12 +15507,12 @@ void graphe::identify_from_sequences(ivectors &spec,int haar_limit) {
                     break;
             }
             if (it==gc_components.end()) {
-                ivector res(1,_GT_SEQ_COMPLETE);
+                vecteur res;
                 for (it=gc_components.begin();it!=gc_components.end();++it) {
                     res.push_back(it->size());
                 }
-                std::sort(res.begin()+1,res.end());
-                std::reverse(res.begin()+1,res.end());
+                res=*_SortD(res,ctx)._VECTptr;
+                res.insert(res.begin(),at_complete_graph);
                 spec.push_back(res);
             }
         }
@@ -15507,12 +15528,14 @@ void graphe::identify_from_sequences(ivectors &spec,int haar_limit) {
                     d[i]=it->first;
                     cnt[i++]=it->second;
                 }
-                if (cnt[1]==1 && deg_count.size()==2)
-                    spec.push_back(make_ivector(3,_GT_SEQ_COMPLETE_TREE,d[1],1));
-                else if (cnt[1]==1 && (k=d[1])>1 && d[2]==k+1 && _logb(makesequence(cnt[0],k),ctx).is_integer()) {
+                if (cnt[1]==1 && deg_count.size()==2) {
+                    spec.push_back(d[1]==2?makevecteur(at_complete_binary_tree,1):
+                                           makevecteur(at_complete_kary_tree,d[1],1));
+                } else if (cnt[1]==1 && (k=d[1])>1 && d[2]==k+1 && _logb(makesequence(cnt[0],k),ctx).is_integer()) {
                     n=_logb(makesequence(cnt[0],k),ctx).val;
                     if (tree_height(tree_height())==n && cnt[2]==((int)std::pow(k,n)-1)/(k-1)-1)
-                        spec.push_back(make_ivector(3,_GT_SEQ_COMPLETE_TREE,k,n));
+                        spec.push_back(k==2?makevecteur(at_complete_binary_tree,n):
+                                            makevecteur(at_complete_kary_tree,k,n));
                 }
             }
         }
@@ -15538,9 +15561,9 @@ void graphe::identify_from_sequences(ivectors &spec,int haar_limit) {
                 G.make_intersection_graph(n,k,0);
                 assert(nv==G.node_count() && ne==G.edge_count());
                 if (is_isomorphic(G,isom,false)) {
-                    spec.push_back(make_ivector(3,_GT_SEQ_KNESER,n,k));
+                    spec.push_back(makevecteur(at_kneser_graph,n,k));
                     if (n==2*k+1)
-                        spec.push_back(make_ivector(2,_GT_SEQ_ODD,k+1));
+                        spec.push_back(makevecteur(at_odd_graph,k+1));
                 }
             }
             for (ipairs_iter it=nk_johnson.begin();it!=nk_johnson.end();++it) {
@@ -15548,7 +15571,7 @@ void graphe::identify_from_sequences(ivectors &spec,int haar_limit) {
                 G.make_intersection_graph(n,k,k-1);
                 assert(nv==G.node_count() && ne==G.edge_count());
                 if (is_isomorphic(G,isom,false))
-                    spec.push_back(make_ivector(3,_GT_SEQ_JOHNSON,n,k));
+                    spec.push_back(makevecteur(at_johnson_graph,n,k));
             }
         }
         /* hypercube graphs */
@@ -15557,37 +15580,37 @@ void graphe::identify_from_sequences(ivectors &spec,int haar_limit) {
             if (nv==(1<<n) && ne==n*(1<<(n-1))) {
                 G.make_hypercube_graph(n);
                 if (is_isomorphic(G,isom,false))
-                    spec.push_back(make_ivector(2,_GT_SEQ_HYPERCUBE,n));
+                    spec.push_back(makevecteur(at_hypercube_graph,n));
             }
         }
         /* star graphs */
         if (conn && maxdeg==ne && ne==nv-1 && ne>2)
-            spec.push_back(make_ivector(2,_GT_SEQ_STAR,ne));
+            spec.push_back(makevecteur(at_star_graph,ne));
         /* web graphs */
-        if (conn && maxdeg==4 && mindeg==3 && nv%(2*nv-ne)==0) {
+        if (conn && mindeg==3 && maxdeg<=4 && nv%(2*nv-ne)==0) {
             int m=2*nv-ne,n=nv/m;
             if (m>2 && n>1) {
                 G.make_web_graph(m,n);
                 if (is_isomorphic(G,isom,false))
-                    spec.push_back(make_ivector(3,_GT_SEQ_WEB,m,n));
+                    spec.push_back(makevecteur(at_web_graph,m,n));
             }
         }
         /* wheel graphs */
         if (conn && nv>3 && maxdeg==nv-1 && mindeg==3 && ne==2*(nv-1))
-            spec.push_back(make_ivector(2,_GT_SEQ_WHEEL,nv-1));
+            spec.push_back(makevecteur(at_wheel_graph,nv-1));
         /* prism graphs */
         if (conn && reg && maxdeg==3 && nv>5 && nv%2==0 && 2*ne==3*nv) {
             G.make_petersen_graph(nv/2,1);
             if (is_isomorphic(G,isom,false))
-                spec.push_back(make_ivector(2,_GT_SEQ_PRISM,nv/2));
+                spec.push_back(makevecteur(at_prism_graph,nv/2));
         }
         /* antiprism graphs */
         if (conn && reg && maxdeg==4 && nv%2==0 && ne==2*nv) {
             G.make_antiprism_graph(nv/2);
             if (is_isomorphic(G,isom,false))
-                spec.push_back(make_ivector(2,_GT_SEQ_ANTIPRISM,nv/2));
+                spec.push_back(makevecteur(at_antiprism_graph,nv/2));
         }
-        /* grid graphs (mode in {0,1,2} is written as the third parameter) */
+        /* grid graphs */
         if (conn && mindeg==2 && maxdeg<=4) { // rectangular grid
             int D=ne*ne-4*nv*(ne-nv+1);
             gen n=(2*nv-ne-sqrt(D,ctx))/2;
@@ -15595,17 +15618,17 @@ void graphe::identify_from_sequences(ivectors &spec,int haar_limit) {
             if (n.is_integer() && m.is_integer() && n.val>1 && m.val>1) {
                 G.make_grid_graph(m.val,n.val,0);
                 if (is_isomorphic(G,isom,false))
-                    spec.push_back(make_ivector(4,_GT_SEQ_GRID,m.val,n.val,0));
+                    spec.push_back(makevecteur(at_grid_graph,m,n));
             }
         }
         if (conn && mindeg==2 && maxdeg<=6) { // triangular grid
             int D=9*nv*nv+ne*ne-6*nv*ne-10*nv-2*ne+1;
-            gen n=(3*nv-ne+1-sqrt(D,ctx))/2;
-            gen m=(3*nv-ne+1+sqrt(D,ctx))/2;
+            gen n=(3*nv-ne+1-sqrt(D,ctx))/4;
+            gen m=(3*nv-ne+1+sqrt(D,ctx))/4;
             if (n.is_integer() && m.is_integer() && n.val>1 && m.val>1) {
                 G.make_grid_graph(m.val,n.val,1);
                 if (is_isomorphic(G,isom,false))
-                    spec.push_back(make_ivector(4,_GT_SEQ_GRID,m.val,n.val,1));
+                    spec.push_back(makevecteur(at_grid_graph,m,n,at_triangle));
             }
         }
         if (conn && reg && maxdeg==4 && ne==2*nv) { // toroidal grid
@@ -15615,13 +15638,13 @@ void graphe::identify_from_sequences(ivectors &spec,int haar_limit) {
                 if (is_greater(m,n,ctx)) {
                     G.make_grid_graph(m.val,n.val,2);
                     if (is_isomorphic(G,isom,false)) {
-                        spec.push_back(make_ivector(4,_GT_SEQ_GRID,m.val,n.val,2));
+                        spec.push_back(makevecteur(at_torus_grid_graph,m,n));
                         break;
                     }
                 }
             }
         }
-        /* Sierpinski graphs (triangle=true or false is written as the third parameter) */
+        /* Sierpinski graphs */
         if (conn) {
             int n,p;
             gen lgb;
@@ -15631,7 +15654,7 @@ void graphe::identify_from_sequences(ivectors &spec,int haar_limit) {
                         maxdeg==(n==1?p-1:p) && mindeg==p-1) {
                     G.make_sierpinski_graph(n,p,false);
                     if (is_isomorphic(G,isom,false))
-                        spec.push_back(make_ivector(4,_GT_SEQ_SIERPINSKI,n,p,0));
+                        spec.push_back(makevecteur(at_sierpinski_graph,n,p));
                 }
             }
             int D=4*nv*(nv-1)-8*ne+1;
@@ -15641,7 +15664,7 @@ void graphe::identify_from_sequences(ivectors &spec,int haar_limit) {
                     maxdeg==(n==1?p-1:2*(p-1)) && mindeg==p-1) {
                 G.make_sierpinski_graph(n,p,true);
                 if (is_isomorphic(G,isom,false))
-                    spec.push_back(make_ivector(4,_GT_SEQ_SIERPINSKI,n,p,1));
+                    spec.push_back(makevecteur(at_sierpinski_graph,n,p,at_triangle));
             }
         }
         /* generalized Petersen graphs */
@@ -15649,7 +15672,7 @@ void graphe::identify_from_sequences(ivectors &spec,int haar_limit) {
             for (int k=1;k<=(nv/2-1)/2;++k) {
                 G.make_petersen_graph(nv/2,k);
                 if (is_isomorphic(G,isom,false)) {
-                    spec.push_back(make_ivector(3,_GT_SEQ_PETERSEN,nv/2,k));
+                    spec.push_back(makevecteur(at_petersen_graph,nv/2,k));
                     break;
                 }
             }
@@ -15660,11 +15683,11 @@ void graphe::identify_from_sequences(ivectors &spec,int haar_limit) {
             if ((n=nv/4)>2 && n%2==1) {
                 G.make_flower_snark(n);
                 if (is_isomorphic(G,isom,false))
-                    spec.push_back(make_ivector(2,_GT_SEQ_FLOWER,n));
+                    spec.push_back(makevecteur(at_flower_snark,n));
             } else if (n%2==0 && (n/2)%2==1) {
                 G.make_goldberg_snark(n/2);
                 if (is_isomorphic(G,isom,false))
-                    spec.push_back(make_ivector(2,_GT_SEQ_GOLDBERG,n/2));
+                    spec.push_back(makevecteur(at_goldberg_snark,n/2));
             }
         }
         /* Paley graphs */
@@ -15675,19 +15698,19 @@ void graphe::identify_from_sequences(ivectors &spec,int haar_limit) {
                     is_strongly_regular(sig) && sig.first==(nv-5)/4 && sig.second==(nv-1)/4) {
                 G.make_paley_graph(f.front().val,f.back().val);
                 if (is_isomorphic(G,isom,false))
-                    spec.push_back(make_ivector(3,_GT_SEQ_PALEY,f.front().val,f.back().val));
+                    spec.push_back(makevecteur(at_paley_graph,f.front(),f.back()));
             }
         }
         /* Haar graphs */
         if (reg && nv%2==0 && bp && n1==n2) {
             int k=nv/2,m;
-            if (k<=std::min(haar_limit,64)) {
-                ulong lb=(1<<(k-1)),ub=(1<<k);
+            if (k<=std::min(haar_limit,_GT_HAAR_LIMIT)) {
+                ulong lb=(1UL<<(k-1)),ub=(1UL<<k);
                 ivector d(2*k),d0=degree_sequence();
                 std::sort(d0.begin(),d0.end());
                 for (ulong n=lb;n<ub;++n) {
                     bitset<64> be(n);
-                    if (maxdeg!=be.count())
+                    if (maxdeg!=int(be.count()))
                         continue;
                     std::fill(d.begin(),d.end(),0);
                     m=0;
@@ -15706,7 +15729,12 @@ void graphe::identify_from_sequences(ivectors &spec,int haar_limit) {
                     if (d==d0) {
                         G.make_haar_graph(n);
                         if (is_isomorphic(G,isom,false)) {
-                            spec.push_back(make_ivector(2,_GT_SEQ_HAAR,n));
+                            vecteur v(k);
+                            for (int i=0;i<k;++i) {
+                                v[i]=be.test(i)?1:0;
+                            }
+                            gen ng=_convert(makesequence(v,_BASE,2),ctx);
+                            spec.push_back(makevecteur(at_haar_graph,ng));
                             break;
                         }
                     }

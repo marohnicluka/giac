@@ -75,12 +75,12 @@ void graphe::message(const char *format,int a,int b,int c) const {
 }
 
 void graphe::suspend_logging() {
-    logger_rdstate=(*logptr(ctx)).rdstate();
-    (*logptr(ctx)).setstate(ios_base::failbit);
+    ctx->globalptr->_logptr_->setstate(ios::ios_base::failbit);
 }
 
 void graphe::restore_logging() {
-    (*logptr(ctx)).setstate(logger_rdstate);
+    ios::ios_base::iostate s=ctx->globalptr->_logptr_->rdstate() & ~ios::ios_base::failbit;
+    ctx->globalptr->_logptr_->clear(s);
 }
 
 string graphe::giac_version() const {
@@ -6028,7 +6028,7 @@ bool graphe::make_haar_graph(const gen &n) {
 bool graphe::make_haar_graph(ulong n) {
     if (n==0)
         return false;
-    int k=1+int(std::floor(std::log2(n)));
+    int k=1+int(std::floor(std::log(n)/M_LN2));
     this->clear();
     bitset<64> be(n);
     vecteur V;
@@ -8604,7 +8604,7 @@ double graphe::to_double(const gen &g,GIAC_CONTEXT) {
 
 /* customize the Giac display */
 gen graphe::customize_display(int options) {
-    return symbolic(at_equal,makesequence(at_display,change_subtype(options,_INT_COLOR)));
+    return symb_equal(at_display,change_subtype(options,_INT_COLOR));
 }
 
 /* append the line segment [p,q] to vecteur v */

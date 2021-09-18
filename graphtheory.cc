@@ -583,7 +583,7 @@ gen _foldl(const gen &g,GIAC_CONTEXT) {
     const gen &op=gv.front();
     gen arg=gv[1];
     for (const_iterateur it=gv.begin()+2;it!=gv.end();++it) {
-        arg=symbolic(at_of,makesequence(op,makesequence(arg,*it)));
+        arg=symb_of(op,makesequence(arg,*it));
     }
     return _eval(arg,contextptr);
 }
@@ -608,7 +608,7 @@ gen _foldr(const gen &g,GIAC_CONTEXT) {
     const gen &op=gv.front();
     gen arg=gv[1];
     for (int i=gv.size();i-->2;) {
-        arg=symbolic(at_of,makesequence(op,makesequence(gv[i],arg)));
+        arg=symb_of(op,makesequence(gv[i],arg));
     }
     return _eval(arg,contextptr);
 }
@@ -1044,7 +1044,7 @@ gen _digraph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_VECT && g.subtype==_SEQ__VECT)
         args=*g._VECTptr;
     else args.push_back(g);
-    args.push_back(symbolic(at_equal,makesequence(_GT_DIRECTED,graphe::VRAI)));
+    args.push_back(symb_equal(_GT_DIRECTED,graphe::VRAI));
     return _graph(change_subtype(args,_SEQ__VECT),contextptr);
 }
 static const char _digraph_s[]="digraph";
@@ -3227,7 +3227,7 @@ gen _get_edge_attribute(const gen &g,GIAC_CONTEXT) {
     if (tags.empty()) {
         const graphe::attrib &attr=G.edge_attributes(i,j);
         for (graphe::attrib_iter it=attr.begin();it!=attr.end();++it) {
-            values.push_back(symbolic(at_equal,makesequence(graphe::str2gen(G.index2tag(it->first),true),it->second)));
+            values.push_back(symb_equal(graphe::str2gen(G.index2tag(it->first),true),it->second));
         }
     } else {
         gen value;
@@ -3864,7 +3864,7 @@ gen _tree_height(const gen &g,GIAC_CONTEXT) {
         res=G.tree_height(r);
         height=r<0?G.tree_height(res):res;
     }
-    return is_undef(root)?makesequence(height,symbolic(at_equal,makevecteur(at_maple_root,G.node_label(res)))):height;
+    return is_undef(root)?makesequence(height,symb_equal(at_maple_root,G.node_label(res))):height;
 }
 static const char _tree_height_s[]="tree_height";
 static define_unary_function_eval(__tree_height,&_tree_height,_tree_height_s);
@@ -4920,7 +4920,7 @@ gen _graph_power(const gen &g,GIAC_CONTEXT) {
                 mij=1;
         }
     }
-    gen opt=symbolic(at_equal,makesequence(_GT_DIRECTED,G.is_directed()));
+    gen opt=symb_equal(_GT_DIRECTED,G.is_directed());
     return _graph(makesequence(G.vertices(),mpow,opt),contextptr);
 }
 static const char _graph_power_s[]="graph_power";
@@ -6393,7 +6393,7 @@ gen _is_isomorphic(const gen &g,GIAC_CONTEXT) {
         vecteur mapping;
         int n=G1.node_count();
         for (int i=0;i<n;++i) {
-            mapping.push_back(symbolic(at_equal,G1.node_label(i),G2.node_label(clab[i])));
+            mapping.push_back(symb_equal(G1.node_label(i),G2.node_label(clab[i])));
         }
         identifier_assign(*isom._IDNTptr,mapping,contextptr);
     }

@@ -778,7 +778,6 @@ private:
     std::map<int,iset> visited_edges;
     ivectors maxcliques;
     std::stack<ivector> saved_subgraphs;
-    std::ios::iostate logger_rdstate;
     bool m_supports_attributes;
     void clear_node_stack();
     void clear_node_queue();

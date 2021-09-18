@@ -1,3 +1,22 @@
+/*
+ * lpsolve.h
+ *
+ * Copyright 2021 Luka Marohnić
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #ifndef __LPSOLVE_H
 #define __LPSOLVE_H
 
@@ -18,8 +37,10 @@ namespace giac {
 #define LP_MIN_PARALLELISM 0.86
 #define LP_MAX_MAGNITUDE 1e6
 #define LP_CONSTR_MAXSIZE 1e8
+#define LP_FEAS_TOL 1e-5
 
 typedef vector<int> ints;
+typedef pair<int,gen> intgen;
 
 enum lp_results {
     _LP_SOLVED     = 0,
@@ -57,7 +78,7 @@ struct lp_settings {
     //solver parameters
     int solver;
     int precision;
-    bool presolve;
+    int presolve;
     bool maximize;
     int assumption;
     int iteration_limit;
@@ -71,6 +92,7 @@ struct lp_settings {
     int node_limit;
     int time_limit; //in miliseconds
     int max_cuts;
+    bool use_heuristic;
     //message report parameters
     bool verbose;
     double status_report_freq;
@@ -80,6 +102,7 @@ struct lp_settings {
 struct lp_stats {
     int subproblems_examined;
     int cuts_applied;
+    double cut_improvement;
     int max_active_nodes;
     double mip_gap;
     lp_stats();
@@ -111,7 +134,7 @@ class lp_variable {
     int _sign_type;
     lp_range _range;
     string _name;
-    map<int,gen> _subs_coef;
+    vector<intgen> _subs_coef;
     double pseudocost[2];
     int nbranch[2];
     void assign(const lp_variable &other);
@@ -122,6 +145,7 @@ public:
     lp_variable &operator =(const lp_variable &other) { assign(other); return *this; }
     bool is_integral() const { return _is_integral; }
     void set_integral(bool yes) { _is_integral = yes; }
+    bool is_binary() const { return _is_integral && is_zero(_range.lb()) && is_one(_range.ub()); }
     int sign_type() const { return _sign_type; }
     void set_sign_type(int type) { _sign_type=type; }
     const lp_range &range() const { return _range; }
@@ -133,20 +157,23 @@ public:
     void set_ub(const gen &U) { _range.set_ub(U); }
     const gen &lb() const { return _range.lb(); }
     const gen &ub() const { return _range.ub(); }
-    bool tighten_lbound(const gen &L,GIAC_CONTEXT) { return _range.tighten_lbound(L,contextptr); }
-    bool tighten_ubound(const gen &U,GIAC_CONTEXT) { return _range.tighten_ubound(U,contextptr); }
+    bool tighten_lbound(const gen &L,GIAC_CONTEXT)
+        { return _range.tighten_lbound(_is_integral?_ceil(L,contextptr):L,contextptr); }
+    bool tighten_ubound(const gen &U,GIAC_CONTEXT)
+        { return _range.tighten_ubound(_is_integral?_floor(U,contextptr):U,contextptr); }
     void update_pseudocost(double delta,double fr,int dir);
     double score(double fr) const;
-    void set_subs_coef(int j,const gen &g) { _subs_coef[j]=g; }
-    bool has_subs_coef(int j) const { return _subs_coef.find(j)!=_subs_coef.end(); }
-    const gen &get_subs_coef(int j) const { return _subs_coef.at(j); }
+    void push_subs_coef(int j,const gen &g) { _subs_coef.push_back(make_pair(j,g)); }
+    void clear_subs_coef() { _subs_coef.clear(); }
+    const vector<intgen> &subs_coef() const { return _subs_coef; }
     int find_opt_free(const gen &c,gen &val,GIAC_CONTEXT) const;
 };
 
 struct lp_constraints {
-    matrice lhs;
-    vecteur rhs;
-    ints rv;
+    matrice lhs,lhs_f;
+    vecteur rhs,rhs_f;
+    ints rv,rv_orig;
+    int ncols_orig;
     int nrows() { return lhs.size(); }
     int ncols() { return lhs.empty()?0:lhs.front()._VECTptr->size(); }
     int nonzeros();
@@ -161,6 +188,7 @@ struct lp_constraints {
     void subtract(int index,const vecteur &v,const gen &g);
     void remove(int index);
     int remove_linearly_dependent(GIAC_CONTEXT);
+    pair<int,double> violated_constraints(const vecteur &x,GIAC_CONTEXT);
 };
 
 class lp_node;
@@ -173,7 +201,6 @@ struct lp_problem {
     vector<lp_variable> variables;
     vecteur variable_identifiers;
     lp_constraints constr;
-    lp_constraints cuts;
     lp_settings settings;
     lp_stats stats;
     vecteur solution;
@@ -182,6 +209,7 @@ struct lp_problem {
     stack<int> removed_cols;
     int iteration_count;
     bool use_blb;
+    int imp_int_count;
     lp_problem(GIAC_CONTEXT) {
         ctx=contextptr;
         settings=lp_settings();
@@ -189,7 +217,7 @@ struct lp_problem {
     int nc() { return constr.lhs.size(); }
     int nv() { return variables.size(); }
     void message(const char* msg,bool err=false);
-    void report_status(const char* msg,int count);
+    void report_status(const char* msg);
     void add_identifiers_from(const gen &g);
     bool assign_variable_types(const gen &g,int t);
     int get_variable_index(const identificateur &idnt);
@@ -202,12 +230,13 @@ struct lp_problem {
     bool has_integral_variables();
     bool has_approx_coefficients();
     bool lincomb_coeff(const gen &g,vecteur &varcoeffs,gen &freecoeff);
-    int preprocess();
+    int preprocess(bool find_imp_int=true);
     bool has_infeasible_var() const;
     void remove_variable(int j);
+    void find_implied_integers();
     void postprocess();
     int solve();
-    vecteur output_solution();
+    vecteur output_solution(bool sort_vars);
     //GLPK routines
 #ifdef HAVE_LIBGLPK
     glp_prob *glpk_initialize();
@@ -231,15 +260,21 @@ class lp_node {
     gen infeas;
     int most_fractional;
     map<int,double> fractional_vars;
-    ints cut_indices;
-    bool use_bland;
+    bool use_bland,up_branch,is_root;
+    stack<vector<intgen> > removed_cols;
+    vector<intgen> pivot_row;
+    gen pivot_elm;
+    int nv;
     void assign(const lp_node &other);
     gen fracpart(const gen &g) const;
+    int preprocess(matrice &m,vecteur &bv,vecteur &l,vecteur &u,ints &cols,vecteur &obj,gen &obj_ct);
+    bool remove_free_variable(int j,const vecteur &l,const vecteur &u,ints &cols,const vecteur &obj,gen &obj_ct);
     bool change_basis(matrice &m,const vecteur &u,vector<bool> &is_slack,ints &basis,ints &cols);
+    void pivot_ij(matrice &m,int I,int J,bool negate=false);
     void simplex_reduce_bounded(matrice &m,const vecteur &u,vector<bool> &is_slack,
                                 ints &basis,ints &cols,int phase,const gen &obj_ct);
 public:
-    lp_node(lp_problem *p) { prob=p; }
+    lp_node(lp_problem *p,bool isroot=false) { prob=p; is_root=isroot; }
     lp_node(const lp_node &other) { assign(other); }
     ~lp_node() { }
     lp_node &operator =(const lp_node &other) { assign(other); return *this; }
@@ -259,8 +294,11 @@ public:
     int get_most_fractional() const { return most_fractional; }
     int get_first_fractional_var() const { return fractional_vars.begin()->first; }
     int get_last_fractional_var() const { return fractional_vars.rbegin()->first; }
-    lp_node create_child();
+    void init_child(lp_node &child);
+    void set_up_branch(bool yes) { up_branch=yes; }
+    bool is_up_branch() const { return up_branch; }
     int solve_relaxation();
+    bool rounding_heuristic(vecteur &sol,gen &cost) const;
 };
 
 gen _lpsolve(const gen &args,GIAC_CONTEXT);

@@ -937,7 +937,7 @@ void lp_problem::set_objective(const vecteur &v,const gen &ft) {
  */
 void lp_problem::message(const char *msg,bool force_print) {
     if (force_print || settings.verbose)
-        *logptr(ctx) << msg << "\n";
+        *logptr(ctx) << gettext(msg) << "\n";
 }
 
 /*
@@ -1151,8 +1151,8 @@ void lp_problem::tighten_variable_bounds(int i,const gen &l,const gen &u) {
 vecteur lp_problem::output_solution(bool sort_vars) {
     if (variable_identifiers.empty())
         return solution;
-    vecteur ret=*_zip(makesequence(at_equal,variable_identifiers,solution),ctx)._VECTptr;
-    return sort_vars?*_sort(ret,ctx)._VECTptr:ret;
+    vecteur v=sort_vars?sort_identifiers(variable_identifiers,ctx):variable_identifiers;
+    return *_zip(makesequence(at_equal,v,solution),ctx)._VECTptr;
 }
 
 /*
@@ -2312,7 +2312,7 @@ bool parse_options_and_bounds(const_iterateur &it,const_iterateur &itend,lp_prob
             prob.settings.maximize=true;
         else if (*it==at_minimize)
             prob.settings.maximize=false;
-        else if (it->is_integer() && it->subtype==_INT_MAPLECONVERSION) {
+        else if (is_mcint(*it)) {
             switch(it->val) {
             case _LP_MAXIMIZE:
                 prob.settings.maximize=true;
@@ -2344,7 +2344,7 @@ bool parse_options_and_bounds(const_iterateur &it,const_iterateur &itend,lp_prob
                 prob.settings.maximize=(bool)rh.val;
             else if (lh==at_assume && rh.is_integer())
                 prob.settings.assumption=rh.val;
-            else if (lh.is_integer() && lh.subtype==_INT_MAPLECONVERSION) {
+            else if (is_mcint(lh)) {
                 switch(lh.val) {
                 case _LP_INTEGERVARIABLES:
                 case _LP_BINARYVARIABLES:
@@ -2372,14 +2372,14 @@ bool parse_options_and_bounds(const_iterateur &it,const_iterateur &itend,lp_prob
                         return false;
                     break;
                 case _LP_NODESELECT:
-                    if (rh.is_integer() && rh.subtype==_INT_MAPLECONVERSION)
+                    if (is_mcint(rh))
                         prob.settings.nodeselect=rh.val;
                     else return false;
                     if (prob.settings.nodeselect<_LP_DEPTHFIRST || prob.settings.nodeselect>_LP_HYBRID)
                         return false;
                     break;
                 case _LP_VARSELECT:
-                    if (rh.is_integer() && rh.subtype==_INT_MAPLECONVERSION)
+                    if (is_mcint(rh))
                         prob.settings.varselect=rh.val;
                     else return false;
                     if (prob.settings.varselect<_LP_FIRSTFRACTIONAL || prob.settings.varselect>_LP_PSEUDOCOST)
@@ -2390,7 +2390,7 @@ bool parse_options_and_bounds(const_iterateur &it,const_iterateur &itend,lp_prob
                         prob.settings.precision=_LP_EXACT;
                     else if (rh==at_float)
                         prob.settings.precision=_LP_INEXACT;
-                    else if (rh.is_integer() && rh.subtype==_INT_MAPLECONVERSION) {
+                    else if (is_mcint(rh)) {
                         if (rh.val==_LP_INTERIOR_POINT) {
                             prob.settings.precision=_LP_INEXACT;
                             prob.settings.solver=_LP_INTERIOR_POINT;

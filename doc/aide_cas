@@ -15603,6 +15603,9 @@ ratinterp([1,3,5,8],[2,-1,3,4],x)
 0 Expr(o),[List(c)],[bounds],[options]
 -1 nlpsolve
 -2 fsolve
+-3 minimize
+-4 maximize
+-5 box_constraints
 lpsolve(2x+y-z+4,[x<=1,y>=2,x+3y-z=2,2x-y+z<=8,-x+y<=5])
 lpsolve(-4x-5y,[x+2y<=6,5x+4y<=20,0<=x,0<=y])
 lpsolve(-7x+2y,[4x-12y<=20,-x+3y<=3],x=-5..5,y=0..inf,lp_maximize=true)
@@ -15621,22 +15624,26 @@ lpsolve(x1+x2,[1867x1+1913x2=3618894],assume=nonnegint,lp_verbose=true)
 
 # nlpsolve
 1 Optimisation non lineaire de objectif (expression non lineaire) sous contraintes d'egalite ou inegalite non lineaires par l'algorithme COBYLA
-2 Solves a nonlinear programming problem of optimizing the objective obj under constraints constr (list of equations and/or inequations) and within bounds bd (sequence of x=a..b) with optional options (for example setting an initial point).
+2 Solves a nonlinear programming problem of optimizing the objective under constraints constr (list of equations and/or inequations) and within bounds bd (sequence of x=a..b) with optional options (for example setting an initial point or integrality constraints) using COBYLA algorithm.
 0 objective, [constr], [bd], [opts]
--1 lpsolve
--2 fsolve
+-1 minimize
+-2 maximize
 -3 fMin
 -4 fMax
+-5 box_constraints
+-6 lpsolve
+-7 fsolve
 nlpsolve((x1-10)^3+(x2-20)^3,[(x1-5)^2+(x2-5)^2>=100,(x2-5)^2+(x1-6)^2<=82.81],nlp_initialpoint=[x1=20.1,x2=5.84])
 nlpsolve(sin(x1+x2)+(x1-x2)^2-1.5x1+2.5x2+1,x1=-1.5..4,x2=-3..3)
 nlpsolve(ln(1+x1^2)-x2,[(1+x1^2)^2+x2^2=4])
 nlpsolve(x1,[x2>=exp(x1),x3>=exp(x2)],maximize=true,x1=0..100,x2=0..100,x3=0..10,nlp_initialpoint=[x1=1,x2=1.05,x3=2.9])
 nlpsolve(-x1*x2*x3,[72-x1-2x2-2x3>=0],x1=0..20,x2=0..11,x3=0..42)
 nlpsolve(2-1/120*x1*x2*x3*x4*x5,[x1<=1,x2<=2,x3<=3,x4<=4,x5<=5],assume=nlp_nonnegative)
-nlpsolve(sin(x)/x,x=1..30)
 nlpsolve(x^3+2x*y-2y^2,x=-10..10,y=-10..10,nlp_initialpoint=[x=3,y=4],maximize) 
 nlpsolve(w^3*(v-w)^2+(w-x-1)^2+(x-y-2)^2+(y-z-3)^2,[w+x+y+z<=5,3z+2v=3],assume=nlp_nonnegative)
 nlpsolve(sin(x)*Psi(x),x=1..20,nlp_initialpoint=[x=16])
+nlpsolve(x1^2/2+5x1+6x2,[6x1+x2^2<=23],[x1,x2]=1..5,assume=integer,maximize)
+nlpsolve(4x1*x2*x3-x1*x2-x1*x3-x2*x3,assume=nlp_binary)
 
 # implicitdiff
 1 Derivee implicite
@@ -15663,7 +15670,7 @@ implicitdiff(x*y*z,-2x^3+15x^2*y+11y^3-24y=0,[x,z,y],order=2,[1,-1,0])
 0 Opt
 -1 lpsolve
 
-# nlp_initialpoint nlp_iterationlimit nlp_nonnegative nlp_precision nlp_maximize
+# nlp_initialpoint nlp_iterationlimit nlp_nonnegative nlp_precision nlp_maximize nlp_presolve nlp_samples nlp_integervariables nlp_integer nlp_binaryvariables nlp_binary nlp_feasibilitytolerance nlp_integertolerance nlp_nonnegint
 1 Options de la commande nlpsolve
 2 Options for nlpsolve command.
 0 Opt
@@ -15683,11 +15690,13 @@ extrema((x^3-1)^4/(2x^3+1)^4,x=0..inf)
 extrema(exp(x^2-2x)*ln(x)*ln(1-x),x=0.5)
 extrema(x^3-2x*y+3y^4,[x,y])
 extrema((2x^2-y)*(y-x^2),[x,y])  //Peano surface
+extrema(5x^2+3y^2+x*z^2-z*y^2,[x,y,z])
 extrema(x^2+y^2,x*y=1,[x=0..inf,y=0..inf])
  assume(a>0):;extrema(x/a^2+a*y^2,x+y=a,[x,y])
 extrema(x*y*z,x+y+z=1,[x,y,z])
 extrema(4y-2z,[2x-y-z=2,x^2+y^2=1],[x,y,z])
  assume(a>0):;extrema(x+y+z,[y^2-x^2=a,x+2z=1],[x,y,z])
+extrema((x-u)^2+(y-v)^2,[x^2/4+y^2/9=1,(u-3)^2+(v+5)^2=1],[u,v,x,y])
 extrema(x2^4-x1^4-x2^8+x1^10,[x1,x2],order=1)
 extrema(3x+3y+8z,[x^2+z^2=1,y^2+z^2=1],[x,y,z])
 extrema(ln(x)+2*ln(y)+3*ln(z)+4*ln(u)+5*ln(v),x+y+z+u+v=1,[x,y,z,u,v])

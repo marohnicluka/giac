@@ -1,3 +1,23 @@
+/*
+ * optimization.h
+ *
+ * Copyright 2021 Luka Marohnić
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 #ifndef __OPTIMIZATION_H
 #define __OPTIMIZATION_H
 #ifdef HAVE_CONFIG_H
@@ -6,10 +26,13 @@
 #include "first.h"
 #include "gen.h"
 #include "unary.h"
+#include <set>
 
 #ifndef NO_NAMESPACE_GIAC
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
+
+#define GOLDEN_RATIO 1.61803398875
 
 enum critical_point_classification {
     _CPCLASS_UNDECIDED=0,
@@ -117,6 +140,33 @@ public:
     /* solve the transportation problem with the given cost matrix, output in sol */
     void solve(const matrice &cost_matrix,matrice &sol);
 };
+
+struct nlp_fxvars {
+    int n_oldvars;
+    std::vector<int> indices;
+    vecteur names;
+    vecteur values;
+};
+
+struct nlp_lineq {
+    std::vector<int> lvars;
+    std::vector<int> nlvars;
+    int index;
+    gen e;
+};
+
+struct nlp_node {
+    vecteur lbv;
+    vecteur ubv;
+    gen opt;
+    int depth;
+    int branch_var;
+    gen frac_val;
+    bool find_branch_var(const vecteur &sol,const std::set<int> &iv_ind,double tol,GIAC_CONTEXT);
+};
+
+bool is_mcint(const gen &g,int v=-1);
+vecteur sort_identifiers(const vecteur &v,GIAC_CONTEXT);
 
 gen _implicitdiff(const gen &g,GIAC_CONTEXT);
 gen _box_constraints(const gen &g,GIAC_CONTEXT);

@@ -31264,7 +31264,7 @@ can convert bounds of given variables from the matrix form to interval form.
     \item \textit{bnds}, a matrix with $n$ rows and two columns in which the $k$-th row contains the lower and upper bound $l_k$ and $u_k$ of $x_k$, respectively.
   \end{itemize}
   \item \texttt{box\_constraints(}\textit{vars},\textit{bnds}\texttt{)}
-   returns the list $[x_1=l_1\ldots u_1,x_2=l_2\ldots u_2,\dots,x_n=l_n\ldots u_n]$.
+   returns the sequence $(x_1=l_1\ldots u_1,x_2=l_2\ldots u_2,\dots,x_n=l_n\ldots u_n)$.
 \end{itemize}
 
 \smallskip
@@ -31279,7 +31279,7 @@ can convert bounds of given variables from the matrix form to interval form.
 \end{center}
 \textit{Output:}
 \[
-\left[x=-2\ldots 2,y=-5\ldots 5\right]
+x=-2\ldots 2,y=-5\ldots 5
 \]
 \end{itemize}
 
@@ -41077,14 +41077,19 @@ To enter a problem symbolically:
   \item \textit{obj}, a symbolic expression representing the
     objective function or a path to a file containing the LP problem.
   \item Optionally, \textit{constr}, list of linear constraints which
-    may be equalities or inequalities or bounded expressions entered as
-    \textit{expr}$=a..b$.  (If \textit{obj} is a file name, this
+    may be equalities or inequalities or doubly bounded expressions in
+    form $a\leq f(x)\leq b$ entered as
+    \texttt{f(x)=a..b}.  (If \textit{obj} is a file name, this
     option is omitted.)
   \item Optionally, \textit{bd}, a sequence of expressions of type
-    \texttt{$x$=$a$..$b$}, specifying that the variable $x$ is bounded
-    below by $a$ and above by $b$.
-  \item Optionally, \textit{opts}, a sequence of solver settings in
-  form \textit{option=value}, where \texttt{option} may be one of:
+    \texttt{x=a..b}, specifying that the variable $x$ is bounded
+    below by $a\in\mathbb{R}\cup\{-\infty\}$ and above by
+    $b\in\mathbb{R}\cup\{+\infty\}$. If the bounds are stored in a
+    two-column matrix, consider using the conversion routine
+    \texttt{box\_constraints} (see Section~\ref{ssec:numb2intvl}).
+  \item Optionally, \textit{opts}, a sequence of solver settings
+  in form $\textit{option}=\textit{value}$, where \textit{option}
+  may be one of:
   \begin{itemize}
   \item \texttt{lp\_assume} (or \texttt{assume}), which specifies a global
   constraint on variables and whose value can be one of:
@@ -41102,7 +41107,9 @@ To enter a problem symbolically:
   \item \texttt{lp\_maximize} (or \texttt{maximize}), whose value can
   be \texttt{true} or \texttt{false} setting the objective
   direction (by default \texttt{false}, meaning that the objective is minimized).
-  \item \texttt{lp\_method}, setting the solver type, whose value can be one of:
+  You can enter only \texttt{maximize}, which is equivalent to
+  \texttt{maximize=true}.
+  \item \texttt{lp\_method}, setting the solver type, which can be one of:
   \begin{itemize}
     \item \texttt{exact}
     \item \texttt{float}
@@ -41133,6 +41140,9 @@ To enter a problem symbolically:
   \item \texttt{lp\_presolve}, whose value can be either \texttt{true} or
     \texttt{false}, enabling/disabling the preprocessing step (by default,
     \texttt{true}).
+  \item \texttt{lp\_heuristic}, whose value can be either \texttt{true} or
+    \texttt{false}, enabling/disabling the rounding heuristic (by default,
+    \texttt{true}).
   \item \texttt{lp\_nodeselect}, which sets the branching node
   selection strategy and whose value can be one of:
   \begin{itemize}
@@ -41153,7 +41163,8 @@ To enter a problem symbolically:
   \end{itemize}
   (by default, \texttt{lp\_varselect=lp\_pseudocost}).
   \item \texttt{lp\_verbose}, whose value can be \texttt{true} or
-    \texttt{false} (by default \texttt{false}).
+    \texttt{false} (by default \texttt{false}). You can enter
+    only \texttt{lp\_verbose}, which is equivalent to \texttt{lp\_verbose=true}.
 \end{itemize}
 \end{itemize}
 \item
@@ -41206,7 +41217,8 @@ under the given constraints. The optimal value is attained at point
 $(x,y,z)=(0,5,13)$.  
 \item
 Constraints may also take the form \texttt{expr=a..b} for bounded
-linear expressions.\\
+linear expressions. For example, minimize $x+2y+3z$ subject to
+$1\leq x+y\leq 5$ and $2\leq y+z+1\leq 4$, where $x,y\geq 0$.\\
 \textit{Input:}
 \begin{center}
 \texttt{lpsolve(x+2y+3z,[x+y=1..5,y+z+1=2..4,x>=0,y>=0])}
@@ -41221,7 +41233,8 @@ linear expressions.\\
 \item
 Use the \texttt{assume=lp\_nonnegative} option to specify that all
 variables are nonnegative. It is easier than entering the
-nonnegativity constraints explicitly.\\
+nonnegativity constraints explicitly. For example, minimize
+$-x-y$ subject to $y\leq 3x+\frac12$ and $y\leq -5x+2$, where $x,y\geq 0$.\\
 \textit{Input:}
 \begin{center}
   \texttt{lpsolve(-x-y,[y<=3x+1/2,y<=-5x+2],assume=lp\_nonnegative)}
@@ -41235,7 +41248,11 @@ nonnegativity constraints explicitly.\\
 % \end{center}
 \item
 Bounds can be added separately for some variables. They should be
-entered after constraints.\\
+entered after the constraints. For example, minimize $-6x+4y+z$ subject to
+\begin{align*}
+  5x-10y&\leq 20,\\ 2z-3y&=6,\\ -x+3y&\leq 3,
+\end{align*}
+where $1\leq x\leq 20$ and $y\geq 0$.\\
 \textit{Input:}
 \begin{center}
 \begin{tabular}{l}
@@ -41295,7 +41312,7 @@ To enter a problem in matrix form:
 \noindent
 \textbf{Examples.}
 \begin{itemize}
-\item 
+\item
 \textit{Input:}
 \begin{center}
 \begin{tabular}{l}
@@ -41350,7 +41367,7 @@ rule is used. A preprocessing routine, helping to reduce the size of the problem
 is available and enabled by default (you can disable it by typing
 \texttt{lp\_presolve=false}). All computation is done by using
 arbitrary-precision integer arithmetic, which is always exact but slower than the
-floating-point arithmetic.
+floating-point arithmetic. Note that all problem data should be rational.
 
 Cycling in simplex algorithm may happen, although it is rare in practice.
 Bland rule safeguarding is used by default in order to prevent cycling. However,
@@ -41481,10 +41498,15 @@ particular variable into two new nodes, and subsequently removed from
 the list. A node in which no branching is possible represents a feasible
 solution. The corresponding objective value is used to fathom nodes which cannot
 possibly lead to a better solution. The algorithm terminates when there is no
-space left for improvement. Since the bounds of the problem variables are the
-only parameters that change accross the subproblems, the number of constraints
-does not change, which is a benefit of the upper-bounding technique built in the
-simplex algorithm. This makes the algorithm space-efficient.
+space left for improvement.
+
+If presolving is enabled, then basic preprocessing is done at each node of the
+tree, except when \texttt{lp\_presolve=root} is set, in which case only the root node
+is processed. Additionally, after a non-integer-feasible solution with better objective
+value than the current incumbent is obtained by solving the linear relaxation, a
+rounding heuristic is applied in attempt to achieve integral feasibility. The
+heuristic is enabled by default; you can disable it by setting
+\texttt{lp\_heuristic} to \texttt{false}.
 
 \paragraph{Node-selection strategies.} 
 A node-selection strategy can be chosen by using the
@@ -41556,10 +41578,10 @@ and total solving time (in seconds).
 \begin{center}
   \begin{tabular}{|l|l|l|l|}\hline
     \textbf{Node selection} & \textbf{Variable selection} & \textbf{Nodes examined} & \textbf{Time}\\\hline
-    Best local bound & Last fractional & 13102 & 5.9\\\hline
-    Best projection & Pseudocost & 23528 & 14.2\\\hline
-    Hybrid & Most fractional & 43410 & 21.7\\\hline
-    Breadth-first & Pseudocost & 77034 & 100.8\\\hline
+    Best local bound & Last fractional & 13102 & 4.8\\\hline
+    Best projection & Most fractional & 26238 & 11.7\\\hline
+    Hybrid & First fractional & 55046 & 19.5\\\hline
+    Depth-first & Pseudocost & 131466 & 36.2\\\hline
   \end{tabular}
 \end{center}
 
@@ -41571,18 +41593,18 @@ which use larger amounts of information generally perform better.
 Therefore, it is reasonable to assume that \texttt{lp\_bestlocalbound} will be
 more appropriate than~\texttt{lp\_breadthfirst}, for instance.
 
-\paragraph{Cutting planes.} 
-Strong Gomory mixed integer cuts are generated at every node of the
-branch-and-bound tree and used to improve the objective value bound. 
-After solving the relaxed subproblem by using the
-simplex method, at most one strong cut is generated and added to the
-subproblem which is subsequently reoptimized. This procedure is repeated until
-no more cuts can be generated.
+\paragraph{Cutting planes.}
+Gomory mixed integer (GMI) cuts are generated at every node of the
+branch-and-bound tree to improve the objective value bound. 
+After solving the relaxed subproblem using the simplex method,
+GMI cuts are added to the subproblem which is subsequently reoptimized.
+This procedure is repeated until no useful cuts can be generated or
+until \texttt{lp\_maxcuts} limit is reached.
 
-Simplex reoptimizations
-are fast because they start with the last feasible basis; however, applying
-cuts makes the simplex tableau larger, which may slow the computation down.
-To limit the number of cuts that is allowed be appended to a subproblem,
+Simplex reoptimizations are fast because they start with the last feasible basis;
+however, applying cuts makes the simplex tableau larger, which may slow the
+computation down.
+To limit the number of GMI cuts that is allowed be appended to a subproblem,
 you can use \texttt{lp\_maxcuts} option, setting it either to zero (which
 disables the cut generation altogether) or to some positive integer.
 You may set it to \texttt{+infinity} as well, thus allowing any number of cuts
@@ -41635,8 +41657,9 @@ minimization resp.~maximization), and $g$ is the relative integrality gap.
 Also, a message is printed every time the incumbent solution is found or updated,
 as well as when the solver switches to pseudocost-based branching. After the
 algorithm is finished, a summary is displayed containing the total number of
-examined subproblems, the number of most nodes being active at the same time and
-the number of applied Gomory mixed integer cuts.       
+examined subproblems, the number of most nodes being active at the same time, and
+the number of applied GMI cuts along with the respective average objective value
+improvement.      
 
 In the following example, we solve the MIP given above.
 The solver shows all progress and summary messages.
@@ -41650,33 +41673,29 @@ The solver shows all progress and summary messages.
  \texttt{A:=[[22,13,26,33,21,3,14,26],[39,16,22,28,26,30,23,24], 
         [18,14,29,27,30,38,26,26],[41,26,28,36,18,38,16,26]]:;}\\
  \texttt{b:=[7872,10466,11322,12058]:;c:=[2,10,13,17,7,5,7,3]:;}\\
- \texttt{lpsolve(c,[[],[],A,b],assume=nonnegint, lp\_nodeselect=lp\_bestprojection,lp\_verbose)}
+ \texttt{lpsolve(c,[[],[],A,b],assume=nonnegint,lp\_verbose)}
 \end{center}
 \textit{Output:}
 \begin{center}
 \begin{tabular}{l}
-\texttt{Constraint matrix has 4 rows, 8 columns, and 36 nonzeros}\\
-\texttt{Preprocessing...}\\
-\texttt{Constraint matrix has 4 rows, 8 columns, and 36 nonzeros}\\
+\texttt{Constraint matrix has 4 rows, 9 columns, and 36 nonzeros}\\
+\texttt{Variables:~0 continuous, 8 integer (0 binary)}\\
+\texttt{Constraints:~4 equalities, 0 inequalities}\\
 \texttt{Optimizing...}\\
-\texttt{Applying branch \& bound method...}\\
-\texttt{~~~~~~76:~Switched to pseudocost based branching}\\
-\texttt{~~~~8906:~909 nodes active, bound:~1574.31}\\
-\texttt{~~~~9999:~Incumbent solution found}\\
-\texttt{~~~17052:~598 nodes active, bound:~1706.09, gap:~7.9779\%}\\
-\texttt{~~~23528:~Tree is empty}\\
+\texttt{Starting branch \& bound...}\\
+\texttt{~~~11310:~147 nodes active, bound:~1793.43}\\
+\texttt{~~~12709:~Incumbent solution found:~1854}\\
+\texttt{~~~20646:~931 nodes active, bound:~1841.81, gap:~0.657343\%}\\
+\texttt{~~~23836:~Tree is empty}\\
 \texttt{Summary:}\\
-\texttt{~* 23528 subproblem(s) examined}\\
-\texttt{~* max.~tree size:~1021 nodes}\\
-\texttt{~* 398 Gomory cut(s) applied}
+\texttt{~* 23836 subproblem(s) examined}\\
+\texttt{~* max.~tree size:~1256 nodes}\\
+\texttt{~* 13 GMI cut(s) applied (average improvement:~2.34241e-05\%)}
 \end{tabular}
 \end{center}
 \[
 \left[1854,\left[24,15,19,11,3,99,4,226\right]\right]
 \]
-% \begin{center}
-% 	\texttt{[1916,[x1=1009,x2=907]]}
-% \end{center}
 
 \subsubsection{Solving problems in floating-point arithmetic}\label{sec:lp-float}
 
@@ -41700,15 +41719,18 @@ method). In this case the native solver is used.
 Setting \texttt{lp\_method} to \texttt{float} forces \texttt{lpsolve} to use
 the GLPK simplex solver. If a (mixed) integer problem is given, then the branch-and-cut algorithm in GLPK is used. The parameters can be
 controlled by setting the \texttt{lp\_timelimit}, \texttt{lp\_iterationlimit},
-\texttt{lp\_gaptolerance}, \texttt{lp\_maxcuts}, \texttt{lp\_verbose},
-\texttt{lp\_nodeselect}, and \texttt{lp\_varselect} options. If
-\texttt{lp\_varselect} is not set, then the Driebeek--Tomlin heuristic is used,
+\texttt{lp\_gaptolerance}, \texttt{lp\_maxcuts}, \texttt{lp\_heuristic},
+\texttt{lp\_verbose}, \texttt{lp\_nodeselect}, and \texttt{lp\_varselect}
+options. If \texttt{lp\_varselect} is not set, then the Driebeek--Tomlin
+heuristic is used,
 and if \texttt{lp\_nodeselect} is not set, then the best-local-bound selection
 method is used. If \texttt{lp\_maxcuts} is greater than
 zero, then GMI/MIR cut generation is enabled, else it is disabled. If
 the problem contains binary variables, then cover/clique cut generation
-is enabled, else it is disabled. Finally, \texttt{lp\_verbose=true}
-enables GLPK messages, which are useful for monitoring solver's progress.
+is enabled, else it is disabled. If \texttt{lp\_heuristic=false}, then the simple
+rounding heuristic in GLPK is disabled (by default it is enabled).
+Finally, \texttt{lp\_verbose=true} enables GLPK messages, which are useful for
+monitoring solver's progress.
 
 Setting \texttt{lp\_method} to \texttt{lp\_interiorpoint} uses
 the primal-dual interior-point algorithm in GLPK. The only
@@ -41964,14 +41986,14 @@ by \texttt{epsilon}), which forces the algorithm to avoid the associated routes.
 \index{minimize|textbf}
 \index{maximize|textbf}}
 
-\texttt{minimize} attempts to find the smallest value of an
+\texttt{minimize} attempts to find the smallest value of a differentiable
 expression defined on a compact domain, using analytical methods.
 \begin{itemize}
   \item \texttt{minimize} takes two mandatory arguments and two
   optional arguments:
 \begin{itemize}
 \item \textit{obj}, a univariate or multivariate expression
-\item Optionally, \texttt{constr}, list of constraints given by
+\item Optionally, \textit{constr}, list of constraints given by
 equalities, inequalities, and/or expressions assumed to be equal to 0.
 If there is only one constraint, it doesn't have to be a list.
 \item \textit{vars}, list of variables.  If there is only one
@@ -41988,13 +42010,14 @@ specified by constraints and/or bounding variables, or (if
 and the list of points where the minimum is achieved.
 
 The domain must be closed and bounded (i.e.~compact) and \textit{obj}
-must be continuous; otherwise the final result may be incorrect or
-meaningless.  If the minimal value could not be obtained,
+must be continuous and differentiable except in a finite number of
+points; otherwise the final result may be incorrect or
+meaningless.  If the minimal value could not be obtained, then
 \texttt{undef} is returned.
 \end{itemize}
 
 The \texttt{maximize} command takes the same parameters as
-\texttt{minimize}, but returns the global maximum of \texttt{obj} on
+\texttt{minimize}, but returns the global maximum of \textit{obj} on
 the specified domain. 
 
 
@@ -42355,11 +42378,11 @@ guaranteed.
 % \end{center}
 \end{itemize}
 
-\subsection{Local derivative-free optimization: \texttt{nlpsolve}
+\subsection{Continuous derivative-free optimization: \texttt{nlpsolve}
 \index{nlpsolve}}
 
-\texttt{nlpsolve} computes the optimum of a (not necessarily
-differentiable) nonlinear (multivariate) objective function, subject
+\texttt{nlpsolve} computes the optimum of a continuous, not necessarily
+differentiable nonlinear (multivariate) objective function, subject
 to a set of nonlinear equality and/or inequality constraints, using
 the COBYLA algorithm.
 \begin{itemize}
@@ -42367,31 +42390,101 @@ the COBYLA algorithm.
   \begin{itemize}
     \item \textit{obj}, an expression to optimize.
     \item Optionally, \textit{constr}, a list of equality and
-         inequality constraints.
+         inequality constraints. Double-bounded constraints in form
+         $a\leq f(x)\leq b$ can be entered as \texttt{f(x)=a..b} instead
+         of two inequalities.
     \item Optionally, \textit{bd}, a sequence of variable boundaries
-      $x=a..b$.
-    \item Optionally, \textit{opt}, a sequence of options which may be one of:
+      \texttt{x=a..b} where $a\in\mathbb{R}\cup\{-\infty\}$ and
+      $b\in\mathbb{R}\cup\{+\infty\}$, $b\geq a$.
+      If several variables have the same upper and lower
+      bounds, one can enter \texttt{[x,y,...]=a..b}. If the
+      bounds are stored in a two-column matrix, consider using the conversion
+      routine \texttt{box\_constraints} (see Section~\ref{ssec:numb2intvl}).
+    \item Optionally, \textit{opt}, a sequence of options in which each
+    option may be one of:
       \begin{itemize}
-       \item \texttt{maximize=}\textit{bool}, where \textit{bool} can
-         be \texttt{true} or \texttt{false}.  Just \texttt{maximize}
+       \item \texttt{maximize=}\textit{bool} or
+       \texttt{nlp\_maximize=}\textit{bool},
+         where \textit{bool} can be \texttt{true} or \texttt{false}.
+         Just \texttt{maximize} or \texttt{nlp\_maximize}
          is equivalent to \texttt{maximize=true}.  (By default,
-         \texttt{maximize=false}.)
+         \texttt{maximize=false}, i.e.~the objective is minimized.)
        \item \texttt{nlp\_initialpoint=}\textit{pt}, where \textit{pt}
-       is a point given in the form $[x=x_{0},y=y_{0},\ldots]$.  
+       is a starting point for the solver,
+       given in the form $[x=x_{0},y=y_{0},\ldots]$.  
        \textit{pt} does not have to be feasible, but it must not be zero.
-       If none is given or the given point is not feasible, then a feasible starting
-       guess is automatically generated. Note that choosing a good
-       initial point is required for obtaining a correct solution in some cases.
-       \item \texttt{nlp\_iterationlimit=$n$} for an integer $n$.
-       \item \texttt{assume=nlp\_nonnegative}
-       \item \texttt{nlp\_precision=$\epsilon$} for some $\epsilon > 0$.
+       If none is given or the given point is not feasible, then it is driven
+       into the feasible region before optimizing the objective.
+       \item \texttt{nlp\_samples=$n$} for a nonnegative integer $n$. If $n>0$,
+       then $n$ points are sampled at random in the feasible region. At most five
+       points with the smallest/largest value of \textit{obj} (in case of
+       minimization/maximization) are chosen for the multistart heuristic
+       which enables \texttt{nlpsolve} to reach global optimum in most cases.
+       If $n=0$, then the randomized standard heuristic is used as a single
+       starting point.\footnote{See J.~W.~Chinneck, \emph{Feasibility and Infeasibility in Optimization}, Springer, 2008.}
+       Note that if \texttt{nlp\_initialpoint} is set, these heuristics
+       are not used. (By default, $n=500$.)
+       \item \texttt{nlp\_presolve=}\textit{bool}, where \textit{bool} can be
+       \texttt{true} or \texttt{false}. This option enables/disables the
+       preprocessing step which attempts to reduce the number of decision
+       variables by solving subsets of equality constraints which are all linear
+       in certain subsets of variables, substituting the results, and
+       repeating the process until no further reduction can be made.
+       (In particular, fixed variables are removed.)
+       After solving the presolved problem, the removed variables
+       are substituted back to the solution.
+       (By default, \texttt{nlp\_presolve=true}.)
+       \item \texttt{nlp\_integervariables=}\textit{lst}, where \textit{lst}
+       is a list of problem variables that are supposed to take integral values.
+       (By default, there are no integral variables.)
+       \item \texttt{nlp\_binaryvariables=}\textit{lst}, where \textit{lst}
+       is a list of problem variables that are supposed to take binary (0-1)
+       values. (By default, there are no binary variables.)
+       \item \texttt{nlp\_iterationlimit=$n$} for a positive integer $n$.
+       This sets the maximum number of iterations allowed for the solver.
+       (By default, $n=10^5$.)
+       \item \texttt{nlp\_precision=$\epsilon$} for some $\epsilon>0$.
+       This sets the default precision for the optimizer. (By default,
+       \texttt{nlp\_precision} is equal to the value of \texttt{epsilon()},
+       which can be set in the session settings in \texttt{Xcas}.)
+       \item \texttt{nlp\_feasibilitytolerance=$\epsilon$} for some $\epsilon>0$.
+       This sets the feasibility tolerance for the initial point generator.
+       If this tolerance is not met, \texttt{nlpsolve} declares the problem
+       to be infeasible and returns an empty list.
+       (By default, $\epsilon=10^{-6}$.)
+       \item \texttt{nlp\_integertolerance=$\epsilon$} for some $\epsilon>0$.
+       This sets the tolerance for evaluation of integrality constraints.
+       (By default, $\epsilon=10^{-6}$.)
+       \item \texttt{assume=}\textit{asmp}, where \textit{asmp} may be one
+       of the following:
+       \begin{itemize}
+         \item \texttt{nlp\_nonnegative}, which restricts all variables to
+         nonnegative values (existing positive lower bounds are kept, however),
+         \item \texttt{nlp\_nonnegint} or \texttt{nonnegint}, which forces
+         all variables to take nonnegative integer values,
+         \item \texttt{nlp\_integer} or \texttt{integer}, which forces
+         all variables to take integer values,
+         \item \texttt{nlp\_binary}, which forces all variables to take
+         0-1 values.
        \end{itemize}
      \end{itemize}
+  \end{itemize}
   \item
   \texttt{nlpsolve(}\textit{obj$\,\langle$constr,bd,opt$\rangle$}\texttt{)}
   returns a list  \textit{$[$optobj,optdec$]$}, where \textit{optobj}
   is the optimal value of \textit{obj} and \textit{optobj}
-  is a list of of optimal values of the decision variables.
+  is a list of of optimal values of the decision variables. If the optimization
+  fails, then \textit{optobj} is the warning message and \textit{optdec} is
+  the last point on the path the solver takes in attempt to find the
+  optimal objective value. If the problem is infeasible or if the solver fails
+  to find a feasible point, then an empty list is returned.
+  \item
+  \texttt{nlpsolve} is a local-search based solver which acts as a global
+  optimizer when the initial point is not set. However, since it is based
+  on a random-sampling heuristic, the global optimality of the solution is
+  not guaranteed. For solving mixed-integer nonlinear problems (MINLP), the
+  branch\&bound method is used. Note that \texttt{nlpsolve} generally works
+  best for problems with a small number of variables (say, less than ten).
 \end{itemize}
 
 
@@ -42400,72 +42493,123 @@ the COBYLA algorithm.
 \noindent
 \textbf{Examples.}
 \begin{itemize}
-\item 
+\item The continuous function $f$ defined by
+\[ f(x)=\min\{\sqrt{|x+4|}-1,\sqrt{|x+1|}-1.005,\sqrt{|x-3|}+0.5\}, \]
+has a unique global minimum in $[-5,5]$ at $x=-1$, with $f(-1)=1.005$.\\
 \textit{Input:}
 \begin{center}
-   \texttt{nlpsolve(ln(1+x1\^{}2)-x2,[(1+x1\^{}2)\^{}2+x2\^{}2=4])}
+  \begin{tabular}{l}
+    \texttt{nlpsolve(min(sqrt(abs(x+4))-1,sqrt(abs(x+1))-1.005,}\\
+    \texttt{~~sqrt(abs(x-3))+0.5),x=-5..5)}
+  \end{tabular}
+\end{center}
+\textit{Output:}
+\[ [-1.0049992998,[x=-1.0]] \]
+\item Minimize $z=x_1 x_4 (x_1+x_2+x_3)+x_3$ subject to
+\begin{align*}
+  x_1 x_2 x_3 x_4 &\geq 25,\\ x_1^2+x_2^2+x_3^2 &= 40,
+\end{align*}
+where $1\leq x_i\leq 5$, $i=1,2,3,4$.\\
+\textit{Input:}
+\begin{center}
+  \begin{tabular}{l}
+    \texttt{nlpsolve(x1*x4*(x1+x2+x3)+x3,}\\
+    \texttt{~~[x1*x2*x3*x4-25>=0,x1\^{}2+x2\^{}2+x3\^{}2+x4\^{}2-40=0],}\\  
+    \texttt{~~[x1,x2,x3,x4]=1..5)}
+  \end{tabular}
+\end{center}
+\textit{Output:}
+\begin{align*}
+[17.0140172892,[x_{1}&=1.0,x_{2}=4.74299973362,\\x_{3}&=3.82114985829,x_{4}=1.3794083106]]
+\end{align*}
+\item Minimize $z=(x_1-1)^2+(x_1-x_2)^2+(x_3-1)^2+(x_4-1)^4+(x_5-1)^6$ subject to
+\begin{align*}
+  x_1^2 x_4+\sin(x_4-x_5)&=2\sqrt{2},\\x_2+x_3^4 x_4^2&=8+\sqrt{2}.
+\end{align*}
+\textit{Input:}
+\begin{center}
+  \begin{tabular}{l}
+    \texttt{nlpsolve((x1-1)\^{}2+(x1-x2)\^{}2+(x3-1)\^{}2+(x4-1)\^{}4+(x5-1)\^{}6,}\\
+    \texttt{~~[x1\^{}2*x4+sin(x4-x5)=2*sqrt(2),x2+x3\^{}4*x4\^{}2=8+sqrt(2)])}
+  \end{tabular}
+\end{center}
+\textit{Output:}
+\begin{align*}
+[0.241505128809,[x_{1}&=1.16617119669,x_{2}=1.18211040318,x_{3}=1.3802572722,\\
+x_{4}&=1.50603586392,x_{5}=0.610913318325]]
+\end{align*}
+\item Maximize $z=3x_1 x_2-x_1+6x_2$ subject to $5x_1 x_2-4x_1-4.5x_2\leq 32$, where $1\leq x_1,x_2\leq 5$ are integers.\\
+\textit{Input:}
+\begin{center}
+  \begin{tabular}{l}
+    \texttt{nlpsolve(3x1*x2-x1+6x2,[5x1*x2-4x1-4.5x2<=32],}\\
+    \texttt{~~[x1,x2]=1..5,assume=integer,maximize)}
+  \end{tabular}
 \end{center}
 \textit{Output:}
 \[
-\left[-1.73205080757,\left[x_{1}=-4.77142305945\times10^{-8},x_{2}=1.73205080757\right]\right]
+[58.0,[x_{1}=2.0,x_{2}=5.0]]
 \]
-% \begin{center}
-% 	\texttt{[-1.73205080757,[x1=-4.77142305945e-08,x2=1.73205080757]]}
-% \end{center}
-\item
+\item Maximize $z=2x_1+3x_2+6x_3-2x_1 x_2-x_1 x_3-4x_2 x_3$ where all variables
+are binary.\\
 \textit{Input:}
 \begin{center}
-  \texttt{nlpsolve(-x1*x2*x3,[72-x1-2x2-2x3>=0],x1=0..20,x2=0..11,x3=0..42)}
+  \begin{tabular}{l}
+    \texttt{nlpsolve(2x1+3x2+6x3-2x1*x2-x1*x3-4x2*x3,}\\
+    \texttt{~~assume=nlp\_binary,maximize)}
+  \end{tabular}
 \end{center}
 \textit{Output:}
 \[
-\left[-3300.0,\left[x_{1}=20.0,x_{2}=11.0,x_{3}=15.0\right]\right]
+[7.0,[x_{1}=1.0,x_{2}=0,x_{3}=1.0]]
 \]
-% \begin{center}
-% 	\texttt{[-3300.0,[x1=20.0,x2=11.0,x3=15.0]]}
-% \end{center}
-\item
+\item Minimize $z=5y-2\ln(x+1)$ subject to
+\begin{align*}
+  \mathrm{e}^{x/2}-\frac12\sqrt{y}&\leq 1,\\
+  -2\ln(x+1)-y+2.5&\leq 0,\\
+  x+y&\leq 4,
+\end{align*}
+where $x\in[0,2]$ and $y\in[1,3]$ is integer.\\
 \textit{Input:}
 \begin{center}
-\begin{tabular}{l}
-  \texttt{nlpsolve(x\^{}3+2x*y-2y\^{}2,x=-10..10,y=-10..10,}\\
-  \texttt{~~nlp\_initialpoint=[x=3,y=4],maximize)}
-\end{tabular}
+  \begin{tabular}{l}
+    \texttt{nlpsolve(5y-2*ln(x+1),}\\
+    \texttt{~~[exp(x/2)-sqrt(y)/2-1<=0,-2*ln(x+1)-y+2.5<=0,x+y-4<=0],}\\   
+    \texttt{~~x=0..2,y=1..3,nlp\_integervariables=[y])}
+  \end{tabular}
 \end{center}
 \textit{Output:}
 \[
-\left[1050.0,\left[x=10.0,y=4.99999985519\right]\right]
+[8.54528930252,[x=1.06959999348,y=2.0]]
 \]
-% \begin{center}
-% 	\texttt{[1050.0,[x=10.0,y=4.99999985519]]}
-% \end{center}
-\item
+\item Minimize $z=x_1^2+x_2^2+3x_3^2+4x_4^2+2x_5^2-8x_1-2x_2-3x_3-x_4-2x_5$
+subject to
+\begin{align*} 
+x_1+x_2+x_3+x_4+x_5&\leq 400,\\
+x_1+2x_2+2x_3+x_4+6x_5&\leq 800,\\
+2x_1+x_2+6x_3&\leq 200,\\
+x_3+x_4+5x_5&\leq 200,\\
+x_1+x_2+x_3+x_4+x_5&\geq 55,\\
+x_1+x_2+x_3+x_4&\geq 48,\\
+x_2+x_4+x_5&\geq 34,\\
+6x_1+7x_5&\geq 104,
+\end{align*}
+where $0\leq x_i\leq 99$ are integers for $i=1,\dots,5$.\\
 \textit{Input:}
 \begin{center}
-  \texttt{nlpsolve(sin(x)/x,x=1..30)}
+  \begin{tabular}{l}
+    \texttt{obj:=x1\^{}2+x2\^{}2+3x3\^{}2+4x4\^{}2+2x5\^{}2-8x1-2x2-3x3-x4-2x5;}\\     
+    \texttt{constr:=[x1+x2+x3+x4+x5<=400,x1+2x2+2x3+x4+6x5<=800,}\\
+    \texttt{~~~~~~~~~2x1+x2+6x3<=200,x3+x4+5x5<=200,}\\
+    \texttt{~~~~~~~~~x1+x2+x3+x4+x5>=55,x1+x2+x3+x4>=48,}\\
+    \texttt{~~~~~~~~~x2+x4+x5>=34,6x1+7x5>=104];}\\
+    \texttt{nlpsolve(obj,constr,[x1,x2,x3,x4,x5]=0..99,assume=integer)}
+  \end{tabular}
 \end{center}
 \textit{Output:}
 \[
-\left[-0.217233628211,\left[x=4.49340946198\right]\right]
+[807.0,[x_{1}=16.0,x_{2}=22.0,x_{3}=5.0,x_{4}=5.0,x_{5}=7.0]]
 \]
-% \begin{center}
-% 	\texttt{[-0.217233628211,[x=4.49340942383]]}
-% \end{center}
-\item
-\textit{Input:}
-\begin{center}
-\begin{tabular}{l}
-  \texttt{nlpsolve(2-1/120*x1*x2*x3*x4*x5,}\\
-  \texttt{~~[x1<=1,x2<=2,x3<=3,x4<=4,x5<=5],assume=nlp\_nonnegative)}
-\end{tabular}
-\end{center}
-\textit{Output:}
-\[
-\left[1.0,\left[x_{1}=1.0,x_{2}=2.0,x_{3}=3.0,x_{4}=4.0,x_{5}=5.0\right]\right]
-\]
-% \begin{center}
-% 	\texttt{[1.0,[x1=1.0,x2=2.0,x3=3.0,x4=4.0,x5=5.0]]}
-% \end{center}
 \end{itemize}
 
 \subsection{Minimax polynomial approximation: \texttt{minimax}
@@ -54601,7 +54745,6 @@ returns the function $\hat{f}$ given in \eqref{eq:kde1}.
 \begin{center}
   \includegraphics[width=0.75\textwidth]{xcas-kde_plot1.png}
 \end{center}
-\item
 \textit{Input:}
 \begin{center}
   \texttt{X:=randvar(f,range=0..10,1000):; S:=sample(X,1000):; F:=kernel\_density(S,piecewise):; plot([F,f(x)],x=0..10, display=[line\_width\_2+blue,line\_width\_1+black])}
@@ -54631,7 +54774,7 @@ returns the function $\hat{f}$ given in \eqref{eq:kde1}.
 \item
 \textit{Input:}
 \begin{center}
-  \texttt{S:=sample(X,5000):; sqrt(int((f(x)-kde(S,piecewise))\^2,x=0..10))}
+  \texttt{S:=sample(X,5000):; sqrt(int((f(x)-kde(S,piecewise))\^{}2,x=0..10))}
 \end{center}
 \textit{Output:}
 \[

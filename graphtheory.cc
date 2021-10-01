@@ -358,14 +358,14 @@ void parse_lp_options(const_iterateur opt_start,const_iterateur opt_end,bool *st
         if (store!=NULL && *it==at_sto)
             *store=true;
         else if (it->is_integer() && it->val>0) {
-            if (it->subtype==_INT_MAPLECONVERSION && it->val==_LP_VERBOSE)
+            if (is_mcint(*it,_LP_VERBOSE))
                 verbose=true;
             else if (k!=NULL)
                 *k=it->val;
         } else if (it->is_symb_of_sommet(at_equal)) {
             const gen &lhs=it->_SYMBptr->feuille._VECTptr->front();
             const gen &rhs=it->_SYMBptr->feuille._VECTptr->back();
-            if (lhs.is_integer() && lhs.subtype==_INT_MAPLECONVERSION) {
+            if (is_mcint(lhs)) {
                 switch (lhs.val) {
                 case _LP_TIME_LIMIT:
                     if (!rhs.is_integer() || rhs.val<=0)
@@ -431,8 +431,8 @@ gen flights(const gen &g,bool arrive,bool all,GIAC_CONTEXT) {
                 v.push_back(G.node_label(*it));
         }
         if (!all)
-            return _sort(v,contextptr);
-        res.push_back(_sort(v,contextptr));
+            return sort_identifiers(v,contextptr);
+        res.push_back(sort_identifiers(v,contextptr));
     } while (++i<G.node_count());
     return change_subtype(res,_LIST__VECT);
 }
@@ -3549,7 +3549,7 @@ gen _neighbors(const gen &g,GIAC_CONTEXT) {
         graphe::ivector adj;
         for (int i=0;i<n;++i) {
             G.adjacent_nodes(i,adj,false);
-            res.push_back(_sort(G.get_node_labels(adj),contextptr));
+            res.push_back(sort_identifiers(G.get_node_labels(adj),contextptr));
         }
         return change_subtype(res,_LIST__VECT);
     }
@@ -3897,7 +3897,7 @@ gen _number_of_triangles(const gen &g,GIAC_CONTEXT) {
     if (!is_undef(dest)) {
         vecteur triangles;
         for (graphe::ivectors_iter it=lst.begin();it!=lst.end();++it) {
-            triangles.push_back(_sort(G.get_node_labels(*it),contextptr));
+            triangles.push_back(sort_identifiers(G.get_node_labels(*it),contextptr));
             identifier_assign(*dest._IDNTptr,change_subtype(triangles,_LIST__VECT),contextptr);
         }
     }
@@ -5315,7 +5315,7 @@ gen _maximum_clique(const gen &g,GIAC_CONTEXT) {
     graphe::ivector clique;
     G.maximum_clique(clique);
     vecteur res=G.get_node_labels(clique);
-    return _sort(res,contextptr);
+    return sort_identifiers(res,contextptr);
 }
 static const char _maximum_clique_s[]="maximum_clique";
 static define_unary_function_eval(__maximum_clique,&_maximum_clique,_maximum_clique_s);
@@ -5462,7 +5462,7 @@ gen _maximum_independent_set(const gen &g,GIAC_CONTEXT) {
     graphe::ivector clique;
     C.maximum_clique(clique);
     vecteur res=C.get_node_labels(clique);
-    return _sort(res,contextptr);
+    return sort_identifiers(res,contextptr);
 }
 static const char _maximum_independent_set_s[]="maximum_independent_set";
 static define_unary_function_eval(__maximum_independent_set,&_maximum_independent_set,_maximum_independent_set_s);
@@ -6058,8 +6058,8 @@ gen _is_bipartite(const gen &g,GIAC_CONTEXT) {
         return G.boole(false);
     if (!is_undef(P)) {
         identifier_assign(*P._IDNTptr,
-                          change_subtype(makevecteur(_sort(G.get_node_labels(V1),contextptr),
-                                                    _sort(G.get_node_labels(V2),contextptr)),_LIST__VECT),
+                          change_subtype(makevecteur(sort_identifiers(G.get_node_labels(V1),contextptr),
+                                                     sort_identifiers(G.get_node_labels(V2),contextptr)),_LIST__VECT),
                           contextptr);
     }
     return G.boole(true);
@@ -6694,13 +6694,13 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
                             return gt_err(i<0?v.front():v.back(),_GT_ERR_VERTEX_NOT_FOUND);
                         incl.push_back(make_pair(i,j));
                     } else return generr("Expected an edge or list of edges");
-                } else if (lhs.is_integer() && lhs.subtype==_INT_MAPLECONVERSION && lhs.val==_LP_GAP_TOLERANCE) {
+                } else if (is_mcint(lhs,_LP_GAP_TOLERANCE)) {
                     if (_evalf(rhs,contextptr).type!=_DOUBLE_ || is_strictly_greater(0,rhs,contextptr))
                         return generr("Expected a nonnegative real number");
                     gap_tol=_evalf(rhs,contextptr).DOUBLE_val();
                 } else return generr("Option not supported");
             } else if (it->is_integer() && it->val>0) {
-                if (it->subtype==_INT_MAPLECONVERSION && it->val==_LP_VERBOSE)
+                if (is_mcint(*it,_LP_VERBOSE))
                     verbose=true;
                 else k=it->val;
             } else return generr("Option not supported");
@@ -6723,7 +6723,7 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
                 const gen &rhs=it->_SYMBptr->feuille._VECTptr->back();
                 if (approximate && lhs==at_limit && rhs.is_integer())
                     time_limit=rhs.val;
-                else if (lhs.is_integer() && lhs.subtype==_INT_MAPLECONVERSION && lhs==_LP_GAP_TOLERANCE) {
+                else if (is_mcint(lhs,_LP_GAP_TOLERANCE)) {
                     if (_evalf(rhs,contextptr).type!=_DOUBLE_ || is_strictly_greater(0,rhs,contextptr))
                         return generr("Expected a nonnegative real number");
                     gap_tol=_evalf(rhs,contextptr).DOUBLE_val();
@@ -6731,7 +6731,7 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
             } else if (*it==at_vertex_distance && M.empty())
                 make_distances=true;
             else if (it->is_integer() && it->val>0) {
-                if (it->subtype==_INT_MAPLECONVERSION && it->val==_LP_VERBOSE)
+                if (is_mcint(*it,_LP_VERBOSE))
                     verbose=true;
                 else k=it->val;
             } else return generr("Option not supported");
@@ -6921,7 +6921,7 @@ gen _is_network(const gen &g,GIAC_CONTEXT) {
                 sinks.push_back(G.node_label(i));
         }
     }
-    return makesequence(_sort(sources,contextptr),_sort(sinks,contextptr));
+    return makesequence(sort_identifiers(sources,contextptr),sort_identifiers(sinks,contextptr));
 }
 static const char _is_network_s[]="is_network";
 static define_unary_function_eval(__is_network,&_is_network,_is_network_s);

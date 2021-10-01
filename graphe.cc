@@ -171,7 +171,7 @@ graphe::ivector graphe::make_ivector(int n,...) {
 void graphe::ivectors2vecteur(const ivectors &v,vecteur &res,bool sort_all) const {
     res.resize(v.size());
     for (ivectors_iter it=v.begin();it!=v.end();++it) {
-        res[it-v.begin()]=sort_all?_sort(get_node_labels(*it),ctx):get_node_labels(*it);
+        res[it-v.begin()]=sort_all?sort_identifiers(get_node_labels(*it),ctx):get_node_labels(*it);
     }
 }
 

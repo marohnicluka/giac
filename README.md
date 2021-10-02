@@ -6,7 +6,8 @@ My contributions to [Giac/Xcas](https://www-fourier.ujf-grenoble.fr/~parisse/gia
 - constrained optimization in multivariate calculus (local and global extrema)
 - calculus of variations
 - numerical differentiation (Fornberg's algorithm)
-- (mixed integer) linear programming and transportation problems
+- (mixed integer) (non)linear programming
+- transportation problems
 - curve interpolation and fitting (Thiele's algorithm, Floater and Hormann's algorithm, trigonometric polynomial fitting, Remez algorithm)
 - simplification of trigonometric expressions
 - statistics (discrete random variables with sampling, kernel density estimation, maximum-likelihood fitting)

@@ -3356,7 +3356,7 @@ int nlp_optimize(const gen &obj_orig,const vecteur &constr_orig,const vecteur &v
                     optval=cobyla_obj;
                     sol=cobyla_sol;
                 }
-            } catch (std::runtime_error &err) { // an error raised in COBYLA or user interruption
+            } catch (const std::exception &err) { // an error raised in COBYLA or user interruption
                 *logptr(contextptr) << err.what() << "\n";
                 return _NLP_ERROR;
             }
@@ -3648,53 +3648,75 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
         root.opt=optval;
         root.depth=0;
         active_nodes.push_back(root);
-        while (!active_nodes.empty()) {
-            int k=-1;
-            gen best_opt=plus_inf;
-            for (vector<nlp_node>::const_iterator it=active_nodes.begin();it!=active_nodes.end();++it) {
-                if (is_strictly_greater(best_opt,it->opt,contextptr)) {
-                    best_opt=it->opt;
-                    k=it-active_nodes.begin();
+        try {
+            while (!active_nodes.empty()) {
+                int k=-1; //is_inf(optimum)?active_nodes.size()-1:-1;
+                gen best_opt=plus_inf;
+                if (k<0) {
+                    for (vector<nlp_node>::const_iterator it=active_nodes.begin();it!=active_nodes.end();++it) {
+                        if (is_strictly_greater(best_opt,it->opt,contextptr)) {
+                            best_opt=it->opt;
+                            k=it-active_nodes.begin();
+                        }
+                    }
                 }
-            }
-            nlp_node &p=active_nodes[k],ch[2];
-            int j=p.branch_var;
-            ch[0].lbv=ch[1].lbv=p.lbv;
-            ch[0].ubv=ch[1].ubv=p.ubv;
-            ch[0].depth=ch[1].depth=p.depth+1;
-            ch[0].lbv[j]=max(ch[0].lbv[j],_ceil(p.frac_val,contextptr),contextptr);
-            ch[1].ubv[j]=min(ch[1].ubv[j],_floor(p.frac_val,contextptr),contextptr);
-            bool optimum_updated=false;
-            for (int i=0;i<2;++i) {
-                res=nlp_optimize(obj,constr,vars,ch[i].lbv,ch[i].ubv,initp,ch[i].opt,sol,eps,feas_tol,nsamp,maxiter,presolve,contextptr);
-                switch (res) {
-                case _NLP_OPTIMAL:
-                    break;
-                case _NLP_INFEAS:
-                    continue;
-                case _NLP_FAILED:
-                    *logptr(contextptr) << gettext("Warning") << ": " << gettext("failed to optimize at given precision") << "\n";
-                    optval=subst(obj,vars,sol,false,contextptr);
-                    break;
-                case _NLP_ERROR:
-                    return undef;
+                nlp_node &p=active_nodes[k],ch[2];
+                int j=p.branch_var;
+                ch[0].lbv=ch[1].lbv=p.lbv;
+                ch[0].ubv=ch[1].ubv=p.ubv;
+                ch[0].depth=ch[1].depth=p.depth+1;
+                ch[0].lbv[j]=max(ch[0].lbv[j],_ceil(p.frac_val,contextptr),contextptr);
+                ch[1].ubv[j]=min(ch[1].ubv[j],_floor(p.frac_val,contextptr),contextptr);
+                bool optimum_updated=false;
+                for (int i=0;i<2;++i) {
+                    res=nlp_optimize(obj,constr,vars,ch[i].lbv,ch[i].ubv,initp,ch[i].opt,sol,eps,feas_tol,nsamp,maxiter,presolve,contextptr);
+                    switch (res) {
+                    case _NLP_OPTIMAL: case _NLP_ERROR:
+                        break;
+                    case _NLP_INFEAS:
+                        continue;
+                    case _NLP_FAILED:
+                        *logptr(contextptr) << gettext("Warning") << ": " << gettext("failed to optimize at given precision") << "\n";
+                        ch[i].opt=subst(obj,vars,sol,false,contextptr);
+                        break;
+                    }
+                    if (res==_NLP_ERROR) {
+                        if (is_inf(optimum))
+                            return undef;
+                        else break;
+                    }
+                    cout << sol << endl;
+                    if (is_strictly_greater(optimum,ch[i].opt,contextptr)) {
+                        if (ch[i].find_branch_var(sol,intvars_indices,int_tol,contextptr)) {
+                            active_nodes.push_back(ch[i]);
+                        } else { // new incumbent found
+                            cout << "Incumbent found" << endl;
+                            optimum=ch[i].opt;
+                            optsol=sol;
+                            optimum_updated=true;
+                        }
+                    }
                 }
-                if (is_strictly_greater(optimum,ch[i].opt,contextptr)) {
-                    if (ch[i].find_branch_var(sol,intvars_indices,int_tol,contextptr)) {
-                        active_nodes.push_back(ch[i]);
-                    } else { // new incumbent found
-                        optimum=ch[i].opt;
-                        optsol=sol;
-                        optimum_updated=true;
+                if (res==_NLP_ERROR) {
+                    *logptr(contextptr) << gettext("Returning incumbent solution") << "\n";
+                    break;
+                }
+                active_nodes.erase(active_nodes.begin()+k); // delete parent node
+                if (optimum_updated) { // prune nodes
+                    for (int i=active_nodes.size();i-->0;) {
+                        if (is_greater(active_nodes[i].opt,optimum,contextptr))
+                            active_nodes.erase(active_nodes.begin()+i);
                     }
                 }
             }
-            active_nodes.erase(active_nodes.begin()+k); // delete parent node
-            if (optimum_updated) { // prune nodes
-                for (int i=active_nodes.size();i-->0;) {
-                    if (is_greater(active_nodes[i].opt,optimum,contextptr))
-                        active_nodes.erase(active_nodes.begin()+i);
-                }
+        } catch (const std::exception &e) {
+            if (strstr(e.what(),"user interruption")!=NULL) {
+                *logptr(contextptr) << gettext("Error") << ": " << gettext("stopped by user interruption");
+                if (!is_inf(optimum))
+                    *logptr(contextptr) << ", " << gettext("returning incumbent solution");
+                *logptr(contextptr) << "\n";
+                if (is_inf(optimum))
+                    return undef;
             }
         }
         if (is_inf(optimum)) // no integer-feasible solution found

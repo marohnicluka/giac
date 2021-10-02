@@ -61,6 +61,13 @@ enum bvp_output_type {
     _BVP_SPLINE
 };
 
+enum nlp_optres {
+    _NLP_OPTIMAL,
+    _NLP_FAILED,
+    _NLP_INFEAS,
+    _NLP_ERROR
+};
+
 class ipdiff {
     /* IPDIFF CLASS (Implicit Partial DIFFerentiation)
      * This class is used for implicit differentiation of f with respect to g=0.

@@ -3310,7 +3310,6 @@ int nlp_optimize(const gen &obj_orig,const vecteur &constr_orig,const vecteur &v
                 fx_subs.push(fxvars);
             }
         } while (changed && (++pass>0));
-        cout << "Removed " << vars_orig.size()-vars.size() << " variables in " << pass << " passes" << endl;
     }
     /* optimize */
     if (!vars.empty()) { // solve the problem using COBYLA
@@ -3685,12 +3684,10 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
                             return undef;
                         else break;
                     }
-                    cout << sol << endl;
                     if (is_strictly_greater(optimum,ch[i].opt,contextptr)) {
                         if (ch[i].find_branch_var(sol,intvars_indices,int_tol,contextptr)) {
                             active_nodes.push_back(ch[i]);
                         } else { // new incumbent found
-                            cout << "Incumbent found" << endl;
                             optimum=ch[i].opt;
                             optsol=sol;
                             optimum_updated=true;

@@ -645,6 +645,29 @@ vecteur solve2(const vecteur &e_orig,const vecteur &vars_orig,GIAC_CONTEXT) {
     return ret;
 }
 
+/*
+ * Solve the system of equations e=0 w.r.t. variables in v, include the solutions
+ * of continuous extension too. It is assumed that e is exact. The solutions are
+ * appended to res.
+ */
+void zeros_ext(const vecteur &e,const vecteur &v,vecteur &res,GIAC_CONTEXT) {
+    vecteur e_numer=*_apply(makesequence(at_numer,e),contextptr)._VECTptr;
+    vecteur e_denom=*_apply(makesequence(at_denom,e),contextptr)._VECTptr;
+    vecteur sol=solve2(e_numer,v,contextptr);
+    for (const_iterateur it=sol.begin();it!=sol.end();++it) {
+        bool ok=true;
+        if (!is_approx(*it)) {
+            for (const_iterateur jt=e.begin();ok && jt!=e.end();++jt) {
+                if (!is_constant_wrt_vars(e_denom[jt-e.begin()],v,contextptr) &&
+                        is_zero(simp(subst(e_denom[jt-e.begin()],v,*(it->_VECTptr),false,contextptr),contextptr)))
+                    ok=is_zero(simp(eval_continuous(*jt,v,*(it->_VECTptr),contextptr),contextptr));
+            }
+        }
+        if (ok)
+            res.push_back(*it);
+    }
+}
+
 bool is_ineq_x_a(const gen &g,const gen &var,gen &a,GIAC_CONTEXT) {
     if ((g.is_symb_of_sommet(at_inferieur_egal) ||
          g.is_symb_of_sommet(at_inferieur_strict) ||
@@ -798,21 +821,7 @@ vecteur solve_kkt(const gen &f,const vecteur &g,const vecteur &h,const vecteur &
                 v.erase(v.begin()+n+i);
             } else e.push_back(enu_all?g[i]:v[n+i]*g[i]); // complementary slackness
         }
-        vecteur eq_numer=*_apply(makesequence(at_numer,e),contextptr)._VECTptr;
-        vecteur eq_denom=*_apply(makesequence(at_denom,e),contextptr)._VECTptr;
-        vecteur res=solve2(eq_numer,v,contextptr);
-        for (const_iterateur it=res.begin();it!=res.end();++it) {
-            bool ok=true;
-            if (!is_approx(*it)) {
-                for (const_iterateur jt=e.begin();ok && jt!=e.end();++jt) {
-                    if (!is_constant_wrt_vars(eq_denom[jt-e.begin()],v,contextptr) &&
-                            is_zero(simp(subst(eq_denom[jt-e.begin()],v,*(it->_VECTptr),false,contextptr),contextptr)))
-                        ok=is_zero(simp(eval_continuous(*jt,v,*(it->_VECTptr),contextptr),contextptr));
-                }
-            }
-            if (ok)
-                cv.push_back(*it);
-        }
+        zeros_ext(e,v,cv,contextptr);
     } while(enu_all && next_binary_perm(is_mu_zero));
     for (iterateur it=cv.begin();it!=cv.end();++it) {
         it->_VECTptr->resize(n);
@@ -3633,7 +3642,7 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
         break;
     case _NLP_FAILED:
         *logptr(contextptr) << gettext("Warning") << ": " << gettext("failed to optimize at given precision") << "\n";
-        optval=subst(obj,vars,sol,false,contextptr);
+        optval=minlp?subst(obj,vars,sol,false,contextptr):undef;
         break;
     case _NLP_INFEAS:
         return vecteur(0);
@@ -3730,7 +3739,8 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
     }
 #endif
     /* return the optimal solution */
-    return gen(makevecteur(optimum,_zip(makesequence(at_equal,vars,optsol),contextptr)),_LIST__VECT);
+    return change_subtype(makevecteur(is_undef(optimum)?at_point:optimum,
+                                        _zip(makesequence(at_equal,vars,optsol),contextptr)),_LIST__VECT);
 }
 static const char _nlpsolve_s []="nlpsolve";
 static define_unary_function_eval (__nlpsolve,&_nlpsolve,_nlpsolve_s);

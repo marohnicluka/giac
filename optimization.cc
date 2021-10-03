@@ -2010,6 +2010,7 @@ void find_local_extrema(vecteur &cpts,const gen &f,const vecteur &g,const vecteu
         if (tmpgr.type==_VECT) {
             vecteur &gr=*tmpgr._VECTptr;
             if (allinitial.empty()) {
+                //zeros_ext(gr,allvars,cv,contextptr);
                 cv=solve2(gr,allvars,contextptr);
                 cpt_simp(cv,tmpvars,subst(f,vars,tmpvars,false,contextptr),contextptr);
             } else {
@@ -3222,7 +3223,7 @@ bool nlp_subs_fxvars(const nlp_fxvars &fxvars,gen &obj,vecteur &constr,GIAC_CONT
  */
 int nlp_optimize(const gen &obj_orig,const vecteur &constr_orig,const vecteur &vars_orig,
         const vecteur &lbv_orig,const vecteur &ubv_orig,const vecteur &initp_orig,
-        gen &optval,vecteur &sol,double eps,double feas_tol,int nsamp,int maxiter,bool presolve,GIAC_CONTEXT) {
+        gen &optval,vecteur &sol,double eps,double feas_tol,int nsamp,int maxiter,bool presolve,bool &is_reduced,GIAC_CONTEXT) {
     gen obj(obj_orig);
     vecteur constr=constr_orig,vars=vars_orig,lbv=lbv_orig,ubv=ubv_orig,initp=initp_orig;
     /* presolve to reduce the number of variables */
@@ -3319,7 +3320,8 @@ int nlp_optimize(const gen &obj_orig,const vecteur &constr_orig,const vecteur &v
                 fx_subs.push(fxvars);
             }
         } while (changed && (++pass>0));
-    }
+        is_reduced=vars_orig.size()-vars.size()>0;
+    } else is_reduced=false;
     /* optimize */
     if (!vars.empty()) { // solve the problem using COBYLA
         vecteur initpv;
@@ -3636,13 +3638,24 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
     gen optval,optimum=plus_inf;
     vecteur sol,optsol;
     vector<nlp_node> active_nodes;
-    int res=nlp_optimize(obj,constr,vars,lbv,ubv,initp,optval,sol,eps,feas_tol,nsamp,maxiter,presolve,contextptr);
+    bool is_reduced;
+    int res=nlp_optimize(obj,constr,vars,lbv,ubv,initp,optval,sol,eps,feas_tol,nsamp,maxiter,presolve,is_reduced,contextptr);
     switch (res) {
     case _NLP_OPTIMAL:
         break;
     case _NLP_FAILED:
-        *logptr(contextptr) << gettext("Warning") << ": " << gettext("failed to optimize at given precision") << "\n";
-        optval=minlp?subst(obj,vars,sol,false,contextptr):undef;
+        if (is_reduced) { // try again from the last point, disable presolving
+            if (!minlp)
+                *logptr(contextptr) << gettext("Warning") << ": " << gettext("reoptimizing without presolving") << "\n";
+            vecteur old_sol=sol;
+            res=nlp_optimize(obj,constr,vars,lbv,ubv,old_sol,optval,sol,eps,feas_tol,0,maxiter,false,is_reduced,contextptr);
+            if (res==_NLP_ERROR || res==_NLP_INFEAS)
+                sol=old_sol;
+        }
+        if (res!=_NLP_OPTIMAL) {
+            *logptr(contextptr) << gettext(minlp?"Warning":"Error") << ": " << gettext("failed to optimize at given precision") << "\n";
+            optval=minlp?subst(obj,vars,sol,false,contextptr):undef;
+        }
         break;
     case _NLP_INFEAS:
         return vecteur(0);
@@ -3677,15 +3690,23 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
                 ch[1].ubv[j]=min(ch[1].ubv[j],_floor(p.frac_val,contextptr),contextptr);
                 bool optimum_updated=false;
                 for (int i=0;i<2;++i) {
-                    res=nlp_optimize(obj,constr,vars,ch[i].lbv,ch[i].ubv,initp,ch[i].opt,sol,eps,feas_tol,nsamp,maxiter,presolve,contextptr);
+                    res=nlp_optimize(obj,constr,vars,ch[i].lbv,ch[i].ubv,initp,ch[i].opt,sol,eps,feas_tol,nsamp,maxiter,presolve,is_reduced,contextptr);
                     switch (res) {
                     case _NLP_OPTIMAL: case _NLP_ERROR:
                         break;
                     case _NLP_INFEAS:
                         continue;
                     case _NLP_FAILED:
-                        *logptr(contextptr) << gettext("Warning") << ": " << gettext("failed to optimize at given precision") << "\n";
-                        ch[i].opt=subst(obj,vars,sol,false,contextptr);
+                        if (is_reduced) {
+                            vecteur old_sol=sol;
+                            res=nlp_optimize(obj,constr,vars,ch[i].lbv,ch[i].ubv,old_sol,ch[i].opt,sol,eps,feas_tol,0,maxiter,false,is_reduced,contextptr);
+                            if (res==_NLP_ERROR || res==_NLP_INFEAS)
+                                sol=old_sol;
+                        }
+                        if (res!=_NLP_OPTIMAL) {
+                            *logptr(contextptr) << gettext("Warning") << ": " << gettext("failed to optimize at given precision") << "\n";
+                            ch[i].opt=subst(obj,vars,sol,false,contextptr);
+                        }
                         break;
                     }
                     if (res==_NLP_ERROR) {

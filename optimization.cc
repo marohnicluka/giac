@@ -63,13 +63,29 @@ int indexof(const gen &g,const vecteur &v) {
 }
 
 /*
- * Sort identifiers assumed to be in form x<n>, like x1,x2,...,x9,x10,x11,...
+ * Sort identifiers assumed to be in form x<n>, x1,x2,...,x9,x10,x11,...,y1,y2,...
+ * All sorts of elements are supported, like pure numbers, identifiers without numbers, etc.
  */
 vecteur sort_identifiers(const vecteur &v,GIAC_CONTEXT) {
     if (v.empty())
         return v;
-    vecteur lv=*_apply(makesequence(at_size,_apply(makesequence(at_string,v),contextptr)),contextptr)._VECTptr;
-    return *mtran(*_sort(mtran(makevecteur(lv,v)),contextptr)._VECTptr)[1]._VECTptr;
+    vecteur strv=*_apply(makesequence(at_string,v),contextptr)._VECTptr,snv;
+    for (const_iterateur it=strv.begin();it!=strv.end();++it) {
+        assert(it->type==_STRNG);
+        string s=*it->_STRNGptr;
+        size_t i=s.find_last_not_of("0123456789");
+        gen id=_expr(string2gen(i==string::npos?"":s.substr(0,i+1),false),contextptr);
+        gen num=_expr(string2gen(i==string::npos?s:s.substr(i+1),false),contextptr);
+        vecteur sn;
+        if (!is_undef(id))
+            sn.push_back(id);
+        if (!is_undef(num))
+            sn.push_back(num);
+        else if (!is_undef(id))
+            sn.push_back(0);
+        snv.push_back(sn);
+    }
+    return *mtran(*_sort(mtran(makevecteur(snv,v)),contextptr)._VECTptr)[1]._VECTptr;
 }
 
 /*

@@ -30,6 +30,57 @@ using namespace std;
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
+#define _SP_BAD_SOUND_DATA "Bad sound data"
+#define _SP_INVALID_RANGE "Invalid range specification"
+
+gen generr(const char* msg,bool translate) {
+    string m(translate?gettext(msg):msg);
+    m.append(".");
+    return gensizeerr(m.c_str());
+}
+
+gen generrtype(const char* msg,bool translate) {
+    string m(translate?gettext(msg):msg);
+    m.append(".");
+    return gentypeerr(m.c_str());
+}
+
+gen generrdim(const char* msg,bool translate) {
+    string m(translate?gettext(msg):msg);
+    m.append(".");
+    return gendimerr(m.c_str());
+}
+
+/*
+ * Return TRUE iff g is a real constant.
+ */
+bool is_real_number(const gen &g,GIAC_CONTEXT) {
+    gen eg=_evalf(g,contextptr);
+    if (!eg.is_approx())
+        return false;
+    switch (eg.type) {
+    case _INT_: case _DOUBLE_: case _FLOAT_: case _ZINT: case _REAL:
+        return true;
+    case _CPLX: 
+        return (is_zero(*(eg._CPLXptr+1),contextptr));
+    default:
+        break;;
+    }
+    return false;
+}
+
+/*
+ * Convert g to inexact real constant.
+ */
+gen to_real_number(const gen &g,GIAC_CONTEXT) {
+    if (!is_real_number(g,contextptr))
+        return gentypeerr(gettext("Failed to convert ")+g.print(contextptr)+gettext(" to real number."));
+    gen eg=_evalf(g,contextptr);
+    if (eg.type==_CPLX)
+        return *(eg._CPLXptr);
+    else return eg;
+}
+
 int nextpow2(int n) {
     int m=1;
     while (m<n) m*=2;
@@ -86,9 +137,9 @@ vecteur encode_chdata(const vecteur &data,int bd,double ratio,GIAC_CONTEXT) {
     double v,fac=std::pow(2.0,bd-1)-1.0;
     int k;
     for (const_iterateur it=data.begin();it!=data.end();++it) {
-        if (!is_real(*it,contextptr))
+        if (!is_real_number(*it,contextptr))
             return vecteur(0);
-        v=std::max(-1.0,std::min(1.0,ratio*_evalf(*it,contextptr).DOUBLE_val()));
+        v=std::max(-1.0,std::min(1.0,ratio*to_real_number(*it,contextptr).to_double(contextptr)));
         k=std::floor(fac*v);
         if (bd==8) k+=127;
         res.push_back(k);
@@ -119,7 +170,7 @@ gen _createwav(const gen &g,GIAC_CONTEXT) {
     vector<vecteur*> data;
     if (g.is_integer()) {
         if (g.val<1)
-            return gensizeerr(contextptr);
+            return generr("Expected a length in samples (positive integer)");
         len=g.val;
     } else if (g.type==_VECT) {
         if (g.subtype==_SEQ__VECT) {
@@ -131,29 +182,29 @@ gen _createwav(const gen &g,GIAC_CONTEXT) {
                     const gen &rh=it->_SYMBptr->feuille._VECTptr->back();
                     if (lh==at_channels) {
                         if (!rh.is_integer() || (nc=rh.val)<1)
-                            return gensizeerr(contextptr);
+                            return generr("Number of channels must be a positive integer");
                     } else if (lh==at_bit_depth) {
                         if (!rh.is_integer() || (bd=rh.val)<0 || (bd!=8 && bd!=16))
-                            return gensizeerr(contextptr);
+                            return generr("Bit depth must be a nonnegative integer (8 or 16)");
                     } else if (lh==at_samplerate) {
                         if (!rh.is_integer() || (sr=rh.val)<1)
-                            return gensizeerr(contextptr);
+                            return generr("Sample rate must be a positive integer");
                     } else if (lh==at_size) {
                         if (!rh.is_integer() || (plen=rh.val)<1)
-                            return gensizeerr(contextptr);
+                            return generr("Size must be a positive integer");
                     } else if (lh==at_normalize) {
-                        if (!is_real(rh,contextptr))
-                            return gensizeerr(contextptr);
-                        norm=-_evalf(rh,contextptr).DOUBLE_val();
+                        if (!is_real_number(rh,contextptr))
+                            return generr("Normalization level must be a real number");
+                        norm=-to_real_number(rh,contextptr).to_double(contextptr);
                     } else if (lh==at_duration) {
-                        if (!is_real(rh,contextptr))
-                            return gensizeerr(contextptr);
-                        secs=_evalf(rh,contextptr).DOUBLE_val();
+                        if (!is_real_number(rh,contextptr))
+                            return generr("Duration must be a real number");
+                        secs=to_real_number(rh,contextptr).to_double(contextptr);
                     } else if (lh==at_channel_data) {
                         if (rh.type!=_VECT)
-                            return gensizeerr(contextptr);
+                            return generr("Channel data must be a list");
                         plen=read_channel_data(rh,nc,data);
-                    } else return gensizeerr(contextptr);
+                    } else return gensizeerr(gettext("Invalid argument ")+print_INT_(it-args.begin()+1)+".");
                 } else if (it->type==_VECT)
                     plen=read_channel_data(*it,nc,data);
             }
@@ -168,9 +219,9 @@ gen _createwav(const gen &g,GIAC_CONTEXT) {
                 }
             } else len=read_channel_data(g,nc,data);
         }
-    } else return gentypeerr(contextptr);
+    } else return generrtype("Invalid input argument");
     if (!data.empty() && int(data.size())!=nc)
-        return gendimerr(contextptr);
+        return generrdim("No data found or bad number of channels");
     if (len==0) {
         for (vector<vecteur*>::const_iterator it=data.begin();it!=data.end();++it) {
             len=std::max(len,(int)(*it)->size());
@@ -179,7 +230,7 @@ gen _createwav(const gen &g,GIAC_CONTEXT) {
     if (norm>=0) {
         double maxamp=0;
         for (vector<vecteur*>::const_iterator it=data.begin();it!=data.end();++it) {
-            maxamp=std::max(maxamp,_evalf(_max(_abs(**it,contextptr),contextptr),contextptr).DOUBLE_val());
+            maxamp=std::max(maxamp,to_real_number(_max(_abs(**it,contextptr),contextptr),contextptr).to_double(contextptr));
         }
         ratio=std::pow(10.0,-norm/20.0)/maxamp;
     }
@@ -205,14 +256,14 @@ define_unary_function_ptr5(at_createwav,alias_at_createwav,&__createwav,0,true)
 gen _plotwav(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT)
-        return gentypeerr(contextptr);
+        return generrtype("Invalid input argument");
     vecteur opts;
     if (g.subtype==_SEQ__VECT)
         opts=vecteur(g._VECTptr->begin()+1,g._VECTptr->end());
     const gen &wav=g.subtype==_SEQ__VECT?g._VECTptr->front():g;
     int nc,bd,sr,len,slice_start=0;
     if (!is_sound_data(wav,nc,bd,sr,len))
-        return gentypeerr(contextptr);
+        return generrtype(_SP_BAD_SOUND_DATA);
     for (const_iterateur it=opts.begin();it!=opts.end();++it) {
         if (it->is_symb_of_sommet(at_equal)) {
             const gen &lh=it->_SYMBptr->feuille._VECTptr->front();
@@ -221,17 +272,18 @@ gen _plotwav(const gen &g,GIAC_CONTEXT) {
                 if (rh.is_symb_of_sommet(at_interval)) {
                     gen a=rh._SYMBptr->feuille._VECTptr->front();
                     gen b=rh._SYMBptr->feuille._VECTptr->back();
-                    if (!is_real(a,contextptr) || !is_real(b,contextptr) || is_positive(a-b,contextptr))
-                        return gensizeerr(contextptr);
+                    if (!is_real_number(a,contextptr) || !is_real_number(b,contextptr) ||
+                            is_positive((a=to_real_number(a,contextptr))-(b=to_real_number(b,contextptr)),contextptr))
+                        return generr(_SP_INVALID_RANGE);
                     slice_start=std::max(slice_start,_floor(a*gen(sr),contextptr).val);
                     len=std::min(len-slice_start,_floor(b*gen(sr),contextptr).val-slice_start);
                 } else if (rh.type==_VECT) {
                     if (rh._VECTptr->size()!=2 || !rh._VECTptr->front().is_integer() ||
                             !rh._VECTptr->back().is_integer())
-                        return gensizeerr(contextptr);
+                        return generr(_SP_INVALID_RANGE);
                     slice_start=std::max(slice_start,rh._VECTptr->front().val);
                     len=std::min(len-slice_start,rh._VECTptr->back().val-slice_start);
-                } else return gensizeerr(contextptr);
+                } else return generr(_SP_INVALID_RANGE);
             }
         }
     }
@@ -257,7 +309,7 @@ gen _plotwav(const gen &g,GIAC_CONTEXT) {
                 fmax=fmin=0.0;
                 bnd=std::min(i+step,len);
                 for (int j=i;j<bnd;++j) {
-                    s=_evalf(data[j],contextptr).DOUBLE_val();
+                    s=to_real_number(data[j],contextptr).to_double(contextptr);
                     if (s>fmax) fmax=s;
                     else if (s<fmin) fmin=s;
                 }
@@ -283,7 +335,7 @@ gen _stereo2mono(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     int nc,bd,sr,len;
     if (!is_sound_data(g,nc,bd,sr,len))
-        return gentypeerr(contextptr);
+        return generrtype(_SP_BAD_SOUND_DATA);
     if (nc==1)
         return g;
     vecteur data(len,0);
@@ -311,8 +363,10 @@ gen _plotspectrum(const gen &g,GIAC_CONTEXT) {
         return _plotspectrum(makesequence(g,symbolic(at_equal,makesequence(at_range,intrv))),contextptr);
     } else if (g.subtype==_SEQ__VECT) {
         const vecteur &gv=*g._VECTptr;
-        if (gv.size()!=2 || !is_sound_data(gv.front(),nc,bd,sr,len))
-            return gensizeerr(contextptr);
+        if (gv.size()!=2)
+            return generr("Expected two input arguments");
+        if (!is_sound_data(gv.front(),nc,bd,sr,len))
+            return generrtype(_SP_BAD_SOUND_DATA);
         vecteur data;
         if (nc>1)
             data=decode_chdata(*_stereo2mono(gv.front(),contextptr)._VECTptr->at(1)._VECTptr,bd);
@@ -326,19 +380,19 @@ gen _plotspectrum(const gen &g,GIAC_CONTEXT) {
             gen a,b;
             if (rh.type==_VECT) {
                 if (rh._VECTptr->size()!=2 || !is_integer_vecteur(*rh._VECTptr))
-                    return gensizeerr(contextptr);
+                    return generr(_SP_INVALID_RANGE);
                 a=rh._VECTptr->front();
                 b=rh._VECTptr->back();
             } else if (rh.is_symb_of_sommet(at_interval)) {
                 a=rh._SYMBptr->feuille._VECTptr->front();
                 b=rh._SYMBptr->feuille._VECTptr->back();
-            } else return gensizeerr(contextptr);
+            } else return generr(_SP_INVALID_RANGE);
             if (!is_integer(a) || !is_integer(b))
-                return gensizeerr(contextptr);
+                return generr(_SP_INVALID_RANGE);
             lfreq=std::max(0,a.val);
             ufreq=std::min(sr/2,b.val);
             if (lfreq>=ufreq)
-                return gensizeerr(contextptr);
+                return generr(_SP_INVALID_RANGE);
         }
         int n=nextpow2(len);
         data.resize(n,0);
@@ -351,7 +405,7 @@ gen _plotspectrum(const gen &g,GIAC_CONTEXT) {
         if (step==0) step=1;
         double f;
         for (int i=n1;i<n2;++i) {
-            f=std::max(f,_evalf(pow(_abs(spec[i],contextptr),2)/gen(n),contextptr).DOUBLE_val());
+            f=std::max(f,to_real_number(pow(_abs(spec[i],contextptr),2)/gen(n),contextptr).to_double(contextptr));
             if (i%step==0) {
                 nodes.push_back(makecomplex(((long)i*(long)sr)/(long)n,f));
                 f=0;
@@ -371,7 +425,7 @@ gen _channels(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     int nc,bd,sr,len;
     if (!is_sound_data(g,nc,bd,sr,len))
-        return gentypeerr(contextptr);
+        return generrtype(_SP_BAD_SOUND_DATA);
     return nc;
 }
 static const char _channels_s []="channels";
@@ -382,7 +436,7 @@ gen _bit_depth(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     int nc,bd,sr,len;
     if (!is_sound_data(g,nc,bd,sr,len))
-        return gentypeerr(contextptr);
+        return generrtype(_SP_BAD_SOUND_DATA);
     return bd;
 }
 static const char _bit_depth_s []="bit_depth";
@@ -393,7 +447,7 @@ gen _samplerate(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     int nc,bd,sr,len;
     if (!is_sound_data(g,nc,bd,sr,len))
-        return gentypeerr(contextptr);
+        return generrtype(_SP_BAD_SOUND_DATA);
     return sr;
 }
 static const char _samplerate_s []="samplerate";
@@ -404,7 +458,7 @@ gen _duration(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     int nc,bd,sr,len;
     if (!is_sound_data(g,nc,bd,sr,len))
-        return gentypeerr(contextptr);
+        return generrtype(_SP_BAD_SOUND_DATA);
     return _evalf(fraction(len,sr),contextptr);
 }
 static const char _duration_s []="duration";
@@ -418,19 +472,19 @@ gen _channel_data(const gen &g,GIAC_CONTEXT) {
     vecteur opts;
     if (g.subtype==_SEQ__VECT) {
         if (g._VECTptr->front().type!=_VECT)
-            return gentypeerr(contextptr);
+            return generrtype(_SP_BAD_SOUND_DATA);
         opts=vecteur(g._VECTptr->begin()+1,g._VECTptr->end());
     }
     const gen &data=g.subtype==_SEQ__VECT?g._VECTptr->front():g;
     int nc,bd,sr,len;
     if (!is_sound_data(data,nc,bd,sr,len))
-        return gentypeerr(contextptr);
+        return generrtype(_SP_BAD_SOUND_DATA);
     int chan=0,slice_start=0,slice_len=len;
     bool asmatrix=false;
     for (const_iterateur it=opts.begin();it!=opts.end();++it) {
         if (it->is_integer()) {
             if (it->val<1 || it->val>nc)
-                return gensizeerr(contextptr);
+                return generr("Invalid channel number");
             chan=it->val;
         } else if (*it==at_matrix)
             asmatrix=true;
@@ -440,29 +494,29 @@ gen _channel_data(const gen &g,GIAC_CONTEXT) {
             if (lh==at_range) {
                 if (rh.type==_VECT) {
                     if (rh._VECTptr->size()!=2)
-                        return gendimerr(contextptr);
+                        return generrdim(_SP_INVALID_RANGE);
                     if (!is_integer_vecteur(*rh._VECTptr))
-                        return gensizeerr(contextptr);
+                        return generr(_SP_INVALID_RANGE);
                     int start=rh._VECTptr->front().val,stop=rh._VECTptr->back().val;
                     slice_start=start-1; slice_len=stop-start+1;
                 } else if (rh.is_symb_of_sommet(at_interval)) {
                     const gen &a=rh._SYMBptr->feuille._VECTptr->front();
                     const gen &b=rh._SYMBptr->feuille._VECTptr->back();
                     if (!a.is_integer() || !b.is_integer()) {
-                        if (!is_real(a,contextptr) || !is_real(b,contextptr))
-                            return gensizeerr(contextptr);
-                        slice_start=std::floor(sr*_evalf(a,contextptr).DOUBLE_val());
-                        slice_len=std::floor(sr*_evalf(b-a,contextptr).DOUBLE_val());
+                        if (!is_real_number(a,contextptr) || !is_real_number(b,contextptr))
+                            return generr(_SP_INVALID_RANGE);
+                        slice_start=std::floor(sr*to_real_number(a,contextptr).to_double(contextptr));
+                        slice_len=std::floor(sr*to_real_number(b-a,contextptr).to_double(contextptr));
                     } else {
                         slice_start=a.val-1;
                         slice_len=(b-a).val+1;
                     }
-                } else return gensizeerr(contextptr);
+                } else return generr(_SP_INVALID_RANGE);
             }
         }
     }
     if (slice_start<0 || slice_start>=len || slice_len<0 || slice_len>len || slice_start+slice_len>len)
-        return gensizeerr(contextptr);
+        return generr("Invalid slice bounds");
     if (chan==0) {
         vecteur ret;
         for (const_iterateur it=data._VECTptr->begin()+1;it!=data._VECTptr->end();++it) {
@@ -484,7 +538,7 @@ gen _cross_correlation(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     vecteur &args=*g._VECTptr;
     if (args.size()!=2 || args.front().type!=_VECT || args.back().type!=_VECT)
-        return gensizeerr(contextptr);
+        return generr("Expected a sequence of two lists");
     vecteur A=*args.front()._VECTptr,B=*args.back()._VECTptr;
     int m=A.size(),n=B.size(),N=nextpow2(std::max(n,m));
     A.resize(2*N,0);
@@ -533,15 +587,15 @@ void highpass(vecteur &data,double cutoff,int sr) {
 }
 
 gen filter(const vecteur &args,filter_type typ,GIAC_CONTEXT) {
-    double cutoff=_evalf(args.at(1),contextptr).DOUBLE_val();
+    double cutoff=to_real_number(args.at(1),contextptr).to_double(contextptr);
     int nc,bd,sr,len;
     if (is_sound_data(*args.front()._VECTptr,nc,bd,sr,len)) {
         if (cutoff<=0 || cutoff>=sr/2)
-            return gensizeerr(contextptr);
+            return generr("Invalid cutoff specification");
         gen opt(undef);
         if (args.size()>2) {
             if (!args[2].is_symb_of_sommet(at_equal))
-                return gensizeerr(contextptr);
+                return generr("Third argument must be normalize=<real>");
             if (args[2]._SYMBptr->feuille._VECTptr->front()==at_normalize)
                 opt=args[2];
         }
@@ -562,11 +616,11 @@ gen filter(const vecteur &args,filter_type typ,GIAC_CONTEXT) {
         vecteur data=*args.front()._VECTptr;
         sr=44100;
         if (args.size()>2) {
-            if (!is_integer(args.at(2)) || (sr=args.at(2).val)<=0)
-                return gentypeerr(contextptr);
+            if (!args.at(2).is_integer() || (sr=args.at(2).val)<=0)
+                return generr("Invalid sample rate specification");
         }
         if (cutoff<=0 || cutoff>=sr/2)
-            return gensizeerr(contextptr);
+            return generr("Invalid cutoff specification");
         switch(typ) {
         case _LOWPASS_FILTER: lowpass(data,cutoff,sr); break;
         case _HIGHPASS_FILTER: highpass(data,cutoff,sr); break;
@@ -578,7 +632,7 @@ gen filter(const vecteur &args,filter_type typ,GIAC_CONTEXT) {
 gen _lowpass(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT || g._VECTptr->size()<2 ||
-            g._VECTptr->front().type!=_VECT || !is_real(g._VECTptr->at(1),contextptr))
+            g._VECTptr->front().type!=_VECT || !is_real_number(g._VECTptr->at(1),contextptr))
         return gentypeerr(contextptr);
     return filter(*g._VECTptr,_LOWPASS_FILTER,contextptr);
 }
@@ -589,7 +643,7 @@ define_unary_function_ptr5(at_lowpass,alias_at_lowpass,&__lowpass,0,true)
 gen _highpass(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT || g._VECTptr->size()<2 ||
-            g._VECTptr->front().type!=_VECT || !is_real(g._VECTptr->at(1),contextptr))
+            g._VECTptr->front().type!=_VECT || !is_real_number(g._VECTptr->at(1),contextptr))
         return gentypeerr(contextptr);
     return filter(*g._VECTptr,_HIGHPASS_FILTER,contextptr);
 }
@@ -603,15 +657,15 @@ gen _moving_average(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     const vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
-        return gensizeerr("Wrong number of input arguments");
+        return generr("Expected two input arguments");
     if (gv.front().type!=_VECT)
-        return gensizeerr("First argument must be an array");
+        return generr("First argument must be an array");
     if (!gv.back().is_integer() || gv.back().val<=0)
-        return gensizeerr("Second argument must be a positive integer");
+        return generr("Second argument must be a positive integer");
     vecteur &s=*gv.front()._VECTptr;
     int n=gv.back().val,len=s.size();
     if (n>len)
-        return gensizeerr("Filter length exceeds array size");
+        return generr("Filter length exceeds array size");
     vecteur res(len-n+1);
     gen acc(0);
     for (int i=0;i<n;++i) acc+=s[i];
@@ -634,7 +688,7 @@ gen _rms(const gen &g,GIAC_CONTEXT) {
 	const vecteur &gv=*g._VECTptr;
 	int n=gv.size();
 	if (n==0)
-		return gensizeerr("The list is empty");
+		return generr("Input list is empty");
 	gen res(0);
 	for (const_iterateur it=gv.begin();it!=gv.end();++it) {
 		gen rp=re(*it,contextptr);
@@ -651,7 +705,7 @@ define_unary_function_ptr5(at_rms,alias_at_rms,&__rms,0,true)
 gen _resample(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
 #ifndef HAVE_LIBSAMPLERATE
-    *logptr(contextptr) << "Error: libsamplerate is required for resampling audio\n";
+    *logptr(contextptr) << gettext("Error") << ": " << gettext("libsamplerate is required for resampling audio") << "\n";
     return vecteur(0);
 #else
     if (g.type!=_VECT)
@@ -659,16 +713,16 @@ gen _resample(const gen &g,GIAC_CONTEXT) {
     int nc,bd,sr,len;
     const gen &snd=g.subtype==_SEQ__VECT?g._VECTptr->front():g;
     if (!is_sound_data(snd,nc,bd,sr,len))
-        return gentypeerr(contextptr);
+        return generrtype(_SP_BAD_SOUND_DATA);
     int nsr=44100;
     int quality=2;
     if (g.subtype==_SEQ__VECT) {
         const vecteur &gv=*g._VECTptr;
         if (gv.size()<2 || !gv[1].is_integer() || (nsr=gv[1].val)<1)
-            return gensizeerr(contextptr);
+            return generr("Second argument must be a positive integer");
         if (gv.size()>2) {
             if (!gv[2].is_integer() || (quality=gv[2].val)<0 || (quality>4))
-                return gensizeerr(contextptr);
+                return generr("Invalid quality specification (expected an integer 1-4)");
         }
     }
     matrice chdata;
@@ -685,7 +739,7 @@ gen _resample(const gen &g,GIAC_CONTEXT) {
     data.data_out=new float[nlen*nc];
     for (int i=0;i<len;++i) {
         for (int j=0;j<nc;++j) {
-            indata[i*nc+j]=_evalf(chdata[j][i],contextptr).DOUBLE_val();
+            indata[i*nc+j]=to_real_number(chdata[j][i],contextptr).to_double(contextptr);
         }
     }
     data.data_in=indata;
@@ -2261,11 +2315,11 @@ vecteur apply_window_function(const gen &expr,const identificateur &k,const vect
 bool nivelate(vecteur &data,int k,const gen &b,const gen &val,const unary_function_ptr *comp,GIAC_CONTEXT) {
     gen r;
     if (has_i(data[k]) && !is_zero((r=_abs(data[k],contextptr)))) {
-        if (_eval(symbolic(comp,makevecteur(r,b)),contextptr).val!=0) {
+        if (_eval(symbolic(comp,makesequence(r,b)),contextptr).val!=0) {
             data[k]=val*data[k]/r;
             return true;
         }
-    } else if (_eval(symbolic(comp,makevecteur(data[k],b)),contextptr).val!=0) {
+    } else if (_eval(symbolic(comp,makesequence(data[k],b)),contextptr).val!=0) {
         data[k]=val;
         return true;
     }
@@ -2307,7 +2361,7 @@ gen _threshold(const gen &g,GIAC_CONTEXT) {
             val=_rhs(bnd,contextptr);
             bnd=_lhs(bnd,contextptr);
         } else val=bnd;
-        if (!is_real(bnd,contextptr))
+        if (!is_real_number(bnd,contextptr))
             return gentypeerr(contextptr);
         gen comp=at_inferieur_strict,isabs;
         bool absolute=false;
@@ -2326,7 +2380,7 @@ gen _threshold(const gen &g,GIAC_CONTEXT) {
         }
         for (int k=0;k<n;++k) {
             if (absolute) {
-                if (_eval(symbolic(comp._FUNCptr,makevecteur(_abs(data[k],contextptr),bnd)),contextptr).val!=0)
+                if (_eval(symbolic(comp._FUNCptr,makesequence(_abs(data[k],contextptr),bnd)),contextptr).val!=0)
                     output[k]=is_positive(data[k],contextptr)?val:-val;
             } else nivelate(output,k,bnd,val,comp._FUNCptr,contextptr);
         }
@@ -2350,11 +2404,11 @@ bool parse_window_parameters(const gen &g,vecteur &data,int &start,int &len,doub
     data=*args.front()._VECTptr;
     len=data.size();
     bool has_alpha;
-    if (is_real(args.at(1),contextptr)) {
+    if (is_real_number(args.at(1),contextptr)) {
         has_alpha=true;
         if (!alpha)
             return false;
-        *alpha=_evalf(args.at(1),contextptr).DOUBLE_val();
+        *alpha=to_real_number(args.at(1),contextptr).to_double(contextptr);
     } else if (args.size()>2) return false;
     if (args.back().is_symb_of_sommet(at_interval)) {
         gen lh=_lhs(args.back(),contextptr),rh=_rhs(args.back(),contextptr);
@@ -2537,8 +2591,8 @@ gen _riemann_window(const gen &g,GIAC_CONTEXT) {
     identificateur k(" k");
     if (!parse_window_parameters(g,data,start,N,0,contextptr))
         return gentypeerr(contextptr);
-    gen K=(2*k/(N-1)-1)*_IDNT_pi(),cond=symbolic(at_same,makevecteur(k,(N-1)/2.0));
-    gen expr=symbolic(at_when,makevecteur(cond,1,sin(K,contextptr)/K));
+    gen K=(2*k/(N-1)-1)*_IDNT_pi(),cond=symbolic(at_same,makesequence(k,(N-1)/2.0));
+    gen expr=symbolic(at_when,makesequence(cond,1,sin(K,contextptr)/K));
     return apply_window_function(expr,k,data,start,N,contextptr);
 }
 static const char _riemann_window_s []="riemann_window";
@@ -2571,7 +2625,7 @@ gen _tukey_window(const gen &g,GIAC_CONTEXT) {
     double p=alpha*(N-1)/2.0,q=1-alpha/2;
     gen cond1=symb_inferieur_strict(k,p),cond2=symb_inferieur_egal(k,q*(N-1));
     gen f1=(1+cos(_IDNT_pi()*(k/p-1),contextptr))/2,f2=(1+cos(_IDNT_pi()*(k/p+1-2/alpha),contextptr))/2;
-    gen expr=symbolic(at_piecewise,makevecteur(cond1,f1,cond2,1,f2));
+    gen expr=symbolic(at_piecewise,makesequence(cond1,f1,cond2,1,f2));
     return apply_window_function(expr,k,data,start,N,contextptr);
 }
 static const char _tukey_window_s []="tukey_window";

@@ -29,6 +29,7 @@
 #include "unary.h"
 #include "moyal.h"
 #include "optimization.h"
+#include "signalprocessing.h"
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -936,7 +937,6 @@ public:
     double rand_uniform() const;
     double rand_normal() const { return giac::randNorm(ctx); }
     ivector rand_permu(int n) const;
-    static bool is_real_number(const gen &g,GIAC_CONTEXT);
     static gen to_binary(int number,int chars);
     const context *giac_context() const { return ctx; }
     static gen make_idnt(const char* name,int index=-1,bool intern=true);
@@ -1288,7 +1288,6 @@ public:
     void identify_from_sequences(vecteur &spec,int haar_limit=25);
 
     // static methods
-    static double to_double(const gen &g,GIAC_CONTEXT);
     static gen customize_display(int options);
     static gen customize_layout(int options);
     static rectangle layout_bounding_rect(layout &ly,double padding=0,int coord_offset=0);

@@ -64,24 +64,6 @@ static const char *gt_error_messages[] = {
     "Expected an unassigned identifier",                                // 31
 };
 
-gen generr(const char* msg,bool translate=true) {
-    string m(translate?gettext(msg):msg);
-    m.append(".");
-    return gensizeerr(m.c_str());
-}
-
-gen generrtype(const char* msg) {
-    string m(gettext(msg));
-    m.append(".");
-    return gentypeerr(m.c_str());
-}
-
-gen generrdim(const char* msg) {
-    string m(gettext(msg));
-    m.append(".");
-    return gendimerr(m.c_str());
-}
-
 gen gt_err(int code) {
     return generr(gettext((string(gt_error_messages[code])).c_str()),false);
 }
@@ -373,9 +355,9 @@ void parse_lp_options(const_iterateur opt_start,const_iterateur opt_end,bool *st
                     tm_lim=rhs.val;
                     break;
                 case _LP_GAP_TOLERANCE:
-                    if (_evalf(rhs,contextptr).type!=_DOUBLE_ || !is_positive(rhs,contextptr))
+                    if (!is_real_number(rhs,contextptr) || !is_positive(to_real_number(rhs,contextptr),contextptr))
                         generr("Expected a nonnegative real number");
-                    gap_tol=rhs.to_double(contextptr);
+                    gap_tol=to_real_number(rhs,contextptr).to_double(contextptr);
                     break;
                 default: gentypeerr(contextptr);
                 }
@@ -450,12 +432,12 @@ gen randomgraph(const vecteur &gv,bool directed,GIAC_CONTEXT) {
     G.reserve_nodes(n);
     G.add_nodes(V);
     if (gv.size()==2) {
-        gen p=_evalf(gv.back(),contextptr);
-        if (p.type==_DOUBLE_) {
-            if (!is_strictly_positive(p,contextptr))
+        gen p;
+        if (is_real_number(gv.back(),contextptr)) {
+            if (!is_strictly_positive(p=to_real_number(gv.back(),contextptr),contextptr))
                 return gentypeerr("Expected a positive constant");
             G.set_directed(directed);
-            G.erdos_renyi(p.DOUBLE_val());
+            G.erdos_renyi(p.to_double(contextptr));
         } else {
             vecteur P;
             if (directed)
@@ -468,9 +450,10 @@ gen randomgraph(const vecteur &gv,bool directed,GIAC_CONTEXT) {
                 P=*_apply(makesequence(gv.back(),L),contextptr)._VECTptr;
             }
             for (iterateur it=P.begin();it!=P.end();++it) {
-                if (!is_real(*it,contextptr) || !is_positive(*it,contextptr))
+                gen w;
+                if (!is_real_number(*it,contextptr) || !is_positive(w=to_real_number(*it,contextptr),contextptr))
                     return generr("Weights must be nonnegative real numbers");
-                *it=_evalf(*it,contextptr);
+                *it=w;
             }
             G.molloy_reed(P);
         }
@@ -642,7 +625,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
         if (gv.front().type==_FUNC) {
             const_iterateur it=gv.begin()+1;
             for (;it!=gv.end();++it) {
-                if (!graphe::is_real_number(*it,contextptr) && it->type!=_IDNT) break;
+                if (!is_real_number(*it,contextptr) && it->type!=_IDNT) break;
             }
             if (it==gv.end()) {
                 gen args=change_subtype(vecteur(gv.begin()+1,gv.end()),_SEQ__VECT);
@@ -715,8 +698,8 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
             return symbolic(at_normald,makesequence(mean,sdev));
         } else if (f==at_uniform || f==at_uniformd) {
             if (!is_undef(a) && !is_undef(b)) {
-                if (_evalf(a,contextptr).type!=_DOUBLE_ || _evalf(b,contextptr).type!=_DOUBLE_ ||
-                        !is_strictly_greater(b,a,contextptr))
+                if (!is_real_number(a,contextptr) || !is_real_number(b,contextptr) ||
+                        !is_strictly_greater(b=to_real_number(b,contextptr),a=to_real_number(a,contextptr),contextptr))
                     return gensizeerr(contextptr);
                 return makesequence(at_uniformd,a,b);
             } else if (!is_undef(mean) && !is_undef(sdev)) {
@@ -810,7 +793,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
                 return gensizeerr(contextptr);
             return symbolic(at_binomial,makesequence(N,_ratnormal(p,contextptr)));
         } else if (f.type==_FUNC || f.is_symb_of_sommet(at_program)) { // custom discrete distribution
-            if (!is_integer(a) || !is_integer(b) || !is_strictly_greater(b,a,contextptr))
+            if (!is_integer(a) || !is_integer(b) || b.val<=a.val)
                 return gensizeerr(contextptr);
             if (samples>0) {
                 identificateur k(" k");
@@ -829,7 +812,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
         }
     } else if (ckmatrix(g)) {
         if (g._VECTptr->front()._VECTptr->size()!=2)
-            return gendimerr(contextptr);
+            return generrdim("Expected a two-column matrix");
         int n=g._VECTptr->size();
         weights.reserve(n);
         items.reserve(n);
@@ -841,9 +824,9 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
     if (weights.empty())
         return gensizeerr(contextptr);
     if (!items.empty() && items.size()!=weights.size())
-        return gendimerr(contextptr);
+        return generrdim("Items and weights sizes do not match");
     for (const_iterateur it=weights.begin();it!=weights.end();++it) {
-        if (!graphe::is_real_number(*it,contextptr) || !is_positive(*it,contextptr))
+        if (!is_real_number(*it,contextptr) || !is_positive(to_real_number(*it,contextptr),contextptr))
             return gensizeerr(contextptr);
     }
     graphe::ransampl rs(weights,contextptr);
@@ -914,7 +897,7 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
         // adjacency matrix is given
         bool size_err;
         if (!parse_matrix(G,*g._VECTptr,false,0,size_err))
-            return size_err?gendimerr(contextptr):gentypeerr(contextptr);
+            return size_err?generrdim("Bad matrix size"):gentypeerr(contextptr);
     } else if (g.type==_VECT && g.subtype!=_SEQ__VECT) {
         // list of vertices or set of edges is given
         if (g.subtype==_SET__VECT) {
@@ -958,7 +941,7 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
                 if (!G.is_directed() && m!=mtran(m))
                     return gt_err(_GT_ERR_MATRIX_NOT_SYMMETRIC);
                 if (!parse_matrix(G,m,i==2 || weighted,i,size_err))
-                    return size_err?gendimerr(contextptr):generrtype("Failed to parse matrix");
+                    return size_err?generrdim("Bad matrix size"):generrtype("Failed to parse matrix");
             } else if (i==0 && arg.is_integer()) {
                 int nv=arg.val;
                 if (nv<0)
@@ -1582,8 +1565,8 @@ gen _bipartite_matching(const gen &g,GIAC_CONTEXT) {
         else *logptr(contextptr) << "Warning: unknown optional argument\n";
         if (gv.size()>2 && gv[2].is_symb_of_sommet(at_equal) &&
                 gv[2]._SYMBptr->feuille._VECTptr->front()==at_epsilon) {
-            gen val=_evalf(gv[2]._SYMBptr->feuille._VECTptr->back(),contextptr);
-            if (val.type!=_DOUBLE_ || (eps=val.DOUBLE_val())<=0)
+            gen val=gv[2]._SYMBptr->feuille._VECTptr->back();
+            if (!is_real_number(val,contextptr) || (eps=to_real_number(val,contextptr).to_double(contextptr))<=0)
                 return generr("Expected a positive real number");
         }
     } else if (!G.read_gen(g))
@@ -2070,24 +2053,22 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
             ld=br_yz.height();
         }
         if (!is_undef(sc)) {
-            gen d=_evalf(sc,contextptr);
-            if (d.type!=_DOUBLE_)
+            if (!is_real_number(sc,contextptr))
                 return gentypeerr(contextptr);
-            graphe::scale_layout(main_layout,d.DOUBLE_val());
+            graphe::scale_layout(main_layout,to_real_number(sc,contextptr).to_double(contextptr));
         }
         if (!ar.empty()) {
             if ((in_3d && ar.size()!=3) || (method!=_GT_STYLE_3D && ar.size()!=2))
-                return gendimerr(contextptr);
+                return generrdim("Bad point dimension");
             graphe::point s(in_3d?3:2);
             for (const_iterateur it=ar.begin();it!=ar.end();++it) {
                 if (!is_positive(*it,contextptr))
                     return gentypeerr(contextptr);
                 int i=it-ar.begin();
-                gen d=_evalf(*it,contextptr);
-                if (d.type!=_DOUBLE_)
+                if (!is_real_number(*it,contextptr))
                     return gentypeerr(contextptr);
                 double l=(i==0?lw:(i==1?lh:ld));
-                s[i]=is_exactly_zero(*it)?-1:(l==0.0?1.0:d.DOUBLE_val()/l);
+                s[i]=is_zero(*it,contextptr)?-1:(l==0.0?1.0:to_real_number(*it,contextptr).to_double(contextptr)/l);
             }
             if ((in_3d && s[0]*s[1]*s[2]<0) || (!in_3d && s[0]<0 && s[1]<0))
                 return gensizeerr(contextptr);
@@ -2109,13 +2090,12 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
         if (!pos.empty()) {
             graphe::point dp(in_3d?3:2,0.0);
             if (pos.size()!=dp.size())
-                return gendimerr(contextptr);
+                return generrdim("Bad point dimension");
             for (const_iterateur it=pos.begin();it!=pos.end();++it) {
                 int i=it-pos.begin();
-                gen c=_evalf(*it,contextptr);
-                if (c.type!=_DOUBLE_)
+                if (!is_real_number(*it,contextptr))
                     return gentypeerr(contextptr);
-                dp[i]=c.DOUBLE_val()-(i==0?x0:(i==1?y0:z0));
+                dp[i]=to_real_number(*it,contextptr).to_double(contextptr)-(i==0?x0:(i==1?y0:z0));
             }
             graphe::translate_layout(main_layout,dp);
         }
@@ -2313,7 +2293,7 @@ gen _random_bipartite_graph(const gen &g,GIAC_CONTEXT) {
     const vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-    if (!is_strictly_positive(gv.back(),contextptr))
+    if (!is_real_number(gv.back(),contextptr) || !is_strictly_positive(to_real_number(gv.back(),contextptr),contextptr))
         return gentypeerr(contextptr);
     int n,a,b;
     vecteur V,W;
@@ -2351,7 +2331,7 @@ gen _random_bipartite_graph(const gen &g,GIAC_CONTEXT) {
             a=G.rand_integer(n-1)+1;
             b=n-a;
         }
-        p=gv.back().DOUBLE_val();
+        p=to_real_number(gv.back(),contextptr).to_double(contextptr);
         if (p<=0 || p>=1)
             return generr("Expected a a real in (0,1)");
     }
@@ -2547,9 +2527,9 @@ gen _random_planar_graph(const gen &g,GIAC_CONTEXT) {
         const vecteur &gv=*g._VECTptr;
         if (gv.size()>1 && gv.size()<=3) {
             spec=gv.front();
-            if (_evalf(gv[1],contextptr).type!=_DOUBLE_)
+            if (!is_real_number(gv[1],contextptr))
                 return gentypeerr(contextptr);
-            p=gv[1].DOUBLE_val();
+            p=to_real_number(gv[1],contextptr).to_double(contextptr);
             if (p<0 || p>=1)
                 return generrtype("Invalid probability specification");
             if (gv.size()==3) {
@@ -2598,9 +2578,10 @@ gen _assign_edge_weights(const gen &g,GIAC_CONTEXT) {
             return generrtype("Expected an interval");
         gen a=gv.back()._SYMBptr->feuille._VECTptr->front(),
                 b=gv.back()._SYMBptr->feuille._VECTptr->back();
-        if (!graphe::is_real_number(a,contextptr) || !graphe::is_real_number(b,contextptr))
+        if (!is_real_number(a,contextptr) || !is_real_number(b,contextptr))
             return generrtype("Expected an interval of reals");
-        G.randomize_edge_weights(_evalf(a,contextptr).DOUBLE_val(),_evalf(b,contextptr).DOUBLE_val(),false);
+        G.randomize_edge_weights(to_real_number(a,contextptr).to_double(contextptr),
+                                 to_real_number(b,contextptr).to_double(contextptr),false);
     }
     return G.to_gen();
 }
@@ -2675,7 +2656,7 @@ gen _add_arc(const gen &g,GIAC_CONTEXT) {
     if (!G.is_directed())
         return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED);
     if (!parse_edges(G,E,ckmatrix(gv.back())))
-        return gendimerr(contextptr);
+        return generrdim("Failed to parse edges");
     return G.to_gen();
 }
 static const char _add_arc_s[]="add_arc";
@@ -2704,7 +2685,7 @@ gen _delete_arc(const gen &g,GIAC_CONTEXT) {
     if (!G.is_directed())
         return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED);
     if (!delete_edges(G,E))
-        return gendimerr(contextptr);
+        return generrdim("Failed to delete edges");
     return G.to_gen();
 }
 static const char _delete_arc_s[]="delete_arc";
@@ -2733,7 +2714,7 @@ gen _add_edge(const gen &g,GIAC_CONTEXT) {
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     if (!parse_edges(G,E,ckmatrix(gv.back())))
-        return gendimerr(contextptr);
+        return generrdim("Failed to parse edges");
     return G.to_gen();
 }
 static const char _add_edge_s[]="add_edge";
@@ -2762,7 +2743,7 @@ gen _delete_edge(const gen &g,GIAC_CONTEXT) {
     if (G.is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     if (!delete_edges(G,E))
-        return gendimerr(contextptr);
+        return generrdim("Failed to delete edges");
     return G.to_gen();
 }
 static const char _delete_edge_s[]="delete_edge";
@@ -2986,7 +2967,7 @@ gen _make_weighted(const gen &g,GIAC_CONTEXT) {
     if (has_matrix) {
         m=*g._VECTptr->back()._VECTptr;
         if (int(m.size())!=n || int(m.front()._VECTptr->size())!=n)
-            return gendimerr(contextptr);
+            return generrdim("Bad matrix size");
     }
     G.make_weighted(m);
     return G.to_gen();
@@ -4806,7 +4787,7 @@ gen _interval_graph(const gen &g,GIAC_CONTEXT) {
             return generrtype("Expected an interval");
         a=it->_SYMBptr->feuille._VECTptr->front();
         b=it->_SYMBptr->feuille._VECTptr->back();
-        if (!graphe::is_real_number(a,contextptr) || !graphe::is_real_number(b,contextptr))
+        if (!is_real_number(a,contextptr) || !is_real_number(b,contextptr))
             return generrtype("Expected an interval of reals");
         string str;
         str+=gen2string(a);
@@ -5922,9 +5903,9 @@ gen _lowest_common_ancestor(const gen &g,GIAC_CONTEXT) {
         return G.node_label(G.lowest_common_ancestor(i,j,r));
     } else if (gv.size()==3) {
         if (!ckmatrix(gv.back()))
-            return gentypeerr(contextptr);
+            return generrtype("Expected a matrix");
         if (gv.back()._VECTptr->front()._VECTptr->size()!=2)
-            return gendimerr(contextptr);
+            return generrdim("Expected a two-column matrix");
         graphe::ipairs p;
         matrice &m=*gv.back()._VECTptr;
         int n=m.size(),i,j;
@@ -5939,7 +5920,7 @@ gen _lowest_common_ancestor(const gen &g,GIAC_CONTEXT) {
         graphe::ivector lca;
         G.lowest_common_ancestors(r,p,lca);
         return G.get_node_labels(lca);
-    } else return gensizeerr(contextptr);
+    } else return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
 }
 static const char _lowest_common_ancestor_s[]="lowest_common_ancestor";
 static define_unary_function_eval(__lowest_common_ancestor,&_lowest_common_ancestor,_lowest_common_ancestor_s);
@@ -5973,8 +5954,8 @@ gen _st_ordering(const gen &g,GIAC_CONTEXT) {
         return gt_err(makevecteur(gv[1],gv[2]),_GT_ERR_EDGE_NOT_FOUND);
     double p=-1;
     gen gp;
-    if ((gp=_evalf(gv.back(),contextptr)).type==_DOUBLE_) {
-        p=gp.DOUBLE_val();
+    if (is_real_number(gv.back(),contextptr)) {
+        p=to_real_number(gv.back(),contextptr).to_double(contextptr);
         if (p<0 || p>1)
             return generr("0<=p<=1 is required");
     }
@@ -6098,7 +6079,7 @@ gen _plane_dual(const gen &g,GIAC_CONTEXT) {
         const vecteur &gv=*g._VECTptr;
         for (const_iterateur it=gv.begin();it!=gv.end();++it) {
             if (it->type!=_VECT)
-                return gentypeerr(contextptr);
+                return gentypeerr(gettext("Expected a list."));
             graphe::ivector face;
             for (const_iterateur jt=it->_VECTptr->begin();jt!=it->_VECTptr->end();++jt) {
                 if (is_zero(m[*jt]))
@@ -6183,7 +6164,7 @@ gen _set_vertex_positions(const gen &g,GIAC_CONTEXT) {
         if (d==0)
             d=x[i].size();
         else if (int(x[i].size())!=d)
-            return gendimerr(contextptr);
+            return generrdim("Invalid point dimension");
     }
     G.store_layout(x);
     return G.to_gen();
@@ -6217,17 +6198,15 @@ gen _find_cliques(const gen &g,GIAC_CONTEXT) {
                 ub=opt.val;
             else if (opt.is_symb_of_sommet(at_interval)) {
                 const vecteur &bnds=*opt._SYMBptr->feuille._VECTptr;
-                if (!bnds.front().is_integer() ||
-                        !(bnds.back().is_integer() ||
-                          (is_inf(bnds.back()) && is_positive(bnds.back(),contextptr))))
-                    return gentypeerr(contextptr);
+                if (!bnds.front().is_integer() || !(bnds.back().is_integer() || (is_inf(bnds.back()) && is_positive(bnds.back(),contextptr))))
+                    return generr("Invalid bounds");
                 lb=bnds.front().val;
                 ub=is_inf(bnds.back())?rand_max2:bnds.back().val;
                 if (lb<0 || ub<0 || lb>ub)
-                    return gensizeerr(contextptr);
-            } else return gentypeerr(contextptr);
+                    return generr("Invalid bounds");
+            } else return gentypeerr(gettext("Expected an interval."));
         } else if (len>2)
-            return gensizeerr(contextptr);
+            return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     }
     int mode=is_undef(dest)?0:3;
     graphe G(contextptr,mode==3);
@@ -6342,13 +6321,11 @@ gen _transitive_closure(const gen &g,GIAC_CONTEXT) {
         if (g._VECTptr->size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         const gen &opt=g._VECTptr->back();
-        if (opt.is_integer() && opt.val==_GT_WEIGHTED)
+        if (is_mcint(opt,_GT_WEIGHTED))
             weighted=true;
         else if (opt.is_symb_of_sommet(at_equal)) {
             const vecteur &args=*opt._SYMBptr->feuille._VECTptr;
-            if (!args.front().is_integer() ||
-                    args.front().val!=_GT_WEIGHTED ||
-                    !args.back().is_integer())
+            if (!is_mcint(args.front(),_GT_WEIGHTED) || !args.back().is_integer())
                 return gentypeerr(contextptr);
             weighted=(bool)args.back().val;
         }
@@ -6695,9 +6672,9 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
                         incl.push_back(make_pair(i,j));
                     } else return generr("Expected an edge or list of edges");
                 } else if (is_mcint(lhs,_LP_GAP_TOLERANCE)) {
-                    if (_evalf(rhs,contextptr).type!=_DOUBLE_ || is_strictly_greater(0,rhs,contextptr))
+                    if (!is_real_number(rhs,contextptr) || is_strictly_greater(0,to_real_number(rhs,contextptr),contextptr))
                         return generr("Expected a nonnegative real number");
-                    gap_tol=_evalf(rhs,contextptr).DOUBLE_val();
+                    gap_tol=to_real_number(rhs,contextptr).to_double(contextptr);
                 } else return generr("Option not supported");
             } else if (it->is_integer() && it->val>0) {
                 if (is_mcint(*it,_LP_VERBOSE))
@@ -6724,9 +6701,9 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
                 if (approximate && lhs==at_limit && rhs.is_integer())
                     time_limit=rhs.val;
                 else if (is_mcint(lhs,_LP_GAP_TOLERANCE)) {
-                    if (_evalf(rhs,contextptr).type!=_DOUBLE_ || is_strictly_greater(0,rhs,contextptr))
+                    if (!is_real_number(rhs,contextptr) || !is_positive(to_real_number(rhs,contextptr),contextptr))
                         return generr("Expected a nonnegative real number");
-                    gap_tol=_evalf(rhs,contextptr).DOUBLE_val();
+                    gap_tol=to_real_number(rhs,contextptr).to_double(contextptr);
                 }
             } else if (*it==at_vertex_distance && M.empty())
                 make_distances=true;
@@ -6996,9 +6973,10 @@ gen _random_network(const gen &g,GIAC_CONTEXT) {
     bool acyclic=false,weighted=false;
     gen lw,hw;
     for (const_iterateur it=gv.begin()+2;it!=gv.end();++it) {
-        gen P=_evalf(*it,contextptr);
-        if (P.type==_DOUBLE_ && is_strictly_positive(P,contextptr) && !is_strictly_greater(P,1,contextptr))
-            p=P.DOUBLE_val();
+        gen P;
+        if (is_real_number(*it,contextptr) && is_strictly_positive(P=to_real_number(*it,contextptr),contextptr) &&
+                !is_strictly_greater(P,1,contextptr))
+            p=P.to_double(contextptr);
         else if (it->is_integer()) {
             switch (it->val) {
             case _GT_ACYCLIC:
@@ -7019,9 +6997,9 @@ gen _random_network(const gen &g,GIAC_CONTEXT) {
                     if (rh.is_symb_of_sommet(at_interval)) {
                         lw=rh._SYMBptr->feuille._VECTptr->front();
                         hw=rh._SYMBptr->feuille._VECTptr->back();
-                        if (_evalf(lw,contextptr).type!=_DOUBLE_ || _evalf(hw,contextptr).type!=_DOUBLE_)
+                        if (!is_real_number(lw,contextptr) || !is_real_number(hw,contextptr))
                             return generr("Expected a real number");
-                        if (is_greater(lw,hw,contextptr))
+                        if (is_greater(to_real_number(lw,contextptr),to_real_number(hw,contextptr),contextptr))
                             return generr("Invalid range");
                     } else return generr("Expected an interval");
                     weighted=true;
@@ -7089,7 +7067,7 @@ gen _random_network(const gen &g,GIAC_CONTEXT) {
     G.make_default_labels(labels,n);
     G.relabel_nodes(labels);
     if (weighted)
-        G.randomize_edge_weights(_evalf(lw,contextptr).DOUBLE_val(),_evalf(hw,contextptr).DOUBLE_val(),
+        G.randomize_edge_weights(to_real_number(lw,contextptr).to_double(contextptr),to_real_number(hw,contextptr).to_double(contextptr),
                                  lw.is_integer() && hw.is_integer());
     return G.to_gen();
 }
@@ -7534,10 +7512,10 @@ gen _tonnetz(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     const vecteur &gv=*g._VECTptr;
     if (gv.size()!=3 && gv.size()!=4)
-        return gensizeerr(contextptr);
+        return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     for (const_iterateur it=gv.begin();it!=gv.end();++it) {
-        if (!it->is_integer() || !is_strictly_positive(*it,contextptr))
-            return gensizeerr(contextptr);
+        if (!it->is_integer() || it->val<1)
+            return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
     }
     graphe G(contextptr);
     vecteur labels;
@@ -7977,14 +7955,14 @@ gen _katz_centrality(const gen &g,GIAC_CONTEXT) {
     if (G.is_empty())
         return generr("Graph is empty");
     const gen &alpha=gv[1];
-    if (_evalf(alpha,contextptr).type!=_DOUBLE_)
+    if (!is_real_number(alpha,contextptr))
         return gentypeerr(contextptr);
     if (gv.size()==3) {
         k=G.node_index(gv.back());
         if (k==-1)
             return gt_err(gv.back(),_GT_ERR_VERTEX_NOT_FOUND);
     }
-    vecteur kc=G.katz_centrality(alpha);
+    vecteur kc=G.katz_centrality(to_real_number(alpha,contextptr));
     if (k>=0)
         return kc[k];
     return kc;

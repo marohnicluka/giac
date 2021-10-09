@@ -174,6 +174,7 @@ struct nlp_node {
 
 bool is_mcint(const gen &g,int v=-1);
 vecteur sort_identifiers(const vecteur &v,GIAC_CONTEXT);
+ulong next_binary_perm(ulong p);
 
 gen _implicitdiff(const gen &g,GIAC_CONTEXT);
 gen _box_constraints(const gen &g,GIAC_CONTEXT);

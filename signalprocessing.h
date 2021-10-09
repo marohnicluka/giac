@@ -38,6 +38,12 @@ bool is_sound_data(const gen &g,int &nc,int &bd,int &sr,int &len);
 vecteur decode_chdata(const vecteur &data,int bd,int start=0,int len=-1);
 vecteur encode_chdata(const vecteur &data,int bd,double ratio,GIAC_CONTEXT);
 gen filter(const vecteur &args,filter_type typ,GIAC_CONTEXT);
+bool is_real_number(const gen &g,GIAC_CONTEXT);
+gen to_real_number(const gen &g,GIAC_CONTEXT);
+gen generr(const char* msg,bool translate=true);
+gen generrtype(const char* msg,bool translate=true);
+gen generrdim(const char* msg,bool translate=true);
+bool has_rootof(const gen &g);
 
 gen _createwav(const gen &g,GIAC_CONTEXT);
 gen _stereo2mono(const gen &g,GIAC_CONTEXT);

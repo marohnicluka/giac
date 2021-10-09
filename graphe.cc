@@ -21,6 +21,7 @@
 #include "giac.h"
 #include "graphe.h"
 #include "graphtheory.h"
+#include "signalprocessing.h"
 #include <ctype.h>
 #include <math.h>
 #include <ctime>
@@ -510,12 +511,6 @@ bool graphe::rectangle::intersects(vector<rectangle>::const_iterator first,vecto
             return true;
     }
     return false;
-}
-
-/* test if g is a real constant */
-bool graphe::is_real_number(const gen &g,GIAC_CONTEXT) {
-    gen e=_evalf(g,contextptr);
-    return e.type==_DOUBLE_ || e.type==_FLOAT_ || e.type==_REAL;
 }
 
 /* convert number to binary format and return it as gen of type string */
@@ -1127,7 +1122,7 @@ void graphe::make_higman_sims_graph() {
     }
     assert(clq.size()==100);
     for (ivectors::iterator it=clq.begin();it!=clq.end();++it) {
-        sort(it->begin(),it->end());
+        std::sort(it->begin(),it->end());
     }
     if (supports_attributes()) {
         vecteur labels;
@@ -1688,7 +1683,7 @@ void graphe::sort_by_degrees(ivector &sigma) {
     for (int i=0;i<n;++i) {
         lst[i]=make_pair(degree(i),i);
     }
-    sort(lst.rbegin(),lst.rend());
+    std::sort(lst.rbegin(),lst.rend());
     sigma.resize(n);
     for (ipairs_iter it=lst.begin();it!=lst.end();++it) {
         sigma[it-lst.begin()]=it->second;
@@ -1908,7 +1903,7 @@ void graphe::write_attrib(ofstream &dotfile,const attrib &attr,bool style) const
         dotfile << index2tag(it->first) << "=";
         if (it->first==_GT_ATTRIB_POSITION && it->second.is_symb_of_sommet(at_point))
             dotfile << "\"" << it->second._SYMBptr->feuille << "\"";
-        else if (val.type==_STRNG || val.type==_IDNT || val.is_integer() || val.type==_DOUBLE_)
+        else if (val.type==_STRNG || val.type==_IDNT || val.is_integer() || val.type==_DOUBLE_ || val.type==_FLOAT_ || val.type==_REAL)
             dotfile << val;
         else dotfile << "\"" << val << "\"";
         comma=true;
@@ -3260,7 +3255,7 @@ void graphe::maximal_independent_set(ivector &ind) const {
             }
         }
     }
-    sort(ind.begin(),ind.end());
+    std::sort(ind.begin(),ind.end());
 }
 
 /* find a maximum-cardinality matching */
@@ -3858,7 +3853,7 @@ void graphe::edge_labels_placement(const layout &x) {
                 if (edges_crossing(*it,*jt,x,c))
                     dist.push_back(point_distance(p,c,pq)/d);
             }
-            sort(dist.begin(),dist.end());
+            std::sort(dist.begin(),dist.end());
             dist.insert(dist.begin(),MARGIN_FACTOR);
             for (int k=dist.size();k-->1;) {
                 if (dist[k]<=dist.front())
@@ -4087,7 +4082,7 @@ void graphe::multilevel_recursion(layout &x,int d,double R,double K,double tol,i
             for (int j=0;j<m;++j) {
                 if (sparse_matrix_element(P,i,j,pij)) {
                     copy_point(y[j],yj);
-                    scale_point(yj,_evalf(ipair2rat(pij),ctx).DOUBLE_val());
+                    scale_point(yj,to_real_number(ipair2rat(pij),ctx).to_double(ctx));
                     add_point(x[i],yj);
                 }
             }
@@ -4352,7 +4347,7 @@ int graphe::cp_maxclique(ivector &clique) {
         P[i]=i;
     /* sort vertices by degree in descending order */
     degree_comparator comp(this);
-    sort(P.begin(),P.end(),comp);
+    std::sort(P.begin(),P.end(),comp);
     std::reverse(P.begin(),P.end());
     cp_recurse(C,P,clique);
     return clique.size();
@@ -5533,7 +5528,7 @@ bool graphe::hakimi(const ivector &L) {
         D[i]=make_pair(L[i],i);
     }
     do {
-        sort(D.begin(),D.end());
+        std::sort(D.begin(),D.end());
         d=D.back().first;
         i=D.back().second;
         D.pop_back();
@@ -6991,7 +6986,7 @@ int graphe::planar_embedding(ivectors &faces) {
             }
         }
         assert(!face_cv.empty());
-        sort(face_cv.begin(),face_cv.end());
+        std::sort(face_cv.begin(),face_cv.end());
     }
     /* Graph is planar and we have a list of faces for each block.
      * Now blocks are embedded into each other, starting from peripheral blocks,
@@ -7923,7 +7918,7 @@ bool graphe::is_equal(const graphe &G) const {
 /* sort rectangles by height */
 void graphe::sort_rectangles(vector<rectangle> &rectangles) {
     rectangle::comparator comp;
-    sort(rectangles.begin(),rectangles.end(),comp);
+    std::sort(rectangles.begin(),rectangles.end(),comp);
 }
 
 /* packing rectangles (sorted by height) into an enclosing rectangle with specified dimensions,
@@ -8080,7 +8075,7 @@ bool graphe::isomorphic_copy(graphe &G,const ivector &sigma,bool strip_attribute
         p.first=*it;
         p.second=it-sigma.begin();
     }
-    sort(sigma_inv.begin(),sigma_inv.end());
+    std::sort(sigma_inv.begin(),sigma_inv.end());
     ipair f;
     for (ipairs_iter it=E.begin();it!=E.end();++it) {
         const ipair &e=*it;
@@ -8502,8 +8497,8 @@ void graphe::convex_hull(const layout &x,layout &hull) {
     for (const_iterateur it=h.begin();it!=h.end();++it) {
         point &p=hull[it-h.begin()];
         p.resize(2);
-        p.front()=to_double(*it->_CPLXptr,ctx);
-        p.back()=to_double(*(it->_CPLXptr+1),ctx);
+        p.front()=to_real_number(*it->_CPLXptr,ctx).to_double(ctx);
+        p.back()=to_real_number(*(it->_CPLXptr+1),ctx).to_double(ctx);
     }
 }
 
@@ -8597,11 +8592,6 @@ bool graphe::degrees_equal(const ivector &v,int deg) const {
     return true;
 }
 
-/* convert the value g to double type, must be a real number */
-double graphe::to_double(const gen &g,GIAC_CONTEXT) {
-    return g.type==_REAL?g._REALptr->evalf_double():_evalf(g,contextptr).DOUBLE_val();
-}
-
 /* customize the Giac display */
 gen graphe::customize_display(int options) {
     return symb_equal(at_display,change_subtype(options,_INT_COLOR));
@@ -8637,7 +8627,7 @@ bool graphe::gen2point(const gen &g,point &p,GIAC_CONTEXT) {
         for (const_iterateur it=v.begin();it!=v.end();++it) {
             if (!is_real_number(*it,contextptr))
                 return false;
-            p[it-v.begin()]=to_double(*it,contextptr);
+            p[it-v.begin()]=to_real_number(*it,contextptr).to_double(contextptr);
         }
     } else { /* assuming that pos is a complex number */
         p.resize(2);
@@ -8645,12 +8635,12 @@ bool graphe::gen2point(const gen &g,point &p,GIAC_CONTEXT) {
             gen &real=*g._CPLXptr,&imag=*(g._CPLXptr+1);
             if (!is_real_number(real,contextptr) || !is_real_number(imag,contextptr))
                 return false;
-            p.front()=to_double(real,contextptr);
-            p.back()=to_double(imag,contextptr);
+            p.front()=to_real_number(real,contextptr).to_double(contextptr);
+            p.back()=to_real_number(imag,contextptr).to_double(contextptr);
         } else {
             if (!is_real_number(g,contextptr))
                 return false;
-            p.front()=to_double(g,contextptr);
+            p.front()=to_real_number(g,contextptr).to_double(contextptr);
             p.back()=0;
         }
     }
@@ -8713,7 +8703,7 @@ vecteur graphe::draw_edge(int i,int j,const layout &x) const {
     const point &p=x[i],&q=x[j];
     if (is_directed()) {
         assert((ait=attr.find(_GT_ATTRIB_POSITION))!=attr.end());
-        double d=to_double(ait->second,ctx);
+        double d=to_real_number(ait->second,ctx).to_double(ctx);
         point_lincomb(p,q,d,1-d,r);
         append_segment(res,p,r,color,width,style,true);
         append_segment(res,r,q,color,width,style,false);
@@ -8865,7 +8855,7 @@ void graphe::draw_labels(vecteur &drawing,const layout &x) const {
                 if ((ait=attr.find(_GT_ATTRIB_COLOR))!=attr.end())
                     color=ait->second.val;
                 assert((ait=attr.find(_GT_ATTRIB_POSITION))!=attr.end());
-                d=to_double(ait->second,ctx);
+                d=to_real_number(ait->second,ctx).to_double(ctx);
                 point_lincomb(p,q,d,1-d,r);
                 adj.front()=p;
                 adj.back()=q;
@@ -9489,7 +9479,7 @@ void graphe::minimal_spanning_tree(graphe &T,int sg) {
     ipairs E,res;
     get_edges_as_pairs(E,sg);
     edges_comparator comp(this);
-    sort(E.begin(),E.end(),comp);
+    std::sort(E.begin(),E.end(),comp);
     int v,u;
     unionfind ds(node_count());
     for (ipairs_iter it=E.begin();it!=E.end();++it) {
@@ -10286,13 +10276,12 @@ bool graphe::weighted_bipartite_matching(const ivector &p1,const ivector &p2,ipa
             const gen &w=W[*it][*jt];
             if (w.is_integer())
                 continue;
-            f=_evalf(w,ctx);
-            if (f.type!=_DOUBLE_) {
+            if (!is_real_number(f,ctx)) {
                 message("Error: edge weights must be real");
                 return false;
             }
             if (!is_rational(w))
-                W[*it]._VECTptr->at(*jt)=f;
+                W[*it]._VECTptr->at(*jt)=to_real_number(f,ctx);
         }
     }
 #if 0 //def HAVE_LIBGLPK
@@ -10946,7 +10935,7 @@ graphe::tsp::tsp(graphe *gr,double gap_tolerance,bool is_verbose) {
     ipairs E;
     G->get_edges_as_pairs(E);
     edges_comparator comp(G);
-    sort(E.begin(),E.end(),comp); // sort edges by weight (ascending)
+    std::sort(E.begin(),E.end(),comp); // sort edges by weight (ascending)
     nv=G->node_count();
     ne=E.size();
     tour.reserve(nv);
@@ -10965,7 +10954,7 @@ graphe::tsp::tsp(graphe *gr,double gap_tolerance,bool is_verbose) {
         a.head=it->second;
         a.tail=it->first;
         loc_map[a.tail][a.head]=i;
-        weight_map[a.tail][a.head]=to_double(G->weight(*it),G->giac_context());
+        weight_map[a.tail][a.head]=to_real_number(G->weight(*it),G->giac_context()).to_double(G->giac_context());
     }
 }
 
@@ -11059,14 +11048,14 @@ double graphe::tsp::lower_bound() {
         cost=0;
         T.get_edges_as_pairs(E);
         for (ipairs_iter it=E.begin();it!=E.end();++it) {
-            cost+=to_double(T.weight(*it),G->giac_context());
+            cost+=to_real_number(T.weight(*it),G->giac_context()).to_double(G->giac_context());
         }
         dvector c;
         for (ivector_iter it=v.neighbors().begin();it!=v.neighbors().end();++it) {
             c.push_back(weight(i,*it));
         }
         assert(c.size()>1);
-        sort(c.begin(),c.end());
+        std::sort(c.begin(),c.end());
         cost+=c[0];
         cost+=c[1];
         if (cost>maxcost)
@@ -11538,7 +11527,7 @@ bool graphe::tsp::perform_3opt_moves(ivector &hc) {
             ijk[0]=std::min(i1,j1);
             ijk[1]=std::min(i2,j2);
             ijk[2]=std::min(i3,j3);
-            sort(ijk.begin(),ijk.end());
+            std::sort(ijk.begin(),ijk.end());
             i=ijk[0]; j=ijk[1]; k=ijk[2];
             b1=hc[i]; b2=hc[j]; b3=hc[k];
             e1=hc[i+1]; e2=hc[j+1]; e3=hc[k+1];
@@ -11650,7 +11639,7 @@ bool graphe::tsp::is_move_feasible(int k,const ivector &t,const ipairs &x) {
     }
     ivector p,q;
     ipairs xs(x.begin()+1,x.begin()+k+1);
-    sort(xs.begin(),xs.end());
+    std::sort(xs.begin(),xs.end());
     for (ipairs_iter it=xs.begin();it!=xs.end();++it) {
         p.push_back(find(t.begin()+1,t.begin()+2*k+1,it->first)-t.begin());
     }
@@ -12045,7 +12034,7 @@ void graphe::tsp::select_branching_variable(glp_tree *tree) {
         for (ivector_iter it=I.begin();it!=I.end();++it) {
             sorted_by_obj_coeff.push_back(make_pair(obj[*it],*it));
         }
-        sort(sorted_by_obj_coeff.begin(),sorted_by_obj_coeff.end());
+        std::sort(sorted_by_obj_coeff.begin(),sorted_by_obj_coeff.end());
         dvector data2(N),data1(0);
         for (int i=0;i<N;++i) {
             ind[i]=sorted_by_obj_coeff[i].second;
@@ -12235,11 +12224,10 @@ bool graphe::atsp::solve(ivector &hc,double &cost) {
             glp_set_col_bnds(mip,x[i][j],GLP_FX,1,1);
         else glp_set_col_kind(mip,x[i][j],GLP_BV);
         if (isweighted) {
-            e=_evalf(G->weight(i,j),G->giac_context());
-            if (!is_real_number(e,G->giac_context())) {
+            if (!is_real_number(G->weight(i,j),G->giac_context())) {
                 G->message("Warning: arc weight is not numeric, replacing by 1");
                 w=1;
-            } else w=to_double(e,G->giac_context());
+            } else w=to_real_number(G->weight(i,j),G->giac_context()).to_double(G->giac_context());
         } else w=1;
         glp_set_obj_coef(mip,x[i][j],w);
     }
@@ -12910,7 +12898,7 @@ graphe::intpoly graphe::tutte_poly_recurse(int vc) {
             if (block.size()==1) { // bridge
                 poly_mult(p,poly_geom(2,1+multiedges(block.front()),false,true));
             } else { // non-trivial biconnected subgraph
-                sort(block.begin(),block.end());
+                std::sort(block.begin(),block.end());
                 extract_subgraph(block,G);
                 poly_mult(p,G.tutte_poly_recurse(2));
             }
@@ -12936,7 +12924,7 @@ gen graphe::tutte_polynomial(const gen &x,const gen &y) {
     for (ivectors::iterator it=comp.begin();it!=comp.end();++it) {
         if (it->size()<2)
             continue;
-        sort(it->begin(),it->end());
+        std::sort(it->begin(),it->end());
         induce_subgraph(*it,G);
         G.sort_by_degrees(sigma);
         G.sharc_order();
@@ -13646,9 +13634,12 @@ gen graphe::information_centrality(int k,bool approx) const {
     if (approx)
         A=*_evalf(A,ctx)._VECTptr;
     gen dt=_det(A,ctx);
-    if (approx && dt.type!=_DOUBLE_) {
-        message("Error: input must be numerical");
-        return undef;
+    if (approx) {
+        if (!is_real_number(dt,ctx)) {
+            message("Error: input must be numerical");
+            return undef;
+        }
+        dt=to_real_number(dt,ctx);
     }
     if (is_zero(dt)) {
         message("Error: incremented Laplacian is singular");

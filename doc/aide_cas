@@ -6848,6 +6848,21 @@ archive("aa.txt",aa)
 unarchive("toto")
 unarchive("aa.txt")
 
+# tar
+1 Gestion d'archive tar. buf:=tar("src.tar") cree un buffer, tar(buf) affiche la liste des fichiers, tar(buf,"target.tar") sauve le buffer, tar(buf,0,"filename") efface fichier du buffer, tar(buf,1,"filename") ajoute un fichier, tar(buf,2,"filename") sauve le fichier, purge(buf) desalloue le buffer
+2 Tar archive handling. buf:=tar("src.tar") create a buffer, tar(buf) display list of files, tar(buf,"target.tar") save buffer, tar(buf,0,"filename") remove file from buffer, tar(buf,1,"filename") add file, tar(buf,2,"filename") save file, purge(buf) free buffer
+0 String || Buffer || Buffer,String || Buffer,Int,String
+1 fopen
+2 fclose
+ buf:=tar("test.tar");
+tar(buf);
+tar(buf,1,"123456");
+tar(buf,2,"456");
+tar(buf,0,"456");
+tar(buf,"file.tar");
+ purge(buf);
+
+
 # CopyVar
 1 Copie sans l'évaluer le contenu de var1 dans var2.
 2 Copies the storage without evaluation of var1 into var2.
@@ -15534,6 +15549,7 @@ dayofweek(15,10,1582)
 1 Recherche du minimum d'une fonction
 2 Finds the global minimum of a function.
 0 Expr,[Constr],Vars,[Options]
+-1 maximize
 minimize(sin(x),[x=0..4])
 minimize(x^4-x^2,x=-3..3,locus)
 minimize(piecewise(x<=-2,x+6,x<=1,x^2,3/2-x/2),x=-3..2)
@@ -15547,6 +15563,7 @@ minimize(cos(x)^2+cos(y)^2,x+y=pi/4,[x,y],locus)
 1 Recherche du maximum d'une fonction
 2 Finds the global maximum of a function.
 0 Expr,[Constr],Vars,[Options]
+-1 minimize
 maximize(sin(x),[x=0..4])
 maximize(x^4-x^2,x=-3..3,locus)
 maximize(piecewise(x<=-2,x+6,x<=1,x^2,3/2-x/2),x=-3..2)
@@ -15559,7 +15576,8 @@ maximize(cos(x)^2+cos(y)^2,x+y=pi/4,[x,y],locus)
 # minimax
 1 Approximation polynomiale de degré n d'une fonction continue bornée sur [a,b] par la méthode de Remez.
 2 Returns polynomial approximation of degree n of a continuous bounded function on a..b using Remez algorithm.
-0 Expr,Var=a..b,n,[Options]
+0 Expr,Var=Real(a)..Real(b),Intg(n),[Options]
+-1 fitpoly
 minimax(x*exp(-x),x=0..10,12)
 minimax(x*sin(x),x=0..10,15)
 minimax(ln(2+x-sin(x)^2),x=0..2*pi,20)
@@ -15570,6 +15588,14 @@ minimax(abs(x),x=-1..1,25)
 minimax(abs(x)*sqrt(abs(x)),x=-2..2,15)
 minimax(min(1/cosh(3*sin(x)),sin(9x/10)),x=-3..4,30)
 minimax(when(x==0,0,exp(-1/x^2)),x=-1..1,25)
+
+# fitpoly
+2 Returns the polynomial of suitable degree which best fits the data or function in the sense of least squares.
+0 Expr||Mtrx||Seq(Lst(x),Lst(y)),[Var[=Real(a)..Real(b)]],[Options]
+-1 polynomial_regression
+-2 minimax
+fitpoly(x*cos(x),x=0..pi/2)
+ x:=[(k*0.1)$(k=0..10)]:;y:=[0.25,1.12,1.89,2.63,3.19,3.47,3.53,3.18,2.64,1.71,0.09]:;fitpoly(x,y)
 
 # tpsolve
 1 resolution d'un probleme de transport par la methode MODI
@@ -15591,7 +15617,7 @@ tpsolve([1,1,1,1],[1,1,1,1],[[10,12,9,11],[5,10,7,8],[12,14,13,11],[8,15,11,9]])
 
 # ratinterp
 0 [Mtrx(P) || List(X)],[List(Y)],[Var(x)],[Intg(d)])
-2 Computes rational interpolation without poles of the given points.
+2 Computes rational interpolations without poles of the given points.
 -1 thiele
 -2 lagrange
 -3 triginterp

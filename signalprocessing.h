@@ -43,6 +43,8 @@ gen to_real_number(const gen &g,GIAC_CONTEXT);
 gen generr(const char* msg,bool translate=true);
 gen generrtype(const char* msg,bool translate=true);
 gen generrdim(const char* msg,bool translate=true);
+void print_error(const char *msg,GIAC_CONTEXT);
+void print_warning(const char *msg,GIAC_CONTEXT);
 bool has_rootof(const gen &g);
 
 gen _createwav(const gen &g,GIAC_CONTEXT);

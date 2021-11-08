@@ -19088,7 +19088,7 @@ returned equations is usually simpler than the other).
   \frac{\frac{\mathrm{d}}{\mathrm{d}t}y\left(t\right)}{\sqrt{\left(\frac{\mathrm{d}}{\mathrm{d}t}x\left(t\right)\right)^{2}+\left(\frac{\mathrm{d}}{\mathrm{d}t}y\left(t\right)\right)^{2}}}=K_{1}
 \right]
 \]
-where $K_0,K_1\in\mathbb{R}$ are arbitrary (these constants are generated automatically).
+where $K_0,K_1\in\mathbb{R}$ are arbitrary constants (these symbols are generated automatically).
 
 \smallskip
 
@@ -19136,7 +19136,7 @@ This can be solved by assuming $y(x)=x^r$ for some $r\in\mathbb{R}$.\\
 %\begin{center}
 %  \tt [-(sqrt(5)+1)/2,(sqrt(5)-1)/2]
 %\end{center}
-Note that a pair of independent solutions is also returned by
+The same pair of solutions is also returned by
 the \texttt{kovacicsols} command (see \secref{ssec:kovacicsols}):\\
 \textit{Input:}
 \begin{center}
@@ -21961,14 +21961,13 @@ $F(s)$, it is enough to compute the Fourier transform with function
 $\frac{F(s)}{2\pi}$ and using the variables $s$ and $x$ instead of $x$
 and $s$, and replacing $x$ with $-x$ in the result.
 
-Arbitrary rational functions can be transformed.\\
-
 \smallskip
 
 \noindent
 \textbf{Examples.}
 \begin{itemize}
-\item Find the Fourier transform of $f(x)=\frac{x}{x^3-19\,x+30}$:\\
+\item Arbitrary rational functions can be transformed. For example,
+we find the Fourier transform of $f(x)=\frac{x}{x^3-19\,x+30}$.\\
 \textit{Input:}
 \begin{center}
   \texttt{F:=fourier(x/(x\^{}3-19x+30),x,s)}
@@ -23010,6 +23009,7 @@ periodic):\\
 % \frac{8632428959}{286654464}\simeq 30.1144061688
 % \]
 % \end{center}
+
 
 \section{Polynomials\label{sec:polynomials}}
 
@@ -24497,113 +24497,6 @@ since the default argument of \texttt{lagrange}
 would be global, hence not the same as the local
 variable used for the definition of \texttt{g}.
 
-\subsection{Trigonometric interpolation: \texttt{triginterp}
-\index{triginterp|textbf}}
-
-The \texttt{triginterp} command computes a trigonometric polynomial
-which interpolates given data.
-\begin{itemize}
-  \item \texttt{triginterp} takes four arguments:
-  \begin{itemize}
-    \item $L$, a list of numbers.
-    \item $a$, a number (the beginning of an interval).
-    \item $b$, a number (the end of the interval).
-    \item $x$, the name of a variable.
-  \end{itemize}
-  The last three arguments can also be given as $x=a..b$.
-  \item \texttt{triginterp($L,a,b,x$)} or
-   \texttt{triginterp($L,x=a..b$)} 
-    returns the trigonometric polynomial that interpolates data given in the list
-    $L$. It is assumed that the list $L$ contains
-  ordinate components of the points with equidistant abscissa components
-  between $a$ and $b$ such that the first element of $L$
-  corresponds to $a$ and the last element to $b$.
-\end{itemize}
-
-\smallskip
-
-\noindent
-\textbf{Example.}\\
-For example, $\textbf{y}$ may be a list of experimental measurements
-of some quantity taken in regular intervals, with the first
-observation at time $t=a$ and the last observation at time
-$t=b$. The resulting trigonometric polynomial has period
-\[ 
-T=\frac{n\,(b-a)}{n-1}, 
-\] 
-where $n$ is the number of observations ($n$=\texttt{size(\textbf{y})}). 
-As a specific example, assume that the following data is obtained by
-measuring the temperature every three hours:
-\begin{center}
-	\begin{tabular}{|r|c|c|c|c|c|c|c|c|}
-		\hline hour of the day&0&3&6&9&12&15&18&21\\
-		\hline temperature (${}^\circ$C)&11&10&17&24&32&26&23&19\\\hline
-	\end{tabular}
-\end{center}
-Furthermore, assume that an estimate of the temperature at 13:45 is
-required. To obtain a trigonometric interpolation of the data:\\
-\textit{Input:}
-\begin{center}
-   \texttt{tp:=triginterp([11,10,17,24,32,26,23,19],x=0..21)}
-\end{center}
-\textit{Output:}
-\begin{align*}
-    & \frac{81}{4}+
-    \frac{1}{8} \left(-21 \sqrt{2}-42\right) \cos \left(\frac{1}{12}
-    \pi  x\right)+\\
-    & \frac{1}{8} \left(-11 \sqrt{2}-12\right) \sin \left(\frac{1}{12}
-    \pi  x\right)+
-    \frac{3}{4} \cos \left(\frac{1}{6} \pi  x\right)-\\
-    & \frac{7}{4} \sin \left(\frac{1}{6} \pi  x\right)+
-    \frac{1}{8} \left(21 \sqrt{2}-42\right) \cos \left(\frac{1}{4}
-    \pi  x\right)+\\
-    &\frac{1}{8} \left(-11 \sqrt{2}+12\right) \sin \left(\frac{1}{4}
-    \pi  x\right)+
-    \frac{\cos \left(\frac{1}{3} \pi  x\right)}{2}
-\end{align*}
-% \begin{center}
-% 	\texttt{81/4+(-21*sqrt(2)-42)/8*cos(pi/12*x)+\\
-% 		(-11*sqrt(2)-12)/8*sin(pi/12*x)+3/4*cos(pi/6*x)\\
-% 		-7/4*sin(pi/6*x)+(21*sqrt(2)-42)/8*cos(pi/4*x)\\
-% 		+(-11*sqrt(2)+12)/8*sin(pi/4*x)+1/2*cos(pi/3*x)}
-% \end{center}
-Now a temperature at 13:45 hrs can be approximated with the value of
-\texttt{tp} for $x=13.75$.\\
-\textit{Input:}
-\begin{center}
-  \texttt{tp | x=13.75}
-\end{center}
-\textit{Output:}
-\[
-29.4863181684
-\]
-% \begin{center}
-% 	\texttt{29.4863181684}
-% \end{center}
-
-If one of the input parameters is inexact, the result will be inexact
-too. For example:\\
-\textit{Input:}
-\begin{center}
-  \begin{tabular}{l}
-  \texttt{Digits:=3:;}\\
-  \texttt{triginterp([11,10,17,24,32,26,23,19],x=0..21.0)}
-  \end{tabular}
-\end{center}
-\textit{Output:}
-\begin{align*}
-  &20.2-8.96 \cos \left(0.262 x\right)-3.44 \sin \left(0.262 x\right)+
-  0.75 \cos \left(0.524 x\right)-\\
-  &1.75 \sin \left(0.524 x\right)-1.54 \cos \left(0.785 x\right)-
-  0.445 \sin \left(0.785 x\right)+
-  0.5 \cos \left(1.05 x\right)
-\end{align*}
-% \begin{center}
-% 	\texttt{0.5*cos(1.05*x)-1.54*cos(0.785*x)+0.75*cos(0.524*x)\\
-% 		-8.96*cos(0.262*x)-0.445*sin(0.785*x)-1.75*sin(0.524*x)\\
-% 		-3.44*sin(0.262*x)+20.2}
-% \end{center}
-
 \subsection{Natural splines: \texttt{spline}
 \index{spline|textbf}}
 
@@ -24933,7 +24826,7 @@ Rational interpolation usually gives better results than the classic polynomial 
 \begin{itemize}
 	\item Matrix \textit{data} with 2 columns with rows corresponding to points $(x_k,y_k)$, $k=0,1,\dots,n$, or the sequence of lists $\textit{data\_x}=[x_0,x_1,\dots,x_n]$ and $\textit{data\_y}=[y_0,y_1,\dots,y_n]$, where $a=x_0<x_1<\cdots<x_n=b$,
 	\item an identifier \textit{var}, which may also be a number, symbolic expression or list of numbers $a$ (optional, by default $x$),
-	\item an integer $d$ such that $0\leq d\leq n$ (optional, by default $\min\{3,\lfloor n/2\rfloor\}$).
+	\item an integer $d$ such that $0\leq d\leq n$ (optional, by default $0$).
 \end{itemize}
 \item \texttt{ratinterp(}\textit{data}$\langle,\textit{var},d\rangle$\texttt{)} or \texttt{ratinterp(}\textit{data\_x},\textit{data\_y}$\langle,\textit{var},d\rangle$\texttt{)} returns a rational interpolation $r(a)$ of the given points using the method of Floater and Hormann (2006). If $a$ is a list of numbers $a_1,a_2,\dots,a_m$, then the list $[r(a_1)\dots,r(a_m)]$ is returned. There are at most $n+1$ distinct interpolants which can be specified by varying the parameter $d$.
 \end{itemize}
@@ -24962,6 +24855,322 @@ Output:
 	-\frac{29 x^{3}}{168}+\frac{17 x^{2}}{7}-\frac{1507 x}{168}+\frac{61}{7}
 \]
 \end{itemize}
+
+\subsection{Trigonometric interpolation: \texttt{triginterp}
+\index{triginterp}}
+
+The \texttt{triginterp} command computes a trigonometric polynomial
+which interpolates given data.
+\begin{itemize}
+  \item \texttt{triginterp} takes four arguments:
+  \begin{itemize}
+    \item $L$, a list of numbers.
+    \item $a$, a number (the beginning of an interval).
+    \item $b$, a number (the end of the interval).
+    \item $x$, the name of a variable.
+  \end{itemize}
+  The last three arguments can also be given as $x=a..b$.
+  \item \texttt{triginterp($L,a,b,x$)} or
+   \texttt{triginterp($L,x=a..b$)} 
+    returns the trigonometric polynomial that interpolates data given in the list
+    $L$. It is assumed that the list $L$ contains
+  ordinate components of the points with equidistant abscissa components
+  between $a$ and $b$ such that the first element of $L$
+  corresponds to $a$ and the last element to $b$.
+\end{itemize}
+
+\smallskip
+
+\noindent
+\textbf{Example.}\\
+For example, $\textbf{y}$ may be a list of experimental measurements
+of some quantity taken in regular intervals, with the first
+observation at time $t=a$ and the last observation at time
+$t=b$. The resulting trigonometric polynomial has period
+\[ 
+T=\frac{n\,(b-a)}{n-1}, 
+\] 
+where $n$ is the number of observations ($n$=\texttt{size(\textbf{y})}). 
+As a specific example, assume that the following data is obtained by
+measuring the temperature every three hours:
+\begin{center}
+	\begin{tabular}{|r|c|c|c|c|c|c|c|c|}
+		\hline hour of the day&0&3&6&9&12&15&18&21\\
+		\hline temperature (${}^\circ$C)&11&10&17&24&32&26&23&19\\\hline
+	\end{tabular}
+\end{center}
+Furthermore, assume that an estimate of the temperature at 13:45 is
+required. To obtain a trigonometric interpolation of the data:\\
+\textit{Input:}
+\begin{center}
+   \texttt{tp:=triginterp([11,10,17,24,32,26,23,19],x=0..21)}
+\end{center}
+\textit{Output:}
+\begin{align*}
+    & \frac{81}{4}+
+    \frac{1}{8} \left(-21 \sqrt{2}-42\right) \cos \left(\frac{1}{12}
+    \pi  x\right)+\\
+    & \frac{1}{8} \left(-11 \sqrt{2}-12\right) \sin \left(\frac{1}{12}
+    \pi  x\right)+
+    \frac{3}{4} \cos \left(\frac{1}{6} \pi  x\right)-\\
+    & \frac{7}{4} \sin \left(\frac{1}{6} \pi  x\right)+
+    \frac{1}{8} \left(21 \sqrt{2}-42\right) \cos \left(\frac{1}{4}
+    \pi  x\right)+\\
+    &\frac{1}{8} \left(-11 \sqrt{2}+12\right) \sin \left(\frac{1}{4}
+    \pi  x\right)+
+    \frac{\cos \left(\frac{1}{3} \pi  x\right)}{2}
+\end{align*}
+% \begin{center}
+% 	\texttt{81/4+(-21*sqrt(2)-42)/8*cos(pi/12*x)+\\
+% 		(-11*sqrt(2)-12)/8*sin(pi/12*x)+3/4*cos(pi/6*x)\\
+% 		-7/4*sin(pi/6*x)+(21*sqrt(2)-42)/8*cos(pi/4*x)\\
+% 		+(-11*sqrt(2)+12)/8*sin(pi/4*x)+1/2*cos(pi/3*x)}
+% \end{center}
+Now a temperature at 13:45 hrs can be approximated with the value of
+\texttt{tp} for $x=13.75$.\\
+\textit{Input:}
+\begin{center}
+  \texttt{tp | x=13.75}
+\end{center}
+\textit{Output:}
+\[
+29.4863181684
+\]
+% \begin{center}
+% 	\texttt{29.4863181684}
+% \end{center}
+
+If one of the input parameters is inexact, the result will be inexact
+too. For example:\\
+\textit{Input:}
+\begin{center}
+  \begin{tabular}{l}
+  \texttt{Digits:=3:;}\\
+  \texttt{triginterp([11,10,17,24,32,26,23,19],x=0..21.0)}
+  \end{tabular}
+\end{center}
+\textit{Output:}
+\begin{align*}
+  &20.2-8.96 \cos \left(0.262 x\right)-3.44 \sin \left(0.262 x\right)+
+  0.75 \cos \left(0.524 x\right)-\\
+  &1.75 \sin \left(0.524 x\right)-1.54 \cos \left(0.785 x\right)-
+  0.445 \sin \left(0.785 x\right)+
+  0.5 \cos \left(1.05 x\right)
+\end{align*}
+% \begin{center}
+% 	\texttt{0.5*cos(1.05*x)-1.54*cos(0.785*x)+0.75*cos(0.524*x)\\
+% 		-8.96*cos(0.262*x)-0.445*sin(0.785*x)-1.75*sin(0.524*x)\\
+% 		-3.44*sin(0.262*x)+20.2}
+% \end{center}
+
+\subsection{Least-squares polynomial approximation: \texttt{fitpoly}
+\index{fitpoly}}
+
+The \texttt{fitpoly} command is used for replacing tabular data or a function
+by a polynomial of suitable/specified degree.
+
+\subsubsection{Smoothing data: polynomial regression}
+To find a polynomial that fits tabular data:
+\begin{itemize}
+  \item \texttt{fitpoly} takes one mandatory argument and two optional arguments:
+  \begin{itemize}
+    \item \textit{data}, a two-column matrix or a sequence of two lists,
+    representing the $x$- and $y$-values of data points
+    $(x_0,y_0),(x_1,y_1),\dots,(x_m,y_m)$.
+    \item Optionally, \textit{x}\texttt{[=$a$..$b$]} or \texttt{$a$..$b$},
+    which is a variable $x$ and optionally its domain $[a,b]$ or a segment $[a,b]$
+    (by default, unset).
+    \item Optionally, a sequence of options, each of which may be one of:
+    \begin{itemize}
+      \item \texttt{limit=}$N$, a nonnegative integer,
+      which is the maximal degree for the resulting polynomial (by default, $N=15$).
+      \item \texttt{degree=$d$}, where $d$ is a nonnegative integer,
+      which is the desired degree of the resulting polynomial (by default, unset).
+      \item \texttt{threshold=}\textit{tol}, a positive real number,
+      which is used for finding an appropriate fitting degree,
+      as described below
+      (by default, \texttt{threshold=}$0.01$, ignored when $d$ is set).
+      \item \texttt{length=}$l$, a positive integer,
+      which is used for finding an appropriate fitting degree,
+      as described below (by default, \texttt{length=}$5$, ignored when $d$ is set).
+    \end{itemize}
+  \end{itemize}
+  \item If $d$ is set, then \texttt{fitpoly} returns the
+  polynomial of degree $\min\{d,N\}$ which best fits the data
+  in the least-squares sense.
+  \item If $d$ is not set,
+  then a polynomial $p_n$ of modest degree $n\leq N$ but a good error suppression
+  (thus representing the trend of the data)
+  is chosen using \textit{tol} and $l$
+  such that raising the degree does not make a significant improvement to
+  the approximation. Precisely, $n$ is the first nonnegative integer such that
+  \[ \frac{\operatorname{stddev}[\sigma^2_n,\sigma^2_{n+1},\dots,\sigma^2_{n+l-1}]}
+    {\operatorname{mean}[\sigma^2_0,\sigma^2_1,\dots,\sigma^2_{n+l-1}]}\leq\text{\textit{tol}}, \]
+  where $\sigma_k^2$ is the sum of squared residuals $\sum_{i=0}^m(y_i-p_k(x_i))^2$
+  and $p_k$ is the best-fitting polynomial of degree $k$. Ideally, $n$ is the
+  smallest degree for which $\sigma^2_n\approx\sigma^2_{n+1}\approx\sigma^2_{n+2}\approx\cdots$, meaning that
+  higher-order polynomials would overfit on the noise.
+  \item Lowering the parameter \texttt{length}, as well as increasing
+  \texttt{threshold}, would make the algorithm more greedy,
+  effectively lowering the degree of the output polynomial. Note that when
+  \texttt{degree} is set, these two parameters are ignored.
+  \item If no variable is specified, then \texttt{fitpoly} returns the list of
+  polynomial coefficients.
+  \item If a segment $[a,b]$ is given, then only the data points $(x_k,y_k)$ for which
+  $a\leq x_k\leq b$ are considered.
+\end{itemize}
+
+\noindent
+\textbf{Example.}\\
+We find a polynomial which best approximates the data infected by noise.
+The data is produced by evaluating the polynomial $f(x)=\frac1{100}x^4-\frac15x^3+6x$
+at 100 points between $x=1$ and $x=20.8$. The noise is generated by a random,
+normally-distributed variable.\\
+\textit{Input:}
+\begin{center}
+  \begin{tabular}{l}
+    \texttt{f(x):=x\^{}4/100-x\^{}3/5+6x:;}\\
+    \texttt{x:=[(1+0.2*k)\$(k=0..99)]:;}\\
+    \texttt{noise:=randvector(100,randvar(normal,mean=0,stddev=10)):;}\\
+    \texttt{y:=apply(f,x)+noise:;}\\
+    \texttt{fitpoly(x,y)}
+  \end{tabular}
+\end{center}
+We obtain the list of polynomial coefficients, starting with the leading coefficient.\\
+\textit{Output:}
+\[ [0.011665,-0.266955,0.844543,2.44967,3.94846] \]
+Note that the polynomial of degree 4 is returned (it has five coefficients),
+which is, in this case, optimal for data smoothing.
+
+When approximating only the data in segment $[1,10]$, we obtain a polynomial of
+9th degree (the data curvature is now much smaller and the noise is more prominent).\\
+\textit{Input:}
+\begin{center}
+  \texttt{length(fitpoly(x,y,1..10))}
+\end{center}
+\textit{Output:}
+\[ 10 \]
+To make the approximating polynomial less sensitive to noise, we increase the threshold
+value \textit{tol}.\\
+\textit{Input:}
+\begin{center}
+  \texttt{fitpoly(x,y,t=1..10,threshold=0.05)}
+\end{center}
+\textit{Output:}
+\[ -1.30984955412 t^{2}+9.3259443857 t-2.6482979067 \]
+Alternatively, we could set the parameter \texttt{length} to a smaller value, e.g.~3.
+
+\subsubsection{Approximating functions by polynomials}
+To approximate a continuous function $f:[a,b]\to\mathbb{R}$ by a polynomial $p_n$
+of certain degree $n$ which minimizes the error in the sense of $L^2$-norm:
+\begin{itemize}
+  \item \texttt{fitpoly} takes two mandatory arguments and one optional argument:
+  \begin{itemize}
+    \item $f(x)$, which is an univariate expression representing the function $f$.
+    \item \texttt{$a$..$b$}, which is the domain $[a,b]$ of $f$.
+    \item Optionally, a sequence of options, each of which may be one of:
+    \begin{itemize}
+      \item \texttt{limit=}$N$, as before.
+      \item \texttt{degree=$d$}, as before.
+      \item $\varepsilon$ or \texttt{threshold=}$\varepsilon$,
+      which is a positive real number such that for the resulting polynomial $p_n$
+      the following holds:
+      \[\|f-p_n\|=\sqrt{\int_a^b(f(x)-p_n(x))^2\mathrm{d}x}\leq\varepsilon\]
+      (by default, $\varepsilon=10^{-5}$). This parameter is ignored when $d$ is set.
+    \end{itemize}
+  \end{itemize}
+  \item \texttt{fitpoly} finds $p_n$ with minimal $n\leq N$ such that
+  $\|f-p_n\|\leq\varepsilon$. If such $n$ does not exist, then $p_N$ is returned.
+  \item If the parameter $d$ is set, then $p_d$ which minimizes $\|f-p_d\|$ among all
+  polynomials of degree $d$ is returned.
+\end{itemize}
+
+\smallskip
+
+\noindent
+\textbf{Examples.}\\
+\textit{Input:}
+\begin{center}
+  \texttt{fitpoly(cos(x),0..pi/2,1e-2)}
+\end{center}
+\textit{Output:}
+\[ -0.244320054366 x^{3}-0.336364730985 x^{2}+1.13004492821 x-0.0107731059645 \]
+\textit{Input:}
+\begin{center}
+  \texttt{f:=exp(-7x)*5x:; g:=fitpoly(f,0..1,degree=8)}
+\end{center}
+\textit{Output:}
+\begin{align*}
+&-21.717636069 x^{8}+107.930784832 x^{7}-232.831655404 x^{6}\\&+286.778708741 x^{5}-222.236631985 x^{4}+111.004732684 x^{3}\\&-33.8769709361 x^{2}+4.95239715728 x+0.000500886757642
+\end{align*}
+The mean absolute error of the above approximation can be estimated as follows.\\
+\textit{Input:}
+\begin{center}
+  \texttt{sqrt(romberg((f-g)\^{}2,x=0..1))}
+\end{center}
+\textit{Output:}
+\[ 9.3456615562\times10^{-5} \]
+
+\subsection{Minimax polynomial approximation: \texttt{minimax}
+\index{minimax}}
+
+The \texttt{minimax} command finds the minimax polynomial approximation of a
+continuous function on a bounded interval using the Remez algorithm.
+\begin{itemize}
+  \item \texttt{minimax} takes three mandatory argument and one
+  optional argument:
+  \begin{itemize}
+    \item \textit{expr}, a univariate expression representing a
+    continuous function.
+    \item \textit{var}\texttt{=$a$..$b$}, a variable and the interval.
+    \item $n$, a positive integer, the degree of the resulting polynomial.
+    \item Optionally \texttt{limit=$m$}, where $m$ is a positive
+    integer specifying the number of iterations of the Remez
+    algorithm.  (By default, the number of iterations is unlimited.)
+  \end{itemize}
+  \item
+  \texttt{minimax(}\textit{expr,var=$a$..$b$,$n$}\texttt{$\,\langle$limit=$m\rangle$)}
+  returns the minimax polynomial approximation of degree $n$ or lower
+  that approximates \textit{expr} on $[a,b]$.   The largest absolute
+  error of the resulting polynomial will be printed in the message area.
+\end{itemize}
+Since the coefficients of $ p $ are computed numerically, you should
+avoid setting $n$ unnecessary high as it may result in a poor
+approximation due to the roundoff errors.
+\smallskip
+
+\noindent
+\textbf{Example.}\\
+\textit{Input:}
+
+
+\smallskip
+
+\noindent
+\textbf{Example.}\\
+\textit{Input:}
+\begin{center}
+\texttt{minimax(sin(x),x=0..2*pi,10)}
+\end{center}
+\textit{Output:}
+\begin{align*}
+ &\texttt{max.~absolute error:~5.85231264871e-06}\\
+ &5.85141928628\times10^{-6}+0.999777263417 x+0.001400152516 x^{2}\\
+&\quad -0.170089663468 x^{3}+0.0042684302281 x^{4}+0.00525794778108 x^{5}\\
+&\quad +0.00135760211866 x^{6}-0.000570502070425 x^{7}\\
+&\quad +\left(6.0729711779\times10^{-5}\right) x^{8}
+ -\left(2.14787415748\times10^{-6}\right) x^{9}\\
+&\quad -\left(1.49765719172\times10^{-15}\right) x^{10}
+\end{align*}
+% \begin{center}
+% \texttt{5.8514210172e-06+0.999777263385*x+0.00140015265723*x\^{}2}\\
+% \texttt{-0.170089663733*x\^{}3+0.0042684304696*x\^{}4+}\\
+% \texttt{0.00525794766407*x\^{}5+0.00135760214958*x\^{}6}\\
+% \texttt{-0.000570502074548*x\^{}7+6.07297119422e-05*x\^{}8}\\
+% \texttt{-2.14787414001e-06*x\^{}9-2.97767481643e-15*x\^{}10}
+% \end{center}
+%The largest absolute error of this approximation is $ 5.85234008632\times 10^{-6} $.
+
 
 \section{Arithmetic and polynomials}
 
@@ -29671,7 +29880,7 @@ x + 2
 \]
 %\begin{center}\texttt{1*x+2}\end{center}
 \item
-\textit{Input (in \texttt{Maple} mode:}
+\textit{Input (in \texttt{Maple} mode):}
 \begin{center}
 \texttt{Gcd(x\^{}2+2*x,x\^{}2+6*x+5) mod 5}
 \end{center}
@@ -41690,7 +41899,7 @@ The solver shows all progress and summary messages.
 \texttt{Summary:}\\
 \texttt{~* 23836 subproblem(s) examined}\\
 \texttt{~* max.~tree size:~1256 nodes}\\
-\texttt{~* 13 GMI cut(s) applied (average improvement:~2.34241e-05\%)}
+\texttt{~* 13 GMI cut(s) applied}
 \end{tabular}
 \end{center}
 \[
@@ -41986,8 +42195,10 @@ by \texttt{epsilon}), which forces the algorithm to avoid the associated routes.
 \index{minimize|textbf}
 \index{maximize|textbf}}
 
-\texttt{minimize} attempts to find the smallest value of a differentiable
-expression defined on a compact domain, using analytical methods.
+\texttt{minimize} attempts to find, using analytical methods,
+the exact smallest value of a differentiable
+expression on a compact domain specified by (in)equality
+constraints.
 \begin{itemize}
   \item \texttt{minimize} takes two mandatory arguments and two
   optional arguments:
@@ -41999,6 +42210,10 @@ If there is only one constraint, it doesn't have to be a list.
 \item \textit{vars}, list of variables.  If there is only one
 variable, it doesn't have to be a list.  A variable can also include
 bounds, as in $x=a..b$.
+
+Variables can also be given as $x=x_0$, $y=y_0$ and so on,
+in which case the optimum is computed numerically by performing a local search
+from the specified point $(x_0,y_0,\dots)$.
 \item Optionally, \textit{location}, a keyword which may be
 \texttt{coordinates}, \texttt{locus} or \texttt{point}.
 \end{itemize}
@@ -42009,11 +42224,10 @@ specified by constraints and/or bounding variables, or (if
 \textit{location} is specified) a list consisting of the minimum value
 and the list of points where the minimum is achieved.
 
-The domain must be closed and bounded (i.e.~compact) and \textit{obj}
-must be continuous and differentiable except in a finite number of
-points; otherwise the final result may be incorrect or
-meaningless.  If the minimal value could not be obtained, then
+If the domain is not compact, the final result may be incorrect or
+meaningless.  If the minimal value could not be found, then
 \texttt{undef} is returned.
+
 \end{itemize}
 
 The \texttt{maximize} command takes the same parameters as
@@ -42041,18 +42255,6 @@ the specified domain.
 \item
 \textit{Input:}
 \begin{center}
-\texttt{minimize(asin(x),x=-1..1)}
-\end{center}
-\textit{Output:}
-\[
--\frac{\pi }{2}
-\]
-% \begin{center}
-% \texttt{-pi/2}
-% \end{center}
-\item
-\textit{Input:}
-\begin{center}
 \texttt{minimize(x\^{}4-x\^{}2,x=-3..3,locus)}
 \end{center}
 \textit{Output:}
@@ -42063,13 +42265,22 @@ the specified domain.
 % \texttt{-1/4,[-sqrt(2)/2]}
 % \end{center}
 \item
+\texttt{minimize} and \texttt{maximize} can handle absolute values and piecewise
+expressions in one or more variables.
+For example, we find global minimum and global maximum of the function
+\[ f(x,y)=\frac{|2+xy-y^2|+|2x-x^2+xy+y^2|}{1+x^2+y^2} \]
+on the square $[-1,1]\times[-1,1]$.\\
 \textit{Input:}
 \begin{center}
-\texttt{minimize(x-abs(x),x=-1..1)}
+\begin{tabular}{l}
+  \texttt{f(x,y):=(abs(2+x*y-y\^{}2)+abs(2x-x\^{}2+x*y+y\^{}2))/(1+x\^{}2+y\^{}2);}\\
+  \texttt{minimize(f(x,y),[x=-1..1,y=-1..1]);}\\
+  \texttt{maximize(f(x,y),[x=-1..1,y=-1..1]);}
+\end{tabular}
 \end{center}
 \textit{Output:}
 \[
--2
+\frac13,\frac{\sqrt{5}+3}2
 \]
 % \begin{center}
 % \texttt{-2}
@@ -42077,40 +42288,20 @@ the specified domain.
 \item
 \textit{Input:}
 \begin{center}
-\texttt{minimize(when(x==0,0,exp(-1/x\^{}2)),x=-1..1)}
+\begin{tabular}{l}
+  \texttt{obj:=piecewise(x<=-2,x+6,x<=1,x\^{}2,3/2-x/2);}\\
+  \texttt{maximize(obj,x=-3..2)}
+\end{tabular}
 \end{center}
 \textit{Output:}
 \[
-0
+4
 \]
 % \begin{center}
-% \texttt{0}
+% \texttt{4}
 % \end{center}
 \item
-\textit{Input:}
-\begin{center}
-\texttt{minimize(sin(x)+cos(x),x=0..20,coordinates)}
-\end{center}
-\textit{Output:}
-\[
-\left[-\sqrt{2},\left[\frac{5}{4} \pi ,\frac{13}{4} \pi ,\frac{21}{4} \pi \right]\right]
-\]
-% \begin{center}
-% \texttt{-sqrt(2),[5*pi/4,13*pi/4,21*pi/4]}
-% \end{center}
-\item
-\textit{Input:}
-\begin{center}
-\texttt{minimize(x\^{}2-3x+y\^{}2+3y+3,[x=2..4,y=-4..-2],point)}
-\end{center}
-\textit{Output:}
-\[
-\left[-1,\left[\begin{array}{cc}2&-2\end{array}\right]\right]
-\]
-% \begin{center}
-% \texttt{-1,[[2,-2]]}
-% \end{center}
-\item
+Each constraint can be either an equality or a non-strict inequality.\\
 \textit{Input:}
 \begin{center}
 \begin{tabular}{l}
@@ -42139,69 +42330,53 @@ the specified domain.
 % \texttt{-4}
 % \end{center}
 \item
+\texttt{minimize} and \texttt{maximize} are aware of implied constraints that
+restrict the natural domain of the objective function.
+In the following example, the constraint $x^2+y^2\leq 1$ is implied, and the
+minimum corresponds to any point on the unit circle.\\
 \textit{Input:}
 \begin{center}
-\texttt{maximize(cos(x),x=1..3)}
+\texttt{minimize(sqrt(1-x\^{}2-y\^{}2),[x,y],point)}
 \end{center}
 \textit{Output:}
 \[
-\cos \left(1\right)
+\left[0,\left[\begin{array}{cc}\sqrt{-y^{2}+1}&y\\-\sqrt{-y^{2}+1}&y\\x&\sqrt{-x^{2}+1}\\x&-\sqrt{-x^{2}+1}\end{array}\right]\right]
 \]
 % \begin{center}
 % \texttt{cos(1)}
 % \end{center}
 \item
+As another example, it is known that the natural domain of arc sine is
+the segment $[-1,1]$.\\
 \textit{Input:}
 \begin{center}
-\begin{tabular}{l}
-  \texttt{obj:=piecewise(x<=-2,x+6,x<=1,x\^{}2,3/2-x/2);}\\
-  \texttt{maximize(obj,x=-3..2)}
-\end{tabular}
+\texttt{minimize(asin(x),x)}
 \end{center}
 \textit{Output:}
 \[
-4
+-\frac{\pi }{2}
 \]
 % \begin{center}
-% \texttt{4}
+% \texttt{-pi/2}
 % \end{center}
 \item
+Constraints can be built from simpler ones by using
+logical conjunction and disjunction.
+The latter is suitable for specifying disconnected domains,
+like in the following example.\\
 \textit{Input:}
 \begin{center}
-\texttt{maximize(x*y*z,x\^{}2+2*y\^{}2+3*z\^{}2<=1,[x,y,z])}
+  \texttt{minimize(x*y,[x\^{}2+y\^{}2<=1,x<=-3/4 or x>=5/6],[x,y],point)}
 \end{center}
 \textit{Output:}
 \[
-\frac{\sqrt{2}}{18}
+\left[-\frac{3 \sqrt{7}}{16},\left[\begin{array}{cc}-\frac{3}{4}&\frac{\sqrt{7}}{4}\end{array}\right]\right]
 \]
-% \begin{center}
-% \texttt{sqrt(2)/18}
-% \end{center}
 \item
-\textit{Input:}
-\begin{center}
-\texttt{maximize(x*y,[x+y\^{}2<=2,x>=0,y>=0],[x,y],locus)}
-\end{center}
-\textit{Output:}
-\[
-\left[\frac{4}{9} \sqrt{6},\left[\begin{array}{cc}\frac{4}{3}&\frac{\sqrt{6}}{3}\end{array}\right]\right]
-\]
-% \begin{center}
-% \texttt{4*sqrt(6)/9,[[4/3,sqrt(6)/3]]}
-% \end{center}
-\item
-\textit{Input:}
-\begin{center}
-\texttt{maximize(y\^{}2-x\^{}2*y,y<=x,[x=0..2,y=0..2])}
-\end{center}
-\textit{Output:}
-\[
-\frac{4}{27}
-\]
-% \begin{center}
-% \texttt{4/27}
-% \end{center}
-\item
+Symbolic constants are allowed in the objective and constraints.
+Note that they have to be either implied or assumed real numbers.
+Any further assumptions on the symbolic constants required by the
+optimization process are reported in the message area.\\
 \textit{Input:}
 \begin{center}
 \begin{tabular}{l}
@@ -42216,14 +42391,32 @@ the specified domain.
 % \begin{center}
 % \texttt{a\^{}6/27}
 % \end{center}
+\item
+In the following example, we use \texttt{minimize} to obtain a formula for
+computing the distance $d$ between the point $P=(a,b,c)$ and the plane
+$\pi$ given by the equation $Ax+By+Cz+D=0$. We accomplish this by finding
+a point $(x_0,y_0,z_0)\in\pi$ which is closest to $P$.
+Since we are going to minimize $d^2=(x-a)^2+(y-b)^2+(z-c)^2$,
+the distance is equal to the square root of the minimum.\\
+\textit{Input:}
+\begin{center}
+  \begin{tabular}{l}
+    \texttt{d:=minimize((x-a)\^{}2+(y-b)\^{}2+(z-c)\^{}2,A*x+B*y+C*z+D=0,[x,y,z]):;}\\
+    \texttt{simplify(sqrt(d))}
+  \end{tabular}
+\end{center}
+\textit{Output:}
+\[ \frac{|A a+B b+C c+D|}{\sqrt{A^{2}+B^{2}+C^{2}}} \]
+Note that the coordinates $x_0$, $y_0$ and $z_0$ can be obtained by
+passing \texttt{point} as the fourth argument in \texttt{minimize}.
 \end{itemize}
 
 \subsection{Local extrema: \texttt{extrema}
 \index{extrema|textbf}}
 
 \texttt{extrema} attempts to find local extrema of a
-univariate/multivariate differentiable expression under equality
-constraints, using analytical methods.
+univariate/multivariate differentiable expression, possibly subject to
+equality constraints, by using analytical methods.
 \begin{itemize}
   \item \texttt{extrema} which takes two mandatory arguments and two
   optional arguments:
@@ -42251,7 +42444,7 @@ constraints, using analytical methods.
   of the variables; e.g.
   $[x_{1}=a_{1},x_{2}=a_{2},\ldots,x_{n}=a_{n}]$, in which case the critical
   point close to $a=(a_1,a_2,\dots,a_n)$ is computed
-  numerically by , applying an iterative method with initial point $a$.
+  numerically by applying an iterative method with initial point $a$.
   \item Optionally, \textit{opt}, which can be \texttt{order=$n$}
     to make $n$ the upper bound for the order of derivatives examined
     in the process (so if $n=1$ only critical points are found, by
@@ -42474,17 +42667,17 @@ the COBYLA algorithm.
   returns a list  \textit{$[$optobj,optdec$]$}, where \textit{optobj}
   is the optimal value of \textit{obj} and \textit{optobj}
   is a list of of optimal values of the decision variables. If the optimization
-  fails, then \textit{optobj} is the warning message and \textit{optdec} is
+  fails, then \textit{optobj} is the error message and \textit{optdec} is
   the last point on the path the solver takes in attempt to find the
   optimal objective value. If the problem is infeasible or if the solver fails
   to find a feasible point, then an empty list is returned.
   \item
-  \texttt{nlpsolve} is a local-search based solver which acts as a global
-  optimizer when the initial point is not set. However, since it is based
-  on a random-sampling heuristic, the global optimality of the solution is
-  not guaranteed. For solving mixed-integer nonlinear problems (MINLP), the
-  branch\&bound method is used. Note that \texttt{nlpsolve} generally works
-  best for problems with a small number of variables (say, less than ten).
+  \texttt{nlpsolve} is a local-search based solver which attempts
+  global optimization when the initial point is not set.
+  However, since this approach is based on a random-sampling heuristic,
+  the global optimality of the solution is not guaranteed.
+  For solving mixed-integer nonlinear problems (MINLP), the
+  branch\&bound method is used.
 \end{itemize}
 
 
@@ -42612,60 +42805,6 @@ where $0\leq x_i\leq 99$ are integers for $i=1,\dots,5$.\\
 \]
 \end{itemize}
 
-\subsection{Minimax polynomial approximation: \texttt{minimax}
-\index{minimax|textbf}}
-
-The \texttt{minimax} command finds the minimax polynomial approximation of a
-continuous function on a bounded interval using the Remez algorithm.
-\begin{itemize}
-  \item \texttt{minimax} takes three mandatory argument and one
-  optional argument:
-  \begin{itemize}
-    \item \textit{expr}, a univariate expression representing a
-    continuous function.
-    \item \textit{var}\texttt{=$a$..$b$}, a variable and the interval.
-    \item $n$, a positive integer, the degree of the resulting polynomial.
-    \item Optionally \texttt{limit=$m$}, where $m$ is a positive
-    integer specifying the number of iterations of the Remez
-    algorithm.  (By default, the number of iterations is unlimited.)
-  \end{itemize}
-  \item
-  \texttt{minimax(}\textit{expr,var=$a$..$b$,$n$}\texttt{$\,\langle$limit=$m\rangle$)}
-  returns the minimax polynomial approximation of degree $n$ or lower
-  that approximates \textit{expr} on $[a,b]$.   The largest absolute
-  error of the resulting polynomial will be printed in the message area.
-\end{itemize}
-Since the coefficients of $ p $ are computed numerically, you should
-avoid setting $n$ unnecessary high as it may result in a poor
-approximation due to the roundoff errors.
-
-
-\smallskip
-
-\noindent
-\textbf{Example.}\\
-\textit{Input:}
-\begin{center}
-\texttt{minimax(sin(x),x=0..2*pi,10)}
-\end{center}
-\textit{Output:}
-\begin{align*}
- &\texttt{max.~absolute error:~5.85231264871e-06}\\
- &5.85141928628\times10^{-6}+0.999777263417 x+0.001400152516 x^{2}\\
-&\quad -0.170089663468 x^{3}+0.0042684302281 x^{4}+0.00525794778108 x^{5}\\
-&\quad +0.00135760211866 x^{6}-0.000570502070425 x^{7}\\
-&\quad +\left(6.0729711779\times10^{-5}\right) x^{8}
- -\left(2.14787415748\times10^{-6}\right) x^{9}\\
-&\quad -\left(1.49765719172\times10^{-15}\right) x^{10}
-\end{align*}
-% \begin{center}
-% \texttt{5.8514210172e-06+0.999777263385*x+0.00140015265723*x\^{}2}\\
-% \texttt{-0.170089663733*x\^{}3+0.0042684304696*x\^{}4+}\\
-% \texttt{0.00525794766407*x\^{}5+0.00135760214958*x\^{}6}\\
-% \texttt{-0.000570502074548*x\^{}7+6.07297119422e-05*x\^{}8}\\
-% \texttt{-2.14787414001e-06*x\^{}9-2.97767481643e-15*x\^{}10}
-% \end{center}
-%The largest absolute error of this approximation is $ 5.85234008632\times 10^{-6} $.
 
 \section{Quadratic forms}
 
@@ -54795,7 +54934,7 @@ returns the function $\hat{f}$ given in \eqref{eq:kde1}.
 \index{fitdistr}}
 
 The \texttt{fitdistr} command finds the parameters for a distribution
-of a specified type that best fit a set of samples.
+of a specified type that best fits a set of samples.
 \begin{itemize}
   \item \texttt{fitdistr} takes two arguments:
   \begin{itemize}
@@ -56039,7 +56178,7 @@ $y$ and its first derivative $y'$ are approximated at points
 $x_k=a+k\,\delta$, where $\delta=\frac{b-a}{N}$ and $k=0,1,\dots,N$.
 For the numeric tolerance (precision) threshold, the algorithm uses
 \texttt{epsilon} specified in the session settings in Xcas (see
-secref{ssec:confcomp}, item \ref{enum:eps}).
+\secref{ssec:confcomp}, item \ref{enum:eps}).
 
 \begin{itemize}
   \item \texttt{bvpsolve} takes three mandatory arguments and four
@@ -56158,7 +56297,11 @@ default guess $A=\ln 256\approx 5.545$. Therefore let $A=1$
 instead.\\
 \textit{Input:}
 \begin{center}
-  \texttt{f:=(x\^{}2*diff(y(x),x)\^{}2-9*y(x)\^{}2+4*x\^{}6)/x\^{}5:;vars:=[x=1..2,y]:; yinit:=[0,ln(256),1]:; p:=bvpsolve(f,vars,yinit,10,output=spline):; err:=sqrt(romberg((p-x\^{}3*ln(x))\^{}2,x=1..2))}
+\begin{tabular}{l}
+  \texttt{f:=(x\^{}2*diff(y(x),x)\^{}2-9*y(x)\^{}2+4*x\^{}6)/x\^{}5:;}\\
+  \texttt{p:=bvpsolve(f,[x=1..2,y],[0,ln(256),1],10,output=spline):;}\\  
+  \texttt{err:=sqrt(romberg((p-x\^{}3*ln(x))\^{}2,x=1..2))}
+\end{tabular}
 \end{center}
 \textit{Output:}
 \[

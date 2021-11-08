@@ -30,8 +30,9 @@ using namespace std;
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
-#define _SP_BAD_SOUND_DATA "Bad sound data"
+#define _SP_BAD_SOUND_DATA "Invalid sound data"
 #define _SP_INVALID_RANGE "Invalid range specification"
+#define _SP_BAD_WINDOW "Invalid window parameters"
 
 gen generr(const char* msg,bool translate) {
     string m(translate?gettext(msg):msg);
@@ -51,6 +52,14 @@ gen generrdim(const char* msg,bool translate) {
     return gendimerr(m.c_str());
 }
 
+void print_error(const char *msg,GIAC_CONTEXT) {
+    *logptr(contextptr) << gettext("Error") << ": " << gettext(msg) << "\n";
+}
+
+void print_warning(const char *msg,GIAC_CONTEXT) {
+    *logptr(contextptr) << gettext("Warning") << ": " << gettext(msg) << "\n";
+}
+
 /*
  * Return TRUE iff g is a real constant.
  */
@@ -64,7 +73,7 @@ bool is_real_number(const gen &g,GIAC_CONTEXT) {
     case _CPLX: 
         return (is_zero(*(eg._CPLXptr+1),contextptr));
     default:
-        break;;
+        break;
     }
     return false;
 }
@@ -221,7 +230,7 @@ gen _createwav(const gen &g,GIAC_CONTEXT) {
         }
     } else return generrtype("Invalid input argument");
     if (!data.empty() && int(data.size())!=nc)
-        return generrdim("No data found or bad number of channels");
+        return generrdim("No data found or invalid number of channels");
     if (len==0) {
         for (vector<vecteur*>::const_iterator it=data.begin();it!=data.end();++it) {
             len=std::max(len,(int)(*it)->size());
@@ -705,7 +714,7 @@ define_unary_function_ptr5(at_rms,alias_at_rms,&__rms,0,true)
 gen _resample(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
 #ifndef HAVE_LIBSAMPLERATE
-    *logptr(contextptr) << gettext("Error") << ": " << gettext("libsamplerate is required for resampling audio") << "\n";
+    print_error("libsamplerate is required for resampling audio",contextptr);
     return vecteur(0);
 #else
     if (g.type!=_VECT)
@@ -797,7 +806,8 @@ gen _convolution(const gen &g,GIAC_CONTEXT) {
         // convolve real functions
         gen T(0),var=identificateur("x"),tvar=identificateur(" tau"+print_INT_(++varcount));
         int n=args.size(),optstart=2;
-        if (n<2) return gensizeerr(contextptr);
+        if (n<2)
+            return generrdim("Too few input arguments");
         const gen &f1=args[0],&f2=args[1];
         if (n>2) {
             if (args[optstart].type==_IDNT)
@@ -805,11 +815,11 @@ gen _convolution(const gen &g,GIAC_CONTEXT) {
             // parse options
             for (const_iterateur it=args.begin()+optstart;it!=args.end();++it) {
                 if (!it->is_symb_of_sommet(at_equal))
-                    return gensizeerr(contextptr);
+                    return generr("Expected option=value");
                 vecteur &s=*it->_SYMBptr->feuille._VECTptr;
                 if (s.front()==at_shift)
                     T=s.back();
-                else return gensizeerr(contextptr);
+                else return generr("Unrecognized option");
             }
         }
         giac_assume(symb_superieur_egal(tvar,0),contextptr);
@@ -819,13 +829,13 @@ gen _convolution(const gen &g,GIAC_CONTEXT) {
                                   var,minf,pinf),contextptr);
         _purge(tvar,contextptr);
         if (is_one(_contains(makesequence(_lname(c,contextptr),var),contextptr)))
-            return gensizeerr("failed to integrate");
+            return generr("Failed to integrate");
         c=subst(c,tvar,var-T,false,contextptr)*_Heaviside(var-T,contextptr);
         return c;
     }
     // convolve sequences
     if (args.size()!=2 || args.front().type!=_VECT || args.back().type!=_VECT)
-        return gensizeerr(contextptr);
+        return generr("Expected a pair of lists");
     vecteur A=*args.front()._VECTptr,B=*args.back()._VECTptr;
     int lenA=A.size(),lenB=B.size(),len=2*nextpow2(std::max(lenA,lenB));
     A.resize(len-1,0);
@@ -1221,7 +1231,7 @@ gen _addtable(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     const vecteur &args=*g._VECTptr;
     if (args.size()!=5)
-        return gensizeerr(contextptr);
+        return generrdim("Wrong number of input arguments");
     int ti=0;
     if (args[0]==at_fourier) ti=1;
     if (args[0]==at_laplace) ti=2;
@@ -1229,7 +1239,7 @@ gen _addtable(const gen &g,GIAC_CONTEXT) {
             args[1]._SYMBptr->feuille._VECTptr->front().type!=_IDNT ||
             args[2]._SYMBptr->feuille._VECTptr->front().type!=_IDNT ||
             args[3].type!=_IDNT || args[4].type!=_IDNT)
-        return gensizeerr(contextptr);
+        return generrtype("Invalid input argument");
     const identificateur &f=*args[1]._SYMBptr->feuille._VECTptr->front()._IDNTptr;
     const identificateur &F=*args[2]._SYMBptr->feuille._VECTptr->front()._IDNTptr;
     const identificateur &t=*args[3]._IDNTptr,&s=*args[4]._IDNTptr;
@@ -1239,16 +1249,20 @@ gen _addtable(const gen &g,GIAC_CONTEXT) {
     const vecteur Fvars=(args[2]._SYMBptr->feuille._VECTptr->back().type==_VECT?
                              *args[2]._SYMBptr->feuille._VECTptr->back()._VECTptr:
                              vecteur(1,args[2]._SYMBptr->feuille._VECTptr->back()));
-    if (fvars.size()!=Fvars.size()) return gensizeerr(contextptr);
+    if (fvars.size()!=Fvars.size())
+        return gendimerr(contextptr);
     int k=-1;
     for (int i=fvars.size();i-->0;) {
-        if (fvars[i].type!=_IDNT || Fvars[i].type!=_IDNT) return gensizeerr(contextptr);
+        if (fvars[i].type!=_IDNT || Fvars[i].type!=_IDNT)
+            return generr("Expected an identifier");
         const identificateur &x1=*fvars[i]._IDNTptr,&x2=*Fvars[i]._IDNTptr;
         if (x1==x2) continue;
-        if (k>=0 || !(x1==t) || !(x2==s)) return gensizeerr(contextptr);
+        if (k>=0 || !(x1==t) || !(x2==s))
+            return gensizeerr(contextptr);
         k=i;
     }
-    if (k<0) return gensizeerr(contextptr);
+    if (k<0)
+        return gensizeerr(contextptr);
     if (ti<1 || ti>2) return gen(0);
     vecteur &tbl=(ti==1?fourier_table:laplace_table);
     for (const_iterateur it=tbl.begin();it!=tbl.end();++it) {
@@ -1309,7 +1323,7 @@ bool is_partialdiff(const gen &g,identificateur &f,vecteur &vars,vecteur &deg,GI
         deg[n]+=gen(1);
         df=args.front();
     }
-    if (df.type!=_IDNT || is_zero__VECT(deg,contextptr)) return false;
+    if (df.type!=_IDNT || is_zero(deg,contextptr)) return false;
     f=*df._IDNTptr;
     return true;
 }
@@ -2246,18 +2260,18 @@ gen _fourier(const gen &g,GIAC_CONTEXT) {
             return gentypeerr(contextptr);
         const vecteur &args=*g._VECTptr;
         if (args.size()>3 || args.empty())
-            return gensizeerr(contextptr);
+            return generrdim("Wrong number of input arguments");
         f_orig=args.front();
         if (args.size()>=2) {
             if (args[1].type!=_IDNT)
-                return gentypeerr(contextptr);
+                return generrtype("Expected an identifier");
             var=*args[1]._IDNTptr;
         }
         if (args.size()==3) {
             if (args[2].type!=_IDNT)
-                return gentypeerr(contextptr);
+                return generrtype("Expected an identifier");
             if ((tvar=*args[2]._IDNTptr)==var)
-                return gensizeerr(contextptr);
+                return generr("Original and transform variables must be different");
             has_tvar=true;
         }
     } else f_orig=g;
@@ -2280,18 +2294,18 @@ gen _ifourier(const gen &g,GIAC_CONTEXT) {
             return gentypeerr(contextptr);
         const vecteur &args=*g._VECTptr;
         if (args.size()>3 || args.empty())
-            return gensizeerr(contextptr);
+            return generrdim("Wrong number of input arguments");
         f_orig=args.front();
         if (args.size()>=2) {
             if (args[1].type!=_IDNT)
-                return gentypeerr(contextptr);
+                return generrtype("Expected an identifier");
             var=*args[1]._IDNTptr;
         }
         if (args.size()==3) {
             if (args[2].type!=_IDNT)
-                return gentypeerr(contextptr);
+                return generrtype("Expected an identifier");
             if ((tvar=*args[2]._IDNTptr)==var)
-                return gensizeerr(contextptr);
+                return generr("Original and transform variables must be different");
             has_tvar=true;
         }
     } else f_orig=g;
@@ -2332,16 +2346,16 @@ gen _threshold(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     const vecteur &args=*g._VECTptr;
     if (int(args.size())<2)
-        return gensizeerr(contextptr);
+        return generrdim("Wrong number of input arguments");
     if (args.front().type!=_VECT)
-        return gentypeerr(contextptr);
+        return generrtype("Expected a list");
     const vecteur &data=*args.front()._VECTptr;
     gen bnd=args.at(1);
     int n=data.size();
     vecteur output=data;
     if (bnd.type==_VECT) {
         if (int(bnd._VECTptr->size())!=2)
-            return gensizeerr(contextptr);
+            return generr("Expected a list with two elements");
         gen lb=bnd._VECTptr->front(),ub=bnd._VECTptr->back(),lval,uval;
         if (lb.is_symb_of_sommet(at_equal)) {
             lval=_rhs(lb,contextptr);
@@ -2362,7 +2376,7 @@ gen _threshold(const gen &g,GIAC_CONTEXT) {
             bnd=_lhs(bnd,contextptr);
         } else val=bnd;
         if (!is_real_number(bnd,contextptr))
-            return gentypeerr(contextptr);
+            return generrtype("Expected a real constant");
         gen comp=at_inferieur_strict,isabs;
         bool absolute=false;
         for (const_iterateur it=args.begin()+2;it!=args.end();++it) {
@@ -2374,7 +2388,7 @@ gen _threshold(const gen &g,GIAC_CONTEXT) {
                                 (isabs=it->_SYMBptr->feuille._VECTptr->back()).type==_INT_ &&
                                 isabs.subtype==_INT_BOOLEAN)) {
                 if (has_i(data) || !is_strictly_positive(bnd,contextptr))
-                    return gentypeerr(contextptr);
+                    return gensizeerr(contextptr);
                 absolute=(bool)isabs.val;
             }
         }
@@ -2426,7 +2440,7 @@ gen _bartlett_hann_window(const gen &g,GIAC_CONTEXT) {
     int start,N;
     identificateur k(" k");
     if (!parse_window_parameters(g,data,start,N,0,contextptr))
-        return gentypeerr(contextptr);
+        return generrtype(_SP_BAD_WINDOW);
     double a=0.62,b=0.48,c=0.38;
     gen expr=a-b*_abs(k/(N-1)-fraction(1,2),contextptr)-c*cos(2*k*_IDNT_pi()/(N-1),contextptr);
     return apply_window_function(expr,k,data,start,N,contextptr);
@@ -2441,7 +2455,7 @@ gen _blackman_harris_window(const gen &g,GIAC_CONTEXT) {
     int start,N;
     identificateur k(" k");
     if (!parse_window_parameters(g,data,start,N,0,contextptr))
-        return gentypeerr(contextptr);
+        return generrtype(_SP_BAD_WINDOW);
     gen a(0.35875),b(0.48829),c(0.14128),d(0.01168);
     gen K=k*_IDNT_pi()/(N-1),expr=a-b*cos(2*K,contextptr)+c*cos(4*K,contextptr)-d*cos(6*K,contextptr);
     return apply_window_function(expr,k,data,start,N,contextptr);
@@ -2457,7 +2471,7 @@ gen _blackman_window(const gen &g,GIAC_CONTEXT) {
     int start,N;
     identificateur k(" k");
     if (!parse_window_parameters(g,data,start,N,&alpha,contextptr) || alpha<=0)
-        return gentypeerr(contextptr);
+        return generrtype(_SP_BAD_WINDOW);
     gen K=k*_IDNT_pi()/(N-1),expr=(1-alpha)/2-cos(2*K,contextptr)/2+alpha*cos(4*K,contextptr)/2;
     return apply_window_function(expr,k,data,start,N,contextptr);
 }
@@ -2471,7 +2485,7 @@ gen _bohman_window(const gen &g,GIAC_CONTEXT) {
     int start,N;
     identificateur k(" k");
     if (!parse_window_parameters(g,data,start,N,0,contextptr))
-        return gentypeerr(contextptr);
+        return generrtype(_SP_BAD_WINDOW);
     gen K=_abs(2*k/(N-1)-1,contextptr),expr=(1-K)*cos(_IDNT_pi()*K,contextptr)+sin(_IDNT_pi()*K,contextptr)/_IDNT_pi();
     return apply_window_function(expr,k,data,start,N,contextptr);
 }
@@ -2486,7 +2500,7 @@ gen _cosine_window(const gen &g,GIAC_CONTEXT) {
     int start,N;
     identificateur k(" k");
     if (!parse_window_parameters(g,data,start,N,&alpha,contextptr) || alpha<=0)
-        return gentypeerr(contextptr);
+        return generrtype(_SP_BAD_WINDOW);
     gen expr=exp(alpha*ln(sin(k*_IDNT_pi()/(N-1),contextptr),contextptr),contextptr);
     return apply_window_function(expr,k,data,start,N,contextptr);
 }
@@ -2501,7 +2515,7 @@ gen _gaussian_window(const gen &g,GIAC_CONTEXT) {
     int start,N;
     identificateur k(" k");
     if (!parse_window_parameters(g,data,start,N,&alpha,contextptr) || alpha<=0 || alpha>0.5)
-        return gentypeerr(contextptr);
+        return generrtype(_SP_BAD_WINDOW);
     gen c=(N-1)/2.0,expr=exp(-pow((k-c)/(alpha*c),2)/2,contextptr);
     return apply_window_function(expr,k,data,start,N,contextptr);
 }
@@ -2515,7 +2529,7 @@ gen _hamming_window(const gen &g,GIAC_CONTEXT) {
     int start,N;
     identificateur k(" k");
     if (!parse_window_parameters(g,data,start,N,0,contextptr))
-        return gentypeerr(contextptr);
+        return generrtype(_SP_BAD_WINDOW);
     gen a(0.54),b(0.46),expr=a-b*cos(2*_IDNT_pi()*k/(N-1),contextptr);
     return apply_window_function(expr,k,data,start,N,contextptr);
 }
@@ -2530,7 +2544,7 @@ gen _hann_poisson_window(const gen &g,GIAC_CONTEXT) {
     int start,N;
     identificateur k(" k");
     if (!parse_window_parameters(g,data,start,N,&alpha,contextptr))
-        return gentypeerr(contextptr);
+        return generrtype(_SP_BAD_WINDOW);
     gen K=2*_IDNT_pi()*k/(N-1);
     gen expr=(1-cos(K,contextptr))*exp(-alpha*_abs(N-1-2*k,contextptr)/(N-1),contextptr)/2;
     return apply_window_function(expr,k,data,start,N,contextptr);
@@ -2545,7 +2559,7 @@ gen _hann_window(const gen &g,GIAC_CONTEXT) {
     int start,N;
     identificateur k(" k");
     if (!parse_window_parameters(g,data,start,N,0,contextptr))
-        return gentypeerr(contextptr);
+        return generrtype(_SP_BAD_WINDOW);
     gen expr=pow(sin(_IDNT_pi()*k/(N-1),contextptr),2);
     return apply_window_function(expr,k,data,start,N,contextptr);
 }
@@ -2559,7 +2573,7 @@ gen _parzen_window(const gen &g,GIAC_CONTEXT) {
     int start,N;
     identificateur k(" k");
     if (!parse_window_parameters(g,data,start,N,0,contextptr))
-        return gentypeerr(contextptr);
+        return generrtype(_SP_BAD_WINDOW);
     gen K=1-2*k/(N-1),cond=symb_inferieur_egal(symbolic(at_abs,(N-1)/2.0-k),(N-1)/4.0);
     gen f1=1-6*pow(K,2)*(1-_abs(K,contextptr)),f2=2*pow(1-_abs(K,contextptr),3);
     gen expr=symbolic(at_when,makevecteur(cond,f1,f2));
@@ -2576,7 +2590,7 @@ gen _poisson_window(const gen &g,GIAC_CONTEXT) {
     int start,N;
     identificateur k(" k");
     if (!parse_window_parameters(g,data,start,N,&alpha,contextptr))
-        return gentypeerr(contextptr);
+        return generrtype(_SP_BAD_WINDOW);
     gen expr=exp(-alpha*_abs(2*k/(N-1)-1,contextptr),contextptr);
     return apply_window_function(expr,k,data,start,N,contextptr);
 }
@@ -2590,7 +2604,7 @@ gen _riemann_window(const gen &g,GIAC_CONTEXT) {
     int start,N;
     identificateur k(" k");
     if (!parse_window_parameters(g,data,start,N,0,contextptr))
-        return gentypeerr(contextptr);
+        return generrtype(_SP_BAD_WINDOW);
     gen K=(2*k/(N-1)-1)*_IDNT_pi(),cond=symbolic(at_same,makesequence(k,(N-1)/2.0));
     gen expr=symbolic(at_when,makesequence(cond,1,sin(K,contextptr)/K));
     return apply_window_function(expr,k,data,start,N,contextptr);
@@ -2606,7 +2620,7 @@ gen _triangle_window(const gen &g,GIAC_CONTEXT) {
     int start,N;
     identificateur k(" k");
     if (!parse_window_parameters(g,data,start,N,&L,contextptr) || (L!=1 && L!=-1 && L!=0))
-        return gentypeerr(contextptr);
+        return generrtype(_SP_BAD_WINDOW);
     gen expr=1-_abs((2*k-N+1)/(N+L),contextptr);
     return apply_window_function(expr,k,data,start,N,contextptr);
 }
@@ -2621,7 +2635,7 @@ gen _tukey_window(const gen &g,GIAC_CONTEXT) {
     int start,N;
     identificateur k(" k");
     if (!parse_window_parameters(g,data,start,N,&alpha,contextptr) || alpha<0 || alpha>1)
-        return gentypeerr(contextptr);
+        return generrtype(_SP_BAD_WINDOW);
     double p=alpha*(N-1)/2.0,q=1-alpha/2;
     gen cond1=symb_inferieur_strict(k,p),cond2=symb_inferieur_egal(k,q*(N-1));
     gen f1=(1+cos(_IDNT_pi()*(k/p-1),contextptr))/2,f2=(1+cos(_IDNT_pi()*(k/p+1-2/alpha),contextptr))/2;
@@ -2638,7 +2652,7 @@ gen _welch_window(const gen &g,GIAC_CONTEXT) {
     int start,N;
     identificateur k(" k");
     if (!parse_window_parameters(g,data,start,N,0,contextptr))
-        return gentypeerr(contextptr);
+        return generrtype(_SP_BAD_WINDOW);
     double p=(N-1)/2.0;
     gen expr=1-pow(1-k/p,2);
     return apply_window_function(expr,k,data,start,N,contextptr);

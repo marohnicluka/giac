@@ -34,6 +34,21 @@ using namespace std;
 namespace giac {
 #endif //ndef NO_NAMESPACE_GIAC
 
+/* 
+ * A variant of "is_positive" which hopefully does not hang.
+ * Implemented here because optimization.cc includes pari.h which redefines taille!
+ */
+bool is_positive_safe(const gen &g,bool strict,unsigned max_taille,GIAC_CONTEXT) {
+    vecteur s;
+    gen alg=to_algebraic(g,s,contextptr);
+    if (max_taille>0 && taille(alg,max_taille+1)>=max_taille)
+        return false;
+    bool ret=strict?is_strictly_positive(alg,contextptr):is_positive(alg,contextptr);
+    if (!s.empty())
+        _purge(s,contextptr);
+    return ret;
+}
+
 /*
  * Return the number of digits of an unsigned integer.
  */
@@ -47,7 +62,8 @@ int numdigits(unsigned i) {
 bool is_realcons(const gen &g,GIAC_CONTEXT) {
     if (g.type==_VECT) {
         const vecteur &v = *g._VECTptr;
-        for (const_iterateur it=v.begin();it!=v.end();++it) {
+        const_iterateur it=v.begin(),itend=v.end();
+        for (;it!=itend;++it) {
             if (!is_realcons(*it,contextptr))
                 return false;
         }
@@ -74,7 +90,8 @@ bool interval2pair(const gen &g,pair<gen,gen> &p,GIAC_CONTEXT) {
 bool is_idnt_vecteur(const gen &g,GIAC_CONTEXT) {
     if (g.type!=_VECT)
         return false;
-    for (const_iterateur it=g._VECTptr->begin();it!=g._VECTptr->end();++it) {
+    const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
+    for (;it!=itend;++it) {
         if (it->type!=_IDNT)
             return false;
     }
@@ -332,7 +349,8 @@ bool lp_node::change_basis(matrice &m,const vecteur &u,vector<bool> &is_slack,in
     if (prob->settings.acyclic)
         use_bland=is_zero(mincoeff); // Bland's rule
     if (lv<0 || is_greater(mincoeff,u[ev],prob->ctx)) {
-        for (const_iterateur it=m.begin();it!=m.end();++it) {
+        const_iterateur it=m.begin(),itend=m.end();
+        for (;it!=itend;++it) {
             a=it->_VECTptr->at(ec);
             it->_VECTptr->back()-=u[ev]*a;
             it->_VECTptr->at(ec)=-a;
@@ -618,7 +636,8 @@ int lp_node::solve_relaxation() {
     if (!m.empty())
         append_column(m,b);
     // assure that the right-hand side column is nonnegative
-    for (iterateur it=m.begin();it!=m.end();++it) {
+    iterateur it=m.begin(),itend=m.end();
+    for (;it!=itend;++it) {
         if (!is_positive(it->_VECTptr->back(),prob->ctx)) {
             *it=multvecteur(-1,*(it->_VECTptr));
         }
@@ -754,7 +773,8 @@ int lp_node::solve_relaxation() {
             obj.push_back(0);
             cols.push_back(ncols++);
         }
-        for (const_iterateur ct=cuts.begin();ct!=cuts.end();++ct) {
+        const_iterateur ct=cuts.begin(),itend=cuts.end();
+        for (;ct!=itend;++ct) {
             int cc=ct-cuts.begin();
             vecteur cut=mergevecteur(*(ct->_VECTptr),singleton(cuts.size(),cc,true));
             cut.push_back(1);
@@ -927,7 +947,8 @@ bool lp_problem::has_approx_coefficients() {
 void lp_problem::set_objective(const vecteur &v,const gen &ft) {
     objective.first=v;
     objective.second=ft;
-    for (const_iterateur it=v.begin();it!=v.end();++it) {
+    const_iterateur it=v.begin(),itend=v.end();
+    for (;it!=itend;++it) {
         obj_approx.push_back(abs(*it,ctx).to_double(ctx));
     }
 }
@@ -935,9 +956,19 @@ void lp_problem::set_objective(const vecteur &v,const gen &ft) {
 /*
  * Display a message.
  */
-void lp_problem::message(const char *msg,bool force_print) {
-    if (force_print || settings.verbose)
+void lp_problem::message(const char *msg,int type) {
+    if (type==1 || settings.verbose) {
+        switch (type) {
+        case 0:
+            break;
+        case 1:
+            *logptr(ctx) << gettext("Error") << ": ";
+            break;
+        case 2:
+            *logptr(ctx) << gettext("Warning") << ": ";
+        }
         *logptr(ctx) << gettext(msg) << "\n";
+    }
 }
 
 /*
@@ -1050,7 +1081,8 @@ int lp_constraints::remove_linearly_dependent(GIAC_CONTEXT) {
     }
     if (!pos.empty()) {
         matrice mf=mtran(*_rref(mtran(*_evalf(m,contextptr)._VECTptr),contextptr)._VECTptr);
-        for (const_iterateur it=mf.begin();it!=mf.end();++it) {
+        const_iterateur it=mf.begin(),itend=mf.end();
+        for (;it!=itend;++it) {
             int i=0;
             for (;i<=ncols() && is_zero(it->_VECTptr->at(i));++i);
             if (i<=ncols() && is_one(it->_VECTptr->at(i)) && found.find(i)==found.end())
@@ -1102,7 +1134,8 @@ int lp_constraints::nonzeros() {
  */
 void lp_problem::add_identifiers_from(const gen &g) {
     vecteur vars(*_lname(g,ctx)._VECTptr);
-    for (const_iterateur it=vars.begin();it!=vars.end();++it) {
+    const_iterateur it=vars.begin(),itend=vars.end();
+    for (;it!=itend;++it) {
         if (!contains(variable_identifiers,*it))
             variable_identifiers.push_back(*it);
     }
@@ -1151,7 +1184,18 @@ void lp_problem::tighten_variable_bounds(int i,const gen &l,const gen &u) {
 vecteur lp_problem::output_solution(bool sort_vars) {
     if (variable_identifiers.empty())
         return solution;
-    vecteur v=sort_vars?sort_identifiers(variable_identifiers,ctx):variable_identifiers;
+    vecteur v=variable_identifiers;
+    if (sort_vars) {
+        vecteur sv=sort_identifiers(v,ctx),ret;
+        ret.reserve(solution.size());
+        const_iterateur it=sv.begin(),itend=sv.end();
+        for (;it!=itend;++it) {
+            const_iterateur jt=std::find(v.begin(),v.end(),*it);
+            assert(jt!=v.end());
+            ret.push_back(symb_equal(*it,solution[jt-v.begin()]));
+        }
+        return ret;
+    }
     return *_zip(makesequence(at_equal,v,solution),ctx)._VECTptr;
 }
 
@@ -1163,7 +1207,8 @@ vecteur lp_problem::output_solution(bool sort_vars) {
 bool lp_problem::lincomb_coeff(const gen &g,vecteur &varcoeffs,gen &freecoeff) {
     gen e(g),a;
     varcoeffs.clear();
-    for (const_iterateur it=variable_identifiers.begin();it!=variable_identifiers.end();++it) {
+    const_iterateur it=variable_identifiers.begin(),itend=variable_identifiers.end();
+    for (;it!=itend;++it) {
         a=0;
         if (is_constant_wrt(e,*it,ctx) || (is_linear_wrt(e,*it,a,e,ctx) && is_realcons(a,ctx)))
             varcoeffs.push_back(a);
@@ -1638,11 +1683,11 @@ int lp_problem::solve() {
                 pair<double,double> qual;
                 while (!active_nodes.empty()) {
                     if (settings.node_limit>0 && stats.subproblems_examined>=settings.node_limit) {
-                        message("Warning: node limit exceeded",true);
+                        message("node limit exceeded",2);
                         break;
                     }
                     if (settings.iteration_limit>0 && iteration_count>settings.iteration_limit) {
-                        message("Warning: simplex iteration limit exceeded",true);
+                        message("simplex iteration limit exceeded",2);
                         break;
                     }
                     n=active_nodes.size();
@@ -1688,7 +1733,7 @@ int lp_problem::solve() {
                         k=best_cand[idx];
                     }
                     if (k<0) {
-                        message("Error: node selection strategy failed",true);
+                        message("node selection strategy failed",1);
                         break;
                     }
                     j=-1;
@@ -1728,14 +1773,14 @@ int lp_problem::solve() {
                     default: assert(false);
                     }
                     if (j<0) {
-                        message("Error: branching variable selection strategy failed",true);
+                        message("branching variable selection strategy failed",1);
                         break;
                     }
                     if (!is_undef(optimum)) {
                         stats.mip_gap=is_zero(optimum)?-opt_lbound:(opt_approx-opt_lbound)/std::abs(opt_approx);
                         if (stats.mip_gap<=settings.relative_gap_tolerance) {
                             if (settings.relative_gap_tolerance>0)
-                                message("Warning: integrality gap threshold reached",true);
+                                message("integrality gap threshold reached",2);
                             break;
                         }
                     }
@@ -1746,7 +1791,7 @@ int lp_problem::solve() {
                         active_nodes[k].init_child(child_node);
                         if (settings.depth_limit>0 && child_node.get_depth()>settings.depth_limit) {
                             if (!depth_exceeded) {
-                                message ("Warning: depth limit exceeded",true);
+                                message ("depth limit exceeded",2);
                                 depth_exceeded=true;
                             }
                             break;
@@ -1772,8 +1817,8 @@ int lp_problem::solve() {
 #if 1
                             pair<int,double> viol=constr.violated_constraints(child_node.get_solution(),ctx);
                             if (viol.first!=0) {
-                                sprintf(buffer,"Error: Relaxation solution is infeasible with violation %g, please report",viol.second);
-                                message(buffer,true);
+                                sprintf(buffer,"relaxation solution is infeasible with violation %g, please report",viol.second);
+                                message(buffer,1);
                                 return _LP_ERROR;
                             }
 #endif
@@ -1820,7 +1865,7 @@ int lp_problem::solve() {
                     }
                     now=clock();
                     if (settings.time_limit>0 && 1e3*double(now-t0)/CLOCKS_PER_SEC>settings.time_limit) {
-                        message("Warning: time limit exceeded",true);
+                        message("time limit exceeded",2);
                         break;
                     }
                     if (CLOCKS_PER_SEC/double(now-t)<=settings.status_report_freq) { //report status
@@ -2061,7 +2106,7 @@ int lp_problem::term_hook(void *info,const char *s) {
  */
 int lp_problem::glpk_solve() {
 #ifndef HAVE_LIBGLPK
-    message("Warning: solving in floating-point arithmetic requires GLPK library",true);
+    message("solving in floating-point arithmetic requires GLPK library",2);
     return solve();
 #else
     /* redirect GLPK output to logptr */
@@ -2099,11 +2144,11 @@ int lp_problem::glpk_solve() {
             solution_status=_LP_SOLVED;
             break;
         case GLP_FEAS:
-            message("Warning: the solution is not necessarily optimal",true);
+            message("the solution is not necessarily optimal",2);
             solution_status=_LP_SOLVED;
             break;
         case GLP_INFEAS:
-            message("Warning: the solution is infeasible",true);
+            message("the solution is infeasible",2);
             solution_status=_LP_SOLVED;
             break;
         case GLP_NOFEAS:
@@ -2144,22 +2189,22 @@ int lp_problem::glpk_solve() {
             }
         }
     } else switch (result) { // GLPK returned an error
-    case GLP_EBADB:   message("Error (GLPK): invalid basis",true); break;
-    case GLP_ESING:   message("Error (GLPK): singular matrix",true); break;
-    case GLP_ECOND:   message("Error (GLPK): ill-conditioned matrix",true); break;
-    case GLP_EBOUND:  message("Error (GLPK): invalid bounds",true); break;
-    case GLP_EFAIL:   message("Error (GLPK): solver failed",true); break;
-    case GLP_EOBJLL:  message("Error (GLPK): objective lower limit reached",true); break;
-    case GLP_EOBJUL:  message("Error (GLPK): objective upper limit reached",true); break;
-    case GLP_ENOPFS:  message("Error (GLPK): no primal feasible solution",true); break;
-    case GLP_ENODFS:  message("Error (GLPK): no dual feasible solution",true); break;
-    case GLP_EROOT:   message("Error (GLPK): root LP optimum not provided",true); break;
-    case GLP_ENOFEAS: message("Error (GLPK): no primal/dual feasible solution",true); break;
-    case GLP_ENOCVG:  message("Error (GLPK): no convergence",true); break;
-    case GLP_EINSTAB: message("Error (GLPK): numerical instability",true); break;
-    case GLP_EDATA:   message("Error (GLPK): invalid data",true); break;
-    case GLP_ERANGE:  message("Error (GLPK): result out of range",true); break;
-    default:          message("Error (GLPK): unknown error",true); break;
+    case GLP_EBADB:   message("invalid basis",1); break;
+    case GLP_ESING:   message("singular matrix",1); break;
+    case GLP_ECOND:   message("ill-conditioned matrix",1); break;
+    case GLP_EBOUND:  message("invalid bounds",1); break;
+    case GLP_EFAIL:   message("solver failed",1); break;
+    case GLP_EOBJLL:  message("objective lower limit reached",1); break;
+    case GLP_EOBJUL:  message("objective upper limit reached",1); break;
+    case GLP_ENOPFS:  message("no primal feasible solution",1); break;
+    case GLP_ENODFS:  message("no dual feasible solution",1); break;
+    case GLP_EROOT:   message("root LP optimum not provided",1); break;
+    case GLP_ENOFEAS: message("no primal/dual feasible solution",1); break;
+    case GLP_ENOCVG:  message("no convergence",1); break;
+    case GLP_EINSTAB: message("numerical instability",1); break;
+    case GLP_EDATA:   message("invalid data",1); break;
+    case GLP_ERANGE:  message("result out of range",1); break;
+    default:          message("unknown error",1); break;
     }
     glp_delete_prob(prob);
     if (settings.verbose)
@@ -2179,7 +2224,7 @@ int lp_problem::glpk_solve() {
  */
 bool lp_problem::glpk_load_from_file(const char *fname) {
 #ifndef HAVE_LIBGLPK
-    message("Error: loading CPLEX and MPS files requires GLPK library",true);
+    message("loading CPLEX and MPS files requires GLPK library",1);
     return false;
 #endif
 #ifdef HAVE_LIBGLPK
@@ -2196,7 +2241,7 @@ bool lp_problem::glpk_load_from_file(const char *fname) {
     else if (ext=="lp") // CPLEX LP format
         result=glp_read_lp(prob,NULL,fname);
     else {
-        message("Error: file format not supported",true);
+        message("file format not supported",1);
         result=1;
     }
     if (result==0) { // successfully loaded
@@ -2204,7 +2249,7 @@ bool lp_problem::glpk_load_from_file(const char *fname) {
         int obj_dir=glp_get_obj_dir(prob),len,t,k;
         int nr=glp_get_num_rows(prob),n=glp_get_num_cols(prob);
         if (nr*n>LP_CONSTR_MAXSIZE) {
-            message("Error: constraint matrix too large",true);
+            message("constraint matrix too large",1);
             return false;
         }
         int *ind=new int[1+n];
@@ -2244,8 +2289,8 @@ bool lp_problem::glpk_load_from_file(const char *fname) {
             }
             t=glp_get_row_type(prob,i);
             if (t==GLP_FR) {
-                sprintf(buffer,"Warning: row bounds not set, discarding constraint %d",i);
-                message(buffer,true);
+                sprintf(buffer,"row bounds not set, discarding constraint %d",i);
+                message(buffer,2);
                 constr.remove(i-1);
                 continue;
             }
@@ -2281,7 +2326,8 @@ bool lp_problem::assign_variable_types(const gen &g,int t) {
     pair<gen,gen> range;
     int i,i0=array_start(ctx);
     if (g.type==_VECT) {
-        for (const_iterateur it=g._VECTptr->begin();it!=g._VECTptr->end();++it) {
+        const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
+        for (;it!=itend;++it) {
             if (!assign_variable_types(*it,t))
                 return false;
         }
@@ -2334,7 +2380,8 @@ bool parse_options_and_bounds(const_iterateur &it,const_iterateur &itend,lp_prob
                     prob.tighten_variable_bounds(vi,bounds.first,bounds.second);
                 else return false;
             } else if (is_idnt_vecteur(lh,prob.ctx) && interval2pair(rh,bounds,prob.ctx)) {
-                for (const_iterateur it=lh._VECTptr->begin();it!=lh._VECTptr->end();++it) {
+                const_iterateur it=lh._VECTptr->begin(),itend=lh._VECTptr->end();
+                for (;it!=itend;++it) {
                     int vi=prob.get_variable_index(*(it->_IDNTptr));
                     if (vi>=0)
                         prob.tighten_variable_bounds(vi,bounds.first,bounds.second);
@@ -2514,7 +2561,8 @@ int parse_constraints(bool is_matrix_form,const_iterateur &it,const_iterateur &i
         pair<gen,gen> bounds;
         gen r;
         int rel;
-        for (const_iterateur jt=cv.begin();jt!=cv.end();++jt) {
+        const_iterateur jt=cv.begin(),itend=cv.end();
+        for (;jt!=itend;++jt) {
             if (jt->is_symb_of_sommet(at_equal))
                 rel=_LP_EQ;
             else if (jt->is_symb_of_sommet(at_inferieur_egal))
@@ -2602,7 +2650,7 @@ gen _lpsolve(const gen &args,GIAC_CONTEXT) {
                 }
             }
             if (prob.nc()==0) {
-                prob.message("Error: no constraints detected",true);
+                prob.message("no constraints detected",1);
                 return gensizeerr(contextptr);
             }
         }
@@ -2648,10 +2696,10 @@ gen _lpsolve(const gen &args,GIAC_CONTEXT) {
     //solve the problem
     switch (is_solver_exact?prob.solve():prob.glpk_solve()) {
     case _LP_INFEASIBLE:
-        prob.message("Error: problem has no feasible solutions",true);
+        prob.message("problem has no feasible solutions",1);
         return vecteur(0);
     case _LP_UNBOUNDED:
-        prob.message("Error: problem has unbounded solution",true);
+        prob.message("problem has unbounded solution",1);
         return makevecteur(prob.settings.maximize?plus_inf:minus_inf,vecteur(0));
     case _LP_ERROR:
         return undef;

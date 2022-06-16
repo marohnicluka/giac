@@ -13,5 +13,6 @@ My contributions to [Giac/Xcas](https://www-fourier.ujf-grenoble.fr/~parisse/gia
 - statistics (discrete random variables with sampling, kernel density estimation, maximum-likelihood fitting)
 - ordinary differential equations (an implementation of Kovacic's algorithm and a second-degree boundary value problems solver)
 - Diophantine equations
+- K-means and hierarchical agglomerative clustering
 - LaTeX/MathML/TeXmacs conversion of Giac output
 - using Giac in TeXmacs

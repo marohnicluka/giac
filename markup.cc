@@ -25,15 +25,6 @@
 #ifdef __ANDROID__
 using std::vector;
 #endif
-#if defined GIAC_HAS_STO_38 || defined NSPIRE || defined NSPIRE_NEWLIB || defined KHICAS ||     \
-    defined FXCG || defined GIAC_GGB || defined USE_GMP_REPLACEMENTS
-inline bool is_graphe(const giac::gen &g,std::string &disp_out,
-                      const giac::context *) {
-  return false;
-}
-#else
-#include "graphtheory.h"
-#endif
 
 using namespace std;
 
@@ -170,6 +161,14 @@ bool is_greek_letter(const string &s) {
 
 bool is_double_letter(const string &s) {
   return s.length()==2 && isalpha(s.at(0)) && s.at(0)==s.at(1);
+}
+
+bool is_digits(const string &s) {
+  for (string::const_iterator it=s.begin();it!=s.end();++it) {
+    if (!isdigit(*it))
+      return false;
+  }
+  return true;
 }
 
 typedef struct markup_block {
@@ -314,6 +313,16 @@ string trim_string(const string &s_orig,int &indent) {
       break;
   }
   return s.substr(i,j-i+1);
+}
+
+void split_string(string const &str,const char delim,vector<string> &out) {
+  size_t start=0,end,len=str.length();
+  do {
+    end=str.find(delim,start);
+    if (end==string::npos)
+      end=len;
+    out.push_back(str.substr(start,end-start));
+  } while ((start=end+1)<=len);
 }
 
 string str_to_tex(const string &s_orig,bool quote,bool ind) {
@@ -840,8 +849,9 @@ string idnt2markup(const string &s_orig,int typ,bool unit,int idc,bool &isname) 
     size_t pos=s_orig.find("_");
     if (pos!=string::npos) {
       s=s_orig.substr(0,pos);
-      if (s.size()==1 || is_greek_letter(s) || is_double_letter(s))
-        ssub=s_orig.substr(pos+1);
+      string au=s_orig.substr(pos+1);
+      if (s.size()==1 || is_greek_letter(s) || is_double_letter(s) || is_digits(au))
+        ssub=au;
     }
   }
   if (ssub.empty())
@@ -875,13 +885,28 @@ string idnt2markup(const string &s_orig,int typ,bool unit,int idc,bool &isname) 
   string ret=(len==1?(tex || scm?s:mml_tag("mi",s,ssub.empty()?idc:0))
                     :(tex?"\\mathrm{"+s+"}":(scm?s:mml_tag("mi",s,ssub.empty()?idc:0,mdf,"bold"))));
   if (!ssub.empty()) {
+    vector<string> tokens;
+    split_string(ssub,'_',tokens);
+    bool is_multidim=true;
+    for (vector<string>::const_iterator tt=tokens.begin();is_multidim && tt!=tokens.end();++tt) {
+      if (tt->empty() || (*tt!="0" && atof(tt->c_str())==0))
+        is_multidim=false;
+    }
+    if (is_multidim) {
+      ssub.clear();
+      for (vector<string>::const_iterator tt=tokens.begin();tt!=tokens.end();++tt) {
+        if (tt!=tokens.begin())
+          ssub+=scm?"<nosymbol>":(tex?",":"<mo>,<mo>");
+        ssub+=*tt;
+      }
+    }
     if (tex)
       ret+="_{"+((len_sub==1 || atof(ssub.c_str())!=0)?ssub:"\\mathrm{"+ssub+"}")+"}";
-    else if (scm)
+    else if (scm) {
       ret="(concat \""+ret+"\" "+(cnct?"":"\"<nosymbol>\" ")+"(rsub \""+ssub+"\"))";
-    else
-      ret=mml_tag("msub",ret+(ssub=="0" || atof(ssub.c_str())!=0?
-                         "<mn>"+ssub+"</mn>":"<mi>"+ssub+"</mi>"),idc);
+    } else
+      ret=mml_tag("msub",ret+(is_multidim?("<mrow>"+ssub+"</mrow>"):((ssub=="0" || atof(ssub.c_str())!=0?
+                                                                      "<mn>"+ssub+"</mn>":"<mi>"+ssub+"</mi>"))),idc);
   } else if (tex) {
     int i=0;
     while (i<(int)ret.length()) {
@@ -1094,48 +1119,48 @@ string func2markup(const gen &g,int typ,int idc=0) {
   string ret;
   bool has_id=false,isname;
   if (g.is_symb_of_sommet(at_ln) || g.is_symb_of_sommet(at_LN))
-    ret=tex?"\\ln ":(scm?"ln":(content? "<ln/>":"<mi>ln</mi>"));
+    ret=tex?"\\ln ":(scm?"ln":(content?"<ln/>":"<mi>ln</mi>"));
   else if (g.is_symb_of_sommet(at_sin) || g.is_symb_of_sommet(at_SIN))
-    ret=tex?"\\sin ":(scm?"sin":(content? "<sin/>":"<mi>sin</mi>"));
+    ret=tex?"\\sin ":(scm?"sin":(content?"<sin/>":"<mi>sin</mi>"));
   else if (g.is_symb_of_sommet(at_cos) || g.is_symb_of_sommet(at_COS))
-    ret=tex?"\\cos ":(scm?"cos":(content? "<cos/>":"<mi>cos</mi>"));
+    ret=tex?"\\cos ":(scm?"cos":(content?"<cos/>":"<mi>cos</mi>"));
   else if (g.is_symb_of_sommet(at_tan) || g.is_symb_of_sommet(at_TAN))
-    ret=tex?"\\tan ":(scm?"tan":(content? "<tan/>":"<mi>tan</mi>"));
+    ret=tex?"\\tan ":(scm?"tan":(content?"<tan/>":"<mi>tan</mi>"));
   else if (g.is_symb_of_sommet(at_cot) || g.is_symb_of_sommet(at_COT))
-    ret=tex?"\\cot ":(scm?"cot":(content? "<cot/>":"<mi>cot</mi>"));
+    ret=tex?"\\cot ":(scm?"cot":(content?"<cot/>":"<mi>cot</mi>"));
   else if (g.is_symb_of_sommet(at_sinh) || g.is_symb_of_sommet(at_SINH))
-    ret=tex?"\\sinh ":(scm?"sinh":(content? "<sinh/>":"<mi>sinh</mi>"));
+    ret=tex?"\\sinh ":(scm?"sinh":(content?"<sinh/>":"<mi>sinh</mi>"));
   else if (g.is_symb_of_sommet(at_cosh) || g.is_symb_of_sommet(at_COSH))
-    ret=tex?"\\cosh ":(scm?"cosh":(content? "<cosh/>":"<mi>cosh</mi>"));
+    ret=tex?"\\cosh ":(scm?"cosh":(content?"<cosh/>":"<mi>cosh</mi>"));
   else if (g.is_symb_of_sommet(at_tanh) || g.is_symb_of_sommet(at_TANH))
-    ret=tex?"\\tanh ":(scm?"tanh":(content? "<tanh/>":"<mi>tanh</mi>"));
+    ret=tex?"\\tanh ":(scm?"tanh":(content?"<tanh/>":"<mi>tanh</mi>"));
   else if (g.is_symb_of_sommet(at_asin) || g.is_symb_of_sommet(at_ASIN))
-    ret=tex?"\\arcsin ":(scm?"arcsin":(content? "<arcsin/>":"<mi>arcsin</mi>"));
+    ret=tex?"\\arcsin ":(scm?"arcsin":(content?"<arcsin/>":"<mi>arcsin</mi>"));
   else if (g.is_symb_of_sommet(at_acos) || g.is_symb_of_sommet(at_ACOS))
-    ret=tex?"\\arccos ":(scm?"arccos":(content? "<arccos/>":"<mi>arccos</mi>"));
+    ret=tex?"\\arccos ":(scm?"arccos":(content?"<arccos/>":"<mi>arccos</mi>"));
   else if (g.is_symb_of_sommet(at_atan) || g.is_symb_of_sommet(at_ATAN))
-    ret=tex?"\\arctan ":(scm?"arctan":(content? "<arctan/>":"<mi>arctan</mi>"));
+    ret=tex?"\\arctan ":(scm?"arctan":(content?"<arctan/>":"<mi>arctan</mi>"));
   else if (g.is_symb_of_sommet(at_acot) || g.is_symb_of_sommet(at_ACOT))
-    ret=tex?"\\operatorname{arccot}":(scm?"arccot":(content? "<arccot/>":"<mi>arccot</mi>"));
+    ret=tex?"\\operatorname{arccot}":(scm?"arccot":(content?"<arccot/>":"<mi>arccot</mi>"));
   else if (g.is_symb_of_sommet(at_sec) || g.is_symb_of_sommet(at_SEC))
-    ret=tex?"\\sec ":(scm?"sec":(content? "<sec/>":"<mi>sec</mi>"));
+    ret=tex?"\\sec ":(scm?"sec":(content?"<sec/>":"<mi>sec</mi>"));
   else if (g.is_symb_of_sommet(at_csc) || g.is_symb_of_sommet(at_CSC))
-    ret=tex?"\\csc ":(scm?"csc":(content? "<csc/>":"<mi>csc</mi>"));
+    ret=tex?"\\csc ":(scm?"csc":(content?"<csc/>":"<mi>csc</mi>"));
   else if (g.is_symb_of_sommet(at_asec) || g.is_symb_of_sommet(at_ASEC))
     ret=tex?"\\operatorname{arcsec}"
-           :(scm?"arcsec":(content? "<arcsec/>":"<mi>arcsec</mi>"));
+           :(scm?"arcsec":(content?"<arcsec/>":"<mi>arcsec</mi>"));
   else if (g.is_symb_of_sommet(at_acsc) || g.is_symb_of_sommet(at_ACSC))
     ret=tex?"\\operatorname{arccsc}"
-           :(scm?"arccsc":(content? "<arccsc/>":"<mi>arccsc</mi>"));
+           :(scm?"arccsc":(content?"<arccsc/>":"<mi>arccsc</mi>"));
   else if (g.is_symb_of_sommet(at_asinh) || g.is_symb_of_sommet(at_ASINH))
     ret=tex?"\\operatorname{arsinh}"
-           :(scm?"arsinh":(content? "<arcsinh/>":"<mi>arsinh</mi>"));
+           :(scm?"arsinh":(content?"<arcsinh/>":"<mi>arsinh</mi>"));
   else if (g.is_symb_of_sommet(at_acosh) || g.is_symb_of_sommet(at_ACOSH))
     ret=tex?"\\operatorname{arcosh}"
-           :(scm?"arcosh":(content? "<arccosh/>":"<mi>arcosh</mi>"));
+           :(scm?"arcosh":(content?"<arccosh/>":"<mi>arcosh</mi>"));
   else if (g.is_symb_of_sommet(at_atanh) || g.is_symb_of_sommet(at_ATANH))
     ret=tex?"\\operatorname{artanh}"
-           :(scm?"artanh":(content? "<arctanh/>":"<mi>artanh</mi>"));
+           :(scm?"artanh":(content?"<arctanh/>":"<mi>artanh</mi>"));
   else {
     if (g.is_symb_of_sommet(at_id) && content) ret="<ident/>";
     else if (g.is_symb_of_sommet(at_gcd) && content) ret="<gcd/>";
@@ -1507,6 +1532,17 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
   case _SPOL1:
     return gen2markup(spol12gen(*g._SPOL1ptr,contextptr),flags,idc,contextptr);
   */
+  case _USER:
+    str=g._USERptr->print(contextptr);
+    if (mml_content)
+      ml.content=mml_tag("cs",str,++idc);
+    if (mml_presentation)
+      ml.markup=mml_tag("mtext",str,idc);
+    if (tex)
+      ml.latex=g._USERptr->texprint(contextptr);
+    if (scm)
+      ml.scheme="(text \""+str+"\")";
+    return ml;
   case _MAP:
     if (mml_presentation)
       ml.markup="<mtr style='background:lightgray'><mtd><mtext "
@@ -1565,17 +1601,6 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
     ml.type=_MLBLOCK_FUNC;
     return ml;
   case _VECT:
-    if (st==_GRAPH__VECT && is_graphe(g,str,contextptr)) {
-      if (mml_content)
-        ml.content=mml_tag("cs",str,++idc);
-      if (mml_presentation)
-        ml.markup=mml_tag("mtext",str,idc);
-      if (tex)
-        ml.latex="\\text{"+str+"}";
-      if (scm)
-        ml.scheme="(text \""+str+"\")";
-      return ml;
-    }
     if (ckmatrix(*g._VECTptr) && (st==0 || st==_MATRIX__VECT)) {
       ml.type=_MLBLOCK_MATRIX;
       for (const_iterateur it=g._VECTptr->begin();it!=g._VECTptr->end();++it) {
@@ -3279,7 +3304,7 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
       if (tex)
         ml.latex="\\left\\|"+tmp.latex+"\\right\\|";
       if (scm)
-        ml.scheme="(around* \"||\" "+tmp.scheme+" \"||\")";
+        ml.scheme="(around* \"<||>\" "+tmp.scheme+" \"<||>\")";
       if (n>-2) {
         string N=gen(n).print(contextptr);
         if (mml_presentation)

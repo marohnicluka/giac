@@ -216,7 +216,7 @@ struct lp_problem {
     }
     int nc() { return constr.lhs.size(); }
     int nv() { return variables.size(); }
-    void message(const char* msg,bool err=false);
+    void message(const char* msg,int type=0);
     void report_status(const char* msg);
     void add_identifiers_from(const gen &g);
     bool assign_variable_types(const gen &g,int t);

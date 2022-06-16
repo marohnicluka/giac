@@ -222,24 +222,223 @@ void flush_stderr(){
   fflush (stderr);
 }
 
+void suspend_stderr() {
+  std::cerr.setstate(ios_base::failbit);
+}
+
+void restore_stderr() {
+  std::cerr.clear(std::cerr.rdstate() & ~ios_base::failbit);
+}
+
+vector<string> split_string(const string &s,const string &delim) {
+  size_t pos_start=0,pos_end,delim_len=delim.length();
+  string token;
+  vector<string> res;
+  while ((pos_end=s.find(delim,pos_start))!=string::npos) {
+    token=s.substr(pos_start,pos_end-pos_start);
+    pos_start=pos_end+delim_len;
+    res.push_back(token);
+  }
+  res.push_back(s.substr(pos_start));
+  return res;
+}
+
+string join_strings(const vector<string> &sv,const string &delim,bool insert_quotes=false) {
+  string ret="";
+  for (int i=sv.size();i-->0;) {
+    ret=(insert_quotes?"\""+sv[i]+"\"":sv[i])+(ret.empty()?"":delim)+ret;
+  }
+  return ret;
+}
+
+string trim_string(const string &s) {
+  string ws=" \t\n\r";
+  int i,j;
+  for (j=s.length();j-->0 && ws.find(s[j])!=string::npos;);
+  for (i=0;i<j && ws.find(s[i])!=string::npos;++i);
+  return s.substr(i,j-i+1);
+}
+
+size_t example_pos(const string &s) {
+  if (s.find("Ex")!=0)
+    return string::npos;
+  size_t pos=s.find(':');
+  if (pos==string::npos)
+    return pos;
+  if (pos>2 && atoi(s.substr(2,pos-2).c_str())>0)
+    return pos+1;
+  return string::npos;
+}
+
+bool is_help_text(const string &str,string &desc,string &usg,vector<string> &rel,vector<string> &ex) {
+  string desc_text=gettext("Description"),usg_text=gettext("Usage"),rel_text=gettext("Related"),ex_text=gettext("Examples");
+  string see_also=gettext("See also");
+  vector<string> lines=split_string(str,"\n"),fields(4),content(4,"");
+  for (int i=lines.size();i-->0;) {
+    lines[i]=trim_string(lines[i]);
+    if (lines[i].empty())
+      lines.erase(lines.begin()+i);
+  }
+  int lc=lines.size();
+  fields[0]=desc_text;
+  fields[1]=usg_text;
+  fields[2]=rel_text;
+  fields[3]=ex_text;
+  int j=0;
+  size_t pos;
+  for (int i=0;i<4 && j<lc;++i) {
+    if (lines[j].find(fields[i]+":")==0) {
+      content[i]=trim_string(lines[j].substr(fields[i].length()+1));
+      if (i==3 && content[i].empty())
+        content[i]=trim_string(lines[++j]);
+      ++j;
+    }
+  }
+  if (j==lc) {
+    desc=content[0];
+    usg=content[1];
+    rel=split_string(content[2],", ");
+    for (int i=rel.size();i-->0;) {
+      if (trim_string(rel[i]).empty())
+        rel.erase(rel.begin()+i);
+    }
+    if (*content[3].rbegin()==';')
+      content[3].pop_back();
+    ex=split_string(content[3],";");
+    for (int i=ex.size();i-->0;) {
+      ex[i]=trim_string(ex[i]);
+      if (*ex[i].rbegin()==':') {
+        ex[i].push_back(';');
+        if (i+1<int(ex.size())) {
+          ex[i+1]=ex[i]+ex[i+1];
+          ex.erase(ex.begin()+i);
+        }
+      }
+    }
+    return true;
+  } else {
+    int i=lc;
+    bool test=false;
+    for (;i-->0 && (pos=example_pos(lines[i]))!=string::npos;) {
+      ex.push_back(trim_string(lines[i].substr(pos)));
+      test=true;
+    }
+    if (i>=0) {
+      if (lines[i].find(see_also+": ")==0) {
+        rel=split_string(trim_string(lines[i].substr(see_also.length()+2))," ");
+        for (j=rel.size();j-->0;) {
+          if (trim_string(rel[j]).empty())
+            rel.erase(rel.begin()+j);
+        }
+        if (rel.size()%2)
+          return false;
+        for (j=rel.size();j-->0;) {
+          if (j%2==0) {
+            string sep=rel[j];
+            if (*sep.rbegin()!='/')
+              return false;
+            sep.pop_back();
+            if (atoi(sep.c_str())<=0)
+              return false;
+            rel.erase(rel.begin()+j);
+          }
+        }
+        i--;
+        test=true;
+      }
+      if (!test)
+        return false;
+      if (i>=0) {
+        desc=lines[i];
+        i--;
+      }
+      if (i>=0) {
+        usg=lines[i];
+        i--;
+      }
+    }
+    std::reverse(ex.begin(),ex.end());
+    return i<0;
+  }
+  return false;
+}
+
+void print_help_text(const string &desc,const string &usg,const vector<string> &rel,const vector<string> &ex) {
+  string col="dark cyan",numcol="dark magenta";
+  bool newline=false;
+  if (!desc.empty()) {
+    printf("scheme:%s",string("(with \"font-series\" \"bold\" \"color\" \""+col+"\" \""+gettext("Description")+":\")").c_str());
+    putchar(TEXMACS_DATA_END);
+    putchar(TEXMACS_DATA_BEGIN);
+    printf("verbatim: %s",desc.c_str());
+    if (*desc.rbegin()!='.')
+      printf(".");
+    newline=true;
+  }
+  if (!usg.empty()) {
+    if (newline) printf("\n");
+    putchar(TEXMACS_DATA_END);
+    putchar(TEXMACS_DATA_BEGIN);
+    printf("scheme:%s",string("(with \"font-series\" \"bold\" \"color\" \""+col+"\" \""+gettext("Usage")+":\")").c_str());
+    putchar(TEXMACS_DATA_END);
+    putchar(TEXMACS_DATA_BEGIN);
+    printf("verbatim: %s",usg.c_str());
+    newline=true;
+  }
+  if (!rel.empty()) {
+    if (newline) printf("\n");
+    putchar(TEXMACS_DATA_END);
+    putchar(TEXMACS_DATA_BEGIN);
+    printf("scheme:%s",string("(with \"font-series\" \"bold\" \"color\" \""+col+"\" \""+gettext("See also")+":\")").c_str());
+    putchar(TEXMACS_DATA_END);
+    putchar(TEXMACS_DATA_BEGIN);
+    printf("verbatim: %s",join_strings(rel,", ").c_str());
+    newline=true;
+  }
+  if (!ex.empty()) {
+    bool more_than_nine=ex.size()>9;
+    if (newline) printf("\n");
+    putchar(TEXMACS_DATA_END);
+    putchar(TEXMACS_DATA_BEGIN);
+    printf("scheme:%s",string("(with \"font-series\" \"bold\" \"color\" \""+col+"\" \""+gettext("Examples")+":\")").c_str());
+    int cnt=0;
+    for (vector<string>::const_iterator it=ex.begin();it!=ex.end();++it) {
+      putchar(TEXMACS_DATA_END);
+      putchar(TEXMACS_DATA_BEGIN);
+      printf("verbatim:\n");
+      putchar(TEXMACS_DATA_END);
+      putchar(TEXMACS_DATA_BEGIN);
+      printf("scheme:(document (with \"color\" \"%s\" \"(%d)\"))",numcol.c_str(),++cnt);
+      putchar(TEXMACS_DATA_END);
+      putchar(TEXMACS_DATA_BEGIN);
+      if (cnt<10 && more_than_nine)
+        printf("verbatim:  %s",it->c_str());
+      else printf("verbatim: %s",it->c_str());
+    }
+  }
+}
+
 void texmacs_next_input () {
   putchar(TEXMACS_DATA_BEGIN);
   printf("prompt#");
-  // printf("quest(%i) ",texmacs_counter);
+  //printf("[%d] ",texmacs_counter);
   printf("> ");
   putchar(TEXMACS_DATA_END);
   flush_stdout();
+  if (std::cerr.rdstate() & ios_base::failbit) {
+    flush_stderr();
+    restore_stderr();
+  }
 }
 
 bool texmacs_graph_lr_margins(const string &fname,int &val,bool init=true,int width=0) {
   char buffer[1024];
   int left,w;
 #ifdef __MINGW_H
-  string devnull=" 2>nul";
+  FILE *pipe=_popen(((init?"pdfcrop --verbose ":"pdfinfo ")+fname+" 2>nul").c_str(),"r");
 #else
-  string devnull=" 2>/dev/null";
+  FILE *pipe=popen(((init?"pdfcrop --verbose ":"pdfinfo ")+fname+" 2>/dev/null").c_str(),"r");
 #endif
-  FILE *pipe=popen(((init?"pdfcrop --verbose ":"pdfinfo ")+fname+devnull).c_str(),"r");
   if (!pipe) return false;
   try {
     int i=-1,j;
@@ -267,10 +466,17 @@ bool texmacs_graph_lr_margins(const string &fname,int &val,bool init=true,int wi
     if (i<0)
       return false;
   } catch (...) {
+#ifdef __MINGW_H
+    _pclose(pipe);
+    return false;
+  }
+  _pclose(pipe);
+#else
     pclose(pipe);
     return false;
   }
   pclose(pipe);
+#endif
   if (init) {
     int right;
     if (!texmacs_graph_lr_margins(fname,right,false,w))
@@ -313,7 +519,7 @@ void texmacs_graph_output(const giac::gen & g,giac::gen & gg,std::string & figfi
       if (gg.type==giac::_STRNG)
         printf("verbatim:%s\n",gg._STRNGptr->c_str());
       else 
-        printf("scheme:(document (math (with \"math-display\" \"true\" %s)))",giac::gen2scm(gg,giac::context0).c_str());
+        printf("scheme:%s",giac::gen2scm(gg,giac::context0).c_str());
     }
     putchar(TEXMACS_DATA_END);
     flush_stdout();
@@ -355,6 +561,7 @@ void texmacs_graph_output(const giac::gen & g,giac::gen & gg,std::string & figfi
 #endif
     usleep(10000);
     putchar(TEXMACS_DATA_BEGIN);
+#if 1
     printf("scheme:(htab \"\")");
     putchar(TEXMACS_DATA_END);
     putchar(TEXMACS_DATA_BEGIN);
@@ -362,6 +569,9 @@ void texmacs_graph_output(const giac::gen & g,giac::gen & gg,std::string & figfi
     putchar(TEXMACS_DATA_END);
     putchar(TEXMACS_DATA_BEGIN);
     printf("scheme:(htab \"\")");
+#else
+    printf("file:%s", (tmpname+(cropped?"-cropped":"")+(cleaned?extc:ext)).c_str());
+#endif
     putchar(TEXMACS_DATA_END);
     flush_stdout(200);
     // remove temporary files
@@ -440,20 +650,67 @@ void texmacs_output(const giac::gen & g,giac::gen & gg,bool reading_file,int no,
     return;
   }
   if (reading_file && gg.is_symb_of_sommet(giac::at_program))
-     return; 
+     return;
   if (g.is_symb_of_sommet(giac::at_nodisp))
     return;
   putchar(TEXMACS_DATA_BEGIN);
-  if (gg.type==giac::_STRNG)
-    printf("verbatim:%s\n",gg._STRNGptr->c_str());
-  else 
-    printf("scheme:(document (equation* (math %s)))",giac::gen2scm(gg,giac::context0).c_str());
+  if (gg.type==giac::_STRNG) {
+    string desc,usg;
+    vector<string> rel,ex;
+    if (is_help_text(*gg._STRNGptr,desc,usg,rel,ex)) {
+      if (usg.find(gettext("No help available for "))==0) {
+        printf("%s, %s%s: %s?\n",usg.c_str(),gettext("did you mean"),(rel.size()>1?gettext(" one of"):""),join_strings(rel,", ").c_str());
+      } else {
+        giac::gen h=history_in(contextptr).back(),cmd;
+        if (h.is_symb_of_sommet(giac::at_findhelp)) {
+          cmd=h._SYMBptr->feuille;
+          string c=cmd.print(contextptr);
+          if (*c.begin()=='\'' && *c.rbegin()=='\'')
+            c=c.substr(1,c.length()-2);
+          if (usg.size()>4 && usg.substr(usg.length()-5,5)=="(Opt)")
+            usg.clear();
+          printf("scheme:(document (with \"color\" \"dark red\" \"font-series\" \"bold\" \"%s\") \"\")",c.c_str());
+          putchar(TEXMACS_DATA_END);
+          putchar(TEXMACS_DATA_BEGIN);
+          std::map<std::string,std::string>::const_iterator it=giac::lexer_localization_map().find(c),itend=giac::lexer_localization_map().end();
+          if (it!=itend)
+            c=it->second;
+          vector<string> v=giac::html_help(giac::html_mtt,c);
+          if (!v.empty())
+            ;
+        }
+        print_help_text(desc,usg,rel,ex);
+      }
+    } else {
+      string err_text=gettext("Error");
+      vector<string> lines=split_string(*gg._STRNGptr,"\n");
+      for (int i=lines.size();i-->0;) {
+        if (trim_string(lines[i]).empty())
+          lines.erase(lines.begin()+i);
+      }
+      string ts;
+      if ((ts=trim_string(lines.back())).find(err_text+":")==0) {
+        lines.pop_back();
+        printf("verbatim:%s",join_strings(lines,"\n").c_str());
+        printf("\n");
+        putchar(TEXMACS_DATA_END);
+        putchar(TEXMACS_DATA_BEGIN);
+        string msg=trim_string(ts.substr(err_text.length()+1));
+        printf("scheme:(with \"color\" \"red\" \"%s\")",string(err_text+":").c_str());
+        putchar(TEXMACS_DATA_END);
+        putchar(TEXMACS_DATA_BEGIN);
+        printf("verbatim: %s",msg.c_str());
+      } else printf("verbatim:%s\n",gg._STRNGptr->c_str());
+    }
+  } else {
+    int ans_num=(int)history_out(contextptr).size()-1;
+    printf("scheme:(equation* (document %s))",giac::gen2scm(gg,giac::context0).c_str());
+  }
 #else
   if (reading_file){
     putchar(TEXMACS_DATA_BEGIN);
     printf("verbatim: %s\n",g.print().c_str());
     putchar(TEXMACS_DATA_END);
-    // putchar(TEXMACS_DATA_END);
     flush_stdout();
   }
   int graph_output=graph_output_type(gg);
@@ -466,8 +723,6 @@ void texmacs_output(const giac::gen & g,giac::gen & gg,bool reading_file,int no,
      return; 
   if (g.is_symb_of_sommet(giac::at_nodisp))
     return;
-  // putchar(TEXMACS_DATA_BEGIN);
-  // printf("output#");
   putchar(TEXMACS_DATA_BEGIN);
   if (gg.is_symb_of_sommet(giac::at_program))
     printf("verbatim: %s\n",gg.print().c_str());
@@ -1172,6 +1427,13 @@ int micropyjs_evaled(string & s,const giac::context * contextptr){
 }
 
 int main(int ARGC, char *ARGV[]){    
+  bool inemacs=((ARGC>=2) && std::string(ARGV[1])=="--emacs");
+  bool insage=((ARGC>=2) && std::string(ARGV[1])=="--sage");
+  bool intexmacs=((ARGC>=2) && std::string(ARGV[1])=="--texmacs");
+  if (intexmacs) suspend_stderr(); // suppress stderr output when in texmacs (L. Marohnić)
+#ifndef USE_OBJET_BIDON
+  xcas::localisation(); // change by L. Marohnić
+#endif
 #ifdef HAVE_LIBFLTK
   giac::__get_key.op=&xcas::Xcas_fltk_getKey;
 #endif
@@ -1253,9 +1515,6 @@ int main(int ARGC, char *ARGV[]){
   //signal(SIGUSR1,data_signal_handler);
   //signal(SIGUSR2,plot_signal_handler);
   giac::child_id=1;
-  bool inemacs=((ARGC>=2) && std::string(ARGV[1])=="--emacs");
-  bool insage=((ARGC>=2) && std::string(ARGV[1])=="--sage");
-  bool intexmacs=((ARGC>=2) && std::string(ARGV[1])=="--texmacs");
   if (inemacs){
     putchar(EMACS_DATA_BEGIN);
     putchar(EMACS_ERROR);
@@ -1810,6 +2069,19 @@ int main(int ARGC, char *ARGV[]){
     cerr << "// Setting tex log" << '\n';
     show_tex=true;
   }
+#ifdef HAVE_LIBMICROPYTHON
+  if (getenv("GIAC_MICROPY")){
+    cerr << "Micropython mode\n";
+    python_compat(4 | python_compat(contextptr),contextptr);
+    if (ARGC==2){
+      python_console()="";
+      micropy_ck_eval(ARGV[1]);
+      cout << python_console() ;
+      giac::release_globals();
+      return 0;
+    }
+  }
+#endif
 #ifdef HAVE_LIBREADLINE
   if (ARGC==1){
     int taillemax=1000;

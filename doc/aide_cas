@@ -1362,6 +1362,19 @@ bitxor(0x12,0x38)
 0 Intg,Intg
 hamdist(0x12,0x38)
 
+# hamming
+2 Hamming distance between two vectors or strings of equal lengths.
+0 Str(s1)||Lst(s1),Str(s2)||Lst(s2)
+-1 hamdist
+-2 levenshtein
+hamming("cats","dogs")
+
+# levenshtein
+2 Levenshtein distance between two vectors or strings.
+0 Str(s1)||Lst(s1),Str(s2)||Lst(s2)
+-1 hamming
+levenshtein("kitten","sitting")
+
 # simplex_reduce
 1 Réduction par le simplexe pour trouver max(c.x) avec A.x<=b et x>=0, b>=0. Renvoie le max, la solution augmentée x et la matrice réduite. Accepte aussi en argument [[A|I|b],[-c|*|0]].
 2 Reduction by simplex algorithm to find max(c.x) under A.x<=b and x>=0, b>=0. Returns the maximum, the augmented solution x and the reduced matrix. Accepts also [[A|I|b],[-c|*|0]] as argument.
@@ -5262,6 +5275,15 @@ sortd(3,4,2)
 sortd([3,4,2])
 sortd([[3,4,2],[6,4,5]])
 
+# sortperm
+2 Sorts the list V according to the permutation P or outputs the permutation which
+sorts V in ascending order.
+0 Lst(V),[Permu(P)]
+-1 sort
+-2 sortA
+sortperm([30,25,40,10,20])
+sortperm(["ab","cd","ad","bc","de"],[3,4,1,0,2])
+
 # restart
 1 Purge toutes les variables.
 2 Purges all the variables.
@@ -5474,6 +5496,17 @@ fMin(x^2-2*x+1,x)
 fMin(x^2-2*x+1,x=1..2)
 fMin((x-3)^2+(y-5)^2+1,[],[x,y],[1,1])
 fMin((x-3)^2+(y-5)^2+1,[x+y^2=1],[x,y],[1,1])
+
+# find_minimum
+2 Returns the point of global minimum of continuous univariate function or expression f within segment [a,b].
+0 (Expr||Func)(f),Real(a),Real(b),[Real(eps),Intg(maxiter)]
+-1 fMin
+-2 minimize
+-3 nlpsolve
+find_minimum(cosh(x),-1,1)
+find_minimum(cosh(x),-1,1,1e-5,20)
+find_minimum(Airy_Ai(x+sin(x))+cos(x^2),-5,5)
+find_minimum(besselJ(x,2)/Gamma(x+1)+(x+1)^sin(x),0,10)
 
 # DrawInv
 1 Trace le graphe du symétrique de l'expression par rapport à y=x.
@@ -6459,6 +6492,32 @@ SVL([[6,12,18],[5,14,31],[3,8,18]])
 -2 QR
 LSQ([[1,2],[3,4]],[5,11])
 LSQ([[1,2],[3,4]],[[5,-1],[11,-1]])
+
+# ldl
+2 Returns the sequence p,L,D such that P*A*tran(P) = L*D*tran(L), where A is symmetric
+or Hermitian matrix.
+0 Mtrx(A),[opts]
+-1 lu
+-2 inertia
+ldl([[1,-1,2],[-1,4,3],[2,3,-5]])
+ldl([[1,-i,2],[i,4,3],[2,3,-5]],hermite)
+
+# inertia
+2 Returns the triplet [p,n,z] of nonnegative integers indicating the number of
+positive, negative, and zero eigenvalues of the real symmetric matrix A,
+optionally alongside the solution to X*tran(A)=B if z=0 (and p=p0).
+0 Mtrx(A),[B,[p0]]
+-1 ldl
+inertia([[1,-1,2],[-1,4,3],[2,3,-5]])
+inertia([[1,-1,2],[-1,4,3],[2,3,-5]],[[1,2,3],[4,5,6]])
+inertia([[1,-1,2],[-1,4,3],[2,3,-5]],[[1,2,3],[4,5,6]],2)
+
+# isposdef
+2 Returns 1 if symmetric matrix A is positive definite and 0 otherwise.
+0 Mtrx(A)
+-1 cholesky
+-2 ldl
+isposdef([[1,-1,2],[-1,4,3],[2,3,-5]])
 
 # iPart
 1 Renvoie l'argument sans sa partie fractionnaire (type=DOM_FLOAT).
@@ -9006,8 +9065,8 @@ ceil(-4.2)
 ceil(4.3+2.4*i)
 
 # center
-1 Désigne le centre d'un cercle.
-2 Shows the center of a circle.
+1 Renvoie le centre d'un cercle ou d'une sphere. Pour une conique a centre, renvoie le centre, un foyer et un point de la conique. Pour une parabole, renvoie le foyer et le sommet.
+2 Returns the center of a circle or sphere. For ellipse or hyperbola, returns center, one focus and a point on the conic. For a parabola, returns focus and vertex.
 3 Muestra el centro de una circunferencia.
 4 Σχεδιάζει το κέντρο ενός κύκλου.
 0 Crcle
@@ -9557,6 +9616,20 @@ diff(x*y+z*y,[y,z])
  (x*y+z*y,y,z)'
  (x*y+z*y,[y,z])'
  f(x):=sin(2x);g:=f';h:=f''
+ 
+# make_symbol
+2 Returns a symbol with name str.
+0 Strng(str)
+-1 symbol_array
+make_symbol("abc")
+
+# symbol_array
+2 Returns an array of symbols with base name str (which may contain index placeholders %) and specified dimensions dim=(d1,d2,...,dn).
+0 Strng(str),Seq(dim)
+-1 make_symbol
+symbol_array("x",5)
+symbol_array("a",2,3)
+symbol_array("a%%",2,3)
 
 # symb2poly e2r
 1 Renvoie la liste des coefficients d'un polynôme par rapport au 2ème argument ou si le 2ème argument est une liste renvoie le format interne du polynôme.
@@ -14482,8 +14555,8 @@ gbasis_reinject(0.1)
 gbasis_reinject(0.1,0.05)
 
 # rur_gbasis
-1 Reglage expert de gbasis; dans l'algorithme modulaire de calcul d'une rur sur Q, on calcule une base de Groebner sur Q au prealable si n=1, ou si le nombre de monomes de la base de Groebner est <n si n>1. Si n=0 on ne reconstruit pas la base sur Q.
-2 Gbasis fine-tuning; in the modular algorithm of a rur over Q, reconstruct a gbasis over Q if n=1, or if the number of monomials of the gbasis is <n if n>1. If n=0 no gbasis reconstruction over Q
+1 Reglage expert de gbasis; dans l'algorithme modulaire de calcul d'une rur sur Q, on calcule une base de Groebner sur Q au prealable si n=1, ou si le nombre de monomes de la base de Groebner est <n si n>1. Si n=0 on ne reconstruit pas la base sur Q. Si n==-1 et si on calcule une representation rationnelle univariee pour un ideal est de dimension>0, on renvoie rapidement [rur]. Si n==-2 et si l'ideal est de dimension>0, on calcule la base de Groebner.
+2 Gbasis fine-tuning; in the modular algorithm of a rur over Q, reconstruct a gbasis over Q if n=1, or if the number of monomials of the gbasis is <n if n>1. If n=0 no gbasis reconstruction over Q. If n==-1 and if one computes a rational univariate representation for a non 0 dimensional ideal, returns fast [rur]. If n==-2 returns a Groebner basis instead.
 0 Intg(n)
 -1 gbasis
 -2 rur_certify
@@ -15551,13 +15624,12 @@ dayofweek(15,10,1582)
 0 Expr,[Constr],Vars,[Options]
 -1 maximize
 minimize(sin(x),[x=0..4])
-minimize(x^4-x^2,x=-3..3,locus)
+minimize(x^4-x^2,x=-3..3,coordinates)
 minimize(piecewise(x<=-2,x+6,x<=1,x^2,3/2-x/2),x=-3..2)
 minimize(x^2-3x+y^2+3y+3,[x=2..4,y=-4..-2],point)
 minimize(2x^2-y^2+6y,x^2+y^2<=16,[x,y])
 minimize(sqrt(x^2+y^2)-z,[x^2+y^2<=16,x+y+z=10],[x,y,z])
 minimize((1+x^2+3y+5x-4*x*y)/(1+x^2+y^2),x^2/4+y^2/3=9,[x,y])
-minimize(cos(x)^2+cos(y)^2,x+y=pi/4,[x,y],locus)
 
 # maximize
 1 Recherche du maximum d'une fonction
@@ -15565,13 +15637,12 @@ minimize(cos(x)^2+cos(y)^2,x+y=pi/4,[x,y],locus)
 0 Expr,[Constr],Vars,[Options]
 -1 minimize
 maximize(sin(x),[x=0..4])
-maximize(x^4-x^2,x=-3..3,locus)
+maximize(x^4-x^2,x=-3..3,coordinates)
 maximize(piecewise(x<=-2,x+6,x<=1,x^2,3/2-x/2),x=-3..2)
 maximize(x^2-3x+y^2+3y+3,[x=2..4,y=-4..-2],point)
 maximize(2x^2-y^2+6y,x^2+y^2<=16,[x,y])
 maximize(sqrt(x^2+y^2)-z,[x^2+y^2<=16,x+y+z=10],[x,y,z])
 maximize((1+x^2+3y+5x-4*x*y)/(1+x^2+y^2),x^2/4+y^2/3=9,[x,y])
-maximize(cos(x)^2+cos(y)^2,x+y=pi/4,[x,y],locus)
 
 # minimax
 1 Approximation polynomiale de degré n d'une fonction continue bornée sur [a,b] par la méthode de Remez.
@@ -15579,15 +15650,8 @@ maximize(cos(x)^2+cos(y)^2,x+y=pi/4,[x,y],locus)
 0 Expr,Var=Real(a)..Real(b),Intg(n),[Options]
 -1 fitpoly
 minimax(x*exp(-x),x=0..10,12)
-minimax(x*sin(x),x=0..10,15)
-minimax(ln(2+x-sin(x)^2),x=0..2*pi,20)
-minimax(cos(x^2-x+1),x=-2..2,17)
-minimax(atan(x),x=-5..5,30)
-minimax(tanh(sin(9x)),x=-1/2..1/2,15)
-minimax(abs(x),x=-1..1,25)
 minimax(abs(x)*sqrt(abs(x)),x=-2..2,15)
 minimax(min(1/cosh(3*sin(x)),sin(9x/10)),x=-3..4,30)
-minimax(when(x==0,0,exp(-1/x^2)),x=-1..1,25)
 
 # fitpoly
 2 Returns the polynomial of suitable degree which best fits the data or function in the sense of least squares.
@@ -15602,7 +15666,6 @@ fitpoly(x*cos(x),x=0..pi/2)
 2 Solves a transportation problem using MODI method.
 0 List(supply),List(demand),Mtrx(cost_matrix)
 tpsolve([12,17,11],[10,10,10,10],[[500,750,300,450],[650,800,400,600],[400,700,500,550]])
-tpsolve([7,10,8,8,9,6],[9,6,12,8,10],[[36,40,32,43,29],[28,27,29,40,38],[34,35,41,29,31],[41,42,35,27,36],[25,28,40,34,38],[31,30,43,38,40]])
 tpsolve([95,70,165,165],[195,150,30,45,75],[[15,M,45,M,0],[12,40,M,M,0],[0,15,25,25,0],[M,0,M,12,0]])
 tpsolve([1,1,1,1],[1,1,1,1],[[10,12,9,11],[5,10,7,8],[12,14,13,11],[8,15,11,9]])
 
@@ -15633,25 +15696,17 @@ ratinterp([1,3,5,8],[2,-1,3,4],x)
 -4 maximize
 -5 box_constraints
 lpsolve(2x+y-z+4,[x<=1,y>=2,x+3y-z=2,2x-y+z<=8,-x+y<=5])
-lpsolve(-4x-5y,[x+2y<=6,5x+4y<=20,0<=x,0<=y])
-lpsolve(-7x+2y,[4x-12y<=20,-x+3y<=3],x=-5..5,y=0..inf,lp_maximize=true)
-lpsolve(x-y-2z+3,[-3x-y+z<=3,2x-3y>=4z,x-z=y,x>=0,y<=0],lp_maximize)
+lpsolve(-7x+2y,[4x-12y<=20,-x+3y<=3],x=-5..5,y=0..inf,maximize)
 lpsolve(-x-y,[y<=3x+1/2,y<=-5x+2],assume=lp_nonnegative)
-lpsolve(x+y,[x<=8,-x+y<=4,-x+2y>=6,2x+y<=25,3x+y>=18,-x+2y>=6],assume=lp_nonnegative)
-lpsolve(45.55x1+21.87x2,[1.64x1+2.67x2<=31.2,2.11x1+2.3x2>=13.9],assume=lp_nonnegative)
-lpsolve(3x+4y,[x<=4,x+3y<=15,-x+2y>=5,x-y>=9,x+y=6],assume=lp_nonnegative,lp_maximize=true)
 lpsolve(-6x+4y+z,[5x-10y<=20,2z-3y=6,-x+3y<=3],x=1..20,y=0..inf)
 lpsolve(-5x-7y,[7x+y<=35,-x+3y<=6],assume=integer)
-lpsolve(x+3y+3z,[x+3y+2z<=7,2x+2y+z<=11],assume=lp_nonnegative,lp_integervariables=[x,z],lp_maximize)
-lpsolve(2x+5y,[3x-y=1,x-y<=5],assume=nonnegint)
-lpsolve(x1+x2,[2x1+5x2<=16,6x1+5x2<=30],assume=nonnegint,lp_maximize)
-lpsolve(8x1+11x2+6x3+4x4,[5x1+7x2+4x3+3x4<=14],assume=lp_binary,lp_maximize)
+lpsolve(8x1+11x2+6x3+4x4,[5x1+7x2+4x3+3x4<=14],assume=lp_binary,maximize)
 lpsolve(x1+x2,[1867x1+1913x2=3618894],assume=nonnegint,lp_verbose=true)
 
 # nlpsolve
-1 Optimisation non lineaire de objectif (expression non lineaire) sous contraintes d'egalite ou inegalite non lineaires par l'algorithme COBYLA
-2 Solves a nonlinear programming problem of optimizing the objective under constraints constr (list of equations and/or inequations) and within bounds bd (sequence of x=a..b) with optional options (for example setting an initial point or integrality constraints) using COBYLA algorithm.
-0 objective, [constr], [bd], [opts]
+1 Optimisation non lineaire de objectif (expression non lineaire) sous contraintes d'egalite ou inegalite non lineaires.
+2 Solves a nonlinear programming problem of optimizing the objective under constraints constr (list of equations and/or inequations) and within bounds bd (sequence of x=a..b) with optional options (for example setting an initial point or integrality constraints).
+0 Expr(objective),[Lst(constr)],[Seq(bd)],[Seq(opts)]
 -1 minimize
 -2 maximize
 -3 fMin
@@ -15661,13 +15716,7 @@ lpsolve(x1+x2,[1867x1+1913x2=3618894],assume=nonnegint,lp_verbose=true)
 -7 fsolve
 nlpsolve((x1-10)^3+(x2-20)^3,[(x1-5)^2+(x2-5)^2>=100,(x2-5)^2+(x1-6)^2<=82.81],nlp_initialpoint=[x1=20.1,x2=5.84])
 nlpsolve(sin(x1+x2)+(x1-x2)^2-1.5x1+2.5x2+1,x1=-1.5..4,x2=-3..3)
-nlpsolve(ln(1+x1^2)-x2,[(1+x1^2)^2+x2^2=4])
-nlpsolve(x1,[x2>=exp(x1),x3>=exp(x2)],maximize=true,x1=0..100,x2=0..100,x3=0..10,nlp_initialpoint=[x1=1,x2=1.05,x3=2.9])
-nlpsolve(-x1*x2*x3,[72-x1-2x2-2x3>=0],x1=0..20,x2=0..11,x3=0..42)
 nlpsolve(2-1/120*x1*x2*x3*x4*x5,[x1<=1,x2<=2,x3<=3,x4<=4,x5<=5],assume=nlp_nonnegative)
-nlpsolve(x^3+2x*y-2y^2,x=-10..10,y=-10..10,nlp_initialpoint=[x=3,y=4],maximize) 
-nlpsolve(w^3*(v-w)^2+(w-x-1)^2+(x-y-2)^2+(y-z-3)^2,[w+x+y+z<=5,3z+2v=3],assume=nlp_nonnegative)
-nlpsolve(sin(x)*Psi(x),x=1..20,nlp_initialpoint=[x=16])
 nlpsolve(x1^2/2+5x1+6x2,[6x1+x2^2<=23],[x1,x2]=1..5,assume=integer,maximize)
 nlpsolve(4x1*x2*x3-x1*x2-x1*x3-x2*x3,assume=nlp_binary)
 
@@ -15679,11 +15728,6 @@ nlpsolve(4x1*x2*x3-x1*x2-x1*x3-x2*x3,assume=nlp_binary)
 implicitdiff(x^2*y+y^2=1,y,x)
 implicitdiff(R=P*V/T,P,T)
 implicitdiff([x^2+y=z,x+y*z=1],[y(x),z(x)],[y,z],x)
-implicitdiff(y=x^2/z,y,z)
-implicitdiff(y^3+x^2=1,y,x,x)
-implicitdiff(a*x^3*y-2y/z=z^2,y(x,z),x,z)
-implicitdiff([-2x*z+y^2=1,x^2-exp(x*z)=y],[y(x),z(x)],y,x)
-implicitdiff([a*sin(u*v)+b*cos(w*x)=c,u+v+w+x=z,u*v+w*x=z],[u(x,z),v(x,z),w(x,z)],u,z)
 implicitdiff(x*y,-2x^3+15x^2*y+11y^3-24y=0,y(x),x$2)
 implicitdiff((x-u)^2+(y-v)^2,[x^2/4+y^2/9=1,(u-3)^2+(v+5)^2=1],[v(u,x),y(u,x)],u,x)
 implicitdiff(x*y*z,-2x^3+15x^2*y+11y^3-24y=0,[x,z,y],order=1)
@@ -15696,7 +15740,7 @@ implicitdiff(x*y*z,-2x^3+15x^2*y+11y^3-24y=0,[x,z,y],order=2,[1,-1,0])
 0 Opt
 -1 lpsolve
 
-# nlp_initialpoint nlp_iterationlimit nlp_nonnegative nlp_precision nlp_maximize nlp_presolve nlp_samples nlp_integervariables nlp_integer nlp_binaryvariables nlp_binary nlp_feasibilitytolerance nlp_integertolerance nlp_nonnegint
+# nlp_initialpoint nlp_iterationlimit nlp_nonnegative nlp_precision nlp_maximize nlp_presolve nlp_method nlp_integervariables nlp_integer nlp_binaryvariables nlp_binary nlp_tolerance nlp_verbose nlp_nonnegint
 1 Options de la commande nlpsolve
 2 Options for nlpsolve command.
 0 Opt
@@ -15706,7 +15750,7 @@ implicitdiff(x*y*z,-2x^3+15x^2*y+11y^3-24y=0,[x,z,y],order=2,[1,-1,0])
 1 Cree une expression periodique egale a Expr sur [a,b], periode b-a
 2 Returns the periodic expression equal to Expr on a..b, period b-a.
 0 Expr,Var,a,b
-periodic(x^2,x,-1,1)
+ plot(periodic(x^2,x,-1,1),x=-5..5)
 
 # extrema
 1 Recherche des extremas d'une expression
@@ -15714,20 +15758,23 @@ periodic(x^2,x,-1,1)
 extrema(-2*cos(x)-cos(x)^2,x)
 extrema((x^3-1)^4/(2x^3+1)^4,x=0..inf)
 extrema(exp(x^2-2x)*ln(x)*ln(1-x),x=0.5)
-extrema(x^3-2x*y+3y^4,[x,y])
-extrema((2x^2-y)*(y-x^2),[x,y])  //Peano surface
-extrema(5x^2+3y^2+x*z^2-z*y^2,[x,y,z])
 extrema(x^2+y^2,x*y=1,[x=0..inf,y=0..inf])
  assume(a>0):;extrema(x/a^2+a*y^2,x+y=a,[x,y])
 extrema(x*y*z,x+y+z=1,[x,y,z])
-extrema(4y-2z,[2x-y-z=2,x^2+y^2=1],[x,y,z])
- assume(a>0):;extrema(x+y+z,[y^2-x^2=a,x+2z=1],[x,y,z])
-extrema((x-u)^2+(y-v)^2,[x^2/4+y^2/9=1,(u-3)^2+(v+5)^2=1],[u,v,x,y])
 extrema(x2^4-x1^4-x2^8+x1^10,[x1,x2],order=1)
-extrema(3x+3y+8z,[x^2+z^2=1,y^2+z^2=1],[x,y,z])
-extrema(ln(x)+2*ln(y)+3*ln(z)+4*ln(u)+5*ln(v),x+y+z+u+v=1,[x,y,z,u,v])
-extrema(x*y*z,-2x^3+15x^2*y+11y^3-24y=0,[x,y,z])
-extrema(x+y-exp(x)-exp(y)-exp(x+y),[x,y])
+
+# kmeans
+2 Cluster the given Euclidean data by using k-means algorithm.
+0 Mtrx||Lst(data),[opts]
+-1 cluster
+kmeans([[1.1,1.5],[3.2,2.5],[1.5,0.9],[3.5,2.7],[0.8,1.1],[3.1,2.2]])
+
+# cluster
+2 Perform hierarchical agglomerative clustering of the given data.
+0 Lst(data),[opts]
+-1 kmeans
+-2 levenshtein
+cluster([[1.1,1.5],[3.2,2.5],[1.5,0.9],[3.5,2.7],[0.8,1.1],[3.1,2.2]])
 
 # createwav
 0 Lst(data),[opts]
@@ -15857,20 +15904,11 @@ sinc(pi*x)
 -2 fourier_cn
 -3 fft
 fourier(x/(x^3-19x+30),x,s)
-fourier((x^2+1)/(x^2-1),x,s)
-fourier(3x^2+2x+1,x,s)
-fourier(Dirac(x-1)+Dirac(x+1),x,s)
-fourier(exp(-2*abs(x-1)),x,s)
 fourier(atan(1/(2x^2)),x,s)
 fourier(BesselJ(3,x),x,s)
 fourier(sin(x)*sign(x),x,s)
 fourier(log(abs(x)),x,s)
 fourier(rect(x),x,s)
-fourier(exp(-abs(x))*sinc(x),x,s)
-fourier(1/sqrt(abs(x)),x,s)
-fourier(1/cosh(2x),x,s)
-fourier(Gamma(1+i*x/3),x,s)
-fourier(atan(x/4)/x,x,s)
 fourier(piecewise(x<=-1,exp(x+1),x<=1,1,exp(2-2x)),x,s)
 
 # ifourier
@@ -17959,18 +17997,14 @@ bvpsolve((32+2x^3-y*diff(y(x),x))/8,[x=1..3,y],[17,43/3],20)
 bvpsolve((x^2*diff(y(x),x)^2-9y^2+4x^6)/x^5,[x=1..2,y],[0,ln(256),1],10,output=spline)
 
 # convex
-0 Expr(f),Lst(x,y,..)
+0 Expr(f),Lst(x,y,..),[simplify]
 2 Returns a list of conditions under which f(x,y,..) is convex.
 -1 hessian
-convex(-2x+y+x^2-2x*y+y^2,[x,y])
 convex(3*exp(x)+5x^4-ln(x),x)
-convex(x+y-exp(x)-exp(x+y),[x,y])
 convex(x^2+y^2+3z^2-x*y+2x*z+y*z,[x,y,z])
-convex(x1^3+2x1^2+2*x1*x2+x2^2/2-8x1-2x2-8,[x1,x2])
-convex(x1^2+2x2^2+a*x3^2-2x1*x2+2x1*x3-6x2*x3,[x1,x2,x3])
-convex(exp(x1)+exp(x2)+x1*x2,[x1,x2])
-convex(sqrt((1+cos(x)^2)/sin(x)),x)
-convex(sqrt((1+(u')^2)/(2*g*u)),u(t))
+convex(x1^3+2x1^2+2*x1*x2+x2^2/2-8x1-2x2-8,[x1,x2],simplify)
+convex(x1^2+2x2^2+a*x3^2-2x1*x2+2x1*x3-6x2*x3,[x1,x2,x3],simplify)
+convex(sqrt((1+(u')^2)/(2*g*u)),u(t),simplify)
 
 # kovacicsols
 0 Expr||Lst(eq),[Var(x),[Var(y)]]

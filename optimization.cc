@@ -1,7 +1,7 @@
 /*
  * optimization.cc
  *
- * Copyright 2021 Luka Marohnić
+ * Copyright 2021-2022 Luka Marohnić
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,11 +20,17 @@
 
 #include "giacPCH.h"
 #include "giac.h"
+#include "optimization.h"
+#include "lpsolve.h"
 #include "graphe.h"
+#include "signalprocessing.h"
 #include <bitset>
 #include <string>
 #ifdef HAVE_PARI_PARI_H
 #include <pari/pari.h>
+#endif
+#ifdef HAVE_LIBGSL
+#include <gsl/gsl_linalg.h>
 #endif
 
 using namespace std;
@@ -33,26 +39,175 @@ using namespace std;
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
-/*
- * Disable/enable output to logptr.
- */
-void suspend_logging(GIAC_CONTEXT) {
-    contextptr->globalptr->_logptr_->setstate(ios_base::failbit);
-}
-void restore_logging(GIAC_CONTEXT) {
-    contextptr->globalptr->_logptr_->clear(contextptr->globalptr->_logptr_->rdstate() & ~ios_base::failbit);
+/* Create a temporary symbol "name<count>". */
+gen temp_symb(const string &name,int count,GIAC_CONTEXT) {
+    gen ret=identificateur(" "+name+(count>=0?print_INT_(count):""));
+    _purge(ret,contextptr);
+    return ret;
 }
 
-/*
- * Return TRUE iff g is an mapleconversion integer (corresponding to v).
- */
+/* Make a matrix of zeros. */
+matrice zero_mat(int rows,int cols,GIAC_CONTEXT) {
+    return *_matrix(makesequence(rows,cols,0),contextptr)._VECTptr;
+}
+
+/* Copy matrix SRC to DEST, resizing the latter if necessary. */
+void copy_matrice(const matrice &src,matrice &dest) {
+    int m=mrows(src),n=mcols(src);
+    if (int(dest.size())!=m) dest.resize(m);
+    const_iterateur it=src.begin(),itend=src.end();
+    iterateur jt=dest.begin();
+    for (;it!=itend;++it,++jt) {
+        if (jt->type!=_VECT)
+            *jt=vecteur(it->_VECTptr->begin(),it->_VECTptr->end());
+        else {
+            if (int(jt->_VECTptr->size())!=n) jt->_VECTptr->resize(n);
+            std::copy(it->_VECTptr->begin(),it->_VECTptr->end(),jt->_VECTptr->begin());
+        }
+    }
+}
+
+/* Return A+B (add two matrices). */
+matrice madd(const matrice &a,const matrice &b) {
+    matrice ret;
+    ret.reserve(a.size());
+    const_iterateur at=a.begin(),bt=b.begin();
+    for (;at!=a.end()&&bt!=b.end();++at,++bt) {
+        ret.push_back(addvecteur(*at->_VECTptr,*bt->_VECTptr));
+    }
+    return ret;
+}
+void madd_inplace(matrice &a,const matrice &b,bool subt) {
+    iterateur at=a.begin(),ajt;
+    const_iterateur bt=b.begin(),bjt;
+    for (;at!=a.end()&&bt!=b.end();++at,++bt) {
+        ajt=at->_VECTptr->begin();
+        bjt=bt->_VECTptr->begin();
+        for (;ajt!=at->_VECTptr->end()&&bjt!=bt->_VECTptr->end();++ajt,++bjt) {
+            if (subt) *ajt-=*bjt; else *ajt+=*bjt;
+        }
+    }
+}
+
+/* Multiply each element of matrix B by A. */
+matrice mscale(const gen &a,const matrice &b) {
+    matrice ret;
+    ret.reserve(b.size());
+    for (const_iterateur it=b.begin();it!=b.end();++it) {
+        ret.push_back(multvecteur(a,*it->_VECTptr));
+    }
+    return ret;
+}
+void mscale_inplace(const gen &a,matrice &b) {
+    for (iterateur it=b.begin();it!=b.end();++it) {
+        for (iterateur jt=it->_VECTptr->begin();jt!=it->_VECTptr->end();++jt) {
+            *jt=*jt*a;
+        }
+    }
+}
+
+/* Return A-B (subtract two matrices). */
+matrice msub(const matrice &a,const matrice &b) {
+    return madd(a,mscale(-1,b));
+}
+void msub_inplace(matrice &a,const matrice &b) {
+    madd_inplace(a,b,true);
+}
+
+/* Return the index of the first minimal/maximal element in V */
+int argminmax(const vecteur &v,bool min,GIAC_CONTEXT) {
+    gen val=min?plus_inf:minus_inf;
+    int ret=-1;
+    const_iterateur it,itstart=v.begin(),itend=v.end();
+    for (it=itstart;it!=itend;++it) {
+        if (is_strictly_greater(min?val:*it,min?*it:val,contextptr)) {
+            ret=it-itstart;
+            val=*it;
+        }
+    }
+    return ret;
+}
+int argmin(const vecteur &v,GIAC_CONTEXT) {
+    return argminmax(v,true,contextptr);
+}
+int argmax(const vecteur &v,GIAC_CONTEXT) {
+    return argminmax(v,false,contextptr);
+}
+
+gen to_algebraic(const gen &g,vecteur &s,GIAC_CONTEXT) {
+    if (g.type==_IDNT || is_fully_numeric(g,num_mask_withfrac|num_mask_withint))
+        return g;
+    const_iterateur it,itend;
+    if (g.type==_VECT) {
+        vecteur res;
+        res.reserve(g._VECTptr->size());
+        for (it=g._VECTptr->begin(),itend=g._VECTptr->end();it!=itend;++it)
+            res.push_back(to_algebraic(*it,s,contextptr));
+        return change_subtype(res,g.subtype);
+    }
+    if (g.is_symb_of_sommet(at_plus)) {
+        gen ret(0);
+        for (it=g._SYMBptr->feuille._VECTptr->begin(),itend=g._SYMBptr->feuille._VECTptr->end();it!=itend;++it)
+            ret+=to_algebraic(*it,s,contextptr);
+        return ret;
+    }
+    if (g.is_symb_of_sommet(at_prod)) {
+        gen ret(1);
+        for (it=g._SYMBptr->feuille._VECTptr->begin(),itend=g._SYMBptr->feuille._VECTptr->end();it!=itend;++it)
+            ret=ret*to_algebraic(*it,s,contextptr);
+        return ret;
+    }
+    if (g.is_symb_of_sommet(at_inv))
+        return symb_inv(to_algebraic(g._SYMBptr->feuille,s,contextptr));
+    if (g.is_symb_of_sommet(at_div))
+        return to_algebraic(g._SYMBptr->feuille._VECTptr->front(),s,contextptr)/
+               to_algebraic(g._SYMBptr->feuille._VECTptr->back(),s,contextptr);
+    if (g.is_symb_of_sommet(at_neg))
+        return -to_algebraic(g._SYMBptr->feuille,s,contextptr);
+    if (g.is_symb_of_sommet(at_pow) && is_fully_numeric(g._SYMBptr->feuille._VECTptr->back(),num_mask_withfrac|num_mask_withint))
+        return symb_pow(to_algebraic(g._SYMBptr->feuille._VECTptr->front(),s,contextptr),g._SYMBptr->feuille._VECTptr->back());
+    gen u=temp_symb("toalg_tmp",s.size(),contextptr);
+    vecteur cond;
+    if (g.is_symb_of_sommet(at_exp))
+        cond.push_back(symb_superieur_strict(u,0));
+    else if (g.is_symb_of_sommet(at_cosh))
+        cond.push_back(symb_superieur_egal(u,1));
+    else if (g.is_symb_of_sommet(at_cos) || g.is_symb_of_sommet(at_sin) || g.is_symb_of_sommet(at_tanh))
+        cond.push_back(makevecteur(-1,1));
+    else if (g.is_symb_of_sommet(at_atan) || g.is_symb_of_sommet(at_asin))
+        cond.push_back(makevecteur(-cst_pi/2,cst_pi/2));
+    else if (g.is_symb_of_sommet(at_acos))
+        cond.push_back(makevecteur(0,cst_pi));
+    set_assumptions(u,cond,vecteur(0),false,contextptr);
+    s.push_back(u);
+    return u;
+}
+bool is_algebraic(const gen &g,GIAC_CONTEXT) {
+    vecteur s;
+    to_algebraic(g,s,contextptr);
+    if (s.empty())
+        return true;
+    _purge(s,contextptr);
+    return false;
+}
+
+/* Remove elements from V with indices in IND. */
+void remove_elements_with_indices(vecteur &v,const set<int> &ind) {
+    set<int>::const_reverse_iterator it=ind.rbegin(),itend=ind.rend();
+    for (;it!=itend;++it)
+        v.erase(v.begin()+*it);
+}
+void remove_elements_with_indices(vecteur &v,const set<pair<int,gen> > &ind) {
+    set<pair<int,gen> >::const_reverse_iterator it=ind.rbegin(),itend=ind.rend();
+    for (;it!=itend;++it)
+        v.erase(v.begin()+it->first);
+}
+/* Return true iff g is an mapleconversion integer (corresponding to v) */
 bool is_mcint(const gen &g,int v) {
     return g.is_integer() && g.subtype==_INT_MAPLECONVERSION && (v<0 || g.val==v);
 }
 
-/*
- * Return the index of g in v, or -1 if g is not contained in v.
- */
+/* Return the index of g in v, or -1 if g is not contained in v. */
 int indexof(const gen &g,const vecteur &v) {
     const_iterateur it=find(v.begin(),v.end(),g);
     if (it==v.end())
@@ -60,10 +215,8 @@ int indexof(const gen &g,const vecteur &v) {
     return it-v.begin();
 }
 
-/*
- * Return the list of indices of linearly dependent rows in matrix m.
- * The returned list is sorted in ascending order.
- */
+/* Return the list of indices of linearly dependent rows in matrix m.
+ * The returned list is sorted in ascending order. */
 vector<int> linearly_dependent_rows(const matrice &m,GIAC_CONTEXT) {
     int nc=mcols(m);
     std::set<int> found;
@@ -81,9 +234,7 @@ vector<int> linearly_dependent_rows(const matrice &m,GIAC_CONTEXT) {
     return res;
 }
 
-/*
- * Check variables to be identifiers and purge them, issuing warnings when required.
- */
+/* Return true if variables in V are all identifiers. */
 bool ckvars(const vecteur &v,GIAC_CONTEXT) {
     vecteur vp;
     for (const_iterateur it=v.begin();it!=v.end();++it) {
@@ -93,9 +244,7 @@ bool ckvars(const vecteur &v,GIAC_CONTEXT) {
     return true;
 }
 
-/*
- * Set assumptions on vars w.r.t. bnds. If open=true, exclude bounds from range.
- */
+/* Set assumptions on VARS w.r.t. BNDS. If OPEN=true, exclude bounds from range. */
 void bound_variables(const vecteur &vars,const vecteur &bnds,bool open,GIAC_CONTEXT) {
     assert(vars.size()==bnds.size() && (vars.empty() || (ckmatrix(bnds) && bnds.front()._VECTptr->size()==2)));
     for (int i=vars.size();i-->0;) {
@@ -109,9 +258,8 @@ void bound_variables(const vecteur &vars,const vecteur &bnds,bool open,GIAC_CONT
     }
 }
 
-/*
- * Get the assumptions on identifier g.
- */
+/* Get the assumptions on identifier G: obtain the domain, feasible interval(s)
+ * and excluded points. */
 bool get_assumptions(const gen &g,int &dom,matrice &intervals,vecteur &excluded,GIAC_CONTEXT) {
     dom=-1;
     intervals.clear();
@@ -130,12 +278,14 @@ bool get_assumptions(const gen &g,int &dom,matrice &intervals,vecteur &excluded,
     if (res._VECTptr->size()!=3)
         return false;
     if (res._VECTptr->front().is_integer())
-        dom=res._VECTptr->front().val; // 2 - integer, 1 - real, 4 - complex, 10 - rational
+        dom=res._VECTptr->front().val; // 1 - real, 2 - integer, 4 - complex, 10 - rational
     intervals=*res._VECTptr->at(1)._VECTptr;
     excluded=*res._VECTptr->at(2)._VECTptr;
     return true;
 }
 
+/* Set (additional) assumptions on identifier G: must be either inequality
+ * constraints or bounds in form [L,U]. */
 void set_assumptions(const gen &g,const vecteur &cond,const vecteur &excluded,bool additionally,GIAC_CONTEXT) {
     if (cond.empty())
         return;
@@ -160,20 +310,16 @@ void set_assumptions(const gen &g,const vecteur &cond,const vecteur &excluded,bo
     else giac_assume(a,contextptr);
 }
 
-/*
- * Purge identifiers from vars.
- */
 void purge_variables(const vecteur &vars,GIAC_CONTEXT) {
+/* Purge identifiers in VARS. */
     for (const_iterateur it=vars.begin();it!=vars.end();++it) {
         assert(it->type==_IDNT);
         _purge(*it,contextptr);
     }
 }
 
-/*
- * Sort a list of elements such that letters and numbers are treated separately.
- * Useful for sorting lists of numbered identifiers, such as [x1,x2,...,x10,x11,...].
- */
+/* Sort a list of elements such that letters and numbers are treated separately.
+ * Useful for sorting lists of numbered identifiers, such as [x1,x2,...,x10,x11,...]. */
 vecteur sort_identifiers(const vecteur &v,GIAC_CONTEXT) {
     if (v.empty())
         return v;
@@ -198,6 +344,8 @@ vecteur sort_identifiers(const vecteur &v,GIAC_CONTEXT) {
     return *mtran(*_sort(mtran(makevecteur(snv,v)),contextptr)._VECTptr)[1]._VECTptr;
 }
 
+/* Convert bounds given in matrix form [[L1,U1],[L2,U2],..] to the sequence
+ * x1=L1..U1,x2=L2..U2,.. */
 gen _box_constraints(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT || g._VECTptr->size()!=2 ||
@@ -216,6 +364,7 @@ static const char _box_constraints_s []="box_constraints";
 static define_unary_function_eval (__box_constraints,&_box_constraints,_box_constraints_s);
 define_unary_function_ptr5(at_box_constraints,alias_at_box_constraints,&__box_constraints,0,true)
 
+/* Return the sum of elements in V (exclude the last one if DROP_LAST=true). */
 int ipdiff::sum_ivector(const ivector &v,bool drop_last) {
     int res=0;
     for (ivector_iter it=v.begin();it!=v.end()-drop_last?1:0;++it) {
@@ -224,9 +373,7 @@ int ipdiff::sum_ivector(const ivector &v,bool drop_last) {
     return res;
 }
 
-/*
- * Return 1 if g is a <(=) contraint, 2 if g is a >(=) constraint, and 0 otherwise.
- */
+/* Return 1 if G is a <(=) contraint, 2 if G is a >(=) constraint, and 0 otherwise. */
 int which_ineq(const gen &g) {
     if (g.is_symb_of_sommet(at_inferieur_egal) || g.is_symb_of_sommet(at_inferieur_strict))
         return 1;
@@ -235,9 +382,7 @@ int which_ineq(const gen &g) {
     return 0;
 }
 
-/*
- * Compute intersection res of two sorted lists a and b, return the size of res.
- */
+/* Compute the intersection RES of two sorted lists A and B, return the size of RES. */
 int intersect(const vector<int> &a,const vector<int> &b,vector<int> &res) {
     res.resize(a.size()>b.size()?a.size():b.size());
     vector<int>::iterator it=set_intersection(a.begin(),a.end(),b.begin(),b.end(),res.begin());
@@ -245,9 +390,7 @@ int intersect(const vector<int> &a,const vector<int> &b,vector<int> &res) {
     return res.size();
 }
 
-/*
- * Compute union res of two sorted lists a and b, return the size of res.
- */
+/* Compute the union RES of two sorted lists A and B, return the size of RES. */
 int unite(const vector<int> &a,const vector<int> &b,vector<int> &res) {
     res.resize(a.size()+b.size());
     vector<int>::iterator it=set_union(a.begin(),a.end(),b.begin(),b.end(),res.begin());
@@ -255,9 +398,7 @@ int unite(const vector<int> &a,const vector<int> &b,vector<int> &res) {
     return res.size();
 }
 
-/*
- * Simplify expression g.
- */
+/* Simplify expression G. */
 gen simp(const gen &g,GIAC_CONTEXT) {
     if (g.type==_VECT) {
         vecteur res;
@@ -266,12 +407,11 @@ gen simp(const gen &g,GIAC_CONTEXT) {
         }
         return change_subtype(res,g.subtype);
     }
+    log_output_redirect lor(contextptr);
     gen ret=recursive_normal(g,contextptr);
 #if 0
     if (_evalf(g,contextptr).is_approx()) {
-        suspend_logging(contextptr);
         gen ret_simp=_simplify(g,contextptr);
-        restore_logging(contextptr);
         if (!has_rootof(ret_simp))
             return ret_simp;
         if (has_rootof(ret)) {
@@ -283,42 +423,160 @@ gen simp(const gen &g,GIAC_CONTEXT) {
     return ret;
 }
 
-/*
- * Return TRUE if g is a quadratic with positive leading coefficient and negative discriminant.
+/* Return true if the expression E contains a non-elementary derivative w.r.t. X,
+ * which must be an identifier or a list of identifiers. */
+bool has_diff(const gen &e,const gen &x) {
+    if (x.type==_VECT) {
+        for (const_iterateur it=x._VECTptr->begin();it!=x._VECTptr->end();++it) {
+            if (has_diff(e,*it))
+                return true;
+        }
+        return false;
+    }
+    assert(x.type==_IDNT);
+    if (e.type==_VECT) {
+        for (const_iterateur it=e._VECTptr->begin();it!=e._VECTptr->end();++it) {
+            if (has_diff(*it,x))
+                return true;
+        }
+        return false;
+    }
+    if (e.type!=_SYMB)
+        return false;
+    if ((e.is_symb_of_sommet(at_derive) && e._SYMBptr->feuille.type==_VECT &&
+            e._SYMBptr->feuille._VECTptr->size()>=2 && e._SYMBptr->feuille._VECTptr->at(1)==x) ||
+            (e.is_symb_of_sommet(at_of) && e._SYMBptr->feuille._VECTptr->front().is_symb_of_sommet(at_derive) &&
+                e._SYMBptr->feuille._VECTptr->back().type==_VECT && contains(*e._SYMBptr->feuille._VECTptr->back()._VECTptr,x)))
+        return true;
+    return has_diff(e._SYMBptr->feuille,x);
+}
+
+/* Return true iff G contains any of the following:
+ * - absolute values
+ * - piecewise, when and ifte functions
+ * - Heaviside and Dirac functions
+ * - max, min, floor, ceil, round functions
+ * - sign function
  */
-bool is_positive_quadratic(const gen &g,GIAC_CONTEXT) {
+bool has_breaks(const gen &g) {
+    if (g.type==_VECT) {
+        for (const_iterateur it=g._VECTptr->begin();it!=g._VECTptr->end();++it) {
+            if (has_breaks(*it))
+                return true;
+        }
+        return false;
+    }
+    if (g.type!=_SYMB)
+        return false;
+    const gen &s=g._SYMBptr->sommet;
+    const gen &f=g._SYMBptr->feuille;
+    if (s==at_abs || s==at_piecewise || s==at_when || s==at_ifte || s==at_Heaviside || s==at_Dirac || s==at_min ||
+            s==at_max || s==at_floor || s==at_ceil || s==at_round || s==at_sign)
+        return true;
+    return has_breaks(f);
+}
+
+/* Brent's algorithm (implemented by John Burkardt), code below */
+double local_min_rc(double &a,double &b,int &status,double value);
+
+/* Return true if G = A*X^3+B*X^2+C*X+D. */
+bool is_cubic_wrt(const gen &g,const gen &x,gen &a,gen &b,gen &c,gen &d,GIAC_CONTEXT) {
+    if (is_quadratic_wrt(derive(g,x,contextptr),x,a,b,c,contextptr)) {
+        a=a/3;
+        b=b/2;
+        d=g-a*x*x*x-b*x*x-c*x;
+        return true;
+    }
+    return false;
+}
+
+/* Return true if G = A*X^4+B*X^3+C*X^2+D*x+E. */
+bool is_quartic_wrt(const gen &g,const gen &x,gen &a,gen &b,gen &c,gen &d,gen &e,GIAC_CONTEXT) {
+    if (is_cubic_wrt(derive(g,x,contextptr),x,a,b,c,d,contextptr)) {
+        a=a/4;
+        b=b/3;
+        c=c/2;
+        e=g-a*x*x*x*x-b*x*x*x-c*x*x-d*x;
+        return true;
+    }
+    return false;
+}
+
+/* Return true if G is a quadratic with positive leading coefficient and
+ * negative discriminant. */
+bool is_positive_quadratic(const gen &g,bool strict,GIAC_CONTEXT) {
     vecteur p=*_lname(g,contextptr)._VECTptr;
-    gen a,b,c;
+    gen a,b,c,d;
+    unsigned mt=100;
     for (const_iterateur it=p.begin();it!=p.end();++it) {
         if (!is_quadratic_wrt(g,*it,a,b,c,contextptr))
             continue;
-        if (!is_exactly_zero(a) && is_positive(a,contextptr) && is_positive(4*a*c-b*b,contextptr))
+        d=4*a*c-b*b;
+        if (!is_exactly_zero(a) && is_positive_safe(a,false,mt,contextptr) && is_positive_safe(d,strict,mt,contextptr))
             return true;
     }
     return false;
 }
 
-/*
- * Return TRUE if g does not change sign.
- */
-bool is_const_sign(const gen &g,bool pos,GIAC_CONTEXT) {
-    return is_positive(pos?g:-g,contextptr) || is_positive_quadratic(pos?g:-g,contextptr);
+/* Return true if G is a (strictly) positive quartic. */
+bool is_positive_quartic(const gen &g,bool strict,GIAC_CONTEXT) {
+    vecteur p=*_lname(g,contextptr)._VECTptr;
+    gen a,b,c,d,e,dsc,dsc0,D,P,R;
+    unsigned mt=100;
+    for (const_iterateur it=p.begin();it!=p.end();++it) {
+        if (!is_quartic_wrt(g,*it,a,b,c,d,e,contextptr) || is_positive_safe(-a,false,mt,contextptr))
+            continue;
+        dsc=((256*a*e-192*b*d-128*c*c)*e*e+(144*c*e-27*d*d)*d*d)*a*a+(144*c*e*e-6*d*d*e)*a*b*b
+            +(-80*c*d*e+18*d*d*d)*a*b*c+(16*c*e-4*d*d)*a*c*c*c+(-27*b*e*e+18*c*d*e-4*d*d*d)*b*b*b+b*b*c*c*d*d;
+        dsc0=c*c-3*b*d+12*a*e;
+        D=64*a*a*a*e-16*a*a*c*c+16*a*b*b*c-16*a*a*b*d-3*b*b*b*b;
+        P=8*a*c-3*b*b;
+        R=b*b*b+8*d*a*a-4*a*b*c;
+        bool pos_dsc=is_positive_safe(dsc,true,mt,contextptr),zero_dsc=is_exactly_zero(dsc);
+        bool pos_P=is_positive_safe(P,true,mt,contextptr),neg_P=is_positive_safe(-P,true,mt,contextptr),pos_D=is_positive_safe(D,true,mt,contextptr);
+        bool zero_R=is_exactly_zero(R),zero_D=is_exactly_zero(D),zero_dsc0=is_exactly_zero(dsc0);
+        if ((pos_dsc && pos_D && pos_P) || (zero_dsc && zero_D && zero_R && pos_P) ||
+                (!strict && (zero_dsc && ((pos_D || (pos_P && (!zero_D || !zero_R))) || (zero_D && (neg_P || zero_dsc0))))))
+            return true;
+    }
+    return false;
 }
 
-/*
- * Return TRUE if g is strictly positive.
- */
+/* Return true if G does not change sign (but may be zero). */
+bool is_const_sign(const gen &g,bool pos,GIAC_CONTEXT) {
+    return is_positive_safe(pos?g:-g,false,100,contextptr) ||
+           is_positive_quadratic(pos?g:-g,false,contextptr) ||
+           is_positive_quartic(pos?g:-g,false,contextptr);
+}
+
+/* Return true if g is *strictly* positive/negative given pos=true/false.
+ * LIN should be set to true. */
 bool is_const_sign_strict(const gen &g,bool pos,bool lin,GIAC_CONTEXT) {
+    if (is_real_number(g,contextptr) && ((pos && is_strictly_positive(to_real_number(g,contextptr),contextptr)) ||
+                                         (!pos && is_strictly_positive(-to_real_number(g,contextptr),contextptr))))
+        return true;
     if (g.is_symb_of_sommet(at_neg))
         return is_const_sign_strict(g._SYMBptr->feuille,!pos,lin,contextptr);
+    if (g.is_symb_of_sommet(at_abs))
+        return is_const_sign_strict(g._SYMBptr->feuille,true,lin,contextptr) || is_const_sign_strict(g._SYMBptr->feuille,false,lin,contextptr);
+    gen eps=exact(epsilon(contextptr),contextptr);
+    if ((pos?is_greater(g,eps,contextptr):is_greater(-eps,g,contextptr)) ||
+            is_positive_quadratic(pos?g:-g,true,contextptr) || is_positive_quartic(pos?g:-g,true,contextptr))
+        return true;
     if (!lin && g.is_symb_of_sommet(at_prod) && g._SYMBptr->feuille.type==_VECT) {
         const vecteur &f=*g._SYMBptr->feuille._VECTptr;
         vecteur s(f.size(),0);
         for (const_iterateur it=f.begin();it!=f.end();++it) {
-            if (is_const_sign_strict(*it,true,false,contextptr))
+            gen fac=*it,exponent;
+            bool power=false;
+            if (it->is_symb_of_sommet(at_pow) && (exponent=_abs(it->_SYMBptr->feuille._VECTptr->back(),contextptr)).is_integer()) {
+                power=true;
+                fac=it->_SYMBptr->feuille._VECTptr->front();
+            }
+            if (is_const_sign_strict(fac,true,false,contextptr))
                 s[it-f.begin()]=1;
-            else if (is_const_sign_strict(*it,false,false,contextptr))
-                s[it-f.begin()]=-1;
+            else if (is_const_sign_strict(fac,false,false,contextptr))
+                s[it-f.begin()]=power && exponent.val%2==0?1:-1;
         }
         gen ps=_product(s,contextptr);
         if (is_zero(ps))
@@ -332,7 +590,12 @@ bool is_const_sign_strict(const gen &g,bool pos,bool lin,GIAC_CONTEXT) {
     gen rest(0);
     for (const_iterateur it=terms.begin();it!=terms.end();++it) {
         gen l=lin?_lin(*it,contextptr):*it;
-        if (l.is_symb_of_sommet(at_exp) ||
+        if ((pos && (l.is_symb_of_sommet(at_exp) || l.is_symb_of_sommet(at_cosh))) ||
+                ((l.is_symb_of_sommet(at_atan) || l.is_symb_of_sommet(at_asin) || l.is_symb_of_sommet(at_atanh) || l.is_symb_of_sommet(at_asinh))
+                    && is_const_sign_strict(l._SYMBptr->feuille,pos,true,contextptr)) ||
+                (pos && l.is_symb_of_sommet(at_acosh) && is_const_sign_strict(1-l._SYMBptr->feuille,true,true,contextptr)) ||
+                (pos && (l.is_symb_of_sommet(at_ln) || l.is_symb_of_sommet(at_acosh))
+                    && is_const_sign_strict(l._SYMBptr->feuille-1,true,true,contextptr)) ||
                 (is_real_number(*it,contextptr) && is_strictly_positive((pos?1:-1)*to_real_number(*it,contextptr),contextptr)) ||
                 (lin && is_const_sign_strict(l,pos,false,contextptr)))
             surplus=true;
@@ -344,60 +607,11 @@ bool is_const_sign_strict(const gen &g,bool pos,bool lin,GIAC_CONTEXT) {
         return false;
     return is_const_sign(rest,pos,contextptr);
 }
-
-/*
- * Return the list containing real and imaginary part of g.
- * If not sure, assume that g is real, i.e. that im(g)=0.
- */
-vecteur reim(const gen &g,GIAC_CONTEXT) {
-    if (g.is_symb_of_sommet(at_neg))
-        return multvecteur(-1,reim(g._SYMBptr->feuille,contextptr));
-    if (g.is_symb_of_sommet(at_plus) && g._SYMBptr->feuille.type==_VECT) {
-        vecteur ret(2,0);
-        const vecteur &terms=*g._SYMBptr->feuille._VECTptr;
-        for (const_iterateur it=terms.begin();it!=terms.end();++it) {
-            ret=addvecteur(ret,reim(*it,contextptr));
-        }
-        return ret;
-    }
-    if (g.is_symb_of_sommet(at_prod) && g._SYMBptr->feuille.type==_VECT) {
-        vecteur ret=makevecteur(1,0);
-        const vecteur &fac=*g._SYMBptr->feuille._VECTptr;
-        for (const_iterateur it=fac.begin();it!=fac.end();++it) {
-            vecteur z=reim(*it,contextptr);
-            ret=makevecteur(ret[0]*z[0]-ret[1]*z[1],ret[0]*z[1]+ret[1]*z[0]);
-        }
-        return ret;
-    }
-    if (g.is_symb_of_sommet(at_pow) || g.is_symb_of_sommet(at_sqrt)) {
-        gen e=g.is_symb_of_sommet(at_sqrt)?gen(fraction(1,2)):g._SYMBptr->feuille._VECTptr->back();
-        gen rad=g.is_symb_of_sommet(at_sqrt)?g._SYMBptr->feuille:g._SYMBptr->feuille._VECTptr->front();
-        if (e.type==_FRAC && is_one(_even(e._FRACptr->den,contextptr))) {
-            if (is_const_sign(rad,true,contextptr))
-                return makevecteur(g,0);
-            if (is_const_sign(rad,false,contextptr))
-                return makevecteur(0,symb_pow(-rad,e));
-        }
-    } else if (g.is_symb_of_sommet(at_asin) || g.is_symb_of_sommet(at_acos)) {
-        ; // TODO
-    } else if (g.is_symb_of_sommet(at_ln) || g.is_symb_of_sommet(at_log10)) {
-        const gen &f=g._SYMBptr->feuille;
-        if (is_const_sign(f,true,contextptr))
-            return makevecteur(g,0);
-        if (is_const_sign(f,false,contextptr))
-            return makevecteur(symb_ln(-f),cst_pi);
-    }
-    gen rep=re(g,contextptr),imp=im(g,contextptr);
-    if (imp.is_symb_of_sommet(at_im)) // not sure, assume real
-        imp=0;
-    if (rep.is_symb_of_sommet(at_re)) // not sure, assume real
-        rep=g;
-    return makevecteur(rep,imp);
+bool is_definitely_positive(const gen &g,GIAC_CONTEXT) {
+    return is_const_sign_strict(g,true,true,contextptr);
 }
 
-/*
- * Return TRUE if im(g)=0.
- */
+/* Return true if im(g)=0. */
 bool has_imag(const gen &g,GIAC_CONTEXT) {
     if (g.type==_VECT) {
         for (const_iterateur it=g._VECTptr->begin();it!=g._VECTptr->end();++it) {
@@ -408,15 +622,14 @@ bool has_imag(const gen &g,GIAC_CONTEXT) {
     }
     if (is_inf(g) || is_real_number(g,contextptr))
         return false;
-    gen img=simp(reim(g,contextptr).back(),contextptr);
-    return !is_zero(img,contextptr);
+    gen gr,gi;
+    reim(g,gr,gi,contextptr);
+    return !is_zero(simp(gi,contextptr),contextptr);
 }
 
-/*
- * Make piecewise sub-expressions nested, e.g. replace
+/* Make piecewise sub-expressions nested, e.g. replace
  * piecewise(cond1,g1,cond2,g2,...,otherwise) by
- * piecewise(cond1,g1,piecewise(cond2,g2,piecewise(...,piecewise(condn,gn,otherwise))...)).
- */
+ * piecewise(cond1,g1,piecewise(cond2,g2,piecewise(...,piecewise(condn,gn,otherwise))...)). */
 gen make_piecewise_nested(const gen &g) {
     if (g.type==_VECT) {
         vecteur res;
@@ -436,9 +649,8 @@ gen make_piecewise_nested(const gen &g) {
     } else return g;
 }
 
-/*
- * Replace the first found piecewise expression with pcw and store its arguments in feu
- */
+/* Replace the first found piecewise expression in G with PCW and store its
+ * arguments in FEU. */
 bool find_piecewise(gen &g,const gen &pcw,vecteur &feu) {
     if (g.type==_VECT) {
         for (iterateur it=g._VECTptr->begin();it!=g._VECTptr->end();++it) {
@@ -457,9 +669,8 @@ bool find_piecewise(gen &g,const gen &pcw,vecteur &feu) {
     return false;
 }
 
-/*
- * Replace the first found absolute value with asymb and store its argument in val
- */
+/* Replace the first found absolute value in G with ASYMB and store its
+ * argument in VAL. */
 bool find_abs(gen &g,const gen &asymb,gen &val) {
     if (g.type==_VECT) {
         for (iterateur it=g._VECTptr->begin();it!=g._VECTptr->end();++it) {
@@ -478,9 +689,7 @@ bool find_abs(gen &g,const gen &asymb,gen &val) {
     return false;
 }
 
-/*
- * Return true iff 'e' is a rational expression with respect to variables in 'vars'.
- */
+/* Return true if E is rational with respect to variables in VARS. */
 bool is_rational_wrt_vars(const gen &e,const vecteur &vars) {
     for (const_iterateur it=vars.begin();it!=vars.end();++it) {
         vecteur l(rlvarx(e,*it));
@@ -490,184 +699,27 @@ bool is_rational_wrt_vars(const gen &e,const vecteur &vars) {
     return true;
 }
 
-pair<int,int> make_leqv_sys(const vector<int> &ind,const vector<nlp_lineq> &leqv) {
-    vector<int> isect,iunit,tmp;
-    for (graphe::ivector_iter jt=ind.begin();jt!=ind.end();++jt) {
-        const nlp_lineq &lineq=leqv[*jt];
-        if (jt==ind.begin()) {
-            isect=lineq.lvars;
-            iunit=lineq.lvars;
-        } else {
-            intersect(isect,lineq.lvars,tmp);
-            isect=tmp;
-            unite(iunit,lineq.lvars,tmp);
-            iunit=tmp;
-        }
-    }
-    return make_pair(isect.size(),-int(iunit.size()));
-}
-
-bool eliminate_equalities(const vector<nlp_lineq> &leqv,const vecteur &vars,vecteur &constr,vecteur &lsol,vecteur &leq_vars,GIAC_CONTEXT) {
-    int n=leqv.size();
-    graphe G(contextptr,false);
-    G.add_nodes(n);
-    vector<int> tmp;
-    for (int i=0;i<n;++i) {
-        const nlp_lineq &nl1=leqv[i];
-        for (int j=i+1;j<n;++j) {
-            const nlp_lineq &nl2=leqv[j];
-            if (intersect(nl1.lvars,nl2.nlvars,tmp)==0 && intersect(nl1.nlvars,nl2.lvars,tmp)==0)
-                G.add_edge(i,j);
-        }
-    }
-    G.find_maximal_cliques();
-    graphe::ivectors mc=G.maximal_cliques();
-    if (mc.empty())
-        return false;
-    vector<pair<pair<int,int>,int> > mca,rem;
-    for (int i=0;i<int(mc.size());++i) {
-        vector<int> &clq=mc[i];
-        int sz=clq.size();
-        pair<int,int> szp=make_leqv_sys(clq,leqv);
-        while (sz>-szp.second) {
-            rem.clear();
-            for (int j=clq.size();j-->0;) {
-                vector<int> clqj=clq;
-                clqj.erase(clqj.begin()+j);
-                rem.push_back(make_pair(make_leqv_sys(clqj,leqv),j));
-            }
-            sort(rem.begin(),rem.end());
-            clq.erase(clq.begin()+rem.rbegin()->second);
-            szp=rem.rbegin()->first;
-            --sz;
-        }
-        if (sz==0) {
-            mc.erase(mc.begin()+i);
-            --i;
-        } else mca.push_back(make_pair(szp,i));
-    }
-    if (mca.empty())
-        return false;
-    sort(mca.begin(),mca.end());
-    const graphe::ivector &c=mc[mca.rbegin()->second];
-    leq_vars.clear();
-    vecteur eqv;
-    vector<int> rc;
-    for (graphe::ivector_iter it=c.begin();it!=c.end();++it) {
-        const nlp_lineq &lineq=leqv[*it];
-        eqv.push_back(lineq.e);
-        rc.push_back(lineq.index);
-        for (vector<int>::const_iterator jt=lineq.lvars.begin();jt!=lineq.lvars.end();++jt) {
-            const gen &v=vars[*jt];
-            if (!contains(leq_vars,v))
-                leq_vars.push_back(v);
-        }
-    }
-    lsol=*_solve(makesequence(eqv,leq_vars),contextptr)._VECTptr;
-    if (!lsol.empty()) {
-        lsol=*lsol.front()._VECTptr;
-        sort(rc.begin(),rc.end());
-        for (vector<int>::const_reverse_iterator it=rc.rbegin();it!=rc.rend();++it) {
-            constr.erase(constr.begin()+*it);
-        }
+/* Return true if E is linear with respect to variables in VARS. */
+bool is_linear_wrt_vars(const gen &e,const vecteur &vars,GIAC_CONTEXT) {
+    gen a,b;
+    for (const_iterateur it=vars.begin();it!=vars.end();++it) {
+        if (!is_linear_wrt(e,*it,a,b,contextptr) || !is_constant_wrt_vars(a,vars,contextptr))
+            return false;
     }
     return true;
 }
 
-/*
- * Return true iff x0 is feasible for constraints constr dependent on x.
- */
-bool is_feasible(const vecteur &constr,const vecteur &x,const vecteur &x0,double feas_tol,GIAC_CONTEXT) {
-    vecteur p=*_epsilon2zero(x0,contextptr)._VECTptr;
-    for (const_iterateur it=constr.begin();it!=constr.end();++it) {
-        if (it->is_symb_of_sommet(at_equal)) {
-            if (!is_greater(feas_tol,_abs(subst(equal2diff(*it),x,p,false,contextptr),contextptr),contextptr))
-                return false;
-        } else if (which_ineq(*it)==1) {
-            gen d=it->_SYMBptr->feuille._VECTptr->front()-it->_SYMBptr->feuille._VECTptr->back();
-            if (!is_greater(feas_tol,max(subst(d,x,p,false,contextptr),0,contextptr),contextptr))
-                return false;
-        } else if (which_ineq(*it)==2) {
-            gen d=it->_SYMBptr->feuille._VECTptr->front()-it->_SYMBptr->feuille._VECTptr->back();
-            if (!is_greater(feas_tol,max(-subst(d,x,p,false,contextptr),0,contextptr),contextptr))
-                return false;
-        } else if (it->is_integer() && it->subtype==_INT_BOOLEAN) { // boolean (e.g. evaluated inequality)
-            if (it->val==0)
-                return false;
-        } else { // an expression, assumed to be zero
-            if (!is_greater(feas_tol,_abs(subst(*it,x,p,false,contextptr),contextptr),contextptr))
-                return false;
-        }
+/* Return true if E is quadratic with respect to variables in VARS. */
+bool is_quadratic_wrt_vars(const gen &e,const vecteur &vars,GIAC_CONTEXT) {
+    gen a,b,c;
+    for (const_iterateur it=vars.begin();it!=vars.end();++it) {
+        if (!is_quadratic_wrt(e,*it,a,b,c,contextptr) || !is_constant_wrt_vars(a,vars,contextptr) || !is_linear_wrt_vars(b,vars,contextptr))
+            return false;
     }
     return true;
 }
 
-/*
- * Source: Ibrahim and Chinneck 2005 (in "Feasibility and Infeasibility in Optimization", page 70)
- */
-bool constraint_consensus(const vecteur &cv,const vecteur &gconstr,const vecteur &cvars,
-                          const vecteur &x,const vecteur &x_lb,const vecteur &x_ub,vecteur &x0,
-                          const vector<int> &dir,vector<int> &kl,vector<int> &ku,vecteur &sl,vecteur &su,
-                          double alpha,double beta,int maxiter,GIAC_CONTEXT) {
-    int NINF,n=x.size(),m=cv.size();
-    int iter=1;
-    for (;iter<=maxiter;++iter) {
-        NINF=0;
-        std::fill(kl.begin(),kl.end(),0);
-        std::fill(sl.begin(),sl.end(),0);
-        std::fill(ku.begin(),ku.end(),0);
-        std::fill(su.begin(),su.end(),0);
-        for (int i=0;i<m;++i) { // for each constraint c
-            vecteur nabla_c=subst(*gconstr[i]._VECTptr,x,x0,false,contextptr);
-            gen viol,ec=subst(cv[i],x,x0,false,contextptr);
-            viol=dir[i]==0?_abs(ec,contextptr):(dir[i]<0?max(0,ec,contextptr):max(0,-ec,contextptr));
-            if (!is_zero(viol,contextptr)) {
-                vecteur fv=multvecteur((dir[i]==0?_sign(-ec,contextptr):dir[i])*viol/pow(_l2norm(nabla_c,contextptr),2),nabla_c);
-                gen d=_l2norm(fv,contextptr);
-                if (is_strictly_greater(d,alpha,contextptr)) {
-                    NINF++;
-                    for (int j=0;j<n;++j) { // for each variable in c
-                        if (!contains(*cvars[i]._VECTptr,x[j]))
-                            continue;
-                        if (is_strictly_positive(fv[j],contextptr)) {
-                            ku[j]++;
-                            if (is_strictly_greater(fv[j],su[j],contextptr))
-                                su[j]=fv[j];
-                        } else if (!is_zero(fv[j],contextptr)) {
-                            kl[j]++;
-                            if (is_strictly_greater(sl[j],fv[j],contextptr))
-                                sl[j]=fv[j];
-                        }
-                    }
-                }
-            }
-        }
-        if (NINF==0)
-            return true;
-        vecteur t(n,0);
-        for (int j=0;j<n;++j) {
-            if (kl[j]==ku[j])
-                t[j]=(sl[j]+su[j])/2;
-            else if (ku[j]>kl[j])
-                t[j]=su[j];
-            else t[j]=sl[j];
-        }
-        if (is_greater(beta,_l2norm(t,contextptr),contextptr))
-            return false; // movement tolerance exceeded
-        x0=addvecteur(x0,t);
-        for (int j=0;j<n;++j) {
-            if (is_strictly_greater(x0[j],x_ub[j],contextptr))
-                x0[j]=x_ub[j];
-            else if (is_strictly_greater(x_lb[j],x0[j],contextptr))
-                x0[j]=x_lb[j];
-        }
-    }
-    return false; // max number of iterations exceeded
-}
-
-/*
- * Return an uniform random real between a and b.
- */
+/* Return an uniform random real between A and B. */
 gen rand_uniform(const gen &a,const gen &b,GIAC_CONTEXT) {
     gen fa=to_real_number(a,contextptr),fb=to_real_number(b,contextptr);
     if (is_zero(b-a,contextptr))
@@ -675,10 +727,8 @@ gen rand_uniform(const gen &a,const gen &b,GIAC_CONTEXT) {
     return _rand(is_greater(b,a,contextptr)?makesequence(fa,fb):makesequence(fb,fa),contextptr);
 }
 
-/*
- * Generate a normal variable with parameters mu=0 and sigma.
- * If absolut=true, return the absolute value.
- */
+/* Generate a normal variable with parameters MU=0 and SIGMA.
+ * If ABSOLUT=true, return the absolute value. */
 gen rand_normal(const gen &sigma,bool absolut,GIAC_CONTEXT) {
     assert(is_positive(sigma,contextptr));
     gen s=to_real_number(sigma,contextptr);
@@ -688,104 +738,42 @@ gen rand_normal(const gen &sigma,bool absolut,GIAC_CONTEXT) {
     return absolut?_abs(r,contextptr):r;
 }
 
-/*
- * Return at most five random feasible points w.r.t. constr and vars x_lb<=x<=x_ub
- * such that the value of obj is as small as possible.
- * The function first generates at most nsamp feasible points and returns the best ones.
- * If obj is undef, then return a single random feasible point.
- * If no feasible points can be found, return an empty list.
- * The parameter beta is the movement tolerance, and maxiter is the maximum
- * available number of iterations for constraint concensus.
- */
-vecteur gen_feasible_point(const gen &obj,const vecteur &constr,const vecteur &x,const vecteur &x_lb,const vecteur &x_ub,
-                           int nsamp,double alpha,double beta,int maxiter,GIAC_CONTEXT) {
-    assert(alpha>0 && beta>0 && maxiter>=0 && x_lb.size()==x.size() && x_ub.size()==x.size());
-    int m=constr.size(),n=x.size(),nbest=5;
-    vector<int> kl(n),ku(n),dir(m);
-    vecteur sl(n),su(n),cv(m),cvars(m),res;
-    // get constraints and compute their gradients
-    matrice gconstr;
-    for (const_iterateur it=constr.begin();it!=constr.end();++it) {
-        int i=it-constr.begin();
-        if (it->is_symb_of_sommet(at_equal))
-            dir[i]=0;
-        else if (which_ineq(*it)==1)
-            dir[i]=-1;
-        else if (which_ineq(*it)==2)
-            dir[i]=1;
-        else assert(false);
-        cv[i]=it->_SYMBptr->feuille._VECTptr->front()-it->_SYMBptr->feuille._VECTptr->back();
-        cvars[i]=_lname(cv[i],contextptr);
-        gconstr.push_back(_grad(makesequence(cv[i],x),contextptr));
-    }
-    map<double,vecteur> cand;
-    vecteur p(n);
-    if (!is_undef(obj)) {
-        gen ov;
-        for (int pc=1;pc<=nsamp;++pc) {
-            double sigma_guess=(pc*100.0)/nsamp;
-            for (int j=0;j<n;++j) {
-                if (!is_inf(x_lb[j]) && !is_inf(x_ub[j])) { // doubly bounded
-                    double ch=rand_uniform(0,1,contextptr).to_double(contextptr);
-                    gen sigma=(x_ub[j]-x_lb[j])/3.0;
-                    if (ch<0.25)
-                        p[j]=min(x_ub[j],x_lb[j]+rand_normal(sigma,true,contextptr),contextptr);
-                    else if (ch>0.75)
-                        p[j]=max(x_lb[j],x_ub[j]-rand_normal(sigma,true,contextptr),contextptr);
-                    else p[j]=rand_uniform(x_lb[j],x_ub[j],contextptr);
-                } else if (!is_inf(x_lb[j])) // single lower bound
-                    p[j]=x_lb[j]+rand_normal(sigma_guess,true,contextptr);
-                else if (!is_inf(x_ub[j])) // single upper bound
-                    p[j]=x_ub[j]-rand_normal(sigma_guess,true,contextptr);
-                else p[j]=rand_normal(sigma_guess,false,contextptr); // unbounded in both directions
-            }
-            if (constraint_consensus(cv,gconstr,cvars,x,x_lb,x_ub,p,dir,kl,ku,sl,su,alpha,beta,maxiter,contextptr)) {
-                ov=subst(obj,x,p,false,contextptr);
-                if (is_real_number(ov,contextptr))
-                    cand[to_real_number(ov,contextptr).to_double(contextptr)]=p;
-            }
+/* Generate a multi-dimensional normal random variable.
+ * SIGMA is either a single number or a vector of the same length as MU. */
+void rand_multinormal(const vecteur &mu,const gen &sigma,vecteur &res,GIAC_CONTEXT) {
+    int n=mu.size(),i;
+    res.resize(n);
+    iterateur it=res.begin(),itend=res.end();
+    const_iterateur mt=mu.begin();
+    if (sigma.type==_VECT) {
+        const_iterateur st=sigma._VECTptr->begin();
+        for (;it!=itend;++it,++st,++mt) {
+            *it=_randNorm(makesequence(*mt,*st),contextptr);
         }
-        if (!cand.empty()) {
-            map<double,vecteur>::const_iterator it=cand.begin();
-            for (;it!=cand.end() && res.size()<nbest;++it) {
-                if (!is_zero(it->second,contextptr))
-                    res.push_back(it->second);
-            }
-            if (res.empty())
-                res.push_back(vecteur(n,0.5));
-            else return res;
-        }
+    } else for (;it!=itend;++it,++mt) {
+        *it=_randNorm(makesequence(*mt,sigma),contextptr);
     }
-    if (res.empty()) { // apply randomized standard heuristic
-        gen D=rand_uniform(0.5,1.0,contextptr);
-        for (int j=0;j<n;++j) {
-            if (!is_inf(x_lb[j]) && !is_inf(x_ub[j])) { // doubly bounded
-                gen r=(x_ub[j]-x_lb[j])/2;
-                if (is_greater(D,r,contextptr))
-                    D=rand_uniform(r/10,(9*r)/10,contextptr);
-                p[j]=(x_lb[j]+x_ub[j])/2+D;
-            } else if (!is_inf(x_lb[j])) // single lower bound
-                p[j]=x_lb[j]+D;
-            else if (!is_inf(x_ub[j])) // single upper bound
-                p[j]=x_ub[j]-D;
-            else p[j]=D; // unbounded in both directions
-        }
-        res.push_back(p);
-    }
-    if (maxiter==0)
-        return true;
-    /* apply constraint consensus algorithm */
-    if (!constraint_consensus(cv,gconstr,cvars,x,x_lb,x_ub,*res.front()._VECTptr,dir,kl,ku,sl,su,alpha,beta,maxiter,contextptr))
-        return vecteur(0);
-    return res;
 }
 
+/* Generate categorical random integer variable. */
+int rand_categorical(const vecteur &weights,GIAC_CONTEXT) {
+    gen c=rand_uniform(0,_sum(weights,contextptr),contextptr),s=0;
+    int ret=0;
+    for (const_iterateur it=weights.begin();it!=weights.end();++it,++ret) {
+        s+=*it;
+        if (is_greater(s,c,contextptr))
+            return ret;
+    }
+    return ret-1;
+}
+
+/* TODO */
 gen eval_continuous(const gen &g,const vecteur &x,const vecteur &bnds,const vecteur &a,GIAC_CONTEXT) {
     if (g.type==_VECT) {
         if (ckmatrix(g)) {
             const matrice &mat=*g._VECTptr;
             int nr=mat.size(),nc=mat.front()._VECTptr->size();
-            matrice ret=*_matrix(makesequence(nr,nc,0),contextptr)._VECTptr;
+            matrice ret=zero_mat(nr,nc,contextptr);
             for (int i=0;i<nr;++i) {
                 for (int j=0;j<nc;++j) {
                     ret[i]._VECTptr->at(j)=eval_continuous(mat[i][j],x,bnds,a,contextptr);
@@ -807,17 +795,14 @@ gen eval_continuous(const gen &g,const vecteur &x,const vecteur &bnds,const vect
     /* TODO: implement multivariable limits */
 }
 
-/* 
- * Filter critical points. Discard those being complex, those not satisfying the inequality constraints
- * and those for which f (and its extension) is not defined.
- */
+/* Filter critical points in CV. Discard those being complex, those not satisfying
+ * the inequality constraints and those for which f (and its extension) is not defined. */
 void filter_cpts(vecteur &cv,const vecteur &vars,const vecteur &bnds,const vecteur &ineq,bool open,const gen &f,GIAC_CONTEXT) {
     bound_variables(vars,bnds,open,contextptr);
     for (int j=cv.size();j-->0;) {
         gen val,&cpt=cv[j].type==_VECT && !cv[j]._VECTptr->empty() && cv[j]._VECTptr->front().type==_VECT?cv[j]._VECTptr->front():cv[j];
-        if (cpt.type!=_VECT)
-            cpt=vecteur(1,cpt);
-        vecteur cp(cpt._VECTptr->begin(),cpt._VECTptr->begin()+vars.size());
+        vecteur cp=gen2vecteur(cpt);
+        cp.resize(vars.size());
         if (has_inf_or_undef(cp) || has_imag(cp,contextptr)) {
             cv.erase(cv.begin()+j);
             continue;
@@ -845,38 +830,24 @@ void filter_cpts(vecteur &cv,const vecteur &vars,const vecteur &bnds,const vecte
     purge_variables(vars,contextptr);
 }
 
-/*
- * Call _solve without printing any messages. If an error occurs, an empty list is returned.
- */
+/* Call _solve without printing any messages.
+ * If an error occurs, an empty list is returned. */
 vecteur solve_quiet(const gen &e,const gen &x,GIAC_CONTEXT) {
-    suspend_logging(contextptr);
     gen sol;
     try {
+        log_output_redirect lor(contextptr);
         sol=_solve(makesequence(e,x),contextptr);
         if (sol.type!=_VECT)
             return vecteur(0);
     } catch (const std::runtime_error &e) {
-        restore_logging(contextptr);
         return vecteur(0);
     }
-    restore_logging(contextptr);
     return *sol._VECTptr;
 }
 
 int var_index=0;
 
-/*
- * Create a temporary symbol "name<count>".
- */
-gen temp_symb(const string &name,int count,GIAC_CONTEXT) {
-    gen ret=identificateur(" "+name+(count>=0?print_INT_(count):""));
-    _purge(ret,contextptr);
-    return ret;
-}
-
-/*
- * Remove strictly positive factors from g and return the result.
- */
+/* Remove strictly positive or strictly negative factors from G and return the result. */
 gen remove_nonzero_factors(const gen &g,GIAC_CONTEXT) {
     gen f(g);
     bool is_neg=false;
@@ -898,16 +869,14 @@ gen remove_nonzero_factors(const gen &g,GIAC_CONTEXT) {
     return (is_neg?-1:1)*f;
 }
 
-/*
- * Solve a system of equations.
+/* Solve a system of equations.
  * This function is based on _solve but handles cases where a variable
- * is found inside trigonometric, hyperbolic or exponential functions.
- */
+ * is found inside trigonometric, hyperbolic or exponential functions. */
 vecteur solve2(const vecteur &e_orig,const vecteur &vars_orig,GIAC_CONTEXT) {
     int m=e_orig.size(),n=vars_orig.size(),i=0;
     vecteur e_orig_simp=*expexpand(expand(_pow2exp(e_orig,contextptr),contextptr),contextptr)._VECTptr;
     for (iterateur it=e_orig_simp.begin();it!=e_orig_simp.end();++it) {
-        if (it->is_symb_of_sommet(at_equal))
+        if (is_equal(*it))
             *it=equal2diff(*it);
         gen f=(it->type==_SYMB?_factor(*it,contextptr):*it);
         gen num=remove_nonzero_factors(_numer(f,contextptr),contextptr);
@@ -966,10 +935,8 @@ vecteur solve2(const vecteur &e_orig,const vecteur &vars_orig,GIAC_CONTEXT) {
     return ret;
 }
 
-/*
- * Solve the system of equations e=0 w.r.t. variables in v, including the solutions of a
- * continuous extension too. It is assumed that e is exact.
- */
+/* Solve the system of equations e=0 w.r.t. variables in v, including the solutions of a
+ * continuous extension too. It is assumed that e is exact. */
 vecteur zeros_ext(const vecteur &e,const vecteur &v,const vecteur &bnds,GIAC_CONTEXT) {
     vecteur e_numer=*_apply(makesequence(at_numer,e),contextptr)._VECTptr;
     vecteur e_denom=*_apply(makesequence(at_denom,e),contextptr)._VECTptr;
@@ -990,19 +957,15 @@ vecteur zeros_ext(const vecteur &e,const vecteur &v,const vecteur &bnds,GIAC_CON
     return res;
 }
 
-/*
- * Return TRUE iff g=a and b.
- */
+/* Return true if G = (A and B) for some A, B. */
 bool is_conjunction(const gen &g) {
     return g.is_symb_of_sommet(at_and) || g.is_symb_of_sommet(at_et);
 }
 
-/*
- * Get bounds on variables in vars using inequalities ineq.
- */
+/* Get bounds on variables in VARS using the inequalities INEQ. */
 bool get_variable_bounds(const vecteur &vars,vecteur &ineq,vecteur &bnds,GIAC_CONTEXT) {
     gen a,b,c,vmin,vmax;
-    bnds=*_matrix(makesequence(vars.size(),2),contextptr)._VECTptr;
+    bnds=zero_mat(vars.size(),2,contextptr);
     for (const_iterateur it=vars.begin();it!=vars.end();++it) {
         vecteur &bnd=*bnds[it-vars.begin()]._VECTptr;
         vmin=bnd.front()=minus_inf;
@@ -1057,7 +1020,9 @@ bool get_variable_bounds(const vecteur &vars,vecteur &ineq,vecteur &bnds,GIAC_CO
 }
 
 /*
- * IPDIFF CLASS IMPLEMENTATION
+ *
+ ******* IPDIFF CLASS IMPLEMENTATION *******
+ *
  */
 
 ipdiff::ipdiff(const gen &f_orig,const vecteur &g_orig,const vecteur &vars_orig,GIAC_CONTEXT) {
@@ -1071,7 +1036,6 @@ ipdiff::ipdiff(const gen &f_orig,const vecteur &g_orig,const vecteur &vars_orig,
     assert(nvars>0);
     pdv[ivector(nvars,0)]=f; // make the zeroth order derivative initially available
 }
-
 void ipdiff::ipartition(int m,int n,ivectors &c,const ivector &p) {
     for (int i=0;i<n;++i) {
         if (!p.empty() && p[i]!=0)
@@ -1091,7 +1055,6 @@ void ipdiff::ipartition(int m,int n,ivectors &c,const ivector &p) {
         }
     }
 }
-
 ipdiff::diffterms ipdiff::derive_diffterms(const diffterms &terms,ivector &sig) {
     while (!sig.empty() && sig.back()==0) {
         sig.pop_back();
@@ -1140,7 +1103,6 @@ ipdiff::diffterms ipdiff::derive_diffterms(const diffterms &terms,ivector &sig) 
     --sig.back();
     return derive_diffterms(tv,sig);
 }
-
 const gen &ipdiff::get_pd(const pd_map &pds,const ivector &sig) const {
     try {
         return pds.at(sig);
@@ -1149,7 +1111,6 @@ const gen &ipdiff::get_pd(const pd_map &pds,const ivector &sig) const {
         return undef;
     }
 }
-
 const gen &ipdiff::differentiate(const gen &e,pd_map &pds,const ivector &sig) {
     const gen &pd=get_pd(pds,sig);
     if (!is_undef(pd))
@@ -1167,7 +1128,6 @@ const gen &ipdiff::differentiate(const gen &e,pd_map &pds,const ivector &sig) {
         return pds[sig]=_derive(_feuille(v,ctx),ctx);
     return e;
 }
-
 void ipdiff::compute_h(const vector<diffterms> &grv,int order) {
     if (g.empty())
         return;
@@ -1222,7 +1182,6 @@ void ipdiff::compute_h(const vector<diffterms> &grv,int order) {
         pdh[hsigv[i]]=simp(sol[i],ctx);
     }
 }
-
 void ipdiff::find_nearest_terms(const ivector &sig,diffterms &match,ivector &excess) {
     excess=sig;
     int i;
@@ -1240,7 +1199,6 @@ void ipdiff::find_nearest_terms(const ivector &sig,diffterms &match,ivector &exc
         }
     }
 }
-
 void ipdiff::raise_order(int order) {
     if (g.empty())
         return;
@@ -1268,7 +1226,6 @@ void ipdiff::raise_order(int order) {
     }
     ord=order;
 }
-
 void ipdiff::compute_pd(int order,const ivector &sig) {
     gen pd;
     ivectors c;
@@ -1299,7 +1256,6 @@ void ipdiff::compute_pd(int order,const ivector &sig) {
         pdv[*ct]=simp(pd,ctx);
     }
 }
-
 void ipdiff::gradient(vecteur &res) {
     if (nconstr==0)
         res=*_grad(makesequence(f,vars),ctx)._VECTptr;
@@ -1317,7 +1273,6 @@ void ipdiff::gradient(vecteur &res) {
         }
     }
 }
-
 void ipdiff::hessian(matrice &res) {
     if (nconstr==0)
         res=*_hessian(makesequence(f,vars),ctx)._VECTptr;
@@ -1341,7 +1296,6 @@ void ipdiff::hessian(matrice &res) {
         }
     }
 }
-
 const gen &ipdiff::derivative(const ivector &sig) {
     if (nconstr==0)
         return differentiate(f,pdf,sig);
@@ -1352,7 +1306,6 @@ const gen &ipdiff::derivative(const ivector &sig) {
     }
     return get_pd(pdv,sig);
 }
-
 const gen &ipdiff::derivative(const vecteur &dvars) {
     ivector sig(nvars,0);
     int j;
@@ -1363,7 +1316,6 @@ const gen &ipdiff::derivative(const vecteur &dvars) {
     }
     return derivative(sig);
 }
-
 void ipdiff::partial_derivatives(int order,pd_map &pdmap) {
     if (nconstr>0 && ord<order) {
         raise_order(order);
@@ -1375,7 +1327,6 @@ void ipdiff::partial_derivatives(int order,pd_map &pdmap) {
         pdmap[*it]=derivative(*it);
     }
 }
-
 gen ipdiff::taylor_term(const vecteur &a,int k,bool shift) {
     assert(k>=0);
     if (k==0)
@@ -1411,7 +1362,6 @@ gen ipdiff::taylor_term(const vecteur &a,int k,bool shift) {
     }
     return term;
 }
-
 gen ipdiff::taylor(const vecteur &a,int order) {
     assert(order>=0);
     gen T(0);
@@ -1420,10 +1370,7 @@ gen ipdiff::taylor(const vecteur &a,int order) {
     }
     return T;
 }
-
-/*
- * END OF IPDIFF CLASS
- */
+/* END OF IPDIFF CLASS */
 
 void vars_arrangements(matrice J,ipdiff::ivectors &arrs,GIAC_CONTEXT) {
     int m=J.size(),n=J.front()._VECTptr->size();
@@ -1453,29 +1400,32 @@ void vars_arrangements(matrice J,ipdiff::ivectors &arrs,GIAC_CONTEXT) {
         for (ipdiff::ivector::const_iterator it=arr.end()-m;it!=arr.end();++it) {
             S.push_back(tJ[*it]);
         }
-        if (!is_zero(_det(S,contextptr)))
+        if (!is_zero(mdet(S,contextptr)))
             arrs.push_back(arr);
     }
 }
 
-matrice jacobian(const vecteur &g,const vecteur &vars,GIAC_CONTEXT) {
-    matrice J;
+/* Computes the Jacobian of G w.r.t. VARS, returns false on failure. */
+bool jacobian(const vecteur &g,const vecteur &vars,matrice &J,GIAC_CONTEXT) {
+    J.resize(g.size());
+    gen gr;
     for (const_iterateur it=g.begin();it!=g.end();++it) {
-        gen gr=_grad(makesequence(*it,vars),contextptr);
-        if (gr.type==_VECT && gr._VECTptr->size()==vars.size())
-            J.push_back(gr);
-        else {
-            *logptr(contextptr) << gettext("Error") << ": " << gettext("failed to compute gradient of ") << *it << "\n";
-            return vecteur(0);
+        try {
+            gr=_grad(makesequence(*it,vars),contextptr);
+        } catch (const std::runtime_error &e) {
+            return false;
         }
+        if (gr.type==_VECT && gr._VECTptr->size()==vars.size() && !has_inf_or_undef(gr) && !has_diff(gr,vars))
+            J[it-g.begin()]=gr;
+        else return false;
     }
-    return J;
+    return true;
 }
 
 bool ck_jacobian(vecteur &g,vecteur &vars,GIAC_CONTEXT) {
     assert(!g.empty());
-    matrice J(jacobian(g,vars,contextptr));
-    if (J.empty())
+    matrice J;
+    if (!jacobian(g,vars,J,contextptr))
         return false;
     int m=g.size();
     int n=vars.size()-m;
@@ -1483,7 +1433,7 @@ bool ck_jacobian(vecteur &g,vecteur &vars,GIAC_CONTEXT) {
         return false;
     J=mtran(J);
     J.erase(J.begin(),J.begin()+n);
-    return !is_zero(_det(J,contextptr),contextptr);
+    return !is_zero(mdet(J,contextptr),contextptr);
 }
 
 /*
@@ -1569,25 +1519,25 @@ gen _implicitdiff(const gen &g,GIAC_CONTEXT) {
     const gen &f=gv[0];
     if (int(gv.size())<3)
         return generr("Too few arguments");
-    int ci=gv[0].type!=_VECT && !gv[0].is_symb_of_sommet(at_equal)?1:0;
+    int ci=gv[0].type!=_VECT && !is_equal(gv[0])?1:0;
     vecteur freevars,depvars,diffdepvars;
     gen_map diffvars;
     // get the constraints as a list of vanishing expressions
-    vecteur constr(gv[ci].type==_VECT?*gv[ci]._VECTptr:vecteur(1,gv[ci]));
+    vecteur constr=gen2vecteur(gv[ci]);
     for (int i=0;i<int(constr.size());++i) {
-        if (constr[i].is_symb_of_sommet(at_equal))
+        if (is_equal(constr[i]))
             constr[i]=equal2diff(constr[i]);
     }
     int m=constr.size();
     int dvi=3;
     if (ci==0) {
         if (gv[ci+1].type==_VECT)
-            diffdepvars=gv[ci+2].type==_VECT?*gv[ci+2]._VECTptr:vecteur(1,gv[ci+2]);
+            diffdepvars=gen2vecteur(gv[ci+2]);
         else dvi=2;
     }
     bool compute_all=false;
     int order=0;
-    if (ci==1 && gv[dvi].is_symb_of_sommet(at_equal)) {
+    if (ci==1 && is_equal(gv[dvi])) {
         vecteur &v=*gv[dvi]._SYMBptr->feuille._VECTptr;
         if (v.front()!=at_order || !v.back().is_integer() || v.back().val<=0)
             return generrtype("Expected order=<posint>");
@@ -1595,7 +1545,7 @@ gen _implicitdiff(const gen &g,GIAC_CONTEXT) {
         compute_all=true;
     }
     // get dependency specification
-    vecteur deplist(gv[ci+1].type==_VECT?*gv[ci+1]._VECTptr:vecteur(1,gv[ci+1]));
+    vecteur deplist=gen2vecteur(gv[ci+1]);
     if (compute_all) {
         // vars must be specified as x1,x2,...,xn,y1,y2,...,ym
         int nd=deplist.size();
@@ -1649,7 +1599,7 @@ gen _implicitdiff(const gen &g,GIAC_CONTEXT) {
     if (compute_all) {
         vecteur pt(0);
         if (int(gv.size())>4) {
-            pt=gv[4].type==_VECT?*gv[4]._VECTptr:vecteur(1,gv[4]);
+            pt=gen2vecteur(gv[4]);
             if (int(pt.size())!=n+m)
                 return generrdim("The given point does not match the number of variables");
         }
@@ -1744,7 +1694,7 @@ int critical_point_class(const matrice &hess,int n,int m,GIAC_CONTEXT) {
             const vecteur &row=*hess[i]._VECTptr;
             M.push_back(vecteur(row.begin(),row.begin()+2*m+k));
         }
-        s.push_back(simp(pow(gen(-1),m)*_det(M,contextptr),contextptr));
+        s.push_back(simp(pow(gen(-1),m)*mdet(M,contextptr),contextptr));
     }
     if (contains(s,gen(0)))
         return _CPCLASS_UNDECIDED; // paranoid check, a counterexample exists for Theorem 1 of D.S.
@@ -1757,9 +1707,7 @@ int critical_point_class(const matrice &hess,int n,int m,GIAC_CONTEXT) {
     return _CPCLASS_SADDLE;
 }
 
-/*
- * Find those variables from vars which appear in e and store them in x.
- */
+/* Find those variables in VARS which appear in E and store them in X. */
 void find_vars(const gen &e,const vecteur &vars,vecteur &x,GIAC_CONTEXT) {
     vecteur s=*_lname(e,contextptr)._VECTptr;
     for (const_iterateur it=vars.begin();it!=vars.end();++it) {
@@ -2087,23 +2035,22 @@ void find_local_extrema(vecteur &cpts,const gen &f,const vecteur &g,const vecteu
     }
 }
 
-/*
- * Find critical points of f subject to constr=0 and ineq<=0 w.r.t. vars in bnds.
+/* Find critical points of f subject to constr=0 and ineq<=0 w.r.t. vars in bnds.
  * If an initial point is provided, find a single critical point using fsolve.
  * Classify critical points with respect to ord and approx_hp.
  * If cont_ext is TRUE, then ord must be 1 and critical points will also contain those
  * of an extension of f by continuity.
- * This function returns FALSE if the process is interrupted by user, otherwise it returns TRUE.
- */
+ * This function returns FALSE if the process is interrupted by user, otherwise it returns TRUE. */
 bool find_critical(const gen &f,const vecteur &constr_orig,const vecteur &vars,const vecteur &bnds,const vecteur &ineq_orig,bool open,
                    const vecteur &initial,const gen_map &parm_asmp,int ord,bool approx_hp,bool cont_ext,vecteur &cpts,GIAC_CONTEXT) {
     ipdiff::ivectors arrs;
     vecteur constr=constr_orig,ineq=ineq_orig;
     if (ord>0 && !constr.empty()) {
-        matrice J(jacobian(constr,vars,contextptr));
-        suspend_logging(contextptr);
+        log_output_redirect lor(contextptr);
+        matrice J;
+        if (!jacobian(constr,vars,J,contextptr))
+            return true;
         vector<int> ind=linearly_dependent_rows(J,contextptr);
-        restore_logging(contextptr);
         for (vector<int>::const_reverse_iterator it=ind.rbegin();it!=ind.rend();++it) {
             ineq.push_back(constr[*it]);
             ineq.push_back(-constr[*it]);
@@ -2135,12 +2082,9 @@ bool find_critical(const gen &f,const vecteur &constr_orig,const vecteur &vars,c
             find_local_extrema(cpts,f,constr,tmp_vars,arr,ineq,tmp_bnds,open,tmp_initial,parm_asmp,ord,approx_hp,cont_ext,contextptr);
         } catch (const std::runtime_error &e) {
             purge_variables(tmp_vars,contextptr);
-            restore_logging(contextptr);
             undetected=true;
-            if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
-                print_error("stopped by user interruption",contextptr);
-                return false;
-            }
+            if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c)
+                throw e;
         }
     }
     if (undetected)
@@ -2148,10 +2092,8 @@ bool find_critical(const gen &f,const vecteur &constr_orig,const vecteur &vars,c
     return true;
 }
 
-/*
- * Return the list of implied inequalities considering the domain of g.
- * Inequalities are computed in form h(<=0) and stored in ineq.
- */
+/* Return the list of implied inequalities considering the domain of G.
+ * Inequalities are computed in form h(<=0) and stored in INEQ. */
 void implied_inequalities(const gen &g,const vecteur &vars,vecteur &ineq,GIAC_CONTEXT) {
     if (g.type==_VECT) {
         for (const_iterateur it=g._VECTptr->begin();it!=g._VECTptr->end();++it) {
@@ -2159,21 +2101,22 @@ void implied_inequalities(const gen &g,const vecteur &vars,vecteur &ineq,GIAC_CO
         }
     } else if (g.type==_SYMB) {
         const gen &f=g._SYMBptr->feuille,&s=g._SYMBptr->sommet;
-        if ((s==at_sqrt || s==at_ln) && !is_constant_wrt_vars(f,vars,contextptr))
-            ineq.push_back(symb_superieur_egal(f,0));
-        else if (s==at_pow && !f._VECTptr->back().is_integer() && !is_constant_wrt_vars(f._VECTptr->front(),vars,contextptr))
-            ineq.push_back(-f._VECTptr->front());
-        else if ((s==at_asin || s==at_acos) && !is_constant_wrt_vars(f,vars,contextptr)) {
-            ineq.push_back(symb_inferieur_egal(f,1));
-            ineq.push_back(symb_superieur_egal(f,-1));
+        if (!is_constant_wrt_vars(f,vars,contextptr)) {
+            if (s==at_sqrt || s==at_ln)
+                ineq.push_back(symb_superieur_egal(f,0));
+            else if (s==at_pow && is_real_number(f._VECTptr->back(),contextptr) && !f._VECTptr->back().is_integer())
+                ineq.push_back(symb_superieur_egal(f._VECTptr->front(),0));
+            else if (s==at_asin || s==at_acos || s==at_atanh) {
+                ineq.push_back(symb_inferieur_egal(f,1));
+                ineq.push_back(symb_superieur_egal(f,-1));
+            } else if (s==at_acosh)
+                ineq.push_back(symb_superieur_egal(f,1));
         }
         implied_inequalities(f,vars,ineq,contextptr);
     }
 }
 
-/*
- * Find global minimum and maximum recursively, return FALSE iff interrupted.
- */
+/* Find global minimum and maximum recursively, return false if interrupted. */
 bool find_global_extrema_recursively(const gen &f,const vecteur &g,const vecteur &h,const vecteur &vars,const vecteur &bnds,
                                      const gen_map &parm_asmp,const map<int,bool> &sel_orig,const map<int,gen> &fx_orig,gen &mn,gen &mx,vecteur &min_loc,vecteur &ass,GIAC_CONTEXT) {
     vecteur constr_orig=h;
@@ -2259,6 +2202,7 @@ bool find_global_extrema_recursively(const gen &f,const vecteur &g,const vecteur
             }
         } catch (const std::runtime_error &e) {
             if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
+                interrupted=ctrl_c=false;
                 print_error("stopped by user interruption",contextptr);
                 stopped=true;
             } else print_warning("some critical points may have been undetected",contextptr);
@@ -2334,7 +2278,7 @@ bool find_global_extrema_recursively(const gen &f,const vecteur &g,const vecteur
                 print_error("failed to minimize",contextptr);
                 vecteur prm=*_lname(makevecteur(mn,val),contextptr)._VECTptr;
                 if (!prm.empty()) {
-                    *logptr(contextptr) << ", " << gettext("the minimum depends on: ");
+                    *logptr(contextptr) << gettext("The minimum depends on: ");
                     for (const_iterateur it=prm.begin();it!=prm.end();++it) {
                         if (it!=prm.begin())
                             *logptr(contextptr) << ",";
@@ -2352,9 +2296,9 @@ bool find_global_extrema_recursively(const gen &f,const vecteur &g,const vecteur
 }
 
 bool parse_variables(const gen &g,vecteur &vars,vecteur &ineq,vecteur &initial,GIAC_CONTEXT) {
-    vecteur varlist(g.type==_VECT?*g._VECTptr:vecteur(1,g));
+    vecteur varlist=gen2vecteur(g);
     for (const_iterateur it=varlist.begin();it!=varlist.end();++it) {
-        if (it->is_symb_of_sommet(at_equal)) {
+        if (is_equal(*it)) {
             vecteur &ops=*it->_SYMBptr->feuille._VECTptr;
             gen &v=ops.front(), &rh=ops.back();
             vars.push_back(v);
@@ -2415,7 +2359,7 @@ bool minimize(const gen &f_orig,const vecteur &constr,const vecteur &vars,const 
             return minimize(f1,g1,vars,parm_asmp,initial,mn,mx,loc,ass,contextptr) &&
                    minimize(f2,g2,vars,parm_asmp,initial,mn,mx,loc,ass,contextptr);
         } else {
-            print_error("Invalid piecewise expression",contextptr);
+            print_error("invalid piecewise expression",contextptr);
             return false;
         }
     }
@@ -2428,19 +2372,12 @@ bool minimize(const gen &f_orig,const vecteur &constr,const vecteur &vars,const 
         return minimize(f1,g1,vars,parm_asmp,initial,mn,mx,loc,ass,contextptr) &&
                 minimize(f2,g2,vars,parm_asmp,initial,mn,mx,loc,ass,contextptr);
     }
-    for (int i=g.size();i-->0;) {
-        g[i]=_eval(g[i],contextptr);
-        if (g[i].is_integer() && g[i].subtype==_INT_BOOLEAN) {
-            if (constr[i].val==0)
-                return true; // infeasible
-            g.erase(g.begin()+i);
-        }
-    }
     implied_inequalities(f,vars,g,contextptr);
     vecteur h;
     int wi;
     for (int i=g.size();i-->0;) {
-        if (g[i].is_symb_of_sommet(at_equal)) {
+        g[i]=_eval(g[i],contextptr);
+        if (is_equal(g[i])) {
             h.push_back(equal2diff(g[i]));
             g.erase(g.begin()+i);
         } else if ((wi=which_ineq(g[i]))!=0) {
@@ -2458,7 +2395,7 @@ bool minimize(const gen &f_orig,const vecteur &constr,const vecteur &vars,const 
     vecteur bnds;
     if (!get_variable_bounds(vars,g,bnds,contextptr))
         return true; // infeasible
-    if (!initial.empty()) { // local search
+    if (!initial.empty()) { // approx local minimization
         gen args=makesequence(f,mergevecteur(
                                 *_zip(makesequence(at_inferieur_egal,g,vecteur(g.size(),0)),contextptr)._VECTptr,
                                 *_zip(makesequence(at_equal,h,vecteur(h.size(),0)),contextptr)._VECTptr),
@@ -2467,16 +2404,14 @@ bool minimize(const gen &f_orig,const vecteur &constr,const vecteur &vars,const 
         gen asol=_nlpsolve(args,contextptr);
         if (asol.type==_VECT && asol._VECTptr->size()==2) {
             mn=asol._VECTptr->front();
-            if (mn==at_point) { // local search failed
-                // TODO: use interior point method
+            if (mn.type==_STRNG) // failed to find minimum
                 return false;
-            }
             vecteur lc(vars.size());
             gen pos=asol._VECTptr->at(1),v;
             if (pos.type!=_VECT || pos._VECTptr->size()!=vars.size())
                 return false;
             for (const_iterateur it=pos._VECTptr->begin();it!=pos._VECTptr->end();++it) {
-                if (!it->is_symb_of_sommet(at_equal))
+                if (!is_equal(*it))
                     return false;
                 int j=indexof(it->_SYMBptr->feuille._VECTptr->front(),vars);
                 if (j<0)
@@ -2657,13 +2592,13 @@ gen _minimize(const gen &args,GIAC_CONTEXT) {
         --nargs;
     }
     if (nargs==3)
-        constr=argv[1].type==_VECT?*argv[1]._VECTptr:vecteur(1,argv[1]);
+        constr=gen2vecteur(argv[1]);
     if (!parse_variables(argv[nargs-1],vars,constr,initial,contextptr))
         return generr("Invalid specification of variables");
     gen f=make_piecewise_nested(argv[0]);
     if (is_constant_wrt_vars(f,vars,contextptr))
         return location?makevecteur(f,vars):f; // function is constant
-    vecteur bnds,parm=*_lname(makevecteur(f,constr),contextptr)._VECTptr;
+    vecteur parm=*_lname(makevecteur(f,constr),contextptr)._VECTptr;
     for (int i=parm.size();i-->0;) {
         if (contains(vars,parm[i]))
             parm.erase(parm.begin()+i);
@@ -2679,7 +2614,6 @@ gen _minimize(const gen &args,GIAC_CONTEXT) {
     gen mn(undef),mx(undef);
     vecteur loc,ass;
     if (!minimize(f,constr,tmpvars,parm_asmp,initial,mn,mx,loc,ass,contextptr)) { // interrupted or failed
-        restore_logging(contextptr);
         return undef;
     }
     if (is_undef(mn)) {
@@ -2974,7 +2908,7 @@ gen _extrema(const gen &g,GIAC_CONTEXT) {
     if (gv.back()==at_lagrange) {
         ord=0; // use Lagrange method
         --ngv;
-    } else if (gv.back().is_symb_of_sommet(at_equal)) {
+    } else if (is_equal(gv.back())) {
         vecteur &v=*gv.back()._SYMBptr->feuille._VECTptr;
         if (v[0]==at_order && is_integer(v[1])) {
             if ((ord=v[1].val)<1)
@@ -3005,7 +2939,7 @@ gen _extrema(const gen &g,GIAC_CONTEXT) {
     if (ord==0 && constr.empty())
         return generr("At least one constraint is required for Lagrange method");
     for (iterateur it=constr.begin();it!=constr.end();++it) {
-        if (it->is_symb_of_sommet(at_equal))
+        if (is_equal(*it))
             *it=equal2diff(*it);
         else if (which_ineq(*it)!=0)
             return generr("Inequality constraints are not supported");
@@ -3092,17 +3026,13 @@ static const char _extrema_s []="extrema";
 static define_unary_function_eval (__extrema,&_extrema,_extrema_s);
 define_unary_function_ptr5(at_extrema,alias_at_extrema,&__extrema,0,true)
 
-/*
- * Compute the value of expression f(x) (or |f(x)| if 'absolute' is true) for x=a.
- */
+/* Compute the value of expression F(X) (or |F(X)| if ABSOLUTE is true) for X=A. */
 gen compf(const gen &f,identificateur &x,gen &a,bool absolute,GIAC_CONTEXT) {
     gen val(subst(f,x,a,false,contextptr));
     return _evalf(absolute?_abs(val,contextptr):val,contextptr);
 }
 
-/*
- * find zero of expression f(x) for x in [a,b] using Brent solver
- */
+/* find zero of expression F(X) for X in [A,B] using Brent solver. */
 gen find_zero(const gen &f,identificateur &x,gen &a,gen &b,GIAC_CONTEXT) {
     gen var(symb_equal(x,symb_interval(a,b)));
     gen tmpsol=_fsolve(makesequence(f,var,_BRENT_SOLVER),contextptr);
@@ -3112,10 +3042,8 @@ gen find_zero(const gen &f,identificateur &x,gen &a,gen &b,GIAC_CONTEXT) {
     } else return (a+b)/2;
 }
 
-/*
- * Find the point of maximum/minimum of unimodal expression f(x) in [a,b] using the
- * golden-section search.
- */
+/* Find the point of maximum/minimum of unimodal expression f(x) in [a,b] using the
+ * golden-section search. */
 gen find_peak(const gen &f,identificateur &x,gen &a_orig,gen &b_orig,GIAC_CONTEXT) {
     gen a(a_orig),b(b_orig);
     gen c(b-(b-a)/GOLDEN_RATIO),d(a+(b-a)/GOLDEN_RATIO);
@@ -3131,9 +3059,7 @@ gen find_peak(const gen &f,identificateur &x,gen &a_orig,gen &b_orig,GIAC_CONTEX
     return (a+b)/2;
 }
 
-/*
- * Compute n Chebyshev nodes in [a,b].
- */
+/* Compute n Chebyshev nodes in [a,b]. */
 vecteur chebyshev_nodes(gen &a,gen &b,int n,GIAC_CONTEXT) {
     vecteur nodes(1,a);
     for (int i=1;i<=n;++i) {
@@ -3204,7 +3130,7 @@ gen _minimax(const gen &g,GIAC_CONTEXT) {
     const vecteur &gv=*g._VECTptr;
     if (gv.size()<3)
         return generr("Too few arguments");
-    if (!gv[1].is_symb_of_sommet(at_equal) || !is_integer(gv[2]))
+    if (!is_equal(gv[1]) || !is_integer(gv[2]))
         return generrtype("Expected an equality and an integer");
     // detect parameters
     vecteur s(*gv[1]._SYMBptr->feuille._VECTptr);
@@ -3222,7 +3148,7 @@ gen _minimax(const gen &g,GIAC_CONTEXT) {
     int limit=0;
     //bool poly=true;
     for (const_iterateur it=gv.begin()+3;it!=gv.end();++it) {
-        if (it->is_symb_of_sommet(at_equal)) {
+        if (is_equal(*it)) {
             vecteur &p=*it->_SYMBptr->feuille._VECTptr;
             if (p[0]==at_limit) {
                 if (!p[1].is_integer() || p[1].val<=0)
@@ -3253,13 +3179,16 @@ gen _minimax(const gen &g,GIAC_CONTEXT) {
             r.push_back(pow(gen(-1),i));
             m.push_back(r);
         }
-        tmpsol=_linsolve(makesequence(_epsilon2zero(m,contextptr),fv),contextptr);
-        if (tmpsol.type==_VECT)
-            sol=*tmpsol._VECTptr;
-        else sol.clear();
-        if (sol.empty() || !_lname(sol,contextptr)._VECTptr->empty()) {
-            // Solution is not unique, it contains a symbol.
-            // Decrease n and start over.
+        sol.clear();
+        if (!is_zero(mdet(m,contextptr))) {
+            try {
+                tmpsol=_LSQ(makesequence(m,fv),contextptr);
+                if (ckmatrix(tmpsol))
+                    sol=*mtran(*tmpsol._VECTptr).front()._VECTptr;
+            } catch (const std::runtime_error &e) { ; }
+        }
+        if (sol.empty()) {
+            // decrease n and start over
             nodes=chebyshev_nodes(a,b,--n,contextptr);
             continue;
         }
@@ -3316,14 +3245,15 @@ static define_unary_function_eval (__minimax,&_minimax,_minimax_s);
 define_unary_function_ptr5(at_minimax,alias_at_minimax,&__minimax,0,true)
 
 /*
- * TPROB CLASS IMPLEMENTATION
+ *
+ ******* TPROB CLASS IMPLEMENTATION *******
+ * 
  */
 
 /* The constructor.
  * - s: supply vector
  * - d: demand vector
- * - m: a symbol representing infinite cost
- */
+ * - m: a symbol representing infinite cost */
 tprob::tprob(const vecteur &s,const vecteur &d,const gen &m,GIAC_CONTEXT) {
     eps=epsilon(contextptr)/(s.size()*d.size()+1);
     ctx=contextptr;
@@ -3331,16 +3261,13 @@ tprob::tprob(const vecteur &s,const vecteur &d,const gen &m,GIAC_CONTEXT) {
     demand=d;
     M=m;
 }
-
-/*
- * North-West-Corner method giving the initial feasible solution to the
+/* North-West-Corner method giving the initial feasible solution to the
  * transportatiom problem with given supply and demand vectors. It handles
  * degeneracy cases (assignment problems, for example, always have degenerate
- * solutions).
- */
+ * solutions). */
 void tprob::north_west_corner(matrice &feas) {
     int m=supply.size(),n=demand.size();
-    feas=*_matrix(makesequence(m,n,0),ctx)._VECTptr;
+    feas=zero_mat(m,n,ctx);
     int i=0,j=0;
     while (i<m && j<n) {
         const gen &s=supply[i],&d=demand[j];
@@ -3362,11 +3289,8 @@ void tprob::north_west_corner(matrice &feas) {
             feas[i-1]._VECTptr->at(j)=eps;
     }
 }
-
-/*
- * Stepping stone path method for determining a closed path "jumping" from one
- * positive element of X to another in the same row or column.
- */
+/* Stepping stone path method for determining a closed path "jumping" from one
+ * positive element of X to another in the same row or column. */
 tprob::ipairs tprob::stepping_stone_path(ipairs &path_orig,const matrice &X) {
     ipairs path(path_orig);
     int I=path.back().first,J=path.back().second;
@@ -3390,16 +3314,14 @@ tprob::ipairs tprob::stepping_stone_path(ipairs &path_orig,const matrice &X) {
     }
     return ipairs(0);
 }
-
-/*
- * Implementation of the MODI (modified ditribution) method.
+/* Implementation of the MODI (modified ditribution) method.
  * It handles forbidden routes and degenerate solutions.
  * - P_orig: the cost matrix
  * - X: the solution matrix (must be initialized to a feasible solution)
- * After the function returns, X will contain an optimal solution.
- */
+ * After the function returns, X will contain an optimal solution. */
 void tprob::modi(const matrice &P_orig,matrice &X) {
-    matrice P(P_orig);
+    matrice P;
+    copy_matrice(P_orig,P);
     int m=X.size(),n=X.front()._VECTptr->size();
     vecteur u(m),v(n);
     if (M.type==_IDNT)
@@ -3417,7 +3339,7 @@ void tprob::modi(const matrice &P_orig,matrice &X) {
                     eqv.push_back(u[i]+v[j]-P[i][j]);
             }
         }
-        vecteur sol(*_linsolve(makesequence(eqv,vars),ctx)._VECTptr);
+        vecteur sol=*_linsolve(makesequence(eqv,vars),ctx)._VECTptr;
         vecteur U(1,0),V(sol.begin()+m-1,sol.end());
         U=mergevecteur(U,vecteur(sol.begin(),sol.begin()+m-1));
         gen cmin(0);
@@ -3463,15 +3385,11 @@ void tprob::modi(const matrice &P_orig,matrice &X) {
     }
     X=*exact(_epsilon2zero(X,ctx),ctx)._VECTptr;
 }
-
 void tprob::solve(const matrice &cost_matrix,matrice &sol) {
     north_west_corner(sol);
     modi(cost_matrix,sol);
 }
-
-/*
- * END OF TPROB CLASS
- */
+/* END OF TPROB CLASS */
 
 /*
  * Function 'tpsolve' solves a transportation problem using MODI method.
@@ -3581,6 +3499,3627 @@ gen _tpsolve(const gen &g,GIAC_CONTEXT) {
 static const char _tpsolve_s []="tpsolve";
 static define_unary_function_eval (__tpsolve,&_tpsolve,_tpsolve_s);
 define_unary_function_ptr5(at_tpsolve,alias_at_tpsolve,&__tpsolve,0,true)
+
+void add_identifiers(const gen &source,vecteur &dest,GIAC_CONTEXT) {
+    vecteur v(*_lname(source,contextptr)._VECTptr);
+    for (const_iterateur it=v.begin();it!=v.end();++it) {
+        if (_eval(*it,contextptr).type==_IDNT && !contains(dest,*it))
+            dest.push_back(*it);
+    }
+    dest=sort_identifiers(dest,contextptr);
+}
+
+/*
+ *
+ ******* NLP PROBLEM CLASS IMPLEMENTATION ********
+ *
+ */
+nlp_problem::optimum::optimum() {
+    res=solution_status::_PENDING;
+    f=undef;
+}
+/* Initialize a NLP problem: MIN f(x) SUBJECT TO list of (in)equality constraints g(x), x in R^n. */
+nlp_problem::nlp_problem(const gen &f,const vecteur &g,const vecteur &x,GIAC_CONTEXT) : ctx(contextptr)
+{
+    _msg_level=1;
+    _initialized=_presolved=_infeas=_convex_obj=_convex_constr=_debug=_iter_data=false;
+    _linobj=_linconstr=_compact=_smooth_obj=_smooth_constr=false;
+    feasible_region=NULL;
+    vars=obj_vars=x;
+    obj=f;
+    best_obj_val=undef;
+    obj_shift=0;
+    _penalty_scheme=_fevalc=_iter_count=0;
+    _is_intvar.resize(vars.size(),false);
+    _sol_stat.resize(6);
+    debug("Constructing NLP problem...");
+    reset_timer();
+    /* Store equality and inequality constraints in G separately, ignore other elements of G.
+       Inequalities are stored as nonnegativity constraints. */
+    for (const_iterateur it=g.begin();it!=g.end();++it) {
+        if (is_equal(*it)) {
+            eq_cons.push_back(equal2diff(*it));
+        } else switch (which_ineq(*it)) {
+            case 1:
+                ineq_cons.push_back(it->_SYMBptr->feuille._VECTptr->back()-it->_SYMBptr->feuille._VECTptr->front());
+                break;
+            case 2:
+                ineq_cons.push_back(it->_SYMBptr->feuille._VECTptr->front()-it->_SYMBptr->feuille._VECTptr->back());
+                break;
+            default:
+                break;
+        }
+    }
+}
+nlp_problem::~nlp_problem() {
+    debug("Deleting NLP problem...");
+    if (feasible_region!=NULL)
+        delete feasible_region;
+    purge_bounded_vars();
+}
+/* Presolve (optional) - Compute gradients - Determine bounding rect - Check convexity */
+void nlp_problem::initialize(int method,const meth_parm &parm) {
+    if (parm.presolve && !(_presolved=preprocess())) {
+        _infeas=true;
+        return;
+    }
+    int n=var_count();
+    if (n>0) {
+        make_bounded_vars(false);
+        remove_redundant_constraints();
+        if (_infeas) return;
+        if (method<nlp_method::_NELDER_MEAD) {
+            obj_gradient=*_grad(makesequence(obj,vars),ctx)._VECTptr;
+            if (_smooth_obj=!has_diff(obj_gradient,vars) && !has_breaks(obj_gradient))
+                debug("Objective function is differentiable");
+            else debug ("Objective function is not differentiable");
+            eq_jacobian.reserve(eq_cons.size());
+            ineq_jacobian.reserve(ineq_cons.size());
+            _linconstr=_smooth_constr=_convex_constr=true;
+        } else _linconstr=_smooth_obj=_convex_obj=_smooth_constr=_convex_constr=false;
+        for (const_iterateur it=eq_cons.begin();_smooth_constr && it!=eq_cons.end();++it) {
+            eq_jacobian.push_back(_grad(makesequence(*it,vars),ctx));
+            _smooth_constr=!has_diff(eq_jacobian.back(),vars) && !has_breaks(eq_jacobian.back());
+            if (_smooth_constr && _linconstr && !is_linear_wrt_vars(*it,vars,ctx)) {
+                _linconstr=_convex_constr=false;
+                if (parm.convex==1)
+                    warn("nonlinear equality constraint found, dropping convexity assumption");
+            }
+        }
+        for (const_iterateur it=ineq_cons.begin();_smooth_constr && it!=ineq_cons.end();++it) {
+            ineq_jacobian.push_back(_grad(makesequence(*it,vars),ctx));
+            _smooth_constr=!has_diff(ineq_jacobian.back(),vars) && !has_breaks(ineq_jacobian.back());
+            if (_smooth_constr && _linconstr && !is_linear_wrt_vars(*it,vars,ctx))
+                _linconstr=false;
+        }
+        if (!_smooth_constr) {
+            eq_jacobian.clear();
+            ineq_jacobian.clear();
+            _linconstr=_convex_constr=false;
+        } else {
+            if (feasible_region!=NULL)
+                delete feasible_region;
+            feasible_region=new region(*this,parm.tol,100);
+        }
+        // detect feasible region
+        if (bd_rect.empty())
+            bd_rect=_smooth_constr && parm.border?feasible_region->bounding_rect():mtran(makevecteur(lb,ub));
+        if (_infeas)
+            return;
+        _compact=!has_inf_or_undef(bd_rect);
+        // Is the objective function convex?
+        if (_smooth_obj) {
+            debug("Checking convexity of the objective...");
+            _linobj=is_linear_wrt_vars(obj,vars,ctx);
+            if (parm.convex>=0) {
+                if (jacobian(obj_gradient,vars,obj_hessian,ctx)) {
+                    _convex_obj=_have_hessian=!has_diff(obj_hessian,vars) && !has_breaks(obj_hessian);
+                } else {
+                    _convex_obj=_have_hessian=false;
+                }
+                if (parm.convex==1 && !_convex_obj)
+                    warn("the objective is not twice differentiable, dropping convexity assumption");
+            } else {
+                make_bounded_vars(true);
+                obj_hessian=zero_mat(n,n,ctx);
+                if (_linobj) {
+                    _convex_obj=_have_hessian=true;
+                } else _convex_obj=is_expression_convex(obj_gradient,obj_hessian,_have_hessian,false);
+            }
+            if (!_have_hessian)
+                obj_hessian.clear();
+            if (_convex_obj)
+                debug("Objective function is convex under the bound constraints");
+        }
+        // Are inequality constraints convex?
+        if (_convex_constr && parm.convex==-1) {
+            debug("Checking convexity of the constraints...");
+            matrice constr_hessian=zero_mat(n,n,ctx);
+            make_bounded_vars(true);
+            bool hess_ok;
+            for (const_iterateur it=ineq_jacobian.begin();_convex_constr && it!=ineq_jacobian.end();++it) {
+                _convex_constr=is_numericv(*it->_VECTptr,num_mask_withfrac|num_mask_withint) ||
+                                is_expression_convex(multvecteur(-1,*it->_VECTptr),constr_hessian,hess_ok,true);
+            }
+        } else _convex_constr=parm.convex==1;
+        // Is the problem convex?
+        if (_convex_obj && _convex_constr)
+            msg(parm.convex==1?"Assuming that the problem is convex":"Problem is convex");
+    }
+    _initialized=true;
+}
+/* This routine requires BND_VARS to be initialized. */
+bool nlp_problem::is_expression_convex(const vecteur &gradient,matrice &H,bool &hess_ok,bool lt) {
+    hess_ok=true;
+    int n=var_count();
+    for (int i=0;hess_ok&&i<n;++i) {
+        const gen &dxi=gradient[i];
+        for (int j=0;j<=i;++j) {
+            gen dxixj=derive(dxi,vars[j],ctx);
+            if (has_inf_or_undef(dxixj) || has_diff(dxixj,vars[j]) || has_breaks(dxixj)) {
+                hess_ok=false;
+                break;
+            }
+            H[i]._VECTptr->at(j)=dxixj;
+            if (!lt && i!=j)
+                H[j]._VECTptr->at(i)=dxixj;
+        }
+    }
+    return hess_ok && is_positive_semidefinite(subst(H,vars,bnd_vars,false,ctx),0.5,100,ctx);
+}
+/* Make bounded copies of variables using assumptions */
+void nlp_problem::make_bounded_vars(bool use_bd_rect) {
+    int nv=var_count();
+    purge_bounded_vars();
+    bnd_vars.resize(nv);
+    for (int i=0;i<nv;++i) {
+        bnd_vars[i]=temp_symb("xbnd",i,ctx);
+        const gen &l=use_bd_rect?bd_rect[i][0]:lb[i];
+        const gen &u=use_bd_rect?bd_rect[i][1]:ub[i];
+        if (!is_inf(l) || !is_inf(u))
+            set_assumptions(bnd_vars[i],vecteur(1,makevecteur(l,u)),vecteur(0),false,ctx);
+    }
+}
+void nlp_problem::remove_redundant_constraints() {
+    assert(bnd_vars.size()==vars.size());
+    int rm=0,ch=0;
+    debug("Finding redundant constraints...");
+    for (int i=ineq_count();i-->0;) {
+        const gen &c=ineq_cons[i];
+        gen p=subst(c,vars,bnd_vars,false,ctx);
+        //if (!is_real_number(p,ctx)) continue;
+        //p=to_real_number(p,ctx);
+        if (is_positive_safe(p,false,100,ctx)) {
+            _ss << "Removing redundant constraint " << c << ""; debug();
+            rm++;
+            ineq_cons.erase(ineq_cons.begin()+i);
+        }
+        else if (is_definitely_positive(-p,ctx)) {
+            _ss << "Constraint " << c << " is not feasible"; debug();
+            _infeas=true;
+            break;
+        }
+#if 0
+        else if (is_positive(-p,ctx)) {
+            _ss << "Replacing " << c << ">=0 by equality constraint"; debug();
+            ch++;
+            eq_cons.push_back(p);
+            ineq_cons.erase(ineq_cons.begin()+i);
+        }
+#endif
+    }
+    if (rm>0) { _ss << gettext("Removed") << " " << rm << " " << gettext("redundant constraints"); msg(); }
+    else debug("No redundant constraints found");
+}
+pair<int,int> nlp_problem::make_leqv_sys(const vector<int> &ind,const vector<lineq> &leqv) {
+    vector<int> isect,iunit,tmp;
+    for (graphe::ivector_iter jt=ind.begin();jt!=ind.end();++jt) {
+        const lineq &lineq=leqv[*jt];
+        if (jt==ind.begin()) {
+            isect=lineq.lvars;
+            iunit=lineq.lvars;
+        } else {
+            intersect(isect,lineq.lvars,tmp);
+            isect=tmp;
+            unite(iunit,lineq.lvars,tmp);
+            iunit=tmp;
+        }
+    }
+    return make_pair(isect.size(),-int(iunit.size()));
+}
+bool nlp_problem::eliminate_equalities(const vector<lineq> &leqv,vecteur &lsol,vecteur &leq_vars) {
+    int n=leqv.size();
+    graphe G(ctx,false);
+    G.add_nodes(n);
+    vector<int> tmp;
+    for (int i=0;i<n;++i) {
+        const lineq &nl1=leqv[i];
+        for (int j=i+1;j<n;++j) {
+            const lineq &nl2=leqv[j];
+            if (intersect(nl1.lvars,nl2.nlvars,tmp)==0 && intersect(nl1.nlvars,nl2.lvars,tmp)==0)
+                G.add_edge(i,j);
+        }
+    }
+    G.find_maximal_cliques();
+    graphe::ivectors mc=G.maximal_cliques();
+    if (mc.empty())
+        return false;
+    vector<pair<pair<int,int>,int> > mca,rem;
+    for (int i=0;i<int(mc.size());++i) {
+        vector<int> &clq=mc[i];
+        int sz=clq.size();
+        pair<int,int> szp=make_leqv_sys(clq,leqv);
+        while (sz>-szp.second) {
+            rem.clear();
+            for (int j=clq.size();j-->0;) {
+                vector<int> clqj=clq;
+                clqj.erase(clqj.begin()+j);
+                rem.push_back(make_pair(make_leqv_sys(clqj,leqv),j));
+            }
+            std::sort(rem.begin(),rem.end());
+            clq.erase(clq.begin()+rem.rbegin()->second);
+            szp=rem.rbegin()->first;
+            --sz;
+        }
+        if (sz==0) {
+            mc.erase(mc.begin()+i);
+            --i;
+        } else mca.push_back(make_pair(szp,i));
+    }
+    if (mca.empty())
+        return false;
+    std::sort(mca.begin(),mca.end());
+    const graphe::ivector &c=mc[mca.rbegin()->second];
+    leq_vars.clear();
+    vecteur eqv;
+    vector<int> rc;
+    for (graphe::ivector_iter it=c.begin();it!=c.end();++it) {
+        const lineq &lineq=leqv[*it];
+        eqv.push_back(lineq.e);
+        rc.push_back(lineq.index);
+        for (vector<int>::const_iterator jt=lineq.lvars.begin();jt!=lineq.lvars.end();++jt) {
+            const gen &v=vars[*jt];
+            if (!contains(leq_vars,v))
+                leq_vars.push_back(v);
+        }
+    }
+    lsol.clear();
+    vecteur sol=*_solve(makesequence(eqv,leq_vars),ctx)._VECTptr;
+    if (!sol.empty()) {
+        assert(sol.front().type==_VECT);
+        lsol=*sol.front()._VECTptr;
+        std::sort(rc.begin(),rc.end());
+        for (vector<int>::const_reverse_iterator it=rc.rbegin();it!=rc.rend();++it) {
+            eq_cons.erase(eq_cons.begin()+*it);
+        }
+    }
+    return true;
+}
+bool nlp_problem::subs_fxvars(const fxvars &fv) {
+    obj=subst(obj,fv.names,fv.values,false,ctx);
+    for (int i=eq_cons.size();i-->0;) {
+        gen &c=eq_cons[i];
+        c=simp(subst(c,fv.names,fv.values,false,ctx),ctx);
+        if (is_zero(c,ctx))
+            eq_cons.erase(eq_cons.begin()+i);
+        else if (is_real_number(c,ctx))
+            return false;
+    }
+    for (int i=ineq_cons.size();i-->0;) {
+        gen &c=ineq_cons[i];
+        c=simp(subst(c,fv.names,fv.values,false,ctx),ctx);
+        if (is_positive_safe(c,false,100,ctx))
+            ineq_cons.erase(ineq_cons.begin()+i);
+        else if (is_real_number(c,ctx))
+            return false;
+    }
+    return true;
+}
+/* Return the list of constraints (optionally including variable bounds).
+ * If all_geq is true, then the list contains lhs of constraints
+ * written in form f_i(x) >= 0 (used by COBYLA). */
+vecteur nlp_problem::constraints(bool incl_bnds,bool all_geq) const {
+    vecteur res;
+    int n=var_count();
+    res.reserve(2*eq_cons.size()+ineq_cons.size()+2*n);
+    if (!all_geq) {
+        vecteur eqs=eq_cons.empty()?vecteur(0):*_zip(makesequence(at_equal,eq_cons,vecteur(eq_cons.size(),0)),ctx)._VECTptr;
+        vecteur ineqs=ineq_cons.empty()?vecteur(0):*_zip(makesequence(at_superieur_egal,ineq_cons,vecteur(ineq_cons.size(),0)),ctx)._VECTptr;
+        res=mergevecteur(eqs,ineqs);
+    } else {
+        if (!eq_cons.empty())
+            res=mergevecteur(eq_cons,multvecteur(-1,eq_cons));
+        if (!ineq_cons.empty())
+            res=mergevecteur(res,ineq_cons);
+    }
+    if (!incl_bnds)
+        return res;
+    for (int i=0;i<n;++i) {
+        if (!is_inf(lb[i]))
+            res.push_back(all_geq?vars[i]-lb[i]:symb_superieur_egal(vars[i],lb[i]));
+        if (!is_inf(ub[i]))
+            res.push_back(all_geq?ub[i]-vars[i]:symb_inferieur_egal(vars[i],ub[i]));
+    }
+    return res;
+}
+/* Return lists of variables and the respective values. */
+void nlp_problem::get_vars_and_values(const set<pair<int,gen> > &lst,vecteur &v,vecteur &w) const {
+    set<pair<int,gen> >::const_iterator it=_fixed_vars.begin(),itend=_fixed_vars.end();
+    v.clear(); w.clear();
+    v.reserve(_fixed_vars.size());
+    w.reserve(_fixed_vars.size());
+    for (;it!=itend;++it) {
+        v.push_back(vars[it->first]);
+        w.push_back(it->second);
+    }
+}
+/* Return G where fixed variables are substituted with the respective values. */
+gen nlp_problem::subs_fixed_vars(const gen &g) const {
+    if (_fixed_vars.empty()) return g;
+    vecteur fv,fval;
+    get_vars_and_values(_fixed_vars,fv,fval);
+    return subst(g,fv,fval,false,ctx);
+}
+vecteur nlp_problem::subs_fixed_vars(const vecteur &v) const {
+    if (_fixed_vars.empty()) return v;
+    vecteur fv,fval;
+    get_vars_and_values(_fixed_vars,fv,fval);
+    return subst(v,fv,fval,false,ctx);
+}
+/* Find inactive equality constraints among those in EQ.
+ * Return false if there are violated constraints, else return true. */
+bool nlp_problem::find_inactive_eq(const vecteur &eq) {
+    const_iterateur it=eq.begin(),itend=eq.end();
+    _inactive_eq_indices.clear();
+    int i=0;
+    for (;it!=itend;++it,++i) {
+        if (!is_real_number(*it,ctx)) continue;
+        if (is_zero(to_real_number(*it,ctx),ctx))
+            _inactive_eq_indices.insert(i);
+        else {
+            _inactive_eq_indices.clear();
+            return false;
+        }
+    }
+    return true;
+}
+/* Find inactive inequality constraints among those in INEQ.
+ * Return false if there are violated constraints, else return true. */
+bool nlp_problem::find_inactive_ineq(const vecteur &ineq) {
+    const_iterateur it=ineq.begin(),itend=ineq.end();
+    _inactive_ineq_indices.clear();
+    int i=0;
+    for (;it!=itend;++it,++i) {
+        if (is_positive_safe(*it,false,100,ctx))
+            _inactive_ineq_indices.insert(i);
+        else if (is_definitely_positive(-*it,ctx)) {
+            _inactive_ineq_indices.clear();
+            return false;
+        }
+    }
+    return true;
+}
+/* Preprocess the problem. */
+bool nlp_problem::preprocess() {
+    int pass=0,oldvarcount=var_count(),rmvars=0;
+    fxvars fv(vars.size());
+    for (int j=vars.size();j-->0;) { // remove fixed variables
+        if (is_zero(ub[j]-lb[j],ctx)) {
+            fv.names.push_back(vars[j]);
+            fv.values.push_back((lb[j]+ub[j])/2);
+            fv.indices.push_back(j);
+            vars.erase(vars.begin()+j);
+            lb.erase(lb.begin()+j);
+            ub.erase(ub.begin()+j);
+            if (!initp.empty())
+                initp=*_delcols(makesequence(initp,j),ctx)._VECTptr;
+            if (!bd_rect.empty())
+                bd_rect.erase(bd_rect.begin()+j);
+            ++rmvars;
+        } else if (is_strictly_greater(lb[j],ub[j],ctx))
+            return false; // infeasible
+    }
+    if (rmvars>0) {
+        _ss << rmvars << " " << gettext("variable(s) fixed by preprocessor");
+        msg();
+    }
+    if (!fv.names.empty()) {
+        if (!subs_fxvars(fv))
+            return false;
+        fx_subs.push(fv);            
+    }
+    bool changed;
+    do { // substitute variables
+        changed=false;
+        fxvars fxv(vars.size());
+        vector<lineq> leqv;
+        for (const_iterateur ct=eq_cons.begin();ct!=eq_cons.end();++ct) {
+            gen d=exact(*ct,ctx),a,b;
+            vecteur lin;
+            for (const_iterateur it=vars.begin();it!=vars.end();++it) {
+                if (!is_intvar(it-vars.begin()) && is_linear_wrt(d,*it,a,b,ctx) &&
+                        !is_exactly_zero(a) && is_constant_wrt_vars(a,vars,ctx))
+                    lin.push_back(*it);
+            }
+            if (lin.empty())
+                continue;
+            vecteur v=*_lname(d,ctx)._VECTptr;
+            for (const_iterateur it=lin.begin();it!=lin.end();++it) {
+                v.erase(find(v.begin(),v.end(),*it));
+            }
+            lineq lineq(d,ct-eq_cons.begin());
+            for (const_iterateur it=lin.begin();it!=lin.end();++it) {
+                lineq.lvars.push_back(indexof(*it,vars));
+            }
+            for (const_iterateur it=v.begin();it!=v.end();++it) {
+                lineq.nlvars.push_back(indexof(*it,vars));
+            }
+            std::sort(lineq.lvars.begin(),lineq.lvars.end());
+            std::sort(lineq.nlvars.begin(),lineq.nlvars.end());
+            leqv.push_back(lineq);
+        }
+        if (leqv.empty())
+            continue;
+        vecteur lsol,leq_vars;
+        if (!eliminate_equalities(leqv,lsol,leq_vars))
+            continue;
+        if (!lsol.empty()) {
+            for (const_iterateur it=lsol.begin();it!=lsol.end();++it) {
+                int i,j=it-lsol.begin();
+                if (is_constant_wrt(*it,leq_vars[j],ctx)) {
+                    fxv.names.push_back(leq_vars[j]);
+                    fxv.values.push_back(*it);
+                    fxv.indices.push_back(i=indexof(leq_vars[j],vars));
+                    if (!is_inf(lb[i]))
+                        ineq_cons.push_back(*it-lb[i]);
+                    if (!is_inf(ub[i]))
+                        ineq_cons.push_back(ub[i]-*it);
+                }
+            }
+            for (int j=vars.size();j-->0;) {
+                if (find(fxv.indices.begin(),fxv.indices.end(),j)!=fxv.indices.end()) {
+                    vars.erase(vars.begin()+j);
+                    lb.erase(lb.begin()+j);
+                    ub.erase(ub.begin()+j);
+                    _is_intvar.erase(_is_intvar.begin()+j);
+                    if (!initp.empty())
+                        initp=*_delcols(makesequence(initp,j),ctx)._VECTptr;
+                    if (!bd_rect.empty())
+                        bd_rect.erase(bd_rect.begin()+j);
+                }
+            }
+        } else return false;
+        if (changed=!fxv.names.empty()) {
+            if (!subs_fxvars(fxv))
+                return false;
+            fx_subs.push(fxv);
+        }
+    } while (changed && (++pass>0));
+    if (var_count()<oldvarcount-rmvars) {
+        _ss << oldvarcount-var_count()-rmvars << " variable(s) substituted by preprocessor";
+        msg();
+    }
+    return true;
+}
+/* Postprocess the (optimal) point x0 (may be vector of points and/or
+ * vectors of points) for returning to user.
+ * This works only once! (subs info is destroyed) */
+void nlp_problem::postprocess_point(gen &x0,const vecteur &oldvars,const fxvars &fx,vecteur &csol) {
+    if (x0.type!=_VECT)
+        return;
+    vecteur &pt=*x0._VECTptr;
+    if (is_numericv(pt)) {
+        vecteur fxvals=oldvars.empty()?fx.values:subst(fx.values,oldvars,pt,false,ctx);
+        for (int i=fx.indices.size();i-->0;) csol[fx.indices[i]]=fxvals[i];
+        int i=0;
+        for (const_iterateur it=pt.begin();it!=pt.end();++it) {
+            while (!is_undef(csol[i])) ++i;
+            csol[i]=*it;
+        }
+        x0=csol;
+    } else for (iterateur it=pt.begin();it!=pt.end();++it) {
+        postprocess_point(*it,oldvars,fx,csol);
+    }
+}
+void nlp_problem::postprocess(gen &x0) {
+    int i;
+    while (!fx_subs.empty()) {
+        fxvars fx=fx_subs.top();
+        vecteur csol(fx.n_oldvars,undef),oldvars=vars,fxvals;
+        vars=vecteur(fx.n_oldvars,undef);
+        for (i=fx.indices.size();i-->0;) vars[fx.indices[i]]=fx.names[i];
+        i=0;
+        for (const_iterateur it=oldvars.begin();it!=oldvars.end();++it) {
+            while (!is_undef(vars[i])) ++i;
+            vars[i]=*it;
+        }
+        postprocess_point(x0,oldvars,fx,csol);
+        fx_subs.pop();
+    }
+}
+/* NLP_REGION CLASS IMPLEMENTATION */
+nlp_problem::region::region(nlp_problem &p,double tol,int itlim) : prob(p), ctx(p.ctx) {
+    ftol=tol;
+    maxiter=itlim;
+    ipt=NULL;
+    n=prob.var_count();
+    x_lb=prob.lb;
+    x_ub=prob.ub;
+    c=mergevecteur(prob.eq_cons,prob.ineq_cons);
+    m=c.size();
+    dc=mergevecteur(prob.eq_jacobian,prob.ineq_jacobian);
+    cx.resize(m);
+    dir.resize(m);
+    c.resize(m); cx.resize(m); dc.resize(m);
+    kl.resize(n); ku.resize(n);
+    sl.resize(n); su.resize(n);
+    int neq=prob.eq_cons.size();
+    for (int i=0;i<m;++i) {
+        cx[i]=_lname(c[i],ctx);
+        dir[i]=i<neq?0:1;
+    }
+}
+/* Constraint consensus algorithm: moves x0 to the feasible region, returns true iff successful.
+ * SOURCE: Ibrahim and Chinneck 2005 (in "Feasibility and Infeasibility in Optimization", p. 70) */
+bool nlp_problem::region::mfeas(vecteur &x0,bool store) {
+    int NINF,iter=1;
+    vecteur p(x0),t(n);
+    gen evb;
+    for (;iter<=maxiter;++iter) {
+        NINF=0;
+        std::fill(kl.begin(),kl.end(),0);
+        std::fill(sl.begin(),sl.end(),0);
+        std::fill(ku.begin(),ku.end(),0);
+        std::fill(su.begin(),su.end(),0);
+        for (int i=0;i<m;++i) { // for each constraint c
+            vecteur nabla_c=subst(*dc[i]._VECTptr,prob.vars,p,false,ctx);
+            gen viol,ec=subst(c[i],prob.vars,p,false,ctx);
+            viol=dir[i]==0?_abs(ec,ctx):(dir[i]<0?max(0,ec,ctx):max(0,-ec,ctx));
+            if (!is_zero(viol,ctx)) {
+                vecteur fv=multvecteur((dir[i]==0?_sign(-ec,ctx):dir[i])*viol/pow(l2norm(nabla_c,ctx),2),nabla_c);
+                gen d=l2norm(fv,ctx);
+                if (is_strictly_greater(d,ftol,ctx)) {
+                    NINF++;
+                    for (int j=0;j<n;++j) { // for each variable in c
+                        if (!contains(*cx[i]._VECTptr,prob.vars[j]))
+                            continue;
+                        if (is_strictly_positive(fv[j],ctx)) {
+                            ku[j]++;
+                            if (is_strictly_greater(fv[j],su[j],ctx))
+                                su[j]=fv[j];
+                        } else if (!is_zero(fv[j],ctx)) {
+                            kl[j]++;
+                            if (is_strictly_greater(sl[j],fv[j],ctx))
+                                sl[j]=fv[j];
+                        }
+                    }
+                }
+            }
+        }
+        if (NINF==0 || (ipt!=NULL && ipt->filter_accepts(ipt->vars2x(p)))) {
+            if (store)
+                x0=p;
+            return true;
+        }
+        std::fill(t.begin(),t.end(),0);
+        for (int j=0;j<n;++j) {
+            if (kl[j]==ku[j])
+                t[j]=(sl[j]+su[j])/2;
+            else if (ku[j]>kl[j])
+                t[j]=su[j];
+            else t[j]=sl[j];
+        }
+        if (is_zero(l2norm(t,ctx),ctx))
+            return false; // movement tolerance exceeded
+        p=addvecteur(p,t);
+        for (int j=0;j<n;++j) {
+            if (is_strictly_greater(p[j],x_ub[j],ctx))
+                p[j]=x_ub[j];
+            else if (is_strictly_greater(x_lb[j],p[j],ctx))
+                p[j]=x_lb[j];
+        }
+    }
+    return false; // max number of iterations exceeded
+}
+/* Randomized standard heuristic */
+void nlp_problem::region::rs_heur(vecteur &x0) const {
+    x0.resize(n);
+    gen D=rand_uniform(0.5,1.0,ctx);
+    for (int j=0;j<n;++j) {
+        if (!is_inf(x_lb[j]) && !is_inf(x_ub[j])) { // doubly bounded
+            gen r=(x_ub[j]-x_lb[j])/2;
+            if (is_greater(D,r,ctx))
+                D=rand_uniform(r/10,(9*r)/10,ctx);
+            x0[j]=(x_lb[j]+x_ub[j])/2+D;
+        } else if (!is_inf(x_lb[j])) // single lower bound
+            x0[j]=x_lb[j]+D;
+        else if (!is_inf(x_ub[j])) // single upper bound
+            x0[j]=x_ub[j]-D;
+        else x0[j]=D; // unbounded in both directions
+    }
+}
+gen nlp_problem::region::bisection(const vecteur &x0,int i,const gen &a,const gen &b,int d) {
+    assert(is_strictly_greater(b,a,ctx) && d!=0 && i>=0 && i<int(x0.size()));
+    if (is_greater(ftol,b-a,ctx))
+        return d>0?b:a;
+    vecteur p(x0);
+    gen q=(a+b)/2;
+    p[i]=q;
+    gen old_b=d>0?x_lb[i]:x_ub[i];
+    if (d>0) x_lb[i]=q; else x_ub[i]=q;
+    bool succ=mfeas(p,false);
+    if (d>0) x_lb[i]=old_b; else x_ub[i]=old_b;
+    if (succ)
+        return bisection(x0,i,d>0?q:a,d>0?b:q,d);
+    return bisection(x0,i,d>0?a:q,d>0?q:b,d);
+}
+bool nlp_problem::region::strides(const vecteur &x0_orig,int i,int d,int lim,gen &a,gen &b) {
+    assert(d!=0 && lim>0 && !x0_orig.empty() && i>=0 && i<int(x0_orig.size()));
+    if (d>0) b=plus_inf; else a=minus_inf;
+    vecteur x0(x0_orig);
+    gen old_x=x0[i],old_b=d>0?x_lb[i]:x_ub[i];
+    double step=0.618033;
+    bool ret=false;
+    for (int j=0;j<lim;++j) {
+        gen dx(step*(1<<j));
+        if (d>0) x_lb[i]=old_x+dx; else x_ub[i]=old_x-dx;
+        x0[i]=d>0?x_lb[i]:x_ub[i];
+        if (!mfeas(x0,false)) {
+            a=d>0?old_x:x_ub[i];
+            b=d>0?x_lb[i]:old_x;
+            ret=true;
+            break;
+        }
+        old_x=d>0?x_lb[i]:x_ub[i];
+    }
+    if (d>0) x_lb[i]=old_b; else x_ub[i]=old_b;
+    return ret;
+}
+/* Find bound of the variable x[i] in direction d (d<0 is lower bound, d>0 is upper bound) */
+bool nlp_problem::region::find_bound(const vecteur &x0,int i,int d,gen &bnd) {
+    if (prob._linconstr) {
+        vecteur sol;
+        gen optval;
+        int res=prob.minimize_linear((d<0?1:-1)*prob.vars[i],prob.constraints(true),sol,optval);
+        if (res==solution_status::_OPTIMAL) {
+            bnd=sol[i];
+            return true;
+        }
+        return false;
+    }
+    gen a,b;
+    if (!strides(x0,i,d,25,a,b))
+        return false;
+    bnd=bisection(x0,i,a,b,d);
+    return true;
+}
+/* Compute bounding rectangle of the feasible area */
+matrice nlp_problem::region::bounding_rect() {
+    matrice bd=mtran(makevecteur(x_lb,x_ub));
+    if (has_inf_or_undef(bd)) {
+        prob.msg("Estimating variable bounds...");
+        vecteur x0;
+        rs_heur(x0);
+        gen bnd;
+        int i=0;
+        for (;i<n;++i) {
+            gen &lb=bd[i]._VECTptr->front(),&ub=bd[i]._VECTptr->back();
+            if (is_inf(lb) && find_bound(x0,i,-1,bnd))
+                lb=bnd-ftol;
+            if (is_inf(ub) && find_bound(x0,i,1,bnd))
+                ub=bnd+ftol;
+            if (is_strictly_positive(lb-ub,ctx)) {
+                prob._infeas=true;
+                prob.warn("problem appears to be infeasible, try again with bounded variables or initial rectangle");
+                break;
+            }
+        }
+        if (has_inf_or_undef(bd))
+            prob.msg("Feasible region is unbounded");
+        else
+            prob.msg("Feasible region is bounded");
+    }
+    return bd;
+}
+/* END NLP_REGION CLASS */
+
+/* COBYLA optimizer. */
+bool nlp_problem::cobyla(const vecteur &cons,const meth_parm &parm,optima_t &res) {
+    vecteur fcv=makevecteur(obj,cons,vars),x0;
+    cobyla_gc gc={fcv,ctx};
+    int maxiter=parm.max_iter,cres,iter,tries,max_tries=5;
+    while (maxiter>0 && restart(x0)) {
+        optimum_t opt;
+        try { // run COBYLA
+            tries=0;
+            while (maxiter>0 && tries++<max_tries) {
+                iter=maxiter;
+                cres=giac_cobyla(&gc,x0,iter,parm.eps,0);
+                maxiter-=iter;
+                if (cres!=COBYLA_ROUNDING)
+                    break;
+            }
+            if (cres==COBYLA_MAXFUN)
+                maxiter=0;
+            if (cres<0) // error
+                opt.res=solution_status::_ERROR;
+            else {
+                opt.x=x0;
+                save_point(x0);
+                opt.res=cres>0?solution_status::_FAILED:solution_status::_OPTIMAL;
+            }
+        } catch (const std::runtime_error &err) { // an error raised in COBYLA or user interruption
+            msg(err.what());
+            return false;
+        }
+        res.push_back(opt);
+    }
+    return true;
+}
+/* Evaluate objective Hessian at point x0 (if full=false, evaluate only the lower triangle). */
+bool nlp_problem::subst_hessian(const vecteur &x0,matrice &H,bool full) const {
+    if (!_have_hessian || mrows(H)!=var_count() || mcols(H)!=var_count())
+        return false;
+    const_iterateur it=obj_hessian.begin(),itend=obj_hessian.end(),jt,jtend;
+    int i,j;
+    for (i=0;it!=itend;++it,++i) {
+        jt=it->_VECTptr->begin();
+        jtend=it->_VECTptr->end();
+        for (j=0;jt!=jtend;++jt,++j) {
+            gen hij=subst(*jt,vars,x0,false,ctx);
+            if (!is_real_number(hij,ctx))
+                return false;
+            hij=to_real_number(hij,ctx);
+            H[i]._VECTptr->at(j)=hij;
+            if (full && i!=j)
+                H[j]._VECTptr->at(i)=hij;
+        }
+    }
+    return true;
+}
+/* Minimize O subject to C and problem variables by using LPSOLVE. */
+int nlp_problem::minimize_linear(const gen &o,const vecteur &c,vecteur &sol,gen &optval) const {
+    gen res;
+    vecteur iv;
+    int i=0,n=var_count();
+    for (;i<n;++i) if (is_intvar(i)) iv.push_back(vars[i]);
+    try {
+        log_output_redirect lor(ctx);
+        res=_lpsolve(makesequence(o,c,symb_equal(change_subtype(_LP_INTEGERVARIABLES,_INT_MAPLECONVERSION),iv)),ctx);
+    } catch (const std::runtime_error &e) {
+        return solution_status::_ERROR;
+    }
+    if (res.type!=_VECT)
+        return solution_status::_ERROR;
+    if (res._VECTptr->empty())
+        return solution_status::_INFEAS;
+    if (res._VECTptr->size()!=2 || res._VECTptr->back().type!=_VECT)
+        return solution_status::_ERROR;
+    optval=res._VECTptr->front();
+    if (is_inf(optval))
+        return solution_status::_UNBOUNDED;
+    const vecteur &tmpsol=*res._VECTptr->back()._VECTptr;
+    sol.resize(vars.size(),undef);
+    int j;
+    for (const_iterateur it=tmpsol.begin();it!=tmpsol.end();++it) {
+        if (!is_equal(*it) || (j=indexof(it->_SYMBptr->feuille._VECTptr->front(),vars))<0)
+            continue;
+        sol[j]=it->_SYMBptr->feuille._VECTptr->back();
+    }
+    return has_inf_or_undef(sol)?solution_status::_ERROR:solution_status::_OPTIMAL;
+}
+/* Return true if G is a vector of intervals. */
+bool is_vect_of_intervals(const gen &g,vecteur &lb,vecteur &ub,GIAC_CONTEXT) {
+    if (g.type!=_VECT || g._VECTptr->empty())
+        return false;
+    lb.resize(g._VECTptr->size());
+    ub.resize(g._VECTptr->size());
+    for (const_iterateur it=g._VECTptr->begin();it!=g._VECTptr->end();++it) {
+        int i=it-g._VECTptr->begin();
+        if (!it->is_symb_of_sommet(at_interval))
+            return false;
+        const vecteur &lr=*it->_SYMBptr->feuille._VECTptr;
+        if (!is_real_number(lr.front(),contextptr) || !is_real_number(lr.back(),contextptr))
+            return false;
+        lb[i]=to_real_number(lr.front(),contextptr);
+        ub[i]=to_real_number(lr.back(),contextptr);
+    }
+    return true;
+}
+/* Compute initial size from parm.init_size.
+ * If parm.init_size is zero, return uniform random number between LO*D and HI*D,
+ * where D is the range of the smallest dimension. Otherwise, return parm.init_size.
+ * If there is not a variable with lower and upper bound, and parm.init_size is zero,
+ * then return 1 (each dimension has an inifinite range).
+ */
+double nlp_problem::initial_size(const meth_parm &parm,double lo,double hi) const {
+    if (parm.size>0)
+        return parm.size;
+    int n=var_count();
+    double ret;
+    ret=rand_uniform(lo,hi,ctx).to_double(ctx);
+    bool has_bounded_dim=false;
+    gen min_dim_range=plus_inf;
+    for (int i=0;i<n;++i) {
+        gen rng=ub[i]-lb[i];
+        if (is_inf(rng))
+            continue;
+        has_bounded_dim=true;
+        if (is_strictly_greater(min_dim_range,rng,ctx))
+            min_dim_range=rng;
+    }
+    return has_bounded_dim?ret*to_real_number(min_dim_range,ctx).to_double(ctx):1.0;
+}
+void nlp_problem::randomize_ith_component(vecteur &x,int i,bool use_varbnds) const {
+    const gen &lo=use_varbnds?lb[i]:bd_rect[i][0];
+    gen hi=(use_varbnds?ub[i]:bd_rect[i][1])+(is_intvar(i)?1:0);
+    if (is_inf(lo) && is_inf(hi))
+        x[i]=rand_normal(1.0,false,ctx);
+    else if (is_inf(hi))
+        x[i]=lo+rand_normal(1.0,true,ctx);
+    else if (is_inf(lo))
+        x[i]=hi-rand_normal(1.0,true,ctx);
+    else x[i]=rand_uniform(lo,hi,ctx);
+}
+/* Generate a random initial point X which conforms to the bounds of variables.
+ * This procedure avoids previously stored points. If convexity clusters are available,
+ * it attempts to generate points near their centers.
+ * NSAMP - maximum number of samples that will be generated in case there are stored points.
+ * SIGMA-SCALE - standard-deviation scaling along the dimensions if there are stored points.
+ * Return true on success, else return false. */
+bool nlp_problem::make_random_initial_point(vecteur &x,gen *fval,int nsamp,double sigma_scale) {
+    int n=vars.size(),iter=0,ccsize=cclust_centers.size(),k;
+    vecteur samples,x0(n);
+    while (nsamp>(int)samples.size() && ++iter<nsamp*10) {
+        if (ccsize==0) {
+            if (saved_points.empty()) {
+                /* No previously saved points, generate an uniformly random point in bd_rect,
+                * for unbounded dimensions resp. those bounded only from one side,
+                * use normal distribution with mean zero resp. the bound. */
+                for (int i=0;i<n;++i)
+                    randomize_ith_component(x0,i,false);
+            } else {
+                /* stick to stored points */
+                if (initp_sigma.empty()) { // compute sigma for each dimension
+                    initp_sigma.resize(n);
+                    for (k=0;k<n;++k) {
+                        gen &sk=initp_sigma[k];
+                        if (is_inf(sk=std::sqrt(sigma_scale)*(bd_rect[k][1]-bd_rect[k][0])))
+                            sk=1;
+                    }
+                }
+                k=_rand(saved_points.size(),ctx).val;
+                rand_multinormal(*saved_points[k]._VECTptr,initp_sigma,x0,ctx);
+            }
+        } else { // have clusters, try generating a point within a randomly chosen cluster
+            if (cclust_freqs.empty())
+                cclust_freqs.resize(cclust_centers.size(),0);
+            vecteur z=*_find(makesequence(0,cclust_freqs),ctx)._VECTptr;
+            /* Choose uniformly between cluster centers that haven't been selected before,
+            * if there are not such clusters select k-th cluster with probability
+            * proportional to 1/freq[k], where freq[k] is the choice frequency of k-th cluster. */
+            if (z.empty())
+                k=rand_categorical(*_inv(z,ctx)._VECTptr,ctx);
+            else k=z[_rand(z.size(),ctx).val].val;
+            // random normal variable with cluster center as mean and cluster size as sigma
+            rand_multinormal(*cclust_centers[k]._VECTptr,cclust_sizes[k],x0,ctx);
+            // assure the point resides within the variable bounds
+        }
+        if (clamp(x0) && ccsize==0 && !saved_points.empty())
+            continue;
+        if (fval==NULL || compute_obj_val(x0,*fval)) {
+            samples.push_back(makevecteur(x0,fval==NULL?undef:*fval));
+            if (ccsize>0) {
+                cclust_freqs[k]+=1;
+                break;
+            }
+            if (saved_points.empty())
+                break;
+        }
+    }
+    if (samples.empty())
+        return false;
+    if (samples.size()==1) {
+        x=*samples.front()._VECTptr->front()._VECTptr;
+        if (fval!=NULL)
+            *fval=samples.front()._VECTptr->back();
+    } else { // multiple samples
+        assert(!saved_points.empty());
+        gen minp=plus_inf,pval,e;
+        const_iterateur it=samples.begin(),itend=samples.end(),jt,jtend;
+        for (;it!=itend;++it) {
+            pval=0;
+            const vecteur &pt=*it->_VECTptr->front()._VECTptr;
+            for (jt=saved_points.begin(),jtend=saved_points.end();jt!=jtend;++jt) {
+                vecteur d=subvecteur(pt,*jt->_VECTptr);
+                e=0;
+                for (k=0;k<n;++k) e+=pow(d[k]/initp_sigma[k],2);
+                pval+=exp(-e/2,ctx);
+            }
+            if (is_strictly_greater(minp,pval,ctx)) {
+                x=pt;
+                minp=pval;
+                if (fval!=NULL)
+                    *fval=it->_VECTptr->back();
+            }
+        }
+    }
+    return true;
+}
+/* Make next initial point.
+ * If there are initial points provided by the user, they will be iterated over.
+ * Otherwise, make_random_initial_point is used to generate one.
+ * If this method returns false, the respective optimization process should terminate. */
+bool nlp_problem::restart(vecteur &x,gen *fval) {
+    int max_tries=10,tries=0;
+    bool ret=true;
+    if (initp_iter!=initp.end()) {
+        // fetch the next initial point among those provided in INITP
+        x=*(initp_iter++)->_VECTptr;
+        if (fval!=NULL)
+            ret=compute_obj_val(x,*fval);
+    } else {
+        if (!initp.empty())
+            return false; // done iterating over the user-provided initial points
+        // attempt to generate a random initial point
+        while (tries++<max_tries) {
+            ret=make_random_initial_point(x,fval);
+            if (ret) {
+                save_point(x);
+                break;
+            }
+        }
+    }
+    if (ret) { _ss << "Starting from point " << x; debug(); }
+    return ret;
+}
+/* Compute objective function value at X and store it to VAL.
+ * Penalty function is integrated according to the penalty scheme and weights.
+ * Return true if the computed value is a real number. */
+bool nlp_problem::compute_obj_val(const vecteur &x_orig,gen &val,bool print_err) {
+    vecteur x(x_orig);
+    int i=0,n=vars.size();
+    if (n!=(int)x.size())
+        return false;
+    for (;i<n;++i) if (is_intvar(i)) x[i]=INT(x[i]);
+    try {
+        val=_evalf(subst(obj,vars,x,false,ctx),ctx);
+        const_iterateur it,pit,itend;
+        gen s,b;
+        switch (_penalty_scheme) {
+        case 0: // no penalty function
+            break;
+        case 1: // Lagrangian
+            for (it=eq_cons.begin(),itend=eq_cons.end(),pit=penalty_eq.begin();it!=itend;++it,++pit)
+                if (!is_zero(*pit,ctx)) val+=*pit*subst(_abs(*it,ctx),vars,x,false,ctx);
+            for (it=ineq_cons.begin(),itend=ineq_cons.end(),pit=penalty_ineq.begin();it!=itend;++it,++pit)
+                if (!is_zero(*pit,ctx)) val+=*pit*max(0,-subst(*it,vars,x,false,ctx));
+            break;
+        case 2: // multiplicative penalty function
+            val+=obj_shift;
+            for (it=eq_cons.begin(),itend=eq_cons.end(),pit=penalty_eq.begin();it!=itend;++it,++pit) {
+                reim(*pit,s,b,ctx);
+                val=val*pow(1+s*subst(_abs(*it,ctx),vars,x,false,ctx),b,ctx);
+            }
+            for (it=ineq_cons.begin(),itend=ineq_cons.end(),pit=penalty_ineq.begin();it!=itend;++it,++pit) {
+                reim(*pit,s,b,ctx);
+                val=val*pow(1+s*max(0,-subst(*it,vars,x,false,ctx),ctx),b,ctx);
+            }
+            break;
+        default:
+            assert(false); // not implemented
+        }
+        if (is_real_number(val,ctx)) {
+            val=to_real_number(val,ctx);
+            _fevalc++;
+            return true;
+        }
+    } catch (const std::runtime_error &e) {
+        if (print_err) { _ss << e.what(); err(); }
+    }
+    val=undef;
+    if (print_err)
+        err("failed to compute objective value");
+    return false;
+}
+/* Clamp X0 to fit the bounds of variables. */
+bool nlp_problem::clamp(vecteur &x0,bool rnd) const {
+    int n=vars.size();
+    gen nb,xval;
+    bool clamped=false,lviol,uviol;
+    for (int i=0;i<n;++i) {
+        xval=is_intvar(i)?INT(x0[i]):x0[i];
+        lviol=is_strictly_greater(lb[i],xval,ctx);
+        uviol=is_strictly_greater(xval,ub[i],ctx);
+        if (!clamped)
+            clamped=lviol||uviol;
+        if (rnd && (lviol||uviol))
+            randomize_ith_component(x0,i,true);
+        if (!rnd) {
+            if (lviol) x0[i]=lb[i]; else if (uviol) x0[i]=ub[i];
+        }
+    }
+    return clamped;
+}
+/* Return true if at least FR*100% points in X are within the specified
+ * relative tolerance TOL from X[BEST]. */
+bool is_within_tolerance(const vecteur &x,int best,double tol,double fr,GIAC_CONTEXT) {
+    const vecteur &v=*x[best]._VECTptr;
+    gen vnorm=l2norm(v,contextptr);
+    int cnt=0;
+    for (const_iterateur it=x.begin();it!=x.end();++it) {
+        if (is_strictly_greater(tol,l2norm(subvecteur(*it->_VECTptr,v),contextptr)/(1+vnorm),contextptr))
+            cnt++;
+    }
+    return cnt>=fr*x.size();
+}
+/* Generate initial simplex at X0 with the given SIZE (Haftka and Guerdal 1993).
+ * Note that simplex will be clamped to fit variable bounds.
+ * Return TRUE on success, else return false (when objective is undefined at some vertex). */
+bool nlp_problem::initialize_simplex(const vecteur &x0,double size) {
+    nm_simplex[0]=x0;
+    int n=var_count();
+    double q=size*(std::sqrt(n+1)-1)/(n*M_SQRT2),p=size*(std::sqrt(n+1)+n-1)/(n*M_SQRT2);
+    for (int i=1;i<=n;++i) {
+        if (nm_simplex[i].type==_VECT)
+            std::fill(nm_simplex[i]._VECTptr->begin(),nm_simplex[i]._VECTptr->end(),q);
+        else nm_simplex[i]=vecteur(n,q);
+        vecteur &Si=*nm_simplex[i]._VECTptr;
+        Si[i-1]=p;
+        addvecteur(Si,x0,Si);
+        clamp(Si); if (!compute_obj_val(Si,nm_yarr[i])) return false;
+    }
+    return true;
+}
+/* Initialize all penalties to P. */
+void nlp_problem::initialize_penalties(const gen &p) {
+    if (penalty_eq.size()!=eq_cons.size())
+        penalty_eq.resize(eq_cons.size());
+    std::fill(penalty_eq.begin(),penalty_eq.end(),p);
+    if (penalty_ineq.size()!=ineq_cons.size())
+        penalty_ineq.resize(ineq_cons.size());
+    std::fill(penalty_ineq.begin(),penalty_ineq.end(),p);
+}
+/* Nelder-Mead algorithm iteration, which saves the current best point.
+ * if NO_GSL is true, then GSL implementation will not be used (e.g. when some variables are bounded).
+ * Return values: negative (error), 0 (continue), 1 (converged/small), 2 (flat/stalled), 3 (degenerated). */
+int nlp_problem::nm_iteration(vecteur &best_point,gen &fval,double &ssize,const meth_parm &parm,bool no_gsl) {
+    _iter_count++;
+#ifdef HAVE_LIBGSL
+    /* GSL NM implementation 'nmsimplex2' (linear complexity) */
+    if (!no_gsl) {
+        if (nm_s==NULL)
+            return -1; // error
+        int status=gsl_multimin_fminimizer_iterate(nm_s); // make a move
+        if (status)
+            return 2; // cannot continue
+        best_point=gsl_vector2vecteur(gsl_multimin_fminimizer_x(nm_s));
+        fval=gsl_multimin_fminimizer_minimum(nm_s);
+        double size=gsl_multimin_fminimizer_size(nm_s); // simplex size
+        if (gsl_multimin_test_size(size,parm.eps)==GSL_SUCCESS)
+            return 1; // converged
+        return 0; // continue iterating
+    }
+#endif
+    /* Giac NM implementation, detects small/flat/degenerated simplices */
+    matrice E; // simplex edges
+    vector<int> p;
+    int n=var_count(),i,opt_ind;
+    sortperm(nm_yarr,p,ctx); // sort from lowest to highest
+    apply_permutation(nm_simplex,p,true);
+    apply_permutation(nm_yarr,p,true);
+    _base_vertex_index=p[_base_vertex_index]; // update index of the base vertex
+    vecteur xl=*nm_simplex.front()._VECTptr,xh=*nm_simplex.back()._VECTptr,xs=*nm_simplex[n-1]._VECTptr;
+    gen yl=nm_yarr.front(),yh=nm_yarr.back(),ys=nm_yarr[n-1],yr,ye,yc,dc,rng;
+    vecteur xm=*_mean(vecteur(nm_simplex.begin(),nm_simplex.begin()+n),ctx)._VECTptr;
+    vecteur xr=addvecteur(xm,multvecteur(nm_alpha,subvecteur(xm,xh))); // reflection point
+    clamp(xr); if (!compute_obj_val(xr,yr)) return -1;
+    ssize=0;
+    if (is_strictly_greater(yl,yr,ctx)) {
+        vecteur xe=addvecteur(xm,multvecteur(nm_beta,subvecteur(xr,xm))); // expansion point
+        clamp(xe); if (!compute_obj_val(xe,ye)) return -1;
+        if (is_strictly_greater(yr,ye,ctx)) { // expansion
+            nm_simplex.back()=xe; nm_yarr.back()=ye;
+        } else { // reflection
+            nm_simplex.back()=xr; nm_yarr.back()=yr;
+        }
+    } else if (is_strictly_greater(yr,ys,ctx)) {
+        if (is_greater(yh,yr,ctx)) {
+            xh=xr; yh=yr; nm_simplex.back()=xr; nm_yarr.back()=yr;
+        }
+        vecteur xc=addvecteur(xm,multvecteur(nm_gamma,subvecteur(xh,xm))); // contraction point
+        if (!compute_obj_val(xc,yc)) return -1;
+        if (is_strictly_greater(yc,yh,ctx)) { // shrinking
+            gen maxd=minus_inf,d;
+            for (i=1;i<n+1;++i) {
+                vecteur &Si=*nm_simplex[i]._VECTptr;
+                Si=addvecteur(multvecteur(1-nm_delta,Si),multvecteur(nm_delta,xl));
+                if (!compute_obj_val(Si,nm_yarr[i])) return -1;
+            }
+        } else { // contraction
+            nm_simplex.back()=xc; nm_yarr.back()=yc;
+        }
+    } else { // reflection
+        nm_simplex.back()=xr; nm_yarr.back()=yr;
+    }
+    // store best point and the corresponding objective value
+    opt_ind=argmin(nm_yarr,ctx);
+    best_point=*nm_simplex[opt_ind]._VECTptr;
+    fval=nm_yarr[opt_ind];
+    // get simplex edges
+    E.clear();
+    const vecteur &bv=*nm_simplex[_base_vertex_index]._VECTptr;
+    for (i=0;i<=n;++i) {
+        if (i!=_base_vertex_index)
+            E.push_back(subvecteur(*nm_simplex[i]._VECTptr,bv));
+    }
+    assert(is_squarematrix(E));
+    for (const_iterateur it=E.begin();it!=E.end();++it) {
+        const_iterateur jt=it->_VECTptr->begin(),jtend=it->_VECTptr->end();
+        dc=0;
+        for (i=0;jt!=jtend;++jt,++i) {
+            rng=(!bd_rect.empty() && !has_inf_or_undef(bd_rect[i]))?bd_rect[i][1]-bd_rect[i][0]:1;
+            dc+=_abs(*jt/rng,ctx);
+        }
+        if (is_strictly_greater(dc,ssize,ctx))
+            ssize=_evalf(dc,ctx).to_double(ctx);
+    }
+    if (is_strictly_greater(parm.eps,ssize,ctx))
+        return 1;
+    if (is_zero(_max(nm_yarr,ctx)-_min(nm_yarr,ctx),ctx))
+        return 2;
+    vecteur Enorm=*_apply(makesequence(at_l2norm,E),ctx)._VECTptr;
+    if (is_strictly_greater(parm.tol,_min(Enorm,ctx)/_max(Enorm,ctx),ctx) ||
+            is_strictly_greater(parm.tol,_abs(_det(E,ctx),ctx)/_product(Enorm,ctx),ctx))
+        return 3;
+#if 0
+    if (is_strictly_greater(parm.eps,_stddev(nm_yarr,ctx),ctx)) // original Nelder-Mead termination criterion
+        return 1;
+#endif
+    return 0; // continue iterating
+}
+/* Nelder-Mead minimizer. */
+bool nlp_problem::nelder_mead(const meth_parm &parm,optima_t &res) {
+    int maxiter=parm.max_iter,n=var_count(),status,degeneracy_count=0;
+    if (n<=0 || maxiter<=0)
+        return false;
+    bool no_gsl=has_bounded_variables(),has_ips=!initp.empty(),fixed_penalty=false;
+    double nm_initsize,ssize=-1;
+    vecteur ip,bp;
+    gen fval;
+#ifdef HAVE_LIBGSL
+    gsl_vector *nm_ss=NULL,*nm_x0=NULL;
+    gsl_multimin_function nm_func;
+    if (!no_gsl) {
+        msg("Using GSL minimizer...");
+        nm_s=gsl_multimin_fminimizer_alloc(gsl_multimin_fminimizer_nmsimplex2,n);
+        nm_func.n=n;
+        nm_func.f=&nlp_problem::gsl_my_f;
+        nm_func.params=static_cast<void*>(this);
+        nm_ss=gsl_vector_alloc(n);
+        gsl_vector_set_all(nm_ss,initial_size(parm,0.02,0.10));
+        initialize_penalties(1.0/parm.eps);
+        fixed_penalty=true;
+    } else {
+#endif
+        nm_alpha=parm.reflect_ratio;
+        nm_beta=parm.expand_ratio;
+        nm_gamma=parm.contract_ratio;
+        nm_delta=parm.shrink_ratio;
+        if (nm_alpha<=0 || nm_beta<=1 || nm_gamma<=0 || nm_gamma>=1 || nm_delta<=0 || nm_delta>=1) {
+            err("invalid parameter(s) for Nelder & Mead algorithm");
+            return false;
+        }
+        nm_initsize=initial_size(parm,0.02,0.1);
+        nm_simplex.resize(n+1);
+        nm_yarr.resize(n+1);
+        initialize_penalties(is_real_number(parm.penalty,ctx)&&is_positive(parm.penalty,ctx)?to_real_number(parm.penalty,ctx):0);
+#ifdef HAVE_LIBGSL
+    }
+#endif
+    bool start_from_last_point=false;
+    gen best_L,L;
+    const_iterateur cit,citend;
+    iterateur pit;
+    gen pstep=parm.step<=0?1e-2:parm.step;
+    bool has_constraints=eq_count()+ineq_count()>0;
+    while (_iter_count<maxiter) {
+        optimum_t opt;
+        /* 1) provide initial point */
+        if (start_from_last_point) {
+            ip=bp;
+            start_from_last_point=false;
+        } else { // start from a new initial point
+            if (!restart(ip))
+                break;
+        }
+        /* 2) initialize simplex */
+#ifdef HAVE_LIBGSL
+        if (!no_gsl) {
+            nm_x0=vecteur2gsl_vector(ip,ctx);
+            gsl_multimin_fminimizer_set(nm_s,&nm_func,nm_x0,nm_ss);
+        } else {
+#endif
+            if (ssize<0) ssize=nm_initsize;
+            else { // simplex has to be inflated, need to move away from the bounds
+                for (int i=0;i<n;++i) {
+                    if (is_greater(2*ssize,ub[i]-lb[i],ctx))
+                        ip[i]=(lb[i]+ub[i])/2.0;
+                    else if (is_greater(ssize,ip[i]-lb[i],ctx))
+                        ip[i]=lb[i]+ssize;
+                    else if (is_greater(ssize,ub[i]-ip[i],ctx))
+                        ip[i]=ub[i]-ssize;
+                }
+                _ss << "Inflating simplex at point " << ip << "..."; debug();
+            }
+            if (!initialize_simplex(ip,ssize)) {
+                err("simplex initialization failed, aborting...");
+                opt.res=solution_status::_ERROR;
+                break;
+            } else _base_vertex_index=0;
+#ifdef HAVE_LIBGSL
+        }
+#endif
+        /* 3) iterate */
+        status=2;
+        while (_iter_count<maxiter && (status=nm_iteration(bp,fval,ssize,parm,no_gsl))==0) {
+            if (fixed_penalty || !has_constraints) continue;
+            /* handle constraints using adaptive linear penalty (Luersen, Riche & Guyon, 2003) */
+            // update penalty parameters
+            for (cit=eq_cons.begin(),pit=penalty_eq.begin(),citend=eq_cons.end();cit!=citend;++cit,++pit)
+                *pit+=pstep*_abs(subst(*cit,vars,bp,false,ctx),ctx);
+            for (cit=ineq_cons.begin(),pit=penalty_ineq.begin(),citend=ineq_cons.end();cit!=citend;++cit,++pit)
+                *pit+=pstep*max(0,-subst(*cit,vars,bp,false,ctx),ctx);
+            // recompute objective values at the simplex vertices
+            for (cit=nm_simplex.begin(),citend=nm_simplex.end(),pit=nm_yarr.begin();cit!=citend;++cit,++pit)
+                compute_obj_val(*cit->_VECTptr,*pit);
+        }
+        switch (status) {
+        case 1: // converged
+            debug("Converged");
+            opt.res=solution_status::_OPTIMAL;
+            break;
+        case 2: // flat simplex/stalled
+            debug("Stalled or simplex is flat");
+            opt.res=solution_status::_FAILED;
+            break;
+        case 3: // degenerated simplex
+            _ss << "Simplex is degenerated (size: " << ssize << ")"; debug();
+            if (++degeneracy_count==3) {
+                opt.res=solution_status::_FAILED;
+                pstep=10*pstep; // increase step-size for constraints
+                _ss << "Increasing step-size to " << pstep << "..."; debug();
+                break;
+            }
+            start_from_last_point=true;
+            continue; // restart from the best point
+        default: // error
+            debug("Aborted");
+            opt.res=solution_status::_ERROR;
+            break;
+        }
+        degeneracy_count=0;
+        ssize=-1; // restart with simplex of initial size
+        if (status>0) {
+            _ss << "Best point: " << bp; debug();
+            opt.x=bp;
+            save_point(bp);
+        }
+        /* 4) store the best point as a solution candidate */
+        res.push_back(opt);
+    }
+#ifdef HAVE_LIBGSL
+    if (!no_gsl) {
+        gsl_multimin_fminimizer_free(nm_s);
+        gsl_vector_free(nm_ss);
+        gsl_vector_free(nm_x0);
+    }
+#endif
+    _ss << "Penalties: " << mergevecteur(penalty_eq,penalty_ineq); debug();
+    return true;
+}
+/* Initialize the population for differential evolution. */
+bool nlp_problem::de_initialize(iterateur &it,const iterateur &itend,iterateur &kt,iterateur &ft,int &best_k) {
+    bool ok;
+    int i=0,ips=initp.size();
+    for (;it!=itend;++it,++kt,++ft,++i) {
+        *it=i;
+        if (i<ips) {
+            *kt=initp[i];
+            ok=compute_obj_val(*kt->_VECTptr,*ft);
+        } else *kt=vecteur(0);
+        if ((i>=ips || !ok) && !make_random_initial_point(*kt->_VECTptr,ft))
+            return false;
+        if (is_strictly_greater(best_obj_val,*ft,ctx)) {
+            best_obj_val=*ft;
+            best_k=i;
+        }
+    }
+    return true;
+}
+/* Differential evolution minimizer. */
+bool nlp_problem::differential_evolution(const meth_parm &parm,optimum_t &opt) {
+    int conv_iter=10,m=parm.search_points,maxiter=parm.max_iter+conv_iter;
+    double crossp=parm.cross_prob,tol=parm.tol,eps=parm.eps,s=parm.scale;
+    int n=var_count(),k,i,ia,ib,ic;
+    if (m<=0)
+        m=std::max((int)initp.size(),10*n);
+    if (s<=0) { // compute an "optimal" scale (Zaharie, 2002)
+        s=std::sqrt((2-crossp)/(2*n)+5e-2/crossp);
+        _ss << "Optimal scale factor: " << s; debug();
+    }
+    if (m<=0 || maxiter<=0 || crossp<0 || crossp>1 || s<0 || s>2 || tol<=0 || eps<=0)
+        return false;
+    /* create initial population and constraint penalties */
+    best_obj_val=plus_inf;
+    int best_k;
+    initialize_penalties(parm.penalty.type==_CPLX?parm.penalty:makecomplex(10,1));
+    vecteur x(m),fval(m),ind(m);
+    iterateur it=ind.begin(),itend=ind.end(),kt=x.begin(),ktend,ft=fval.begin();
+    if (!de_initialize(it,itend,kt,ft,best_k)) {
+        err("failed to initialize population");
+        return false;
+    }
+    if (eq_count()>0 || ineq_count()>0) // compute the objective shift
+        obj_shift=max(-_min(fval,ctx),0,ctx)+1000;
+    /* iterate DE */
+    const_iterateur jt;
+    bool converged=false,changed;
+    vecteur best_obj_vals,pts,y,abc;
+    best_obj_vals.reserve(maxiter);
+    y.reserve(n);
+    abc.reserve(3);
+    set<int> viol_eq,viol_ineq;
+    set<int>::const_iterator sit,sitend;
+    while (_iter_count++<maxiter) {
+        if (_iter_data) pts.push_back(x);
+        best_obj_vals.push_back(best_obj_val);
+        /* stopping criteria */
+        if (_iter_count>=conv_iter &&
+                is_greater(eps,(best_obj_vals.back()-best_obj_vals[_iter_count-conv_iter])/(1+best_obj_vals.back()),ctx) &&
+                is_within_tolerance(x,best_k,tol,0.67,ctx)) {
+            debug("Converged");
+            converged=true;
+            if (!is_feasible(*x[best_k]._VECTptr,tol,false,&viol_eq,&viol_ineq)) { // restart with larger penalty coefficients
+                _ss << int(viol_eq.size()+viol_ineq.size()) << " "
+                    << gettext("constraints violated, restarting with larger penalties..."); msg();
+                for (sit=viol_eq.begin(),sitend=viol_eq.end();sit!=sitend;++sit) {
+                    gen &p=penalty_eq[*sit];
+                    p=makecomplex(10*re(p,ctx),im(p,ctx)+1);
+                }
+                for (sit=viol_ineq.begin(),sitend=viol_ineq.end();sit!=sitend;++sit) {
+                    gen &p=penalty_ineq[*sit];
+                    p=makecomplex(10*re(p,ctx),im(p,ctx)+1);
+                }
+                it=ind.begin(); itend=ind.end(); kt=x.begin(); ft=fval.begin();
+                if (de_initialize(it,itend,kt,ft,best_k))
+                    continue;
+                err("failed to re-initialize the population");
+                opt.res=solution_status::_INFEAS;
+            }
+            break;
+        }
+        /* change the population */
+        for (kt=x.begin(),ktend=x.end(),ft=fval.begin(),k=0;kt!=ktend;++kt,++ft,++k) {
+            vecteur &xk=*kt->_VECTptr;
+            /* pick three random agents different than xk */
+            do abc=*_rand(makesequence(3,ind),ctx)._VECTptr; while (contains(abc,k));
+            ia=abc[0].val; ib=abc[1].val; ic=abc[2].val;
+            /* mutation */
+            y=addvecteur(*x[ia]._VECTptr,multvecteur(s,subvecteur(*x[ib]._VECTptr,*x[ic]._VECTptr)));
+            changed=false;
+            for (it=y.begin(),itend=y.end(),jt=xk.begin();it!=itend;++it,++jt) {
+                if (is_greater(crossp,rand_uniform(0,1,ctx),ctx)) {
+                    changed=true;
+                    *it=*jt;
+                }
+            }
+            if (!changed) { // force a change anyway
+                i=_rand(n,ctx).val;
+                gen ival=y[i];
+                y=xk;
+                y[i]=ival;
+            }
+            clamp(y,true);
+            /* fitness */
+            gen val;
+            if (compute_obj_val(y,val)) {
+                if (is_greater(*ft,val,ctx)) {
+                    xk=y;
+                    *ft=val;
+                    if (is_strictly_greater(best_obj_val,val,ctx)) {
+                        best_obj_val=val;
+                        best_k=k;
+                    }
+                }
+            }
+        }
+    }
+    obj_shift=0;
+    if (_iter_data)
+        iteration_data.push_back(pts);
+    opt.x=*x[best_k]._VECTptr;
+    for (i=0;i<n;++i) if (is_intvar(i)) opt.x[i]=INT(opt.x[i]);        
+    //opt.f=best_obj_val;
+    if (opt.res==solution_status::_PENDING)
+        opt.res=(converged?solution_status::_OPTIMAL:solution_status::_FAILED);
+    return true;
+}
+#ifdef HAVE_LIBGSL
+double nlp_problem::gsl_my_f(const gsl_vector *x,void *params) {
+    nlp_problem *prob=static_cast<nlp_problem*>(params);
+    gen fval;
+    if (!prob->compute_obj_val(gsl_vector2vecteur(x),fval))
+        return GSL_NAN;
+    return fval.to_double(prob->ctx);
+}
+void nlp_problem::gsl_my_df(const gsl_vector *x,void *params,gsl_vector *df) {
+    nlp_problem *prob=static_cast<nlp_problem*>(params);
+    vecteur Dval=subst(prob->obj_gradient,prob->vars,gsl_vector2vecteur(x),false,prob->ctx);
+    for (iterateur it=Dval.begin();it!=Dval.end();++it)
+        *it=evalf_double(*it,1,prob->ctx);
+    const iterateur it=Dval.begin(),itend=Dval.end();
+    if (vecteur2gsl_vector(it,itend,df,prob->ctx)!=GSL_SUCCESS)
+        prob->debug("Failed to compute gradient for GSL minimizer");
+}
+void nlp_problem::gsl_my_fdf(const gsl_vector *x,void *params,double *f,gsl_vector *df) {
+    *f=gsl_my_f(x,params);
+    gsl_my_df(x,params,df);
+}
+double nlp_problem::gsl_my_uf(double x,void *params) {
+    nlp_problem *prob=static_cast<nlp_problem*>(params);
+    gen fval;
+    if (!prob->compute_obj_val(vecteur(1,x),fval))
+        return GSL_NAN;
+    return fval.to_double(prob->ctx);
+}
+/* This method uses the vector Broyden-Fletcher-Goldfarb-Shanno (BFGS) algorithm.
+ * This is a quasi-Newton method which builds up an approximation to the second
+ * derivatives of the function f using the difference between successive gradient
+ * vectors. By combining the first and second derivatives the algorithm is able
+ * to take Newton-type steps towards the function minimum, assuming quadratic
+ * behavior in that region. */
+bool nlp_problem::gsl_bfgs(const meth_parm &parm,optima_t &res) {
+    int N=vars.size(),maxiter=parm.max_iter,status,restarts,max_restarts=0;
+    gsl_vector *xstart=gsl_vector_alloc(N);
+    gsl_multimin_fdfminimizer *s=gsl_multimin_fdfminimizer_alloc(gsl_multimin_fdfminimizer_vector_bfgs2,N);
+    gsl_multimin_function_fdf my_func;
+    my_func.n=N;
+    my_func.f=&nlp_problem::gsl_my_f;
+    my_func.df=&nlp_problem::gsl_my_df;
+    my_func.fdf=&nlp_problem::gsl_my_fdf;
+    my_func.params=static_cast<void*>(this);
+    vecteur x0;
+    while (_iter_count<maxiter && restart(x0)) {
+        optimum_t opt;
+        if (vecteur2gsl_vector(x0.begin(),x0.end(),xstart,ctx)!=GSL_SUCCESS)
+            opt.res=solution_status::_ERROR;
+        else {
+            opt.res=solution_status::_FAILED;
+            gsl_multimin_fdfminimizer_set(s,&my_func,xstart,parm.step<=0?1.0:parm.step,0.1);
+            restarts=0;
+            do {
+                status=gsl_multimin_fdfminimizer_iterate(s);
+                ++_iter_count;
+                opt.x=gsl_vector2vecteur(gsl_multimin_fdfminimizer_x(s));
+                opt.f=gsl_multimin_fdfminimizer_minimum(s);
+                if (status) {
+                    if (status==GSL_ENOPROG) { // GSL was unable to make improvement
+                        gsl_multimin_fdfminimizer_restart(s);
+                        if (restarts++<max_restarts) {
+                            _ss << "Unable to make improvement, restarting... (attempt " << restarts << ")";
+                            debug();
+                            continue;
+                        }
+                        //warn("unable to make improvement, aborting search");
+                        break; // cannot continue;                        
+                    }
+                    _ss << gettext("GSL minimizer") << " " << gsl_multimin_fdfminimizer_name(s)
+                        << " " << gettext("failed with error code") << " " << status;
+                    err();
+                    opt.res=solution_status::_ERROR;
+                    break;
+                }
+                restarts=0;
+                status=gsl_multimin_test_gradient(s->gradient,parm.eps);
+                if (status==GSL_SUCCESS) {
+                    _ss << "Converged to point " << opt.x; debug();
+                    opt.res=solution_status::_OPTIMAL;
+                    break;
+                }
+            } while (_iter_count<maxiter);
+        }
+        res.push_back(opt);
+    }
+    gsl_multimin_fdfminimizer_free(s);
+    gsl_vector_free(xstart);
+    return true;
+}
+#endif // HAVE_LIBGSL
+
+/* 
+ * INTERIOR POINT IMPLEMENTATION (IPT_SOLVER CLASS)
+ */
+nlp_problem::ipt_solver::ipt_solver(nlp_problem &p,const meth_parm &parm) : prob(p), ctx(p.ctx) {
+    eps_tol=parm.eps;
+    feas_tol=parm.tol;
+    maxiter=parm.max_iter;
+    initialized=false;
+    mu=temp_symb("mu",-1,ctx);
+#ifdef HAVE_LIBLAPACK
+    factorization=NULL;
+    lapack_work=NULL;
+    lapack_ipiv=NULL;
+    lapack_rhs=NULL;
+#endif
+    init_parameters();
+}
+nlp_problem::ipt_solver::~ipt_solver() {
+#ifdef HAVE_LIBLAPACK
+    if (factorization!=NULL) delete[] factorization;
+    if (lapack_work!=NULL) delete[] lapack_work;
+    if (lapack_ipiv!=NULL) delete[] lapack_ipiv;
+    if (lapack_rhs!=NULL) delete[] lapack_rhs;
+#endif
+}
+/* initialize internal parameters with values from the Waechter & Biegler paper */
+void nlp_problem::ipt_solver::init_parameters() {
+    kappa_eps=10;
+    kappa_mu=0.2;
+    kappa_Sigma=1e10;
+    kappa_soc=0.1; // not specified in the paper, guessing...
+    kappa_1=1e-2;
+    tau_min=0.99;
+    theta_mu=1.5;
+    delta=1;
+    s_max=100;
+    s_theta=1.1;
+    s_phi=2.3;
+    eta_phi=1e-4;
+    gamma_alpha=0.05;
+    gamma_theta=1e-5;
+    gamma_phi=1e-5;
+    p_max=4;
+    bardelta_w_min=1e-20;
+    bardelta_w_0=1e-4;
+    bardelta_w_max=1e40;
+    bardelta_c=1e-8;
+    kappa_w_minus=1.0/3.0;
+    kappa_w_plus=0;
+    barkappa_w_plus=100;
+    kappa_c=0.25;
+    kappa_resto=0.9;
+    lambda_max=1e3;
+    theta_min=theta_max=undef;
+}
+/* substitute variables in EXPR */
+vecteur nlp_problem::ipt_solver::subs_vars(const vecteur &expr,const vecteur &x0,const vecteur &lambda0,const vecteur &z0,double muj) {
+    vecteur res=expr;
+    if (!x0.empty()) res=subst(res,x,x0,false,ctx);
+    if (!lambda0.empty()) res=subst(res,lambda,lambda0,false,ctx);
+    if (!z0.empty()) res=subst(res,z,z0,false,ctx);
+    if (muj>=0) res=subst(res,mu,muj,false,ctx);
+    return res;
+}
+/* compute the barrier function value */
+gen nlp_problem::ipt_solver::barrier_fval(const vecteur &x0) const {
+    return _evalf(subst(f,x,x0,false,ctx)-mu_j*ln(_product(x0,ctx),ctx),ctx);
+}
+/* compute constraint violation */
+gen nlp_problem::ipt_solver::constraint_violation(const vecteur &x0) const {
+    return _evalf(_l1norm(subst(c,x,x0,false,ctx),ctx),ctx);
+}
+/* initialize filter */
+void nlp_problem::ipt_solver::init_filter() {
+    F.clear();
+    F.resize(1,makevecteur(theta_max,minus_inf));
+}
+/* update filter with a new pair (THETA,PHI) */
+void nlp_problem::ipt_solver::update_filter(const gen &b_theta,const gen &b_phi) {
+    F.push_back(makevecteur(b_theta,b_phi));
+}
+/* Optimality error for the barrier problem with mu = mu0 */
+gen nlp_problem::ipt_solver::E(const gen &mu0,const vecteur &x0,const vecteur &lambda0,const vecteur &z0) {
+    gen s_d=max(s_max,(_l1norm(lambda0,ctx)+_l1norm(z0,ctx))/(nvars+ncons),ctx)/s_max;
+    gen s_c=max(s_max,_l1norm(z0,ctx)/nvars,ctx)/s_max;
+    vecteur e1v=subvecteur(grad_f,ncons>0?subvecteur(z0,multmatvecteur(A,lambda0)):z0),cx;
+    e1v.resize(nvars-nslacks);
+    e1v=subst(e1v,x,x0,false,ctx);
+    cx=subst(c,x,x0,false,ctx);
+    gen ret=_max(makevecteur(linfn(e1v)/s_d,linfn(subvecteur(pprod(x0,z0),vecteur(nvars,mu0)))/s_c,linfn(cx)),ctx);
+    if (!is_real_number(ret,ctx)) {
+        prob.debug("Failed to compute merit function");
+        return undef;
+    }
+    return to_real_number(ret,ctx);
+}
+/* Inertia correction of the KKT matrix */
+bool nlp_problem::ipt_solver::IC(const matrice &mat) {
+    int n_pos,n_neg,n_zero,i,j;
+    delta_w=delta_c=0;
+    bool is_first=true;
+    while (true) {
+#ifdef HAVE_LIBLAPACK
+        const_iterateur it=mat.begin(),itend=mat.end(),jt,jtend;
+        gen e;
+        for (i=0;it!=itend;++it,++i) {
+            jt=it->_VECTptr->begin();
+            jtend=it->_VECTptr->end();
+            for(j=0;jt!=jtend;++jt,++j) {
+                e=evalf_double(*jt,1,ctx);
+                if (i==j) e+=i<nvars?delta_w:-delta_c;
+                if (e.type!=_DOUBLE_)
+                    return false;
+                factorization[i+j*(nvars+ncons)]=e._DOUBLE_val;
+            }
+        }
+        if (!solve_indef(factorization,lapack_work,lapack_ipiv,NULL,nvars+ncons,0,&n_pos,&n_neg,&n_zero,ctx))
+            return false;
+        
+#else
+        copy_matrice(mat_orig,factorization);
+        for (i=0;i<nvars;++i) factorization[i]._VECTptr->at(i)+=delta_w;
+        for (i=0;i<ncons;++i) factorization[i+nvars]._VECTptr->at(i+nvars)-=delta_c;
+        if (!solve_indef(factorization,NULL,ldl_perm,&n_pos,&n_neg,&n_zero,ctx))
+            return false;
+#endif
+        if (n_zero==0 && n_pos==nvars)
+            break;
+        if (is_first) {
+            delta_w=delta_w_last>0?std::max(bardelta_w_min,kappa_w_minus*delta_w_last):bardelta_w_0;
+            delta_c=n_zero>0?bardelta_c*std::pow(mu_j,kappa_c):0;
+            is_first=false;
+            continue;
+        }
+        delta_w=delta_w_last>0?kappa_w_plus*delta_w:barkappa_w_plus*delta_w;
+        if (delta_w>bardelta_w_max)
+            return false;
+    }
+    return true;
+}
+/* return true iff (THETA,PHI) is accepted by the current filter */
+bool nlp_problem::ipt_solver::filter_accepts(const gen &theta,const gen &phi) const {
+    const_iterateur it=F.begin(),itend=F.end();
+    for (;it!=itend;++it) {
+        if (is_greater(theta,it->_VECTptr->front(),ctx) && is_greater(phi,it->_VECTptr->back(),ctx))
+            return false;
+    }
+    return true;
+}
+/* initialize the symbolic KKT system for the main iteration */
+bool nlp_problem::ipt_solver::kkt_init() {
+    matrice W(hess_f);
+    const_iterateur it=A.begin(),itend=A.end();
+    for (;it!=itend;++it) {
+        matrice J;
+        if (!jacobian(*it->_VECTptr,x,J,ctx)) {
+            prob.err("failed to compute second-order constraint derivatives");
+            return false;
+        }
+        W=madd(W,mscale(lambda[it-A.begin()],J));
+    }
+    sigma=pprod(*inv(x,ctx)._VECTptr,z);
+    if (ncons>0) {
+        matrice tmp=mtran(A);
+        kkt_mat=*_blockmatrix(makesequence(2,2,makevecteur(W,tmp,A,zero_mat(ncons,ncons,ctx))),ctx)._VECTptr;
+        A=tmp;
+    } else kkt_mat=W;
+    for (int i=0;i<nvars;++i) kkt_mat[i]._VECTptr->at(i)+=sigma[i];
+    kkt_rhs=multvecteur(-1,mergevecteur(subvecteur(ncons>0?addvecteur(grad_f,multmatvecteur(A,lambda)):grad_f,z),c));
+    return true;
+}
+/* initialize lambda values for the main iteration */
+vecteur nlp_problem::ipt_solver::init_lambda(const vecteur &x0,const vecteur &z0) {
+    if (ncons==0)
+        return vecteur(0);
+    matrice mat=subst(*_blockmatrix(makesequence(2,2,makevecteur(midn(nvars),A,mtran(A),zero_mat(ncons,ncons,ctx))),ctx)._VECTptr,x,x0,false,ctx);
+    vecteur rhs=multvecteur(-1,mergevecteur(subvecteur(subst(grad_f,x,x0,false,ctx),z0),vecteur(ncons,0)));
+    vecteur sol;
+    if (!solve_lsq(mat,rhs,sol,ctx))
+        return vecteur(ncons,0);
+    vecteur lambda0(sol.begin()+nvars,sol.end());
+    if (is_strictly_greater(linfn(lambda0),lambda_max,ctx))
+        return vecteur(ncons,0);
+    return lambda0;
+}
+/* linear system solver using LSQ */
+bool nlp_problem::solve_lsq(const matrice &lhs,const vecteur &rhs,vecteur &sol,GIAC_CONTEXT) {
+    gen res//=_linsolve(makesequence(lhs,rhs),contextptr)
+    ;
+    //return res.type==_VECT && (sol=*res._VECTptr).size()==rhs.size();
+    try {
+        log_output_redirect lor(contextptr);
+        res=_LSQ(makesequence(lhs,rhs),contextptr);
+    } catch (const std::runtime_error &e) {
+        return false;
+    }
+    return ckmatrix(res) && res._VECTptr->front()._VECTptr->size()==1 && (sol=*mtran(*res._VECTptr).front()._VECTptr).size()==rhs.size();
+}
+/* Feasibility restoration phase algorithm.
+ * We simply solve the relaxed Lagrangian sub-problem without
+ * nonnegativity constraints, starting from the current point X0.
+ * If the solution is not componentwise nonnegative, or the solution
+ * does not significantly reduce the infeasibility, the routine
+ * returns FAILED, otherwise it returns OPTIMAL. */
+int nlp_problem::ipt_solver::feas_restoration(vecteur &x0,vecteur &lambda0,vecteur &z0,const gen &viol_old,gen &viol) {
+    //prob.debug("Attempting feasibility restoration...");
+    vecteur d_R=*_apply(makesequence(at_min,mtran(makevecteur(vecteur(nvars,1.0),inv(_abs(x0,ctx),ctx)))),ctx)._VECTptr;
+    vecteur d_R2=pprod(d_R,d_R);
+    vecteur L_eq=multvecteur(2,pprod(d_R2,subvecteur(x,x0)));
+    if (ncons>0) L_eq=addvecteur(L_eq,multmatvecteur(A,lambda));
+    gen sol;
+    try {
+        sol=_fsolve(makesequence(mergevecteur(L_eq,c),mergevecteur(x,lambda),mergevecteur(x0,lambda0)),ctx);
+    } catch (const std::runtime_error &e) {
+        prob.err(e.what());
+        return solution_status::_ERROR;
+    }
+    if (sol.type!=_VECT || int(sol._VECTptr->size())<nvars)
+        return solution_status::_ERROR;
+    vecteur x_k(sol._VECTptr->begin(),sol._VECTptr->begin()+nvars);
+    if (!is_strictly_positive(_min(x_k,ctx),ctx)) {
+        viol=viol_old;
+        return solution_status::_FAILED;
+    }
+    /* compute new values of z and lambda */
+    vecteur d_x=subvecteur(x_k,x0),d_z;
+    compute_dz(x_k,d_x,z0,d_z);
+    gen alpha_z=fraction_to_boundary(z0,d_z);
+    z0=addvecteur(z0,multvecteur(alpha_z,d_z));
+    lambda0=init_lambda(x0,z0);
+    x0=x_k;
+    viol=constraint_violation(x0);
+    bool yes=filter_accepts(viol,barrier_fval(x0)) && is_greater(kappa_resto*viol_old,viol,ctx);
+    return yes?solution_status::_OPTIMAL:solution_status::_FAILED;
+}
+/* computing the movement in the direction of the z-variables */
+void nlp_problem::ipt_solver::compute_dz(const vecteur &x0,const vecteur &dx0,const vecteur &z0,vecteur &dz) {
+    dz=subs_vars(subvecteur(multvecteur(mu_j,*inv(x0,ctx)._VECTptr),addvecteur(z0,pprod(sigma,dx0))),x0,vecteur(0),z0);
+}
+/* reducing the step size */
+gen nlp_problem::ipt_solver::fraction_to_boundary(const vecteur &y,const vecteur &d_y) {
+    gen alpha(1);
+    const_iterateur it=d_y.begin(),itend=d_y.end();
+    for (;it!=itend;++it) {
+        if (is_strictly_positive(-(*it),ctx)) {
+            gen cand=-tau_j*y[it-d_y.begin()]/(*it);
+            if (is_strictly_greater(alpha,cand,ctx))
+                alpha=cand;
+        }
+    }
+    return alpha;
+}
+bool nlp_problem::ipt_solver::solve_kkt(const matrice &mat,const vecteur &rh,vecteur &sol) {
+#ifdef HAVE_LIBLAPACK
+    const_iterateur it=rh.begin(),itend=rh.end();
+    for (;it!=itend;++it) {
+        gen e=evalf_double(*it,1,ctx);
+        if (e.type!=_DOUBLE_) return solution_status::_ERROR;
+        lapack_rhs[it-rh.begin()]=e._DOUBLE_val;
+    }
+    if (!solve_indef(factorization,lapack_work,lapack_ipiv,lapack_rhs,nvars+ncons,1,NULL,NULL,NULL,ctx))
+        return false;
+    iterateur jt=sol.begin(),jtend=sol.end();
+    for (int i=0;jt!=jtend;++jt,++i) *jt=lapack_rhs[i];
+#else
+    std::copy(ldl_perm.begin(),ldl_perm.end(),sol.begin());
+    if (!solve_indef(factorization,&rh,sol,NULL,NULL,NULL,ctx))
+        return false;
+#endif
+    return true;
+}
+/* Interior-point iterative solver */
+int nlp_problem::ipt_solver::ls_filter_barrier_method(vecteur &x_k,vecteur &lambda_k,vecteur &z_k,double mu0) {
+    /* A-1. Initialize */
+    int j=0,k=-1,heur_iter=0,heur_threshold=4,skip_iter=0,skip_threshold=4;
+    delta_w_last=0;
+    init_filter();
+    mu_j=mu0;
+    tau_j=std::max(tau_min,1-mu_j);
+    bool prev_iter_full_step=false,converged=false,feas_restored=false,first_trial_stepsize_rejected,accepted;
+    vecteur pts,p_k,n_k,z_pk,z_nk,d_p,d_n,d_zp,d_zn;
+    while (prob._iter_count++<maxiter) {
+        ++k;
+        if (prob._iter_data) pts.push_back(x_k);
+        /* A-2. Check convergence for the overall problem */
+        gen merit=E(0,x_k,lambda_k,z_k);
+        if (is_undef(merit)) return solution_status::_ERROR;
+        //sprintf(buf,"Iteration %d: %g",k,merit.to_double(ctx));
+        //prob.debug(buf);
+        if (is_greater(eps_tol,merit,ctx)) {
+            converged=true;
+            break;
+        }
+        /* A-3. Check convergence for the barrier problem */
+        while (true) {
+            merit=E(mu_j,x_k,lambda_k,z_k);
+            if (is_undef(merit)) return solution_status::_ERROR;
+            if (is_strictly_greater(merit,kappa_eps*mu_j,ctx))
+                break;
+            mu_j=std::max(eps_tol/10,std::min(kappa_mu*mu_j,std::pow(mu_j,theta_mu)));
+            tau_j=std::max(tau_min,1-mu_j);
+            ++j;
+            init_filter();
+            if (k>0) break;
+        }
+        /* A-4. Update KKT matrix and compute the search direction */
+        matrice kktm=subs_vars(kkt_mat,x_k,lambda_k,z_k,mu_j);
+        theta_k=constraint_violation(x_k);
+        if (is_undef(theta_min)) theta_min=1e-4*max(1,theta_k,ctx);
+        if (is_undef(theta_max)) theta_max=1e4*max(1,theta_k,ctx);
+        phi_k=barrier_fval(x_k);
+        if (!IC(kktm)) {
+            prob.warn("KKT matrix is ill-conditioned");
+            if (ncons==0)
+                return solution_status::_FAILED;
+            update_filter((1-gamma_theta)*theta_k,subst(f,x,x_k,false,ctx)-gamma_phi*theta_k);
+            switch (feas_restoration(x_k,lambda_k,z_k,theta_k,theta_resto)) {
+            case solution_status::_ERROR:
+                //prob.debug("Feasibility restoration phase failed");
+                return solution_status::_ERROR;
+            case solution_status::_FAILED:
+                return is_greater(theta_resto,feas_tol,ctx)?solution_status::_INFEAS:solution_status::_FAILED;
+            default:
+                //prob.debug("Feasibility restored successfully");
+                continue;
+            }
+        }
+        vecteur kkt_sol(nvars+ncons),rhs=subs_vars(kkt_rhs,x_k,lambda_k,z_k,mu_j);
+        if (!solve_kkt(kktm,rhs,kkt_sol)) {
+            //prob.debug("Failed to obtain search directions");
+            return solution_status::_ERROR;
+        }
+        vecteur d_x(kkt_sol.begin(),kkt_sol.begin()+nvars),x_kn;
+        vecteur d_lambda(kkt_sol.begin()+nvars,kkt_sol.end()),d_z;
+        compute_dz(x_k,d_x,z_k,d_z);
+        /* A-5. Backtracking line search */
+        gen alpha_max=fraction_to_boundary(x_k,d_x),alpha_z=fraction_to_boundary(z_k,d_z);
+        /* A-5.1. Initialize the line search */
+        gen alpha_kl=alpha_max,alpha_k;
+        int l=0;
+        bool skip=false;
+        vecteur grad_phi=subvecteur(subst(subst(grad_f,x,x_k,false,ctx),mu,mu_j,false,ctx),z_k);
+        gen sp=-scalarproduct(grad_phi,d_x,ctx);
+        gen alpha_min=ncons==0?gamma_alpha:gamma_alpha*(is_strictly_positive(sp,ctx)?
+            _min(makesequence(gamma_theta,gamma_phi*theta_k/sp,delta*pow(theta_k,s_theta,ctx)/pow(sp,s_phi,ctx)),ctx):gen(gamma_theta));
+        alpha_min=max(min(alpha_min,alpha_max/100,ctx),eps_tol,ctx);
+        first_trial_stepsize_rejected=false;
+        while (true) {
+            if (ctrl_c || interrupted)
+                throw std::runtime_error("Stopped by user interruption");
+            /* A-5.2. Compute the new trial point */
+            vecteur x_kl=addvecteur(x_k,multvecteur(alpha_kl,d_x));
+            gen theta=constraint_violation(x_kl),phi=barrier_fval(x_kl);
+            bool switching_condition=is_strictly_positive(sp,ctx) && is_strictly_greater(alpha_kl*pow(sp,s_phi,ctx),delta*pow(theta_k,s_theta,ctx),ctx);
+            /* A-5.3. Check acceptability to the filter */
+            accepted=false;
+            while (!accepted) {
+                if (filter_accepts(theta,phi)) {
+                    /* A-5.4. Check sufficient decrease with respect to the current iterate */
+                    if ((is_greater(theta_min,theta_k,ctx) && switching_condition && is_greater(phi_k,phi+eta_phi*alpha_kl*sp,ctx)) ||
+                            ((is_strictly_greater(theta_k,theta_min,ctx) || !switching_condition) &&
+                                (is_greater((1-gamma_theta)*theta_k,theta,ctx) || is_greater(phi_k-gamma_theta*theta_k,phi,ctx)))) {
+                        alpha_k=alpha_kl;
+                        x_kn=x_kl;
+                        accepted=true;
+                    } else break;
+                } else if (heur_iter==heur_threshold) { // apply accelerating heuristic
+                    //prob.debug("Applying accelerating heuristic...");
+                    theta_max=0.1*theta_max;
+                    init_filter();
+                    heur_iter=0;
+                } else break;
+            }
+            if (accepted)
+                break;
+            if (l==0 && ncons>0 && is_greater(theta,theta_k,ctx)) {
+                //prob.debug("Applying second-order correction...");
+                /* A-5.5. Initialize the second-order correction */
+                int p=1; // SOC counter
+                vecteur c_soc=addvecteur(multvecteur(alpha_kl,subst(c,x,x_k,false,ctx)),subst(c,x,x_kl,false,ctx));
+                gen theta_old_soc=theta_k;
+                while (true) {
+                    /* A-5.6. Compute the second-order correction */
+                    rhs.resize(nvars);
+                    rhs=mergevecteur(rhs,c_soc);
+                    if (!solve_kkt(kktm,rhs,kkt_sol))
+                        return solution_status::_ERROR;
+                    vecteur d_x_cor(kkt_sol.begin(),kkt_sol.begin()+nvars);
+                    gen alpha_soc=fraction_to_boundary(x_k,d_x_cor);
+                    vecteur x_soc=addvecteur(x_k,multvecteur(alpha_soc,d_x_cor));
+                    /* A-5.7. Check acceptability to the filter (in SOC) */
+                    theta=constraint_violation(x_soc);
+                    phi=barrier_fval(x_soc);
+                    if (filter_accepts(theta,phi)) {
+                        /* A-5.8. Check sufficient decrease with respect to the current iterate (in SOC) */
+                        if ((is_greater(theta_min,theta_k,ctx) && switching_condition && is_greater(phi_k,phi+eta_phi*alpha_kl*sp,ctx)) ||
+                                ((is_strictly_greater(theta_k,theta_min,ctx) || !switching_condition) &&
+                                    (is_greater((1-gamma_theta)*theta_k,theta,ctx) || is_greater(phi_k-gamma_theta*theta_k,phi,ctx)))) {
+                            alpha_k=alpha_soc;
+                            x_kn=x_soc;
+                            accepted=true;
+                            break;
+                        }
+                    }
+                    /* A-5.9. Next second-order correction */
+                    if (p==p_max || is_strictly_greater(theta,kappa_soc*theta_old_soc,ctx))
+                        break;
+                    p++;
+                    c_soc=addvecteur(multvecteur(alpha_soc,c_soc),subst(c,x,x_soc,false,ctx));
+                    theta_old_soc=theta;
+                }
+                if (accepted)
+                    break;
+            }
+            /* A-5.10. Choose the new trial step size */
+            alpha_kl=0.5*alpha_kl;
+            first_trial_stepsize_rejected=true;
+            l++;
+            if (is_strictly_greater(alpha_min,alpha_kl,ctx)) {
+                update_filter((1-gamma_theta)*theta_k,subst(subst(f,x,x_k,false,ctx),mu,mu_j,false,ctx)-gamma_phi*theta_k);
+                switch (feas_restoration(x_k,lambda_k,z_k,theta_k,theta_resto)) {
+                case solution_status::_ERROR:
+                    //prob.debug("Feasibility restoration phase failed");
+                    return solution_status::_ERROR;
+                case solution_status::_FAILED:
+                    if (is_greater(theta_resto,feas_tol,ctx))
+                        return solution_status::_INFEAS;
+                    break;
+                default:
+                    //prob.debug("Feasibility restored successfully");
+                    break;
+                }
+                skip=true;
+                break;
+            }
+        }
+        if (first_trial_stepsize_rejected)
+            heur_iter++;
+        else heur_iter=0;
+        if (skip) {
+            if (skip_iter++==skip_threshold)
+                return solution_status::_FAILED;
+            continue;
+        } else skip_iter=0;
+        /* A-6. Accept the trial point */
+        int xsize=x_k.size();
+        vecteur d_rel(xsize);
+        for (int i=0;i<xsize;++i) d_rel[i]=(x_k[i]-x_kn[i])/(1+_abs(x_k[i],ctx));
+        bool fullstep=is_strictly_greater(10*epsilon(ctx),linfn(d_rel),ctx);
+        if (fullstep) { // handle small search directions
+            alpha_k=alpha_max;
+            x_kn=addvecteur(x_k,multvecteur(alpha_k,d_x));
+        }
+        vecteur lambda_kn=ncons>0?addvecteur(lambda_k,multvecteur(alpha_k,d_lambda)):vecteur(0);
+        vecteur z_kn=addvecteur(z_k,multvecteur(alpha_z,d_z));
+        /* A-7. Augment the filter if necessary */
+        if (is_positive(-sp,ctx) || is_greater(delta*pow(theta_k,s_theta,ctx),alpha_k*pow(sp,s_phi,ctx),ctx) ||
+                is_strictly_greater(barrier_fval(x_kn),phi_k-eta_phi*alpha_k*sp,ctx))
+            update_filter((1-gamma_theta)*theta_k,subst(subst(f,x,x_k,false,ctx),mu,mu_j,false,ctx)-gamma_phi*theta_k);
+        /* A-8. Update search directions and continue with the next iteration */
+        if (fullstep) {
+            if (prev_iter_full_step) {
+                if (mu_j>eps_tol/10) {
+                    //prob.debug("Search directions are too small, terminating...");
+                    converged=true;
+                    break;
+                }
+                else return solution_status::_FAILED;
+            } else prev_iter_full_step=true;
+        } else prev_iter_full_step=false;
+        x_k=x_kn;
+        lambda_k=lambda_kn;
+        z_k=z_kn;
+    }
+    if (prob._iter_data)
+        iteration_data.push_back(pts);
+    if (!converged) {
+        //prob.debug("Iteration limit exceeded");
+        return solution_status::_FAILED;
+    }
+    return solution_status::_OPTIMAL;
+}
+/* convert nlp_problem variables to ipt_solver variables */
+vecteur nlp_problem::ipt_solver::vars2x(const vecteur &x0,const vecteur &x0_orig) const {
+    int pos=0;
+    vecteur ret(nvars);
+    const_iterateur jt=x0.begin(),jtend=x0.end();
+    for (;jt!=jtend;++jt) {
+        if (dup_ind.find(pos)!=dup_ind.end()) {
+            if (x0_orig.empty()) {
+                if (is_positive(*jt,ctx)) {
+                    ret[pos]=*jt+kappa_1;
+                    ret[pos+1]=kappa_1;
+                } else {
+                    ret[pos]=kappa_1;
+                    ret[pos+1]=-*jt+kappa_1;
+                }
+            } else {
+                gen a=x0_orig[pos],b=x0_orig[pos+1],val1=(a+b+*jt)/2,val2=(a+b-*jt)/2,mv=min(val1,val2,ctx);
+                if (is_positive(-mv,ctx)) {
+                    val1+=kappa_1-mv;
+                    val2+=kappa_1-mv;
+                }
+                ret[pos]=max(kappa_1,val1,ctx);
+                ret[pos+1]=max(kappa_1,val2,ctx);
+            }
+            pos+=2;
+        } else {
+            gen val=_solve(makesequence(symb_equal(x_subs[jt-x0.begin()],*jt),x[pos]),ctx)._VECTptr->front();
+            ret[pos]=max(kappa_1,val,ctx);
+            pos++;
+        }
+    }
+    int pos0=pos;
+    vecteur ns(x.begin(),x.begin()+pos0),nsval(ret.begin(),ret.begin()+pos0);
+    for (;pos<nvars;++pos) {
+        gen val=_solve(makesequence(symb_equal(subst(c[pos-pos0],ns,nsval,false,ctx),0),x[pos]),ctx)._VECTptr->front();
+        ret[pos]=max(kappa_1,val,ctx);
+    }
+    return ret;
+}
+/* convert ipt_solver variables to nlp_problem variables */
+vecteur nlp_problem::ipt_solver::x2vars(const vecteur &x0) const {
+    return subst(x_subs,x,x0,false,ctx);
+}
+/* the main optimization routine */
+bool nlp_problem::ipt_solver::optimize(optima_t &res) {
+    if (!initialized) {
+        /* This code transforms the problem into min f(x) s.t. h(x)=0, x>=0.
+         * Inequalities come first in the list C of constraints, sclacks are used for
+         * conversion to equalities.
+         * Unbounded variables are replaced by x_pos-x_neg, where x_pos and x_neq
+         * are both nonnegative. Additionally, the constraints Jacobian J_C is computed. */
+        int nv_orig=prob.var_count(),nv=nv_orig;
+        if (nv==0) {
+            optimum_t trivial;
+            trivial.res=solution_status::_OPTIMAL;
+            prob.insert_fixed_vars(trivial.x);
+            res.push_back(trivial);
+            return true;            
+        }
+        x.reserve(2*nv);
+        x_subs.resize(nv);
+        vecteur c_eq=prob.subs_fixed_vars(prob.eq_cons),c_ineq=prob.subs_fixed_vars(prob.ineq_cons),lb=prob.lb,ub=prob.ub;
+        matrice J_eq=prob.subs_fixed_vars(prob.eq_jacobian),J_ineq=prob.subs_fixed_vars(prob.ineq_jacobian);
+        prob._inactive_eq_indices.clear();
+        prob._inactive_ineq_indices.clear();
+        if (!prob._fixed_vars.empty() && (!prob.find_inactive_eq(c_eq) || !prob.find_inactive_ineq(c_ineq))) {
+            // the problem is infeasible
+            optimum_t opt;
+            opt.res=solution_status::_INFEAS;
+            res.push_back(opt);
+            return true;
+        }
+        remove_elements_with_indices(lb,prob._fixed_vars);
+        remove_elements_with_indices(ub,prob._fixed_vars);
+        remove_elements_with_indices(c_eq,prob._inactive_eq_indices);
+        remove_elements_with_indices(c_ineq,prob._inactive_ineq_indices);
+        remove_elements_with_indices(J_eq,prob._inactive_eq_indices);
+        remove_elements_with_indices(J_ineq,prob._inactive_ineq_indices);
+        int ineq_size=c_ineq.size();
+        ncons=c_eq.size()+c_ineq.size();
+        c=mergevecteur(c_ineq,c_eq);
+        A=mergevecteur(J_ineq,J_eq);
+        grad_f=prob.subs_fixed_vars(prob.obj_gradient);
+        remove_elements_with_indices(grad_f,prob._fixed_vars);
+        hess_f=prob.subs_fixed_vars(prob.obj_hessian);
+        if (!prob._fixed_vars.empty()) {
+            if (!A.empty()) {
+                A=mtran(A);
+                remove_elements_with_indices(A,prob._fixed_vars);
+                A=mtran(A);
+            }
+            remove_elements_with_indices(hess_f,prob._fixed_vars);
+            hess_f=mtran(hess_f);
+            remove_elements_with_indices(hess_f,prob._fixed_vars);
+            hess_f=mtran(hess_f);
+        }
+        gen L,U;
+        vecteur vars(prob.vars);
+        remove_elements_with_indices(vars,prob._fixed_vars);
+        const_iterateur it=vars.begin(),itend=vars.end();
+        for (;it!=itend;++it) {
+            int i=it-vars.begin();
+            if (!is_inf(L=lb[i])) {
+                x.push_back(temp_symb("x",i,ctx));
+                x_subs[i]=L+x.back();
+                if (!is_inf(U=ub[i])) {
+                    c.insert(c.begin()+ineq_size,U-*it);
+                    A.insert(A.begin()+ineq_size,vecteur(nv_orig,0));
+                    A[ineq_size]._VECTptr->at(i)=-1;
+                    ++ineq_size;
+                    ++ncons;
+                }
+            } else if (!is_inf(U=ub[i])) {
+                x.push_back(temp_symb("x",i,ctx));
+                x_subs[i]=U-x.back();
+                grad_f[i]=-grad_f[i];
+                for (int j=0;j<ncons;++j) A[j]._VECTptr->at(i)=-A[j][i];
+                for (int j=0;j<nv_orig;++j) {
+                    hess_f[j]._VECTptr->at(i)=-hess_f[j][i];
+                    if (i!=j) hess_f[i]._VECTptr->at(j)=hess_f[j][i];
+                }
+            } else { // unbounded variable
+                x.push_back(temp_symb("x_pos",i,ctx));
+                x.push_back(temp_symb("x_neg",i,ctx));
+                x_subs[i]=x[x.size()-2]-x.back();
+                dup_ind.insert(x.size()-2);
+                ++nv;
+            }
+        }
+        if (ncons>0 && !A.empty()) A=mtran(A);
+        for (set<int>::const_iterator it=dup_ind.begin();it!=dup_ind.end();++it) {
+            grad_f.insert(grad_f.begin()+*it+1,-grad_f[*it]);
+            hess_f.insert(hess_f.begin()+*it+1,multvecteur(-1,*hess_f[*it]._VECTptr));
+            if (ncons>0) A.insert(A.begin()+*it+1,multvecteur(-1,*A[*it]._VECTptr));
+        }
+        grad_f.resize(nv+ineq_size,0);
+        hess_f=mtran(ineq_size>0?mergevecteur(hess_f,zero_mat(ineq_size,mcols(hess_f),ctx)):hess_f);
+        for (set<int>::const_iterator it=dup_ind.begin();it!=dup_ind.end();++it) {
+            hess_f.insert(hess_f.begin()+*it+1,multvecteur(-1,*hess_f[*it]._VECTptr));
+        }
+        if (ineq_size>0) {
+            hess_f=mergevecteur(hess_f,zero_mat(ineq_size,mcols(hess_f),ctx));
+            A=mergevecteur(A,zero_mat(ineq_size,mcols(A),ctx));
+        }
+        if (ncons>0 && !A.empty()) A=mtran(subst(A,vars,x_subs,false,ctx));
+        grad_f=subst(grad_f,vars,x_subs,false,ctx);
+        hess_f=subst(hess_f,vars,x_subs,false,ctx);
+        if (ncons>0) c=subst(c,vars,x_subs,false,ctx);
+        nslacks=ineq_size;
+        for (int i=0;i<nslacks;++i) {
+            x.push_back(temp_symb("slack",i,ctx));
+            c[i]-=x.back();
+            if (ncons>0) A[i]._VECTptr->at(nv+i)=-1;
+        }
+        nvars=nv+nslacks;
+        z.resize(nvars);
+        for (int i=0;i<nvars;++i) z[i]=temp_symb("z",i,ctx);
+        lambda.resize(ncons);
+        for (int i=0;i<ncons;++i) lambda[i]=temp_symb("lambda",i,ctx);
+        f=prob.subs_fixed_vars(prob.obj);
+        f=subst(f,vars,x_subs,false,ctx);
+        initialized=true;
+#ifdef HAVE_LIBLAPACK
+        int fsize=nvars+ncons;
+        factorization=new double[fsize*fsize];
+        lapack_ipiv=new int[fsize];
+        lapack_rhs=new double[fsize];
+#endif
+    }
+    if (!kkt_init()) {
+        prob.err("failed to initialize KKT system");
+        return false;
+    }
+    vecteur ip;
+    double mu0=0.1;
+    while (prob._iter_count<maxiter && prob.restart(ip)) {
+        optimum_t opt;
+        remove_elements_with_indices(ip,prob._fixed_vars);
+        vecteur x_k=vars2x(ip),z_k(nvars,1),lambda_k=init_lambda(x_k,z_k);
+        try {
+            opt.res=ls_filter_barrier_method(x_k,lambda_k,z_k,mu0);
+        } catch (const std::runtime_error &e) {
+            if (factorization!=NULL) delete[] factorization;
+            if (lapack_work!=NULL) delete[] lapack_work;
+            if (lapack_ipiv!=NULL) delete[] lapack_ipiv;
+            if (lapack_rhs!=NULL) delete[] lapack_rhs;
+            throw e;
+        }
+        opt.x=x2vars(x_k);
+        prob.insert_fixed_vars(opt.x);
+        if (opt.res<solution_status::_INFEAS)
+            prob.save_point(opt.x);
+        res.push_back(opt);
+    }
+    return true;
+}
+/* END OF IPT_SOLVER CLASS IMPLEMENTATION */
+
+/* Return true if there are no constraints/bounds. */
+bool nlp_problem::is_unconstrained() const {
+    if (eq_count()+ineq_count()>0)
+        return false;
+    for (int i=0;i<var_count();++i) {
+        if (!is_inf(lb[i]) || !is_inf(ub[i]))
+            return false;
+    }
+    return true;
+}
+/* return true if some variables are bounded from either side, else return false. */
+bool nlp_problem::has_bounded_variables() const {
+    int n=var_count();
+    for (int i=0;i<n;++i) {
+        if (!is_inf(lb[i]) || !is_inf(ub[i]))
+            return true;
+    }
+    return false;
+}
+/* Compute the index of the branching variable for B&B algorithm.
+ * Possible strategies are: 0 (random), 1 (first), 2 (last), 3 (pseudocost).
+ * If there is no variable to branch upon, return false, else return true. */
+bool nlp_problem::branch_var(const meth_parm &parm,const vecteur &sol,const gen &cost,int strategy,int &var) {
+    vector<int> iv;
+    iv.reserve(sol.size());
+    const_iterateur it=sol.begin(),itend=sol.end();
+    vector<bool>::const_iterator jt=_is_intvar.begin();
+    vector<int>::const_iterator kt,ktend;
+    int i=0;
+    for (;it!=itend;++it,++jt,++i) {
+        if (*jt && is_strictly_greater(_abs(*it-_round(*it,ctx),ctx),parm.tol,ctx))
+            iv.push_back(i);
+    }
+    if (iv.empty())
+        return false; // no fractional variables
+    gen pc,maxpc=minus_inf;
+    switch (strategy) {
+    case 0:
+        var=iv[_rand(iv.size(),ctx).val];
+        break;
+    case 1:
+        var=iv.front();
+        break;
+    case 2:
+        var=iv.back();
+        break;
+    case 3:
+        if (_min(pc_lo_count,ctx).val==0 || _min(pc_hi_count,ctx).val==0) // there is a variable not being branched upon yet
+            var=iv.front(); // branch upon the first fractional variable
+        else for (kt=iv.begin(),ktend=iv.end();kt!=ktend;++kt) { // use pseudocost branching
+            i=var2intvar(*kt);
+            pc=cost+max(pc_lo[i]*(sol[*kt]-_floor(sol[*kt],ctx)),pc_hi[i]*(_ceil(sol[*kt],ctx)-sol[*kt]),ctx);
+            if (is_strictly_greater(pc,maxpc,ctx)) {
+                maxpc=pc;
+                var=*kt;
+            }
+        }
+        break;
+    default:
+        assert(false); // should be unreachable
+    }
+    return true;
+}
+/* Return true if X is a feasible point with respect to the constraints. */
+bool nlp_problem::is_feasible(const vecteur &x,double feas_tol,bool check_bounds,set<int> *viol_eq,set<int> *viol_ineq,set<int> *viol_bnd) const {
+    gen max_infeas(0),infeas;
+    const_iterateur it,itend;
+    int i,n=var_count();
+    if (viol_eq!=NULL) viol_eq->clear();
+    if (viol_ineq!=NULL) viol_ineq->clear();
+    for (i=0,it=eq_cons.begin(),itend=eq_cons.end();it!=itend;++it,++i) {
+        infeas=_abs(subst(*it,vars,x,false,ctx),ctx);
+        if (is_strictly_greater(infeas,feas_tol,ctx)) {
+            max_infeas=max(max_infeas,infeas);
+            if (viol_eq!=NULL)
+                viol_eq->insert(i);
+        }
+    }
+    for (i=0,it=ineq_cons.begin(),itend=ineq_cons.end();it!=itend;++it,++i) {
+        infeas=max(0,-subst(*it,vars,x,false,ctx),ctx);
+        if (is_strictly_greater(infeas,feas_tol,ctx)) {
+            max_infeas=max(max_infeas,infeas);
+            if (viol_ineq!=NULL)
+                viol_ineq->insert(i);
+        }
+    }
+    if (check_bounds) {
+        if (viol_bnd!=NULL) viol_bnd->clear();
+        for (i=0;i<n;++i) {
+            infeas=max(0,max(lb[i]-x[i],x[i]-ub[i],ctx),ctx);
+            if (is_strictly_greater(infeas,max_infeas,ctx)) {
+                max_infeas=max(max_infeas,infeas);
+                if (viol_bnd!=NULL)
+                    viol_bnd->insert(i);
+            }
+        }
+    }
+    return is_strictly_greater(feas_tol,max_infeas,ctx);
+}
+/* Return the number of integer variables. */
+int nlp_problem::intvar_count() const {
+    int ret=0;
+    for(vector<bool>::const_iterator it=_is_intvar.begin();it!=_is_intvar.end();++it)
+        if (*it) ++ret;
+    return ret;
+}
+/* Return true iff all integer variables are binary. */
+bool nlp_problem::is_intvars_all_binary() const {
+    int i=0;
+    for (vector<bool>::const_iterator it=_is_intvar.begin();it!=_is_intvar.end();++it,++i) {
+        if (*it && (!is_zero(lb[i]) || !is_one(ub[i])))
+            return false;
+    }
+    return true;
+}
+/* Return true iff SOL satisfies integrality constraints. */
+bool nlp_problem::is_intsol(const meth_parm &parm,const vecteur &sol) const {
+    int i=0;
+    const_iterateur it=sol.begin(),itend=sol.end();
+    for (;it!=itend;++it,++i) {
+        if (is_intvar(i) && is_strictly_greater(_abs(*it-_round(*it,ctx),ctx),parm.tol,ctx))
+            return false;
+    }
+    return true;
+}
+/* Find fixed variables (with mutually equal lower and upper bound). */
+void nlp_problem::find_fixed_vars() {
+    _fixed_vars.clear();
+    int n=var_count(),i=0;
+    for (;i<n;++i) {
+        if (is_zero(ub[i]-lb[i],ctx))
+            _fixed_vars.insert(make_pair(i,(ub[i]+lb[i])/2.0));
+    }
+}
+/* Insert fixed variables in X. */
+void nlp_problem::insert_fixed_vars(vecteur &x) const {
+    set<pair<int,gen> >::const_iterator it=_fixed_vars.begin(),itend=_fixed_vars.end();
+    for (;it!=itend;++it)
+        x.insert(x.begin()+it->first,it->second);
+}
+/* Branch & bound subproblem solving routine. */
+bool nlp_problem::bb_solve_subproblem(const meth_parm &parm,vecteur &active_nodes,gen &fval,optima_t &sub_res,optimum_t &incumbent) {
+    find_fixed_vars();
+    initp_iter=initp.begin();
+    _iter_count=0;
+    ipt_solver *ipt=new ipt_solver(*this,parm);
+    sub_res.clear();
+    bool ret=false;
+    int i;
+    optimum_t r;
+    ++_spc;
+    clear_saved_points();
+    if (ipt->optimize(sub_res) && !sub_res.empty()) {
+        find_best_solution(parm,sub_res,r.x,r.f,r.res);
+        if ((r.res==solution_status::_OPTIMAL || r.res==solution_status::_FAILED) && compute_obj_val(r.x,fval)) {
+            ret=true; // pseudocosts will be updated
+            r.f=fval;
+            bool crit=incumbent.res==solution_status::_PENDING || is_strictly_greater(incumbent.f,fval,ctx);
+            if (is_intsol(parm,r.x)) { // a feasible solution was found
+                for (i=active_nodes.size();i-->0;) { // delete nodes with too large lower bound
+                    if (is_greater(active_nodes[i]._VECTptr->back(),fval,ctx))
+                        active_nodes.erase(active_nodes.begin()+i);
+                }
+                if (crit) {
+                    _ss << gettext("New incumbent solution found") << ": " << fval; msg();
+                    incumbent=r;
+                }
+            } else if (crit)
+                active_nodes.push_back(makevecteur(lb,ub,r.x,fval)); // append new active node
+        }
+    }
+    delete ipt;
+    return ret;
+}
+/* Return the index of VAR as an integer variable. */
+int nlp_problem::var2intvar(int var) const {
+    vector<bool>::const_iterator it=_is_intvar.begin();
+    int i=0,j=0;
+    for (;j!=var;++it,++j) if (*it) ++i;
+    return i;
+}
+/* Update pseudocost for integer variable VAR. */
+void nlp_problem::update_pseudocost(int var,vecteur &pc,vecteur &pc_count,const gen &df,const gen &dx) {
+    int i=var2intvar(var);
+    pc[i]=(pc_count[i]*pc[i]+df/dx)*_inv(pc_count[i]+=1,ctx);
+}
+/* Branch & bound algorithm for MINLP using the interior-point solver.
+ * CONT_SOL is the solution if the continuous relaxation.
+ * INCUMBENT status must be set to PENDING prior the call. */
+bool nlp_problem::branch_and_bound(const meth_parm &parm,const vecteur &cont_sol,optimum_t &incumbent) {
+    incumbent.res=solution_status::_PENDING;
+    incumbent.x.clear();
+    incumbent.f=plus_inf;
+    int niv=intvar_count(),bv;
+    _spc=0;
+    pc_lo.resize(niv,0); pc_lo_count.resize(niv,0);
+    pc_hi.resize(niv,0); pc_hi_count.resize(niv,0);
+    vecteur active_nodes;
+    gen fval,minbnd,oldb,s_fval,s_xf,s_xl,s_xu;
+    if (!compute_obj_val(cont_sol,fval))
+        return false;
+    vecteur root_node=makevecteur(lb,ub,cont_sol,fval);
+    active_nodes.push_back(root_node);
+    iterateur nt,ntend,sel;
+    optima_t sub_res;
+    while (!active_nodes.empty()) {
+        // node selection (strategy: best local bound)
+        minbnd=plus_inf;
+        sel=active_nodes.end();
+        for (nt=active_nodes.begin(),ntend=active_nodes.end();nt!=ntend;++nt) {
+            if (is_strictly_greater(minbnd,nt->_VECTptr->back(),ctx)) {
+                minbnd=nt->_VECTptr->back();
+                sel=nt;
+            }
+        }
+        if (sel==active_nodes.end()) {
+            err("node selection failed");
+            break;
+        }
+        const vecteur &s_x=*sel->_VECTptr->at(2)._VECTptr;
+        s_fval=sel->_VECTptr->back();
+        // branching variable selection (default strategy: pseudocost)
+        assert(branch_var(parm,s_x,s_fval,3,bv));
+        s_xf=s_x[bv];
+        s_xl=_floor(s_xf,ctx);
+        s_xu=_ceil(s_xf,ctx);
+        lb=*sel->_VECTptr->at(0)._VECTptr;
+        ub=*sel->_VECTptr->at(1)._VECTptr;
+        oldb=ub[bv];
+        active_nodes.erase(sel); // remove parent subproblem
+        try {
+            // branch down
+            ub[bv]=s_xl;
+            if (is_greater(ub[bv],lb[bv],ctx) && bb_solve_subproblem(parm,active_nodes,fval,sub_res,incumbent))
+                update_pseudocost(bv,pc_lo,pc_lo_count,fval-s_fval,s_xf-s_xl);
+            // branch up
+            ub[bv]=oldb;
+            lb[bv]=s_xu;
+            if (is_greater(ub[bv],lb[bv],ctx) && bb_solve_subproblem(parm,active_nodes,fval,sub_res,incumbent))
+                update_pseudocost(bv,pc_hi,pc_hi_count,fval-s_fval,s_xu-s_xf);
+        } catch (const std::runtime_error &e) {
+            if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c)
+                throw e;
+        }
+    }
+    return true;
+}
+/* Outer Approximation algorithm implementation (Duran & Grossman, Fletcher & Leyffer).
+ * CONT_SOL is the solution if the continuous relaxation.
+ * INCUMBENT status must be set to PENDING prior the call. */
+bool nlp_problem::outer_approximation(const meth_parm &parm,const vecteur &cont_sol,optimum_t &incumbent) {
+    gen UB=plus_inf,LB=minus_inf,LB_prev,gap=plus_inf;
+    vecteur moa_sol,constr(eq_cons),ipt_opt(cont_sol),s,cobyla_cons,ccons,cobyla_vars;
+    gen alpha=temp_symb("alpha",-1,ctx),beta=temp_symb("beta",-1,ctx),fval,ipt_optval,c;
+    int res,i,n=vars.size(),status,ones;
+    ipt_solver *ipt=NULL;
+    optima_t ipt_res;
+    const_iterateur it,itend,jt;
+    bool append_f_lin=true,isbin=is_intvars_all_binary(),ret=true;
+    if (!compute_obj_val(cont_sol,ipt_optval))
+        return false;
+    for (i=0;i<n;++i) {
+        if (!is_inf(lb[i]))
+            constr.push_back(symb_superieur_egal(vars[i],lb[i]));
+        if (!is_inf(ub[i]))
+            constr.push_back(symb_inferieur_egal(vars[i],ub[i]));
+    }
+    if (isbin)
+        debug("All integer variables are binary, replacing infeasibility problems with integer cuts");
+    // make cobyla constraints
+    cobyla_cons=mergevecteur(mergevecteur(ineq_cons,eq_cons),multvecteur(-1,eq_cons));
+    cobyla_cons=mergevecteur(cobyla_cons,subvecteur(vars,lb));
+    cobyla_cons=mergevecteur(cobyla_cons,subvecteur(ub,vars));
+    // iterate OA
+    _spc=0;
+    initp.clear();
+    while(true) {
+        // solve master problem
+        if (!ipt_opt.empty()) {
+            s=subvecteur(vars,ipt_opt);
+            if (append_f_lin) {
+                c=ipt_optval;
+                c+=scalarproduct(subst(obj_gradient,vars,ipt_opt,false,ctx),s,ctx);
+                constr.push_back(symb_inferieur_egal(c,alpha));
+            }
+            for (it=ineq_cons.begin(),itend=ineq_cons.end(),jt=ineq_jacobian.begin();it!=itend;++it,++jt) {
+                c=subst(*it,vars,ipt_opt,false,ctx);
+                c+=scalarproduct(subst(*jt->_VECTptr,vars,ipt_opt,false,ctx),s,ctx);
+                constr.push_back(symb_superieur_egal(c,0));
+            }
+        }
+        vars.push_back(alpha);
+        LB_prev=LB;
+        try {
+            res=minimize_linear(alpha,constr,moa_sol,LB);
+            vars.pop_back();
+            moa_sol.pop_back();
+            ++_spc;
+            _ss << "Lower bound: " << LB; debug();
+            gap=(UB-LB)/(1+_abs(LB,ctx));
+            if (res!=solution_status::_OPTIMAL || is_strictly_greater(parm.eps,gap,ctx))
+                break;
+            // fix integer variables and solve the reduced NLP
+            for (i=0;i<n;++i) {
+                if (is_intvar(i))
+                    _fixed_vars.insert(make_pair(i,moa_sol[i]));
+            }
+            ipt=new ipt_solver(*this,parm);
+            ipt_res.clear();
+            _iter_count=0;
+            if (!ipt->optimize(ipt_res)) {
+                ret=false;
+                break;
+            }
+        } catch (const std::runtime_error &e) {
+            if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c)
+                throw e;
+        }
+        if (ipt_res.empty())
+            break;
+        ipt_optval=undef;
+        status=solution_status::_PENDING;
+        find_best_solution(parm,ipt_res,ipt_opt,ipt_optval,status);
+        if ((status==solution_status::_OPTIMAL || status==solution_status::_FAILED) && compute_obj_val(ipt_opt,ipt_optval)) {
+            if (is_strictly_greater(UB,ipt_optval,ctx)) {
+                UB=ipt_optval;
+                gap=(UB-LB)/(1+_abs(LB,ctx)); // UB has changed, update the gap value
+                incumbent.f=ipt_optval;
+                incumbent.x=ipt_opt;
+                incumbent.res=status;
+                _ss << gettext("New incumbent solution found") << ": " << UB << ", "
+                    << gettext("gap") << ": " << 100.0*gap << "%";
+                msg();
+            }
+            append_f_lin=true;
+        } else { // reduced NLP is infeasible
+            if (isbin) { // append integer cut to MILP constraints
+                debug("NLP is infeasible, adding integer cut...");
+                ones=0;
+                c=0;
+                for (it=moa_sol.begin(),itend=moa_sol.end(),i=0;it!=itend;++it,++i) {
+                    if (!is_intvar(i)) continue;
+                    if (is_one(_round(*it,ctx))) {
+                        ++ones;
+                        c+=vars[i];
+                    } else c-=vars[i];
+                }
+                constr.push_back(symb_inferieur_egal(c,ones-1));
+                ipt_opt.clear();
+            } else {
+                // solve the corresponding NLPF using COBYLA
+                debug("NLP is infeasible, solving feasibility problem...");
+                if (_fixed_vars.size()==vars.size()) {
+                    ipt_opt=moa_sol;
+                } else {
+                    ccons=subs_fixed_vars(cobyla_cons);
+                    for (i=ccons.size();i-->0;) {
+                        if (is_positive_safe(ccons[i],false,100,ctx))
+                            ccons.erase(ccons.begin()+i);
+                    }
+                    addvecteur(ccons,vecteur(ccons.size(),beta),ccons);
+                    cobyla_vars=vars;
+                    remove_elements_with_indices(cobyla_vars,_fixed_vars);
+                    cobyla_vars.push_back(beta);
+                    vecteur fcv=makevecteur(beta,ccons,cobyla_vars),x0=moa_sol;
+                    remove_elements_with_indices(x0,_fixed_vars);
+                    x0.push_back(0);
+                    cobyla_gc gc={fcv,ctx};
+                    int maxiter=parm.max_iter,cres,iter,tries,max_tries=5;
+                    try {
+                        tries=0;
+                        while (maxiter>0 && tries++<max_tries) {
+                            iter=maxiter;
+                            cres=giac_cobyla(&gc,x0,iter,parm.eps,0);
+                            maxiter-=iter;
+                            if (cres!=COBYLA_ROUNDING)
+                                break;
+                        }
+                        if (cres<0) { // error
+                            ret=false;
+                            break;
+                        }
+                        x0.pop_back();
+                        insert_fixed_vars(x0);
+                        ipt_opt=x0;
+                    } catch (const std::runtime_error &e) { // an error raised in COBYLA or user interruption
+                        if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
+                            throw e;
+                        } else {
+                            msg(e.what());
+                            ret=false;
+                        }
+                        break;
+                    }
+                }
+                append_f_lin=false;
+            }
+        }
+        _fixed_vars.clear();
+        delete ipt;
+        ipt=NULL;
+    }
+    if (ipt!=NULL) delete ipt;
+    _fixed_vars.clear();
+    return ret;
+}
+/* Global minimization using METHOD with parameters PARM.
+ * IP must be a list of initial point(s) for the specified method (possibly empty)
+ * or [interval,L,U] where L and U are lists of lower and upper bounds, respectively,
+ * which is used as a starting (hyper)rectangle.
+ * The location of the global minimum is stored to OPT before returning. */
+int nlp_problem::optimize(int method,const meth_parm &parm,const vecteur &ip,vecteur &opt,gen &optval) {
+    int ret=solution_status::_PENDING,i;
+    if (var_count()==0) { // no variables, objective is constant
+        opt.clear();
+        optval=obj;
+        return solution_status::_OPTIMAL;
+    }
+    // there is at least one independent variable
+    _msg_level=parm.msg_level;
+    optval=undef;
+    if (method==0) {
+        err("no method specified");
+        return solution_status::_ERROR;
+    }
+    if (!_initialized) {
+        _has_initial_rect=false;
+        reset_timer();
+        if (!ip.empty() && ip.front()==at_interval) {
+            assert(ip.size()==3);
+            bd_rect=mtran(makevecteur(ip[1],ip[2]));
+            initp.clear();
+            _has_initial_rect=true;
+        } else initp=ip;
+        initialize(method,parm);
+        _ss << "-- Initialization time: " << elapsed_secs()*1000.0 << " ms"; debug();
+        if (_infeas)
+            return solution_status::_INFEAS;
+        if (var_count()>0) {
+            _ss << gettext("Tolerance") << ": " << gettext("optimality") << " = " << parm.eps
+                << ", " << gettext("feasibility") << " = " << parm.tol; msg();
+        }
+    } else if (!ip.empty())
+        initp=mergevecteur(initp,ip);
+    if (var_count()>0) {
+        int max_tries=5,tries=0;
+        bool direct_meth=method>nlp_method::_INTERIOR_POINT;
+        bool is_unconstr=is_unconstrained();
+        vecteur cons;
+        initp_iter=initp.begin();   // initialize the initial point iterator
+        _penalty_scheme=0;          // no inclusion of constraints into the objective
+        _iter_count=0;              // restart iteration counter
+        optval=undef;               // no solution (yet)
+        if (method==nlp_method::_AUTOMATIC) { // guess the method
+            if (var_count()==1) {
+                /* Univariate minimizer */
+                if (eq_count()+ineq_count()>0 || is_inf(lb[0]) || is_inf(ub[0]))
+                    ret=optimize(is_intvar(0)?nlp_method::_DIFFERENTIAL_EVOLUTION:nlp_method::_NELDER_MEAD,parm,vecteur(0),opt,optval);
+                else { // in-segment optimization
+                    msg("Applying univariate minimization...");
+                    if (is_strictly_greater(lb.front(),ub.front(),ctx))
+                        return solution_status::_INFEAS;
+                    opt.resize(1);
+                    if (is_intvar(0)) { // integer variable
+                        int min_ival=_ceil(lb.front(),ctx).val,max_ival=_floor(ub.front(),ctx).val;
+                        gen fval;
+                        for (i=min_ival;i<=max_ival;++i) {
+                            if (!compute_obj_val(vecteur(1,i),fval))
+                                continue;
+                            if (is_undef(optval) || is_strictly_greater(optval,fval,ctx)) {
+                                optval=fval;
+                                opt.front()=i;
+                            }
+                        }
+                        if (is_undef(optval)) {
+                            opt.clear();
+                            return solution_status::_INFEAS;
+                        }
+                        return solution_status::_OPTIMAL;
+                    }
+    #ifdef HAVE_LIBGSL
+                    // use GSL univariate minimizer (Brent minimization algorithm)
+                    debug("Using GSL minimizer");
+                    gsl_min_fminimizer *brent=gsl_min_fminimizer_alloc(gsl_min_fminimizer_brent);
+                    gsl_function F;
+                    F.function=&gsl_my_uf;
+                    F.params=static_cast<void*>(this);
+                    vecteur x0;
+                    double left=_evalf(lb.front(),ctx).to_double(ctx),right=_evalf(ub.front(),ctx).to_double(ctx);
+                    double fval,lfv,rfv,x0d,prev_fval,best_fval=DBL_MAX,best_x0d;
+                    int status;
+                    bool improv_fail;
+                    while (_iter_count<parm.max_iter && restart(x0)) {
+                        x0d=_evalf(x0.front(),ctx).to_double(ctx);
+                        gsl_min_fminimizer_set(brent,&F,x0d,left,right);
+                        improv_fail=false;
+                        prev_fval=DBL_MAX;
+                        do {
+                            status=gsl_min_fminimizer_iterate(brent);
+                            ++_iter_count;
+                            x0d=gsl_min_fminimizer_x_minimum(brent);
+                            left=gsl_min_fminimizer_x_lower(brent);
+                            right=gsl_min_fminimizer_x_upper(brent);
+                            fval=gsl_min_fminimizer_f_minimum(brent);
+                            lfv=gsl_min_fminimizer_f_lower(brent);
+                            rfv=gsl_min_fminimizer_f_upper(brent);
+                            if (lfv<fval) {
+                                x0d=left;
+                                fval=lfv;
+                            } else if (rfv<fval) {
+                                x0d=right;
+                                fval=rfv;
+                            }
+                            if (status==GSL_FAILURE) {
+                                _ss << gettext("failed to improve the current interval") << " [" << left << "," << right << "]";
+                                warn();
+                                improv_fail=true; // update incumbent if necessary and terminate
+                            }
+                            if (status==GSL_EBADFUNC) {
+                                warn("objective function has singular point(s), the problem may be unbounded");
+                                break; // start over
+                            }
+                            if (!improv_fail)
+                                status=gsl_min_test_interval(left,right,parm.tol,0.0);
+                            if (improv_fail || status==GSL_SUCCESS) {
+                                if (!improv_fail) {
+                                    save_point(vecteur(1,x0d));
+                                    if (prev_fval-fval>parm.eps)
+                                        status=GSL_CONTINUE;
+                                }
+                                if (fval<best_fval) {
+                                    best_fval=fval;
+                                    best_x0d=x0d;
+                                }
+                            }
+                            prev_fval=fval;
+                        } while (!improv_fail && status==GSL_CONTINUE && _iter_count<parm.max_iter);
+                    }
+                    gsl_min_fminimizer_free(brent);
+                    if (best_fval<DBL_MAX) {
+                        optval=best_fval;
+                        opt.front()=best_x0d;
+                    } else opt.front()=x0d; // last point
+                    ret=is_undef(optval)?solution_status::_FAILED:solution_status::_OPTIMAL;
+    #else
+                    // no GSL, use global segment optimization with Brent's method (initial points are ignored!)
+                    try {
+                        opt[0]=find_minimum(obj,lb[0],ub[0],true,parm.eps,parm.max_iter,ctx);
+                    } catch (const std::runtime_error &e) {
+                        _ss << "Univariate minimizer error: " << e.what();
+                        debug();
+                        err("Univariate minimizer error");
+                        return solution_status::_ERROR;
+                    }
+                    if (is_undef(opt[0]) || !compute_obj_val(opt,optval)) {
+                        err("Brent's method failed");
+                        return solution_status::_ERROR;
+                    }
+                    ret=solution_status::_OPTIMAL;
+    #endif
+                }
+            } else if (_linconstr && _linobj) { // use linear programming solver
+                msg("Applying the method of linear programming...");
+                reset_timer();
+                ret=minimize_linear(obj,constraints(true),opt,optval);
+                if (ret==solution_status::_ERROR)
+                    err("lpsolve failed");
+            } else if (_smooth_obj && _smooth_constr) {
+                if (eq_count()==0 && ineq_count()==0 && _compact && parm.cluster<0 && initp.empty() && !has_intvars())
+                    ret=optimize(nlp_method::_DIFFERENTIAL_EVOLUTION,parm,vecteur(0),opt,optval);
+                else ret=optimize(nlp_method::_INTERIOR_POINT,parm,vecteur(0),opt,optval);
+            } else if (has_intvars() || (_compact && eq_count()==0 && ineq_count()==0 && initp.empty())) {
+                // use differential evolution for MINLP or box-constrained NLP
+                ret=optimize(nlp_method::_DIFFERENTIAL_EVOLUTION,parm,vecteur(0),opt,optval);
+            } else {
+                // try Nelder-Mead, if it fails use differential evolution
+                ret=optimize(nlp_method::_NELDER_MEAD,parm,vecteur(0),opt,optval);
+                if (ret==solution_status::_FAILED || ret==solution_status::_ERROR) {
+                    warn("Nelder-Mead algorithm failed, switching to differential evolution");
+                    if (_iter_data) iteration_data.clear();
+                    ret=optimize(nlp_method::_DIFFERENTIAL_EVOLUTION,parm,vecteur(0),opt,optval);
+                }
+            }
+            return ret;
+        }
+        // solve by the specified method
+        reset_timer();
+        gen val;
+        optima_t res,res_improv;
+        optimum_t o;
+        res.reserve(initp.size());
+        optima_t::iterator opt_iter;
+        vecteur failed_initp;
+        failed_initp.reserve(initp.size());
+        vector<int> failed_ind;
+        failed_ind.reserve(initp.size());
+        bool has_failed;
+        // optimize by using the specified method
+        switch (method) {
+        case nlp_method::_AUTOMATIC:
+            assert(false); // this case is handled above!
+        case nlp_method::_NELDER_MEAD:
+            msg("Applying the method of Nelder & Mead...");
+            if (has_intvars()) {
+                err("Nelder-Mead method does not support integrality constraints");
+                return solution_status::_ERROR;
+            }
+            _penalty_scheme=1;
+            if (!nelder_mead(parm,res))
+                return solution_status::_ERROR;
+            break;
+        case nlp_method::_DIFFERENTIAL_EVOLUTION:
+            msg("Applying the method of differential evolution...");
+            _penalty_scheme=2;
+            if (!differential_evolution(parm,o))
+                return solution_status::_ERROR;
+            res.push_back(o);
+            break;
+        case nlp_method::_COBYLA:
+            msg("Applying COBYLA algorithm...");
+            if (!cobyla(constraints(true,true),parm,res))
+                return solution_status::_ERROR;
+            break;
+        case nlp_method::_INTERIOR_POINT:
+            if (parm.cluster>=0 && _have_hessian) {
+                vecteur ip_tmp;
+                int n=var_count(),nip=parm.search_points;
+                if (nip<=0) nip=(int)std::round(1000*std::sqrt(n));
+                if (!initp.empty())
+                    warn("ignoring provided initial points");
+                initp.resize(nip);
+                for (iterateur ip_it=initp.begin();ip_it!=initp.end();++ip_it) {
+                    make_random_initial_point(ip_tmp);
+                    *ip_it=ip_tmp;
+                }
+    #ifdef HAVE_LIBGSL
+                gsl_matrix *gslm=gsl_matrix_alloc(n,n);
+                size_t j,k;
+    #endif
+                for (i=nip;i-->0;) {
+                    matrice H=subst(obj_hessian,vars,*initp[i]._VECTptr,false,ctx);
+    #ifdef HAVE_LIGBSL
+                    j=0;
+                    for (const_iterateur jt=H.begin();jt!=H.end();++jt,++j) {
+                        k=0;
+                        for (const_iterateur kt=jt->_VECTptr->begin();kt!=jt->_VECTptr->end();++kt,++k) {
+                            gsl_matrix_set(gslm,j,k,kt->to_double(ctx));
+                        }
+                    }
+                    if (gsl_linalg_cholesky_decomp1(gslm)==GSL_EDOM)
+                        initp.erase(initp.begin()+i);
+                }
+                gsl_matrix_free(gslm);
+    #else
+                    if (!is_positive_definite_inplace(H,true,ctx))
+                        initp.erase(initp.begin()+i);
+                }
+    #endif
+                if (!initp.empty()) {
+                    _ss << "Clustering " << (int)initp.size() << " random PDH points...";
+                    msg();
+                    if ((parm.cluster>0 && (int)initp.size()>parm.cluster) ||
+                            (parm.cluster==0 && (int)initp.size()>10*n)) { // cluster
+                        vector<int> cluster_indices;
+                        int nc=parm.cluster,max_nc=initp.size();
+                        vecteur cc;
+                        if (kmeans(initp,nc,2,max_nc,100,cluster_indices,&cc,NULL,ctx)!=0)
+                            warn("clustering failed");
+                        else {
+                            cclust_centers.resize(cc.size());
+                            cclust_sizes.resize(cc.size());
+                            const_iterateur cct=cc.begin(),cctend=cc.end();
+                            for (i=0;cct!=cctend;++cct,++i) {
+                                cclust_centers[i]=cct->_VECTptr->front();
+                                cclust_sizes[i]=cct->_VECTptr->back();
+                            }
+                        }
+                    }
+                    _ss << "Found " << (int)cclust_centers.size() << " PDH clusters";
+                    msg();
+                } else warn("objective function appears to be concave");
+                initp=cclust_centers;
+                initp_iter=initp.begin();
+            }
+    #ifdef HAVE_LIBGSL
+            if (is_unconstr) {
+                msg("Applying BFGS method...");
+                if (!gsl_bfgs(parm,res))
+                    return solution_status::_ERROR;
+            } else {
+    #endif
+                msg("Applying interior-point method...");
+                if (!_have_hessian || !_smooth_constr) {
+                    err("Could not compute objective hessian and/or constraint gradients");
+                    return solution_status::_ERROR;
+                }
+                ipt_solver *ipt=new ipt_solver(*this,parm);
+                if (!ipt->optimize(res))
+                    ret=solution_status::_ERROR;
+                delete ipt;
+    #ifdef HAVE_LIBGSL
+            }
+    #endif
+            break;
+        default:
+            err("method not implemented");
+            return solution_status::_ERROR;
+        }
+        _penalty_scheme=0;
+        res_improv.clear();
+        failed_initp.clear();
+        failed_ind.clear();
+        for (opt_iter=res.begin();opt_iter!=res.end();++opt_iter) {
+            if (opt_iter->res==solution_status::_UNBOUNDED)
+                return opt_iter->res;
+            if (opt_iter->res==solution_status::_ERROR || opt_iter->res==solution_status::_PENDING)
+                continue;
+            if (method==nlp_method::_NELDER_MEAD || method==nlp_method::_DIFFERENTIAL_EVOLUTION) {
+                failed_initp.push_back(opt_iter->x);
+                failed_ind.push_back(opt_iter-res.begin());
+            }
+        }
+        if (parm.postprocess && !failed_initp.empty()) {
+            // attempt to improve solutions
+            initp=failed_initp;
+            initp_iter=initp.begin();
+            if (method==nlp_method::_DIFFERENTIAL_EVOLUTION && has_intvars()) {
+                // append integrality constraints
+                for (i=0;i<var_count();++i) {
+                    if (is_intvar(i)) {
+                        ineq_cons.push_back(_neg(pow(sin(cst_pi*vars[i],ctx),2),ctx));
+                        _linconstr=false;
+                        if (_smooth_constr)
+                            ineq_jacobian.push_back(_grad(makesequence(ineq_cons.back(),vars),ctx));
+                    }
+                }
+            }
+            if (_have_hessian && _smooth_constr && !has_intvars()) { // use interior-point method
+                debug("Using interior-point method to improve solutions...");
+                ipt_solver *ipt=new ipt_solver(*this,parm);
+                _iter_count=0;
+                if (!ipt->optimize(res_improv)) {
+                    debug("Interior-point algorithm failed");
+                    res_improv.clear();
+                }
+                delete ipt;
+            } else { // use COBYLA
+                debug("Using COBYLA to improve solutions...");
+                if (!cobyla(constraints(true,true),parm,res_improv)) {
+                    debug("COBYLA failed");
+                    res_improv.clear();
+                }
+            }
+            vector<int>::const_iterator it=failed_ind.begin();
+            int improv_count=0;
+            for (opt_iter=res_improv.begin();opt_iter!=res_improv.end();++opt_iter,++it) {
+                if (opt_iter->res==solution_status::_OPTIMAL) {
+                    res[*it]=*opt_iter;
+                    ++improv_count;
+                }
+            }
+            if (improv_count>0) { _ss << gettext("Improved") << " " << improv_count << " "
+                                    << gettext("solution(s)"); msg(); }
+        }
+        find_best_solution(parm,res,opt,optval,ret);
+        switch (ret) {
+        case solution_status::_INFEAS:
+        case solution_status::_ERROR:
+            return ret;
+        case solution_status::_PENDING:
+            return solution_status::_ERROR;
+        default:
+            break;
+        }
+        // print solver summary
+        _ss << gettext("Total number of restarts:") << " " << res.size() << " ("
+            << _sol_stat[0] << " " << gettext("optimal") << ", "
+            << _sol_stat[1] << " " << gettext("failed") << ", "
+            << _sol_stat[2] << " " << gettext("infeasible") << ", "
+            << _sol_stat[4] << " " << gettext("error(s)") << ", "
+            << _sol_stat[5] << " " << gettext("pending") << ")";
+        msg();
+        if (method==nlp_method::_INTERIOR_POINT && has_intvars() && !is_intsol(parm,opt)) {
+            // do branch & bound for MINLP
+            initp.clear();
+            optimum_t intsol;
+            if (is_convex() && _compact) {
+                msg("Applying outer approximation method to find integer solutions...");
+                if (!outer_approximation(parm,opt,intsol) || intsol.res==solution_status::_ERROR)
+                    return solution_status::_ERROR;
+                _ss << gettext("Finished with") << " " << _spc << " " << gettext("major iterations"); msg();
+            } else {
+                msg("Applying branch & bound algorithm to find integer solutions...");
+                if (!branch_and_bound(parm,opt,intsol) || intsol.res==solution_status::_ERROR)
+                    return solution_status::_ERROR;
+                _ss << gettext("Solved") << " " << _spc << " " << gettext("subproblems"); msg();
+            }
+            _fixed_vars.clear();
+            optval=undef;
+            opt.clear();
+            ret=intsol.res;
+            if (ret==solution_status::_PENDING || ret==solution_status::_INFEAS)
+                return solution_status::_INFEAS;
+            opt=intsol.x;
+            optval=intsol.f;
+            if (is_undef(optval) && !compute_obj_val(opt,optval))
+                ret=solution_status::_ERROR;
+        }
+        _ss << gettext("Optimization time") << ": " << elapsed_secs()*1000.0 << " ms"; msg();
+        if (_fevalc>0) { _ss << gettext("Objective function evaluations") << ": " << _fevalc; msg(); }
+    } else {
+        msg("Solution found by preprocessor");
+        opt.clear();
+        optval=obj;
+        ret=solution_status::_OPTIMAL;
+    }
+    // postsolve
+    if (_presolved) {
+        gen pt=_iter_data?makevecteur(opt,iteration_data):opt;
+        debug("Post-processing...");
+        postprocess(pt);
+        opt=_iter_data?*pt._VECTptr->front()._VECTptr:*pt._VECTptr;
+        if (_iter_data)
+            iteration_data=*pt._VECTptr->back()._VECTptr;
+    }
+    return ret;
+}
+/* Filter out the best solution. */
+void nlp_problem::find_best_solution(const meth_parm &parm,optima_t &res,vecteur &opt,gen &optval,int &ret) {
+    std::fill(_sol_stat.begin(),_sol_stat.end(),0);
+    optima_t::iterator opt_iter=res.begin(),opt_itend=res.end();
+    for (;opt_iter!=opt_itend;++opt_iter) {
+        ++_sol_stat[opt_iter->res];
+        switch (opt_iter->res) {
+        case solution_status::_PENDING:
+        case solution_status::_ERROR:
+            continue;
+        default:
+            break;
+        }
+        if (is_undef(opt_iter->f) && !compute_obj_val(opt_iter->x,opt_iter->f)) {
+            opt_iter->res=solution_status::_ERROR;
+            continue;
+        }
+        if (opt_iter->res==solution_status::_INFEAS || !is_feasible(opt_iter->x,parm.tol,true)) {
+            opt_iter->res=solution_status::_INFEAS;
+            if (ret==solution_status::_PENDING)
+                ret=opt_iter->res;
+            continue;
+        }
+        if (!is_undef(optval)) {
+            if (is_greater(parm.eps,_abs(optval-opt_iter->f,ctx),ctx)) {
+                if (opt_iter->res==solution_status::_FAILED && ret==solution_status::_OPTIMAL)
+                    continue;
+            } else if (is_greater(opt_iter->f,optval,ctx))
+                continue;
+        }
+        opt=opt_iter->x;
+        optval=opt_iter->f;
+        ret=opt_iter->res;
+    }
+}
+/* Rudimentary AMPL modeling language parser, which is able to load problems from minlplib.org.
+ * Variables are written to V, objective(s) to O and constraints to C.
+ * Returns true iff successful, otherwise it returns false with message MSG. */
+bool nlp_problem::ampl_load(const std::string &filename,vecteur &v,vecteur &o,vecteur &c,string &msg,GIAC_CONTEXT) {
+    ifstream ifs;
+    ifs.open(filename,ifstream::in);
+    if (!ifs.is_open()) {
+        msg=gettext("AMPL parser: failed to open file for reading");
+        return false; // failed to open file
+    }
+    string line,token;
+    size_t pos,p;
+    int status=0,st,block=0; // 1 - variable, 2 - objective(s), 3 - constraints
+    bool ismin=true;
+    string e;
+    vecteur x;
+    gen g;
+    while (getline(ifs,line)) {
+        pos=line.find('#');
+        if (pos!=string::npos)
+            line=line.substr(0,pos);
+        pos=line.find_first_not_of(" \t");
+        if (pos==string::npos)
+            line="";
+        else line=line.substr(pos);
+        pos=line.find_last_not_of(" \t");
+        if (pos!=string::npos)
+            line=line.substr(0,pos+1);
+        if (line.find("var ")==0) { block=1; line=line.substr(4); }
+        else if (line.find("minimize ")==0) { block=2; line=line.substr(9); }
+        else if (line.find("maximize ")==0) { block=2; line=line.substr(9); ismin=false; }
+        else if (line.find("subject to ")==0) { block=3; line=line.substr(11); }
+        else {
+            if (line=="var") { block=1; continue; }
+            if (line=="minimize") { block=2; continue; }
+            if (line=="maximize") { block=2; ismin=false; continue; }
+            if (line=="subject to") { block=3; continue; }
+        }
+        if (block==0)
+            continue;
+        // tokenize line
+        do {
+            pos=line.find_first_of(" \t");
+            token=line.substr(0,pos);
+            if (pos!=string::npos)
+                line.erase(0,pos+1);
+            if (token.empty())
+                continue;
+            switch (block) {
+            case 1:
+                switch (status) {
+                case 0: // initialize variable
+                    if (token.back()==';') {
+                        token.pop_back();
+                        v.push_back(makevecteur(identificateur(token),0,minus_inf,plus_inf,undef));
+                        status=0;
+                    } else {
+                        x=makevecteur(identificateur(token),0,minus_inf,plus_inf,undef);
+                        status=1;
+                    }
+                    break;
+                case 1:
+                    if (token=="integer")
+                        x[1]=1;
+                    else if (token=="binary")
+                        x[1]=2;
+                    else if (token==">=") status=2;
+                    else if (token=="<=") status=3;
+                    else if (token==":=") status=4;
+                    else {
+                        msg=gettext("AMPL parser: invalid variable specification");
+                        ifs.close();
+                        return false;
+                    }
+                    break;
+                case 2: // read lower bound
+                case 3: // read upper bound
+                case 4: // read initial value
+                    st=status;
+                    if (token.back()==',') {
+                        token.pop_back();
+                        status=1;
+                    } else if (token.back()==';') {
+                        token.pop_back();
+                        status=0;
+                    } else { ifs.close(); return false; }
+                    try {
+                        x[st]=_expr(string2gen(token,false),contextptr);
+                    } catch (const std::runtime_error &e) {
+                        msg=string(gettext("AMPL parser"))+string(": ")+e.what();
+                        ifs.close();
+                        return false;
+                    }
+                    if (status==0)
+                        v.push_back(x);
+                    break;
+                default:
+                    assert(false);
+                }
+                break;
+            case 2: // read objective(s)
+            case 3: // read constraints
+                switch (status) {
+                case 0:
+                    if (token.back()==':')
+                        status=1;
+                    break;
+                case 1:
+                    if (token.back()==';') {
+                        token.pop_back();
+                        e+=token;
+                        try {
+                            g=_expr(string2gen(e,false),contextptr);
+                        } catch (const std::runtime_error &e) {
+                            msg=string(gettext("AMPL parser"))+string(": ")+e.what();
+                            ifs.close();
+                            return false;
+                        }
+                        if (block==2) o.push_back(g);
+                        else c.push_back(g);
+                        status=0;
+                        e.clear();
+                    } else {
+                        e+=token+" ";
+                    }
+                    break;
+                default:
+                    assert(false);
+                }
+                break;
+            }
+        } while (pos!=string::npos);
+    }
+    ifs.close();
+    return true;
+}
+/* initialize method parameters with default values */
+void nlp_problem::meth_parm::init_defaults(double eps) {
+    cross_prob=0.5;
+    scale=0;            // the optimal scale will be computed (DE)
+    reflect_ratio=1.0;
+    expand_ratio=2.0;
+    contract_ratio=shrink_ratio=0.5;
+    search_points=0;    // use 10*n points, where n is the number of variables
+    penalty=undef;      // penalty factor for constraint violation in direct methods (undef means automatic)
+    max_iter=500;       // maximum number of iterations allowed
+    tol=1e-5;           // feasibility tolerance
+    this->eps=eps;      // optimality tolerance
+    size=0;             // initial simplex size for NM (automatic)
+    step=0;             // initial step-size for BGFS or adaptive penalty step for NM (automatic)
+    postprocess=true;   // attempt to improve failed direct-method solutions using COBYLA
+    presolve=true;      // the problem will be presolved by default
+    border=true;        // attempt to estimate bounds on variables
+    convex=-1;          // check whether the problem is convex automatically
+    cluster=-1;         // no clustering (0 - automatic number of clusters, integer k - k clusters)
+    msg_level=1;        // 0 - no output
+                        // 1 - show only errors (default)
+                        // 2 - show warnings and errors
+                        // 3 - show all messages
+                        // 4 - debug mode
+}
+/* END OF NLP_PROBLEM CLASS */
+
+/* Nonlinear programming problem solver.
+ * Usage: nlpsolve(Expr(obj)||Func(obj),Lst(constr),[Seq(bounds)],[opts]) */
+gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
+    gen fnameg(undef);
+    vecteur constr,vars,initp,lbv,ubv,intvars,binvars;
+    gen obj;
+    if (g.type==_STRNG) {
+        if (g.subtype==-1)
+            return g;
+        fnameg=g;
+    }
+    if (g.type==_VECT && g.subtype==_SEQ__VECT && !g._VECTptr->empty() && g._VECTptr->front().type==_STRNG) {
+        fnameg=g._VECTptr->front();
+    }
+    if (!is_undef(fnameg)) {
+        string fname=gen2string(fnameg),ampl_msg;
+        vecteur rest_args=g.type==_VECT?vecteur(g._VECTptr->begin()+1,g._VECTptr->end()):vecteur(0),pv,po,pc;
+        if (!nlp_problem::ampl_load(fname,pv,po,pc,ampl_msg,contextptr))
+            return generr(ampl_msg.c_str(),false);
+        if (po.empty())
+            obj=0;
+        else if (po.size()>1)
+            return generr("Multi-objective problems are not supported");
+        else obj=po.front();
+        *logptr(contextptr) << gettext("Loaded a problem with") << " " << pv.size() << " " << gettext("variables and")
+                            << " " << pc.size() << " " << gettext("constraints") << "\n";
+        lbv.resize(pv.size(),minus_inf);
+        ubv.resize(pv.size(),plus_inf);
+        initp.resize(pv.size(),undef);
+        int i=0;
+        const_iterateur it,itend;
+        for (it=pv.begin(),itend=pv.end();it!=itend;++it,++i) {
+            assert(it->type==_VECT && it->_VECTptr->size()==5 && it->_VECTptr->at(1).is_integer());
+            const vecteur &vspec=*it->_VECTptr;
+            vars.push_back(vspec[0]);
+            switch (vspec[1].val) {
+                case 0: break;
+                case 1: intvars.push_back(vspec[0]); break;
+                case 2: binvars.push_back(vspec[0]); break;
+                default: assert(false);
+            }
+            lbv[i]=vspec[2];
+            ubv[i]=vspec[3];
+            initp[i]=vspec[4];
+        }
+        if (has_inf_or_undef(initp))
+            initp.clear();
+        else initp=vecteur(1,initp);
+        vecteur arguments=makevecteur(obj,pc);
+        arguments=mergevecteur(arguments,*_box_constraints(makesequence(vars,mtran(makevecteur(lbv,ubv))),contextptr)._VECTptr);
+        if (!initp.empty())
+            arguments.push_back(symb_equal(change_subtype(_NLP_INITIALPOINT,_INT_MAPLECONVERSION),_zip(makesequence(at_equal,vars,initp.front()),contextptr)));
+        if (!intvars.empty())
+            arguments.push_back(symb_equal(change_subtype(_NLP_INTEGERVARIABLES,_INT_MAPLECONVERSION),intvars));
+        if (!binvars.empty())
+            arguments.push_back(symb_equal(change_subtype(_NLP_BINARYVARIABLES,_INT_MAPLECONVERSION),binvars));
+        arguments=mergevecteur(arguments,rest_args);
+        return _nlpsolve(change_subtype(arguments,_SEQ__VECT),contextptr);
+    }
+    if (g.type==_SYMB) // unconstrained minimization without any options and bounds
+        return _nlpsolve(makesequence(g,vecteur(0)),contextptr);
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT || g._VECTptr->size()<2)
+        return generrtype("Expected a sequence of two or more arguments");
+    const vecteur &gv=*g._VECTptr;
+    obj=gv.front();
+    add_identifiers(obj,vars,contextptr);
+    bool maximize=false,minlp=false,nonneg=false;
+    int num_mask=num_mask_withint | num_mask_withfrac;
+    int machine_accuracy=-int(std::round(std::log10(epsilon(contextptr))));
+    int wc=0,method=nlp_method::_AUTOMATIC;
+    double eps=std::pow(10,-(machine_accuracy*2)/3);
+    nlp_problem::meth_parm parm;
+    parm.init_defaults(eps);
+    const_iterateur it=gv.begin();
+    /* get the constraints, if any */
+    if (gv[1].type==_VECT) {
+        constr=*gv[1]._VECTptr;
+        // parse constraints, detect infeasible/redundant ones, convert expr=a..b to expr>=a and expr<=b
+        for (int i=constr.size();i-->0;) {
+            gen &c=constr[i];
+            if (c.is_integer() && c.subtype==_INT_BOOLEAN) {
+                if (c.val==0)
+                    return vecteur(0); // infeasible
+                constr.erase(constr.begin()+i);
+                continue;
+            }
+            if (!is_equal(c) && which_ineq(c)==0)
+                return gensizeerr(gettext("Invalid constraint ")+print_INT_(1+i));
+            if (is_equal(c) && c._SYMBptr->feuille._VECTptr->back().is_symb_of_sommet(at_interval)) {
+                gen a=c._SYMBptr->feuille._VECTptr->back()._SYMBptr->feuille._VECTptr->front();
+                gen b=c._SYMBptr->feuille._VECTptr->back()._SYMBptr->feuille._VECTptr->back();
+                gen lh=c._SYMBptr->feuille._VECTptr->front();
+                c=symb_inferieur_egal(lh,b);
+                constr.insert(constr.begin()+i,symb_superieur_egal(lh,a));
+                continue;
+            }
+        }
+        add_identifiers(constr,vars,contextptr);
+        ++it;
+    }
+    if (vars.empty()) {
+        print_error("no variables found, returning the objective value",contextptr);
+        return change_subtype(makevecteur(obj,vecteur(0)),_LIST__VECT);
+    }
+    lbv.resize(vars.size(),minus_inf);
+    ubv.resize(vars.size(),plus_inf);
+    /* parse options and bounds */
+    while (++it!=gv.end()) {
+        bool invalid=false;
+        if (*it==at_maximize || is_mcint(*it,_NLP_MAXIMIZE)) {
+            maximize=true;
+        } else if (*it==at_cluster) {
+            parm.cluster=0;
+        } else if (*it==at_convex) {
+            parm.convex=1;
+        } else if (is_equal(*it)) {
+            const gen &lh=it->_SYMBptr->feuille._VECTptr->front();
+            const gen &rh=it->_SYMBptr->feuille._VECTptr->back();
+            if (lh==at_assume && rh.is_integer() && (rh.val==_ZINT || rh.subtype==_INT_MAPLECONVERSION)) {
+                // parse assumptions
+                switch (rh.val) {
+                case _NONNEGINT: case _NLP_NONNEGINT:
+                    intvars=vars;
+                case _NLP_NONNEGATIVE:
+                    nonneg=true;
+                    break;
+                case _NLP_INTEGER: case _ZINT:
+                    intvars=vars;
+                    break;
+                case _NLP_BINARY:
+                    binvars=vars;
+                    break;
+                default:
+                    invalid=true;
+                    break;
+                }
+            } else if (lh==at_maximize && rh.is_integer() && rh.subtype==_INT_BOOLEAN) {
+                maximize=(bool)rh.val;
+            } else if (lh==at_border && rh.is_integer() && rh.subtype==_INT_BOOLEAN) {
+                parm.border=(bool)rh.val;
+            } else if (lh==at_convex && rh.is_integer() && rh.subtype==_INT_BOOLEAN) {
+                parm.convex=rh.val;
+            } else if (lh==at_cluster && rh.is_integer()) {
+                if (rh.subtype==_INT_BOOLEAN)
+                    parm.cluster=rh.val-1;
+                else if (rh.val<1)
+                    return generr("Expected a positive integer");
+                else parm.cluster=rh.val;
+            } else if (lh.is_integer() && lh.val==_NLP_INITIALPOINT && rh.type==_VECT) {
+                initp.resize(vars.size(),undef);
+                vecteur &pnt=*rh._VECTptr,ipl,ipu;
+                const_iterateur jt=pnt.begin();
+                int iv;
+                for (;jt!=pnt.end();++jt) {
+                    if (is_equal(*jt) && (iv=indexof(jt->_SYMBptr->feuille._VECTptr->front(),vars))>=0)
+                        initp.at(iv)=jt->_SYMBptr->feuille._VECTptr->back();
+                    else break;
+                }
+                if (jt!=pnt.end() || has_inf_or_undef(initp))
+                    return generr("Invalid initial point specification");
+                if (is_vect_of_intervals(initp,ipl,ipu,contextptr)) {
+                    if (!is_numericv(ipl,num_mask) || !is_numericv(ipu,num_mask))
+                        return generr("Invalid initial area specification");
+                    initp=makevecteur(at_interval,ipl,ipu);
+                } else {
+                    if (ckmatrix(initp)) {
+                        if (!is_numericm(initp,num_mask))
+                            return generr("Initial points must be numeric");
+                        initp=mtran(initp);
+                    } else {
+                        if (!is_numericv(initp,num_mask))
+                            return generr("Initial point must be numeric");
+                        initp=vecteur(1,initp);
+                    }
+                }
+            } else if (is_mcint(lh,_NLP_ITERATIONLIMIT) && rh.is_integer() && rh.val>0) {
+                parm.max_iter=rh.val;
+            } else if (is_mcint(lh,_NLP_METHOD) && (rh.type==_STRNG || rh.type==_VECT)) {
+                string method_name;
+                if (rh.type==_STRNG) {
+                    method_name=*rh._STRNGptr;
+                } else {
+                    const vecteur &meth=*rh._VECTptr;
+                    if (meth.empty() || meth.front().type!=_STRNG)
+                        return generr("Invalid method specification");
+                    method_name=*meth.front()._STRNGptr;
+                    /* parse method parameters */
+                    for (const_iterateur it=meth.begin()+1;it!=meth.end();++it) {
+                        if (!is_equal(*it) || it->_SYMBptr->feuille._VECTptr->front().type!=_STRNG)
+                            return generr("Invalid method parameter specification");
+                        string param_name=*it->_SYMBptr->feuille._VECTptr->front()._STRNGptr;
+                        const gen &pval=it->_SYMBptr->feuille._VECTptr->back();
+                        if (param_name=="penalty") {
+                            if (pval.type==_CPLX) {
+                                if (!is_strictly_positive(re(pval,contextptr),contextptr) || !is_strictly_positive(im(pval,contextptr),contextptr))
+                                    return generr("Penalty coefficients must be positive");
+                                parm.penalty=_evalf(pval,contextptr);
+                            } else {
+                                if (!is_real_number(pval,contextptr) || is_positive(-pval,contextptr))
+                                    return generr("Expected a positive real number");
+                                parm.penalty=to_real_number(pval,contextptr).to_double(contextptr);
+                            }
+                        } else if (param_name=="cross-probability") {
+                            if (!is_real_number(pval,contextptr) || !is_positive(pval,contextptr) || !is_greater(1,pval,contextptr))
+                                return generr("Expected a real number in [0,1]");
+                            parm.cross_prob=to_real_number(pval,contextptr).to_double(contextptr);
+                        } else if (param_name=="scale") {
+                            if (!is_real_number(pval,contextptr) || !is_positive(pval,contextptr) || !is_greater(2,pval,contextptr))
+                                return generr("Expected a real number in [0,2]");
+                            parm.scale=to_real_number(pval,contextptr).to_double(contextptr);
+                        } else if (param_name=="contract-ratio") {
+                            if (!is_real_number(pval,contextptr) || is_positive(-pval,contextptr) || is_positive(pval-1,contextptr))
+                                return generr("Expected a real number in (0,1)");
+                            parm.contract_ratio=to_real_number(pval,contextptr).to_double(contextptr);
+                        } else if (param_name=="shrink-ratio") {
+                            if (!is_real_number(pval,contextptr) || is_positive(-pval,contextptr) || is_positive(pval-1,contextptr))
+                                return generr("Expected a real number in (0,1)");
+                            parm.shrink_ratio=to_real_number(pval,contextptr).to_double(contextptr);
+                        } else if (param_name=="reflect-ratio") {
+                            if (!is_real_number(pval,contextptr) || is_positive(-pval,contextptr))
+                                return generr("Expected a positive real number");
+                            parm.reflect_ratio=to_real_number(pval,contextptr).to_double(contextptr);
+                        } else if (param_name=="expand-ratio") {
+                            if (!is_real_number(pval,contextptr) || is_positive(1-pval,contextptr))
+                                return generr("Expected a real number greater than 1");
+                            parm.expand_ratio=to_real_number(pval,contextptr).to_double(contextptr);
+                        } else if (param_name=="search-points") {
+                            if (!pval.is_integer() || pval.val<1)
+                                return generr("Expected a positive integer");
+                            parm.search_points=pval.val;
+                        } else if (param_name=="postprocess") {
+                            if (!pval.is_integer() || pval.subtype!=_INT_BOOLEAN)
+                                return generr("Expected a boolean value");
+                            parm.postprocess=(bool)pval.val;
+                        } else if (param_name=="size") {
+                            if (!is_real_number(pval,contextptr) || is_positive(-pval,contextptr))
+                                return generr("Expected a positive real number");
+                            parm.size=to_real_number(pval,contextptr).to_double(contextptr);
+                        } else if (param_name=="step") {
+                            if (!is_real_number(pval,contextptr) || is_positive(-pval,contextptr))
+                                return generr("Expected a positive real number");
+                            parm.step=to_real_number(pval,contextptr).to_double(contextptr);
+                        } else return generr("Unrecognized method parameter");
+                    }
+                }
+                if (method_name=="differential-evolution" || method_name=="de")
+                    method=nlp_method::_DIFFERENTIAL_EVOLUTION;
+                else if (method_name=="automatic" || method_name=="auto")
+                    method=nlp_method::_AUTOMATIC;
+                else if (method_name=="nelder-mead" || method_name=="nm")
+                    method=nlp_method::_NELDER_MEAD;
+                else if (method_name=="interior-point" || method_name=="ipt")
+                    method=nlp_method::_INTERIOR_POINT;
+                else if (method_name=="cobyla" || method_name=="cbl")
+                    method=nlp_method::_COBYLA;
+                else return generr("Method not supported");
+            } else if (is_mcint(lh,_NLP_PRESOLVE) && rh.is_integer() && rh.subtype==_INT_BOOLEAN) {
+                parm.presolve=(bool)rh.val;
+            } else if (is_mcint(lh,_NLP_MAXIMIZE) && rh.is_integer() && rh.subtype==_INT_BOOLEAN) {
+                maximize=(bool)rh.val;
+            } else if (is_mcint(lh,_NLP_PRECISION) && is_real_number(rh,contextptr) && is_strictly_positive(rh,contextptr)) {
+                parm.eps=to_real_number(rh,contextptr).to_double(contextptr);
+            } else if (is_mcint(lh,_NLP_TOLERANCE) && is_real_number(rh,contextptr) && is_strictly_positive(rh,contextptr)) {
+                parm.tol=to_real_number(rh,contextptr).to_double(contextptr);
+            } else if (is_mcint(lh,_NLP_VERBOSE) && rh.is_integer()) {
+                parm.msg_level=rh.subtype==_INT_BOOLEAN?((bool)rh.val?3:0):rh.val;
+                if (parm.msg_level<0 || parm.msg_level>4)
+                    invalid=true;
+            } else if (is_mcint(lh,_NLP_INTEGERVARIABLES) && rh.type==_VECT) {
+                intvars=*rh._VECTptr;
+            } else if (is_mcint(lh,_NLP_BINARYVARIABLES) && rh.type==_VECT) {
+                binvars=*rh._VECTptr;
+            } else if (rh.is_symb_of_sommet(at_interval)) {
+                vecteur vs=gen2vecteur(lh);
+                const gen &lb=rh._SYMBptr->feuille._VECTptr->front();
+                const gen &ub=rh._SYMBptr->feuille._VECTptr->back();
+                if (is_strictly_greater(lb,ub,contextptr))
+                    return gensizeerr(gettext("Infeasible bounds on variable(s) ")+_feuille(vs,contextptr).print(contextptr)+".");
+                for (const_iterateur vt=vs.begin();vt!=vs.end();++vt) {
+                    int j=indexof(*vt,vars);
+                    if (j<0)
+                        return generr("Expected a variable");
+                    lbv[j]=max(lb,lbv[j],contextptr);
+                    ubv[j]=min(ub,ubv[j],contextptr);
+                }
+            } else invalid=true;
+        } else invalid=true;
+        if (invalid)
+            return gensizeerr(gettext("Invalid argument ")+print_INT_(it-gv.begin())+".");
+    }
+    // convert trivial inequalities to variable bounds
+    for (int i=constr.size();i-->0;) {
+        gen &c=constr[i],a,b;
+        int dir=which_ineq(c);
+        if (dir>0) {
+            dir=2*dir-3;
+            gen d=c._SYMBptr->feuille._VECTptr->front()-c._SYMBptr->feuille._VECTptr->back();
+            for (const_iterateur it=vars.begin();it!=vars.end();++it) {
+                int j=it-vars.begin();
+                gen fa;
+                if (is_linear_wrt(d,*it,a,b,contextptr) && is_real_number(a,contextptr) &&
+                        !is_zero((fa=to_real_number(a,contextptr)),contextptr) && is_real_number(b,contextptr)) {
+                    if (!is_positive(fa,contextptr))
+                        dir=-dir;
+                    if (dir>0)
+                        lbv[j]=max(lbv[j],-b/a,contextptr);
+                    else ubv[j]=min(ubv[j],-b/a,contextptr);
+                    constr.erase(constr.begin()+i);
+                    break;
+                }
+            }
+        }
+    }
+    if (maximize)
+        obj=-obj;
+    if (nonneg) for (iterateur it=lbv.begin();it!=lbv.end();++it) {
+        *it=max(0,*it,contextptr);
+    }
+    // handle integral variables
+    intvars=mergevecteur(intvars,binvars);
+    minlp=!intvars.empty();
+    set<int> intvars_indices;
+    for (const_iterateur it=intvars.begin();it!=intvars.end();++it) {
+        int j=indexof(*it,vars);
+        if (j<0) // specified variable not found among problem variables
+            return generr("Invalid specification of integer variables");
+        intvars_indices.insert(j);
+        if (contains(binvars,*it)) { // tighten bounds on binary variable
+            lbv[j]=max(lbv[j],0,contextptr);
+            ubv[j]=min(ubv[j],1,contextptr);
+        }
+        // make bounds integral
+        lbv[j]=_ceil(lbv[j],contextptr);
+        ubv[j]=_floor(ubv[j],contextptr);
+    }
+    //if (!minlp) parm.convex=0; // check convexity only for MINLP
+    // solve the problem
+    nlp_problem prob(obj,constr,vars,contextptr);
+    prob.set_variable_bounds(lbv,ubv);
+    for (set<int>::const_iterator iit=intvars_indices.begin();iit!=intvars_indices.end();++iit) {
+        prob.set_integer_variable(*iit);
+    }
+    prob.enable_debug_messages(parm.msg_level>=4);
+    vecteur optsol;
+    gen optval;
+    int res;
+    try {
+        res=prob.optimize(method,parm,initp,optsol,optval);
+    } catch (const std::runtime_error &e) {
+        if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
+            interrupted=ctrl_c=false;
+            return generr("Stopped by user interruption");
+        }
+        return generr(e.what(),false);
+    }
+    switch (res) {
+    case nlp_problem::solution_status::_OPTIMAL:
+        return change_subtype(makevecteur(maximize?-optval:optval,_zip(makesequence(at_equal,vars,optsol),contextptr)),_LIST__VECT);
+    case nlp_problem::solution_status::_FAILED:
+        return change_subtype(makevecteur(string2gen(gettext("Failed to optimize at given precision"),false),
+                                          _zip(makesequence(at_equal,vars,optsol),contextptr)),_LIST__VECT);
+    case nlp_problem::solution_status::_ERROR:
+        return generr("Failed to find a solution");
+    case nlp_problem::solution_status::_INFEAS:
+        if (optsol.size()!=vars.size())
+            return generr("The problem is infeasible");
+        return change_subtype(makevecteur(string2gen(gettext("Solution is infeasible"),false),
+                                          _zip(makesequence(at_equal,vars,optsol),contextptr)),_LIST__VECT);
+    case nlp_problem::solution_status::_UNBOUNDED:
+        return maximize?plus_inf:minus_inf;
+    default: // not implemented
+        break;
+    }
+    assert(false);
+}
+static const char _nlpsolve_s []="nlpsolve";
+static define_unary_function_eval (__nlpsolve,&_nlpsolve,_nlpsolve_s);
+define_unary_function_ptr5(at_nlpsolve,alias_at_nlpsolve,&__nlpsolve,0,true)
 
 gen compute_invdiff(int n,int k,vecteur &xv,vecteur &yv,map<tprob::ipair,gen> &invdiff,GIAC_CONTEXT) {
     tprob::ipair I=make_pair(n,k);
@@ -3723,595 +7262,7 @@ static const char _thiele_s []="thiele";
 static define_unary_function_eval (__thiele,&_thiele,_thiele_s);
 define_unary_function_ptr5(at_thiele,alias_at_thiele,&__thiele,0,true)
 
-void add_identifiers(const gen &source,vecteur &dest,GIAC_CONTEXT) {
-    vecteur v(*_lname(source,contextptr)._VECTptr);
-    for (const_iterateur it=v.begin();it!=v.end();++it) {
-        if (!contains(dest,*it))
-            dest.push_back(*it);
-    }
-    dest=sort_identifiers(dest,contextptr);
-}
-
-bool nlp_subs_fxvars(const nlp_fxvars &fxvars,gen &obj,vecteur &constr,GIAC_CONTEXT) {
-    obj=subst(obj,fxvars.names,fxvars.values,false,contextptr);
-    for (int i=constr.size();i-->0;) {
-        gen &c=constr[i];
-        assert(c.type==_SYMB);
-        int w=which_ineq(c);
-        gen d=c._SYMBptr->feuille._VECTptr->front()-c._SYMBptr->feuille._VECTptr->back();
-        d=subst(d,fxvars.names,fxvars.values,false,contextptr);
-        if (is_zero(d,contextptr))
-            constr.erase(constr.begin()+i);
-        else {
-            if (is_real_number(d,contextptr) &&
-                    (c.is_symb_of_sommet(at_equal) || (w==1 && is_positive(d,contextptr)) || (w==2 && !is_positive(d,contextptr))))
-                return false;
-            if (w!=0) {
-                c=_eval(symbolic(c._SYMBptr->sommet,makesequence(d,0)),contextptr);
-                if (c.is_integer() && c.subtype==_INT_BOOLEAN) {
-                    if (c.val==0)
-                        c=symb_equal(d,0);
-                    else constr.erase(constr.begin()+i);
-                }
-            } else c=symb_equal(d,0);
-        }
-    }
-    return true;
-}
-
-/*
- * Optimize obj subject to constr w.r.t. vars with bounds lbv and ubv using COBYLA.
- */
-int nlp_optimize(const gen &obj_orig,const vecteur &constr_orig,const vecteur &vars_orig,
-        const vecteur &lbv_orig,const vecteur &ubv_orig,const vecteur &initp_orig,
-        gen &optval,vecteur &sol,double eps,double feas_tol,int nsamp,int maxiter,bool presolve,bool &is_reduced,GIAC_CONTEXT) {
-    gen obj(obj_orig);
-    vecteur constr=constr_orig,vars=vars_orig,lbv=lbv_orig,ubv=ubv_orig,initp=initp_orig;
-    /* presolve to reduce the number of variables */
-    stack<nlp_fxvars> fx_subs;
-    if (presolve) {
-        int pass=0,nvars=vars.size();
-        nlp_fxvars fxvars;
-        fxvars.n_oldvars=vars.size();
-        for (int j=vars.size();j-->0;) { // remove fixed variables
-            if (is_zero(ubv[j]-lbv[j],contextptr)) {
-                fxvars.names.push_back(vars[j]);
-                fxvars.values.push_back((lbv[j]+ubv[j])/2);
-                fxvars.indices.push_back(j);
-                vars.erase(vars.begin()+j);
-                lbv.erase(lbv.begin()+j);
-                ubv.erase(ubv.begin()+j);
-                if (!initp.empty())
-                    initp.erase(initp.begin()+j);
-            } else if (is_strictly_greater(lbv[j],ubv[j],contextptr))
-                return _NLP_INFEAS; // infeasible
-        }
-        if (!fxvars.names.empty()) {
-            if (!nlp_subs_fxvars(fxvars,obj,constr,contextptr))
-                return _NLP_INFEAS;
-            fx_subs.push(fxvars);            
-        }
-        bool changed;
-        do { // substitute variables
-            changed=false;
-            fxvars.indices.clear();
-            fxvars.names.clear();
-            fxvars.values.clear();
-            fxvars.n_oldvars=vars.size();
-            vector<nlp_lineq> leqv;
-            for (const_iterateur ct=constr.begin();ct!=constr.end();++ct) {
-                if (!ct->is_symb_of_sommet(at_equal))
-                    continue;
-                gen d=exact(ct->_SYMBptr->feuille._VECTptr->front()-ct->_SYMBptr->feuille._VECTptr->back(),contextptr),a,b;
-                vecteur lin;
-                for (const_iterateur it=vars.begin();it!=vars.end();++it) {
-                    if (is_linear_wrt(d,*it,a,b,contextptr) && !is_exactly_zero(a) && is_constant_wrt_vars(a,vars,contextptr))
-                        lin.push_back(*it);
-                }
-                if (lin.empty())
-                    continue;
-                vecteur v=*_lname(d,contextptr)._VECTptr;
-                for (const_iterateur it=lin.begin();it!=lin.end();++it) {
-                    v.erase(find(v.begin(),v.end(),*it));
-                }
-                nlp_lineq lineq;
-                lineq.e=d;
-                lineq.index=ct-constr.begin();
-                for (const_iterateur it=lin.begin();it!=lin.end();++it) {
-                    lineq.lvars.push_back(indexof(*it,vars));
-                }
-                for (const_iterateur it=v.begin();it!=v.end();++it) {
-                    lineq.nlvars.push_back(indexof(*it,vars));
-                }
-                sort(lineq.lvars.begin(),lineq.lvars.end());
-                sort(lineq.nlvars.begin(),lineq.nlvars.end());
-                leqv.push_back(lineq);
-            }
-            if (leqv.empty())
-                continue;
-            vecteur lsol,leq_vars;
-            if (!eliminate_equalities(leqv,vars,constr,lsol,leq_vars,contextptr))
-                continue;
-            if (!lsol.empty()) {
-                for (const_iterateur it=lsol.begin();it!=lsol.end();++it) {
-                    int i,j=it-lsol.begin();
-                    if (is_constant_wrt(*it,leq_vars[j],contextptr)) {
-                        fxvars.names.push_back(leq_vars[j]);
-                        fxvars.values.push_back(*it);
-                        fxvars.indices.push_back(i=indexof(leq_vars[j],vars));
-                        if (!is_inf(lbv[i]))
-                            constr.push_back(symb_superieur_egal(*it,lbv[i]));
-                        if (!is_inf(ubv[i]))
-                            constr.push_back(symb_inferieur_egal(*it,ubv[i]));
-                    }
-                }
-                for (int j=vars.size();j-->0;) {
-                    if (find(fxvars.indices.begin(),fxvars.indices.end(),j)!=fxvars.indices.end()) {
-                        vars.erase(vars.begin()+j);
-                        lbv.erase(lbv.begin()+j);
-                        ubv.erase(ubv.begin()+j);
-                        if (!initp.empty())
-                            initp.erase(initp.begin()+j);
-                    }
-                }
-            } else return _NLP_INFEAS;
-            if (changed=!fxvars.names.empty()) {
-                if (!nlp_subs_fxvars(fxvars,obj,constr,contextptr))
-                    return _NLP_INFEAS;
-                fx_subs.push(fxvars);
-            }
-        } while (changed && (++pass>0));
-        is_reduced=vars_orig.size()-vars.size()>0;
-    } else is_reduced=false;
-    /* optimize */
-    if (!vars.empty()) { // solve the problem using COBYLA
-        vecteur initpv;
-        if (initp.empty()) { // generate feasible points for multistart
-            initpv=gen_feasible_point(obj,constr,vars,lbv,ubv,nsamp,feas_tol,epsilon(contextptr),100,contextptr);
-            if (initpv.empty()) {
-                initp.resize(vars.size(),0.5);
-                initpv.push_back(initp);
-            }
-        } else initpv.push_back(initp);
-        for (int i=vars.size();i-->0;) { // convert variable bounds to inequality constraints
-            if (!is_inf(lbv[i]))
-                constr.push_back(symb_superieur_egal(vars[i],lbv[i]));
-            if (!is_inf(ubv[i]))
-                constr.push_back(symb_inferieur_egal(vars[i],ubv[i]));
-        }
-        gen cobyla_res,cobyla_obj;
-        vecteur cobyla_sol;
-        optval=plus_inf;
-        for (const_iterateur it=initpv.begin();it!=initpv.end();++it) {
-            initp=*(it->_VECTptr);
-            try {
-                if (!is_feasible(constr,vars,initp,feas_tol,contextptr)) {
-                    gen tmpinitp=_fMin(makesequence(0,constr,vars,initp,feas_tol,maxiter),contextptr);
-                    if (tmpinitp.type==_VECT && !tmpinitp._VECTptr->empty())
-                        initp=tmpinitp._VECTptr->front().type==_STRNG?*tmpinitp._VECTptr->at(1)._VECTptr:*tmpinitp._VECTptr;
-                }
-                if (!is_feasible(constr,vars,initp,feas_tol,contextptr))
-                    continue;
-                cobyla_res=_fMin(makesequence(obj,constr,vars,initp,eps,maxiter),contextptr);
-                if (cobyla_res.type!=_VECT || cobyla_res._VECTptr->empty()) {
-                    *logptr(contextptr) << gettext("Error") << ": " << gettext("failed to optimize, COBYLA returned ") << cobyla_res << "\n";
-                    return _NLP_ERROR;
-                }
-                cobyla_sol=*cobyla_res._VECTptr;
-                if (cobyla_sol.front().type==_STRNG) {
-                    cobyla_obj=cobyla_sol.front();
-                    cobyla_sol=*cobyla_sol.back()._VECTptr;
-                } else cobyla_obj=subst(obj,vars,cobyla_sol,false,contextptr);
-                if ((cobyla_obj.type==_STRNG && is_inf(optval)) ||
-                        (cobyla_obj.type!=_STRNG && is_strictly_greater(optval,cobyla_obj,contextptr))) {
-                    optval=cobyla_obj;
-                    sol=cobyla_sol;
-                }
-            } catch (const std::runtime_error &err) { // an error raised in COBYLA or user interruption
-                *logptr(contextptr) << err.what() << "\n";
-                return _NLP_ERROR;
-            }
-        }
-        if (is_inf(optval))
-            return _NLP_INFEAS; // failed to find feasible region
-    } else { // all variables are fixed in preprocessing
-        optval=obj;
-        sol=vecteur(0);
-    }
-    /* postprocess */
-    vecteur csol;
-    while (!fx_subs.empty()) {
-        nlp_fxvars fx=fx_subs.top();
-        if (!vars.empty())
-            fx.values=subst(fx.values,vars,sol,false,contextptr);
-        csol=vecteur(fx.n_oldvars,undef);
-        vecteur tmp_vars=vars;
-        vars=vecteur(fx.n_oldvars,undef);
-        for (int i=fx.indices.size();i-->0;) {
-            csol[fx.indices[i]]=fx.values[i];
-            vars[fx.indices[i]]=fx.names[i];
-        }
-        int i=0;
-        for (const_iterateur it=sol.begin();it!=sol.end();++it) {
-            int j=it-sol.begin();
-            while (!is_undef(csol[i])) ++i;
-            csol[i]=*it;
-            vars[i]=tmp_vars[j];
-        }
-        fx_subs.pop();
-        sol=csol;
-    }
-    return optval.type==_STRNG?_NLP_FAILED:_NLP_OPTIMAL;
-}
-
-bool nlp_node::find_branch_var(const vecteur &sol,const set<int> &iv_ind,double tol,GIAC_CONTEXT) {
-    set<int>::const_iterator it=iv_ind.begin();
-    for (;it!=iv_ind.end() && _abs(sol[*it]-_round(sol[*it],contextptr),contextptr).to_double(contextptr)<tol;++it);
-    if (it==iv_ind.end()) // solution is integer feasible
-        return false;
-    branch_var=*it;
-    frac_val=sol[*it];
-    return true;
-}
-
-
-/*
- * 'nlpsolve' computes an optimum of a nonlinear objective function, subject to
- * nonlinear equality and inequality constraints, using the COBYLA algorithm.
- *
- * Syntax
- * ^^^^^^
- *      nlpsolve(objective,[constr],[bd],[opts])
- *
- * - objective: objective expression
- * - constr: list of equality/inequality constraints
- * - bd: sequence of arguments of type x=a..b or [x,y...]=a..b, where x,y... are problem variables and a<=b are reals
- * - opts: a sequence of one or more of the following:
- *       assume=nlp_nonnegative,nlp_binary,nlp_integer|integer,nlp_nonnegint|nonnegint (2 or more options in a list)
- *       maximize[=true] or nlp_maximize[=true]
- *       nlp_initialpoint=[x1=a,x2=b,...]
- *       nlp_precision=real
- *       nlp_iterationlimit=intg>0
- *       nlp_integervariables=list
- *       nlp_binaryvariables=list
- *       nlp_presolve=true|false
- *       nlp_samples=intg>=0
- *
- * If initial point is not given, it will be automatically generated. The given point does not need to be feasible.
- * If nlp_samples>0 then the feasible region is randomly sampled and the best point is used as the initial one.
- * Note that choosing a good initial point is needed for obtaining a correct solution in some cases.
- *
- * Examples
- * ^^^^^^^^
- * (problems taken from:
- *      www.ai7.uni-bayreuth.de/test_problem_coll.pdf
- *      https://www.maplesoft.com/support/help/maple/view.aspx?path=Optimization%2FNLPSolve)
- *
- * nlpsolve(
- *  (x1-10)^3+(x2-20)^3,
- *  [(x1-5)^2+(x2-5)^2>=100,(x2-5)^2+(x1-6)^2<=82.81],
- *  nlp_initialpoint=[x1=20.1,x2=5.84]) // problem 19, using initial point
- * nlpsolve(sin(x1+x2)+(x1-x2)^2-1.5x1+2.5x2+1,x1=-1.5..4,x2=-3..3) // problem 5
- * nlpsolve(ln(1+x1^2)-x2,[(1+x1^2)^2+x2^2=4]) // problem 7
- * nlpsolve(
- *  x1,[x2>=exp(x1),x3>=exp(x2)],maximize=true,
- *  x1=0..100,x2=0..100,x3=0..10,nlp_initialpoint=[x1=1,x2=1.05,x3=2.9]) // problem 34 (modified)
- * nlpsolve(-x1*x2*x3,[72-x1-2x2-2x3>=0],x1=0..20,x2=0..11,x3=0..42) // problem 36
- * nlpsolve(2-1/120*x1*x2*x3*x4*x5,[x1<=1,x2<=2,x3<=3,x4<=4,x5<=5],assume=nlp_nonnegative) // problem 45
- * nlpsolve(sin(x)/x,x=1..30) // Maple computes wrong result for this example, at least on their web page
- * nlpsolve(x^3+2x*y-2y^2,x=-10..10,y=-10..10,nlp_initialpoint=[x=3,y=4],maximize) // Maple example
- * nlpsolve(w^3*(v-w)^2+(w-x-1)^2+(x-y-2)^2+(y-z-3)^2,[w+x+y+z<=5,3z+2v=3],assume=nlp_nonnegative) // Maple example
- * nlpsolve(sin(x)*Psi(x),x=1..20,nlp_initialpoint=[x=16]) // Maple example, needs an initial point
- */
-gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type==_SYMB) // unconstrained minimization without any options and bounds
-        return _nlpsolve(makesequence(g,vecteur(0)),contextptr);
-    if (g.type!=_VECT || g.subtype!=_SEQ__VECT || g._VECTptr->size()<2)
-        return generrtype("Expected a sequence of two or more arguments");
-    const vecteur &gv=*g._VECTptr;
-    vecteur constr,vars,initp;
-    gen obj=gv.front();
-    add_identifiers(obj,vars,contextptr);
-    bool maximize=false,has_initp=false,presolve=true,minlp=false,nonneg=false;
-    int maxiter=1e5,nsamp=500,wc=0;
-    double eps=epsilon(contextptr),int_tol=1e-6,feas_tol=1e-6;
-    const_iterateur it=gv.begin();
-    /* get the constraints, if any */
-    if (gv[1].type==_VECT) {
-        constr=*gv[1]._VECTptr;
-        // parse constraints, detect infeasible/redundant ones, convert expr=a..b to expr>=a and expr<=b
-        for (int i=constr.size();i-->0;) {
-            gen &c=constr[i];
-            if (c.is_integer() && c.subtype==_INT_BOOLEAN) {
-                if (c.val==0)
-                    return vecteur(0);
-                constr.erase(constr.begin()+i);
-                continue;
-            }
-            if (!c.is_symb_of_sommet(at_equal) && which_ineq(c)==0)
-                return gensizeerr(gettext("Invalid constraint ")+print_INT_(1+i));
-            if (c.is_symb_of_sommet(at_equal) && c._SYMBptr->feuille._VECTptr->back().is_symb_of_sommet(at_interval)) {
-                gen a=c._SYMBptr->feuille._VECTptr->back()._SYMBptr->feuille._VECTptr->front();
-                gen b=c._SYMBptr->feuille._VECTptr->back()._SYMBptr->feuille._VECTptr->back();
-                gen lh=c._SYMBptr->feuille._VECTptr->front();
-                c=symb_inferieur_egal(lh,b);
-                constr.insert(constr.begin()+i,symb_superieur_egal(lh,a));
-                continue;
-            }
-        }
-        add_identifiers(constr,vars,contextptr);
-        ++it;
-    }
-    if (vars.empty()) {
-        if (!is_feasible(constr,vars,vecteur(0),feas_tol,contextptr))
-            return vecteur(0);
-        return change_subtype(makevecteur(obj,vecteur(0)),_LIST__VECT);
-    }
-    vecteur lbv(vars.size(),minus_inf),ubv(vars.size(),plus_inf),intvars,binvars;
-    /* parse options and bounds */
-    while (++it!=gv.end()) {
-        bool invalid=false;
-        if (*it==at_maximize || is_mcint(*it,_NLP_MAXIMIZE)) {
-            maximize=true;
-        } else if (it->is_symb_of_sommet(at_equal)) {
-            const gen &lh=it->_SYMBptr->feuille._VECTptr->front();
-            const gen &rh=it->_SYMBptr->feuille._VECTptr->back();
-            if (lh==at_assume && rh.is_integer() && (rh.val==_ZINT || rh.subtype==_INT_MAPLECONVERSION)) {
-                // parse assumptions
-                switch (rh.val) {
-                case _NONNEGINT: case _NLP_NONNEGINT:
-                    intvars=vars;
-                case _NLP_NONNEGATIVE:
-                    nonneg=true;
-                    break;
-                case _NLP_INTEGER: case _ZINT:
-                    intvars=vars;
-                    break;
-                case _NLP_BINARY:
-                    binvars=vars;
-                    break;
-                default:
-                    invalid=true;
-                    break;
-                }
-            } else if (lh==at_maximize && rh.is_integer() && rh.subtype==_INT_BOOLEAN) {
-                maximize=(bool)rh.val;
-            } else if (lh.is_integer() && lh.val==_NLP_INITIALPOINT && rh.type==_VECT) {
-                initp.resize(vars.size(),undef);
-                vecteur &pnt=*rh._VECTptr;
-                const_iterateur jt=pnt.begin();
-                for (;jt!=pnt.end();++jt) {
-                    gen var;
-                    if (jt->is_symb_of_sommet(at_equal) && contains(vars,var=jt->_SYMBptr->feuille._VECTptr->front()))
-                        initp.at(indexof(var,vars))=jt->_SYMBptr->feuille._VECTptr->back();
-                    else break;
-                }
-                if (jt!=pnt.end() || contains(initp,undef) || !_lname(_evalf(initp,contextptr),contextptr)._VECTptr->empty())
-                    return generr("Invalid initial point specification");
-                if (is_zero(initp,contextptr))
-                    return generr("Cannot use zero vector as an initial point");
-            } else if (is_mcint(lh,_NLP_ITERATIONLIMIT) && rh.is_integer() && rh.val>0) {
-                maxiter=rh.val;
-            } else if (is_mcint(lh,_NLP_SAMPLES) && rh.is_integer() && rh.val>=0) {
-                nsamp=rh.val;
-            } else if (is_mcint(lh,_NLP_PRESOLVE) && rh.is_integer() && rh.subtype==_INT_BOOLEAN) {
-                presolve=(bool)rh.val;
-            } else if (is_mcint(lh,_NLP_MAXIMIZE) && rh.is_integer() && rh.subtype==_INT_BOOLEAN) {
-                maximize=(bool)rh.val;
-            } else if (is_mcint(lh,_NLP_PRECISION) && is_real_number(rh,contextptr) && is_strictly_positive(rh,contextptr)) {
-                eps=to_real_number(rh,contextptr).to_double(contextptr);
-            } else if (is_mcint(lh,_NLP_FEAS_TOL) && is_real_number(rh,contextptr) && is_strictly_positive(rh,contextptr)) {
-                feas_tol=to_real_number(rh,contextptr).to_double(contextptr);
-            } else if (is_mcint(lh,_NLP_INT_TOL) && is_real_number(rh,contextptr) && is_strictly_positive(rh,contextptr)) {
-                int_tol=to_real_number(rh,contextptr).to_double(contextptr);
-            } else if (is_mcint(lh,_NLP_INTEGERVARIABLES) && rh.type==_VECT) {
-                intvars=*rh._VECTptr;
-            } else if (is_mcint(lh,_NLP_BINARYVARIABLES) && rh.type==_VECT) {
-                binvars=*rh._VECTptr;
-            } else if (rh.is_symb_of_sommet(at_interval)) {
-                vecteur vs=lh.type==_VECT?*lh._VECTptr:vecteur(1,lh);
-                const gen &lb=rh._SYMBptr->feuille._VECTptr->front();
-                const gen &ub=rh._SYMBptr->feuille._VECTptr->back();
-                if (is_strictly_greater(lb,ub,contextptr))
-                    return gensizeerr(gettext("Infeasible bounds on variable(s) ")+_feuille(vs,contextptr).print(contextptr)+".");
-                for (const_iterateur vt=vs.begin();vt!=vs.end();++vt) {
-                    int j=indexof(*vt,vars);
-                    if (j<0)
-                        return generr("Expected a variable");
-                    lbv[j]=max(lb,lbv[j],contextptr);
-                    ubv[j]=min(ub,ubv[j],contextptr);
-                }
-            } else invalid=true;
-        } else invalid=true;
-        if (invalid)
-            return gensizeerr(gettext("Invalid argument ")+print_INT_(it-gv.begin())+".");
-    }
-    // convert trivial inequalities to variable bounds
-    for (int i=constr.size();i-->0;) {
-        gen &c=constr[i],a,b;
-        int dir=which_ineq(c);
-        if (dir>0) {
-            dir=2*dir-3;
-            gen d=c._SYMBptr->feuille._VECTptr->front()-c._SYMBptr->feuille._VECTptr->back();
-            for (const_iterateur it=vars.begin();it!=vars.end();++it) {
-                int j=it-vars.begin();
-                gen fa;
-                if (is_linear_wrt(d,*it,a,b,contextptr) && is_real_number(a,contextptr) &&
-                        !is_zero((fa=to_real_number(a,contextptr)),contextptr) && is_real_number(b,contextptr)) {
-                    if (!is_positive(fa,contextptr))
-                        dir=-dir;
-                    if (dir>0)
-                        lbv[j]=max(lbv[j],-b/a,contextptr);
-                    else ubv[j]=min(ubv[j],-b/a,contextptr);
-                    constr.erase(constr.begin()+i);
-                    break;
-                }
-            }
-        }
-    }
-    if (maximize)
-        obj=-obj;
-    if (nonneg) for (iterateur it=lbv.begin();it!=lbv.end();++it) {
-        *it=max(0,*it,contextptr);
-    }
-    // handle integral variables
-    intvars=mergevecteur(intvars,binvars);
-    minlp=!intvars.empty();
-    set<int> intvars_indices;
-    for (const_iterateur it=intvars.begin();it!=intvars.end();++it) {
-        int j=indexof(*it,vars);
-        if (j<0) // specified variable not found among problem variables
-            return generr("Invalid specification of integer variables");
-        intvars_indices.insert(j);
-        if (contains(binvars,*it)) { // tighten bounds on binary variable
-            lbv[j]=max(lbv[j],0,contextptr);
-            ubv[j]=min(ubv[j],1,contextptr);
-        }
-        // make bounds integral
-        lbv[j]=_ceil(lbv[j],contextptr);
-        ubv[j]=_floor(ubv[j],contextptr);
-    }
-    obj=_evalf(obj,contextptr);
-    constr=*_evalf(constr,contextptr)._VECTptr;
-    lbv=*_evalf(lbv,contextptr)._VECTptr;
-    ubv=*_evalf(ubv,contextptr)._VECTptr;
-    initp=*_evalf(initp,contextptr)._VECTptr;
-    gen optval,optimum=plus_inf;
-    vecteur sol,optsol;
-    vector<nlp_node> active_nodes;
-    bool is_reduced;
-    int res=nlp_optimize(obj,constr,vars,lbv,ubv,initp,optval,sol,eps,feas_tol,nsamp,maxiter,presolve,is_reduced,contextptr);
-    switch (res) {
-    case _NLP_OPTIMAL:
-        break;
-    case _NLP_FAILED:
-        if (is_reduced) { // try again from the last point, disable presolving
-            if (!minlp)
-                print_warning("reoptimizing without presolving",contextptr);
-            vecteur old_sol=sol;
-            res=nlp_optimize(obj,constr,vars,lbv,ubv,old_sol,optval,sol,eps,feas_tol,0,maxiter,false,is_reduced,contextptr);
-            if (res==_NLP_ERROR || res==_NLP_INFEAS)
-                sol=old_sol;
-        }
-        if (res!=_NLP_OPTIMAL) {
-            if (minlp)
-                print_warning("failed to optimize at given precision",contextptr);
-            optval=minlp?subst(obj,vars,sol,false,contextptr):undef;
-        }
-        break;
-    case _NLP_INFEAS:
-        return vecteur(0);
-    case _NLP_ERROR:
-        return undef;
-    }
-    nlp_node root;
-    if (minlp && root.find_branch_var(sol,intvars_indices,int_tol,contextptr)) { // apply branch & bound
-        root.lbv=lbv;
-        root.ubv=ubv;
-        root.opt=optval;
-        root.depth=0;
-        active_nodes.push_back(root);
-        try {
-            while (!active_nodes.empty()) {
-                int k=-1; //is_inf(optimum)?active_nodes.size()-1:-1;
-                gen best_opt=plus_inf;
-                if (k<0) {
-                    for (vector<nlp_node>::const_iterator it=active_nodes.begin();it!=active_nodes.end();++it) {
-                        if (is_strictly_greater(best_opt,it->opt,contextptr)) {
-                            best_opt=it->opt;
-                            k=it-active_nodes.begin();
-                        }
-                    }
-                }
-                nlp_node &p=active_nodes[k],ch[2];
-                int j=p.branch_var;
-                ch[0].lbv=ch[1].lbv=p.lbv;
-                ch[0].ubv=ch[1].ubv=p.ubv;
-                ch[0].depth=ch[1].depth=p.depth+1;
-                ch[0].lbv[j]=max(ch[0].lbv[j],_ceil(p.frac_val,contextptr),contextptr);
-                ch[1].ubv[j]=min(ch[1].ubv[j],_floor(p.frac_val,contextptr),contextptr);
-                bool optimum_updated=false;
-                for (int i=0;i<2;++i) {
-                    res=nlp_optimize(obj,constr,vars,ch[i].lbv,ch[i].ubv,initp,ch[i].opt,sol,eps,feas_tol,nsamp,maxiter,presolve,is_reduced,contextptr);
-                    switch (res) {
-                    case _NLP_OPTIMAL: case _NLP_ERROR:
-                        break;
-                    case _NLP_INFEAS:
-                        continue;
-                    case _NLP_FAILED:
-                        if (is_reduced) {
-                            vecteur old_sol=sol;
-                            res=nlp_optimize(obj,constr,vars,ch[i].lbv,ch[i].ubv,old_sol,ch[i].opt,sol,eps,feas_tol,0,maxiter,false,is_reduced,contextptr);
-                            if (res==_NLP_ERROR || res==_NLP_INFEAS)
-                                sol=old_sol;
-                        }
-                        if (res!=_NLP_OPTIMAL) {
-                            print_warning("failed to optimize at given precision",contextptr);
-                            ch[i].opt=subst(obj,vars,sol,false,contextptr);
-                        }
-                        break;
-                    }
-                    if (res==_NLP_ERROR) {
-                        if (is_inf(optimum))
-                            return undef;
-                        else break;
-                    }
-                    if (is_strictly_greater(optimum,ch[i].opt,contextptr)) {
-                        if (ch[i].find_branch_var(sol,intvars_indices,int_tol,contextptr)) {
-                            active_nodes.push_back(ch[i]);
-                        } else { // new incumbent found
-                            optimum=ch[i].opt;
-                            optsol=sol;
-                            optimum_updated=true;
-                        }
-                    }
-                }
-                if (res==_NLP_ERROR) {
-                    *logptr(contextptr) << gettext("Returning incumbent solution") << "\n";
-                    break;
-                }
-                active_nodes.erase(active_nodes.begin()+k); // delete parent node
-                if (optimum_updated) { // prune nodes
-                    for (int i=active_nodes.size();i-->0;) {
-                        if (is_greater(active_nodes[i].opt,optimum,contextptr))
-                            active_nodes.erase(active_nodes.begin()+i);
-                    }
-                }
-            }
-        } catch (const std::runtime_error &e) {
-            if (strstr(e.what(),"user interruption")!=NULL) {
-                print_error("stopped by user interruption",contextptr);
-                if (!is_inf(optimum))
-                    *logptr(contextptr) << ", " << gettext("returning incumbent solution");
-                *logptr(contextptr) << "\n";
-                if (is_inf(optimum))
-                    return undef;
-            }
-        }
-        if (is_inf(optimum)) // no integer-feasible solution found
-            return vecteur(0);
-    } else {
-        optsol=sol;
-        optimum=optval;
-    }
-    if (maximize)
-        optimum=-optimum;
-#if 0
-    for (set<int>::const_iterator it=intvars_indices.begin();it!=intvars_indices.end();++it) {
-        optsol[*it]=_round(optsol[*it],contextptr);
-    }
-#endif
-    /* return the optimal solution */
-    return change_subtype(makevecteur(is_undef(optimum)?string2gen(gettext("Failed to optimize at given precision"),false):optimum,
-                                        _zip(makesequence(at_equal,vars,optsol),contextptr)),_LIST__VECT);
-}
-static const char _nlpsolve_s []="nlpsolve";
-static define_unary_function_eval (__nlpsolve,&_nlpsolve,_nlpsolve_s);
-define_unary_function_ptr5(at_nlpsolve,alias_at_nlpsolve,&__nlpsolve,0,true)
-
-/*
- * Returns the trigonometric polynomial in variable x passing through points
+/* Returns the trigonometric polynomial in variable x passing through points
  * with ordinate componets in 'data' and the abscissa components equally spaced between
  * a and b (the first being equal a and the last being equal to b).
  */
@@ -4321,8 +7272,8 @@ gen triginterp(const vecteur &data,const gen &a,const gen &b,const identificateu
         return generr("At least two data points are required");
     int N=(n%2)==0?n/2:(n-1)/2;
     gen T=(b-a)*fraction(n,n-1),twopi=2*_IDNT_pi(),X;
-    matrice cos_coeff=*_matrix(makesequence(N,n,0),contextptr)._VECTptr;
-    matrice sin_coeff=*_matrix(makesequence(N,n,0),contextptr)._VECTptr;
+    matrice cos_coeff=zero_mat(N,n,contextptr);
+    matrice sin_coeff=zero_mat(N,n,contextptr);
     for (int k=0;k<n;++k) {
         X=twopi*(a/T+fraction(k,n));
         for (int j=1;j<=N;++j) {
@@ -4352,9 +7303,7 @@ gen _triginterp(const gen &g,GIAC_CONTEXT) {
         return generrtype("Expected a list");
     vecteur &data=*args.front()._VECTptr;
     gen x,ab,a,b,&vararg=args.at(1);
-    if (vararg.is_symb_of_sommet(at_equal) &&
-               (x=_lhs(vararg,contextptr)).type==_IDNT &&
-               (ab=_rhs(vararg,contextptr)).is_symb_of_sommet(at_interval)) {
+    if (is_equal(vararg) && (x=_lhs(vararg,contextptr)).type==_IDNT && (ab=_rhs(vararg,contextptr)).is_symb_of_sommet(at_interval)) {
         a=_lhs(ab,contextptr);
         b=_rhs(ab,contextptr);
     } else if (args.size()==4 && (x=args.back()).type==_IDNT) {
@@ -4602,7 +7551,7 @@ gen _kernel_density(const gen &g,GIAC_CONTEXT) {
     if (g.subtype==_SEQ__VECT) {
         // parse options
         for (const_iterateur it=g._VECTptr->begin()+1;it!=g._VECTptr->end();++it) {
-            if (it->is_symb_of_sommet(at_equal)) {
+            if (is_equal(*it)) {
                 const gen &opt=it->_SYMBptr->feuille._VECTptr->front();
                 const gen &v=it->_SYMBptr->feuille._VECTptr->back();
                 if (opt==_KDE_BANDWIDTH) {
@@ -4637,10 +7586,10 @@ gen _kernel_density(const gen &g,GIAC_CONTEXT) {
                     else return generr("Invalid method specification");
                 } else if (opt==at_interp) {
                     if (!v.is_integer() || (interp=v.val)<1)
-                        return generr("Invalid interpolation specification");
+                        return generr("Invalid interpolation method specification");
                 } else if (opt==at_spline) {
                     if (!v.is_integer() || (interp=v.val)<1)
-                        return generr("Invalid interpolation specification");
+                        return generr("Invalid interpolation method specification");
                     method=_KDE_METHOD_PIECEWISE;
                 } else if (opt.type==_IDNT) {
                     x=opt;
@@ -4659,18 +7608,22 @@ gen _kernel_density(const gen &g,GIAC_CONTEXT) {
             else return generr("Unrecognized option");
         }
     }
-    if (x.type!=_IDNT && (!is_real_number(x,contextptr) || method==_KDE_METHOD_LIST))
-        return generr("A real constant expected or invalid method");
+    if (x.type!=_IDNT) {
+        if (!is_real_number(x,contextptr))
+            return generr("Expected a real constant");
+        if (method==_KDE_METHOD_LIST)
+            return generr("Invalid method");
+    }
     vecteur &data=g.subtype==_SEQ__VECT?*g._VECTptr->front()._VECTptr:*g._VECTptr;
     int n=data.size();
     if (n<2)
-        return generr("Invalid data size");
+        return generr("Data too small");
     vector<double> ddata(n);
     gen e;
     for (const_iterateur it=data.begin();it!=data.end();++it) {
         if (!is_real_number(*it,contextptr))
             return generr("Expected a real constant");
-        d=ddata[it-data.begin()]=to_real_number(e,contextptr).to_double(contextptr);
+        d=ddata[it-data.begin()]=to_real_number(*it,contextptr).to_double(contextptr);
         sx+=d;
         sxsq+=d*d;
     }
@@ -4678,7 +7631,7 @@ gen _kernel_density(const gen &g,GIAC_CONTEXT) {
     if (bw_method==_KDE_BW_METHOD_ROT) { // Silverman's rule of thumb
         double iqr=to_real_number(_quartile3(data,contextptr)-_quartile1(data,contextptr),contextptr).to_double(contextptr);
         bw=1.06*std::min(sd,iqr/1.34)*std::pow(double(data.size()),-0.2);
-        *logptr(contextptr) << gettext("selected bandwidth: ") << bw << "\n";
+        *logptr(contextptr) << gettext("Selected bandwidth: ") << bw << "\n";
     }
     if (bins>0 && a==0 && b==0) {
         a=to_real_number(_min(data,contextptr),contextptr).to_double(contextptr)-3*bw;
@@ -4714,7 +7667,7 @@ gen weibull_mle(const vecteur &S,const gen &k0,const gen &eps,GIAC_CONTEXT) {
     }
     L=L/n;
     gen ik0=_inv(k0,contextptr),k=k0-(s1-s0*(ik0+L))/(s2+s0*sq(ik0)-s1*(ik0+L));
-    if (!is_strictly_positive(k,contextptr))
+    if (is_positive(-k,contextptr))
         return undef;
     if (is_greater(_abs(k-k0,contextptr),eps,contextptr))
         return weibull_mle(S,k,eps,contextptr);
@@ -4724,7 +7677,7 @@ gen weibull_mle(const vecteur &S,const gen &k0,const gen &eps,GIAC_CONTEXT) {
 
 /* maximum likelihood estimation for Cauchy distribution */
 gen cauchy_mle(const vecteur &S,const gen &x0_init,const gen &gama_init,const gen &eps,GIAC_CONTEXT) {
-    matrice m=*_matrix(makesequence(2,2,0),contextptr)._VECTptr;
+    matrice m=zero_mat(2,2,contextptr);
     gen n(S.size()),d,dsq,den,densq,gsq=sq(gama_init),F(0),G(-n/2);
     gen &Fx0=m.front()._VECTptr->front(),&Fgama=m.front()._VECTptr->back(),
             &Gx0=m.back()._VECTptr->front(),&Ggama=m.back()._VECTptr->back();
@@ -4742,7 +7695,7 @@ gen cauchy_mle(const vecteur &S,const gen &x0_init,const gen &gama_init,const ge
         if (delta.empty())
             return undef;
         gen x0=x0_init+delta.front(),gama=gama_init+delta.back();
-        if (is_greater(_l2norm(delta,contextptr),eps,contextptr))
+        if (is_greater(l2norm(delta,contextptr),eps,contextptr))
             return cauchy_mle(S,x0,gama,eps,contextptr);
         return symbolic(at_cauchyd,makesequence(x0,gama));
     }
@@ -4787,7 +7740,7 @@ gen _fitdistr(const gen &g,GIAC_CONTEXT) {
         return symbolic(at_poisson,mean);
     } else if (dist==at_exp || dist==at_EXP || dist==at_exponential || dist==at_exponentiald) {
         for (const_iterateur it=S.begin();it!=S.end();++it) {
-            if (!is_strictly_positive(*it,contextptr)) return generr("Expected a positive number");
+            if (is_positive(-*it,contextptr)) return generr("Expected a positive number");
         }
         return symbolic(at_exponentiald,_inv(mean,contextptr));
     } else if (dist==at_geometric) {
@@ -4798,7 +7751,7 @@ gen _fitdistr(const gen &g,GIAC_CONTEXT) {
     } else if (dist==at_gammad || dist==at_Gamma) {
         gen slog(0);
         for (const_iterateur it=S.begin();it!=S.end();++it) {
-            if (!is_strictly_positive(*it,contextptr)) return generr("Expected a positive number");
+            if (is_positive(-*it,contextptr)) return generr("Expected a positive number");
             slog+=ln(*it,contextptr);
         }
         gen a_init=sq(mean)/var,aidn=temp_symb("a",-1,contextptr);
@@ -4828,7 +7781,7 @@ gen _fitdistr(const gen &g,GIAC_CONTEXT) {
         if (is_zero(var)) return generr("Expected a nonzero variance");
         gen kidn=temp_symb("k",-1,contextptr),slog(0);
         for (const_iterateur it=S.begin();it!=S.end();++it) {
-            if (!is_strictly_positive(*it,contextptr)) return generr("Expected a positive number");
+            if (is_positive(-*it,contextptr)) return generr("Expected a positive number");
             slog+=ln(*it,contextptr);
         }
         gen e=_Gamma(1+gen(2)/kidn,contextptr)/_Gamma(1+gen(1)/kidn,contextptr)-var/sq(mean)-1;
@@ -4973,7 +7926,7 @@ int finitediff(const gen &f,const gen &x_idn,const gen &y_idn,const gen &dy_idn,
             V[i]=gen(Z[i])-gen(U[i])*V[i+1];
             W[i]+=Z[i]-U[i]*V[i+1].to_double(contextptr);
         }
-        if (is_greater(tol,_l2norm(V,contextptr),contextptr)) {
+        if (is_greater(tol,l2norm(V,contextptr),contextptr)) {
             X.resize(N+2);
             Y.resize(N+2);
             for (int i=0;i<=N+1;++i) {
@@ -4994,17 +7947,20 @@ gen _bvpsolve(const gen &g,GIAC_CONTEXT) {
     const vecteur &gv=*g._VECTptr;
     gen tk(undef);
     int maxiter=RAND_MAX;
-    if (gv.size()<3 || gv[1].type!=_VECT || gv[2].type!=_VECT ||
-            gv[1]._VECTptr->size()!=2 || (gv[2]._VECTptr->size()!=2 && gv[2]._VECTptr->size()!=3))
+    if (gv.size()<3)
+        return generr("Too few input arguments");
+    gen arg2=_eval(gv[1],contextptr),arg3=_eval(gv[2],contextptr);
+    if (arg2.type!=_VECT || arg3.type!=_VECT || arg2._VECTptr->size()!=2 || arg3._VECTptr->size()<2 || arg3._VECTptr->size()>3)
         return generr("Invalid input arguments");
-    const gen &f=gv.front(),&t=gv[1]._VECTptr->front(),&y=gv[1]._VECTptr->back();
-    gen y1=gv[2]._VECTptr->at(0),y2=gv[2]._VECTptr->at(1);
-    if (gv[2]._VECTptr->size()==3 && !is_real_number(gv[2]._VECTptr->at(2),contextptr))
+    gen f=idnteval(gv.front(),contextptr);
+    const gen &t=arg2._VECTptr->front(),&y=arg2._VECTptr->back();
+    gen y1=arg3._VECTptr->at(0),y2=arg3._VECTptr->at(1);
+    if (arg3._VECTptr->size()==3 && !is_real_number(arg3._VECTptr->at(2),contextptr))
         return generr("Expected a real constant");
-    tk=to_real_number(gv[2]._VECTptr->at(2),contextptr);
+    tk=to_real_number(arg3._VECTptr->at(2),contextptr);
     if (y.type!=_IDNT)
         return generr("Expected an identifier");
-    if (!t.is_symb_of_sommet(at_equal) || t._SYMBptr->feuille._VECTptr->front().type!=_IDNT ||
+    if (!is_equal(t) || t._SYMBptr->feuille._VECTptr->front().type!=_IDNT ||
             !t._SYMBptr->feuille._VECTptr->back().is_symb_of_sommet(at_interval))
         return generrtype("Expected a variable with range");
     const gen &x=t._SYMBptr->feuille._VECTptr->front();
@@ -5021,7 +7977,7 @@ gen _bvpsolve(const gen &g,GIAC_CONTEXT) {
     /* parse options */
     int output_type=_BVP_LIST;
     for (const_iterateur it=gv.begin()+3;it!=gv.end();++it) {
-        if (it->is_symb_of_sommet(at_equal)) {
+        if (is_equal(*it)) {
             const gen &lh=it->_SYMBptr->feuille._VECTptr->front();
             const gen &rh=it->_SYMBptr->feuille._VECTptr->back();
             if (lh==at_output || lh==at_Output) {
@@ -5073,7 +8029,7 @@ gen _bvpsolve(const gen &g,GIAC_CONTEXT) {
         } else return undef;
     }
     vecteur res,coeff;
-    matrice m=*_matrix(makesequence(4,4,0),contextptr)._VECTptr;
+    matrice m=zero_mat(4,4,contextptr);
     m[0]._VECTptr->at(3)=m[1]._VECTptr->at(3)=m[2]._VECTptr->at(2)=m[3]._VECTptr->at(2)=1;
     switch (output_type) {
     case _BVP_LIST:
@@ -5171,24 +8127,23 @@ gen _euler_lagrange(const gen &g,GIAC_CONTEXT) {
     gen L,t=identificateur("x");
     vecteur u=makevecteur(identificateur("y"));
     if (g.type!=_VECT) {
-        L=g;
-        if (L.type==_IDNT)
-            L=eval(L,contextptr);
+        L=idnteval(g,contextptr);
         if (!contains(lidnt(L),t))
             t=t__IDNT_e;
     } else {
         if (g.subtype!=_SEQ__VECT)
             return gentypeerr(contextptr);
         const vecteur &gv=*g._VECTptr;
-        L=gv.front();
+        L=idnteval(gv.front(),contextptr);
         if (gv.size()>1) {
-            if (gv.size()==2 && gv[1].is_symb_of_sommet(at_of)) {
-                u.front()=gv[1]._SYMBptr->feuille._VECTptr->front();
-                t=gv[1]._SYMBptr->feuille._VECTptr->back();
-            } else if (gv.size()==2 && gv[1].type==_VECT && !gv[1]._VECTptr->empty()) {
+            gen arg=_eval(gv[1],contextptr);
+            if (gv.size()==2 && arg.is_symb_of_sommet(at_of)) {
+                u.front()=arg._SYMBptr->feuille._VECTptr->front();
+                t=arg._SYMBptr->feuille._VECTptr->back();
+            } else if (gv.size()==2 && arg.type==_VECT && !arg._VECTptr->empty()) {
                 u.clear();
                 t=undef;
-                for (const_iterateur it=gv[1]._VECTptr->begin();it!=gv[1]._VECTptr->end();++it) {
+                for (const_iterateur it=arg._VECTptr->begin();it!=arg._VECTptr->end();++it) {
                     if (!it->is_symb_of_sommet(at_of))
                         return generr("Expected a function");
                     u.push_back(it->_SYMBptr->feuille._VECTptr->front());
@@ -5197,15 +8152,16 @@ gen _euler_lagrange(const gen &g,GIAC_CONTEXT) {
                     else if (t!=it->_SYMBptr->feuille._VECTptr->back())
                         return generr("Expected a single parameter variable");
                 }
-            } else t=gv[1];
+            } else t=arg;
             if (t.type!=_IDNT)
                 return generr("Expected a variable");
         }
         if (gv.size()>2) {
-            if (gv[2].type==_IDNT)
-                u.front()=gv[2];
-            else if (gv[2].type==_VECT)
-                u=*gv[2]._VECTptr;
+            gen arg=_eval(gv[2],contextptr);
+            if (arg.type==_IDNT)
+                u.front()=arg;
+            else if (arg.type==_VECT)
+                u=*arg._VECTptr;
             else return generr("Expected a variable or a list of variables");
         }
     }
@@ -5277,15 +8233,16 @@ gen _jacobi_equation(const gen &g,GIAC_CONTEXT) {
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
     const vecteur &gv=*g._VECTptr;
-    L=gv.front();
-    if (gv.size()==5) {
-        if (!gv[1].is_symb_of_sommet(at_of))
+    L=idnteval(gv.front(),contextptr);
+    vecteur args=*_eval(vecteur(gv.begin()+1,gv.end()),contextptr)._VECTptr;
+    if (args.size()==4) {
+        if (!args[0].is_symb_of_sommet(at_of))
             return generr("Expected a function");
-        y=gv[1]._SYMBptr->feuille._VECTptr->front();
-        t=gv[1]._SYMBptr->feuille._VECTptr->back();
-        Y=gv[2]; h=gv[3]; a=gv[4];
-    } else if (gv.size()==6) {
-        t=gv[1]; y=gv[2]; Y=gv[3]; h=gv[4]; a=gv[5];
+        y=args[0]._SYMBptr->feuille._VECTptr->front();
+        t=args[0]._SYMBptr->feuille._VECTptr->back();
+        Y=args[1]; h=args[2]; a=args[3];
+    } else if (args.size()==5) {
+        t=args[0]; y=args[1]; Y=args[2]; h=args[3]; a=args[4];
     } else return generr("Invalid number of input arguments");
     if (t.type!=_IDNT || h.type!=_IDNT || y.type!=_IDNT || !is_real_number(a,contextptr))
         return generr("Invalid input arguments");
@@ -5384,24 +8341,22 @@ gen _convex(const gen &g,GIAC_CONTEXT) {
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
     const vecteur &gv=*g._VECTptr;
-    vecteur vars;
     gen f=gv.front(),t(undef),TRUE=change_subtype(1,_INT_BOOLEAN),FALSE=change_subtype(0,_INT_BOOLEAN);
     if (gv.size()<2)
         return generr("Too few input arguments");
     f=idnteval(f,contextptr);
-    if (gv[1].type==_VECT)
-        vars=*gv[1]._VECTptr;
-    else vars.push_back(gv[1]);
+    vecteur vars;
+    gen vars_arg=idnteval(gv[1],contextptr);
+    if (vars_arg.type==_VECT)
+        vars=*vars_arg._VECTptr;
+    else vars.push_back(vars_arg);
     if (vars.empty())
-        return generr("List of variables must not be empty");
-    gen simp_func=at_simplify;
+        return generr("List of variables is empty");
+    bool dosimp=false;
     if (gv.size()>2) {
-        gen lh,rh;
-        if (!gv[2].is_symb_of_sommet(at_equal) || (lh=gv[2]._SYMBptr->feuille._VECTptr->front())!=at_simplify ||
-                !(rh=gv[2]._SYMBptr->feuille._VECTptr->back()).is_integer() || rh.subtype!=_INT_BOOLEAN)
-            return generr("Invalid input arguments");
-        if (rh.val==0)
-            simp_func=at_ratnormal;
+        if (gv[2]!=at_simplify)
+            return generr("Invalid optional argument");
+        dosimp=true;
     }
     vecteur fvars,depvars;
     for (iterateur it=vars.begin();it!=vars.end();++it) {
@@ -5429,34 +8384,44 @@ gen _convex(const gen &g,GIAC_CONTEXT) {
     }
     gen F=is_undef(t)?_eval(f,contextptr):makevars(f,t,depvars,diffvars,contextptr);
     vecteur allvars=mergevecteur(fvars,mergevecteur(depvars,diffvars));
+    gen simp_func=dosimp?at_simplify:at_ratnormal;
     if (allvars.size()==1) { // univariate function
         gen e=determine_sign(derive(F,allvars.front(),2,contextptr),simp_func,contextptr);
         if (is_one(e))
             return TRUE;
         if (is_minus_one(e))
             return FALSE;
-        e=_apply(makesequence(simp_func,vecteur(1,strip_sign(e))),contextptr)._VECTptr->front();
+        e=strip_sign(e);
+        e=dosimp?_simplify(e,contextptr):_ratnormal(e,contextptr);
         return eval(e.is_symb_of_sommet(at_neg)?symb_inferieur_egal(e._SYMBptr->feuille,0):symb_superieur_egal(e,0),contextptr);
     }
-    // multivariate case, compute the eigenvalues of the Hessian
-    int n=allvars.size(),N=1<<n;
+    // multivariate case
+    log_output_redirect lor(contextptr);
+    int n=allvars.size();
     matrice H=*_hessian(makesequence(F,allvars),contextptr)._VECTptr;
-    vecteur cond;
-    cond.reserve(N);
-    for (int i=1;i<N;++i) {
-        matrice m_tmp,m;
-        for (int j=0;j<n;++j) {
-            if (((int)std::pow(2,j) & i)==0) continue;
-            m_tmp.push_back(H[j]);
+    if (has_diff(H,allvars))
+        return generr("Function is not twice differentiable");
+    vector<int> perm;
+    bool sing;
+    int mt=is_numericm(H,num_mask_withfrac|num_mask_withint)?2:0;
+    if (!ldl(H,perm,mt,sing,0,contextptr))
+        return generr("Factorization failed");
+    gen a11,a12,a22,simb;
+    vecteur cond,res;
+    cond.reserve(n);
+    res.reserve(n);
+    for (int i=0;i<n;++i) {
+        if (i<n-1 && (!(a12=H[0][i+1]).is_integer() || a12.val!=0)) {
+            // 2x2 block (all principal minors must be nonnegative!)
+            cond.push_back(determine_sign(a11=H[i][i],simp_func,contextptr));
+            cond.push_back(determine_sign(a22=H[i+1][i+1],simp_func,contextptr));
+            cond.push_back(determine_sign(a11*a22-pow(a12,2),simp_func,contextptr));
+            ++i;
+        } else {
+            // 1x1 block
+            cond.push_back(determine_sign(H[i][i],simp_func,contextptr));
         }
-        m_tmp=mtran(m_tmp);
-        for (int j=0;j<n;++j) {
-            if (((int)std::pow(2,j) & i)==0) continue;
-            m.push_back(m_tmp[j]);
-        }
-        cond.push_back(determine_sign(_det(m,contextptr),simp_func,contextptr));
     }
-    vecteur res;
     for (const_iterateur it=cond.begin();it!=cond.end();++it) {
         if (is_minus_one(*it))
             return FALSE;
@@ -5473,20 +8438,19 @@ gen _convex(const gen &g,GIAC_CONTEXT) {
         }
     }
     for (int i=res.size();i-->0;) {
-        if (res[i].is_integer() && res[i].subtype==_INT_BOOLEAN) {
-            if (res[i].val==1)
-                res.erase(res.begin()+i);
-            else if (res[i].val==0)
-                return FALSE;
-        }
         gen &r=res[i];
-        r=_apply(makesequence(simp_func,vecteur(1,r)),contextptr)._VECTptr->front();
+        r=dosimp?_simplify(r,contextptr):_ratnormal(r,contextptr);
+        if (is_positive_safe(r,false,100,contextptr))
+            res.erase(res.begin()+i);
+        else if (is_definitely_positive(-r,contextptr))
+            return FALSE;
         r=symb_superieur_egal(subst(r,diffvars,diffs,false,contextptr),0);
     }
     if (res.empty())
         return TRUE;
-    gen simb=_lname(res,contextptr);
-    if (simb.type==_VECT && simb._VECTptr->size()==1) {
+    if (dosimp && (simb=_lname(res,contextptr)).type==_VECT && simb._VECTptr->size()==1) {
+        /* Attempt to simplify the result by solving the
+         * system of inequalities depending on a single parameter. */
         vecteur s=solve_quiet(res,simb._VECTptr->front(),contextptr);
         if (!s.empty())
             res=s;
@@ -5508,10 +8472,9 @@ gen _numdiff(const gen &g,GIAC_CONTEXT) {
         return generrtype("First two arguments must be lists");
     if (gv[0]._VECTptr->size()!=gv[1]._VECTptr->size() || gv[0]._VECTptr->empty())
         return generr("Lists X and Y must have equal sizes");
-    // avoid numerical instabilities by using exact arithmetic
-    vecteur X=*exact(gv[0],contextptr)._VECTptr;
-    vecteur Y=*exact(gv[1],contextptr)._VECTptr;
-    gen x0=exact(gv[2],contextptr);
+    vecteur X=*gv[0]._VECTptr;
+    vecteur Y=*gv[1]._VECTptr;
+    gen x0=gv[2];
     int M=1,N=X.size()-1;
     vecteur rest(1,M);
     if (gv.size()>=4) {
@@ -5523,7 +8486,28 @@ gen _numdiff(const gen &g,GIAC_CONTEXT) {
         M=_max(rest,contextptr).val;
     }
     vecteur res(rest.size());
-    // Fornberg's algorithm
+    if (is_fully_numeric(_evalf(makevecteur(X,Y,x0),contextptr)) &&
+            (is_approx(X) || is_approx(Y) || is_approx(x0))) { // the input is numeric and not fully exact
+        X=*_evalf(X,contextptr)._VECTptr;
+        Y=*_evalf(Y,contextptr)._VECTptr;
+        x0=_evalf(x0,contextptr);
+    } else { // the input is exact or symbolic
+        X=*exact(X,contextptr)._VECTptr;
+        Y=*exact(Y,contextptr)._VECTptr;
+        x0=exact(x0,contextptr);
+    }
+#if 1 // Sadiq & Viswanath (2014)
+    FDWeights fdw(X,M,contextptr);
+    fdw.setz0(x0);
+    iterateur rt=res.begin();
+    for (const_iterateur it=rest.begin();it!=rest.end();++it,++rt) {
+        *rt=0;
+        int k=0;
+        for (const_iterateur jt=Y.begin();jt!=Y.end();++jt,++k) {
+            *rt+=fdw(k,it->val)*(*jt);
+        }
+    }
+#else // Fornberg algorithm
     vecteur del((N+1)*(N+1)*(M+1),0);
     del[0]=1;
     gen c1(1),c2,c3;
@@ -5545,16 +8529,15 @@ gen _numdiff(const gen &g,GIAC_CONTEXT) {
         c1=c2;
     }
     // compute approximations of the derivatives
-    for (const_iterateur it=rest.begin();it!=rest.end();++it) {
-        gen d(0);
+    iterateur rt=res.begin();
+    for (const_iterateur it=rest.begin();it!=rest.end();++it,++rt) {
+        *rt=0;
         for (int ni=0;ni<=N;++ni) {
-            d+=del[(N*(N+1)+ni)*(M+1)+it->val]*Y[ni];
+            *rt+=del[(N*(N+1)+ni)*(M+1)+it->val]*Y[ni];
         }
-        res[it-rest.begin()]=d;
     }
+#endif
     gen result=res.size()==1?res.front():res;
-    if (g.is_approx() && _lname(result,contextptr)._VECTptr->empty())
-        result=_evalf(result,contextptr);
     return result;
 }
 static const char _numdiff_s []="numdiff";
@@ -5569,7 +8552,7 @@ bool parse_equations(const gen &eq,vecteur &eqv) {
         }
     } else {
         gen e;
-        if (eq.is_symb_of_sommet(at_equal)) {
+        if (is_equal(eq)) {
             const gen &lhs=eq._SYMBptr->feuille._VECTptr->front();
             const gen &rhs=eq._SYMBptr->feuille._VECTptr->back();
             e=lhs-rhs;
@@ -5717,7 +8700,7 @@ bool rosser(const vecteur &a_orig,const gen &b,vecteur &sol,GIAC_CONTEXT) {
     int n=a_orig.size();
     vecteur a=a_orig,ind(n);
     for (int i=0;i<n;++i) {
-        if (!is_positive(a[i],contextptr)) {
+        if (is_strictly_positive(-a[i],contextptr)) {
             a[i]=-a[i];
             ind[i]=-(i+1);
         } else ind[i]=i+1;
@@ -5725,7 +8708,7 @@ bool rosser(const vecteur &a_orig,const gen &b,vecteur &sol,GIAC_CONTEXT) {
     matrice z=mtran(*_revlist(_sort(_zip(makesequence(a,ind),contextptr),contextptr),contextptr)._VECTptr);
     a=*z.front()._VECTptr;
     vector<int> iv=vecteur_2_vector_int(*z.back()._VECTptr);
-    matrice C=*_idn(n,contextptr)._VECTptr;
+    matrice C=midn(n);
     C=mtran(mergevecteur(matrice(1,a),C));
     while (!is_zero(C[1][0])) {
         gen f=_floor(fraction(C[0][0],C[1][0]),contextptr);
@@ -5761,7 +8744,7 @@ bool ABS_diophantine(const matrice &A,const vecteur &b,const vecteur &q,vecteur 
     int m=A.size(),n=A.front()._VECTptr->size();
     assert(m<=n);
     vecteur x(n,0),z(n);
-    matrice H=*_idn(n,contextptr)._VECTptr;
+    matrice H=midn(n);
     for (int i=0;i<m;++i) {
         const vecteur &a=*A[i]._VECTptr;
         gen tau=scalarproduct(a,x,contextptr)-b[i];
@@ -5826,7 +8809,7 @@ int is_pell_equation(const gen &g,const gen &x,const gen &y,gen &d,GIAC_CONTEXT)
     if (!is_quadratic_wrt(c,y,a,b,f,contextptr) || !is_exactly_zero(b) || !is_one(_abs(f,contextptr)))
         return 0;
     d=-a;
-    if (!d.is_integer() || !is_strictly_positive(d,contextptr) || is_perfect_square(d))
+    if (!d.is_integer() || is_positive(-d,contextptr) || is_perfect_square(d))
         return 0;
     return is_positive(f,contextptr)?-1:1;
 }
@@ -6255,7 +9238,7 @@ void purge_nonfundamental_solutions(vecteur &sols,const gen &a,const gen &b,cons
             const gen &x2=sols[j]._VECTptr->front(),&y2=sols[j]._VECTptr->back();
             gen u2=2*a*x2+b*y2,v2=y2;
             if (is_divisible(u1*u2-D*v1*v2,N,contextptr) && is_divisible(v1*u2-u1*v2,N,contextptr)) {
-                if (is_positive(v1,contextptr) && (!is_positive(v2,contextptr) || is_greater(v2,v1,contextptr)))
+                if (is_positive(v1,contextptr) && (is_strictly_positive(-v2,contextptr) || is_greater(v2,v1,contextptr)))
                     sols.erase(sols.begin()+j);
                 else {
                     sols.erase(sols.begin()+i);
@@ -6423,7 +9406,7 @@ gen solve_binary_quadratic(const vecteur &cf,gen &ph,bool set_ph,bool &alt_sols,
         return sol;
     }
     gen dsc=b*b-4*a*c;
-    if (!is_positive(dsc,contextptr)) {
+    if (is_positive(dsc,contextptr)) {
         /* elliptical case */
         gen A=dsc,B=2*(b*e-2*c*d),C=e*e-4*c*f;
         dsc=B*B-4*A*C;
@@ -6593,7 +9576,7 @@ gen solve_binary_quadratic(const vecteur &cf,gen &ph,bool set_ph,bool &alt_sols,
 
 /* Diophantine equation solver, which can solve:
  *  - (systems of) linear equation(s) (Esmaeili et al., 2001)
- *  - Pell equations (Junod, 2015)
+ *  - Pell equations (Junod, 2015)TRUE
  *  - Thue equations (using PARI) - only in MinGW!
  *  - homogeneous equations Q(x,y,z)=0, where Q is ternary quadratic form (Smart, 1998)
  *  - general quadratic equations in two variables (Alpern)
@@ -6618,7 +9601,7 @@ gen _isolve(const gen &g,GIAC_CONTEXT) {
     int n=vars.size(),m=eqv.size();
     /* parse options */
     for (const_iterateur it=opts.begin();it!=opts.end();++it) {
-        if (it->is_symb_of_sommet(at_equal)) {
+        if (is_equal(*it)) {
             const gen &ls=it->_SYMBptr->feuille._VECTptr->front();
             const gen &rs=it->_SYMBptr->feuille._VECTptr->back();
             if (ls==at_seq && rs.is_integer() && rs.subtype==_INT_BOOLEAN)
@@ -6812,16 +9795,15 @@ vecteur yvalues(const gen &f,const gen &x,const vecteur &xi,GIAC_CONTEXT) {
     return ret;
 }
 
-bool inner_product(const gen &f,const gen &g,const gen &x,const gen &a,const gen &b,gen &res,GIAC_CONTEXT) {
-    suspend_logging(contextptr);
+bool inner_product(const gen &f,const gen &g,const gen &x,const gen &a,const gen &b,const gen &weight,gen &res,GIAC_CONTEXT) {
     bool ret=true;
     try {
-        res=_gaussquad(makesequence(f*g,x,a,b),contextptr);
+        log_output_redirect lor(contextptr);
+        res=_gaussquad(makesequence(f*g*weight,x,a,b),contextptr);
     } catch (const std::runtime_error &e) {
         print_error(e.what(),contextptr);
         ret=false;
     }
-    restore_logging(contextptr);
     if (res.type==_VECT && res._VECTptr->size()==2) {
         res=_mean(res,contextptr);
     }
@@ -6832,9 +9814,9 @@ bool inner_product(const gen &f,const gen &g,const gen &x,const gen &a,const gen
     return ret;
 }
 
-gen fitpoly(const gen &f,const vecteur &vardata,const gen &tol,int maxdeg,int d,GIAC_CONTEXT) {
+gen fitpoly(const gen &f,const vecteur &vardata,const gen &tol_orig,int maxdeg,int d,GIAC_CONTEXT) {
     vecteur xdata,ydata;
-    gen t;
+    gen t,tol(tol_orig);
     assert(vardata.size()==3);
     const gen &x=vardata[0],&a=vardata[1],&b=vardata[2];
     if (ckmatrix(f)) {
@@ -6845,7 +9827,7 @@ gen fitpoly(const gen &f,const vecteur &vardata,const gen &tol,int maxdeg,int d,
         for (int i=0;i<nc;++i) {
             const gen &xi=f._VECTptr->front()._VECTptr->at(i),&yi=f._VECTptr->back()._VECTptr->at(i);
             if (!is_real_number(xi,contextptr) || !is_real_number(yi,contextptr)) {
-                print_error("numerical data is required",contextptr);
+                print_error("data must be numeric",contextptr);
                 return undef;
             }
             if ((!is_undef(a) && is_strictly_greater(a,xi,contextptr)) || (!is_undef(b) && is_strictly_greater(xi,b,contextptr)))
@@ -6857,24 +9839,37 @@ gen fitpoly(const gen &f,const vecteur &vardata,const gen &tol,int maxdeg,int d,
         assert(!is_undef(a) && !is_undef(b));
         t=temp_symb("t",-1,contextptr);
     }
-    int m=ydata.size(),n;
-    vecteur q,Fq,qq,rho,qy,qy0,c,lp;
-    gen cf,fp(0),f2,sqerr;
-    if (m==0 && !inner_product(f,f,x,a,b,f2,contextptr))
-        return undef;
+    int m=ydata.size(),n,N=giacmax(63,maxdeg+1);
+    vecteur q,Fq,qq,rho,qy,qy0,c,lp,cheby_zeros,cheby_zeros_fvals;
+    gen cf,fp(0),f2(0),f2_actual(1),mapx=2*(x-a)/(b-a)-1,corr=gen(2)/(M_PI_2*(b-a));
+    if (m==0) {
+        if (d<0 && (!inner_product(f,f,x,a,b,_inv(sqrt(1-pow(mapx,2),contextptr),contextptr),f2,contextptr) ||
+                    !inner_product(f,f,x,a,b,1,f2_actual,contextptr)))
+            return undef;
+        tol=tol*corr*f2/f2_actual;
+        f2=f2*corr;
+        c.reserve(maxdeg+1);
+        cheby_zeros.reserve(N+1);
+        cheby_zeros_fvals.reserve(N+1);
+        for (int j=0;j<=N;++j) {
+            cheby_zeros.push_back((b-a)*(1+cos((2.0*j+1)*M_PI_2/(N+1),contextptr))/2+a);
+            cheby_zeros_fvals.push_back(subst(f,x,cheby_zeros.back(),false,contextptr));
+        }
+    }
     // find the optimal degree n
+    const_iterateur czf_iter,cz_iter,cz_itend=cheby_zeros.end();
     for (n=0;(m==0 || n<m) && n<=maxdeg+(d<0?0:d);++n) {
         if (m==0) {
-            lp.push_back(subst(_legendre(makesequence(n,t),contextptr),t,2*(x-a)/(b-a)-1,false,contextptr));
-            if (!inner_product(f,lp[n],x,a,b,cf,contextptr)) {
-                *logptr(contextptr) << gettext("Returning last approximation") << "\n";
-                n--;
-                break;
+            gen T=_e2r(makesequence(subst(_tchebyshev1(makesequence(n,t),contextptr),t,mapx,false,contextptr),x),contextptr);
+            cf=0;
+            for (cz_iter=cheby_zeros.begin(),czf_iter=cheby_zeros_fvals.begin();cz_iter!=cz_itend;++cz_iter,++czf_iter) {
+                cf+=*czf_iter*_peval(makesequence(T,*cz_iter),contextptr);
             }
-            c.push_back(((2*n+1)*cf)/(b-a));
-            fp+=((b-a)*pow(c[n],2))/(2*n+1);
-            sqerr=max(0,f2-fp,contextptr);
-            if ((d>=0 && n==d) || (d<0 && is_greater(tol,sqrt(sqerr,contextptr),contextptr)))
+            cf=(2.0*cf)/(N+1);
+            fp+=pow(cf,2)/(n==0?2:1);
+            c.push_back(cf);
+            lp.push_back(T);
+            if ((d>=0 && n==d) || (d<0 && is_greater(tol,_abs(f2-fp,contextptr),contextptr)))
                 break; // the desired precision or degree is reached
         } else {
             if (n==0)
@@ -6908,7 +9903,8 @@ gen fitpoly(const gen &f,const vecteur &vardata,const gen &tol,int maxdeg,int d,
     }
     // build the polynomial
     gen p(0);
-    for (int i=0;i<=n;++i) p+=(m==0?c[i]*lp[i]:q[i]*Fq[i]/qq[i]);
+    for (int i=0;i<=n;++i) p+=(m==0?c[i]*lp[i]/(i==0?2:1):q[i]*Fq[i]/qq[i]);
+    if (m==0) p=_r2e(makesequence(p,x),contextptr);
     return _evalf(expand(symb_normal(p),contextptr),contextptr);
 }
 
@@ -6949,22 +9945,22 @@ gen _fitpoly(const gen &g,GIAC_CONTEXT) {
         }
         if (argn<args.size()) {
             const gen &v=args[argn];
+            bool iseq;
             if (v.type==_IDNT) {
                 var=v;
                 has_var=true;
                 argn++;
-            } else {
-                bool iseq;
-                if (!(iseq=v.is_symb_of_sommet(at_equal)) && !v.is_symb_of_sommet(at_interval))
-                    return generr("Expected a (variable with) range");
+            } else if ((iseq=is_equal(v) && (v._SYMBptr->feuille._VECTptr->back().is_symb_of_sommet(at_interval) ||
+                                             v._SYMBptr->feuille._VECTptr->front().type==_IDNT)) ||
+                                             v.is_symb_of_sommet(at_interval)) {
                 if (iseq) {
                     if ((var=v._SYMBptr->feuille._VECTptr->front()).type!=_IDNT)
                         return generr("Expected a variable");
+                    if (!v._SYMBptr->feuille._VECTptr->back().is_symb_of_sommet(at_interval))
+                        return generr("Expected a range");
                     has_var=true;
                 }
                 const gen &intrv=iseq?v._SYMBptr->feuille._VECTptr->back():v;
-                if (!intrv.is_symb_of_sommet(at_interval))
-                    return generr("Expected a range");
                 a=intrv._SYMBptr->feuille._VECTptr->front();
                 b=intrv._SYMBptr->feuille._VECTptr->back();
                 if (!is_real_number(a,contextptr) || !is_real_number(b,contextptr) || is_greater(a,b,contextptr))
@@ -6976,7 +9972,7 @@ gen _fitpoly(const gen &g,GIAC_CONTEXT) {
         }
         // parse options
         for (const_iterateur it=args.begin()+argn;it!=args.end();++it) {
-            if (it->is_symb_of_sommet(at_equal)) {
+            if (is_equal(*it)) {
                 const gen &lh=it->_SYMBptr->feuille._VECTptr->front();
                 const gen &rh=it->_SYMBptr->feuille._VECTptr->back();
                 if (lh==at_limit) {
@@ -6984,7 +9980,7 @@ gen _fitpoly(const gen &g,GIAC_CONTEXT) {
                         return generr("Expected a positive integer");
                     maxdeg=rh.val;
                 } else if (lh==at_threshold) {
-                    if (!is_real_number(rh,contextptr) || !is_strictly_positive(rh,contextptr))
+                    if (!is_real_number(rh,contextptr) || is_positive(-rh,contextptr))
                         return generr("Expected a positive real number");
                     tol=to_real_number(rh,contextptr);
                 } else if (lh==at_len || lh==at_length) {
@@ -7033,6 +10029,2809 @@ gen _fitpoly(const gen &g,GIAC_CONTEXT) {
 static const char _fitpoly_s []="fitpoly";
 static define_unary_function_eval (__fitpoly,&_fitpoly,_fitpoly_s);
 define_unary_function_ptr5(at_fitpoly,alias_at_fitpoly,&__fitpoly,0,true)
+
+// Routine for solving K-means problem
+// Source: https://people.math.sc.edu/Burkardt/cpp_src/asa136/asa136.html
+//
+//****************************************************************************80
+
+double r8_huge ( )
+
+//****************************************************************************80
+//
+//  Purpose:
+//
+//    R8_HUGE returns a "huge" R8.
+//
+//  Discussion:
+//
+//    The value returned by this function is NOT required to be the
+//    maximum representable R8.  This value varies from machine to machine,
+//    from compiler to compiler, and may cause problems when being printed.
+//    We simply want a "very large" but non-infinite number.
+//
+//  Licensing:
+//
+//    This code is distributed under the GNU LGPL license. 
+//
+//  Modified:
+//
+//    06 October 2007
+//
+//  Author:
+//
+//    John Burkardt
+//
+//  Parameters:
+//
+//    Output, double R8_HUGE, a "huge" R8 value.
+//
+{
+  double value;
+
+  value = 1.0E+30;
+
+  return value;
+}
+//****************************************************************************80
+
+void optra ( double a[], int m, int n, double c[], int k, int ic1[], 
+  int ic2[], int nc[], double an1[], double an2[], int ncp[], double d[], 
+  int itran[], int live[], int *indx )
+
+//****************************************************************************80
+//
+//  Purpose:
+//
+//    OPTRA carries out the optimal transfer stage.
+//
+//  Discussion:
+//
+//    This is the optimal transfer stage.
+//
+//    Each point is re-allocated, if necessary, to the cluster that
+//    will induce a maximum reduction in the within-cluster sum of
+//    squares.
+//
+//  Licensing:
+//
+//    This code is distributed under the GNU LGPL license. 
+//
+//  Modified:
+//
+//    15 February 2008
+//
+//  Author:
+//
+//    Original FORTRAN77 version by John Hartigan, Manchek Wong.
+//    C++ version by John Burkardt.
+//
+//  Reference:
+//
+//    John Hartigan, Manchek Wong,
+//    Algorithm AS 136:
+//    A K-Means Clustering Algorithm,
+//    Applied Statistics,
+//    Volume 28, Number 1, 1979, pages 100-108.
+//
+//  Parameters:
+//
+//    Input, double A(M,N), the points.
+//
+//    Input, int M, the number of points.
+//
+//    Input, int N, the number of spatial dimensions.
+//
+//    Input/output, double C(K,N), the cluster centers.
+//
+//    Input, int K, the number of clusters.
+//
+//    Input/output, int IC1(M), the cluster to which each 
+//    point is assigned.
+//
+//    Input/output, int IC2(M), used to store the cluster 
+//    which each point is most likely to be transferred to at each step.
+//
+//    Input/output, int NC(K), the number of points in 
+//    each cluster.
+//
+//    Input/output, double AN1(K).
+//
+//    Input/output, double AN2(K).
+//
+//    Input/output, int NCP(K).
+//
+//    Input/output, double D(M).
+//
+//    Input/output, int ITRAN(K).
+//
+//    Input/output, int LIVE(K).
+//
+//    Input/output, int *INDX, the number of steps since a 
+//    transfer took place.
+//
+{
+  double al1;
+  double al2;
+  double alt;
+  double alw;
+  double da;
+  double db;
+  double dc;
+  double dd;
+  double de;
+  double df;
+  int i;
+  int j;
+  int l;
+  int l1;
+  int l2;
+  int ll;
+  double r2;
+  double rr;
+//
+//  If cluster L is updated in the last quick-transfer stage, it
+//  belongs to the live set throughout this stage.   Otherwise, at
+//  each step, it is not in the live set if it has not been updated
+//  in the last M optimal transfer steps.
+//
+  for ( l = 1; l <= k; l++ )
+  {
+    if ( itran[l-1] == 1)
+    {
+      live[l-1] = m + 1;
+    }
+  }
+
+  for ( i = 1; i <= m; i++ )
+  {
+    *indx = *indx + 1;
+    l1 = ic1[i-1];
+    l2 = ic2[i-1];
+    ll = l2;
+//
+//  If point I is the only member of cluster L1, no transfer.
+//
+    if ( 1 < nc[l1-1]  )
+    {
+//
+//  If L1 has not yet been updated in this stage, no need to
+//  re-compute D(I).
+//
+      if ( ncp[l1-1] != 0 )
+      {
+        de = 0.0;
+        for ( j = 1; j <= n; j++ )
+        {
+          df = a[i-1+(j-1)*m] - c[l1-1+(j-1)*k];
+          de = de + df * df;
+        }
+        d[i-1] = de * an1[l1-1];
+      }
+//
+//  Find the cluster with minimum R2.
+//
+      da = 0.0;
+      for ( j = 1; j <= n; j++ )
+      {
+        db = a[i-1+(j-1)*m] - c[l2-1+(j-1)*k];
+        da = da + db * db;
+      }
+      r2 = da * an2[l2-1];
+
+      for ( l = 1; l <= k; l++ )
+      {
+//
+//  If LIVE(L1) <= I, then L1 is not in the live set.   If this is
+//  true, we only need to consider clusters that are in the live set
+//  for possible transfer of point I.   Otherwise, we need to consider
+//  all possible clusters.
+//
+        if ( ( i < live[l1-1] || i < live[l2-1] ) && l != l1 && l != ll )
+        {
+          rr = r2 / an2[l-1];
+
+          dc = 0.0;
+          for ( j = 1; j <= n; j++ )
+          {
+            dd = a[i-1+(j-1)*m] - c[l-1+(j-1)*k];
+            dc = dc + dd * dd;
+          }
+
+          if ( dc < rr )
+          {
+            r2 = dc * an2[l-1];
+            l2 = l;
+          }
+        }
+      }
+//
+//  If no transfer is necessary, L2 is the new IC2(I).
+//
+      if ( d[i-1] <= r2 )
+      {
+        ic2[i-1] = l2;
+      }
+//
+//  Update cluster centers, LIVE, NCP, AN1 and AN2 for clusters L1 and
+//  L2, and update IC1(I) and IC2(I).
+//
+      else
+      {
+        *indx = 0;
+        live[l1-1] = m + i;
+        live[l2-1] = m + i;
+        ncp[l1-1] = i;
+        ncp[l2-1] = i;
+        al1 = ( double ) ( nc[l1-1] );
+        alw = al1 - 1.0;
+        al2 = ( double ) ( nc[l2-1] );
+        alt = al2 + 1.0;
+        for ( j = 1; j <= n; j++ )
+        {
+          c[l1-1+(j-1)*k] = ( c[l1-1+(j-1)*k] * al1 - a[i-1+(j-1)*m] ) / alw;
+          c[l2-1+(j-1)*k] = ( c[l2-1+(j-1)*k] * al2 + a[i-1+(j-1)*m] ) / alt;
+        }
+        nc[l1-1] = nc[l1-1] - 1;
+        nc[l2-1] = nc[l2-1] + 1;
+        an2[l1-1] = alw / al1;
+        if ( 1.0 < alw )
+        {
+          an1[l1-1] = alw / ( alw - 1.0 );
+        }
+        else
+        {
+          an1[l1-1] = r8_huge ( );
+        }
+        an1[l2-1] = alt / al2;
+        an2[l2-1] = alt / ( alt + 1.0 );
+        ic1[i-1] = l2;
+        ic2[i-1] = l1;
+      }
+    }
+
+    if ( *indx == m )
+    {
+      return;
+    }
+  }
+//
+//  ITRAN(L) = 0 before entering QTRAN.   Also, LIVE(L) has to be
+//  decreased by M before re-entering OPTRA.
+//
+  for ( l = 1; l <= k; l++ )
+  {
+    itran[l-1] = 0;
+    live[l-1] = live[l-1] - m;
+  }
+
+  return;
+}
+//****************************************************************************80
+
+void qtran ( double a[], int m, int n, double c[], int k, int ic1[], 
+  int ic2[], int nc[], double an1[], double an2[], int ncp[], double d[], 
+  int itran[], int *indx )
+
+//****************************************************************************80
+//
+//  Purpose:
+//
+//    QTRAN carries out the quick transfer stage.
+//
+//  Discussion:
+//
+//    This is the quick transfer stage.
+//
+//    IC1(I) is the cluster which point I belongs to.
+//    IC2(I) is the cluster which point I is most likely to be
+//    transferred to.
+//
+//    For each point I, IC1(I) and IC2(I) are switched, if necessary, to
+//    reduce within-cluster sum of squares.  The cluster centers are
+//    updated after each step.
+//
+//  Licensing:
+//
+//    This code is distributed under the GNU LGPL license. 
+//
+//  Modified:
+//
+//    15 February 2008
+//
+//  Author:
+//
+//    Original FORTRAN77 version by John Hartigan, Manchek Wong.
+//    C++ version by John Burkardt.
+//
+//  Reference:
+//
+//    John Hartigan, Manchek Wong,
+//    Algorithm AS 136:
+//    A K-Means Clustering Algorithm,
+//    Applied Statistics,
+//    Volume 28, Number 1, 1979, pages 100-108.
+//
+//  Parameters:
+//
+//    Input, double A(M,N), the points.
+//
+//    Input, int M, the number of points.
+//
+//    Input, int N, the number of spatial dimensions.
+//
+//    Input/output, double C(K,N), the cluster centers.
+//
+//    Input, int K, the number of clusters.
+//
+//    Input/output, int IC1(M), the cluster to which each 
+//    point is assigned.
+//
+//    Input/output, int IC2(M), used to store the cluster 
+//    which each point is most likely to be transferred to at each step.
+//
+//    Input/output, int NC(K), the number of points in 
+//    each cluster.
+//
+//    Input/output, double AN1(K).
+//
+//    Input/output, double AN2(K).
+//
+//    Input/output, int NCP(K).
+//
+//    Input/output, double D(M).
+//
+//    Input/output, int ITRAN(K).
+//
+//    Input/output, int INDX, counts the number of steps 
+//    since the last transfer.
+//
+{
+  double al1;
+  double al2;
+  double alt;
+  double alw;
+  double da;
+  double db;
+  double dd;
+  double de;
+  int i;
+  int icoun;
+  int istep;
+  int j;
+  int l1;
+  int l2;
+  double r2;
+//
+//  In the optimal transfer stage, NCP(L) indicates the step at which
+//  cluster L is last updated.   In the quick transfer stage, NCP(L)
+//  is equal to the step at which cluster L is last updated plus M.
+//
+  icoun = 0;
+  istep = 0;
+
+  for ( ; ; )
+  {
+    for ( i = 1; i <= m; i++ )
+    {
+      icoun = icoun + 1;
+      istep = istep + 1;
+      l1 = ic1[i-1];
+      l2 = ic2[i-1];
+//
+//  If point I is the only member of cluster L1, no transfer.
+//
+      if ( 1 < nc[l1-1] )
+      {
+//
+//  If NCP(L1) < ISTEP, no need to re-compute distance from point I to
+//  cluster L1.   Note that if cluster L1 is last updated exactly M
+//  steps ago, we still need to compute the distance from point I to
+//  cluster L1.
+//
+        if ( istep <= ncp[l1-1] )
+        {
+          da = 0.0;
+          for ( j = 1; j <= n; j++ )
+          {
+            db = a[i-1+(j-1)*m] - c[l1-1+(j-1)*k];
+            da = da + db * db;
+          }
+          d[i-1] = da * an1[l1-1];
+        }
+//
+//  If NCP(L1) <= ISTEP and NCP(L2) <= ISTEP, there will be no transfer of
+//  point I at this step.
+//
+        if ( istep < ncp[l1-1] || istep < ncp[l2-1] )
+        {
+          r2 = d[i-1] / an2[l2-1];
+
+          dd = 0.0;
+          for ( j = 1; j <= n; j++ )
+          {
+            de = a[i-1+(j-1)*m] - c[l2-1+(j-1)*k];
+            dd = dd + de * de;
+          }
+//
+//  Update cluster centers, NCP, NC, ITRAN, AN1 and AN2 for clusters
+//  L1 and L2.   Also update IC1(I) and IC2(I).   Note that if any
+//  updating occurs in this stage, INDX is set back to 0.
+//
+          if ( dd < r2 )
+          {
+            icoun = 0;
+            *indx = 0;
+            itran[l1-1] = 1;
+            itran[l2-1] = 1;
+            ncp[l1-1] = istep + m;
+            ncp[l2-1] = istep + m;
+            al1 = ( double ) ( nc[l1-1] );
+            alw = al1 - 1.0;
+            al2 = ( double ) ( nc[l2-1] );
+            alt = al2 + 1.0;
+            for ( j = 1; j <= n; j++ )
+            {
+              c[l1-1+(j-1)*k] = ( c[l1-1+(j-1)*k] * al1 - a[i-1+(j-1)*m] ) / alw;
+              c[l2-1+(j-1)*k] = ( c[l2-1+(j-1)*k] * al2 + a[i-1+(j-1)*m] ) / alt;
+            }
+            nc[l1-1] = nc[l1-1] - 1;
+            nc[l2-1] = nc[l2-1] + 1;
+            an2[l1-1] = alw / al1;
+            if ( 1.0 < alw )
+            {
+              an1[l1-1] = alw / ( alw - 1.0 );
+            }
+            else
+            {
+              an1[l1-1] = r8_huge ( );
+            }
+            an1[l2-1] = alt / al2;
+            an2[l2-1] = alt / ( alt + 1.0 );
+            ic1[i-1] = l2;
+            ic2[i-1] = l1;
+          }
+        }
+      }
+//
+//  If no re-allocation took place in the last M steps, return.
+//
+      if ( icoun == m )
+      {
+        return;
+      }
+    }
+  }
+}
+//****************************************************************************80
+
+void kmns ( double a[], int m, int n, double c[], int k, int ic1[], int nc[], 
+  int iter, double wss[], int *ifault )
+
+//****************************************************************************80
+//
+//  Purpose:
+//
+//    KMNS carries out the K-means algorithm.
+//
+//  Discussion:
+//
+//    This routine attempts to divide M points in N-dimensional space into 
+//    K clusters so that the within cluster sum of squares is minimized.
+//
+//  Licensing:
+//
+//    This code is distributed under the GNU LGPL license. 
+//
+//  Modified:
+//
+//    15 February 2008
+//
+//  Author:
+//
+//    Original FORTRAN77 version by John Hartigan, Manchek Wong.
+//    C++ version by John Burkardt
+//
+//  Reference:
+//
+//    John Hartigan, Manchek Wong,
+//    Algorithm AS 136:
+//    A K-Means Clustering Algorithm,
+//    Applied Statistics,
+//    Volume 28, Number 1, 1979, pages 100-108.
+//
+//  Parameters:
+//
+//    Input, double A(M,N), the points.
+//
+//    Input, int M, the number of points.
+//
+//    Input, int N, the number of spatial dimensions.
+//
+//    Input/output, double C(K,N), the cluster centers.
+//
+//    Input, int K, the number of clusters.
+//
+//    Output, int IC1(M), the cluster to which each point 
+//    is assigned.
+//
+//    Output, int NC(K), the number of points in each cluster.
+//
+//    Input, int ITER, the maximum number of iterations allowed.
+//
+//    Output, double WSS(K), the within-cluster sum of squares
+//    of each cluster.
+//
+//    Output, int *IFAULT, error indicator.
+//    0, no error was detected.
+//    1, at least one cluster is empty after the initial assignment.  A better
+//       set of initial cluster centers is needed.
+//    2, the allowed maximum number of iterations was exceeded.
+//    3, K is less than or equal to 1, or greater than or equal to M.
+//
+{
+  double aa;
+  double *an1;
+  double *an2;
+  double *d;
+  double da;
+  double db;
+  double dc;
+  double dt[2];
+  int i;
+  int *ic2;
+  int ii;
+  int ij;
+  int il;
+  int indx;
+  int *itran;
+  int j;
+  int l;
+  int *live;
+  int *ncp;
+  double temp;
+
+  *ifault = 0;
+
+  if ( k <= 1 || m <= k )
+  {
+    *ifault = 3;
+    return;
+  }
+  ic2 = new int[m];
+  an1 = new double[k];
+  an2 = new double[k];
+  ncp = new int[k];
+  d = new double[m];
+  itran = new int[k];
+  live = new int[k];
+//
+//  For each point I, find its two closest centers, IC1(I) and
+//  IC2(I).  Assign the point to IC1(I).
+//
+  for ( i = 1; i <= m; i++ )
+  {
+    ic1[i-1] = 1;
+    ic2[i-1] = 2;
+
+    for ( il = 1; il <= 2; il++ )
+    {
+      dt[il-1] = 0.0;
+      for ( j = 1; j <= n; j++ )
+      {
+        da = a[i-1+(j-1)*m] - c[il-1+(j-1)*k];
+        dt[il-1] = dt[il-1] + da * da;
+      }
+    }
+
+    if ( dt[1] < dt[0] )
+    {
+      ic1[i-1] = 2;
+      ic2[i-1] = 1;
+      temp = dt[0];
+      dt[0] = dt[1];
+      dt[1] = temp;
+    }
+
+    for ( l = 3; l <= k; l++ )
+    {
+      db = 0.0;
+      for ( j = 1; j <= n; j++ )
+      {
+        dc = a[i-1+(j-1)*m] - c[l-1+(j-1)*k];
+        db = db + dc * dc;
+      }
+
+      if ( db < dt[1] )
+      {
+        if ( dt[0] <= db )
+        {
+          dt[1] = db;
+          ic2[i-1] = l;
+        }
+        else
+        {
+          dt[1] = dt[0];
+          ic2[i-1] = ic1[i-1];
+          dt[0] = db;
+          ic1[i-1] = l;
+        }
+      }
+    }
+  }
+//
+//  Update cluster centers to be the average of points contained within them.
+//
+  for ( l = 1; l <= k; l++ )
+  {
+    nc[l-1] = 0;
+    for ( j = 1; j <= n; j++ )
+    {
+      c[l-1+(j-1)*k] = 0.0;
+    }
+  }
+
+  for ( i = 1; i <= m; i++ )
+  {
+    l = ic1[i-1];
+    nc[l-1] = nc[l-1] + 1;
+    for ( j = 1; j <= n; j++ )
+    {
+      c[l-1+(j-1)*k] = c[l-1+(j-1)*k] + a[i-1+(j-1)*m];
+    }
+  }
+//
+//  Check to see if there is any empty cluster at this stage.
+//
+  *ifault = 1;
+
+  for ( l = 1; l <= k; l++ )
+  {
+    if ( nc[l-1] == 0 )
+    {
+      *ifault = 1;
+      return;
+    }
+
+  }
+
+  *ifault = 0;
+
+  for ( l = 1; l <= k; l++ )
+  {
+    aa = ( double ) ( nc[l-1] );
+
+    for ( j = 1; j <= n; j++ )
+    {
+      c[l-1+(j-1)*k] = c[l-1+(j-1)*k] / aa;
+    }
+//
+//  Initialize AN1, AN2, ITRAN and NCP.
+//
+//  AN1(L) = NC(L) / (NC(L) - 1)
+//  AN2(L) = NC(L) / (NC(L) + 1)
+//  ITRAN(L) = 1 if cluster L is updated in the quick-transfer stage,
+//           = 0 otherwise
+//
+//  In the optimal-transfer stage, NCP(L) stores the step at which
+//  cluster L is last updated.
+//
+//  In the quick-transfer stage, NCP(L) stores the step at which
+//  cluster L is last updated plus M.
+//
+    an2[l-1] = aa / ( aa + 1.0 );
+
+    if ( 1.0 < aa )
+    {
+      an1[l-1] = aa / ( aa - 1.0 );
+    }
+    else
+    {
+      an1[l-1] = r8_huge ( );
+    }
+    itran[l-1] = 1;
+    ncp[l-1] = -1;
+  }
+
+  indx = 0;
+  *ifault = 2;
+
+  for ( ij = 1; ij <= iter; ij++ )
+  {
+//
+//  In this stage, there is only one pass through the data.   Each
+//  point is re-allocated, if necessary, to the cluster that will
+//  induce the maximum reduction in within-cluster sum of squares.
+//
+    optra ( a, m, n, c, k, ic1, ic2, nc, an1, an2, ncp, d, itran, live, &indx );
+//
+//  Stop if no transfer took place in the last M optimal transfer steps.
+//
+    if ( indx == m )
+    {
+      *ifault = 0;
+      break;
+    }
+//
+//  Each point is tested in turn to see if it should be re-allocated
+//  to the cluster to which it is most likely to be transferred,
+//  IC2(I), from its present cluster, IC1(I).   Loop through the
+//  data until no further change is to take place.
+//
+    qtran ( a, m, n, c, k, ic1, ic2, nc, an1, an2, ncp, d, itran, &indx );
+//
+//  If there are only two clusters, there is no need to re-enter the
+//  optimal transfer stage.
+//
+    if ( k == 2 )
+    {
+      *ifault = 0;
+      break;
+    }
+//
+//  NCP has to be set to 0 before entering OPTRA.
+//
+    for ( l = 1; l <= k; l++ )
+    {
+      ncp[l-1] = 0;
+    }
+
+  }
+//
+//  Compute the within-cluster sum of squares for each cluster.
+//
+  for ( l = 1; l <= k; l++ )
+  {
+    wss[l-1] = 0.0;
+    for ( j = 1; j <= n; j++ )
+    {
+      c[l-1+(j-1)*k] = 0.0;
+    }
+  }
+
+  for ( i = 1; i <= m; i++ )
+  {
+    ii = ic1[i-1];
+    for ( j = 1; j <= n; j++ )
+    {
+      c[ii-1+(j-1)*k] = c[ii-1+(j-1)*k] + a[i-1+(j-1)*m];
+    }
+  }
+
+  for ( j = 1; j <= n; j++ )
+  {
+    for ( l = 1; l <= k; l++ )
+    {
+      c[l-1+(j-1)*k] = c[l-1+(j-1)*k] / ( double ) ( nc[l-1] );
+    }
+    for ( i = 1; i <= m; i++ )
+    {
+      ii = ic1[i-1];
+      da = a[i-1+(j-1)*m] - c[ii-1+(j-1)*k];
+      wss[ii-1] = wss[ii-1] + da * da;
+    }
+  }
+
+  delete [] ic2;
+  delete [] an1;
+  delete [] an2;
+  delete [] ncp;
+  delete [] d;
+  delete [] itran;
+  delete [] live;
+
+  return;
+}
+
+void transpose_array(double *ar,int k,int n) {
+    double tmp;
+    for (int i=0;i<k;++i) {
+        for (int j=0;j<n;++j) {
+            tmp=ar[i+j*k];
+            ar[i+j*k]=ar[j+i*n];
+            ar[j+i*n]=tmp;
+        }
+    }
+}
+
+/* Initialize cluster centers k data points randomly */
+void init_cluster_centers(const double *x,const int *ind,int m,int n,int k,double *d,GIAC_CONTEXT) {
+    map<int,vecteur> partition;
+    for (int i=0;i<m;++i) partition[ind==NULL?1:ind[i]].push_back(i);
+    vecteur ch;
+    ch.reserve(k);
+    int lc,maxsize=0;
+    for (map<int,vecteur>::iterator it=partition.begin();it!=partition.end();++it) {
+        if (int(it->second.size())>maxsize) {
+            maxsize=it->second.size();
+            lc=it->first;
+        }
+        int pos=_rand(it->second.size(),contextptr).val;
+        ch.push_back(it->second[pos]);
+        it->second.erase(it->second.begin()+pos);
+    }
+    if (int(ch.size())<k) {
+        ch=mergevecteur(ch,*_rand(makesequence(k-int(ch.size()),partition[lc]),contextptr)._VECTptr);
+    }
+    assert(int(ch.size())==k);
+    for (int i=0;i<k;++i) {
+        for (int j=0;j<n;++j) {
+            d[i+j*k]=x[ch[i].val+j*m];
+        }
+    }
+}
+
+/* Compute list RES of cluster indices for data points using an efficient k-means
+ * implementation AS 136 (Hartigan & Wong). Set K to the desired number of clusters
+ * or to a negative value, in which case the cluster index -K is computed.
+ * MIN_K and MAX_K are bounds for K. The total number of clusters is written to K.
+ * Cluster centers and average sizes [center,size] are stored to CC unless the latter is NULL.
+ * The list of values of used clustering indices is stored in IND unless the latter is NULL. */
+int kmeans(const matrice &data,int &k,int min_k,int &max_k,int maxiter,vector<int> &res,vecteur *cc,matrice *ind,GIAC_CONTEXT) {
+    int m=mrows(data),n=mcols(data); // m data points as vectors of size n
+    double *x=new double[m*n];       // data points
+    int *b=new int[m];               // cluster indices for data points
+    double *d=NULL;                  // cluster centers
+    double *dev=NULL;                // sums of squared deviations from centers
+    int *e=NULL;                     // number of points in each cluster
+    int ifault;
+    /* input data points */
+    for (int i=0;i<m;++i) {
+        for (int j=0;j<n;++j) {
+            x[i+j*m]=to_real_number(data[i][j],contextptr).to_double(contextptr);
+        }
+    }
+    res.resize(m);
+    int tries=0;
+    if (k>0) { // the number of clusters is fixed (k)
+        d=new double[k*n];
+        dev=new double[k];
+        e=new int[k];
+        do { // try to generate initial centers at most 10 times
+            init_cluster_centers(x,NULL,m,n,k,d,contextptr);
+            kmns(x,m,n,d,k,b,e,maxiter,dev,&ifault);
+        } while (ifault==1 && tries++<10);
+        if (ifault!=0)
+            return ifault;
+        for (int i=0;i<m;++i) res[i]=b[i]-1;
+    } else { // guess the optimal number of clusters
+        double W,W_prev=0,score;
+        int best_k=0,meth=-k;
+        int *b_best=meth==cluster_crit::criterion::_HARTIGAN?new int[m]:NULL;
+        dev=new double[max_k];
+        e=new int[max_k];
+        if (b_best!=NULL) for (int i=0;i<m;++i) b_best[i]=i+1;
+        bool rough_optimum_found=false;
+        cluster_crit ccr(data,at_longueur2,contextptr);
+        map<int,vector<int> > b_map;
+        vecteur kvals;
+        kvals.reserve(max_k-min_k+1);
+        for (k=min_k;k<=max_k;++k) {
+            if (d==NULL)
+                d=new double[max_k*n];
+            tries=0;
+            do { // try to generate initial centers at most 10 times
+                init_cluster_centers(x,k==min_k||tries>0?NULL:b,m,n,k,d,contextptr);
+                kmns(x,m,n,d,k,b,e,maxiter,dev,&ifault);
+            } while (ifault==1 && tries++<10);
+            if (ifault!=0) return ifault;
+            if (!rough_optimum_found) {
+                W=0;
+                for (int i=0;i<k;++i) W+=dev[i];
+                if (W>0 && W_prev>0) {
+                    score=(W_prev/W-1)*(m-k);
+                    if (score<=10) {
+                        rough_optimum_found=true;
+                        if (meth==cluster_crit::criterion::_HARTIGAN) {
+                            k--;
+                            break;
+                        }
+                        max_k=std::min(max_k,2*k);
+                    }
+                }
+                W_prev=W;
+                if (meth==cluster_crit::criterion::_HARTIGAN) {
+                    for (int i=0;i<m;++i) b_best[i]=b[i];
+                    if (W==0) break;
+                }
+            }
+            if (meth>0) {
+                ccr.init(k,b,d,dev);
+                ccr.compute_indices(meth);
+                kvals.push_back(k);
+                vector<int> lst(m);
+                for (int i=0;i<m;++i) lst[i]=b[i]-1;
+                b_map.insert(make_pair(k,lst));
+            }
+        }
+        if (meth==cluster_crit::criterion::_HARTIGAN) {
+            if (k>max_k) k=max_k;
+            for (int i=0;i<m;++i) res[i]=(rough_optimum_found?b_best[i]:b[i])-1;
+            delete[] b_best;
+        } else {
+            k=ccr.ncopt();
+            res=b_map[k];
+        }
+        if (ind!=NULL) { // store clustering indices
+            vecteur indval=ccr.get_index_values();
+            gen ndef=string2gen(gettext("not defined"),false);
+            for (iterateur it=indval.begin();it!=indval.end();++it) {
+                if (is_undef(*it))
+                    *it=ndef;
+            }
+            *ind=mtran(makevecteur(kvals,indval));
+        }
+    }
+    if (cc!=NULL && d!=NULL) { // store cluster centers & sizes
+        cc->resize(k);
+        vecteur xc(n);
+        for (int i=0;i<k;++i) {
+            for (int j=0;j<n;++j) xc[j]=d[i+j*k];
+            cc->at(i)=makevecteur(xc,std::sqrt(dev[i]/e[i]));
+        }
+    }
+    if (d!=NULL) delete[] d;
+    delete[] dev;
+    delete[] e;
+    delete[] x;
+    delete[] b;
+    return 0;
+}
+
+gen comp_dist(const gen &a,const gen &b,const gen &dist_func,GIAC_CONTEXT) {
+    gen val;
+    try {
+        val=_evalf(dist_func(makesequence(a,b),contextptr),contextptr);
+    } catch (const std::runtime_error &e) {
+        return undef;
+    }
+    if (!is_real_number(val,contextptr))
+        return undef;
+    return to_real_number(val,contextptr);
+}
+
+/*
+ ****** IMPLEMENTATION OF CLUSTER_CRIT CLASS *******
+ *
+ * Various cluster indices for obtaining optimal clustering
+ * SOURCE: Bernard Desgraupes, "Clustering Indices" (2017) -- package clusterCrit for R
+ * https://cran.r-project.org/web/packages/clusterCrit/vignettes/clusterCrit.pdf
+ */
+cluster_crit::cluster_crit(const matrice &data,const gen &dist_func,GIAC_CONTEXT)
+    : ctx(contextptr),pts(data),distf(dist_func)
+{
+    N=mrows(pts);
+    p=mcols(pts);
+    K=0;
+    _mu.resize(1,_mean(pts,ctx)); // global barycenter
+    _ci.resize(N,-1);
+    _mu.reserve(N+1);
+    _n.reserve(N);
+    _WGSSk.reserve(N);
+    _WG.reserve(N);
+    _T=midn(p);
+    _BG=midn(p);
+    _TSS.resize(p);
+    _BGSS.resize(p);
+    ET=0;
+    for (int i=0;i<N;++i) ET+=comp_dist(pts[i],mu(),distf,ctx);
+}
+gen cluster_crit::Delta(int k,int l) {
+    pair<int,int> kl=make_pair(k<l?k:l,k<l?l:k);
+    map<pair<int,int>,gen>::const_iterator it=Delta_map.find(kl);
+    if (it==Delta_map.end())
+        it=Delta_map.insert(make_pair(kl,comp_dist(mu(k),mu(l),(distf==at_longueur2?at_longueur:distf),ctx))).first;
+    return it->second;
+}
+void cluster_crit::init(int k,const int *indices,const double *bc,const double *wgss) {
+    assert(k>0 && K<=N);
+    K=k;
+    _n.resize(K);
+    std::fill(_n.begin(),_n.end(),0);
+    for (int i=0;i<N;++i) _n[_ci[i]=indices[i]-1]++;
+    _mu.resize(K+1);
+    _WG.resize(K);
+    _WGSSk.resize(K);
+    _WGSS=0;
+    _BGSS[0]=_TSS[0]=undef;
+    for (int i=0;i<K;++i) {
+        _WGSS+=(_WGSSk[i]=wgss[i]);
+        if (_mu[i+1].type!=_VECT)
+            _mu[i+1]=vecteur(p);
+        for (int j=0;j<p;++j) {
+            _mu[i+1]._VECTptr->at(j)=bc[i+j*K];
+        }
+    }
+    _DB_min=_DB_max=undef;
+    have_T=have_WG=have_BG=false;
+    Delta_map.clear();
+}
+const vecteur &cluster_crit::T() {
+    if (!have_T) {
+        for (int i=0;i<p;++i) {
+            _TSS[i]=0;
+            for (int j=i;j<p;++j) {
+                _T[i]._VECTptr->at(j)=0;
+                for (int l=0;l<N;++l) {
+                    _T[i]._VECTptr->at(j)+=(pts[l][i]-mu()[i])*(pts[l][j]-mu()[j]);
+                }
+                if (i!=j)
+                    _T[j]._VECTptr->at(i)=_T[i][j];
+                else _TSS[i]=_T[i][i];
+            }
+        }
+        have_T=true;
+    }
+    return _T;
+}
+gen cluster_crit::TSS(int k) {
+    if (is_undef(_TSS.front())) {
+        for (int j=0;j<p;++j) {
+            _TSS[j]=0;
+            for (int l=0;l<N;++l) {
+                _TSS[j]+=pow(pts[l][j]-mu()[j],2);
+            }
+        }
+    }
+    return k<0?_sum(_TSS,ctx):_TSS[k];
+}
+const vecteur &cluster_crit::WG(int l) {
+    if (!have_WG) {
+        _WG.resize(K);
+        _WGsum.clear();
+        for (int k=0;k<K;++k) {
+            if (_WG[k].type!=_VECT)
+                _WG[k]=zero_mat(p,p,ctx);
+            matrice &WGk=*_WG[k]._VECTptr;
+            for (int i=0;i<p;++i) {
+                for (int j=i;j<p;++j) {
+                    WGk[i]._VECTptr->at(j)=0;
+                    for (int l=0;l<N;++l) {
+                        if (ci(l)==k)
+                            WGk[i]._VECTptr->at(j)+=(pts[l][i]-mu(k)[i])*(pts[l][j]-mu(k)[j]);
+                    }
+                    if (i!=j)
+                        WGk[j]._VECTptr->at(i)=_T[i][j];
+                }
+            }
+            _WGsum=_WGsum.empty()?WGk:madd(_WGsum,WGk);
+        }
+        have_WG=true;
+    }
+    return l<0?_WGsum:*_WG[l]._VECTptr;
+}
+const vecteur &cluster_crit::BG() {
+    if (!have_BG) {
+        for (int i=0;i<p;++i) {
+            _BGSS[i]=0;
+            for (int j=i;j<p;++j) {
+                _BG[i]._VECTptr->at(j)=0;
+                for (int k=0;k<K;++k) {
+                    _BG[i]._VECTptr->at(j)+=n(k)*(mu(k)[i]-mu()[i])*(mu(k)[j]-mu()[j]);
+                }
+                if (i!=j)
+                    _BG[j]._VECTptr->at(i)=_BG[i][j];
+                else _BGSS[i]=_BG[i][i];
+            }
+        }
+        have_BG=true;
+    }
+    return _BG;
+}
+gen cluster_crit::BGSS(int k) {
+    if (is_undef(_BGSS.front())) {
+        for (int i=0;i<p;++i) {
+            _BGSS[i]=0;
+            for (int k=0;k<K;++k) {
+                _BGSS[i]+=n(k)*pow(mu(k)[i]-mu()[i],2);
+            }
+        }
+    }
+    return k<0?_sum(_BGSS,ctx):_BGSS[k];
+}
+gen cluster_crit::DB(int dir) {
+    if (is_undef(_DB_min) || is_undef(_DB_max)) {
+        _DB_min=plus_inf;
+        _DB_max=minus_inf;
+        for (int k=0;k<K;++k) {
+            for (int l=k+1;l<K;++l) {
+                gen D=Delta(k,l);
+                _DB_min=min(_DB_min,D,ctx);
+                _DB_max=max(_DB_max,D,ctx);
+            }
+        }
+    }
+    return dir<0?_DB_min:_DB_max;
+}
+gen cluster_crit::banfeld_raftery() {
+    gen ret=0;
+    for (int k=0;k<K;++k) {
+        if (is_zero(WGSS(k),ctx))
+            return undef;
+        ret+=n(k)*ln(WGSS(k)/n(k),ctx);
+    }
+    return is_real_number(ret,ctx)?to_real_number(ret,ctx):undef;
+}
+gen cluster_crit::calinski_harabasz() {
+    if (K<=1)
+        return undef;
+    gen ret=((N-K)*BGSS())/((K-1)*WGSS());
+    return is_real_number(ret,ctx)?to_real_number(ret,ctx):undef;
+}
+gen cluster_crit::davies_bouldin() {
+    vecteur M(K,minus_inf);
+    gen m;
+    for (int k=0;k<K;++k) {
+        for (int l=0;l<K;++l) {
+            if (k!=l) M[k]=max((WGSS(k)/n(k)+WGSS(l)/n(l))/Delta(k,l),M[k],ctx);
+        }
+    }
+    gen ret=_mean(M,ctx);
+    return is_real_number(ret,ctx)?to_real_number(ret,ctx):undef;
+}
+gen cluster_crit::pbm() {
+    gen ret=pow(ET*DB(1)/(K*WGSS()),2);
+    return is_real_number(ret,ctx)?to_real_number(ret,ctx):undef;
+}
+gen cluster_crit::ratkowsky_lance() {
+    gen Rbar=0;
+    for (int j=0;j<p;++j) Rbar+=BGSS(j)/TSS(j);
+    gen ret=sqrt(Rbar/p,ctx);
+    return is_real_number(ret,ctx)?to_real_number(ret,ctx):undef;
+}
+gen cluster_crit::ray_turi() {
+    gen ret=WGSS()/(N*pow(DB(-1),2));
+    return is_real_number(ret,ctx)?to_real_number(ret,ctx):undef;
+}
+gen cluster_crit::scott_symons() {
+    gen ret=0;
+    for (int k=0;k<K;++k) {
+        gen d=_det(WG(k),ctx);
+        if (is_zero(d,ctx))
+            return undef;
+        ret+=n(k)*log(d/n(k),ctx);
+    }
+    return is_real_number(ret,ctx)?to_real_number(ret,ctx):undef;
+}
+gen cluster_crit::det_ratio() {
+    gen den=_det(WG(),ctx);
+    if (is_zero(den,ctx))
+        return undef;
+    return _det(T(),ctx)/den;
+}
+gen cluster_crit::log_det_ratio() {
+    gen num=_det(T(),ctx),den=_det(WG(),ctx);
+    if (is_zero(num,ctx) || is_zero(den,ctx))
+        return undef;
+    return N*ln(num/den,ctx);
+}
+gen cluster_crit::ksq_detW() {
+    return K*K*_det(WG(),ctx);
+}
+gen cluster_crit::log_ss_ratio() {
+    gen num=BGSS(),den=WGSS();
+    if (is_zero(num,ctx) || is_zero(den,ctx))
+        return undef;
+    return ln(num/den,ctx);
+}
+gen cluster_crit::trace_W() {
+    return WGSS();
+}
+gen cluster_crit::trace_WiB() {
+    gen C;
+    try {
+        C=_evalf(symbolic(at_trace,mmult(*_inv(WG(),ctx)._VECTptr,BG())),ctx);
+    } catch (const std::runtime_error &e) {
+        return undef;
+    }
+    return is_real_number(C,ctx)?to_real_number(C,ctx):undef;
+}
+gen cluster_crit::ball_hall() {
+    gen ret=0;
+    for (int k=0;k<K;++k) ret+=WGSS(k)/n(k);
+    return ret/K;
+}
+void cluster_crit::update(int pos,const gen &val,int dir) {
+    assert(dir!=0);
+    _vmap[pos].push_back(val);
+    if (is_undef(val))
+        return;
+    bool elbow=(dir==-2||dir==2);
+    gen V=val;
+    if (elbow) {
+        const vecteur &v=_vmap[pos];
+        int vs=v.size();
+        if (vs<3)
+            return;
+        V=v[vs-1]-2*v[vs-2]+v[vs-3];
+    }
+    map<int,pair<int,double> >::const_iterator it=_optvals.find(pos);
+    if (!is_real_number(V,ctx))
+        return;
+    double Vd=to_real_number(V,ctx).to_double(ctx);
+    if (it==_optvals.end() || (dir<0 && it->second.second>Vd) || (dir>0 && it->second.second<Vd)) {
+        _optvals[pos]=make_pair(elbow?K-1:K,Vd);
+        _updated=true;
+    }
+}
+bool cluster_crit::compute_indices(int crit) {
+    int pos=0;
+    _updated=false;
+    if (crit & criterion::_BANFELD_RAFTERY)     update(pos++,banfeld_raftery(),-1);
+    if (crit & criterion::_DAVIES_BOULDIN)      update(pos++,davies_bouldin(),-1);
+    if (crit & criterion::_RAY_TURI)            update(pos++,ray_turi(),-1);
+    if (crit & criterion::_SCOTT_SYMONS)        update(pos++,scott_symons(),-1);
+    if (crit & criterion::_CALINSKI_HARABASZ)   update(pos++,calinski_harabasz(),1);
+    if (crit & criterion::_PBM)                 update(pos++,pbm(),1);
+    if (crit & criterion::_RATKOWSKY_LANCE)     update(pos++,ratkowsky_lance(),1);
+    if (crit & criterion::_DET_RATIO)           update(pos++,det_ratio(),-2);
+    if (crit & criterion::_LOG_DET_RATIO)       update(pos++,log_det_ratio(),-2);
+    if (crit & criterion::_LOG_SS_RATIO)        update(pos++,log_ss_ratio(),-2);
+    if (crit & criterion::_BALL_HALL)           update(pos++,ball_hall(),2);
+    if (crit & criterion::_KSQ_DETW)            update(pos++,ksq_detW(),2);
+    if (crit & criterion::_TRACE_W)             update(pos++,trace_W(),2);
+    if (crit & criterion::_TRACE_WIB)           update(pos++,trace_WiB(),2);
+    return _updated;
+}
+int cluster_crit::name2index(const string &name) {
+    if (name=="banfeld-raftery")                return criterion::_BANFELD_RAFTERY;
+    if (name=="davies-bouldin")                 return criterion::_DAVIES_BOULDIN;
+    if (name=="ray-turi")                       return criterion::_RAY_TURI;
+    if (name=="scott-symons")                   return criterion::_SCOTT_SYMONS;
+    if (name=="calinski-harabasz")              return criterion::_CALINSKI_HARABASZ;
+    if (name=="pbm")                            return criterion::_PBM;
+    if (name=="ratkowsky-lance")                return criterion::_RATKOWSKY_LANCE;
+    if (name=="det")                            return criterion::_DET_RATIO;
+    if (name=="log-det")                        return criterion::_DET_RATIO;
+    if (name=="ksq-detW")                       return criterion::_KSQ_DETW;
+    if (name=="log-ss")                         return criterion::_LOG_SS_RATIO;
+    if (name=="ball-hall")                      return criterion::_BALL_HALL;
+    if (name=="trace-W")                        return criterion::_TRACE_W;
+    if (name=="trace-WiB")                      return criterion::_TRACE_WIB;
+    if (name=="all")                            return criterion::_ALL;
+    return -1;
+}
+int cluster_crit::optimal_number_of_clusters(const map<int,pair<int,double> > &optvals) {
+    map<int,int> sugg;
+    for (map<int,pair<int,double> >::const_iterator it=optvals.begin();it!=optvals.end();++it) {
+        sugg[it->second.first]++;
+    }
+    int best_k=0,num_k;
+    for (map<int,int>::const_iterator it=sugg.begin();it!=sugg.end();++it) {
+        if (best_k==0 || it->second>num_k) {
+            best_k=it->first;
+            num_k=it->second;
+        }
+    }
+    return best_k;
+}
+/* END OF CLUSTER_CRIT CLASS */
+
+/*
+ ****** IMPLEMENTATION OF HCLUST CLASS *******
+ *
+ * Hierarchical agglomerative clustering algorithm
+ * 
+ * SOURCE: Daniel Muellner, "Modern hierarchical, agglomerative clustering algorithms" (2011)
+ * https://arxiv.org/pdf/1109.2378.pdf
+ */
+hclust::hclust(const matrice &data,const gen &dist_func,GIAC_CONTEXT)
+    : ctx(contextptr),points(data),distf(dist_func)
+{
+    N=data.size();
+    assert(N>0);
+    S.resize(N);
+    vector<int>::iterator it=S.begin(),itend=S.end();
+    for (int i=0;it!=itend;++it,++i) *it=i;
+    _dist_cache=NULL;
+}
+hclust::~hclust() {
+    if (_dist_cache!=NULL)
+        delete[] _dist_cache;
+}
+double hclust::dist(int i,int j,bool cache) {
+    if (i==j)
+        return 0;
+    gen d;
+    if (cache) {
+        int I=i<j?i:j,J=i<j?j:i;
+        double &dc=dist_cache(I,J);
+        if (dc<0) {
+            d=comp_dist(points[i],points[j],distf,ctx);
+            if (is_undef(d))
+                return -1;
+            dc=d.to_double(ctx);
+        }
+        return dc;
+    }
+    d=comp_dist(points[i],points[j],distf,ctx);
+    return is_undef(d)?-1:d.to_double(ctx);
+}
+double hclust::formula(int a,int b,int x,int na,int nb,int nx,double dab,int meth) {
+    double dax=dist(a,x,true),dbx=dist(b,x,true);
+    if (dax<0 || dbx<0 || dab<0 || dax+dbx<dab)
+        return -1; // bad distance function
+    switch (meth) {
+    case linkage_type::_SINGLE:
+        return std::min(dax,dbx);
+    case linkage_type::_COMPLETE:
+        return std::max(dax,dbx);
+    case linkage_type::_AVERAGE:
+        return (na*dax+nb*dbx)/double(na+nb);
+    case linkage_type::_WEIGHTED:
+        return (dax+dbx)/2.0;
+    case linkage_type::_WARD:
+        return ((na+nx)*dax+(nb+nx)*dbx-nx*dab)/(na+nb+nx);
+    case linkage_type::_CENTROID:
+        return (na*dax+nb*dbx)/(na+nb)-na*nb*dab/std::pow(na+nb,2);
+    case linkage_type::_MEDIAN:
+        return (dax+dbx)/2.0-dab/4.0;
+    default:
+        break;
+    }
+    assert(false); // bad linkage method
+}
+int hclust::k_low(const dendrogram &dg) {
+    double dprev=0,max_step=-1,d;
+    int k=0,i;
+    for (dendrogram::const_iterator it=dg.begin();it!=dg.end();++it) {
+        i=it-dg.begin();
+        d=it->first;
+        if (d-dprev>max_step) {
+            max_step=d-dprev;
+            k=N-i;
+        }
+        dprev=d;
+    }
+    return k;
+}
+bool hclust::mst_linkage(dendrogram &dg,bool cache_distances) {
+    int c=S.front();
+    dg.clear();
+    dg.reserve(N-1);
+    double *D;
+    try { D=new double[2*N]; } catch (const std::bad_alloc &ba) { return false; }
+    bool prev_first=true;
+    for (vector<int>::const_iterator it=S.begin();it!=S.end();++it) {
+        if (*it!=c)
+            D[*it]=DBL_MAX;
+    }
+    for (int i=1;i<N;++i) {
+        double minD=DBL_MAX,Dval;
+        int n=-1,offset=prev_first?0:N;
+        S.erase(std::find(S.begin(),S.end(),c));
+        for (vector<int>::const_iterator it=S.begin();it!=S.end();++it) {
+            Dval=std::min(D[*it+offset],dist(*it,c,cache_distances));
+            if (Dval<0) {
+                delete[] D;
+                return false;
+            }
+            if (Dval<minD) {
+                n=*it;
+                minD=Dval;
+            }
+            D[*it+N-offset]=Dval;
+        }
+        assert(n>=0);
+        drow r;
+        r.first=D[n+N-offset];
+        r.second=make_pair(c,n);
+        dg.push_back(r);
+        c=n;
+        prev_first=!prev_first;
+    }
+    delete[] D;
+    return true;
+}
+bool hclust::nn_chain_linkage(dendrogram &dg,int meth) {
+    dg.clear();
+    dg.reserve(N-1);
+    vector<int> chain;
+    chain.reserve(N);
+    map<int,double> size;
+    vector<int>::const_iterator it,et;
+    for (it=S.begin();it!=S.end();++it) size[*it]=1;
+    int a,b,c,x;
+    while (S.size()>1) {
+        if (chain.size()<=3) {
+            a=S[0];
+            chain.resize(1);
+            chain[0]=a;
+            b=S[1];
+        } else {
+            a=chain[chain.size()-4];
+            b=chain[chain.size()-3];
+            chain.resize(chain.size()-3);
+        }
+        do {
+            double mind=DBL_MAX,d;
+            for (it=S.begin();it!=S.end();++it) {
+                if ((x=*it)!=a && ((d=dist(x,a,true))<mind || (x==b && d==mind))) {
+                    c=x;
+                    mind=d;
+                }
+            }
+            b=a;
+            a=c;
+            chain.push_back(a);
+        } while (chain.size()<3 || a!=chain[chain.size()-3]);
+        double dab=dist(a,b,true);
+        if (dab<0)
+            return false;
+        dg.push_back(make_pair(dab,make_pair(a,b))); // append (d(a,b),a,b) to dendrogram
+        et=std::lower_bound(S.begin(),S.end(),b);
+        assert(et!=S.end());
+        S.erase(et);
+        for (it=S.begin();it!=S.end();++it) { // update distances
+            if ((x=*it)==a)
+                continue;
+            double f=formula(a,b,x,size[a],size[b],size[x],dab,meth);
+            if (f<0)
+                return false;
+            dist_cache(x<a?x:a,x<a?a:x)=f;
+        }
+        size[a]+=size[b];
+    }
+    return true;
+}
+int hclust::linkage(dendrogram &dg,vector<int> &ind,int meth,int K,int min_k,int max_k) {
+    int dcs=(N*(N-1))/2;
+    if (meth!=linkage_type::_SINGLE || K<0) {
+        if (_dist_cache!=NULL)
+            delete[] _dist_cache;
+        try { _dist_cache=new double[dcs]; } catch (const std::bad_alloc &ba) { return -1; }
+        for (int i=0;i<dcs;++i) _dist_cache[i]=-1;
+    }
+    switch (meth) {
+    case linkage_type::_SINGLE:
+        if (!mst_linkage(dg,K<0))
+            return -1;
+        break;
+    case linkage_type::_COMPLETE:
+    case linkage_type::_AVERAGE:
+    case linkage_type::_WEIGHTED:
+    case linkage_type::_WARD:
+        if (!nn_chain_linkage(dg,meth))
+            return -1;
+        break;
+    default:
+        // TODO: implement CENTROID and MEDIAN linkage
+        assert(false);
+    }
+    // agglomerate
+    std::stable_sort(dg.begin(),dg.end());
+    graphe::unionfind UF(N);
+    for (int i=0;i<N;++i) UF.make_set(i);
+    int k=N,best_k=0,k_lb=std::max(min_k,K<=0?k_low(dg):0),a,b,c,indf=-K;
+    double indval;
+    ind.resize(N,-1);
+    pair<int,double> ep=make_pair(0,0.0);
+    set<int> cind;
+    if (indf>0) {
+        if (meth!=linkage_type::_SINGLE) { // force recomputation of distances
+            for (int i=0;i<dcs;++i) _dist_cache[i]=-1;
+        }
+        if (indf & index_function::_SILHOUETTE) {
+            slh_a.resize(N);
+            slh_b.resize(N);
+            slh_s.resize(N);
+        }
+    }
+    if (indf>0) {
+        _kvals.clear();
+        _kvals.reserve(max_k-min_k);
+    }
+    for (dendrogram::iterator it=dg.begin();it!=dg.end();++it) {
+        if (k==(K>0?K:k_lb))
+            break;
+        a=it->second.first;
+        b=it->second.second;
+        --k;
+        if (indf>0 && k<=max_k) { // use index function
+            int ci,cj;
+            if (k<max_k) {
+                int ca=UF.find(a),cb=UF.find(b);
+                if (indf & index_function::_SILHOUETTE) {
+                    for (int i=0;i<N;++i) {
+                        ci=UF.find(i);
+                        map<int,pair<int,double> > &bm=slh_b[i];
+                        if (ci==ca || ci==cb) {
+                            map<int,pair<int,double> >::const_iterator jt=bm.find(ci==ca?cb:ca);
+                            assert(jt!=bm.end());
+                            pair<int,double> &p=slh_a[i];
+                            p.first+=jt->second.first;
+                            p.second+=jt->second.second;
+                            bm.erase(jt);
+                        }
+                    }
+                }
+                UF.unite(a,b);
+                c=UF.find(a);
+                assert(c==ca||c==cb);
+                if (c==cb) { // swap ca and cb
+                    cb=ca;
+                    ca=c;
+                }
+                if (indf & index_function::_SILHOUETTE) {
+                    for (int i=0;i<N;++i) {
+                        ci=UF.find(i);
+                        map<int,pair<int,double> > &bm=slh_b[i];
+                        if (ci!=c) {
+                            map<int,pair<int,double> >::iterator jta=bm.find(ca);
+                            map<int,pair<int,double> >::const_iterator jtb=bm.find(cb);
+                            assert(jta!=bm.end() && jtb!=bm.end());
+                            jta->second.first+=jtb->second.first;
+                            jta->second.second+=jtb->second.second;
+                            bm.erase(jtb);
+                        }
+                    }
+                }
+            } else {
+                UF.unite(a,b);
+                if (indf & index_function::_SILHOUETTE)
+                    std::fill(slh_a.begin(),slh_a.end(),ep);
+                for (int i=0;i<N;++i) {
+                    ci=UF.find(i);
+                    cind.insert(ci);
+                    for (int j=i+1;j<N;++j) {
+                        cj=UF.find(j);
+                        double d=dist(i,j,true);
+                        if (ci==cj) {
+                            if (indf & index_function::_SILHOUETTE) {
+                                pair<int,double> &p=slh_a[i],&q=slh_a[j];
+                                ++p.first;
+                                ++q.first;
+                                p.second+=d;
+                                q.second+=d;
+                            }
+                        } else {
+                            if (indf & index_function::_SILHOUETTE) {
+                                map<int,pair<int,double> > &bv=slh_b[i],&bw=slh_b[j];
+                                pair<int,double> &p=bv[cj],&q=bw[ci];
+                                ++p.first;
+                                ++q.first;
+                                p.second+=d;
+                                q.second+=d;
+                            }
+                        }
+                    }
+                }
+            }
+            int pos=0;
+            bool updated=false;
+            if (indf & index_function::_SILHOUETTE) {
+                std::fill(slh_s.begin(),slh_s.end(),ep);
+                double ai,bi,minb,si;
+                for (int i=0;i<N;++i) {
+                    ci=UF.find(i);
+                    minb=DBL_MAX;
+                    map<int,pair<int,double> > &bv=slh_b[i];
+                    pair<int,double> &ap=slh_a[i];
+                    ai=ap.first==0?0:ap.second/ap.first;
+                    for (map<int,pair<int,double> >::const_iterator jt=bv.begin();jt!=bv.end();++jt) {
+                        bi=jt->second.second/jt->second.first;
+                        if (bi<minb) minb=bi;
+                    }
+                    si=ap.first==0?0:(minb-ai)/std::max(minb,ai);
+                    pair<int,double> &s=slh_s[ci];
+                    ++s.first;
+                    s.second+=si;
+                }
+                indval=DBL_MIN;
+                for (vector<pair<int,double> >::const_iterator it=slh_s.begin();it!=slh_s.end();++it) {
+                    if (it->first==0)
+                        continue;
+                    double S=it->second/it->first;
+                    if (S>indval) indval=S;
+                }
+                _vmap[pos].push_back(indval);
+                map<int,pair<int,double> >::const_iterator mt=_optvals.find(pos);
+                if (mt==_optvals.end() || mt->second.second<indval) {
+                    _optvals[pos]=make_pair(k,indval);
+                    updated=true;
+                }
+                pos++;
+            }
+            _kvals.push_back(k);
+            if (updated) {
+                int optk=cluster_crit::optimal_number_of_clusters(_optvals);
+                if (optk!=best_k) {
+                    for (vector<int>::iterator jt=ind.begin();jt!=ind.end();++jt) {
+                        *jt=UF.find(jt-ind.begin());
+                    }
+                    best_k=optk;
+                }
+            }
+        } else UF.unite(a,b);
+    }
+    map<int,int> ci_map;
+    map<int,int>::iterator jt;
+    for (vector<int>::iterator it=ind.begin();it!=ind.end();++it) {
+        if (*it<0) *it=UF.find(it-ind.begin());
+        jt=ci_map.find(*it);
+        if (jt==ci_map.end())
+            jt=ci_map.insert(make_pair(*it,ci_map.size())).first;
+        *it=jt->second;
+    }
+    return std::max(k,best_k);
+}
+/* the following methods are adapted from:
+ * https://www.centerspace.net/drawing-dendrograms */
+const vector<int> &hclust::order(dendrogram &dg) {
+    vector<int> parent(2*N-1,-1);
+    int pos=0,lab=N;
+    for (dendrogram::iterator it=dg.begin();it!=dg.end();++it) {
+        int a=it->second.first,b=it->second.second,pa=a,pb=b;
+        while (parent[pa]>=0) pa=parent[pa];
+        while (parent[pb]>=0) pb=parent[pb];
+        it->second=make_pair(pa,pb);
+        parent[pa]=parent[pb]=lab;
+        ++lab;
+    }
+    ord.resize(N);
+    reorder_children(dg);
+    walk_children(dg,pos,N-2);
+    return ord;
+}
+void hclust::walk_children(const dendrogram &dg,int &pos,int row) {
+    int node=dg[row].second.first;
+    if (node>=N) walk_children(dg,pos,node-N);
+    if (node<N) ord[pos++]=node;
+    node=dg[row].second.second;
+    if (node>=N) walk_children(dg,pos,node-N);
+    if (node<N) ord[pos++]=node;
+}
+void hclust::reorder_children(dendrogram &dg) {
+    for (int i=0;i<N-1;++i) {
+        int l1=dg[i].second.first;
+        int l2=dg[i].second.second;
+        if ((l1<N && l2<N) || (l1>=N && l2>=N)) {
+            if (l1>l2) swap(dg,i);
+        } else if (l1<N && l2>=N) swap(dg,i);
+    }
+}
+void hclust::swap(dendrogram &dg,int row) {
+    int tmp=dg[row].second.first;
+    dg[row].second.first=dg[row].second.second;
+    dg[row].second.second=tmp;
+}
+int hclust::name2index(const string &name) {
+    if (name=="silhouette")     return index_function::_SILHOUETTE;
+    if (name=="mcclain-rao")    return index_function::_MCCLAIN_RAO;
+    if (name=="dunn")           return index_function::_DUNN;
+    if (name=="all")            return index_function::_ALL;
+    return -1;
+}
+/* end of the centerspace code slice */
+/* END OF HCLUST CLASS */
+
+vecteur data2list(const gen &g,GIAC_CONTEXT) {
+    vecteur v=gen2vecteur(g);
+    for (unsigned i=0;i<v.size();++i) {
+        gen &tmp=v[i];
+        if (tmp.is_symb_of_sommet(at_pnt))
+            tmp=complex2vecteur(remove_at_pnt(tmp),contextptr);
+    }
+    return v;
+}
+
+int lev_size(const gen &g) {
+    if (g.type==_VECT)
+        return g._VECTptr->size();
+    if (g.type==_STRNG)
+        return g._STRNGptr->length();
+    assert(false);
+}
+
+bool lev_is_equal(const gen &g1,const gen &g2,int i,int j) {
+    if (g1.type==_VECT && g2.type==_VECT)
+        return g1._VECTptr->at(i)==g2._VECTptr->at(j);
+    if (g1.type==_STRNG && g2.type==_STRNG)
+        return g1._STRNGptr->at(i)==g2._STRNGptr->at(j);
+    assert(false);
+}
+
+/* Modified from https://en.wikipedia.org/wiki/Levenshtein_distance */
+int LevenshteinDistance(const gen &source, const gen &target) {
+    int m=lev_size(source),n=lev_size(target),del_cost,ins_cost,sub_cost;
+    if (m>n) return LevenshteinDistance(target,source);
+    vector<int> v0(n+1),v1(n+1);
+    for (int i=0;i<=n;++i) v0[i]=i;
+    for (int i=0;i<m;++i) {
+        v1[0]=i+1;
+        for (int j=0;j<n;++j) {
+            del_cost=v0[j+1]+1;
+            ins_cost=v1[j]+1;
+            sub_cost=v0[j]+(lev_is_equal(source,target,i,j)?0:1);
+            v1[j+1]=std::min(std::min(del_cost,ins_cost),sub_cost);
+        }
+        v0.swap(v1);
+    }
+    return v0[n];
+}
+
+/* Return the Levenshtein distance between two vectors/strings */
+gen _levenshtein(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT || g._VECTptr->size()!=2)
+        return gentypeerr(contextptr);
+    const gen &arg1=g._VECTptr->front(),&arg2=g._VECTptr->back();
+    if ((arg1.type==_VECT && arg2.type==_VECT) || (arg1.type==_STRNG && arg2.type==_STRNG))
+        return LevenshteinDistance(arg1,arg2);
+    return generrtype("Both arguments must be either lists or strings");
+}
+static const char _levenshtein_s []="levenshtein";
+static define_unary_function_eval (__levenshtein,&_levenshtein,_levenshtein_s);
+define_unary_function_ptr5(at_levenshtein,alias_at_levenshtein,&__levenshtein,0,true)
+
+int cyclic_colormap(int c) {
+    int col=c%16; // 16 colors are available for distinguishing between clusters (cyclic colormap)
+    switch (col) { // make some colors better for displaying
+    case 3: col=94; break;
+    case 6: col=222; break;
+    case 7: col=92; break;
+    }
+    return col;
+}
+
+gen clustering_result(const vecteur &data,int NP,int p,int out_what,int k,int disp,const vector<int> &res,GIAC_CONTEXT) {
+    vecteur ret;
+    int as=array_start(contextptr);
+    char buf[256];
+    switch (out_what) {
+    case 1: // return list of clusters
+        ret.resize(k,undef);
+        for (vector<int>::const_iterator it=res.begin();it!=res.end();++it) {
+            int i=it-res.begin();
+            gen &c=ret[*it];
+            if (is_undef(c))
+                c=vecteur(1,data[i]);
+            else c._VECTptr->push_back(data[i]);
+        }
+        return change_subtype(ret,_LIST__VECT);    
+    case 2: // return cluster indices for data points
+        for (vector<int>::const_iterator it=res.begin();it!=res.end();++it) {
+            ret.push_back(*it+as);
+        }
+        return ret;
+    case 3: // plot clusters in different colors
+        assert(p==2 || p==3);
+        sprintf(buf,"%s: %d",gettext("Number of clusters"),k);
+        ret.push_back(symb_equal(change_subtype(_TITLE,_INT_PLOT),string2gen(buf,false))); // show title
+        ret.push_back(symb_equal(change_subtype(gen(_AXES),_INT_PLOT),0)); // hide axes
+        for (int i=0;i<NP;++i) {
+            int pt_attrib=disp!=0?disp:(_POINT_POINT | (p==2?_POINT_WIDTH_2:_POINT_WIDTH_4));
+            gen attr=change_subtype(pt_attrib | cyclic_colormap(res[i]),_INT_COLOR);
+            ret.push_back(symbolic(at_point,makesequence(data[i],symb_equal(at_display,attr))));
+        }
+        return ret;
+    case 4:
+        return k;
+    default:
+        break;
+    }
+    assert(false);
+}
+
+gen _kmeans(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    vecteur data=data2list(g.type==_VECT && g.subtype==_SEQ__VECT?g._VECTptr->front():g,contextptr);
+    if (data.empty())
+        return generr("No data found");
+    if (!is_fully_numeric(data,num_mask_withint | num_mask_withfrac))
+        return generr("Data must be numeric");
+    int NP=data.size(),p=data.front().type==_VECT?data.front()._VECTptr->size():1;
+    int out_what=2,min_k=2,max_k=NP-1,k=0,maxiter=100,disp=0;
+    if (g.subtype==_SEQ__VECT) for (const_iterateur it=g._VECTptr->begin()+1;it!=g._VECTptr->end();++it) { // parse options
+        if (is_equal(*it)) {
+            const gen &lh=it->_SYMBptr->feuille._VECTptr->front(),&rh=it->_SYMBptr->feuille._VECTptr->back();
+            if (lh==at_count) {
+                if (rh.is_integer()) {
+                    if ((k=rh.val)<=0) {
+                        print_error("invalid value for count option",contextptr);
+                        return generr("Expected a positive integer");
+                    }
+                } else if (rh.is_symb_of_sommet(at_interval)) {
+                    const gen &lb=rh._SYMBptr->feuille._VECTptr->front();
+                    const gen &ub=rh._SYMBptr->feuille._VECTptr->back();
+                    if (!lb.is_integer() || !ub.is_integer() || (min_k=lb.val)<=0 || (max_k=ub.val)<min_k) {
+                        print_error("Invalid value for count option",contextptr);
+                        return generr("Expected a range of positive integers");
+                    }
+                } else {
+                    print_error("invalid value for count option",contextptr);
+                    return generrtype("Expected an integer or range");
+                }
+            } else if (lh==at_count_sup) {
+                if (!rh.is_integer()) {
+                    print_error("invalid value for count_sup option",contextptr);
+                    return generr("Expected a positive integer");
+                }
+                max_k=std::min(rh.val,NP-1);
+            } else if (lh==at_count_inf) {
+                if (!rh.is_integer()) {
+                    print_error("invalid value for count_inf option",contextptr);
+                    return generr("Expected a positive integer");
+                }
+                min_k=std::max(rh.val,2);
+            } else if (lh==at_limit) {
+                if (!rh.is_integer() || (maxiter=rh.val)<1) {
+                    print_error("invalid value for limit option",contextptr);
+                    return generr("Expected a positive integer");
+                }
+            } else if (lh==at_display) {
+                if (!rh.is_integer() && rh.subtype!=_INT_COLOR) {
+                    print_error("invalid value for display option",contextptr);
+                    return generr("Expected an integer");
+                }
+                disp=rh.val;
+            } else if (lh==at_index) {
+                if (rh.is_integer() && rh.subtype==_INT_BOOLEAN) {
+                    k=(bool)rh.val?-cluster_crit::_CALINSKI_HARABASZ:0;
+                } else if (rh.type==_STRNG) {
+                    int cr=cluster_crit::name2index(*rh._STRNGptr);
+                    if (cr<0) return generr("Unknown index name");
+                    k=-cr;
+                } else if (is_string_list(rh)) {
+                    int cr_aggreg=0,cr;
+                    for (const_iterateur jt=rh._VECTptr->begin();jt!=rh._VECTptr->end();++jt) {
+                        cr=cluster_crit::name2index(*jt->_STRNGptr);
+                        if (cr<0) return generr("Unknown index name");
+                        cr_aggreg|=cr;
+                    }
+                    k=-cr_aggreg;
+                } else {
+                    print_error("invalid value for index option",contextptr);
+                    return generrtype("Expected a string or list of strings");
+                }
+            } else if (lh==at_output) {
+                if (rh==at_part) out_what=1;                    // partition
+                else if (is_mcint(rh,_MAPLE_LIST)) out_what=2;  // list of cluster indices
+                else if (rh==at_plot) out_what=3;               // plot clusters (only for 2D/3D data)
+                else if (rh==at_count) out_what=4;              // return the number of clusters
+                else if (rh==at_index) out_what=5;              // return values of the first index used
+                else return generr("Invalid output specification");
+            }
+        } else if (it->is_integer()) {
+            if ((k=it->val)<=0) {
+                print_error("invalid number of clusters",contextptr);
+                return generr("Expected a positive integer");
+            }
+        } else return generr("Invalid option");
+    }
+    if (out_what==3 && p!=2 && p!=3)
+        return generrdim("Plot output works only with 2D or 3D data");
+    if (out_what==5 && k>=0)
+        return generr("No index specified for output");
+    max_k=std::min(max_k,NP-1);
+    if (min_k>max_k)
+        return generr("Invalid k-range");
+    if (min_k==max_k)
+        k=max_k;
+    vector<int> res;
+    matrice ind;
+    int code=kmeans(data,k,min_k,max_k,maxiter,res,NULL,out_what==5?&ind:NULL,contextptr);
+    if (code==1)
+        print_error("failed to generate good initial cluster centers",contextptr);
+    else if (code==2)
+        print_error("maximum number of iterations exceeded",contextptr);
+    if (code!=0)
+        return vecteur(0);
+    if (out_what==5)
+        return ind;
+    return clustering_result(data,NP,p,out_what,k,disp,res,contextptr);
+}
+static const char _kmeans_s []="kmeans";
+static define_unary_function_eval (__kmeans,&_kmeans,_kmeans_s);
+define_unary_function_ptr5(at_kmeans,alias_at_kmeans,&__kmeans,0,true)
+
+gen make_2D_line_segment(const vecteur &P,const vecteur &Q,int style,GIAC_CONTEXT) {
+    vecteur attr(1,style),seg=makevecteur(makecomplex(P[0],P[1]),makecomplex(Q[0],Q[1]));
+    return pnt_attrib(gen(seg,_GROUP__VECT),attr,contextptr);
+}
+
+gen _cluster(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    vecteur data=data2list(g.type==_VECT && g.subtype==_SEQ__VECT?g._VECTptr->front():g,contextptr);
+    if (data.empty())
+        return generr("No data found");
+    gen dist_func=is_string_list(data)?at_levenshtein:at_longueur2;
+    int NP=data.size(),p=data.front().type==_VECT?data.front()._VECTptr->size():1;
+    int out_what=2,k=0,min_k=0,max_k=16,lmeth=hclust::linkage_type::_SINGLE,lab=1,indf=0,disp=0;
+    if (g.subtype==_SEQ__VECT) for (const_iterateur it=g._VECTptr->begin()+1;it!=g._VECTptr->end();++it) { // parse options
+        if (is_equal(*it)) {
+            const gen &lh=it->_SYMBptr->feuille._VECTptr->front(),&rh=it->_SYMBptr->feuille._VECTptr->back();
+            if (lh==at_count) {
+                if (rh.is_integer()) {
+                    if ((k=rh.val)<=0) {
+                        print_error("invalid value for count option",contextptr);
+                        return generr("Expected a positive integer");
+                    }
+                } else if (rh.is_symb_of_sommet(at_interval)) {
+                    const gen &lb=rh._SYMBptr->feuille._VECTptr->front();
+                    const gen &ub=rh._SYMBptr->feuille._VECTptr->back();
+                    if (!lb.is_integer() || !ub.is_integer() || (min_k=lb.val)<=0 || (max_k=ub.val)<min_k) {
+                        print_error("Invalid value for count option",contextptr);
+                        return generr("Expected a range of positive integers");
+                    }
+                } else {
+                    print_error("invalid value for count option",contextptr);
+                    return generrtype("Expected an integer or range");
+                }
+            } else if (lh==at_count_sup) {
+                if (!rh.is_integer()) {
+                    print_error("invalid value for count_sup option",contextptr);
+                    return generr("Expected a positive integer");
+                }
+                max_k=std::min(rh.val,NP-1);
+            } else if (lh==at_display) {
+                if (!rh.is_integer() && rh.subtype!=_INT_COLOR) {
+                    print_error("invalid value for display option",contextptr);
+                    return generr("Expected an integer");
+                }
+                disp=rh.val;
+            } else if (lh==at_count_inf) {
+                if (!rh.is_integer()) {
+                    print_error("invalid value for count_inf option",contextptr);
+                    return generr("Expected a positive integer");
+                }
+                min_k=std::max(rh.val,2);
+            } else if (lh==at_type) {
+                if (rh.type!=_STRNG) {
+                    print_error("invalid value for type option (linkage)",contextptr);
+                    return generrtype("Expected a string");
+                }
+                const string &lt=*rh._STRNGptr;
+                if (lt=="single")           lmeth=hclust::linkage_type::_SINGLE;
+                else if (lt=="complete")    lmeth=hclust::linkage_type::_COMPLETE;
+                else if (lt=="average")     lmeth=hclust::linkage_type::_AVERAGE;
+                else if (lt=="weighted")    lmeth=hclust::linkage_type::_WEIGHTED;
+                else if (lt=="ward")        lmeth=hclust::linkage_type::_WARD;
+#if 0
+                else if (lt=="centroid")    lmeth=hclust::linkage_type::_CENTROID;
+                else if (lt=="median")      lmeth=hclust::linkage_type::_MEDIAN;
+#endif
+                else return generr("Unknown linkage type");
+            } else if (lh==at_longueur) {
+                if (rh.type!=_FUNC && (rh.type!=_SYMB || rh._SYMBptr->sommet!=at_program))
+                    return generrtype("Invalid distance function specification");
+                dist_func=rh;
+            } else if (lh==at_output) { // set desired output
+                if (rh==at_part) out_what=1;                    // partition of the set of points
+                else if (is_mcint(rh,_MAPLE_LIST)) out_what=2;  // list of cluster indices for each point
+                else if (rh==at_plot) out_what=3;               // plot clusters (works only with 2D or 3D euclidean points)
+                else if (rh==at_count) out_what=4;              // return the number of clusters
+                else if (is_mcint(rh,_GT_TREE)) out_what=5;     // dendrogram drawing
+                else if (rh==at_index) out_what=6;              // return values of the last index used
+                else return generr("Invalid output specification");
+            } else if (lh.is_integer() && lh.subtype==_INT_PLOT && lh.val==_LABELS) {
+                if (rh.is_integer() && rh.subtype==_INT_BOOLEAN)
+                    lab=(bool)rh.val?1:0;
+                else if (rh==at_index)
+                    lab=2;
+                else return generr("Invalid labels specification");
+            } else if (lh==at_index) {
+                if (rh.is_integer() && rh.subtype==_INT_BOOLEAN) {
+                    indf=(bool)rh.val?hclust::index_function::_SILHOUETTE:0;
+                } else if (rh.type==_STRNG) {
+                    indf=hclust::name2index(*rh._STRNGptr);
+                    if (indf<0) return generr("Unknown index name");
+                } else if (is_string_list(rh)) {
+                    int cr;
+                    indf=0;
+                    for (const_iterateur jt=rh._VECTptr->begin();jt!=rh._VECTptr->end();++jt) {
+                        cr=hclust::name2index(*jt->_STRNGptr);
+                        if (cr<0) return generr("Unknown index name");
+                        indf|=cr;
+                    }
+                } else {
+                    print_error("invalid value for index option",contextptr);
+                    return generrtype("Expected a string or list of strings");
+                }
+            } else return generr("Invalid option");
+        } else if (it->is_integer()) {
+            if ((k=it->val)<=0) {
+                print_error("invalid number of clusters",contextptr);
+                return generr("Expected a positive integer");
+            }
+        } else if (it->type==_FUNC) {
+            dist_func=*it;
+        } else return generr("Invalid option");
+    }
+    if (out_what==3 && p!=2 && p!=3)
+        return generrdim("Plot output works only with 2D or 3D data");
+    if (out_what==6 && indf<=0)
+        return generr("No index specified for output");
+    if (max_k<min_k)
+        return generr("Invalid k-range");
+    if (max_k==min_k)
+        k=min_k;
+    hclust hc(data,dist_func,contextptr);
+    hclust::dendrogram dg;
+    vector<int> indices;
+    if ((k=hc.linkage(dg,indices,lmeth,k>0?k:-indf,min_k,max_k))<=0) {
+        print_error("linkage method failed",contextptr);
+        return generr("Bad distance function");
+    }
+    if (out_what==6)
+        return hc.get_index_values();
+    if (out_what==5) { // draw the dendrogram with horizontal orientation (better for labels placement)
+        vector<int> ord=hc.order(dg);
+        vecteur drawing;
+        vecteur pos(2*NP-1,undef);
+        int as=array_start(contextptr),ulab=NP;
+        for (int i=0;i<NP;++i) {
+            int j=ord[i];
+            pos[j]=makevecteur(makevecteur(0,i+1),indices[j]);
+            if (lab>0) {
+                gen label=_string(lab==1?data[j]:gen(j+as),contextptr);
+                gen attr=symb_equal(at_display,change_subtype(_QUADRANT2,_INT_COLOR));
+                const vecteur &p=*pos[j]._VECTptr->front()._VECTptr;
+                drawing.push_back(_legende(makesequence(makecomplex(p[0],p[1]),label,attr),contextptr));
+            }
+        }
+        for (hclust::dendrogram::const_iterator it=dg.begin();it!=dg.end();++it) {
+            int a=it->second.first,b=it->second.second;
+            double h=it->first;
+            const vecteur &A=*pos[a]._VECTptr->front()._VECTptr,&B=*pos[b]._VECTptr->front()._VECTptr;
+            int col=pos[a]._VECTptr->back().val,next_ind;
+            if (pos[b]._VECTptr->back().val!=col) {
+                next_ind=ulab;
+                col=50; // light gray
+            } else {
+                next_ind=col;
+                col=cyclic_colormap(col);
+            }
+            pos[ulab]=makevecteur(makevecteur(h,(A[1]+B[1])/2),next_ind);
+            drawing.push_back(make_2D_line_segment(A,makevecteur(h,A[1]),col,contextptr));
+            drawing.push_back(make_2D_line_segment(B,makevecteur(h,B[1]),col,contextptr));
+            drawing.push_back(make_2D_line_segment(makevecteur(h,A[1]),makevecteur(h,B[1]),col,contextptr));
+            ulab++;
+        }
+        return drawing;
+    }
+    return clustering_result(data,NP,p,out_what,k,disp,indices,contextptr);
+}
+static const char _cluster_s []="cluster";
+static define_unary_function_eval (__cluster,&_cluster,_cluster_s);
+define_unary_function_ptr5(at_cluster,alias_at_cluster,&__cluster,0,true)
+
+/* Return TRUE iff g is a list of strings */
+bool is_string_list(const gen &g) {
+    if (g.type!=_VECT || g._VECTptr->empty())
+        return false;
+    for (const_iterateur it=g._VECTptr->begin();it!=g._VECTptr->end();++it) {
+        if (it->type!=_STRNG)
+            return false;
+    }
+    return true;
+}
+
+// Brent's method for finding local minimizer of a univariate function
+// SOURCE: https://people.math.sc.edu/Burkardt/cpp_src/local_min_rc/local_min_rc.html
+//
+//****************************************************************************80
+
+double r8_epsilon ( )
+
+//****************************************************************************80
+//
+//  Purpose:
+//
+//    R8_EPSILON returns the R8 roundoff unit.
+//
+//  Discussion:
+//
+//    The roundoff unit is a number R which is a power of 2 with the
+//    property that, to the precision of the computer's arithmetic,
+//      1 < 1 + R
+//    but
+//      1 = ( 1 + R / 2 )
+//
+//  Licensing:
+//
+//    This code is distributed under the GNU LGPL license.
+//
+//  Modified:
+//
+//    01 September 2012
+//
+//  Author:
+//
+//    John Burkardt
+//
+//  Parameters:
+//
+//    Output, double R8_EPSILON, the R8 round-off unit.
+//
+{
+  const double value = 2.220446049250313E-016;
+
+  return value;
+}
+//****************************************************************************80
+
+double r8_sign ( double x )
+
+//****************************************************************************80
+//
+//  Purpose:
+//
+//    R8_SIGN returns the sign of an R8.
+//
+//  Licensing:
+//
+//    This code is distributed under the GNU LGPL license.
+//
+//  Modified:
+//
+//    18 October 2004
+//
+//  Author:
+//
+//    John Burkardt
+//
+//  Parameters:
+//
+//    Input, double X, the number whose sign is desired.
+//
+//    Output, double R8_SIGN, the sign of X.
+//
+{
+  double value;
+
+  if ( x < 0.0 )
+  {
+    value = -1.0;
+  }
+  else
+  {
+    value = 1.0;
+  }
+  return value;
+}
+//****************************************************************************80
+
+double local_min_rc ( double &a, double &b, int &status, double value )
+
+//****************************************************************************80
+//
+//  Purpose:
+//
+//    LOCAL_MIN_RC seeks a minimizer of a scalar function of a scalar variable.
+//
+//  Discussion:
+//
+//    This routine seeks an approximation to the point where a function
+//    F attains a minimum on the interval (A,B).
+//
+//    The method used is a combination of golden section search and
+//    successive parabolic interpolation.  Convergence is never much
+//    slower than that for a Fibonacci search.  If F has a continuous
+//    second derivative which is positive at the minimum (which is not
+//    at A or B), then convergence is superlinear, and usually of the
+//    order of about 1.324...
+//
+//    The routine is a revised version of the Brent local minimization
+//    algorithm, using reverse communication.
+//
+//    It is worth stating explicitly that this routine will NOT be
+//    able to detect a minimizer that occurs at either initial endpoint
+//    A or B.  If this is a concern to the user, then the user must
+//    either ensure that the initial interval is larger, or to check
+//    the function value at the returned minimizer against the values
+//    at either endpoint.
+//
+//  Licensing:
+//
+//    This code is distributed under the GNU LGPL license.
+//
+//  Modified:
+//
+//    17 July 2011
+//
+//  Author:
+//
+//    John Burkardt
+//
+//  Reference:
+//
+//    Richard Brent,
+//    Algorithms for Minimization Without Derivatives,
+//    Dover, 2002,
+//    ISBN: 0-486-41998-3,
+//    LC: QA402.5.B74.
+//
+//    David Kahaner, Cleve Moler, Steven Nash,
+//    Numerical Methods and Software,
+//    Prentice Hall, 1989,
+//    ISBN: 0-13-627258-4,
+//    LC: TA345.K34.
+//
+//  Parameters
+//
+//    Input/output, double &A, &B.  On input, the left and right
+//    endpoints of the initial interval.  On output, the lower and upper
+//    bounds for an interval containing the minimizer.  It is required
+//    that A < B.
+//
+//    Input/output, int &STATUS, used to communicate between
+//    the user and the routine.  The user only sets STATUS to zero on the first
+//    call, to indicate that this is a startup call.  The routine returns STATUS
+//    positive to request that the function be evaluated at ARG, or returns
+//    STATUS as 0, to indicate that the iteration is complete and that
+//    ARG is the estimated minimizer.
+//
+//    Input, double VALUE, the function value at ARG, as requested
+//    by the routine on the previous call.
+//
+//    Output, double LOCAL_MIN_RC, the currently considered point.
+//    On return with STATUS positive, the user is requested to evaluate the
+//    function at this point, and return the value in VALUE.  On return with
+//    STATUS zero, this is the routine's estimate for the function minimizer.
+//
+//  Local parameters:
+//
+//    C is the squared inverse of the golden ratio.
+//
+//    EPS is the square root of the relative machine precision.
+//
+{
+  static double arg;
+  static double c;
+  static double d;
+  static double e;
+  static double eps;
+  static double fu;
+  static double fv;
+  static double fw;
+  static double fx;
+  static double midpoint;
+  static double p;
+  static double q;
+  static double r;
+  static double tol;
+  static double tol1;
+  static double tol2;
+  static double u;
+  static double v;
+  static double w;
+  static double x;
+//
+//  STATUS (INPUT) = 0, startup.
+//
+  if ( status == 0 )
+  {
+    if ( b <= a )
+    {
+      status = -1;
+      return 0;
+    }
+    c = 0.5 * ( 3.0 - std::sqrt ( 5.0 ) );
+
+    eps = std::sqrt ( r8_epsilon ( ) );
+    tol = r8_epsilon ( );
+
+    v = a + c * ( b - a );
+    w = v;
+    x = v;
+    e = 0.0;
+
+    status = 1;
+    arg = x;
+
+    return arg;
+  }
+//
+//  STATUS (INPUT) = 1, return with initial function value of FX.
+//
+  else if ( status == 1 )
+  {
+    fx = value;
+    fv = fx;
+    fw = fx;
+  }
+//
+//  STATUS (INPUT) = 2 or more, update the data.
+//
+  else if ( 2 <= status )
+  {
+    fu = value;
+
+    if ( fu <= fx )
+    {
+      if ( x <= u )
+      {
+        a = x;
+      }
+      else
+      {
+        b = x;
+      }
+      v = w;
+      fv = fw;
+      w = x;
+      fw = fx;
+      x = u;
+      fx = fu;
+    }
+    else
+    {
+      if ( u < x )
+      {
+        a = u;
+      }
+      else
+      {
+        b = u;
+      }
+
+      if ( fu <= fw || w == x )
+      {
+        v = w;
+        fv = fw;
+        w = u;
+        fw = fu;
+      }
+      else if ( fu <= fv || v == x || v == w )
+      {
+        v = u;
+        fv = fu;
+      }
+    }
+  }
+//
+//  Take the next step.
+//
+  midpoint = 0.5 * ( a + b );
+  tol1 = eps * fabs ( x ) + tol / 3.0;
+  tol2 = 2.0 * tol1;
+//
+//  If the stopping criterion is satisfied, we can exit.
+//
+  if ( fabs ( x - midpoint ) <= ( tol2 - 0.5 * ( b - a ) ) )
+  {
+    status = 0;
+    return arg;
+  }
+//
+//  Is golden-section necessary?
+//
+  if ( fabs ( e ) <= tol1 )
+  {
+    if ( midpoint <= x )
+    {
+      e = a - x;
+    }
+    else
+    {
+      e = b - x;
+    }
+    d = c * e;
+  }
+//
+//  Consider fitting a parabola.
+//
+  else
+  {
+    r = ( x - w ) * ( fx - fv );
+    q = ( x - v ) * ( fx - fw );
+    p = ( x - v ) * q - ( x - w ) * r;
+    q = 2.0 * ( q - r );
+    if ( 0.0 < q )
+    {
+      p = - p;
+    }
+    q = fabs ( q );
+    r = e;
+    e = d;
+//
+//  Choose a golden-section step if the parabola is not advised.
+//
+    if (
+      ( fabs ( 0.5 * q * r ) <= fabs ( p ) ) ||
+      ( p <= q * ( a - x ) ) ||
+      ( q * ( b - x ) <= p ) )
+    {
+      if ( midpoint <= x )
+      {
+        e = a - x;
+      }
+      else
+      {
+        e = b - x;
+      }
+      d = c * e;
+    }
+//
+//  Choose a parabolic interpolation step.
+//
+    else
+    {
+      d = p / q;
+      u = x + d;
+
+      if ( ( u - a ) < tol2 )
+      {
+        d = tol1 * r8_sign ( midpoint - x );
+      }
+
+      if ( ( b - u ) < tol2 )
+      {
+        d = tol1 * r8_sign ( midpoint - x );
+      }
+    }
+  }
+//
+//  F must not be evaluated too close to X.
+//
+  if ( tol1 <= fabs ( d ) )
+  {
+    u = x + d;
+  }
+  if ( fabs ( d ) < tol1 )
+  {
+    u = x + tol1 * r8_sign ( d );
+  }
+//
+//  Request value of F(U).
+//
+  arg = u;
+  status = status + 1;
+
+  return arg;
+}
+
+/* Find local/global minimum of f in (a,b) using (a modification of) Brent's method */
+gen find_minimum(const gen &f,const gen &a,const gen &b,bool global,double eps,int maxiter,GIAC_CONTEXT) {
+    if (!is_real_number(a,contextptr) || !is_real_number(b,contextptr) || maxiter<1 || eps<=0)
+        return undef;
+    bool isfunc=f.type==_FUNC||(f.type==_SYMB && f._SYMBptr->sommet==at_program);
+    gen val,x=isfunc?undef:_lname(f,contextptr);
+    if (!is_undef(x) && (x.type!=_VECT || x._VECTptr->size()!=1))
+        return undef;
+    if (x.type==_VECT) x=x._VECTptr->front();
+    double xL=a.to_double(contextptr);
+    double xU=b.to_double(contextptr);
+    if (xL>=xU)
+        return undef;
+    double arg,min_arg,min_fval=DBL_MAX,value;
+    std::queue<pair<double,double> > intq;
+    intq.push(make_pair(xL,xU));
+    while (!intq.empty()) {
+        int status=0,iter=0;
+        pair<double,double> bnds=intq.front();
+        intq.pop();
+        double x1=bnds.first,x2=bnds.second;
+        while (iter++<maxiter) {
+            arg=local_min_rc(x1,x2,status,value);
+            if (status<0)
+                return undef;
+            if (status==0 || x2-x1<eps)
+                break;
+            try {
+                val=isfunc?_evalf(f(arg,contextptr),contextptr):subst(f,x,arg,false,contextptr);
+            } catch (const std::runtime_error &e) {
+                *logptr(contextptr) << e.what() << endl;
+                return generr("Failed to compute function value");
+            }
+            if (!is_real_number(val,contextptr))
+                return generr("Function values must be real");
+            value=to_real_number(val,contextptr).to_double(contextptr);
+        }
+        if (!global) {
+            min_arg=arg;
+            continue;
+        }
+        if (arg<bnds.first+eps||arg>bnds.second-eps) {
+            if (value<min_fval) {
+                min_arg=arg;
+                min_fval=value;
+            }
+            continue;
+        }
+        if (value>=min_fval)
+            continue;
+        min_arg=arg;
+        min_fval=value;
+        intq.push(make_pair(bnds.first,arg));
+        intq.push(make_pair(arg,bnds.second));
+    }
+    return min_arg;
+}
+
+/* Minimize a scalar univariate function on the interval (a,b) using Brent algorithm.
+ * Usage: find_minimum(f,a,b,[optargs])
+ * Sequence OPTARGS may contain real number EPS in (0,1) and/or a positive integer MAXITER.
+ */
+gen _find_minimum(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return generrtype("Expected a sequence of arguments");
+    const vecteur &args=*g._VECTptr;
+    int argc=args.size();
+    if (argc<3 || argc>5)
+        return generrdim("Wrong number of input arguments");
+    const gen &f=args[0];
+    gen a=args[1],b=args[2];
+    if (!is_real_number(a,contextptr) || !is_real_number(b,contextptr))
+        return generr("Range bounds must be real");
+    a=to_real_number(a,contextptr);
+    b=to_real_number(b,contextptr);
+    if (is_greater(a,b,contextptr))
+        return generr("Invalid range");
+    double eps=std::pow(epsilon(contextptr),2.0/3.0);
+    int maxiter=100;
+    for (const_iterateur it=args.begin()+3;it!=args.end();++it) {
+        if (!is_real_number(*it,contextptr) || is_positive(-*it,contextptr))
+            return generr("Expected a positive number");
+        if (it->is_integer())
+            maxiter=it->val;
+        else {
+            eps=to_real_number(*it,contextptr).to_double(contextptr);
+            if (is_greater(eps,plus_one,contextptr))
+                return generr("Expected a real number in (0,1)");
+        }
+    }
+    return find_minimum(f,a,b,true,eps,maxiter,contextptr);
+}
+static const char _find_minimum_s []="find_minimum";
+static define_unary_function_eval (__find_minimum,&_find_minimum,_find_minimum_s);
+define_unary_function_ptr5(at_find_minimum,alias_at_find_minimum,&__find_minimum,0,true)
+
+/* Return true if MAT is positive definite,
+ * set isnum to true if MAT is fully numeric */
+bool is_positive_definite_inplace(vecteur &m,bool isnum,GIAC_CONTEXT) {
+    int n=int(m.size()),j,k,l;
+    for (j=0;j<n;j++) {
+        gen s,d;
+        for (l=j;l<n;l++) {
+	        s=0;
+	        for (k=0;k<j;k++) {
+                const gen &kk=m[k][k];
+	            if ((isnum && is_positive(-kk,contextptr)) ||
+                        (!isnum && !is_definitely_positive(kk,contextptr)))
+	                return false;
+            	s+=m[l][k]*m[j][k]/kk;
+	        }
+            d=m[l][j]-s;
+            m[l]._VECTptr->at(j)=isnum?d:ratnormal(d,contextptr);
+        }
+    }
+    return true;
+}
+bool is_positive_definite(const vecteur &mat,int isnum,GIAC_CONTEXT) {
+    bool isn=isnum<0?is_numericm(mat):(isnum==1);
+#ifdef HAVE_LIBGSL
+    if (isn && is_zero(im(mat,contextptr),contextptr)) {
+        gsl_matrix *m=matrice2gsl_matrix(*re(mat,contextptr)._VECTptr,contextptr);
+        int res=gsl_linalg_cholesky_decomp1(m);
+        gsl_matrix_free(m);
+        return res!=GSL_EDOM;
+    }
+#endif // HAVE_LIBGSL
+    int n=int(mat.size()),i=0;
+    vecteur m;
+    m.reserve(n);
+    for (const_iterateur it=mat.begin();it!=mat.end();++it) {
+        const vecteur &row=*it->_VECTptr;
+        m.push_back(vecteur(row.begin(),row.begin()+(++i)));
+    }
+    return is_positive_definite_inplace(m,isn,contextptr);
+}
+/* Return true if MAT is positive semidefinite.
+ * TIME-LIMIT, if positive, is applied when determining LDL decomposition.
+ * MAX-TAILLE, if positive, limits the complexity of the elements of block-diagonal matrix D. */
+bool is_positive_semidefinite(const matrice &mat,double time_limit,unsigned max_taille,GIAC_CONTEXT) {
+    matrice M;
+    copy_matrice(mat,M);
+    vector<int> perm;
+    bool sing;
+    log_output_redirect lor(contextptr);
+    int mt=is_numericm(mat,num_mask_withfrac|num_mask_withint)?2:0,i,n=M.size();
+    bool res=ldl(M,perm,mt,sing,time_limit,contextptr);
+    if (!res)
+        return false;
+    gen din,dli;
+    for (i=0;i<n;++i) {
+        const gen &di=M[i][i];
+        if (i<n-1 && (!(dli=M[0][i+1]).is_integer() || dli.val!=0)) { // 2x2 block
+            if (!is_positive_safe(di,false,max_taille,contextptr) ||
+                    !is_positive_safe(din=M[i+1][i+1],false,max_taille,contextptr) ||
+                    !is_positive_safe(di*din-pow(dli,2),false,max_taille,contextptr))
+                return false;
+            ++i;
+        } else { // 1x1 block
+            if (!is_positive_safe(di,false,max_taille,contextptr))
+                return false;
+        }
+    }
+    return true;
+}
+
+/* Return 1 if g is a positive definite matrix, else return 0 */
+gen _isposdef(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (!is_squarematrix(g))
+        return generr("Expected a square matrix");
+    return is_positive_definite(*g._VECTptr,-1,contextptr)?1:0;
+}
+static const char _isposdef_s []="isposdef";
+static define_unary_function_eval (__isposdef,&_isposdef,_isposdef_s);
+define_unary_function_ptr5(at_isposdef,alias_at_isposdef,&__isposdef,0,true)
+
+vecteur symbol_array(const vector<int> &sz,vector<int> &ind,int pos,const vector<int> &hashpos,const string &tmpl,int as) {
+    int nd=sz.size();
+    vecteur ret(sz[pos]);
+    iterateur rt=ret.begin(),rtend=ret.end();
+    for (int i=0;rt!=rtend;++rt,++i) {
+        ind[pos]=i;
+        if (pos==nd-1) {
+            string name(tmpl);
+            vector<int>::const_reverse_iterator it=hashpos.rbegin(),itend=hashpos.rend(),jt=ind.rbegin();
+            for (;it!=itend;++it,++jt) {
+                name.replace(*it,1,print_INT_(*jt+as));
+            }
+            *rt=identificateur(name);
+        } else *rt=symbol_array(sz,ind,pos+1,hashpos,tmpl,as);
+    }
+    return ret;
+}
+
+gen _symbol_array(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return generrtype("Expected a sequence of arguments");
+    const vecteur &args=*g._VECTptr;
+    if (args.size()<2)
+        return generrdim("Too few input arguments");
+    if (args.front().type!=_STRNG)
+        return generrtype("First argument must be a string");
+    string tmpl=*args.front()._STRNGptr;
+    vecteur d(args.begin()+1,args.end());
+    if (!is_integer_vecteur(d,true) || is_strictly_greater(1,_min(d,contextptr),contextptr))
+        return generr("Expected a sequence of positive integers");
+    int nd=d.size(),cnt=0,as=array_start(contextptr);
+    vector<int> sz=vecteur_2_vector_int(d),ind(nd,0),hashpos(tmpl.size(),-1);
+    string::const_iterator st,ststart=tmpl.begin(),stend=tmpl.end();
+    char hash_ch='%';
+    for (st=ststart;st!=stend;++st) {
+        if (*st==hash_ch)
+            hashpos[cnt++]=st-ststart;
+        else if ((st==ststart && isdigit(*st)) || (!isalnum(*st) && *st!='_'))
+            break;
+    }
+    hashpos.resize(cnt);
+    if (st!=stend || (cnt>0 && cnt!=nd))
+        return generr("Invalid name template");
+    if (cnt==0) {
+        string suffix(nd,hash_ch);
+        hashpos.resize(nd);
+        for (int i=nd-1;i>0;i--) {
+            suffix.insert(suffix.begin()+i,'_');
+        }
+        if (nd>1) tmpl+="_";
+        for (int i=0;i<nd;++i) {
+            hashpos[i]=tmpl.size()+2*i;
+        }
+        tmpl+=suffix;
+    }
+    return symbol_array(sz,ind,0,hashpos,tmpl,as);
+}
+static const char _symbol_array_s []="symbol_array";
+static define_unary_function_eval (__symbol_array,&_symbol_array,_symbol_array_s);
+define_unary_function_ptr5(at_symbol_array,alias_at_symbol_array,&__symbol_array,0,true)
+
+void PermuSort::sort(vector<int> &p) {
+    comparator comp(*this);
+    std::stable_sort(p.begin(),p.end(),comp);
+}
+void sortperm(const vecteur &v,vector<int> &p,GIAC_CONTEXT) {
+    int n=v.size(),i=array_start(contextptr);
+    if ((int)p.size()!=n) p.resize(n);
+    vector<int>::iterator it=p.begin(),itend=p.end();
+    for (;it!=itend;++it,++i) *it=i;
+    PermuSort ps(v,contextptr);
+    ps.sort(p);
+}
+
+/* With 1 argument: return the permutation that sorts the given vector.
+ * With 2 arguments: first arg must be a vector, the second a permutation,
+ *                   then return the first sorted according to the second. */
+gen _sortperm(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    if (g.subtype==_SEQ__VECT) {
+        const vecteur &args=*g._VECTptr;
+        if (args.size()!=2)
+            return gendimerr(contextptr);
+        if (args.front().type!=_VECT || args.back().type!=_VECT)
+            return gentypeerr(contextptr);
+        vector<int> p;
+        if (!is_permu(*args.back()._VECTptr,p,contextptr))
+            return gentypeerr(contextptr);
+        vecteur v=*args.front()._VECTptr;
+        apply_permutation(v,p,false);
+        return gen(v,args.front().subtype);    
+    }
+    const vecteur &v=*g._VECTptr;
+    if (v.empty()) return vecteur(0);
+    if (v.size()==1) return vecteur(1,array_start(contextptr));
+    vector<int> p;
+    sortperm(v,p,contextptr);
+    return vector_int_2_vecteur(p);
+}
+static const char _sortperm_s []="sortperm";
+static define_unary_function_eval (__sortperm,&_sortperm,_sortperm_s);
+define_unary_function_ptr5(at_sortperm,alias_at_sortperm,&__sortperm,0,true)
+
+/*
+ * FDWEIGHTS CLASS IMPLEMENTATION
+ * Fast and accurate numerical differentiation
+ */
+FDWeights::FDWeights(const vecteur &grid_points,int diff_order,GIAC_CONTEXT) : ctx(contextptr),z(grid_points) {
+    N=grid_points.size();
+    M=diff_order;
+    w_lagrange.resize(N);
+    L=zero_mat(N+2,M+1,ctx);
+    R=zero_mat(N+2,M+1,ctx);
+    w=zero_mat(N,M+1,ctx);
+    lagrange_weights();
+}
+void FDWeights::lagrange_weights() {
+    iterateur it=w_lagrange.begin(),itend=w_lagrange.end();
+    const_iterateur zit=z.begin(),zjt,zjtend=z.end();
+    for (;it!=itend;++it,++zit) {
+        *it=1;
+        for (zjt=z.begin();zjt!=zjtend;++zjt) if (zit!=zjt) *it=*it*(*zit-*zjt);
+        *it=_inv(*it,ctx);
+    }
+}
+void FDWeights::find_weights(const vecteur &c,int k) {
+    gen f=w_lagrange[k];
+    vecteur &wk=*w[k]._VECTptr;
+    iterateur it=wk.begin(),itend=wk.end();
+    const_iterateur ct=c.begin();
+    int m=0;
+    for (;it!=itend;++it,++ct,++m) {
+        *it=*ct*f;
+        f=(m+1)*f;
+    }
+}
+inline void FDWeights::multbinom(const vecteur &a,vecteur &b,const gen &zeta) {
+    b[0]=-zeta*a[0];
+    const_iterateur it=a.begin();
+    iterateur jt=b.begin()+1,jtend=b.end();
+    for (;jt!=jtend;++it,++jt) *jt=-*(it+1)*zeta+*it;
+}
+inline void FDWeights::convolve(const vecteur &a,const vecteur &b,vecteur &c) {
+    int m=0,i;
+    iterateur it=c.begin(),itend=c.end();
+    for (;it!=itend;++it,++m) {
+        *it=0;
+        for (i=0;i<=m;++i) *it+=a[m-i]*b[i];
+    }
+}
+void FDWeights::setz0(const gen &zeta) {
+    vecteur zeta_v(N);
+    iterateur it=zeta_v.begin(),itend=zeta_v.end();
+    const_iterateur jt=z.begin(),jtend;
+    for (;it!=itend;++it,++jt) *it=*jt-zeta;
+    vecteur &L0=*L[0]._VECTptr,&Rlast=*R[N+1]._VECTptr;
+    std::fill(L0.begin(),L0.end(),0);
+    std::fill(Rlast.begin(),Rlast.end(),0);
+    L0.front()=Rlast.front()=1;
+    int k;
+    for (k=1;k<N;++k) multbinom(*L[k-1]._VECTptr,*L[k]._VECTptr,zeta_v[k-1]);
+    for (k=N+1;k-->2;) multbinom(*R[k+1]._VECTptr,*R[k]._VECTptr,zeta_v[k-1]);
+    vecteur c(M+1);
+    for (k=1;k<=N;++k) {
+        convolve(*L[k-1]._VECTptr,*R[k+1]._VECTptr,c);
+        find_weights(c,k-1);
+    }
+}
+/* END OF FDWEIGHTS CLASS */
 
 #ifndef NO_NAMESPACE_GIAC
 }

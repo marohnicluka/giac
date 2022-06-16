@@ -82,8 +82,6 @@ bool is_real_number(const gen &g,GIAC_CONTEXT) {
  * Convert g to inexact real constant.
  */
 gen to_real_number(const gen &g,GIAC_CONTEXT) {
-    if (!is_real_number(g,contextptr))
-        return gentypeerr(gettext("Failed to convert ")+g.print(contextptr)+gettext(" to real number."));
     gen eg=_evalf(g,contextptr);
     if (eg.type==_CPLX)
         return *(eg._CPLXptr);
@@ -186,7 +184,7 @@ gen _createwav(const gen &g,GIAC_CONTEXT) {
             vecteur &args=*g._VECTptr;
             double secs=-1,plen=-1;
             for (const_iterateur it=args.begin();it!=args.end();++it) {
-                if (it->is_symb_of_sommet(at_equal)) {
+                if (is_equal(*it)) {
                     const gen &lh=it->_SYMBptr->feuille._VECTptr->front();
                     const gen &rh=it->_SYMBptr->feuille._VECTptr->back();
                     if (lh==at_channels) {
@@ -274,7 +272,7 @@ gen _plotwav(const gen &g,GIAC_CONTEXT) {
     if (!is_sound_data(wav,nc,bd,sr,len))
         return generrtype(_SP_BAD_SOUND_DATA);
     for (const_iterateur it=opts.begin();it!=opts.end();++it) {
-        if (it->is_symb_of_sommet(at_equal)) {
+        if (is_equal(*it)) {
             const gen &lh=it->_SYMBptr->feuille._VECTptr->front();
             const gen &rh=it->_SYMBptr->feuille._VECTptr->back();
             if (lh==at_range) {
@@ -381,7 +379,7 @@ gen _plotspectrum(const gen &g,GIAC_CONTEXT) {
             data=decode_chdata(*_stereo2mono(gv.front(),contextptr)._VECTptr->at(1)._VECTptr,bd);
         else data=decode_chdata(*gv.front()._VECTptr->at(1)._VECTptr,bd);
         len=data.size();
-        if (!gv.back().is_symb_of_sommet(at_equal))
+        if (!is_equal(gv.back()))
             return gensizeerr(contextptr);
         const gen &lh=gv.back()._SYMBptr->feuille._VECTptr->front();
         const gen &rh=gv.back()._SYMBptr->feuille._VECTptr->back();
@@ -497,7 +495,7 @@ gen _channel_data(const gen &g,GIAC_CONTEXT) {
             chan=it->val;
         } else if (*it==at_matrix)
             asmatrix=true;
-        else if (it->is_symb_of_sommet(at_equal)) {
+        else if (is_equal(*it)) {
             const gen &lh=it->_SYMBptr->feuille._VECTptr->front();
             const gen &rh=it->_SYMBptr->feuille._VECTptr->back();
             if (lh==at_range) {
@@ -603,7 +601,7 @@ gen filter(const vecteur &args,filter_type typ,GIAC_CONTEXT) {
             return generr("Invalid cutoff specification");
         gen opt(undef);
         if (args.size()>2) {
-            if (!args[2].is_symb_of_sommet(at_equal))
+            if (!is_equal(args[2]))
                 return generr("Third argument must be normalize=<real>");
             if (args[2]._SYMBptr->feuille._VECTptr->front()==at_normalize)
                 opt=args[2];
@@ -814,7 +812,7 @@ gen _convolution(const gen &g,GIAC_CONTEXT) {
                 var=args[optstart++];
             // parse options
             for (const_iterateur it=args.begin()+optstart;it!=args.end();++it) {
-                if (!it->is_symb_of_sommet(at_equal))
+                if (!is_equal(*it))
                     return generr("Expected option=value");
                 vecteur &s=*it->_SYMBptr->feuille._VECTptr;
                 if (s.front()==at_shift)
@@ -893,6 +891,91 @@ static const char _sinc_s []="sinc";
 static define_unary_function_eval (__sinc,&_sinc,_sinc_s);
 define_unary_function_ptr5(at_sinc,alias_at_sinc,&__sinc,0,true)
 
+gen _ReLU(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    gen x(g),a(0);
+    if (g.type==_VECT && g.subtype==_SEQ__VECT) {
+        if (g._VECTptr->size()!=2)
+            return generrdim("Expected a sequence of two arguments");
+        x=g._VECTptr->front();
+        a=g._VECTptr->back();
+    }
+    return (x*_sign(x,contextptr)*(-a+1)+x*(a+1))/2;
+}
+static const char _ReLU_s []="ReLU";
+static define_unary_function_eval (__ReLU,&_ReLU,_ReLU_s);
+define_unary_function_ptr5(at_ReLU,alias_at_ReLU,&__ReLU,0,true)
+
+gen _swish(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    gen x(g),b(1);
+    if (g.type==_VECT && g.subtype==_SEQ__VECT) {
+        if (g._VECTptr->size()!=2)
+            return generrdim("Expected a sequence of two arguments");
+        x=g._VECTptr->front();
+        b=g._VECTptr->back();
+    }
+    return x/(1+exp(-b*x,contextptr));
+}
+static const char _swish_s []="swish";
+static define_unary_function_eval (__swish,&_swish,_swish_s);
+define_unary_function_ptr5(at_swish,alias_at_swish,&__swish,0,true)
+
+gen _logistic(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    gen x(g),x0(0),L(1),k(1); // standard sigmoid by default
+    if (g.type==_VECT && g.subtype==_SEQ__VECT) {
+        if (g._VECTptr->size()!=4)
+            return generrdim("Expected a sequence of four arguments");
+        x=g._VECTptr->at(0);
+        x0=g._VECTptr->at(1);
+        L=g._VECTptr->at(2);
+        k=g._VECTptr->at(3);
+    }
+    return L/(exp(-k*(x-x0),contextptr)+1);
+}
+static const char _logistic_s []="logistic";
+static define_unary_function_eval (__logistic,&_logistic,_logistic_s);
+define_unary_function_ptr5(at_logistic,alias_at_logistic,&__logistic,0,true)
+
+gen _softplus(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    gen x(g),k(1);
+    if (g.type==_VECT && g.subtype==_SEQ__VECT) {
+        if (g._VECTptr->size()!=2)
+            return generrdim("Expected a sequence of two arguments");
+        x=g._VECTptr->front();
+        k=g._VECTptr->back();
+    }
+    return ln(exp(k*x,contextptr)+1,contextptr)/k;
+}
+static const char _softplus_s []="softplus";
+static define_unary_function_eval (__softplus,&_softplus,_softplus_s);
+define_unary_function_ptr5(at_softplus,alias_at_softplus,&__softplus,0,true)
+
+gen _softmax(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    gen x(g),k(1);
+    if (g.type==_VECT && g.subtype==_SEQ__VECT) {
+        if (g._VECTptr->size()!=2)
+            return generrdim("Expected a sequence of two arguments");
+        x=g._VECTptr->front();
+        k=g._VECTptr->back();
+    }
+    if (x.type!=_VECT)
+        return generrtype("Expected a vector of real values");
+    vecteur e;
+    e.reserve(x._VECTptr->size());
+    const_iterateur it=x._VECTptr->begin(),itend=x._VECTptr->end();
+    for (;it!=itend;++it)
+        e.push_back(exp(*it*k,contextptr));
+    gen d=_sum(e,contextptr);
+    return multvecteur(inv(d,contextptr),e);
+}
+static const char _softmax_s []="softmax";
+static define_unary_function_eval (__softmax,&_softmax,_softmax_s);
+define_unary_function_ptr5(at_softmax,alias_at_softmax,&__softmax,0,true)
+
 #define MAX_TAILLE 500
 
 /* return true iff g is significantly simpler than h */
@@ -925,8 +1008,7 @@ bool ispoly(const gen &e,const identificateur &x,gen &d,GIAC_CONTEXT) {
 
 void constlin_terms(const gen &g,const identificateur &x,gen &lt,gen &c,gen &rest,GIAC_CONTEXT) {
     gen e=expand(g,contextptr);
-    vecteur terms=(e.is_symb_of_sommet(at_plus) && e._SYMBptr->feuille.type==_VECT?
-                   *e._SYMBptr->feuille._VECTptr:vecteur(1,e));
+    vecteur terms=(e.is_symb_of_sommet(at_plus) && e._SYMBptr->feuille.type==_VECT?*e._SYMBptr->feuille._VECTptr:vecteur(1,e));
     gen a,b;
     rest=c=lt=gen(0);
     for (const_iterateur it=terms.begin();it!=terms.end();++it) {
@@ -1243,12 +1325,8 @@ gen _addtable(const gen &g,GIAC_CONTEXT) {
     const identificateur &f=*args[1]._SYMBptr->feuille._VECTptr->front()._IDNTptr;
     const identificateur &F=*args[2]._SYMBptr->feuille._VECTptr->front()._IDNTptr;
     const identificateur &t=*args[3]._IDNTptr,&s=*args[4]._IDNTptr;
-    const vecteur fvars=(args[1]._SYMBptr->feuille._VECTptr->back().type==_VECT?
-                             *args[1]._SYMBptr->feuille._VECTptr->back()._VECTptr:
-                             vecteur(1,args[1]._SYMBptr->feuille._VECTptr->back()));
-    const vecteur Fvars=(args[2]._SYMBptr->feuille._VECTptr->back().type==_VECT?
-                             *args[2]._SYMBptr->feuille._VECTptr->back()._VECTptr:
-                             vecteur(1,args[2]._SYMBptr->feuille._VECTptr->back()));
+    const vecteur fvars=gen2vecteur(args[1]._SYMBptr->feuille._VECTptr->back());
+    const vecteur Fvars=gen2vecteur(args[2]._SYMBptr->feuille._VECTptr->back());
     if (fvars.size()!=Fvars.size())
         return gendimerr(contextptr);
     int k=-1;
@@ -1290,9 +1368,7 @@ bool is_func(const gen &g,identificateur &f,vecteur &vars) {
     if (!g.is_symb_of_sommet(at_of) || g._SYMBptr->feuille._VECTptr->front().type!=_IDNT)
         return false;
     f=*g._SYMBptr->feuille._VECTptr->front()._IDNTptr;
-    vars=(g._SYMBptr->feuille._VECTptr->back().type==_VECT?
-              *g._SYMBptr->feuille._VECTptr->back()._VECTptr:
-              vecteur(1,g._SYMBptr->feuille._VECTptr->back()));
+    vars=gen2vecteur(g._SYMBptr->feuille._VECTptr->back());
     return true;
 }
 
@@ -1793,7 +1869,7 @@ bool is_integral(const gen &g,identificateur &x,gen &f,gen &a,gen &b,GIAC_CONTEX
         return false;
     f=args.front();
     if (args.size()==2) {
-        if (!args.back().is_symb_of_sommet(at_equal) ||
+        if (!is_equal(args.back()) ||
                 args.back()._SYMBptr->feuille._VECTptr->front().type!=_IDNT ||
                 !args.back()._SYMBptr->feuille._VECTptr->back().is_symb_of_sommet(at_interval))
             return false;
@@ -2216,8 +2292,6 @@ gen fourier(const gen &f_orig,const identificateur &x,const identificateur &s,
                         break;
                     }
                 }
-                *logptr(contextptr) << "Unable to determine Fourier transform of "
-                                    << f << ", resorting to integration\n";
                 intgr+=cnst*eval(_Int(makesequence(exp(-cst_i*x*((neg?-s:s)-sh),contextptr)*
                                         pow(x,d.val)*f,x,minf,pinf),contextptr),0,contextptr);
                 continue;
@@ -2357,11 +2431,11 @@ gen _threshold(const gen &g,GIAC_CONTEXT) {
         if (int(bnd._VECTptr->size())!=2)
             return generr("Expected a list with two elements");
         gen lb=bnd._VECTptr->front(),ub=bnd._VECTptr->back(),lval,uval;
-        if (lb.is_symb_of_sommet(at_equal)) {
+        if (is_equal(lb)) {
             lval=_rhs(lb,contextptr);
             lb=_lhs(lb,contextptr);
         } else lval=lb;
-        if (ub.is_symb_of_sommet(at_equal)) {
+        if (is_equal(ub)) {
             uval=_rhs(ub,contextptr);
             ub=_lhs(ub,contextptr);
         } else uval=ub;
@@ -2371,7 +2445,7 @@ gen _threshold(const gen &g,GIAC_CONTEXT) {
         }
     } else {
         gen val;
-        if (bnd.is_symb_of_sommet(at_equal)) {
+        if (is_equal(bnd)) {
             val=_rhs(bnd,contextptr);
             bnd=_lhs(bnd,contextptr);
         } else val=bnd;
@@ -2383,7 +2457,7 @@ gen _threshold(const gen &g,GIAC_CONTEXT) {
             if (*it==at_superieur_strict || *it==at_superieur_egal || *it==at_inferieur_egal)
                 comp=*it;
             isabs=gen(1);
-            if (*it==at_abs || (it->is_symb_of_sommet(at_equal) &&
+            if (*it==at_abs || (is_equal(*it) &&
                                 it->_SYMBptr->feuille._VECTptr->front()==at_abs &&
                                 (isabs=it->_SYMBptr->feuille._VECTptr->back()).type==_INT_ &&
                                 isabs.subtype==_INT_BOOLEAN)) {

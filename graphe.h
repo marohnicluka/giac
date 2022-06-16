@@ -28,8 +28,6 @@
 #include "gen.h"
 #include "unary.h"
 #include "moyal.h"
-#include "optimization.h"
-#include "signalprocessing.h"
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -39,6 +37,11 @@
 #include <bitset>
 #ifdef HAVE_LIBGLPK
 #include <glpk.h>
+#endif
+#ifdef HAVE_LIBGSL
+#include <gsl/gsl_linalg.h>
+#include <gsl/gsl_rng.h>
+#include <gsl/gsl_randist.h>
 #endif
 
 #ifndef DBL_MAX
@@ -129,7 +132,7 @@ extern const unary_function_ptr * const at_goldberg_snark;
 extern const unary_function_ptr * const at_paley_graph;
 extern const unary_function_ptr * const at_haar_graph;
 
-class graphe {
+class graphe : public gen_user {
 public:
     typedef std::vector<int> ivector;
     typedef std::vector<ivector> ivectors;
@@ -215,8 +218,9 @@ public:
         bool has_neighbor(int i) const { return binary_search(m_neighbors.begin(),m_neighbors.end(),i); }
         void remove_neighbor(int i);
         void clear_neighbors();
+        void map_neighbors(const std::map<int,int> &m);
         void incident_faces(ivector &F) const;
-        void add_edge_face(int nb,int f) { assert(m_faces.find(nb)==m_faces.end()); m_faces[nb]=f+1; }
+        void add_edge_face(int nb,int f);
         void clear_edge_faces() { m_faces.clear(); }
         int edge_face(int nb) { return m_faces[nb]-1; }
         const std::map<int,int> &edge_faces() const { return m_faces; }
@@ -561,7 +565,7 @@ public:
         } tree_node;
         struct kspaths_comparator {
             bool operator()(const std::pair<gen,tree_node*> &a,const std::pair<gen,tree_node*> &b) const {
-                if (is_zero(a.first-b.first))
+                if (giac::is_zero(a.first-b.first))
                     return a.second<b.second;
                 return is_strictly_greater(b.first,a.first,context0);
             }
@@ -621,7 +625,7 @@ public:
         bool M_has_empty_row();
         bool recurse(int i=0);
         void prune();
-        void edit(int i,int j) { set_ij(M,i,j,false); changes.push_back(make_pair(i,j)); }
+        void edit(int i,int j) { set_ij(M,i,j,false); changes.push_back(std::make_pair(i,j)); }
         void push_changes() { snapshots.push(changes); changes.clear(); }
         void revert_changes();
         bool is_isomorphism();
@@ -811,7 +815,7 @@ private:
     static void scale_point(point &p,double s);
     static double point_vecprod2d(const point &v,const point &w);
     static double point_dotprod(const point &p,const point &q);
-    static void clear_point_coords(point &p);
+    static void clear_point_coords(point &p) { std:fill(p.begin(),p.end(),0); }
     static double point_displacement(const point &p,bool sqroot=true);
     static double point_distance(const point &p,const point &q,point &pq);
     static void point_mirror(double a,double b,double c,const point &src,point &dest);
@@ -929,8 +933,13 @@ public:
     graphe(const context *contextptr=context0,bool support_attributes=true);
     graphe(const graphe &G);
     graphe(const std::string &name,const context *contextptr=context0,bool support_attributes=true);
+    static graphe *from_gen(const gen &g);
+    virtual ~graphe() { }
     graphe &operator =(const graphe &other);
     bool is_simple() const;
+    virtual std::string print (GIAC_CONTEXT) const;
+    virtual std::string texprint (GIAC_CONTEXT) const;
+    virtual gen_user *memory_alloc() const { return new graphe(*this); }
     
     // methods
     int rand_integer(int n) const { assert(n>=0); return n==0?0:giac::giac_rand(ctx)%n; }
@@ -952,12 +961,12 @@ public:
     void append_node(vecteur &drawing,const point &p,int color,int width,int shape) const;
     void append_label(vecteur &drawing,const point &p,const gen &label,int quadrant,int color=_BLACK) const;
     void reserve_nodes(int n) { assert(nodes.empty()); nodes.reserve(n); }
-    bool read_gen(const gen &g);
+    //bool read_gen(const gen &g);
     void read_special(const int *special_graph);
     void read_special(const char **special_graph);
     void copy(graphe &G) const;
     void copy_nodes(const std::vector<vertex> &V);
-    void copy_nodes(graphe &G,map<int,int> &vmap,int sg=-1) const;
+    void copy_nodes(graphe &G,std::map<int,int> &vmap,int sg=-1) const;
     bool supports_attributes() const { return m_supports_attributes; }
     void clear();
     void clear_maximal_cliques() { maxcliques.clear(); }
@@ -982,7 +991,7 @@ public:
     bool is_edge_visited(int i,int j) const;
     bool is_edge_visited(const ipair &e) const { return is_edge_visited(e.first,e.second); }
     void unvisit_all_edges() { visited_edges.clear(); }
-    gen to_gen();
+    //gen to_gen();
     int *to_array(int &sz,bool colored,bool reduce=false) const;
     bool write_latex(const std::string &filename,const gen &drawing) const;
     bool write_dot(const std::string &filename,bool style=true) const;
@@ -1018,7 +1027,7 @@ public:
     void add_nodes(const vecteur &v);
     void add_nodes(int n);
     void add_unlabeled_nodes(int n);
-    void remove_isolated_nodes(const iset &I,graphe &G);
+    void remove_isolated_nodes(const iset &I);
     void isolate_nodes(const iset &V);
     const vertex &node(int i) const { assert(i>=0 && i<node_count()); return nodes[i]; }
     const gen node_label(int i) const { assert(i>=0 && i<node_count()); return nodes[i].label(); }
@@ -1042,12 +1051,12 @@ public:
     const attrib &edge_attributes(const ipair &e) const { return edge_attributes(e.first,e.second); }
     attrib &edge_attributes(const ipair &e) { return edge_attributes(e.first,e.second); }
     void attrib2vecteurs(const attrib &attr,vecteur &tags,vecteur &values) const;
-    void add_edge(int i,int j,const gen &w=gen(1));
-    void add_edge(int i,int j,const attrib &attr);
-    void add_edge(const ipair &edge) { add_edge(edge.first,edge.second); }
-    void add_edge(const ipair &edge,const attrib &attr) { add_edge(edge.first,edge.second,attr); }
-    ipair add_edge(const gen &v,const gen &w,const gen &weight=gen(1));
-    ipair add_edge(const gen &v,const gen &w,const attrib &attr);
+    bool add_edge(int i,int j,const gen &w=gen(1));
+    bool add_edge(int i,int j,const attrib &attr);
+    bool add_edge(const ipair &edge) { return add_edge(edge.first,edge.second); }
+    bool add_edge(const ipair &edge,const attrib &attr) { return add_edge(edge.first,edge.second,attr); }
+    bool add_edge(const gen &v,const gen &w,const gen &weight=gen(1));
+    bool add_edge(const gen &v,const gen &w,const attrib &attr);
     void add_temporary_edge(int i,int j);
     bool is_temporary_edge(int i,int j) const;
     void remove_temporary_edges();
@@ -1066,7 +1075,7 @@ public:
     int maximum_degree(int sg=-1) const;
     int minimum_degree(int sg=-1) const;
     ivector degree_sequence(int sg=-1) const;
-    void sort_by_degrees(ivector &sigma);
+    void sort_by_degrees(graphe &G,ivector &sigma,int sg=-1);
     void adjacency_matrix(matrice &m) const;
     void adjacency_sparse_matrix(sparsemat &sm,bool diag_ones=false,int sg=-1) const;
     void laplacian_matrix(matrice &m,bool normalize=false) const;
@@ -1097,7 +1106,7 @@ public:
     bool is_equal(const graphe &G) const;
     void underlying(graphe &G,int sg=-1) const;
     void complement(graphe &G,int sg=-1) const;
-    bool isomorphic_copy(graphe &G,const ivector &sigma,bool strip_attributes=false);
+    bool isomorphic_copy(graphe &G,const ivector &sigma,bool strip_attributes=false,int sg=-1);
     bool relabel_nodes(const vecteur &labels);
     void induce_subgraph(const ivector &vi,graphe &G) const;
     void extract_subgraph(const ipairs &E,graphe &G) const;
@@ -1190,6 +1199,7 @@ public:
     bool fleury(int start,ivector &path);
     void hierholzer(ivector &path);
     bool is_multigraph() const;
+    void make_simple();
     int multiedges(const ipair &e) const;
     void set_multiedge(const ipair &e,int k);
     bool weights2multiedges();
@@ -1309,6 +1319,54 @@ public:
     static int term_hook(void *info,const char *s);
     static bool is_interrupted();
 };
+
+#if 0
+#ifdef HAVE_LIBGSL
+class ann : public gen_user {
+    const context *ctx;
+    std::vector<int> topology;
+    std::vector<gsl_vector*> neuron_layers;
+    std::vector<gsl_vector*> cache_layers;
+    std::vector<gsl_vector*> deltas;
+    std::vector<gsl_matrix*> weights;
+    double learning_rate;
+    gen x;
+    vecteur hidden_activation;
+    vecteur output_activation;
+    std::map<int,vecteur> layer_activation;
+    gsl_rng *rng;
+    gsl_vector *output_tmp;
+    double rnd_unif(double width=1) const;
+    double rnd_norm(double sigma=1) const;
+    bool create(const std::vector<int> &topology,double learning_rate,bool init);
+    void assign(const ann &other);
+    void deallocate();
+    void propagate_forward(gsl_vector *input);
+    void propagate_backward(gsl_vector *output);
+    void calc_errors(gsl_vector *output);
+    void update_weights();
+    double activate(int i,int j,bool deriv) const;
+    static gen tempvar(const std::string &name,int i,int j);
+public:
+    ann(const std::vector<int> &topology,double learning_rate,GIAC_CONTEXT);
+    ann(const ann &other);
+    ann &operator=(const ann &other);
+    static ann *from_gen(const gen &g);
+    virtual ~ann();
+    virtual std::string print (GIAC_CONTEXT) const;
+    virtual std::string texprint (GIAC_CONTEXT) const;
+    virtual gen_user *memory_alloc() const { return new ann(*this); }
+    // methods
+    int layer_count() const { return topology.size(); }
+    int layer_size(int i) const { assert(i>=0&&i<layer_count()); return topology[i]; }
+    int neuron_count() const;
+    void get_layer(int i,gsl_vector *layer) const;
+    void set_activation(int layer,const gen &f,const vecteur &params,bool is_vector_func=false);
+    void feed(gsl_vector *input,gsl_vector *output=NULL);
+    double train(gsl_vector *input,gsl_vector *output);
+};
+#endif
+#endif
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

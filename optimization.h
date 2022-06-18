@@ -66,6 +66,58 @@ enum bvp_output_type {
     _BVP_SPLINE
 };
 
+enum hclust_linkage_type {
+    _SINGLE_LINKAGE   = 1,
+    _AVERAGE_LINKAGE  = 2,
+    _COMPLETE_LINKAGE = 3,
+    _WEIGHTED_LINKAGE = 4,
+    _WARD_LINKAGE     = 5,
+    _MEDIAN_LINKAGE   = 6,
+    _CENTROID_LINKAGE = 7
+};
+enum hclust_index_function {
+    _SILHOUETTE_INDEX     = 1,
+    _MCCLAIN_RAO_INDEX    = 2,
+    _DUNN_INDEX           = 4,
+    _ALL_HCLUST_INDICES   = 7
+};
+
+enum clustering_indices {
+    _HARTIGAN_CRITERION         = 0,
+    _BANFELD_RAFTERY_INDEX      = 1,      // min
+    _DAVIES_BOULDIN_INDEX       = 2,      // min
+    _RAY_TURI_INDEX             = 4,      // min
+    _SCOTT_SYMONS_INDEX         = 8,      // min
+    _CALINSKI_HARABASZ_INDEX    = 16,     // max
+    _PBM_INDEX                  = 32,     // max
+    _RATKOWSKY_LANCE_INDEX      = 64,     // max
+    _DET_RATIO_INDEX            = 128,    // min diff
+    _LOG_DET_RATIO_INDEX        = 256,    // min diff
+    _LOG_SS_RATIO_INDEX         = 512,    // min diff
+    _KSQ_DETW_INDEX             = 1024,   // max diff
+    _BALL_HALL_INDEX            = 2048,   // max diff
+    _TRACE_W_INDEX              = 4096,   // max diff
+    _TRACE_WIB_INDEX            = 8192,   // max diff
+    _ALL_CLUSTER_INDICES        = 16383
+};
+
+enum nlp_method {
+    _NLP_AUTOMATIC              = 1,
+    _NLP_INTERIOR_POINT         = 2,
+    _NLP_NELDER_MEAD            = 3,
+    _NLP_DIFFERENTIAL_EVOLUTION = 4,
+    _NLP_COBYLA                 = 5
+};
+
+enum nlp_solution_status {
+    _NLP_OPTIMAL,
+    _NLP_FAILED,
+    _NLP_INFEAS,
+    _NLP_UNBOUNDED,
+    _NLP_ERROR,
+    _NLP_PENDING
+};
+
 class ipdiff {
     /* IPDIFF CLASS (Implicit Partial DIFFerentiation)
      * This class is used for implicit differentiation of f with respect to g=0.
@@ -177,13 +229,6 @@ gen to_algebraic(const gen &g,vecteur &S,GIAC_CONTEXT);
 bool is_algebraic(const gen &g,GIAC_CONTEXT);
 extern bool is_positive_safe(const gen &g,bool strict,unsigned max_taille,GIAC_CONTEXT);
 
-enum nlp_method {
-    _AUTOMATIC              = 1,
-    _INTERIOR_POINT         = 2,
-    _NELDER_MEAD            = 3,
-    _DIFFERENTIAL_EVOLUTION = 4,
-    _COBYLA                 = 5
-};
 class nlp_problem {
     gen obj,best_obj_val,obj_shift;
     int _fevalc; // objective function evaluation counter
@@ -251,14 +296,6 @@ class nlp_problem {
     bool eliminate_equalities(const std::vector<lineq> &leqv,vecteur &lsol,vecteur &leq_vars);
     bool subs_fxvars(const fxvars &fv);
 public:
-    typedef enum SolutionStatus {
-        _OPTIMAL,
-        _FAILED,
-        _INFEAS,
-        _UNBOUNDED,
-        _ERROR,
-        _PENDING
-    } solution_status;
     typedef struct optimum {
         int res;
         vecteur x;
@@ -556,27 +593,6 @@ class cluster_crit {
     std::map<int,std::pair<int,double> > _optvals;
     void update(int pos,const gen &val,int dir);
 public:
-    enum criterion {
-        /* Hartigan index is used for obtaining a rough estimation of optimal number of clusters */
-        _HARTIGAN             = 0,
-        /* individual indices */
-        _BANFELD_RAFTERY      = 1,      // min
-        _DAVIES_BOULDIN       = 2,      // min
-        _RAY_TURI             = 4,      // min
-        _SCOTT_SYMONS         = 8,      // min
-        _CALINSKI_HARABASZ    = 16,     // max
-        _PBM                  = 32,     // max
-        _RATKOWSKY_LANCE      = 64,     // max
-        _DET_RATIO            = 128,    // min diff
-        _LOG_DET_RATIO        = 256,    // min diff
-        _LOG_SS_RATIO         = 512,    // min diff
-        _KSQ_DETW             = 1024,   // max diff
-        _BALL_HALL            = 2048,   // max diff
-        _TRACE_W              = 4096,   // max diff
-        _TRACE_WIB            = 8192,   // max diff
-        /* collections of indices */
-        _ALL                  = 16383
-    };
     cluster_crit(const matrice &data,const gen &dist_func,GIAC_CONTEXT);
     void init(int k,const int *indices,const double *bc,const double *wgss);
     bool compute_indices(int crit);
@@ -612,23 +628,6 @@ private:
     void reorder_children(dendrogram &dg);
     void swap(dendrogram &d,int row);
 public:
-    enum linkage_type {
-        _SINGLE         = 1,
-        _AVERAGE        = 2,
-        _COMPLETE       = 3,
-        _WEIGHTED       = 4,
-        _WARD           = 5,
-        _MEDIAN         = 6,
-        _CENTROID       = 7
-    };
-    enum index_function {
-        /* individual indices */
-        _SILHOUETTE     = 1,
-        _MCCLAIN_RAO    = 2,
-        _DUNN           = 4,
-        /* combinations */
-        _ALL            = 7
-    };
     hclust(const matrice &data,const gen &dist_func,GIAC_CONTEXT);
     ~hclust();
     /* linkage with respect to method METH (linkage type), returns
@@ -710,7 +709,6 @@ extern const unary_function_ptr * const at_maximize;
 extern const unary_function_ptr * const at_find_minimum;
 extern const unary_function_ptr * const at_extrema;
 extern const unary_function_ptr * const at_minimax;
-extern const unary_function_ptr * const at_l2min;
 extern const unary_function_ptr * const at_tpsolve;
 extern const unary_function_ptr * const at_nlpsolve;
 extern const unary_function_ptr * const at_thiele;

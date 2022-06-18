@@ -29,9 +29,6 @@
 #ifdef HAVE_PARI_PARI_H
 #include <pari/pari.h>
 #endif
-#ifdef HAVE_LIBGSL
-#include <gsl/gsl_linalg.h>
-#endif
 
 using namespace std;
 
@@ -3515,7 +3512,7 @@ void add_identifiers(const gen &source,vecteur &dest,GIAC_CONTEXT) {
  *
  */
 nlp_problem::optimum::optimum() {
-    res=solution_status::_PENDING;
+    res=_NLP_PENDING;
     f=undef;
 }
 /* Initialize a NLP problem: MIN f(x) SUBJECT TO list of (in)equality constraints g(x), x in R^n. */
@@ -3568,7 +3565,7 @@ void nlp_problem::initialize(int method,const meth_parm &parm) {
         make_bounded_vars(false);
         remove_redundant_constraints();
         if (_infeas) return;
-        if (method<nlp_method::_NELDER_MEAD) {
+        if (method<_NLP_NELDER_MEAD) {
             obj_gradient=*_grad(makesequence(obj,vars),ctx)._VECTptr;
             if (_smooth_obj=!has_diff(obj_gradient,vars) && !has_breaks(obj_gradient))
                 debug("Objective function is differentiable");
@@ -4181,7 +4178,7 @@ bool nlp_problem::region::find_bound(const vecteur &x0,int i,int d,gen &bnd) {
         vecteur sol;
         gen optval;
         int res=prob.minimize_linear((d<0?1:-1)*prob.vars[i],prob.constraints(true),sol,optval);
-        if (res==solution_status::_OPTIMAL) {
+        if (res==_NLP_OPTIMAL) {
             bnd=sol[i];
             return true;
         }
@@ -4242,11 +4239,11 @@ bool nlp_problem::cobyla(const vecteur &cons,const meth_parm &parm,optima_t &res
             if (cres==COBYLA_MAXFUN)
                 maxiter=0;
             if (cres<0) // error
-                opt.res=solution_status::_ERROR;
+                opt.res=_NLP_ERROR;
             else {
                 opt.x=x0;
                 save_point(x0);
-                opt.res=cres>0?solution_status::_FAILED:solution_status::_OPTIMAL;
+                opt.res=cres>0?_NLP_FAILED:_NLP_OPTIMAL;
             }
         } catch (const std::runtime_error &err) { // an error raised in COBYLA or user interruption
             msg(err.what());
@@ -4287,17 +4284,17 @@ int nlp_problem::minimize_linear(const gen &o,const vecteur &c,vecteur &sol,gen 
         log_output_redirect lor(ctx);
         res=_lpsolve(makesequence(o,c,symb_equal(change_subtype(_LP_INTEGERVARIABLES,_INT_MAPLECONVERSION),iv)),ctx);
     } catch (const std::runtime_error &e) {
-        return solution_status::_ERROR;
+        return _NLP_ERROR;
     }
     if (res.type!=_VECT)
-        return solution_status::_ERROR;
+        return _NLP_ERROR;
     if (res._VECTptr->empty())
-        return solution_status::_INFEAS;
+        return _NLP_INFEAS;
     if (res._VECTptr->size()!=2 || res._VECTptr->back().type!=_VECT)
-        return solution_status::_ERROR;
+        return _NLP_ERROR;
     optval=res._VECTptr->front();
     if (is_inf(optval))
-        return solution_status::_UNBOUNDED;
+        return _NLP_UNBOUNDED;
     const vecteur &tmpsol=*res._VECTptr->back()._VECTptr;
     sol.resize(vars.size(),undef);
     int j;
@@ -4306,7 +4303,7 @@ int nlp_problem::minimize_linear(const gen &o,const vecteur &c,vecteur &sol,gen 
             continue;
         sol[j]=it->_SYMBptr->feuille._VECTptr->back();
     }
-    return has_inf_or_undef(sol)?solution_status::_ERROR:solution_status::_OPTIMAL;
+    return has_inf_or_undef(sol)?_NLP_ERROR:_NLP_OPTIMAL;
 }
 /* Return true if G is a vector of intervals. */
 bool is_vect_of_intervals(const gen &g,vecteur &lb,vecteur &ub,GIAC_CONTEXT) {
@@ -4754,7 +4751,7 @@ bool nlp_problem::nelder_mead(const meth_parm &parm,optima_t &res) {
             }
             if (!initialize_simplex(ip,ssize)) {
                 err("simplex initialization failed, aborting...");
-                opt.res=solution_status::_ERROR;
+                opt.res=_NLP_ERROR;
                 break;
             } else _base_vertex_index=0;
 #ifdef HAVE_LIBGSL
@@ -4777,16 +4774,16 @@ bool nlp_problem::nelder_mead(const meth_parm &parm,optima_t &res) {
         switch (status) {
         case 1: // converged
             debug("Converged");
-            opt.res=solution_status::_OPTIMAL;
+            opt.res=_NLP_OPTIMAL;
             break;
         case 2: // flat simplex/stalled
             debug("Stalled or simplex is flat");
-            opt.res=solution_status::_FAILED;
+            opt.res=_NLP_FAILED;
             break;
         case 3: // degenerated simplex
             _ss << "Simplex is degenerated (size: " << ssize << ")"; debug();
             if (++degeneracy_count==3) {
-                opt.res=solution_status::_FAILED;
+                opt.res=_NLP_FAILED;
                 pstep=10*pstep; // increase step-size for constraints
                 _ss << "Increasing step-size to " << pstep << "..."; debug();
                 break;
@@ -4795,7 +4792,7 @@ bool nlp_problem::nelder_mead(const meth_parm &parm,optima_t &res) {
             continue; // restart from the best point
         default: // error
             debug("Aborted");
-            opt.res=solution_status::_ERROR;
+            opt.res=_NLP_ERROR;
             break;
         }
         degeneracy_count=0;
@@ -4895,7 +4892,7 @@ bool nlp_problem::differential_evolution(const meth_parm &parm,optimum_t &opt) {
                 if (de_initialize(it,itend,kt,ft,best_k))
                     continue;
                 err("failed to re-initialize the population");
-                opt.res=solution_status::_INFEAS;
+                opt.res=_NLP_INFEAS;
             }
             break;
         }
@@ -4941,8 +4938,8 @@ bool nlp_problem::differential_evolution(const meth_parm &parm,optimum_t &opt) {
     opt.x=*x[best_k]._VECTptr;
     for (i=0;i<n;++i) if (is_intvar(i)) opt.x[i]=INT(opt.x[i]);        
     //opt.f=best_obj_val;
-    if (opt.res==solution_status::_PENDING)
-        opt.res=(converged?solution_status::_OPTIMAL:solution_status::_FAILED);
+    if (opt.res==_NLP_PENDING)
+        opt.res=(converged?_NLP_OPTIMAL:_NLP_FAILED);
     return true;
 }
 #ifdef HAVE_LIBGSL
@@ -4993,9 +4990,9 @@ bool nlp_problem::gsl_bfgs(const meth_parm &parm,optima_t &res) {
     while (_iter_count<maxiter && restart(x0)) {
         optimum_t opt;
         if (vecteur2gsl_vector(x0.begin(),x0.end(),xstart,ctx)!=GSL_SUCCESS)
-            opt.res=solution_status::_ERROR;
+            opt.res=_NLP_ERROR;
         else {
-            opt.res=solution_status::_FAILED;
+            opt.res=_NLP_FAILED;
             gsl_multimin_fdfminimizer_set(s,&my_func,xstart,parm.step<=0?1.0:parm.step,0.1);
             restarts=0;
             do {
@@ -5017,14 +5014,14 @@ bool nlp_problem::gsl_bfgs(const meth_parm &parm,optima_t &res) {
                     _ss << gettext("GSL minimizer") << " " << gsl_multimin_fdfminimizer_name(s)
                         << " " << gettext("failed with error code") << " " << status;
                     err();
-                    opt.res=solution_status::_ERROR;
+                    opt.res=_NLP_ERROR;
                     break;
                 }
                 restarts=0;
                 status=gsl_multimin_test_gradient(s->gradient,parm.eps);
                 if (status==GSL_SUCCESS) {
                     _ss << "Converged to point " << opt.x; debug();
-                    opt.res=solution_status::_OPTIMAL;
+                    opt.res=_NLP_OPTIMAL;
                     break;
                 }
             } while (_iter_count<maxiter);
@@ -5252,14 +5249,14 @@ int nlp_problem::ipt_solver::feas_restoration(vecteur &x0,vecteur &lambda0,vecte
         sol=_fsolve(makesequence(mergevecteur(L_eq,c),mergevecteur(x,lambda),mergevecteur(x0,lambda0)),ctx);
     } catch (const std::runtime_error &e) {
         prob.err(e.what());
-        return solution_status::_ERROR;
+        return _NLP_ERROR;
     }
     if (sol.type!=_VECT || int(sol._VECTptr->size())<nvars)
-        return solution_status::_ERROR;
+        return _NLP_ERROR;
     vecteur x_k(sol._VECTptr->begin(),sol._VECTptr->begin()+nvars);
     if (!is_strictly_positive(_min(x_k,ctx),ctx)) {
         viol=viol_old;
-        return solution_status::_FAILED;
+        return _NLP_FAILED;
     }
     /* compute new values of z and lambda */
     vecteur d_x=subvecteur(x_k,x0),d_z;
@@ -5270,7 +5267,7 @@ int nlp_problem::ipt_solver::feas_restoration(vecteur &x0,vecteur &lambda0,vecte
     x0=x_k;
     viol=constraint_violation(x0);
     bool yes=filter_accepts(viol,barrier_fval(x0)) && is_greater(kappa_resto*viol_old,viol,ctx);
-    return yes?solution_status::_OPTIMAL:solution_status::_FAILED;
+    return yes?_NLP_OPTIMAL:_NLP_FAILED;
 }
 /* computing the movement in the direction of the z-variables */
 void nlp_problem::ipt_solver::compute_dz(const vecteur &x0,const vecteur &dx0,const vecteur &z0,vecteur &dz) {
@@ -5294,7 +5291,7 @@ bool nlp_problem::ipt_solver::solve_kkt(const matrice &mat,const vecteur &rh,vec
     const_iterateur it=rh.begin(),itend=rh.end();
     for (;it!=itend;++it) {
         gen e=evalf_double(*it,1,ctx);
-        if (e.type!=_DOUBLE_) return solution_status::_ERROR;
+        if (e.type!=_DOUBLE_) return _NLP_ERROR;
         lapack_rhs[it-rh.begin()]=e._DOUBLE_val;
     }
     if (!solve_indef(factorization,lapack_work,lapack_ipiv,lapack_rhs,nvars+ncons,1,NULL,NULL,NULL,ctx))
@@ -5323,7 +5320,7 @@ int nlp_problem::ipt_solver::ls_filter_barrier_method(vecteur &x_k,vecteur &lamb
         if (prob._iter_data) pts.push_back(x_k);
         /* A-2. Check convergence for the overall problem */
         gen merit=E(0,x_k,lambda_k,z_k);
-        if (is_undef(merit)) return solution_status::_ERROR;
+        if (is_undef(merit)) return _NLP_ERROR;
         //sprintf(buf,"Iteration %d: %g",k,merit.to_double(ctx));
         //prob.debug(buf);
         if (is_greater(eps_tol,merit,ctx)) {
@@ -5333,7 +5330,7 @@ int nlp_problem::ipt_solver::ls_filter_barrier_method(vecteur &x_k,vecteur &lamb
         /* A-3. Check convergence for the barrier problem */
         while (true) {
             merit=E(mu_j,x_k,lambda_k,z_k);
-            if (is_undef(merit)) return solution_status::_ERROR;
+            if (is_undef(merit)) return _NLP_ERROR;
             if (is_strictly_greater(merit,kappa_eps*mu_j,ctx))
                 break;
             mu_j=std::max(eps_tol/10,std::min(kappa_mu*mu_j,std::pow(mu_j,theta_mu)));
@@ -5351,14 +5348,14 @@ int nlp_problem::ipt_solver::ls_filter_barrier_method(vecteur &x_k,vecteur &lamb
         if (!IC(kktm)) {
             prob.warn("KKT matrix is ill-conditioned");
             if (ncons==0)
-                return solution_status::_FAILED;
+                return _NLP_FAILED;
             update_filter((1-gamma_theta)*theta_k,subst(f,x,x_k,false,ctx)-gamma_phi*theta_k);
             switch (feas_restoration(x_k,lambda_k,z_k,theta_k,theta_resto)) {
-            case solution_status::_ERROR:
+            case _NLP_ERROR:
                 //prob.debug("Feasibility restoration phase failed");
-                return solution_status::_ERROR;
-            case solution_status::_FAILED:
-                return is_greater(theta_resto,feas_tol,ctx)?solution_status::_INFEAS:solution_status::_FAILED;
+                return _NLP_ERROR;
+            case _NLP_FAILED:
+                return is_greater(theta_resto,feas_tol,ctx)?_NLP_INFEAS:_NLP_FAILED;
             default:
                 //prob.debug("Feasibility restored successfully");
                 continue;
@@ -5367,7 +5364,7 @@ int nlp_problem::ipt_solver::ls_filter_barrier_method(vecteur &x_k,vecteur &lamb
         vecteur kkt_sol(nvars+ncons),rhs=subs_vars(kkt_rhs,x_k,lambda_k,z_k,mu_j);
         if (!solve_kkt(kktm,rhs,kkt_sol)) {
             //prob.debug("Failed to obtain search directions");
-            return solution_status::_ERROR;
+            return _NLP_ERROR;
         }
         vecteur d_x(kkt_sol.begin(),kkt_sol.begin()+nvars),x_kn;
         vecteur d_lambda(kkt_sol.begin()+nvars,kkt_sol.end()),d_z;
@@ -5423,7 +5420,7 @@ int nlp_problem::ipt_solver::ls_filter_barrier_method(vecteur &x_k,vecteur &lamb
                     rhs.resize(nvars);
                     rhs=mergevecteur(rhs,c_soc);
                     if (!solve_kkt(kktm,rhs,kkt_sol))
-                        return solution_status::_ERROR;
+                        return _NLP_ERROR;
                     vecteur d_x_cor(kkt_sol.begin(),kkt_sol.begin()+nvars);
                     gen alpha_soc=fraction_to_boundary(x_k,d_x_cor);
                     vecteur x_soc=addvecteur(x_k,multvecteur(alpha_soc,d_x_cor));
@@ -5458,12 +5455,12 @@ int nlp_problem::ipt_solver::ls_filter_barrier_method(vecteur &x_k,vecteur &lamb
             if (is_strictly_greater(alpha_min,alpha_kl,ctx)) {
                 update_filter((1-gamma_theta)*theta_k,subst(subst(f,x,x_k,false,ctx),mu,mu_j,false,ctx)-gamma_phi*theta_k);
                 switch (feas_restoration(x_k,lambda_k,z_k,theta_k,theta_resto)) {
-                case solution_status::_ERROR:
+                case _NLP_ERROR:
                     //prob.debug("Feasibility restoration phase failed");
-                    return solution_status::_ERROR;
-                case solution_status::_FAILED:
+                    return _NLP_ERROR;
+                case _NLP_FAILED:
                     if (is_greater(theta_resto,feas_tol,ctx))
-                        return solution_status::_INFEAS;
+                        return _NLP_INFEAS;
                     break;
                 default:
                     //prob.debug("Feasibility restored successfully");
@@ -5478,7 +5475,7 @@ int nlp_problem::ipt_solver::ls_filter_barrier_method(vecteur &x_k,vecteur &lamb
         else heur_iter=0;
         if (skip) {
             if (skip_iter++==skip_threshold)
-                return solution_status::_FAILED;
+                return _NLP_FAILED;
             continue;
         } else skip_iter=0;
         /* A-6. Accept the trial point */
@@ -5504,7 +5501,7 @@ int nlp_problem::ipt_solver::ls_filter_barrier_method(vecteur &x_k,vecteur &lamb
                     converged=true;
                     break;
                 }
-                else return solution_status::_FAILED;
+                else return _NLP_FAILED;
             } else prev_iter_full_step=true;
         } else prev_iter_full_step=false;
         x_k=x_kn;
@@ -5515,9 +5512,9 @@ int nlp_problem::ipt_solver::ls_filter_barrier_method(vecteur &x_k,vecteur &lamb
         iteration_data.push_back(pts);
     if (!converged) {
         //prob.debug("Iteration limit exceeded");
-        return solution_status::_FAILED;
+        return _NLP_FAILED;
     }
-    return solution_status::_OPTIMAL;
+    return _NLP_OPTIMAL;
 }
 /* convert nlp_problem variables to ipt_solver variables */
 vecteur nlp_problem::ipt_solver::vars2x(const vecteur &x0,const vecteur &x0_orig) const {
@@ -5573,7 +5570,7 @@ bool nlp_problem::ipt_solver::optimize(optima_t &res) {
         int nv_orig=prob.var_count(),nv=nv_orig;
         if (nv==0) {
             optimum_t trivial;
-            trivial.res=solution_status::_OPTIMAL;
+            trivial.res=_NLP_OPTIMAL;
             prob.insert_fixed_vars(trivial.x);
             res.push_back(trivial);
             return true;            
@@ -5587,7 +5584,7 @@ bool nlp_problem::ipt_solver::optimize(optima_t &res) {
         if (!prob._fixed_vars.empty() && (!prob.find_inactive_eq(c_eq) || !prob.find_inactive_ineq(c_ineq))) {
             // the problem is infeasible
             optimum_t opt;
-            opt.res=solution_status::_INFEAS;
+            opt.res=_NLP_INFEAS;
             res.push_back(opt);
             return true;
         }
@@ -5709,7 +5706,7 @@ bool nlp_problem::ipt_solver::optimize(optima_t &res) {
         }
         opt.x=x2vars(x_k);
         prob.insert_fixed_vars(opt.x);
-        if (opt.res<solution_status::_INFEAS)
+        if (opt.res<_NLP_INFEAS)
             prob.save_point(opt.x);
         res.push_back(opt);
     }
@@ -5871,10 +5868,10 @@ bool nlp_problem::bb_solve_subproblem(const meth_parm &parm,vecteur &active_node
     clear_saved_points();
     if (ipt->optimize(sub_res) && !sub_res.empty()) {
         find_best_solution(parm,sub_res,r.x,r.f,r.res);
-        if ((r.res==solution_status::_OPTIMAL || r.res==solution_status::_FAILED) && compute_obj_val(r.x,fval)) {
+        if ((r.res==_NLP_OPTIMAL || r.res==_NLP_FAILED) && compute_obj_val(r.x,fval)) {
             ret=true; // pseudocosts will be updated
             r.f=fval;
-            bool crit=incumbent.res==solution_status::_PENDING || is_strictly_greater(incumbent.f,fval,ctx);
+            bool crit=incumbent.res==_NLP_PENDING || is_strictly_greater(incumbent.f,fval,ctx);
             if (is_intsol(parm,r.x)) { // a feasible solution was found
                 for (i=active_nodes.size();i-->0;) { // delete nodes with too large lower bound
                     if (is_greater(active_nodes[i]._VECTptr->back(),fval,ctx))
@@ -5907,7 +5904,7 @@ void nlp_problem::update_pseudocost(int var,vecteur &pc,vecteur &pc_count,const 
  * CONT_SOL is the solution if the continuous relaxation.
  * INCUMBENT status must be set to PENDING prior the call. */
 bool nlp_problem::branch_and_bound(const meth_parm &parm,const vecteur &cont_sol,optimum_t &incumbent) {
-    incumbent.res=solution_status::_PENDING;
+    incumbent.res=_NLP_PENDING;
     incumbent.x.clear();
     incumbent.f=plus_inf;
     int niv=intvar_count(),bv;
@@ -6017,7 +6014,7 @@ bool nlp_problem::outer_approximation(const meth_parm &parm,const vecteur &cont_
             ++_spc;
             _ss << "Lower bound: " << LB; debug();
             gap=(UB-LB)/(1+_abs(LB,ctx));
-            if (res!=solution_status::_OPTIMAL || is_strictly_greater(parm.eps,gap,ctx))
+            if (res!=_NLP_OPTIMAL || is_strictly_greater(parm.eps,gap,ctx))
                 break;
             // fix integer variables and solve the reduced NLP
             for (i=0;i<n;++i) {
@@ -6038,9 +6035,9 @@ bool nlp_problem::outer_approximation(const meth_parm &parm,const vecteur &cont_
         if (ipt_res.empty())
             break;
         ipt_optval=undef;
-        status=solution_status::_PENDING;
+        status=_NLP_PENDING;
         find_best_solution(parm,ipt_res,ipt_opt,ipt_optval,status);
-        if ((status==solution_status::_OPTIMAL || status==solution_status::_FAILED) && compute_obj_val(ipt_opt,ipt_optval)) {
+        if ((status==_NLP_OPTIMAL || status==_NLP_FAILED) && compute_obj_val(ipt_opt,ipt_optval)) {
             if (is_strictly_greater(UB,ipt_optval,ctx)) {
                 UB=ipt_optval;
                 gap=(UB-LB)/(1+_abs(LB,ctx)); // UB has changed, update the gap value
@@ -6129,18 +6126,18 @@ bool nlp_problem::outer_approximation(const meth_parm &parm,const vecteur &cont_
  * which is used as a starting (hyper)rectangle.
  * The location of the global minimum is stored to OPT before returning. */
 int nlp_problem::optimize(int method,const meth_parm &parm,const vecteur &ip,vecteur &opt,gen &optval) {
-    int ret=solution_status::_PENDING,i;
+    int ret=_NLP_PENDING,i;
     if (var_count()==0) { // no variables, objective is constant
         opt.clear();
         optval=obj;
-        return solution_status::_OPTIMAL;
+        return _NLP_OPTIMAL;
     }
     // there is at least one independent variable
     _msg_level=parm.msg_level;
     optval=undef;
     if (method==0) {
         err("no method specified");
-        return solution_status::_ERROR;
+        return _NLP_ERROR;
     }
     if (!_initialized) {
         _has_initial_rect=false;
@@ -6154,7 +6151,7 @@ int nlp_problem::optimize(int method,const meth_parm &parm,const vecteur &ip,vec
         initialize(method,parm);
         _ss << "-- Initialization time: " << elapsed_secs()*1000.0 << " ms"; debug();
         if (_infeas)
-            return solution_status::_INFEAS;
+            return _NLP_INFEAS;
         if (var_count()>0) {
             _ss << gettext("Tolerance") << ": " << gettext("optimality") << " = " << parm.eps
                 << ", " << gettext("feasibility") << " = " << parm.tol; msg();
@@ -6163,22 +6160,22 @@ int nlp_problem::optimize(int method,const meth_parm &parm,const vecteur &ip,vec
         initp=mergevecteur(initp,ip);
     if (var_count()>0) {
         int max_tries=5,tries=0;
-        bool direct_meth=method>nlp_method::_INTERIOR_POINT;
+        bool direct_meth=method>_NLP_INTERIOR_POINT;
         bool is_unconstr=is_unconstrained();
         vecteur cons;
         initp_iter=initp.begin();   // initialize the initial point iterator
         _penalty_scheme=0;          // no inclusion of constraints into the objective
         _iter_count=0;              // restart iteration counter
         optval=undef;               // no solution (yet)
-        if (method==nlp_method::_AUTOMATIC) { // guess the method
+        if (method==_NLP_AUTOMATIC) { // guess the method
             if (var_count()==1) {
                 /* Univariate minimizer */
                 if (eq_count()+ineq_count()>0 || is_inf(lb[0]) || is_inf(ub[0]))
-                    ret=optimize(is_intvar(0)?nlp_method::_DIFFERENTIAL_EVOLUTION:nlp_method::_NELDER_MEAD,parm,vecteur(0),opt,optval);
+                    ret=optimize(is_intvar(0)?_NLP_DIFFERENTIAL_EVOLUTION:_NLP_NELDER_MEAD,parm,vecteur(0),opt,optval);
                 else { // in-segment optimization
                     msg("Applying univariate minimization...");
                     if (is_strictly_greater(lb.front(),ub.front(),ctx))
-                        return solution_status::_INFEAS;
+                        return _NLP_INFEAS;
                     opt.resize(1);
                     if (is_intvar(0)) { // integer variable
                         int min_ival=_ceil(lb.front(),ctx).val,max_ival=_floor(ub.front(),ctx).val;
@@ -6193,9 +6190,9 @@ int nlp_problem::optimize(int method,const meth_parm &parm,const vecteur &ip,vec
                         }
                         if (is_undef(optval)) {
                             opt.clear();
-                            return solution_status::_INFEAS;
+                            return _NLP_INFEAS;
                         }
-                        return solution_status::_OPTIMAL;
+                        return _NLP_OPTIMAL;
                     }
     #ifdef HAVE_LIBGSL
                     // use GSL univariate minimizer (Brent minimization algorithm)
@@ -6260,7 +6257,7 @@ int nlp_problem::optimize(int method,const meth_parm &parm,const vecteur &ip,vec
                         optval=best_fval;
                         opt.front()=best_x0d;
                     } else opt.front()=x0d; // last point
-                    ret=is_undef(optval)?solution_status::_FAILED:solution_status::_OPTIMAL;
+                    ret=is_undef(optval)?_NLP_FAILED:_NLP_OPTIMAL;
     #else
                     // no GSL, use global segment optimization with Brent's method (initial points are ignored!)
                     try {
@@ -6269,35 +6266,35 @@ int nlp_problem::optimize(int method,const meth_parm &parm,const vecteur &ip,vec
                         _ss << "Univariate minimizer error: " << e.what();
                         debug();
                         err("Univariate minimizer error");
-                        return solution_status::_ERROR;
+                        return _NLP_ERROR;
                     }
                     if (is_undef(opt[0]) || !compute_obj_val(opt,optval)) {
                         err("Brent's method failed");
-                        return solution_status::_ERROR;
+                        return _NLP_ERROR;
                     }
-                    ret=solution_status::_OPTIMAL;
+                    ret=_NLP_OPTIMAL;
     #endif
                 }
             } else if (_linconstr && _linobj) { // use linear programming solver
                 msg("Applying the method of linear programming...");
                 reset_timer();
                 ret=minimize_linear(obj,constraints(true),opt,optval);
-                if (ret==solution_status::_ERROR)
+                if (ret==_NLP_ERROR)
                     err("lpsolve failed");
             } else if (_smooth_obj && _smooth_constr) {
                 if (eq_count()==0 && ineq_count()==0 && _compact && parm.cluster<0 && initp.empty() && !has_intvars())
-                    ret=optimize(nlp_method::_DIFFERENTIAL_EVOLUTION,parm,vecteur(0),opt,optval);
-                else ret=optimize(nlp_method::_INTERIOR_POINT,parm,vecteur(0),opt,optval);
+                    ret=optimize(_NLP_DIFFERENTIAL_EVOLUTION,parm,vecteur(0),opt,optval);
+                else ret=optimize(_NLP_INTERIOR_POINT,parm,vecteur(0),opt,optval);
             } else if (has_intvars() || (_compact && eq_count()==0 && ineq_count()==0 && initp.empty())) {
                 // use differential evolution for MINLP or box-constrained NLP
-                ret=optimize(nlp_method::_DIFFERENTIAL_EVOLUTION,parm,vecteur(0),opt,optval);
+                ret=optimize(_NLP_DIFFERENTIAL_EVOLUTION,parm,vecteur(0),opt,optval);
             } else {
                 // try Nelder-Mead, if it fails use differential evolution
-                ret=optimize(nlp_method::_NELDER_MEAD,parm,vecteur(0),opt,optval);
-                if (ret==solution_status::_FAILED || ret==solution_status::_ERROR) {
+                ret=optimize(_NLP_NELDER_MEAD,parm,vecteur(0),opt,optval);
+                if (ret==_NLP_FAILED || ret==_NLP_ERROR) {
                     warn("Nelder-Mead algorithm failed, switching to differential evolution");
                     if (_iter_data) iteration_data.clear();
-                    ret=optimize(nlp_method::_DIFFERENTIAL_EVOLUTION,parm,vecteur(0),opt,optval);
+                    ret=optimize(_NLP_DIFFERENTIAL_EVOLUTION,parm,vecteur(0),opt,optval);
                 }
             }
             return ret;
@@ -6316,35 +6313,35 @@ int nlp_problem::optimize(int method,const meth_parm &parm,const vecteur &ip,vec
         bool has_failed;
         // optimize by using the specified method
         switch (method) {
-        case nlp_method::_AUTOMATIC:
+        case _NLP_AUTOMATIC:
             assert(false); // this case is handled above!
-        case nlp_method::_NELDER_MEAD:
+        case _NLP_NELDER_MEAD:
             msg("Applying the method of Nelder & Mead...");
             if (has_intvars()) {
                 err("Nelder-Mead method does not support integrality constraints");
-                return solution_status::_ERROR;
+                return _NLP_ERROR;
             }
             _penalty_scheme=1;
             if (!nelder_mead(parm,res))
-                return solution_status::_ERROR;
+                return _NLP_ERROR;
             break;
-        case nlp_method::_DIFFERENTIAL_EVOLUTION:
+        case _NLP_DIFFERENTIAL_EVOLUTION:
             msg("Applying the method of differential evolution...");
             _penalty_scheme=2;
             if (!differential_evolution(parm,o))
-                return solution_status::_ERROR;
+                return _NLP_ERROR;
             res.push_back(o);
             break;
-        case nlp_method::_COBYLA:
+        case _NLP_COBYLA:
             msg("Applying COBYLA algorithm...");
             if (!cobyla(constraints(true,true),parm,res))
-                return solution_status::_ERROR;
+                return _NLP_ERROR;
             break;
-        case nlp_method::_INTERIOR_POINT:
+        case _NLP_INTERIOR_POINT:
             if (parm.cluster>=0 && _have_hessian) {
                 vecteur ip_tmp;
                 int n=var_count(),nip=parm.search_points;
-                if (nip<=0) nip=(int)std::round(1000*std::sqrt(n));
+                if (nip<=0) nip=_round(1000*std::sqrt(n),ctx).val;
                 if (!initp.empty())
                     warn("ignoring provided initial points");
                 initp.resize(nip);
@@ -6405,17 +6402,17 @@ int nlp_problem::optimize(int method,const meth_parm &parm,const vecteur &ip,vec
             if (is_unconstr) {
                 msg("Applying BFGS method...");
                 if (!gsl_bfgs(parm,res))
-                    return solution_status::_ERROR;
+                    return _NLP_ERROR;
             } else {
     #endif
                 msg("Applying interior-point method...");
                 if (!_have_hessian || !_smooth_constr) {
                     err("Could not compute objective hessian and/or constraint gradients");
-                    return solution_status::_ERROR;
+                    return _NLP_ERROR;
                 }
                 ipt_solver *ipt=new ipt_solver(*this,parm);
                 if (!ipt->optimize(res))
-                    ret=solution_status::_ERROR;
+                    ret=_NLP_ERROR;
                 delete ipt;
     #ifdef HAVE_LIBGSL
             }
@@ -6423,18 +6420,18 @@ int nlp_problem::optimize(int method,const meth_parm &parm,const vecteur &ip,vec
             break;
         default:
             err("method not implemented");
-            return solution_status::_ERROR;
+            return _NLP_ERROR;
         }
         _penalty_scheme=0;
         res_improv.clear();
         failed_initp.clear();
         failed_ind.clear();
         for (opt_iter=res.begin();opt_iter!=res.end();++opt_iter) {
-            if (opt_iter->res==solution_status::_UNBOUNDED)
+            if (opt_iter->res==_NLP_UNBOUNDED)
                 return opt_iter->res;
-            if (opt_iter->res==solution_status::_ERROR || opt_iter->res==solution_status::_PENDING)
+            if (opt_iter->res==_NLP_ERROR || opt_iter->res==_NLP_PENDING)
                 continue;
-            if (method==nlp_method::_NELDER_MEAD || method==nlp_method::_DIFFERENTIAL_EVOLUTION) {
+            if (method==_NLP_NELDER_MEAD || method==_NLP_DIFFERENTIAL_EVOLUTION) {
                 failed_initp.push_back(opt_iter->x);
                 failed_ind.push_back(opt_iter-res.begin());
             }
@@ -6443,7 +6440,7 @@ int nlp_problem::optimize(int method,const meth_parm &parm,const vecteur &ip,vec
             // attempt to improve solutions
             initp=failed_initp;
             initp_iter=initp.begin();
-            if (method==nlp_method::_DIFFERENTIAL_EVOLUTION && has_intvars()) {
+            if (method==_NLP_DIFFERENTIAL_EVOLUTION && has_intvars()) {
                 // append integrality constraints
                 for (i=0;i<var_count();++i) {
                     if (is_intvar(i)) {
@@ -6473,7 +6470,7 @@ int nlp_problem::optimize(int method,const meth_parm &parm,const vecteur &ip,vec
             vector<int>::const_iterator it=failed_ind.begin();
             int improv_count=0;
             for (opt_iter=res_improv.begin();opt_iter!=res_improv.end();++opt_iter,++it) {
-                if (opt_iter->res==solution_status::_OPTIMAL) {
+                if (opt_iter->res==_NLP_OPTIMAL) {
                     res[*it]=*opt_iter;
                     ++improv_count;
                 }
@@ -6483,11 +6480,11 @@ int nlp_problem::optimize(int method,const meth_parm &parm,const vecteur &ip,vec
         }
         find_best_solution(parm,res,opt,optval,ret);
         switch (ret) {
-        case solution_status::_INFEAS:
-        case solution_status::_ERROR:
+        case _NLP_INFEAS:
+        case _NLP_ERROR:
             return ret;
-        case solution_status::_PENDING:
-            return solution_status::_ERROR;
+        case _NLP_PENDING:
+            return _NLP_ERROR;
         default:
             break;
         }
@@ -6499,31 +6496,31 @@ int nlp_problem::optimize(int method,const meth_parm &parm,const vecteur &ip,vec
             << _sol_stat[4] << " " << gettext("error(s)") << ", "
             << _sol_stat[5] << " " << gettext("pending") << ")";
         msg();
-        if (method==nlp_method::_INTERIOR_POINT && has_intvars() && !is_intsol(parm,opt)) {
+        if (method==_NLP_INTERIOR_POINT && has_intvars() && !is_intsol(parm,opt)) {
             // do branch & bound for MINLP
             initp.clear();
             optimum_t intsol;
             if (is_convex() && _compact) {
                 msg("Applying outer approximation method to find integer solutions...");
-                if (!outer_approximation(parm,opt,intsol) || intsol.res==solution_status::_ERROR)
-                    return solution_status::_ERROR;
+                if (!outer_approximation(parm,opt,intsol) || intsol.res==_NLP_ERROR)
+                    return _NLP_ERROR;
                 _ss << gettext("Finished with") << " " << _spc << " " << gettext("major iterations"); msg();
             } else {
                 msg("Applying branch & bound algorithm to find integer solutions...");
-                if (!branch_and_bound(parm,opt,intsol) || intsol.res==solution_status::_ERROR)
-                    return solution_status::_ERROR;
+                if (!branch_and_bound(parm,opt,intsol) || intsol.res==_NLP_ERROR)
+                    return _NLP_ERROR;
                 _ss << gettext("Solved") << " " << _spc << " " << gettext("subproblems"); msg();
             }
             _fixed_vars.clear();
             optval=undef;
             opt.clear();
             ret=intsol.res;
-            if (ret==solution_status::_PENDING || ret==solution_status::_INFEAS)
-                return solution_status::_INFEAS;
+            if (ret==_NLP_PENDING || ret==_NLP_INFEAS)
+                return _NLP_INFEAS;
             opt=intsol.x;
             optval=intsol.f;
             if (is_undef(optval) && !compute_obj_val(opt,optval))
-                ret=solution_status::_ERROR;
+                ret=_NLP_ERROR;
         }
         _ss << gettext("Optimization time") << ": " << elapsed_secs()*1000.0 << " ms"; msg();
         if (_fevalc>0) { _ss << gettext("Objective function evaluations") << ": " << _fevalc; msg(); }
@@ -6531,7 +6528,7 @@ int nlp_problem::optimize(int method,const meth_parm &parm,const vecteur &ip,vec
         msg("Solution found by preprocessor");
         opt.clear();
         optval=obj;
-        ret=solution_status::_OPTIMAL;
+        ret=_NLP_OPTIMAL;
     }
     // postsolve
     if (_presolved) {
@@ -6551,25 +6548,25 @@ void nlp_problem::find_best_solution(const meth_parm &parm,optima_t &res,vecteur
     for (;opt_iter!=opt_itend;++opt_iter) {
         ++_sol_stat[opt_iter->res];
         switch (opt_iter->res) {
-        case solution_status::_PENDING:
-        case solution_status::_ERROR:
+        case _NLP_PENDING:
+        case _NLP_ERROR:
             continue;
         default:
             break;
         }
         if (is_undef(opt_iter->f) && !compute_obj_val(opt_iter->x,opt_iter->f)) {
-            opt_iter->res=solution_status::_ERROR;
+            opt_iter->res=_NLP_ERROR;
             continue;
         }
-        if (opt_iter->res==solution_status::_INFEAS || !is_feasible(opt_iter->x,parm.tol,true)) {
-            opt_iter->res=solution_status::_INFEAS;
-            if (ret==solution_status::_PENDING)
+        if (opt_iter->res==_NLP_INFEAS || !is_feasible(opt_iter->x,parm.tol,true)) {
+            opt_iter->res=_NLP_INFEAS;
+            if (ret==_NLP_PENDING)
                 ret=opt_iter->res;
             continue;
         }
         if (!is_undef(optval)) {
             if (is_greater(parm.eps,_abs(optval-opt_iter->f,ctx),ctx)) {
-                if (opt_iter->res==solution_status::_FAILED && ret==solution_status::_OPTIMAL)
+                if (opt_iter->res==_NLP_FAILED && ret==_NLP_OPTIMAL)
                     continue;
             } else if (is_greater(opt_iter->f,optval,ctx))
                 continue;
@@ -6584,7 +6581,7 @@ void nlp_problem::find_best_solution(const meth_parm &parm,optima_t &res,vecteur
  * Returns true iff successful, otherwise it returns false with message MSG. */
 bool nlp_problem::ampl_load(const std::string &filename,vecteur &v,vecteur &o,vecteur &c,string &msg,GIAC_CONTEXT) {
     ifstream ifs;
-    ifs.open(filename,ifstream::in);
+    ifs.open(filename);
     if (!ifs.is_open()) {
         msg=gettext("AMPL parser: failed to open file for reading");
         return false; // failed to open file
@@ -6631,8 +6628,8 @@ bool nlp_problem::ampl_load(const std::string &filename,vecteur &v,vecteur &o,ve
             case 1:
                 switch (status) {
                 case 0: // initialize variable
-                    if (token.back()==';') {
-                        token.pop_back();
+                    if (token.at(token.size()-1)==';') {
+                        token.erase(token.size()-1,1);
                         v.push_back(makevecteur(identificateur(token),0,minus_inf,plus_inf,undef));
                         status=0;
                     } else {
@@ -6658,11 +6655,11 @@ bool nlp_problem::ampl_load(const std::string &filename,vecteur &v,vecteur &o,ve
                 case 3: // read upper bound
                 case 4: // read initial value
                     st=status;
-                    if (token.back()==',') {
-                        token.pop_back();
+                    if (token.at(token.size()-1)==',') {
+                        token.erase(token.size()-1,1);
                         status=1;
-                    } else if (token.back()==';') {
-                        token.pop_back();
+                    } else if (token.at(token.size()-1)==';') {
+                        token.erase(token.size()-1,1);
                         status=0;
                     } else { ifs.close(); return false; }
                     try {
@@ -6683,12 +6680,12 @@ bool nlp_problem::ampl_load(const std::string &filename,vecteur &v,vecteur &o,ve
             case 3: // read constraints
                 switch (status) {
                 case 0:
-                    if (token.back()==':')
+                    if (token.at(token.size()-1)==':')
                         status=1;
                     break;
                 case 1:
-                    if (token.back()==';') {
-                        token.pop_back();
+                    if (token.at(token.size()-1)==';') {
+                        token.erase(token.size()-1,1);
                         e+=token;
                         try {
                             g=_expr(string2gen(e,false),contextptr);
@@ -6810,8 +6807,8 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
     add_identifiers(obj,vars,contextptr);
     bool maximize=false,minlp=false,nonneg=false;
     int num_mask=num_mask_withint | num_mask_withfrac;
-    int machine_accuracy=-int(std::round(std::log10(epsilon(contextptr))));
-    int wc=0,method=nlp_method::_AUTOMATIC;
+    int machine_accuracy=-_round(std::log10(epsilon(contextptr)),contextptr).val;
+    int wc=0,method=_NLP_AUTOMATIC;
     double eps=std::pow(10,-(machine_accuracy*2)/3);
     nlp_problem::meth_parm parm;
     parm.init_defaults(eps);
@@ -6988,15 +6985,15 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
                     }
                 }
                 if (method_name=="differential-evolution" || method_name=="de")
-                    method=nlp_method::_DIFFERENTIAL_EVOLUTION;
+                    method=_NLP_DIFFERENTIAL_EVOLUTION;
                 else if (method_name=="automatic" || method_name=="auto")
-                    method=nlp_method::_AUTOMATIC;
+                    method=_NLP_AUTOMATIC;
                 else if (method_name=="nelder-mead" || method_name=="nm")
-                    method=nlp_method::_NELDER_MEAD;
+                    method=_NLP_NELDER_MEAD;
                 else if (method_name=="interior-point" || method_name=="ipt")
-                    method=nlp_method::_INTERIOR_POINT;
+                    method=_NLP_INTERIOR_POINT;
                 else if (method_name=="cobyla" || method_name=="cbl")
-                    method=nlp_method::_COBYLA;
+                    method=_NLP_COBYLA;
                 else return generr("Method not supported");
             } else if (is_mcint(lh,_NLP_PRESOLVE) && rh.is_integer() && rh.subtype==_INT_BOOLEAN) {
                 parm.presolve=(bool)rh.val;
@@ -7098,19 +7095,19 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
         return generr(e.what(),false);
     }
     switch (res) {
-    case nlp_problem::solution_status::_OPTIMAL:
+    case _NLP_OPTIMAL:
         return change_subtype(makevecteur(maximize?-optval:optval,_zip(makesequence(at_equal,vars,optsol),contextptr)),_LIST__VECT);
-    case nlp_problem::solution_status::_FAILED:
+    case _NLP_FAILED:
         return change_subtype(makevecteur(string2gen(gettext("Failed to optimize at given precision"),false),
                                           _zip(makesequence(at_equal,vars,optsol),contextptr)),_LIST__VECT);
-    case nlp_problem::solution_status::_ERROR:
+    case _NLP_ERROR:
         return generr("Failed to find a solution");
-    case nlp_problem::solution_status::_INFEAS:
+    case _NLP_INFEAS:
         if (optsol.size()!=vars.size())
             return generr("The problem is infeasible");
         return change_subtype(makevecteur(string2gen(gettext("Solution is infeasible"),false),
                                           _zip(makesequence(at_equal,vars,optsol),contextptr)),_LIST__VECT);
-    case nlp_problem::solution_status::_UNBOUNDED:
+    case _NLP_UNBOUNDED:
         return maximize?plus_inf:minus_inf;
     default: // not implemented
         break;
@@ -10897,7 +10894,7 @@ int kmeans(const matrice &data,int &k,int min_k,int &max_k,int maxiter,vector<in
     } else { // guess the optimal number of clusters
         double W,W_prev=0,score;
         int best_k=0,meth=-k;
-        int *b_best=meth==cluster_crit::criterion::_HARTIGAN?new int[m]:NULL;
+        int *b_best=meth==_HARTIGAN_CRITERION?new int[m]:NULL;
         dev=new double[max_k];
         e=new int[max_k];
         if (b_best!=NULL) for (int i=0;i<m;++i) b_best[i]=i+1;
@@ -10922,7 +10919,7 @@ int kmeans(const matrice &data,int &k,int min_k,int &max_k,int maxiter,vector<in
                     score=(W_prev/W-1)*(m-k);
                     if (score<=10) {
                         rough_optimum_found=true;
-                        if (meth==cluster_crit::criterion::_HARTIGAN) {
+                        if (meth==_HARTIGAN_CRITERION) {
                             k--;
                             break;
                         }
@@ -10930,7 +10927,7 @@ int kmeans(const matrice &data,int &k,int min_k,int &max_k,int maxiter,vector<in
                     }
                 }
                 W_prev=W;
-                if (meth==cluster_crit::criterion::_HARTIGAN) {
+                if (meth==_HARTIGAN_CRITERION) {
                     for (int i=0;i<m;++i) b_best[i]=b[i];
                     if (W==0) break;
                 }
@@ -10944,7 +10941,7 @@ int kmeans(const matrice &data,int &k,int min_k,int &max_k,int maxiter,vector<in
                 b_map.insert(make_pair(k,lst));
             }
         }
-        if (meth==cluster_crit::criterion::_HARTIGAN) {
+        if (meth==_HARTIGAN_CRITERION) {
             if (k>max_k) k=max_k;
             for (int i=0;i<m;++i) res[i]=(rough_optimum_found?b_best[i]:b[i])-1;
             delete[] b_best;
@@ -11257,38 +11254,38 @@ void cluster_crit::update(int pos,const gen &val,int dir) {
 bool cluster_crit::compute_indices(int crit) {
     int pos=0;
     _updated=false;
-    if (crit & criterion::_BANFELD_RAFTERY)     update(pos++,banfeld_raftery(),-1);
-    if (crit & criterion::_DAVIES_BOULDIN)      update(pos++,davies_bouldin(),-1);
-    if (crit & criterion::_RAY_TURI)            update(pos++,ray_turi(),-1);
-    if (crit & criterion::_SCOTT_SYMONS)        update(pos++,scott_symons(),-1);
-    if (crit & criterion::_CALINSKI_HARABASZ)   update(pos++,calinski_harabasz(),1);
-    if (crit & criterion::_PBM)                 update(pos++,pbm(),1);
-    if (crit & criterion::_RATKOWSKY_LANCE)     update(pos++,ratkowsky_lance(),1);
-    if (crit & criterion::_DET_RATIO)           update(pos++,det_ratio(),-2);
-    if (crit & criterion::_LOG_DET_RATIO)       update(pos++,log_det_ratio(),-2);
-    if (crit & criterion::_LOG_SS_RATIO)        update(pos++,log_ss_ratio(),-2);
-    if (crit & criterion::_BALL_HALL)           update(pos++,ball_hall(),2);
-    if (crit & criterion::_KSQ_DETW)            update(pos++,ksq_detW(),2);
-    if (crit & criterion::_TRACE_W)             update(pos++,trace_W(),2);
-    if (crit & criterion::_TRACE_WIB)           update(pos++,trace_WiB(),2);
+    if (crit & _BANFELD_RAFTERY_INDEX)     update(pos++,banfeld_raftery(),-1);
+    if (crit & _DAVIES_BOULDIN_INDEX)      update(pos++,davies_bouldin(),-1);
+    if (crit & _RAY_TURI_INDEX)            update(pos++,ray_turi(),-1);
+    if (crit & _SCOTT_SYMONS_INDEX)        update(pos++,scott_symons(),-1);
+    if (crit & _CALINSKI_HARABASZ_INDEX)   update(pos++,calinski_harabasz(),1);
+    if (crit & _PBM_INDEX)                 update(pos++,pbm(),1);
+    if (crit & _RATKOWSKY_LANCE_INDEX)     update(pos++,ratkowsky_lance(),1);
+    if (crit & _DET_RATIO_INDEX)           update(pos++,det_ratio(),-2);
+    if (crit & _LOG_DET_RATIO_INDEX)       update(pos++,log_det_ratio(),-2);
+    if (crit & _LOG_SS_RATIO_INDEX)        update(pos++,log_ss_ratio(),-2);
+    if (crit & _BALL_HALL_INDEX)           update(pos++,ball_hall(),2);
+    if (crit & _KSQ_DETW_INDEX)            update(pos++,ksq_detW(),2);
+    if (crit & _TRACE_W_INDEX)             update(pos++,trace_W(),2);
+    if (crit & _TRACE_WIB_INDEX)           update(pos++,trace_WiB(),2);
     return _updated;
 }
 int cluster_crit::name2index(const string &name) {
-    if (name=="banfeld-raftery")                return criterion::_BANFELD_RAFTERY;
-    if (name=="davies-bouldin")                 return criterion::_DAVIES_BOULDIN;
-    if (name=="ray-turi")                       return criterion::_RAY_TURI;
-    if (name=="scott-symons")                   return criterion::_SCOTT_SYMONS;
-    if (name=="calinski-harabasz")              return criterion::_CALINSKI_HARABASZ;
-    if (name=="pbm")                            return criterion::_PBM;
-    if (name=="ratkowsky-lance")                return criterion::_RATKOWSKY_LANCE;
-    if (name=="det")                            return criterion::_DET_RATIO;
-    if (name=="log-det")                        return criterion::_DET_RATIO;
-    if (name=="ksq-detW")                       return criterion::_KSQ_DETW;
-    if (name=="log-ss")                         return criterion::_LOG_SS_RATIO;
-    if (name=="ball-hall")                      return criterion::_BALL_HALL;
-    if (name=="trace-W")                        return criterion::_TRACE_W;
-    if (name=="trace-WiB")                      return criterion::_TRACE_WIB;
-    if (name=="all")                            return criterion::_ALL;
+    if (name=="banfeld-raftery")                return _BANFELD_RAFTERY_INDEX;
+    if (name=="davies-bouldin")                 return _DAVIES_BOULDIN_INDEX;
+    if (name=="ray-turi")                       return _RAY_TURI_INDEX;
+    if (name=="scott-symons")                   return _SCOTT_SYMONS_INDEX;
+    if (name=="calinski-harabasz")              return _CALINSKI_HARABASZ_INDEX;
+    if (name=="pbm")                            return _PBM_INDEX;
+    if (name=="ratkowsky-lance")                return _RATKOWSKY_LANCE_INDEX;
+    if (name=="det")                            return _DET_RATIO_INDEX;
+    if (name=="log-det")                        return _DET_RATIO_INDEX;
+    if (name=="ksq-detW")                       return _KSQ_DETW_INDEX;
+    if (name=="log-ss")                         return _LOG_SS_RATIO_INDEX;
+    if (name=="ball-hall")                      return _BALL_HALL_INDEX;
+    if (name=="trace-W")                        return _TRACE_W_INDEX;
+    if (name=="trace-WiB")                      return _TRACE_WIB_INDEX;
+    if (name=="all")                            return _ALL_CLUSTER_INDICES;
     return -1;
 }
 int cluster_crit::optimal_number_of_clusters(const map<int,pair<int,double> > &optvals) {
@@ -11352,19 +11349,19 @@ double hclust::formula(int a,int b,int x,int na,int nb,int nx,double dab,int met
     if (dax<0 || dbx<0 || dab<0 || dax+dbx<dab)
         return -1; // bad distance function
     switch (meth) {
-    case linkage_type::_SINGLE:
+    case _SINGLE_LINKAGE:
         return std::min(dax,dbx);
-    case linkage_type::_COMPLETE:
+    case _COMPLETE_LINKAGE:
         return std::max(dax,dbx);
-    case linkage_type::_AVERAGE:
+    case _AVERAGE_LINKAGE:
         return (na*dax+nb*dbx)/double(na+nb);
-    case linkage_type::_WEIGHTED:
+    case _WEIGHTED_LINKAGE:
         return (dax+dbx)/2.0;
-    case linkage_type::_WARD:
+    case _WARD_LINKAGE:
         return ((na+nx)*dax+(nb+nx)*dbx-nx*dab)/(na+nb+nx);
-    case linkage_type::_CENTROID:
+    case _CENTROID_LINKAGE:
         return (na*dax+nb*dbx)/(na+nb)-na*nb*dab/std::pow(na+nb,2);
-    case linkage_type::_MEDIAN:
+    case _MEDIAN_LINKAGE:
         return (dax+dbx)/2.0-dab/4.0;
     default:
         break;
@@ -11429,7 +11426,8 @@ bool hclust::nn_chain_linkage(dendrogram &dg,int meth) {
     vector<int> chain;
     chain.reserve(N);
     map<int,double> size;
-    vector<int>::const_iterator it,et;
+    vector<int>::const_iterator it;
+    vector<int>::iterator et;
     for (it=S.begin();it!=S.end();++it) size[*it]=1;
     int a,b,c,x;
     while (S.size()>1) {
@@ -11476,21 +11474,21 @@ bool hclust::nn_chain_linkage(dendrogram &dg,int meth) {
 }
 int hclust::linkage(dendrogram &dg,vector<int> &ind,int meth,int K,int min_k,int max_k) {
     int dcs=(N*(N-1))/2;
-    if (meth!=linkage_type::_SINGLE || K<0) {
+    if (meth!=_SINGLE_LINKAGE || K<0) {
         if (_dist_cache!=NULL)
             delete[] _dist_cache;
         try { _dist_cache=new double[dcs]; } catch (const std::bad_alloc &ba) { return -1; }
         for (int i=0;i<dcs;++i) _dist_cache[i]=-1;
     }
     switch (meth) {
-    case linkage_type::_SINGLE:
+    case _SINGLE_LINKAGE:
         if (!mst_linkage(dg,K<0))
             return -1;
         break;
-    case linkage_type::_COMPLETE:
-    case linkage_type::_AVERAGE:
-    case linkage_type::_WEIGHTED:
-    case linkage_type::_WARD:
+    case _COMPLETE_LINKAGE:
+    case _AVERAGE_LINKAGE:
+    case _WEIGHTED_LINKAGE:
+    case _WARD_LINKAGE:
         if (!nn_chain_linkage(dg,meth))
             return -1;
         break;
@@ -11508,10 +11506,10 @@ int hclust::linkage(dendrogram &dg,vector<int> &ind,int meth,int K,int min_k,int
     pair<int,double> ep=make_pair(0,0.0);
     set<int> cind;
     if (indf>0) {
-        if (meth!=linkage_type::_SINGLE) { // force recomputation of distances
+        if (meth!=_SINGLE_LINKAGE) { // force recomputation of distances
             for (int i=0;i<dcs;++i) _dist_cache[i]=-1;
         }
-        if (indf & index_function::_SILHOUETTE) {
+        if (indf & _SILHOUETTE_INDEX) {
             slh_a.resize(N);
             slh_b.resize(N);
             slh_s.resize(N);
@@ -11531,12 +11529,12 @@ int hclust::linkage(dendrogram &dg,vector<int> &ind,int meth,int K,int min_k,int
             int ci,cj;
             if (k<max_k) {
                 int ca=UF.find(a),cb=UF.find(b);
-                if (indf & index_function::_SILHOUETTE) {
+                if (indf & _SILHOUETTE_INDEX) {
                     for (int i=0;i<N;++i) {
                         ci=UF.find(i);
                         map<int,pair<int,double> > &bm=slh_b[i];
                         if (ci==ca || ci==cb) {
-                            map<int,pair<int,double> >::const_iterator jt=bm.find(ci==ca?cb:ca);
+                            map<int,pair<int,double> >::iterator jt=bm.find(ci==ca?cb:ca);
                             assert(jt!=bm.end());
                             pair<int,double> &p=slh_a[i];
                             p.first+=jt->second.first;
@@ -11552,13 +11550,12 @@ int hclust::linkage(dendrogram &dg,vector<int> &ind,int meth,int K,int min_k,int
                     cb=ca;
                     ca=c;
                 }
-                if (indf & index_function::_SILHOUETTE) {
+                if (indf & _SILHOUETTE_INDEX) {
                     for (int i=0;i<N;++i) {
                         ci=UF.find(i);
                         map<int,pair<int,double> > &bm=slh_b[i];
                         if (ci!=c) {
-                            map<int,pair<int,double> >::iterator jta=bm.find(ca);
-                            map<int,pair<int,double> >::const_iterator jtb=bm.find(cb);
+                            map<int,pair<int,double> >::iterator jta=bm.find(ca),jtb=bm.find(cb);
                             assert(jta!=bm.end() && jtb!=bm.end());
                             jta->second.first+=jtb->second.first;
                             jta->second.second+=jtb->second.second;
@@ -11568,7 +11565,7 @@ int hclust::linkage(dendrogram &dg,vector<int> &ind,int meth,int K,int min_k,int
                 }
             } else {
                 UF.unite(a,b);
-                if (indf & index_function::_SILHOUETTE)
+                if (indf & _SILHOUETTE_INDEX)
                     std::fill(slh_a.begin(),slh_a.end(),ep);
                 for (int i=0;i<N;++i) {
                     ci=UF.find(i);
@@ -11577,7 +11574,7 @@ int hclust::linkage(dendrogram &dg,vector<int> &ind,int meth,int K,int min_k,int
                         cj=UF.find(j);
                         double d=dist(i,j,true);
                         if (ci==cj) {
-                            if (indf & index_function::_SILHOUETTE) {
+                            if (indf & _SILHOUETTE_INDEX) {
                                 pair<int,double> &p=slh_a[i],&q=slh_a[j];
                                 ++p.first;
                                 ++q.first;
@@ -11585,7 +11582,7 @@ int hclust::linkage(dendrogram &dg,vector<int> &ind,int meth,int K,int min_k,int
                                 q.second+=d;
                             }
                         } else {
-                            if (indf & index_function::_SILHOUETTE) {
+                            if (indf & _SILHOUETTE_INDEX) {
                                 map<int,pair<int,double> > &bv=slh_b[i],&bw=slh_b[j];
                                 pair<int,double> &p=bv[cj],&q=bw[ci];
                                 ++p.first;
@@ -11599,7 +11596,7 @@ int hclust::linkage(dendrogram &dg,vector<int> &ind,int meth,int K,int min_k,int
             }
             int pos=0;
             bool updated=false;
-            if (indf & index_function::_SILHOUETTE) {
+            if (indf & _SILHOUETTE_INDEX) {
                 std::fill(slh_s.begin(),slh_s.end(),ep);
                 double ai,bi,minb,si;
                 for (int i=0;i<N;++i) {
@@ -11696,10 +11693,10 @@ void hclust::swap(dendrogram &dg,int row) {
     dg[row].second.second=tmp;
 }
 int hclust::name2index(const string &name) {
-    if (name=="silhouette")     return index_function::_SILHOUETTE;
-    if (name=="mcclain-rao")    return index_function::_MCCLAIN_RAO;
-    if (name=="dunn")           return index_function::_DUNN;
-    if (name=="all")            return index_function::_ALL;
+    if (name=="silhouette")     return _SILHOUETTE_INDEX;
+    if (name=="mcclain-rao")    return _MCCLAIN_RAO_INDEX;
+    if (name=="dunn")           return _DUNN_INDEX;
+    if (name=="all")            return _ALL_HCLUST_INDICES;
     return -1;
 }
 /* end of the centerspace code slice */
@@ -11867,7 +11864,7 @@ gen _kmeans(const gen &g,GIAC_CONTEXT) {
                 disp=rh.val;
             } else if (lh==at_index) {
                 if (rh.is_integer() && rh.subtype==_INT_BOOLEAN) {
-                    k=(bool)rh.val?-cluster_crit::_CALINSKI_HARABASZ:0;
+                    k=(bool)rh.val?-_CALINSKI_HARABASZ_INDEX:0;
                 } else if (rh.type==_STRNG) {
                     int cr=cluster_crit::name2index(*rh._STRNGptr);
                     if (cr<0) return generr("Unknown index name");
@@ -11937,7 +11934,7 @@ gen _cluster(const gen &g,GIAC_CONTEXT) {
         return generr("No data found");
     gen dist_func=is_string_list(data)?at_levenshtein:at_longueur2;
     int NP=data.size(),p=data.front().type==_VECT?data.front()._VECTptr->size():1;
-    int out_what=2,k=0,min_k=0,max_k=16,lmeth=hclust::linkage_type::_SINGLE,lab=1,indf=0,disp=0;
+    int out_what=2,k=0,min_k=0,max_k=16,lmeth=_SINGLE_LINKAGE,lab=1,indf=0,disp=0;
     if (g.subtype==_SEQ__VECT) for (const_iterateur it=g._VECTptr->begin()+1;it!=g._VECTptr->end();++it) { // parse options
         if (is_equal(*it)) {
             const gen &lh=it->_SYMBptr->feuille._VECTptr->front(),&rh=it->_SYMBptr->feuille._VECTptr->back();
@@ -11982,14 +11979,14 @@ gen _cluster(const gen &g,GIAC_CONTEXT) {
                     return generrtype("Expected a string");
                 }
                 const string &lt=*rh._STRNGptr;
-                if (lt=="single")           lmeth=hclust::linkage_type::_SINGLE;
-                else if (lt=="complete")    lmeth=hclust::linkage_type::_COMPLETE;
-                else if (lt=="average")     lmeth=hclust::linkage_type::_AVERAGE;
-                else if (lt=="weighted")    lmeth=hclust::linkage_type::_WEIGHTED;
-                else if (lt=="ward")        lmeth=hclust::linkage_type::_WARD;
+                if (lt=="single")           lmeth=_SINGLE_LINKAGE;
+                else if (lt=="complete")    lmeth=_COMPLETE_LINKAGE;
+                else if (lt=="average")     lmeth=_AVERAGE_LINKAGE;
+                else if (lt=="weighted")    lmeth=_WEIGHTED_LINKAGE;
+                else if (lt=="ward")        lmeth=_WARD_LINKAGE;
 #if 0
-                else if (lt=="centroid")    lmeth=hclust::linkage_type::_CENTROID;
-                else if (lt=="median")      lmeth=hclust::linkage_type::_MEDIAN;
+                else if (lt=="centroid")    lmeth=_CENTROID_LINKAGE;
+                else if (lt=="median")      lmeth=_MEDIAN_LINKAGE;
 #endif
                 else return generr("Unknown linkage type");
             } else if (lh==at_longueur) {
@@ -12012,7 +12009,7 @@ gen _cluster(const gen &g,GIAC_CONTEXT) {
                 else return generr("Invalid labels specification");
             } else if (lh==at_index) {
                 if (rh.is_integer() && rh.subtype==_INT_BOOLEAN) {
-                    indf=(bool)rh.val?hclust::index_function::_SILHOUETTE:0;
+                    indf=(bool)rh.val?_SILHOUETTE_INDEX:0;
                 } else if (rh.type==_STRNG) {
                     indf=hclust::name2index(*rh._STRNGptr);
                     if (indf<0) return generr("Unknown index name");
@@ -12605,7 +12602,7 @@ bool is_positive_definite(const vecteur &mat,int isnum,GIAC_CONTEXT) {
 #ifdef HAVE_LIBGSL
     if (isn && is_zero(im(mat,contextptr),contextptr)) {
         gsl_matrix *m=matrice2gsl_matrix(*re(mat,contextptr)._VECTptr,contextptr);
-        int res=gsl_linalg_cholesky_decomp1(m);
+        int res=gsl_linalg_cholesky_decomp(m); // should be cholesky_decomp1 in GSL 2.7
         gsl_matrix_free(m);
         return res!=GSL_EDOM;
     }
@@ -12660,7 +12657,7 @@ static const char _isposdef_s []="isposdef";
 static define_unary_function_eval (__isposdef,&_isposdef,_isposdef_s);
 define_unary_function_ptr5(at_isposdef,alias_at_isposdef,&__isposdef,0,true)
 
-vecteur symbol_array(const vector<int> &sz,vector<int> &ind,int pos,const vector<int> &hashpos,const string &tmpl,int as) {
+vecteur symbol_array(const vector<int> &sz,vector<int> &ind,int pos,const vector<int> &hashpos,const string &tmpl,int as,GIAC_CONTEXT) {
     int nd=sz.size();
     vecteur ret(sz[pos]);
     iterateur rt=ret.begin(),rtend=ret.end();
@@ -12673,7 +12670,10 @@ vecteur symbol_array(const vector<int> &sz,vector<int> &ind,int pos,const vector
                 name.replace(*it,1,print_INT_(*jt+as));
             }
             *rt=identificateur(name);
-        } else *rt=symbol_array(sz,ind,pos+1,hashpos,tmpl,as);
+            if (_eval(*rt,contextptr).type!=_IDNT)
+                *logptr(contextptr) << gettext("Warning") << ": " << gettext("variable") << " "
+                                    << name << " " << gettext("should be purged") << "\n";
+        } else *rt=symbol_array(sz,ind,pos+1,hashpos,tmpl,as,contextptr);
     }
     return ret;
 }
@@ -12716,7 +12716,7 @@ gen _symbol_array(const gen &g,GIAC_CONTEXT) {
         }
         tmpl+=suffix;
     }
-    return symbol_array(sz,ind,0,hashpos,tmpl,as);
+    return symbol_array(sz,ind,0,hashpos,tmpl,as,contextptr);
 }
 static const char _symbol_array_s []="symbol_array";
 static define_unary_function_eval (__symbol_array,&_symbol_array,_symbol_array_s);

@@ -906,31 +906,20 @@ static const char _ReLU_s []="ReLU";
 static define_unary_function_eval (__ReLU,&_ReLU,_ReLU_s);
 define_unary_function_ptr5(at_ReLU,alias_at_ReLU,&__ReLU,0,true)
 
-gen _swish(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    gen x(g),b(1);
-    if (g.type==_VECT && g.subtype==_SEQ__VECT) {
-        if (g._VECTptr->size()!=2)
-            return generrdim("Expected a sequence of two arguments");
-        x=g._VECTptr->front();
-        b=g._VECTptr->back();
-    }
-    return x/(1+exp(-b*x,contextptr));
-}
-static const char _swish_s []="swish";
-static define_unary_function_eval (__swish,&_swish,_swish_s);
-define_unary_function_ptr5(at_swish,alias_at_swish,&__swish,0,true)
-
 gen _logistic(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     gen x(g),x0(0),L(1),k(1); // standard sigmoid by default
     if (g.type==_VECT && g.subtype==_SEQ__VECT) {
-        if (g._VECTptr->size()!=4)
-            return generrdim("Expected a sequence of four arguments");
-        x=g._VECTptr->at(0);
-        x0=g._VECTptr->at(1);
-        L=g._VECTptr->at(2);
-        k=g._VECTptr->at(3);
+        vecteur gv(*g._VECTptr);
+        if (gv.empty() || gv.size()>4)
+            return gendimerr(contextptr);
+        x=gv.front();
+        if (gv.size()>=2)
+            x0=gv[1];
+        if (gv.size()>=3)
+            L=gv[2];
+        if (gv.size()==4)
+            k=gv[3];
     }
     return L/(exp(-k*(x-x0),contextptr)+1);
 }
@@ -938,43 +927,79 @@ static const char _logistic_s []="logistic";
 static define_unary_function_eval (__logistic,&_logistic,_logistic_s);
 define_unary_function_ptr5(at_logistic,alias_at_logistic,&__logistic,0,true)
 
-gen _softplus(const gen &g,GIAC_CONTEXT) {
+gen _swish(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    gen x(g),k(1);
+    gen x(g),b(1);
     if (g.type==_VECT && g.subtype==_SEQ__VECT) {
-        if (g._VECTptr->size()!=2)
-            return generrdim("Expected a sequence of two arguments");
-        x=g._VECTptr->front();
-        k=g._VECTptr->back();
+        vecteur gv(*g._VECTptr);
+        if (gv.empty() || gv.size()>2)
+            return gendimerr(contextptr);
+        x=gv.front();
+        if (gv.size()==2)
+            b=gv.back();
     }
-    return ln(exp(k*x,contextptr)+1,contextptr)/k;
+    return _logistic(makesequence(x,0,x,b),contextptr);
 }
-static const char _softplus_s []="softplus";
-static define_unary_function_eval (__softplus,&_softplus,_softplus_s);
-define_unary_function_ptr5(at_softplus,alias_at_softplus,&__softplus,0,true)
+static const char _swish_s []="swish";
+static define_unary_function_eval (__swish,&_swish,_swish_s);
+define_unary_function_ptr5(at_swish,alias_at_swish,&__swish,0,true)
 
-gen _softmax(const gen &g,GIAC_CONTEXT) {
+gen _entropy(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    gen x(g),k(1);
-    if (g.type==_VECT && g.subtype==_SEQ__VECT) {
-        if (g._VECTptr->size()!=2)
-            return generrdim("Expected a sequence of two arguments");
-        x=g._VECTptr->front();
-        k=g._VECTptr->back();
+    vecteur p;
+    if (g.type==_VECT)
+        p=*g._VECTptr;
+    else if (g.is_symb_of_sommet(at_discreted)) {
+        const vecteur &f=*g._SYMBptr->feuille._VECTptr;
+        int n=f.front().val;
+        p=vecteur(f.begin()+1,f.begin()+n+1);
+    } else return generrtype("Expected a vector or a discrete distribution");
+    if (p.empty())
+        return generr("Argument is not a probability distribution");
+    gen ret(0);
+    const_iterateur it=p.begin(),itend=p.end();
+    for (;it!=itend;++it) {
+        if (!is_exactly_zero(*it))
+            ret+=*it*ln(*it,contextptr);
     }
-    if (x.type!=_VECT)
-        return generrtype("Expected a vector of real values");
-    vecteur e;
-    e.reserve(x._VECTptr->size());
-    const_iterateur it=x._VECTptr->begin(),itend=x._VECTptr->end();
-    for (;it!=itend;++it)
-        e.push_back(exp(*it*k,contextptr));
-    gen d=_sum(e,contextptr);
-    return multvecteur(inv(d,contextptr),e);
+    return -ret;
 }
-static const char _softmax_s []="softmax";
-static define_unary_function_eval (__softmax,&_softmax,_softmax_s);
-define_unary_function_ptr5(at_softmax,alias_at_softmax,&__softmax,0,true)
+static const char _entropy_s []="entropy";
+static define_unary_function_eval (__entropy,&_entropy,_entropy_s);
+define_unary_function_ptr5(at_entropy,alias_at_entropy,&__entropy,0,true)
+
+gen _cross_entropy(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    const vecteur &gv=*g._VECTptr;
+    if (gv.size()!=2)
+        return gendimerr("Wrong number of arguments");
+    vecteur p,q;
+    const_iterateur it,jt,itend;
+    if (gv.front().type==_VECT && gv.back().type==_VECT) {
+        p=*gv.front()._VECTptr;
+        q=*gv.back()._VECTptr;
+    } else if (gv.front().is_symb_of_sommet(at_discreted) && gv.back().is_symb_of_sommet(at_discreted)) {
+        const vecteur &d1=*gv.front()._SYMBptr->feuille._VECTptr,&d2=*gv.back()._SYMBptr->feuille._VECTptr;
+        int n=d1.front().val,m=d2.front().val;
+        p=vecteur(d1.begin()+1,d1.begin()+n+1);
+        q=vecteur(d2.begin()+1,d2.begin()+m+1);
+    } else return generrtype("Arguments must be discrete distributions or vectors");
+    if (p.empty() || q.empty())
+        return generr("Argument is not a probability distribution");
+    if (p.size()!=q.size())
+        return generrdim("Distribution supports are not equal");
+    gen ret(0);
+    for (it=p.begin(),jt=q.begin(),itend=p.end();it!=itend;++it,++jt) {
+        if (!is_exactly_zero(*it))
+            ret+=*it*ln(*jt,contextptr);
+    }
+    return -ret;
+}
+static const char _cross_entropy_s []="cross_entropy";
+static define_unary_function_eval (__cross_entropy,&_cross_entropy,_cross_entropy_s);
+define_unary_function_ptr5(at_cross_entropy,alias_at_cross_entropy,&__cross_entropy,0,true)
 
 #define MAX_TAILLE 500
 

@@ -88,10 +88,10 @@ gen _boxcar(const gen &g,GIAC_CONTEXT);
 gen _tri(const gen &g,GIAC_CONTEXT);
 gen _sinc(const gen &g,GIAC_CONTEXT);
 gen _ReLU(const gen &g,GIAC_CONTEXT);
-gen _swish(const gen &g,GIAC_CONTEXT);
 gen _logistic(const gen &g,GIAC_CONTEXT);
-gen _softplus(const gen &g,GIAC_CONTEXT);
-gen _softmax(const gen &g,GIAC_CONTEXT);
+gen _swish(const gen &g,GIAC_CONTEXT);
+gen _entropy(const gen &g,GIAC_CONTEXT);
+gen _cross_entropy(const gen &g,GIAC_CONTEXT);
 
 extern const unary_function_ptr * const at_createwav;
 extern const unary_function_ptr * const at_plotwav;
@@ -129,11 +129,12 @@ extern const unary_function_ptr * const at_rect;
 extern const unary_function_ptr * const at_boxcar;
 extern const unary_function_ptr * const at_tri;
 extern const unary_function_ptr * const at_sinc;
-extern const unary_function_ptr * const at_logistic;
 extern const unary_function_ptr * const at_ReLU;
-extern const unary_function_ptr * const at_softplus;
-extern const unary_function_ptr * const at_softmax;
+extern const unary_function_ptr * const at_logistic;
 extern const unary_function_ptr * const at_swish;
+extern const unary_function_ptr * const at_entropy;
+extern const unary_function_ptr * const at_cross_entropy;
+
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

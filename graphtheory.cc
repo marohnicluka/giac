@@ -574,6 +574,26 @@ static const char _foldr_s[]="foldr";
 static define_unary_function_eval(__foldr,&_foldr,_foldr_s);
 define_unary_function_ptr5(at_foldr,alias_at_foldr,&__foldr,0,true)
 
+bool is_density(const gen &g,const gen &d) {
+    if (d==at_normal)
+        return g==at_normal || g==at_normald || g==at_NORMALD || g==at_randNorm || g==at_randnormald;
+    if (d==at_uniform)
+        return g==at_uniform || g==at_uniformd;
+    if (d==at_exp)
+        return g==at_exp || g==at_exponential || g==at_exponentiald || g==at_EXP;
+    if (d==at_poisson)
+        return g==at_poisson || g==at_POISSON;
+    if (d==at_weibull)
+        return g==at_weibull || g==at_weibulld;
+    if (d==at_Gamma)
+        return g==at_Gamma || g==at_gammad;
+    if (d==at_Beta)
+        return g==at_Beta || g==at_betad;
+    if (d==at_binomial)
+        return g==at_binomial || g==at_BINOMIAL;
+    return g==d;
+}
+
 /* USAGE:   randvar(f,[params])
  *          random_variable(f,[params])
  *          randvar(f,[range=]a..b,[V])
@@ -584,11 +604,11 @@ define_unary_function_ptr5(at_foldr,alias_at_foldr,&__foldr,0,true)
 gen _randvar(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.is_symb_of_sommet(at_program) || g.type==_FUNC) {
-        if (g==at_normal || g==at_normald || g==at_NORMALD || g==at_randNorm || g==at_randnormald)
+        if (is_density(g,at_normal))
             return symbolic(at_normald,makesequence(0.0,1.0));
-        if (g==at_uniform || g==at_uniformd)
+        if (is_density(g,at_uniform))
             return symbolic(at_uniformd,makesequence(0.0,1.0));
-        if (g==at_exp || g==at_exponential || g==at_exponentiald || g==at_EXP)
+        if (is_density(g,at_exp))
             return symbolic(at_exponentiald,1.0);
         return g;
     }
@@ -604,22 +624,22 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
             }
             if (it==gv.end()) {
                 gen args=change_subtype(vecteur(gv.begin()+1,gv.end()),_SEQ__VECT);
-                if (gv.front()==at_exp) {
+                if (is_density(gv.front(),at_exp)) {
                     if (args._VECTptr->size()==1)
                         return symbolic(at_exponentiald,args._VECTptr->front());
                     return gensizeerr(contextptr);
                 }
-                if (gv.front()==at_poisson) {
+                if (is_density(gv.front(),at_poisson)) {
                     if (args._VECTptr->size()==1)
                         return symbolic(at_poisson,args._VECTptr->front());
                     return gensizeerr(contextptr);
                 }
-                if (gv.front()==at_geometric) {
+                if (is_density(gv.front(),at_geometric)) {
                     if (args._VECTptr->size()==1)
                         return symbolic(at_geometric,args._VECTptr->front());
                     return gensizeerr(contextptr);
                 }
-                if (gv.front()==at_normal) {
+                if (is_density(gv.front(),at_normal)) {
                     if (args._VECTptr->size()==2)
                         return symbolic(at_normald,args);
                     return gensizeerr(contextptr);
@@ -675,13 +695,13 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
             return generr("Standard deviation must be positive");
         if (f.type==_VECT) { // custom discrete distribution
             weights=*f._VECTptr;
-        } else if (f==at_normald || f==at_NORMALD || f==at_normal) {
+        } else if (is_density(f,at_normal)) {
             if (is_undef(mean)) mean=0;
             if (is_undef(sdev)) sdev=1;
             mean=_evalf(mean,contextptr);
             sdev=_evalf(sdev,contextptr);
             return symbolic(at_normald,makesequence(mean,sdev));
-        } else if (f==at_uniform || f==at_uniformd) {
+        } else if (is_density(f,at_uniform)) {
             if (!is_undef(a) && !is_undef(b)) {
                 if (!is_real_number(a,contextptr) || !is_real_number(b,contextptr) ||
                         !is_strictly_greater(b=to_real_number(b,contextptr),a=to_real_number(a,contextptr),contextptr))
@@ -691,7 +711,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
                 gen sqrt3=sqrt(3,contextptr);
                 return symbolic(at_uniformd,makesequence(mean-sqrt3*sdev,mean+sqrt3*sdev));
             } else return gensizeerr(contextptr);
-        } else if (f==at_poisson || f==at_POISSON) {
+        } else if (is_density(f,at_poisson)) {
             gen lambda;
             if (!is_undef(mean)) {
                 if (!is_undef(sdev) && !is_zero(_ratnormal(sq(sdev)-mean,contextptr)))
@@ -705,7 +725,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
             if (!is_strictly_positive(lambda,contextptr))
                 return generr("Invalid distribution parameter");
             return symbolic(at_poisson,lambda);
-        } else if (f==at_exp || f==at_EXP || f==at_exponential || f==at_exponentiald) {
+        } else if (is_density(f,at_exp)) {
             gen lambda;
             if (!is_undef(mean)) {
                 if (!is_undef(sdev) && !is_zero(_ratnormal(sdev-mean,contextptr)))
@@ -721,7 +741,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
             if (!is_strictly_positive(lambda,contextptr))
                 return generr("Invalid distribution parameter");
             return symbolic(at_exponentiald,lambda);
-        } else if (f==at_weibull || f==at_weibulld) {
+        } else if (is_density(f,at_weibull)) {
             if (is_undef(mean) || is_undef(sdev) || !is_strictly_positive(mean,contextptr))
                 return gensizeerr(contextptr);
             gen var=sq(sdev);
@@ -734,12 +754,12 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
             if (!is_strictly_positive(k,contextptr) || !is_strictly_positive(lambda,contextptr))
                 return generr("Invalid distribution parameter(s)");
             return symbolic(at_weibulld,makesequence(k,lambda));
-        } else if (f==at_Gamma || f==at_gammad) {
+        } else if (is_density(f,at_Gamma)) {
             if (is_undef(mean) || is_undef(sdev) || !is_strictly_positive(mean,contextptr))
                 return gensizeerr(contextptr);
             gen var=sq(sdev);
             return symbolic(at_gammad,makesequence(sq(mean)/var,mean/var));
-        } else if (f==at_Beta || f==at_betad) {
+        } else if (is_density(f,at_Beta)) {
             if (is_undef(mean) || is_undef(sdev) || !is_strictly_positive(mean,contextptr) ||
                     !is_strictly_greater(1,mean,contextptr))
                 return gensizeerr(contextptr);
@@ -748,7 +768,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
             if (!is_strictly_positive(par1,contextptr) || !is_strictly_positive(par2,contextptr))
                 return generr("Invalid distribution parameter(s)");
             return symbolic(at_betad,makesequence(par1,par2));
-        } else if (f==at_geometric) {
+        } else if (is_density(f,at_geometric)) {
             gen p;
             if (!is_undef(mean)) {
                 if (!is_strictly_positive(mean,contextptr) ||
@@ -765,13 +785,13 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
         } else if (f==at_fisher || f==at_fisherd || f==at_snedecor || f==at_chisquare || f==at_chisquared ||
                    f==at_cauchy || f==at_cauchyd || f==at_student || f==at_studentd) {
             return generr("Specifying moments is not supported for this distribution");
-        } else if (f==at_multinomial) {
+        } else if (is_density(f,at_multinomial)) {
             if (categories.empty())
                 return gensizeerr(contextptr);
             if (items.empty())
                 return makesequence(at_multinomial,categories);
             return makesequence(at_multinomial,categories,items);
-        } else if (f==at_binomial || f==at_BINOMIAL) {
+        } else if (is_density(f,at_binomial)) {
             if (is_undef(mean) || is_undef(sdev) || !is_strictly_positive(mean,contextptr) ||
                     is_zero(ratnormal(mean-sq(sdev),contextptr)))
                 return gensizeerr(contextptr);
@@ -785,7 +805,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
             if (!is_greater(p,0,contextptr) || is_strictly_greater(p,1,contextptr))
                 return generr("Invalid distribution parameter(s)");
             return symbolic(at_binomial,makesequence(N,_ratnormal(p,contextptr)));
-        } else if (f==at_negbinomial) {
+        } else if (is_density(f,at_negbinomial)) {
             if (is_undef(mean) || is_undef(sdev) || !is_strictly_positive(mean,contextptr) ||
                     is_zero(ratnormal(mean-sq(sdev),contextptr)))
                 return gensizeerr(contextptr);

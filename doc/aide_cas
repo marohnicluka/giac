@@ -5961,6 +5961,10 @@ plotcontour(x^2+y^2,[x,y])
 plotcontour(x^2+2*y^2-2,[x,y],[1.0,2.0,3.0])
 plotcontour(x^2-y^2,[x=-4..4,y=-4..4],seq(k,k,-11,11,3),xstep=0.1,ystep=0.1)
 
+# xstep ystep zstep
+2 Option for plotting commands.
+0 Opt
+
 # Circle
 1 Trace le cercle de centre (xc,yc) et de rayon r (par défaut option=1 et option=0 efface ce cercle).
 2 Draws the circle with center (xc,yc) and radius r (by default option=1 and option=0 is to remove this circle).
@@ -14782,7 +14786,7 @@ display(red+filled);square(0,1);
  F:=display(square(0,2+i),filled)
  C:=display(square(2,2+i),red+filled)
 
-# white black red green blue yellow magenta cyan
+# white black red green blue yellow magenta cyan orange purple pink grey brown
 1 Option de la commande affichage (ou display) pour afficher en couleur.
 2 Option of the display command to display with color.
 3 Opción de la instrucción display para colores.
@@ -18252,4 +18256,29 @@ vertex_cover_number(graph_complement(complete_graph(3,4)))
 -2 minimize
 -3 maximize
 box_constraints([x,y],[[-2,2],[-5,5]])
+
+# neural_network
+2 Creates a feed-forward neural network with given parameters.
+0 Vect(topology),[opts]
+-1 train
+neural_network([2,3,1])
+neural_network([2,3,1],func=logistic)
+
+# train
+2 Performs neural network training and returns the trained network.
+0 NeuralNet(net),Mtrx(input),Mtrx(expected_output),[err])
+-1 neural_network
+
+# MSE cross_entropy log_loss ReLU learning_rate weight_decay block_size adaptive momentum topology
+2 Option for the neural_network command.
+0 Opt
+-1 neural_network
+
+# logistic
+2 Returns the logistic function value L/(1+exp(-k*(x-x0))) at point x, where L=k=1 and x0=0 by default.
+0 Real(x),[Real(x0),[Real(L),[Real(k)]]]
+logistic(1.8)
+logistic(0.0,0.5,10,2)
+-1 atan
+-2 tanh
 

@@ -14,5 +14,7 @@ My contributions to [Giac/Xcas](https://www-fourier.ujf-grenoble.fr/~parisse/gia
 - ordinary differential equations (an implementation of Kovacic's algorithm and a second-degree boundary value problems solver)
 - Diophantine equations
 - K-means and hierarchical agglomerative clustering
+- feed-forward neural networks
+- feed-forward neural networks
 - LaTeX/MathML/TeXmacs conversion of Giac output
 - using Giac in TeXmacs

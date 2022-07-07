@@ -15,6 +15,5 @@ My contributions to [Giac/Xcas](https://www-fourier.ujf-grenoble.fr/~parisse/gia
 - Diophantine equations
 - K-means and hierarchical agglomerative clustering
 - feed-forward neural networks
-- feed-forward neural networks
 - LaTeX/MathML/TeXmacs conversion of Giac output
 - using Giac in TeXmacs

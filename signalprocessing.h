@@ -232,6 +232,7 @@ public:
     int output_size() const { return layer_size(layer_count()-1); }
     int hidden_layer_count() const { return layer_count()-2; }
     int neuron_count() const;
+    const std::string &name() const { return title; }
     bool is_classifier() const { return _is_classifier; }
     bool is_default_classifier() const;
     void set_error_function(const gen &f,const vecteur &params=vecteur(0));
@@ -245,7 +246,6 @@ public:
     void set_momentum(double mom);
     void set_adam_params(double b1,double b2) { beta1=b1; beta2=b2; }
     void restart_iteration();
-    void set_block_size(int bs);
     int task() const { return labels.empty()?0:(_is_classifier?1:2); }
     const gen &label(int i) const { assert(i>=0&&i<topology.back()); return labels[i]; }
     void train(const matrice &input,const vecteur &expected_output,int batch_size);

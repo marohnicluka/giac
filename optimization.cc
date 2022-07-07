@@ -6580,8 +6580,7 @@ void nlp_problem::find_best_solution(const meth_parm &parm,optima_t &res,vecteur
  * Variables are written to V, objective(s) to O and constraints to C.
  * Returns true iff successful, otherwise it returns false with message MSG. */
 bool nlp_problem::ampl_load(const std::string &filename,vecteur &v,vecteur &o,vecteur &c,string &msg,GIAC_CONTEXT) {
-    ifstream ifs;
-    ifs.open(filename);
+    ifstream ifs(filename.c_str());
     if (!ifs.is_open()) {
         msg=gettext("AMPL parser: failed to open file for reading");
         return false; // failed to open file
@@ -7112,7 +7111,7 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
     default: // not implemented
         break;
     }
-    assert(false);
+    return undef; // should not be reachable
 }
 static const char _nlpsolve_s []="nlpsolve";
 static define_unary_function_eval (__nlpsolve,&_nlpsolve,_nlpsolve_s);
@@ -11366,7 +11365,7 @@ double hclust::formula(int a,int b,int x,int na,int nb,int nx,double dab,int met
     default:
         break;
     }
-    assert(false); // bad linkage method
+    return giac::nan(); // should not be reachable
 }
 int hclust::k_low(const dendrogram &dg) {
     double dprev=0,max_step=-1,d;
@@ -11807,7 +11806,7 @@ gen clustering_result(const vecteur &data,int NP,int p,int out_what,int k,int di
     default:
         break;
     }
-    assert(false);
+    return undef; // should not be reachable
 }
 
 gen _kmeans(const gen &g,GIAC_CONTEXT) {

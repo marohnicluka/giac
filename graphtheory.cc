@@ -70,7 +70,7 @@ static const char *gt_error_messages[] = {
     "Wrong number of arguments",                                        // 28
     "Positive integer required",                                        // 29
     "Invalid vertex specification",                                     // 30
-    "Expected an unassigned identifier",                                // 31
+    "Expected an identifier",                                           // 31
 };
 
 gen gt_err(int code) {
@@ -274,13 +274,21 @@ bool parse_edge_with_weight(graphe &G,const vecteur &E) {
         return false;
     const vecteur &e=*E.front()._VECTptr;
     const gen &w=E.back();
-    if (e.size()!=2)
+    if (e.size()!=2 || e.front()==e.back())
         return false;
-    if (!G.is_weighted())
-        G.set_weighted(true);
-    if (e.front()==e.back())
-        return false;
-    G.add_edge(e.front(),e.back(),w);
+    if (w.type==_MAP) { // a map of attributes is given instead of a weight
+        graphe::attrib a;
+        for (gen_map::const_iterator it=w._MAPptr->begin();it!=w._MAPptr->end();++it) {
+            if (it->first.type!=_STRNG)
+                return false;
+            a[G.tag2index(*it->first._STRNGptr)]=it->second;
+        }
+        G.add_edge(e.front(),e.back(),a);
+    } else {
+        if (!G.is_weighted())
+            G.set_weighted(true);
+        G.add_edge(e.front(),e.back(),w);
+    }
     return true;
 }
 
@@ -935,23 +943,26 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
         const vecteur &args=*g._VECTptr;
         int nargs=args.size(),n=nargs-1;
         // parse options first
-        bool weighted=false,size_err;
+        bool size_err;
         while(is_equal(args[n])) {
             const vecteur &sides=*args[n]._SYMBptr->feuille._VECTptr;
-            if (!sides.front().is_integer())
-                return generr("Unrecognized option");
-            switch(sides.front().val) {
-            case _GT_DIRECTED:
-                if (!sides.back().is_integer())
-                    return generr("Option value not supported");
-                G.set_directed((bool)sides.back().val);
-                break;
-            case _GT_WEIGHTED:
-                if (!sides.back().is_integer())
-                    return generr("Option value not supported");
-                weighted=(bool)sides.back().val;
-                break;
-            }
+            if (sides.front().is_integer() && sides.front().subtype!=_INT_MAPLECONVERSION) {
+                switch(sides.front().val) {
+                case _GT_DIRECTED:
+                    if (!sides.back().is_integer())
+                        return generr("Option value not supported");
+                    G.set_directed((bool)sides.back().val);
+                    break;
+                case _GT_WEIGHTED:
+                    if (!sides.back().is_integer())
+                        return generr("Option value not supported");
+                    G.set_weighted((bool)sides.back().val);
+                    break;
+                }
+            } else if (sides.front().type==_STRNG) {
+                // graph attribute is given
+                G.set_graph_attribute(G.tag2index(*sides.front()._STRNGptr),sides.back());
+            } else return generr("Unknown option");
             n--;
         }
         // parse other arguments
@@ -962,7 +973,7 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
                 matrice &m=*arg._VECTptr;
                 if (!G.is_directed() && m!=mtran(m))
                     return gt_err(_GT_ERR_MATRIX_NOT_SYMMETRIC);
-                if (!parse_matrix(G,m,i==2 || weighted,i,size_err))
+                if (!parse_matrix(G,m,i==2 || G.is_weighted(),i,size_err))
                     return size_err?generrdim("Bad matrix size"):generrtype("Failed to parse matrix");
             } else if (i==0 && arg.is_integer()) {
                 int nv=arg.val;
@@ -973,23 +984,25 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
                 G.add_nodes(V);
             } else if (i<2 && arg.type==_VECT) {
                 int permu_size;
+                graphe::ivector permu_int;
                 const vecteur &argv=*arg._VECTptr;
                 if (arg.subtype==_SET__VECT) {
                     // set of edges
                     int addc=0;
                     if (!parse_edges(G,argv,true,addc))
                         return generrtype("Failed to parse edges");
-                } else if (i==1 && !is_zero(_is_permu(arg,contextptr)) &&
-                           (permu_size=argv.size())>0) {
+                } else if (i==1 && is_permu(argv,permu_int,contextptr) && (permu_size=argv.size())>0) {
                     if (permu_size!=G.node_count())
                         return generr("Permutation size does not match the number of vertices");
                     // directed cycle
                     G.set_directed(true);
                     int offset=array_start(contextptr);
-                    for (const_iterateur it=argv.begin();it!=argv.end()-1;++it) {
-                        G.add_edge(it->val-offset,(it+1)->val-offset);
+                    graphe::ivector_iter it=permu_int.begin(),itend=permu_int.end();
+                    for (;it!=itend;++it) {
+                        if (it+1==itend)
+                            G.add_edge(*it-offset,permu_int.front()-offset);
+                        else G.add_edge(*it-offset,*(it+1)-offset);
                     }
-                    G.add_edge(argv.back().val-offset,argv.front().val-offset);
                 } else if (i==0) // list of vertices
                     G.add_nodes(argv);
                 else return gentypeerr(contextptr);
@@ -1000,7 +1013,7 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
                 // option
                 const gen &lh=arg._SYMBptr->feuille._VECTptr->front();
                 const gen &rh=arg._SYMBptr->feuille._VECTptr->back();
-                if (lh.is_integer()) {
+                if (lh.is_integer() && lh.subtype==_INT_PLOT) {
                     switch(lh.val) {
                     case _COLOR:
                         // vertex colors are given
@@ -1829,7 +1842,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
         for (const_iterateur it=g._VECTptr->begin()+1;it!=g._VECTptr->end();++it) {
             opt_counter++;
             const gen &opt=*it;
-            if (is_unassigned_identifier(opt,contextptr)) {
+            if (opt.type==_IDNT) {
                 coords_dest=opt;
                 opt_counter--;
             } else if (is_equal(opt)) {
@@ -3711,7 +3724,7 @@ gen _is_regular(const gen &g,GIAC_CONTEXT) {
         if (arg.is_integer()) {
             if ((d=arg.val)<0)
                 return generr("Expected a nonnegative integer");
-        } else if (!is_unassigned_identifier(arg,contextptr))
+        } else if (arg.type!=_IDNT)
             return gentypeerr(contextptr);
     }
     dd=G->is_regular(d);
@@ -3735,7 +3748,7 @@ gen _is_strongly_regular(const gen &g,GIAC_CONTEXT) {
     if (is_seq_vect(g)) {
         if (g._VECTptr->size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-        if (!is_unassigned_identifier(srg=g._VECTptr->back(),contextptr))
+        if ((srg=g._VECTptr->back()).type!=_IDNT)
             return gt_err(_GT_ERR_UNASSIGNED_IDENTIFIER_EXPECTED);
     }
     graphe *G=graphe::from_gen(is_seq_vect(g)?g._VECTptr->front():g);
@@ -3966,7 +3979,7 @@ gen _number_of_triangles(const gen &g,GIAC_CONTEXT) {
         if (g._VECTptr->size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         dest=g._VECTptr->back();
-        if (!is_unassigned_identifier(dest,contextptr))
+        if (dest.type!=_IDNT)
             return gt_err(_GT_ERR_UNASSIGNED_IDENTIFIER_EXPECTED);
     }
     graphe *G=graphe::from_gen(is_seq_vect(g)?g._VECTptr->front():g);
@@ -4077,7 +4090,7 @@ gen _is_planar(const gen &g,GIAC_CONTEXT) {
     if (is_seq_vect(g)) {
         if (g._VECTptr->size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-        if (!is_unassigned_identifier(g._VECTptr->back(),contextptr))
+        if (g._VECTptr->back().type!=_IDNT)
             return gt_err(_GT_ERR_UNASSIGNED_IDENTIFIER_EXPECTED);
         F=g._VECTptr->back();
     }
@@ -4504,7 +4517,7 @@ gen _is_eulerian(const gen &g,GIAC_CONTEXT) {
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         // output path as vecteur V
         gen V=g._VECTptr->back();
-        if (!is_unassigned_identifier(V,contextptr))
+        if (V.type!=_IDNT)
             return gt_err(_GT_ERR_UNASSIGNED_IDENTIFIER_EXPECTED);
         vecteur P(path.size());
         int i=0;
@@ -6131,7 +6144,7 @@ gen _st_ordering(const gen &g,GIAC_CONTEXT) {
     else G->parametrized_st_orientation(s,t,p);
     vecteur st=G->get_st_numbering();
     if ((gv.size()==4 && p<0) || (gv.size()==5 && p>=0)) {
-        if (!is_unassigned_identifier(gv[3],contextptr))
+        if (gv[3].type!=_IDNT)
             return gt_err(_GT_ERR_UNASSIGNED_IDENTIFIER_EXPECTED);
         G->assign_edge_directions_from_st();
         identifier_assign(*gv[3]._IDNTptr,*G,contextptr);
@@ -6191,7 +6204,7 @@ gen _is_bipartite(const gen &g,GIAC_CONTEXT) {
     if (is_seq_vect(g)) {
         if (g._VECTptr->size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
-        if (!is_unassigned_identifier(P=g._VECTptr->back(),contextptr))
+        if ((P=g._VECTptr->back()).type!=_IDNT)
             return gt_err(_GT_ERR_UNASSIGNED_IDENTIFIER_EXPECTED);
     }
     graphe *G=graphe::from_gen(is_seq_vect(g)?g._VECTptr->front():g);
@@ -6275,7 +6288,7 @@ gen _is_vertex_colorable(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
     gen colors_dest=undef;
     if (gv.size()>2) {
-        if (!is_unassigned_identifier(gv.back(),contextptr))
+        if (gv.back().type!=_IDNT)
             return gt_err(_GT_ERR_UNASSIGNED_IDENTIFIER_EXPECTED);
         colors_dest=gv.back();
     }
@@ -6346,7 +6359,7 @@ gen _find_cliques(const gen &g,GIAC_CONTEXT) {
     gen dest(undef);
     if (is_seq_vect(g)) {
         int len=g._VECTptr->size();
-        if (is_unassigned_identifier(g._VECTptr->back(),contextptr)) {
+        if (g._VECTptr->back().type==_IDNT) {
             dest=g._VECTptr->back();
             --len;
         }
@@ -6521,7 +6534,7 @@ gen _is_isomorphic(const gen &g,GIAC_CONTEXT) {
     if (G1->is_directed()!=G2->is_directed() || G1->node_count()!=G2->node_count())
         return graphe::FAUX;
     if (gv.size()>2) {
-        if (!is_unassigned_identifier(isom=gv.back(),contextptr))
+        if ((isom=gv.back()).type!=_IDNT)
             return gt_err(_GT_ERR_UNASSIGNED_IDENTIFIER_EXPECTED);
     }
     map<int,int> clab;
@@ -6561,9 +6574,9 @@ gen _is_subgraph_isomorphic(const gen &g,GIAC_CONTEXT) {
     if (G1->is_directed()!=G2->is_directed())
         return generr("Both graphs must be (un)directed");
     for (const_iterateur it=gv.begin()+2;it!=gv.end();++it) {
-        if (is_unassigned_identifier(*it,contextptr))
+        if (it->type==_IDNT)
             S=*it;
-        if (*it==at_induced_subgraph)
+        else if (*it==at_induced_subgraph)
             induced=true;
     }
     if (G1->node_count()>G2->node_count() || G1->edge_count()>G2->edge_count())
@@ -6766,7 +6779,7 @@ gen _is_hamiltonian(const gen &g,GIAC_CONTEXT) {
         if (g._VECTptr->size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         dest=g._VECTptr->back();
-        if (!is_unassigned_identifier(dest,contextptr))
+        if (dest.type!=_IDNT)
             return gt_err(_GT_ERR_UNASSIGNED_IDENTIFIER_EXPECTED);
     }
     graphe *G=graphe::from_gen(is_seq_vect(g)?g._VECTptr->front():g);
@@ -6980,7 +6993,7 @@ gen _maxflow(const gen &g,GIAC_CONTEXT) {
     gen M(undef);
     if (gv.size()==4) {
         M=gv[3];
-        if (!is_unassigned_identifier(M,contextptr))
+        if (M.type!=_IDNT)
             return gt_err(_GT_ERR_UNASSIGNED_IDENTIFIER_EXPECTED);
     }
     graphe *G=graphe::from_gen(gv.front());

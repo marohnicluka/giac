@@ -24,6 +24,9 @@
 #include "first.h"
 #include "gen.h"
 #include "unary.h"
+#ifdef HAVE_LIBGSL
+#include <gsl/gsl_linalg.h>
+#endif
 
 #ifndef NO_NAMESPACE_GIAC
 namespace giac {
@@ -32,6 +35,41 @@ namespace giac {
 enum filter_type {
     _LOWPASS_FILTER,
     _HIGHPASS_FILTER
+};
+
+enum FourierFuncType {
+    _FOURIER_FUNCTYPE_UNKNOWN       =0,
+    _FOURIER_FUNCTYPE_ONE           =1,
+    _FOURIER_FUNCTYPE_DIRAC         =2,
+    _FOURIER_FUNCTYPE_INV_MONOM     =3,
+    _FOURIER_FUNCTYPE_GAUSSIAN      =4,
+    _FOURIER_FUNCTYPE_LOGABSX       =5,
+    _FOURIER_FUNCTYPE_BESSELJ       =6,
+    _FOURIER_FUNCTYPE_SGN           =7,
+    _FOURIER_FUNCTYPE_ABSX_ALPHA    =8,
+    _FOURIER_FUNCTYPE_INVABSX       =9,
+    _FOURIER_FUNCTYPE_GAMMA         =10,
+    _FOURIER_FUNCTYPE_EXPEXP        =11,
+    _FOURIER_FUNCTYPE_AIRY_AI       =12,
+    _FOURIER_FUNCTYPE_EXP_HEAVISIDE =13,
+    _FOURIER_FUNCTYPE_HEAVISIDE     =14,
+    _FOURIER_FUNCTYPE_ATAN_OVERX    =15,
+    _FOURIER_FUNCTYPE_EXPABSX       =16,
+    _FOURIER_FUNCTYPE_EXPABSX_OVERX =17,
+    _FOURIER_FUNCTYPE_COSECH        =18,
+    _FOURIER_FUNCTYPE_SECH          =19,
+    _FOURIER_FUNCTYPE_SECH_2        =20,
+    _FOURIER_FUNCTYPE_CONVOLUTION   =21,
+    _FOURIER_FUNCTYPE_PIECEWISE     =22,
+    _FOURIER_FUNCTYPE_FUNC          =23,
+    _FOURIER_FUNCTYPE_DIFF          =24,
+    _FOURIER_FUNCTYPE_PARTIAL_DIFF  =25
+};
+
+enum ann_activation_function {
+    _ANN_LINEAR     =1,
+    _ANN_SIGMOID    =2,
+    _ANN_TANH       =3
 };
 
 bool is_sound_data(const gen &g,int &nc,int &bd,int &sr,int &len);
@@ -87,11 +125,9 @@ gen _rect(const gen &g,GIAC_CONTEXT);
 gen _boxcar(const gen &g,GIAC_CONTEXT);
 gen _tri(const gen &g,GIAC_CONTEXT);
 gen _sinc(const gen &g,GIAC_CONTEXT);
-gen _ReLU(const gen &g,GIAC_CONTEXT);
 gen _logistic(const gen &g,GIAC_CONTEXT);
-gen _swish(const gen &g,GIAC_CONTEXT);
-gen _entropy(const gen &g,GIAC_CONTEXT);
-gen _cross_entropy(const gen &g,GIAC_CONTEXT);
+gen _neural_network(const gen &g,GIAC_CONTEXT);
+gen _train(const gen &g,GIAC_CONTEXT);
 
 extern const unary_function_ptr * const at_createwav;
 extern const unary_function_ptr * const at_plotwav;
@@ -129,12 +165,92 @@ extern const unary_function_ptr * const at_rect;
 extern const unary_function_ptr * const at_boxcar;
 extern const unary_function_ptr * const at_tri;
 extern const unary_function_ptr * const at_sinc;
-extern const unary_function_ptr * const at_ReLU;
 extern const unary_function_ptr * const at_logistic;
-extern const unary_function_ptr * const at_swish;
-extern const unary_function_ptr * const at_entropy;
-extern const unary_function_ptr * const at_cross_entropy;
+extern const unary_function_ptr * const at_neural_network;
+extern const unary_function_ptr * const at_train;
 
+/* Neural network class */
+#ifdef HAVE_LIBGSL
+class ann : public gen_user {
+    std::vector<int> topology;
+    std::vector<gsl_matrix*> layers;
+    std::vector<gsl_matrix*> cache;
+    std::vector<gsl_matrix*> deltas;
+    std::vector<gsl_matrix*> weights;
+    std::vector<gsl_matrix*> Deltas;
+    std::vector<gsl_matrix*> moment1;
+    std::vector<gsl_matrix*> moment2;
+    const context *ctx;
+    int block_size,iter,accum_count;
+    double learning_rate,eps,momentum,beta1,beta2;
+    gen x,schedule;
+    vecteur y,t,fan,labels,activation,output_activation,errfunc;
+    bool _is_classifier;
+    gsl_vector *reg_coeff;
+    gsl_matrix *eout;
+    std::string title;
+    void create();
+    void assign(const ann &other,int bs);
+    void deallocate();
+    void propagate_forward() const;
+    void propagate_backward();
+    void calc_deltas() const;
+    void update_Deltas();
+    void update_weights();
+    double activate(bool deriv,int i,double &a) const;
+    gen compute_errfunc(gsl_vector *t,gsl_vector *y) const;
+    void compute_errfunc_diff(gsl_matrix *t,gsl_matrix *y,gsl_matrix *res) const;
+    void ckinput(const matrice &input,const vecteur &output,bool ignore_output) const;
+    void output2gsl_matrix(const vecteur &output,int i0,int n,gsl_matrix *m) const;
+    gen gsl_vector2output(gsl_vector *output) const;
+    void feed(const matrice &input,vecteur &res,const matrice &expected_output=vecteur(0)) const;
+    std::string network_type() const;
+    void weights2vecteur(vecteur &res) const;
+public:
+    ann(const std::vector<int> &topology,int bsize,GIAC_CONTEXT);
+    ann(const ann &other);
+    ann(const ann &other,int bs);
+    ann &operator=(const ann &other);
+    static ann *from_gen(const gen &g);
+    // reimplemented from gen_user
+    virtual ~ann() { deallocate(); }
+    virtual std::string print (GIAC_CONTEXT) const;
+    virtual std::string texprint (GIAC_CONTEXT) const;
+    virtual gen giac_constructor (GIAC_CONTEXT) const;
+    virtual bool operator ==(const gen &) const;
+    virtual gen_user *memory_alloc() const { return new ann(*this); }
+    virtual gen operator()(const gen &,GIAC_CONTEXT) const;
+    virtual gen operator[](const gen &);
+    // methods
+    gsl_matrix *const layer(int i) const { assert(i>=0&&i<layer_count()); return layers[i]; }
+    gsl_matrix *const weight_matrix(int i) const { assert(i>=0&&i<layer_count()-1); return weights[i]; }
+    gsl_matrix *const weight_updates(int i) const { assert(i>=0&&i<layer_count()-1); return Deltas[i]; }
+    vecteur layout() const { return vector_int_2_vecteur(topology); }
+    int layer_count() const { return topology.size(); }
+    int layer_size(int i) const { assert(i>=0&&i<layer_count()); return topology[i]; }
+    int input_size() const { return layer_size(0); }
+    int output_size() const { return layer_size(layer_count()-1); }
+    int hidden_layer_count() const { return layer_count()-2; }
+    int neuron_count() const;
+    bool is_classifier() const { return _is_classifier; }
+    bool is_default_classifier() const;
+    void set_error_function(const gen &f,const vecteur &params=vecteur(0));
+    void set_activation(bool out,const gen &f,const vecteur &params=vecteur(0));
+    void set_regularization(const vecteur &reg) const;
+    void randomize_initial_weights(const gen &f,const vecteur &fan_in_out) const;
+    void set_initial_weights(const matrice &w,int i=0) const;
+    void set_labels(const vecteur &lab,bool classes=false);
+    void set_name(const std::string &name) { title=name; }
+    void set_learning_rate(double lr,const gen &sched) { learning_rate=lr; schedule=sched; }
+    void set_momentum(double mom);
+    void set_adam_params(double b1,double b2) { beta1=b1; beta2=b2; }
+    void restart_iteration();
+    void set_block_size(int bs);
+    int task() const { return labels.empty()?0:(_is_classifier?1:2); }
+    const gen &label(int i) const { assert(i>=0&&i<topology.back()); return labels[i]; }
+    void train(const matrice &input,const vecteur &expected_output,int batch_size);
+};
+#endif
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

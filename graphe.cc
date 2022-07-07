@@ -2511,22 +2511,11 @@ void graphe::complement(graphe &G,int sg) const {
     }
 }
 
-/* read contents of gen_map and write it to attrib */
-bool graphe::genmap2attrib(const gen_map &m,attrib &attr) {
-    attr.clear();
-    for (gen_map::const_iterator it=m.begin();it!=m.end();++it) {
-        if (!it->first.is_integer())
-            return false;
-        attr.insert(make_pair(it->first.val,it->second));
-    }
-    return true;
-}
-
 /* convert attrib to gen_map */
-void graphe::attrib2genmap(const attrib &attr, gen_map &m) {
+void graphe::attrib2genmap(const attrib &attr, gen_map &m,bool keys2tags) const {
     m.clear();
     for (attrib_iter it=attr.begin();it!=attr.end();++it) {
-        m[it->first]=it->second;
+        m[keys2tags?string2gen(index2tag(it->first),false):gen(it->first)]=it->second;
     }
 }
 
@@ -2785,6 +2774,22 @@ int graphe::add_node() {
 /* add vertex v to the graph */
 int graphe::add_node(const gen &v,const attrib &attr) {
     assert(supports_attributes());
+    if (v.type==_MAP) {
+        attrib a;
+        gen lab(undef);
+        int i;
+        for (gen_map::const_iterator it=v._MAPptr->begin();it!=v._MAPptr->end();++it) {
+            if (it->first.type!=_STRNG)
+                continue;
+            i=tag2index(*it->first._STRNGptr);
+            if (i==_GT_ATTRIB_LABEL)
+                lab=it->second;
+            else a[i]=it->second;
+        }
+        if (is_undef(lab))
+            return -1; // error
+        return add_node(lab,a);
+    }
     node_iter it=nodes.begin(),itend=nodes.end();
     for (;it!=itend;++it) {
         if (it->label()==v)
@@ -2797,17 +2802,16 @@ int graphe::add_node(const gen &v,const attrib &attr) {
 /* add vertices from list v to the graph */
 void graphe::add_nodes(const vecteur &v) {
     assert(supports_attributes());
-    for (const_iterateur it=v.begin();it!=v.end();++it) {
+    const_iterateur it=v.begin(),itend=v.end();
+    for (;it!=itend;++it)
         add_node(*it);
-    }
 }
 
 /* adds n new nodes to the graph */
 void graphe::add_nodes(int n) {
     assert(!supports_attributes());
-    for (int i=0;i<n;++i) {
+    for (int i=0;i<n;++i)
         nodes.push_back(vertex(false));
-    }
 }
 
 /* remove all nodes with indices from V */
@@ -14289,7 +14293,7 @@ int graphe::mvc_solver::solve(ivector &cover,int k,int tm_lim,double gap_tol,boo
     default:
         break;
     }
-    assert(false);
+    return -1; // should not be reachable
 }
 
 void graphe::mvc_solver::find_mirrors(int v) {
@@ -15796,6 +15800,39 @@ string graphe::texprint(GIAC_CONTEXT) const {
     return ret;
 }
 
+/* Return the giac command (as string) which creates this graph.
+ * This is required for saving sessions in Xcas. */
+gen graphe::giac_constructor(GIAC_CONTEXT) const {
+    vecteur V,E,A;
+    V.reserve(node_count());
+    E.reserve(edge_count());
+    node_iter it=nodes.begin(),itend=nodes.end();
+    ivector_iter jt,jtend;
+    for (;it!=itend;++it) {
+        gen_map vm;
+        attrib2genmap(it->attributes(),vm,true);
+        V.push_back(vm);
+        jt=it->neighbors().begin(),jtend=it->neighbors().end();
+        for (;jt!=jtend;++jt) {
+            gen_map em;
+            attrib2genmap(it->neighbor_attributes(*jt),em,true);
+            E.push_back(makevecteur(makevecteur(it->label(),node(*jt).label()),em));
+        }
+    }
+    vecteur args=makevecteur(V,change_subtype(E,_SET__VECT));
+    for (attrib_iter kt=attributes.begin();kt!=attributes.end();++kt)
+        args.push_back(symb_equal(string2gen(index2tag(kt->first),false),kt->second));
+    return symbolic(at_graph,change_subtype(args,_SEQ__VECT));
+}
+
+/* Return true iff the othe graph is equal to this graph. */
+bool graphe::operator ==(const gen &g) const {
+    graphe *other=from_gen(g);
+    if (other==NULL)
+        return false;
+    return this->is_equal(*other);
+}
+
 /* Return the pointer to the graph contained in G.
  * Return true if G contains a graph, otherwise return false. */
 graphe *graphe::from_gen(const gen &g) {
@@ -16222,258 +16259,6 @@ const graphe::spcgraph graphe::special_graph[] = {
     {"wong", 30, 75},
     {"", 0, 0} // termination entry
 };
-
-/*
- * ANN CLASS IMPLEMENTATION (Artificial Neural Networks)
- * - A simple feedforward neural network (multilayer perceptron) implementation
- * - Adapted from https://www.geeksforgeeks.org/ml-neural-network-implementation-in-c-from-scratch/
- */
-#if 0
-#ifdef HAVE_LIBGSL
-/* Constructors. */
-ann::ann(const vector<int> &topology,double learning_rate,GIAC_CONTEXT) {
-    ctx=contextptr;
-    x=identificateur(" nn_x");
-    _purge(x,ctx);
-    this->rng=gsl_rng_alloc(gsl_rng_default);
-    if (topology.size()<2)
-        throw std::invalid_argument(gettext("Neural network must have at least 2 layers"));
-    if (!create(topology,learning_rate,true))
-        throw std::bad_alloc();
-}
-ann::ann(const ann &other) {
-    this->rng=gsl_rng_alloc(gsl_rng_default);
-    assign(other);
-}
-/* Assign OTHER to this network. */
-ann &ann::operator=(const ann &other) {
-    deallocate();
-    neuron_layers.clear();
-    cache_layers.clear();
-    deltas.clear();
-    weights.clear();
-    assign(other);
-    return *this;
-}
-void ann::assign(const ann &other) {
-    ctx=other.ctx;
-    if (!create(other.topology,other.learning_rate,false))
-        throw std::bad_alloc();
-    int lc=layer_count(),i;
-    for (i=0;i<lc;++i) {
-        gsl_vector_memcpy(this->neuron_layers[i],other.neuron_layers[i]);
-        gsl_vector_memcpy(this->cache_layers[i],other.cache_layers[i]);
-        gsl_vector_memcpy(this->deltas[i],other.deltas[i]);
-        if (i>0)
-            gsl_matrix_memcpy(this->weights[i-1],other.weights[i-1]);
-    }
-}
-bool ann::create(const vector<int> &topology,double learning_rate,bool init) {
-    this->topology=topology;
-    this->learning_rate=learning_rate;
-    gsl_rng_env_setup();
-    this->output_tmp=gsl_vector_alloc(topology.back());
-    if (output_tmp==NULL) return false;
-    int lc=layer_count(),ti,tip,j;
-    for (int i=0;i<lc;++i) {
-        ti=topology[i];
-        neuron_layers.push_back(gsl_vector_alloc(ti+(i==lc-1?0:1)));
-        if (neuron_layers.back()==NULL) return false;
-        cache_layers.push_back(gsl_vector_alloc(neuron_layers.back()->size));
-        if (cache_layers.back()==NULL) return false;
-        deltas.push_back(gsl_vector_alloc(neuron_layers.back()->size));
-        if (deltas.back()==NULL) return false;
-        if (init && i!=lc-1) { // initialize bias neurons
-            gsl_vector_set(neuron_layers.back(),ti,1.0);
-            gsl_vector_set(cache_layers.back(),ti,1.0);
-        }
-        if (i>0) {
-            tip=topology[i-1];
-            weights.push_back(gsl_matrix_alloc(tip+1,ti+(i!=lc-1?1:0)));
-            if (weights.back()==NULL) return false;
-            /*
-            if (init) { // initialize weights
-                set_random(weights.back());
-                if (i!=lc-1) for (j=0;j<=tip;++j)
-                    gsl_matrix_set(weights.back(),j,ti,j==tip?1.0:0.0);
-            }
-            */
-        }
-    }
-    return true;
-}
-/* Free all GSL array data in the network. */
-void ann::deallocate() {
-    gsl_vector_free(output_tmp);
-    vector<gsl_vector*>::const_iterator it,itend;
-    vector<gsl_matrix*>::const_iterator jt,jtend;
-    for (it=neuron_layers.begin(),itend=neuron_layers.end();it!=itend;++it)
-        gsl_vector_free(*it);
-    for (it=cache_layers.begin(),itend=cache_layers.end();it!=itend;++it)
-        gsl_vector_free(*it);
-    for (it=deltas.begin(),itend=deltas.end();it!=itend;++it)
-        gsl_vector_free(*it);
-    for (jt=weights.begin(),jtend=weights.end();jt!=jtend;++jt)
-        gsl_matrix_free(*jt);
-}
-/* Destructor. */
-ann::~ann() {
-    deallocate();
-    gsl_rng_free(rng);
-    if (x.type==_IDNT)
-        _purge(x,ctx);
-}
-/* Generate a uniform random number between 0 and WIDTH. */
-double ann::rnd_unif(double width) const {
-    return gsl_rng_uniform(rng)*width;
-}
-/* Generate a normally distributed random variable with standard
- * deviation SIGMA and mean zero. */
-double ann::rnd_norm(double sigma) const {
-    return gsl_ran_gaussian(rng,sigma);
-}
-/* Create symbol Xij from X = NAME and integers I and J. */
-gen ann::tempvar(const string &name,int i,int j) {
-    gen ret=identificateur(" "+name+print_INT_(i)+print_INT_(j));
-    _purge(ret,contextptr);
-    return ret;
-}
-/* Set activation function for LAYER. If LAYER=-1, sets for all hidden neurons. */
-void ann::set_activation(int layer,const gen &f,const vecteur &params,bool is_vector_func) {
-    vecteur vars;
-    if (is_vector_func) for (int j=0;j<topology[layer];++j) vars.push_back(tempvar("x",layer,j));
-    gen res,act;
-    switch (f.type) {
-    case _FUNC:
-        if (is_vector_func) {
-            res=_simplify(f(gen(mergevecteur(vecteur(1,vars),params),_SEQ__VECT),ctx),ctx);
-            if (res.type!=_VECT || (int)res._VECTptr->size()!=topology[layer])
-                return std::invalid_argument(gettext("Vector function must return a vector of the same size as input"));
-            act=_unapply(gen(mergevecteur(vecteur(1,res),vars),_SEQ__VECT),ctx);
-        } else {
-
-        }
-    }
-}
-/* Apply activation function. */
-double ann::activate(int i,int j,bool deriv) const {
-    map<int,vecteur>::const_iterator it;
-    const gen &f=((it=layer_activation.find(i))!=layer_activation.end()?it->second?
-                  (i==(layer_count()-1?output_activation:hidden_activation)))->at(deriv?1:0);
-    double *xij=gsl_vector_ptr(deriv?cache_layers[i]:neuron_layers[i],j);
-    if (f.type==_VECT) { // f is a vector function
-        assert(f._VECTptr->size()==1);
-        const gen &F=f._VECTptr->front();
-        vecteur xi=gsl_vector2vecteur(deriv?cache_layers[i]:neuron_layers[i]);
-        if (i!=layer_count()-1)
-            xi.pop_back();
-        vecteur fi=*F(gen(xi._SEQ__VECT),ctx)._VECTptr;
-        if (deriv)
-            return fi[j].to_double(ctx);
-        *xij=fi[j].to_double(ctx);
-    } else {
-        if (deriv)
-            return f(*xij,ctx).to_double(ctx);
-        *xij=f(*xij,ctx).to_double(ctx);
-    }
-    return 0; // dummy
-}
-/* Propagate the input forward through the network. */
-void ann::propagate_forward(gsl_vector *input) {
-    assert(input->size+1==neuron_layers.front()->size);
-    int lc=layer_count(),n=input->size,i,j,ti;
-    gsl_vector *nli;
-    for (i=0;i<n;++i)
-        gsl_vector_set(neuron_layers.front(),i,gsl_vector_get(input,i));
-    for (i=1;i<lc;++i) {
-        gsl_blas_dgemv(CblasTrans,1.0,weights[i-1],neuron_layers[i-1],0.0,neuron_layers[i]);
-        gsl_vector_memcpy(cache_layers[i],neuron_layers[i]);
-        for (j=0;j<topology[i];++j)
-            activate(i,j,false);
-    }
-}
-/* Calculate the errors made by neurons. */
-void ann::calc_errors(gsl_vector *output) {
-    gsl_vector_sub(output,neuron_layers.back());
-    gsl_vector_memcpy(deltas.back(),output);
-    int lc=layer_count(),i;
-    for (i=lc-2;i>0;--i)
-        gsl_blas_dgemv(CblasNoTrans,1.0,weights[i],deltas[i+1],0,deltas[i]);
-}
-/* Update weights. */
-void ann::update_weights() {
-    size_t i,r,c;
-    for (i=0;i<weights.size();++i) {
-        size_t len=weights[i]->size2-(i+2!=topology.size()?1:0);
-        for (c=0;c<len;++c) {
-            for (r=0;r<weights[i]->size1;++r)
-                (*gsl_matrix_ptr(weights[i],r,c))+=
-                    learning_rate*gsl_vector_get(deltas[i+1],c)*activate(i+1,c,true)*gsl_vector_get(neuron_layers[i],r);
-        }
-    }
-}
-/* Backward propagation of the expected output. */
-void ann::propagate_backward(gsl_vector *output) {
-    calc_errors(output);
-    update_weights();
-}
-/* One-sample network training. */
-double ann::train(gsl_vector *input,gsl_vector *output) {
-    assert(input!=NULL && output!=NULL);
-    gsl_vector_memcpy(output_tmp,output);
-    propagate_forward(input);
-    propagate_backward(output_tmp);
-    // return the MSE
-    return gsl_blas_dnrm2(deltas.back())/std::sqrt((double)deltas.back()->size);
-}
-/* Feed INPUT forward through the network and copy the output layer to OUTPUT. */
-void ann::feed(gsl_vector *input,gsl_vector *output) {
-    assert(input!=NULL);
-    propagate_forward(input);
-    if (output!=NULL) {
-        assert(output->size==neuron_layers.back()->size);
-        gsl_vector_memcpy(output,neuron_layers.back());
-    }
-}
-/* Copy the neurons in the i-th layer (including the bias
- * neuron, which is the last one) to LAYER. Here i>=1. */
-void ann::get_layer(int i,gsl_vector *layer) const {
-    int lc=topology.size();
-    assert(i>0 && i<lc && layer!=NULL && (int)layer->size==topology[i]);
-    gsl_vector_memcpy(layer,neuron_layers[i]);
-}
-/* Return the total number of neurons (including bias neurons). */
-int ann::neuron_count() const {
-    int s=0;
-    for (vector<int>::const_iterator it=topology.begin();it!=topology.end();++it)
-        s+=*it;
-    return s+layer_count()-1;
-}
-string ann::print (GIAC_CONTEXT) const {
-    stringstream ss;
-    ss << gettext("a neural network with") << " "
-       << neuron_count() << " " << gettext("neurons in") << " "
-       << layer_count() << " " << gettext("layers");
-    return ss.str();
-}
-string ann::texprint(GIAC_CONTEXT) const {
-    string ret="\\text{";
-    ret+=print(contextptr);
-    ret+="}";
-    return ret;
-}
-/* Return the pointer to the neural network contained in G.
- * The return value is NULL if G is not a neural network. */
-ann *ann::from_gen(const gen &g) {
-    if (g.type!=_USER)
-        return NULL;
-    return dynamic_cast<ann*>(g._USERptr);
-}
-#endif
-#endif
-/*
- * END OF ANN CLASS IMPLEMENTATION
- */
 
 #ifndef NO_NAMESPACE_GIAC
 }

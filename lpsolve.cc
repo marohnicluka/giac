@@ -40,7 +40,7 @@ namespace giac {
  */
 bool is_positive_safe(const gen &g,bool strict,unsigned max_taille,GIAC_CONTEXT) {
     vecteur s;
-    gen alg=to_algebraic(g,s,contextptr);
+    gen alg=g;//to_algebraic(g,s,contextptr); // FIXME
     if (max_taille>0 && taille(alg,max_taille+1)>=max_taille)
         return false;
     bool ret=strict?is_strictly_positive(alg,contextptr):is_positive(alg,contextptr);

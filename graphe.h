@@ -797,9 +797,8 @@ private:
     bool dot_parse_attributes(std::ifstream &dotfile,attrib &attr);
     static bool insert_attribute(attrib &attr,int key,const gen &val,bool overwrite=true);
     static bool remove_attribute(attrib &attr,int key);
-    static bool genmap2attrib(const gen_map &m,attrib &attr);
-    static void attrib2genmap(const attrib &attr,gen_map &m);
     static void copy_attributes(const attrib &src,attrib &dest);
+    void attrib2genmap(const attrib &attr,gen_map &m,bool keys2tags=false) const;
     void write_attrib(std::ofstream &dotfile,const attrib &attr,bool style=true) const;
     static ivector_iter binsearch(ivector_iter first,ivector_iter last,int a);
     static size_t sets_union(const iset &A,const iset &B,iset &U);
@@ -939,7 +938,9 @@ public:
     bool is_simple() const;
     virtual std::string print (GIAC_CONTEXT) const;
     virtual std::string texprint (GIAC_CONTEXT) const;
+    virtual bool operator ==(const gen &) const;
     virtual gen_user *memory_alloc() const { return new graphe(*this); }
+    virtual gen giac_constructor(GIAC_CONTEXT) const;
     
     // methods
     int rand_integer(int n) const { assert(n>=0); return n==0?0:giac::giac_rand(ctx)%n; }
@@ -1319,54 +1320,6 @@ public:
     static int term_hook(void *info,const char *s);
     static bool is_interrupted();
 };
-
-#if 0
-#ifdef HAVE_LIBGSL
-class ann : public gen_user {
-    const context *ctx;
-    std::vector<int> topology;
-    std::vector<gsl_vector*> neuron_layers;
-    std::vector<gsl_vector*> cache_layers;
-    std::vector<gsl_vector*> deltas;
-    std::vector<gsl_matrix*> weights;
-    double learning_rate;
-    gen x;
-    vecteur hidden_activation;
-    vecteur output_activation;
-    std::map<int,vecteur> layer_activation;
-    gsl_rng *rng;
-    gsl_vector *output_tmp;
-    double rnd_unif(double width=1) const;
-    double rnd_norm(double sigma=1) const;
-    bool create(const std::vector<int> &topology,double learning_rate,bool init);
-    void assign(const ann &other);
-    void deallocate();
-    void propagate_forward(gsl_vector *input);
-    void propagate_backward(gsl_vector *output);
-    void calc_errors(gsl_vector *output);
-    void update_weights();
-    double activate(int i,int j,bool deriv) const;
-    static gen tempvar(const std::string &name,int i,int j);
-public:
-    ann(const std::vector<int> &topology,double learning_rate,GIAC_CONTEXT);
-    ann(const ann &other);
-    ann &operator=(const ann &other);
-    static ann *from_gen(const gen &g);
-    virtual ~ann();
-    virtual std::string print (GIAC_CONTEXT) const;
-    virtual std::string texprint (GIAC_CONTEXT) const;
-    virtual gen_user *memory_alloc() const { return new ann(*this); }
-    // methods
-    int layer_count() const { return topology.size(); }
-    int layer_size(int i) const { assert(i>=0&&i<layer_count()); return topology[i]; }
-    int neuron_count() const;
-    void get_layer(int i,gsl_vector *layer) const;
-    void set_activation(int layer,const gen &f,const vecteur &params,bool is_vector_func=false);
-    void feed(gsl_vector *input,gsl_vector *output=NULL);
-    double train(gsl_vector *input,gsl_vector *output);
-};
-#endif
-#endif
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

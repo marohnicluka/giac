@@ -19,6 +19,7 @@
 #include "giacPCH.h"
 #include "giac.h"
 #include "signalprocessing.h"
+#include "graphtheory.h"
 
 #ifdef HAVE_LIBSAMPLERATE
 #include "samplerate.h"
@@ -157,12 +158,12 @@ vecteur encode_chdata(const vecteur &data,int bd,double ratio,GIAC_CONTEXT) {
 int read_channel_data(const gen &g,int &nc,vector<vecteur*> &data) {
     int ret;
     if (ckmatrix(g)) {
-        matrice &chns=*g._VECTptr;
+        const matrice &chns=*g._VECTptr;
         nc=chns.size();
         ret=chns.front()._VECTptr->size();
-        for (const_iterateur jt=chns.begin();jt!=chns.end();++jt) {
+        const_iterateur jt,jtend;
+        for (jt=chns.begin(),jtend=chns.end();jt!=jtend;++jt)
             data.push_back(jt->_VECTptr);
-        }
     } else {
         data.push_back(g._VECTptr);
         ret=g._VECTptr->size();
@@ -181,7 +182,7 @@ gen _createwav(const gen &g,GIAC_CONTEXT) {
         len=g.val;
     } else if (g.type==_VECT) {
         if (g.subtype==_SEQ__VECT) {
-            vecteur &args=*g._VECTptr;
+            const vecteur &args=*g._VECTptr;
             double secs=-1,plen=-1;
             for (const_iterateur it=args.begin();it!=args.end();++it) {
                 if (is_equal(*it)) {
@@ -348,9 +349,9 @@ gen _stereo2mono(const gen &g,GIAC_CONTEXT) {
     vecteur data(len,0);
     for (int i=1;i<=nc;++i) {
         const vecteur &chan=*g._VECTptr->at(i)._VECTptr;
-        data=addvecteur(data,decode_chdata(chan,bd));
+        addvecteur(data,decode_chdata(chan,bd),data);
     }
-    data=multvecteur(fraction(1,nc),data);
+    multvecteur(fraction(1,nc),data,data);
     vecteur header=*g._VECTptr->front()._VECTptr,edata=encode_chdata(data,bd,1.0,contextptr);
     header[0]=1;
     header[3]=header[3]/gen(nc);
@@ -543,7 +544,7 @@ gen _cross_correlation(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
-    vecteur &args=*g._VECTptr;
+    const vecteur &args=*g._VECTptr;
     if (args.size()!=2 || args.front().type!=_VECT || args.back().type!=_VECT)
         return generr("Expected a sequence of two lists");
     vecteur A=*args.front()._VECTptr,B=*args.back()._VECTptr;
@@ -576,7 +577,8 @@ void lowpass(vecteur &data,double cutoff,int sr) {
     double rc=0.15915494309/cutoff;
     double dt=1.0/sr;
     gen s=data.front(),alpha(dt/(rc+dt));
-    for (iterateur it=data.begin();it!=data.end();++it) {
+    iterateur it=data.begin(),itend=data.end();
+    for (;it!=itend;++it) {
         s+=alpha*(*it-s);
         *it=s;
     }
@@ -586,7 +588,8 @@ void highpass(vecteur &data,double cutoff,int sr) {
     double rc=0.15915494309/cutoff;
     double dt=1.0/sr;
     gen alpha(rc/(rc+dt)),prevdata=data.front(),temp;
-    for (iterateur it=data.begin()+1;it!=data.end();++it) {
+    iterateur it=data.begin()+1,itend=data.end();
+    for (;it!=itend;++it) {
         temp=*it;
         *it=alpha*(*(it-1)+*it-prevdata);
         prevdata=temp;
@@ -669,7 +672,7 @@ gen _moving_average(const gen &g,GIAC_CONTEXT) {
         return generr("First argument must be an array");
     if (!gv.back().is_integer() || gv.back().val<=0)
         return generr("Second argument must be a positive integer");
-    vecteur &s=*gv.front()._VECTptr;
+    const vecteur &s=*gv.front()._VECTptr;
     int n=gv.back().val,len=s.size();
     if (n>len)
         return generr("Filter length exceeds array size");
@@ -696,11 +699,11 @@ gen _rms(const gen &g,GIAC_CONTEXT) {
 	int n=gv.size();
 	if (n==0)
 		return generr("Input list is empty");
-	gen res(0);
-	for (const_iterateur it=gv.begin();it!=gv.end();++it) {
-		gen rp=re(*it,contextptr);
-		gen ip=im(*it,contextptr);
-		res+=rp*rp+ip*ip;
+	gen res(0),rp,ip;
+    const_iterateur it=gv.begin(),itend=gv.end();
+	for (;it!=itend;++it) {
+		reim(*it,rp,ip,contextptr);
+		res+=sq(rp)+sq(ip);
 	}
 	res=res/n;
 	return sqrt(res,contextptr);
@@ -821,12 +824,11 @@ gen _convolution(const gen &g,GIAC_CONTEXT) {
             }
         }
         giac_assume(symb_superieur_egal(tvar,0),contextptr);
-        gen minf=symbolic(at_neg,unsigned_inf),pinf=symbolic(at_plus,unsigned_inf),c;
-        c=_integrate(makesequence(f1*_Heaviside(var,contextptr)*
-                                  subst(f2*_Heaviside(var,contextptr),var,tvar-var,false,contextptr),
-                                  var,minf,pinf),contextptr);
+        gen c=_integrate(makesequence(f1*_Heaviside(var,contextptr)*
+                                      subst(f2*_Heaviside(var,contextptr),var,tvar-var,false,contextptr),
+                                      var,minus_inf,plus_inf),contextptr);
         _purge(tvar,contextptr);
-        if (is_one(_contains(makesequence(_lname(c,contextptr),var),contextptr)))
+        if (contains(_lname(c,contextptr),var))
             return generr("Failed to integrate");
         c=subst(c,tvar,var-T,false,contextptr)*_Heaviside(var-T,contextptr);
         return c;
@@ -891,21 +893,6 @@ static const char _sinc_s []="sinc";
 static define_unary_function_eval (__sinc,&_sinc,_sinc_s);
 define_unary_function_ptr5(at_sinc,alias_at_sinc,&__sinc,0,true)
 
-gen _ReLU(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    gen x(g),a(0);
-    if (g.type==_VECT && g.subtype==_SEQ__VECT) {
-        if (g._VECTptr->size()!=2)
-            return generrdim("Expected a sequence of two arguments");
-        x=g._VECTptr->front();
-        a=g._VECTptr->back();
-    }
-    return (x*_sign(x,contextptr)*(-a+1)+x*(a+1))/2;
-}
-static const char _ReLU_s []="ReLU";
-static define_unary_function_eval (__ReLU,&_ReLU,_ReLU_s);
-define_unary_function_ptr5(at_ReLU,alias_at_ReLU,&__ReLU,0,true)
-
 gen _logistic(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     gen x(g),x0(0),L(1),k(1); // standard sigmoid by default
@@ -927,80 +914,6 @@ static const char _logistic_s []="logistic";
 static define_unary_function_eval (__logistic,&_logistic,_logistic_s);
 define_unary_function_ptr5(at_logistic,alias_at_logistic,&__logistic,0,true)
 
-gen _swish(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    gen x(g),b(1);
-    if (g.type==_VECT && g.subtype==_SEQ__VECT) {
-        vecteur gv(*g._VECTptr);
-        if (gv.empty() || gv.size()>2)
-            return gendimerr(contextptr);
-        x=gv.front();
-        if (gv.size()==2)
-            b=gv.back();
-    }
-    return _logistic(makesequence(x,0,x,b),contextptr);
-}
-static const char _swish_s []="swish";
-static define_unary_function_eval (__swish,&_swish,_swish_s);
-define_unary_function_ptr5(at_swish,alias_at_swish,&__swish,0,true)
-
-gen _entropy(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    vecteur p;
-    if (g.type==_VECT)
-        p=*g._VECTptr;
-    else if (g.is_symb_of_sommet(at_discreted)) {
-        const vecteur &f=*g._SYMBptr->feuille._VECTptr;
-        int n=f.front().val;
-        p=vecteur(f.begin()+1,f.begin()+n+1);
-    } else return generrtype("Expected a vector or a discrete distribution");
-    if (p.empty())
-        return generr("Argument is not a probability distribution");
-    gen ret(0);
-    const_iterateur it=p.begin(),itend=p.end();
-    for (;it!=itend;++it) {
-        if (!is_exactly_zero(*it))
-            ret+=*it*ln(*it,contextptr);
-    }
-    return -ret;
-}
-static const char _entropy_s []="entropy";
-static define_unary_function_eval (__entropy,&_entropy,_entropy_s);
-define_unary_function_ptr5(at_entropy,alias_at_entropy,&__entropy,0,true)
-
-gen _cross_entropy(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
-        return gentypeerr(contextptr);
-    const vecteur &gv=*g._VECTptr;
-    if (gv.size()!=2)
-        return gendimerr("Wrong number of arguments");
-    vecteur p,q;
-    const_iterateur it,jt,itend;
-    if (gv.front().type==_VECT && gv.back().type==_VECT) {
-        p=*gv.front()._VECTptr;
-        q=*gv.back()._VECTptr;
-    } else if (gv.front().is_symb_of_sommet(at_discreted) && gv.back().is_symb_of_sommet(at_discreted)) {
-        const vecteur &d1=*gv.front()._SYMBptr->feuille._VECTptr,&d2=*gv.back()._SYMBptr->feuille._VECTptr;
-        int n=d1.front().val,m=d2.front().val;
-        p=vecteur(d1.begin()+1,d1.begin()+n+1);
-        q=vecteur(d2.begin()+1,d2.begin()+m+1);
-    } else return generrtype("Arguments must be discrete distributions or vectors");
-    if (p.empty() || q.empty())
-        return generr("Argument is not a probability distribution");
-    if (p.size()!=q.size())
-        return generrdim("Distribution supports are not equal");
-    gen ret(0);
-    for (it=p.begin(),jt=q.begin(),itend=p.end();it!=itend;++it,++jt) {
-        if (!is_exactly_zero(*it))
-            ret+=*it*ln(*jt,contextptr);
-    }
-    return -ret;
-}
-static const char _cross_entropy_s []="cross_entropy";
-static define_unary_function_eval (__cross_entropy,&_cross_entropy,_cross_entropy_s);
-define_unary_function_ptr5(at_cross_entropy,alias_at_cross_entropy,&__cross_entropy,0,true)
-
 #define MAX_TAILLE 500
 
 /* return true iff g is significantly simpler than h */
@@ -1012,16 +925,12 @@ bool is_rational_wrt(const gen &e,const identificateur &x) {
     return rlvarx(e,x).size()<=1;
 }
 
-bool is_const_wrt_x(const gen &g,const identificateur &x,GIAC_CONTEXT) {
-    return is_zero(_contains(makesequence(_lname(g,contextptr),x),contextptr));
-}
-
 gen factorise(const gen &g,GIAC_CONTEXT) {
     return factorcollect(g,false,contextptr);
 }
 
 bool ispoly(const gen &e,const identificateur &x,gen &d,GIAC_CONTEXT) {
-    if (is_const_wrt_x(e,x,contextptr)) {
+    if (is_constant_wrt(e,x,contextptr)) {
         d=gen(0);
         return true;
     }
@@ -1037,7 +946,7 @@ void constlin_terms(const gen &g,const identificateur &x,gen &lt,gen &c,gen &res
     gen a,b;
     rest=c=lt=gen(0);
     for (const_iterateur it=terms.begin();it!=terms.end();++it) {
-        if (is_const_wrt_x(*it,x,contextptr))
+        if (is_constant_wrt(*it,x,contextptr))
             c+=*it;
         else if (is_linear_wrt(*it,x,a,b,contextptr)) {
             lt+=a;
@@ -1074,7 +983,7 @@ vecteur analyze_terms(const gen &g,const identificateur &x,GIAC_CONTEXT) {
     for (const_iterateur it=terms.begin();it!=terms.end();++it) {
         vecteur factors;
         gen cnst(1),rest(1),deg(0),exprest(0),sh(0),rt=ratnormal(*it,contextptr),st;
-        if (!is_const_wrt_x(rt,x,contextptr))
+        if (!is_constant_wrt(rt,x,contextptr))
             rt=factorise(rt,contextptr);
         if (rt.is_symb_of_sommet(at_neg)) {
             cnst=gen(-1);
@@ -1104,7 +1013,7 @@ vecteur analyze_terms(const gen &g,const identificateur &x,GIAC_CONTEXT) {
                 cnst=cnst*exp(c1+cst_i*c2,contextptr);
                 sh+=lt2;
                 exprest+=rest1+x*lt1+cst_i*rest2;
-            } else if (is_const_wrt_x(*jt,x,contextptr))
+            } else if (is_constant_wrt(*jt,x,contextptr))
                 cnst=cnst*(*jt);
             else if (ispoly(*jt,x,st,contextptr)) {
                 deg+=st;
@@ -1202,7 +1111,7 @@ gen hcollect(const gen &g,const gen &h,const identificateur &x,gen &cnst,GIAC_CO
                                          subst(r2,x,-b2/a2+_sign(a2,contextptr)*x,false,contextptr),
                                          contextptr))) {
             hvs=subst(r1,x,-b1/a1+_sign(a1,contextptr)*_abs(x+b1/a1,contextptr),false,contextptr);
-        } else if (is_const_wrt_x(*it,x,contextptr))
+        } else if (is_constant_wrt(*it,x,contextptr))
             cnst=cnst*(*it);
         else rest=rest*(*it);
     }
@@ -1299,35 +1208,6 @@ vecteur fourier_terms(const gen &g_orig,const identificateur &x,bool do_simp,GIA
     }
     return terms;
 }
-
-enum FourierFuncType {
-    _FOURIER_FUNCTYPE_UNKNOWN=0,
-    _FOURIER_FUNCTYPE_ONE=1,
-    _FOURIER_FUNCTYPE_DIRAC=2,
-    _FOURIER_FUNCTYPE_INV_MONOM=3,
-    _FOURIER_FUNCTYPE_GAUSSIAN=4,
-    _FOURIER_FUNCTYPE_LOGABSX=5,
-    _FOURIER_FUNCTYPE_BESSELJ=6,
-    _FOURIER_FUNCTYPE_SGN=7,
-    _FOURIER_FUNCTYPE_ABSX_ALPHA=8,
-    _FOURIER_FUNCTYPE_INVABSX=9,
-    _FOURIER_FUNCTYPE_GAMMA=10,
-    _FOURIER_FUNCTYPE_EXPEXP=11,
-    _FOURIER_FUNCTYPE_AIRY_AI=12,
-    _FOURIER_FUNCTYPE_EXP_HEAVISIDE=13,
-    _FOURIER_FUNCTYPE_HEAVISIDE=14,
-    _FOURIER_FUNCTYPE_ATAN_OVERX=15,
-    _FOURIER_FUNCTYPE_EXPABSX=16,
-    _FOURIER_FUNCTYPE_EXPABSX_OVERX=17,
-    _FOURIER_FUNCTYPE_COSECH=18,
-    _FOURIER_FUNCTYPE_SECH=19,
-    _FOURIER_FUNCTYPE_SECH_2=20,
-    _FOURIER_FUNCTYPE_CONVOLUTION=21,
-    _FOURIER_FUNCTYPE_PIECEWISE=22,
-    _FOURIER_FUNCTYPE_FUNC=23,
-    _FOURIER_FUNCTYPE_DIFF=24,
-    _FOURIER_FUNCTYPE_PARTIAL_DIFF=25
-};
 
 static vecteur fourier_table;
 static vecteur laplace_table;
@@ -1493,18 +1373,18 @@ gen cond2Heaviside(const gen &g,const identificateur &x,GIAC_CONTEXT) {
     }
     if (g.is_symb_of_sommet(at_inferieur_egal) || g.is_symb_of_sommet(at_inferieur_strict)) {
         if (g._SYMBptr->feuille._VECTptr->front()==x &&
-                is_const_wrt_x(g._SYMBptr->feuille._VECTptr->back(),x,contextptr))
+                is_constant_wrt(g._SYMBptr->feuille._VECTptr->back(),x,contextptr))
             return _Heaviside(g._SYMBptr->feuille._VECTptr->back()-x,contextptr);
         if (g._SYMBptr->feuille._VECTptr->back()==x &&
-                is_const_wrt_x(g._SYMBptr->feuille._VECTptr->front(),x,contextptr))
+                is_constant_wrt(g._SYMBptr->feuille._VECTptr->front(),x,contextptr))
             return _Heaviside(x-g._SYMBptr->feuille._VECTptr->front(),contextptr);
     }
     if (g.is_symb_of_sommet(at_superieur_egal) || g.is_symb_of_sommet(at_superieur_strict)) {
         if (g._SYMBptr->feuille._VECTptr->front()==x &&
-                is_const_wrt_x(g._SYMBptr->feuille._VECTptr->back(),x,contextptr))
+                is_constant_wrt(g._SYMBptr->feuille._VECTptr->back(),x,contextptr))
             return _Heaviside(x-g._SYMBptr->feuille._VECTptr->back(),contextptr);
         if (g._SYMBptr->feuille._VECTptr->back()==x &&
-                is_const_wrt_x(g._SYMBptr->feuille._VECTptr->front(),x,contextptr))
+                is_constant_wrt(g._SYMBptr->feuille._VECTptr->front(),x,contextptr))
             return _Heaviside(g._SYMBptr->feuille._VECTptr->front()-x,contextptr);
     }
     return undef;
@@ -1699,7 +1579,7 @@ bool is_linabs(const gen &g_orig,const identificateur &x,gen &a,gen &b,GIAC_CONT
         factors=*g._SYMBptr->feuille._VECTptr;
     else factors=vecteur(1,g);
     for (const_iterateur it=factors.begin();it!=factors.end();++it) {
-        if (is_const_wrt_x(*it,x,contextptr))
+        if (is_constant_wrt(*it,x,contextptr))
             a=a*(*it);
         else if (is_zero(A) && it->is_symb_of_sommet(at_abs) &&
                     is_linear_wrt(it->_SYMBptr->feuille,x,A,B,contextptr) && !is_zero(A)) {
@@ -1722,7 +1602,7 @@ iterateur find_lin(vecteur &lv,const gen &key,GIAC_CONTEXT) {
 void extract_linpow(const gen &g,const identificateur &x,
                     const gen &e,gen &c,vecteur &lv,gen &rest,GIAC_CONTEXT) {
     gen a,b;
-    if (is_const_wrt_x(g,x,contextptr))
+    if (is_constant_wrt(g,x,contextptr))
         c=c*_pow(makesequence(g,e),contextptr);
     else if (g.is_symb_of_sommet(at_neg)) {
         c=c*_pow(makesequence(-1,e),contextptr);
@@ -1756,8 +1636,8 @@ bool is_linpow(const gen &g,const identificateur &x,gen &a,gen &b,gen &c,bool &s
     gen c1(1),c2(1),r1(1),r2(1),h=simplify_signs(g,x,contextptr);
     vecteur lv1,lv2;
     gen num=_numer(h,contextptr),den=_denom(h,contextptr);
-    if (!is_const_wrt_x(num,x,contextptr)) num=factorise(num,contextptr);
-    if (!is_const_wrt_x(den,x,contextptr)) den=factorise(den,contextptr);
+    if (!is_constant_wrt(num,x,contextptr)) num=factorise(num,contextptr);
+    if (!is_constant_wrt(den,x,contextptr)) den=factorise(den,contextptr);
     extract_linpow(num,x,1,c1,lv1,r1,contextptr);
     extract_linpow(den,x,1,c2,lv2,r2,contextptr);
     if (lv1.size()>1 || lv2.size()>1)
@@ -1791,7 +1671,7 @@ bool is_linpow(const gen &g,const identificateur &x,gen &a,gen &b,gen &c,bool &s
             rest=rest*_sign(x+b,contextptr);
     }
     rest=ratnormal(rest,contextptr);
-    if (is_const_wrt_x(rest,x,contextptr)) {
+    if (is_constant_wrt(rest,x,contextptr)) {
         c=c*rest;
         s=false;
     } else if (rest.is_symb_of_sommet(at_sign) &&
@@ -1838,7 +1718,7 @@ int is_expsum(const gen &g_orig,const identificateur &x,gen &a,gen &b,gen &c,boo
         factors=*g._SYMBptr->feuille._VECTptr;
     else factors=vecteur(1,g);
     for (const_iterateur it=factors.begin();it!=factors.end();++it) {
-        if (is_const_wrt_x(*it,x,contextptr))
+        if (is_constant_wrt(*it,x,contextptr))
             c=c*(*it);
         else if (it->is_symb_of_sommet(at_plus) && it->_SYMBptr->feuille.type==_VECT &&
                  it->_SYMBptr->feuille._VECTptr->size()>=2) {
@@ -1924,17 +1804,17 @@ bool is_convolution(const gen &e,const identificateur &x,gen &f,gen &g,GIAC_CONT
     else factors=vecteur(1,h);
     f=g=gen(1);
     for (const_iterateur it=factors.begin();it!=factors.end();++it) {
-        if (is_const_wrt_x(*it,x,contextptr))
+        if (is_constant_wrt(*it,x,contextptr))
             f=f*(*it);
         else g=g*(*it);
     }
     g=recursive_normal(subst(g,x,x+t,false,contextptr),contextptr);
-    return is_const_wrt_x(g,t,contextptr);
+    return is_constant_wrt(g,t,contextptr);
 }
 
 int fourier_func_type(const gen &g,const identificateur &x,vecteur &params,GIAC_CONTEXT) {
     params.clear();
-    if (is_const_wrt_x(g,x,contextptr)) {
+    if (is_constant_wrt(g,x,contextptr)) {
         params.push_back(g);
         return _FOURIER_FUNCTYPE_ONE;
     }
@@ -2064,13 +1944,13 @@ int fourier_func_type(const gen &g,const identificateur &x,vecteur &params,GIAC_
                             it->is_symb_of_sommet(at_inferieur_strict)) &&
                            it->_SYMBptr->feuille.type==_VECT &&
                            it->_SYMBptr->feuille._VECTptr->front()==x &&
-                           is_const_wrt_x(it->_SYMBptr->feuille._VECTptr->back(),x,contextptr))
+                           is_constant_wrt(it->_SYMBptr->feuille._VECTptr->back(),x,contextptr))
                     params.push_back(it->_SYMBptr->feuille._VECTptr->back());
                 else if ((it->is_symb_of_sommet(at_superieur_egal) ||
                           it->is_symb_of_sommet(at_superieur_strict)) &&
                          it->_SYMBptr->feuille.type==_VECT &&
                          it->_SYMBptr->feuille._VECTptr->back()==x &&
-                         is_const_wrt_x(it->_SYMBptr->feuille._VECTptr->front(),x,contextptr))
+                         is_constant_wrt(it->_SYMBptr->feuille._VECTptr->front(),x,contextptr))
                     params.push_back(it->_SYMBptr->feuille._VECTptr->front());
                 else return _FOURIER_FUNCTYPE_UNKNOWN;
             } else params.push_back(*it);
@@ -2337,7 +2217,7 @@ gen fourier(const gen &f_orig,const identificateur &x,const identificateur &s,
         ret=simplify(ret,contextptr);
     else if (is_simpler(rcn,ret))
         ret=rcn;
-    if (!is_const_wrt_x(ret,s,contextptr)) {
+    if (!is_constant_wrt(ret,s,contextptr)) {
         gen rcn1=ratnormal(sign2Heaviside(ret,contextptr),contextptr);
         gen rcn2=ratnormal(Heaviside2sign(ret,contextptr),contextptr);
         ret=is_simpler(rcn1,rcn2)?rcn1:rcn2;
@@ -2759,6 +2639,1149 @@ gen _welch_window(const gen &g,GIAC_CONTEXT) {
 static const char _welch_window_s []="welch_window";
 static define_unary_function_eval (__welch_window,&_welch_window,_welch_window_s);
 define_unary_function_ptr5(at_welch_window,alias_at_welch_window,&__welch_window,0,true)
+
+/*
+ * ANN CLASS IMPLEMENTATION (Artificial Neural Networks)
+ * A simple implementation of feedforward neural network (multilayer perceptron) using GSL
+ */
+#ifdef HAVE_LIBGSL
+/* Constructors. */
+ann::ann(const vector<int> &topology,int bsize,GIAC_CONTEXT) {
+    if (topology.size()<3)
+        throw std::runtime_error(gettext("At least three layers are required"));
+    ctx=contextptr;
+    // block_size: the number of input vectors that can be passed through the network at once
+    block_size=bsize;
+    // no momentum by default
+    momentum=0;
+    // default Adam parameters from the paper
+    beta1=0.9; beta2=0.999;
+    // default initial learning rate and schedule multiplier
+    learning_rate=1e-3; schedule=1.0;
+    // iteration counter
+    iter=accum_count=0;
+    // topology
+    this->topology=topology;
+    // epsilon: used for preventing division by zero (default value from Adam paper)
+    eps=1e-8; // epsilon(contextptr);
+    // this network is a regression model by default
+    _is_classifier=false;
+    // construct the network
+    create();
+    // no regularization by default
+    gsl_vector_set_zero(reg_coeff);
+    // create temporary symbolic variables
+    x=identificateur(" nn_x");
+    _purge(x,ctx);
+    y.reserve(topology.back());
+    t.reserve(topology.back());
+    for (int i=0;i<topology.back();++i) {
+        y.push_back(identificateur(" y"+print_INT_(i+1)));
+        t.push_back(identificateur(" t"+print_INT_(i+1)));
+        _purge(makesequence(y.back(),t.back()),ctx);
+    }
+    fan=makevecteur(identificateur(" fan_in"),identificateur(" fan_out"));
+}
+ann::ann(const ann &other) {
+    assign(other,other.block_size);
+}
+ann::ann(const ann &other,int bs) {
+    assign(other,bs);
+}
+/* Assign OTHER to this network. */
+ann &ann::operator=(const ann &other) {
+    deallocate();
+    layers.clear();
+    cache.clear();
+    deltas.clear();
+    weights.clear();
+    Deltas.clear();
+    moment1.clear();
+    moment2.clear();
+    assign(other,other.block_size);
+    return *this;
+}
+void ann::assign(const ann &other,int bs) {
+    ctx=other.ctx;
+    topology=other.topology;
+    learning_rate=other.learning_rate;
+    block_size=bs;
+    eps=other.eps;
+    momentum=other.momentum;
+    beta1=other.beta1;
+    beta2=other.beta2;
+    iter=other.iter;
+    accum_count=other.accum_count;
+    schedule=other.schedule;
+    y=other.y;
+    t=other.t;
+    fan=other.fan;
+    errfunc=other.errfunc;
+    activation=other.activation;
+    output_activation=other.output_activation;
+    labels=other.labels;
+    _is_classifier=other._is_classifier;
+    title=other.title;
+    create();
+    gsl_vector_memcpy(this->reg_coeff,other.reg_coeff);
+    int lc=layer_count(),i;
+    for (i=0;i<lc;++i) {
+        gsl_matrix_memcpy(layers[i],other.layer(i));
+        if (i>0) {
+            gsl_matrix_memcpy(weights[i-1],other.weight_matrix(i-1));
+            gsl_matrix_memcpy(Deltas[i-1],other.weight_updates(i-1));
+            gsl_matrix_memcpy(moment1[i-1],other.moment1[i-1]);
+            gsl_matrix_memcpy(moment2[i-1],other.moment2[i-1]);
+        }
+    }
+}
+/* Create the network parameters and allocate the required space. */
+void ann::create() {
+    reg_coeff=gsl_vector_alloc(layer_count()-1);
+    eout=eout=gsl_matrix_alloc(output_size(),block_size);
+    if (reg_coeff==NULL || eout==NULL)
+        throw std::bad_alloc();
+    int lc=layer_count(),ti,tip,j,sz;
+    for (int i=0;i<lc;++i) {
+        ti=topology[i];
+        sz=ti+(i==lc-1?0:1);
+        if (ti<1)
+            throw std::runtime_error(gettext("Invalid number of neurons in a layer"));
+        layers.push_back(gsl_matrix_alloc(sz,block_size));
+        cache.push_back(i==0?NULL:gsl_matrix_alloc(sz,block_size));
+        deltas.push_back(i==0?NULL:gsl_matrix_alloc(sz,block_size));
+        if (layers.back()==NULL || (i>0 && (deltas.back()==NULL || cache.back()==NULL)))
+            throw std::bad_alloc();
+        if (i!=lc-1) { // initialize bias neurons
+            for (int b=0;b<block_size;++b)
+                gsl_matrix_set(layers.back(),ti,b,1.0);
+        }
+        if (i>0) { // initialize all weights (including bias) to zero
+            tip=topology[i-1];
+            weights.push_back(gsl_matrix_calloc(tip+1,sz));
+            Deltas.push_back(gsl_matrix_calloc(tip+1,sz));
+            moment1.push_back(gsl_matrix_calloc(tip+1,sz));
+            moment2.push_back(gsl_matrix_calloc(tip+1,sz));
+            if (weights.back()==NULL || Deltas.back()==NULL || moment1.back()==NULL || moment2.back()==NULL)
+                throw std::bad_alloc();
+            gsl_matrix_set(weights.back(),tip,ti,1.0);
+        }
+    }
+}
+/* Free all GSL array data in the network. */
+void ann::deallocate() {
+    if (reg_coeff!=NULL) gsl_vector_free(reg_coeff);
+    if (eout!=NULL) gsl_matrix_free(eout);
+    vector<gsl_matrix*>::const_iterator jt,jtend;
+    for (jt=layers.begin(),jtend=layers.end();jt!=jtend;++jt)
+        if (*jt!=NULL) gsl_matrix_free(*jt);
+    for (jt=cache.begin(),jtend=cache.end();jt!=jtend;++jt)
+        if (*jt!=NULL) gsl_matrix_free(*jt);
+    for (jt=deltas.begin(),jtend=deltas.end();jt!=jtend;++jt)
+        if (*jt!=NULL) gsl_matrix_free(*jt);
+    for (jt=weights.begin(),jtend=weights.end();jt!=jtend;++jt)
+        if (*jt!=NULL) gsl_matrix_free(*jt);
+    for (jt=Deltas.begin(),jtend=Deltas.end();jt!=jtend;++jt)
+        if (*jt!=NULL) gsl_matrix_free(*jt);
+    for (jt=moment1.begin(),jtend=moment1.end();jt!=jtend;++jt)
+        if (*jt!=NULL) gsl_matrix_free(*jt);
+    for (jt=moment2.begin(),jtend=moment2.end();jt!=jtend;++jt)
+        if (*jt!=NULL) gsl_matrix_free(*jt);    
+}
+/* Set momentum mom (for 0<=mom<1 use classical momentum and for mom=1 use Adam). */
+void ann::set_momentum(double mom) {
+    if (mom<0)
+        throw std::runtime_error(gettext("Momentum must be nonnegative"));
+    momentum=std::min(1.0,mom);
+}
+/* Set activation function for LAYER. If LAYER=-1, it is set for all hidden neurons.
+ * e.g. set_activation(-1,tanh)
+ * or set_activation(2,logistic,[0,2,1.5]) <- assuming layer count of three
+ * or set_activation(-1,piecewise(x< -pi/2, -1, x<pi/2, sin(x), 1)). */
+void ann::set_activation(bool out,const gen &f,const vecteur &params) {
+    gen res,dif;
+    vecteur s,act;
+    int pf=0;
+    if (f==at_id)
+        pf=_ANN_LINEAR;
+    else if (f==at_logistic)
+        pf==_ANN_SIGMOID;
+    else if (f==at_tanh)
+        pf=_ANN_TANH;
+    else if (f.is_integer() && f.subtype==_INT_MAPLECONVERSION)
+        pf=f.val;
+    if (pf>0) {
+        act.push_back(change_subtype(pf,_INT_MAPLECONVERSION));
+        if (!is_numericv(params,num_mask_withfrac|num_mask_withint))
+            throw std::runtime_error(gettext("Activation function parameters must be numeric"));
+        act.push_back(_evalf(params,ctx));
+    } else { // custom activation function
+        switch (f.type) {
+        case _FUNC:
+        case _SYMB:
+            if (f.type==_FUNC || f.is_symb_of_sommet(at_program)) {
+                if (f.type==_SYMB && f._SYMBptr->feuille._VECTptr->front()._VECTptr->size()!=params.size()+1)
+                    throw std::runtime_error(gettext("Wrong number of arguments to function"));
+                res=f(gen(mergevecteur(vecteur(1,x),params),_SEQ__VECT),ctx);
+                if (_lname(res,ctx)._VECTptr->size()>1)
+                    throw std::runtime_error(gettext("Function contains uninitialized parameters"));
+                break;
+            } else {
+                if (!params.empty())
+                    throw std::runtime_error(gettext("No parameters can be passed alongside a symbolic expression"));
+                s=*_lname(f,ctx)._VECTptr;
+                if (s.size()!=1)
+                    throw std::runtime_error(gettext("Expected a univariate symbolic expression"));
+                res=subst(f,s.front(),x,false,ctx);
+            }
+            break;
+        default:
+            throw std::runtime_error(gettext("Invalid activation function type"));
+        }
+        dif=_unapply(makesequence(_derive(makesequence(res,x),ctx),x),ctx);
+        act=makevecteur(_unapply(makesequence(res,x),ctx),dif);
+    }
+    if (out) output_activation=act;
+    else activation=act;
+}
+/* Set the error function.
+ * e.g. set_error_function(distance2) or, if you have a function f(x,y,a,b,...) where a,b,... are
+ * parameters, use: set_error_function(f,[A,B,...]) where A,B,... are the parameter values (fixed). */
+void ann::set_error_function(const gen &f,const vecteur &params) {
+    if (f.is_integer() && f.subtype==_INT_MAPLECONVERSION) {
+        if (!is_numericv(params,num_mask_withfrac|num_mask_withint))
+            throw std::runtime_error(gettext("Error function parameters must be numeric"));
+        errfunc=makevecteur(f,_evalf(params,ctx));
+    } else {
+        if (f.type!=_FUNC && !f.is_symb_of_sommet(at_program))
+            throw std::runtime_error("Invalid error function type");
+        if (f.type==_SYMB && f._SYMBptr->feuille._VECTptr->front()._VECTptr->size()!=params.size()+1)
+            throw std::runtime_error(gettext("Wrong number of arguments to function"));
+        vecteur vars=mergevecteur(t,y);
+        gen res=f(gen(mergevecteur(makevecteur(t,y),params),_SEQ__VECT),ctx);
+        if ((int)_lname(res,ctx)._VECTptr->size()>2*output_size())
+            throw std::runtime_error(gettext("Function contains uninitialized parameters"));
+        errfunc=makevecteur(_unapply(gen(mergevecteur(vecteur(1,res),vars),_SEQ__VECT),ctx),
+                            _unapply(gen(mergevecteur(vecteur(1,_grad(makesequence(res,y),ctx)),vars),_SEQ__VECT),ctx));
+    }
+}
+/* Set labels for output neurons. */
+void ann::set_labels(const vecteur &lab,bool classes) {
+    labels=lab;
+    if (classes && output_size()==1) {
+        if (lab.size()!=2)
+            throw std::runtime_error(gettext("Expected 2 labels for binary classification"));
+    } else {
+        if ((int)lab.size()!=output_size())
+            throw std::runtime_error(gettext("Number of labels does not match the output size"));
+    }
+    _is_classifier=classes;
+}
+/* Set L2-regularization (weight decay) parameters. */
+void ann::set_regularization(const vecteur &reg) const {
+    if (reg.size()!=reg_coeff->size)
+        throw std::runtime_error(gettext("Invalid number of regularization parameters"));
+    if (vecteur2gsl_vector(reg,reg_coeff,ctx)!=GSL_SUCCESS)
+        throw std::runtime_error(gettext("Failed to set regularization parameters"));
+}
+/* Return the network type as a string. */
+string ann::network_type() const {
+    switch (task()) {
+        case 1: return gettext("a classifier");
+        case 2: return gettext("a multi-label classifier");
+        default: break;
+    }
+    return gettext("a neural network");
+}
+/* Apply activation function or its derivative to A. */
+double ann::activate(bool deriv,int i,double &a) const {
+    if (_is_classifier && deriv && i+1==layer_count())
+        return 1.0;
+    const vecteur &f=(i+1==layer_count()?output_activation:activation);
+    double e,v;
+    if (f.front().is_integer() && f.front().subtype==_INT_MAPLECONVERSION) {
+        const vecteur &params=*f.back()._VECTptr;
+        bool nop=params.empty();
+        switch (f.front().val) {
+        case _ANN_LINEAR:
+            if (deriv) return 1.0;
+            break;
+        case _ANN_SIGMOID:
+            e=a>0?std::exp(-a):std::exp(a);
+            v=(a>0?1.0:e)/(1.0+e);
+            if (deriv) return v*(1-v);
+            a=v;
+            break;
+        case _ANN_TANH:
+            v=std::tanh(a);
+            if (deriv) return 1.0-v*v;
+            a=v;
+            break;
+        case _ANN_RELU: // leaky ReLU if parameter is set
+            v=nop?0.0:params.front().to_double(ctx);
+            if (deriv) return a<0?v:1;
+            if (a<0) a*=v;
+            break;
+        default: // not reachable
+            if (deriv) return giac::nan();
+            a=giac::nan();
+            break;
+        }
+    } else {
+        if (deriv) return f[1](a,ctx).to_double(ctx);
+        a=f[0](a,ctx).to_double(ctx);
+    }
+    return 0; // dummy, OK
+}
+/* Propagate a block of samples forward. */
+void ann::propagate_forward() const {
+    int i,j,k,ti,len,lc=layer_count(),os=output_size(),s1;
+    gsl_vector_view mc;
+    double s,*o,m;
+    bool softmax=is_default_classifier() && os>1;
+    for (i=1;i<lc;++i) {
+        s1=layers[i]->size1;
+        gsl_blas_dgemm(CblasTrans,CblasNoTrans,1.0,weights[i-1],layers[i-1],0.0,layers[i]);
+        gsl_matrix_memcpy(cache[i],layers[i]);
+        if (softmax && i+1==lc) {
+            for (k=0;k<block_size;++k) {
+                mc=gsl_matrix_subcolumn(layers[i],k,0,os);
+                m=gsl_vector_max(&mc.vector);
+                s=0;
+                for (j=0;j<os;++j) {
+                    o=gsl_vector_ptr(&mc.vector,j);
+                    s+=(*o=std::exp(*o-m));
+                }
+                gsl_vector_scale(&mc.vector,1.0/s);
+            }
+        } else {
+            len=(s1-1)*block_size;
+            for (j=0;j<len;++j)
+                activate(false,i,layers[i]->data[j]);
+        }
+    }
+} 
+/* Return E(t,y). t can be changed! */
+gen ann::compute_errfunc(gsl_vector *t,gsl_vector *y) const {
+    if (errfunc.size()!=2)
+        throw std::runtime_error(gettext("Error function not defined"));
+    if (errfunc.front().is_integer() && errfunc.front().subtype==_INT_MAPLECONVERSION) {
+        const vecteur &params=*errfunc.back()._VECTptr;
+        int i,n=y->size,ef=errfunc.front().val;
+        double res,ti,yi;
+        switch (ef) {
+        case _ANN_HALF_MSE:
+            gsl_vector_sub(t,y);
+            gsl_blas_ddot(t,t,&res);
+            return res/(2.0*n);
+        case _ANN_CROSS_ENTROPY:
+        case _ANN_LOG_LOSS:
+            res=0;
+            for (i=0;i<n;++i) {
+                ti=gsl_vector_get(t,i);
+                yi=gsl_vector_get(y,i);
+                if (ti>0.0) res-=ti*std::log(std::max(yi,eps));
+                if (ef==_ANN_LOG_LOSS)
+                    if (ti<1.0) res-=(1.0-ti)*std::log(std::max(1.0-yi,eps));
+            }
+            return res;
+        default:
+            break;
+        }
+        return undef; // not reachable
+    }
+    vecteur args=mergevecteur(gsl_vector2vecteur(t),gsl_vector2vecteur(y));
+    return errfunc.front()(gen(args,_SEQ__VECT),ctx);
+}
+/* Compute dE(t,y)/dy and store it to res. */
+void ann::compute_errfunc_diff(gsl_matrix *t,gsl_matrix *y,gsl_matrix *res) const {
+    if (errfunc.size()!=2)
+        throw std::runtime_error(gettext("Error function not defined"));
+    int n=y->size1,m=y->size2;
+    if (errfunc.front().is_integer() && errfunc.front().subtype==_INT_MAPLECONVERSION) {
+        const vecteur &params=*errfunc.back()._VECTptr;
+        int i,len=m*n,ef=errfunc.front().val;
+        double ti,yi;
+        switch (ef) {
+        case _ANN_HALF_MSE:
+            gsl_matrix_memcpy(res,y);
+            gsl_matrix_sub(res,t);
+            break;
+        case _ANN_CROSS_ENTROPY:
+        case _ANN_LOG_LOSS:
+            for (i=0;i<len;++i) {
+                ti=t->data[i];
+                yi=y->data[i];
+                if (ti>0.0) res->data[i]=-ti/std::max(yi,eps);
+                if (ef==_ANN_LOG_LOSS)
+                    if (ti<1.0) res->data[i]-=(1.0-ti)/std::max(1.0-yi,eps);
+            }
+            break;
+        default:
+            assert(false); // not reachable
+        }
+    } else {
+        matrice args=mtran(mergevecteur(gsl_matrix2matrice(t),gsl_matrix2matrice(y))),val;
+        val.reserve(m);
+        const_iterateur it=args.begin(),itend=args.end();
+        for (;it!=itend;++it)
+            val.push_back(errfunc.back()(gen(*it,_SEQ__VECT),ctx));
+        if (matrice2gsl_matrix(mtran(val),res,ctx)!=GSL_SUCCESS)
+            throw std::runtime_error(gettext("Failed to compute the error function derivative"));
+    }
+}
+/* Return true iff this network is a classifier with usual error function. */
+bool ann::is_default_classifier() const {
+    if (!_is_classifier)
+        return false;
+    const gen &e=errfunc.front();
+    if (!e.is_integer() || e.subtype!=_INT_MAPLECONVERSION)
+        return false;
+    return e.val==(output_size()==1?_ANN_LOG_LOSS:_ANN_CROSS_ENTROPY);
+}
+/* Calculate the errors made by neurons. */
+void ann::calc_deltas() const {
+    int i,j,len,lc=layer_count();
+    if (is_default_classifier()) {
+        gsl_matrix_memcpy(deltas.back(),layers.back());
+        gsl_matrix_sub(deltas.back(),eout);
+    } else compute_errfunc_diff(eout,layers.back(),deltas.back());
+    for (i=lc-2;i>=0;--i) {
+        len=((i+2<lc?-1:0)+deltas[i+1]->size1)*block_size;
+        for (j=0;j<len;++j)
+            deltas[i+1]->data[j]*=activate(true,i+1,cache[i+1]->data[j]);
+        if (i>0)
+            gsl_blas_dgemm(CblasNoTrans,CblasNoTrans,1.0,weights[i],deltas[i+1],0.0,deltas[i]);
+    }
+}
+/* Accumulate weight deltas. */
+void ann::update_Deltas() {
+    gsl_matrix_view dm,lm;
+    int lc=layer_count(),i;
+    for (i=0;i<lc-1;++i)
+        gsl_blas_dgemm(CblasNoTrans,CblasTrans,1.0,layers[i],deltas[i+1],1.0,Deltas[i]);
+}
+/* Update weights. */
+void ann::update_weights() {
+    if (accum_count==0)
+        return;
+    ++iter;
+    double eta=_evalf(schedule.is_symb_of_sommet(at_program)?schedule(iter,ctx):schedule,ctx).to_double(ctx);
+    double lambda,e=std::sqrt(1.0-std::pow(beta2,iter)),c=eps*e,lr=eta*learning_rate,alpha=lr*e/(1.0-std::pow(beta1,iter)),l;
+    int i,lc=layer_count();
+    size_t j,len,n1,n2,bias_start;
+    bool adam=(momentum==1);
+    for (i=0;i<lc-1;++i) {
+        n1=weights[i]->size1;
+        n2=weights[i]->size2;
+        len=n1*n2;
+        bias_start=n2*(n1-1);
+        lambda=gsl_vector_get(reg_coeff,i);
+        l=1.0-eta*lambda;
+        for (j=0;j<len;++j) {
+            if (i<lc-2 && (j+1)%n2==0)
+                continue;
+            double &d=Deltas[i]->data[j],&w=weights[i]->data[j],&fm=moment1[i]->data[j],&sm=moment2[i]->data[j];
+            d/=(double)accum_count;
+            if (lambda>0 && j<bias_start) {
+                d+=w*lambda;
+                w*=l;
+            }
+            if (adam) {
+                fm=beta1*fm+(1.0-beta1)*d;
+                sm=beta2*sm+(1.0-beta2)*d*d;
+                w-=alpha*fm/(std::sqrt(sm)+c);
+            } else w-=(fm=momentum*fm+lr*d);
+        }
+        gsl_matrix_set_zero(Deltas[i]);
+    }
+    accum_count=0;
+}
+/* Backward propagation of the expected output. */
+void ann::propagate_backward() {
+    calc_deltas();
+    update_Deltas();
+}
+/* Initialize iterative learning. Set ITER to 0 and zero-out the moments. */
+void ann::restart_iteration() {
+    iter=0;
+    int lc=layer_count()-1,i=0;
+    for (;i<lc-1;++i) {
+        gsl_matrix_set_zero(moment1[i]);
+        gsl_matrix_set_zero(moment2[i]);
+    }
+}
+/* Convert output to GSL matrix. */
+void ann::output2gsl_matrix(const vecteur &output,int i0,int n,gsl_matrix *m) const {
+    int i;
+    gsl_matrix_set_zero(m);
+    const_iterateur it,jt;
+    bool ck;
+    switch (this->task()) {
+    case 0:
+        if (ckmatrix(output))
+            assert(matrice2gsl_matrix(output,i0,0,n,0,true,m,ctx)==GSL_SUCCESS);
+        else {
+            gsl_vector_view m1=gsl_matrix_subrow(m,0,0,n);
+            assert(vecteur2gsl_vector(output.begin()+i0,output.begin()+i0+n,&m1.vector,ctx)==GSL_SUCCESS);
+        }
+        break;
+    case 1:
+        for (i=0,jt=output.begin()+i0;i<n;++i,++jt) {
+            it=std::find(labels.begin(),labels.end(),*jt);
+            if (it==labels.end())
+                throw std::runtime_error(gettext("Output label not found"));
+            if (output_size()==1)
+                gsl_matrix_set(m,0,i,it-labels.begin());
+            else gsl_matrix_set(m,it-labels.begin(),i,1.0);
+        }
+        break;
+    case 2:
+        for (i=0,jt=output.begin()+i0;i<n;++i,++jt) {
+            const vecteur &samp=*it->_VECTptr;
+            for (it=labels.begin();it!=labels.end();++it) {
+                if (contains(samp,*it))
+                    gsl_matrix_set(m,it-labels.begin(),i,1.0);
+            }
+        }
+        break;
+    }
+}
+/* Check input-output consistency. */
+void ann::ckinput(const matrice &input,const vecteur &output,bool ignore_output) const {
+    if (mcols(input)!=input_size())
+        throw std::runtime_error(gettext("Invalid input size"));
+    if (!is_numericm(input,num_mask_withfrac|num_mask_withint))
+        throw std::runtime_error(gettext("Input must be numeric"));
+    if (ignore_output) return;
+    if (input.size()!=output.size())
+        throw std::runtime_error(gettext("Number of samples does not match the number of outputs"));
+    if (ckmatrix(output) && mcols(output)!=output_size())
+        throw std::runtime_error(gettext("Invalid output dimension"));
+    switch (this->task()) {
+    case 0:
+        if (!is_numericv(output,num_mask_withfrac|num_mask_withint))
+            throw std::runtime_error(gettext("Output must be numeric"));
+        if (!ckmatrix(output) && output_size()>1)
+            throw std::runtime_error(gettext("Invalid output dimension"));
+        break;
+    case 1:
+        break;
+    case 2:
+        if (!ckmatrix(output))
+            throw std::runtime_error(gettext("Output must be a vector of labels"));
+        break;
+    default:
+        throw std::runtime_error(gettext("Invalid network task"));
+    }
+}
+/* Compute the gradient update for the given input and expected output.
+ * After batch_size samples are passed forward (or all samples for size 0), update the weights.
+ * Setting batch_size to a negative number disables updating the weights. */
+void ann::train(const matrice &input,const vecteur &expected_output,int batch_size) {
+    int nsamp=input.size(),i,j=0,jprev=0,sz=0,ep;
+    if (batch_size>0 && batch_size>nsamp)
+        throw std::runtime_error(gettext("Batch size too large"));
+    ckinput(input,expected_output,false);
+    bool update=false;
+    gsl_matrix_view ov;
+    while (j<nsamp) {
+        j=std::min(j+block_size,nsamp);
+        sz+=j-jprev;
+        if ((batch_size>0 && sz>=batch_size) || (batch_size>=0 && j==nsamp)) {
+            if (batch_size>0 && sz>batch_size)
+                j-=sz-batch_size;
+            update=true;
+            sz=0;
+        }
+        if (j-jprev<block_size)
+            gsl_matrix_set_zero(layers.front());
+        assert(matrice2gsl_matrix(input,jprev,0,j-jprev,0,true,layers.front(),ctx)==GSL_SUCCESS);
+        propagate_forward();
+        output2gsl_matrix(expected_output,jprev,j-jprev,eout);
+        propagate_backward();
+        accum_count+=j-jprev;
+        if (update) {
+            update_weights();
+            update=false;
+        }
+        jprev=j;
+    }
+}
+/* Convert the output to gen. */
+gen ann::gsl_vector2output(gsl_vector *output) const {
+    vecteur sel;
+    size_t i;
+    const_iterateur it;
+    switch (this->task()) {
+    case 0: // regression
+        return gsl_vector2vecteur(output);
+    case 1: // classifier
+        if (output_size()==1)
+            return labels[gsl_vector_get(output,0)>=0.5?1:0];
+        return labels[gsl_vector_max_index(output)];
+    case 2: // labeller
+        sel.reserve(labels.size());
+        for (i=0,it=labels.begin();i<output->size;++i,++it) {
+            if (gsl_vector_get(output,i)>=0.5)
+                sel.push_back(*it);
+        }
+        return sel;
+    default:
+        break;
+    }
+    throw std::runtime_error(gettext("Invalid network task"));
+}
+/* Feed the input through the network.
+ * If expected_output is NULL, return the output in res.
+ * If expected_output is not NULL, compute error function values for the obtained
+ * and expected output and store these values in res. */
+void ann::feed(const matrice &input,vecteur &res,const vecteur &expected_output) const {
+    int nsamp=input.size(),i,j=0,jprev=0;
+    res.clear();
+    if (nsamp==0) return;
+    bool comp=!expected_output.empty();
+    ckinput(input,expected_output,!comp);
+    res.reserve(nsamp);
+    gsl_vector_view ov,eov;
+    while (j<nsamp) {
+        j=std::min(j+block_size,nsamp);
+        assert(matrice2gsl_matrix(input,jprev,0,j-jprev,0,true,layers.front(),ctx)==GSL_SUCCESS);
+        if (j-jprev<block_size)
+            gsl_matrix_set_zero(eout);
+        propagate_forward();
+        if (comp) output2gsl_matrix(expected_output,jprev,j-jprev,eout);
+        for (i=0;i<j-jprev;++i) {
+            ov=gsl_matrix_column(layers.back(),i);
+            if (comp) {
+                eov=gsl_matrix_column(eout,i);
+                res.push_back(compute_errfunc(&eov.vector,&ov.vector));
+            } else res.push_back(gsl_vector2output(&ov.vector));
+        }
+        jprev=j;
+    }
+}
+/* Feed the argument forward, return the result. */
+gen ann::operator()(const gen &g,GIAC_CONTEXT) const {
+    if (g.type!=_VECT)
+        return generrtype("Input must be a vector or a matrix");
+    vecteur res;
+    if (g.subtype==_SEQ__VECT) {
+        if (g._VECTptr->size()!=2)
+            return generrdim("Expected 2 arguments");
+        const gen &inp=g._VECTptr->front(),&out=g._VECTptr->back();
+        if (inp.type!=_VECT)
+            return generrtype("Input must be a vector or a matrix");
+        if (ckmatrix(inp)) {
+            if (out.type!=_VECT)
+                return generrtype("Expected output must be a vector");
+            feed(*inp._VECTptr,res,*out._VECTptr);
+        } else feed(vecteur(1,inp),res,vecteur(1,out));
+    } else if (ckmatrix(g))
+        feed(*g._VECTptr,res);
+    else feed(vecteur(1,g),res);
+    if (ckmatrix(res) && output_size()==1)
+        res=*mtran(res).front()._VECTptr;
+    return res.size()==1?res.front():res;
+}
+/* Convert weight matrices to a vector of giac matrices. */
+void ann::weights2vecteur(vecteur &res) const {
+    int i,lc=layer_count();
+    res.clear();
+    res.reserve(lc-1);
+    gsl_matrix_view mv;
+    for (i=0;i<lc-1;++i) {
+        mv=gsl_matrix_submatrix(weights[i],0,0,weights[i]->size1,weights[i]->size2-(i+2==lc?0:1));
+        res.push_back(gsl_matrix2matrice(&mv.matrix));
+    }
+}
+/* Return the given hyperparameter value or the i-th layer (after feed-forward). */
+gen ann::operator[](const gen &g) {
+    int i,j,lc=layer_count();
+    vecteur ret;
+    gsl_matrix_view mv;
+    if (!g.is_integer())
+        return gentypeerr(ctx);
+    i=g.val;
+    if (g.subtype==_INT_MAPLECONVERSION) {
+        switch (i) {
+        case _ANN_LEARNING_RATE:
+            if (schedule.is_symb_of_sommet(at_program))
+                ret=makevecteur(string2gen("Scheduled",false),learning_rate,schedule);
+            else return learning_rate;
+            break;
+        case _ANN_BLOCK_SIZE:
+            return block_size;
+        case _ANN_TOPOLOGY:
+            ret=vector_int_2_vecteur(topology);
+            break;
+        case _GT_WEIGHTS:
+            weights2vecteur(ret);
+            break;
+        case _ANN_WEIGHT_DECAY:
+            ret=gsl_vector2vecteur(reg_coeff);
+            break;
+        case _ANN_MOMENTUM:
+            if (momentum==1)
+                ret=makevecteur(string2gen("Adam",false),beta1,beta2);
+            else return momentum;
+            break;
+        default:
+            return generr("Unknown hyperparameter");
+        }
+    } else if (g.subtype==_INT_PLOT) {
+        switch (i) {
+        case _LABELS:
+            ret=labels;
+            break;
+        case _TITLE:
+            return string2gen(title,false);
+        default:
+            return generr("Unknown hyperparameter");
+        }
+    } else {
+        if (i<0 || i>=lc)
+            return generrdim("Layer index out of range");
+        mv=gsl_matrix_submatrix(layers[i],0,0,layers[i]->size1,layers[i]->size2-(i+1==lc?0:1));
+        ret=gsl_matrix2matrice(&mv.matrix,true);
+    }
+    return ret;
+}
+/* Initialize weights using the initializer f (a random variable). Bias weights are initialized to zero. */
+void ann::randomize_initial_weights(const gen &f,const vecteur &fan_in_out) const {
+    gen r;
+    if (fan_in_out.empty())
+        r=f;
+    else if (fan_in_out.size()==1)
+        r=subst(f,fan_in_out.front(),fan[0],false,ctx);
+    else if (fan_in_out.size()==2)
+        r=subst(f,fan_in_out,fan,false,ctx);
+    else throw std::runtime_error(gettext("Invalid weights initializer specification"));
+    int i=0;
+    for (;i<layer_count()-1;++i) {
+        gen fan_in=topology[i],fan_out=topology[i+1];
+        gen args=makesequence(fan_in,fan_out,subst(r,fan,makevecteur(fan_in,fan_out),false,ctx));
+        set_initial_weights(*(is_real_number(args._VECTptr->back(),ctx)?_matrix(args,ctx):_ranm(args,ctx))._VECTptr,i);
+    }
+}
+/* Initialize weigths between i-th and (i+1)-th layer directly from a matrix. */
+void ann::set_initial_weights(const matrice &w,int i) const {
+    if (i<0||i+1>=layer_count())
+        throw std::runtime_error(gettext("Invalid layer specification"));
+    if (mrows(w)<topology[i] || mrows(w)>topology[i]+1 || mcols(w)!=topology[i+1])
+        throw std::runtime_error(gettext("Invalid weight matrix dimensions"));
+    if (matrice2gsl_matrix(w,0,0,0,0,false,weights[i],ctx)!=GSL_SUCCESS)
+        throw std::runtime_error(gettext("Failed to initialize weights"));
+}
+/* Return the total number of neurons (including bias neurons). */
+int ann::neuron_count() const {
+    int s=0;
+    for (vector<int>::const_iterator it=topology.begin();it!=topology.end();++it)
+        s+=*it;
+    return s+layer_count()-1;
+}
+/* Return an one-line description of this network. */
+string ann::print (GIAC_CONTEXT) const {
+    stringstream ss;
+    if (title.size()>0)
+        ss << title << ": ";
+    ss << network_type() << " " << gettext("with input of size") << " " << topology.front();
+    switch (task()) {
+    case 1:
+        ss << " " << gettext("and") << " ";
+        if (output_size()==1)
+            ss << 2;
+        else ss << output_size();
+        ss << " " << gettext("classes");
+        break;
+    case 2:
+        ss << " " << gettext("and") << " " << output_size() << " " << gettext("labels");
+        break;
+    default:
+        ss << " " << gettext("and") << " " << gettext("output of size") << " " << output_size();
+        break;
+    }
+    return ss.str();
+}
+/* Return the LaTeX code containing the one-line description of this network. */
+string ann::texprint(GIAC_CONTEXT) const {
+    string ret="\\text{";
+    ret+=print(contextptr);
+    ret+="}";
+    return ret;
+}
+/* Return the pointer to the neural network contained in G, or NULL if G is not a neural network. */
+ann *ann::from_gen(const gen &g) {
+    if (g.type!=_USER)
+        return NULL;
+    return dynamic_cast<ann*>(g._USERptr);
+}
+/* Return true iff the other network has the same parameters as this network. */
+bool ann::operator ==(const gen &g) const {
+    ann *other=from_gen(g);
+    if (other==NULL)
+        return false;
+    if (this->topology!=other->topology || this->labels!=other->labels || this->activation!=other->activation ||
+            this->output_activation!=other->output_activation || this->_is_classifier!=other->_is_classifier ||
+            this->errfunc!=other->errfunc || this->learning_rate!=other->learning_rate || this->schedule!=other->schedule ||
+            this->block_size!=other->block_size || this->momentum!=other->momentum ||
+            (momentum==1 && (this->beta1!=other->beta1 || this->beta2!=other->beta2)))
+        return false;
+    for(int i=0;i<topology.size()-1;++i) {
+        if (gsl_vector_get(this->reg_coeff,i)!=gsl_vector_get(other->reg_coeff,i))
+            return false;
+    }
+    return true;
+}
+/* Implement the giac constructor. */
+gen ann::giac_constructor(GIAC_CONTEXT) const {
+    vecteur args;
+    // topology
+    args.push_back(vector_int_2_vecteur(topology));
+    // hidden activation
+    if (activation.front().is_integer() && activation.front().subtype==_INT_MAPLECONVERSION) {
+        vecteur act;
+        switch (activation.front().val) {
+            case _ANN_LINEAR: act.push_back(at_id); break;
+            case _ANN_SIGMOID: act.push_back(at_logistic); break;
+            case _ANN_TANH: act.push_back(at_tanh); break;
+            default: act.push_back(activation.front()); break;
+        }
+        act=mergevecteur(act,*activation.back()._VECTptr);
+        if (!act.empty())
+            args.push_back(symb_equal(change_subtype(_FUNC,_INT_TYPE),act.size()>1?act:act.front()));
+    } else args.push_back(symb_equal(change_subtype(_FUNC,_INT_TYPE),activation.front()));
+    // output activation
+    if (!_is_classifier && output_activation.front().is_integer() && output_activation.front().subtype==_INT_MAPLECONVERSION) {
+        vecteur act;
+        switch (output_activation.front().val) {
+            case _ANN_LINEAR: act.push_back(at_id); break;
+            default: break;
+        }
+        act=mergevecteur(act,*output_activation.back()._VECTptr);
+        if (!act.empty())
+            args.push_back(symb_equal(at_output,act.size()>1?act:act.front()));
+    } else args.push_back(symb_equal(at_output,output_activation.front()));
+    // error function
+    if (errfunc.front().is_integer() && errfunc.front().subtype==_INT_MAPLECONVERSION) {
+        vecteur err(1,errfunc.front());
+        err=mergevecteur(err,*errfunc.back()._VECTptr);
+        args.push_back(symb_equal(at_erf,err.size()>1?err:err.front()));
+    } else args.push_back(symb_equal(at_erf,errfunc.front()));
+    // learning rate
+    args.push_back(symb_equal(change_subtype(_ANN_LEARNING_RATE,_INT_MAPLECONVERSION),
+                              schedule.is_symb_of_sommet(at_program)?makevecteur(learning_rate,schedule):gen(learning_rate)));
+    // batch size
+    args.push_back(symb_equal(change_subtype(_ANN_BLOCK_SIZE,_INT_MAPLECONVERSION),block_size));
+    // weight decay parameters
+    args.push_back(symb_equal(change_subtype(_ANN_WEIGHT_DECAY,_INT_MAPLECONVERSION),gsl_vector2vecteur(reg_coeff)));
+    // momentum
+    args.push_back(symb_equal(change_subtype(_ANN_MOMENTUM,_INT_MAPLECONVERSION),momentum==1?makevecteur(beta1,beta2):momentum));
+    // title
+    if (title.size()>0)
+        args.push_back(symb_equal(change_subtype(_TITLE,_INT_PLOT),string2gen(title,false)));
+    // labels
+    if (!labels.empty())
+        args.push_back(symb_equal(_is_classifier?at_classes:change_subtype(_LABELS,_INT_PLOT),labels));
+    // weights
+    vecteur w;
+    weights2vecteur(w);
+    args.push_back(symb_equal(change_subtype(_GT_WEIGHTS,_INT_MAPLECONVERSION),w));
+    // finalize
+    return symbolic(at_neural_network,change_subtype(args,_SEQ__VECT));
+}
+#endif // HAVE_LIBGSL
+/*
+ * END OF ANN CLASS IMPLEMENTATION
+ */
+
+gen _neural_network(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+#ifdef HAVE_LIBGSL
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    vecteur topology,act,out_act,err,lab,winit,reg;
+    vector<matrice*> init_weights;
+    gen rate(0.001),schedule(1),mom(0.0),fan_in=identificateur(" fan_in"),fan_out=identificateur(" fan_out");
+    string name;
+    bool cls=false,set_rate=false;
+    int i,bs=1;
+    ann *src=NULL;
+    if (g.subtype==_SEQ__VECT) {
+        const vecteur &gv=*g._VECTptr;
+        if (gv.empty())
+            return generrdim("Sequence of arguments is empty");
+        if ((src=ann::from_gen(gv.front()))==NULL) {
+            if (gv.front().type!=_VECT)
+                return generrtype("Invalid topology specification");
+            topology=*gv.front()._VECTptr;
+        }
+        // parse options
+        for (const_iterateur it=gv.begin()+1;it!=gv.end();++it) {
+            if (it->is_symb_of_sommet(at_equal)) {
+                const gen &prop=it->_SYMBptr->feuille._VECTptr->front();
+                const gen &val=it->_SYMBptr->feuille._VECTptr->back();
+                if (prop==at_output) {
+                    out_act=val.type==_VECT?*val._VECTptr:vecteur(1,val);
+                    if (out_act.empty())
+                        return generr("Invalid output activation function specification");
+                    vecteur params(out_act.begin()+1,out_act.end());
+                    out_act=makevecteur(out_act.front(),params);
+                } else if (prop==at_classes) {
+                    if (val.type!=_VECT)
+                        return generrtype("Expected a list of classes");
+                    lab=*val._VECTptr;
+                    cls=true;
+                } else if (prop==at_erf) {
+                    err=val.type==_VECT?*val._VECTptr:vecteur(1,val);
+                    if (err.empty())
+                        return generr("Invalid error function specification");
+                    vecteur params(err.begin()+1,err.end());
+                    err=makevecteur(err.front(),params);
+                } else if (prop.is_integer() && prop.subtype==_INT_MAPLECONVERSION) {
+                    switch (prop.val) {
+                    case _GT_WEIGHTS:
+                        if (val.type==_VECT) {
+                            if (!val._VECTptr->empty()) {
+                                if (ckmatrix(val._VECTptr->front())) {
+                                    if (val._VECTptr->size()!=topology.size()-1)
+                                        return generrdim("Invalid number of initial weight matrices");
+                                    init_weights.reserve(val._VECTptr->size());
+                                    for (const_iterateur wt=val._VECTptr->begin();wt!=val._VECTptr->end();++wt) {
+                                        if (wt!=val._VECTptr->begin() && !ckmatrix(*wt))
+                                            return generrtype("Expected an initial weight matrix");
+                                        init_weights.push_back(wt->_VECTptr);
+                                    }
+                                } else winit=makevecteur(val._VECTptr->front(),vecteur(val._VECTptr->begin()+1,val._VECTptr->end()));
+                            }
+                        } else winit=makevecteur(val,vecteur(0));
+                        break;
+                    case _ANN_LEARNING_RATE:
+                        if (val.type==_VECT) {
+                            if (val._VECTptr->size()!=2)
+                                return generr("Invalid scheduled learning rate specification");
+                            if (!val._VECTptr->back().is_symb_of_sommet(at_program) ||
+                                    val._VECTptr->back()._SYMBptr->feuille._VECTptr->front()._VECTptr->size()!=1)
+                                return generr("Schedule multiplier must be an univariate function");
+                            rate=val._VECTptr->front();
+                            schedule=val._VECTptr->back();
+                        } else rate=val;
+                        if (!is_real_number(rate,contextptr) || !is_strictly_positive(rate=to_real_number(rate,contextptr),contextptr))
+                            return generr("(Initial) learning rate must be a positive real number");
+                        set_rate=true;
+                        break;
+                    case _ANN_BLOCK_SIZE:
+                        if (!val.is_integer() || (bs=val.val)<1)
+                            return generr("Block size must be a positive integer");
+                        break;
+                    case _ANN_MOMENTUM:
+                        if (val.is_integer() && val.subtype==_INT_PLOT && val.val==_ADAPTIVE) {
+                            mom=1;
+                        } else if (val.type==_VECT) {
+                            if (val._VECTptr->size()!=2 || !is_numericv(*val._VECTptr,num_mask_withfrac) ||
+                                    is_positive(-_min(val,contextptr),contextptr) || is_greater(_max(val,contextptr),1,contextptr))
+                                return generr("Invalid specification of adaptive momentum parameters");
+                            mom=_evalf(val,contextptr);
+                        } else if (is_real_number(val,contextptr)) {
+                            mom=to_real_number(val,contextptr);
+                            if (!is_positive(mom,contextptr) || is_greater(mom,1,contextptr))
+                                return generr("Momentum parameter must be a real number in [0,1)");
+                        }
+                        break;
+                    case _ANN_WEIGHT_DECAY:
+                        reg=val.type==_VECT?*val._VECTptr:vecteur(1,val);
+                        if (!is_numericv(reg,num_mask_withfrac|num_mask_withint) || is_strictly_positive(-_min(reg,contextptr),contextptr))
+                            return generr("Invalid weight decay parameter(s) specification");
+                        break;
+                    default:
+                        return generr("Invalid property specification");
+                    }
+                } else if (prop.is_integer() && prop.subtype==_INT_TYPE && prop.val==_FUNC) {
+                    act=val.type==_VECT?*val._VECTptr:vecteur(1,val);
+                    if (act.empty())
+                        return generr("Invalid activation function specification");
+                    vecteur params(act.begin()+1,act.end());
+                    act=makevecteur(act.front(),params);
+                } else if (prop.is_integer() && prop.subtype==_INT_PLOT) {
+                    if (prop.val==_LABELS) {
+                        if (val.type!=_VECT)
+                            return generrtype("Expected a list of labels");
+                        lab=*val._VECTptr;
+                    } else if (prop.val==_TITLE) {
+                        if (val.type!=_STRNG)
+                            return generrtype("Title must be a string");
+                        name=*val._STRNGptr;
+                    } else return generr("Invalid property specification");
+                } else return generr("Invalid property specification");
+            } else return generrtype("Invalid optional argument");
+        }
+    } else topology=*g._VECTptr;
+    vector<int> t;
+    if (src==NULL) {
+        if (topology.size()<2)
+            return generrdim("Too few layers in the network");
+        if (!is_integer_vecteur(topology))
+            return generrtype("Invalid layer size type");
+        if (is_strictly_greater(1,_min(topology,contextptr),contextptr))
+            return gensizeerr("Invalid layer size, must be at least 1");
+        if (topology.size()==2) { // guess the size of the hidden layer: (input+output)*2/3
+            gen hsize=_round(2*_sum(topology,contextptr)/3,contextptr);
+            *logptr(contextptr) << gettext("No hidden layers specified, creating 1 hidden layer of size") << " " << hsize << "\n";
+            topology.insert(topology.begin()+1,hsize);
+        }
+        vecteur2vector_int(topology,0,t);
+    }
+    if (reg.size()==1) {
+        gen r=reg.front();
+        reg=vecteur((src==NULL?topology.size():src->layer_count())-1,r);
+    }
+    gen glorot=inv(sqrt(fan_in+fan_out,contextptr),contextptr),lecun=inv(sqrt(fan_in,contextptr),contextptr);
+    vecteur fan=makevecteur(fan_in,fan_out);
+    vecteur glorot_uniform=makevecteur(symbolic(at_uniformd,makesequence(minus_sqrt6*glorot,plus_sqrt6*glorot)),fan);
+    vecteur glorot_normal=makevecteur(symbolic(at_normald,makesequence(0,plus_sqrt2*glorot)),fan);
+    vecteur he_uniform=makevecteur(symbolic(at_uniformd,makesequence(minus_sqrt6*lecun,plus_sqrt6*lecun)),fan);
+    vecteur he_normal=makevecteur(symbolic(at_normald,makesequence(0,plus_sqrt2*lecun)),fan);
+    vecteur lecun_uniform=makevecteur(symbolic(at_uniformd,makesequence(minus_sqrt3*lecun,plus_sqrt3*lecun)),fan);
+    vecteur lecun_normal=makevecteur(symbolic(at_normald,makesequence(0,lecun)),fan);
+    if (src==NULL && winit.empty() && init_weights.empty()) // set default initialization
+        winit=makevecteur(symbolic(at_uniformd,makesequence(-lecun,lecun)),makevecteur(fan_in,fan_out));
+    try {
+        log_output_redirect lor(contextptr);
+        ann network=src==NULL?ann(t,bs,contextptr):ann(*src,bs);
+        if (src==NULL || set_rate)
+            network.set_learning_rate(rate.to_double(contextptr),schedule);
+        if (mom.type==_VECT) {
+            network.set_momentum(1);
+            network.set_adam_params(mom._VECTptr->front().to_double(contextptr),mom._VECTptr->back().to_double(contextptr));
+        } else if (src==NULL) network.set_momentum(mom.to_double(contextptr));
+        if (name.length()>0)
+            network.set_name(name);
+        if (!reg.empty())
+            network.set_regularization(reg);
+        // set labels
+        if (!lab.empty())
+            network.set_labels(lab,cls);
+        int task=network.task();
+        if (task<0)
+            return generr("Bad output labels");
+        // set activation function for hidden layers
+        if (!act.empty())
+            network.set_activation(false,act.front(),*act.back()._VECTptr);
+        else if (src==NULL) switch (task) {
+        case 0:
+            network.set_activation(false,change_subtype(_ANN_RELU,_INT_MAPLECONVERSION));
+            break;
+        case 1:
+        case 2:
+            network.set_activation(false,at_tanh);
+            break;
+        default: assert(false);
+        }
+        // set activation function for the output layer
+        if (!out_act.empty()) {
+            if (cls)
+                *logptr(contextptr) << gettext("Warning") << ": "
+                                    << gettext("'output' option is ignored in classifier networks") << "\n";
+            network.set_activation(true,out_act.front(),*out_act.back()._VECTptr);
+        } else if (src==NULL) switch (task) {
+        case 0:
+            network.set_activation(true,at_id);
+            break;
+        case 1:
+            if (network.output_size()==1)
+                network.set_activation(true,at_logistic);
+            else ; // softmax will be used
+            break;
+        case 2:
+            network.set_activation(true,at_logistic);
+            break;
+        default: assert(false);
+        }
+        // set error function
+        if (!err.empty())
+            network.set_error_function(err.front(),*err.back()._VECTptr);
+        else if (src==NULL) switch (task) {
+        case 0:
+            network.set_error_function(change_subtype(_ANN_HALF_MSE,_INT_MAPLECONVERSION));
+            break;
+        case 1:
+            if (network.output_size()>1)
+                network.set_error_function(change_subtype(_ANN_CROSS_ENTROPY,_INT_MAPLECONVERSION));
+            else network.set_error_function(change_subtype(_ANN_LOG_LOSS,_INT_MAPLECONVERSION));
+            break;
+        case 2:
+            network.set_error_function(change_subtype(_ANN_LOG_LOSS,_INT_MAPLECONVERSION));
+            break;
+        default: assert(false);
+        }
+        // initialize weights
+        if (!init_weights.empty()) {
+            i=0;
+            for (vector<matrice*>::const_iterator it=init_weights.begin();it!=init_weights.end();++it,++i)
+                network.set_initial_weights(*(*it),i);
+        } else if (!winit.empty()) {
+            if (winit.front().type==_STRNG) {
+                if (!winit.back()._VECTptr->empty())
+                    *logptr(contextptr) << gettext("Warning") << ": " << gettext("ignoring parameters for weight initializer") << "\n";
+                const string &str=*winit.front()._STRNGptr;
+                if (str=="glorot-uniform")
+                    winit=glorot_uniform;
+                else if (str=="he-uniform")
+                    winit=he_uniform;
+                else if (str=="lecun-uniform")
+                    winit=lecun_uniform;
+                else if (str=="glorot-normal")
+                    winit=glorot_normal;
+                else if (str=="he-normal")
+                    winit=he_normal;
+                else if (str=="lecun-normal")
+                    winit=lecun_normal;
+                else return generr("Unknown weight initializer");
+            }
+            network.randomize_initial_weights(winit.front(),*winit.back()._VECTptr);
+        }
+        return network;
+    } catch (const std::runtime_error &e) {
+        return generr(e.what(),false);
+    }
+#else
+    return generr("GNU Scientific Library is required for neural networks");
+#endif // HAVE_LIBGSL
+}
+static const char _neural_network_s []="neural_network";
+static define_unary_function_eval (__neural_network,&_neural_network,_neural_network_s);
+define_unary_function_ptr5(at_neural_network,alias_at_neural_network,&__neural_network,0,true)
+
+gen _train(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+#ifdef HAVE_LIBGSL
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    const vecteur &gv=*g._VECTptr;
+    if (gv.size()<3)
+        return generrdim("Expected 3 or more arguments");
+    ann *net=ann::from_gen(gv.front());
+    if (net==NULL)
+        return generrtype("First argument must be a neural network");
+    const gen &inp=gv[1],&out=gv[2];
+    if (!ckmatrix(inp) || out.type!=_VECT)
+        return generrtype("Input and output must be a matrix and a vector");
+    int batch_size=0;
+    if (gv.size()>3 && (!gv[3].is_integer() || (batch_size=gv[3].val)>(int)inp._VECTptr->size()))
+        return generr("Invalid batch size specification");
+    try {
+        net->train(*inp._VECTptr,*out._VECTptr,batch_size);
+    } catch (const std::runtime_error &e) {
+        return generr(e.what(),false);
+    }
+    return *net;
+#else
+    return generr("GNU Scientific Library is required for neural networks");
+#endif // HAVE_LIBGSL
+}
+static const char _train_s []="train";
+static define_unary_function_eval (__train,&_train,_train_s);
+define_unary_function_ptr5(at_train,alias_at_train,&__train,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

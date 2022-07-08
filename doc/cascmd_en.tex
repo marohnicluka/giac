@@ -53740,7 +53740,7 @@ The command \texttt{train} is used for training neural networks created by the c
   \texttt{mnist\_training.csv} and \texttt{mnist\_testing.csv}, which can be obtained here:
   \url{https://github.com/marohnicluka/giac/tree/master/data},
   into the subfolders \texttt{training} and \texttt{testing}, respectively. These CSV files contain
-  image paths and labels. We use these files to load the image data to \texttt{giac}.\\
+  image paths and labels. We use these files to load labeled image data to \texttt{giac}.\\
   First we load the training data. \textit{Input:}
   \begin{center}
     \begin{tabular}{l}
@@ -53752,7 +53752,7 @@ The command \texttt{train} is used for training neural networks created by the c
       \texttt{for k from 1 to size(csv) do}\\
       \texttt{~~img:=flatten(readrgb(path+csv[k-1,0])[1])/255.0;}\\
       \texttt{~~for j from 1 to n do}\\
-      \texttt{~~~~test\_data[k-1,j-1]=<img[j-1];}\\
+      \texttt{~~~~train\_data[k-1,j-1]=<img[j-1];}\\
       \texttt{~~od;}\\
       \texttt{od:;}
     \end{tabular}

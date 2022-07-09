@@ -2953,7 +2953,7 @@ void ann::propagate_forward(bool comp_deriv) const {
                 }
                 gsl_vector_scale(&mc.vector,1.0/s);
             }
-            gsl_matrix_set_all(cache.back(),1.0);
+            if (comp_deriv) gsl_matrix_set_all(cache.back(),1.0);
         } else {
             len=(s1-(i+1==lc?0:1))*block_size;
             for (j=0;j<len;++j)

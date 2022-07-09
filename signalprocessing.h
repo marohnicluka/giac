@@ -192,12 +192,12 @@ class ann : public gen_user {
     void create();
     void assign(const ann &other,int bs);
     void deallocate();
-    void propagate_forward() const;
+    void propagate_forward(bool comp_deriv=false) const;
     void propagate_backward();
     void calc_deltas() const;
     void update_Deltas();
     void update_weights();
-    double activate(bool deriv,int i,double &a) const;
+    void activate(int i,double &a,double *b) const;
     gen compute_errfunc(gsl_vector *t,gsl_vector *y) const;
     void compute_errfunc_diff(gsl_matrix *t,gsl_matrix *y,gsl_matrix *res) const;
     void ckinput(const matrice &input,const vecteur &output,bool ignore_output) const;

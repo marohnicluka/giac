@@ -2752,9 +2752,11 @@ void ann::create() {
         deltas.push_back(i==0?NULL:gsl_matrix_alloc(sz,block_size));
         if (layers.back()==NULL || (i>0 && (deltas.back()==NULL || cache.back()==NULL)))
             throw std::bad_alloc();
-        if (i!=lc-1) { // initialize bias neurons
-            for (int b=0;b<block_size;++b)
+        if (i!=lc-1) { // initialize bias neurons and constant cache
+            for (int b=0;b<block_size;++b) {
                 gsl_matrix_set(layers.back(),ti,b,1.0);
+                if (i>0) gsl_matrix_set(cache.back(),ti,b,1.0);
+            }
         }
         if (i>0) { // initialize all weights (including bias) to zero
             tip=topology[i-1];
@@ -2894,9 +2896,8 @@ string ann::network_type() const {
     return gettext("a neural network");
 }
 /* Apply activation function or its derivative to A. */
-double ann::activate(bool deriv,int i,double &a) const {
-    if (_is_classifier && deriv && i+1==layer_count())
-        return 1.0;
+void ann::activate(int i,double &a,double *b) const {
+    bool ones=_is_classifier && i+1==layer_count();
     const vecteur &f=(i+1==layer_count()?output_activation:activation);
     double e,v;
     if (f.front().is_integer() && f.front().subtype==_INT_MAPLECONVERSION) {
@@ -2904,37 +2905,36 @@ double ann::activate(bool deriv,int i,double &a) const {
         bool nop=params.empty();
         switch (f.front().val) {
         case _ANN_LINEAR:
-            if (deriv) return 1.0;
+            if (b!=NULL) *b=1.0;
             break;
         case _ANN_SIGMOID:
             e=a>0?std::exp(-a):std::exp(a);
             v=(a>0?1.0:e)/(1.0+e);
-            if (deriv) return v*(1-v);
             a=v;
+            if (b!=NULL) *b=ones?1.0:v*(1-v);
             break;
         case _ANN_TANH:
             v=std::tanh(a);
-            if (deriv) return 1.0-v*v;
             a=v;
+            if (b!=NULL) *b=ones?1.0:1.0-v*v;
             break;
         case _ANN_RELU: // leaky ReLU if parameter is set
             v=nop?0.0:params.front().to_double(ctx);
-            if (deriv) return a<0?v:1;
+            if (b!=NULL) *b=ones||a>0?1.0:v;
             if (a<0) a*=v;
             break;
         default: // not reachable
-            if (deriv) return giac::nan();
             a=giac::nan();
+            if (b!=NULL) *b=giac::nan();
             break;
         }
     } else {
-        if (deriv) return f[1](a,ctx).to_double(ctx);
+        if (b!=NULL) *b=ones?1.0:f[1](a,ctx).to_double(ctx);
         a=f[0](a,ctx).to_double(ctx);
     }
-    return 0; // dummy, OK
 }
 /* Propagate a block of samples forward. */
-void ann::propagate_forward() const {
+void ann::propagate_forward(bool comp_deriv) const {
     int i,j,k,ti,len,lc=layer_count(),os=output_size(),s1;
     gsl_vector_view mc;
     double s,*o,m;
@@ -2942,10 +2942,9 @@ void ann::propagate_forward() const {
     for (i=1;i<lc;++i) {
         s1=layers[i]->size1;
         gsl_blas_dgemm(CblasTrans,CblasNoTrans,1.0,weights[i-1],layers[i-1],0.0,layers[i]);
-        gsl_matrix_memcpy(cache[i],layers[i]);
         if (softmax && i+1==lc) {
             for (k=0;k<block_size;++k) {
-                mc=gsl_matrix_subcolumn(layers[i],k,0,os);
+                mc=gsl_matrix_column(layers[i],k);
                 m=gsl_vector_max(&mc.vector);
                 s=0;
                 for (j=0;j<os;++j) {
@@ -2954,10 +2953,11 @@ void ann::propagate_forward() const {
                 }
                 gsl_vector_scale(&mc.vector,1.0/s);
             }
+            gsl_matrix_set_all(cache.back(),1.0);
         } else {
-            len=(s1-1)*block_size;
+            len=(s1-(i+1==lc?0:1))*block_size;
             for (j=0;j<len;++j)
-                activate(false,i,layers[i]->data[j]);
+                activate(i,layers[i]->data[j],comp_deriv?&cache[i]->data[j]:NULL);
         }
     }
 } 
@@ -3026,7 +3026,7 @@ void ann::compute_errfunc_diff(gsl_matrix *t,gsl_matrix *y,gsl_matrix *res) cons
         const_iterateur it=args.begin(),itend=args.end();
         for (;it!=itend;++it)
             val.push_back(errfunc.back()(gen(*it,_SEQ__VECT),ctx));
-        if (matrice2gsl_matrix(mtran(val),res,ctx)!=GSL_SUCCESS)
+        if (matrice2gsl_matrix(val,0,0,0,0,true,res,ctx)!=GSL_SUCCESS)
             throw std::runtime_error(gettext("Failed to compute the error function derivative"));
     }
 }
@@ -3047,9 +3047,7 @@ void ann::calc_deltas() const {
         gsl_matrix_sub(deltas.back(),eout);
     } else compute_errfunc_diff(eout,layers.back(),deltas.back());
     for (i=lc-2;i>=0;--i) {
-        len=((i+2<lc?-1:0)+deltas[i+1]->size1)*block_size;
-        for (j=0;j<len;++j)
-            deltas[i+1]->data[j]*=activate(true,i+1,cache[i+1]->data[j]);
+        gsl_matrix_mul_elements(deltas[i+1],cache[i+1]);
         if (i>0)
             gsl_blas_dgemm(CblasNoTrans,CblasNoTrans,1.0,weights[i],deltas[i+1],0.0,deltas[i]);
     }
@@ -3197,7 +3195,7 @@ void ann::train(const matrice &input,const vecteur &expected_output,int batch_si
         if (j-jprev<block_size)
             gsl_matrix_set_zero(layers.front());
         assert(matrice2gsl_matrix(input,jprev,0,j-jprev,0,true,layers.front(),ctx)==GSL_SUCCESS);
-        propagate_forward();
+        propagate_forward(true);
         output2gsl_matrix(expected_output,jprev,j-jprev,eout);
         propagate_backward();
         accum_count+=j-jprev;
@@ -3249,7 +3247,7 @@ void ann::feed(const matrice &input,vecteur &res,const vecteur &expected_output)
         assert(matrice2gsl_matrix(input,jprev,0,j-jprev,0,true,layers.front(),ctx)==GSL_SUCCESS);
         if (j-jprev<block_size)
             gsl_matrix_set_zero(eout);
-        propagate_forward();
+        propagate_forward(false);
         if (comp) output2gsl_matrix(expected_output,jprev,j-jprev,eout);
         for (i=0;i<j-jprev;++i) {
             ov=gsl_matrix_column(layers.back(),i);

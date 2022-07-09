@@ -5154,7 +5154,7 @@ bool nlp_problem::ipt_solver::IC(const matrice &mat) {
             return false;
         
 #else
-        copy_matrice(mat_orig,factorization);
+        copy_matrice(mat,factorization);
         for (i=0;i<nvars;++i) factorization[i]._VECTptr->at(i)+=delta_w;
         for (i=0;i<ncons;++i) factorization[i+nvars]._VECTptr->at(i+nvars)-=delta_c;
         if (!solve_indef(factorization,NULL,ldl_perm,&n_pos,&n_neg,&n_zero,ctx))
@@ -5695,15 +5695,7 @@ bool nlp_problem::ipt_solver::optimize(optima_t &res) {
         optimum_t opt;
         remove_elements_with_indices(ip,prob._fixed_vars);
         vecteur x_k=vars2x(ip),z_k(nvars,1),lambda_k=init_lambda(x_k,z_k);
-        try {
-            opt.res=ls_filter_barrier_method(x_k,lambda_k,z_k,mu0);
-        } catch (const std::runtime_error &e) {
-            if (factorization!=NULL) delete[] factorization;
-            if (lapack_work!=NULL) delete[] lapack_work;
-            if (lapack_ipiv!=NULL) delete[] lapack_ipiv;
-            if (lapack_rhs!=NULL) delete[] lapack_rhs;
-            throw e;
-        }
+        opt.res=ls_filter_barrier_method(x_k,lambda_k,z_k,mu0);
         opt.x=x2vars(x_k);
         prob.insert_fixed_vars(opt.x);
         if (opt.res<_NLP_INFEAS)

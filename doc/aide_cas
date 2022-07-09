@@ -18258,16 +18258,17 @@ vertex_cover_number(graph_complement(complete_graph(3,4)))
 box_constraints([x,y],[[-2,2],[-5,5]])
 
 # neural_network
-2 Creates a feed-forward neural network with given parameters.
-0 Vect(topology),[opts]
+2 Creates a feed-forward neural network with given parameters or creates a copy of the given network with parameter modifications.
+0 Vect(topology)||NeuralNet(net),[opts]
 -1 train
 neural_network([2,3,1])
 neural_network([2,3,1],func=logistic)
 
 # train
 2 Performs neural network training and returns the trained network.
-0 NeuralNet(net),Mtrx(input),Mtrx(expected_output),[err])
+0 NeuralNet(net),Mtrx(input),Mtrx||Vect(expected_output),[Intg(batchsize)])
 -1 neural_network
+ X:=ranm(10000,2,uniformd(-1,1)):;f(x):=2*x[0]-x[1]+10:;net:=train(neural_network([2,3,1]),X,apply(f,X),1):;x0:=ranv(2,uniformd(-1,1)):;net(x0);f(x0)
 
 # MSE cross_entropy log_loss ReLU learning_rate weight_decay block_size adaptive momentum topology
 2 Option for the neural_network command.

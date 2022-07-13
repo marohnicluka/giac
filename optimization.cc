@@ -6402,10 +6402,10 @@ int nlp_problem::optimize(int method,const meth_parm &parm,const vecteur &ip,vec
                     err("Could not compute objective hessian and/or constraint gradients");
                     return _NLP_ERROR;
                 }
-                ipt_solver *ipt=new ipt_solver(*this,parm);
+                { ipt_solver *ipt=new ipt_solver(*this,parm);
                 if (!ipt->optimize(res))
                     ret=_NLP_ERROR;
-                delete ipt;
+                delete ipt; }
     #ifdef HAVE_LIBGSL
             }
     #endif

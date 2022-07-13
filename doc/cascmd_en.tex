@@ -7154,7 +7154,7 @@ If $a$ and $n$ are relatively prime, then $a^{euler(n)}=1\ \bmod \ n$.
 \begin{center}
 \texttt{powmod(5,12,21)}
 \end{center}
-(see section \secref{ssec:powmod})\\
+(see \secref{ssec:powmod})\\
 \textit{Output:}
 \[
 1
@@ -7809,7 +7809,7 @@ fraction.\\
   % \end{center}
   \item To avoid simplification, the argument must
     be quoted (see \secref{ssec:qt}).\\
-    (For rational fractions see \ref{sec:getNum}).\\
+    (For rational fractions see \secref{sec:getNum}).\\
     \textit{Input:}
     \begin{center}
     \texttt{numer('42/12')}
@@ -13325,7 +13325,7 @@ x\mapsto 2 x+3
 An expression can be represented by a tree. The top of the tree is
 either an operator or a function and the leaves of the tree are the
 arguments of the operator or function (see also
-\ref{sec:makesuiteop}).
+\secref{sec:makesuiteop}).
 
 The \texttt{sommet} command finds the top of an expression.
 \begin{itemize}
@@ -16252,7 +16252,7 @@ To compute first order derivatives:
     \item \textit{expr}, an expression or a list of expressions.
     \item Optionally, $x$, a variable (resp. a list of
       variable names, see several variable functions in
-      \ref{sec:plusvar}).  If the only variable is \texttt{x}, this
+      \secref{sec:plusvar}).  If the only variable is \texttt{x}, this
       second argument can be omitted.
   \end{itemize}
   \item \texttt{diff(}\textit{expr}$\,\langle ,x \rangle$\texttt{)}
@@ -16407,7 +16407,7 @@ To implicitly differentiate dependent variables:
     independent variables; these will be of the form
     \[g_i(x_{1},\ldots,x_{n},y_{1},\ldots,y_{m})=0\]
     for
-    $i=1,2,\ldots,m$, where $x_{1},ldots,x_{n}$ are the
+    $i=1,2,\ldots,m$, where $x_{1},\ldots,x_{n}$ are the
     independent variables and $y_{1},\ldots,y_{m}$ are the
     dependent variables.
     \item \textit{depvars}, the list of dependent variables, where each
@@ -18545,9 +18545,6 @@ First, solve the associated Euler-Lagrange equation:\\
 \[
 \left[-\frac{3}{4} \left(-x+1.52832425067\right)^{\frac{4}{3}}+2.32032831141\right]
 \]
-\begin{center}
-  \tt [-3*(-x+1.52832425067)\^{}(4/3)/4+2.32032831141]
-\end{center}
 Next, check if the integrand in $F(y)$ is convex:\\
 \textit{Input:}
 \begin{center}
@@ -24426,7 +24423,7 @@ and remainder of the Euclidean division of two polynomials.\\
 \index{Gcd}}
 
 The \texttt{gcd} command computes the gcd (greatest common divisor) of 
-polynomials.  (See also \ref{sec:igcd} for GCD of integers.)
+polynomials.  (See also \secref{sec:igcd} for GCD of integers.)
 \begin{itemize}
   \item \texttt{gcd} takes an unspecified number or arguments:\\
   \textit{polys}, a sequence or list of polynomials.
@@ -26732,7 +26729,7 @@ texttt{getNum} does not simplify the expression before extracting the numerator.
 \index{numer}}
 
 The \texttt{numer} command finds the numerator of a rational function,
-after it has been reduced. (See also \ref{sec:inumer}.)
+after it has been reduced. (See also \secref{sec:inumer}.)
 \begin{itemize}
   \item \noindent\texttt{numer} takes one argument:\\
   \textit{rat}, a rational function.
@@ -26807,7 +26804,7 @@ x^{2}-1
 \index{denom}}
 
 The \texttt{denom} command finds the denominator of a rational function,
-after it has been reduced. (See also \ref{sec:idenom}.)
+after it has been reduced. (See also \secref{sec:idenom}.)
 \begin{itemize}
   \item \noindent\texttt{denom} takes one argument:\\
   \textit{rat}, a rational function.
@@ -28448,7 +28445,7 @@ native \texttt{Xcas} mode  (see \secref{ssec:lang}).
 
 In \texttt{Xcas} mode, \texttt{Quo} is simply the inert form of
 \texttt{quo}; namely, it returns the Euclidean quotient of two
-polynomials without evaluation.  (See section \secref{ssec:quo}.)
+polynomials without evaluation.  (See \secref{ssec:quo}.)
 In \texttt{Maple} mode, the \texttt{Quo} command
 can additionally be used in conjunction with \texttt{mod} to
 compute the Euclidean quotient of two polynomials with
@@ -28509,7 +28506,7 @@ To get the result of the division:\\
 
 In \texttt{Xcas} mode, \texttt{Rem} is simply the inert form of
 \texttt{rem}; namely, it returns the Euclidean remainder of two
-polynomials without evaluation.  (See section \secref{ssec:rem}.)
+polynomials without evaluation.  (See \secref{ssec:rem}.)
 In \texttt{Maple} mode, the \texttt{rem} command can additionally be used in
 conjunction with \texttt{mod} to compute the Euclidean remainder of
 two polynomials with coefficients in $\mathbb{Z}/p\mathbb{Z}$.
@@ -28573,7 +28570,7 @@ x
 
 In \texttt{Xcas} mode, \texttt{Gcd} is simply the inert form of
 \texttt{gcd}; namely, it returns the greatest common divisor of two
-polynomials without evaluation.  (See section \secref{ssec:gcd}.)
+polynomials without evaluation.  (See \secref{ssec:gcd}.)
 In \texttt{Maple} mode, the \texttt{Gcd} command
 can additionally be used in conjunction with \texttt{mod} to
 compute the greatest common divisor of two polynomials with
@@ -28636,7 +28633,7 @@ x
 
 In \texttt{Xcas} mode, \texttt{Factor} is simply the inert form of
 \texttt{factor}; namely, it factors a polynomial without evaluation.
-(See section \secref{ssec:factore}.)
+(See \secref{ssec:factore}.)
 In \texttt{Maple} mode, the \texttt{Factor} command
 can additionally be used in conjunction with \texttt{mod} to
 factor a polynomials with coefficients in $\mathbb{Z}/p\mathbb{Z}$,
@@ -28685,7 +28682,7 @@ To get the actual factorization:\\
 
 In \texttt{Xcas} mode, \texttt{Det} is simply the inert form of
 \texttt{det}; namely, it gives the determinant of a matrix without
-evaluating it.  (See section \secref{ssec:det}.)
+evaluating it.  (See \secref{ssec:det}.)
 In \texttt{Maple} mode, the \texttt{Det} command
 can additionally be used in conjunction with \texttt{mod} to
 find the determinant of a matrix whose elements are in
@@ -28734,7 +28731,7 @@ $A=[[1, 2, 9],[3,10,0],[3,11,1]]$ is \texttt{5\%13} (in $\mathbb{Z}$, \texttt{de
 
 In \texttt{Xcas} mode, \texttt{Inverse} is simply the inert form of
 \texttt{inverse}; namely, it gives the inverse of a matrix without
-evaluating it.  (See section \secref{ssec:inv}.)
+evaluating it.  (See \secref{ssec:inv}.)
 In \texttt{Maple} mode, the \texttt{Inverse} command
 can additionally be used in conjunction with \texttt{mod} to
 find the inverse of a matrix whose elements are in
@@ -28782,7 +28779,7 @@ which is the inverse of $A=[[1,2,9],[3,10,0],[3,11,1]]$ in $\mathbb{Z}/13\mathbb
 
 In \texttt{Xcas} mode, \texttt{Rref} is simply the inert form of
 \texttt{rref}; namely, it returns \texttt{rref} without
-evaluating it.  (See section \secref{ssec:rref}.)
+evaluating it.  (See \secref{ssec:rref}.)
 In \texttt{Maple} mode, the \texttt{Rref} command
 can additionally be used in conjunction with \texttt{mod} to
 find the reduced row echelon form of a matrix whose elements are in
@@ -38528,7 +38525,7 @@ unambiguous reconstruction of $L$ and $D$. The following relation holds:
 
 The \texttt{inertia} command computes the inertia of a real symmetric matrix,
 i.e.~the number of positive, negative and zero eigenvalues, by performing
-LDL decomposition (see Section~\ref{sec:ldl}).
+LDL decomposition (see \secref{sec:ldl}).
 It can also use the factorization for solving a system of
 linear equations if certain inertia-related conditions are satisfied.
 
@@ -40247,7 +40244,7 @@ to \texttt{giac} identifiers during the loading process.
 Note that the coefficients of a problem loaded from file are always
 floating-point values. Therefore, to solve the problem with the native solver,
 you have to use the option \texttt{lp\_method=exact}
-(see Section~\ref{sec:lp-float}).
+(see \secref{sec:lp-float}).
 
 \subsection{Solving the transportation problems: \texttt{tpsolve}
 \index{tpsolve|textbf}}
@@ -40950,7 +40947,7 @@ to equality and/or inequality constraints with continuous and/or integer variabl
   \texttt{nlpsolve} contains a very basic parser for such files and is able to read
   problem variables, objective and constraints. For example, problems from
   \url{https://www.minlplib.org/instances.html} can be loaded this way. Solver parameters
-  can be provided in \textit{opt}.
+  can be specified in \textit{opt}.
   \item[Automatic selection of the optimization method.]
   If objective and constraints are twice differentiable, then interior-point method is used.
   If no initial point is provided and there are only box constraints, then differential evolution
@@ -53177,9 +53174,12 @@ compare sample data to a specified continuous distribution.
 % \end{center}
 \end{itemize}
 
-\chapter{Data analysis\label{chap:data}}
+\chapter{Data analysis and machine learning\label{chap:data}}
 
 \section{Clustering}
+
+Clustering is a form of unsupervised machine learning. \texttt{giac} can perform hierarchical
+clustering and $k$-means clustering.
 
 \subsection{Hierarchical clustering: \texttt{cluster}}\label{sec:hclust}
 \index{cluster}
@@ -53238,7 +53238,7 @@ of custom data by using a custom distance function.
       whether the data points are shown in the dendrogram.
     \end{itemize}
   \end{itemize}
-  \item Hierarchical clustering is slower than the $k$-means algorithm (see Section~\ref{sec:kmeans})
+  \item Hierarchical clustering is slower than the $k$-means algorithm (see \secref{sec:kmeans})
   but may produce a better classification of the data. Hierarchical clustering is also a method of
   choice for custom data types and distance functions.
   \item If more than one index is computed in a clustering process, then the optimal number of clusters
@@ -53254,12 +53254,12 @@ The dataset is loaded from file in a table cell in \texttt{Xcas} and associated 
 the variable \texttt{data}. We use the \texttt{average} linkage method and \texttt{silhouette}
 index (which is used by default if \texttt{index=true}). By setting \texttt{output} parameter
 to \texttt{plot}, we obtain a visualization of colored clusters as shown in Figure~\ref{fig:hclust}.
-\begin{figure}
+\begin{figure}[h]
   \centering
   \includegraphics[width=0.75\textwidth]{hclust.png}
   \caption{Clustering in \texttt{Xcas}\label{fig:hclust}}
 \end{figure}
-\item For string data, Levenshtein distance is used by default (see Section~\ref{sec:levenshtein}).
+\item For string data, Levenshtein distance is used by default (see \secref{sec:levenshtein}).
 \textit{Input:}
 \begin{center}
   \texttt{cluster(["cat","mouse","rat","spouse","house","cut"],output=part)}
@@ -53283,7 +53283,7 @@ to \texttt{plot}, we obtain a visualization of colored clusters as shown in Figu
 &\left[\text{"GGTAA"}\right],\left[\text{"CGGCC"}\right],\left[\text{"GGGAG"}\right]] \end{align*}
 \end{itemize}
 
-\subsection{$k$-means algorithm: \texttt{kmeans}\label{sec:kmeans}}
+\subsection{$k$-means clustering: \texttt{kmeans}\label{sec:kmeans}}
 \index{kmeans}
 
 The \texttt{kmeans} command is an efficient implementation of $k$-means algorithm
@@ -53337,7 +53337,7 @@ for clustering numerical multidimensional data.
   and suitable for large datasets.
   \item \texttt{kmeans} does not support custom distance functions.
   If you want to cluster the data by using a distance function other than the Euclidean distance,
-  use the \texttt{cluster} command (see Section~\ref{sec:hclust}).
+  use the \texttt{cluster} command (see \secref{sec:hclust}).
   \item If more than one index is computed in a clustering process, then the optimal number of clusters
   is decided by voting: the number which was selected by most indices is used.
 \end{itemize}
@@ -53366,6 +53366,445 @@ for clustering numerical multidimensional data.
     \includegraphics[width=0.75\textwidth]{clusters.png}
   \end{center}
 \end{itemize}
+
+\section{Artificial neural networks}
+
+This section explains how to create and train feed-forward neural networks in \texttt{giac}.
+
+A feed-forward network, more precisely a \textbf{multilayer perceptron}, is comprised of a sequence of at least
+three neuron layers. The first layer is called the \textbf{input layer} and the last layer is
+called the \textbf{output layer}. Layers are essentially vectors of numerical data. Each
+component of such vector corresponds to an activated neuron. The network processes the given input
+by applying the formula $l_{k+1}=f_k(W_k^Tl_k)$, where $l_k$ is the $k$-th layer of length $n_k$,
+$l_{k+1}$ is the $(k+1)$-th layer of length $n_{k+1}$, $W_k$ is a $n_k\times n_{k+1}$ weight matrix
+and $f_k$ is the activation function at the $k+1$-th layer (which is applied element-wise).
+Here $k=1,2,\ldots,L-1$, where $L$ is the
+number of layers. Each layer except the final one contains one \textbf{bias neuron} with linear activation.
+Bias neurons are auxiliary neurons created during construction of the network.
+
+Multilayer perceptrons are trained by using \textbf{backpropagation} to compute the approximate
+gradient (with respect to the weight parameters in the matrices $W_k$)
+of the error function which compares the output to the expected output (or ground truth).
+Precisely, after the training data is fed to the network, the obtained
+output is compared to the expected output and finally the error is backpropagated to find the
+weight adjustment enabling the network to predict the expected output more accurately.
+
+The examples in \secref{ssec:train} demonstrate how to prepare training data, construct neural
+networks, train them and test their accuracy.
+
+\smallskip\noindent
+\textbf{Note:} the commands in this section require that \texttt{giac} is linked to GNU Scientific Library.
+
+
+\subsection{Creating neural networks: \texttt{neural\_network}\label{sec:nnet1}}
+\index{neural\_network}
+
+The command \texttt{neural\_network} is used for creating trainable feed-forward neural networks.
+\begin{itemize}
+  \item \texttt{neural\_network} takes one mandatory argument and several optional arguments:
+  \begin{itemize}
+    \item \textit{topology} or \textit{net}, where \textit{topology} is a vector of positive integers
+    defining the number of neurons in each layer and \textit{net} is an existing neural network.
+    \begin{itemize}
+      \item If \textit{topology} is given, then a neural network is constructed from scratch.
+      The first number in \textit{topology} is the size of the input layer and the last number is the size of
+      the output layer. The numbers in between are sizes of the hidden layers. If \textit{topology}
+      contains only two numbers $m$ and $n$, then a hidden layer of size $2(m+n)/3$ is added automatically.
+      The number of layers will be referred to as $L$ below.
+      \item If \textit{net} is given, then a copy of \textit{net} is constructed with optional
+      modifications of the parameters as specified by the additional arguments (see below).
+    \end{itemize}
+    \item Optionally, \texttt{block\_size=}\textit{bs}, where \textit{bs} is a positive integer specifying
+    the amount of samples that can be processed by the network at a time. This value can be set to
+    the batch size or some smaller number for faster execution (by default, \textit{bs}$=1$).
+    \item Optionally, \texttt{learning\_rate=}\textit{rate}, where \textit{rate} is a positive real
+    number which is used as the learning rate of the network (by default, \textit{rate}$=0.001$).
+    Alternatively, \textit{rate} can be a two-element vector
+    \texttt{[}\textit{rinit}\texttt{,}\textit{schedule}\texttt{]} where \textit{rinit}$=\eta_0$
+    is the initial rate (a real number) and \textit{schedule} is a function $\eta(t)$, $t\in\mathbb{Z}$
+    which is used as the schedule multiplier for \textit{rinit} ($t$ is initially zero and increases
+    by 1 after each weight update).
+    In this case, the learning rate in iteration $t$ is $\eta_t=\eta_0\eta(t)$.
+    \item Optionally, \texttt{momentum=}\textit{mom}, where \textit{mom} is a number $\mu\in[0,1)$
+    which specifies the momentum parameter of the network (it is usually set between 0.5 and 1.0).
+    Alternatively, \textit{mom} can be specified as a two-element vector $[\beta_1,\beta_2]$ in which
+    case Adam (adaptive moment estimation) method is used. To use Adam with the default (paper)
+    parameters $\beta_1=0.9$ and $\beta_2=0.999$, simply set \textit{mom} to \texttt{adaptive}.
+    (By default, $\mu=0$, i.e.~no momentum is used.)
+    \item Optionally, \texttt{func=}\textit{act}, where \textit{act} is the activation function used in
+    the hidden layers. It can be specified either as an univariate function
+    (e.g.~\texttt{tanh} or \texttt{logistic}) or a list in which the first element is a univariate
+    function $f(x,a,b,\ldots)$ with parameters $a,b,\ldots$, and the other elements are the fixed
+    values $a_0,b_0,\ldots$ of the parameters.
+    In the latter case the value of $f$ at $x$ is obtained by computing $f(x,a_0,b_0,\ldots)$.
+    ReLU activation is specified by the symbol \texttt{ReLU}.
+    By default, ReLU activation is used for regression models while $\tanh$ is used for
+    classifiers (see below).
+    \item Optionally, \texttt{output=}\textit{outact}, where \textit{outact} is the activation
+    function used in the output layer. It is specified in the same way as the hidden activation
+    function (see above). By default, identity is used in regression models, while sigmoid
+    and softmax are used in binary and multi-class classifiers, repectively.
+    \item Optionally, \texttt{erf=}\textit{err}, where \textit{err} is the error function used for
+    network training. It is either a bivariate function $g(\mathbf{t},\mathbf{y})$ or a list
+    in which the first element is a function $g(\mathbf{t},\mathbf{y},a,b,\ldots)$) with parameters
+    $a,b,\ldots$ and the other elements are the fixed values $a_0,b_0,\ldots$ of the parameters.
+    In the latter case the error is computed as $f(\mathbf{t},\mathbf{y},a_0,b_0,\ldots)$. Here
+    $\mathbf{t}$ is the expected output and $\mathbf{y}$ is the output read at the final layer of
+    the network after forward-propagation of the input. By default, half mean squared distance is
+    used in regression models while log-loss and cross-entropy are used in binary and
+    multi-class classifiers, respectively. These error functions
+    can be specified by using shorthands \texttt{MSE}, \texttt{log\_loss} and \texttt{cross\_entropy}.
+    The corresponding definitions are:
+    \begin{align*}
+      \text{MSE:}\quad &f(\mathbf{t},\mathbf{y})=\frac1{2n}\sum_{i=1}^n(t_i-y_i)^2,\\
+      \text{log-loss:}\quad &f(\mathbf{t},\mathbf{y})=-\sum_{i=1}^n(t_i\log(y_i)+(1-t_i)\log(1-y_i)),\\
+      \text{cross-entropy:}\quad &f(\mathbf{t},\mathbf{y})=-\sum_{i=1}^nt_i\log(y_i).
+    \end{align*}
+    \item Optionally, \texttt{labels=}\textit{lab} or \texttt{classes=}\textit{lab},
+    where \textit{lab} is the list of labels
+    corresponding to the output neurons. If this option is set, then the activation for hidden
+    layers is set to \texttt{tanh}, while the activation for the output layer is set to
+    \texttt{logistic} except with \texttt{classes} and multiple labels, in which case the softmax activation
+    is used. (By default, \textit{lab} is unset, i.e.~the network is a regression model.)
+    With \texttt{labels} the network becomes a multi-label classifier (multiple labels may be assigned
+    to the output), while with \texttt{classes} it becomes a binary/multi-class classifier
+    (exactly one label is assigned to the output).
+    \item Optionally, \texttt{weights=}\textit{wi}, where \textit{wi} is either a list of
+    matrices containing initial weights for the model or a random variable used for generating
+    initial weights automatically.
+    \begin{itemize}
+      \item In the former case, \textit{wi} is a list $[W^{(1)},W^{(2)},\dots,W^{(L-1)}]$
+      where $W^{(k)}$ is the matrix specifying the weights between the $k$-th and $(k+1)$-th layer.
+      The element $w^{(k)}_{ij}$ is the weight corresponding to the link from the $i$-th neuron in
+      $k$-th layer to the $j$-th neuron in $(k+1)$-th layer. Optionally, the initial bias for
+      the $k$-th layer may be specified as an additional row in the matrix $W^{(k)}$.
+      \item In the latter case, \textit{wi} is either a constant or a random variable $X$
+      as returned by the command
+      \texttt{randvar} which may optionally contain one or two symbolic parameters: $n_{\mathrm{in}}$
+      and optionally $n_{\mathrm{out}}$, which correspond to the size of the preceding layer (``fan-in'')
+      and the size of the next layer (``fan-out''). If symbols are present, then \textit{wi} must be
+      a list in which the first element is the random variable and other elements are the symbols
+      ($n_{\mathrm{in}}$ first, then optionally $n_{\mathrm{out}}$).
+      These symbols are substituted by sizes of the $k$-th and $(k+1)$-th layer, respectively.
+      The commonly used initializations by He, Glorot and LeCun
+      can be specified as strings \texttt{"he"}, \texttt{"glorot"} and \texttt{"lecun"} with the suffix
+      \texttt{"-uniform"} resp.~\texttt{"-normal"} for uniform resp.~Gaussian variant.
+    \end{itemize}
+    By default, the uniform random variable
+    $U\left(-\frac1{\sqrt{n_{\mathrm{in}}}},\frac1{\sqrt{n_{\mathrm{in}}}}\right)$ is
+    used for weights initialization. Note that bias weights are always initialized to zero.
+    \item Optionally, \texttt{weight\_decay=}\textit{wd}, where \textit{wd} is a positive real number $\alpha$
+    or a list of $L-1$ such numbers $[\alpha_1,\alpha_2,\ldots,\alpha_{L-1}]$. These numbers are the
+    $L^2$-regularization coefficients used in the model (by default, they are all equal to zero, i.e.~no
+    regularization is performed). If a single number $\alpha$ is given, then the coefficients for all
+    layers are set to that value. If the list is given, then $\alpha_k$ is used for the $k$-th layer
+    ($\alpha_k$ is a weight decay coefficient for the weights in $W^{(k)}$). Note that regularization
+    is not applied to bias weights.
+    \item Optionally, \texttt{title=}\textit{str}, where \textit{str} is a string holding the name of
+    the newtork which is printed alongside its one-line description (by default, network is not named).
+  \end{itemize}
+  \item \texttt{neural\_network} returns the network object \texttt{net} which can be trained by using the
+  \texttt{train} command (see \secref{ssec:train}). After the network is trained to a sufficient accuracy,
+  the input \texttt{inp} is processed by calling the command \texttt{net(inp)} which returns the list
+  of values in the final layer or output label(s) if the network is a classifier. \texttt{inp} can also
+  be a matrix, in which case each row is processed and the list of results is returned.
+  Alternatively, you can pass two arguments to \texttt{net} as in the command \texttt{net(inp,res)} where
+  \texttt{res} is (the list of) expected output(s). The return value in this case is the (list of) error(s)
+  made by the network in attempt to predict \texttt{res}.
+  \item Hyperparameters and other properties of the network \texttt{net} can be fetched by using the command
+  \texttt{net[}\textit{property}\texttt{]}, where \textit{property} is one of:
+  \begin{itemize}
+    \item \texttt{block\_size}, for obtaining the block size,
+    \item \texttt{learning\_rate}, for obtaining the learning rate and possibly the schedule multiplier,
+    \item \texttt{labels}, for obtaining the list of output labels,
+    \item \texttt{momentum}, for obtaining the momentum/Adam parameter(s),
+    \item \texttt{title}, for obtaining the network name,
+    \item \texttt{topology}, for obtaining the network topology, i.e.~the list of layer sizes,
+    \item \texttt{weight\_decay}, for obtaining the list of $L^2$-regularization parameters,
+    \item \texttt{weights}, for obtaining the list of weight matrices (bias weights are contained in the
+    last row in each of these matrices).
+  \end{itemize}
+  To fetch the contents of the $k$-th layer neurons, the command \texttt{net[k]} can be used,
+  where $k\in\{0,1,\ldots,L-1\}$. This returns the layer as a matrix with the number of rows equal
+  to the block size in which the $i$-th row corresponds to the $i$-th sample passed forward through the
+  network. This is useful for e.g.~obtaining hidden representations from autoencoders.
+  \item Although \texttt{neural\_network} is flexible when it comes to custom activation and error
+  functions, the resulting network is optimized for speed only when the options \texttt{func},
+  \texttt{output} and \texttt{erf} are left unset, i.e.~when the default activation/error function(s) are used.
+  \item Networks can be saved to disk by using the command \texttt{write} (see \secref{ssec:write})
+  and loaded by using the command \texttt{read} (see \secref{ssec:read}). This is useful for
+  storing networks after training and loading them on demand.
+\end{itemize}
+
+\subsubsection*{Examples.}
+\begin{itemize}
+  \item \textit{Input:}
+  \begin{center}
+    \texttt{neural\_network([2,3,1])}
+  \end{center}
+  \item \textit{Output:}
+  \[ \text{a neural network with input of size 2 and output of size 1} \]
+  \item In this example we use GELU activation $x\mapsto x\cdot\Phi(x)$ for hidden neurons.
+  \textit{Input:}
+  \begin{center}
+    \texttt{neural\_network([2,3,1],func=unapply(x*normal\_cdf(x),x))}
+  \end{center}
+  \item \textit{Output:}
+  \[ \text{a neural network with input of size 2 and output of size 1} \]
+  \item Here we define a penguin classifier. \textit{Input:}
+  \begin{center}
+    \texttt{net:=neural\_network([10,15,7,3],classes=["adelie","chinstrap","gentoo"])}
+  \end{center}
+  \item \textit{Output:}
+  \[ \text{a classifier with input of size 10 and 3 classes} \]
+  \item Now we create a copy of \texttt{net} with block size changed to 10. \textit{Input:}
+  \begin{center}
+    \texttt{netcopy:=neural\_network(net,block\_size=10)}
+  \end{center}
+  \item \textit{Output:}
+  \[ \text{a classifier with input of size 10 and 3 classes} \]
+  \item \textit{Input:}
+  \begin{center}
+    \texttt{netcopy[block\_size]}
+  \end{center}
+  \item \textit{Output:}
+  \[ 10 \]
+\end{itemize}
+
+\subsection{Training a neural network: \texttt{train}\label{ssec:train}}
+\index{train}
+
+The command \texttt{train} is used for training neural networks created by the command
+\texttt{neural\_network} (see \secref{sec:nnet1}).
+\begin{itemize}
+  \item \texttt{train} takes three mandatory arguments and one optional argument:
+  \begin{itemize}
+    \item \textit{net}, a neural network.
+    \item \textit{input}, an input vector or a list of input vectors.
+    \item \textit{expout}, the expected output(s) from \textit{input}.
+    \item Optionally, \textit{batchsize}, a positive integer specifying the batch size.
+    Weight updates are applied only after processing each batch of samples. By setting this
+    value to a negative number, weight deltas are accumulated but the weights are not updated.
+    (By default, \textit{batchsize} is equal to the number of input vectors, i.e.~weights will
+    be updated after processing the whole input.)
+  \end{itemize}
+  \item \texttt{train} returns a copy of the input network containing weight modifications. If the
+  weights are not modified (depending on the \textit{batchsize}), the returned newtork contains
+  the accumulated weight deltas which will be applied alongside any subsequent modification
+  in the next update. Before calling \texttt{train} again, the resulting so-far trained network
+  can be tested for accuracy.
+  \item \texttt{train} applies batch/minibatch/stochastic gradient descent (depending on the
+  batch size) in attempt to optimize the weight parameters. Optionally, it takes advantage of the weight decay,
+  classical momentum or Adam (adaptive moment estimation) methods which usually make the learning process
+  faster and the resulting model more accurate. These tools are enabled for the network during the
+  construction (see \secref{sec:nnet1}).
+  \item It is advisable to set the \texttt{block\_size} option to the batch size when constructing the
+  network (see \secref{sec:nnet1}). This makes the forward passing and backpropagation more efficient
+  thanks to the fast BLAS level 3 routines.
+\end{itemize}
+
+\subsubsection*{Examples.}
+\begin{itemize}
+  \item In the first example, we demonstrate learning a nonlinear function. Let
+  \[ f(x_1,x_2)=x_1\sin(3x_2)\cos(2x_1x_2). \]
+  We create a neural network with three hidden layers and train it to predict the value $f(x_1,x_2)$
+  given the input vector $\mathbf{x}=(x_1,x_2)$ in the square $S=[-1,1]^2$.
+  We use Adam with the default parameters and set the
+  weight decay factor to $10^{-4}$. The block size is set to 100 (we will use full-batch gradient descent,
+  meaning that the network will process training samples in bulks of 100 samples at once).
+  The network has $30+20+10$ neurons in hidden layers (not counting the bias neurons).
+  We store the network topology in \texttt{t}.\\
+  \noindent\textit{Input:}
+  \begin{center}
+    \begin{tabular}{l}
+      \texttt{t:=[2,30,20,10,1]:;}\\
+      \texttt{net:=neural\_network(t,momentum=adaptive,weight\_decay=1e-4,block\_size=100)}
+    \end{tabular}
+  \end{center}
+  \textit{Output:}
+  \[ \text{"a neural network with input of size 2 and output of size 1"} \]
+  Next we create 5000 training samples in $S$ by using the uniform random variable $U(-1,1)$. \textit{Input:}
+  \begin{center}
+    \begin{tabular}{l}
+      \texttt{f(x):=x[0]*sin(3*x[1])*cos(2*x[0]*x[1])}\\
+      \texttt{data:=ranm(5000,2,uniformd(-1,1)):; res:=apply(f,data):;}
+    \end{tabular}
+  \end{center}
+  Now we have data points in \texttt{data} and the corresponding function values in \texttt{res}.
+  In a similar manner, we create a collection of another 100 samples, which will be kept
+  unseen by the network and used for testing its accuracy. \textit{Input:}
+  \begin{center}
+    \texttt{test\_data:=ranm(100,2,uniformd(-1,1)):; test\_res:=apply(f,test\_data):;}
+  \end{center}
+  Now we train the network using 2500 epochs. We test the accuracy in intervals of 250 epochs.
+  \textit{Input:}
+  \begin{center}
+    \begin{tabular}{l}
+      \texttt{for epoch from 1 to 2500 do}\\
+      \texttt{~~net:=train(net,data,res);}\\
+      \texttt{~~if irem(epoch,250)==0 then}\\
+      \texttt{~~~~print(mean(net(test\_data,test\_res)));}\\
+      \texttt{~~fi;}\\
+      \texttt{od:;}
+    \end{tabular}
+  \end{center}
+  \textit{Possible output:}
+  \begin{center}
+    \begin{tabular}{l}
+      \texttt{0.00211048030912}\\
+      \texttt{0.000199757341385}\\
+      \texttt{8.70954607301e-05}\\
+      \texttt{6.21486919568e-05}\\
+      \texttt{5.22746108944e-05}\\
+      \texttt{5.0011469063e-05}\\
+      \texttt{4.91138941048e-05}\\
+      \texttt{4.81631000381e-05}\\
+      \texttt{4.86611973063e-05}\\
+      \texttt{4.79773288935e-05}\\
+      \texttt{~}\\
+      \texttt{Evaluation time: 16.85}
+    \end{tabular}
+  \end{center}
+  Note that half-MSE is used as the error function by default (this is a regression model).
+  Now we generate a random point $\mathbf{x}_0$ in $S$ and compute the predicted and exact
+  value of $f(\mathbf{x}_0)$.\\
+  \noindent\textit{Input:}
+  \begin{center}
+    \texttt{x0:=ranv(2,uniformd(-1,1))}
+  \end{center}
+  \textit{Possible output:}
+  \[ \left[-0.402978600934,-0.836934269406\right] \]
+  \textit{Input:}
+  \begin{center}
+    \texttt{net(x0), f(x0)}
+  \end{center}
+  \textit{Possible output:}
+  \[ 0.18592080555,0.185619807512 \]
+  To plot the learned surface, use the command:
+  \begin{center}
+    \texttt{plot3d(quote(net([x1,x2])),x1=-1..1,x2=-1..1)}
+  \end{center}
+  \item In the second example we demonstrate learning a simple nonlinear separation of data.
+  Let \[f(t)=\frac25+\frac32\left(t-\frac12\right)^2,\] which defines a parabola that splits
+  the unit square $S=[0,1]^2$ into two regions. We generate 1024 random points in $S$ and
+  label them either as \texttt{below} or \texttt{above}, depending on whether they are located
+  below or above the parabola.\\
+  \textit{Input:}
+  \begin{center}
+    \begin{tabular}{l}
+      \texttt{f(t):=0.4+1.5*(t-0.5)\^{}2:;}\\
+      \texttt{g:=unapply(x[1]<f(x[0])?"below":"above",x):;}\\
+      \texttt{pts:=ranm(1024,2,uniformd(0,1)):;}\\
+      \texttt{lab:=apply(g,pts):;}
+    \end{tabular}
+  \end{center}
+  Next we create a neural network with four hidden layers which we train to label random points in $S$.
+  The error function used by default is the log-loss function since we have a binary classifier.\\
+  \textit{Input:}
+  \begin{center}
+    \begin{tabular}{l}
+      \texttt{params:=seq[momentum=adaptive,weight\_decay=1e-3,block\_size=128]:;}\\
+      \texttt{net:=neural\_network([2,10\$4,1],classes=["below","above"],params)}
+    \end{tabular}
+  \end{center}
+  \textit{Output:}
+  \[ \text{"a classifier with input of size 2 and 2 classes"} \]
+  We train on the generated data with batch size 128 and 500 epochs.
+  Before starting each epoch, the training data is shuffled (thus avoiding symmetry).\\
+  \textit{Input:}
+  \begin{center}
+    \begin{tabular}{l}
+      \texttt{for epoch from 1 to 500 do}\\
+      \texttt{~~p:=randperm(size(pts));}\\
+      \texttt{~~net:=train(net,sortperm(pts,p),sortperm(res,p),128);}\\
+      \texttt{od:;}
+    \end{tabular}
+  \end{center}
+  Now we test the accuracy of the classifier by using 1000 random test samples which we store in \texttt{tst}.
+  The number of misses is the Hamming distance of the vector of predicted labels \texttt{net(tst)} from
+  the vector of correct labels which we obtain by using the command \texttt{apply(g,tst)}.\\
+  \textit{Input:}
+  \begin{center}
+    \begin{tabular}{l}
+      \texttt{tst:=ranm(1000,2,uniformd(0,1)):;}\\
+      \texttt{(1-hamdist(net(tst),apply(g,tst))/size(tst))*100.0}
+    \end{tabular}
+  \end{center}
+  \textit{Possible output:}
+  \[ 99.8 \]
+  \item In the third example, we train a neural network on the MNIST dataset in PNG format, which can be
+  obtained here: \url{https://github.com/myleott/mnist_png}. This dataset contains 60000 training
+  grayscale images of handwritten digits in $28\times 28$ resolution, anlogside 10000 testing images.
+  Let us assume that the contents of
+  \texttt{mnist\_png.tar.gz} is unpacked in the \texttt{Downloads} folder. Now put the files
+  \texttt{mnist\_training.csv} and \texttt{mnist\_testing.csv}, which can be obtained here:
+  \url{https://github.com/marohnicluka/giac/tree/master/data},
+  into the subfolders \texttt{training} and \texttt{testing}, respectively. These CSV files contain
+  image paths and labels. We use these files to load and encode training and testing data in \texttt{giac}.\\
+  First we load the training data. \textit{Input:}
+  \begin{center}
+    \begin{tabular}{l}
+      \texttt{csv:=csv2gen("/home/luka/Downloads/mnist\_png/training/mnist\_training.csv",","):;}\\
+      \texttt{train\_data:=matrix(size(csv),28*28):; // allocate memory for training samples}\\
+      \texttt{train\_lab:=col(csv,1):;}\\
+      \texttt{path:="/home/luka/Downloads/mnist\_png/training/":;}\\
+      \texttt{for k from 1 to size(csv) do}\\
+      \texttt{~~train\_data[k-1]=<flatten(readrgb(path+csv[k-1,0])[1])/255.0;}\\
+      \texttt{od:;}
+    \end{tabular}
+  \end{center}
+  Loading the images takes several minutes. Note that we flatten and normalize the images, so that
+  the training vectors contain numbers strictly in $[0,1]$.\\
+  We load the testing images in a similar manner and store the data in \texttt{test\_data} and
+  \texttt{test\_lab}.\\
+  Now we create a neural network with three hidden layers which we train to classify the handwritten digits.
+  \textit{Input:}
+  \begin{center}
+    \begin{tabular}{l}
+      \texttt{c:=["zero","one","two","three","four","five","six","seven","eight","nine"]:;}\\
+      \texttt{params:=seq[func=ReLU,weights="he-normal",momentum=adaptive,weight\_decay=1e-4]:;}\\
+      \texttt{net:=neural\_network([28*28,500\$3,10],block\_size=100,classes=c,params);}\\
+    \end{tabular}
+  \end{center}
+  \textit{Output:}
+  \[ \text{"a classifier with input of size 784 and 10 classes"} \]
+  Note that we use ReLU activation in hidden layers (by default, tanh is used for classifiers) and
+  He normal initialization for weights.\\
+  We train the network with batch size 100 by iterating over 5 epochs.
+  Training data is shuffled before each epoch and the mean error on testing data is printed after each epoch.\\
+  \textit{Input:}
+  \begin{center}
+    \begin{tabular}{l}
+      \texttt{for epoch from 1 to 5 do}\\
+      \texttt{~~p:=randperm(size(train\_data));}\\
+      \texttt{~~net:=train(net,sortperm(train\_data,p),sortperm(train\_lab,p),100);}\\
+      \texttt{~~print(mean(net(test\_data,test\_lab)));}\\
+      \texttt{od:;}
+    \end{tabular}
+  \end{center}
+  The training takes about a minute.\\\textit{Possible output:}
+  \begin{center}
+    \begin{tabular}{l}
+      \texttt{0.110725006182}\\
+      \texttt{0.104843072908}\\
+      \texttt{0.0859572165559}\\
+      \texttt{0.0675629083633}\\
+      \texttt{0.0626279369745}
+    \end{tabular}
+  \end{center}
+  These error values are computed using the cross-entropy function, which is
+  used by default in multiclass classifiers.
+  To test the accuracy of the network, we use the following command.
+  \textit{Input:}
+  \begin{center}
+    \texttt{(1-hamdist(net(test\_data),test\_lab)/size(test\_data))*100.0}
+  \end{center}
+  \textit{Possible output:}
+  \[ 97.88 \]
+  Therefore, our network recognizes the correct digit upon ``seeing'' an image
+  of it in about 98\% of cases.
+\end{itemize}
+
 
 \chapter{Numerical computations\label{chap:numeric}}
 
@@ -56673,7 +57112,7 @@ makelist(n,n,0,4)} or \texttt{a:= [n\$(n=0..4)]} can also be used in
 place of \texttt{a:= [0,1,2,3,4]}.
 
 \subsection{Writing variable values to a file: \texttt{write}
-\index{write}}
+\index{write}}\label{ssec:write}
 
 The \texttt{write} command saves variable values to a file, to be read
 later.
@@ -67945,7 +68384,7 @@ where it is 1; namely,
 $\Pi(x)=\operatorname{\theta}(x+1/2)-\operatorname{\theta}(x-1/2)$
 where $\operatorname{\theta}$ is the  
 Heaviside function. The rectangle function is a special case of boxcar function
-(see section~\ref{sec:boxcar}) for $a=-\frac{1}{2}$ and $b=\frac{1}{2}$.
+(see \secref{sec:boxcar}) for $a=-\frac{1}{2}$ and $b=\frac{1}{2}$.
 \begin{itemize}
   \item \texttt{rect} takes one argument:\\
   $x$, an identifier or an expression.
@@ -67989,7 +68428,7 @@ The triangle function is defined by
   \end{cases}
 \]
 This is equal to the convolution of rectangle
-function with itself (see Section~\ref{sec:rect}).\\
+function with itself (see \secref{sec:rect}).\\
 The \texttt{tri} command computes the triangle function.
 \begin{itemize}
   \item \texttt{tri} takes one argument:\\

@@ -158,7 +158,7 @@ vecteur jth_column(const matrice &m,int j) {
 void integralize(vecteur &v,GIAC_CONTEXT) {
     vecteur vd;
     for (const_iterateur it=v.begin();it!=v.end();++it) {
-        if (!is_zero(*it))
+        if (!is_zero(*it,contextptr))
             vd.push_back(_denom(*it,contextptr));
     }
     if (vd.empty())
@@ -272,21 +272,26 @@ lp_stats::lp_stats() {
  */
 void lp_node::pivot_ij(matrice &m,int I,int J,bool negate) {
     pivot_elm=m[I][J];
-    iterateur start=m[I]._VECTptr->begin(),end=m[I]._VECTptr->end();
-    int rc=0,j;
-    for (iterateur it=start;it!=end;++it) {
-        if ((j=it-start)!=J && !is_zero(*it))
-            pivot_row[rc++]=make_pair(j,*it=*it/pivot_elm);
+    vecteur &mI=*m[I]._VECTptr;
+    iterateur it=mI.begin(),itend=mI.end(),jt;
+    vector<intgen>::iterator rcbeg=pivot_row.begin(),rc;
+    int i,j,jprev,jmax;
+    for (j=jprev=0,rc=rcbeg;it!=itend;++it,++j) {
+        if (j!=J && !is_zero(*it,prob->ctx)) {
+            *(rc++)=make_pair(j-jprev,*it=*it/pivot_elm);
+            jprev=j;
+        }
     }
-    m[I]._VECTptr->at(J)=gen(negate?-1:1)/pivot_elm;
-    end=m.end();
-    for (iterateur rt=start=m.begin();rt!=end;++rt) {
-        gen &atJ=rt->_VECTptr->at(J);
-        if (int(rt-start)!=I && !is_zero(atJ)) {
-            j=rc;
-            for (vector<pair<int,gen> >::const_iterator it=pivot_row.begin();j-->0;++it)
-                rt->_VECTptr->at(it->first)-=atJ*it->second;
-            atJ=(negate?1:-1)*atJ/pivot_elm;
+    jmax=rc-rcbeg;
+    mI[J]=gen(negate?-1:1)/pivot_elm;
+    for (it=m.begin(),itend=m.end(),i=0;it!=itend;++it,++i) {
+        vecteur &mi=*it->_VECTptr;
+        gen &miJ=mi[J];
+        if (i!=I && !is_zero(miJ,prob->ctx)) {
+            j=jmax;
+            for (rc=rcbeg,jt=mi.begin();j-->0;++rc)
+                *(jt+=rc->first)-=miJ*rc->second;
+            miJ=gen(negate?1:-1)*miJ/pivot_elm;
         }
     }
 }
@@ -300,20 +305,20 @@ static clock_t srbt;
 bool lp_node::change_basis(matrice &m,const vecteur &u,vector<bool> &is_slack,ints &basis,ints &cols) {
     // ev, lv: indices of entering and leaving variables
     // ec, lr: 'entering' column and 'leaving' row in matrix m, respectively
-    int ec,ev,lr,lv,nc=cols.size(),nr=basis.size();
-    gen a,b,ratio,mincoeff=0;
+    int ec,ev,lr,lv,nc=cols.size(),nr=basis.size(),i,j;
+    gen ratio,mincoeff=0;
     // choose a variable to enter basis
     ev=-1;
     const vecteur &last=*m.back()._VECTptr;
-    for (int j=0;j<nc;++j) {
-        int k=cols[j];
-        const gen &l=last[j];
-        if ((use_bland && !is_positive(l,prob->ctx) &&
-                (ev<0 || k+(is_slack[k]?nv:0)<ev+(is_slack[ev]?nv:0))) ||
-                (!use_bland && is_strictly_greater(mincoeff,l,prob->ctx))) {
+    vector<int>::const_iterator it;
+    const_iterateur jt,jtend;
+    for (j=0,it=cols.begin(),jt=last.begin();j<nc;++j,++it,++jt) {
+        if ((use_bland && !is_positive(*jt,prob->ctx) &&
+                (ev<0 || *it+(is_slack[*it]?nv:0)<ev+(is_slack[ev]?nv:0))) ||
+                (!use_bland && is_strictly_greater(mincoeff,*jt,prob->ctx))) {
             ec=j;
-            ev=k;
-            mincoeff=l;
+            ev=*it;
+            mincoeff=*jt;
         }
     }
     if (ev<0) // current solution is optimal
@@ -322,10 +327,9 @@ bool lp_node::change_basis(matrice &m,const vecteur &u,vector<bool> &is_slack,in
     mincoeff=plus_inf;
     lv=-1;
     bool hits_ub,ub_subs;
-    for (int i=0;i<nr;++i) {
-        a=m[i][ec];
-        b=m[i]._VECTptr->back();
-        int j=basis[i];
+    for (i=0,jt=m.begin();i<nr;++i,++jt) {
+        const gen &a=jt->_VECTptr->at(ec),&b=jt->_VECTptr->back();
+        j=basis[i];
         if (is_strictly_positive(a,prob->ctx) && is_greater(mincoeff,ratio=b/a,prob->ctx))
             hits_ub=false;
         else if (!is_positive(a,prob->ctx) && !is_inf(u[j]) &&
@@ -347,13 +351,12 @@ bool lp_node::change_basis(matrice &m,const vecteur &u,vector<bool> &is_slack,in
         return true;
     }
     if (prob->settings.acyclic)
-        use_bland=is_zero(mincoeff); // Bland's rule
+        use_bland=is_zero(mincoeff,prob->ctx); // Bland's rule
     if (lv<0 || is_greater(mincoeff,u[ev],prob->ctx)) {
-        const_iterateur it=m.begin(),itend=m.end();
-        for (;it!=itend;++it) {
-            a=it->_VECTptr->at(ec);
-            it->_VECTptr->back()-=u[ev]*a;
-            it->_VECTptr->at(ec)=-a;
+        for (jt=m.begin(),jtend=m.end();jt!=jtend;++jt) {
+            gen &a=jt->_VECTptr->at(ec);
+            a=-a;
+            jt->_VECTptr->back()+=u[ev]*a;
         }
         if (ev<nv)
             is_slack[ev]=!is_slack[ev];
@@ -404,7 +407,7 @@ void lp_node::simplex_reduce_bounded(matrice &m,const vecteur &u,vector<bool> &i
             clock_t now=clock();
             double obj=_evalf(phase==1?-m[nr][nc]:(prob->settings.maximize?-1:1)*(obj_ct-m[nr][nc]),prob->ctx).DOUBLE_val();
             if (phase==1 && obj0<obj) {
-                if (is_zero(m[nr][nc]))
+                if (is_zero(m[nr][nc],prob->ctx))
                     break;
                 obj0=obj;
             }
@@ -417,7 +420,7 @@ void lp_node::simplex_reduce_bounded(matrice &m,const vecteur &u,vector<bool> &i
                 srbt=now;
             }
         }
-        if (change_basis(m,u,is_slack,basis,cols) || (std::abs(phase)==1 && is_zero(m[nr][nc])))
+        if (change_basis(m,u,is_slack,basis,cols) || (std::abs(phase)==1 && is_zero(m[nr][nc],prob->ctx)))
             break;
     }
     if (is_undef(optimum))
@@ -454,13 +457,13 @@ int lp_node::preprocess(matrice &m,vecteur &bv,vecteur &l,vecteur &u,ints &cols,
             const gen &b=bv[i];
             int nz=0,j0=-1;
             for (int j=cols.size();j-->0;) {
-                if (!is_zero(a[j])) {
+                if (!is_zero(a[j],prob->ctx)) {
                     ++nz;
                     j0=j;
                 }
             }
             if (nz==0) { // empty row detected
-                if (!is_zero(b))
+                if (!is_zero(b,prob->ctx))
                     return _LP_INFEASIBLE;
             } else if (nz==1) { // singleton row detected
                 assert(j0>=0);
@@ -479,7 +482,7 @@ int lp_node::preprocess(matrice &m,vecteur &bv,vecteur &l,vecteur &u,ints &cols,
             const gen &b=bv[i];
             gen g(0),h(0);
             for (int j=cols.size();j-->0;) {
-                if (is_zero(a[j]))
+                if (is_zero(a[j],prob->ctx))
                     continue;
                 int v=cols[j];
                 g+=a[j]*(is_positive(a[j],prob->ctx)?l[v]:u[v]);
@@ -491,12 +494,12 @@ int lp_node::preprocess(matrice &m,vecteur &bv,vecteur &l,vecteur &u,ints &cols,
                 return _LP_INFEASIBLE;
             if (is_inf(g) || is_inf(h))
                 continue;
-            if (is_zero(g-b) || is_zero(h-b)) { // forcing constraint detected
+            if (is_zero(g-b,prob->ctx) || is_zero(h-b,prob->ctx)) { // forcing constraint detected
                 for (int j=cols.size();j-->0;) {
-                    if (is_zero(a[j]))
+                    if (is_zero(a[j],prob->ctx))
                         continue;
                     int v=cols[j];
-                    if (is_positive(a[j]*gen(is_zero(g-b)?1:-1),prob->ctx))
+                    if (is_positive(a[j]*gen(is_zero(g-b,prob->ctx)?1:-1),prob->ctx))
                         u[v]=l[v];
                     else l[v]=u[v];
                 }
@@ -508,19 +511,19 @@ int lp_node::preprocess(matrice &m,vecteur &bv,vecteur &l,vecteur &u,ints &cols,
             }
             // detect free singleton columns, tighten variable bounds
             for (int j=cols.size();j-->0;) {
-                if (is_zero(a[j]))
+                if (is_zero(a[j],prob->ctx))
                     continue;
                 int v=cols[j];
                 gen vl=(is_positive(a[j],prob->ctx)?b-h:b-g)/a[j]+u[v];
                 gen vu=(is_positive(a[j],prob->ctx)?b-g:b-h)/a[j]+l[v];
                 int k=0;
-                for (;k<int(m.size()) && (k==i || is_zero(m[k][j]));++k);
+                for (;k<int(m.size()) && (k==i || is_zero(m[k][j],prob->ctx));++k);
                 if (k==int(m.size()) && is_greater(vl,l[v],prob->ctx) && is_greater(u[v],vu,prob->ctx)) {
                     // free column singleton detected
                     vector<intgen> rcol(1,make_pair(v,b/a[j]));
                     obj_ct+=obj[v]*b/a[j];
                     for (k=cols.size();k-->0;) {
-                        if (k!=j && !is_zero(a[k])) {
+                        if (k!=j && !is_zero(a[k],prob->ctx)) {
                             rcol.push_back(make_pair(cols[k],-a[k]/a[j]));
                             obj[cols[k]]-=obj[v]*a[k]/a[j];
                         }
@@ -558,8 +561,8 @@ int lp_node::preprocess(matrice &m,vecteur &bv,vecteur &l,vecteur &u,ints &cols,
                 remove_column(m,j);
                 if (m.front()._VECTptr->empty()) return 0;
                 changed=true;
-            } else if (is_zero(u[v]-l[v])) { // variable v is fixed
-                if (!is_zero(l[v])) for (int i=bv.size();i-->0;) {
+            } else if (is_zero(u[v]-l[v],prob->ctx)) { // variable v is fixed
+                if (!is_zero(l[v]),prob->ctx) for (int i=bv.size();i-->0;) {
                     bv[i]-=m[i][j]*l[v];
                 }
                 vector<intgen> rcol(1,make_pair(v,l[v]));
@@ -625,7 +628,7 @@ int lp_node::solve_relaxation() {
     ints shifted;
     for (ints::const_iterator it=cols.begin();it!=cols.end();++it) {
         int i=it-cols.begin(),j=*it;
-        if (!is_zero(l[j])) {
+        if (!is_zero(l[j],prob->ctx)) {
             b=subvecteur(b,multvecteur(l[j],jth_column(m,i)));
             u[j]-=l[j];
             obj_ct+=obj[j]*l[j];
@@ -666,7 +669,7 @@ int lp_node::solve_relaxation() {
         assert(ckmatrix(m));
         // phase 1: minimize the sum of artificial variables
         simplex_reduce_bounded(m,u,is_slack,basis,cols,is_mip || !prob->settings.verbose?-1:1,obj_ct);
-        if (!is_zero(optimum))
+        if (!is_zero(optimum,prob->ctx))
             return _LP_INFEASIBLE; // at least one artificial variable is basic and positive
         m.pop_back();
         // push artificial variables out of the basis (requires that m is full-rank)
@@ -675,7 +678,7 @@ int lp_node::solve_relaxation() {
             if (j<ncols)
                 continue;
             int k=0;
-            for (;k<nc && (is_zero(m[i][k]) || cols[k]>=ncols);++k);
+            for (;k<nc && (is_zero(m[i][k],prob->ctx) || cols[k]>=ncols);++k);
             if (k==nc)
                 return _LP_ERROR;
             pivot_ij(m,i,k);
@@ -717,7 +720,7 @@ int lp_node::solve_relaxation() {
             opt1=optimum;
             cuts0=prob->stats.cuts_applied;
         }
-        else if (!is_zero(opt1))
+        else if (!is_zero(opt1,prob->ctx))
             imp=((opt1-optimum)/_abs(opt1,prob->ctx)).to_double(prob->ctx)*100;
         // get the solution
         solution=vecteur(ncols+nrows,0);
@@ -737,7 +740,7 @@ int lp_node::solve_relaxation() {
             int j0=basis[i];
             vecteur eq(*m[i]._VECTptr);
             gen f0=fracpart(eq.back()),fj,sp(0),eqnorm(0);
-            if (j0>=prob->nv() || !prob->variables[j0].is_integral() || is_zero(f0) ||
+            if (j0>=prob->nv() || !prob->variables[j0].is_integral() || is_zero(f0,prob->ctx) ||
                     min(f0,1-f0,prob->ctx).to_double(prob->ctx)<LP_MIN_AWAY)
                 continue;
             eq.pop_back();
@@ -819,7 +822,7 @@ int lp_node::solve_relaxation() {
     for (int i=0;i<prob->nv();++i) {
         if (!prob->variables[i].is_integral())
             continue;
-        if (is_zero(p=fracpart(solution[i])))
+        if (is_zero(p=fracpart(solution[i]),prob->ctx))
             continue;
         ifs=min(p,1-p,prob->ctx);
         fractional_vars[i]=p.to_double(prob->ctx);
@@ -1041,7 +1044,7 @@ void lp_constraints::get(int index,vecteur &lh,gen &rh,int &relation_type) {
  * Divide the constraint by g.
  */
 void lp_constraints::div(int index,const gen &g,GIAC_CONTEXT) {
-    assert(index<nrows() && !is_zero(g));
+    assert(index<nrows());
     lhs[index]=divvecteur(*lhs[index]._VECTptr,g);
     rhs[index]=rhs[index]/g;
     if (!is_positive(g,contextptr))
@@ -1410,7 +1413,7 @@ void lp_problem::find_implied_integers() {
             for (int i=0;i<nr;++i) {
                 if (is_one(cns[i]._VECTptr->at(j))) {
                     int k=0;
-                    for (;k<nc && (k==j || is_zero(cns[i]._VECTptr->at(k)) || variables[k].is_integral());++k);
+                    for (;k<nc && (k==j || is_zero(cns[i]._VECTptr->at(k),ctx) || variables[k].is_integral());++k);
                     if (k==nc) {
                         if (is_eq[i]) {
                             var.set_integral(true);
@@ -1443,13 +1446,13 @@ int lp_problem::preprocess(bool find_imp_int) {
             const gen &b=constr.rhs[i];
             int nz=0,j0=-1,r=constr.rv[i];
             for (int j=0;j<constr.ncols();++j) {
-                if (!is_zero(a[j])) {
+                if (!is_zero(a[j],ctx)) {
                     ++nz;
                     j0=j;
                 }
             }
             if (nz==0) { // empty row detected
-                if ((r==_LP_EQ && !is_zero(b)) ||
+                if ((r==_LP_EQ && !is_zero(b,ctx)) ||
                         (r==_LP_LEQ && !is_positive(b,ctx)) ||
                         (r==_LP_GEQ && is_strictly_positive(b,ctx)))
                     return _LP_INFEASIBLE;
@@ -1473,7 +1476,7 @@ int lp_problem::preprocess(bool find_imp_int) {
             int r=constr.rv[i];
             gen g(0),h(0);
             for (int j=0;j<constr.ncols();++j) {
-                if (is_zero(a[j]))
+                if (is_zero(a[j],ctx))
                     continue;
                 const lp_variable &var=variables[j];
                 g+=a[j]*(is_positive(a[j],ctx)?var.lb():var.ub());
@@ -1485,12 +1488,12 @@ int lp_problem::preprocess(bool find_imp_int) {
                 return _LP_INFEASIBLE;
             if (r!=_LP_EQ || is_inf(g) || is_inf(h))
                 continue;
-            if (is_zero(g-b) || is_zero(h-b)) { // forcing constraint detected
+            if (is_zero(g-b,ctx) || is_zero(h-b,ctx)) { // forcing constraint detected
                 for (int j=0;j<constr.ncols();++j) {
-                    if (is_zero(a[j]))
+                    if (is_zero(a[j],ctx))
                         continue;
                     lp_variable &var=variables[j];
-                    if (is_positive(a[j]*gen(is_zero(g-b)?1:-1),ctx))
+                    if (is_positive(a[j]*gen(is_zero(g-b,ctx)?1:-1),ctx))
                         var.tighten_ubound(var.lb(),ctx);
                     else var.tighten_lbound(var.ub(),ctx);
                 }
@@ -1500,20 +1503,20 @@ int lp_problem::preprocess(bool find_imp_int) {
             }
             // detect free singleton columns, tighten variable bounds
             for (int j=constr.ncols();j-->0;) {
-                if (is_zero(a[j]))
+                if (is_zero(a[j],ctx))
                     continue;
                 lp_variable &var=variables[j];
                 gen l=(is_positive(a[j],ctx)?b-h:b-g)/a[j]+var.ub();
                 gen u=(is_positive(a[j],ctx)?b-g:b-h)/a[j]+var.lb();
                 int k=0;
-                for (;k<constr.nrows() && (k==i || is_zero(constr.lhs[k][j]));++k);
+                for (;k<constr.nrows() && (k==i || is_zero(constr.lhs[k][j],ctx));++k);
                 if (k==constr.nrows() && is_greater(l,var.lb(),ctx) && is_greater(var.ub(),u,ctx)) {
                     // free column singleton detected
                     bool intg=true;
-                    if (!is_zero(b)) var.push_subs_coef(-1,b/a[j]);
+                    if (!is_zero(b,ctx)) var.push_subs_coef(-1,b/a[j]);
                     intg=intg && (b/a[j]).is_integer();
                     for (k=0;k<constr.ncols();++k) {
-                        if (k!=j && !is_zero(a[k])) {
+                        if (k!=j && !is_zero(a[k],ctx)) {
                             var.push_subs_coef(k,-a[k]/a[j]);
                             intg=intg && variables[k].is_integral() && (a[k]/a[j]).is_integer();
                         }
@@ -1542,7 +1545,7 @@ int lp_problem::preprocess(bool find_imp_int) {
                 int res=var.find_opt_free(objective.first[j],val,ctx);
                 if (res!=0)
                     return res;
-                if (!is_zero(val)) var.push_subs_coef(-1,val);
+                if (!is_zero(val,ctx)) var.push_subs_coef(-1,val);
                 remove_variable(j);
                 changed=true;
             } else if (var.is_fixed()) { // fixed variable
@@ -1552,7 +1555,7 @@ int lp_problem::preprocess(bool find_imp_int) {
                 for (int i=0;i<constr.nrows();++i) {
                     constr.rhs[i]-=constr.lhs[i][j]*val;
                 }
-                if (!is_zero(val)) var.push_subs_coef(-1,val);
+                if (!is_zero(val,ctx)) var.push_subs_coef(-1,val);
                 remove_variable(j);
                 changed=true;
             }
@@ -1584,30 +1587,38 @@ void lp_problem::postprocess() {
 }
 
 /*
+ * Print the constraint matrix dimensions and sparsity.
+ */
+void lp_problem::print_constraint_matrix_dim(char *buffer) {
+    sprintf(buffer,gettext("Constraint matrix has %d rows, %d columns, and %d nonzeros"),constr.nrows(),constr.ncols()+1,constr.nonzeros());
+}
+
+/*
  * Solve the problem using the specified settings.
  */
-int lp_problem::solve() {
+int lp_problem::solve(bool make_exact) {
     stats=lp_stats();
     char buffer[256];
-    sprintf(buffer,"Constraint matrix has %d rows, %d columns, and %d nonzeros",constr.nrows(),constr.ncols()+1,constr.nonzeros());
+    print_constraint_matrix_dim(buffer);
     message(buffer);
-    make_problem_exact();
+    if (make_exact)
+        make_problem_exact();
     if (objective.first.size()!=variables.size())
         objective.first.resize(variables.size(),0);
     imp_int_count=0;
     if (settings.presolve>0) {
-        message("Preprocessing...");
+        message(gettext("Preprocessing..."));
         int res=preprocess();
         if (res!=0)
             return res; // the problem is either infeasible or unbounded
     }
     int rr=constr.remove_linearly_dependent(ctx);
     if (rr>0) {
-        sprintf(buffer,"Removed %d redundant equality constraint(s)",rr);
+        sprintf(buffer,gettext("Removed %d redundant equality constraint(s)"),rr);
         message(buffer);
     }
     if (settings.presolve>0 || rr>0) {
-        sprintf(buffer,"Constraint matrix has %d rows, %d columns, and %d nonzeros",constr.nrows(),constr.ncols()+1,constr.nonzeros());
+        print_constraint_matrix_dim(buffer);
         message(buffer);
     }
     // print information about variables and constraints
@@ -1619,17 +1630,17 @@ int lp_problem::solve() {
         if (it->is_binary())
             ++bvc;
     }
-    sprintf(buffer,"Variables: %d continuous, %d integer (%d binary)",cvc,ivc,bvc);
+    sprintf(buffer,gettext("Variables: %d continuous, %d integer (%d binary)"),cvc,ivc,bvc);
     message(buffer);
     if (imp_int_count>0) {
-        sprintf(buffer,"Found %d implied integer variables",imp_int_count);
+        sprintf(buffer,gettext("Found %d implied integer variables"),imp_int_count);
         message(buffer);
     }
     for (ints::const_iterator it=constr.rv.begin();it!=constr.rv.end();++it) {
         if (*it==0) ecc++;
         else inecc++;
     }
-    sprintf(buffer,"Constraints: %d equalities, %d inequalities",ecc,inecc);
+    sprintf(buffer,gettext("Constraints: %d equalities, %d inequalities"),ecc,inecc);
     message(buffer);
     if (settings.maximize) { // convert to minimization problem
         objective.first=multvecteur(-1,objective.first);
@@ -1659,14 +1670,14 @@ int lp_problem::solve() {
             lp_node root(this,true);
             root.resize_ranges(nv());
             root.set_depth(0);
-            message("Optimizing...");
+            message(gettext("Optimizing..."));
             if ((result=root.solve_relaxation())!=_LP_SOLVED)
                 return result;
             if (root.is_integer_feasible()) {
                 solution=root.get_solution();
                 optimum=root.get_optimum();
             } else {
-                message("Starting branch & bound...");
+                message(gettext("Starting branch & bound..."));
                 if (settings.nodeselect<0)
                     settings.nodeselect=_LP_BEST_LOCAL_BOUND;
                 double root_optimum=root.get_optimum().to_double(ctx);
@@ -1683,11 +1694,11 @@ int lp_problem::solve() {
                 pair<double,double> qual;
                 while (!active_nodes.empty()) {
                     if (settings.node_limit>0 && stats.subproblems_examined>=settings.node_limit) {
-                        message("node limit exceeded",2);
+                        message(gettext("node limit exceeded"),2);
                         break;
                     }
                     if (settings.iteration_limit>0 && iteration_count>settings.iteration_limit) {
-                        message("simplex iteration limit exceeded",2);
+                        message(gettext("simplex iteration limit exceeded"),2);
                         break;
                     }
                     n=active_nodes.size();
@@ -1733,7 +1744,7 @@ int lp_problem::solve() {
                         k=best_cand[idx];
                     }
                     if (k<0) {
-                        message("node selection strategy failed",1);
+                        message(gettext("node selection strategy failed"),1);
                         break;
                     }
                     j=-1;
@@ -1773,14 +1784,14 @@ int lp_problem::solve() {
                     default: assert(false);
                     }
                     if (j<0) {
-                        message("branching variable selection strategy failed",1);
+                        message(gettext("branching variable selection strategy failed"),1);
                         break;
                     }
                     if (!is_undef(optimum)) {
-                        stats.mip_gap=is_zero(optimum)?-opt_lbound:(opt_approx-opt_lbound)/std::abs(opt_approx);
+                        stats.mip_gap=is_zero(optimum,ctx)?-opt_lbound:(opt_approx-opt_lbound)/std::abs(opt_approx);
                         if (stats.mip_gap<=settings.relative_gap_tolerance) {
                             if (settings.relative_gap_tolerance>0)
-                                message("integrality gap threshold reached",2);
+                                message(gettext("integrality gap threshold reached"),2);
                             break;
                         }
                     }
@@ -1791,7 +1802,7 @@ int lp_problem::solve() {
                         active_nodes[k].init_child(child_node);
                         if (settings.depth_limit>0 && child_node.get_depth()>settings.depth_limit) {
                             if (!depth_exceeded) {
-                                message ("depth limit exceeded",2);
+                                message (gettext("depth limit exceeded"),2);
                                 depth_exceeded=true;
                             }
                             break;
@@ -1817,7 +1828,7 @@ int lp_problem::solve() {
 #if 1
                             pair<int,double> viol=constr.violated_constraints(child_node.get_solution(),ctx);
                             if (viol.first!=0) {
-                                sprintf(buffer,"relaxation solution is infeasible with violation %g, please report",viol.second);
+                                sprintf(buffer,gettext("relaxation solution is infeasible with violation %g, please report"),viol.second);
                                 message(buffer,1);
                                 return _LP_ERROR;
                             }
@@ -1865,7 +1876,7 @@ int lp_problem::solve() {
                     }
                     now=clock();
                     if (settings.time_limit>0 && 1e3*double(now-t0)/CLOCKS_PER_SEC>settings.time_limit) {
-                        message("time limit exceeded",2);
+                        message(gettext("time limit exceeded"),2);
                         break;
                     }
                     if (CLOCKS_PER_SEC/double(now-t)<=settings.status_report_freq) { //report status
@@ -1881,10 +1892,10 @@ int lp_problem::solve() {
                     report_status("Tree is empty");
                 if (!is_undef(optimum)) {
                     //show branch&bound summary
-                    sprintf(buffer,"Summary:\n * %d subproblem(s) examined\n * max. tree size: %d nodes\n * %d GMI cut(s) applied",
+                    sprintf(buffer,gettext("Summary:\n * %d subproblem(s) examined\n * max. tree size: %d nodes\n * %d GMI cut(s) applied"),
                             stats.subproblems_examined,stats.max_active_nodes,stats.cuts_applied);
                     if (stats.cuts_applied>0)
-                        sprintf(buffer+strlen(buffer)," (average improvement: %g%%)",stats.cut_improvement/stats.cuts_applied);
+                        sprintf(buffer+strlen(buffer),gettext(" (average improvement: %g%%)"),stats.cut_improvement/stats.cuts_applied);
                     message(buffer);
                 }
             }
@@ -1906,7 +1917,7 @@ int lp_problem::solve() {
         }
     } else {
         if (settings.presolve>0) {
-            message("Solution found by preprocessor");
+            message(gettext("Solution found by preprocessor"));
             optimum=objective.second;
         } else {
             optimum=undef;
@@ -1943,9 +1954,7 @@ glp_prob *lp_problem::glpk_initialize() {
             else if (var.range().is_unrestricted_below() && !var.range().is_unrestricted_above())
                 bound_type=GLP_UP;
             else if (!var.range().is_unrestricted_below() && !var.range().is_unrestricted_above())
-                bound_type=GLP_DB;
-            else if (is_zero(var.ub()-var.lb()))
-                bound_type=GLP_FX;
+                bound_type=is_zero(var.ub()-var.lb(),ctx)?GLP_FX:GLP_DB;
             double lo=var.range().is_unrestricted_below()?0:var.lb().to_double(ctx);
             double hi=var.range().is_unrestricted_above()?0:var.ub().to_double(ctx);
             if (var.is_integral()) {
@@ -1954,7 +1963,7 @@ glp_prob *lp_problem::glpk_initialize() {
                 if (bound_type==GLP_DB && lo==hi)
                     bound_type=GLP_FX;
             }
-            if (lo==0 && hi==1 && var.is_integral())
+            if (bound_type==GLP_DB && lo==0 && hi==1 && var.is_integral())
                 glp_set_col_kind(glp,i,GLP_BV);
             else glp_set_col_bnds(glp,i,bound_type,lo,hi);
         }
@@ -1965,7 +1974,7 @@ glp_prob *lp_problem::glpk_initialize() {
     gen a;
     for (int i=0;i<constr.nrows();++i) {
         for (int j=0;j<constr.ncols();++j) {
-            if (is_zero(a=constr.lhs[i][j]))
+            if (is_zero(a=constr.lhs[i][j],ctx))
                 continue;
             ++k;
             ia[k]=i+1;
@@ -1986,9 +1995,9 @@ glp_prob *lp_problem::glpk_initialize() {
         }
     }
     glp_load_matrix(glp,k,ia,ja,ar);
-    delete [] ia;
-    delete [] ja;
-    delete [] ar;
+    delete[] ia;
+    delete[] ja;
+    delete[] ar;
     return glp;
 }
 
@@ -2030,7 +2039,7 @@ void lp_problem::glpk_callback(glp_tree *tree,void *info) {
         break;
     case GLP_IBINGO:
         if (prob->settings.nodeselect==_LP_HYBRID && !prob->use_blb) {
-            prob->message("Switching to best-local-bound node selection");
+            prob->message(gettext("Switching to best-local-bound node selection"));
             prob->use_blb=true;
         }
         break;
@@ -2106,8 +2115,8 @@ int lp_problem::term_hook(void *info,const char *s) {
  */
 int lp_problem::glpk_solve() {
 #ifndef HAVE_LIBGLPK
-    message("solving in floating-point arithmetic requires GLPK library",2);
-    return solve();
+    message(gettext("GLPK library not found, using the native solver"),2);
+    return solve(true);
 #else
     /* redirect GLPK output to logptr */
     int term_old;
@@ -2144,11 +2153,11 @@ int lp_problem::glpk_solve() {
             solution_status=_LP_SOLVED;
             break;
         case GLP_FEAS:
-            message("the solution is not necessarily optimal",2);
+            message(gettext("the solution is not necessarily optimal"),2);
             solution_status=_LP_SOLVED;
             break;
         case GLP_INFEAS:
-            message("the solution is infeasible",2);
+            message(gettext("the solution is infeasible"),2);
             solution_status=_LP_SOLVED;
             break;
         case GLP_NOFEAS:
@@ -2189,22 +2198,22 @@ int lp_problem::glpk_solve() {
             }
         }
     } else switch (result) { // GLPK returned an error
-    case GLP_EBADB:   message("invalid basis",1); break;
-    case GLP_ESING:   message("singular matrix",1); break;
-    case GLP_ECOND:   message("ill-conditioned matrix",1); break;
-    case GLP_EBOUND:  message("invalid bounds",1); break;
-    case GLP_EFAIL:   message("solver failed",1); break;
-    case GLP_EOBJLL:  message("objective lower limit reached",1); break;
-    case GLP_EOBJUL:  message("objective upper limit reached",1); break;
-    case GLP_ENOPFS:  message("no primal feasible solution",1); break;
-    case GLP_ENODFS:  message("no dual feasible solution",1); break;
-    case GLP_EROOT:   message("root LP optimum not provided",1); break;
-    case GLP_ENOFEAS: message("no primal/dual feasible solution",1); break;
-    case GLP_ENOCVG:  message("no convergence",1); break;
-    case GLP_EINSTAB: message("numerical instability",1); break;
-    case GLP_EDATA:   message("invalid data",1); break;
-    case GLP_ERANGE:  message("result out of range",1); break;
-    default:          message("unknown error",1); break;
+    case GLP_EBADB:   message(gettext("invalid basis"),1); break;
+    case GLP_ESING:   message(gettext("singular matrix"),1); break;
+    case GLP_ECOND:   message(gettext("ill-conditioned matrix"),1); break;
+    case GLP_EBOUND:  message(gettext("invalid bounds"),1); break;
+    case GLP_EFAIL:   message(gettext("solver failed"),1); break;
+    case GLP_EOBJLL:  message(gettext("objective lower limit reached"),1); break;
+    case GLP_EOBJUL:  message(gettext("objective upper limit reached"),1); break;
+    case GLP_ENOPFS:  message(gettext("no primal feasible solution"),1); break;
+    case GLP_ENODFS:  message(gettext("no dual feasible solution"),1); break;
+    case GLP_EROOT:   message(gettext("root LP optimum not provided"),1); break;
+    case GLP_ENOFEAS: message(gettext("no primal/dual feasible solution"),1); break;
+    case GLP_ENOCVG:  message(gettext("no convergence"),1); break;
+    case GLP_EINSTAB: message(gettext("numerical instability"),1); break;
+    case GLP_EDATA:   message(gettext("invalid data"),1); break;
+    case GLP_ERANGE:  message(gettext("result out of range"),1); break;
+    default:          message(gettext("unknown GLPK error"),1); break;
     }
     glp_delete_prob(prob);
     if (settings.verbose)
@@ -2224,7 +2233,7 @@ int lp_problem::glpk_solve() {
  */
 bool lp_problem::glpk_load_from_file(const char *fname) {
 #ifndef HAVE_LIBGLPK
-    message("loading CPLEX and MPS files requires GLPK library",1);
+    message(gettext("loading CPLEX and MPS files requires GLPK library"),1);
     return false;
 #endif
 #ifdef HAVE_LIBGLPK
@@ -2241,7 +2250,7 @@ bool lp_problem::glpk_load_from_file(const char *fname) {
     else if (ext=="lp") // CPLEX LP format
         result=glp_read_lp(prob,NULL,fname);
     else {
-        message("file format not supported",1);
+        message(gettext("file format not supported"),1);
         result=1;
     }
     if (result==0) { // successfully loaded
@@ -2249,7 +2258,7 @@ bool lp_problem::glpk_load_from_file(const char *fname) {
         int obj_dir=glp_get_obj_dir(prob),len,t,k;
         int nr=glp_get_num_rows(prob),n=glp_get_num_cols(prob);
         if (nr*n>LP_CONSTR_MAXSIZE) {
-            message("constraint matrix too large",1);
+            message(gettext("constraint matrix too large"),1);
             return false;
         }
         int *ind=new int[1+n];
@@ -2289,7 +2298,7 @@ bool lp_problem::glpk_load_from_file(const char *fname) {
             }
             t=glp_get_row_type(prob,i);
             if (t==GLP_FR) {
-                sprintf(buffer,"row bounds not set, discarding constraint %d",i);
+                sprintf(buffer,gettext("row bounds not set, discarding constraint %d"),i);
                 message(buffer,2);
                 constr.remove(i-1);
                 continue;
@@ -2311,8 +2320,8 @@ bool lp_problem::glpk_load_from_file(const char *fname) {
                 }
             }
         }
-        delete [] ind;
-        delete [] val;
+        delete[] ind;
+        delete[] val;
     }
     glp_delete_prob(prob);
     if (print_messages)
@@ -2495,31 +2504,36 @@ bool parse_options_and_bounds(const_iterateur &it,const_iterateur &itend,lp_prob
 }
 
 int parse_constraints(bool is_matrix_form,const_iterateur &it,const_iterateur &itend,lp_problem &prob) {
-    vecteur cv;
     if (is_matrix_form) {
         if (it->type!=_VECT)
             return _LP_ERR_TYPE;
-        cv=*it->_VECTptr;
-        int n=cv.size();
+        const vecteur arg=*it->_VECTptr;
+        int n=arg.size(),mask=num_mask_withfrac|num_mask_withint;
         if ((n%2)!=0)
             return _LP_ERR_SIZE;
         if (n>0) {
             //constraints are given in form [A,b,Aeq,beq] such that
             //A.x<=b and/or Aeq.x=beq (Aeq and beq are optional)
-            if (cv[0].type!=_VECT || cv[1].type!=_VECT)
+            if (!((arg[0].type==_VECT && arg[0]._VECTptr->empty()) || ckmatrix(arg[0])) || arg[1].type!=_VECT)
                 return _LP_ERR_TYPE;
-            vecteur &A=*cv[0]._VECTptr,&b=*cv[1]._VECTptr;
-            int len;
-            if ((len=A.size())!=int(b.size()))
+            const matrice &A=*arg[0]._VECTptr;
+            const vecteur &b=*arg[1]._VECTptr;
+            if (!is_numericm(A,mask) || !is_numericv(b,mask))
+                return _LP_ERR_TYPE;
+            int len=A.size();
+            if (len!=int(b.size()) || (!A.empty() && mcols(A)!=prob.nv()))
                 return _LP_ERR_DIM;
             for (int i=0;i<len;++i) {
                 prob.constr.append(*A[i]._VECTptr,b[i],_LP_LEQ);
             }
             if (n>2) { //there are equality constraints
-                if (cv[2].type!=_VECT || cv[3].type!=_VECT)
+                if (!ckmatrix(arg[2]) || arg[3].type!=_VECT)
                     return _LP_ERR_TYPE;
-                vecteur &Aeq=*cv[2]._VECTptr,&beq=*cv[3]._VECTptr;
-                if ((len=Aeq.size())!=int(beq.size()))
+                const matrice &Aeq=*arg[2]._VECTptr;
+                const vecteur &beq=*arg[3]._VECTptr;
+                if (!is_numericm(Aeq,mask) || !is_numericv(beq,mask))
+                    return _LP_ERR_TYPE;
+                if ((len=Aeq.size())!=int(beq.size()) || mcols(Aeq)!=prob.nv())
                     return _LP_ERR_DIM;
                 for (int i=0;i<len;++i) {
                     prob.constr.append(*Aeq[i]._VECTptr,beq[i],_LP_EQ);
@@ -2536,8 +2550,7 @@ int parse_constraints(bool is_matrix_form,const_iterateur &it,const_iterateur &i
         ++it;
         if (it!=itend && it->type==_VECT) {
             matrice &bounds=*it->_VECTptr;
-            if (!ckmatrix(bounds) || int(bounds.size())!=2 ||
-                    int(bounds.front()._VECTptr->size())<prob.nv())
+            if (!ckmatrix(bounds) || bounds.size()!=2 || int(bounds.front()._VECTptr->size())<prob.nv())
                 return _LP_ERR_DIM;
             if (prob.nv()==0)
                 prob.create_variables(bounds.front()._VECTptr->size());
@@ -2552,37 +2565,37 @@ int parse_constraints(bool is_matrix_form,const_iterateur &it,const_iterateur &i
             prob.set_objective(vecteur(prob.nv(),0),0);
     } else { //the problem is given in symbolic form
         if (it->type==_VECT) {
-            cv=*it->_VECTptr;
-            prob.add_identifiers_from(cv);
+            const vecteur &arg=*it->_VECTptr;
+            prob.add_identifiers_from(arg);
             ++it;
+            vecteur sides,c;
+            pair<gen,gen> bounds;
+            gen r;
+            int rel;
+            const_iterateur jt=arg.begin(),itend=arg.end();
+            for (;jt!=itend;++jt) {
+                if (jt->is_symb_of_sommet(at_equal))
+                    rel=_LP_EQ;
+                else if (jt->is_symb_of_sommet(at_inferieur_egal))
+                    rel=_LP_LEQ;
+                else if (jt->is_symb_of_sommet(at_superieur_egal))
+                    rel=_LP_GEQ;
+                else
+                    return _LP_ERR_TYPE;
+                sides=*jt->_SYMBptr->feuille._VECTptr;
+                if (jt->is_symb_of_sommet(at_equal) && interval2pair(sides.back(),bounds,prob.ctx)) {
+                    if (!prob.lincomb_coeff(sides.front(),c,r))
+                        return _LP_ERR_TYPE;
+                    prob.constr.append(c,bounds.first-r,_LP_GEQ);
+                    prob.constr.append(c,bounds.second-r,_LP_LEQ);
+                    continue;
+                }
+                if (!prob.lincomb_coeff(sides.front()-sides.back(),c,r))
+                    return _LP_ERR_TYPE;
+                prob.constr.append(c,-r,rel);
+            }
         }
         prob.create_variables(prob.variable_identifiers.size());
-        vecteur sides,c;
-        pair<gen,gen> bounds;
-        gen r;
-        int rel;
-        const_iterateur jt=cv.begin(),itend=cv.end();
-        for (;jt!=itend;++jt) {
-            if (jt->is_symb_of_sommet(at_equal))
-                rel=_LP_EQ;
-            else if (jt->is_symb_of_sommet(at_inferieur_egal))
-                rel=_LP_LEQ;
-            else if (jt->is_symb_of_sommet(at_superieur_egal))
-                rel=_LP_GEQ;
-            else
-                return _LP_ERR_TYPE;
-            sides=*jt->_SYMBptr->feuille._VECTptr;
-            if (jt->is_symb_of_sommet(at_equal) && interval2pair(sides.back(),bounds,prob.ctx)) {
-                if (!prob.lincomb_coeff(sides.front(),c,r))
-                    return _LP_ERR_TYPE;
-                prob.constr.append(c,bounds.first-r,_LP_GEQ);
-                prob.constr.append(c,bounds.second-r,_LP_LEQ);
-                continue;
-            }
-            if (!prob.lincomb_coeff(sides.front()-sides.back(),c,r))
-                return _LP_ERR_TYPE;
-            prob.constr.append(c,-r,rel);
-        }
     }
     if (!parse_options_and_bounds(it,itend,prob))
         return _LP_ERR_TYPE;
@@ -2650,7 +2663,7 @@ gen _lpsolve(const gen &args,GIAC_CONTEXT) {
                 }
             }
             if (prob.nc()==0) {
-                prob.message("no constraints detected",1);
+                prob.message(gettext("no constraints detected"),1);
                 return gensizeerr(contextptr);
             }
         }
@@ -2688,18 +2701,18 @@ gen _lpsolve(const gen &args,GIAC_CONTEXT) {
     }
     vector<lp_variable>::const_iterator vt=prob.variables.begin();
     for (;vt!=prob.variables.end();++vt) {
-        if (vt->is_integral() && is_zero(vt->lb()) && is_one(vt->ub())) {
+        if (vt->is_integral() && is_zero(vt->lb(),contextptr) && is_one(vt->ub())) {
             prob.settings.has_binary_vars=true;
             break;
         }
     }
     //solve the problem
-    switch (is_solver_exact?prob.solve():prob.glpk_solve()) {
+    switch (is_solver_exact?prob.solve(true):prob.glpk_solve()) {
     case _LP_INFEASIBLE:
-        prob.message("problem has no feasible solutions",1);
+        prob.message(gettext("problem has no feasible solutions"),1);
         return vecteur(0);
     case _LP_UNBOUNDED:
-        prob.message("problem has unbounded solution",1);
+        prob.message(gettext("problem has unbounded solution"),1);
         return makevecteur(prob.settings.maximize?plus_inf:minus_inf,vecteur(0));
     case _LP_ERROR:
         return undef;

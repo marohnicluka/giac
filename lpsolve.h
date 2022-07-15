@@ -235,7 +235,8 @@ struct lp_problem {
     void remove_variable(int j);
     void find_implied_integers();
     void postprocess();
-    int solve();
+    void print_constraint_matrix_dim(char *buffer);
+    int solve(bool make_exact);
     vecteur output_solution(bool sort_vars);
     //GLPK routines
 #ifdef HAVE_LIBGLPK

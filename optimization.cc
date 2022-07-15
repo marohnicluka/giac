@@ -5150,9 +5150,8 @@ bool nlp_problem::ipt_solver::IC(const matrice &mat) {
                 factorization[i+j*(nvars+ncons)]=e._DOUBLE_val;
             }
         }
-        if (!solve_indef(factorization,lapack_work,lapack_ipiv,NULL,nvars+ncons,0,&n_pos,&n_neg,&n_zero,ctx))
+        if (!solve_indef(factorization,&lapack_work,lapack_ipiv,NULL,nvars+ncons,0,&n_pos,&n_neg,&n_zero))
             return false;
-        
 #else
         copy_matrice(mat,factorization);
         for (i=0;i<nvars;++i) factorization[i]._VECTptr->at(i)+=delta_w;
@@ -5289,12 +5288,12 @@ gen nlp_problem::ipt_solver::fraction_to_boundary(const vecteur &y,const vecteur
 bool nlp_problem::ipt_solver::solve_kkt(const matrice &mat,const vecteur &rh,vecteur &sol) {
 #ifdef HAVE_LIBLAPACK
     const_iterateur it=rh.begin(),itend=rh.end();
-    for (;it!=itend;++it) {
+    for (int i=0;it!=itend;++it,++i) {
         gen e=evalf_double(*it,1,ctx);
         if (e.type!=_DOUBLE_) return _NLP_ERROR;
-        lapack_rhs[it-rh.begin()]=e._DOUBLE_val;
+        lapack_rhs[i]=e._DOUBLE_val;
     }
-    if (!solve_indef(factorization,lapack_work,lapack_ipiv,lapack_rhs,nvars+ncons,1,NULL,NULL,NULL,ctx))
+    if (!solve_indef(factorization,&lapack_work,lapack_ipiv,lapack_rhs,nvars+ncons,1,NULL,NULL,NULL))
         return false;
     iterateur jt=sol.begin(),jtend=sol.end();
     for (int i=0;jt!=jtend;++jt,++i) *jt=lapack_rhs[i];
@@ -5382,8 +5381,10 @@ int nlp_problem::ipt_solver::ls_filter_barrier_method(vecteur &x_k,vecteur &lamb
         alpha_min=max(min(alpha_min,alpha_max/100,ctx),eps_tol,ctx);
         first_trial_stepsize_rejected=false;
         while (true) {
-            if (ctrl_c || interrupted)
+            if (ctrl_c || interrupted) {
+                ctrl_c=interrupted=false;
                 throw std::runtime_error("Stopped by user interruption");
+            }
             /* A-5.2. Compute the new trial point */
             vecteur x_kl=addvecteur(x_k,multvecteur(alpha_kl,d_x));
             gen theta=constraint_violation(x_kl),phi=barrier_fval(x_kl);
@@ -5912,6 +5913,10 @@ bool nlp_problem::branch_and_bound(const meth_parm &parm,const vecteur &cont_sol
     iterateur nt,ntend,sel;
     optima_t sub_res;
     while (!active_nodes.empty()) {
+        if (interrupted || ctrl_c) {
+            interrupted=ctrl_c=false;
+            throw std::runtime_error(gettext("Stopped by user interruption"));
+        }
         // node selection (strategy: best local bound)
         minbnd=plus_inf;
         sel=active_nodes.end();
@@ -5936,20 +5941,15 @@ bool nlp_problem::branch_and_bound(const meth_parm &parm,const vecteur &cont_sol
         ub=*sel->_VECTptr->at(1)._VECTptr;
         oldb=ub[bv];
         active_nodes.erase(sel); // remove parent subproblem
-        try {
-            // branch down
-            ub[bv]=s_xl;
-            if (is_greater(ub[bv],lb[bv],ctx) && bb_solve_subproblem(parm,active_nodes,fval,sub_res,incumbent))
-                update_pseudocost(bv,pc_lo,pc_lo_count,fval-s_fval,s_xf-s_xl);
-            // branch up
-            ub[bv]=oldb;
-            lb[bv]=s_xu;
-            if (is_greater(ub[bv],lb[bv],ctx) && bb_solve_subproblem(parm,active_nodes,fval,sub_res,incumbent))
-                update_pseudocost(bv,pc_hi,pc_hi_count,fval-s_fval,s_xu-s_xf);
-        } catch (const std::runtime_error &e) {
-            if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c)
-                throw e;
-        }
+        // branch down
+        ub[bv]=s_xl;
+        if (is_greater(ub[bv],lb[bv],ctx) && bb_solve_subproblem(parm,active_nodes,fval,sub_res,incumbent))
+            update_pseudocost(bv,pc_lo,pc_lo_count,fval-s_fval,s_xf-s_xl);
+        // branch up
+        ub[bv]=oldb;
+        lb[bv]=s_xu;
+        if (is_greater(ub[bv],lb[bv],ctx) && bb_solve_subproblem(parm,active_nodes,fval,sub_res,incumbent))
+            update_pseudocost(bv,pc_hi,pc_hi_count,fval-s_fval,s_xu-s_xf);
     }
     return true;
 }
@@ -5983,6 +5983,10 @@ bool nlp_problem::outer_approximation(const meth_parm &parm,const vecteur &cont_
     _spc=0;
     initp.clear();
     while(true) {
+        if (interrupted || ctrl_c) {
+            interrupted=ctrl_c=false;
+            throw std::runtime_error(gettext("Stopped by user interruption"));
+        }
         // solve master problem
         if (!ipt_opt.empty()) {
             s=subvecteur(vars,ipt_opt);
@@ -5999,30 +6003,25 @@ bool nlp_problem::outer_approximation(const meth_parm &parm,const vecteur &cont_
         }
         vars.push_back(alpha);
         LB_prev=LB;
-        try {
-            res=minimize_linear(alpha,constr,moa_sol,LB);
-            vars.pop_back();
-            moa_sol.pop_back();
-            ++_spc;
-            _ss << "Lower bound: " << LB; debug();
-            gap=(UB-LB)/(1+_abs(LB,ctx));
-            if (res!=_NLP_OPTIMAL || is_strictly_greater(parm.eps,gap,ctx))
-                break;
-            // fix integer variables and solve the reduced NLP
-            for (i=0;i<n;++i) {
-                if (is_intvar(i))
-                    _fixed_vars.insert(make_pair(i,moa_sol[i]));
-            }
-            ipt=new ipt_solver(*this,parm);
-            ipt_res.clear();
-            _iter_count=0;
-            if (!ipt->optimize(ipt_res)) {
-                ret=false;
-                break;
-            }
-        } catch (const std::runtime_error &e) {
-            if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c)
-                throw e;
+        res=minimize_linear(alpha,constr,moa_sol,LB);
+        vars.pop_back();
+        moa_sol.pop_back();
+        ++_spc;
+        _ss << "Lower bound: " << LB; debug();
+        gap=(UB-LB)/(1+_abs(LB,ctx));
+        if (res!=_NLP_OPTIMAL || is_strictly_greater(parm.eps,gap,ctx))
+            break;
+        // fix integer variables and solve the reduced NLP
+        for (i=0;i<n;++i) {
+            if (is_intvar(i))
+                _fixed_vars.insert(make_pair(i,moa_sol[i]));
+        }
+        ipt=new ipt_solver(*this,parm);
+        ipt_res.clear();
+        _iter_count=0;
+        if (!ipt->optimize(ipt_res)) {
+            ret=false;
+            break;
         }
         if (ipt_res.empty())
             break;
@@ -7079,10 +7078,6 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
     try {
         res=prob.optimize(method,parm,initp,optsol,optval);
     } catch (const std::runtime_error &e) {
-        if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
-            interrupted=ctrl_c=false;
-            return generr("Stopped by user interruption");
-        }
         return generr(e.what(),false);
     }
     switch (res) {

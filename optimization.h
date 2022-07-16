@@ -31,6 +31,8 @@
 #include <sstream>
 #ifdef HAVE_LIBGSL
 #include <gsl/gsl_multimin.h>
+#include <gsl/gsl_siman.h>
+#include <gsl/gsl_rng.h>
 #endif
 
 #ifndef NO_NAMESPACE_GIAC
@@ -673,6 +675,27 @@ public:
     gen operator()(int k,int m) const { return w[k][m]; } // weight for mth derivative at kth grid-point
 };
 
+class siman_config { // a configuration class for simulated annealing
+    const context *ctx;
+    const gen &energy_func;
+    const gen &distance_func;
+    const gen &modify_func;
+    gen _obj;
+    public:
+    siman_config(const gen &obj_orig,const gen &efunc,const gen &distfunc,const gen &modfunc,GIAC_CONTEXT)
+        : ctx(contextptr), energy_func(efunc), distance_func(distfunc), modify_func(modfunc) { _obj=obj_orig; }
+    siman_config(const siman_config &other)
+        : ctx(other.ctx), energy_func(other.energy_func), distance_func(other.distance_func), modify_func(other.modify_func) { _obj=other.obj(); }
+    void assign(const siman_config &other) { _obj=other.obj(); }
+    ~siman_config() {}
+    const gen &obj() const { return _obj; }
+    bool is_valid() const { return !is_undef(_obj); }
+    int step_func_nargs() const { return modify_func._SYMBptr->feuille._VECTptr->front()._VECTptr->size(); }
+    gen energy() { return evalf_double(energy_func(_obj,ctx),1,ctx); }
+    gen distance(const siman_config &other) { return evalf_double(distance_func(makesequence(_obj,other.obj()),ctx),1,ctx); }
+    void modify(double step_size) { _obj=modify_func(step_func_nargs()==1?_obj:makesequence(_obj,step_size),ctx); }
+};
+
 gen _implicitdiff(const gen &g,GIAC_CONTEXT);               // implicit differentiation
 gen _box_constraints(const gen &g,GIAC_CONTEXT);            // converting a matrix [[L1,U1],[L2,U2],...] to x1=L1..U1,x2=L2..U2,...
 gen _minimize(const gen &g,GIAC_CONTEXT);                   // exact global minimization of a differentiable function over a compact domain
@@ -701,6 +724,7 @@ gen _levenshtein(const gen &g,GIAC_CONTEXT);                // Levenshtein dista
 gen _isposdef(const gen &g,GIAC_CONTEXT);                   // check whether a symmetric/Hermitian matrix is positive definite
 gen _symbol_array(const gen &g,GIAC_CONTEXT);               // Create vectors and matrices of symbols
 gen _sortperm(const gen &g,GIAC_CONTEXT);                   // permutation that sorts the given vector in ascending order
+gen _siman(const gen &g,GIAC_CONTEXT);                      // simulated annealing optimizer
 
 extern const unary_function_ptr * const at_implicitdiff;
 extern const unary_function_ptr * const at_box_constraints;
@@ -728,6 +752,7 @@ extern const unary_function_ptr * const at_levenshtein;
 extern const unary_function_ptr * const at_isposdef;
 extern const unary_function_ptr * const at_symbol_array;
 extern const unary_function_ptr * const at_sortperm;
+extern const unary_function_ptr * const at_siman;
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

@@ -12819,6 +12819,133 @@ void FDWeights::setz0(const gen &zeta) {
 }
 /* END OF FDWEIGHTS CLASS */
 
+double siman_energy_func(void *xp) {
+    siman_config *x=static_cast<siman_config*>(xp);
+    assert(x!=NULL);
+    if (!x->is_valid())
+        throw std::runtime_error(gettext("Invalid configuration"));
+    gen e=x->energy();
+    if (e.type!=_DOUBLE_)
+        throw std::runtime_error(gettext("energy function should return a real number"));
+    return e.DOUBLE_val();
+}
+
+double siman_distance_func(void *xp,void *yp) {
+    siman_config *x=static_cast<siman_config*>(xp);
+    siman_config *y=static_cast<siman_config*>(yp);
+    assert(x!=NULL && y!=NULL);
+    if (!x->is_valid() || !y->is_valid())
+        throw std::runtime_error(gettext("Invalid configuration"));
+    gen d=x->distance(*y);
+    if (d.type!=_DOUBLE_)
+        throw std::runtime_error(gettext("distance function should return a real number"));
+    return d.DOUBLE_val();
+}
+
+void siman_modify_func(const gsl_rng *r,void *xp,double step_size) {
+    siman_config *x=static_cast<siman_config*>(xp);
+    assert(x!=NULL);
+    if (!x->is_valid())
+        throw std::runtime_error(gettext("Invalid configuration"));
+    x->modify(step_size);
+    if (!x->is_valid())
+        throw std::runtime_error(gettext("failed to modify configuration"));
+}
+
+void siman_copy_func(void *source,void *dest) {
+    siman_config *src=static_cast<siman_config*>(source);
+    siman_config *dst=static_cast<siman_config*>(dest);
+    assert(src!=NULL && dst!=NULL);
+    if (!src->is_valid() || !dst->is_valid())
+        throw std::runtime_error(gettext("Invalid configuration"));
+    dst->assign(*src);
+}
+
+void *siman_copy_constructor(void *xp) {
+    siman_config *x=static_cast<siman_config*>(xp),*copy;
+    assert(x!=NULL);
+    copy=new siman_config(*x);
+    return static_cast<void*>(copy);
+}
+
+void siman_destroy_func(void *xp) {
+    siman_config *x=static_cast<siman_config*>(xp);
+    assert(x!=NULL);
+    delete x;
+}
+
+gen _siman(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+#ifdef HAVE_LIBGSL
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    const vecteur &args=*g._VECTptr;
+    if (args.size()<5 || args.size()>7)
+        return generrdim("Wrong number of input arguments");
+    const gen &x0=args[0],&efunc=args[1],&distfunc=args[2],&modfunc=args[3],&tp=args[4];
+    if (!efunc.is_symb_of_sommet(at_program) || efunc._SYMBptr->feuille._VECTptr->front()._VECTptr->size()!=1)
+        return generrtype("Energy function should accept one argument");
+    if (!distfunc.is_symb_of_sommet(at_program) || distfunc._SYMBptr->feuille._VECTptr->front()._VECTptr->size()!=2)
+        return generrtype("Distance function should accept two arguments");
+    if (!modfunc.is_symb_of_sommet(at_program))
+        return generrtype("Invalid step function specification");
+    int mod_nargs=modfunc._SYMBptr->feuille._VECTptr->front()._VECTptr->size(),mask=num_mask_withfrac|num_mask_withint;
+    int n_tries=10,iters_fixed_T=100;
+    double step_size=0;
+    if (tp.type!=_VECT || tp._VECTptr->size()!=4 || !is_numericv(*tp._VECTptr,mask))
+        return generrtype("Invalid specification of cooling schedule");
+    const vecteur &cooling_params=*tp._VECTptr;
+    if (!is_zero__VECT(*im(cooling_params,contextptr)._VECTptr,contextptr) || !is_strictly_positive(_min(cooling_params,contextptr),contextptr))
+        return generr("Cooling schedule parameters must be positive real numbers");
+    if (args.size()>5) { // set iteration parameters
+        if (args[5].type!=_VECT || args[5]._VECTptr->size()!=2 || !is_integer_vecteur(*args[5]._VECTptr))
+            return generrtype("Invalid specification of iteration limits");
+        n_tries=args[5]._VECTptr->front().val;
+        iters_fixed_T=args[5]._VECTptr->back().val;
+        if (n_tries<1)
+            return generr("Invalid number of tries per step");
+        if (iters_fixed_T<1)
+            return generr("Invalid number of iterations per temperature value");
+    }
+    if (args.size()>6) { // set max step size
+        if (!is_real_number(args[6],contextptr) || (step_size=to_real_number(args[6],contextptr).to_double(contextptr))<=0)
+            return generr("Invalid maximum step-size specification");
+        if (modfunc._SYMBptr->feuille._VECTptr->front()._VECTptr->size()!=2)
+            return generrdim("Step function should accept two arguments");
+    } else if (modfunc._SYMBptr->feuille._VECTptr->front()._VECTptr->size()!=1)
+        return generrdim("Step function should accept one argument");
+    gsl_siman_params_t params;
+    params.n_tries=n_tries;
+    params.iters_fixed_T=iters_fixed_T;
+    params.step_size=step_size;
+    params.k=to_real_number(cooling_params[0],contextptr).to_double(contextptr);
+    params.t_initial=to_real_number(cooling_params[1],contextptr).to_double(contextptr);
+    params.mu_t=to_real_number(cooling_params[2],contextptr).to_double(contextptr);
+    params.t_min=to_real_number(cooling_params[3],contextptr).to_double(contextptr);
+    siman_config *cfg=new siman_config(x0,efunc,distfunc,modfunc,contextptr);
+    gsl_rng *r=NULL;
+    try {
+        gsl_rng_env_setup();
+        r=gsl_rng_alloc(gsl_rng_default);
+        gsl_siman_solve(r,static_cast<void*>(cfg),siman_energy_func,siman_modify_func,siman_distance_func,
+                        NULL,siman_copy_func,siman_copy_constructor,siman_destroy_func,0,params);
+    } catch (const std::runtime_error &e) {
+        delete cfg;
+        if (r!=NULL) gsl_rng_free(r);
+        return generr(e.what(),false);
+    }
+    gen ret=cfg->obj();
+    if (r!=NULL) gsl_rng_free(r);
+    delete cfg;
+    return ret;
+#else
+    return generr("GSL is required for simulated annealing");
+#endif
+}
+static const char _siman_s []="simulated_annealing";
+static define_unary_function_eval (__siman,&_siman,_siman_s);
+define_unary_function_ptr5(at_siman,alias_at_siman,&__siman,0,true)
+
 #ifndef NO_NAMESPACE_GIAC
 }
 #endif // ndef NO_NAMESPACE_GIAC

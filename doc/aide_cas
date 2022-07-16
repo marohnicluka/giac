@@ -5276,8 +5276,7 @@ sortd([3,4,2])
 sortd([[3,4,2],[6,4,5]])
 
 # sortperm
-2 Sorts the list V according to the permutation P or outputs the permutation which
-sorts V in ascending order.
+2 Sorts the list V according to the permutation P or outputs the permutation which sorts V in ascending order.
 0 Lst(V),[Permu(P)]
 -1 sort
 -2 sortA
@@ -5507,6 +5506,14 @@ find_minimum(cosh(x),-1,1)
 find_minimum(cosh(x),-1,1,1e-5,20)
 find_minimum(Airy_Ai(x+sin(x))+cos(x^2),-5,5)
 find_minimum(besselJ(x,2)/Gamma(x+1)+(x+1)^sin(x),0,10)
+
+# simulated_annealing
+2 Returns the point in a search space which minimizes the cost function using the method of simulated annealing, starting from an initial configuration x0.
+0 x0,Func(cost),Func(dist),Func(step),Lst(csparam),[Lst(iterparam),[Real(maxstep)]]
+-1 nlpsolve
+-2 fMin
+-3 find_minimum
+simulated_annealing(2,x->x^2+sin(20x)/5,(x,y)->abs(x-y),(x,m)->rand(x-m,x+m),[1,0.1,1.002,1e-6],[5,20],1)
 
 # DrawInv
 1 Trace le graphe du symétrique de l'expression par rapport à y=x.

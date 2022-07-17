@@ -8228,7 +8228,7 @@ number.
   % \end{center}
 \end{itemize}
 
-\subsection{The $n$-th Bernoulli number: \texttt{bernoulli}
+\subsection{The $n$th Bernoulli number: \texttt{bernoulli}
 \index{bernoulli}}
 
 The Bernoulli polynomial $B_n$ is defined by: \[ B_0=1, \quad
@@ -8240,7 +8240,7 @@ The \texttt{bernoulli} command computes the Bernoulli numbers.
 \begin{itemize}
   \item \texttt{bernoulli} takes one argument:\\
   $n$, an integer.
-  \item \texttt{bernoulli($n$)} returns the $n$-th Bernoulli number, $B_{n}$.
+  \item \texttt{bernoulli($n$)} returns the $n$th Bernoulli number, $B_{n}$.
 \end{itemize}
 
 \subsubsection*{Example}
@@ -8565,7 +8565,7 @@ operator.
 % \end{center}
 \end{itemize}
 
-\subsection{$n$-th root: \texttt{root}
+\subsection{$n$th root: \texttt{root}
 \index{root}}
 
 The \texttt{root} command finds roots of numbers.
@@ -8573,7 +8573,7 @@ The \texttt{root} command finds roots of numbers.
   \item \texttt{root} takes two arguments:\\
   $n$ and $a$, numbers.
   \item \texttt{root($n$,$a$)} returns the $n$th root of $a$ (i.e.
-  $a^{1/n}$). If $a<0$, the $n$-th root is a complex number with argument
+  $a^{1/n}$). If $a<0$, the $n$th root is a complex number with argument
   $2\pi/n$.
 \end{itemize}
 
@@ -16698,7 +16698,7 @@ derivatives.
     \item Optionally, $m$, an integer or a sequence of integers (by default 1).
   \end{itemize}
   \item \texttt{numdiff($X,Y,x_0\,\langle,m\rangle$)}
-  returns an approximation of the $m$-th derivative of a function $f$
+  returns an approximation of the $m$th derivative of a function $f$
   at $x_0$, or a sequence of derivatives of order given by the
   sequence $m$,  where $f$ has values given by $f(\alpha_k)=\beta_k$,
   $k=0,1,\dots,n$.
@@ -21560,7 +21560,7 @@ homogeneous equation to obtain the general solution.
 
 For any integer $N$, the Discrete Fourier Transform (DFT) is a
 transformation $F_N$ defined on the set of periodic sequences of
-period $N$; it depends on a choice of a primitive $N$-th root of unity
+period $N$; it depends on a choice of a primitive $n$th root of unity
 $\omega_N$. For sequences with complex coefficients, we take: 
 \[ 
 \omega_N=e^{\frac{2 i \pi}{N}}
@@ -21858,7 +21858,7 @@ Replace $y_k$ by its value in $\tilde{c_n}$:
 \tilde{c_n}=\frac{1}{N}\sum_{k=0}^{N-1}\sum_{m=-\infty}^{+\infty}
 c_m\omega_N^{km}\omega_N^{-kn} 
 \]
-If $m\neq n \pmod N$, $\omega_N^{m-n}$ is an $N$-th root of unity different
+If $m\neq n \pmod N$, $\omega_N^{m-n}$ is an $n$th root of unity different
 from 1, hence:
 \[ 
 \omega_N^{(m-n)N}=1, \quad \sum_{k=0}^{N-1}\omega_N^{(m-n)k}=0 
@@ -21946,7 +21946,7 @@ F_N(x * y)=F_N(x) \cdot F_N(y)
 % \texttt{fft} returns the list \texttt{[$b_0,..b_{N-1}$]} such that,
 % for \texttt{k=0..N-1} \[ \texttt{fft}([a_0,..a_{N-1}])[k]=b_k =
 % \sum_{j=0}^{N-1}x_j\omega_N^{-k\cdot j} \] where $\omega_N$ is a
-% primitive $N$-th root of the unity.\\ \textit{Input:}
+% primitive $n$th root of the unity.\\ \textit{Input:}
 % \begin{center}\texttt{fft(0,1,1,0)}\end{center}
 % \textit{Output:}
 % \begin{center}\texttt{[2.0, -1-i, 0.0, -1+i]}\end{center}
@@ -30129,7 +30129,7 @@ can convert bounds of given variables from the matrix form to interval form.
   \item \texttt{box\_constraints} takes two mandatory arguments:
   \begin{itemize}
     \item \textit{vars}, a list of variables $[x_1,x_2,\dots,x_n]$.
-    \item \textit{bnds}, a matrix with $n$ rows and two columns in which the $k$-th row contains the lower and upper bound $l_k$ and $u_k$ of $x_k$, respectively.
+    \item \textit{bnds}, a matrix with $n$ rows and two columns in which the $k$th row contains the lower and upper bound $l_k$ and $u_k$ of $x_k$, respectively.
   \end{itemize}
   \item \texttt{box\_constraints(}\textit{vars},\textit{bnds}\texttt{)}
    returns the sequence $(x_1=l_1\ldots u_1,x_2=l_2\ldots u_2,\dots,x_n=l_n\ldots u_n)$.
@@ -33934,7 +33934,7 @@ finds a Vandermonde matrix.
   \item \texttt{vandermonde} takes one argument:\\
   $X=[x_{0},\ldots,x_{n-1}]$, a vector.
   \item \texttt{vandermonde($X$)} returns the corresponding
-  Vandermonde matrix; namely, the $k$-th row of the
+  Vandermonde matrix; namely, the $k$th row of the
   matrix is the vector whose components are $x_i^{k}$ for $i=0..n-1$ and
   $k=0..n-1$.
 \end{itemize}
@@ -40051,10 +40051,12 @@ The solver shows all progress and summary messages.
 \subsubsection*{Example}
 \textit{Input:}
 \begin{center}
- \texttt{A:=[[22,13,26,33,21,3,14,26],[39,16,22,28,26,30,23,24], 
-        [18,14,29,27,30,38,26,26],[41,26,28,36,18,38,16,26]]:;}\\
- \texttt{b:=[7872,10466,11322,12058]:;c:=[2,10,13,17,7,5,7,3]:;}\\
- \texttt{lpsolve(c,[[],[],A,b],assume=nonnegint,lp\_verbose)}
+  \begin{tabular}{l}
+    \texttt{A:=[[22,13,26,33,21,3,14,26],[39,16,22,28,26,30,23,24],}\\
+    \texttt{~~~~[18,14,29,27,30,38,26,26],[41,26,28,36,18,38,16,26]]:;}\\
+    \texttt{b:=[7872,10466,11322,12058]:; c:=[2,10,13,17,7,5,7,3]:;}\\
+    \texttt{lpsolve(c,[[],[],A,b],assume=nonnegint,lp\_verbose)}
+  \end{tabular}
 \end{center}
 \textit{Output:}
 \begin{center}
@@ -40282,8 +40284,8 @@ The \texttt{tpsolve} command solves the transportation problem.
 \textit{Input:}
 \begin{center}
 \begin{tabular}{l}
-\texttt{s:=[12,17,11];d:=[10,10,10,10];}\\
-\texttt{C:=[[50,75,30,45],[65,80,40,60],[40,70,50,55]];}\\
+\texttt{s:=[12,17,11]:; d:=[10,10,10,10]:;}\\
+\texttt{C:=[[50,75,30,45],[65,80,40,60],[40,70,50,55]]:;}\\
 \texttt{tpsolve(s,d,C)}
 \end{tabular}
 \end{center}
@@ -40309,9 +40311,9 @@ zero cost of ``transportation'' from/to that point. The
 \textit{Input:}
 \begin{center}
 \begin{tabular}{l}
-\texttt{s:=[7,10,8,8,9,6];d:=[9,6,12,8,10];}\\
+\texttt{s:=[7,10,8,8,9,6]:; d:=[9,6,12,8,10]:;}\\
 \texttt{C:=[[36,40,32,43,29],[28,27,29,40,38],[34,35,41,29,31],}\\
-\texttt{[41,42,35,27,36],[25,28,40,34,38],[31,30,43,38,40]];}\\
+\texttt{~~~~[41,42,35,27,36],[25,28,40,34,38],[31,30,43,38,40]]:;}\\
 \texttt{tpsolve(s,d,C)}
 \end{tabular}
 \end{center}
@@ -40338,8 +40340,8 @@ by \texttt{epsilon}), which forces the algorithm to avoid the associated routes.
 \textit{Input:}
 \begin{center}
 \begin{tabular}{l}
-\texttt{s:=[95,70,165,165];d:=[195,150,30,45,75];}\\
-\texttt{C:=[[15,M,45,M,0],[12,40,M,M,0],[0,15,25,25,0],[M,0,M,12,0]]}\\
+\texttt{s:=[95,70,165,165]:; d:=[195,150,30,45,75]:;}\\
+\texttt{C:=[[15,M,45,M,0],[12,40,M,M,0],[0,15,25,25,0],[M,0,M,12,0]]:;}\\
 \texttt{tpsolve(s,d,C)}
 \end{tabular}
 \end{center}
@@ -53583,7 +53585,7 @@ A feed-forward network, more precisely a \textbf{multilayer perceptron}, is comp
 three neuron layers. The first layer is called the \textbf{input layer} and the last layer is
 called the \textbf{output layer}. Layers are essentially vectors of numerical data. Each
 component of such vector corresponds to an activated neuron. The network processes the given input
-by applying the formula $l_{k+1}=f_k(W_k^Tl_k)$, where $l_k$ is the $k$-th layer of length $n_k$,
+by applying the formula $l_{k+1}=f_k(W_k^Tl_k)$, where $l_k$ is the $k$th layer of length $n_k$,
 $l_{k+1}$ is the $(k+1)$-th layer of length $n_{k+1}$, $W_k$ is a $n_k\times n_{k+1}$ weight matrix
 and $f_k$ is the activation function at the $k+1$-th layer (which is applied element-wise).
 Here $k=1,2,\ldots,L-1$, where $L$ is the number of layers.
@@ -53682,10 +53684,10 @@ The command \texttt{neural\_network} is used for creating trainable feed-forward
     initial weights automatically.
     \begin{itemize}
       \item In the former case, \textit{wi} is a list $[W^{(1)},W^{(2)},\dots,W^{(L-1)}]$
-      where $W^{(k)}$ is the matrix specifying the weights between the $k$-th and $(k+1)$-th layer.
-      The element $w^{(k)}_{ij}$ is the weight corresponding to the link from the $i$-th neuron in
-      $k$-th layer to the $j$-th neuron in $(k+1)$-th layer. Optionally, the initial bias for
-      the $k$-th layer may be specified as an additional row in the matrix $W^{(k)}$.
+      where $W^{(k)}$ is the matrix specifying the weights between the $k$th and $(k+1)$-th layer.
+      The element $w^{(k)}_{ij}$ is the weight corresponding to the link from the $i$th neuron in
+      $k$th layer to the $j$th neuron in $(k+1)$-th layer. Optionally, the initial bias for
+      the $k$th layer may be specified as an additional row in the matrix $W^{(k)}$.
       \item In the latter case, \textit{wi} is either a constant or a random variable $X$
       as returned by the command
       \texttt{randvar} which may optionally contain one or two symbolic parameters: $n_{\mathrm{in}}$
@@ -53693,7 +53695,7 @@ The command \texttt{neural\_network} is used for creating trainable feed-forward
       and the size of the next layer (``fan-out''). If symbols are present, then \textit{wi} must be
       a list in which the first element is the random variable and other elements are the symbols
       ($n_{\mathrm{in}}$ first, then optionally $n_{\mathrm{out}}$).
-      These symbols are substituted by sizes of the $k$-th and $(k+1)$-th layer, respectively.
+      These symbols are substituted by sizes of the $k$th and $(k+1)$-th layer, respectively.
       The commonly used initializations by He, Glorot and LeCun
       can be specified as strings \texttt{"he"}, \texttt{"glorot"} and \texttt{"lecun"} with the suffix
       \texttt{"-uniform"} resp.~\texttt{"-normal"} for uniform resp.~Gaussian variant.
@@ -53705,7 +53707,7 @@ The command \texttt{neural\_network} is used for creating trainable feed-forward
     or a list of $L-1$ such numbers $[\alpha_1,\alpha_2,\ldots,\alpha_{L-1}]$. These numbers are the
     $L^2$-regularization coefficients used in the model (by default, they are all equal to zero, i.e.~no
     regularization is performed). If a single number $\alpha$ is given, then the coefficients for all
-    layers are set to that value. If the list is given, then $\alpha_k$ is used for the $k$-th layer
+    layers are set to that value. If the list is given, then $\alpha_k$ is used for the $k$th layer
     ($\alpha_k$ is a weight decay coefficient for the weights in $W^{(k)}$). Note that regularization
     is not applied to bias weights.
     \item Optionally, \texttt{title=}\textit{str}, where \textit{str} is a string holding the name of
@@ -53732,9 +53734,9 @@ The command \texttt{neural\_network} is used for creating trainable feed-forward
     \item \texttt{weights}, for obtaining the list of weight matrices (bias weights are contained in the
     last row in each of these matrices).
   \end{itemize}
-  To fetch the contents of the $k$-th layer neurons, the command \texttt{net[k]} can be used,
+  To fetch the contents of the $k$th layer neurons, the command \texttt{net[k]} can be used,
   where $k\in\{0,1,\ldots,L-1\}$. This returns the layer as a matrix with the number of rows equal
-  to the block size in which the $i$-th row corresponds to the $i$-th sample passed forward through the
+  to the block size in which the $i$th row corresponds to the $i$th sample passed forward through the
   network. This is useful for e.g.~obtaining hidden representations from autoencoders.
   \item Although \texttt{neural\_network} is flexible when it comes to custom activation and error
   functions, the resulting network is optimized for speed only when the options \texttt{func},
@@ -57539,7 +57541,7 @@ It takes two arguments:
 
 The return value is an array with $m$ dimensions $n_1,n_2,\dots,n_m$ with indexed symbols as elements.
 Symbols are created from the template string \textit{str} by appending indices. Template string may contain
-$m$ instances of the character \texttt{'\%'}, $k$-th of which serves as the placeholder for the $k$-th
+$m$ instances of the character \texttt{'\%'}, $k$th of which serves as the placeholder for the $k$th
 dimension index. If placeholders are omitted, indices are simply appended in case $m=1$,
 while in case $m>1$ they are separated from \textit{str} and each other by the underscore (\texttt{'\_'}).
 
@@ -67974,8 +67976,8 @@ parameters.
   default 1).
   \item $D$ or \texttt{channel\_data=$D$}, where $D$ is a list or a
   matrix.\\
-  If $D$ is a matrix, it should contain the $k$-th sample in the
-  $j$-th channel at position $(j,k)$. The value of each sample must be
+  If $D$ is a matrix, it should contain the $k$th sample in the
+  $j$th channel at position $(j,k)$. The value of each sample must be
   a real number in range $[-1.0,1.0]$. Any value outside this interval
   is clamped to it (the resulting effect is called \emph{clipping}).\\
   If $D$ is a single list, it is copied across channels.\\
@@ -67994,7 +67996,7 @@ audio object with the requested parameters.
 % argument produces a single-channel clip on 16~bits/44100~Hz containing
 % $n$ samples initialized to zero.
 
-% Data matrix should contain the $k$-th sample in the $j$-th channel at
+% Data matrix should contain the $k$th sample in the $j$th channel at
 % position $(j,k)$. The value of each sample must be a real number in
 % range $[-1.0,1.0]$. Any value outside this interval is clamped to it
 % (the resulting effect is called \emph{clipping}). If the data is
@@ -68214,7 +68216,7 @@ The \texttt{channel\_data} command gets samples from an audio clip.
           channel data are returned as the rows of a matrix.
     \item With the option \texttt{range=[$m,n$]} or
           \texttt{range=$m..n$}, with $m$ and $n$ integers, only the
-          samples from $n$-th to $m$-th (inclusive) are extracted.
+          samples from $n$th to $m$th (inclusive) are extracted.
     \item With the option \texttt{range=$a..b$}, with floating point
           numbers $a$ and $b$, then $a$ and $b$ are bounds in seconds.
 \end{itemize}

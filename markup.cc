@@ -57,6 +57,9 @@ const string tm_Zeta="\\operatorname{\\upzeta}";
 
 bool is_texmacs_compatible_latex_export=false;
 bool force_legacy_conversion_to_latex=false;
+bool allow_implicit_multiplication=true;
+bool allow_implicit_function_application=true;
+bool allow_exponent_simplification=true;
 
 enum OperatorPrecedence {
   _PRIORITY_APPLY=1, // function application, array access
@@ -110,6 +113,8 @@ enum MarkupFlags {
   _MARKUP_ERROR=512,
   _MARKUP_SCHEME=1024
 };
+
+int mathml_default_export=_MARKUP_MATHML_PRESENTATION | _MARKUP_MATHML_CONTENT;
 
 string scm_quote(const string &s) {
   if (s.length()==0 || s[0]=='(')
@@ -342,18 +347,25 @@ string str_to_tex(const string &s_orig,bool quote,bool ind) {
   if (ind && indent>0)
     for (int i=0;i<indent;++i) ret="\\ "+ret;
   if (quote)
-    return "\""+ret+"\"";
+    return "``"+ret+"''";
   return ret;
 }
 
 string str_to_scm(const string &s_orig,bool quote,bool ind) {
   int indent;
   string s=trim_string(s_orig,indent),ret;
-  for (string::const_iterator it=s.begin();it!=s.end();++it) {
+  string::const_iterator it=s.begin(),itend=s.end();
+  for (;it!=itend;++it) {
     switch (*it) {
     case '\\': case '"':
       ret+="\\\\\\";
       ret+=string(1,*it);
+      break;
+    case '<':
+      ret+="<less>";
+      break;
+    case '>':
+      ret+="<gtr>";
       break;
     default:
       ret+=string(1,*it);
@@ -1240,7 +1252,7 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
   ml.neg=ml.appl=false;
   ml.markup.clear();
   ml.split_pos=-1;
-  int st=g.subtype;
+  int st=g.subtype,sf;
   switch (g.type) {
   case _INT_:
   case _ZINT:
@@ -1528,10 +1540,53 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
         ml.type|=_MLBLOCK_IDNT_NAME;
     }
     return ml;
-  /*
   case _SPOL1:
-    return gen2markup(spol12gen(*g._SPOL1ptr,contextptr),flags,idc,contextptr);
-  */
+    sf=series_flags(contextptr);
+    if (sf & (1<<5) && !(sf & (1<<4))) {
+	    identificateur tt(string(1,series_variable_name(contextptr)));
+	    gen remains,gg=sparse_poly12gen(*g._SPOL1ptr,tt,remains,!(sf & (1<<6)));
+	    if ((sf & (1<<6)) && !is_zero(remains))
+	      gg += symb_of(gen("O",contextptr),remains);
+      return gen2markup(gg,flags,idc,contextptr);
+    }
+  case _POLY:
+    if (mml_content)
+      ml.content=mml_tag("cs",g._POLYptr->print(),++idc);
+    if (mml_presentation || tex || scm) {
+      for (monomial_v::const_iterator mt=g._POLYptr->coord.begin();mt!=g._POLYptr->coord.end();++mt) {
+        left=gen2markup(mt->value,flags,idc,contextptr);
+        const index_t &ir=mt->index.iref();
+        vecteur idxv;
+        idxv.reserve(ir.size());
+        for (index_t::const_iterator idxt=ir.begin();idxt!=ir.end();++idxt) {
+          idxv.push_back(*idxt);
+        }
+        right=gen2markup(idxv,flags,idc,contextptr);
+        if (tex) {
+          if (mt!=g._POLYptr->coord.begin())
+            ml.latex+="+";
+          ml.latex+="\\text{\\%\\%\\%\\{}"+left.latex+","+right.latex+"\\text{\\%\\%\\%\\}}";
+        }
+        if (scm) {
+          if (mt!=g._POLYptr->coord.begin())
+            ml.scheme+=" \"+\" ";
+          ml.scheme+="(around* \"%%%{\" (concat "+left.scheme+","+right.scheme+") \"%%%}\")";
+        }
+        if (mml_presentation) {
+          if (mt!=g._POLYptr->coord.begin())
+            ml.markup+="<mo>+</mo>";
+          ml.markup+="<mfenced open=\"%%%{\" close=\"%%%}\"><mrow>"+left.markup+"<mo>,</mo>"+right.markup+"</mrow></mfenced>"; 
+        }
+      }
+      if (g._POLYptr->coord.size()>1) {
+        ml.priority=_PRIORITY_ADD;
+        if (scm)
+          ml.scheme=scm_concat(ml.scheme);
+        if (mml_presentation)
+          ml.markup=mml_tag("mrow",ml.markup,idc);
+      }
+    }
+    return ml;
   case _USER:
     str=g._USERptr->print(contextptr);
     if (mml_content)
@@ -1839,7 +1894,7 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
       pnum.type=_MLBLOCK_GENERAL;
       pnum.appl=false;
       pnum.priority=0;
-      bool isinv,hasleadingfrac=true,is_cdot;
+      bool isinv,hasleadingfrac=true,is_cdot=true;
       int ni,di,np=-1,dp=-1;
       for (iterateur it=args.begin();it!=args.end();++it) {
         if (it->is_symb_of_sommet(at_inv)) {
@@ -1902,12 +1957,13 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
              (!tmp.ctype(_MLBLOCK_SUMPROD) || (!isinv && nc<num_count) ||
               (isinv && dc<den_count))))
           parenthesize(tmp,flags);
-        is_cdot=
-            tmp.ctype(_MLBLOCK_LEADING_DIGIT) || tmp.ctype(_MLBLOCK_SUBTYPE_IDNT) ||
-            tmp.ctype(_MLBLOCK_FACTORIAL) || tmp.ctype(_MLBLOCK_IDNT_NAME) ||
-            prev.ctype(_MLBLOCK_IDNT_NAME) || prev.ctype(_MLBLOCK_SUBTYPE_IDNT) ||
-            (tmp.ctype(_MLBLOCK_FRACTION) && prev.ctype(_MLBLOCK_FRACTION)) ||
-            (prev.ctype(_MLBLOCK_ELEMAPP) && prev.appl);
+        if (allow_implicit_multiplication)
+          is_cdot=
+              tmp.ctype(_MLBLOCK_LEADING_DIGIT) || tmp.ctype(_MLBLOCK_SUBTYPE_IDNT) ||
+              tmp.ctype(_MLBLOCK_FACTORIAL) || tmp.ctype(_MLBLOCK_IDNT_NAME) ||
+              prev.ctype(_MLBLOCK_IDNT_NAME) || prev.ctype(_MLBLOCK_SUBTYPE_IDNT) ||
+              (tmp.ctype(_MLBLOCK_FRACTION) && prev.ctype(_MLBLOCK_FRACTION)) ||
+              (prev.ctype(_MLBLOCK_ELEMAPP) && prev.appl);
         prod_sign=is_cdot?mml_cdot:mml_itimes;
         prod_sign_tex=is_cdot?"\\cdot ":tex_itimes;
         prod_sign_scm=is_cdot?" \"<cdot>\" ":" \"*\" ";
@@ -3509,8 +3565,10 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
         ml.split_pos=ml.markup.length();
         ml.split_pos_tex=ml.latex.length();
         ml.split_pos_scm=ml.scheme.length()+8;
-        ml.appl=(tmp.priority==0 && !tmp.ctype(_MLBLOCK_NUMERIC_EXACT) &&
-                   !tmp.ctype(_MLBLOCK_NUMERIC_APPROX) && !tmp.ctype(_MLBLOCK_SUBTYPE_IDNT));
+        if (allow_implicit_function_application)
+          ml.appl=(tmp.priority==0 && !tmp.ctype(_MLBLOCK_NUMERIC_EXACT) &&
+                    !tmp.ctype(_MLBLOCK_NUMERIC_APPROX) && !tmp.ctype(_MLBLOCK_SUBTYPE_IDNT) &&
+                    !tmp.ctype(_MLBLOCK_IDNT_NAME));
       }
       if (!ml.appl)
         parenthesize(tmp,flags);
@@ -3546,7 +3604,9 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
 
 string export_latex(const gen &g,GIAC_CONTEXT) {
   MarkupBlock ml;
-  int idc=0,flags=_MARKUP_TOPLEVEL | _MARKUP_ELEMPOW | _MARKUP_LATEX;
+  int idc=0,flags=_MARKUP_TOPLEVEL | _MARKUP_LATEX;
+  if (allow_exponent_simplification)
+    flags|=_MARKUP_ELEMPOW;
   ml=gen2markup(g,flags,idc,contextptr);
   prepend_minus(ml,flags);
   return ml.latex;
@@ -3554,7 +3614,9 @@ string export_latex(const gen &g,GIAC_CONTEXT) {
 
 string gen2scm(const gen &g,GIAC_CONTEXT) {
   MarkupBlock ml;
-  int idc=0,flags=_MARKUP_TOPLEVEL | _MARKUP_ELEMPOW | _MARKUP_SCHEME;
+  int idc=0,flags=_MARKUP_TOPLEVEL | _MARKUP_SCHEME;
+  if (allow_exponent_simplification)
+    flags|=_MARKUP_ELEMPOW;
   ml=gen2markup(g,flags,idc,contextptr);
   prepend_minus(ml,flags);
   return ml.scheme;
@@ -3668,7 +3730,9 @@ string export_mathml_content(const gen &g,GIAC_CONTEXT) {
 
 string export_mathml_presentation(const gen &g,GIAC_CONTEXT) {
   MarkupBlock ml;
-  int idc=0,flags=_MARKUP_TOPLEVEL | _MARKUP_ELEMPOW | _MARKUP_MATHML_PRESENTATION;
+  int idc=0,flags=_MARKUP_TOPLEVEL | _MARKUP_MATHML_PRESENTATION;
+  if (allow_exponent_simplification)
+    flags|=_MARKUP_ELEMPOW;
   ml=gen2markup(g,flags,idc,contextptr);
   prepend_minus(ml,flags);
   return "<math "+mathml_header_attributes+">"+ml.markup+"</math>";
@@ -3676,7 +3740,9 @@ string export_mathml_presentation(const gen &g,GIAC_CONTEXT) {
 
 string export_mathml(const gen &g,GIAC_CONTEXT) {
   MarkupBlock ml;
-  int idc=0,flags=_MARKUP_TOPLEVEL | _MARKUP_MATHML_PRESENTATION | _MARKUP_MATHML_CONTENT;
+  int idc=0,flags=_MARKUP_TOPLEVEL | mathml_default_export;
+  if (allow_exponent_simplification)
+    flags|=_MARKUP_ELEMPOW;
   ml=gen2markup(g,flags,idc,contextptr);
   prepend_minus(ml,flags);
   return "<math "+mathml_header_attributes+"><semantics>"+ml.markup+
@@ -3690,8 +3756,7 @@ bool has_improved_latex_export(const gen &g,string &s,bool override_texmacs,GIAC
   if (force_legacy_conversion_to_latex || g.is_symb_of_sommet(at_pnt))
     return false;
   switch (g.type) {
-  case _POLY: case _SPOL1: case _EXT: case _ROOT:
-  case _USER: case _EQW: case _GROB: case _POINTER_:
+  case _EXT: case _ROOT: case _EQW: case _GROB: case _POINTER_:
     return false;
   default:
     break;
@@ -3754,6 +3819,52 @@ gen _xml_print(const gen &g,GIAC_CONTEXT) {
 static const char _xml_print_s[]="xml_print";
 static define_unary_function_eval(__xml_print,&_xml_print,_xml_print_s);
 define_unary_function_ptr5(at_xml_print,alias_at_xml_print,&__xml_print,0,true)
+
+gen _markup_cfg(const gen &g,GIAC_CONTEXT) {
+  if (g.type==_STRNG && g.subtype==-1)
+    return g;
+  vecteur args=(g.type==_VECT && g.subtype==_SEQ__VECT)?*g._VECTptr:vecteur(1,g);
+  const_iterateur it=args.begin(),itend=args.end(),jt,jtend;
+  for (;it!=itend;++it) {
+    if (it->is_symb_of_sommet(at_equal)) {
+      const gen &lh=it->_SYMBptr->feuille._VECTptr->front();
+      const gen &rh=it->_SYMBptr->feuille._VECTptr->back();
+      vecteur p=rh.type==_VECT?*rh._VECTptr:vecteur(1,rh);
+      if (lh==at_simplify) {
+        allow_implicit_multiplication=false;
+        allow_implicit_function_application=false;
+        allow_exponent_simplification=false;
+        for (jt=p.begin(),jtend=p.end();jt!=jtend;++jt) {
+          if (*jt==at_product)
+            allow_implicit_multiplication=true;
+          else if (*jt==at_apply || *jt==at_of)
+            allow_implicit_function_application=true;
+          else if (*jt==at_pow)
+            allow_exponent_simplification=true;
+          else return 0;
+        }
+      } else if (lh==at_mathml) {
+        mathml_default_export=0;
+        for (jt=p.begin(),jtend=p.end();jt!=jtend;++jt) {
+          if (*jt==at_display)
+            mathml_default_export|=_MARKUP_MATHML_PRESENTATION;
+          else if (*jt==at_content)
+            mathml_default_export|=_MARKUP_MATHML_CONTENT;
+        }
+        if (mathml_default_export==0) {
+          *logptr(contextptr) << gettext("Error") << ": " << gettext("MathML export cannot be empty") << "\n";
+          return 0;
+        }
+      } else if (lh==at_latex) {
+        ;
+      } else return 0;
+    } else return 0;
+  }
+  return 1;
+}
+static const char _markup_cfg_s[]="markup_cfg";
+static define_unary_function_eval(__markup_cfg,&_markup_cfg,_markup_cfg_s);
+define_unary_function_ptr5(at_markup_cfg,alias_at_markup_cfg,&__markup_cfg,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

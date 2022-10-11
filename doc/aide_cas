@@ -5968,7 +5968,7 @@ plotcontour(x^2+y^2,[x,y])
 plotcontour(x^2+2*y^2-2,[x,y],[1.0,2.0,3.0])
 plotcontour(x^2-y^2,[x=-4..4,y=-4..4],seq(k,k,-11,11,3),xstep=0.1,ystep=0.1)
 
-# xstep ystep zstep
+# xstep ystep zstep nstep tstep ustep vstep
 2 Option for plotting commands.
 0 Opt
 
@@ -18289,4 +18289,14 @@ logistic(1.8)
 logistic(0.0,0.5,10,2)
 -1 atan
 -2 tanh
+
+# markup_cfg
+2 Sets the configuration for markup export routines (LaTeX, MathML and TeXmacs).
+0 opts
+-1 export_mathml
+-2 latex
+markup_cfg(simplify=[])
+markup_cfg(simplify=apply)
+markup_cfg(simplify=[apply,product,pow])
+markup_cfg(mathml=display)
 

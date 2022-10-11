@@ -348,11 +348,11 @@ gen _box_constraints(const gen &g,GIAC_CONTEXT) {
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT || g._VECTptr->size()!=2 ||
             g._VECTptr->front().type!=_VECT || g._VECTptr->back().type!=_VECT ||
             g._VECTptr->front()._VECTptr->empty() || g._VECTptr->back()._VECTptr->empty())
-        return generrtype("Expected a sequence of two nonempty lists");
+        return generrtype(gettext("Expected a sequence of two nonempty lists"));
     const vecteur &x=*g._VECTptr->front()._VECTptr;
     const vecteur &b=*g._VECTptr->back()._VECTptr;
     if (!ckmatrix(b,false) || b.size()!=x.size() || b.front()._VECTptr->size()!=2)
-        return generrdim("Invalid list of bounds");
+        return generrdim(gettext("Invalid list of bounds"));
     matrice B=mtran(b);
     gen intrv=_zip(makesequence(at_interval,B.front(),B.back()),contextptr);
     return change_subtype(_zip(makesequence(at_equal,x,intrv),contextptr),_SEQ__VECT);
@@ -1515,7 +1515,7 @@ gen _implicitdiff(const gen &g,GIAC_CONTEXT) {
     const vecteur &gv=*g._VECTptr;
     const gen &f=gv[0];
     if (int(gv.size())<3)
-        return generr("Too few arguments");
+        return generr(gettext("Too few arguments"));
     int ci=gv[0].type!=_VECT && !is_equal(gv[0])?1:0;
     vecteur freevars,depvars,diffdepvars;
     gen_map diffvars;
@@ -1547,7 +1547,7 @@ gen _implicitdiff(const gen &g,GIAC_CONTEXT) {
         // vars must be specified as x1,x2,...,xn,y1,y2,...,ym
         int nd=deplist.size();
         if (nd<=m)
-            return generrdim("Too few variables");
+            return generrdim(gettext("Too few variables"));
         for (int i=0;i<nd;++i) {
             if (i<nd-m)
                 freevars.push_back(deplist[i]);
@@ -1568,7 +1568,7 @@ gen _implicitdiff(const gen &g,GIAC_CONTEXT) {
                             freevars.push_back(x);
                     }
                 } else freevars.push_back(fe.back());
-            } else return generrtype("Invalid variable specification");
+            } else return generrtype(gettext("Invalid variable specification"));
         }
         // get diffvars
         for (const_iterateur it=gv.begin()+dvi;it!=gv.end();++it) {
@@ -1578,18 +1578,18 @@ gen _implicitdiff(const gen &g,GIAC_CONTEXT) {
                 diffvars[(x=v)]+=1;
             else if (v.type==_VECT && v.subtype==_SEQ__VECT)
                 diffvars[(x=v._VECTptr->front())]+=v._VECTptr->size();
-            else return generrtype("Invalid variable specification");
+            else return generrtype(gettext("Invalid variable specification"));
             if (!contains(freevars,x))
                 freevars.push_back(x);
         }
     }
     int n=freevars.size();  // number of independent variables
     if (m!=int(depvars.size()))
-        return generrdim("Invalid number of dependent variables");
+        return generrdim(gettext("Invalid number of dependent variables"));
     vecteur vars(mergevecteur(freevars,depvars));  // list of all variables
     // check whether the conditions of implicit function theorem hold
     if (!ck_jacobian(constr,vars,contextptr))
-        return generr("Conditions of implicit function theorem are violated");
+        return generr(gettext("Conditions of implicit function theorem are violated"));
     // build partial derivative specification 'sig'
     ipdiff::ivector sig(n,0); // sig[i]=k means: derive k times with respect to ith independent variable
     ipdiff ipd(f,constr,vars,contextptr);
@@ -1598,7 +1598,7 @@ gen _implicitdiff(const gen &g,GIAC_CONTEXT) {
         if (int(gv.size())>4) {
             pt=gen2vecteur(gv[4]);
             if (int(pt.size())!=n+m)
-                return generrdim("The given point does not match the number of variables");
+                return generrdim(gettext("The given point does not match the number of variables"));
         }
         ipdiff::pd_map pdv;
         ipd.partial_derivatives(order,pdv);
@@ -2591,7 +2591,7 @@ gen _minimize(const gen &args,GIAC_CONTEXT) {
     if (nargs==3)
         constr=gen2vecteur(argv[1]);
     if (!parse_variables(argv[nargs-1],vars,constr,initial,contextptr))
-        return generr("Invalid specification of variables");
+        return generr(gettext("Invalid specification of variables"));
     gen f=make_piecewise_nested(argv[0]);
     if (is_constant_wrt_vars(f,vars,contextptr))
         return location?makevecteur(f,vars):f; // function is constant
@@ -2601,10 +2601,10 @@ gen _minimize(const gen &args,GIAC_CONTEXT) {
             parm.erase(parm.begin()+i);
     }
     if (!initial.empty() && !parm.empty())
-        return generr("Cannot perform local search with symbolic constants");
+        return generr(gettext("Cannot perform local search with symbolic constants"));
     gen_map parm_asmp;
     if (!get_parameter_assumptions(parm,parm_asmp,contextptr))
-        return generr("Symbolic constants must be real");
+        return generr(gettext("Symbolic constants must be real"));
     vecteur tmpvars=make_temp_vars(vars,constr,contextptr);
     f=subst(f,vars,tmpvars,false,contextptr);
     constr=subst(constr,vars,tmpvars,false,contextptr);
@@ -2618,7 +2618,7 @@ gen _minimize(const gen &args,GIAC_CONTEXT) {
         return undef;
     }
     if (is_inf(mn))
-        return generr("Objective function is unbounded");
+        return generr(gettext("Objective function is unbounded"));
     if (location) {
         loc=subst(loc,tmpvars,vars,false,contextptr);
 #if 1
@@ -2909,23 +2909,23 @@ gen _extrema(const gen &g,GIAC_CONTEXT) {
         vecteur &v=*gv.back()._SYMBptr->feuille._VECTptr;
         if (v[0]==at_order && is_integer(v[1])) {
             if ((ord=v[1].val)<1)
-                return generr("Expected a positive integer");
+                return generr(gettext("Expected a positive integer"));
             --ngv;
         }
     }
     if (ngv<2 || ngv>3)
-        return generr("Wrong number of input arguments");
+        return generr(gettext("Wrong number of input arguments"));
     // get the variables
     vecteur vars,initial,ineq;
     // parse variables and their ranges, if given
     if (!parse_variables(gv[ngv-1],vars,ineq,initial,contextptr))
-        return generrtype("Invalid specification of variables");
+        return generrtype(gettext("Invalid specification of variables"));
 #if 0
     if (vars.size()>20)
-        return generrdim("Too many variables");
+        return generrdim(gettext("Too many variables"));
 #endif
     if (!initial.empty() && initial.size()!=vars.size())
-        return generrdim("Invalid initial point specification");
+        return generrdim(gettext("Invalid initial point specification"));
     if (ngv==3) {
         // get the constraint(s)
         if (gv[1].type==_VECT)
@@ -2934,12 +2934,12 @@ gen _extrema(const gen &g,GIAC_CONTEXT) {
             constr=vecteur(1,gv[1]);
     }
     if (ord==0 && constr.empty())
-        return generr("At least one constraint is required for Lagrange method");
+        return generr(gettext("At least one constraint is required for Lagrange method"));
     for (iterateur it=constr.begin();it!=constr.end();++it) {
         if (is_equal(*it))
             *it=equal2diff(*it);
         else if (which_ineq(*it)!=0)
-            return generr("Inequality constraints are not supported");
+            return generr(gettext("Inequality constraints are not supported"));
     }
     vecteur parm=*_lname(makevecteur(f,constr),contextptr)._VECTptr;
     for (int i=parm.size();i-->0;) {
@@ -2947,10 +2947,10 @@ gen _extrema(const gen &g,GIAC_CONTEXT) {
             parm.erase(parm.begin()+i);
     }
     if (!initial.empty() && !parm.empty())
-        return generr("Cannot perform local search with symbolic constants");
+        return generr(gettext("Cannot perform local search with symbolic constants"));
     gen_map parm_asmp;
     if (!get_parameter_assumptions(parm,parm_asmp,contextptr))
-        return generr("Symbolic constants must be real");
+        return generr(gettext("Symbolic constants must be real"));
     vecteur tmpvars=make_temp_vars(vars,ineq,contextptr);
     f=subst(f,vars,tmpvars,false,contextptr);
     constr=subst(constr,vars,tmpvars,false,contextptr);
@@ -3126,9 +3126,9 @@ gen _minimax(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     const vecteur &gv=*g._VECTptr;
     if (gv.size()<3)
-        return generr("Too few arguments");
+        return generr(gettext("Too few arguments"));
     if (!is_equal(gv[1]) || !is_integer(gv[2]))
-        return generrtype("Expected an equality and an integer");
+        return generrtype(gettext("Expected an equality and an integer"));
     // detect parameters
     vecteur s(*gv[1]._SYMBptr->feuille._VECTptr);
     if (s[0].type!=_IDNT || !s[1].is_symb_of_sommet(at_interval))
@@ -3137,7 +3137,7 @@ gen _minimax(const gen &g,GIAC_CONTEXT) {
     s=*s[1]._SYMBptr->feuille._VECTptr;
     gen a(_evalf(s[0],contextptr)),b(_evalf(s[1],contextptr));
     if (!is_strictly_greater(b,a,contextptr))
-        return generrtype("Invalid bounds in the second argument");
+        return generrtype(gettext("Invalid bounds in the second argument"));
     const gen &f=gv[0];
     int n=gv[2].val;
     gen threshold(1.02);  // threshold for stopping criterion
@@ -3149,12 +3149,12 @@ gen _minimax(const gen &g,GIAC_CONTEXT) {
             vecteur &p=*it->_SYMBptr->feuille._VECTptr;
             if (p[0]==at_limit) {
                 if (!p[1].is_integer() || p[1].val<=0)
-                    return generrtype("Expected a positive integer");
+                    return generrtype(gettext("Expected a positive integer"));
                 limit=p[1].val;
                 continue;
             }
         }
-        return generr("Invalid option");
+        return generr(gettext("Invalid option"));
     }
     // create Chebyshev nodes to start with
     vecteur nodes(chebyshev_nodes(a,b,n,contextptr)),sol;
@@ -3445,22 +3445,22 @@ gen _tpsolve(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     const vecteur &gv=*g._VECTptr;
     if (gv.size()<3)
-        return generr("Too few arguments");
+        return generr(gettext("Too few arguments"));
     if (gv[0].type!=_VECT || gv[1].type!=_VECT ||
             gv[2].type!=_VECT || !ckmatrix(*gv[2]._VECTptr))
-        return generrtype("Expected two vectors and a matrix");
+        return generrtype(gettext("Expected two vectors and a matrix"));
     vecteur supply(*gv[0]._VECTptr),demand(*gv[1]._VECTptr);
     if (!is_integer_vecteur(supply,true) || !is_integer_vecteur(demand,true))
-        return generrtype("Supply and demand quantites must be integers");
+        return generrtype(gettext("Supply and demand quantites must be integers"));
     matrice P(*gv[2]._VECTptr);
     if (is_strictly_greater(0,_min(_min(P,contextptr),contextptr),contextptr))
         return generr("All costs must be non-negative");
     vecteur sy(*_lname(P,contextptr)._VECTptr);
     if (sy.size()>1)
-        return generr("At most one symbol is allowed in the cost matrix");
+        return generr(gettext("At most one symbol is allowed in the cost matrix"));
     int m=supply.size(),n=demand.size();
     if (m!=int(P.size()) || n!=int(P.front()._VECTptr->size()))
-        return generrdim("Cost matrix dimensions do not match supply and demand");
+        return generrdim(gettext("Cost matrix dimensions do not match supply and demand"));
     gen M(sy.size()==1 && sy[0].type==_IDNT?sy[0]:0);
     gen ts(_sum(supply,contextptr)),td(_sum(demand,contextptr));
     if (ts!=td) {
@@ -3490,7 +3490,7 @@ gen _tpsolve(const gen &g,GIAC_CONTEXT) {
         }
     }
     if (contains(*_lname(cost,contextptr)._VECTptr,M))
-        return generr("The problem has no feasible solution");
+        return generr(gettext("The problem has no feasible solution"));
     return makesequence(cost,X);
 }
 static const char _tpsolve_s []="tpsolve";
@@ -4825,7 +4825,7 @@ bool nlp_problem::de_initialize(iterateur &it,const iterateur &itend,iterateur &
             *kt=initp[i];
             ok=compute_obj_val(*kt->_VECTptr,*ft);
         } else *kt=vecteur(0);
-        if ((i>=ips || !ok) && !make_random_initial_point(*kt->_VECTptr,ft))
+        if ((i>=ips || !ok) && !make_random_initial_point(*kt->_VECTptr,&*ft))
             return false;
         if (is_strictly_greater(best_obj_val,*ft,ctx)) {
             best_obj_val=*ft;

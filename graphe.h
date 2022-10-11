@@ -786,10 +786,10 @@ private:
     bool m_supports_attributes;
     void clear_node_stack();
     void clear_node_queue();
-    void message(const char *str) const;
-    void message(const char *format,int a) const;
-    void message(const char *format,int a,int b) const;
-    void message(const char *format,int a,int b,int c) const;
+    void message(int t,const char *str) const;
+    void message(int t,const char *format,int a) const;
+    void message(int t,const char *format,int a,int b) const;
+    void message(int t,const char *format,int a,int b,int c) const;
     void suspend_logging();
     void restore_logging();
     std::string giac_version() const;

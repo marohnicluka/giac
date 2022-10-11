@@ -20,9 +20,19 @@
 #include "giac.h"
 #include "signalprocessing.h"
 #include "graphtheory.h"
+#include "usual.h"
 
 #ifdef HAVE_LIBSAMPLERATE
 #include "samplerate.h"
+#endif
+#ifdef HAVE_LIBAO
+#include <ao/ao.h>
+#endif
+#ifndef HAVE_PNG_H
+#undef HAVE_LIBPNG
+#endif
+#ifdef HAVE_LIBPNG
+#include <png.h>
 #endif
 
 using namespace std;
@@ -31,9 +41,9 @@ using namespace std;
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
-#define _SP_BAD_SOUND_DATA "Invalid sound data"
-#define _SP_INVALID_RANGE "Invalid range specification"
-#define _SP_BAD_WINDOW "Invalid window parameters"
+#define _SP_BAD_SOUND_DATA gettext("Invalid sound data")
+#define _SP_INVALID_RANGE gettext("Invalid range specification")
+#define _SP_BAD_WINDOW gettext("Invalid window parameters")
 
 gen generr(const char* msg,bool translate) {
     string m(translate?gettext(msg):msg);
@@ -53,6 +63,10 @@ gen generrdim(const char* msg,bool translate) {
     return gendimerr(m.c_str());
 }
 
+gen generrarg(int i) {
+    return generr(string(gettext("Invalid argument")+string(" ")+print_INT_(i)).c_str());
+}
+
 void print_error(const char *msg,GIAC_CONTEXT) {
     *logptr(contextptr) << gettext("Error") << ": " << gettext(msg) << "\n";
 }
@@ -61,32 +75,29 @@ void print_warning(const char *msg,GIAC_CONTEXT) {
     *logptr(contextptr) << gettext("Warning") << ": " << gettext(msg) << "\n";
 }
 
-/*
- * Return TRUE iff g is a real constant.
- */
 bool is_real_number(const gen &g,GIAC_CONTEXT) {
-    gen eg=_evalf(g,contextptr);
-    if (!eg.is_approx())
-        return false;
-    switch (eg.type) {
-    case _INT_: case _DOUBLE_: case _FLOAT_: case _ZINT: case _REAL:
+    if (g.type==_INT_ || g.type==_ZINT || g.type==_FLOAT_ || g.type==_DOUBLE_ || g.type==_REAL || g.type==_FRAC)
         return true;
-    case _CPLX: 
-        return (is_zero(*(eg._CPLXptr+1),contextptr));
-    default:
-        break;
-    }
-    return false;
+    return evalf_double(g,1,contextptr).type==_DOUBLE_;
 }
 
-/*
- * Convert g to inexact real constant.
- */
 gen to_real_number(const gen &g,GIAC_CONTEXT) {
-    gen eg=_evalf(g,contextptr);
-    if (eg.type==_CPLX)
-        return *(eg._CPLXptr);
-    else return eg;
+    gen ret=_evalf(g,contextptr);
+    if (ret.type!=_DOUBLE_)
+        return evalf_double(ret,1,contextptr);
+    return ret;
+}
+
+bool is_real_interval(const gen &g,gen &a,gen &b,GIAC_CONTEXT) {
+    if (!g.is_symb_of_sommet(at_interval))
+        return false;
+    a=g._SYMBptr->feuille._VECTptr->front();
+    b=g._SYMBptr->feuille._VECTptr->back();
+    if (!is_real_number(a,contextptr) || !is_real_number(b,contextptr))
+        return false;
+    a=to_real_number(a,contextptr);
+    b=to_real_number(b,contextptr);
+    return true;
 }
 
 int nextpow2(int n) {
@@ -95,87 +106,1217 @@ int nextpow2(int n) {
     return m;
 }
 
-bool is_sound_data(const gen &g,int &nc,int &bd,int &sr,int &len) {
-    if (g.type!=_VECT)
+//
+// AUDIO CLIP CLASS IMPLEMENTATION
+//
+
+string n2hexstr(char c) {
+    static const char* digits="0123456789ABCDEF";
+    std::string hex(2,'0');
+    for (size_t i=0,j=4;i<2;++i,j-=4)
+        hex[i]=digits[(c>>j) & 0x0f];
+    return hex;
+}
+int hexstr2int(const string &hex) {
+    return (int)strtol(hex.c_str(),NULL,16);
+}
+
+audio_clip::audio_clip(int depth,int rate,int nc,int len,GIAC_CONTEXT) {
+    if ((depth!=8 && depth!=16 && depth!=24) || len<1 || nc<1 || rate<1)
+        throw std::runtime_error(gettext("Invalid sound parameters"));
+    _bit_depth=depth;
+    _pow2=1<<_bit_depth;
+    _range=_pow2/2-1;
+    _nc=nc;
+    _len=len;
+    _size=len*nc*depth/8;
+    _sample_rate=rate;
+    _data=(char*)calloc(_size,sizeof(char));
+    if (_data==NULL)
+        throw std::runtime_error(gettext("Failed to allocate memory for wave data"));
+    ctx=contextptr;
+    _filename.clear();
+    _file_offset=0;
+}
+audio_clip::audio_clip(const audio_clip &other,int offset,int len) {
+    _size=0;
+    _data=NULL;
+    assign(other,offset,len);
+}
+audio_clip::audio_clip(const char *fname,int offset,int len,GIAC_CONTEXT) {
+    ctx=contextptr;
+    FILE *f=fopen(fname,"r");
+    if (f==NULL)
+        throw std::runtime_error(gettext("Failed to open file for reading"));
+    _size=0;
+    try {
+        read(f,offset,len,true);
+        _filename=fname;
+    } catch (const std::runtime_error &e) {
+        fclose(f);
+        if (_size>0)
+            free(_data);
+        throw e;
+    }
+    fclose(f);
+}
+audio_clip::audio_clip(const char *fname,double t1,double t2,GIAC_CONTEXT) {
+    ctx=contextptr;
+    FILE *f=fopen(fname,"r");
+    if (f==NULL)
+        throw std::runtime_error(gettext("Failed to open file for reading"));
+    _size=0;
+    int offset,len;
+    try {
+        read_header(f,_bit_depth,_sample_rate,_nc,_size);
+        offset=(int)std::floor(t1*_sample_rate);
+        len=(int)std::floor((t2-t1)*_sample_rate);
+        read(f,offset,len,false);
+        _filename=fname;
+    } catch (const std::runtime_error &e) {
+        fclose(f);
+        if (_size>0)
+            free(_data);
+        throw e;
+    }
+    fclose(f);
+}
+audio_clip *audio_clip::from_gen(const gen &g) {
+    if (g.type!=_USER)
+        return NULL;
+    return dynamic_cast<audio_clip*>(g._USERptr);
+}
+gen audio_clip::giac_constructor(GIAC_CONTEXT) const {
+    if (!_filename.empty())
+        return symbolic(at_readwav,makesequence(string2gen(_filename,false),_file_offset,_len));
+    vecteur args;
+    string data;
+    data.reserve(_size*2);
+    for (int i=0;i<_size;++i)
+        data.append(n2hexstr(_data[i]));
+    args.push_back(symb_equal(at_channels,_nc));
+    args.push_back(symb_equal(at_bit_depth,_bit_depth));
+    args.push_back(symb_equal(at_samplerate,_sample_rate));
+    args.push_back(symb_equal(at_channel_data,string2gen(data,false)));
+    return symbolic(at_createwav,gen(args,_SEQ__VECT));
+}
+void audio_clip::assign(const audio_clip &other,int offset,int len) {
+    _bit_depth=other.bit_depth();
+    _nc=other.channel_count();
+    if (offset>other.length()-len)
+        len=other.length()-offset;
+    _len=len;
+    _sample_rate=other.sample_rate();
+    _pow2=other._pow2;
+    _range=other._range;
+    if (other._filename.size()>0) {
+        _filename=other._filename;
+        _file_offset=other._file_offset+offset;
+    } else _filename.clear();
+    ctx=other.ctx;
+    int m=_nc*_bit_depth/8,sz=len*m;
+    if (_size!=sz) {
+        char *d=(char*)calloc(sz,sizeof(char));
+        if (d!=NULL) {
+            if (_data!=NULL) free(_data);
+            _data=d;
+            _size=sz;
+        } else throw std::runtime_error(gettext("Failed to allocate memory for wave data"));
+    }
+    memcpy(_data,other._data+offset*m,_size);
+}
+gen audio_clip::operator+(const gen &g) const {
+    audio_clip *other=from_gen(g);
+    if (other==NULL)
+        return generrtype(gettext("Expected an audio clip"));
+    if (_bit_depth!=other->bit_depth())
+        return generr(gettext("Audio clips must have the same bit depth"));
+    if (_sample_rate!=other->sample_rate())
+        return generr(gettext("Audio clips must have the same sample rate"));
+    if (_nc!=other->channel_count())
+        return generr(gettext("Audio clips must have the same number of channels"));
+    audio_clip ret(_bit_depth,_sample_rate,_nc,_len+other->length(),ctx);
+    memcpy(ret._data,this->_data,this->_size);
+    memcpy(ret._data+this->_size,other->_data,other->_size);
+    return ret;
+}
+string audio_clip::print(GIAC_CONTEXT) const {
+    char buf[1024];
+    sprintf(buf,gettext("a sound clip with %d samples at %d Hz (%d bit, %s)"),_len,_sample_rate,_bit_depth,(_nc==1?"mono":"stereo"));
+    return buf;
+}
+string audio_clip::texprint(GIAC_CONTEXT) const {
+    string ret="\\text{";
+    ret+=this->print(contextptr);
+    ret+"}";
+    return ret;
+}
+/* Return true iff G is audio clip with the same parameters and data as this. */
+bool audio_clip::operator==(const gen &g) const {
+    audio_clip *other=from_gen(g);
+    if (other==NULL)
         return false;
-    const vecteur &gv=*g._VECTptr;
-    if (gv.size()<2 || gv.front().type!=_VECT || gv.front()._VECTptr->size()!=4)
+    if (_bit_depth!=other->bit_depth() || _sample_rate!=other->sample_rate() ||
+            _nc!=other->channel_count() || _len!=other->length() || _size!=other->_size)
         return false;
-    vecteur &header=*gv.front()._VECTptr;
-    if (!is_integer_vecteur(header))
-        return false;
-    int n=header[0].val,b=header[1].val,s=header[2].val,l=(8*header[3].val)/(n*b);
-    if (n<1 || (b!=8 && b!=16 && b!=24) || s<1 || l<0 ||
-            int(gv.size())!=n+1)
-        return false;
-    for (const_iterateur it=gv.begin()+1;it!=gv.end();++it) {
-        if (it->type!=_VECT)
-            return false;
-        if (int(it->_VECTptr->size())!=l)
+    for (int i=0;i<_size;++i) {
+        if (_data[i]!=other->_data[i])
             return false;
     }
-    nc=n; bd=b; sr=s; len=l;
+    return true;
+}
+/* Copy the segment beginning at POS with length LEN (by default unlimited)
+ * and return the selection as a new audio clip. */
+gen audio_clip::operator()(const gen &g,GIAC_CONTEXT) const {
+    int len=rand_max2,pos=0;
+    gen a,b;
+    if (g.is_integer())
+        pos=g.val;
+    else if (is_real_interval(g,a,b,contextptr)) {
+        pos=(int)std::floor(0.5+_sample_rate*to_real_number(a,contextptr).to_double(contextptr));
+        len=(int)std::floor(0.5+_sample_rate*to_real_number(b-a,contextptr).to_double(contextptr));
+    } else if (g.type==_VECT && g.subtype==_SEQ__VECT && g._VECTptr->size()==2 &&
+            g._VECTptr->front().is_integer() && g._VECTptr->back().is_integer()) {
+        pos=g._VECTptr->front().val;
+        len=g._VECTptr->back().val;
+    } else return generr(gettext("Invalid argument"));
+    if (pos<0 || pos>=_len)
+        return generr(gettext("Invalid selection offset"));
+    if (len<1)
+        return generr(gettext("Invalid selection length"));
+    return audio_clip(*this,pos,len);
+}
+/* Get individual samples or blocks of data on a channel.
+ * Call with pair c,offset or triple c,offset,len where c
+ * is the channel index (zero-based).
+ * It is allowed to enter 'left' or 'right' instead of c. */
+gen audio_clip::operator[](const gen &g) {
+    int chn=-1,pos=0,len=rand_max2;
+    gen a,b,c;
+    if (g.type!=_VECT)
+        c=g;
+    else {
+        if (g.subtype!=_SEQ__VECT)
+            return gentypeerr(ctx);
+        const vecteur &args=*g._VECTptr;
+        if (args.size()<2 || args.size()>3)
+            return gendimerr(ctx);
+        c=args.front();
+        if (args.size()==2 && is_real_interval(args.back(),a,b,ctx)) {
+            pos=(int)std::floor(0.5+_sample_rate*a.to_double(ctx));
+            len=(int)std::floor(0.5+_sample_rate*(b-a).to_double(ctx));
+        } else {
+            if (!is_integer_vecteur(vecteur(args.begin()+1,args.end())))
+                return generrtype(gettext("Invalid range"));
+            pos=args[1].val;
+            if (args.size()==3)
+                len=args[2].val;
+        }
+    }
+    if (c==at_left) chn=0;
+    else if (c==at_right) chn=1;
+    else if (c.is_integer())
+        chn=c.val;
+    else return generrtype(gettext("Invalid channel specification"));
+    if (chn>=_nc || chn<0)
+        return generr(gettext("Invalid channel index"));
+    if (pos<0 || pos>=_len)
+        return generr(gettext("Invalid offset"));
+    if (len<=0)
+        return generr(gettext("Length should be positive"));
+    if (pos>_len-len)
+        len=_len-pos;
+    vecteur ret;
+    ret.reserve(len);
+    for (int i=0;i<len;++i)
+        ret.push_back(decode(get_sample(chn,pos+i)));
+    return ret;
+}
+/* Load the wave data from the specified string and offset. */
+void audio_clip::load_data(const string &s,int offset) {
+    int sz=s.size()/2,len=(8*sz)/(_nc*_bit_depth),p0=offset*_nc*_bit_depth/8,j;
+    for (int i=0;i<sz;++i) {
+        j=p0+i;
+        if (j<0) continue;
+        else if (j>=_size) break;
+        unsigned char c=hexstr2int(s.substr(2*i,2));
+        _data[j]=static_cast<char>(c);
+    }
+    _filename.clear();
+}
+/* Set the sample at position POS of the channel C. */
+void audio_clip::set_sample(int chn,int pos,unsigned u) {
+    if (chn<0 || chn>=_nc || pos<0 || pos>=_len)
+        return;
+    int i=pos*_nc+chn;
+    switch (_bit_depth) {
+    case 8:
+        _data[i]=u;
+        break;
+    case 16:
+        _data[2*i]=u & 0xff;
+        _data[2*i+1]=(u>>8) & 0xff;
+        break;
+    case 24:
+        _data[3*i]=u & 0xff;
+        _data[3*i+1]=(u>>8) & 0xff;
+        _data[3*i+2]=(u>>16) & 0xff;
+        break;
+    }
+}
+/* Return RMS value of (a portion of) this clip. */
+double audio_clip::rms(int offset,int len) const {
+    int l=offset>_len-len?_len-offset:len;
+    double s,tot=0;
+    vector<double> chn_rms(_nc,0);
+    for (int c=0;c<_nc;++c) {
+        double &cr=chn_rms[c];
+        for (int i=0;i<l;++i) {
+            s=decode(get_sample(c,i+offset));
+            cr+=s*s;
+        }
+        cr/=double(l);
+    }
+    for (int c=0;c<_nc;++c)
+        tot+=chn_rms[c];
+    return std::sqrt(tot);
+}
+/* Return the cosine similarity of chunks in this and other of
+ * length LEN starting at specified offsets.
+ * In case of multichannel clips, the geometric mean of channel
+ * similarities is returned. */
+double audio_clip::similarity(const audio_clip &other,int offset,int other_offset,int len) const {
+    if (offset<0 || offset>=_len || other_offset<0 || other_offset>=other._len || len<=0)
+        throw std::runtime_error(gettext("Invalid chunk position and/or length specification"));
+    if (other.bit_depth()!=_bit_depth || other.sample_rate()!=_sample_rate || other.channel_count()!=_nc)
+        throw std::runtime_error(gettext("Clips should have the same bit depths, sample rates and channel counts"));
+    int l=std::min(len,std::min(_len-offset,other._len-other_offset));
+    double p=1.0,a,b;
+    for (int c=0;c<_nc;++c) {
+        double pp=0.0,norm_a=0.0,norm_b=0.0;
+        for (int i=0;i<l;++i) {
+            a=decode(get_sample(c,i+offset));
+            b=other.decode(other.get_sample(c,i+other_offset));
+            pp+=a*b;
+            norm_a+=a*a;
+            norm_b+=b*b;
+        }
+        p*=pp/std::sqrt(norm_a*norm_b);
+    }
+    return std::pow(p,1.0/double(_nc));
+}
+/* Pad this audio with LEN samples of silence at the end. */
+void audio_clip::pad_zeros(int len) {
+    int newlen=_len+len,newsize=_size+len*_nc*_bit_depth/8;
+    char *newdata=(char*)realloc(_data,newsize*sizeof(char));
+    if (newdata==NULL)
+        throw std::runtime_error(gettext("Failed to resize audio"));
+    _data=newdata;
+    for (int i=_size;i<newsize;++i) _data[i]=0;
+    _size=newsize;
+    _len=newlen;
+}
+/* Mix another audio clip in.
+ * OFFSET, FADE_IN and FADE_OUT are in samples, gain is in dB. 
+ * Return true if no clipping has occurred, else return false. */
+bool audio_clip::mix(const audio_clip &other,int offset,double gain,double pan,int fade_in,int fade_out) {
+    int onc=other.channel_count();
+    if (_nc>2 || (onc>1 && onc!=_nc) || other.sample_rate()!=_sample_rate)
+        throw std::runtime_error(gettext("Incompatible sound parameters"));
+    double ratio=std::pow(10.0,gain/20.0),r,s1,s2,s,theta=M_PI*(pan+1.0)/4.0,pl=std::cos(theta),pr=std::sin(theta);
+    int len=other.length();
+    if (offset+len>_len) {
+        try { pad_zeros(offset+len-_len); } catch (const std::runtime_error &e) { throw e; }
+    }
+    bool clipping=false;
+    if (_nc==1) pl=1.0; // can't pan in mono
+    for (int i=0;i<len;++i) {
+        r=ratio;
+        if (i<fade_in)
+            r*=double(i)/double(fade_in);
+        if (i>=len-fade_out)
+            r*=double(len-i-1)/double(fade_out);
+        for (int c=0;c<_nc;++c) {
+            s1=decode(get_sample(c,i+offset));
+            s2=(c==0?pl:pr)*r*other.decode(other.get_sample(std::min(onc-1,c),i));
+            s=s1+s2;
+            clipping=s>1.0 || s< -1.0;
+            set_sample(c,i+offset,encode(s));
+        }
+    }
+    return !clipping;
+}
+/* Splice two audio clips at position POS in this clip.
+ * Use EX<0 for auto crossfade, EX=1.0 for constant gain and
+ * EX=0.5 for constant power crossfade. */
+audio_clip audio_clip::splice(const audio_clip &other,int pos,double ex) const {
+    if (pos<0 || pos>=_len)
+        throw std::runtime_error(gettext("Invalid splice position"));
+    double e=ex<0?0.5+0.5*std::abs(similarity(other,pos)):ex,a,b,cf,v;
+    audio_clip ret(_bit_depth,_sample_rate,_nc,pos+other._len,ctx);
+    int cflen=std::min(_len-pos,other._len),s=_nc*_bit_depth/8;
+    pos=_len-cflen;
+    memcpy(ret._data,this->_data,pos*s);
+    memcpy(ret._data+_len*s,other._data+cflen*s,(other._len-cflen)*s);
+    bool clipping=false;
+    // crossfade
+    for (int c=0;c<_nc;++c) {
+        for (int i=0;i<cflen;++i) {
+            a=decode(get_sample(c,i+pos));
+            b=other.decode(other.get_sample(c,i));
+            if (e==0) {
+                clipping=std::abs(v=a+b)>1.0;
+            } else {
+                cf=std::pow(double(i+1)/double(cflen),e);
+                clipping=std::abs(v=a*(1.0-cf)+b*cf)>1.0;
+            }
+            ret.set_sample(c,i+pos,ret.encode(v));
+        }
+    }
+    if (clipping)
+        *logptr(ctx) << gettext("Warning") << ": " << gettext("clipping audio, the result will be distorted") << "\n";
+    return ret;
+}
+/* Return this clip with channels mixed down to one. */
+audio_clip audio_clip::to_mono() const {
+    audio_clip ret(_bit_depth,_sample_rate,1,_len,ctx);
+    for (int i=0;i<_len;++i) {
+        double tot=0.0;
+        for (int c=0;c<_nc;++c)
+            tot+=decode(get_sample(c,i));
+        ret.set_sample(0,i,ret.encode(tot/_nc));
+    }
+    return ret;
+}
+/* Reverse all channels in the clip. */
+audio_clip audio_clip::reverse() const {
+    audio_clip ret(_bit_depth,_sample_rate,_nc,_len,ctx);
+    for (int c=0;c<_nc;++c)
+        for (int i=0;i<_len;++i)
+            ret.set_sample(c,i,get_sample(c,_len-i-1));
+    return ret;
+}
+/* Find audio peak in [0,1]. */
+double audio_clip::peak() const {
+    double ret=0.0;
+    for (int c=0;c<_nc;++c)
+        for (int i=0;i<_len;++i)
+            ret=std::max(ret,decode(get_sample(c,i)));
+    return ret;
+}
+/* Normalize the audio to the specified dBFS level. */
+void audio_clip::normalize(double dbfs) {
+    double s=std::pow(10.0,dbfs/20.0)/peak();
+    for (int c=0;c<_nc;++c)
+        for (int i=0;i<_len;++i)
+            set_sample(c,i,encode(s*decode(get_sample(c,i))));
+}
+/* Return the sample at position POS of the channel C. */
+unsigned audio_clip::get_sample(int c,int pos) const {
+    if (c<0 || c>=_nc || pos<0 || pos>=_len)
+        return 0;
+    int i=pos*_nc+c;
+    unsigned v,d1,d2,d3;
+    switch (_bit_depth) {
+    case 8:
+        v=static_cast<unsigned char>(_data[i]);
+        break;
+    case 16:
+        d1=static_cast<unsigned char>(_data[2*i]);
+        d2=static_cast<unsigned char>(_data[2*i+1]);
+        v=d1 | (d2<<8);
+        break;
+    case 24:
+        d1=static_cast<unsigned char>(_data[3*i]);
+        d2=static_cast<unsigned char>(_data[3*i+1]);
+        d3=static_cast<unsigned char>(_data[3*i+2]);
+        v=d1 | (d2<<8) | (d3<<16);
+        break;
+    default:
+        throw std::runtime_error(gettext("Invalid bit depth"));
+    }
+    return v;
+}
+/* Return a copy of this clip with all channels inverted. */
+gen audio_clip::inv() const {
+    audio_clip clip(*this);
+    unsigned p=1<<_bit_depth;
+    for (int c=0;c<_nc;++c)
+        for (int i=0;i<_len;++i)
+            clip.set_sample(c,i,p-get_sample(c,i));
+    return clip;
+}
+/* Decode the sample, return a value in [-1,1]. */
+double audio_clip::decode(int sample) const {
+    int v=sample;
+    if (_bit_depth==8) v-=127;
+    else if (2*v>=_pow2) v-=_pow2;
+    return double(2*v)/double(_pow2);
+}
+/* Encode a signal value SAMPLE in [-1,1]. Clipping will occur if |SAMPLE| > 1. */
+int audio_clip::encode(double sample) const {
+    double v;
+    if (sample< -1.0 || sample>1.0)
+        v=std::max(-1.0,std::min(1.0,sample));
+    else v=sample;
+    int k=(int)std::floor(_range*v+0.5);
+    if (_bit_depth==8) k+=127;
+    //else if (k<0) k+=_pow2;
+    return k;
+}
+#ifdef RTOS_THREADX
+void audio_clip::read_header(FILE *f,int &bd,int &sr,int &nc,int &sz) {
+    bd=sr=nc=sz=0;
+}
+void audio_clip::read(FILE *f,int offset,int len) {
+    throw std::runtime_error(gettext("Loading wave files is not supported"));
+}
+bool audio_clip::write(FILE *f) const {
+    return false;
+}
+gen _readwav(const gen &g,GIAC_CONTEXT){
+    return generr(gettext("Loading wave files is not supported"));
+}
+gen _writewav(const gen &g,GIAC_CONTEXT){
+    return 0;
+}
+#else
+void audio_clip::read_header(FILE *f,int &bd,int &sr,int &nc,int &sz) {
+    unsigned char c,channels;
+    unsigned int u,s,sample_rate,byte_rate,block_align=0,bits_per_sample=0,data_size=0;
+    if (fread(&u,4,1,f)!=1 || u!=0x46464952 || // "RIFF"
+            fread(&s,4,1,f)!=1 ||
+            fread(&u,4,1,f)!=1 || u!=0x45564157 || // "WAVE"
+            fread(&u,4,1,f)!=1 || u!=0x20746d66 || // "fmt "
+            fread(&u,4,1,f)!=1 || u!=0x10) // 16 for PCM
+        throw std::runtime_error(gettext("Failed to read wave file header"));
+    c=fgetc(f);
+    if (c!=1)
+        throw std::runtime_error(gettext("Badly formatted wave file"));
+    c=fgetc(f);
+    if (c!=0)
+        throw std::runtime_error(gettext("Badly formatted wave file"));
+    channels=fgetc(f);
+    c=fgetc(f);
+    if (c!=0 || fread(&sample_rate,4,1,f)!=1 || fread(&byte_rate,4,1,f)!=1)
+        throw std::runtime_error(gettext("Failed to read wave file parameters"));
+    block_align=fgetc(f);
+    block_align=block_align+(fgetc(f)<<8);
+    bits_per_sample=fgetc(f); // 8 or 16
+    bits_per_sample=bits_per_sample+(fgetc(f)<<8);
+    if (fread(&u,4,1,f)!=1 || u!=0x61746164 || fread(&data_size,4,1,f)!=1)
+        throw std::runtime_error(gettext("Failed to read wave data header"));
+    bd=bits_per_sample;
+    sr=sample_rate;
+    nc=channels;
+    sz=data_size;
+}
+/* Read audio from a wave file F.
+ * Source: http://ccrma.stanford.edu/courses/422/projects/WaveFormat/ */
+void audio_clip::read(FILE *f,int offset,int len,bool read_hdr) {
+    unsigned u;
+    int n,pos=0,nsamp,bytes_per_sample;
+    if (read_hdr) {
+        read_header(f,_bit_depth,_sample_rate,_nc,n);
+        if (_bit_depth>24)
+            throw std::runtime_error(gettext("Bit depth too high"));
+    } else n=_size;
+    bytes_per_sample=_bit_depth/8;
+    nsamp=n/(_nc*bytes_per_sample);
+    if (offset<0 || offset>=nsamp)
+        throw std::runtime_error(gettext("Invalid offset"));
+    if (offset>nsamp-len)
+        len=nsamp-offset;
+    if (len<=0)
+        throw std::runtime_error(gettext("Invalid length"));
+    _pow2=(1<<_bit_depth);
+    _range=_pow2/2-1;
+    _len=len;
+    _size=_len*_nc*bytes_per_sample;
+    _data=(char*)calloc(_size,sizeof(char));
+    if (_data==NULL)
+        throw std::runtime_error(gettext("Failed to allocate memory for wave data"));
+    if (fseek(f,offset*bytes_per_sample*_nc,SEEK_CUR))
+        throw std::runtime_error(gettext("Failed to read wave data"));
+    for (;pos<_len&&!feof(f);++pos) {
+        for (int i=0;i<_nc;++i) {
+            u=0;
+            if (fread(&u,bytes_per_sample,1,f)!=1)
+                throw std::runtime_error(gettext("Failed to read wave data"));
+            set_sample(i,pos,u);
+        }
+    }
+    _file_offset=offset;
+}
+/* Write audio to file F in wave format. */
+bool audio_clip::write(FILE *f) const {
+    unsigned int u,byte_rate,block_align=0;
+    u=0x46464952;
+    if (fwrite(&u,4,1,f)!=1)
+        return false;
+    u=36+_size;
+    if (fwrite(&u,4,1,f)!=1)
+        return false;    
+    u=0x45564157;
+    if (fwrite(&u,4,1,f)!=1)
+        return false;
+    u=0x20746d66;
+    if (fwrite(&u,4,1,f)!=1)
+        return false;
+    u=0x10;
+    if (fwrite(&u,4,1,f)!=1)
+        return false;
+    fputc(1,f);
+    fputc(0,f);
+    fputc(_nc,f);
+    fputc(0,f);
+    block_align=_nc*_bit_depth/8;
+    byte_rate=_sample_rate*block_align;
+    if (fwrite(&_sample_rate,4,1,f)!=1 || fwrite(&byte_rate,4,1,f)!=1 ||
+            fwrite(&block_align,2,1,f)!=1 || fwrite(&_bit_depth,2,1,f)!=1)
+        return false;
+    u=0x61746164; // "data"
+    if (fwrite(&u,4,1,f)!=1)
+        return false;
+    u=_size;
+    if (fwrite(&u,4,1,f)!=1)
+        return false;
+    // write data
+    unsigned bytes_per_sample=_bit_depth/8;
+    for (int i=0;i<_len;++i){
+        for (int j=0;j<_nc;++j){
+            u=get_sample(j,i);
+            if (fwrite(&u,bytes_per_sample,1,f)!=1)
+                return false;
+        }
+    }
     return true;
 }
 
-vecteur decode_chdata(const vecteur &data,int bd,int start,int len) {
-    if (data.empty() || (bd!=8 && bd!=16))
-        return vecteur(0);
-    vecteur res;
-    int l=len<0?data.size():len;
-    res.reserve(l);
-    int v;
-    double denom=std::pow(2,bd-1);
-    for (const_iterateur it=data.begin()+start;it!=data.begin()+start+l;++it) {
-        if (!it->is_integer())
-            return vecteur(0);
-        v=it->val;
-        if (bd==8) v-=127;
-        else if (bd==16 && v>=32768) v-=65536;
-        res.push_back(double(v)/denom);
+gen _readwav(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    const gen &fname=(g.type==_VECT && !g._VECTptr->empty())?g._VECTptr->front():g;
+    if (fname.type!=_STRNG)
+        return generrtype(gettext("Expected a file name"));
+    int offset=0,len=rand_max2;
+    double t1,t2;
+    bool has_range=false;
+    if (g.type==_VECT) {
+        if (g.subtype!=_SEQ__VECT)
+            return gentypeerr(contextptr);
+        const vecteur &gv=*g._VECTptr;
+        if (gv.size()<2 || gv.size()>3)
+            return generrdim(gettext("Wrong number of arguments"));
+        gen a,b;
+        if (is_real_interval(gv[1],a,b,contextptr)) {
+            t1=a.to_double(contextptr);
+            t2=b.to_double(contextptr);
+            has_range=true;
+            if (gv.size()>2)
+                return generrdim(gettext("Too many input arguments"));
+        } else if (gv[1].is_integer()) {
+            offset=gv[1].val;
+            if (gv.size()>2) {
+                if (gv[2].is_integer())
+                    len=gv[2].val;
+                else return generrtype(gettext("Expected a length in samples"));
+            }
+        } else return generrtype(gettext("Expected an offset or a range"));
     }
+    try {
+        if (has_range)
+            return audio_clip(fname._STRNGptr->c_str(),t1,t2,contextptr);
+        return audio_clip(fname._STRNGptr->c_str(),offset,len,contextptr);
+    } catch (const std::runtime_error &e) {
+        return generr(e.what(),false);
+    }
+}
+
+gen _writewav(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    const vecteur &gv=*g._VECTptr;
+    if (gv.size()!=2)
+        return generrdim(gettext("Wrong number of arguments"));
+    if (gv.front().type!=_STRNG)
+        return generrtype(gettext("Expected a file name"));
+    audio_clip *clip=audio_clip::from_gen(gv.back());
+    if (clip==NULL)
+        return generrtype(_SP_BAD_SOUND_DATA);
+    bool res=clip->write_wav(gv.front()._STRNGptr->c_str());
+    return (int)res;
+}
+#endif
+
+static const char _readwav_s []="readwav";
+static define_unary_function_eval (__readwav,&_readwav,_readwav_s);
+define_unary_function_ptr5( at_readwav,alias_at_readwav,&__readwav,0,true);
+
+static const char _writewav_s []="writewav";
+static define_unary_function_eval (__writewav,&_writewav,_writewav_s);
+define_unary_function_ptr5( at_writewav,alias_at_writewav,&__writewav,0,true);
+
+bool audio_clip::write_wav(const char *fname) const {
+    FILE *f=fopen(fname,"w");
+    if (f==NULL)
+        return false;
+    bool res=write(f);
+    fclose(f);
     return res;
 }
 
-vecteur encode_chdata(const vecteur &data,int bd,double ratio,GIAC_CONTEXT) {
-    if (data.empty() || (bd!=8 && bd!=16))
-        return vecteur(0);
-    vecteur res;
-    res.reserve(data.size());
-    double v,fac=std::pow(2.0,bd-1)-1.0;
-    int k;
-    for (const_iterateur it=data.begin();it!=data.end();++it) {
-        if (!is_real_number(*it,contextptr))
-            return vecteur(0);
-        v=std::max(-1.0,std::min(1.0,ratio*to_real_number(*it,contextptr).to_double(contextptr)));
-        k=std::floor(fac*v);
-        if (bd==8) k+=127;
-        res.push_back(k);
+void audio_clip::set_channel_data(int chn,const vecteur &data,int offset,double ratio) {
+    if (chn<0 || chn>=_nc)
+        throw std::runtime_error(gettext("Invalid channel number"));
+    int len=data.size(),pos;
+    if (offset>=_len)
+        return;
+    else if (offset>_len-len)
+        len=_len-offset;
+    const_iterateur it=data.begin();
+    gen v;
+    for (pos=0;pos<len;++it,++pos) {
+        v=evalf_double(*it,1,ctx);
+        if (v.type!=_DOUBLE_) {
+            char buf[1024];
+            sprintf(buf,gettext("Failed to set channel data, %s is not a valid sample value"),it->print(ctx).c_str());
+            throw std::runtime_error(buf);
+        }
+        set_sample(chn,offset+pos,encode(ratio*v.DOUBLE_val()));
     }
-    return res;
+    _filename.clear();
 }
 
-int read_channel_data(const gen &g,int &nc,vector<vecteur*> &data) {
-    int ret;
-    if (ckmatrix(g)) {
-        const matrice &chns=*g._VECTptr;
-        nc=chns.size();
-        ret=chns.front()._VECTptr->size();
-        const_iterateur jt,jtend;
-        for (jt=chns.begin(),jtend=chns.end();jt!=jtend;++jt)
-            data.push_back(jt->_VECTptr);
-    } else {
-        data.push_back(g._VECTptr);
-        ret=g._VECTptr->size();
+void audio_clip::set_block(const matrice &data,int offset) {
+    const_iterateur it=data.begin(),itend=data.end();
+    int chn=0;
+    for (;it!=itend;++it,++chn)
+        set_channel_data(chn,*it->_VECTptr,offset);
+    _filename.clear();
+}
+
+vecteur audio_clip::get_channel_data(int chn,int pos,int len) const {
+    vecteur ret;
+    if (pos<_len && chn>=0 && chn<_nc) {
+        if (pos>_len-len)
+            len=_len-pos;
+        ret.reserve(len);
+        for (int i=0;i<len;++i) {
+            ret.push_back(decode(get_sample(chn,pos+i)));
+        }
     }
     return ret;
 }
 
+matrice audio_clip::get_block(int pos,int len) const {
+    matrice ret;
+    ret.reserve(_nc);
+    for (int chn=0;chn<_nc;++chn) {
+        ret.push_back(get_channel_data(chn,pos,len));
+    }
+    return ret;
+}
+
+/* Play at most DUR samples starting from POS (and repeat the indicated number of times).
+ * Return 0 on success, 1 on audio device error, 2 on playback error, 3 on libao missing. */
+#ifdef HAVE_LIBAO
+int audio_clip::play(int pos,int len,int repeats) const {
+    ao_device *device=0;
+    ao_sample_format format;
+    memset(&format,0,sizeof(format));
+    format.bits=_bit_depth;
+    format.channels=_nc;
+    format.rate=_sample_rate;
+    format.byte_format=AO_FMT_LITTLE;
+    int default_driver,block_size=_nc*_bit_depth/8,sz,offset,N=_sample_rate/20,ret=0;
+    ao_initialize();
+    default_driver=ao_default_driver_id();
+    device=ao_open_live(default_driver,&format,NULL /* no options */);
+    if (device==NULL) 
+        return 1; // error opening audio device
+    if (pos>_len-len)
+        len=_len-pos;
+    for (int r=0;r<repeats;++r) {
+        offset=0;
+        while (offset<len && !interrupted && !ctrl_c) {
+            sz=(offset+N<=len?N:len-offset)*block_size;
+            if (!ao_play(device,_data+(pos+offset)*block_size,sz)) {
+                ret=2; // playback error
+                break;
+            }
+            offset+=N;
+        }
+        if (interrupted || ctrl_c) {
+            interrupted=ctrl_c=false;
+            break;
+        }
+    }
+    ao_close(device);
+    ao_shutdown();
+    return ret;
+}
+#else
+#if !defined GIAC_GGB && (defined EMCC || defined (EMCC2))// must have EM_ASM code javascript inlined (emscripten 1.30.4 at least?)
+#include <emscripten.h>
+int audio_clip::play(int pos,int len,int repeats) const {
+    int nbits=_bit_depth,nrate=_sample_rate,nchannels=_nc;
+    unsigned data_size=pos>_len-len?_len-pos:len,b=nbits/8;
+    unsigned total_size=data_size*repeats,nDataBytes=total_size*nchannels*sizeof(float);
+    // copy data from v into buffer and play it
+    float *ptr=(float*)malloc(nDataBytes);
+    for (unsigned j=0;j<nchannels;++j) {
+        for (unsigned i=0;i<total_size;++i) {
+            unsigned u=get_sample(j,pos+(i%data_size));
+            double ud=0;
+            if (b==1)
+                ud=u/128.0-1;
+            else if (b==2)
+                ud=u/32768.0-1;
+            else if (b==3)
+                ud=u/16777216.0-1;
+            ptr[j*total_size+i]=ud;
+        }
+    }
+    COUT << "Playing..." << '\n';
+    EM_ASM_ARGS({
+        var nchannels;
+        var nDataBytes;
+        var nrate;
+        var ptr;
+        var data_size;
+        nchannels=$0;nDataBytes=$1;nrate=$2;ptr=$3;
+        data_size=nDataBytes/4/nchannels;
+        var audioCtx=new (window.AudioContext || window.webkitAudioContext)();
+        var SoundArrayBuffer=audioCtx.createBuffer(nchannels,nDataBytes,audioCtx.sampleRate);
+        var dataHeap=new Uint8Array(Module.HEAPU8.buffer,ptr,nDataBytes);
+        var result=new Float32Array(dataHeap.buffer,dataHeap.byteOffset,nDataBytes/4);
+        var j;
+        var i;
+        for (j=0;j<nchannels;j++) {
+            var v=SoundArrayBuffer.getChannelData(j);
+            for (i=0;i<data_size;++i)
+                v[i]=result[j*data_size+i];
+        }
+        var source=audioCtx.createBufferSource();
+        // set the buffer in the AudioBufferSourceNode
+        source.buffer=SoundArrayBuffer;
+        // connect the AudioBufferSourceNode to the
+        // destination so we can hear the sound
+        source.connect(audioCtx.destination);
+        // start the source playing
+        source.start();
+    },nchannels,nDataBytes,nrate,ptr);
+    free(ptr);
+    return 0;
+}
+#else
+int audio_clip::play(int pos,int len,int repeats) const {
+    return 3; // ao is missing; no sound playback
+}
+#endif
+#endif // HAVE_LIBAO
+
+gen _playsnd(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    audio_clip *clip=audio_clip::from_gen((g.type==_VECT && !g._VECTptr->empty())?g._VECTptr->front():g);
+    if (clip==NULL)
+        return generrtype(_SP_BAD_SOUND_DATA);
+    int offset=0,len=rand_max2,sr=clip->sample_rate(),repeats=1;
+    if (g.type==_VECT) {
+        if (g.subtype!=_SEQ__VECT)
+            return gentypeerr(contextptr);
+        const vecteur &gv=*g._VECTptr;
+        if (gv.size()<2 || gv.size()>4)
+            return generrdim(gettext("Wrong number of arguments"));
+        gen a,b;
+        if (is_real_interval(gv[1],a,b,contextptr)) {
+            offset=(int)std::floor(0.5+sr*a.to_double(contextptr));
+            len=(int)std::floor(0.5+sr*(b-a).to_double(contextptr));
+            if (gv.size()>3)
+                return generrdim(gettext("Too many input arguments"));
+            if (gv.size()==3) {
+                if (gv[2].is_integer())
+                    repeats=gv[2].val;
+                else return generrtype(gettext("Expected a number of repeats"));
+            }
+        } else if (gv[1].is_integer()) {
+            offset=gv[1].val;
+            if (gv.size()>2) {
+                if (gv[2].is_integer())
+                    len=gv[2].val;
+                else return generrtype(gettext("Expected a length in samples"));
+            }
+            if (gv.size()>3) {
+                if (gv[3].is_integer())
+                    repeats=gv[3].val;
+                else return generrtype(gettext("Expected a number of repeats"));
+            }
+        } else return generrtype(gettext("Expected an offset or a range"));
+    }
+    if (offset<0 || offset>=clip->length())
+        return generr(gettext("Invalid offset"));
+    len=std::min(len,clip->length()-offset);
+    if (len<0)
+        return generr(gettext("Invalid length"));
+    if (len==0)
+        return 1;
+    int res=clip->play(offset,len,repeats);
+    switch (res) {
+    case 1:
+        print_error("Audio device failure",contextptr);
+        break;
+    case 2:
+        print_error("Playback failure",contextptr);
+        break;
+    case 3:
+        print_error("libao is required for sound playback",contextptr);
+        break;
+    default:
+        break;
+    }
+    return (int)(res==0);
+}
+static const char _playsnd_s[]="playsnd";
+static define_unary_function_eval (__playsnd,&_playsnd,_playsnd_s);
+define_unary_function_ptr5(at_playsnd,alias_at_playsnd,&__playsnd,0,true);
+
+/* Splice two audio clips. */
+gen _splice(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    const vecteur &args=*g._VECTptr;
+    if (args.size()<2 || args.size()>4)
+        return gendimerr(contextptr);
+    audio_clip *a,*b;
+    a=audio_clip::from_gen(args[0]);
+    b=audio_clip::from_gen(args[1]);
+    if (a==NULL || b==NULL)
+        return generrtype(gettext("First two arguments should be audio clips"));
+    int pos=-1,sr=a->sample_rate(),len=a->length();
+    double ex=-1;
+    if (args.size()>2) {
+        if (!is_real_number(args[2],contextptr))
+            return generrtype(gettext("Crossfade length should be a real number"));
+        if (is_approx(args[2]))
+            pos=len-(int)std::floor(0.5+sr*to_real_number(args[2],contextptr).to_double(contextptr));
+        else if (args[2].is_integer())
+            pos=len-args[2].val;
+        else return gentypeerr(contextptr);
+    }
+    if (args.size()>3) {
+        if (!is_real_number(args[3],contextptr))
+            return generr(gettext("Crossfade exponent should be a real number"));
+        ex=to_real_number(args[3],contextptr).to_double(contextptr);
+    }
+    if (pos<0)
+        pos=len-(int)std::floor(0.5+sr*std::min(std::min(a->duration(),b->duration())/2.0,0.5));
+    try {
+        return a->splice(*b,pos,ex);
+    } catch (const std::runtime_error &e) {
+        return generr(e.what());
+    }
+}
+static const char _splice_s[]="splice";
+static define_unary_function_eval (__splice,&_splice,_splice_s);
+define_unary_function_ptr5(at_splice,alias_at_splice,&__splice,0,true);
+
+bool is_audio_position(const gen &g,int sr,int &offset,GIAC_CONTEXT) {
+    if (g.is_integer() && g.val>=0) {
+        offset=g.val;
+        return true;
+    }
+    if (is_real_number(g,contextptr) && is_positive(g,contextptr)) {
+        offset=(int)std::floor(0.5+sr*to_real_number(g,contextptr).to_double(contextptr));
+        return true;
+    }
+    return false;
+}
+
+/* Mix audio clips down to one. */
+gen _mixdown(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT || g._VECTptr->empty())
+        return gentypeerr(contextptr);
+    const vecteur &args=*g._VECTptr;
+    int s=args.size();
+    if (s<=0 || s%2)
+        return gendimerr(contextptr);
+    int nclips=s/2,len=0,sr=0,bd=0,nc=0;
+    vector<audio_clip*> clips(nclips,NULL);
+    vector<int> offsets(nclips,0),cfins(nclips,0),cfouts(nclips,0);
+    vector<double> gains(nclips,0.0),pans(nclips,0.0);
+    for (int i=0;i<nclips;++i) {
+        clips[i]=audio_clip::from_gen(args[2*i]);
+        if (clips[i]==NULL)
+            return generrarg(2*i+1);
+        if (clips[i]->channel_count()>2)
+            return generr(gettext("Only mono and stereo clips are allowed"));
+        if (sr==0) sr=clips[i]->sample_rate();
+        else if (sr!=clips[i]->sample_rate())
+            return generr(gettext("All clips must have the same sample rate"));
+        bd=std::max(bd,clips[i]->bit_depth());
+        nc=std::max(nc,clips[i]->channel_count());
+        if (args[2*i+1].type==_VECT && args[2*i+1]._VECTptr->size()>5)
+            return gendimerr(contextptr);
+        vecteur parm=args[2*i+1].type==_VECT?*args[2*i+1]._VECTptr:vecteur(1,args[2*i+1]);
+        if (parm.size()>0 && !is_audio_position(parm[0],sr,offsets[i],contextptr))
+            return generr(gettext("Invalid offset specification"));
+        if (parm.size()>1 && (!is_real_number(parm[1],contextptr) ||
+                (gains[i]=to_real_number(parm[1],contextptr).to_double(contextptr))>0))
+            return generr(gettext("Invalid gain specification"));
+        if (parm.size()>2 && (!is_real_number(parm[2],contextptr) ||
+                (pans[i]=to_real_number(parm[2],contextptr).to_double(contextptr))< -1.0 || pans[i]>1.0))
+            return generr(gettext("Invalid pan specification"));
+        if (parm.size()>3 && !is_audio_position(parm[3],sr,cfins[i],contextptr))
+            return generr(gettext("Invalid fade-in specification"));
+        if (parm.size()>4 && !is_audio_position(parm[4],sr,cfouts[i],contextptr))
+            return generr(gettext("Invalid fade-out specification"));
+        if (cfins[i]+cfouts[i]>clips[i]->length())
+            return generrdim(gettext("Fade-in/out is too long"));
+        len=std::max(len,offsets[i]+clips[i]->length());
+    }
+    audio_clip ret(bd,sr,nc,len,contextptr);
+    bool clipping=false,res;
+    for (int i=0;i<nclips;++i) {
+        res=ret.mix(*clips[i],offsets[i],gains[i],pans[i],cfins[i],cfouts[i]);
+        if (!clipping && !res)
+            clipping=true;
+    }
+    if (clipping)
+        *logptr(contextptr) << gettext("Warning") << ": " << gettext("clipping audio, the result will be distorted") << "\n";
+    return ret;
+}
+static const char _mixdown_s[]="mixdown";
+static define_unary_function_eval (__mixdown,&_mixdown,_mixdown_s);
+define_unary_function_ptr5(at_mixdown,alias_at_mixdown,&__mixdown,0,true);
+
+gen discrete_wavelet_transform(const gen &g,int dir,GIAC_CONTEXT) {
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    vecteur *data;
+    int wtype=_DAUBECHIES_WAVELET,k=4;
+    bool non_standard=false,centered=false;
+    if (g.subtype==_SEQ__VECT) {
+        const vecteur &args=*g._VECTptr;
+        if (args.empty() || args.size()>5)
+            return gendimerr(contextptr);
+        if (args[0].type!=_VECT)
+            return gentypeerr(contextptr);
+        data=args[0]._VECTptr;
+        for (const_iterateur it=args.begin()+1;it!=args.end();++it) {
+            if (it->type==_STRNG) {
+                const string &wt=*it->_STRNGptr;
+                if (wt=="daubechies")
+                    wtype=_DAUBECHIES_WAVELET;
+                else if (wt=="haar") {
+                    wtype=_HAAR_WAVELET;
+                    k=2;
+                } else if (wt=="bspline") {
+                    wtype=_BSPLINE_WAVELET;
+                    k=103;
+                } else return generr(gettext("Unsupported wavelet type"));
+            } else if (it->is_integer()) {
+                k=it->val;
+                if ((wtype==_DAUBECHIES_WAVELET && (k%2 || k<4 || k>20)) ||
+                        (wtype==_HAAR_WAVELET && k!=2) ||
+                        (wtype==_BSPLINE_WAVELET && (k!=103 && k!=105 && k!=202 && k!=204 && k!=206 && k!=208
+                            && k!=301 && k!=303 && k!=305 && k!=307 && k!=309)))
+                    return generr("Wavelet not implemented");
+            } else if (*it==at_centre)
+                centered=true;
+            else if (*it==at_image)
+                non_standard=true;
+            else return generrarg(it-args.begin()+1);
+        }
+    } else data=g._VECTptr;
+    int datatype=ckmatrix(*data)?(non_standard?3:2):1;
+    int n=datatype==1?data->size():std::max(mcols(*data),mrows(*data));
+    if (n==0)
+        return vecteur(0);
+    if (n & (n-1)) { // not a power of two
+        n=nextpow2(n);
+        *logptr(contextptr) << gettext("Warning") << ": "
+                            << gettext("data size is not a power of 2, padding with zeros up to size") << " ";
+        if (datatype==1)
+            *logptr(contextptr) << n;
+        else *logptr(contextptr) << n << "×" << n;
+        *logptr(contextptr) << "\n";
+    }
+    void *dat;
+    gsl_matrix *dd;
+    double *d;
+    if (datatype==1) {
+        d=(double*)calloc(n,sizeof(double));
+        if (d==NULL)
+            return generr(gettext("Failed to allocate memory"));
+        const_iterateur it=data->begin(),itend=data->end();
+        for (int i=0;it!=itend;++it,++i) {
+            if (!is_real_number(*it,contextptr)) {
+                free(d);
+                return generr(gettext("Data must be numeric"));
+            }
+            d[i]=to_real_number(*it,contextptr).to_double(contextptr);
+        }
+        dat=(void*)d;
+    } else {
+        dd=gsl_matrix_calloc(n,n);
+        if (dd==NULL)
+            return generr(gettext("Failed to allocate memory"));
+        if (matrice2gsl_matrix(*data,0,0,mrows(*data),mcols(*data),false,dd,contextptr)!=GSL_SUCCESS)
+            return generr(gettext("Failed to convert data to GSL matrix"));
+        dat=static_cast<void*>(dd);
+    }
+    int res=dwt(dat,datatype,n,wtype,k,dir);
+    if (res!=0)
+        free(d);
+    switch (res) {
+        case 1: return generr(gettext("Unsupported wavelet type"));
+        case 2: return generr(gettext("Failed to allocate memory"));
+        case 3: return generr(gettext("DWT computation failed"));
+        default: break;
+    }
+    if (datatype==1) {
+        vecteur ret;
+        ret.reserve(n);
+        for (int i=0;i<n;++i)
+            ret.push_back(d[i]);
+        free(d);
+        return ret;
+    }
+    matrice ret=gsl_matrix2matrice(dd);
+    gsl_matrix_free(dd);
+    return ret;
+}
+
+/* Discrete wavelet transform. */
+gen _dwt(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+#ifndef HAVE_LIBGSL
+    return generr(gettext("GSL is required for wavelet transform"));
+#else
+    return discrete_wavelet_transform(g,1,contextptr);
+#endif
+}
+static const char _dwt_s[]="dwt";
+static define_unary_function_eval (__dwt,&_dwt,_dwt_s);
+define_unary_function_ptr5(at_dwt,alias_at_dwt,&__dwt,0,true);
+
+/* Inverse discrete wavelet transform. */
+gen _idwt(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+#ifndef HAVE_LIBGSL
+    return generr(gettext("GSL is required for wavelet transform"));
+#else
+    return discrete_wavelet_transform(g,-1,contextptr);
+#endif
+}
+static const char _idwt_s[]="idwt";
+static define_unary_function_eval (__idwt,&_idwt,_idwt_s);
+define_unary_function_ptr5(at_idwt,alias_at_idwt,&__idwt,0,true);
+
+/* Resample this clip at NSR Hz with the specified quality using libsamplerate, returning
+ * the result as a new audio clip. If the library is not available, an error is thrown. */
+audio_clip audio_clip::resample(int nsr,int quality) const {
+#ifndef HAVE_LIBSAMPLERATE
+    throw std::runtime_error(gettext("libsamplerate is required for resampling audio",contextptr));
+#else
+    SRC_DATA data;
+    data.src_ratio=double(nsr)/double(_sample_rate);
+    int nlen=(int)std::floor(_len*data.src_ratio);
+    data.input_frames=_len;
+    data.output_frames=nlen;
+    float *indata=new float[_len*_nc];
+    data.data_out=new float[nlen*_nc];
+    for (int i=0;i<_len;++i) {
+        for (int j=0;j<_nc;++j) {
+            indata[i*_nc+j]=decode(get_sample(j,i));
+        }
+    }
+    data.data_in=indata;
+    switch(quality) {
+    case 0:
+        quality=SRC_LINEAR;
+        break;
+    case 1:
+        quality=SRC_ZERO_ORDER_HOLD;
+        break;
+    case 2:
+        quality=SRC_SINC_FASTEST;
+        break;
+    case 3:
+        quality=SRC_SINC_MEDIUM_QUALITY;
+        break;
+    case 4:
+        quality=SRC_SINC_BEST_QUALITY;
+        break;
+    default:
+        assert(false);
+    }
+    int res=src_simple(&data,quality,_nc);
+    if (res!=0) // error
+        throw std::runtime_error(src_strerror(res));
+    audio_clip clip(_bit_depth,nsr,_nc,nlen,ctx);
+    for (int i=0;i<nlen;++i) {
+        for (int j=0;j<_nc;++j) {
+            clip.set_sample(j,i,encode(data.data_out[i*_nc+j]));
+        }
+    }
+    delete[] indata;
+    delete[] data.data_out;
+    return clip;
+#endif
+}
+
+/* Set FMIN and FMAX to the minimal resp. maximal signal value in chunk starting
+ * at OFFSET and with length LEN, channel C. */
+bool audio_clip::get_chunk_span(int c,int offset,int len,double &fmin,double &fmax) const {
+    fmin=fmax=0.0;
+    if (offset<0 || offset>=_len || len<1)
+        return false;
+    if (offset>_len-len)
+        len=_len-offset;
+    for (int i=0;i<len;++i) {
+        double s=decode(get_sample(c,i+offset));
+        if (s<fmin) fmin=s;
+        if (s>fmax) fmax=s;
+    }
+    return true;
+}
+
+// Usage: nseconds [,rate]
+gen _soundsec(const gen & g,GIAC_CONTEXT){
+    gen n,rate=44100;
+    if (g.type==_VECT && g._VECTptr->size()==2){
+        n=g._VECTptr->front();
+        rate=g._VECTptr->back();
+    }
+    else n=g;
+    n=evalf_double(n,1,contextptr);
+    if (n.type!=_DOUBLE_ || n._DOUBLE_val<=0 || rate.type!=_INT_ || rate.val<1 )
+        return generr(gettext("Invalid sound parameters"));
+    double r=evalf_double(rate,1,contextptr)._DOUBLE_val;
+    double nr=r*n._DOUBLE_val;
+    if (nr>LIST_SIZE_LIMIT)
+        return generr(gettext("Too many records"));
+    vecteur v;
+    v.reserve(int(nr));
+    for (int i=0;i<nr;++i){
+        v.push_back(double(i)/r);
+    }
+    return v;
+}
+static const char _soundsec_s[]="soundsec";
+static define_unary_function_eval (__soundsec,&_soundsec,_soundsec_s);
+define_unary_function_ptr5( at_soundsec ,alias_at_soundsec,&__soundsec,0,true);
+
 gen _createwav(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    int len=0,bd=16,sr=44100,nc=1;
-    double ratio=1.0,norm=-1;
-    vector<vecteur*> data;
+    int len=0,bd=16,sr=44100,nc=0,offset=0;
+    double ratio=1.0,norm=1,secs=-1;
+    vecteur *data=NULL;
+    string *strdata=NULL;
     if (g.is_integer()) {
         if (g.val<1)
             return generr("Expected a length in samples (positive integer)");
@@ -183,79 +1324,88 @@ gen _createwav(const gen &g,GIAC_CONTEXT) {
     } else if (g.type==_VECT) {
         if (g.subtype==_SEQ__VECT) {
             const vecteur &args=*g._VECTptr;
-            double secs=-1,plen=-1;
             for (const_iterateur it=args.begin();it!=args.end();++it) {
                 if (is_equal(*it)) {
                     const gen &lh=it->_SYMBptr->feuille._VECTptr->front();
                     const gen &rh=it->_SYMBptr->feuille._VECTptr->back();
                     if (lh==at_channels) {
                         if (!rh.is_integer() || (nc=rh.val)<1)
-                            return generr("Number of channels must be a positive integer");
+                            return generr(gettext("Number of channels should be a positive integer"));
                     } else if (lh==at_bit_depth) {
-                        if (!rh.is_integer() || (bd=rh.val)<0 || (bd!=8 && bd!=16))
-                            return generr("Bit depth must be a nonnegative integer (8 or 16)");
+                        if (!rh.is_integer() || (bd=rh.val)<0 || (bd!=8 && bd!=16 && bd!=24))
+                            return generr("Bit depth should be either 8, 16 or 24");
                     } else if (lh==at_samplerate) {
                         if (!rh.is_integer() || (sr=rh.val)<1)
-                            return generr("Sample rate must be a positive integer");
-                    } else if (lh==at_size) {
-                        if (!rh.is_integer() || (plen=rh.val)<1)
-                            return generr("Size must be a positive integer");
+                            return generr(gettext("Sample rate should be a positive integer"));
+                    } else if (lh==at_length) {
+                        if (!rh.is_integer() || (len=rh.val)<1)
+                            return generr(gettext("Length should be a positive integer"));
                     } else if (lh==at_normalize) {
                         if (!is_real_number(rh,contextptr))
-                            return generr("Normalization level must be a real number");
+                            return generr(gettext("Normalization level should be a real number"));
                         norm=-to_real_number(rh,contextptr).to_double(contextptr);
                     } else if (lh==at_duration) {
                         if (!is_real_number(rh,contextptr))
-                            return generr("Duration must be a real number");
+                            return generr(gettext("Duration should be a real number"));
                         secs=to_real_number(rh,contextptr).to_double(contextptr);
                     } else if (lh==at_channel_data) {
-                        if (rh.type!=_VECT)
-                            return generr("Channel data must be a list");
-                        plen=read_channel_data(rh,nc,data);
-                    } else return gensizeerr(gettext("Invalid argument ")+print_INT_(it-args.begin()+1)+".");
-                } else if (it->type==_VECT)
-                    plen=read_channel_data(*it,nc,data);
+                        if (rh.type==_VECT)
+                            data=rh._VECTptr;
+                        else if (rh.type==_STRNG)
+                            strdata=rh._STRNGptr;
+                        else return generr("Channel data should be either a matrix, vector, or string");
+                    } else return generrarg(it-args.begin()+1);
+                } else if (it->type==_VECT && data==NULL && strdata==NULL)
+                    data=it->_VECTptr;
+                else if (it->type==_STRNG && strdata==NULL && data==NULL)
+                    strdata=it->_STRNGptr;
+                else return generrarg(it-args.begin()+1);
             }
-            if (secs>=0)
-                len=1+std::floor(secs*sr);
-            else if ((len=plen)<0)
-                return gensizeerr(contextptr);
-        } else {
-            if (is_sound_data(g,nc,bd,sr,len)) {
-                for (int i=1;i<=nc;++i) {
-                    data.push_back(g._VECTptr->at(i)._VECTptr);
+        } else data=g._VECTptr;
+    } else return _createwav(change_subtype(vecteur(1,g),_SEQ__VECT),contextptr);
+    if (secs>=0 && len==0)
+        len=1+(int)std::floor(secs*sr);
+    bool data_is_matrix=false;
+    if (data!=NULL) {
+        data_is_matrix=ckmatrix(*data);
+        if (len==0)
+            len=data_is_matrix?mcols(*data):int(data->size());
+        if (nc==0)
+            nc=data_is_matrix?mrows(*data):1;
+        else if (data_is_matrix && mrows(*data)!=nc)
+            return generrdim(gettext("Number of channels does not match the number of data rows"));        
+    }
+    if (nc==0)
+        return generr(gettext("Number of channels not set"));
+    if (strdata!=NULL)
+        len=strdata->size()/(nc*bd/4);
+    if (len==0)
+        return generr(gettext("Audio length not set"));
+    try {
+        audio_clip clip(bd,sr,nc,len,contextptr);
+        if (strdata!=NULL)
+            clip.load_data(*strdata);
+        else if (data!=NULL) {
+            if (norm>0) {
+                gen maxamp(undef);
+                try {
+                    maxamp=_max(data_is_matrix?_max(_apply(makesequence(at_abs,*data),contextptr),contextptr)
+                                            :_abs(*data,contextptr),contextptr);
+                } catch (const gen &e) {
+                    *logptr(contextptr) << gettext("Failed to determine the maximum amplitude of data") << "\n";
+                    return e;
                 }
-            } else len=read_channel_data(g,nc,data);
+                if (!is_real_number(maxamp,contextptr))
+                    return generr(gettext("Sample data should be numeric"));
+                ratio=std::pow(10.0,-norm/20.0)/to_real_number(maxamp,contextptr).to_double(contextptr);
+            }
+            for (int chn=0;chn<nc;++chn)
+                clip.set_channel_data(chn,*(data_is_matrix?data->at(chn)._VECTptr:data),offset,ratio);
         }
-    } else return generrtype("Invalid input argument");
-    if (!data.empty() && int(data.size())!=nc)
-        return generrdim("No data found or invalid number of channels");
-    if (len==0) {
-        for (vector<vecteur*>::const_iterator it=data.begin();it!=data.end();++it) {
-            len=std::max(len,(int)(*it)->size());
-        }
+        return clip;
+    } catch (const std::runtime_error &e) {
+        return generr(e.what());
     }
-    if (norm>=0) {
-        double maxamp=0;
-        for (vector<vecteur*>::const_iterator it=data.begin();it!=data.end();++it) {
-            maxamp=std::max(maxamp,to_real_number(_max(_abs(**it,contextptr),contextptr),contextptr).to_double(contextptr));
-        }
-        ratio=std::pow(10.0,-norm/20.0)/maxamp;
-    }
-    /* create wav data */
-    vecteur header,res;
-    header.resize(4);
-    header[0]=nc;
-    header[1]=bd;
-    header[2]=sr;
-    header[3]=(bd*len*nc)/8;
-    res.push_back(header);
-    for (vector<vecteur*>::const_iterator it=data.begin();it!=data.end();++it) {
-        vecteur enc=encode_chdata(**it,bd,ratio,contextptr);
-        enc.resize(len,0);
-        res.push_back(enc);
-    }
-    return res;
 }
 static const char _createwav_s []="createwav";
 static define_unary_function_eval (__createwav,&_createwav,_createwav_s);
@@ -263,64 +1413,54 @@ define_unary_function_ptr5(at_createwav,alias_at_createwav,&__createwav,0,true)
 
 gen _plotwav(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type!=_VECT)
-        return generrtype("Invalid input argument");
-    vecteur opts;
-    if (g.subtype==_SEQ__VECT)
-        opts=vecteur(g._VECTptr->begin()+1,g._VECTptr->end());
-    const gen &wav=g.subtype==_SEQ__VECT?g._VECTptr->front():g;
-    int nc,bd,sr,len,slice_start=0;
-    if (!is_sound_data(wav,nc,bd,sr,len))
+    bool has_opts=g.type==_VECT && g.subtype==_SEQ__VECT;
+    audio_clip *clip=audio_clip::from_gen(has_opts?g._VECTptr->front():g);
+    if (clip==NULL)
         return generrtype(_SP_BAD_SOUND_DATA);
-    for (const_iterateur it=opts.begin();it!=opts.end();++it) {
+    int nc=clip->channel_count(),bd=clip->bit_depth(),sr=clip->sample_rate(),len=clip->length(),offset=0;
+    gen a,b;
+    if (has_opts) for (const_iterateur it=g._VECTptr->begin()+1;it!=g._VECTptr->end();++it) {
         if (is_equal(*it)) {
             const gen &lh=it->_SYMBptr->feuille._VECTptr->front();
             const gen &rh=it->_SYMBptr->feuille._VECTptr->back();
             if (lh==at_range) {
-                if (rh.is_symb_of_sommet(at_interval)) {
-                    gen a=rh._SYMBptr->feuille._VECTptr->front();
-                    gen b=rh._SYMBptr->feuille._VECTptr->back();
-                    if (!is_real_number(a,contextptr) || !is_real_number(b,contextptr) ||
-                            is_positive((a=to_real_number(a,contextptr))-(b=to_real_number(b,contextptr)),contextptr))
+                gen a,b;
+                if (is_real_interval(rh,a,b,contextptr)) {
+                    if (is_positive(a-b,contextptr))
                         return generr(_SP_INVALID_RANGE);
-                    slice_start=std::max(slice_start,_floor(a*gen(sr),contextptr).val);
-                    len=std::min(len-slice_start,_floor(b*gen(sr),contextptr).val-slice_start);
+                    offset=std::max(offset,_round(sr*a,contextptr).val);
+                    len=std::min(len-offset,_round(sr*b,contextptr).val-offset);
                 } else if (rh.type==_VECT) {
-                    if (rh._VECTptr->size()!=2 || !rh._VECTptr->front().is_integer() ||
-                            !rh._VECTptr->back().is_integer())
+                    if (rh._VECTptr->size()!=2 || !is_integer_vecteur(*rh._VECTptr))
                         return generr(_SP_INVALID_RANGE);
-                    slice_start=std::max(slice_start,rh._VECTptr->front().val);
-                    len=std::min(len-slice_start,rh._VECTptr->back().val-slice_start);
+                    offset=std::max(offset,rh._VECTptr->front().val);
+                    len=std::min(len-offset,rh._VECTptr->back().val-offset);
                 } else return generr(_SP_INVALID_RANGE);
             }
         }
     }
     if (len==0)
         return vecteur(0);
-    double dur=double(len)/double(sr),width=1500.0,sc=double(len)/width,x,y=nc==1?0.0:1.0;
-    double fmax,fmin,s,t0=double(slice_start)/double(sr),dt=1.0/sr;
-    int step=std::floor(sc),bnd;
+    double dur=double(len)/double(sr),width=600.0,sc=double(len)/width,x,y=nc==1?0.0:1.0;
+    double fmax,fmin,s,t0=double(offset)/double(sr),dt=1.0/sr;
     vecteur drawing,tvec;
     if (sc<=1.0) tvec.resize(len);
-    for (int c=1;c<=nc;++c) {
-        vecteur data=decode_chdata(*wav._VECTptr->at(c)._VECTptr,bd,slice_start,len),unodes,lnodes;
+    for (int c=0;c<nc;++c) {
+        vecteur unodes,lnodes;
         if (sc<=1.0) {
-            for (iterateur it=data.begin();it!=data.end();++it) {
+            vecteur data=clip->get_channel_data(c,offset,len);
+            iterateur it=data.begin(),itend=data.end(),jt=tvec.begin();
+            for (int i=0;it!=itend;++it,++jt,++i) {
                 *it+=gen(y);
-                tvec[it-data.begin()]=t0+(it-data.begin())*dt;
+                if (c==0) *jt=t0+i*dt;
             }
             drawing.push_back(_listplot(_zip(makesequence(at_makevector,tvec,data),contextptr),contextptr));
         } else {
             unodes.reserve(std::floor(width));
             lnodes.reserve(std::floor(width));
+            int step=std::floor(sc);
             for (int i=0;i<len;i+=step) {
-                fmax=fmin=0.0;
-                bnd=std::min(i+step,len);
-                for (int j=i;j<bnd;++j) {
-                    s=to_real_number(data[j],contextptr).to_double(contextptr);
-                    if (s>fmax) fmax=s;
-                    else if (s<fmin) fmin=s;
-                }
+                clip->get_chunk_span(c,i,step,fmin,fmax);
                 x=t0+dur*(i/step)/width;
                 unodes.push_back(makecomplex(x,y+fmax));
                 lnodes.push_back(makecomplex(x,y+fmin));
@@ -341,21 +1481,14 @@ define_unary_function_ptr5(at_plotwav,alias_at_plotwav,&__plotwav,0,true)
 
 gen _stereo2mono(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    int nc,bd,sr,len;
-    if (!is_sound_data(g,nc,bd,sr,len))
+    audio_clip *clip=audio_clip::from_gen(g);
+    if (clip==NULL)
         return generrtype(_SP_BAD_SOUND_DATA);
-    if (nc==1)
-        return g;
-    vecteur data(len,0);
-    for (int i=1;i<=nc;++i) {
-        const vecteur &chan=*g._VECTptr->at(i)._VECTptr;
-        addvecteur(data,decode_chdata(chan,bd),data);
+    try {
+        return clip->to_mono();
+    } catch (const std::runtime_error &e) {
+        return generr(e.what());
     }
-    multvecteur(fraction(1,nc),data,data);
-    vecteur header=*g._VECTptr->front()._VECTptr,edata=encode_chdata(data,bd,1.0,contextptr);
-    header[0]=1;
-    header[3]=header[3]/gen(nc);
-    return makevecteur(header,edata);
 }
 static const char _stereo2mono_s []="stereo2mono";
 static define_unary_function_eval (__stereo2mono,&_stereo2mono,_stereo2mono_s);
@@ -363,23 +1496,19 @@ define_unary_function_ptr5(at_stereo2mono,alias_at_stereo2mono,&__stereo2mono,0,
 
 gen _plotspectrum(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type!=_VECT)
-        return gentypeerr(contextptr);
-    int nc,bd,sr,len,lfreq,ufreq;
-    if (is_sound_data(g,nc,bd,sr,len)) {
-        gen intrv=symbolic(at_interval,makesequence(0,sr/2));
+    if (audio_clip *clip=audio_clip::from_gen(g)) {
+        gen intrv=symbolic(at_interval,makesequence(0,clip->sample_rate()/2)); // Shannon sampling theorem
         return _plotspectrum(makesequence(g,symbolic(at_equal,makesequence(at_range,intrv))),contextptr);
-    } else if (g.subtype==_SEQ__VECT) {
+    }
+    if (g.type==_VECT && g.subtype==_SEQ__VECT) {
         const vecteur &gv=*g._VECTptr;
         if (gv.size()!=2)
-            return generr("Expected two input arguments");
-        if (!is_sound_data(gv.front(),nc,bd,sr,len))
+            return generr(gettext("Expected two input arguments"));
+        audio_clip *clip=audio_clip::from_gen(gv.front());
+        if (clip==NULL)
             return generrtype(_SP_BAD_SOUND_DATA);
-        vecteur data;
-        if (nc>1)
-            data=decode_chdata(*_stereo2mono(gv.front(),contextptr)._VECTptr->at(1)._VECTptr,bd);
-        else data=decode_chdata(*gv.front()._VECTptr->at(1)._VECTptr,bd);
-        len=data.size();
+        int nc=clip->channel_count(),bd=clip->bit_depth(),sr=clip->sample_rate(),len=clip->length(),lfreq,ufreq;
+        vecteur data=(nc>1?audio_clip::from_gen(_stereo2mono(*clip,contextptr)):clip)->get_channel_data(0);
         if (!is_equal(gv.back()))
             return gensizeerr(contextptr);
         const gen &lh=gv.back()._SYMBptr->feuille._VECTptr->front();
@@ -431,10 +1560,13 @@ define_unary_function_ptr5(at_plotspectrum,alias_at_plotspectrum,&__plotspectrum
 
 gen _channels(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    int nc,bd,sr,len;
-    if (!is_sound_data(g,nc,bd,sr,len))
-        return generrtype(_SP_BAD_SOUND_DATA);
-    return nc;
+    audio_clip *clip=audio_clip::from_gen(g);
+    rgba_image *img=rgba_image::from_gen(g);
+    if (clip!=NULL)
+        return clip->channel_count();
+    if (img!=NULL)
+        return img->depth();
+    return generrtype(gettext("Expected audio clip or image"));
 }
 static const char _channels_s []="channels";
 static define_unary_function_eval (__channels,&_channels,_channels_s);
@@ -442,10 +1574,13 @@ define_unary_function_ptr5(at_channels,alias_at_channels,&__channels,0,true)
 
 gen _bit_depth(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    int nc,bd,sr,len;
-    if (!is_sound_data(g,nc,bd,sr,len))
-        return generrtype(_SP_BAD_SOUND_DATA);
-    return bd;
+    audio_clip *clip=audio_clip::from_gen(g);
+    rgba_image *img=rgba_image::from_gen(g);
+    if (clip!=NULL)
+        return clip->bit_depth();
+    if (img!=NULL)
+        return 8;
+    return generrtype(gettext("Expected audio clip or image"));
 }
 static const char _bit_depth_s []="bit_depth";
 static define_unary_function_eval (__bit_depth,&_bit_depth,_bit_depth_s);
@@ -453,10 +1588,10 @@ define_unary_function_ptr5(at_bit_depth,alias_at_bit_depth,&__bit_depth,0,true)
 
 gen _samplerate(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    int nc,bd,sr,len;
-    if (!is_sound_data(g,nc,bd,sr,len))
+    audio_clip *clip=audio_clip::from_gen(g);
+    if (clip==NULL)
         return generrtype(_SP_BAD_SOUND_DATA);
-    return sr;
+    return clip->sample_rate();
 }
 static const char _samplerate_s []="samplerate";
 static define_unary_function_eval (__samplerate,&_samplerate,_samplerate_s);
@@ -464,10 +1599,10 @@ define_unary_function_ptr5(at_samplerate,alias_at_samplerate,&__samplerate,0,tru
 
 gen _duration(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    int nc,bd,sr,len;
-    if (!is_sound_data(g,nc,bd,sr,len))
+    audio_clip *clip=audio_clip::from_gen(g);
+    if (clip==NULL)
         return generrtype(_SP_BAD_SOUND_DATA);
-    return _evalf(fraction(len,sr),contextptr);
+    return double(clip->length())/double(clip->sample_rate());
 }
 static const char _duration_s []="duration";
 static define_unary_function_eval (__duration,&_duration,_duration_s);
@@ -475,70 +1610,153 @@ define_unary_function_ptr5(at_duration,alias_at_duration,&__duration,0,true)
 
 gen _channel_data(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type!=_VECT)
-        return gentypeerr(contextptr);
-    vecteur opts;
-    if (g.subtype==_SEQ__VECT) {
-        if (g._VECTptr->front().type!=_VECT)
-            return generrtype(_SP_BAD_SOUND_DATA);
-        opts=vecteur(g._VECTptr->begin()+1,g._VECTptr->end());
-    }
-    const gen &data=g.subtype==_SEQ__VECT?g._VECTptr->front():g;
-    int nc,bd,sr,len;
-    if (!is_sound_data(data,nc,bd,sr,len))
-        return generrtype(_SP_BAD_SOUND_DATA);
-    int chan=0,slice_start=0,slice_len=len;
-    bool asmatrix=false;
-    for (const_iterateur it=opts.begin();it!=opts.end();++it) {
-        if (it->is_integer()) {
-            if (it->val<1 || it->val>nc)
-                return generr("Invalid channel number");
-            chan=it->val;
-        } else if (*it==at_matrix)
-            asmatrix=true;
-        else if (is_equal(*it)) {
-            const gen &lh=it->_SYMBptr->feuille._VECTptr->front();
-            const gen &rh=it->_SYMBptr->feuille._VECTptr->back();
-            if (lh==at_range) {
-                if (rh.type==_VECT) {
-                    if (rh._VECTptr->size()!=2)
-                        return generrdim(_SP_INVALID_RANGE);
-                    if (!is_integer_vecteur(*rh._VECTptr))
-                        return generr(_SP_INVALID_RANGE);
-                    int start=rh._VECTptr->front().val,stop=rh._VECTptr->back().val;
-                    slice_start=start-1; slice_len=stop-start+1;
-                } else if (rh.is_symb_of_sommet(at_interval)) {
-                    const gen &a=rh._SYMBptr->feuille._VECTptr->front();
-                    const gen &b=rh._SYMBptr->feuille._VECTptr->back();
-                    if (!a.is_integer() || !b.is_integer()) {
-                        if (!is_real_number(a,contextptr) || !is_real_number(b,contextptr))
+    bool has_opts=g.type==_VECT && g.subtype==_SEQ__VECT;
+    audio_clip *clip=audio_clip::from_gen(has_opts?g._VECTptr->front():g);
+    rgba_image *img=rgba_image::from_gen(has_opts?g._VECTptr->front():g);
+    if (clip!=NULL) {
+        int len=clip->length(),sr=clip->sample_rate(),chan=-1,slice_start=0,slice_len=len;
+        bool asmatrix=false;
+        if (has_opts) for (const_iterateur it=g._VECTptr->begin()+1;it!=g._VECTptr->end();++it) {
+            if (it->is_integer())
+                chan=it->val;
+            else if (*it==at_left)
+                chan=0;
+            else if (*it==at_right)
+                chan=1;
+            else if (*it==at_matrix)
+                asmatrix=true;
+            else if (is_equal(*it)) {
+                const gen &lh=it->_SYMBptr->feuille._VECTptr->front();
+                const gen &rh=it->_SYMBptr->feuille._VECTptr->back();
+                if (lh==at_range) {
+                    gen a,b;
+                    if (rh.type==_VECT) {
+                        if (rh._VECTptr->size()!=2)
+                            return generrdim(_SP_INVALID_RANGE);
+                        if (!is_integer_vecteur(*rh._VECTptr))
                             return generr(_SP_INVALID_RANGE);
-                        slice_start=std::floor(sr*to_real_number(a,contextptr).to_double(contextptr));
-                        slice_len=std::floor(sr*to_real_number(b-a,contextptr).to_double(contextptr));
-                    } else {
-                        slice_start=a.val-1;
-                        slice_len=(b-a).val+1;
-                    }
-                } else return generr(_SP_INVALID_RANGE);
-            }
+                        slice_start=rh._VECTptr->front().val;
+                        slice_len=rh._VECTptr->back().val;
+                    } else if (is_real_interval(rh,a,b,contextptr)) {
+                        slice_start=std::floor(0.5+sr*a.to_double(contextptr));
+                        slice_len=std::floor(0.5+sr*(b-a).to_double(contextptr));
+                    } else return generr(_SP_INVALID_RANGE);
+                }
+            } else return generrarg(it-g._VECTptr->begin()+1);
         }
-    }
-    if (slice_start<0 || slice_start>=len || slice_len<0 || slice_len>len || slice_start+slice_len>len)
-        return generr("Invalid slice bounds");
-    if (chan==0) {
-        vecteur ret;
-        for (const_iterateur it=data._VECTptr->begin()+1;it!=data._VECTptr->end();++it) {
-            ret.push_back(decode_chdata(*it->_VECTptr,bd,slice_start,slice_len));
+        slice_len=std::min(slice_len,len-slice_start);
+        if (slice_start<0 || slice_start>=len || slice_len<=0)
+            return generr(gettext("Invalid slice bounds"));
+        if (chan<0) {
+            vecteur ret=clip->get_block(slice_start,slice_len);
+            if (ret.size()==1)
+                return ret.front();
+            return asmatrix?ret:change_subtype(ret,_SEQ__VECT);
         }
-        if (ret.size()==1)
-            return ret.front();
-        return asmatrix?ret:change_subtype(ret,_SEQ__VECT);
+        if (chan>=clip->channel_count())
+            return generr(gettext("Invalid channel number"));
+        return clip->get_channel_data(chan,slice_start,slice_len);
+    } else if (img!=NULL) {
+        if (!has_opts) {
+            if (img->depth()>1)
+                return generr(gettext("No channel specified"));
+            return (*img)[change_subtype(44373,_INT_COLOR)];
+        }
+        const vecteur &args=*g._VECTptr;
+        return (*img)[change_subtype(vecteur(args.begin()+1,args.end()),_SEQ__VECT)];
     }
-    return decode_chdata(*data._VECTptr->at(chan)._VECTptr,bd,slice_start,slice_len);
+    return generr(gettext("Expected audio clip or image"));
 }
 static const char _channel_data_s []="channel_data";
 static define_unary_function_eval (__channel_data,&_channel_data,_channel_data_s);
 define_unary_function_ptr5(at_channel_data,alias_at_channel_data,&__channel_data,0,true)
+
+gen _set_channel_data(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    const vecteur &args=*g._VECTptr;
+    if (args.size()<2 || args.size()>4)
+        return gendimerr(contextptr);
+    audio_clip *clip=audio_clip::from_gen(args.front());
+    rgba_image *img=rgba_image::from_gen(args.front());
+    if (clip!=NULL) { // set channel data in an audio clip
+        int nc=clip->channel_count();
+        if (args[1].type!=_VECT)
+            return generrtype(gettext("Invalid data specification"));
+        const vecteur &data=*args[1]._VECTptr;
+        bool data_is_matrix=ckmatrix(data);
+        if (data_is_matrix && mrows(data)!=nc)
+            return generrdim(gettext("Invalid data specification"));
+        int offset=0,chn=-1;
+        if (args.size()>2) { // read offset size
+            if (!args[2].is_integer())
+                return generrtype(gettext("Expected an integer"));
+            offset=args[2].val;
+            if (offset<0 || offset>=clip->length())
+                return generr(gettext("Invalid offset"));
+        }
+        if (args.size()>3) { // read channel number
+            const gen &c=args[3];
+            if (c==at_left)
+                chn=0;
+            else if (c==at_right)
+                chn=1;
+            else if (c.is_integer()) {
+                chn=c.val;
+                if (chn<0 || chn>=nc)
+                    return generrdim(gettext("Invalid channel number"));
+            } else return generrtype(gettext("Invalid channel specification"));
+            if (data_is_matrix)
+                return generrtype(gettext("Invalid data specification"));
+        }
+        try {
+            if (chn<0) {
+                if (data_is_matrix)
+                    clip->set_block(data,offset);
+                else for (int i=0;i<nc;++i) clip->set_channel_data(i,data,offset);
+            } else clip->set_channel_data(chn,data,offset);
+        } catch (const std::runtime_error &e) {
+            return generr(e.what());
+        }
+        return *clip;
+    } else if (img!=NULL) {
+        int chn=0,start=img->depth()==1?0:1;
+        if (args.size()!=4+start)
+            return gendimerr(contextptr);
+        if (start) {
+            if (args[1]==at_tran) {
+                if (img->depth()%2)
+                    return generr(gettext("Alpha channel not found"));
+                chn=img->depth()-1;
+            } else if (args[1].is_integer() && args[1].subtype==_INT_COLOR) {
+                switch (args[1].val) {
+                case _RED: chn=0; break;
+                case _GREEN: chn=1; break;
+                case _BLUE: chn=2; break;
+                default: return generr(gettext("Invalid channel specification"));
+                }
+            } else return generrtype(gettext("Invalid channel specification"));
+        }
+        if (!args[1+start].is_integer() || !args[2+start].is_integer())
+            return generrtype(gettext("Invalid reference point specification"));
+        int x=args[1+start].val,y=args[2+start].val;
+        if (x<0 || x>=img->width() || y<0 || y>=img->height())
+            return generr(gettext("Reference point is not in image"));
+        if (!ckmatrix(args[3+start]))
+            return generrtype(gettext("Channel data must be a matrix"));
+        try {
+            img->set_channel_data(chn,*args[3+start]._VECTptr,x,y);
+        } catch (const std::runtime_error &e) {
+            return generr(e.what());
+        }
+        return *img;
+    }
+    return generr(gettext("Expected audio clip or image"));
+}
+static const char _set_channel_data_s []="set_channel_data";
+static define_unary_function_eval (__set_channel_data,&_set_channel_data,_set_channel_data_s);
+define_unary_function_ptr5(at_set_channel_data,alias_at_set_channel_data,&__set_channel_data,0,true)
 
 gen _cross_correlation(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -546,7 +1764,7 @@ gen _cross_correlation(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     const vecteur &args=*g._VECTptr;
     if (args.size()!=2 || args.front().type!=_VECT || args.back().type!=_VECT)
-        return generr("Expected a sequence of two lists");
+        return generr(gettext("Expected a sequence of two lists"));
     vecteur A=*args.front()._VECTptr,B=*args.back()._VECTptr;
     int m=A.size(),n=B.size(),N=nextpow2(std::max(n,m));
     A.resize(2*N,0);
@@ -588,8 +1806,8 @@ void highpass(vecteur &data,double cutoff,int sr) {
     double rc=0.15915494309/cutoff;
     double dt=1.0/sr;
     gen alpha(rc/(rc+dt)),prevdata=data.front(),temp;
-    iterateur it=data.begin()+1,itend=data.end();
-    for (;it!=itend;++it) {
+    iterateur it=data.begin(),itend=data.end();
+    for (++it;it!=itend;++it) {
         temp=*it;
         *it=alpha*(*(it-1)+*it-prevdata);
         prevdata=temp;
@@ -598,20 +1816,24 @@ void highpass(vecteur &data,double cutoff,int sr) {
 
 gen filter(const vecteur &args,filter_type typ,GIAC_CONTEXT) {
     double cutoff=to_real_number(args.at(1),contextptr).to_double(contextptr);
-    int nc,bd,sr,len;
-    if (is_sound_data(*args.front()._VECTptr,nc,bd,sr,len)) {
+    if (cutoff<=0)
+        return generr(gettext("Cutoff frequency should be positive"));
+    audio_clip *clip=audio_clip::from_gen(args.front());
+    int sr=44100;
+    if (clip!=NULL) {
+        sr=clip->sample_rate();
         if (cutoff<=0 || cutoff>=sr/2)
-            return generr("Invalid cutoff specification");
+            return generr(gettext("Invalid cutoff specification"));
         gen opt(undef);
         if (args.size()>2) {
             if (!is_equal(args[2]))
-                return generr("Third argument must be normalize=<real>");
+                return generr("Third argument should be normalize=<real>");
             if (args[2]._SYMBptr->feuille._VECTptr->front()==at_normalize)
                 opt=args[2];
         }
         matrice data;
-        for (int i=1;i<=nc;++i) {
-            vecteur chdata=decode_chdata(*args.front()._VECTptr->at(i)._VECTptr,bd);
+        for (int i=0;i<clip->channel_count();++i) {
+            vecteur chdata=clip->get_channel_data(i);
             switch(typ) {
             case _LOWPASS_FILTER: lowpass(chdata,cutoff,sr); break;
             case _HIGHPASS_FILTER: highpass(chdata,cutoff,sr); break;
@@ -619,30 +1841,28 @@ gen filter(const vecteur &args,filter_type typ,GIAC_CONTEXT) {
             data.push_back(chdata);
         }
         gen argv=makesequence(symbolic(at_equal,makesequence(at_samplerate,sr)),
-                              symbolic(at_equal,makesequence(at_bit_depth,bd)),data);
+                              symbolic(at_equal,makesequence(at_bit_depth,clip->bit_depth())),data);
         if (!is_undef(opt)) argv._VECTptr->push_back(opt);
         return _createwav(argv,contextptr);
-    } else {
+    } else if (args.front().type==_VECT) {
         vecteur data=*args.front()._VECTptr;
-        sr=44100;
         if (args.size()>2) {
             if (!args.at(2).is_integer() || (sr=args.at(2).val)<=0)
-                return generr("Invalid sample rate specification");
+                return generr(gettext("Invalid sample rate specification"));
         }
         if (cutoff<=0 || cutoff>=sr/2)
-            return generr("Invalid cutoff specification");
+            return generr(gettext("Invalid cutoff specification"));
         switch(typ) {
         case _LOWPASS_FILTER: lowpass(data,cutoff,sr); break;
         case _HIGHPASS_FILTER: highpass(data,cutoff,sr); break;
         }
         return data;
-    }
+    } else return generrtype(gettext("Invalid argument"));
 }
 
 gen _lowpass(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type!=_VECT || g.subtype!=_SEQ__VECT || g._VECTptr->size()<2 ||
-            g._VECTptr->front().type!=_VECT || !is_real_number(g._VECTptr->at(1),contextptr))
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT || g._VECTptr->size()<2 || !is_real_number(g._VECTptr->at(1),contextptr))
         return gentypeerr(contextptr);
     return filter(*g._VECTptr,_LOWPASS_FILTER,contextptr);
 }
@@ -652,8 +1872,7 @@ define_unary_function_ptr5(at_lowpass,alias_at_lowpass,&__lowpass,0,true)
 
 gen _highpass(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    if (g.type!=_VECT || g.subtype!=_SEQ__VECT || g._VECTptr->size()<2 ||
-            g._VECTptr->front().type!=_VECT || !is_real_number(g._VECTptr->at(1),contextptr))
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT || g._VECTptr->size()<2 || !is_real_number(g._VECTptr->at(1),contextptr))
         return gentypeerr(contextptr);
     return filter(*g._VECTptr,_HIGHPASS_FILTER,contextptr);
 }
@@ -667,15 +1886,15 @@ gen _moving_average(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     const vecteur &gv=*g._VECTptr;
     if (gv.size()!=2)
-        return generr("Expected two input arguments");
+        return generr(gettext("Expected two input arguments"));
     if (gv.front().type!=_VECT)
-        return generr("First argument must be an array");
+        return generr(gettext("First argument should be an array"));
     if (!gv.back().is_integer() || gv.back().val<=0)
-        return generr("Second argument must be a positive integer");
+        return generr(gettext("Second argument should be a positive integer"));
     const vecteur &s=*gv.front()._VECTptr;
     int n=gv.back().val,len=s.size();
     if (n>len)
-        return generr("Filter length exceeds array size");
+        return generr(gettext("Filter length exceeds array size"));
     vecteur res(len-n+1);
     gen acc(0);
     for (int i=0;i<n;++i) acc+=s[i];
@@ -693,12 +1912,38 @@ define_unary_function_ptr5(at_moving_average,alias_at_moving_average,&__moving_a
 
 gen _rms(const gen &g,GIAC_CONTEXT) {
 	if (g.type==_STRNG && g.subtype==-1) return g;
+    audio_clip *clip=audio_clip::from_gen(g);
+    if (clip!=NULL)
+        return clip->rms();
 	if (g.type!=_VECT)
 		return gentypeerr(contextptr);
+    if (g.subtype==_SEQ__VECT) {
+        const vecteur &args=*g._VECTptr;
+        if (args.size()<2 || args.size()>3)
+            return gendimerr(contextptr);
+        clip=audio_clip::from_gen(args[0]);
+        if (clip==NULL)
+            return generrtype(gettext("Expected an audio clip"));
+        if (!args[1].is_integer())
+            return generrtype(gettext("Invalid start position"));
+        int offset=args[1].val,len=rand_max2;
+        if (args.size()==3) {
+            if (!args[2].is_integer())
+                return generrtype(gettext("Invalid length"));
+            len=args[2].val;
+        }
+        if (offset<0 || offset>=clip->length())
+            return generr(gettext("Invalid start position"));
+        if (len<0)
+            return generr(gettext("Invalid length"));
+        if (len==0)
+            return 0;
+        return clip->rms(offset,len);
+    }
 	const vecteur &gv=*g._VECTptr;
 	int n=gv.size();
 	if (n==0)
-		return generr("Input list is empty");
+		return generr(gettext("Input list is empty"));
 	gen res(0),rp,ip;
     const_iterateur it=gv.begin(),itend=gv.end();
 	for (;it!=itend;++it) {
@@ -714,89 +1959,32 @@ define_unary_function_ptr5(at_rms,alias_at_rms,&__rms,0,true)
 
 gen _resample(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-#ifndef HAVE_LIBSAMPLERATE
-    print_error("libsamplerate is required for resampling audio",contextptr);
-    return vecteur(0);
-#else
-    if (g.type!=_VECT)
-        return gentypeerr(contextptr);
-    int nc,bd,sr,len;
-    const gen &snd=g.subtype==_SEQ__VECT?g._VECTptr->front():g;
-    if (!is_sound_data(snd,nc,bd,sr,len))
-        return generrtype(_SP_BAD_SOUND_DATA);
+    audio_clip *clip=NULL;
     int nsr=44100;
     int quality=2;
-    if (g.subtype==_SEQ__VECT) {
+    if (g.type==_VECT && g.subtype==_SEQ__VECT && !g._VECTptr->empty()) {
         const vecteur &gv=*g._VECTptr;
+        clip=audio_clip::from_gen(gv[0]);
         if (gv.size()<2 || !gv[1].is_integer() || (nsr=gv[1].val)<1)
-            return generr("Second argument must be a positive integer");
+            return generr(gettext("Invalid sample rate specification"));
         if (gv.size()>2) {
             if (!gv[2].is_integer() || (quality=gv[2].val)<0 || (quality>4))
-                return generr("Invalid quality specification (expected an integer 1-4)");
+                return generr(gettext("Invalid quality specification"));
         }
+    } else clip=audio_clip::from_gen(g);
+    if (clip==NULL)
+        return generrtype(_SP_BAD_SOUND_DATA);
+    try {
+        return clip->resample(nsr,quality);
+    } catch (const std::runtime_error &e) {
+        return generr(e.what());
     }
-    matrice chdata;
-    for (int i=1;i<=nc;++i) {
-        vecteur ch=decode_chdata(*snd._VECTptr->at(i)._VECTptr,bd);
-        chdata.push_back(ch);
-    }
-    SRC_DATA data;
-    data.src_ratio=double(nsr)/double(sr);
-    int nlen=(int)std::floor(len*data.src_ratio);
-    data.input_frames=len;
-    data.output_frames=nlen;
-    float *indata=new float[len*nc];
-    data.data_out=new float[nlen*nc];
-    for (int i=0;i<len;++i) {
-        for (int j=0;j<nc;++j) {
-            indata[i*nc+j]=to_real_number(chdata[j][i],contextptr).to_double(contextptr);
-        }
-    }
-    data.data_in=indata;
-    switch(quality) {
-    case 0:
-        quality=SRC_LINEAR;
-        break;
-    case 1:
-        quality=SRC_ZERO_ORDER_HOLD;
-        break;
-    case 2:
-        quality=SRC_SINC_FASTEST;
-        break;
-    case 3:
-        quality=SRC_SINC_MEDIUM_QUALITY;
-        break;
-    case 4:
-        quality=SRC_SINC_BEST_QUALITY;
-        break;
-    default:
-        assert(false);
-    }
-    src_simple(&data,quality,nc);
-    matrice output=*_matrix(makesequence(nc,nlen,0),contextptr)._VECTptr;
-    for (int i=0;i<nlen;++i) {
-        for (int j=0;j<nc;++j) {
-            output[j]._VECTptr->at(i)=data.data_out[i*nc+j];
-        }
-    }
-    delete[] indata;
-    delete[] data.data_out;
-    vecteur header=*snd._VECTptr->front()._VECTptr;
-    header[2]=nsr;
-    header[3]=(bd*nc*nlen)/8;
-    vecteur ret;
-    ret.push_back(header);
-    for (const_iterateur it=output.begin();it!=output.end();++it) {
-        ret.push_back(encode_chdata(*it->_VECTptr,bd,1.0,contextptr));
-    }
-    return ret;
-#endif
 }
 static const char _resample_s []="resample";
 static define_unary_function_eval (__resample,&_resample,_resample_s);
 define_unary_function_ptr5(at_resample,alias_at_resample,&__resample,0,true)
 
-int varcount=0;
+static int varcount=0;
 
 gen _convolution(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -808,7 +1996,7 @@ gen _convolution(const gen &g,GIAC_CONTEXT) {
         gen T(0),var=identificateur("x"),tvar=identificateur(" tau"+print_INT_(++varcount));
         int n=args.size(),optstart=2;
         if (n<2)
-            return generrdim("Too few input arguments");
+            return generrdim(gettext("Too few input arguments"));
         const gen &f1=args[0],&f2=args[1];
         if (n>2) {
             if (args[optstart].type==_IDNT)
@@ -820,7 +2008,7 @@ gen _convolution(const gen &g,GIAC_CONTEXT) {
                 vecteur &s=*it->_SYMBptr->feuille._VECTptr;
                 if (s.front()==at_shift)
                     T=s.back();
-                else return generr("Unrecognized option");
+                else return generr(gettext("Unrecognized option"));
             }
         }
         giac_assume(symb_superieur_egal(tvar,0),contextptr);
@@ -829,13 +2017,13 @@ gen _convolution(const gen &g,GIAC_CONTEXT) {
                                       var,minus_inf,plus_inf),contextptr);
         _purge(tvar,contextptr);
         if (contains(_lname(c,contextptr),var))
-            return generr("Failed to integrate");
+            return generr(gettext("Failed to integrate"));
         c=subst(c,tvar,var-T,false,contextptr)*_Heaviside(var-T,contextptr);
         return c;
     }
     // convolve sequences
     if (args.size()!=2 || args.front().type!=_VECT || args.back().type!=_VECT)
-        return generr("Expected a pair of lists");
+        return generr(gettext("Expected a pair of lists"));
     vecteur A=*args.front()._VECTptr,B=*args.back()._VECTptr;
     int lenA=A.size(),lenB=B.size(),len=2*nextpow2(std::max(lenA,lenB));
     A.resize(len-1,0);
@@ -1218,7 +2406,7 @@ gen _addtable(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     const vecteur &args=*g._VECTptr;
     if (args.size()!=5)
-        return generrdim("Wrong number of input arguments");
+        return generrdim(gettext("Wrong number of input arguments"));
     int ti=0;
     if (args[0]==at_fourier) ti=1;
     if (args[0]==at_laplace) ti=2;
@@ -1226,7 +2414,7 @@ gen _addtable(const gen &g,GIAC_CONTEXT) {
             args[1]._SYMBptr->feuille._VECTptr->front().type!=_IDNT ||
             args[2]._SYMBptr->feuille._VECTptr->front().type!=_IDNT ||
             args[3].type!=_IDNT || args[4].type!=_IDNT)
-        return generrtype("Invalid input argument");
+        return generrtype(gettext("Invalid input argument"));
     const identificateur &f=*args[1]._SYMBptr->feuille._VECTptr->front()._IDNTptr;
     const identificateur &F=*args[2]._SYMBptr->feuille._VECTptr->front()._IDNTptr;
     const identificateur &t=*args[3]._IDNTptr,&s=*args[4]._IDNTptr;
@@ -1237,7 +2425,7 @@ gen _addtable(const gen &g,GIAC_CONTEXT) {
     int k=-1;
     for (int i=fvars.size();i-->0;) {
         if (fvars[i].type!=_IDNT || Fvars[i].type!=_IDNT)
-            return generr("Expected an identifier");
+            return generr(gettext("Expected an identifier"));
         const identificateur &x1=*fvars[i]._IDNTptr,&x2=*Fvars[i]._IDNTptr;
         if (x1==x2) continue;
         if (k>=0 || !(x1==t) || !(x2==s))
@@ -2239,18 +3427,18 @@ gen _fourier(const gen &g,GIAC_CONTEXT) {
             return gentypeerr(contextptr);
         const vecteur &args=*g._VECTptr;
         if (args.size()>3 || args.empty())
-            return generrdim("Wrong number of input arguments");
+            return generrdim(gettext("Wrong number of input arguments"));
         f_orig=args.front();
         if (args.size()>=2) {
             if (args[1].type!=_IDNT)
-                return generrtype("Expected an identifier");
+                return generrtype(gettext("Expected an identifier"));
             var=*args[1]._IDNTptr;
         }
         if (args.size()==3) {
             if (args[2].type!=_IDNT)
-                return generrtype("Expected an identifier");
+                return generrtype(gettext("Expected an identifier"));
             if ((tvar=*args[2]._IDNTptr)==var)
-                return generr("Original and transform variables must be different");
+                return generr(gettext("Original and transform variables should be different"));
             has_tvar=true;
         }
     } else f_orig=g;
@@ -2273,18 +3461,18 @@ gen _ifourier(const gen &g,GIAC_CONTEXT) {
             return gentypeerr(contextptr);
         const vecteur &args=*g._VECTptr;
         if (args.size()>3 || args.empty())
-            return generrdim("Wrong number of input arguments");
+            return generrdim(gettext("Wrong number of input arguments"));
         f_orig=args.front();
         if (args.size()>=2) {
             if (args[1].type!=_IDNT)
-                return generrtype("Expected an identifier");
+                return generrtype(gettext("Expected an identifier"));
             var=*args[1]._IDNTptr;
         }
         if (args.size()==3) {
             if (args[2].type!=_IDNT)
-                return generrtype("Expected an identifier");
+                return generrtype(gettext("Expected an identifier"));
             if ((tvar=*args[2]._IDNTptr)==var)
-                return generr("Original and transform variables must be different");
+                return generr(gettext("Original and transform variables should be different"));
             has_tvar=true;
         }
     } else f_orig=g;
@@ -2297,12 +3485,139 @@ static const char _ifourier_s []="ifourier";
 static define_unary_function_eval (__ifourier,&_ifourier,_ifourier_s);
 define_unary_function_ptr5(at_ifourier,alias_at_ifourier,&__ifourier,0,true)
 
-vecteur apply_window_function(const gen &expr,const identificateur &k,const vecteur &data,int start,int len,GIAC_CONTEXT) {
-    vecteur output(len);
-    for (int j=0;j<len;++j) {
-        output[j]=_evalf(subst(expr,k,gen((double)j),false,contextptr),contextptr)*data[start+j];
+gen apply_window_function(int wf,const gen &arg,GIAC_CONTEXT) {
+    if (arg.type==_STRNG && arg.subtype==-1) return arg;
+    int start=0,len=0;
+    vecteur *data,res;
+    double alpha;
+    bool has_parm=true;
+    if (arg.type!=_VECT)
+        return gentypeerr(contextptr);
+    switch (wf) {
+    case _BLACKMAN_WINDOW: alpha=0.16; break;
+    case _COSINE_WINDOW: case _HANN_POISSON_WINDOW: case _POISSON_WINDOW: alpha=1.0; break;
+    case _GAUSSIAN_WINDOW: alpha=0.1; break;
+    case _TRIANGLE_WINDOW: alpha=0; break;
+    case _TUKEY_WINDOW: alpha=0.5; break;
+    case _HANN_WINDOW: alpha=2.0; break;
+    default: has_parm=false;
     }
-    return output;
+    if (arg.subtype==_SEQ__VECT) {
+        const vecteur &args=*arg._VECTptr;
+        if (args.empty())
+            return gendimerr(contextptr);
+        if (args.front().type!=_VECT)
+            return gentypeerr(contextptr);
+        data=args.front()._VECTptr;
+        const gen *parm=NULL,*offset=NULL,*ws=NULL;
+        if (has_parm && args.size()==2)
+            parm=&args[1];
+        if (args.size()>2) {
+            offset=&args[1];
+            ws=&args[2];
+        }
+        if (has_parm && args.size()==4)
+            parm=&args[3];
+        if (parm) {
+            if (!is_real_number(*parm,contextptr))
+                return gentypeerr(contextptr);
+            switch (wf) {
+            case _GAUSSIAN_WINDOW:
+                if (is_strictly_greater(*parm,0.5,contextptr))
+                    return generr(gettext("Parameter value should be less than 0.5"));
+                break;
+            case _TRIANGLE_WINDOW:
+                if (!is_one(*parm) && !is_minus_one(*parm) && !is_exactly_zero(*parm))
+                    return generr(gettext("Parameter value should be -1, 0, or 1"));
+                break;
+            case _TUKEY_WINDOW:
+                if (is_strictly_positive(-*parm,contextptr) || is_strictly_greater(*parm,1,contextptr))
+                    return generr(gettext("Parameter value should be in [0,1]"));
+                break;
+            }
+            alpha=to_real_number(*parm,contextptr).to_double(contextptr);
+        }
+        if (offset) {
+            if (!offset->is_integer())
+                return gentypeerr(contextptr);
+            start=offset->val;
+        }
+        if (ws) {
+            if (!ws->is_integer())
+                return gentypeerr(contextptr);
+            len=ws->val;
+            if (len<=0)
+                return gensizeerr(contextptr);
+        }
+    } else data=arg._VECTptr;
+    int data_size=data->size();
+    if (start<0 || start>=data_size)
+        return generr(gettext("Invalid window start position"));
+    if (len==0)
+        len=data_size-start;
+    if (len<2)
+        return generr(gettext("Window size should be at least 2"));
+    if (len>data_size-start)
+        return generr(gettext("Window size is too large"));
+    res.clear();
+    res.reserve(len);
+    int j=0;
+    double s,d=double(len-1),a0=0.62,a1=0.48,a2=0.38,b0=0.35875,b1=0.48829,b2=0.14128,b3=0.01168,xk;
+    double hamming_alpha=0.54,hamming_beta=0.46,tukey_beta=alpha*d/2.0;
+    const_iterateur it=data->begin()+start;
+    for (;j<len;++j,++it) {
+        xk=std::abs(2*j/d-1);
+        switch (wf) {
+        case _BARTLETT_HANN_WINDOW:
+            s=a0-a1*std::abs(j/d-0.5)-a2*std::cos(2*j*M_PI/d);
+            break;
+        case _BLACKMAN_HARRIS_WINDOW:
+            s=b0-b1*std::cos(2*j*M_PI/d)+b2*std::cos(4*j*M_PI/d)-b3*std::cos(6*j*M_PI/d);
+            break;
+        case _BLACKMAN_WINDOW:
+            s=(1-alpha)/2.0-0.5*std::cos(2*j*M_PI/d)+alpha/2.0*std::cos(4*j*M_PI/d);
+            break;
+        case _BOHMAN_WINDOW:
+            s=(1-xk)*std::cos(M_PI*xk)+std::sin(M_PI*xk)/M_PI;
+            break;
+        case _HANN_WINDOW:
+        case _COSINE_WINDOW:
+            s=std::pow(std::sin(j*M_PI/d),alpha);
+            break;
+        case _GAUSSIAN_WINDOW:
+            s=std::exp(-0.5*std::pow((j-d/2.0)/(alpha*d/2.0),2));
+            break;
+        case _HAMMING_WINDOW:
+            s=hamming_alpha-hamming_beta*std::cos(2*j*M_PI/d);
+            break;
+        case _HANN_POISSON_WINDOW:
+            s=0.5*(1-std::cos(2*j*M_PI/d))*std::exp(-alpha*std::abs(d-2*j)/d);
+            break;
+        case _PARZEN_WINDOW:
+            s=1+std::abs(2*(len-1)-4*j)<=len?1-6*xk*xk*(1-xk):2*std::pow(1-xk,3);
+            break;
+        case _POISSON_WINDOW:
+            s=std::exp(-alpha*xk);
+            break;
+        case _RIEMANN_WINDOW:
+            s=2*j+1==len?1:std::sin(M_PI*xk)/(M_PI*xk);
+            break;
+        case _TRIANGLE_WINDOW:
+            s=1-std::abs(2.0*(j-d/2)/(len+alpha));
+            break;
+        case _TUKEY_WINDOW:
+            s=j<tukey_beta?0.5*(1+std::cos(M_PI*(j/tukey_beta-1)))
+                :(j>=tukey_beta && j<=d*(1-alpha/2.0)?1:0.5*(1+std::cos(M_PI*(j/tukey_beta-2.0/alpha+1))));
+            break;
+        case _WELCH_WINDOW:
+            s=1-std::pow(2.0*(j-d/2)/d,2);
+            break;
+        default:
+            assert(false); // unknown window function!
+        }
+        res.push_back(s*(*it));
+    }
+    return res;
 }
 
 bool nivelate(vecteur &data,int k,const gen &b,const gen &val,const unary_function_ptr *comp,GIAC_CONTEXT) {
@@ -2325,16 +3640,28 @@ gen _threshold(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     const vecteur &args=*g._VECTptr;
     if (int(args.size())<2)
-        return generrdim("Wrong number of input arguments");
+        return gendimerr(contextptr);
     if (args.front().type!=_VECT)
-        return generrtype("Expected a list");
+        return gentypeerr(contextptr);
     const vecteur &data=*args.front()._VECTptr;
+    if (ckmatrix(data)) {
+        matrice rmat;
+        rmat.reserve(data.size());
+        const_iterateur it=data.begin(),itend=data.end();
+        vecteur a(args.begin()+1,args.end());
+        a.insert(a.begin(),0);
+        for (;it!=itend;++it) {
+            a.front()=*it;
+            rmat.push_back(_threshold(change_subtype(a,_SEQ__VECT),contextptr));
+        }
+        return rmat;
+    }
     gen bnd=args.at(1);
     int n=data.size();
     vecteur output=data;
     if (bnd.type==_VECT) {
         if (int(bnd._VECTptr->size())!=2)
-            return generr("Expected a list with two elements");
+            return generr(gettext("Expected a list with two elements"));
         gen lb=bnd._VECTptr->front(),ub=bnd._VECTptr->back(),lval,uval;
         if (is_equal(lb)) {
             lval=_rhs(lb,contextptr);
@@ -2355,7 +3682,7 @@ gen _threshold(const gen &g,GIAC_CONTEXT) {
             bnd=_lhs(bnd,contextptr);
         } else val=bnd;
         if (!is_real_number(bnd,contextptr))
-            return generrtype("Expected a real constant");
+            return generrtype(gettext("Expected a real constant"));
         gen comp=at_inferieur_strict,isabs;
         bool absolute=false;
         for (const_iterateur it=args.begin()+2;it!=args.end();++it) {
@@ -2384,257 +3711,106 @@ static const char _threshold_s []="threshold";
 static define_unary_function_eval (__threshold,&_threshold,_threshold_s);
 define_unary_function_ptr5(at_threshold,alias_at_threshold,&__threshold,0,true)
 
-bool parse_window_parameters(const gen &g,vecteur &data,int &start,int &len,double *alpha,GIAC_CONTEXT) {
-    start=0;
-    if (g.type==_VECT && g.subtype!=_SEQ__VECT) {
-        data=*g._VECTptr;
-        len=data.size();
-        return true;
-    }
-    if (g.type!=_VECT || g.subtype!=_SEQ__VECT || g._VECTptr->size()>3 || g._VECTptr->front().type!=_VECT)
-        return false;
-    vecteur &args=*g._VECTptr;
-    data=*args.front()._VECTptr;
-    len=data.size();
-    bool has_alpha;
-    if (is_real_number(args.at(1),contextptr)) {
-        has_alpha=true;
-        if (!alpha)
-            return false;
-        *alpha=to_real_number(args.at(1),contextptr).to_double(contextptr);
-    } else if (args.size()>2) return false;
-    if (args.back().is_symb_of_sommet(at_interval)) {
-        gen lh=_lhs(args.back(),contextptr),rh=_rhs(args.back(),contextptr);
-        if (!lh.is_integer() || !rh.is_integer() || lh.val<0 || rh.val>=len)
-            return false;
-        start=lh.val;
-        len=rh.val-start+1;
-    } else if (args.size()>2 || !has_alpha) return false;
-    return true;
-}
-
 gen _bartlett_hann_window(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    vecteur data;
-    int start,N;
-    identificateur k(" k");
-    if (!parse_window_parameters(g,data,start,N,0,contextptr))
-        return generrtype(_SP_BAD_WINDOW);
-    double a=0.62,b=0.48,c=0.38;
-    gen expr=a-b*_abs(k/(N-1)-fraction(1,2),contextptr)-c*cos(2*k*_IDNT_pi()/(N-1),contextptr);
-    return apply_window_function(expr,k,data,start,N,contextptr);
+    return apply_window_function(_BARTLETT_HANN_WINDOW,g,contextptr);
 }
 static const char _bartlett_hann_window_s []="bartlett_hann_window";
 static define_unary_function_eval (__bartlett_hann_window,&_bartlett_hann_window,_bartlett_hann_window_s);
 define_unary_function_ptr5(at_bartlett_hann_window,alias_at_bartlett_hann_window,&__bartlett_hann_window,0,true)
 
 gen _blackman_harris_window(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    vecteur data;
-    int start,N;
-    identificateur k(" k");
-    if (!parse_window_parameters(g,data,start,N,0,contextptr))
-        return generrtype(_SP_BAD_WINDOW);
-    gen a(0.35875),b(0.48829),c(0.14128),d(0.01168);
-    gen K=k*_IDNT_pi()/(N-1),expr=a-b*cos(2*K,contextptr)+c*cos(4*K,contextptr)-d*cos(6*K,contextptr);
-    return apply_window_function(expr,k,data,start,N,contextptr);
+    return apply_window_function(_BLACKMAN_HARRIS_WINDOW,g,contextptr);
 }
 static const char _blackman_harris_window_s []="blackman_harris_window";
 static define_unary_function_eval (__blackman_harris_window,&_blackman_harris_window,_blackman_harris_window_s);
 define_unary_function_ptr5(at_blackman_harris_window,alias_at_blackman_harris_window,&__blackman_harris_window,0,true)
 
 gen _blackman_window(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    double alpha=0.16;
-    vecteur data;
-    int start,N;
-    identificateur k(" k");
-    if (!parse_window_parameters(g,data,start,N,&alpha,contextptr) || alpha<=0)
-        return generrtype(_SP_BAD_WINDOW);
-    gen K=k*_IDNT_pi()/(N-1),expr=(1-alpha)/2-cos(2*K,contextptr)/2+alpha*cos(4*K,contextptr)/2;
-    return apply_window_function(expr,k,data,start,N,contextptr);
+    return apply_window_function(_BLACKMAN_WINDOW,g,contextptr);
 }
 static const char _blackman_window_s []="blackman_window";
 static define_unary_function_eval (__blackman_window,&_blackman_window,_blackman_window_s);
 define_unary_function_ptr5(at_blackman_window,alias_at_blackman_window,&__blackman_window,0,true)
 
 gen _bohman_window(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    vecteur data;
-    int start,N;
-    identificateur k(" k");
-    if (!parse_window_parameters(g,data,start,N,0,contextptr))
-        return generrtype(_SP_BAD_WINDOW);
-    gen K=_abs(2*k/(N-1)-1,contextptr),expr=(1-K)*cos(_IDNT_pi()*K,contextptr)+sin(_IDNT_pi()*K,contextptr)/_IDNT_pi();
-    return apply_window_function(expr,k,data,start,N,contextptr);
+    return apply_window_function(_BOHMAN_WINDOW,g,contextptr);
 }
 static const char _bohman_window_s []="bohman_window";
 static define_unary_function_eval (__bohman_window,&_bohman_window,_bohman_window_s);
 define_unary_function_ptr5(at_bohman_window,alias_at_bohman_window,&__bohman_window,0,true)
 
 gen _cosine_window(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    double alpha=1.0;
-    vecteur data;
-    int start,N;
-    identificateur k(" k");
-    if (!parse_window_parameters(g,data,start,N,&alpha,contextptr) || alpha<=0)
-        return generrtype(_SP_BAD_WINDOW);
-    gen expr=exp(alpha*ln(sin(k*_IDNT_pi()/(N-1),contextptr),contextptr),contextptr);
-    return apply_window_function(expr,k,data,start,N,contextptr);
+    return apply_window_function(_COSINE_WINDOW,g,contextptr);
 }
 static const char _cosine_window_s []="cosine_window";
 static define_unary_function_eval (__cosine_window,&_cosine_window,_cosine_window_s);
 define_unary_function_ptr5(at_cosine_window,alias_at_cosine_window,&__cosine_window,0,true)
 
 gen _gaussian_window(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    double alpha=0.1;
-    vecteur data;
-    int start,N;
-    identificateur k(" k");
-    if (!parse_window_parameters(g,data,start,N,&alpha,contextptr) || alpha<=0 || alpha>0.5)
-        return generrtype(_SP_BAD_WINDOW);
-    gen c=(N-1)/2.0,expr=exp(-pow((k-c)/(alpha*c),2)/2,contextptr);
-    return apply_window_function(expr,k,data,start,N,contextptr);
+    return apply_window_function(_GAUSSIAN_WINDOW,g,contextptr);
 }
 static const char _gaussian_window_s []="gaussian_window";
 static define_unary_function_eval (__gaussian_window,&_gaussian_window,_gaussian_window_s);
 define_unary_function_ptr5(at_gaussian_window,alias_at_gaussian_window,&__gaussian_window,0,true)
 
 gen _hamming_window(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    vecteur data;
-    int start,N;
-    identificateur k(" k");
-    if (!parse_window_parameters(g,data,start,N,0,contextptr))
-        return generrtype(_SP_BAD_WINDOW);
-    gen a(0.54),b(0.46),expr=a-b*cos(2*_IDNT_pi()*k/(N-1),contextptr);
-    return apply_window_function(expr,k,data,start,N,contextptr);
+    return apply_window_function(_HAMMING_WINDOW,g,contextptr);
 }
 static const char _hamming_window_s []="hamming_window";
 static define_unary_function_eval (__hamming_window,&_hamming_window,_hamming_window_s);
 define_unary_function_ptr5(at_hamming_window,alias_at_hamming_window,&__hamming_window,0,true)
 
 gen _hann_poisson_window(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    double alpha=1;
-    vecteur data;
-    int start,N;
-    identificateur k(" k");
-    if (!parse_window_parameters(g,data,start,N,&alpha,contextptr))
-        return generrtype(_SP_BAD_WINDOW);
-    gen K=2*_IDNT_pi()*k/(N-1);
-    gen expr=(1-cos(K,contextptr))*exp(-alpha*_abs(N-1-2*k,contextptr)/(N-1),contextptr)/2;
-    return apply_window_function(expr,k,data,start,N,contextptr);
+    return apply_window_function(_HANN_POISSON_WINDOW,g,contextptr);
 }
 static const char _hann_poisson_window_s []="hann_poisson_window";
 static define_unary_function_eval (__hann_poisson_window,&_hann_poisson_window,_hann_poisson_window_s);
 define_unary_function_ptr5(at_hann_poisson_window,alias_at_hann_poisson_window,&__hann_poisson_window,0,true)
 
 gen _hann_window(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    vecteur data;
-    int start,N;
-    identificateur k(" k");
-    if (!parse_window_parameters(g,data,start,N,0,contextptr))
-        return generrtype(_SP_BAD_WINDOW);
-    gen expr=pow(sin(_IDNT_pi()*k/(N-1),contextptr),2);
-    return apply_window_function(expr,k,data,start,N,contextptr);
+    return apply_window_function(_HANN_WINDOW,g,contextptr);
 }
 static const char _hann_window_s []="hann_window";
 static define_unary_function_eval (__hann_window,&_hann_window,_hann_window_s);
 define_unary_function_ptr5(at_hann_window,alias_at_hann_window,&__hann_window,0,true)
 
 gen _parzen_window(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    vecteur data;
-    int start,N;
-    identificateur k(" k");
-    if (!parse_window_parameters(g,data,start,N,0,contextptr))
-        return generrtype(_SP_BAD_WINDOW);
-    gen K=1-2*k/(N-1),cond=symb_inferieur_egal(symbolic(at_abs,(N-1)/2.0-k),(N-1)/4.0);
-    gen f1=1-6*pow(K,2)*(1-_abs(K,contextptr)),f2=2*pow(1-_abs(K,contextptr),3);
-    gen expr=symbolic(at_when,makevecteur(cond,f1,f2));
-    return apply_window_function(expr,k,data,start,N,contextptr);
+    return apply_window_function(_PARZEN_WINDOW,g,contextptr);
 }
 static const char _parzen_window_s []="parzen_window";
 static define_unary_function_eval (__parzen_window,&_parzen_window,_parzen_window_s);
 define_unary_function_ptr5(at_parzen_window,alias_at_parzen_window,&__parzen_window,0,true)
 
 gen _poisson_window(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    double alpha=1.0;
-    vecteur data;
-    int start,N;
-    identificateur k(" k");
-    if (!parse_window_parameters(g,data,start,N,&alpha,contextptr))
-        return generrtype(_SP_BAD_WINDOW);
-    gen expr=exp(-alpha*_abs(2*k/(N-1)-1,contextptr),contextptr);
-    return apply_window_function(expr,k,data,start,N,contextptr);
+    return apply_window_function(_POISSON_WINDOW,g,contextptr);
 }
 static const char _poisson_window_s []="poisson_window";
 static define_unary_function_eval (__poisson_window,&_poisson_window,_poisson_window_s);
 define_unary_function_ptr5(at_poisson_window,alias_at_poisson_window,&__poisson_window,0,true)
 
 gen _riemann_window(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    vecteur data;
-    int start,N;
-    identificateur k(" k");
-    if (!parse_window_parameters(g,data,start,N,0,contextptr))
-        return generrtype(_SP_BAD_WINDOW);
-    gen K=(2*k/(N-1)-1)*_IDNT_pi(),cond=symbolic(at_same,makesequence(k,(N-1)/2.0));
-    gen expr=symbolic(at_when,makesequence(cond,1,sin(K,contextptr)/K));
-    return apply_window_function(expr,k,data,start,N,contextptr);
+    return apply_window_function(_RIEMANN_WINDOW,g,contextptr);
 }
 static const char _riemann_window_s []="riemann_window";
 static define_unary_function_eval (__riemann_window,&_riemann_window,_riemann_window_s);
 define_unary_function_ptr5(at_riemann_window,alias_at_riemann_window,&__riemann_window,0,true)
 
 gen _triangle_window(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    double L=0;
-    vecteur data;
-    int start,N;
-    identificateur k(" k");
-    if (!parse_window_parameters(g,data,start,N,&L,contextptr) || (L!=1 && L!=-1 && L!=0))
-        return generrtype(_SP_BAD_WINDOW);
-    gen expr=1-_abs((2*k-N+1)/(N+L),contextptr);
-    return apply_window_function(expr,k,data,start,N,contextptr);
+    return apply_window_function(_TRIANGLE_WINDOW,g,contextptr);
 }
 static const char _triangle_window_s []="triangle_window";
 static define_unary_function_eval (__triangle_window,&_triangle_window,_triangle_window_s);
 define_unary_function_ptr5(at_triangle_window,alias_at_triangle_window,&__triangle_window,0,true)
 
 gen _tukey_window(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    double alpha=0.5;
-    vecteur data;
-    int start,N;
-    identificateur k(" k");
-    if (!parse_window_parameters(g,data,start,N,&alpha,contextptr) || alpha<0 || alpha>1)
-        return generrtype(_SP_BAD_WINDOW);
-    double p=alpha*(N-1)/2.0,q=1-alpha/2;
-    gen cond1=symb_inferieur_strict(k,p),cond2=symb_inferieur_egal(k,q*(N-1));
-    gen f1=(1+cos(_IDNT_pi()*(k/p-1),contextptr))/2,f2=(1+cos(_IDNT_pi()*(k/p+1-2/alpha),contextptr))/2;
-    gen expr=symbolic(at_piecewise,makesequence(cond1,f1,cond2,1,f2));
-    return apply_window_function(expr,k,data,start,N,contextptr);
+    return apply_window_function(_TUKEY_WINDOW,g,contextptr);
 }
 static const char _tukey_window_s []="tukey_window";
 static define_unary_function_eval (__tukey_window,&_tukey_window,_tukey_window_s);
 define_unary_function_ptr5(at_tukey_window,alias_at_tukey_window,&__tukey_window,0,true)
 
 gen _welch_window(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    vecteur data;
-    int start,N;
-    identificateur k(" k");
-    if (!parse_window_parameters(g,data,start,N,0,contextptr))
-        return generrtype(_SP_BAD_WINDOW);
-    double p=(N-1)/2.0;
-    gen expr=1-pow(1-k/p,2);
-    return apply_window_function(expr,k,data,start,N,contextptr);
+    return apply_window_function(_WELCH_WINDOW,g,contextptr);
 }
 static const char _welch_window_s []="welch_window";
 static define_unary_function_eval (__welch_window,&_welch_window,_welch_window_s);
@@ -2793,7 +3969,7 @@ void ann::deallocate() {
 /* Set momentum mom (for 0<=mom<1 use classical momentum and for mom=1 use Adam). */
 void ann::set_momentum(double mom) {
     if (mom<0)
-        throw std::runtime_error(gettext("Momentum must be nonnegative"));
+        throw std::runtime_error(gettext("Momentum should be nonnegative"));
     momentum=std::min(1.0,mom);
 }
 /* Set activation function for LAYER. If LAYER=-1, it is set for all hidden neurons.
@@ -2815,7 +3991,7 @@ void ann::set_activation(bool out,const gen &f,const vecteur &params) {
     if (pf>0) {
         act.push_back(change_subtype(pf,_INT_MAPLECONVERSION));
         if (!is_numericv(params,num_mask_withfrac|num_mask_withint))
-            throw std::runtime_error(gettext("Activation function parameters must be numeric"));
+            throw std::runtime_error(gettext("Activation function parameters should be numeric"));
         act.push_back(_evalf(params,ctx));
     } else { // custom activation function
         switch (f.type) {
@@ -2852,7 +4028,7 @@ void ann::set_activation(bool out,const gen &f,const vecteur &params) {
 void ann::set_error_function(const gen &f,const vecteur &params) {
     if (f.is_integer() && f.subtype==_INT_MAPLECONVERSION) {
         if (!is_numericv(params,num_mask_withfrac|num_mask_withint))
-            throw std::runtime_error(gettext("Error function parameters must be numeric"));
+            throw std::runtime_error(gettext("Error function parameters should be numeric"));
         errfunc=makevecteur(f,_evalf(params,ctx));
     } else {
         if (f.type!=_FUNC && !f.is_symb_of_sommet(at_program))
@@ -3150,7 +4326,7 @@ void ann::ckinput(const matrice &input,const vecteur &output,bool ignore_output)
     if (mcols(input)!=input_size())
         throw std::runtime_error(gettext("Invalid input size"));
     if (!is_numericm(input,num_mask_withfrac|num_mask_withint))
-        throw std::runtime_error(gettext("Input must be numeric"));
+        throw std::runtime_error(gettext("Input should be numeric"));
     if (ignore_output) return;
     if (input.size()!=output.size())
         throw std::runtime_error(gettext("Number of samples does not match the number of outputs"));
@@ -3159,7 +4335,7 @@ void ann::ckinput(const matrice &input,const vecteur &output,bool ignore_output)
     switch (this->task()) {
     case 0:
         if (!is_numericv(output,num_mask_withfrac|num_mask_withint))
-            throw std::runtime_error(gettext("Output must be numeric"));
+            throw std::runtime_error(gettext("Output should be numeric"));
         if (!ckmatrix(output) && output_size()>1)
             throw std::runtime_error(gettext("Invalid output dimension"));
         break;
@@ -3167,7 +4343,7 @@ void ann::ckinput(const matrice &input,const vecteur &output,bool ignore_output)
         break;
     case 2:
         if (!ckmatrix(output))
-            throw std::runtime_error(gettext("Output must be a vector of labels"));
+            throw std::runtime_error(gettext("Output should be a vector of labels"));
         break;
     default:
         throw std::runtime_error(gettext("Invalid network task"));
@@ -3262,17 +4438,17 @@ void ann::feed(const matrice &input,vecteur &res,const vecteur &expected_output)
 /* Feed the argument forward, return the result. */
 gen ann::operator()(const gen &g,GIAC_CONTEXT) const {
     if (g.type!=_VECT)
-        return generrtype("Input must be a vector or a matrix");
+        return generrtype(gettext("Input should be a vector or a matrix"));
     vecteur res;
     if (g.subtype==_SEQ__VECT) {
         if (g._VECTptr->size()!=2)
-            return generrdim("Expected 2 arguments");
+            return generrdim(gettext("Expected 2 arguments"));
         const gen &inp=g._VECTptr->front(),&out=g._VECTptr->back();
         if (inp.type!=_VECT)
-            return generrtype("Input must be a vector or a matrix");
+            return generrtype(gettext("Input should be a vector or a matrix"));
         if (ckmatrix(inp)) {
             if (out.type!=_VECT)
-                return generrtype("Expected output must be a vector");
+                return generrtype(gettext("Expected output should be a vector"));
             feed(*inp._VECTptr,res,*out._VECTptr);
         } else feed(vecteur(1,inp),res,vecteur(1,out));
     } else if (ckmatrix(g))
@@ -3325,7 +4501,7 @@ gen ann::operator[](const gen &g) {
             else return momentum;
             break;
         default:
-            return generr("Unknown hyperparameter");
+            return generr(gettext("Unknown hyperparameter"));
         }
     } else if (g.subtype==_INT_PLOT) {
         switch (i) {
@@ -3335,11 +4511,11 @@ gen ann::operator[](const gen &g) {
         case _TITLE:
             return string2gen(title,false);
         default:
-            return generr("Unknown hyperparameter");
+            return generr(gettext("Unknown hyperparameter"));
         }
     } else {
         if (i<0 || i>=lc)
-            return generrdim("Layer index out of range");
+            return generrdim(gettext("Layer index out of range"));
         mv=gsl_matrix_submatrix(layers[i],0,0,layers[i]->size1,layers[i]->size2-(i+1==lc?0:1));
         ret=gsl_matrix2matrice(&mv.matrix,true);
     }
@@ -3488,10 +4664,73 @@ gen ann::giac_constructor(GIAC_CONTEXT) const {
     // finalize
     return symbolic(at_neural_network,change_subtype(args,_SEQ__VECT));
 }
-#endif // HAVE_LIBGSL
 /*
  * END OF ANN CLASS IMPLEMENTATION
  */
+
+/* Compute wavelet transform of DATA with N samples, changing DATA in place.
+ * DIR is 1 for forward transform and -1 for inverse transform. */
+int dwt(void *data,int datatype,int n,int wtype,int k,int dir) {
+    const gsl_wavelet_type *wt;
+    switch (wtype) {
+    case _DAUBECHIES_WAVELET:
+        wt=gsl_wavelet_daubechies;
+        break;
+    case _DAUBECHIES_WAVELET_CENTERED:
+        wt=gsl_wavelet_daubechies_centered;
+        break;
+    case _HAAR_WAVELET:
+        wt=gsl_wavelet_haar;
+        break;
+    case _HAAR_WAVELET_CENTERED:
+        wt=gsl_wavelet_haar_centered;
+        break;
+    case _BSPLINE_WAVELET:
+        wt=gsl_wavelet_bspline;
+        break;
+    case _BSPLINE_WAVELET_CENTERED:
+        wt=gsl_wavelet_bspline_centered;
+        break;
+    default:
+        return 1; // unsupported wavelet type
+    }
+    gsl_wavelet *w=gsl_wavelet_alloc(wt,k);
+    if (w==NULL)
+        return 2; // memory allocation failed
+    gsl_wavelet_workspace *work=gsl_wavelet_workspace_alloc(n);
+    if (work==NULL) {
+        gsl_wavelet_free(w);
+        return 2;
+    }
+    bool ret=0;
+    int res;
+    switch (datatype) {
+    case 1: // one-dimensional transform
+        res=(dir>0)?gsl_wavelet_transform_forward(w,(double*)data,1,n,work)
+                   :gsl_wavelet_transform_inverse(w,(double*)data,1,n,work);
+        break;
+    case 2: // two-dimensional transform
+        res=(dir>0)?gsl_wavelet2d_transform_matrix_forward(w,static_cast<gsl_matrix*>(data),work)
+                   :gsl_wavelet2d_transform_matrix_inverse(w,static_cast<gsl_matrix*>(data),work);
+        break;
+    case 3: // "non-standard" two-dimensional transform
+        res=(dir>0)?gsl_wavelet2d_nstransform_matrix_forward(w,static_cast<gsl_matrix*>(data),work)
+                   :gsl_wavelet2d_nstransform_matrix_inverse(w,static_cast<gsl_matrix*>(data),work);
+        break;
+    default:
+        assert(false);
+    }
+    if (res!=GSL_SUCCESS)
+        ret=3; // DWT computation failed
+    gsl_wavelet_free(w);
+    gsl_wavelet_workspace_free(work);
+    return ret;
+}
+#else
+bool dwt(double *data,int n,int wtype,int k,int dir) {
+    return false;
+}
+#endif // HAVE_LIBGSL
 
 gen _neural_network(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
@@ -3508,10 +4747,10 @@ gen _neural_network(const gen &g,GIAC_CONTEXT) {
     if (g.subtype==_SEQ__VECT) {
         const vecteur &gv=*g._VECTptr;
         if (gv.empty())
-            return generrdim("Sequence of arguments is empty");
+            return generrdim(gettext("Sequence of arguments is empty"));
         if ((src=ann::from_gen(gv.front()))==NULL) {
             if (gv.front().type!=_VECT)
-                return generrtype("Invalid topology specification");
+                return generrtype(gettext("Invalid topology specification"));
             topology=*gv.front()._VECTptr;
         }
         // parse options
@@ -3522,18 +4761,18 @@ gen _neural_network(const gen &g,GIAC_CONTEXT) {
                 if (prop==at_output) {
                     out_act=val.type==_VECT?*val._VECTptr:vecteur(1,val);
                     if (out_act.empty())
-                        return generr("Invalid output activation function specification");
+                        return generr(gettext("Invalid output activation function specification"));
                     vecteur params(out_act.begin()+1,out_act.end());
                     out_act=makevecteur(out_act.front(),params);
                 } else if (prop==at_classes) {
                     if (val.type!=_VECT)
-                        return generrtype("Expected a list of classes");
+                        return generrtype(gettext("Expected a list of classes"));
                     lab=*val._VECTptr;
                     cls=true;
                 } else if (prop==at_erf) {
                     err=val.type==_VECT?*val._VECTptr:vecteur(1,val);
                     if (err.empty())
-                        return generr("Invalid error function specification");
+                        return generr(gettext("Invalid error function specification"));
                     vecteur params(err.begin()+1,err.end());
                     err=makevecteur(err.front(),params);
                 } else if (prop.is_integer() && prop.subtype==_INT_MAPLECONVERSION) {
@@ -3543,11 +4782,11 @@ gen _neural_network(const gen &g,GIAC_CONTEXT) {
                             if (!val._VECTptr->empty()) {
                                 if (ckmatrix(val._VECTptr->front())) {
                                     if (val._VECTptr->size()!=topology.size()-1)
-                                        return generrdim("Invalid number of initial weight matrices");
+                                        return generrdim(gettext("Invalid number of initial weight matrices"));
                                     init_weights.reserve(val._VECTptr->size());
                                     for (const_iterateur wt=val._VECTptr->begin();wt!=val._VECTptr->end();++wt) {
                                         if (wt!=val._VECTptr->begin() && !ckmatrix(*wt))
-                                            return generrtype("Expected an initial weight matrix");
+                                            return generrtype(gettext("Expected an initial weight matrix"));
                                         init_weights.push_back(wt->_VECTptr);
                                     }
                                 } else winit=makevecteur(val._VECTptr->front(),vecteur(val._VECTptr->begin()+1,val._VECTptr->end()));
@@ -3557,20 +4796,20 @@ gen _neural_network(const gen &g,GIAC_CONTEXT) {
                     case _ANN_LEARNING_RATE:
                         if (val.type==_VECT) {
                             if (val._VECTptr->size()!=2)
-                                return generr("Invalid scheduled learning rate specification");
+                                return generr(gettext("Invalid scheduled learning rate specification"));
                             if (!val._VECTptr->back().is_symb_of_sommet(at_program) ||
                                     val._VECTptr->back()._SYMBptr->feuille._VECTptr->front()._VECTptr->size()!=1)
-                                return generr("Schedule multiplier must be an univariate function");
+                                return generr(gettext("Schedule multiplier should be an univariate function"));
                             rate=val._VECTptr->front();
                             schedule=val._VECTptr->back();
                         } else rate=val;
                         if (!is_real_number(rate,contextptr) || !is_strictly_positive(rate=to_real_number(rate,contextptr),contextptr))
-                            return generr("(Initial) learning rate must be a positive real number");
+                            return generr("(Initial) learning rate should be a positive real number");
                         set_rate=true;
                         break;
                     case _ANN_BLOCK_SIZE:
                         if (!val.is_integer() || (bs=val.val)<1)
-                            return generr("Block size must be a positive integer");
+                            return generr(gettext("Block size should be a positive integer"));
                         break;
                     case _ANN_MOMENTUM:
                         if (val.is_integer() && val.subtype==_INT_PLOT && val.val==_ADAPTIVE) {
@@ -3578,12 +4817,12 @@ gen _neural_network(const gen &g,GIAC_CONTEXT) {
                         } else if (val.type==_VECT) {
                             if (val._VECTptr->size()!=2 || !is_numericv(*val._VECTptr,num_mask_withfrac) ||
                                     is_positive(-_min(val,contextptr),contextptr) || is_greater(_max(val,contextptr),1,contextptr))
-                                return generr("Invalid specification of adaptive momentum parameters");
+                                return generr(gettext("Invalid specification of adaptive momentum parameters"));
                             mom=_evalf(val,contextptr);
                         } else if (is_real_number(val,contextptr)) {
                             mom=to_real_number(val,contextptr);
                             if (!is_positive(mom,contextptr) || is_greater(mom,1,contextptr))
-                                return generr("Momentum parameter must be a real number in [0,1)");
+                                return generr("Momentum parameter should be a real number in [0,1)");
                         }
                         break;
                     case _ANN_WEIGHT_DECAY:
@@ -3592,36 +4831,36 @@ gen _neural_network(const gen &g,GIAC_CONTEXT) {
                             return generr("Invalid weight decay parameter(s) specification");
                         break;
                     default:
-                        return generr("Invalid property specification");
+                        return generr(gettext("Invalid property specification"));
                     }
                 } else if (prop.is_integer() && prop.subtype==_INT_TYPE && prop.val==_FUNC) {
                     act=val.type==_VECT?*val._VECTptr:vecteur(1,val);
                     if (act.empty())
-                        return generr("Invalid activation function specification");
+                        return generr(gettext("Invalid activation function specification"));
                     vecteur params(act.begin()+1,act.end());
                     act=makevecteur(act.front(),params);
                 } else if (prop.is_integer() && prop.subtype==_INT_PLOT) {
                     if (prop.val==_LABELS) {
                         if (val.type!=_VECT)
-                            return generrtype("Expected a list of labels");
+                            return generrtype(gettext("Expected a list of labels"));
                         lab=*val._VECTptr;
                     } else if (prop.val==_TITLE) {
                         if (val.type!=_STRNG)
-                            return generrtype("Title must be a string");
+                            return generrtype(gettext("Title should be a string"));
                         name=*val._STRNGptr;
-                    } else return generr("Invalid property specification");
-                } else return generr("Invalid property specification");
-            } else return generrtype("Invalid optional argument");
+                    } else return generr(gettext("Invalid property specification"));
+                } else return generr(gettext("Invalid property specification"));
+            } else return generrtype(gettext("Invalid optional argument"));
         }
     } else topology=*g._VECTptr;
     vector<int> t;
     if (src==NULL) {
         if (topology.size()<2)
-            return generrdim("Too few layers in the network");
+            return generrdim(gettext("Too few layers in the network"));
         if (!is_integer_vecteur(topology))
-            return generrtype("Invalid layer size type");
+            return generrtype(gettext("Invalid layer size type"));
         if (is_strictly_greater(1,_min(topology,contextptr),contextptr))
-            return gensizeerr("Invalid layer size, must be at least 1");
+            return gensizeerr("Invalid layer size, should be at least 1");
         if (topology.size()==2) { // guess the size of the hidden layer: (input+output)*2/3
             gen hsize=_round(2*_sum(topology,contextptr)/3,contextptr);
             *logptr(contextptr) << gettext("No hidden layers specified, creating 1 hidden layer of size") << " " << hsize << "\n";
@@ -3661,7 +4900,7 @@ gen _neural_network(const gen &g,GIAC_CONTEXT) {
             network.set_labels(lab,cls);
         int task=network.task();
         if (task<0)
-            return generr("Bad output labels");
+            return generr(gettext("Bad output labels"));
         // set activation function for hidden layers
         if (!act.empty())
             network.set_activation(false,act.front(),*act.back()._VECTptr);
@@ -3734,7 +4973,7 @@ gen _neural_network(const gen &g,GIAC_CONTEXT) {
                     winit=he_normal;
                 else if (str=="lecun-normal")
                     winit=lecun_normal;
-                else return generr("Unknown weight initializer");
+                else return generr(gettext("Unknown weight initializer"));
             }
             network.randomize_initial_weights(winit.front(),*winit.back()._VECTptr);
         }
@@ -3743,7 +4982,7 @@ gen _neural_network(const gen &g,GIAC_CONTEXT) {
         return generr(e.what(),false);
     }
 #else
-    return generr("GNU Scientific Library is required for neural networks");
+    return generr(gettext("GNU Scientific Library is required for neural networks"));
 #endif // HAVE_LIBGSL
 }
 static const char _neural_network_s []="neural_network";
@@ -3757,16 +4996,16 @@ gen _train(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     const vecteur &gv=*g._VECTptr;
     if (gv.size()<3)
-        return generrdim("Expected 3 or more arguments");
+        return generrdim(gettext("Expected 3 or more arguments"));
     ann *net=ann::from_gen(gv.front());
     if (net==NULL)
-        return generrtype("First argument must be a neural network");
+        return generrtype(gettext("First argument should be a neural network"));
     const gen &inp=gv[1],&out=gv[2];
     if (!ckmatrix(inp) || out.type!=_VECT)
-        return generrtype("Input and output must be a matrix and a vector");
+        return generrtype(gettext("Input and output should be a matrix and a vector"));
     int batch_size=0;
     if (gv.size()>3 && (!gv[3].is_integer() || (batch_size=gv[3].val)>(int)inp._VECTptr->size()))
-        return generr("Invalid batch size specification");
+        return generr(gettext("Invalid batch size specification"));
     try {
         net->train(*inp._VECTptr,*out._VECTptr,batch_size);
     } catch (const std::runtime_error &e) {
@@ -3774,12 +5013,395 @@ gen _train(const gen &g,GIAC_CONTEXT) {
     }
     return *net;
 #else
-    return generr("GNU Scientific Library is required for neural networks");
+    return generr(gettext("GNU Scientific Library is required for neural networks"));
 #endif // HAVE_LIBGSL
 }
 static const char _train_s []="train";
 static define_unary_function_eval (__train,&_train,_train_s);
 define_unary_function_ptr5(at_train,alias_at_train,&__train,0,true)
+
+//
+// RGBA IMAGE CLASS IMPLEMENTATION
+//
+gen (*load_image_ptr)(const char *fname,GIAC_CONTEXT)=0;
+gen (*resize_image_ptr)(const rgba_image &img,int w,int h,GIAC_CONTEXT)=0;
+tempimagefilename::~tempimagefilename() {
+    while (!_fnames.empty()) {
+        remove(_fnames.top().c_str());
+        _fnames.pop();
+    }
+}
+const string &tempimagefilename::make() {
+    _fnames.push(temp_file_name("casimage","png"));
+    return _fnames.top();
+}
+tempimagefilename temp_image_file_name;
+rgba_image::rgba_image(int d,int w,int h,GIAC_CONTEXT) {
+    ctx=contextptr;
+    _d=d;
+    _w=w;
+    _h=h;
+    allocate();
+}
+rgba_image::rgba_image(const std::vector<const gen*> &data,GIAC_CONTEXT) {
+    ctx=contextptr;
+    const matrice* chndata[4];
+    int i,j,k;
+    _d=data.size();
+    if (_d<1 || _d>4)
+        throw std::runtime_error(gettext("Invalid number of channels"));
+    _w=_h=0;
+    matrice alpha;
+    for (int i=0;i<_d;++i) {
+        if (data[i]==NULL) {
+            alpha=*_matrix(makesequence(_h,_w,255),contextptr)._VECTptr;
+            chndata[i]=&alpha;
+        } else {
+            if (!ckmatrix(*data[i]))
+                throw std::runtime_error(gettext("Channel data should be a matrix"));
+            const matrice &c=*data[i]->_VECTptr;
+            if (_w && _h && (_w!=mcols(c) || _h!=mrows(c)))
+                throw std::runtime_error(gettext("Incompatible dimensions of channel data matrix"));
+            else if (_w==0 && _h==0) {
+                _w=mcols(c);
+                _h=mrows(c);
+            }
+            if (!is_integer_matrice(c))
+                throw std::runtime_error(gettext("Data values should be integers"));
+            chndata[i]=&c;
+        }
+    }
+    allocate();
+    const_iterateur it,jt;
+    for (i=0;i<_d;++i)
+        for (k=0,it=chndata[i]->begin();k<_h;++k,++it)
+            for (j=0,jt=it->_VECTptr->begin();j<_w;++j,++jt)
+                set_pixel(i,j,k,static_cast<uchar>(jt->to_int()));
+}
+rgba_image::rgba_image(int d,int w,const string &data,GIAC_CONTEXT) {
+    ctx=contextptr;
+    int sz=data.size()/2,j=0;
+    _d=d;
+    _w=w;
+    _h=sz/(_w*_d);
+    if (_d<1 || _d>4 || _w<=0 || _h<=0)
+        throw std::runtime_error(gettext("Invalid image parameters"));
+    allocate();
+    for (int i=0;i<sz;++i)
+        _data[j++]=hexstr2int(data.substr(2*i,2));
+}
+/* Return the color type description. */
+string rgba_image::color_type_string() const {
+    switch (_d) {
+        case 0: case 1: return gettext("grayscale");
+        case 2: return gettext("grayscale with alpha channel");
+        case 3: return gettext("RGB");
+        case 4: return gettext("RGBA");
+        default: break;
+    }
+    return "";
+}
+bool rgba_image::assure_on_disk() {
+    if (!_filename.empty())
+        return true;
+    _filename=temp_image_file_name.make();
+    _tmp=false;
+    return write_png(_filename.c_str())==0;
+}
+string rgba_image::print(GIAC_CONTEXT) const {
+    stringstream ss;
+    ss << gettext("an image of size") << " " << _w << "×" << _h << " (";
+    string chd=color_type_string();
+    if (chd.empty())
+        ss << _d << " " << gettext("channels");
+    else ss << chd;
+    ss << ")";
+    return ss.str();
+}
+rgba_image::rgba_image(const rgba_image &other,int x,int y,int w,int h) {
+    _data=NULL;
+    assign(other,x,y,w,h);
+}
+void rgba_image::clear() {
+    if (_data!=NULL)
+        free(_data);
+}
+void rgba_image::assign(const rgba_image &other,int x,int y,int w,int h) {
+    clear();
+    ctx=other.ctx;
+    _filename=other._filename;
+    _tmp=other._tmp;
+    _d=other._d;
+    _w=w==0?other._w:std::min(other._w-x,w);
+    _h=h==0?other._h:std::min(other._h-y,h);
+    allocate();
+    if (x || y || w || h) {
+        _filename.clear();
+        for (int i=0;i<_w;++i)
+            for (int j=0;j<_h;++j)
+                for (int k=0;k<_d;++k)
+                    set_pixel(k,i,j,other.get_pixel(k,i+x,j+y));
+    } else memcpy(_data,other._data,_w*_d*_h*sizeof(uchar));
+}
+string rgba_image::texprint(GIAC_CONTEXT) const {
+    return string("\\text{")+print(contextptr)+"}";
+}
+rgba_image *rgba_image::from_gen(const gen &g) {
+    if (g.type!=_USER)
+        return NULL;
+    return dynamic_cast<rgba_image*>(g._USERptr);
+}
+bool rgba_image::operator==(const gen &g) const {
+    rgba_image *img=rgba_image::from_gen(g);
+    if (img==NULL || _d!=img->_d || _w!=img->_w || _h!=img->_h)
+        return false;
+    int sz=_w*_d*_h;
+    for (int i=0;i<sz;++i) {
+        if (_data[i]!=img->_data[i])
+            return false;
+    }
+    return true;
+}
+void rgba_image::allocate() {
+    _data=(uchar*)calloc(_w*_h*_d,sizeof(uchar));
+    if (_data==NULL)
+        throw std::runtime_error(gettext("Failed to allocate memory for image"));
+}
+rgba_image::~rgba_image() {
+    clear();
+}
+uchar rgba_image::get_pixel(int chn,int x,int y) const {
+    if (x<0 || x>=_w || y<=0 || y>=_h || chn>=_d)
+        return 0;
+    if (chn>=0)
+        return _data[y*_w*_d+x*_d+chn];
+    unsigned int val=0;
+    int imax=(_d%2)?_d:_d-1;
+    for (int i=0;i<imax;++i)
+        val+=_data[y*_w*_d+x*_d+i];
+    return (uchar)(val/imax);
+}
+void rgba_image::set_pixel(int chn,int x,int y,uchar v) {
+    if (x>=0 && x<_w && y>=0 && y<_h && chn>=0 && chn<_d)
+        _data[y*_w*_d+x*_d+chn]=v;
+}
+/* crop or resize the image, return a modified copy */
+gen rgba_image::operator()(const gen &g,GIAC_CONTEXT) const {
+    int x=0,y=0,w,h,task=0;
+    if (g.is_integer() && g.subtype==_INT_COLOR && g.val==44373)
+        return to_grayscale();
+    if (evalf_double(g,1,contextptr).type==_DOUBLE_) {
+        double s=evalf_double(g,1,contextptr).to_double(contextptr);
+        w=(int)std::floor(s*_w+0.5);
+        h=(int)std::floor(s*_h+0.5);
+        task=1;
+    } else {
+        if (g.type!=_VECT || g.subtype!=_SEQ__VECT || !is_integer_vecteur(*g._VECTptr))
+            return gentypeerr(contextptr);
+        const vecteur &args=*g._VECTptr;
+        switch (args.size()) {
+        case 2: // resize
+            w=args.front().val;
+            h=args.back().val;
+            task=1;
+            break;
+        case 4: // crop
+            x=args[0].val;
+            y=args[1].val;
+            w=args[2].val;
+            h=args[3].val;
+            task=2;
+            break;
+        default:
+            return gendimerr(contextptr);
+        }
+    }
+    if (w<=0 || h<=0)
+        return gendimerr(contextptr);
+    if (x>=_w || y>=_h || x<0 || y<0)
+        return gensizeerr(contextptr);
+    assert(task>0);
+    if (task==1) {
+        if (resize_image_ptr)
+            return resize_image_ptr(*this,w,h,ctx);
+        return gensizeerr(gettext("FLTK is required for image resizing"));
+    } else if (task==2) {
+        w=std::min(w,_w-x);
+        h=std::min(h,_h-y);
+        try {
+            return rgba_image(*this,x,y,w,h);
+        } catch (const std::runtime_error &e) {
+            return gensizeerr(e.what());
+        }
+    }
+    return undef; // unreachable
+}
+gen rgba_image::operator[](const gen &g) {
+    if (g.type!=_VECT)
+        return (*this)[gen(vecteur(1,g),_SEQ__VECT)];
+    if (g.subtype!=_SEQ__VECT)
+        return gentypeerr(ctx);
+    const vecteur &args=*g._VECTptr;
+    if (args.empty())
+        return gendimerr(ctx);
+    int x,y,w=0,h=0,task=0,chn=0,start=1;
+    if (args.front()==at_tran) {
+        if (_d==1 || _d==3)
+            return gensizeerr(ctx);
+        chn=_d-1;
+    } else if (args.front().is_integer() && args.front().subtype==_INT_COLOR) {
+        switch (args.front().val) {
+        case _RED: chn=0; break;
+        case _GREEN: chn=1; break;
+        case _BLUE: chn=2; break;
+        case 44373: chn=-1; break; // gray
+        default: return gensizeerr(ctx);
+        }
+    } else start=0;
+    if (chn>=_d)
+        return gensizeerr(gettext("Invalid channel number"));
+    if (chn<0 && _d==1)
+        chn=0;
+    if (args.size()==1)
+        return get_channel_data(chn);
+    if (args.size()<2+start || args.size()>4+start)
+        return gendimerr(ctx);
+    if (!is_integer_vecteur(vecteur(g._VECTptr->begin()+start,g._VECTptr->end())))
+        return gentypeerr(ctx);
+    x=args[start].val;
+    y=args[1+start].val;
+    switch (args.size()-start) {
+    case 2:
+        task=1;
+        break;
+    case 4:
+        w=args[2+start].val;
+        h=args[3+start].val;
+        task=2;
+        break;
+    default:
+        return gendimerr(ctx);
+    }
+    if (x<0 || y<0 || x>=_w || y>=_h)
+        return gensizeerr(ctx);
+    if (task==1) {
+        return get_pixel(chn,x,y);
+    } else if (task==2) {
+        w=std::min(w,_w-x);
+        h=std::min(h,_h-y);
+        if (w<=0 || h<=0)
+            return gendimerr(ctx);
+        return get_channel_data(chn,x,y,w,h);
+    }
+    return undef; // unreachable
+}
+matrice rgba_image::get_channel_data(int chn,int x,int y,int w,int h) const {
+    int width=w==0?_w-x:std::min(w,_w-x),height=h==0?_h-y:std::min(h,_h-y);
+    if (width<=0 || height<=0)
+        throw std::runtime_error(gettext("Invalid slice dimensions"));
+    matrice ret=*_matrix(makesequence(height,width,0),ctx)._VECTptr;
+    iterateur it,jt;
+    int i,j;
+    uchar v;
+    for (i=0,it=ret.begin();i<height;++i,++it) {
+        for (j=0,jt=it->_VECTptr->begin();j<width;++j,++jt) {
+            v=get_pixel(chn,j+x,i+y);
+            if (v)
+                *jt=v;
+        }
+    }
+    return ret;
+}
+void rgba_image::set_channel_data(int chn,const matrice &data,int x,int y) {
+    const_iterateur it=data.begin(),itend=data.end(),jt,jtend;
+    int i,j;
+    gen v;
+    for (i=0;it!=itend;++it,++i) {
+        for (j=0,jt=it->_VECTptr->begin(),jtend=it->_VECTptr->end();jt!=jtend;++j,++jt) {
+            if (!jt->is_integer())
+                throw std::runtime_error(gettext("Invalid pixel data"));
+            set_pixel(chn,j+x,i+y,static_cast<uchar>(jt->val));
+        }
+    }
+    _filename.clear();
+}
+#ifdef HAVE_LIBPNG
+int rgba_image::write_png(const char *fname) {
+    png_bytep *rows=new png_bytep[_h];
+    for (int i=0;i<_h;++i)
+        rows[i]=_data+i*_w*_d;
+    png_structp png_ptr;
+    png_infop info_ptr;
+    int retval=0;
+    FILE *fp=fopen(fname,"wb");
+    if (!fp) {
+        retval=2; goto fail; // could not open file for writing
+    }
+    if (!(png_ptr=png_create_write_struct(PNG_LIBPNG_VER_STRING,NULL,NULL, NULL))) {
+        retval=3; goto fail; // could not create png write struct
+    }
+    if (!(info_ptr=png_create_info_struct(png_ptr)) || setjmp(png_jmpbuf(png_ptr))) {
+        retval=4; goto fail; // could not create png info struct
+    }
+    png_init_io(png_ptr,fp);
+    int colortype;
+    switch (_d) {
+    case 1: colortype=PNG_COLOR_TYPE_GRAY; break;
+    case 2: colortype=PNG_COLOR_TYPE_GA; break;
+    case 3: colortype=PNG_COLOR_TYPE_RGB; break;
+    case 4: colortype=PNG_COLOR_TYPE_RGBA; break;
+    default: retval=5; goto fail; // could not determine color type (should be unreachable)
+    }
+    png_set_IHDR(png_ptr,info_ptr,_w,_h,8,colortype, 
+                PNG_INTERLACE_NONE,PNG_COMPRESSION_TYPE_BASE,PNG_FILTER_TYPE_BASE);
+    png_write_info(png_ptr,info_ptr);
+    png_write_image(png_ptr,rows);
+    png_write_end(png_ptr,NULL);
+    fclose(fp);
+fail:
+    delete[] rows;
+    return retval;
+}
+#else
+int rgba_image::write_png(const char *fname) const {
+    return 1; // no png export
+}
+#endif // LIBPNG
+gen rgba_image::giac_constructor(GIAC_CONTEXT) const {
+    if (is_original())
+        return symbolic(at_image,string2gen(_filename,false));
+    string data;
+    int sz=_w*_h*_d;
+    data.reserve(sz*2);
+    for (int i=0;i<sz;++i)
+        data.append(n2hexstr(_data[i]));
+    return symbolic(at_image,makesequence(_d,_w,string2gen(data,false)));
+}
+rgba_image rgba_image::to_grayscale() const {
+    bool ha=has_alpha();
+    rgba_image ret(ha?2:1,_w,_h,ctx);
+    for (int i=0;i<_w;++i) {
+        for (int j=0;j<_h;++j) {
+            ret.set_pixel(0,i,j,get_pixel(-1,i,j));
+            if (ha) ret.set_pixel(1,i,j,get_pixel(_d-1,i,j));
+        }
+    }
+    return ret;
+}
+void rgba_image::flatten(vecteur &res) const {
+    res.clear();
+    int sz=_w*_h*_d;
+    res.reserve(sz);
+    for (int i=0;i<sz;++i)
+        res.push_back(_data[i]);
+}
+rgba_image rgba_image::to_negative() const {
+    rgba_image ret(_d,_w,_h,ctx);
+    int ac=has_alpha()?_d:0,sz=_w*_h*_d;
+    for (int i=0;i<sz;++i)
+        ret._data[i]=(ac>0 && (i+1)%ac==0)?_data[i]:255-_data[i];
+    return ret;
+}
 
 #ifndef NO_NAMESPACE_GIAC
 }

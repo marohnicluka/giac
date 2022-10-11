@@ -36,6 +36,7 @@ string export_mathml_presentation(const gen &g,GIAC_CONTEXT);
 string export_mathml_content(const gen &g,GIAC_CONTEXT);
 gen _export_mathml(const gen &g,GIAC_CONTEXT);
 gen _xml_print(const gen &g,GIAC_CONTEXT);
+gen _markup_cfg(const gen &g,GIAC_CONTEXT);
 
 #if 0
 enum EqElementType {

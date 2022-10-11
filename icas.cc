@@ -303,7 +303,7 @@ bool is_help_text(const string &str,string &desc,string &usg,vector<string> &rel
         rel.erase(rel.begin()+i);
     }
     if (*content[3].rbegin()==';')
-      content[3].pop_back();
+      content[3]=content[3].substr(0,content[3].size()-1); // content[3].pop_back();
     ex=split_string(content[3],";");
     for (int i=ex.size();i-->0;) {
       ex[i]=trim_string(ex[i]);
@@ -337,7 +337,7 @@ bool is_help_text(const string &str,string &desc,string &usg,vector<string> &rel
             string sep=rel[j];
             if (*sep.rbegin()!='/')
               return false;
-            sep.pop_back();
+            sep=sep.substr(0,sep.size()-1);//sep.pop_back();
             if (atoi(sep.c_str())<=0)
               return false;
             rel.erase(rel.begin()+j);
@@ -363,67 +363,90 @@ bool is_help_text(const string &str,string &desc,string &usg,vector<string> &rel
   return false;
 }
 
+string str2texmacs(const string &str) {
+  string ret;
+  string::const_iterator it=str.begin(),itend=str.end();
+  for (;it!=itend;++it) {
+    switch (*it) {
+    case '<':
+      ret.append("<less>");
+      break;
+    case '>':
+      ret.append("<gtr>");
+      break;
+    default:
+      ret.append(1,*it);
+      break;
+    }
+  }
+  return ret;
+}
+
+void texmacs_begin() {
+  putchar(TEXMACS_DATA_BEGIN);
+}
+
+void texmacs_end() {
+  putchar(TEXMACS_DATA_END);
+}
+
+void texmacs_endbegin() {
+  texmacs_end();
+  texmacs_begin();
+}
+
 void print_help_text(const string &desc,const string &usg,const vector<string> &rel,const vector<string> &ex) {
   string col="dark cyan",numcol="dark magenta";
   bool newline=false;
   if (!desc.empty()) {
     printf("scheme:%s",string("(with \"font-series\" \"bold\" \"color\" \""+col+"\" \""+gettext("Description")+":\")").c_str());
-    putchar(TEXMACS_DATA_END);
-    putchar(TEXMACS_DATA_BEGIN);
-    printf("verbatim: %s",desc.c_str());
+    texmacs_endbegin();
+    printf("verbatim: %s",str2texmacs(desc).c_str());
     if (*desc.rbegin()!='.')
       printf(".");
     newline=true;
   }
   if (!usg.empty()) {
     if (newline) printf("\n");
-    putchar(TEXMACS_DATA_END);
-    putchar(TEXMACS_DATA_BEGIN);
+    texmacs_endbegin();
     printf("scheme:%s",string("(with \"font-series\" \"bold\" \"color\" \""+col+"\" \""+gettext("Usage")+":\")").c_str());
-    putchar(TEXMACS_DATA_END);
-    putchar(TEXMACS_DATA_BEGIN);
-    printf("verbatim: %s",usg.c_str());
+    texmacs_endbegin();
+    printf("verbatim: %s",str2texmacs(usg).c_str());
     newline=true;
   }
   if (!rel.empty()) {
     if (newline) printf("\n");
-    putchar(TEXMACS_DATA_END);
-    putchar(TEXMACS_DATA_BEGIN);
+    texmacs_endbegin();
     printf("scheme:%s",string("(with \"font-series\" \"bold\" \"color\" \""+col+"\" \""+gettext("See also")+":\")").c_str());
-    putchar(TEXMACS_DATA_END);
-    putchar(TEXMACS_DATA_BEGIN);
-    printf("verbatim: %s",join_strings(rel,", ").c_str());
+    texmacs_endbegin();
+    printf("verbatim: %s",str2texmacs(join_strings(rel,", ")).c_str());
     newline=true;
   }
   if (!ex.empty()) {
     bool more_than_nine=ex.size()>9;
     if (newline) printf("\n");
-    putchar(TEXMACS_DATA_END);
-    putchar(TEXMACS_DATA_BEGIN);
+    texmacs_endbegin();
     printf("scheme:%s",string("(with \"font-series\" \"bold\" \"color\" \""+col+"\" \""+gettext("Examples")+":\")").c_str());
     int cnt=0;
     for (vector<string>::const_iterator it=ex.begin();it!=ex.end();++it) {
-      putchar(TEXMACS_DATA_END);
-      putchar(TEXMACS_DATA_BEGIN);
+      texmacs_endbegin();
       printf("verbatim:\n");
-      putchar(TEXMACS_DATA_END);
-      putchar(TEXMACS_DATA_BEGIN);
+      texmacs_endbegin();
       printf("scheme:(document (with \"color\" \"%s\" \"(%d)\"))",numcol.c_str(),++cnt);
-      putchar(TEXMACS_DATA_END);
-      putchar(TEXMACS_DATA_BEGIN);
+      texmacs_endbegin();
       if (cnt<10 && more_than_nine)
-        printf("verbatim:  %s",it->c_str());
-      else printf("verbatim: %s",it->c_str());
+        printf("verbatim:  %s",str2texmacs(*it).c_str());
+      else printf("verbatim: %s",str2texmacs(*it).c_str());
     }
   }
 }
 
 void texmacs_next_input () {
-  putchar(TEXMACS_DATA_BEGIN);
+  texmacs_begin();
   printf("prompt#");
   //printf("[%d] ",texmacs_counter);
   printf("> ");
-  putchar(TEXMACS_DATA_END);
+  texmacs_end();
   flush_stdout();
   if (std::cerr.rdstate() & ios_base::failbit) {
     flush_stderr();
@@ -431,14 +454,18 @@ void texmacs_next_input () {
   }
 }
 
+#ifdef __MINGW_H
+static const string silent_all(" >nul 2>&1");
+static const string silent_err(" 2>nul");
+#else
+static const string silent_all(" >/dev/null 2>&1");
+static const string silent_err(" 2>/dev/null");
+#endif
+
 bool texmacs_graph_lr_margins(const string &fname,int &val,bool init=true,int width=0) {
   char buffer[1024];
   int left,w;
-#ifdef __MINGW_H
-  FILE *pipe=_popen(((init?"pdfcrop --verbose ":"pdfinfo ")+fname+" 2>nul").c_str(),"r");
-#else
-  FILE *pipe=popen(((init?"pdfcrop --verbose ":"pdfinfo ")+fname+" 2>/dev/null").c_str(),"r");
-#endif
+  FILE *pipe=popen(((init?"pdfcrop --verbose ":"pdfinfo ")+giac::to_unix_path(fname)+silent_err).c_str(),"r");
   if (!pipe) return false;
   try {
     int i=-1,j;
@@ -466,17 +493,10 @@ bool texmacs_graph_lr_margins(const string &fname,int &val,bool init=true,int wi
     if (i<0)
       return false;
   } catch (...) {
-#ifdef __MINGW_H
-    _pclose(pipe);
-    return false;
-  }
-  _pclose(pipe);
-#else
     pclose(pipe);
     return false;
   }
   pclose(pipe);
-#endif
   if (init) {
     int right;
     if (!texmacs_graph_lr_margins(fname,right,false,w))
@@ -489,30 +509,29 @@ bool texmacs_graph_lr_margins(const string &fname,int &val,bool init=true,int wi
 bool system_status_ok(int status) {
   return status!=-1
 #ifndef __MINGW_H
-		&& WEXITSTATUS(status)==0
+    && WEXITSTATUS(status)==0
 #endif
     ;
 }
 
+std::string texmacs_image_file;
+int texmacs_image_files_count;
+
 void texmacs_graph_output(const giac::gen & g,giac::gen & gg,std::string & figfilename,int file_type,const giac::context * contextptr){
 #if 1 // changes by L. Marohnić
-  char buf[L_tmpnam];
-  bool has_temp_file=(tmpnam(buf)!=NULL);
-  string tmpname(has_temp_file?buf:"casgraph");
-#ifdef _WIN32
-  string tmpdir=getenv("TEMP")?getenv("TEMP"):"c:\\Users\\Public";
-  tmpname=tmpdir+"\\"+tmpname;
-#endif
-  string ext=".eps",extc=".pdf";
-  if (!xcas::fltk_view(g,gg,tmpname+ext,figfilename,file_type,contextptr)){
-    putchar(TEXMACS_DATA_BEGIN);
-    printf("verbatim:Plot cancelled or unable to plot\n");
-    putchar(TEXMACS_DATA_END);
+  string fcrop=texmacs_image_file+"-crop.pdf";
+  string fclean=texmacs_image_file+"-clean.eps";
+  string feps=texmacs_image_file+".eps";
+  string fpdf=texmacs_image_file+".pdf";
+  if (!xcas::fltk_view(g,gg,feps,figfilename,file_type,contextptr)){
+    texmacs_begin();
+    printf("verbatim:%s\n",gettext("Plot cancelled or unable to plot"));
+    texmacs_end();
     flush_stdout();
-      return;
+    return;
   }
-  if (0  && figfilename.empty()){
-    putchar(TEXMACS_DATA_BEGIN);
+  if (0 && figfilename.empty()){
+    texmacs_begin();
     if (gg.is_symb_of_sommet(giac::at_program))
       printf("verbatim:%s\n",gg.print().c_str());
     else {
@@ -521,7 +540,7 @@ void texmacs_graph_output(const giac::gen & g,giac::gen & gg,std::string & figfi
       else 
         printf("scheme:%s",giac::gen2scm(gg,giac::context0).c_str());
     }
-    putchar(TEXMACS_DATA_END);
+    texmacs_end();
     flush_stdout();
   }
   else {
@@ -529,69 +548,45 @@ void texmacs_graph_output(const giac::gen & g,giac::gen & gg,std::string & figfi
 #ifdef HAVE_SYSTEM
     if (system(NULL)) {
 #ifdef __MINGW_H
-      no_pdfcrop=system("where pdfcrop >nul") || system("where pdfinfo >nul");
+      no_pdfcrop=system("where pdfcrop >nul 2>&1") || system("where pdfinfo >nul 2>&1");
 #else
       no_pdfcrop=system("which pdfcrop >/dev/null 2>&1") || system("which pdfinfo >/dev/null 2>&1");
 #endif
       stringstream ss;
       int lr,status;
 #ifdef __MINGW_H
-      cleaned=system_status_ok(system(("eps2eps "+tmpname+ext+" "+tmpname+"-cleaned"+ext).c_str())) &&
-              system_status_ok(system(("ps2pdf -dEPSCrop "+tmpname+"-cleaned"+ext+" "+tmpname+extc).c_str()));
+      cleaned=system_status_ok(system(("eps2eps "+feps+" "+fclean).c_str())) &&
+              system_status_ok(system(("ps2pdf -dEPSCrop "+fclean+" "+fpdf).c_str()));
 #else
-      status=system(("eps2eps "+tmpname+ext+" - | ps2pdf -dEPSCrop - "+tmpname+extc).c_str());
+      status=system(("eps2eps "+feps+" - | ps2pdf -dEPSCrop - "+fpdf).c_str());
       cleaned=system_status_ok(status);
 #endif
       if (cleaned && !no_pdfcrop) {
-        if (!texmacs_graph_lr_margins(tmpname+extc,lr))
+        if (!texmacs_graph_lr_margins(fpdf,lr))
           no_pdfcrop=true;
         else ss << lr << " 0 " << lr << " 0";
       }
       string mrg=ss.str();
       if (cleaned && !no_pdfcrop) {
-#ifdef __MINGW_H
-        string devnull=" >nul";
-#else
-        string devnull=" >/dev/null 2>&1";
-#endif
-        status=system(("pdfcrop --margins '"+mrg+"' "+tmpname+extc+" "+tmpname+"-cropped"+extc+devnull).c_str());
+        status=system(("pdfcrop --margins '"+mrg+"' "+giac::to_unix_path(fpdf)+" "+giac::to_unix_path(fcrop)+silent_all).c_str());
         cropped=system_status_ok(status);
       }
     }
 #endif
-    usleep(10000);
-    putchar(TEXMACS_DATA_BEGIN);
-#if 1
+    usleep(1000);
+    texmacs_begin();
     printf("scheme:(htab \"\")");
-    putchar(TEXMACS_DATA_END);
-    putchar(TEXMACS_DATA_BEGIN);
-    printf("file:%s", (tmpname+(cropped?"-cropped":"")+(cleaned?extc:ext)).c_str());
-    putchar(TEXMACS_DATA_END);
-    putchar(TEXMACS_DATA_BEGIN);
+    texmacs_endbegin();
+    printf("file:%s", (cleaned?(cropped?fcrop:fpdf):feps).c_str());
+    texmacs_endbegin();
     printf("scheme:(htab \"\")");
-#else
-    printf("file:%s", (tmpname+(cropped?"-cropped":"")+(cleaned?extc:ext)).c_str());
-#endif
-    putchar(TEXMACS_DATA_END);
+    texmacs_end();
     flush_stdout(200);
-    // remove temporary files
-    bool remove_fail=false;
-    if (remove((tmpname+ext).c_str())!=0)
-      remove_fail=true;
-    if (cleaned) {
-#ifdef __MINGW_H
-      if (remove((tmpname+"-cleaned"+ext).c_str())!=0)
-        remove_fail=true;
-#endif
-      if (remove((tmpname+extc).c_str())!=0)
-        remove_fail=true;
-    }
-    if (cropped) {
-      if (remove((tmpname+"-cropped"+extc).c_str())!=0)
-        remove_fail=true;
-    }
-    if (remove_fail)
-      cerr << "Warning: failed to remove temporary file(s)\n";
+    // delete temporary image files
+    remove(feps.c_str());
+    remove(fpdf.c_str());
+    remove(fclean.c_str());
+    remove(fcrop.c_str());
   }
 #else
   if (!xcas::fltk_view(g,gg,"casgraph.eps",figfilename,file_type,contextptr)){
@@ -609,9 +604,9 @@ void texmacs_graph_output(const giac::gen & g,giac::gen & gg,std::string & figfi
       printf("verbatim: %s\n",gg.print().c_str());
     else {
       if (gg.type==giac::_STRNG)
-	printf("verbatim: %s\n",gg._STRNGptr->c_str());
+        printf("verbatim: %s\n",gg._STRNGptr->c_str());
       else 
-	printf("latex:\\[ %s \\]",giac::gen2tex(gg,giac::context0).c_str());
+        printf("latex:\\[ %s \\]",giac::gen2tex(gg,giac::context0).c_str());
     }
   }
   else {
@@ -630,7 +625,7 @@ void texmacs_graph_output(const giac::gen & g,giac::gen & gg,std::string & figfi
     // ofstream log("log");
     // log << g << '\n';
   }
-  #endif
+#endif
 }
 
 void texmacs_output(const giac::gen & g,giac::gen & gg,bool reading_file,int no,const giac::context * contextptr){
@@ -638,9 +633,9 @@ void texmacs_output(const giac::gen & g,giac::gen & gg,bool reading_file,int no,
   giac::history_out(contextptr).push_back(gg);
 #if 1 // changes by L. Marohnić
   if (reading_file){
-    putchar(TEXMACS_DATA_BEGIN);
-    printf("verbatim:%s\n",g.print().c_str());
-    putchar(TEXMACS_DATA_END);
+    texmacs_begin();
+    printf("verbatim:%s\n",str2texmacs(g.print()).c_str());
+    texmacs_end();
     flush_stdout();
   }
   int graph_output=graph_output_type(gg);
@@ -650,10 +645,10 @@ void texmacs_output(const giac::gen & g,giac::gen & gg,bool reading_file,int no,
     return;
   }
   if (reading_file && gg.is_symb_of_sommet(giac::at_program))
-     return;
+    return;
   if (g.is_symb_of_sommet(giac::at_nodisp))
     return;
-  putchar(TEXMACS_DATA_BEGIN);
+  texmacs_begin();
   if (gg.type==giac::_STRNG) {
     string desc,usg;
     vector<string> rel,ex;
@@ -670,8 +665,7 @@ void texmacs_output(const giac::gen & g,giac::gen & gg,bool reading_file,int no,
           if (usg.size()>4 && usg.substr(usg.length()-5,5)=="(Opt)")
             usg.clear();
           printf("scheme:(document (with \"color\" \"dark red\" \"font-series\" \"bold\" \"%s\") \"\")",c.c_str());
-          putchar(TEXMACS_DATA_END);
-          putchar(TEXMACS_DATA_BEGIN);
+          texmacs_endbegin();
           std::map<std::string,std::string>::const_iterator it=giac::lexer_localization_map().find(c),itend=giac::lexer_localization_map().end();
           if (it!=itend)
             c=it->second;
@@ -691,16 +685,14 @@ void texmacs_output(const giac::gen & g,giac::gen & gg,bool reading_file,int no,
       string ts;
       if ((ts=trim_string(lines.back())).find(err_text+":")==0) {
         lines.pop_back();
-        printf("verbatim:%s",join_strings(lines,"\n").c_str());
+        printf("verbatim:%s",str2texmacs(join_strings(lines,"\n")).c_str());
         printf("\n");
-        putchar(TEXMACS_DATA_END);
-        putchar(TEXMACS_DATA_BEGIN);
+        texmacs_endbegin();
         string msg=trim_string(ts.substr(err_text.length()+1));
         printf("scheme:(with \"color\" \"red\" \"%s\")",string(err_text+":").c_str());
-        putchar(TEXMACS_DATA_END);
-        putchar(TEXMACS_DATA_BEGIN);
-        printf("verbatim: %s",msg.c_str());
-      } else printf("verbatim:%s\n",gg._STRNGptr->c_str());
+        texmacs_endbegin();
+        printf("verbatim: %s",str2texmacs(msg).c_str());
+      } else printf("verbatim:%s\n",str2texmacs(*gg._STRNGptr).c_str());
     }
   } else {
     int ans_num=(int)history_out(contextptr).size()-1;
@@ -720,7 +712,7 @@ void texmacs_output(const giac::gen & g,giac::gen & gg,bool reading_file,int no,
     return;
   }
   if (reading_file && gg.is_symb_of_sommet(giac::at_program))
-     return; 
+    return; 
   if (g.is_symb_of_sommet(giac::at_nodisp))
     return;
   putchar(TEXMACS_DATA_BEGIN);
@@ -733,7 +725,7 @@ void texmacs_output(const giac::gen & g,giac::gen & gg,bool reading_file,int no,
       printf("latex:\\[ %s \\]",giac::gen2tex(gg,giac::context0).c_str());
   }
 #endif
-  putchar(TEXMACS_DATA_END);
+  texmacs_end();
   flush_stdout();
 }
 
@@ -1431,10 +1423,10 @@ int main(int ARGC, char *ARGV[]){
   bool insage=((ARGC>=2) && std::string(ARGV[1])=="--sage");
   bool intexmacs=((ARGC>=2) && std::string(ARGV[1])=="--texmacs");
   if (intexmacs) suspend_stderr(); // suppress stderr output when in texmacs (L. Marohnić)
+#ifdef HAVE_LIBFLTK
 #ifndef USE_OBJET_BIDON
   xcas::localisation(); // change by L. Marohnić
 #endif
-#ifdef HAVE_LIBFLTK
   giac::__get_key.op=&xcas::Xcas_fltk_getKey;
 #endif
   //giac::step_infolevel=1;
@@ -1834,28 +1826,29 @@ int main(int ARGC, char *ARGV[]){
   /* END EMACS */
 
   /* *********************************************************
-     *                       BEGIN TEXMACS                  *
-     ********************************************************* */
-  if ( intexmacs){
+   *                       BEGIN TEXMACS                  *
+   ********************************************************* */
+  if (intexmacs){
     giac::html_help_init(ARGV[0],false);
     giac::enable_texmacs_compatible_latex_export(true);
+    texmacs_image_file=giac::temp_file_name("casgraph");
 #ifdef WITH_GNUPLOT
     int out_handle;
     giac::run_gnuplot(out_handle);
 #endif
-    putchar(TEXMACS_DATA_BEGIN);
+    texmacs_begin();
     printf("verbatim:");
     format_plugin();
-    putchar(TEXMACS_DATA_BEGIN);
+    texmacs_begin();
     printf("scheme:(hrule)");
-    putchar(TEXMACS_DATA_END);
+    texmacs_end();
     printf("\nGiac %s for TeXmacs, released under the GPL license (3.0)\n",PACKAGE_VERSION);
     printf("See www.gnu.org for license details\n");
     printf("May contain BSD licensed software parts (lapack, atlas, tinymt)\n");
     printf("© 2003–2021 B. Parisse & al (giac), J. van der Hoeven (TeXmacs), L. Marohnić (interface)\n");
-    putchar(TEXMACS_DATA_BEGIN);
+    texmacs_begin();
     printf("scheme:(hrule)");
-    putchar(TEXMACS_DATA_END);
+    texmacs_end();
     printf("\n");
     switch (giac::xcas_mode(contextptr)){
     case 0:
@@ -1870,9 +1863,9 @@ int main(int ARGC, char *ARGV[]){
     case 3:
       printf("TI89/92 syntax mode\n");
     } 
-    printf("Type ? for documentation or ?commandname for help on commandname\n");
+    printf("Type ? for documentation or ? NAME for help on NAME\n");
     printf("Type tabulation key to complete a partial command\n");
-    putchar(TEXMACS_DATA_END);
+    texmacs_end();
     texmacs_next_input();
 #ifdef __MINGW_H
     char buf[4096];
@@ -1885,103 +1878,103 @@ int main(int ARGC, char *ARGV[]){
 #else
       char car;//,nxt;
       for (;;){
-	int i=getchar();
-	// cerr << i << '\n';
-	if (i==EOF)
-	  break;
-	car=i;
-	if (car=='\n'){
+        int i=getchar();
+        // cerr << i << '\n';
+        if (i==EOF)
+          break;
+        car=i;
+        if (car=='\n'){
 #if !defined VISUALC
-	  giac::set_nonblock_flag(STDIN_FILENO,1); // set non blocking mode on stdin
+          giac::set_nonblock_flag(STDIN_FILENO,1); // set non blocking mode on stdin
 #endif
-	  usleep(5000);
-	  // ssize_t s=read(STDIN_FILENO,&nxt,1);
-	  i=getchar();
+          usleep(5000);
+          // ssize_t s=read(STDIN_FILENO,&nxt,1);
+          i=getchar();
 #if !defined VISUALC
-	  giac::set_nonblock_flag(STDIN_FILENO,0); // set blocking mode on stdin
+          giac::set_nonblock_flag(STDIN_FILENO,0); // set blocking mode on stdin
 #endif
-	  // cerr << "read "  << s << '\n';
-	  if (i==EOF)
-	    break;
-	  buffer += car;
-	  car = i;
-	  buffer += car;
-	}
-	else
-	  buffer +=car;
+          // cerr << "read "  << s << '\n';
+          if (i==EOF)
+            break;
+          buffer += car;
+          car = i;
+          buffer += car;
+        }
+        else
+          buffer +=car;
       }
 #endif
       // end read buffer
       if (buffer[0]==TEXMACS_DATA_COMMAND){
-	int bs=buffer.size();
-	--bs;
-	buffer=buffer.substr(1,bs);
-	int pos=buffer.find(' ');
-	if (pos>0 && pos<bs-1){
-	  bs = bs-pos-1;
-	  buffer=buffer.substr(pos+1,bs);
-	  pos=buffer.find(' ');
-	  string complete_string=buffer.substr(1,pos-2);
-	  // search non ascii char starting from the end
-	  int ss=complete_string.size(),cs=ss;
-	  string partial_string;
-	  for (int i=ss-1;i>=0;--i){
-	    if (giac::isalphan(complete_string[i]))
-	      ;
-	    else
-	      break;
-	    partial_string=complete_string[i]+partial_string;
-	  }
-	  ss=partial_string.size();
-	  // remove beginning part
-	  buffer=buffer.substr(pos+1,bs-pos-2);
-	  int n=atoi(buffer.c_str());
-	  string cmd("(tuple ");
-	  cmd += '"'+complete_string.substr(0,n)+'"' ;
-	  n=n-(cs-ss);
-	  if (n>=0 && n<=cs){
-	    // reading possible completions from aide_cas
-	    vector<string> vres;
-	    string res=partial_string.substr(0,n);
-	    for (unsigned k=0;k<(*giac::vector_completions_ptr()).size();++k){
-	      if ((*giac::vector_completions_ptr())[k].substr(0,n)==res){
-		vres.push_back((*giac::vector_completions_ptr())[k]);
-	      }
-	    }
-	    int vs=vres.size();
-	    for (int k=0;k<vs;k++){
-	      string & tmp=vres[k];
-	      cmd += " \""+tmp.substr(n,tmp.size()-n)+'"';
-	    }
-	    putchar(TEXMACS_DATA_BEGIN);
-	    printf("scheme:%s)",cmd.c_str());
-	    putchar(TEXMACS_DATA_END);
-	    flush_stdout();
-	  } 
-	  else {
-	    putchar(TEXMACS_DATA_BEGIN);
-	    printf("scheme:(tuple \"%s\" \"\")",complete_string.c_str());
-	    putchar(TEXMACS_DATA_END);
-	    flush_stdout();
-	  }
-	}
-	else {
-	  // should not happen
-	}
-	buffer="";
-	continue;
+        int bs=buffer.size();
+        --bs;
+        buffer=buffer.substr(1,bs);
+        int pos=buffer.find(' ');
+        if (pos>0 && pos<bs-1){
+          bs = bs-pos-1;
+          buffer=buffer.substr(pos+1,bs);
+          pos=buffer.find(' ');
+          string complete_string=buffer.substr(1,pos-2);
+          // search non ascii char starting from the end
+          int ss=complete_string.size(),cs=ss;
+          string partial_string;
+          for (int i=ss-1;i>=0;--i){
+            if (giac::isalphan(complete_string[i]))
+              ;
+            else
+              break;
+            partial_string=complete_string[i]+partial_string;
+          }
+          ss=partial_string.size();
+          // remove beginning part
+          buffer=buffer.substr(pos+1,bs-pos-2);
+          int n=atoi(buffer.c_str());
+          string cmd("(tuple ");
+          cmd += '"'+complete_string.substr(0,n)+'"' ;
+          n=n-(cs-ss);
+          if (n>=0 && n<=cs){
+            // reading possible completions from aide_cas
+            vector<string> vres;
+            string res=partial_string.substr(0,n);
+            for (unsigned k=0;k<(*giac::vector_completions_ptr()).size();++k){
+              if ((*giac::vector_completions_ptr())[k].substr(0,n)==res){
+                vres.push_back((*giac::vector_completions_ptr())[k]);
+              }
+            }
+            int vs=vres.size();
+            for (int k=0;k<vs;k++){
+              string & tmp=vres[k];
+              cmd += " \""+tmp.substr(n,tmp.size()-n)+'"';
+            }
+            putchar(TEXMACS_DATA_BEGIN);
+            printf("scheme:%s)",cmd.c_str());
+            putchar(TEXMACS_DATA_END);
+            flush_stdout();
+          } 
+          else {
+            putchar(TEXMACS_DATA_BEGIN);
+            printf("scheme:(tuple \"%s\" \"\")",complete_string.c_str());
+            putchar(TEXMACS_DATA_END);
+            flush_stdout();
+          }
+        }
+        else {
+          // should not happen
+        }
+        buffer="";
+        continue;
       }
       if ( buffer=="quit") 
-	break; // end of session
+        break; // end of session
       // Begin answer
       putchar(TEXMACS_DATA_BEGIN);
       printf("verbatim:");
       // ONLINE HELP
       if (buffer=="?"){
 #ifndef HAVE_NO_SYSTEM
-	giac::system_browser_command("doc/index.html");
+        giac::system_browser_command("doc/index.html");
 #endif
-	buffer="?giac";
+        buffer="?giac";
       }
 #ifdef HAVE_SIGNAL_H_OLD
       giac::messages_to_print="";
@@ -1995,21 +1988,21 @@ int main(int ARGC, char *ARGV[]){
       // GEO SETUP
       if ( (g.type==giac::_SYMB) && (g._SYMBptr->sommet==giac::at_xyztrange) && (g._SYMBptr->feuille.type==giac::_VECT) && (g._SYMBptr->feuille._VECTptr->size()<12) ){
 #ifdef HAVE_LIBFLTK
-	xcas::Xcas_load_graph_setup(contextptr);
-	Fl::run();
-	Fl::wait(0.001);
+        xcas::Xcas_load_graph_setup(contextptr);
+        Fl::run();
+        Fl::wait(0.001);
 #endif
-	giac::history_in(contextptr).push_back(g);
-	giac::history_out(contextptr).push_back(gg);
-	printf("Done\n");
-	putchar(TEXMACS_DATA_BEGIN); 
-	printf("latex:");
-	printf("x_-=%.4f,x_+=%.4f,y_-=%.4f,y_+=%.4f",giac::gnuplot_xmin,giac::gnuplot_xmax,giac::gnuplot_ymin,giac::gnuplot_ymax);
-	putchar(TEXMACS_DATA_END); 
-	texmacs_counter++;
-	putchar(TEXMACS_DATA_END); // end answer
-	texmacs_next_input();
-	continue;
+        giac::history_in(contextptr).push_back(g);
+        giac::history_out(contextptr).push_back(gg);
+        printf("Done\n");
+        putchar(TEXMACS_DATA_BEGIN); 
+        printf("latex:");
+        printf("x_-=%.4f,x_+=%.4f,y_-=%.4f,y_+=%.4f",giac::gnuplot_xmin,giac::gnuplot_xmax,giac::gnuplot_ymin,giac::gnuplot_ymax);
+        putchar(TEXMACS_DATA_END); 
+        texmacs_counter++;
+        putchar(TEXMACS_DATA_END); // end answer
+        texmacs_next_input();
+        continue;
       }
       // END GEO SETUP
       int reading_file=0;
@@ -2017,35 +2010,35 @@ int main(int ARGC, char *ARGV[]){
       xcas::icas_eval(g,gg,reading_file,filename,contextptr);
       bool done=false;
       if (reading_file){ 
-	if (reading_file>=2 || (giac::ckmatrix(gg,true)&&gg.subtype==giac::_SPREAD__VECT) ){
-	  texmacs_graph_output(g,gg,filename,reading_file,contextptr);
-	  done=true;
-	}
-	if (!done && g.type==giac::_VECT && gg.type==giac::_VECT){
-	  giac::vecteur & gv=*g._VECTptr;
-	  giac::vecteur & ggv=*gg._VECTptr;
-	  // check if ggv last element is geometric -> geo2d or geo3d
-	  int ggs=ggv.size();
-	  if (ggs && (graph_output_type(ggv[ggs-1])) ){
-	    texmacs_graph_output(g,gg,filename,reading_file,contextptr);
-	    done=true;
-	  }
-	  // output each component of the vector gg 1 by 1
-	  int s=min(gv.size(),ggv.size());
-	  for (int j=0;!done && j<s;++j){
-	    texmacs_output(gv[j],ggv[j],reading_file,texmacs_counter,contextptr);
-	    texmacs_counter++;
-	  }
-	  done = true;
-	}
+        if (reading_file>=2 || (giac::ckmatrix(gg,true)&&gg.subtype==giac::_SPREAD__VECT) ){
+          texmacs_graph_output(g,gg,filename,reading_file,contextptr);
+          done=true;
+        }
+        if (!done && g.type==giac::_VECT && gg.type==giac::_VECT){
+          giac::vecteur & gv=*g._VECTptr;
+          giac::vecteur & ggv=*gg._VECTptr;
+          // check if ggv last element is geometric -> geo2d or geo3d
+          int ggs=ggv.size();
+          if (ggs && (graph_output_type(ggv[ggs-1])) ){
+            texmacs_graph_output(g,gg,filename,reading_file,contextptr);
+            done=true;
+          }
+          // output each component of the vector gg 1 by 1
+          int s=min(gv.size(),ggv.size());
+          for (int j=0;!done && j<s;++j){
+            texmacs_output(gv[j],ggv[j],reading_file,texmacs_counter,contextptr);
+            texmacs_counter++;
+          }
+          done = true;
+        }
       }
       if (!done) {
 #ifdef HAVE_LIBFLTK
-	if (g.type==giac::_SYMB && gg.is_symb_of_sommet(giac::at_pnt) && gg.subtype>=0 && equalposcomp(giac::implicittex_plot_sommets,g._SYMBptr->sommet))
-	  ;// set_view_point(0,0); // FIXME
+        if (g.type==giac::_SYMB && gg.is_symb_of_sommet(giac::at_pnt) && gg.subtype>=0 && equalposcomp(giac::implicittex_plot_sommets,g._SYMBptr->sommet))
+          ;// set_view_point(0,0); // FIXME
 #endif
-	texmacs_output(g,gg,false,0,contextptr);
-	texmacs_counter++;
+        texmacs_output(g,gg,false,0,contextptr);
+        texmacs_counter++;
       }
       putchar(TEXMACS_DATA_END); // end answer
       texmacs_next_input();
@@ -2057,8 +2050,8 @@ int main(int ARGC, char *ARGV[]){
     return 0;
   }
   /* *********************************************************
-     *                       END OF TEXMACS                  *
-     ********************************************************* */
+   *                       END OF TEXMACS                  *
+   ********************************************************* */
 #endif // EMCC not defined
 
   if (insage || getenv("GIAC_NO_TIME"))

@@ -48,6 +48,7 @@ using namespace std;
 #include "modfactor.h"
 #include "quater.h"
 #include "giacintl.h"
+#include "signalprocessing.h"
 #ifdef HAVE_LIBGSL
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_eigen.h>
@@ -15202,8 +15203,77 @@ namespace giac {
     return v;
   }
 
+  // adapted by L. Marohnić for image loading and creation
   gen _image(const gen & a,GIAC_CONTEXT){
-    if ( a.type==_STRNG && a.subtype==-1) return  a;
+    if (a.type==_STRNG) {
+      if (a.subtype==-1) return a;
+      if (load_image_ptr)
+        return load_image_ptr(a._STRNGptr->c_str(),contextptr);
+      return generr(gettext("FLTK is required for loading images"));
+    }
+    if (a.type==_VECT && a.subtype==_SEQ__VECT) {
+      const vecteur &args=*a._VECTptr;
+      if (args.size()<2)
+        return gendimerr(contextptr);
+      if (!args.front().is_integer())
+        return gentypeerr(contextptr);
+      int d=args.front().val,w=0,h=0;
+      if (d<1 || d>4)
+        return generr(gettext("Invalid color type"));
+      if (args.back().type==_STRNG) {
+        if (args.size()!=3)
+          return gendimerr(contextptr);
+        if (!args[1].is_integer())
+          return gentypeerr(contextptr);
+        w=args[1].val;
+        try {
+          return rgba_image(d,w,*args.back()._STRNGptr,contextptr);
+        } catch (const std::runtime_error &e) {
+          return generr(e.what());
+        }
+      }
+      if (args.size()-1>d)
+        return gendimerr(contextptr);
+      vector<const gen*> data;
+      switch (d) {
+      case 1:
+        data.push_back(&args[1]);
+        break;
+      case 2:
+        data.push_back(&args[1]);
+        if (args.size()>2)
+          data.push_back(&args[2]);
+        else data.push_back(NULL);
+        break;
+      case 3:
+        if (args.size()==2)
+          data=vector<const gen*>(3,&args[1]);
+        else if (args.size()==4) {
+          data.push_back(&args[1]);
+          data.push_back(&args[2]);
+          data.push_back(&args[3]);
+        } else return gendimerr(contextptr);
+        break;
+      case 4:
+        if (args.size()<4) {
+          data=vector<const gen*>(3,&args[1]);
+          data.push_back(args.size()==2?NULL:&args[2]);
+        } else {
+          data.push_back(&args[1]);
+          data.push_back(&args[2]);
+          data.push_back(&args[3]);
+          if (args.size()>4)
+            data.push_back(&args[4]);
+          else data.push_back(NULL);
+        }
+        break;
+      }
+      try {
+        return rgba_image(data,contextptr);
+      } catch (const std::runtime_error &e) {
+        return generr(e.what());
+      }
+    }
     if (!ckmatrix(a))
       return symb_image(a);
     vecteur v;
@@ -15332,6 +15402,14 @@ namespace giac {
   }
   gen _size(const gen &args,GIAC_CONTEXT){
     if (args.type==_STRNG && args.subtype==-1) return args;
+    /* size of image or audio clip, addition by L. Marohnić */
+    audio_clip *clip=audio_clip::from_gen(args);
+    rgba_image *img=rgba_image::from_gen(args);
+    if (clip!=NULL)
+      return clip->length();
+    if (img!=NULL)
+      return makevecteur(img->width(),img->height());
+    /* end audio clip or image size */
     if (args.type==_STRNG)
       return (int) args._STRNGptr->size();
     if (args.type==_SYMB){
@@ -15421,7 +15499,7 @@ namespace giac {
       vecteur & v =*it->_VECTptr;
       for (j=0,jt=v.begin()+j0;j<cc;++j,++jt){
 	g=evalf_double(*jt,1,contextptr);
-  if (g.type==_DOUBLE_)
+	if (g.type==_DOUBLE_)
 	  gsl_matrix_set(w,transp?j:i,transp?i:j,g._DOUBLE_val);
 	else {
 	  res=!GSL_SUCCESS;
@@ -15440,6 +15518,25 @@ namespace giac {
       setdimerr();
 #endif
     return matrice2gsl_matrix(m,0,0,0,0,false,w,contextptr); // change by L. Marohnić
+    gen g;
+    const_iterateur it=m.begin(),itend=m.end();
+    int res=GSL_SUCCESS;
+    for (int i = 0; it!=itend; ++i,++it){
+      if (it->type!=_VECT)
+	res=!GSL_SUCCESS;
+      vecteur & v =*it->_VECTptr;
+      const_iterateur jt=v.begin(),jtend=v.end();
+      for (int j=0;jt!=jtend;++j,++jt){
+	g=evalf(*jt,1,contextptr);
+	if (g.type==_DOUBLE_)
+	  gsl_matrix_set(w,i,j,g._DOUBLE_val);
+	else {
+	  res=!GSL_SUCCESS;
+	  gsl_matrix_set(w,i,j,nan());	  
+	}
+      }
+    }
+    return res;
   }
 
   // this function allocate all space needed for the gsl_matrix
@@ -16148,7 +16245,9 @@ namespace giac {
         mat_type=2; // real numeric
     }
     bool sing;
+#if !defined KHICAS && !defined GIAC_HAS_STO_38
     log_output_redirect lor(contextptr);
+#endif
     if (!ldl(a,perm,mat_type,sing,0,contextptr))
       return gensizeerr(gettext("LAPACK LDL error"));
     if (sing)

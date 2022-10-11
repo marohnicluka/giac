@@ -39,50 +39,50 @@ inline bool is_seq_vect(const gen &g) {
 
 /* error messages */
 static const char *gt_error_messages[] = {
-    "Unknown error",                                                    //  0
-    "Argument is not a graph",                                          //  1
-    "Weighted graph is required",                                       //  2
-    "Unweighted graph is required",                                     //  3
-    "Directed graph is required",                                       //  4
-    "Undirected graph is required",                                     //  5
-    "does not specify an edge",                                         //  6
-    "Mixing edges and arcs not allowed",                                //  7
-    "Weight/adjacency matrix must be symmetric for undirected graphs",  //  8
-    "Failed to read graph from file",                                   //  9
-    "Edge not found",                                                   // 10
-    "Vertex not found",                                                 // 11
-    "Graph is not a tree",                                              // 12
-    "Exactly one root node must be specified per connected component",  // 13
-    "Invalid root node specification",                                  // 14
-    "Graph is not planar",                                              // 15
-    "Connected graph required",                                         // 16
-    "Invalid drawing method specification",                             // 17
-    "does not specify a cycle in the given graph",                      // 18
-    "No cycle found",                                                   // 19
-    "Graph name is not recognized",                                     // 20
-    "Argument is not a subgraph",                                       // 21
-    "Graph is null",                                                    // 22
-    "Expected \"tag\"=value pair",                                      // 23
-    "Argument is not a valid graphic sequence",                         // 24
-    "Graph is not acyclic",                                             // 25
-    "Biconnected graph required",                                       // 26
-    "Graph is not bipartite",                                           // 27
-    "Wrong number of arguments",                                        // 28
-    "Positive integer required",                                        // 29
-    "Invalid vertex specification",                                     // 30
-    "Expected an identifier",                                           // 31
+    gettext("Unknown error"),                                                    //  0
+    gettext("Argument is not a graph"),                                          //  1
+    gettext("Weighted graph is required"),                                       //  2
+    gettext("Unweighted graph is required"),                                     //  3
+    gettext("Directed graph is required"),                                       //  4
+    gettext("Undirected graph is required"),                                     //  5
+    gettext("does not specify an edge"),                                         //  6
+    gettext("Mixing edges and arcs not allowed"),                                //  7
+    gettext("Weight/adjacency matrix must be symmetric for undirected graphs"),  //  8
+    gettext("Failed to read graph from file"),                                   //  9
+    gettext("Edge not found"),                                                   // 10
+    gettext("Vertex not found"),                                                 // 11
+    gettext("Graph is not a tree"),                                              // 12
+    gettext("Exactly one root node must be specified per connected component"),  // 13
+    gettext("Invalid root node specification"),                                  // 14
+    gettext("Graph is not planar"),                                              // 15
+    gettext("Connected graph required"),                                         // 16
+    gettext("Invalid drawing method specification"),                             // 17
+    gettext("does not specify a cycle in the given graph"),                      // 18
+    gettext("No cycle found"),                                                   // 19
+    gettext("Graph name is not recognized"),                                     // 20
+    gettext("Argument is not a subgraph"),                                       // 21
+    gettext("Graph is null"),                                                    // 22
+    gettext("Expected \"tag\"=value pair"),                                      // 23
+    gettext("Argument is not a valid graphic sequence"),                         // 24
+    gettext("Graph is not acyclic"),                                             // 25
+    gettext("Biconnected graph required"),                                       // 26
+    gettext("Graph is not bipartite"),                                           // 27
+    gettext("Wrong number of arguments"),                                        // 28
+    gettext("Positive integer required"),                                        // 29
+    gettext("Invalid vertex specification"),                                     // 30
+    gettext("Expected an identifier"),                                           // 31
 };
 
 gen gt_err(int code) {
-    return generr(gettext((string(gt_error_messages[code])).c_str()),false);
+    return generr(gt_error_messages[code]);
 }
 
 gen gt_err(const gen &g,int code) {
     string str;
     str+=gen2string(g);
     str+=": ";
-    str+=gettext(gt_error_messages[code]);
-    return generr(str.c_str(),false);
+    str+=gt_error_messages[code];
+    return generr(str.c_str());
 }
 
 bool is_unassigned_identifier(const gen &g,GIAC_CONTEXT) {
@@ -342,12 +342,12 @@ void parse_lp_options(const_iterateur opt_start,const_iterateur opt_end,bool *st
                 switch (lhs.val) {
                 case _LP_TIME_LIMIT:
                     if (!rhs.is_integer() || rhs.val<=0)
-                        generr("Expected a positive integer");
+                        generr(gettext("Expected a positive integer"));
                     tm_lim=rhs.val;
                     break;
                 case _LP_GAP_TOLERANCE:
                     if (!is_real_number(rhs,contextptr) || !is_positive(to_real_number(rhs,contextptr),contextptr))
-                        generr("Expected a nonnegative real number");
+                        generr(gettext("Expected a nonnegative real number"));
                     gap_tol=to_real_number(rhs,contextptr).to_double(contextptr);
                     break;
                 default: gentypeerr(contextptr);
@@ -426,7 +426,7 @@ gen randomgraph(const vecteur &gv,bool directed,GIAC_CONTEXT) {
         } else {
             vecteur P;
             if (directed)
-                return generr("This method cannot generate digraphs");
+                return generr(gettext("This method cannot generate digraphs"));
             if (gv.back().type==_VECT) {
                 P=*gv.back()._VECTptr;
             } else if (gv.back().is_symb_of_sommet(at_program) || gv.back().type==_FUNC) {
@@ -437,18 +437,18 @@ gen randomgraph(const vecteur &gv,bool directed,GIAC_CONTEXT) {
             for (iterateur it=P.begin();it!=P.end();++it) {
                 gen w;
                 if (!is_real_number(*it,contextptr) || !is_positive(w=to_real_number(*it,contextptr),contextptr))
-                    return generr("Weights must be nonnegative real numbers");
+                    return generr(gettext("Weights must be nonnegative real numbers"));
                 *it=w;
             }
             G.molloy_reed(P);
         }
     } else if (gv.size()==3) { // preferential attachment
         if (directed)
-            return generr("This method cannot generate digraphs");
+            return generr(gettext("This method cannot generate digraphs"));
         if (!gv[1].is_integer() || !is_strictly_positive(gv[1],contextptr))
-            return generr("Expected a positive integer");
+            return generr(gettext("Expected a positive integer"));
         if (!gv[2].is_integer() || !is_positive(gv[2],contextptr))
-            return generr("Expected a nonnegative integer");
+            return generr(gettext("Expected a nonnegative integer"));
         int d=gv[1].val,o=gv[2].val;
         G.preferential_attachment(d,o);
     } else return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
@@ -659,7 +659,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
             }
         }
         if (gv.size()<2)
-            return generrdim("Too few input arguments");
+            return generrdim(gettext("Too few input arguments"));
         gen mean(undef),sdev(undef),a(undef),b(undef);
         const gen &f=gv.front();
         int cnt=1,samples=0;
@@ -672,7 +672,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
                 else if (lh==at_stddev)
                     sdev=rh;
                 else if (lh==at_variance) {
-                    if (!is_positive(rh,contextptr)) return generr("Variance must be nonnegative");
+                    if (!is_positive(rh,contextptr)) return generr(gettext("Variance must be nonnegative"));
                     sdev=sqrt(rh,contextptr);
                 } else if (lh==at_range) {
                     if (rh.type==_VECT) {
@@ -683,8 +683,8 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
                     } else if (rh.is_symb_of_sommet(at_interval)) {
                         a=rh._SYMBptr->feuille._VECTptr->front();
                         b=rh._SYMBptr->feuille._VECTptr->back();
-                    } else return generr("Invalid range specification");
-                } else return generr("Unknown distribution parameter");
+                    } else return generr(gettext("Invalid range specification"));
+                } else return generr(gettext("Unknown distribution parameter"));
             } else if (it->is_symb_of_sommet(at_interval)) {
                 a=it->_SYMBptr->feuille._VECTptr->front();
                 b=it->_SYMBptr->feuille._VECTptr->back();
@@ -697,10 +697,10 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
                 else items=*(it->_VECTptr);
             } else if (it->is_integer() && it->val>1 && cnt==2) {
                 samples=it->val;
-            } else return generr("Invalid distribution specification");
+            } else return generr(gettext("Invalid distribution specification"));
         }
         if (!is_undef(sdev) && !is_strictly_positive(sdev,contextptr))
-            return generr("Standard deviation must be positive");
+            return generr(gettext("Standard deviation must be positive"));
         if (f.type==_VECT) { // custom discrete distribution
             weights=*f._VECTptr;
         } else if (is_density(f,at_normal)) {
@@ -731,7 +731,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
             if (!is_strictly_positive(lambda,contextptr))
                 return gensizeerr(contextptr);
             if (!is_strictly_positive(lambda,contextptr))
-                return generr("Invalid distribution parameter");
+                return generr(gettext("Invalid distribution parameter"));
             return symbolic(at_poisson,lambda);
         } else if (is_density(f,at_exp)) {
             gen lambda;
@@ -747,7 +747,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
             if (!is_strictly_positive(lambda,contextptr))
                 return gensizeerr(contextptr);
             if (!is_strictly_positive(lambda,contextptr))
-                return generr("Invalid distribution parameter");
+                return generr(gettext("Invalid distribution parameter"));
             return symbolic(at_exponentiald,lambda);
         } else if (is_density(f,at_weibull)) {
             if (is_undef(mean) || is_undef(sdev) || !is_strictly_positive(mean,contextptr))
@@ -792,7 +792,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
             return symbolic(at_geometric,p);
         } else if (f==at_fisher || f==at_fisherd || f==at_snedecor || f==at_chisquare || f==at_chisquared ||
                    f==at_cauchy || f==at_cauchyd || f==at_student || f==at_studentd) {
-            return generr("Specifying moments is not supported for this distribution");
+            return generr(gettext("Specifying moments is not supported for this distribution"));
         } else if (is_density(f,at_multinomial)) {
             if (categories.empty())
                 return gensizeerr(contextptr);
@@ -853,7 +853,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
     if (weights.empty())
         return gensizeerr(contextptr);
     if (!items.empty() && items.size()!=weights.size())
-        return generrdim("Items and weights sizes do not match");
+        return generrdim(gettext("Items and weights sizes do not match"));
     for (const_iterateur it=weights.begin();it!=weights.end();++it) {
         if (!is_real_number(*it,contextptr) || !is_positive(to_real_number(*it,contextptr),contextptr))
             return gensizeerr(contextptr);
@@ -926,13 +926,13 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
         // adjacency matrix is given
         bool size_err;
         if (!parse_matrix(G,*g._VECTptr,false,0,size_err))
-            return size_err?generrdim("Bad matrix size"):gentypeerr(contextptr);
+            return size_err?generrdim(gettext("Bad matrix size")):gentypeerr(contextptr);
     } else if (g.type==_VECT && g.subtype!=_SEQ__VECT) {
         // list of vertices or set of edges is given
         int addc=0;
         if (g.subtype==_SET__VECT) {
             if (!parse_edges(G,*g._VECTptr,true,addc))
-                return generrtype("Failed to parse edges");
+                return generrtype(gettext("Failed to parse edges"));
         } else G.add_nodes(*g._VECTptr);
     } else if (g.is_symb_of_sommet(at_trail)) {
         // a trail is given
@@ -950,19 +950,19 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
                 switch(sides.front().val) {
                 case _GT_DIRECTED:
                     if (!sides.back().is_integer())
-                        return generr("Option value not supported");
+                        return generr(gettext("Option value not supported"));
                     G.set_directed((bool)sides.back().val);
                     break;
                 case _GT_WEIGHTED:
                     if (!sides.back().is_integer())
-                        return generr("Option value not supported");
+                        return generr(gettext("Option value not supported"));
                     G.set_weighted((bool)sides.back().val);
                     break;
                 }
             } else if (sides.front().type==_STRNG) {
                 // graph attribute is given
                 G.set_graph_attribute(G.tag2index(*sides.front()._STRNGptr),sides.back());
-            } else return generr("Unknown option");
+            } else return generr(gettext("Unknown option"));
             n--;
         }
         // parse other arguments
@@ -974,11 +974,11 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
                 if (!G.is_directed() && m!=mtran(m))
                     return gt_err(_GT_ERR_MATRIX_NOT_SYMMETRIC);
                 if (!parse_matrix(G,m,i==2 || G.is_weighted(),i,size_err))
-                    return size_err?generrdim("Bad matrix size"):generrtype("Failed to parse matrix");
+                    return size_err?generrdim(gettext("Bad matrix size")):generrtype(gettext("Failed to parse matrix"));
             } else if (i==0 && arg.is_integer()) {
                 int nv=arg.val;
                 if (nv<0)
-                    return generr("Number of vertices must be positive");
+                    return generr(gettext("Number of vertices must be positive"));
                 vecteur V;
                 G.make_default_labels(V,nv);
                 G.add_nodes(V);
@@ -990,10 +990,10 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
                     // set of edges
                     int addc=0;
                     if (!parse_edges(G,argv,true,addc))
-                        return generrtype("Failed to parse edges");
+                        return generrtype(gettext("Failed to parse edges"));
                 } else if (i==1 && is_permu(argv,permu_int,contextptr) && (permu_size=argv.size())>0) {
                     if (permu_size!=G.node_count())
-                        return generr("Permutation size does not match the number of vertices");
+                        return generr(gettext("Permutation size does not match the number of vertices"));
                     // directed cycle
                     G.set_directed(true);
                     int offset=array_start(contextptr);
@@ -1020,7 +1020,7 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
                         if (rh.type!=_VECT || int(rh._VECTptr->size())!=G.node_count())
                             return gensizeerr(contextptr);
                         if (!parse_vertex_colors(G,rh))
-                            return generr("Failed to parse vertex colors");
+                            return generr(gettext("Failed to parse vertex colors"));
                         break;
                     }
                 } else if (lh==at_coordonnees) {
@@ -1032,7 +1032,7 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
                     bool size_error=false;
                     if (!parse_vertex_coordinates(G,*rh._VECTptr,size_error))
                         return size_error?generr("Wrong number of vertex positions;"):
-                                          generrtype("Failed to parse vertex positions");
+                                          generrtype(gettext("Failed to parse vertex positions"));
                 }
             } else return gentypeerr(contextptr);
         }
@@ -1124,7 +1124,7 @@ gen _export_graph(const gen &g,GIAC_CONTEXT) {
         return G->write_dot(filename,export_style)?1:0;
     if (has_suffix(filename,".lst"))
         return G->write_lst(filename)?1:0;
-    return generr("File format not recognized");
+    return generr(gettext("File format not recognized"));
 }
 static const char _export_graph_s[]="export_graph";
 static define_unary_function_eval(__export_graph,&_export_graph,_export_graph_s);
@@ -1143,7 +1143,7 @@ gen _import_graph(const gen &g,GIAC_CONTEXT) {
         const vecteur &gv=*g._VECTptr;
         if (gv.front().type==_STRNG)
             filename=graphe::genstring2str(gv.front());
-        else return generrtype("Expected a string");
+        else return generrtype(gettext("Expected a string"));
         /* parse options */
         for (const_iterateur it=gv.begin()+1;it!=gv.end();++it) {
             if (is_equal(*it)) {
@@ -1167,7 +1167,7 @@ gen _import_graph(const gen &g,GIAC_CONTEXT) {
         }
     } else if (g.type==_STRNG)
         filename=graphe::genstring2str(g);
-    else return generrtype("Expected a string");
+    else return generrtype(gettext("Expected a string"));
     graphe G(contextptr);
     if (filename.empty())
         return undef;
@@ -1176,7 +1176,7 @@ gen _import_graph(const gen &g,GIAC_CONTEXT) {
         f=0;
     else if (has_suffix(filename,".lst"))
         f=1;
-    else return generr("File format not recognized");
+    else return generr(gettext("File format not recognized"));
     filename=make_absolute_file_path(filename);
     if ((f==0 && !G.read_dot(filename)) || (f==1 && !G.read_lst(filename)))
         gt_err(_GT_ERR_READING_FAILED);
@@ -1186,7 +1186,7 @@ gen _import_graph(const gen &g,GIAC_CONTEXT) {
         for (int i=0;i<G.node_count();++i) {
             l=G.node_label(i);
             if (m.find(l)!=m.end())
-                return generr("Imported graph contains vertices with equal labels");
+                return generr(gettext("Imported graph contains vertices with equal labels"));
             m[l]=1;
         }
         int n=G.node_count();
@@ -1379,7 +1379,7 @@ gen _incidence_matrix(const gen &g,GIAC_CONTEXT) {
     if (G->is_null())
         return gt_err(_GT_ERR_GRAPH_IS_NULL);
     if (G->is_empty())
-        return generr("Graph is empty");
+        return generr(gettext("Graph is empty"));
     if (G->is_null())
         return vecteur(0);
     matrice M;
@@ -1602,7 +1602,7 @@ gen _bipartite_matching(const gen &g,GIAC_CONTEXT) {
         else *logptr(contextptr) << "Warning: unknown optional argument\n";
         if (gv.size()>2) {
             if (!is_real_number(gv[2],contextptr) || (eps=to_real_number(gv[2],contextptr).to_double(contextptr))<=0)
-                return generr("Expected a positive real number");
+                return generr(gettext("Expected a positive real number"));
         }
     } else {
         G=graphe::from_gen(g);
@@ -1697,7 +1697,7 @@ gen _cycle_graph(const gen &g,GIAC_CONTEXT) {
     if (!vertices_from_integer_or_vecteur(g,G))
         return gt_err(_GT_ERR_BAD_VERTICES);
     if (G.node_count()<3)
-        return generr("At least 3 vertices are required");
+        return generr(gettext("At least 3 vertices are required"));
     G.make_cycle_graph();
     return G;
 }
@@ -1859,21 +1859,21 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                         break;
                     case _LABELS:
                         if (!rh.is_integer())
-                            return generrtype("Expected an integer");
+                            return generrtype(gettext("Expected an integer"));
                         labels=(bool)rh.val;
                         opt_counter--;
                         break;
                     case _TITLE:
                         if (rh.type!=_STRNG)
-                            return generrtype("Expected a string");
+                            return generrtype(gettext("Expected a string"));
                         title=rh;
                         opt_counter--;
                         break;
-                    default: return generrtype("Unrecognized option");
+                    default: return generrtype(gettext("Unrecognized option"));
                     }
                 } else if (lh==at_cercle || lh==at_convexhull) {
                     if (rh.type!=_VECT)
-                        return generrtype("Expected a list of vertices");
+                        return generrtype(gettext("Expected a list of vertices"));
                     outer_vertices=*rh._VECTptr;
                     method=_GT_STYLE_CIRCLE;
                 } else if (lh==at_size) {
@@ -1884,7 +1884,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 } else if (lh==at_scale) {
                     sc=rh;
                     opt_counter--;
-                } else return generrtype("Unrecognized option");
+                } else return generrtype(gettext("Unrecognized option"));
             } else if (opt==at_cercle || opt==at_convexhull)
                 method=_GT_STYLE_CIRCLE;
             else if (opt==at_plan)
@@ -1905,12 +1905,12 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
                 case _GT_PLANAR:
                     method=_GT_STYLE_PLANAR;
                     break;
-                default: return generrtype("Unrecognized drawing method");
+                default: return generrtype(gettext("Unrecognized drawing method"));
                 }
             } else if (opt.type==_VECT) {
                 pos=*opt._VECTptr;
                 opt_counter--;
-            } else return generrtype("Unrecognized option");
+            } else return generrtype(gettext("Unrecognized option"));
         }
         if (opt_counter>1)
             return gt_err(_GT_ERR_INVALID_DRAWING_METHOD);
@@ -2039,7 +2039,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
             } catch (const std::runtime_error &e) {
                 if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
                     ctrl_c=interrupted=false;
-                    return generr("Stopped by user interruption");
+                    return generr(gettext("Stopped by user interruption"));
                 }
                 *logptr(contextptr) << e.what() << "\n";
             }
@@ -2097,7 +2097,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
         }
         if (!ar.empty()) {
             if ((in_3d && ar.size()!=3) || (method!=_GT_STYLE_3D && ar.size()!=2))
-                return generrdim("Bad point dimension");
+                return generrdim(gettext("Bad point dimension"));
             graphe::point s(in_3d?3:2);
             for (const_iterateur it=ar.begin();it!=ar.end();++it) {
                 if (!is_positive(*it,contextptr))
@@ -2128,7 +2128,7 @@ gen _draw_graph(const gen &g,GIAC_CONTEXT) {
         if (!pos.empty()) {
             graphe::point dp(in_3d?3:2,0.0);
             if (pos.size()!=dp.size())
-                return generrdim("Bad point dimension");
+                return generrdim(gettext("Bad point dimension"));
             for (const_iterateur it=pos.begin();it!=pos.end();++it) {
                 int i=it-pos.begin();
                 if (!is_real_number(*it,contextptr))
@@ -2203,7 +2203,7 @@ gen _sierpinski_graph(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -2305,7 +2305,7 @@ gen _random_graph(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -2331,7 +2331,7 @@ gen _random_digraph(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -2368,7 +2368,7 @@ gen _random_bipartite_graph(const gen &g,GIAC_CONTEXT) {
     } else if (gv.front().type==_VECT && gv.front()._VECTptr->size()==2) {
         const vecteur &ab=*gv.front()._VECTptr;
         if (!ab.front().is_integer() || !ab.back().is_integer())
-            return generrtype("Expected a pair of integers");
+            return generrtype(gettext("Expected a pair of integers"));
         a=ab.front().val;
         b=ab.back().val;
         if (a<=0 || b<=0)
@@ -2378,13 +2378,13 @@ gen _random_bipartite_graph(const gen &g,GIAC_CONTEXT) {
     double p;
     if (gv.back().is_integer()) {
         if ((m=gv.back().val)<1)
-            return generr("Expected a positive integer");
+            return generr(gettext("Expected a positive integer"));
         if (a<0 && b<0) do {
             a=G.rand_integer(n-1)+1;
             b=n-a;
         } while (m>a*b);
         if (m>a*b)
-            return generr("Number of edges too large");
+            return generr(gettext("Number of edges too large"));
         if (m==a*b)
             return _complete_graph(makesequence(a,b),contextptr);
         p=m;
@@ -2406,7 +2406,7 @@ gen _random_bipartite_graph(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -2472,7 +2472,7 @@ gen _random_regular_graph(const gen &g,GIAC_CONTEXT) {
         connected=true;
     int n=V.size();
     if (n<=d+1 || (n*d)%2!=0) // check the necessary condition
-        return generr("Graph does not exist");
+        return generr(gettext("Graph does not exist"));
     G.reserve_nodes(V.size());
     G.add_nodes(V);
     try {
@@ -2480,7 +2480,7 @@ gen _random_regular_graph(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -2508,7 +2508,7 @@ gen _random_sequence_graph(const gen &g,GIAC_CONTEXT) {
         m+=(deg[it-g._VECTptr->begin()]=it->val);
     }
     if ((m%2)!=0)
-        return generr("Sum of degrees must be even");
+        return generr(gettext("Sum of degrees must be even"));
     graphe G(contextptr);
     vecteur labels;
     G.make_default_labels(labels,n);
@@ -2549,7 +2549,7 @@ gen _random_tree(const gen &g,GIAC_CONTEXT) {
                 return gt_err(_GT_ERR_BAD_VERTICES);
             if (gv.back().is_integer()) {
                 if ((maxd=gv.back().val)<2)
-                    return generr("Maximum degree must be at least two");
+                    return generr(gettext("Maximum degree must be at least two"));
             } else if (is_inf(gv.back()))
                 maxd=rand_max2;
             else if (gv.back()==at_maple_root)
@@ -2563,7 +2563,7 @@ gen _random_tree(const gen &g,GIAC_CONTEXT) {
                 V.insert(V.begin(),root_label);
                 rooted=true;
             }
-            else return generr("Invalid option");
+            else return generr(gettext("Invalid option"));
         } else {
             V=gv;
             n=V.size();
@@ -2607,10 +2607,10 @@ gen _random_planar_graph(const gen &g,GIAC_CONTEXT) {
                 return gentypeerr(contextptr);
             p=to_real_number(gv[1],contextptr).to_double(contextptr);
             if (p<0 || p>=1)
-                return generrtype("Invalid probability specification");
+                return generrtype(gettext("Invalid probability specification"));
             if (gv.size()==3) {
                 if (!gv.back().is_integer() || gv.back().val<0 || gv.back().val>3)
-                    return generrtype("Invalid connectivity specification");
+                    return generrtype(gettext("Invalid connectivity specification"));
                 connectivity=gv.back().val;
             }
         } else return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
@@ -2623,7 +2623,7 @@ gen _random_planar_graph(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -2655,15 +2655,15 @@ gen _assign_edge_weights(const gen &g,GIAC_CONTEXT) {
             return gentypeerr(contextptr);
         int m=gv[1].val,n=gv[2].val;
         if (m>n)
-            return generr("Lower bound too high");
+            return generr(gettext("Lower bound too high"));
         G->randomize_edge_weights(m,n,true);
     } else if (gv.size()==2) {
         if (!gv.back().is_symb_of_sommet(at_interval))
-            return generrtype("Expected an interval");
+            return generrtype(gettext("Expected an interval"));
         gen a=gv.back()._SYMBptr->feuille._VECTptr->front(),
                 b=gv.back()._SYMBptr->feuille._VECTptr->back();
         if (!is_real_number(a,contextptr) || !is_real_number(b,contextptr))
-            return generrtype("Expected an interval of reals");
+            return generrtype(gettext("Expected an interval of reals"));
         G->randomize_edge_weights(to_real_number(a,contextptr).to_double(contextptr),
                                  to_real_number(b,contextptr).to_double(contextptr),false);
     }
@@ -3084,7 +3084,7 @@ gen _make_weighted(const gen &g,GIAC_CONTEXT) {
     if (has_matrix) {
         m=*g._VECTptr->back()._VECTptr;
         if (int(m.size())!=n || int(m.front()._VECTptr->size())!=n)
-            return generrdim("Bad matrix size");
+            return generrdim(gettext("Bad matrix size"));
     }
     G->make_weighted(m);
     return *G;
@@ -3723,7 +3723,7 @@ gen _is_regular(const gen &g,GIAC_CONTEXT) {
     if (!is_undef(arg)) {
         if (arg.is_integer()) {
             if ((d=arg.val)<0)
-                return generr("Expected a nonnegative integer");
+                return generr(gettext("Expected a nonnegative integer"));
         } else if (arg.type!=_IDNT)
             return gentypeerr(contextptr);
     }
@@ -3781,7 +3781,7 @@ gen _isomorphic_copy(const gen &g,GIAC_CONTEXT) {
         if (gv.size()<2)
             return gensizeerr(contextptr);
         if (is_zero(_is_permu(gv[1],contextptr)))
-            return generrtype("Expected a permutation");
+            return generrtype(gettext("Expected a permutation"));
         sigma=*gv[1]._VECTptr;
     }
     graphe *G=graphe::from_gen(is_seq_vect(g)?g._VECTptr->front():g);
@@ -3790,7 +3790,7 @@ gen _isomorphic_copy(const gen &g,GIAC_CONTEXT) {
     if (sigma.empty())
         sigma=*_randperm(G->node_count(),contextptr)._VECTptr;
     if (int(sigma.size())!=G->node_count())
-        return generr("Invalid permutation size");
+        return generr(gettext("Invalid permutation size"));
     graphe::ivector v(sigma.size());
     int ofs=array_start(contextptr);
     for (const_iterateur it=sigma.begin();it!=sigma.end();++it) {
@@ -3798,7 +3798,7 @@ gen _isomorphic_copy(const gen &g,GIAC_CONTEXT) {
     }
     graphe H(contextptr);
     if (!G->isomorphic_copy(H,v,true))
-        return generrtype("Failed to create isomorphic copy");
+        return generrtype(gettext("Failed to create isomorphic copy"));
     H.relabel_nodes(G->vertices());
     return H;
 }
@@ -3822,7 +3822,7 @@ gen _permute_vertices(const gen &g,GIAC_CONTEXT) {
             ;
         else if (gv[1].type==_VECT)
             sigma=*gv[1]._VECTptr;
-        else return generrtype("Expected a list of vertices");
+        else return generrtype(gettext("Expected a list of vertices"));
     }
     graphe *G=graphe::from_gen(is_seq_vect(g)?g._VECTptr->front():g);
     if (G==NULL)
@@ -3831,7 +3831,7 @@ gen _permute_vertices(const gen &g,GIAC_CONTEXT) {
     if (sigma.empty())
         sigma=*_eval(symbolic(at_shuffle,V),contextptr)._VECTptr;
     if (sigma.size()!=V.size())
-        return generr("Invalid permutation size");
+        return generr(gettext("Invalid permutation size"));
     graphe::ivector v(sigma.size(),-1);
     const_iterateur jt;
     int i;
@@ -3840,7 +3840,7 @@ gen _permute_vertices(const gen &g,GIAC_CONTEXT) {
             return gt_err(*it,_GT_ERR_VERTEX_NOT_FOUND);
         i=jt-V.begin();
         if (find(v.begin(),v.end(),i)!=v.end())
-            return generrtype("Expected a permutation");
+            return generrtype(gettext("Expected a permutation"));
         v[it-sigma.begin()]=i;
     }
     graphe H(contextptr);
@@ -3864,15 +3864,15 @@ gen _relabel_vertices(const gen &g,GIAC_CONTEXT) {
     if (gv.size()<2)
         return gensizeerr(contextptr);
     if (gv[1].type!=_VECT)
-        return generrtype("Expected a list of labels");
+        return generrtype(gettext("Expected a list of labels"));
     graphe *G=graphe::from_gen(gv.front());
     if (G==NULL)
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     const vecteur &labels=*gv[1]._VECTptr;
     if (int(labels.size())!=G->node_count())
-        return generr("Invalid number of labels");
+        return generr(gettext("Invalid number of labels"));
     if (!G->relabel_nodes(labels))
-        return generrtype("Failed to relabel vertices");
+        return generrtype(gettext("Failed to relabel vertices"));
     return *G;
 }
 static const char _relabel_vertices_s[]="relabel_vertices";
@@ -3986,7 +3986,7 @@ gen _number_of_triangles(const gen &g,GIAC_CONTEXT) {
     if (G==NULL)
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (!is_undef(dest) && G->is_directed())
-        return generr("Undirected graph is required for triangle listing");
+        return generr(gettext("Undirected graph is required for triangle listing"));
     graphe::ivectors lst;
     gen cnt;
     try {
@@ -3994,7 +3994,7 @@ gen _number_of_triangles(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -4108,7 +4108,7 @@ gen _is_planar(const gen &g,GIAC_CONTEXT) {
         } catch (const std::runtime_error &e) {
             if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
                 ctrl_c=interrupted=false;
-                return generr("Stopped by user interruption");
+                return generr(gettext("Stopped by user interruption"));
             }
             return generr(e.what());
         }
@@ -4152,7 +4152,7 @@ gen _complete_kary_tree(const gen &g,GIAC_CONTEXT) {
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (!gv.front().is_integer() || !gv.back().is_integer())
-        return generrtype("Expected an integer");
+        return generrtype(gettext("Expected an integer"));
     int k=gv.front().val,n=gv.back().val;
     if (k<2 || n<1)
         return gensizeerr(contextptr);
@@ -4172,7 +4172,7 @@ define_unary_function_ptr5(at_complete_kary_tree,alias_at_complete_kary_tree,&__
 gen _prism_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (!g.is_integer() || g.val<3)
-        return generr("Expected an integer greater than two");
+        return generr(gettext("Expected an integer greater than two"));
     return _petersen_graph(makesequence(g,1),contextptr);
 }
 static const char _prism_graph_s[]="prism_graph";
@@ -4186,7 +4186,7 @@ define_unary_function_ptr5(at_prism_graph,alias_at_prism_graph,&__prism_graph,0,
 gen _antiprism_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (!g.is_integer() || g.val<3)
-        return generr("Expected an integer greater than two");
+        return generr(gettext("Expected an integer greater than two"));
     graphe G(contextptr);
     graphe::layout x;
     G.make_antiprism_graph(g.val,&x);
@@ -4219,7 +4219,7 @@ define_unary_function_ptr5(at_star_graph,alias_at_star_graph,&__star_graph,0,tru
 gen _wheel_graph(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (!g.is_integer() || g.val<3)
-        return generr("Expected an integer greater than two");
+        return generr(gettext("Expected an integer greater than two"));
     graphe G(contextptr);
     graphe::layout x;
     G.make_wheel_graph(g.val,&x);
@@ -4244,14 +4244,14 @@ gen _grid_graph(const gen &g,GIAC_CONTEXT) {
     bool trg=false;
     if (gv.size()==3) {
         if (gv[2]!=at_triangle)
-            return generr("Unrecognized option");
+            return generr(gettext("Unrecognized option"));
         trg=true;
     }
     if (!gv[0].is_integer() || !gv[1].is_integer())
-        return generrtype("Expected an integer");
+        return generrtype(gettext("Expected an integer"));
     int m=gv[0].val,n=gv[1].val;
     if (m<2 || n<2)
-        return generr("Expected an integer greater than one");
+        return generr(gettext("Expected an integer greater than one"));
     graphe G(contextptr);
     G.make_grid_graph(m,n,trg?1:0);
     return G;
@@ -4272,10 +4272,10 @@ gen _torus_grid_graph(const gen &g,GIAC_CONTEXT) {
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (!gv.front().is_integer() || !gv.back().is_integer())
-        return generrtype("Expected an integer");
+        return generrtype(gettext("Expected an integer"));
     int m=gv.front().val,n=gv.back().val;
     if (m<3 || n<3)
-        return generr("Expected an integer greater than two");
+        return generr(gettext("Expected an integer greater than two"));
     graphe G(contextptr);
     G.make_grid_graph(m,n,2);
     return G;
@@ -4296,10 +4296,10 @@ gen _web_graph(const gen &g,GIAC_CONTEXT) {
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (!gv.front().is_integer() || !gv.back().is_integer())
-        return generrtype("Expected an integer");
+        return generrtype(gettext("Expected an integer"));
     int a=gv.front().val,b=gv.back().val;
     if (a<3 || b<2)
-        return generr("Value too small");
+        return generr(gettext("Value too small"));
     graphe G(contextptr);
     graphe::layout x;
     G.make_web_graph(a,b,&x);
@@ -4319,7 +4319,7 @@ gen _flower_snark(const gen &g,GIAC_CONTEXT) {
     int n;
     if (g.is_integer()) {
         if ((n=g.val)<3 || n%2==0)
-            return generr("Expected an odd integer greater than two");
+            return generr(gettext("Expected an odd integer greater than two"));
     } else if (g.type==_VECT && g._VECTptr->empty())
         n=5;
     else return gentypeerr(contextptr);
@@ -4342,7 +4342,7 @@ gen _goldberg_snark(const gen &g,GIAC_CONTEXT) {
     int n;
     if (g.is_integer()) {
         if ((n=g.val)<3 || n%2==0)
-            return generr("Expected an odd integer greater than two");
+            return generr(gettext("Expected an odd integer greater than two"));
     } else if (g.type==_VECT && g._VECTptr->empty())
         n=5;
     else return gentypeerr(contextptr);
@@ -4384,7 +4384,7 @@ gen _paley_graph(const gen &g,GIAC_CONTEXT) {
             return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
     } else return gentypeerr(contextptr);
     if (is_zero(_is_prime(p,contextptr)) || p==2)
-        return generr("Odd prime number is required");
+        return generr(gettext("Odd prime number is required"));
     graphe G(contextptr);
     G.make_paley_graph(p,k);
     return G;
@@ -4445,7 +4445,7 @@ gen _path_graph(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_BAD_VERTICES);
     int n=G.node_count();
     if (n<2)
-        return generr("At least two vertices are required");
+        return generr(gettext("At least two vertices are required"));
     for (int i=0;i<n-1;++i) {
         G.add_edge(i,i+1);
     }
@@ -4508,7 +4508,7 @@ gen _is_eulerian(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -4546,7 +4546,7 @@ gen _kneser_graph(const gen &g,GIAC_CONTEXT) {
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (!gv.front().is_integer() || !gv.back().is_integer())
-        return generrtype("Expected an integer");
+        return generrtype(gettext("Expected an integer"));
     int n=gv.front().val,k=gv.back().val;
     if (n<2 || n>20 || k<1 || k>=n)
         return generr("Failed to satisfy 2<n<=20 and 1<=k<n");
@@ -4573,7 +4573,7 @@ gen _johnson_graph(const gen &g,GIAC_CONTEXT) {
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (!gv.front().is_integer() || !gv.back().is_integer())
-        return generrtype("Expected an integer");
+        return generrtype(gettext("Expected an integer"));
     int n=gv.front().val,k=gv.back().val;
     if (n<2 || n>20 || k<1 || k>=n)
         return generr("Failed to satisfy 2<n<=20 and 1<=k<n");
@@ -4633,7 +4633,7 @@ gen _highlight_vertex(const gen &g,GIAC_CONTEXT) {
     }
     gen C=gv.size()==3?gv.back():graphe::default_highlighted_vertex_color;
     if (!parse_vertex_colors(*G,C,indices))
-        return generr("Invalid vertex color specification");
+        return generr(gettext("Invalid vertex color specification"));
     return *G;
 }
 static const char _highlight_vertex_s[]="highlight_vertex";
@@ -4687,7 +4687,7 @@ gen _highlight_subgraph(const gen &g,GIAC_CONTEXT) {
     int C1=graphe::default_highlighted_edge_color,C2=graphe::default_highlighted_vertex_color;
     if (gv.size()>=4) {
         if (!gv[2].is_integer() || !gv[3].is_integer())
-            return generrtype("Expected an integer");
+            return generrtype(gettext("Expected an integer"));
         C1=gv[2].val;
         C2=gv[3].val;
     }
@@ -4757,9 +4757,9 @@ gen _highlight_trail(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     gen color=gv.size()==3?gv.back():gen(_RED);
     if (color.type==_VECT && !is_integer_vecteur(*color._VECTptr))
-        return generrtype("Invalid specification of colors");
+        return generrtype(gettext("Invalid specification of colors"));
     if (color.type==_VECT && color._VECTptr->size()!=V.size())
-        return generrdim("Numbers of colors and vertices do not match");
+        return generrdim(gettext("Numbers of colors and vertices do not match"));
     int i,j;
     for (const_iterateur it=V.begin();it!=V.end();++it) {
         for (const_iterateur jt=it->_VECTptr->begin();jt!=it->_VECTptr->end()-1;++jt) {
@@ -4919,11 +4919,11 @@ gen _interval_graph(const gen &g,GIAC_CONTEXT) {
     V.reserve(n);
     for (const_iterateur it=gv.begin();it!=gv.end();++it) {
         if (!it->is_symb_of_sommet(at_interval))
-            return generrtype("Expected an interval");
+            return generrtype(gettext("Expected an interval"));
         a=it->_SYMBptr->feuille._VECTptr->front();
         b=it->_SYMBptr->feuille._VECTptr->back();
         if (!is_real_number(a,contextptr) || !is_real_number(b,contextptr))
-            return generrtype("Expected an interval of reals");
+            return generrtype(gettext("Expected an interval of reals"));
         string str;
         str+=gen2string(a);
         str+="..";
@@ -5156,7 +5156,7 @@ gen _allpairs_distance(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -5442,7 +5442,7 @@ gen _maximum_clique(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -5498,7 +5498,7 @@ gen _clique_cover(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -5531,7 +5531,7 @@ gen _clique_cover_number(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -5582,7 +5582,7 @@ gen _chromatic_number(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -5618,7 +5618,7 @@ gen _maximum_independent_set(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -5646,7 +5646,7 @@ gen _independence_number(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -5876,7 +5876,7 @@ gen _seidel_spectrum(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     int n=G->node_count();
     if (n<2)
-        return generr("Input graph must have at least two vertices");
+        return generr(gettext("Input graph must have at least two vertices"));
     matrice A,I,J,res;
     G->adjacency_matrix(A);
     I=*_idn(n,contextptr)._VECTptr;
@@ -6083,7 +6083,7 @@ gen _lowest_common_ancestor(const gen &g,GIAC_CONTEXT) {
         return G->node_label(G->lowest_common_ancestor(i,j,r));
     } else if (gv.size()==3) {
         if (!ckmatrix(gv.back()))
-            return generrtype("Expected a matrix");
+            return generrtype(gettext("Expected a matrix"));
         if (gv.back()._VECTptr->front()._VECTptr->size()!=2)
             return generrdim("Expected a two-column matrix");
         graphe::ipairs p;
@@ -6168,7 +6168,7 @@ gen _greedy_color(const gen &g,GIAC_CONTEXT) {
         if (g._VECTptr->size()!=2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         if (is_zero(_is_permu(g._VECTptr->back(),contextptr)))
-            return generrtype("Expected a permutation");
+            return generrtype(gettext("Expected a permutation"));
         p=vecteur_2_vector_int(*g._VECTptr->back()._VECTptr);
         int offset=array_start(contextptr);
         for (graphe::ivector::iterator it=p.begin();it!=p.end();++it) {
@@ -6184,7 +6184,7 @@ gen _greedy_color(const gen &g,GIAC_CONTEXT) {
             *it=it-p.begin();
         }
     } else if (G->node_count()!=int(p.size()))
-        return generr("Permutation size must match the number of vertices");
+        return generr(gettext("Permutation size must match the number of vertices"));
     G->greedy_vertex_coloring(p);
     G->get_node_colors(colors);
     return vector_int_2_vecteur(colors);
@@ -6242,7 +6242,7 @@ gen _plane_dual(const gen &g,GIAC_CONTEXT) {
         if (G->is_null())
             return gt_err(_GT_ERR_GRAPH_IS_NULL);
         if (G->node_count()<3)
-            return generr("Input graph must have at least three vertices");
+            return generr(gettext("Input graph must have at least three vertices"));
         if (!G->is_biconnected())
             return gt_err(_GT_ERR_BICONNECTED_GRAPH_REQUIRED);
         else if (!G->demoucron(faces))
@@ -6322,22 +6322,22 @@ gen _set_vertex_positions(const gen &g,GIAC_CONTEXT) {
     if (gv.size()!=2)
         return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
     if (gv.back().type!=_VECT)
-        return generrtype("Expected a list of coordinates");
+        return generrtype(gettext("Expected a list of coordinates"));
     vecteur vp=*_evalf(gv.back(),contextptr)._VECTptr;
     graphe *G=graphe::from_gen(gv.front());
     if (G==NULL)
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     int n,d=0;
     if ((n=vp.size())!=G->node_count())
-        return generr("Number of points must match the number of vertices");
+        return generr(gettext("Number of points must match the number of vertices"));
     graphe::layout x(n);
     for (int i=0;i<n;++i) {
         if (!graphe::gen2point(vp[i],x[i],contextptr))
-            return generr("Invalid point specification");
+            return generr(gettext("Invalid point specification"));
         if (d==0)
             d=x[i].size();
         else if (int(x[i].size())!=d)
-            return generrdim("Invalid point dimension");
+            return generrdim(gettext("Invalid point dimension"));
     }
     G->store_layout(x);
     return *G;
@@ -6370,11 +6370,11 @@ gen _find_cliques(const gen &g,GIAC_CONTEXT) {
             else if (opt.is_symb_of_sommet(at_interval)) {
                 const vecteur &bnds=*opt._SYMBptr->feuille._VECTptr;
                 if (!bnds.front().is_integer() || !(bnds.back().is_integer() || (is_inf(bnds.back()) && is_positive(bnds.back(),contextptr))))
-                    return generr("Invalid bounds");
+                    return generr(gettext("Invalid bounds"));
                 lb=bnds.front().val;
                 ub=is_inf(bnds.back())?rand_max2:bnds.back().val;
                 if (lb<0 || ub<0 || lb>ub)
-                    return generr("Invalid bounds");
+                    return generr(gettext("Invalid bounds"));
             } else return gentypeerr(gettext("Expected an interval."));
         } else if (len>2)
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
@@ -6451,7 +6451,7 @@ gen _minimal_vertex_coloring(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -6587,7 +6587,7 @@ gen _is_subgraph_isomorphic(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -6680,7 +6680,7 @@ gen _canonical_labeling(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     graphe::ivector sigma;
     if (!G->canonical_labeling(sigma)) // nauty not found
-        return generr("nauty library is required for canonical labeling");
+        return generr(gettext("nauty library is required for canonical labeling"));
     vecteur res(G->node_count());
     int ofs=array_start(contextptr);
     for (iterateur it=res.begin();it!=res.end();++it) {
@@ -6718,7 +6718,7 @@ gen _minimal_edge_coloring(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -6757,7 +6757,7 @@ gen _chromatic_index(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -6792,7 +6792,7 @@ gen _is_hamiltonian(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -6837,7 +6837,7 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (!M.empty() && !G->is_weighted()) {
         if (!is_squarematrix(M) || int(M.size())!=G->node_count())
-            return generrdim("Weight matrix has invalid dimensions");
+            return generrdim(gettext("Weight matrix has invalid dimensions"));
         G->make_weighted(M);
     }
     int k=1;
@@ -6858,7 +6858,7 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
                         for (const_iterateur jt=v.begin();jt!=v.end();++jt) {
                             const vecteur &vec=*(jt->_VECTptr);
                             if (vec.size()!=2)
-                                return generr("Expected an edge");
+                                return generr(gettext("Expected an edge"));
                             i=G->node_index(vec.front());
                             j=G->node_index(vec.back());
                             if (i<0 || j<0)
@@ -6871,25 +6871,25 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
                         if (i<0 || j<0)
                             return gt_err(i<0?v.front():v.back(),_GT_ERR_VERTEX_NOT_FOUND);
                         incl.push_back(make_pair(i,j));
-                    } else return generr("Expected an edge or list of edges");
+                    } else return generr(gettext("Expected an edge or list of edges"));
                 } else if (is_mcint(lhs,_LP_GAP_TOLERANCE)) {
                     if (!is_real_number(rhs,contextptr) || is_strictly_greater(0,to_real_number(rhs,contextptr),contextptr))
-                        return generr("Expected a nonnegative real number");
+                        return generr(gettext("Expected a nonnegative real number"));
                     gap_tol=to_real_number(rhs,contextptr).to_double(contextptr);
-                } else return generr("Option not supported");
+                } else return generr(gettext("Option not supported"));
             } else if (it->is_integer() && it->val>0) {
                 if (is_mcint(*it,_LP_VERBOSE))
                     verbose=true;
                 else k=it->val;
-            } else return generr("Option not supported");
+            } else return generr(gettext("Option not supported"));
         }
         if (!G->find_directed_tours(k,hcv,costs,incl,gap_tol,verbose))
             return undef;
         if (hcv.empty())
-            return generr("Unable to find a Hamiltonian cycle");
+            return generr(gettext("Unable to find a Hamiltonian cycle"));
     } else {
         if (G->hamcond()==0)
-            return generr("Input graph is not Hamiltonian");
+            return generr(gettext("Input graph is not Hamiltonian"));
         /* parse options */
         bool approximate=false,make_distances=false;
         int time_limit=rand_max2;
@@ -6903,7 +6903,7 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
                     time_limit=rhs.val;
                 else if (is_mcint(lhs,_LP_GAP_TOLERANCE)) {
                     if (!is_real_number(rhs,contextptr) || !is_positive(to_real_number(rhs,contextptr),contextptr))
-                        return generr("Expected a nonnegative real number");
+                        return generr(gettext("Expected a nonnegative real number"));
                     gap_tol=to_real_number(rhs,contextptr).to_double(contextptr);
                 }
             } else if (*it==at_vertex_distance && M.empty())
@@ -6912,15 +6912,15 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
                 if (is_mcint(*it,_LP_VERBOSE))
                     verbose=true;
                 else k=it->val;
-            } else return generr("Option not supported");
+            } else return generr(gettext("Option not supported"));
         }
         if (time_limit<0)
-            return generr("Expected a nonnegative integer");
+            return generr(gettext("Expected a nonnegative integer"));
         if (make_distances) {
             if (G->is_weighted())
                 return gt_err(_GT_ERR_UNWEIGHTED_GRAPH_REQUIRED);
             if (!G->make_euclidean_distances())
-                return generr("Some vertex positions are invalid");
+                return generr(gettext("Some vertex positions are invalid"));
         }
         G->underlying(U);
         int res;
@@ -6929,12 +6929,12 @@ gen _traveling_salesman(const gen &g,GIAC_CONTEXT) {
             if (!G->is_weighted())
                 gt_err(_GT_ERR_WEIGHTED_GRAPH_REQUIRED);
             if (!G->is_clique())
-                return generr("Input graph must be complete");
+                return generr(gettext("Input graph must be complete"));
             G->traveling_salesman(k=0,hcv,costs,gap_tol,verbose);
         } else {
             res=U.is_biconnected()?G->traveling_salesman(k=1,hcv,costs,gap_tol,verbose):0;
             if (res==0)
-                return generr("Input graph is not Hamiltonian");
+                return generr(gettext("Input graph is not Hamiltonian"));
             if (res==-1)
                 return undef;
         }
@@ -7189,21 +7189,21 @@ gen _random_network(const gen &g,GIAC_CONTEXT) {
                 case _GT_ACYCLIC:
                     if (rh.is_integer() && rh.subtype==_INT_BOOLEAN)
                         acyclic=(bool)rh.val;
-                    else return generr("Expected a boolean value");
+                    else return generr(gettext("Expected a boolean value"));
                     break;
                 case _GT_WEIGHTS:
                     if (rh.is_symb_of_sommet(at_interval)) {
                         lw=rh._SYMBptr->feuille._VECTptr->front();
                         hw=rh._SYMBptr->feuille._VECTptr->back();
                         if (!is_real_number(lw,contextptr) || !is_real_number(hw,contextptr))
-                            return generr("Expected a real number");
+                            return generr(gettext("Expected a real number"));
                         if (is_greater(to_real_number(lw,contextptr),to_real_number(hw,contextptr),contextptr))
-                            return generr("Invalid range");
-                    } else return generr("Expected an interval");
+                            return generr(gettext("Invalid range"));
+                    } else return generr(gettext("Expected an interval"));
                     weighted=true;
                     break;
                 default:
-                    return generr("Unrecognized option");
+                    return generr(gettext("Unrecognized option"));
                 }
             }
         }
@@ -7297,7 +7297,7 @@ gen _tutte_polynomial(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     if (G->is_weighted()) {
         if (!G->weights2multiedges())
-            return generr("Some edge weights are not positive integers");
+            return generr(gettext("Some edge weights are not positive integers"));
         G->set_weighted(false);
     }
     gen p;
@@ -7306,7 +7306,7 @@ gen _tutte_polynomial(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -7348,7 +7348,7 @@ gen _flow_polynomial(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -7390,7 +7390,7 @@ gen _chromatic_polynomial(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -7425,7 +7425,7 @@ gen _reliability_polynomial(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     if (G->is_weighted()) {
         if (!G->weights2multiedges())
-            return generr("Some edge weights are not positive integers");
+            return generr(gettext("Some edge weights are not positive integers"));
         G->set_weighted(false);
     }
     int n=G->node_count(),m=G->edge_count(),c=G->connected_component_count();
@@ -7438,7 +7438,7 @@ gen _reliability_polynomial(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -7469,7 +7469,7 @@ gen _laplacian_matrix(const gen &g,GIAC_CONTEXT) {
             return gt_err(_GT_ERR_WRONG_NUMBER_OF_ARGS);
         if (gv[1]==at_normal)
             normalize=true;
-        else return generr("Unrecognized option");
+        else return generr(gettext("Unrecognized option"));
     }
     graphe *G=graphe::from_gen(is_seq_vect(g)?g._VECTptr->front():g);
     if (G==NULL)
@@ -7502,7 +7502,7 @@ gen _fundamental_cycle(const gen &g,GIAC_CONTEXT) {
     graphe::ivectors cycles;
     G->fundamental_cycles(cycles);
     if (cycles.size()!=1)
-        return generr("Graph is not unicyclic");
+        return generr(gettext("Graph is not unicyclic"));
     graphe::ivector &fc=cycles.front();
     return _cycle_graph(G->get_node_labels(fc),contextptr);
 }
@@ -7687,7 +7687,7 @@ gen _edge_connectivity(const gen &g,GIAC_CONTEXT) {
     if (G->is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     if (G->node_count()<2)
-        return generr("Graph must have at least two vertices");
+        return generr(gettext("Graph must have at least two vertices"));
     if (!G->is_connected())
         return gt_err(_GT_ERR_CONNECTED_GRAPH_REQUIRED);
     try {
@@ -7695,7 +7695,7 @@ gen _edge_connectivity(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -7716,7 +7716,7 @@ gen _vertex_connectivity(const gen &g,GIAC_CONTEXT) {
     if (G->is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     if (G->node_count()<2)
-        return generr("Graph must have at least two vertices");
+        return generr(gettext("Graph must have at least two vertices"));
     if (!G->is_connected())
         return gt_err(_GT_ERR_CONNECTED_GRAPH_REQUIRED);
     try {
@@ -7724,7 +7724,7 @@ gen _vertex_connectivity(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -7803,7 +7803,7 @@ gen _truncate_graph(const gen &g,GIAC_CONTEXT) {
     if (G->is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     if (G->is_empty())
-        return generr("Graph is empty");
+        return generr(gettext("Graph is empty"));
     if (!G->is_biconnected())
         return gt_err(_GT_ERR_BICONNECTED_GRAPH_REQUIRED);
     graphe::ivectors faces;
@@ -7851,7 +7851,7 @@ gen _find_cycles(const gen &g,GIAC_CONTEXT) {
     if (G==NULL)
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G->is_empty())
-        return generr("Graph is empty");
+        return generr(gettext("Graph is empty"));
     if (!G->is_directed())
         return gt_err(_GT_ERR_DIRECTED_GRAPH_REQUIRED);
     graphe::ivectors cyc;
@@ -7860,7 +7860,7 @@ gen _find_cycles(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -7888,7 +7888,7 @@ gen _kspaths(const gen &g,GIAC_CONTEXT) {
     if (G==NULL)
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G->is_empty())
-        return generr("Graph is empty");
+        return generr(gettext("Graph is empty"));
     graphe::ivectors paths;
     int k,src,dest;
     src=G->node_index(gv[1]);
@@ -7896,7 +7896,7 @@ gen _kspaths(const gen &g,GIAC_CONTEXT) {
     if (src<0 || dest<0)
         return gt_err(src<0?gv[1]:gv[2],_GT_ERR_VERTEX_NOT_FOUND);
     if (src==dest)
-        return generr("Source and destination vertices must be different");
+        return generr(gettext("Source and destination vertices must be different"));
     if (!gv.back().is_integer() || (k=gv.back().val)<=0)
         return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
     try {
@@ -7904,7 +7904,7 @@ gen _kspaths(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -7978,7 +7978,7 @@ gen _icomp(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -8027,7 +8027,7 @@ gen _information_centrality(const gen &g,GIAC_CONTEXT) {
             return gt_err(_GT_ERR_NOT_A_GRAPH);
     }
     if (G->is_empty())
-        return generr("Graph is empty");
+        return generr(gettext("Graph is empty"));
     if (G->is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     return G->information_centrality(k,approx);
@@ -8063,7 +8063,7 @@ gen _degree_centrality(const gen &g,GIAC_CONTEXT) {
             return gt_err(_GT_ERR_NOT_A_GRAPH);
     }
     if (G->is_empty())
-        return generr("Graph is empty");
+        return generr(gettext("Graph is empty"));
     return G->degree_centrality(k);
 }
 static const char _degree_centrality_s[]="degree_centrality";
@@ -8096,7 +8096,7 @@ gen _harmonic_centrality(const gen &g,GIAC_CONTEXT) {
             return gt_err(_GT_ERR_NOT_A_GRAPH);
     }
     if (G->is_empty())
-        return generr("Graph is empty");
+        return generr(gettext("Graph is empty"));
     return G->closeness_centrality(k,true);
 }
 static const char _harmonic_centrality_s[]="harmonic_centrality";
@@ -8129,7 +8129,7 @@ gen _closeness_centrality(const gen &g,GIAC_CONTEXT) {
             return gt_err(_GT_ERR_NOT_A_GRAPH);
     }
     if (G->is_empty())
-        return generr("Graph is empty");
+        return generr(gettext("Graph is empty"));
     return G->closeness_centrality(k,false);
 }
 static const char _closeness_centrality_s[]="closeness_centrality";
@@ -8163,7 +8163,7 @@ gen _betweenness_centrality(const gen &g,GIAC_CONTEXT) {
             return gt_err(_GT_ERR_NOT_A_GRAPH);
     }
     if (G->is_empty())
-        return generr("Graph is empty");
+        return generr(gettext("Graph is empty"));
     return G->betweenness_centrality(k);
 }
 static const char _betweenness_centrality_s[]="betweenness_centrality";
@@ -8197,12 +8197,12 @@ gen _communicability_betweenness_centrality(const gen &g,GIAC_CONTEXT) {
             return gt_err(_GT_ERR_NOT_A_GRAPH);
     }
     if (G->is_empty())
-        return generr("Graph is empty");
+        return generr(gettext("Graph is empty"));
     if (G->is_directed()) {
         graphe::ivectors components;
         G->strongly_connected_components(components);
         if (components.size()>1)
-            return generr("Digraph must be strongly connected");
+            return generr(gettext("Digraph must be strongly connected"));
     } else if (!G->is_connected())
         return gt_err(_GT_ERR_CONNECTED_GRAPH_REQUIRED);
     try {
@@ -8210,7 +8210,7 @@ gen _communicability_betweenness_centrality(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -8243,7 +8243,7 @@ gen _katz_centrality(const gen &g,GIAC_CONTEXT) {
     if (G==NULL)
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G->is_empty())
-        return generr("Graph is empty");
+        return generr(gettext("Graph is empty"));
     const gen &alpha=gv[1];
     if (!is_real_number(alpha,contextptr))
         return gentypeerr(contextptr);
@@ -8258,7 +8258,7 @@ gen _katz_centrality(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -8288,12 +8288,12 @@ gen _is_split_graph(const gen &g,GIAC_CONTEXT) {
         G=graphe::from_gen(gv.front());
         if (gv.back()==at_part)
             decomp=true;
-        else return generr("Unrecognized option");
+        else return generr(gettext("Unrecognized option"));
     } else G=graphe::from_gen(g);
     if (G==NULL)
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G->is_empty())
-        return generr("Graph is empty");
+        return generr(gettext("Graph is empty"));
     if (G->is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     graphe::ivector clq,indp;
@@ -8329,7 +8329,7 @@ gen _contract_subgraph(const gen &g,GIAC_CONTEXT) {
     if (G==NULL)
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G->is_empty())
-        return generr("Graph is empty");
+        return generr(gettext("Graph is empty"));
     if (gv[1].type!=_VECT)
         return gentypeerr(contextptr);
     const vecteur &S=*gv[1]._VECTptr;
@@ -8372,11 +8372,11 @@ gen _greedy_clique(const gen &g,GIAC_CONTEXT) {
     if (G==NULL)
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G->is_empty())
-        return generr("Graph is empty");
+        return generr(gettext("Graph is empty"));
     if (G->is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     if (n<1)
-        return generr("Number of iterations must be positive");
+        return generr(gettext("Number of iterations must be positive"));
     graphe::ivector Q;
     G->grasp_clique(n,Q);
     return G->get_node_labels(Q);
@@ -8405,11 +8405,11 @@ gen _greedy_independent_set(const gen &g,GIAC_CONTEXT) {
     if (G==NULL)
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G->is_empty())
-        return generr("Graph is empty");
+        return generr(gettext("Graph is empty"));
     if (G->is_directed())
         return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
     if (n<2)
-        return generr("Number of iterations must be at least 2");
+        return generr(gettext("Number of iterations must be at least 2"));
     graphe::ivector Q;
     G->grasp_clique(n,Q,true);
     return G->get_node_labels(Q);
@@ -8452,7 +8452,7 @@ gen _minimum_vertex_cover(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -8536,7 +8536,7 @@ gen _vertex_cover_number(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         if (strstr(e.what(),"user interruption")!=NULL || interrupted || ctrl_c) {
             ctrl_c=interrupted=false;
-            return generr("Stopped by user interruption");
+            return generr(gettext("Stopped by user interruption"));
         }
         return generr(e.what());
     }
@@ -8635,7 +8635,7 @@ gen _pruefer_code(const gen &g,GIAC_CONTEXT) {
         if (G->is_directed())
             return gt_err(_GT_ERR_UNDIRECTED_GRAPH_REQUIRED);
         if (!G->pruefer_encode(code,true))
-            return generrtype("Graph is not a tree");
+            return generrtype(gettext("Graph is not a tree"));
         for (graphe::ivector::iterator it=code.begin();it!=code.end();++it) {
             *it+=array_start(contextptr);
         }
@@ -8650,7 +8650,7 @@ gen _pruefer_code(const gen &g,GIAC_CONTEXT) {
             if (*it<0 || *it>=n) break;
         }
         if (it!=code.end() || !G.pruefer_decode(code))
-            return generrtype("Sequence is not a Pruefer code");
+            return generrtype(gettext("Sequence is not a Pruefer code"));
         return G;
     } else return gentypeerr(contextptr);
 }

@@ -1652,50 +1652,48 @@ the the menu item \textsf{Cfg\menusep{}Graph
   configuration}. You will then be given a window in which you can
 change the following options:
 \begin{itemize}
-\item \texttt{X-} and \texttt{X+}\\
-  These determine the $x$ values for which calculations will be
-  done.
+\item \texttt{X-} and \texttt{X+}:
+  these determine the $x$ values for which calculations will be done.
 
-\item \texttt{Y-} and \texttt{Y+}\\
-  These determine the $y$ values for which calculations will be done.
+\item \texttt{Y-} and \texttt{Y+}:
+  these determine the $y$ values for which calculations will be done.
 
-\item \texttt{Z-} and \texttt{Z+}\\
-  These determine the $z$ values for which calculations will be done.
+\item \texttt{Z-} and \texttt{Z+}:
+  these determine the $z$ values for which calculations will be done.
 
-\item \texttt{t-} and \texttt{t+}\\
-  These determine the $t$ values for which calculations will be
-  done; when plotting parametric curves, for example.
+\item \texttt{t-} and \texttt{t+}:
+  these determine the $t$ values for which calculations will be
+  done (when plotting parametric curves, for example).
 
-\item \texttt{WX-} and \texttt{WX+}\\
-  These determine the range of $x$ values for the viewing window.
+\item \texttt{WX-} and \texttt{WX+}:
+  these determine the range of $x$ values for the viewing window.
 
-\item \texttt{WY-} and \texttt{WY+}\\
-  These determine the range of $y$ values for the viewing window.
+\item \texttt{WY-} and \texttt{WY+}:
+  these determine the range of $y$ values for the viewing window.
 
-\item \texttt{TX} and \texttt{TY}\\
-  These determine the tick ranges on the $x$- and $y$-axes.
+\item \texttt{TX} and \texttt{TY}:
+  these determine the tick ranges on the $x$- and $y$-axes.
 
-\item \texttt{class\_min}\\
-  This determines the minimum size of a statistics class.
+\item \texttt{class\_min}:
+  this determines the minimum size of a statistics class.
 
-\item \texttt{class\_size}\\
-  This determines the default size of a statistics class.
+\item \texttt{class\_size}:
+  this determines the default size of a statistics class.
 
-\item \texttt{autoscale}\\
-  When checked, the graphic will be autoscaled.
+\item \texttt{autoscale}:
+  when checked, the graphic will be autoscaled.
 
-\item \texttt{ortho}\\
-  When checked, all axes of the graphic will be scaled equally.
+\item \texttt{ortho}:
+  when checked, all axes of the graphic will be scaled equally.
 
-\item \texttt{>W} and \texttt{W>}\\
-  These are convenient shortcuts to copy the \texttt{X-}, \texttt{X+},
+\item \texttt{>W} and \texttt{W>}:
+  these are convenient shortcuts to copy the \texttt{X-}, \texttt{X+},
   \texttt{Y-} and \texttt{Y+} values to  \texttt{WX-}, \texttt{WX+},
   \texttt{WY-} and \texttt{WY+}, or the other way around.
 \end{itemize}
 Note that the viewing window is not the same as the calculation
 window; if the calculation window is larger than the visible window,
-then you can scroll to bring other parts of the calculation window
-into view.
+then you can scroll to bring other parts of the calculation into view.
 
 This page also has buttons for applying the settings, saving the
 settings for future sessions, or canceling any new settings.
@@ -1907,7 +1905,7 @@ To return the values:
 Each tab above the status line represents a session, the tab for the
 active session will be yellow.  The label of each tab will be the name
 of the file that the session is saved in; if the session hasn't been
-saved the tab will read \texttt{Unnamed}.
+saved the tab will read \textsf{Unnamed}.
 
 You can save your current session by clicking on the \button{Save}
 button on the status line.  If the session contains unsaved changes
@@ -2267,9 +2265,7 @@ translates a file of \Maple{}\index{Maple} commands to the \xcas{} language.
   \Maple{} commands in \textit{MapleFile} translated to the \xcas{} language.
 \end{itemize}
 
-\chapter{Entry in \xcas{}}
-
-\section{Suppressing output}
+\section{Entry in \xcas{}}
 
 If you enter a command into \xcas{}, the result will appear in
 the output box below the input, colored in blue. For example:
@@ -2279,6 +2275,8 @@ a:=2+2
 \begin{xcasoutput}
   4
 \end{xcasoutput}
+
+\subsection{Suppressing output}
 
 The \texttt{nodisp}\index{nodisp@\texttt{nodisp}}
 command is used to evaluate an expression and suppress the output.
@@ -2308,7 +2306,7 @@ b:=3+3:;
 \end{xcasoutput}
 and \texttt{b} will be set to \texttt{6}.
 
-\section{Entering comments\label{sec:comments}}
+\subsection{Entering comments\label{sec:comments}}
 \index{comments}
 
 You can annotate an \xcas{} session by adding comments. You can
@@ -2354,6 +2352,50 @@ bs():={ // Hello
 }
 \end{lstlisting}
 are programs with the comment ``Hello''.
+
+\subsection{Previous outputs}
+
+The \texttt{ans}\index{ans@\texttt{ans}}
+command returns the outputs of the previous commands.
+\begin{itemize}
+\item \texttt{ans} takes one optional argument:
+
+  Optionally, $n$, an integer (the 0-based index of the command, by default $n=-1$).
+\item \texttt{ans(}$\langle n\,\rangle$\texttt{)} returns the corresponding
+  result; in particular, \texttt{ans(-1)} returns the previous result.
+\end{itemize}
+
+\subsubsection*{Example}
+If the first command that you enter is:
+\begin{xcasinput}
+2+5
+\end{xcasinput}
+\begin{xcasoutput}
+  7
+\end{xcasoutput}
+then later references to \texttt{ans(0)} will evaluate to \texttt{7}.
+
+
+Note that the argument to \texttt{ans} doesn't correspond to the line
+number in \xcas{}.  For one thing, the line numbers begin at 1.
+What's more, if you go back and re-evaluate a previous line, then that
+will become part of the commands that \texttt{ans} keeps track of.
+
+If you give \texttt{ans} a negative number, then it counts backwards
+from the current input.  To get the latest output, for example, you
+can use \texttt{ans(-1)}.  With no argument, \texttt{ans()} will also
+return the latest output.
+
+Similarly, the \texttt{quest\index{quest@\texttt{quest}}} command returns the
+previous inputs.  Since these will often be simplified to be the same
+as the output, \texttt{quest($n$)} sometimes has the same value as
+\texttt{ans($n$)}.
+
+You can also use \textsf{Ctrl} plus the arrow keys to scroll through
+previous inputs.  With the cursor on the command line,
+\textsf{Ctrl+Up} will go backwards in the list of previous
+commands and display them on the current line, and
+\textsf{Ctrl+Down} will go forwards.
 
 \section{Editing expressions\label{sec:expred}}
 
@@ -2467,10 +2509,7 @@ with the arrow keys, the tree will look like
 If a subexpression\index{subexpressions} is selected in the expression
 editor, then any menu command will be applied to that subexpression.
 
-For example, suppose that you enter the expression
-\begin{center}
-  \texttt{(x+1)*(x+2)*(x-1)}
-\end{center}
+For example, enter the expression \texttt{(x+1)*(x+2)*(x-1)}
 in the expression editor.  Note that you can use the abilities of the
 editor to make this easier.  First, enter \texttt{x+1}.  Select this
 with the up arrow, then type \texttt{*} followed by \texttt{x+2}.  Select
@@ -2523,51 +2562,6 @@ the others are given in Table~\ref{tab:actions}\begin{latexonly}, p.~\pageref{ta
   \end{tabular}
   \caption{\label{tab:actions}Keystroke operations on subexpressions}
 \end{table}
-
-\section{Previous results}
-
-The \texttt{ans}\index{ans@\texttt{ans}}
-command returns the results of previous commands.
-\begin{itemize}
-\item \texttt{ans} takes one optionaly :
-
-  Optionally, $n$, an integer (the number of the command beginning with 0).
-\item \texttt{ans(}$\,\langle,n\,\rangle$\texttt{)} returns the corresponding
-  result; in particular, \texttt{ans(-1)} returns the previous result.
-\end{itemize}
-
-\subsubsection*{Example}
-If the first command that you enter is:
-\begin{xcasinput}
-2+5
-\end{xcasinput}
-resulting in
-\begin{xcasoutput}
-  7
-\end{xcasoutput}
-then later references to \texttt{ans(0)} will evaluate to \texttt{7}.
-
-
-Note that the argument to \texttt{ans} doesn't correspond to the line
-number in \xcas{}.  For one thing, the line numbers begin at 1.
-What's more, if you go back and re-evaluate a previous line, then that
-will become part of the commands that \texttt{ans} keeps track of.
-
-If you give \texttt{ans} a negative number, then it counts backwards
-from the current input.  To get the latest output, for example, you
-can use \texttt{ans(-1)}.  With no argument, \texttt{ans()} will also
-return the latest output.
-
-Similarly, the \texttt{quest\index{quest@\texttt{quest}}} command returns the
-previous inputs.  Since these will often be simplified to be the same
-as the output, \texttt{quest($n$)} sometimes has the same value as
-\texttt{ans($n$)}.
-
-You can also use \textsf{Ctrl} plus the arrow keys to scroll through
-previous inputs.  With the cursor on the command line,
-\textsf{Ctrl+Up} will go backwards in the list of previous
-commands and display them on the current line, and
-\textsf{Ctrl+Down} will go forwards.
 
 \section{Spreadsheets\label{sec:spreadsheet}}
 \index{spreadsheet}
@@ -2638,7 +2632,7 @@ To the right will be the name of the file the spreadsheet will be
 saved into. Below the menu bar will be two boxes; a box which displays
 the active cell (and can be used to choose a cell) and a command line
 to enter information into the cell. Below that will be a status line,
-you can click on this to return to the configuration screen.
+which can be clicked to return to the configuration screen.
 
 \chapter{CAS building blocks\label{chap:casbb}}
 
@@ -3974,10 +3968,10 @@ To verify, plot $f(x)$ for e.g.~$-3\leq x\leq 1$.
 
 \subsection{Logical operators\label{ssec:bool}}
 
-Booleans can be combined to form new booleans.  For example, with
-\texttt{and}: the statement ``\textit{boolean1} \texttt{and}
-\textit{boolean2}'' is true if both \textit{boolean1} and
-\textit{boolean2} are true, otherwise the statement is false.
+Booleans can be combined to form new booleans.  For example with
+\texttt{and}, the statement ``\textit{bool1} \texttt{and}
+\textit{bool2}'' is true if both \textit{bool1} and
+\textit{bool2} are true, otherwise the statement is false.
 
 \xcas{} has the standard boolean operators, as follows ($a$ and
 $b$ are two booleans):
@@ -3985,7 +3979,7 @@ $b$ are two booleans):
 \item\texttt{or} or \texttt{\mybigparallel} ---
   \index{or@\texttt{or}}\index{\mybigparallel}
   These are infixed operators.
-  \texttt{($a$ or $b$)} (or \texttt{($a$ \mybigparallel
+  \texttt{($a$ or $b$)} (or \texttt{($a$ \mybigparallel{}
     $b$)}) returns \texttt{0} (or \texttt{false}) if $a$
   and $b$ are both equal to 0 (or \texttt{false}) and returns
   \texttt{1} (or \texttt{true}) otherwise.
@@ -4146,7 +4140,7 @@ and is equivalent to \texttt{eval} (see \secref{ssec:eval}).
 \item \texttt{evalb} takes one argument:
 
   \textit{bool}, a boolean expression.
-\item \texttt{evalb()}\textit{bool}\texttt{)} returns 1 if
+\item \texttt{evalb(}\textit{bool}\texttt{)} returns 1 if
   \textit{bool} is true and returns 0 otherwise.
 \end{itemize}
 
@@ -4180,11 +4174,11 @@ Strings are delimited with quotation marks
 (\texttt{"})\index{\symbol{34}@\texttt{\symbol{34}}}.
 A character is a string of length one.
 
-Do not confuse \texttt{"} with \texttt{'} (or
-\texttt{quote}\index{quote@\texttt{quote}}) which is used to prevent evaluation
+Do not confuse \texttt{"} with \texttt{'} which is used to prevent evaluation
 of an expression (see \secref{ssec:qt}). For example, \texttt{"a"}
 returns a string with one character but \texttt{'a'} or
-\texttt{quote(a)} returns the variable \texttt{a} unevaluated.
+\texttt{quote(a)}\index{quote@\texttt{quote}}
+returns the variable \texttt{a} unevaluated.
 
 When a string is entered on a command line, it is evaluated to itself,
 hence the output is the same string. You can use \texttt{+} to
@@ -5276,8 +5270,7 @@ You can find the length of a sequence or list with any of the
 \texttt{nops}\index{nops@\texttt{nops}} or
 \texttt{length}\index{length@\texttt{length}} commands.
 \begin{itemize}
-\item \texttt{size} (or \texttt{nops} or \texttt{length}) takes one
-  :
+\item \texttt{size} (or \texttt{nops} or \texttt{length}) takes one argument:
 
   $S$, a sequence or list.
 \item \texttt{size($S$)} (or \texttt{nops($S$)} or
@@ -5624,13 +5617,10 @@ a table of values of a function.  The spreadsheet can be opened with
 \end{itemize}
 
 \subsubsection*{Example}
-Display the values of the sequence $u_n=\sin(n)$\\
-Select a cell of a spreadsheet (for example \texttt{C0})
-and:
-\begin{xcasinput}
-tablefunc(sin(n),n,0,1)
-\end{xcasinput}
-Output:
+To display the values of the sequence $u_n=\sin(n)$,
+select a cell of a spreadsheet (for example \texttt{C0}) and input
+\texttt{tablefunc(sin(n),n,0,1)} in the spreadsheet commandline.
+You get:
 \begin{center}
   \begin{tabular}{|l|l|l|}
     \hline
@@ -5652,7 +5642,6 @@ Output:
     \hline
   \end{tabular}
 \end{center}
-
 The graphic representation may be plotted with the \texttt{plotfunc}
 command (see \ref{ssec:plotfunc}).
 
@@ -5829,14 +5818,31 @@ For a one term recurrence relation:
   for a graphic representation of a one-term recurrence sequence.
 \end{itemize}
 
-\subsubsection*{Example}
-Display the values of the sequence $u_0=3.5, u_{n+1}=\sin(u_{n})$\\
-Select a cell of the spreadsheet (for example \texttt{B0}) and
-input in the command line:
-\begin{xcasinput}
-tableseq(sin(x),x,3.5)
-\end{xcasinput}
-Output:
+More generally, for a recurrence relation where each term depends on
+the previous $k$ terms:
+\begin{itemize}
+\item \texttt{tableseq} takes three arguments:
+  \begin{itemize}
+  \item $f(x_{1},x_{2},\dots,x_{k})$, a formula which defines the
+    recurrence, through $u_{n+1}=f(u_{n},\dots,u_{n-k})$.
+  \item $[x_{1},\dots,x_{k}]$, a list of variables.
+  \item $[u_{0},\dots,u_{k-1}]$, a list  of the beginning $k$ terms.
+  \end{itemize}
+\item
+  \texttt{tableseq($f(x_{1},\dots,x_{k}),[x_{1},\dots,x_{k}],[u_{0},\dots,u_{k-1}]$)}
+  fills the current column of the
+  spreadsheet, starting with the selected cell (or cell 0 if the entire
+  column is selected), with the formula $f(x_{1},x_{2},\dots,x_{k})$,
+  followed by the variables $x_{1},\dots,x_{k}$, followed by the
+  terms $u_{0}, u_{1}, \ldots$ of the sequence.
+\end{itemize}
+
+\subsubsection*{Examples}
+To display the values of the sequence $u_0=3.5, u_{n+1}=\sin(u_{n})$,
+select a cell of the spreadsheet, say \texttt{B0}, and
+input \texttt{tableseq(sin(x),x,3.5)} in the command line.
+By pressing \textsf{Enter}, The corresponding column of the spreadsheet
+is filled with values of the function, like this:
 \begin{center}
   \begin{tabular}{|l|l|}
     \hline
@@ -5859,34 +5865,11 @@ Output:
   \end{tabular}
 \end{center}
 
-
-More generally, for a recurrence relation where each term depends on
-the previous $k$ terms:
-\begin{itemize}
-\item \texttt{tableseq} takes three arguments:
-  \begin{itemize}
-  \item $f(x_{1},x_{2},\dots,x_{k})$, a formula which defines the
-    recurrence, through $u_{n+1}=f(u_{n},\dots,u_{n-k})$.
-  \item $[x_{1},\dots,x_{k}]$, a list of variables.
-  \item $[u_{0},\dots,u_{k-1}]$, a list  of the beginning $k$ terms.
-  \end{itemize}
-\item
-  \texttt{tableseq($f(x_{1},\dots,x_{k}),[x_{1},\dots,x_{k}],[u_{0},\dots,u_{k-1}]$)}
-  fills the current column of the
-  spreadsheet, starting with the selected cell (or cell 0 if the entire
-  column is selected), with the formula $f(x_{1},x_{2},\dots,x_{k})$,
-  followed by the variables $x_{1},\dots,x_{k}$, followed by the
-  terms $u_{0}, u_{1}, \ldots$ of the sequence.
-\end{itemize}
-
-\subsubsection*{Example}
-Display the values of the Fibonacci sequence
-$u_0=1, u_1=1,\dots, u_{n+2}=u_n+u_{n+1}$\\
-Select a cell, say \texttt{B0}, and:
-\begin{xcasinput}
-tableseq(x+y,[x,y],[1,1])
-\end{xcasinput}
-Output:
+To display the values of the Fibonacci sequence
+$u_0=1, u_1=1,\dots, u_{n+2}=u_n+u_{n+1}$,
+select a cell, say \texttt{B0}, and input
+\texttt{tableseq(x+y,[x,y],[1,1])} in the
+commandline. You get:
 \begin{center}
   \begin{tabular}{|l|l|}
     \hline
@@ -6173,7 +6156,7 @@ can be used to modify elements in a list.
 \item (In \Maple{} mode; the only difference is the order of
   the arguments).
 
-  \texttt{subsop(}$i=\textit{value},L$\texttt{)} returns the list $L$
+  \texttt{subsop(}$i\texttt{=}\textit{value},L$\texttt{)} returns the list $L$
   with the value at index $i$ replaced by \textit{value}. 
 \end{itemize}
 \paragraph*{Remark.}  If the second argument is \texttt{$i$=NULL}, then
@@ -8782,8 +8765,7 @@ finds this value of $c$.
 
 \texttt{ichrem}\index{ichrem@\texttt{ichrem}} is a synonym for \texttt{ichinrem}.
 \begin{itemize}
-\item \texttt{ichinrem} takes one or more
-  :
+\item \texttt{ichinrem} takes one or more arguments:
 
   Each argument is a pair of integers $a_{k}$ and $p_{k}$ either as a list
   $[a_{k},p_{k}]$ or as a modular integer $a_{k}\% p_{k}$.
@@ -9761,7 +9743,7 @@ Input to verify:
 The Bernoulli polynomial $B_n$ is defined by: \[ B_0=1, \quad
   B_n{'}(x)=n\,B_{n-1}(x), \quad \int_0^1B_n(x)\,\mathrm{d}x=0 \] The $n$th Bernoulli
 number is $B_n=B_{n}(0)$, and is also given by the formula: \[
-  \frac{t}{\mathrm{e}^{t}-1}=\sum_{n=0}^{+\infty} \frac{B(n)}{n!}t^n \]
+  \frac{t}{\mathrm{e}^{t}-1}=\sum_{n=0}^{+\infty} \frac{B(n)}{n!}t^n. \]
 
 The \texttt{bernoulli}\index{bernoulli@\texttt{bernoulli}} command
 computes the Bernoulli numbers.
@@ -10965,14 +10947,14 @@ or center of mass, of a set of points $A_{1},
 A_{2},\dots,A_{n}$ with masses
 $\alpha_{1},\alpha_{2},\dots,\alpha_{n}$ is \[
   \frac{\alpha_{1}A_{1}+\cdots+\alpha_{n}A_{n}}{\alpha_{1}+\cdots +
-    \alpha_{n}} \] This formula makes sense even if the $\alpha_{j}$ are
+    \alpha_{n}}. \] This formula makes sense even if the $\alpha_{j}$ are
 not positive real numbers, and is still called the barycenter of the
 weighted points.
 
 The \texttt{barycenter} command computes the barycenter of a set of
 weighted points.
 \begin{itemize}
-\item \texttt{barycenter} takes an unspecified number of :
+\item \texttt{barycenter} takes an unspecified number of arguments:
 
   each argument is a list $l_{j}=[A_{j},\alpha_{j}]$ containing a point $A_{j}$ (or the
   affix of a point) and a weight $\alpha_{j}$ for the point.  The sum of
@@ -11096,7 +11078,6 @@ and \secref{ssec:cusualinfix}.)
 \item
   \texttt{\$}\index{\$@\texttt{\$}} is the infixed
   version  of \texttt{seq} (see \secref{ssec:makeseq}).
-
   For example (do not forget to put parenthesis around the arguments):
 \begin{xcasinput}
 (2^k)$(k=0..3)
@@ -11113,7 +11094,6 @@ seq(2^k,k=0..3)
   \texttt{\%}\index{\%@\texttt{\%}}
   defines a modular number; $a \mod  n$ is
   the equivalence class of $a$ in $\mathbb{Z}/n\mathbb{Z}$.
-
   For example:
 \begin{xcasinput}
 5 % 7
@@ -11128,7 +11108,6 @@ seq(2^k,k=0..3)
 \item
   \texttt{@}\index{\@@\texttt{\@}}
   is used to compose functions; $(f$\texttt{@}$g)(x)=f(g(x))$.
-
   For example:
 \begin{xcasinput}
 (sin@exp)(x)
@@ -11138,9 +11117,8 @@ seq(2^k,k=0..3)
   \end{xcasoutput}
 \item
   \texttt{@@}\index{\@\@@\texttt{\@\@}} is used to compose a function
-  with itself many times (like a power, replacing multiplication by
+  with itself several times (like a power, replacing multiplication by
   composition), e.g.~$(f$\texttt{@@}$3)(x)=f(f(f(x)))$.
-
   For example:
 \begin{xcasinput}
 (sin@@4)(x)
@@ -11151,7 +11129,6 @@ seq(2^k,k=0..3)
 \item
   \texttt{minus}, \texttt{union} and \texttt{intersect} return the difference, the union and the
   intersection of two sets, respectively.  (See \secref{ssec:sets}).
-
   For example:
 \begin{xcasinput}
 A:=set[1,2,3,4];
@@ -11179,7 +11156,6 @@ A intersect B
   \end{xcasoutput}
 \item
   \texttt{->} is used to define a function, which can be assigned a name.
-
   For example:
 \begin{xcasinput}
 (x->x^2)(3)
@@ -11201,7 +11177,6 @@ f(3)
   \texttt{=>} is the infixed version of \texttt{sto} (see
   \secref{ssec:assign}) and so is used to  store an expression in a
   variable.
-
   For example:
 \begin{xcasinput}
 2=>a
@@ -11216,7 +11191,6 @@ a
 \item
   \texttt{:=} is used to store an expression in a variable, but the
   variable comes first (the argument order is switched from \texttt{=>}).
-
   For example:
 \begin{xcasinput}
 a:=2
@@ -11235,7 +11209,6 @@ a
   of large size, because no copy is made, the change is done in place.
   Use with care, all objects pointing to this matrix or list will
   be modified.
-
   For example:
 \begin{xcasinput}
 L:=[2,3];
@@ -12000,13 +11973,13 @@ or:
 The \texttt{max}\index{max@\texttt{max}} command finds the maximum of
 a sequence of real numbers.
 \begin{itemize}
-\item \texttt{max} takes an arbitrary number of :
+\item \texttt{max} takes an arbitrary number of arguments:
 
   \textit{seq}, a sequence (or list) of real numbers.
 \item \texttt{max(}\textit{seq}\texttt{)} returns the largest number in the
   sequence \textit{seq}.
 \end{itemize}
-For example:
+\subsubsection*{Example}
 \begin{xcasinput}
 max(0,1,2,-1,-2)
 \end{xcasinput}
@@ -12017,13 +11990,13 @@ max(0,1,2,-1,-2)
 The \texttt{min}\index{min@\texttt{min}} command finds the minimum of
 a sequence of real numbers.
 \begin{itemize}
-\item \texttt{min} takes an arbitrary number of :
+\item \texttt{min} takes an arbitrary number of arguments:
 
   \textit{seq}, a sequence (or list) of real numbers.
 \item \texttt{min(}\textit{seq}\texttt{)} returns the smallest number in the
   sequence \textit{seq}.
 \end{itemize}
-For example:
+\subsubsection*{Example}
 \begin{xcasinput}
 min(0,1,2,-1,-2)
 \end{xcasinput}
@@ -12039,7 +12012,7 @@ or complex number.
   $x$, a real or complex number.
 \item \texttt{abs($x$)} returns the absolute value of $x$.
 \end{itemize}
-For example:
+\subsubsection*{Example}
 \begin{xcasinput}
 abs(-5)
 \end{xcasinput}
@@ -12062,7 +12035,7 @@ negative).
   $x$, a real number.
 \item \texttt{sign($x$)} returns the sign of $x$.
 \end{itemize}
-For example:
+\subsubsection*{Example}
 \begin{xcasinput}
 sign(-4)
 \end{xcasinput}
@@ -12086,7 +12059,7 @@ number; namely, the largest integer less than or equal to the number.
   $x$, a real number.
 \item \texttt{floor($x$)} returns the floor of $x$.
 \end{itemize}
-For example:
+\subsubsection*{Example}
 \begin{xcasinput}
 floor(4.1)
 \end{xcasinput}
@@ -12108,7 +12081,7 @@ nearest integer, rounding up in the case of a half-integer.
   $x$, a real number.
 \item \texttt{round($x$)} returns the nearest integer to $x$.
 \end{itemize}
-For example:
+\subsubsection*{Example}
 \begin{xcasinput}
 round(3.4)
 \end{xcasinput}
@@ -12139,7 +12112,7 @@ number.
   $x$, a real number.
 \item \texttt{ceil($x$)} returns the ceiling of $x$.
 \end{itemize}
-For example:
+\subsubsection*{Example}
 \begin{xcasinput}
 ceiling(4.1)
 \end{xcasinput}
@@ -12168,7 +12141,7 @@ $x$ minus the ceiling of $x$.
 \item \texttt{frac($x$)} returns the fractional part
   of $x$.
 \end{itemize}
-For example:
+\subsubsection*{Example}
 \begin{xcasinput}
 frac(3.24)
 \end{xcasinput}
@@ -12191,7 +12164,7 @@ added to the fractional part will equal the original number.
   $x$, a real number.
 \item \texttt{trunc($x$)} returns the truncated value of $x$.
 \end{itemize}
-For example:
+\subsubsection*{Example}
 \begin{xcasinput}
 trunc(3.24)
 \end{xcasinput}
@@ -12207,13 +12180,12 @@ trunc(-3.24)
 
 The \texttt{id}\index{id@\texttt{id}} command is the identity function.
 \begin{itemize}
-\item \texttt{id} takes one argument or a sequence of
-  :
+\item \texttt{id} takes one argument or a sequence of:
 
   \textit{seq}, whose elements can be any type.
 \item \texttt{id(}\textit{seq}\texttt{)} returns \textit{seq}.
 \end{itemize}
-For example:
+\subsubsection*{Example}
 \begin{xcasinput}
 id(a,1,"abc",[1,2,3])
 \end{xcasinput}
@@ -12228,7 +12200,7 @@ The \texttt{sq}\index{sq@\texttt{sq}} command squares its argument.
   $x$, any object that can be multiplied by itself.
 \item \texttt{sq($x$)} returns $x^{2}$.
 \end{itemize}
-For example:
+\subsubsection*{Example}
 \begin{xcasinput}
 sq(5)
 \end{xcasinput}
@@ -12244,20 +12216,20 @@ sq(x+y)
 \begin{xcasinput}
 sq([[1,2],[3,4]])
 \end{xcasinput}
-(This is a matrix product; see \secref{sec:defmat}).
 \begin{xcasoutput}
   \begin{bmatrix}
     7&10\\
     15&22
   \end{bmatrix}
 \end{xcasoutput}
+(This is a matrix product; see \secref{sec:defmat}).
 \begin{xcasinput}
 sq([1,2,3])
 \end{xcasinput}
-(This is the dot product of $[1,2,3]$ with itself.)\\
 \begin{xcasoutput}
   14
 \end{xcasoutput}
+(This is the dot product of $[1,2,3]$ with itself.)
 
 The \texttt{sqrt}\index{sqrt@\texttt{sqrt}} command finds the square root of
 its argument.
@@ -12267,7 +12239,7 @@ its argument.
   $x$, any object for which the $1/2$ power makes sense.
 \item \texttt{sqrt($x$)} returns $x^{1/2}$.
 \end{itemize}
-For example:
+\subsubsection*{Example}
 \begin{xcasinput}
 sqrt(9)
 \end{xcasinput}
@@ -12297,7 +12269,7 @@ The \texttt{surd}\index{surd@\texttt{surd}} command finds roots of quantities.
   $x$ and $n$, numbers.
 \item \texttt{surd($x,n$)} returns the $n$th root of $x$; i.e., $x^{1/n}$.
 \end{itemize}
-For example:
+\subsubsection*{Example}
 \begin{xcasinput}
 surd(15.625,3)
 \end{xcasinput}
@@ -12313,7 +12285,7 @@ function.
   $x$, a number.
 \item \texttt{exp($x$)} returns $\mathrm{e}^{x}$.
 \end{itemize}
-For example:
+\subsubsection*{Example}
 \begin{xcasinput}
 exp(1.0)
 \end{xcasinput}
@@ -12332,7 +12304,7 @@ logarithm function.
 \item \texttt{log($x$)} returns the natural logarithm
   of $x$.
 \end{itemize}
-For example:
+\subsubsection*{Example}
 \begin{xcasinput}
 log(2.0)
 \end{xcasinput}
@@ -12348,7 +12320,7 @@ logarithm.
   $x$, a number.
 \item \texttt{log10($x$)} returns the base-10 logarithm of $x$.
 \end{itemize}
-For example:
+\subsubsection*{Example}
 \begin{xcasinput}
 log10(1000)
 \end{xcasinput}
@@ -12364,7 +12336,7 @@ specified base.
   $x$ and $b$, non-zero numbers.
 \item \texttt{logb($x,b$)} returns the base-$b$ logarithm of $x$.
 \end{itemize}
-For example:
+\subsubsection*{Example}
 \begin{xcasinput}
 logb(10.0,2)
 \end{xcasinput}
@@ -12372,7 +12344,7 @@ logb(10.0,2)
   3.32192809489
 \end{xcasoutput}
 
-The standard trigonometric functions:
+\subsubsection{Trigonometric functions}
 \begin{itemize}
 \item The \texttt{sin}\index{sin@\texttt{sin}} command is the sine function.
 \item The \texttt{cos}\index{cos@\texttt{cos}} command is the cosine function.
@@ -12394,8 +12366,7 @@ $\csc x=\frac1{\sin x}$.
   to 0; resetting it to 1 will change the angle measure to radians again.
 \item \texttt{sin($x$)} returns the sine of $x$.
 \end{itemize}
-For example:
-Input with \texttt{angle\_radian} equal to 1:
+For example, input with \texttt{angle\_radian} equal to 1:
 \begin{xcasinput}
 sin(pi/4)
 \end{xcasinput}
@@ -12410,8 +12381,7 @@ sin(30)
   \frac{1}{2}
 \end{xcasoutput}
 \texttt{cos($x$)} returns the cosine of $x$.
-For example:
-Input with \texttt{angle\_radian} equal to 1:
+For example, input with \texttt{angle\_radian} equal to 1:
 \begin{xcasinput}
 cos(pi/6)
 \end{xcasinput}
@@ -12426,8 +12396,7 @@ cos(90)
   0
 \end{xcasoutput}
 \texttt{tan($x$)} returns the tangent of $x$.
-For example:
-Input with \texttt{angle\_radian} equal to 1:
+For example, input with \texttt{angle\_radian} equal to 1:
 \begin{xcasinput}
 tan(pi/4)
 \end{xcasinput}
@@ -12442,8 +12411,7 @@ tan(60)
   \sqrt{3}
 \end{xcasoutput}
 \texttt{cot($x$)} returns the cotangent of $x$.
-For example:
-Input with \texttt{angle\_radian} equal to 1:
+For example, input with \texttt{angle\_radian} equal to 1:
 \begin{xcasinput}
 cot(pi/6)
 \end{xcasinput}
@@ -12458,8 +12426,8 @@ cot(45)
   1
 \end{xcasoutput}
 \texttt{sec($x$)} returns the secant of $x$.
-For example:
-Input with \texttt{angle\_radian} equal to 1:
+For example,
+input with \texttt{angle\_radian} equal to 1:
 \begin{xcasinput}
 sec(pi/3)
 \end{xcasinput}
@@ -12474,8 +12442,7 @@ sec(30)
   \frac{2}{\sqrt{3}}
 \end{xcasoutput}
 \texttt{csc($x$)} returns the cosecant of $x$.
-For example:
-Input with {angle\_radian} equal to 1:
+For example, input with {angle\_radian} equal to 1:
 \begin{xcasinput}
 csc(pi/4)
 \end{xcasinput}
@@ -12490,6 +12457,7 @@ csc(30)
   2
 \end{xcasoutput}
 
+\subsubsection{Inverse trigonometric functions}
 The \texttt{asin}\index{asin@\texttt{asin}},
 \texttt{acos}\index{acos@\texttt{acos}},
 \texttt{atan}\index{atan@\texttt{atan}},
@@ -12609,6 +12577,7 @@ acsc(2)
   30
 \end{xcasoutput}
 
+\subsubsection{Hyperbolic functions}
 The \texttt{sinh}\index{sinh@\texttt{sinh}}, \texttt{cosh}\index{cosh@\texttt{cosh}},
 and \texttt{tanh}\index{tanh@\texttt{tanh}} commands compute the hyperbolic
 sine, hyperbolic cosine, and hyperbolic tangent functions.
@@ -12642,6 +12611,7 @@ tanh(-1.0)
   -0.761594155956
 \end{xcasoutput}
 
+\subsubsection{Inverse hyperbolic functions}
 The \texttt{asinh}\index{asinh@\texttt{asinh}},
 \texttt{acosh}\index{acosh@\texttt{acosh}}, and
 \texttt{atanh}\index{atanh@\texttt{atanh}} commands compute the inverse
@@ -12955,8 +12925,7 @@ So \texttt{c(x)} is equal to $3x+2$.
 Hence the line where \texttt{a} is defined must be reevaluated before the good
 definition of \texttt{b}.
 
-\section{Getting information about functions from $\mathbb{R}$ to
-  $\mathbb{R}$}
+\section{Getting information about univariate real functions}
 
 \subsection{Domain of a function%: \texttt{domain}
 }
@@ -13113,7 +13082,7 @@ When it evaluates expressions, the maximum number of recursions that
 The \texttt{eval\_level}\index{eval\_level@\texttt{eval\_level}}
 command will change the evaluation level for the current session.
 \begin{itemize}
-\item \texttt{eval\_level} takes one optional :
+\item \texttt{eval\_level} takes one optional argument:
 
   Optionally $n$, a positive integer.
 \item \texttt{eval\_level()} returns the current evaluation level.
@@ -13689,7 +13658,7 @@ subst(Int(sin(x^2)*x,x),x=sqrt(t))
 Another way to substitute a variable by a value, besides with the
 \texttt{|} operator or the \texttt{subst} command, is with something
 akin to functional notation.  You can follow an expression or
-expression name with equalities of the form $\textit{variable}=\textit{value}$.
+expression name with equalities of the form $\textit{variable}\texttt{=}\textit{value}$.
 
 \subsubsection*{Examples}
 \begin{xcasinput}
@@ -14006,8 +13975,8 @@ of the two sides, resulting in an expression assumed to be equal to 0.
 \begin{itemize}
 \item \texttt{equal2diff} takes one argument:
 
-  $\textit{lhs}=\textit{rhs}$,  an equation.
-\item \texttt{equal2diff(}$\textit{lhs}=\textit{rhs}$\texttt{)} returns the
+  $\textit{lhs}\texttt{=}\textit{rhs}$, an equation.
+\item \texttt{equal2diff(}$\textit{lhs}\texttt{=}\textit{rhs}$\texttt{)} returns the
   difference $\textit{lhs}-\textit{rhs}$.
 \end{itemize}
 
@@ -14027,8 +13996,8 @@ command separates the two sides of an equation.
 \begin{itemize}
 \item \texttt{equal2list} takes one argument:
 
-  $\textit{lhs}=\textit{rhs}$, an equation.
-\item \texttt{equal2list(}$\textit{lhs}=\textit{rhs}$\texttt{)} returns the
+  $\textit{lhs}\texttt{=}\textit{rhs}$, an equation.
+\item \texttt{equal2list(}$\textit{lhs}\texttt{=}\textit{rhs}$\texttt{)} returns the
   sequence $\textit{lhs},\textit{rhs}$.
 \end{itemize}
 
@@ -14055,8 +14024,8 @@ For this, \texttt{lhs}\index{lhs@\texttt{lhs}} is a synonym for \texttt{left}.
 \begin{itemize}
 \item \texttt{left} takes one argument:
 
-  $\textit{lhs}=\textit{rhs}$, an equation.
-\item \texttt{left(}$\textit{lhs}=\textit{rhs}$\texttt{)} returns \textit{lhs}.
+  $\textit{lhs}\texttt{=}\textit{rhs}$, an equation.
+\item \texttt{left(}$\textit{lhs}\texttt{=}\textit{rhs}$\texttt{)} returns \textit{lhs}.
 \end{itemize}
 
 \subsubsection*{Example}
@@ -14085,8 +14054,8 @@ For this, \texttt{rhs}\index{rhs@\texttt{rhs}} is a synonym for \texttt{right}.
 \begin{itemize}
 \item \texttt{right} takes one argument:
 
-  $\textit{lhs}=\textit{rhs}$, an equation.
-\item \texttt{right(}$\textit{lhs}=\textit{rhs}$\texttt{)} returns \textit{rhs}.
+  $\textit{lhs}\texttt{=}\textit{rhs}$, an equation.
+\item \texttt{right(}$\textit{lhs}\texttt{=}\textit{rhs}$\texttt{)} returns \textit{rhs}.
 \end{itemize}
 
 \subsubsection*{Example}
@@ -14243,7 +14212,7 @@ command replaces values close enough to zero by 0.
 \item \texttt{epsilon2zero(}\textit{expr}\texttt{)} returns
   \textit{expr} where any values of modulus less than \texttt{epsilon}\index{epsilon@\texttt{epsilon}}
   (see \secref{ssec:confcomp}, item \ref{enum:eps}, by default
-  $\texttt{epsilon}=1\mathrm{e}{-10}$) are replaced by
+  $\texttt{epsilon}=1\mathrm{e}{-12}$) are replaced by
   zero. The expression is not evaluated.
 \end{itemize}
 
@@ -14251,14 +14220,14 @@ command replaces values close enough to zero by 0.
 \begin{xcasinput}
 epsilon2zero(1e-13+x)
 \end{xcasinput}
-Output (with $\textsf{epsilon}=1\mathrm{e}{-10}$ in the CAS configuration):
+Output (with $\textsf{epsilon}=1\mathrm{e}{-12}$ in the CAS configuration):
 \begin{xcasoutput}
   0+x
 \end{xcasoutput}
 \begin{xcasinput}
 epsilon2zero((1e-13+x)*100000)
 \end{xcasinput}
-Output (with $\textsf{epsilon}=1\mathrm{e}{-10}$):
+Output (with $\textsf{epsilon}=1\mathrm{e}{-12}$):
 \begin{xcasoutput}
   100000 \left(0+x\right)
 \end{xcasoutput}
@@ -15439,7 +15408,7 @@ trigtan(sin(x)^4+cos(x)^2+1)
 \xcas{} has many commands to convert expressions into different
 forms; the \texttt{convert}\index{convert@\texttt{convert}} command
 (or its infixed version \texttt{=>}\index{=>@\texttt{=>}}) is
-a different way to call many of these functions.\index{convertir@\texttt{convertir}}
+a different way to call most of these functions.\index{convertir@\texttt{convertir}}
 \begin{itemize}
 \item \texttt{convert} takes two or more arguments:
   \begin{itemize}
@@ -17873,7 +17842,7 @@ The \texttt{gcd}\index{gcd@\texttt{gcd}} command computes the gcd
 (greatest common divisor) of polynomials.
 (See also \secref{sec:igcd} for GCD of integers.)
 \begin{itemize}
-\item \texttt{gcd} takes an unspecified number or :
+\item \texttt{gcd} takes an arbitrary number or arguments:
 
   \textit{polys}, a sequence or list of polynomials.
 \item \texttt{gcd(}\textit{polys}\texttt{)} returns the greatest
@@ -18021,7 +17990,7 @@ The \texttt{lcm}\index{lcm@\texttt{lcm}} command computes the
 LCM (Least Common Multiple) of polynomials.
 (See \ref{ssec:ilcm} for LCM of integers).
 \begin{itemize}
-\item \texttt{lcm} takes an unspecified number of :
+\item \texttt{lcm} takes an arbitrary number of arguments:
 
   \textit{polys}, a sequence or list of polynomials.
 \item \texttt{lcm(}\textit{polys}\texttt{)} returns the least common
@@ -18583,22 +18552,22 @@ resultant(x^3-p*x+q,3*x^2-p,x)
     parameter, so that the coordinates of $A$ are rational functions with
     respect to $t$. More precisely:
     \[
-      A=(ax,ay)=\left(2a\frac{1-t^2}{1+t^2},2a\frac{2t}{1+t^2}\right)
+      A=(ax,ay)=\left(2a\frac{1-t^2}{1+t^2},2a\frac{2t}{1+t^2}\right).
     \]
     If $|F_1F_2|=2c$ and if $I$ is the midpoint of $\overline{AF_2}$, then since the
     coordinates of $F_2$ are $F_2=(2c,0)$, the coordinates of $I$ are
     \[
-      I=(c+ax/2;ay/2)=\left(c+a\frac{1-t^2}{1+t^2};a\frac{2t}{1+t^2}\right)
+      I=(c+ax/2;ay/2)=\left(c+a\frac{1-t^2}{1+t^2};a\frac{2t}{1+t^2}\right).
     \]
     $IM$ is orthogonal to $\overline{AF_2}$, hence $M=(x;y)$ satisfies the equation $\mathrm{eq}_1=0$
     where
     \[
-      \mathrm{eq}_1:=(x-ix)(ax-2c)+(y-iy)ay
+      \mathrm{eq}_1:=(x-ix)(ax-2c)+(y-iy)ay.
     \]
     But $M=(x,y)$ is also on $\overline{F_1A}$, hence $M$ satisfies the equation
     $\mathrm{eq}_2=0$ where
     \[
-      \mathrm{eq}_2:=y/x-ay/ax
+      \mathrm{eq}_2:=y/x-ay/ax.
     \]
     The resultant of both equations with respect to $t$,
     \texttt{resultant(eq1,eq2,t)}, is a polynomial $\mathrm{eq}_3$ depending on the
@@ -18620,7 +18589,7 @@ factor(resultant(eq1,eq2,t))
     The factor $-64 (x^2+y^2)$ is always different from zero,
     hence the locus equation of $M$:
     \[
-      x^2a^2-x^2c^2+-2xa^2c+2xc^3-a^4+2a^2c^2+a^2y^2-c^4=0
+      x^2a^2-x^2c^2+-2xa^2c+2xc^3-a^4+2a^2c^2+a^2y^2-c^4=0.
     \]
     If the frame origin is $O$, the middle point of $F_1F_2$,
     then this is the cartesian equation of an ellipse.
@@ -18640,9 +18609,9 @@ normal(subst(-c^2*X^2+c^2*a^2+X^2*a^2-a^4+a^2*Y^2,c^2=a^2-b^2))
     \begin{xcasoutput}
       X^{2} b^{2}+Y^{2} a^{2}-a^{2} b^{2}
     \end{xcasoutput}
-    that is to say, after division by $a^2b^2$, $M$ satisfies the equation:
+    that is to say, after division by $a^2b^2$, $M$ satisfies the equation
     \[
-      \frac{X^2}{a^2}+\frac{Y^2}{b^2}=1
+      \frac{X^2}{a^2}+\frac{Y^2}{b^2}=1.
     \]
   \end{description}
 \item
@@ -18657,7 +18626,7 @@ normal(subst(-c^2*X^2+c^2*a^2+X^2*a^2-a^4+a^2*Y^2,c^2=a^2-b^2))
   In the Cartesian coordinate system with center $F_1$ and $x$-axis having
   the same direction as the vector $F_1F_2$, the coordinates of $A$ are:
   \[
-    A=(2a\cos(\theta);2a\sin(\theta))
+    A=(2a\cos(\theta);2a\sin(\theta)),
   \]
   where $\theta$ is the $(Ox,OA)$ angle. Choose $t=\tan(\theta/2)$ as
   parameter such that the coordinates of $A$ are rational functions with
@@ -18667,11 +18636,11 @@ normal(subst(-c^2*X^2+c^2*a^2+X^2*a^2-a^4+a^2*Y^2,c^2=a^2-b^2))
   \]
   If $|F_1F_2|=2c$ and $I$ is the midpoint of $AF_2$:
   \[
-    F_2=(2c,0),\quad I=(c+ax/2;ay/2)=\left(c+a\frac{1-t^2}{1+t^2};a\frac{2t}{1+t^2}\right)
+    F_2=(2c,0),\quad I=(c+ax/2;ay/2)=\left(c+a\frac{1-t^2}{1+t^2};a\frac{2t}{1+t^2}\right).
   \]
   Since $D$ is orthogonal to $\overline{AF_2}$, the equation of $D$ is $\mathrm{eq}_1=0$ where
   \[
-    \mathrm{eq}_1:=(x-ix)(ax-2c)+(y-iy)ay
+    \mathrm{eq}_1:=(x-ix)(ax-2c)+(y-iy)ay.
   \]
   So, the hull of $D$ is the locus
   of $M$, the intersection point of $D$ and $D'$ where $D'$ has equation
@@ -20840,7 +20809,7 @@ compute the greatest common divisor of two polynomials with
 coefficients in $\mathbb{Z}/p\mathbb{Z}$.
 \begin{itemize}
 \item (In \Maple{} mode.)\\
-  \texttt{Gcd} takes an unspecified number of :
+  \texttt{Gcd} takes an arbitrary number of arguments:
 
   \textit{polys}, a sequence or list of polynomials with coefficients
   in $\mathbb{Z}/p\mathbb{Z}$.
@@ -21095,8 +21064,7 @@ command computes the factorial of a number.
 The postfix operator \texttt{!}\index{\symbol{33}@\texttt{\symbol{33}}}
 is an equivalent to \texttt{factorial}.
 \begin{itemize}
-\item \texttt{factorial} takes one
-  :
+\item \texttt{factorial} takes one argument:
 
   $n$, an integer.
 \item \texttt{factorial($n$)} returns $n!$.
@@ -22925,7 +22893,7 @@ To find the length of a curve given by an equation:
   \]
   or
   \[
-    \operatorname{arcLen}(f(x),x,a,b)=\int_{a}^{b}\sqrt{x\Prime(t)^{2}+y\Prime(t)^{2}}\,\mathrm{d}t
+    \operatorname{arcLen}(f(x),x,a,b)=\int_{a}^{b}\sqrt{x\Prime(t)^{2}+y\Prime(t)^{2}}\,\mathrm{d}t.
   \]
 \end{itemize}
 
@@ -27506,7 +27474,7 @@ function first sorts by type and then uses an order for each type
 
 The \texttt{table}\index{table@\texttt{table}} command creates a table.
 \begin{itemize}
-\item \texttt{table} takes an unspecified number of :
+\item \texttt{table} takes an arbitrary number of arguments:
 
   \textit{seq}, a list or sequence of equalities
   of the form \textit{key}\texttt{=}\textit{value}.
@@ -30963,7 +30931,7 @@ To enter a problem symbolically:
     two-column matrix, consider using the conversion routine
     \texttt{box\_constraints} (see Section~\ref{ssec:boxconstr}).
   \item Optionally, \textit{opts}, a sequence of solver settings
-    in form $\textit{option}=\textit{value}$, where \textit{option}
+    in form $\textit{option}\texttt{=}\textit{value}$, where \textit{option}
     may be one of:
     \begin{itemize}
     \item \texttt{lp\_assume}\index{lp\_assume@\textit{lp\_assume}}
@@ -31611,7 +31579,7 @@ lpsolve("somefile.lp",x2=5.4..inf,assume=integer)
 
 It is advisable to use only (capital) letters, digits and underscores
 when naming variables in an LP file, although the corresponding format
-allows many more characters. That is because these names are converted
+allows more characters. That is because these names are converted
 to \giac{} identifiers during the loading process.
 
 Note that the coefficients of a problem loaded from file are always
@@ -31989,7 +31957,7 @@ function on a segment.
 \end{itemize}
 
 \texttt{find\_minimum} applies a modification of Brent's algorithm which usually finds a global
-minimum, even when $f$ has many local extrema.
+minimum, even when $f$ has several local extrema.
 The original Brent's method is used as a subroutine which is applied recursively by
 partitioning the search interval. Each instance is allowed the maximum of $n$ iterations.
 
@@ -32203,7 +32171,7 @@ to equality and/or inequality constraints with continuous and/or integer variabl
       Note that these names must be entered with double quotes, i.e.~as strings. Some parameters
       can be set for individual methods; to do so, \textit{meth} should be a list in which the
       leading element is the method specification, followed by one or more entries of the form
-      $"\textit{param}"=\textit{value}$, where \textit{param} can be one of the following
+      $"\textit{param}"\texttt{=}\textit{value}$, where \textit{param} can be one of the following
       (see below for detailed explanations on values):
       \begin{itemize}
       \item \texttt{cross-probability}, which specifies the probability of mutation in differential
@@ -32219,7 +32187,7 @@ to equality and/or inequality constraints with continuous and/or integer variabl
       \item \texttt{shrink-ratio}, which specifies the simplex shrinking factor in Nelder-Mead
         method (by default 0.5).
       \item \texttt{size}, which specifies the initial simplex size for Nelder-Mead method (by default, it is computed automatically by using the variable bounds).
-      \item \xcaskey{step}, which specifies initial step for BGFS method or adaptive penalty step for
+      \item \texttt{step}, which specifies initial step for BGFS method or adaptive penalty step for
         Nelder-Mead method (by default, it is set to 1 for BGFS and to 0.01 for Nelder \& Mead).
       \item \texttt{search-points}, which specifies the number of agents in differential evolution
         (by default $10n$, where $n$ is the number of variables) or the number of points for determining
@@ -36124,7 +36092,7 @@ initialize (or re-initialize) the random numbers given by
 is a synonym for \texttt{srand}.
 
 \begin{itemize}
-\item \texttt{srand} takes one optional :
+\item \texttt{srand} takes one optional argument:
 
   Optionally, $n$, an integer.
 \item \texttt{srand($n$)} initializes the random numbers.
@@ -36603,7 +36571,7 @@ or \texttt{randmatrix} (see \secref{ssec:randmatrix}).
 \texttt{random\_variable}\index{random\_variable@\texttt{random\_variable}}
 is a synonym for \texttt{randvar}.
 \begin{itemize}
-\item \texttt{randvar} takes a sequence of :
+\item \texttt{randvar} takes a sequence of arguments:
 
   \textit{distspec}, which specifies a probability distribution with
   parameters. The following distributions are supported:
@@ -38412,7 +38380,7 @@ The \texttt{cauchy}\index{cauchy@\texttt{cauchy}}
 probability density function for the Cauchy distribution (sometimes
 called the Lorentz distribution).
 \begin{itemize}
-\item \texttt{cauchy} takes two optionaly arguments and one
+\item \texttt{cauchy} takes two optional arguments and one
   mandatory argument:
   \begin{itemize}
   \item Optionally, $a$ and $b$, real numbers (the parameters; by
@@ -40567,7 +40535,6 @@ Piecewise functions can be transformed if defined as
 where $f_{0},\dots,f_{n}$ are expressions
 and $a_1,a_2,\dots,a_n $ are real numbers such that
 $a_1<a_2<\cdots<a_n $. Inequalities may be strict or non-strict.
-
 For example:
 \begin{xcasinput}
 f:=piecewise(x<=-1,exp(x+1),x<=1,1,exp(2-2x)):;
@@ -43101,7 +43068,7 @@ difference between a function and an expression):
   returns an approximate value of $y(t_1)$ where $y(t)$ is the
   solution of:
   \[
-    y\Prime(t)=f(t,y(t)), \quad  y(t_0)=y_0
+    y\Prime(t)=f(t,y(t)), \quad  y(t_0)=y_0.
   \]
   With an optional argument of \texttt{curve}, the list of all the
   $[t,[y(t)]]$ values that were computed are returned.
@@ -43192,9 +43159,9 @@ difference between a function and an expression):
   \end{itemize}
 \item \texttt{odesolve(}$\textit{mandatory}\,\langle,\texttt{curve}\,\rangle$\texttt{)}
   returns an approximate value of $x(t_1)$ where $x(t)$ is the
-  solution of:
+  solution of
   \[
-    x\Prime(t)=f(t,x(t)), \quad  x(t_0)=x_0
+    x\Prime(t)=f(t,x(t)), \quad  x(t_0)=x_0.
   \]
   With an optional argument of \texttt{curve}, the list of all the
   $[t,[x(t)]]$ values that were computed by the solver are returned.
@@ -43506,7 +43473,7 @@ See Table~\ref{tab:upref} for a list of the unit prefixes.
 You cannot use a prefix with a built-in unit if the result gives another
 built-in unit.
 
-For example:
+For example,
 \texttt{1\_a} is one are, but \texttt{1\_Pa} is one pascal and not
 \texttt{10\^{}15\_a}.
 
@@ -44348,7 +44315,7 @@ The \texttt{printpow}\index{printpow@\texttt{printpow}}
 command determines how the \texttt{print}
 command will print exponents in the special pane above the output line.
 \begin{itemize}
-\item \texttt{printpow} takes on :
+\item \texttt{printpow} takes one argument:
 
   $n$, which is either $-1$, $0$ or $1$ (by default 1).
 \item \texttt{printpow($n$)} sets the style for printing exponents
@@ -46057,7 +46024,7 @@ controlled by a \textsf{Show axes} checkbox in the configuration panel
 brought up with the \button{cfg} button
 on the graphic screen control panel.
 \begin{itemize}
-\item \texttt{switch\_axes} takes one optional :
+\item \texttt{switch\_axes} takes one argument:
 
   $n$, either 0 or 1.
 \item \texttt{switch\_axes()} toggles whether or not the coordinate
@@ -46414,7 +46381,7 @@ The parameters for global features and their possible values are:
   \texttt{1} or \texttt{true} shows the axes.
 \item \texttt{labels} ---  This sets labels for the axes, it should be
   a list of two strings $[\text{``x axis label''},\text{``y axis label''}]$.
-\item \xcaskey{label} ---
+\item \texttt{label} ---
   This puts labels on the graphic screen in the following ways.
   \begin{itemize}
   \item
@@ -46813,7 +46780,7 @@ The \texttt{point2d}\index{point2d@\texttt{point2d}}
 command defines a random point whose coordinates
 are integers between $-5$ and $5$.
 \begin{itemize}
-\item \texttt{point2d} takes an unspecified number of :
+\item \texttt{point2d} takes an arbitrary number of arguments:
 
   \textit{names}, a sequence of names for the points.
 \item \texttt{point2d(}\textit{names}\texttt{)} assigns a random
@@ -47011,7 +46978,7 @@ The \texttt{barycenter}\index{barycenter@\texttt{barycenter}}
 command returns and draws the barycenter of a set of
 weighted points.
 \begin{itemize}
-\item \texttt{barycenter} takes an unspecified number of :
+\item \texttt{barycenter} takes an arbitrary number of arguments:
 
   $L_{1},L_{2},\dots,L_{n}$, a sequence of lists of length two, where
   each list consists of a point and a weight.  This information can
@@ -48091,7 +48058,7 @@ See \secref{ssec:3dgenpolygon} for general polygons in space.
 The \texttt{polygon}\index{polygon@\texttt{polygon}}
 command draws general polygons.
 \begin{itemize}
-\item \texttt{polygon} takes an unspecified number of :
+\item \texttt{polygon} takes an arbitrary number of arguments:
 
   \textit{points}, a sequence or list of points.
 \item \texttt{polygon(}\textit{points}\texttt{)} returns and draws
@@ -48149,7 +48116,7 @@ The \texttt{convexhull}\index{convexhull@\texttt{convexhull}}
 command uses the Graham scanning algorithm to
 find the convex hull of a set of points.
 \begin{itemize}
-\item \texttt{convexhull} takes an unspecified number of :
+\item \texttt{convexhull} takes an arbitrary number of arguments:
 
   \textit{points}, a sequence or list of points.
 \item \texttt{convexhull(}\textit{points}\texttt{)}
@@ -50447,7 +50414,7 @@ $[(c-a)/(c-b)]/[(d-a)/(d-b)]$.
 The \texttt{cross\_ratio}\index{cross\_ratio@\texttt{cross\_ratio}}
 command finds the cross ratio.
 \begin{itemize}
-\item \texttt{cross\_ratio} takes for :
+\item \texttt{cross\_ratio} takes four arguments:
 
   $a,b,c,d$, complex numbers.
 \item \texttt{cross\_ratio($a,b,c,d$)} returns the cross ratio,
@@ -50987,7 +50954,7 @@ see \secref{sssec:localfeatures}.)
 The \texttt{point3d}\index{point3d@\texttt{point3d}}
 command defines a random point whose coordinates are integers between $-5$ and $5$.
 \begin{itemize}
-\item \texttt{point3d} takes an unspecified number of :
+\item \texttt{point3d} takes an arbitrary number of arguments:
 
   \textit{names}, a sequence of names for the points.
 \item \texttt{point3d(}\textit{names}\texttt{)} assigns a random
@@ -51160,7 +51127,7 @@ plane.
 The \texttt{barycenter}\index{barycenter@\texttt{barycenter}}
 command returns and draws the barycenter of a set of weighted points.
 \begin{itemize}
-\item \texttt{barycenter} takes an unspecified number of :
+\item \texttt{barycenter} takes an arbitrary number of arguments:
 
   $L_{1},L_{2},\dots,L_{n}$, a sequence of lists of length two, where
   each list consists of a point and a weight.  This information can

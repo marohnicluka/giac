@@ -32468,11 +32468,13 @@ we provided no initial points). Also, observe that our procedure \texttt{f} has 
 so we have to quote the first argument in \texttt{nlpsolve} in order to fix the parameter $a$ to 2.
 (This technique should be used for ``black box'' objectives possibly requiring parameter specifications.)
 
-Additionally, you can input:
+Additionally, to visualize the surface $f$, you can input:
 \begin{xcasinput}
 plot3d(quote(f(x1,x2,2)),x1=0..5,x2=0..10,display=filled+yellow)
 \end{xcasinput}
-to visualize the surface $f$.
+\begin{xcasimage}
+  \includeimage{nlpsolve-surface.png}
+\end{xcasimage}
 
 \subsection{Simulated annealing minimization%: \texttt{simulated\_annealing}
 }

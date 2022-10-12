@@ -344,7 +344,7 @@ or \textit{italics} (option names and specific values like color names).
 \section{Interfaces for the \giac{} library}
 
 The \giac{} library is a \CC{} mathematics library.  It comes with
-two interfaces you can use directly; a graphical interface and a
+two interfaces use directly; a graphical interface and a
 command-line interface. All interfaces can do symbolic and numeric
 calculations, use \giac{}'s programming language, and have a
 built in help function.
@@ -400,12 +400,12 @@ killall xcas
   \xcas{}, you will be asked if you want to resume where you left
   off.
 \item
-  If you are running Windows, you can use the explorer to go to the
+  If you are running Windows, use the explorer to go to the
   directory where \xcas{} is installed.  In that directory is
   a file called \texttt{xcas.bat}.  You can click on that file to start
   \xcas{}.
 \item
-  If you are running Mac OS, you can use the Finder to go to the
+  If you are running Mac OS, use the Finder to go to the
   \texttt{xcas\_image.dmg} file and double-click it.  Then double-click
   the \xcas{} disk icon.  Finally, you can double-click the
   \xcas{} program to launch \xcas{}.
@@ -414,7 +414,7 @@ killall xcas
 When you start \xcas{}, a window will open with menu entries
 across the top, below that will be a bar giving information about the
 current \xcas{} configuration, and below that will be an entry
-line you can use to enter commands.  This interface will be described
+line use to enter commands.  This interface will be described
 in more detail later, but the menu item \textsf{Help\menusep{}Interface}
 will bring up an introduction.
 
@@ -559,7 +559,7 @@ the level.  Each level can have one of the following:
 
   If the output is a graphic, then it will appear in a graphing area
   below the input region.  To the right of the graphic will be a
-  control panel which you can use to manipulate the graphic (see
+  control panel which use to manipulate the graphic (see
   \secref{sec:graphscreen}).
 
 \item[Expression editor] ---
@@ -820,7 +820,7 @@ argument, which is either a variable name (which defaults to
 Finally, there is an optional third argument which can be used to
 specify a color for the graph.
 
-Below the brief description will be some entry fields that you can use
+Below the brief description will be some entry fields that use
 to enter the arguments.  If you fill them out and press the enter key,
 the command with the arguments filled out will be put on the command
 line.
@@ -887,7 +887,7 @@ This menu contains the following entries:
   There will be a submenu with a list of saved session files in the
   primary directory (see \secref{ssec:wdir}) that you can open,
   as well as a \textsf{File} item which will open a directory browser
-  you can use to find a session file.  This directory browser can also
+  use to find a session file.  This directory browser can also
   be opened with \textsf{Alt+O}.
 
 \item[Import] ---
@@ -1632,7 +1632,6 @@ the status line.  This will open a window with the following options:
 \begin{xcasinput}
 factor(x^2-3)
 \end{xcasinput}
-  returns
   \begin{xcasoutput}
     \left(x-\sqrt{3}\right) \left(x+\sqrt{3}\right)
   \end{xcasoutput}
@@ -1732,7 +1731,7 @@ be given a window in which you can change the following options:
 
 \item[Print format] ---
   This determines the paper size for printing and saving files.
-  There is also a button you can use to have the printing done in
+  There is also a button use to have the printing done in
   landscape mode; if this button is not checked, the printing will be
   done in portrait.
 
@@ -1916,9 +1915,9 @@ saved in the same file; to save a session in a different file you can
 use the menu item \textsf{File\menusep{}Save as}.
 
 If you have a session saved in a file and you want to load it in a
-tab, you can use the menu item \textsf{File\menusep{}Open}.
+tab, use the menu item \textsf{File\menusep{}Open}.
 From there you can choose a specific file from a list or open a
-directory browser that you can use to choose a file.  The directory
+directory browser that use to choose a file.  The directory
 browser can also be opened with \textsf{Alt+O}.
 
 \subsection{Saving a spreadsheet\label{ssec:spreadsave}}
@@ -1936,8 +1935,8 @@ You can save a spreadsheet with the
 you select that, you will be prompted for a file name; you should
 choose a file name that ends in \texttt{.tab}.  Once you save a
 spreadsheet, there will be a button to the right of the menus which
-you can use to save any changes you make.  If you want to save the
-spreadsheet under a different name, you can use the
+use to save any changes you make.  If you want to save the
+spreadsheet under a different name, use the
 \textsf{Table\menusep{}Save as alternate filename} menu
 entry.
 
@@ -1947,9 +1946,9 @@ spreadsheet in a comma-separated values file, and the
 \textsf{Table\menusep{}Save as mathml} menu item will save
 the spreadsheet in as a \MathML{} file.
 
-You can use the \textsf{Table} menu to insert previously saved
+use the \textsf{Table} menu to insert previously saved
 spreadsheets; the menu item \textsf{Table\menusep{}Insert}
-will bring up a directory browser that you can use to select a file to
+will bring up a directory browser that use to select a file to
 enter.
 
 \subsection{Saving a program\label{ssec:progsave}}
@@ -1966,10 +1965,10 @@ program.  The first time you save a program, you will be prompted for
 a file name; you should choose a name ending in \texttt{.cxx}.  Once a
 program is saved, the file name will appear to the right of the
 \button{Save} button.  If you want to save the program under a
-different name, you can use the \textsf{Prog\menusep{}Save
+different name, use the \textsf{Prog\menusep{}Save
   as} item from the program editor menu.
 
-To insert a previously saved program, you can use the
+To insert a previously saved program, use the
 \textsf{Prog\menusep{}Load} item from the program editor
 menu.
 
@@ -1979,20 +1978,20 @@ You can print a session with the
 \textsf{File\menusep{}Print\menusep{}To printer}
 menu item.
 
-If you prefer to save the printed form as a file, you can use the
+If you prefer to save the printed form as a file, use the
 \textsf{File\menusep{}Print\menusep{}Preview}
 menu item.  You will prompted for a file name to save the printed form
 in; the file will be a PostScript file, so the name should end in
 \texttt{.ps}. If you only want to save certain levels in printable
-form, you can use the
+form, use the
 \textsf{File\menusep{}Print\menusep{}Preview
   selected levels} menu item; this file will be encapsulated PostScript,
 so the name should end in \texttt{.eps}.
 
 \section{Translating to other computer languages}
 
-\xcas{} can translate a session, or parts of a session, to other
-computer languages; notably \LaTeX{} and \MathML{}.
+\xcas{} can export a session, or parts of a session, to typesetting
+languages such as \LaTeX{} and \MathML{}.
 
 \subsection{Translating an expression to \LaTeX{}}
 
@@ -2015,10 +2014,8 @@ latex(1+1/2)
 
 \subsection{Translating the entire session to \LaTeX{}}
 
-To save your entire document as a complete \LaTeX{}\index{LaTeX} file, you can use
-the menu item
-\textsf{File\menusep{}LaTeX\menusep{}LaTeX
-  preview}.
+To export entire session to a \LaTeX{}\index{LaTeX} file, use
+the menu item \textsf{File\menusep{}LaTeX\menusep{}LaTeX~preview}.
 
 \subsection{Translating graphical output to \LaTeX{}\label{ssec:graph2tex}}
 
@@ -2030,7 +2027,7 @@ there will be a \textsf{Print} menu; the
 \textsf{Print\menusep{}LaTeX print} will give you several
 files \texttt{DispG.tex}, \texttt{DispG.dvi}, \texttt{DispG.ps} and
 \texttt{DispG.png} with the graphics in different formats. To save it
-without using the \texttt{DispG()} command you can use the
+without using the \texttt{DispG()} command use the
 \texttt{graph2tex}\index{graph2tex@\texttt{graph2tex}} command.
 
 The \texttt{graph2tex} command saves all current graphic output to a
@@ -2049,12 +2046,12 @@ The command line
 \begin{xcasinput}
 graph2tex("myfile.tex")
 \end{xcasinput}
-results in a \LaTeX{} file named \texttt{myfile.tex} with the graphs.
-To save a three-dimensional graph, you can use the command
+creates a \LaTeX{} file \texttt{myfile.tex} with the graphs.
+To save a 3D graph, use the command
 \texttt{graph3d2tex}\index{graph3d2tex@\texttt{graph3d2tex}}.
 
 
-To save a single graph as a \LaTeX{} file, you can use the \texttt{M}
+To save a single graph as a \LaTeX{} file, use the \texttt{M}
 menu to the right of the graph.  Selecting
 \textsf{M\menusep{}Export Print\menusep{}Print
   (with LaTeX)} will save the current graph.  You can also save a single
@@ -2322,7 +2319,7 @@ enter the comment line
 \end{quote}
 then the browser will open to the \xcas{} home page.
 
-To add a comment to a program, rather than a session, you can use the
+To add a comment to a program, rather than a session, use the
 \texttt{comment}\index{comment@\texttt{comment}} command.
 \begin{itemize}
 \item \texttt{comment} takes
@@ -2394,7 +2391,7 @@ commands and display them on the current line, and
 
 You can enter expressions on the command line, but \xcas{} also
 has a built-in expression editor\index{expression editor}
-that you can use to enter expressions in two dimensions, the way
+that use to enter expressions in two dimensions, the way
 they normally look when typeset.  When you have an expression in the
 editor, you can also manipulate subexpressions apart from the entire expression.
 
@@ -2410,7 +2407,7 @@ enter it visually, as $x+2$ on top of $x^2-4$.  To do this, you can
 start the expression editor with the \textsf{Alt+E} keystroke (or the
 \textsf{Expression\menusep{}New Expression} menu
 command).  There will be a small \texttt{M} on the right side of the
-expression line, which is a menu with some commands you can use on the
+expression line, which is a menu with some commands use on the
 expressions.  There will also be a \texttt{0} selected on the
 expression line and an on-screen keyboard at the bottom
 (see \secref{sec:swin}, item \ref{enum:kbd}).  If you type
@@ -2430,7 +2427,7 @@ evaluated and will appear on the output line.
 
 \xcas{} can operate on expressions in the expression editor or
 subexpressions\index{subexpressions} of the expression.
-To understand subexpressions and how to select them, it helps to know
+To understand subexpressions and how to select its parts, it helps to know
 that \xcas{} stores expressions as \textsl{trees}.
 
 A tree, in this sense, consists of objects called nodes.  A node can
@@ -2442,7 +2439,7 @@ siblings.  Finally, if a node doesn't have any children, it is called
 a leaf.  This terminology comes from a visual representation of a
 tree,
 \begin{center}
-  \includeimage[0.4142]{xcas-tree.png}
+  \includeimage[0.38]{xcas-tree.png}
 \end{center}
 which looks like an upside-down tree; the root is at the
 top and the leaves are at the bottom.
@@ -2454,7 +2451,7 @@ children of an operator node are its operands, and the constants and
 variables will be the leaves.  For example, the tree for $\sin(2x +
 y)$ will look like
 \begin{center}
-  \includeimage[0.4142]{xcas-expr-tree.png}
+  \includeimage[0.38]{xcas-expr-tree.png}
 \end{center}
 A subexpression\index{subexpression} of an expression will be a
 selected node together with the nodes below it.  For example, both
@@ -2481,20 +2478,20 @@ using the arrow keys.  Given a selection:
   operator, and another backspace will delete the arguments or operands.
 \end{itemize}
 
-You can use the arrow keys to navigate the tree structure of an
+use the arrow keys to navigate the tree structure of an
 expression, which isn't always evident by looking at the expression
 itself.  For example, suppose you enter \texttt{x*y*z} in the editor.
 The two multiplications will be a different levels; the tree will look
 like
 \begin{center}
-  \includeimage[0.4142]{xcas-xyz-tree.png}
+  \includeimage[0.38]{xcas-xyz-tree.png}
 \end{center}
 If you select the entire expression with the up arrow and then go to
 the \texttt{M} menu to the right of the line and choose eval, then the
 expression will look the same but, as you can check by navigating it
 with the arrow keys, the tree will look like
 \begin{center}
-  \includeimage[0.4142]{xcas-xyz-tree2.png}
+  \includeimage[0.38]{xcas-xyz-tree2.png}
 \end{center}
 
 \subsection{Manipulating subexpressions}
@@ -2503,7 +2500,7 @@ If a subexpression\index{subexpressions} is selected in the expression
 editor, then any menu command will be applied to that subexpression.
 
 For example, enter the expression \texttt{(x+1)*(x+2)*(x-1)}
-in the expression editor.  Note that you can use the abilities of the
+in the expression editor.  Note that use the abilities of the
 editor to make this easier.  First, enter \texttt{x+1}.  Select this
 with the up arrow, then type \texttt{*} followed by \texttt{x+2}.  Select
 the \texttt{x+2} with the up arrow and then type \texttt{*} followed
@@ -2533,7 +2530,7 @@ do one of the following:
   $(x^2+3x+2)(x-1)$ in the editor.
 \end{itemize}
 
-There are also keystroke commands that you can use to operate on
+There are also keystroke commands that use to operate on
 subexpressions that you have selected.  There are the usual
 \textsf{Ctrl+Z} and \textsf{Ctrl+Y} for undoing and redoing.  Some of
 the others are given in Table~\ref{tab:actions}\begin{latexonly}, p.~\pageref{tab:actions}\end{latexonly}.
@@ -2933,11 +2930,11 @@ variables or functions or other keywords reserved by \xcas{}.
 You can assign a value to a variable with the
 \texttt{:=}\index{:=@\texttt{:=}} operator.
 For example, to give the variable \texttt{a} the value of \texttt{4},
-you can enter:
+enter:
 \begin{xcasinput}
 a:=4
 \end{xcasinput}
-Alternatively, you can use the
+Alternatively, use the
 \texttt{=>}\index{=>@\texttt{=>}} operator; when
 you use this operator, the value comes before the variable:
 \begin{xcasinput}
@@ -2953,7 +2950,7 @@ sto(4,a)
 After any one of these commands, whenever you use the variable
 \texttt{a} in an expression, it will be replaced by \texttt{4}.
 
-You can use sequences or lists to make multiple assignments at the
+use sequences or lists to make multiple assignments at the
 same time. For example,
 \begin{xcasinput}
 (a,b,c):=(1,2,3)
@@ -3446,7 +3443,7 @@ compatibility there is \texttt{del}.
 \end{itemize}
 
 The \texttt{rm\_all\_vars} and \texttt{restart} commands clear the
-values and assumptions you have made on all variables you can use.
+values and assumptions you have made on all variables use.
 \begin{itemize}
 \item \texttt{rm\_all\_vars} takes no arguments.
 \item \texttt{rm\_all\_vars()} removes all the values that you have
@@ -3510,7 +3507,7 @@ menu and the input to be entered when the item is selected.
 
 For example, to create a custom defined menu with the builtin function
 \texttt{diff}, a user defined function \texttt{foo}, and a menu item
-to insert the number $22/7$, you can enter:
+to insert the number $22/7$, enter:
 \begin{xcasinput}
 CST:=[diff,["foo",foo],["My pi approx",22/7]]
 \end{xcasinput}
@@ -3545,7 +3542,7 @@ will add the \texttt{evalc} command to the \texttt{cust} menu.
 \subsection{Defining functions\label{ssec:deffuns}}
 
 Similar to how you can assign a value to a variable (see
-\secref{ssec:assign}), you can use the \texttt{:=}\index{:=@\texttt{:=}} and
+\secref{ssec:assign}), use the \texttt{:=}\index{:=@\texttt{:=}} and
 \texttt{=>}\index{=>@\texttt{=>}} operators to define a function; both
 \begin{xcasinput}
 f(x):=x^2
@@ -3571,7 +3568,7 @@ can be defined by
 \begin{xcasinput}
 x->x^2
 \end{xcasinput}
-You can use this form of the function to assign it a name; both
+use this form of the function to assign it a name; both
 \begin{xcasinput}
 f:=x->x^2
 \end{xcasinput}
@@ -3806,8 +3803,8 @@ intent to solve it.  To test for equality, you need to use
   \label{ssec:piecewise}}
 \index{piecewise defined functions}
 
-You can use boolean tests to define functions not given by a single
-simple formula.  Notably, you can use the \texttt{ifte} command or the
+use boolean tests to define functions not given by a single
+simple formula.  Notably, use the \texttt{ifte} command or the
 \texttt{?:} operator to define piecewise-defined functions.
 \begin{itemize}
 \item \texttt{ifte}\index{ifte@\texttt{ifte}} takes three arguments:
@@ -3941,7 +3938,7 @@ To define
     x+1 & \text{if } x \ge 0
   \end{cases}
 \]
-you can enter:
+enter:
 \begin{xcasinput}
 f(x):=piecewise(x<-2,-2,x<-1,3*x+4,x<0,1,x+1)
 \end{xcasinput}
@@ -4213,7 +4210,7 @@ A newline can be inserted into a string with
 
 \subsection{Length of a string}
 
-The \texttt{size}\index{size@\texttt{size}} command can find
+The \texttt{size}\index{size@\texttt{size}} command finds
 the length of a string (as well as the length of lists in
 general, see \secref{ssec:listlen}).
 
@@ -4652,7 +4649,8 @@ expr("123e-5")
   0.00123
 \end{xcasoutput}
 
-\subsection{Levensthein distance\label{sec:levenshtein}}
+\subsection{Levensthein distance\label{sec:levensthein}}
+\index{Distance function!Levensthein}
 
 The \texttt{levenshtein}\index{levenshtein@\texttt{levenshtein}}
 command computes the Levenshtein distance between two words, which is the
@@ -4678,6 +4676,7 @@ levenshtein("kitten","sitting")
 \end{xcasoutput}
 
 \subsection{Hamming distance}
+\index{Distance function!Hamming}
 
 The \texttt{hamdist}\index{hamdist@\texttt{hamdist}}
 command computes the Hamming distance between two sequences of equal lengths,
@@ -4789,6 +4788,7 @@ bitand(18,56)
 \end{itemize}
 
 \subsection{Bitwise Hamming distance}
+\index{Distance function!Bitwise Hamming}
 
 The Hamming distance between two integers is the number of differences
 between the bits of the two integers.
@@ -6007,7 +6007,7 @@ range(10,4,-1)
 \begin{xcasoutput}
   \left[10,9,8,7,6,5\right]
 \end{xcasoutput}
-You can use the \texttt{range} command to create a list of values
+use the \texttt{range} command to create a list of values
 $f(k)$, where $k$ is an integer satisfying a certain condition.  (See
 \secref{ssec:for} for the \xcaskey{for} loop used below.)
 \begin{itemize}
@@ -6063,8 +6063,8 @@ select(x->(x>=2),[0,1,2,3,1,5])
 \subsection{Obtaining left and right portions of a list\label{ssec:lrlist}}
 
 The \texttt{left}\index{left@\texttt{left}} and
-\texttt{right}\index{right@\texttt{right}}
-can find the left and right parts of a list.
+\texttt{right}\index{right@\texttt{right}} commands
+find the left and right parts of a list.
 (See \secref{ssec:lrstring}, \secref{ssec:op},
 \secref{ssec:range}, \secref{ssec:lrinterval},
 \secref{ssec:lhs} and \secref{ssec:rhs} for
@@ -6218,7 +6218,7 @@ remove(x->(x>=2),[0,1,2,3,1,5])
   \left[0,1,1\right]
 \end{xcasoutput}
 
-\paragraph*{Remark.} You can use \texttt{remove} to remove characters from
+\paragraph*{Remark.} use \texttt{remove} to remove characters from
 a string.  For example, to remove all the \texttt{"a"}s of a string
 (see \secref{ssec:funcs} for writing functions):
 \begin{xcasinput}
@@ -7327,7 +7327,7 @@ or:
 \subsection{Intersection of two sets or of two lists}
 
 The \texttt{intersect}\index{intersect@\texttt{intersect}} operator
-is an infixed operator that can find the intersection of the elements
+is an infixed operator that finds the intersection of the elements
 of two sets or lists; the result will always be a set.
 
 
@@ -7349,7 +7349,7 @@ or:
 \subsection{Difference of two sets or of two lists}
 
 The \texttt{minus}\index{minus@\texttt{minus}} operator is an
-infixed operator that can find the set difference of the elements
+infixed operator that finds the set difference of the elements
 of two sets or lists; the result will always be a set.
 
 \subsubsection*{Examples}
@@ -7440,7 +7440,7 @@ then \texttt{B} and \texttt{C} are not equal; \texttt{B==C} returns
 \paragraph*{Remark.}
 Since \texttt{..} is an operator, the parts of an expression can be
 picked out of it (see \secref{ssec:op}). In particular, the
-\texttt{left} and \texttt{right} commands can find the left and right
+\texttt{left} and \texttt{right} commands find the left and right
 endpoints of a range (see \secref{ssec:lrstring}, \secref{ssec:op},
 \secref{ssec:lrinterval}, \secref{ssec:lrlist}, \secref{ssec:lhs} and
 \secref{ssec:rhs} for other uses of \texttt{left} and \texttt{right}.)
@@ -7715,7 +7715,7 @@ midpoint(i[2,3])
 In \xcas{}, the union of two intervals is their convex hull.
 
 The \texttt{union\index{union@\texttt{union}}} operator is a
-binary infixed operator that can find the union of two intervals.
+binary infixed operator that finds the union of two intervals.
 
 \subsubsection*{Examples}
 \begin{xcasinput}
@@ -7855,7 +7855,7 @@ factorial(100)
   &697920827223758251185210916864000000000000000000000000
 \end{xcasoutput}
 Gaussian integers are numbers of the form $a+\mathrm{i}b$, where $a$ and $b$
-are in $\mathbb{Z}$. For most functions in this section, you can use
+are in $\mathbb{Z}$. For most functions in this section, use
 Gaussian integers in place of integers.
 
 \subsection{GCD%: \texttt{gcd} \texttt{igcd} \texttt{Gcd}
@@ -8524,7 +8524,7 @@ isprime(14)
   \mathrm{false}
 \end{xcasoutput}
 
-You can use the command \texttt{pari("isprime",n,1)} (see
+use the command \texttt{pari("isprime",n,1)} (see
 \secref{ssec:pari}) to get a primality certificate (see the
 documentation \PARI{} with the menu
 \textsf{Help\menusep{}Manuals\menusep{}PARI-GP})
@@ -9834,7 +9834,7 @@ multiplication, division and raising to a power.
 \end{xcasoutput}
 
 \paragraph*{Remark.}
-You can use the square key or the cube key if your keyboard has one;
+use the square key or the cube key if your keyboard has one;
 for example, $3^2$ returns~9.
 
 \paragraph*{Remarks on non integral powers.}
@@ -12488,7 +12488,7 @@ atanh(1/2)
 \subsubsection{Defining a function from $\mathbb{R}^{p}$ to $\mathbb{R}^{q}$}
 
 If \textit{expr} is an expression possibly involving a variable
-$x$, you can use it to define a function $f$ either by
+$x$, use it to define a function $f$ either by
 \begin{center}
   $f(x)$\texttt{:=}\textit{expr}
 \end{center}
@@ -18040,7 +18040,7 @@ most $n$ terms.
 If $P(x)$ is square-free, then Sturm's Theorem gives a way to use the
 sequence to determine the number of zeros of $P(x)$ on an interval.
 
-The \texttt{sturm}\index{sturm@\texttt{sturm}} command can find either
+The \texttt{sturm}\index{sturm@\texttt{sturm}} command finds either
 the Sturm sequence (in which case it can also be called as
 \texttt{sturmseq}\index{sturmseq@\texttt{sturmseq}}) or the number
 of zeros in an interval (in which case it can also be called as
@@ -19809,7 +19809,7 @@ quo((x^3+x^2+1)%13,(2*x^2+4)%13)
 \begin{xcasoutput}
   \left(\left(-6\right)\mathbin{\%}13\right) x+\left(-6\right)\mathbin{\%}13
 \end{xcasoutput}
-Indeed, $\displaystyle x^3+x^2+1=(2x^2+4)\left(\frac{x+1}{2}\right)+\frac{5x-4}{4}$
+Indeed, $x^3+x^2+1=(2x^2+4)\frac{x+1}{2}+\frac{5x-4}{4}$
 and $-3\cdot 4=-6\cdot 2\equiv 1\pmod{13}$.
 
 \subsection{Euclidean remainder%: \texttt{rem}
@@ -19837,7 +19837,7 @@ rem((x^3+x^2+1)%13,(2*x^2+4)%13)
 \begin{xcasoutput}
   \left(\left(-2\right)\mathbin{\%}13\right) x+\left(-1\right)\mathbin{\%}13
 \end{xcasoutput}
-Indeed: $\displaystyle x^3+x^2+1=(2x^2+4)\cdot\frac{x+1}{2}+\frac{5x-4}{4}$
+Indeed, $x^3+x^2+1=(2x^2+4)\cdot\frac{x+1}{2}+\frac{5x-4}{4}$
 and $-3\cdot 4=-6\cdot 2\equiv 1\pmod{13}$.
 
 \subsection{Euclidean quotient and euclidean remainder%: \texttt{quorem}
@@ -19856,8 +19856,7 @@ the quotient and remainder of the Euclidean division of two polynomials
     \texttt{x}), if $P$ and $Q$ are given as expressions.
   \end{itemize}
 \item \texttt{quorem($P,Q \,\langle,x\rangle$)}
-  returns the list of the quotient and remainder of the Euclidean
-  division of $P$ and $Q$.
+  returns the list of the quotient and remainder of dividing $P$ by $Q$.
 \end{itemize}
 
 \subsubsection*{Example}
@@ -19867,8 +19866,8 @@ quorem((x^3+x^2+1)%13,(2*x^2+4)%13)
 \begin{xcasoutput}
   \left[\left(\left(-6\right)\mathbin{\%}13\right) x+\left(-6\right)\mathbin{\%}13,\left(\left(-2\right)\mathbin{\%}13\right) x+\left(-1\right)\mathbin{\%}13\right]
 \end{xcasoutput}
-Indeed
-$\displaystyle x^3+x^2+1=(2x^2+4)\cdot\frac{x+1}{2}+\frac{5x-4}{4}$\\
+Indeed,
+$x^3+x^2+1=(2x^2+4)\cdot\frac{x+1}{2}+\frac{5x-4}{4}$
 and $-3\cdot 4=-6\cdot 2\equiv 1\pmod{13}$.
 
 \subsection{Division in $\mathbb{Z}/p\mathbb{Z}$ or in $\mathbb{Z}/p\mathbb{Z}[x]$%: \texttt{/}
@@ -20038,7 +20037,7 @@ fracmod(3,13)
 \begin{xcasoutput}
   -\frac{1}{4}
 \end{xcasoutput}
-Indeed: $3\cdot(-4)=-12\equiv 1\pmod{13}$, hence $3=-1/4\%13$.
+Indeed, $3\cdot(-4)=-12\equiv 1\pmod{13}$, hence $3=-1/4\%13$.
 
 Note that this means:
 \begin{xcasinput}
@@ -20053,7 +20052,7 @@ fracmod(13,121)
 \begin{xcasoutput}
   -\frac{4}{9}
 \end{xcasoutput}
-Indeed: $13\cdot(-9)=-117\equiv 4\pmod{121}$ and therefore $13=-4/9\%13$.
+Indeed, $13\cdot(-9)=-117\equiv 4\pmod{121}$ and therefore $13=-4/9\mathbin{\%}13$.
 
 \subsection{GCD in $\mathbb{Z}/p\mathbb{Z}[x]$%: \texttt{gcd}
   \label{sec:gcdm}}
@@ -20101,7 +20100,7 @@ factor((-3*x^3+5*x^2-5*x+4)%13)
 \subsection{Determinant of a matrix in $\mathbb{Z}/p\mathbb{Z}$%: \texttt{det}
 }
 
-The \texttt{det}\index{det@\texttt{det}} command can find the determinant of
+The \texttt{det}\index{det@\texttt{det}} command finds the determinant of
 a matrix with elements in $\mathbb{Z}/p\mathbb{Z}$.  (See also \secref{ssec:det}.)
 \begin{itemize}
 \item \texttt{det} takes
@@ -20130,7 +20129,7 @@ $M=[[1,2,9],[3,10,0],[3,11,1]]$ is \texttt{5\%13} (in $\mathbb{Z}$,
 \subsection{Inverse of a matrix with coefficients in $\mathbb{Z}/p\mathbb{Z}$%: \texttt{inv} \texttt{inverse}
 }
 
-The \texttt{inv}\index{inv@\texttt{inv}} command can find the inverse of
+The \texttt{inv}\index{inv@\texttt{inv}} command finds the inverse of
 a matrix with elements in $\mathbb{Z}/p\mathbb{Z}$.
 (See also \secref{ssec:inv}.)\\
 \texttt{inverse}\index{inverse@\texttt{inverse}} is a synonym for \texttt{inv}.
@@ -20168,9 +20167,8 @@ inverse([[1,2,9],[3,10,0],[3,11,1]]%13)
 \subsection{Row reduction to echelon form in $\mathbb{Z}/p\mathbb{Z}$%: \texttt{rref}
   \label{ssec:rrefm}}
 
-The \texttt{rref}\index{rref@\texttt{rref}} command can find the reduced
-row echelon form of a matrix with elements in $\mathbb{Z}/p\mathbb{Z}$.
-(See \ref{ssec:rref}):
+The \texttt{rref}\index{rref@\texttt{rref}} command finds the reduced
+row echelon form of a matrix with elements in $\mathbb{Z}/p\mathbb{Z}$ (see \ref{ssec:rref}).
 \begin{itemize}
 \item \texttt{rref} takes
   $A$, a matrix in $\mathbb{Z}/p\mathbb{Z}$.
@@ -20193,7 +20191,7 @@ This can be used to solve a linear system of equations with
 coefficients in $\mathbb{Z}/p\mathbb{Z}$ by rewriting it in matrix
 form
 \begin{equation}\label{eq:rref}
-  A X=B
+  A X=B.
 \end{equation}
 \texttt{rref} can then take as argument the augmented matrix
 of the system (the matrix obtained by augmenting matrix $A$ to the
@@ -20288,7 +20286,7 @@ The \texttt{GF}\index{GF@\texttt{GF}} command creates Galois fields.
 \item
   The elements of the field will be $0,g,g^{2},\dots,g^{p^{n}-2}$.
 \item
-  Once a Galois field is created in \xcas{}, you can use elements
+  Once a Galois field is created in \xcas{}, use elements
   of the field to create polynomials and matrices, and use the usual
   operators on them, such as \texttt{+}, \texttt{-}, \texttt{*},
   \texttt{/},  \texttt{\^{}}, \texttt{inv}, \texttt{sqrt}, \texttt{quo},
@@ -20446,8 +20444,7 @@ command can additionally be used in conjunction with
 \texttt{mod} to compute the Euclidean quotient of two polynomials with
 coefficients in $\mathbb{Z}/p\mathbb{Z}$.
 \begin{itemize}
-\item (In \Maple{} mode.)\\
-  \texttt{Quo} takes two arguments:
+\item In \Maple{} mode, \texttt{Quo} takes two arguments:
   $P$ and $Q$, two polynomials with coefficients
   in $\mathbb{Z}/p\mathbb{Z}$.
 \item \texttt{Quo($P,Q$)} returns the
@@ -20495,8 +20492,7 @@ command can additionally be used in conjunction with
 \texttt{mod} to compute the Euclidean remainder of
 two polynomials with coefficients in $\mathbb{Z}/p\mathbb{Z}$.
 \begin{itemize}
-\item (In \Maple{} mode.)\\
-  \texttt{Rem} takes two arguments:
+\item In \Maple{} mode, \texttt{Rem} takes two arguments:
   $P$ and $Q$, two polynomials with coefficients
   in $\mathbb{Z}/p\mathbb{Z}$.
 \item \texttt{Rem($P,Q$)} returns the
@@ -20525,7 +20521,7 @@ Rem(x^3+x^2+1,2*x^2+4) mod 13
 \begin{xcasoutput}
   -2x-1
 \end{xcasoutput}
-Input in \Maple{} mode:
+%Input in \Maple{} mode:
 \begin{xcasinput}
 Rem(x^2+2*x,x^2+6*x+5) mod 5
 \end{xcasinput}
@@ -20544,7 +20540,7 @@ can additionally be used in conjunction with \texttt{mod} to
 compute the greatest common divisor of two polynomials with
 coefficients in $\mathbb{Z}/p\mathbb{Z}$.
 \begin{itemize}
-\item (In \Maple{} mode.)\\
+\item In \Maple{} mode,
   \texttt{Gcd} takes \textit{polys}, a sequence or list of polynomials with coefficients
   in $\mathbb{Z}/p\mathbb{Z}$.
 \item \texttt{Gcd(}\textit{polys}\texttt{)} returns the
@@ -20573,7 +20569,7 @@ Gcd(2*x^2+5,5*x^2+2*x-3) mod 13
 \begin{xcasoutput}
   x+2
 \end{xcasoutput}
-Input in \Maple{} mode:
+%Input in \Maple{} mode:
 \begin{xcasinput}
 Gcd(x^2+2*x,x^2+6*x+5) mod 5
 \end{xcasinput}
@@ -20592,8 +20588,7 @@ can additionally be used in conjunction with \texttt{mod} to
 factor a polynomials with coefficients in $\mathbb{Z}/p\mathbb{Z}$,
 where $p$ must be prime.
 \begin{itemize}
-\item (In \Maple{} mode.)\\
-  \texttt{Factor} takes
+\item In \Maple{} mode, \texttt{Factor} takes
   $P$, a polynomial with coefficients
   in $\mathbb{Z}/p\mathbb{Z}$ for prime $p$.
 \item \texttt{Factor($P$)} returns the factored
@@ -20653,7 +20648,7 @@ Det([[1,2,9] mod 13,[3,10,0] mod 13,[3,11,1] mod 13])
     \end{bmatrix}
   \right)
 \end{xcasoutput}
-To find the value of the determinant, you can enter:
+To find the value of the determinant, enter:
 \begin{xcasinput}
 eval(ans())
 \end{xcasinput}
@@ -20661,7 +20656,7 @@ eval(ans())
   5\mathbin{\%}13
 \end{xcasoutput}
 Hence, in  $\mathbb{Z}/13\mathbb{Z}$, the determinant of
-$A=[[1, 2, 9],[3,10,0],[3,11,1]]$ is \texttt{5\%13} (in $\mathbb{Z}$, \texttt{det(A)=31}).
+$A=[[1, 2, 9],[3,10,0],[3,11,1]]$ is $5\mathbin{\%}13$ (in $\mathbb{Z}$, \texttt{det(A)=31}).
 
 Input in \Maple{} mode:
 \begin{xcasinput}
@@ -20701,7 +20696,7 @@ Inverse([[1,2,9] mod 13,[3,10,0] mod 13,[3,11,1] mod13])
     \end{bmatrix}
   \right)
 \end{xcasoutput}
-To get the actual inverse, you can enter:
+To get the actual inverse, enter:
 \begin{xcasinput}
 eval(ans())
 \end{xcasinput}
@@ -20727,7 +20722,7 @@ Inverse([[1,2,9],[3,10,0],[3,11,1]]) mod 13
 
 In \xcas{} mode, \texttt{Rref} is simply the inert form of
 \texttt{rref}; namely, it returns \texttt{rref} without
-evaluating it.  (See \secref{ssec:rref}.)
+evaluating it (see \secref{ssec:rref}).
 In \Maple{} mode, the \texttt{Rref}\index{Rref@\texttt{Rref}} command
 can additionally be used in conjunction with \texttt{mod} to
 find the reduced row echelon form of a matrix whose elements are in
@@ -20760,7 +20755,7 @@ Rref([[1,2,9] mod 13,[3,10,0] mod 13])
     \end{bmatrix}
   \right)
 \end{xcasoutput}
-To actually get the reduced echelon form, you can enter:
+To actually get the reduced echelon form, enter:
 \begin{xcasinput}
 eval(ans())
 \end{xcasinput}
@@ -20770,7 +20765,7 @@ eval(ans())
     0\mathbin{\%}13&1\mathbin{\%}13&3\mathbin{\%}13
   \end{bmatrix}
 \end{xcasoutput}
-and conclude that \texttt{x=3\%13} and  \texttt{y=3\%13}.
+%and conclude that \texttt{x=3\%13} and  \texttt{y=3\%13}.
 
 Input in \Maple{} mode:
 \begin{xcasinput}
@@ -20779,7 +20774,7 @@ Rref([[1,2,9],[3,10,0]] mod 13)
 \begin{xcasoutput}
   \begin{bmatrix}1&0&3\\0&1&3\end{bmatrix}
 \end{xcasoutput}
-and again conclude that \texttt{x=3\%13} and  \texttt{y=3\%13}.
+In both cases you conclude that $x=3\mathbin{\%}13$ and  $y=3\mathbin{\%}13$.
 
 \chapter{Combinatorics}
 
@@ -20952,8 +20947,7 @@ $F(n,k)=\frac{(-1)^k\binom{n}{k}\binom{2k}{k} 4^{n-k}}{\binom{2n}{n}}$ and
 $G(n,k)=R(n,k)F(n,k)$ form a Wilf-Zeilberger pair. So
 $\sum_{k} F(n,k)$ is a constant. Since $F(0,0)=1$ and $F(0,k)=0$
 for $k>0$, we have $\sum_{k} F(0,k)=1$
-and so $\sum_{k} F(n,k)=1$ for all $n$, showing that~\eqref{eq:wilfz}
-holds.
+and so $\sum_{k} F(n,k)=1$ for all $n$, implying~\eqref{eq:wilfz}.
 
 \section{Permutations}
 
@@ -21080,7 +21074,7 @@ permu2cycles([0,1,2,3,5,4])
 }
 
 The \texttt{cycles2permu}\index{cycles2permu@\texttt{cycles2permu}} command
-is the inverse of \texttt{perm2cycles}; it turns a sequence of cycles into a
+does the opposite of \texttt{perm2cycles}; it turns a sequence of cycles into a
 permutation.
 \begin{itemize}
 \item \texttt{cycles2permu} takes
@@ -21119,7 +21113,7 @@ The \texttt{cycle2perm}\index{cycle2perm@\texttt{cycle2perm}}
 command converts a cycle to the cycle written as a permutation.
 \begin{itemize}
 \item \texttt{cycle2perm} takes
-  $c$, a cycle $c$.
+  $c$, a cycle.
 \item \texttt{cycle2perm($c$)} returns the permutation of size $n$
   corresponding to the cycle $c$, where $n$ is chosen as small as
   possible (see also \texttt{permu2cycles} and \texttt{cycles2permu}).
@@ -24722,7 +24716,7 @@ solve([eval(subs(D2f,y=y2,y(x)=y2))<=0,x>=0,x<=1],x)
 You can conclude that the strong Legendre condition is satisfied in
 both cases, so you can proceed by attempting to find the points conjugate
 to 0 for each catenary. The function $y_0$ depends on two parameters,
-so you can use \texttt{conjugate\_equation} to find these points
+so use \texttt{conjugate\_equation} to find these points
 easily.
 \begin{xcasinput}
 fsolve(conjugate_equation(y0,p,p1,x,0)=0,x=0..1);
@@ -25377,7 +25371,7 @@ border([[1,2,3,4],[4,5,6,8],[7,8,9,10]],[1,3,5])
 \subsection{Creating a matrix with a formula or function%: \texttt{makemat} \texttt{matrix}
   \label{ssec:matrixcommand}}
 
-You can use a function or a formula to specify the elements of a
+use a function or a formula to specify the elements of a
 matrix with the \texttt{makemat}\index{makemat@\texttt{makemat}}
 or \texttt{matrix}\index{matrix@\texttt{matrix}} command.
 
@@ -25509,7 +25503,7 @@ A[[1,2]]
 \begin{xcasoutput}
   2
 \end{xcasoutput}
-You can use a range (see \secref{ssec:range}) of indices to get submatrices.
+use a range (see \secref{ssec:range}) of indices to get submatrices.
 Some examples:
 \begin{xcasinput}
 A[1,0..2]
@@ -25697,7 +25691,7 @@ A
 \begin{xcasoutput}
   \begin{bmatrix}1&7&6\\3&4&8\\1&0&1\end{bmatrix}
 \end{xcasoutput}
-You can use assignment to change several entries of a matrix at one.
+use assignment to change several entries of a matrix at one.
 For example, create a diagonal matrix with a diagonal of \texttt{[1,2,3]}:
 \begin{xcasinput}
 M:=matrix(3,3)
@@ -25825,7 +25819,7 @@ $\begin{bmatrix}4&5\\2&6\end{bmatrix}$.
 }
 
 The \texttt{subsop}\index{subsop@\texttt{subsop}} command modifies elements of lists (see
-\secref{ssec:subsoplist}), and so you can use it to modify elements or rows of matrices.
+\secref{ssec:subsoplist}), and so use it to modify elements or rows of matrices.
 It is used mainly for \Maple{} and \MuPAD{} compatibility,
 and the argument list is in a different order in \Maple{} mode. Unlike
 \texttt{:=} or \texttt{=<}, it does not require the matrix to be
@@ -26336,7 +26330,7 @@ or:
   \label{ssec:product2}}
 
 The \texttt{hadamard}\index{hadamard@\texttt{hadamard}}
-command can find the Hadamard product of two
+command finds the Hadamard product of two
 matrices; namely, the term-by-term product of the two matrices.
 
 The \texttt{product}\index{product@\texttt{product}} command can do
@@ -26606,7 +26600,7 @@ count(x->x,[[2,12],[45,3],[7,78]])
 \begin{xcasoutput}
   147
 \end{xcasoutput}
-Indeed: $2+12+45+3+7+78=147$.
+Indeed, $2+12+45+3+7+78=147$.
 \begin{xcasinput}
 count(x->x<10,[[2,12],[45,3],[7,78]])
 \end{xcasinput}
@@ -27148,7 +27142,7 @@ boxwhisker([[6,0,1,3,4,2,5],[0,1,3,4,2,5,6],[1,3,4,2,5,6,0],
 
 A \emph{table} is a map (associative container) used to store
 information associated to indices which are much more general than
-integers, such as  strings or sequences. For example, you can use one to
+integers, such as  strings or sequences. For example, use one to
 store a table of phone numbers indexed by names.
 
 In \xcas{}, the indices in a table may be any kind of \xcas{} objects.
@@ -28960,7 +28954,7 @@ rownorm([[1,2],[3,-4]])
 \begin{xcasoutput}
   7
 \end{xcasoutput}
-Indeed: $\max\{1+2,3+4\}=7$.
+Indeed, $\max\{1+2,3+4\}=7$.
 
 \subsection{Matrix column norm%: \texttt{colnorm} \texttt{colNorm} \texttt{l1norm}
   \label{ssec:colnorm}}
@@ -29040,7 +29034,7 @@ operator norm of $A$ will be the operator norm of $f$.
 \subsubsection{Computing operator norms}
 
 The \texttt{matrix\_norm}\index{matrix\_norm@\texttt{matrix\_norm}}
-command is a command which can find any of the above operator norms.
+command is a command which finds any of the above operator norms.
 \begin{itemize}
 \item \texttt{matrix\_norm} takes two arguments:
   \begin{itemize}
@@ -29873,7 +29867,7 @@ coefficients (see also \ref{ssec:rref}).
 \end{itemize}
 
 \subsubsection*{Examples}
-Solve
+Solve the system:
 \[
   \left\{
     \begin{array}{lcr}
@@ -29889,7 +29883,7 @@ simult([[3,1],[3,2]],[[-2],[2]])
 \end{xcasoutput}
 Hence $x=-2$ and $y=4$ is the solution.
 
-Solve
+Solve the systems:
 \[
   \left\{
     \begin{array}{lcr}
@@ -31013,7 +31007,7 @@ Simplex reoptimizations are fast because they start with the last feasible basis
 however, applying cuts makes the simplex tableau larger, which may slow the
 computation down.
 To limit the number of GMI cuts that is allowed be appended to a subproblem,
-you can use \texttt{lp\_maxcuts} option, setting it either to zero (which
+use \texttt{lp\_maxcuts} option, setting it either to zero (which
 disables the cut generation altogether) or to some positive integer.
 You may set it to \texttt{+infinity} as well, thus allowing any number of cuts
 to be applied to a node. By default, \texttt{lp\_maxcuts} equals to 5.
@@ -31723,18 +31717,16 @@ subject to constraints:
 \item \texttt{fMax} and \texttt{fMin} take four mandatory and two
   optional arguments:
   \begin{itemize}
-  \item \textit{expr}, an expression with several variables.
-  \item \textit{constr}, a list of constraints (equalities and
-    inequalities).
+  \item \textit{expr}, an expression with several variables, which does not need to be differentiable.
+  \item \textit{constr}, a list of constraints (equalities and inequalities).
   \item \textit{vars}, a list of the variables.
-  \item \textit{init}, an initial guess (which must be a list of
-    nonzero reals representing a feasible point).
+  \item \textit{init}, an initial guess, which must be a list of
+    nonzero reals representing a starting point (not necessarily feasible).
   \item Optionally, $\varepsilon$, the precision.  If this isn't
     given, the default epsilon value is used (see \secref{ssec:confcomp},
     item \ref{enum:eps}).
   \item Optionally, $N$, the maximum number of iterations.
   \end{itemize}
-  The expression \textit{expr} does not need to be differentiable.
 \item \texttt{fMax(}$\textit{expr},\textit{constr},\textit{vars},\textit{init}\,\langle,\varepsilon,N\,\rangle$\texttt{)}
   returns the vector of values that maximizes \textit{expr} subject to
   the constraints \textit{constr}.
@@ -31756,10 +31748,6 @@ fMin((x-5)^2+y^2-25,[y>=x^2],[x,y],[1,1])
 \begin{xcasoutput}
   \left[1.2347728625,1.52466402196\right]
 \end{xcasoutput}
-
-Although the initial point is required to be feasible, the algorithm
-will sometimes succeed even with a poor choice of initial point.
-Note that the initial value of a variable must not be zero.
 
 \subsection{Solving general nonlinear programming problems%: \texttt{nlpsolve}
 }
@@ -32058,7 +32046,7 @@ nlpsolve(obj,constr,[x1,x2,x3,x4,x5]=0..99,assume=integer)
 \end{xcasoutput}
 
 Minimize the function
-\[f(x_1,x_2)=\begin{cases}\int_{x_1}^{x_2}\mathrm{e}^{-t}t^a\sin(t+x_1)\cos(2t-x_2)\mathrm{d}t,&x_1<x_2,\\0,&\text{otherwise}\end{cases}\]
+\[f(x_1,x_2)=\begin{cases}\int_{x_1}^{x_2}\mathrm{e}^{-t}t^a\sin(t+x_1)\cos(2t-x_2)\mathrm{d}t,&x_1<x_2,\\0,&x_1\geq x_2\end{cases}\]
 for $0\leq x_1,x_2\leq 10$ and $a=2$.
 
 With the following program compiled in \xcas{}:
@@ -32144,10 +32132,9 @@ a real-valued cost function is minimized, by using the method of simulated annea
 \end{itemize}
 
 \subsubsection*{Examples}
-
-In the first example we find the global minimum of a damped sine wave function\footnote{
-  Adapted from \url{https://www.gnu.org/software/gsl/doc/html/siman.html\#trivial-example}}:
-\[ f(x)=\mathrm{e}^{-(x-1)^2}\sin(8x). \]
+(The following examples are adapted from GSL documentation, see \url{https://www.gnu.org/software/gsl/doc/html/siman.html}.)
+In the first example we find the global minimum of a damped sine wave function%\footnote{Adapted from \url{https://www.gnu.org/software/gsl/doc/html/siman.html\#trivial-example}}
+$f(x)=\mathrm{e}^{-(x-1)^2}\sin(8x)$.
 This function has many local minima but only a single global minimum in the interval $[1.0,1.5]$.
 We start from the point $x_0=15.5$, which is several local minima away from the solution.
 The following parameter values are used:
@@ -32155,14 +32142,13 @@ $k=1$, $T_0=0.008$, $\mu=1.003$, $T_{\mathrm{min}}=2\times 10^{-6}$,
 $n=20$, $N=100$ and $\text{\textit{maxstep}}=1$.
 \begin{xcasinput}
 simulated_annealing(15.5,x->exp(-(x-1)^2)*sin(8x),(x,y)->abs(x-y),(x,m)->rand(x-m,x+m),
-[1.0,0.008,1.003,2.0e-6],[20,100],1.0)
+  [1.0,0.008,1.003,2.0e-6],[20,100],1.0)
 \end{xcasinput}
 \begin{xcasoutput}
   1.36313090008
 \end{xcasoutput}
 
-In the second example we solve an instance of traveling salesman problem with 12 cities\footnote{
-  Adapted from \url{https://www.gnu.org/software/gsl/doc/html/siman.html\#traveling-salesman-problem}}.
+In the second example we solve an instance of traveling salesman problem with 12 cities.%\footnote{Adapted from \url{https://www.gnu.org/software/gsl/doc/html/siman.html\#traveling-salesman-problem}}
 We enter the cities alongside their latitude and longitude coordinates in an \xcas{} table cell
 which we associate with the variable \texttt{cities} (see Figure~\ref{fig:cities}).
 \begin{figure}
@@ -33250,7 +33236,7 @@ G:=plotfunc(g(x),x):;
 A:=point(1.2,g(1.2)):;
 \end{xcasinput}
 If you want to draw the tangent at the point \texttt{A} to the graph
-\texttt{G}, you can enter:
+\texttt{G}, enter:
 \begin{xcasinput}
 T:=tangent(G, A)
 \end{xcasinput}
@@ -33261,7 +33247,7 @@ T:=tangent(G, 1.2)
 \begin{xcasimage}
   \includeimage{xcas-2dtangent01.png}
 \end{xcasimage}
-For the equation of the tangent line, you can enter:
+For the equation of the tangent line, enter:
 \begin{xcasinput}
 equation(T)
 \end{xcasinput}
@@ -33526,7 +33512,7 @@ plotcontour(x^2-y^2,[x,y])
   \includeimage{xcas-plotcontour02.png}
 \end{xcasimage}
 
-If you want to draw the surface in 3D representation, you can use
+If you want to draw the surface in 3D representation, use
 \texttt{plotfunc} (see \secref{ssec:plotfunc3}).
 \begin{xcasinput}
 plotfunc(x^2-y^2,[x,y])
@@ -33834,7 +33820,7 @@ bezier(point(0,0,0),point(1,1,0),point(0,1,1),plot)
 \end{xcasimage}
 
 
-To get the parameterization of the curve, you can use
+To get the parameterization of the curve, use
 the \texttt{parameq} command (see \secref{ssec:2dparam}).
 
 \subsubsection*{Examples}
@@ -34874,7 +34860,7 @@ frequencies([1,2,1,1,2,1,2,4,3,3])
 \end{xcasoutput}
 
 
-You can use this, for example, to simulate flipping a fair coin and
+use this, for example, to simulate flipping a fair coin and
 seeing how many times each side appears; to flip a coin 1000 times,
 for example:
 \begin{xcasinput}
@@ -35297,7 +35283,7 @@ listplot([0,1,4,9,16])
   \includeimage{xcas-polygonplot.png}
 \end{xcasimage}
 
-If you want to get coordinates on the polygonal path, you can use the
+If you want to get coordinates on the polygonal path, use the
 The \texttt{linear\_interpolate}\index{linear\_interpolate@\texttt{linear\_interpolate}}
 command will find coordinates on the
 polygonal path.
@@ -35795,7 +35781,7 @@ rand(5)
 
 You can then use \texttt{rand} to find a random integer in a specified
 interval; if you want an random integer between 6 and 10, inclusive,
-for example, you can enter:
+for example, enter:
 \begin{xcasinput}
 6+rand(11-6)
 \end{xcasinput}
@@ -40778,7 +40764,7 @@ evalf(ans())
   30.1144061688
 \end{xcasoutput}
 Note, however, that Lagrange polynomial can suffer from large
-oscillations and is hence not a reliable tool in practice.
+oscillations and is hence not practical.
 
 \subsection{Discrete wavelet transform%: \texttt{dwt} \texttt{idwt}
   \label{ssec:dwt}}
@@ -40831,9 +40817,11 @@ the GSL library.
 \end{itemize}
 
 \subsubsection*{Examples}
-In the first example, we load some data from the
-MIT-BIH Arrhythmia Database\footnote{\url{https://physionet.org/content/mitdb/1.0.0/}}
-and attempt to remove the noisy information. The size of the loaded sample is equal to 256.
+In the first example (adapted from the GSL documentation,
+see \url{https://www.gnu.org/software/gsl/doc/html/dwt.html}),
+we load a sample of size 256 from the
+MIT-BIH Arrhythmia Database (see \url{https://physionet.org/content/mitdb/1.0.0/})
+and attempt to remove the noisy information.
 \begin{xcasinput}
 data:=mid(col(csv2gen("/home/luka/Documents/MIT-BIH.csv","\t"),2),300,256):;
 listplot(data)
@@ -40863,8 +40851,8 @@ img:=image("/home/luka/Pictures/noisy.jpg")(grey)
 \end{xcasoutput}
 We transform the image matrix and replace each component smaller than 55
 (by absolute value) in the resulting matrix to zero, before transforming
-it back to obtain a noise-reduced image. The threshold value is obtained by
-trial and error. Note that \texttt{dwt} enlarges the input matrix to the size
+it back to obtain a noise-reduced image. (The threshold value was obtained by
+trial and error.) Note that \texttt{dwt} enlarges the input matrix to the size
 $512\times 512$, so we crop the output of \texttt{idwt} back to $300\times 300$.
 We also make sure that no component gets below zero or above 255.
 \begin{xcasinput}
@@ -41395,17 +41383,12 @@ of custom data by using a custom distance function.
       maximal number of clusters (by default, $k_u=16$).
     \item \texttt{type=}\textit{linkage}, where \textit{linkage} is a string specifying
       the linkage method. Avaliable methods are:
-      \begin{itemize}
-      \item \texttt{single} (the default),
-      \item \texttt{complete},
-      \item \texttt{average},
-      \item \texttt{weighted},
-      \item \texttt{ward}.
-      \end{itemize}
+      \texttt{single} (the default), \texttt{complete}, \texttt{average}, \texttt{weighted},
+      and \texttt{ward}.
     \item \texttt{distance=}\textit{dist}, where \textit{dist} is a distance function. By default,
       the squared Euclidean distance function \texttt{distance2} is used unless \textit{data}
       is a list of strings, in which case Levenshtein distance is used.
-      For example, the taxicab distance function could be defined by typing:
+      For example, the taxicab distance function could be defined by typing:\index{Distance function!Taxicab}
 \begin{xcasinput}
 taxicab:=(p1,p2)->l1norm(p1-p2)
 \end{xcasinput}
@@ -41452,7 +41435,7 @@ to \texttt{plot}, we obtain a visualization of colored clusters as shown in Figu
   \caption{\label{fig:hclust}Clustering in \xcas{}}
 \end{figure}
 
-For string data, Levenshtein distance is used by default (see \secref{sec:levenshtein}).
+For string data, Levenshtein distance is used by default (see \secref{sec:levensthein}).
 \begin{xcasinput}
 cluster(["cat","mouse","rat","spouse","house","cut"],output=part)
 \end{xcasinput}
@@ -43330,7 +43313,7 @@ _c_
 \begin{xcasoutput}
   1\;c
 \end{xcasoutput}
-You can use the \texttt{mksa} command (see \secref{ssec:mksa})
+use the \texttt{mksa} command (see \secref{ssec:mksa})
 to put this in terms of standard units:
 \begin{xcasinput}
 mksa(_c_)
@@ -43380,7 +43363,7 @@ enter:
 \begin{xcasinput}
 sumprod(a,b):=[a+b,a*b]
 \end{xcasinput}
-Afterwards, you can use this new function.
+Afterwards, use this new function.
 \begin{xcasinput}
 sumprod(3,5)
 \end{xcasinput}
@@ -43592,7 +43575,7 @@ input("Set a to the value: ",a,bee,"Set c to this value: ",c)
 
 If the value that you enter for \texttt{input} is a string, it should
 be between quotes.  If you want the user to enter a string without
-having to use the quotes, you can use the
+having to use the quotes, use the
 \texttt{InputStr}\index{InputStr@\texttt{InputStr}} command,
 which is just like \texttt{input} except that it will assume any input
 is a string and so the user won't need to use quotes.
@@ -43622,7 +43605,7 @@ output("This is a ",s)
 \begin{xcasimage}
   \includeimage{xcas-output.png}
 \end{xcasimage}
-You can use \texttt{output} to add
+use \texttt{output} to add
 information to the input window:
 \begin{xcasinput}
 input(output("Calculate p(a)"),"polynomial",p,"value",a)
@@ -44147,8 +44130,8 @@ a,b
 \begin{xcasoutput}
   8,6
 \end{xcasoutput}
-since \texttt{a>b} will evaluate to true, and so the variable
-\texttt{a} will be reset to \texttt{8} and \texttt{b} will be reset
+since \texttt{a>b} evaluates to true, and so the variable
+\texttt{a} resets to \texttt{8} and \texttt{b} resets
 to the value \texttt{6}.
 \begin{xcasinput}
 a:=3:; b:=2:;
@@ -44158,8 +44141,8 @@ a,b
 \begin{xcasoutput}
   -2,0
 \end{xcasoutput}
-since \texttt{a>b} will evaluate to false, and so the variable
-\texttt{a} will be reset to \texttt{-2} and \texttt{b} will be reset
+since \texttt{a>b} evaluates to false, and so the variable
+\texttt{a} resets to \texttt{-2} and \texttt{b} resets
 to the value \texttt{0}.
 
 \paragraph{The ``if\ldots then\ldots else\ldots end'' structure.}
@@ -44307,7 +44290,7 @@ oper(2,3,2)
   -1
 \end{xcasoutput}
 since the third argument is \texttt{2} and so \texttt{oper(a,b,c)}
-will return \texttt{a-b}.
+will return $a-b$.
 
 
 \subsection{For loop%: \xcaskey{for} \xcaskey{from} \xcaskey{to} \xcaskey{step} \xcaskey{do} \xcaskey{end\_for}
@@ -44323,11 +44306,11 @@ index.)
 For the first form, the \xcaskey{for}\index{for@\xcaskey{for}} keyword is
 followed by the starting value for the index, the end condition, and
 the increment step, separated by semicolons and in parentheses.
-Afterwards is a block of code to be executed for each iteration:
+Afterwards is a block of code to be executed for each iteration,
+where $j$ is the index and $j_0$ is the starting value of $j$:
 \begin{center}
   \xcaskey{for} \texttt{($j$:=$j_0$;~}\textit{end\_cond}\texttt{;~}\textit{increment\_step}\texttt{)} \textit{block}
 \end{center}
-where $j$ is the index and $j_0$ is the starting value of $j$.
 
 \subsubsection*{Example}
 To add the even numbers less than 100, you can start by setting the
@@ -44335,7 +44318,7 @@ running total to 0:
 \begin{xcasinput}
 S:=0
 \end{xcasinput}
-then use a \xcaskey{for} loop to do the summing:
+Then use a \xcaskey{for} loop to do the summation:
 \begin{xcasinput}
 for (j:=0;j<100;j:=j+2) { S:=S+j }
 \end{xcasinput}
@@ -44366,7 +44349,7 @@ running total to 0:
 \begin{xcasinput}
 S:=0
 \end{xcasinput}
-then use the second form of the \xcaskey{for} loop to do the summing:
+then use the second form of the \xcaskey{for} loop to do the summation:
 \begin{xcasinput}
 for j from 2 to 98 step 2 do S:=S+j; end_for
 \end{xcasinput}
@@ -44703,7 +44686,7 @@ variables.
 
 \subsubsection*{Example}
 If, in a different session, you want to use the
-values of \texttt{a} and \texttt{b} above, you can enter:
+values of \texttt{a} and \texttt{b} above, enter:
 \begin{xcasinput}
 read("foo")
 \end{xcasinput}
@@ -44728,7 +44711,7 @@ command creates and opens a file to write into.
 \end{itemize}
 To use this, you need to associate it with a variable
 \textit{var}\texttt{:=fopen(}\textit{filename}\texttt{)}
-which you can use to refer to the file when printing to it.
+which use to refer to the file when printing to it.
 
 The \texttt{fprint}\index{fprint@\texttt{fprint}}
 command writes to a file.
@@ -45080,11 +45063,11 @@ command opens the \texttt{DispG} screen.
 \item \texttt{Disp} brings up the \texttt{Disp} screen.
 \end{itemize}
 
-\subsubsection*{Example}
-\begin{xcasinput}
-DispG;
-\end{xcasinput}
-opens the graphics screen.
+% \subsubsection*{Example}
+% \begin{xcasinput}
+% DispG;
+% \end{xcasinput}
+% opens the graphics screen.
 
 \paragraph{Clearing the graphic screen.}
 The \texttt{ClrGraph}\index{ClrGraph@\texttt{ClrGraph}}
@@ -45094,18 +45077,18 @@ command clears the screen.
 is a synonym for \texttt{ClrGraph}.
 \begin{itemize}
 \item \texttt{ClrGraph} takes no arguments.
-\item \texttt{ClrGraph} clears the \texttt{Disp} screen.
+\item \texttt{ClrGraph} or \texttt{ClrGraph()} clears the \texttt{Disp} screen.
 \end{itemize}
 
-\subsubsection*{Example}
-\begin{xcasinput}
-ClrGraph
-\end{xcasinput}
-or:
-\begin{xcasinput}
-ClrGraph()
-\end{xcasinput}
-erases the \texttt{DispG} screen.
+% \subsubsection*{Example}
+% \begin{xcasinput}
+% ClrGraph
+% \end{xcasinput}
+% or:
+% \begin{xcasinput}
+%
+% \end{xcasinput}
+% erases the \texttt{DispG} screen.
 
 \paragraph{Closing the graphic screen.}
 The \texttt{DispHome}\index{DispHome@\texttt{DispHome}}
@@ -45115,11 +45098,11 @@ command closes the \texttt{DispG} screen.
 \item \texttt{DispHome} closes the \texttt{DispG} screen.
 \end{itemize}
 
-\subsubsection*{Example}
-\begin{xcasinput}
-DispHome;
-\end{xcasinput}
-makes the graphics screen go away.
+% \subsubsection*{Example}
+% \begin{xcasinput}
+% DispHome;
+% \end{xcasinput}
+% makes the graphics screen go away.
 
 \subsection{Pausing a program%: \texttt{Pause} \texttt{WAIT}
 }
@@ -45131,18 +45114,17 @@ The \texttt{Pause}\index{Pause@\texttt{Pause}} command pauses \xcas{}.
 
   Optionally, $r$, a positive number.
 \item \texttt{Pause $r$} pauses \xcas{} for $r$ seconds.
-\item \texttt{Pause} brings up a Pause informational window and
+\item \texttt{Pause} without an argument brings up a Pause informational window and
   pauses \xcas{} until you click \texttt{Close} in the Pause window.
 \end{itemize}
 The \texttt{WAIT}\index{WAIT@\texttt{WAIT}} command also pauses \xcas{}.
 It acts just like \texttt{Pause}, but uses parentheses for its argument.
 
-\subsubsection*{Examples}
-The command
+\subsubsection*{Example}
 \begin{xcasinput}
 Pause 10
 \end{xcasinput}
-or
+or:
 \begin{xcasinput}
 WAIT(10)
 \end{xcasinput}
@@ -45155,8 +45137,8 @@ Some commands produce errors, and if your program tries to run such a
 command it will halt with an error. 
 The \xcaskey{try}\index{try@\xcaskey{try}} and
 \xcaskey{catch}\index{catch@\xcaskey{catch}}
-commands can help you to avoid halting the program. In order
-to use them, put potentially problematic statements in a block
+commands can help you to avoid halting the program;
+put potentially problematic statements in a block
 following \xcaskey{try}, and immediately after the block put
 \xcaskey{catch} with an argument of an unused symbol, and follow that
 with a block of statements that can handle the error.
@@ -45179,11 +45161,10 @@ The command
 [[1,1]]*[[2,2]]
 \end{xcasinput}
 produces an error saying \texttt{Error:~Invalid dimension}.
-However,
+However, the command below does not produce an error:
 \begin{xcasinput}
 try { [[1,1]]*[[2,2]] } catch (err) { print("The error is "+err) }
 \end{xcasinput}
-will not produce an error:
 \begin{xcasoutput}
   \text{``The error is Error: Invalid dimension''}
 \end{xcasoutput}
@@ -45278,15 +45259,14 @@ g(12)
 \begin{xcasoutput}
   12
 \end{xcasoutput}
-since 12 is an integer.
+since 12 is an integer. With a non-integer input, \texttt{f(x)} gives an error and so
+\texttt{g(x)} returns 0:
 \begin{xcasinput}
 g(1.2)
 \end{xcasinput}
 \begin{xcasoutput}
   0
 \end{xcasoutput}
-since 1.2 is not an integer, \texttt{f(x)} will give an error and so
-\texttt{g(x)} will return 0.
 
 \section{Debugging\label{sec:debug}}
 
@@ -45327,10 +45307,9 @@ debug(sumprod(2,3))
 which opens the debug window shown in Figure~\ref{fig:debugwindow}.
 \begin{figure}\centering
   \includeimage[0.4142]{xcas-debugwindow.png}
-  \caption{\label{fig:debugwindow}Debug window in \xcas{}}
+  \caption{\label{fig:debugwindow}The debug window in \xcas{}}
 \end{figure}
-
-The debug window has the following buttons:
+It has the following buttons:
 \begin{itemize}
 \item \button{sst} runs the
   \texttt{sst}\index{sst@\texttt{sst}}
@@ -45465,21 +45444,26 @@ be \texttt{gen} type.  A variable \texttt{g} can be declared to be
 gen g;
 \end{lstlisting}
 In this case, \texttt{g.type} can have different values.
+The value of \texttt{g} is fetched differently for different types:
 \begin{itemize}
-\item  If \texttt{g.val} is an integer type \texttt{int}, then
-  \texttt{g.type} will be \texttt{\_INT\_}.
-\item  If \texttt{g.\_DOUBLE\_val} is a real \texttt{double},
-  \texttt{g.type} will be \texttt{\_DOUBLE\_}.
-\item  If \texttt{g.\_SYMBptr} is type \texttt{symbolic}, then
-  \texttt{g.type} will be \texttt{\_SYMB}.
-\item  If \texttt{g.\_VECTptr} is a  vector, type \texttt{vector}, then
-  \texttt{g.type} will be \texttt{\_VECT}.
-\item  If \texttt{g.\_ZINTptr} is an integer type \texttt{zint}, then
-  \texttt{g.type} will be \texttt{\_ZINT}.
-\item  If \texttt{g.\_IDNTptr} is an identifier, type \texttt{idnt}, then
-  \texttt{g.type} will be \texttt{\_IDNT}.
-\item  If \texttt{g.\_CPLXptr} is a complex type \texttt{complex}, then
-  \texttt{g.type} will be \texttt{\_CPLX}.
+\item  If \texttt{g.type} is \texttt{\_INT\_}, then \texttt{g.val}
+  is an integer type \texttt{int}.
+\item  If \texttt{g.type} is \texttt{\_DOUBLE\_}, then
+  \texttt{g.\_DOUBLE\_val} is a real \texttt{double}.
+\item  If \texttt{g.type} is \texttt{\_SYMB}, then
+  \texttt{g.\_SYMBptr} points to a value of type \texttt{symbolic}. The
+  function is contained in the \texttt{sommet} member and its arguments in
+  the \texttt{feuille} member.
+\item  If \texttt{g.type} is \texttt{\_VECT}, then
+  \texttt{g.\_VECTptr} points to a value of type \texttt{vecteur},
+  which behaves like \texttt{std::vector}.
+\item  If \texttt{g.type} is \texttt{\_ZINT}, then
+  \texttt{g.\_ZINTptr} points to a value of integer type \texttt{zint}.
+\item  If \texttt{g.type} is \texttt{\_IDNT}, then
+  \texttt{g.\_IDNTptr} points to an identifier of type \texttt{identificateur}.
+\item  If \texttt{g.type} will be \texttt{\_CPLX}, then
+  \texttt{g.\_CPLXptr} is a two-element array of type \texttt{double*}
+  containing the real and imaginary parts of \texttt{g}.
 \end{itemize}
 
 As an example, put the following program in a file called \texttt{pgcd.cpp}.
@@ -46382,7 +46366,7 @@ In other words, this generates a random triangle.
 \subsection{Points in polar coordinates%: \texttt{polar\_point} \texttt{point\_polar}
 }
 
-You can use the \texttt{point} command to specify a point in polar
+use the \texttt{point} command to specify a point in polar
 coordinates by using the polar representation of complex numbers, e.g.
 \begin{xcasinput}
 point(2*exp(i*pi/4))
@@ -47684,7 +47668,7 @@ convexhull(0,1,1+i,1+2i,-1-i,1-3i,-2+i)
 \begin{xcasoutput}
   1-3 \mathrm{i},1+2 \mathrm{i},-2+\mathrm{i},-1-\mathrm{i}
 \end{xcasoutput}
-To draw the hull, you can use the \texttt{polygon} command with the
+To draw the hull, use the \texttt{polygon} command with the
 output of \texttt{convexhull} (see \secref{ssec:2dgenpolygon}).
 \begin{xcasinput}
 polygon(convexhull(0,1,1+i,1+2i,-1-i,1-3i,-2+i))
@@ -48524,6 +48508,7 @@ extract_measure(angleat(A,B,C,0.2i))
 
 \subsection{Distance between objects in the plane%: \texttt{distance}
   \label{ssec:2ddist}}
+\index{Distance function!Euclidean}
 
 See \secref{ssec:3ddist} for distances in three-dimensional geometry.
 
@@ -48584,6 +48569,7 @@ The \texttt{distance} command has \texttt{distanceat} and
 
 \subsection{Squared length of a segment in the plane%: \texttt{distance2}
   \label{ssec:2ddist2}}
+\index{Distance function!Squared Euclidean}
 
 See \secref{ssec:3ddist2} for squares of lengths in three-dimensional
 geometry.
@@ -52088,6 +52074,7 @@ normal(parameq(ellipse(point(-1,1,1),point(1,1,1),point(0,1,2))))
 
 \subsection{Length of a segment in space%: \texttt{distance}
   \label{ssec:3ddist}}
+\index{Distance function!Euclidean}
 
 See \secref{ssec:2ddist} for distances in two-dimensional geometry.
 
@@ -52114,6 +52101,7 @@ distance([-1,1,1],[1,1,1])
 
 \subsection{Squared length of a segment in space%: \texttt{distance2}
   \label{ssec:3ddist2}}
+\index{Distance function!Squared Euclidean}
 
 See \secref{ssec:2ddist2} for squares of lengths in two-dimensional
 geometry.

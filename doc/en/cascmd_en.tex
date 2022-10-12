@@ -28731,7 +28731,7 @@ or Hermitian matrix $A$.
 \item \texttt{ldl} takes one mandatory argument and a sequence of optional arguments:
   \begin{itemize}
   \item $A$, a symmetric or Hermitian matrix.
-  \item \textit{opts}, a sequence of options, each of which is one of the following:
+  \item Optionally, \textit{opts}, a sequence of options, each of which is one of the following:
     \begin{itemize}
     \item \texttt{hermite}, which must be passed alongside a Hermitian matrix $A$ since
       no check is performed.
@@ -28739,7 +28739,8 @@ or Hermitian matrix $A$.
     \end{itemize}
   \end{itemize}
 \item
-  \texttt{ldl} returns the sequence $p,L,D$ or $p,M$ (if the option \texttt{zip} is passed), where
+  \texttt{ldl(}$A\,\langle,\textit{opts}\,\rangle$\texttt{)}
+  returns the sequence $p,L,D$ or $p,M$ (if the option \texttt{zip} is passed), where
   $p$ is the permutation defining the permutation matrix $P$ (using \texttt{permu2mat} command),
   $L$ is a unit lower triangular matrix and $D$ is a tridiagonal matrix with 1- or 2-blocks on the
   diagonal. Matrix $M$ is obtained by merging $L$ and $D$ together which saves the space while allowing
@@ -28776,18 +28777,20 @@ linear equations if certain inertia-related conditions are satisfied.
 \item\texttt{inertia} takes one mandatory argument and one or two optional arguments:
   \begin{itemize}
   \item $A$, a symmetric matrix of order $n$ with real coefficients.
-  \item $B$ (optional), a matrix of type $m\times n$ or a vector of length $n$.
-  \item $p_0$ (optional), an integer such that $0\leq p_0\leq n$.
+  \item Optionally, $B$, a matrix of type $m\times n$ or a vector of length $n$.
+  \item Optionally, $p_0$, an integer such that $0\leq p_0\leq n$.
   \end{itemize}
-\item If called with a single argument $A$, \texttt{inertia} returns the triple $[p,n,z]$ where
+  Note that \texttt{inertia} does not check whether $A$ is symmetric.
+\item \texttt{inertia(}$A$\texttt{)} returns the list $[p,n,z]$ where
   $p$, $n$ and $z$ are the numbers of positive, negative and zero eigenvalues of $A$, respectively.
-\item If called with arguments $A$ and $B$, \texttt{inertia} returns the sequence containing two elements:
-  the triple $[p,n,z]$ and the solution $X$ to the equation $AX^T=B^T$ in case $z=0$.
-\item If called with three arguments, it returns the sequence containing $[p,n,z]$ and $X$, but the latter
-  is not computed if $p\neq p_0$.
-\item \texttt{inertia} computes the inertia of $A$ by computing the LDL factorization of $A$. The matrix
-  $X$ can be computed with small cost once $L$ and $D$ are known.
-\item Note that \texttt{inertia} does not check whether $A$ is symmetric.
+\item \texttt{inertia(}$A,B\,\langle,p_0\,\rangle$\texttt{)}
+  returns the sequence containing two elements:
+  the list $[p,n,z]$ and the solution $X$ to the system $AX^T=B^T$ in case $z=0$.
+  If $p_0$ is given, then $X$ is not computed if $p\neq p_0$ and an empty list is returned instead.
+\item The inertia of $A$ is computed from the LDL factorization of $A$. The matrix
+  $X$ can be computed at a small cost once $L$ and $D$ are known. The purpose of the argument $p_0$
+  is to prevent unnecessary computation if the matrix $A$ has to be adjusted for the desired
+  value of $p$ before solving the system.
 \end{itemize}
 
 \subsubsection*{Examples}
@@ -31584,24 +31587,27 @@ The \texttt{find\_minimum}\index{find\_minimum@\texttt{find\_minimum}}
 command is used for global minimization of a continuous
 function on a segment.
 
-\texttt{find\_minimum} takes between three and five arguments:
 \begin{itemize}
-\item $f$, a continuous univariate function or expression.
-\item $a$, a real number.
-\item $b$, a real number such that $a<b$.
-\item Optionally, a sequence of one or two numbers being either:
+\item \texttt{find\_minimum} takes between three and five arguments:
   \begin{itemize}
-  \item $\varepsilon\in\langle 0,1\rangle$, the optimality tolerance (by default, $\varepsilon=\varepsilon_0^{2/3}$, where $\varepsilon_0$ is the number returned by
-    the command \texttt{epsilon}), or
-  \item $n\in\mathbb{Z}$, the maximum number of iterations ($n\geq 1$ is required)
-    for Brent's method subroutine (by default, $n=100$).
+  \item $f$, a continuous univariate function or expression.
+  \item $a$, a real number.
+  \item $b$, a real number such that $a<b$.
+  \item Optionally, a sequence of one or two numbers, each of which being either:
+    \begin{itemize}
+    \item $\varepsilon\in\langle 0,1\rangle$, the optimality tolerance (by default, $\varepsilon=\varepsilon_0^{2/3}$, where $\varepsilon_0$ is the number returned by
+      the command \texttt{epsilon}), or
+    \item $n\in\mathbb{Z}$, the maximum number of iterations ($n\geq 1$ is required)
+      for Brent's method subroutine (by default, $n=100$).
+    \end{itemize}
   \end{itemize}
+\item \texttt{find\_minimum(}$f,a,b\,\langle,\varepsilon,n\,\rangle$\texttt{)} returns
+  the location of the smallest local minimum found.
+\item \texttt{find\_minimum} applies a modification of Brent's algorithm which usually finds a global
+  minimum, even when $f$ has several local extrema.
+  The original Brent's method is used as a subroutine which is applied recursively by
+  partitioning the search interval. Each instance is allowed the maximum of $n$ iterations.
 \end{itemize}
-
-\texttt{find\_minimum} applies a modification of Brent's algorithm which usually finds a global
-minimum, even when $f$ has several local extrema.
-The original Brent's method is used as a subroutine which is applied recursively by
-partitioning the search interval. Each instance is allowed the maximum of $n$ iterations.
 
 \subsubsection*{Examples}
 We minimize a function which has several local extrema, one of which is global.
@@ -32112,9 +32118,10 @@ a real-valued cost function is minimized, by using the method of simulated annea
     will be passed as the second argument whenever calling \textit{stepfunc}.
     By default, this parameter is unset.
   \end{itemize}
-\item \texttt{simulated\_annealing} returns the best configuration found in the context of cost function
+\item \texttt{simulated\_annealing(}$x_0,\textit{costfunc},\textit{distfunc},\textit{stepfunc},\textit{csparam}\,\langle,\textit{iterparam},\textit{maxstep}\,\rangle$\texttt{)}
+  returns the best configuration found in the context of cost function
   minimization. The method of simulated annealing gives good results in avoiding local minima, so
-  the result is usually (close to) the global cost minimum.
+  you usually get the global cost minimum.
 \item Simulated annealing is essentially a random walk in the search space.
   The probability of taking a step is determined by the Boltzmann distribution
   \[ p=\mathrm{e}^{-\frac{E_{i+1}-E_i}{k T}} \]
@@ -39312,7 +39319,9 @@ rms([1,1-i,2+3i,5-2i])
 
 The cross correlation of two complex vectors
 $v=[v_1,\dots,v_n]$ and $w=[w_1,\dots,w_m]$ is the complex vector
-$z=v\star w$ of length $n+m-1$ given by
+$z=v\star w$ (note the difference between $\star$ and the convolution operation $\ast$,
+see~\secref{ssec:convolution})
+of length $n+m-1$ given by
 \[
   z_k=\sum_{i=k}^{N-1}\overline{v_{i-k}^\ast}\,w_i^\ast,\quad
   k=0,1,\dots,N-1,
@@ -39382,7 +39391,8 @@ auto_correlation([2,3,4,3,1,4,5,1,3,1])
 
 The convolution of two real vectors
 $v=[v_1,\dots,v_n]$ and $w=[w_1,\dots,w_m]$ is the complex vector
-$z=v\ast w$ of length $n+m-1$ given by
+$z=v\ast w$ (note the difference between $\ast$ and the cross-correlation operation $\star$,
+see~\secref{ssec:crosscorr}) of length $n+m-1$ given by
 \[
   z_k=\sum_{i=0}^{k}v_i\,w_{k-i},\quad k=0,1,\dots,N-1,
 \]
@@ -40775,7 +40785,7 @@ wavelet transform (DWT) of a signal and for computing the inverse transformation
 i.e.~reconstructing the original signal from the transform. These commands require
 the GSL library.
 \begin{itemize}
-\item \texttt{dwt} and \texttt{idwt} take one mandatory argument and up to four
+\item \texttt{dwt} and \texttt{idwt} both take one mandatory argument and up to four
   optional arguments (the order of optional arguments is irrelevant):
   \begin{itemize}
   \item \textit{data}, a numeric vector of length $n$ or matrix with dimensions $m\times n$.
@@ -40796,18 +40806,20 @@ the GSL library.
   \item Optionally, \texttt{image}, the symbol which makes use of the ``non-standard''
     form of the two-dimensional DWT.
   \end{itemize}
-\item The input array \textit{data} is enlarged, if necessary, such that its size
+  Note that the input array \textit{data} will be enlarged, if necessary, such that its size
   is a power of two. If \textit{data} is a matrix, it is augmented to a square matrix of
-  size equal to the first power of 2 not smaller than $\max\{m,n\}$. Extension is done
+  size equal to the first power of 2 not smaller than $\max\{m,n\}$. Extending the data is done
   by zero padding.
-\item If \textit{data} is a vector, then \texttt{dwt} returns the list of length $n$ which
+\item If \textit{data} is a vector, then
+  \texttt{dwt(}$\textit{data}\,\langle,\textit{options}\,\rangle$\texttt{)}
+  returns the list of length $n$ which
   contains the DWT of the signal \textit{data}, packed in a triangular storage layout:
   \[ \left(s_{-1,0},d_{0,0},d_{1,0},d_{1,1},d_{2,0},d_{2,1},d_{2,2},\dots,d_{i,j},\dots,d_{N-1,2^{N-1}-1}\right), \]
   where $i=0,\dots,N-1$ is the level index, $j=0,\dots,2^{i}-1$ is the index of the
   coefficient within each level, and $N=\log_2(n)$. The first element $s_{-1,0}$ is the
   smoothing coefficient, which is followed by detail coefficients $d_{i,j}$ for each level $i$.
-\item The ``non-standard'' two-dimensional DWT is performed in interleaved passes on the
-  rows and columns of the data matrix for each level of the transform. The non-standard
+\item If \textit{data} is a matrix, then the ``non-standard'' two-dimensional DWT is performed in interleaved
+  passes on the rows and columns for each level of the transform. The non-standard
   form of DWT is typically used in image analysis. By default, the ``standard'' form is used,
   which performs a complete DWT on the rows of the matrix, followed by a separate complete
   DWT on the columns of the resulting row-transformed matrix.
@@ -40860,6 +40872,7 @@ tdata:=dwt(img[0],image):;
 sdata:=threshold(w,55.0=0,'<=',abs=true):;
 nr:=image(1,threshold(round(subMat(idwt(sdata,image),0,0,299,299)),[0,255])):;
 \end{xcasinput}
+Finally, we display the original image and the processed image next to each other for comparison.
 \begin{xcasinput}
 display(img,0); display(nr,320);
 legend(-20i,"original"); legend(320-20i,"denoised")
@@ -41415,6 +41428,8 @@ taxicab:=(p1,p2)->l1norm(p1-p2)
       whether the data points are shown in the dendrogram.
     \end{itemize}
   \end{itemize}
+\item \texttt{cluster(}$\textit{data}\,\langle,\textit{opt}\,\rangle$\texttt{)} returns
+  the result as specified by the \texttt{output} argument (see above).
 \item Hierarchical clustering is slower than the $k$-means algorithm (see \secref{sec:kmeans})
   but may produce a better classification of the data. Hierarchical clustering is also a method of
   choice for custom data types and distance functions.
@@ -41510,6 +41525,8 @@ for clustering numerical multidimensional data.
       (by default, points are drawn as dots of width 2).
     \end{itemize}
   \end{itemize}
+\item \texttt{kmeans(}$\textit{data}\,\langle,\textit{opt}\,\rangle$\texttt{)} returns the
+  result as specified by the \texttt{output} argument (see above).
 \item \texttt{kmeans} applies the Hartigan-Wong implementation of $k$-means algorithm, which is fast
   and suitable for large datasets.
 \item \texttt{kmeans} does not support custom distance functions.
@@ -41684,9 +41701,11 @@ is used for creating trainable feed-forward neural networks.
     Optionally, \texttt{title=}\textit{str}, where \textit{str} is a string holding the name of
     the newtork which is printed alongside its one-line description (by default, network is not named).
   \end{itemize}
-\item \texttt{neural\_network} returns the network object \texttt{net} which can be trained by using the
-  \texttt{train} command (see \secref{ssec:train}). After the network is trained to a sufficient accuracy,
-  the input \texttt{inp} is processed by calling the command \texttt{net(inp)} which returns the list
+\item \texttt{neural\_network(}$\textit{topology}\,\langle,\textit{options}\,\rangle$\texttt{)}
+  returns the network object \texttt{net} which can be trained by using the
+  \texttt{train} command (see \secref{ssec:train}).
+\item After the network is trained to a sufficient accuracy,
+  you feed it with some input \texttt{inp} by calling the command \texttt{net(inp)}, which returns the list
   of values in the final layer or output label(s) if the network is a classifier. \texttt{inp} can also
   be a matrix, in which case each row is processed and the list of results is returned.
   Alternatively, you can pass two arguments to \texttt{net} as in the command \texttt{net(inp,res)} where
@@ -53582,7 +53601,9 @@ command creates image objects from files or data.
     Each matrix must have integral values between 0 and 255, representing
     8-bit color values.
   \end{itemize}
-\item \texttt{image} returns the corresponding image object.
+\item \texttt{image(}\textit{filename}\texttt{)} or
+  \texttt{image(}$n,\textit{data}$\texttt{)}
+  returns the corresponding image object.
 \item The parameter $n$ represents the color type of the image (1 -- grayscale image,
   2 -- grayscale image with alpha channel, 3 -- RGB image, 4 -- RGBA image).
 \item If the number of matrices in \textit{data} is smaller than $n$, then it can
@@ -53638,7 +53659,7 @@ command reads an \xcas{} image structure (see \secref{sec:imagestruct}).
 
 \subsection{Viewing images}
 
-Starting from \xcas{} 1.9.0, image objects are viewed by using
+Starting from \xcas{} version~1.9.0, image objects are viewed by using
 the \texttt{display}\index{display@\texttt{display}}
 command.
 \begin{itemize}
@@ -53646,9 +53667,11 @@ command.
   \begin{itemize}
     \item \textit{img}, an image object.
     \item Optionally, either $a,b$, a pair of real numbers, or $a+\mathrm{i}b$,
-    a complex number (by default, $a=b=0$.
+    a complex number (by default, $a=b=0$).
   \end{itemize}
-  \item \texttt{display} returns a graphic object showing \textit{img} at location
+  \item \texttt{display(}$\textit{img}\,\langle,a,b\,\rangle$\textit{)}
+  or \texttt{display(}$\textit{img}\,\langle,a+\mathrm{i}b\,\rangle$\textit{)}
+  returns a graphic object showing \textit{img} at location
   $(a,b)$ (the upper-left corner).
 \end{itemize}
 
@@ -53674,7 +53697,7 @@ display(img)
 
 \paragraph*{The legacy procedure.}
 \xcas{} can also display images in rectangles in
-two-dimensions or on surfaces in three-dimensions with the
+2D or on surfaces in 3D with the
 \texttt{gl\_texture}\index{gl\_texture@\textit{gl\_texture}}
 property of the object (see \secref{ssec:indattr}). It is required that the
 image is read from disk.
@@ -54025,23 +54048,21 @@ writewav("sounds/sine.wav",s)
 \end{xcasoutput}
 The \texttt{sounds} directory now contains the file \texttt{sine.wav}.
 
-\subsection{Audio playback%: \texttt{playsnd}
-\label{ssec:playsnd}}
-
-The \texttt{playsnd}\index{playsnd@\texttt{playsnd}}
-command plays audio clips.
-\begin{itemize}
-\item \texttt{playsnd} takes
-  $A$, an audio clip.
-\item \texttt{playsnd($A$)} plays the audio clip $A$.
-\end{itemize}
-
-\subsubsection*{Example}
-\begin{xcasinput}
-playsnd(createwav(sin(2*pi*440*soundsec(3))))
-\end{xcasinput}
-\Output{}
-The sound of the sine wave will be played.
+% \subsection{Audio playback%: \texttt{playsnd}
+% The \texttt{playsnd}\index{playsnd@\texttt{playsnd}}
+% command plays audio clips.
+% \begin{itemize}
+% \item \texttt{playsnd} takes
+%   $A$, an audio clip.
+% \item \texttt{playsnd($A$)} plays the audio clip $A$.
+% \end{itemize}
+%
+% \subsubsection*{Example}
+% \begin{xcasinput}
+% playsnd(createwav(sin(2*pi*440*soundsec(3))))
+% \end{xcasinput}
+% \Output{}
+% The sound of the sine wave will be played.
 
 \subsection{Averaging channel data%: \texttt{stereo2mono}
 \label{ssec:stereo2mono}}
@@ -54130,7 +54151,7 @@ Sound data 1 second long sampled at the frequency of 22050 Hz.
 sin(2*pi*440*soundsec(1.3))
 \end{xcasinput}
 \Output{}
-A sinusoid with frequency 440 Hz sampled 44100 times per
+A sinusoidal signal with frequency 440 Hz sampled 44100 times per
 second for 1.3 seconds.
 
 \subsection{Extracting samples from audio clips%: \texttt{channel\_data} \texttt{[]}
@@ -54146,20 +54167,14 @@ command gets samples from an audio clip.
   \item Optionally \texttt{options}, which can be the following (the
     order is unimportant):
     \begin{itemize}
-    \item One of:
-      \begin{itemize}
       \item $n$, a postive integer (channel number, zero-based) or
-        the symbol \texttt{left} or \texttt{right} (for the left resp.~right channel).
-      \item \texttt{matrix}, the symbol.
-      \end{itemize}
-    \item One of:
-      \begin{itemize}
+        \texttt{matrix}, the symbol.
       \item \texttt{range=[}\textit{offset},\textit{length}\texttt{]} for
-        nonnegative integer \textit{offset} and positive integer \textit{length}.
-      \item \texttt{range=$a$..$b$} for floating point numbers $a$ and
-        $b$.
-      \end{itemize}
+        nonnegative integer \textit{offset} and positive integer \textit{length}, or
+        \texttt{range=$a$..$b$} for floating point numbers $a$ and $b$.
     \end{itemize}
+    Instead of channel number $n$, the symbol \texttt{left} resp.~\texttt{right}
+    may be used to specify the left resp.~right channel.
   \end{itemize}
 \item
   \texttt{channel\_data($A\,\langle,$}\textit{options}\texttt{$\rangle$)}
@@ -54235,7 +54250,8 @@ command sets the audio clip samples to desired values.
     (\texttt{left} or \texttt{right}) (by default, the same data is written to all channels
     or \textit{data} must be a matrix with one row for each channel).
   \end{itemize}
-\item \texttt{set\_channel\_data} returns a modified copy of $A$ in which
+\item \texttt{set\_channel\_data(}$A,\textit{data}\,\langle,\textit{offset},\textit{chn}\,\rangle$\texttt{)} 
+  returns a modified copy of $A$ in which
   \textit{data} is written to $A$ at the desired \textit{offset} and channel \textit{chn}.
 \item If \textit{data} is a matrix, then it must have $n$ rows where $n$ is the
   number of channels in $A$. In this case, the fourth argument should be dropped.
@@ -54395,7 +54411,7 @@ middle of tenor range. This is consistent with the fact that a male is
 speaking in the clip. 
 
 \subsection{Listening to a digital sound%: \texttt{playsnd}
-}
+\label{ssec:playsnd}}
 
 The \texttt{playsnd}\index{playsnd@\texttt{playsnd}}
 command plays digitized sound data.
@@ -54409,7 +54425,7 @@ command plays digitized sound data.
     to be played (by default, the entire clip is played).
   \item Optionally, $r$, a positive integer (by default, $r=1$).
   \end{itemize}
-\item \texttt{playsnd($s$)} plays the given (portion of) audio clip over
+\item \texttt{playsnd($A$)} plays the given (portion of) audio clip over
   the computer speakers and repeats it $r$ times (setting $r$ to a higher value
   loops the sound $r$ times).
 \item The portion to be played is either the block of \textit{len} samples
@@ -54465,7 +54481,8 @@ command computes the RMS (root mean square) of the audio data
     (by default, $\text{\textit{len}}=L-\text{\textit{offset}}$,
     where $L$ is the length of $A$).
   \end{itemize}
-\item \texttt{rms} computes RMS for each channel (optionally restricted to the
+\item \texttt{rms(}$A\,\langle,\textit{offset},\textit{len}\,\rangle$\texttt{)}
+  computes RMS for each channel (optionally restricted to the
   portion of length \textit{len} starting at \textit{offset}) and returns the result
   as $\sqrt{\sum_c\mathrm{RMS}_c^2}$, where $\mathrm{RMS}_c$ is the RMS of channel $c$.
 \item \texttt{rms} operates with sample values mapped to $[-1,1]$, hence the result is
@@ -54491,7 +54508,8 @@ command joins two audio clips together with an overlap and optionally a crossfad
   \item Optionally, $p$, a real number defining the crossfade curve
     (by default, $p$ is computed automatically, see below).
   \end{itemize}
-\item \texttt{splice} returns the audio clip obtained by splicing $A$ and $B$ with an overlap
+\item \texttt{splice(}$A,B\,\langle,\textit{len},p\,\rangle$\texttt{)}
+  returns the audio clip obtained by splicing $A$ and $B$ with an overlap
   of \textit{len} samples and a crossfade which is computed using the function
   $f(x)=x^p$, $x\in[0,1]$, for $p>0$.
 \item For positively correlated audio data on the overlap, it is best to set $p=1.0$
@@ -54543,7 +54561,7 @@ The \texttt{mixdown}\index{mixdown@\texttt{mixdown}} command
 is used for mixing several audio clips down together into one clip.
 \begin{itemize}
 \item \texttt{mixdown} takes an even number of arguments. Each pair of
-  arguments must consist of the following:
+  consecutive arguments is a sequence consisting of the following:
   \begin{itemize}
   \item $A$, a stereo or mono audio clip.
   \item \textit{parm}, which is either a nonnegative real number or a list consisting
@@ -54562,7 +54580,8 @@ is used for mixing several audio clips down together into one clip.
       the fade-out length (by default 0).
     \end{itemize}
   \end{itemize}
-\item \texttt{mixdown} returns an audio clip which is the mix of the given clips.
+\item \texttt{mixdown(}$A,\textit{parm}\,\langle,\dots\,\rangle$\texttt{)}
+  returns an audio clip which is the mix of the given clips.
   The audio is not automatically normalized, so calling \texttt{normalize} may be required
   afterwards. If clipping occurs while mixing, a warning is printed in the message area.
 \item All audio clips involved in the mix must have the same sample rate,

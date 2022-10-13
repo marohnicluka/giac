@@ -107,6 +107,7 @@ clock_t times (struct tms *__buffer) {
 #include "derive.h"
 #include "ti89.h"
 #include "giacintl.h"
+#include "signalprocessing.h"
 #ifdef HAVE_LIBGSL
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_fft_complex.h>
@@ -2465,8 +2466,13 @@ namespace giac {
 #endif // LIBPNG
 
   gen _writergb(const gen & g,GIAC_CONTEXT){
-    if ( g.type==_STRNG && g.subtype==-1) return  g;
+    if ( g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT || g._VECTptr->size()!=2 || g._VECTptr->front().type!=_STRNG)
+      return gensizeerr(contextptr);
     vecteur v(gen2vecteur(g));
+    rgba_image *img=rgba_image::from_gen(v[1]);
+    if (img!=NULL)
+      return img->write_png(v[0]._STRNGptr->c_str())==0?1:0;
     if (ckmatrix(v[1])){
       int l,c;
       mdims(*v[1]._VECTptr,l,c);
@@ -2478,7 +2484,7 @@ namespace giac {
       }
       v=makevecteur(v[0],w);
     }
-    if (v.size()!=2 || v[0].type!=_STRNG || v[1].type!=_VECT)
+    if (v[1].type!=_VECT)
       return gensizeerr();
     vecteur w=*v[1]._VECTptr;
     // w[0]==[d,w,h], w[1..4]=data

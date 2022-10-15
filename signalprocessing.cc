@@ -1676,7 +1676,7 @@ gen _set_channel_data(const gen &g,GIAC_CONTEXT) {
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
     const vecteur &args=*g._VECTptr;
-    if (args.size()<2 || args.size()>4)
+    if (args.size()<2 || args.size()>5)
         return gendimerr(contextptr);
     audio_clip *clip=audio_clip::from_gen(args.front());
     rgba_image *img=rgba_image::from_gen(args.front());
@@ -1746,7 +1746,7 @@ gen _set_channel_data(const gen &g,GIAC_CONTEXT) {
             return generrtype(gettext("Invalid reference point specification"));
         int x=args[1+start].val,y=args[2+start].val;
         if (x<0 || x>=img->width() || y<0 || y>=img->height())
-            return generr(gettext("Reference point is not in image"));
+            return generr(gettext("Reference point outside the image"));
         if (!ckmatrix(args[3+start]))
             return generrtype(gettext("Channel data must be a matrix"));
         try {

@@ -2319,14 +2319,14 @@ An alternate way of suppressing the output is to end the input with the
 nodisp(a:=2+2)
 \end{xcasinput}
 \begin{xcasoutput}
-  \text{``Done''}
+  \text{Done}
 \end{xcasoutput}
 and \texttt{a} will be set to \texttt{4}.
 \begin{xcasinput}
 b:=3+3:;
 \end{xcasinput}
 \begin{xcasoutput}
-  \text{``Done''}
+  \text{Done}
 \end{xcasoutput}
 and \texttt{b} will be set to \texttt{6}.
 
@@ -5056,8 +5056,8 @@ a sequence or a list.
     if the previous two arguments are combined into one, $k=a\texttt{..}b$
   \end{itemize}
   This is \Maple{}-like syntax.
-\item \texttt{seq(}$\textit{expr},k,a\texttt{..}b$\texttt{)} (or
-  \texttt{seq(}$\textit{expr},k\texttt{=}a\texttt{..}b \,\langle,p\rangle$\texttt{)})
+\item \texttt{seq(}$\textit{expr},k,a\texttt{..}b$\texttt{)} or
+  \texttt{seq(}$\textit{expr},k\texttt{=}a\texttt{..}b \,\langle,p\rangle$\texttt{)}
   returns the sequence formed by the values of \texttt{expr}, as $k$
   changes from $a$ to $b$ in steps of $p$.
 \end{itemize}
@@ -17627,7 +17627,7 @@ psrgcd((x+y-1)*(x+y+1),(x+y+1)^2)
 ezgcd((x+1)^4-y^4,(x+1-y)^2)
 \end{xcasinput}
 \begin{xcasoutput}
-  \text{``GCD not successful Error:~Bad Argument Value''}
+  \text{GCD not successful Error:~Bad Argument Value}
 \end{xcasoutput}
 But:
 \begin{xcasinput}
@@ -18096,7 +18096,7 @@ or:
 sturm([1,0,0,2,0,0],x,-2,0)
 \end{xcasinput}
 \begin{xcasoutput}
-  \text{``Bad argument type''}
+  \text{Bad argument type}
 \end{xcasoutput}
 
 \subsection{Sylvester matrix of two polynomials and resultant%: \texttt{sylvester} \texttt{resultant}
@@ -19783,7 +19783,7 @@ denominator is $0 \pmod{p}$).
 5%14/7%14
 \end{xcasinput}
   \begin{xcasoutput}
-    \text{``Not invertible Error: Bad Argument Value''}
+    \text{Not invertible Error: Bad Argument Value}
   \end{xcasoutput}
 
 \item For polynomials, the result of $P/Q$ is its irreducible
@@ -20236,7 +20236,7 @@ Note that these two variable names must be quoted.
 G:=GF(2,2,['w','G']):; G(w^2)
 \end{xcasinput}
 \begin{xcasoutput}
-  \text{``Done''},G\left(w+1\right)
+  \text{Done},G\left(w+1\right)
 \end{xcasoutput}
 \begin{xcasinput}
 G(w^3)
@@ -20245,7 +20245,7 @@ G(w^3)
   G(1)
 \end{xcasoutput}
 Hence, the elements of \texttt{GF(2,2)} are
-\texttt{G(0)},\texttt{G(1)},\texttt{G(w)}, and \texttt{G(w\^{}2)=G(w+1)}.
+\texttt{G(0)}, \texttt{G(1)}, \texttt{G(w)} and \texttt{G(w\^{}2)=G(w+1)}.
 
 We may also impose the irreducible primitive polynomial that we wish
 to use, by putting it as second argument (instead of $n$), for
@@ -21363,7 +21363,7 @@ Note that $\infty$ or \textit{infinity} without an explicit
 \texttt{+} or \textit{-} represents unsigned infinity.
 
 Find, for $n>2$, the limit of
-$\frac{n\tan(x)-\tan(nx)}{\sin(nx)-n\sin(x)}$
+$\displaystyle\frac{n\tan(x)-\tan(nx)}{\sin(nx)-n\sin(x)}$
 as $x$ approaches $0$.
 \begin{xcasinput}
 limit((n*tan(x)-tan(n*x))/(sin(n*x)-n*sin(x)),x=0)
@@ -21385,7 +21385,7 @@ limit(sqrt(x+sqrt(x+sqrt(x)))-sqrt(x),x=+infinity)
 \end{xcasoutput}
 
 Find the limit of
-$\frac{\sqrt{1+x+x^2/2}- \mathrm{e}^{x/2}}{(1-\cos(x))\sin(x)}$
+$\displaystyle\frac{\sqrt{1+x+x^2/2}- \mathrm{e}^{x/2}}{(1-\cos(x))\sin(x)}$
 as $x$ approaches 0.
 \begin{xcasinput}
 limit((sqrt(1+x+x^2/2)-exp(x/2))/((1-cos(x))*sin(x)),x,0)
@@ -21427,13 +21427,13 @@ computes derivatives and partial derivatives of expressions.
     the number of derivations with respect to the variable; for
     example, instead of writing \texttt{x,x,x} you could write \texttt{x\$3}.
   \end{itemize}
-\item \texttt{diff(}\textit{expr},$x_{1},x_{2}$,\dots\texttt{)} returns the
+\item \texttt{diff(}$\textit{expr},x_{1},x_{2},\dots$\texttt{)} returns the
   partial derivative of \textit{expr} with respect to the variables
   $x_{1},x_{2},\dots$
 \end{itemize}
 
 \subsubsection*{Examples}
-Compute $\displaystyle\frac {\partial (x y^2 z^3+x y z)}{\partial z}$.
+Compute $\displaystyle\frac {\partial}{\partial z}(x y^2 z^3+x y z)$.
 \begin{xcasinput}
 diff(x*y^2*z^3+x*y*z,z)
 \end{xcasinput}
@@ -21447,21 +21447,21 @@ diff(x*y^2*z^3+x*y,[x,y,z])
 \begin{xcasoutput}
   \left[y^{2} z^{3}+y,2 x y z^{3}+x,3 x y^{2} z^{2}\right]
 \end{xcasoutput}
-Compute $\displaystyle\frac {\partial^3 (x y^2 z^3+x y z)}{\partial y\,\partial^2 z}$.
+Compute $\displaystyle\frac {\partial^3}{\partial y\,\partial^2 z}(x y^2 z^3+x y z)$.
 \begin{xcasinput}
 diff(x*y ^2*z^3+x*y*z,y,z$2)
 \end{xcasinput}
 \begin{xcasoutput}
   12 x y z
 \end{xcasoutput}
-Compute $\displaystyle\frac {\partial^2 (x y^2 z^3+x y z)}{\partial x\partial z}$.
+Compute $\displaystyle\frac {\partial^2}{\partial x\partial z}(x y^2 z^3+x y z)$.
 \begin{xcasinput}
 diff(x*y^2*z^3+x*y*z,x,z)
 \end{xcasinput}
 \begin{xcasoutput}
   3 y^{2} z^{2}+y
 \end{xcasoutput}
-Compute $\displaystyle\frac {\partial^3 (x y^2 z^3+x y z)}{\partial x\partial^2 z}$.
+Compute $\displaystyle\frac {\partial^3}{\partial x\partial^2 z}(x y^2 z^3+x y z)$.
 \begin{xcasinput}
 diff(x*y^2*z^3+x*y*z,x,z,z)
 \end{xcasinput}
@@ -21841,7 +21841,7 @@ namely, it evaluates to \textit{integrate} for later evaluation.
     \texttt{x} the second argument is unnecessary).
   \end{itemize}
 \item \texttt{int(}$\textit{expr}\,\langle,x\,\rangle$\texttt{)}
-  (or \texttt{integrate(}$\textit{expr}\,\langle,x\,\rangle$\texttt{)}) returns a
+  or \texttt{integrate(}$\textit{expr}\,\langle,x\,\rangle$\texttt{)} returns a
   primitive of \textit{expr} with respect to $x$.
 \item To evaluate a definite integral, \texttt{int} (or \texttt{integrate})
   takes four arguments:
@@ -21851,7 +21851,7 @@ namely, it evaluates to \textit{integrate} for later evaluation.
   \item $a$ and $b$, the bounds of the definite integral.
   \end{itemize}
 \item \texttt{int(}$\textit{expr},x,a,b$\texttt{)}
-  (or \texttt{integrate(}$\textit{expr},x,a,b$\texttt{)}) returns
+  or \texttt{integrate(}$\textit{expr},x,a,b$\texttt{)} returns
   the exact value of the definite integral if the computation was
   successful or an unevaluated integral otherwise.
 \end{itemize}
@@ -22094,7 +22094,7 @@ command determines if a sum is such a Riemann sum, and if it is, evaluates the i
 \item \texttt{sum\_riemann(}$\textit{expr},\texttt{[}n,k\texttt{]}$\texttt{)}
   returns
   \[
-    \lim_{n\to\infty}\sum_{k=1}^{n}\textit{expr}
+    \lim_{n\to+\infty}\sum_{k=1}^{n}\textit{expr}
   \]
   (which, viewing the sum as a Riemann sum of a continuous function on
   $[0,1]$, is the definite integral) or returns
@@ -22103,32 +22103,32 @@ command determines if a sum is such a Riemann sum, and if it is, evaluates the i
 \end{itemize}
 
 \subsubsection*{Examples}
-Suppose $\displaystyle S_n=\sum_{k=1}^n \frac{k^2}{n^3}$.
-Compute $\lim_{n \rightarrow +\infty} S_n$.
+Let $\displaystyle S_n=\sum_{k=1}^n \frac{k^2}{n^3}$.
+Compute the limit of $(S_n)_{n\in\mathbb{N}}$.
 \begin{xcasinput}
 sum_riemann(k^2/n^3,[n,k])
 \end{xcasinput}
 \begin{xcasoutput}
   \frac{1}{3}
 \end{xcasoutput}
-Suppose $\displaystyle S_n=\sum_{k=1}^n \frac{k^3}{n^4}$.
-Compute $\lim_{n \rightarrow +\infty} S_n$.
+Let $\displaystyle S_n=\sum_{k=1}^n \frac{k^3}{n^4}$.
+Compute the limit of $(S_n)_{n\in\mathbb{N}}$.
 \begin{xcasinput}
 sum_riemann(k^3/n^4,[n,k])
 \end{xcasinput}
 \begin{xcasoutput}
   \frac{1}{4}
 \end{xcasoutput}
-Compute $\lim_{n \rightarrow +\infty}\left(\frac{1}{n+1}+
-  \frac{1}{n+2}+\cdots+\frac{1}{n+n}\right)$.
+Compute $\displaystyle\lim_{n \rightarrow +\infty}\left(\frac{1}{n+1}+
+  \frac{1}{n+2}+\cdots+\frac{1}{2n}\right)$.
 \begin{xcasinput}
 sum_riemann(1/(n+k),[n,k])
 \end{xcasinput}
 \begin{xcasoutput}
   \ln \left(2\right)
 \end{xcasoutput}
-Suppose $\displaystyle S_n=\sum_{k=1}^n \frac{32n^3}{16n^4-k^4}$.
-Compute $\lim_{n \rightarrow +\infty} S_n$.
+Let $\displaystyle S_n=\sum_{k=1}^n \frac{32n^3}{16n^4-k^4}$.
+Compute the limit of $(S_n)_{n\in\mathbb{N}}$.
 \begin{xcasinput}
 sum_riemann(32*n^3/(16*n^4-k^4),[n,k])
 \end{xcasinput}
@@ -22173,8 +22173,8 @@ the primitive of an expression written as $u(x)v\Prime(x)$ by specifying $v(x)$.
     the expression \textit{uvprime} is integrated as a whole (this can
     be useful for finishing a multi-step integration by parts problem).
   \end{itemize}
-\item \texttt{ibpdv(}$\textit{uvprime},\textit{vexpr}$\texttt{)} (or
-  \texttt{ibpdv(}$[\textit{Fexpr},\textit{uvprime}],\textit{vexpr}$\texttt{)}) returns
+\item \texttt{ibpdv(}$\textit{uvprime},\textit{vexpr}$\texttt{)} or
+  \texttt{ibpdv(}$[\textit{Fexpr},\textit{uvprime}],\textit{vexpr}$\texttt{)} returns
   \begin{itemize}
   \item if $\textit{vexpr}\neq 0$:
  
@@ -22216,8 +22216,8 @@ the primitive of an expression written as $u(x)v\Prime(x)$ by specifying $u(x)$.
     the expression \textit{uvprime} is integrated as a whole (this can
     be useful for finishing a multi-step integration by parts problem).
   \end{itemize}
-\item \texttt{ibpu(}$\textit{uvprime},\textit{uexpr}$\texttt{)} (or
-  \texttt{ibpu(}$[\textit{Fexpr},\textit{uvprime}],\textit{uexpr}$\texttt{)}) returns
+\item \texttt{ibpu(}$\textit{uvprime},\textit{uexpr}$\texttt{)} or
+  \texttt{ibpu(}$[\textit{Fexpr},\textit{uvprime}],\textit{uexpr}$\texttt{)} returns
   \begin{itemize}
   \item if $\textit{uexpr}\neq 0$:
  
@@ -22422,11 +22422,10 @@ of curves in the plane, which can either be given by an equation or a curve obje
   \item $a$ and $b$, two values for the bounds of this variable.
   \end{itemize}
 \item \texttt{arcLen(}$\textit{expr},x,a,b$\texttt{)}
-  (resp.
-  \texttt{arcLen([}\textit{expr$_{1}$},\textit{expr$_{2}$}\texttt{]}$x,a,b$\texttt{)})
+  resp. \texttt{arcLen([}\textit{expr$_{1}$},\textit{expr$_{2}$}\texttt{]}$x,a,b$\texttt{)}
   returns the length of the curve defined by
-  $y=f(x)=\textit{expr}$ (resp. by
-  $x_{1}=\textit{expr}_{1}$, $x_{2}=\textit{expr}_{2}$) as $x$ varies from
+  $y=f(x)=\textit{expr}$ resp. by
+  $x_{1}=\textit{expr}_{1}$, $x_{2}=\textit{expr}_{2}$ as $x$ varies from
   $a$ to $b$, using  the formula
   \[
     \operatorname{arcLen}(f(x),x,a,b)=\int_{a}^{b}\sqrt{f\Prime(x)^{2}+1}\,\mathrm{d}x
@@ -32492,9 +32491,9 @@ G
 \end{xcasinput}
 produces the error:
 \begin{xcasoutput}
-  &\text{``Unable to eval test in loop: x>0.0}\\
+  &\text{Unable to eval test in loop: x>0.0}\\
   &\text{Error: Bad Argument Value Error:}\\
-  &\text{Bad Argument Value''}
+  &\text{Bad Argument Value}
 \end{xcasoutput}
 Internally, \texttt{F} and \texttt{G} contain the formal expressions
 \texttt{f(x)} and \texttt{g(x)}, respectively.  When \xcas{}
@@ -40463,7 +40462,7 @@ In the second example, we attempt to reduce the noise in a noisy image.
 img:=image("/home/luka/Pictures/noisy.jpg")(grey)
 \end{xcasinput}
 \begin{xcasoutput}
-  \text{``an image of size 300×300 (grayscale)''}
+  \text{an image of size 300×300 (grayscale)}
 \end{xcasoutput}
 We transform the image matrix and replace each component smaller than 55
 (by absolute value) in the resulting matrix to zero, before transforming
@@ -53505,11 +53504,10 @@ Existing image objects can be modified by using the
   \item \texttt{set\_channel\_data} takes four or five arguments:
   \begin{itemize}
     \item \textit{img}, an image object.
-    \item \textit{chn}, a channel specification, which for colored
-    images must be one of:
-    \texttt{red} for the red channel, \texttt{green} for the green channel,
+    \item \textit{chn}, a channel index, which should be either a nonnegative
+    integer or \texttt{red} for the red channel, \texttt{green} for the green channel,
     \texttt{blue} for the blue channel, \texttt{grey} for the grayscale
-    channel or \texttt{tran} for the transparency channel.
+    channel resp.~\texttt{tran} for the transparency channel.
     
     For grayscale images without a transparency channel, 
     this argument should be omitted since there is only one channel.
@@ -53525,6 +53523,9 @@ Existing image objects can be modified by using the
   pixel $(x+j,y+i)$ in  is set to $\textit{data}_{ij}$ for $i=0,\dots,h-1$ and $j=0,\dots,w-1$.
 \end{itemize}
 
+To produce a negative of an image, use the unary operator
+\texttt{-}\index{-@\texttt{-}} or the command \texttt{inv}\index{inv@\texttt{inv}}.
+
 \subsection{Extracting data from images}
 
 \paragraph{Obtaining the size of an image.}
@@ -53538,16 +53539,17 @@ The size of an image can be obtained by using the
 
 \paragraph{Obtaining pixel data.}
 Channel data can be extracted from image objects to matrices by using
-the \texttt{[]} operator or the \texttt{channel\_data} command.
+the \texttt{[]}\index{[]@\texttt{[]}} operator or the
+\texttt{channel\_data}\index{channel\_data@\texttt{channel\_data}} command.
 \begin{itemize}
   \item Let \textit{img} be an image object.
   \item The command $\textit{img}\texttt{[}\textit{chn}\,\langle,x,y\,\langle,w,h\,\rangle\rangle\texttt{]}$,
     where
     \begin{itemize}
-      \item \textit{chn} is a channel specification and should be one of:
-        \texttt{red} for the red channel, \texttt{green} for the green channel,
-        \texttt{blue} for the blue channel, \texttt{tran} for the transparency
-        channel or \texttt{grey} for the grayscale channel,
+      \item \textit{chn} is a channel index, which should be either a
+        nonnegative integer or  \texttt{red} for the red channel, \texttt{green} for the
+        green channel, \texttt{blue} for the blue channel, \texttt{grey} for the
+        grayscale channel resp.~\texttt{tran} for the transparency channel,
       \item (optionally) $x$, $y$ are integers and
       \item (optionally) $w$, $h$ are positive integers (if these are given, then
       $x$ and $y$ must also be given),
@@ -53562,8 +53564,7 @@ the \texttt{[]} operator or the \texttt{channel\_data} command.
     \end{itemize}
   \item If $\textit{chn}=\texttt{grey}$ and \textit{img} is a color image, then the returned
   pixel value(s) are obtained by averaging the color channels.
-  \item The \texttt{channel\_data}\index{channel\_data@\texttt{channel\_data}}
-  command extracts a channel (sub)matrix. Precisely,
+  \item The \texttt{channel\_data} command extracts a channel (sub)matrix. Precisely,
   \texttt{channel\_data(}$\textit{img},\textit{args}$\textit{)} is equivalent to
   \textit{img}\texttt{[}\textit{args}\texttt{]}, where \textit{img} is an image object
   and \textit{args} is a sequence of arguments as described above.
@@ -53574,7 +53575,8 @@ The \texttt{flatten}\index{flatten@\texttt{flatten}} command returns a list
 representation of an image, which is suitable for e.g.~passing the image to a neural
 network. It accepts a single argument, an image object \textit{img}, and returns the
 list in which the pixel data is stored row by row, with individual channel values for
-the same pixel occupying consecutive entries in the list.
+the same pixel occupying consecutive entries in the list. (See the MNIST example
+in~\secref{ssec:train}.)
 
 \section{Audio}
 
@@ -53657,7 +53659,8 @@ command creates an audio object with specified parameters.
     If $D$ is a matrix, it should contain the $k$th sample in the
     $j$th channel at position $(j,k)$. The value of each sample must be
     a real number in range $[-1.0,1.0]$. Any value outside this interval
-    is clamped to it (the resulting effect is called \emph{clipping}).
+    is clamped to it (this effect is called \emph{clipping} and
+    it will distort the signal).
 
     If $D$ is a single list, it is copied across channels.
 
@@ -53674,33 +53677,6 @@ command creates an audio object with specified parameters.
   audio object with the requested parameters.
 \item If no sound data is provided, the resulting audio will be silent
   (all samples will be initialized to 0).
-\item Audio clips can be obtained from existing clips by slicing. To extract a portion
-  of length $n$ samples starting at $k$th sample in an audio clip \texttt{clip},
-  use the \texttt{()}\index{()@\texttt{()}} operator like this:
-\begin{xcasinput}
-subclip:=clip(k,n)
-\end{xcasinput}
-  The second argument may be omitted, in which case $n=L-k$ is used, where $L$ is the length
-  of \texttt{clip} in samples. To extract the portion between timestamps $t_1$ and $t_2$
-  in seconds, use the syntax:
-\begin{xcasinput}
-subclip:=clip(t1..t2)
-\end{xcasinput}
-\item Yet another way to create new audio clips is to concatenate existing clips.
-  This is done by using the \texttt{+} operator. Note that clips to be concatenated
-  must have the same number of channels, bit depth and sample rate. For example, to
-  concatenate two audio clips \texttt{clip1} and \texttt{clip2}, input:
-\begin{xcasinput}
-clip:=clip1+clip2
-\end{xcasinput}
-  This is useful for e.g.~padding audio with zeros (silence).
-\item Audio clips can be inverted (which is equivalent to multiplying sample
-  data with $-1$ for each channel) by using the unary sign operator \texttt{-}
-  or the \texttt{inv}\index{inv@\texttt{inv}}
-  command which takes an audio clip as its only argument.
-\item Audio clips can be reversed in time by using the
-  \texttt{reverse}\index{reverse@\texttt{reverse}}
-  command which takes an audio clip as its only argument.
 \end{itemize}
 
 \subsubsection*{Examples}
@@ -53719,6 +53695,45 @@ playsnd(s)
 \end{xcasinput}
 \Output{}
 Three seconds of a vibrato effect on a sine wave (stereo).
+
+\subsection{New audio clips from existing ones}
+
+You can create audio clips from existing ones by using some standard operators.
+
+\paragraph{Slicing.}
+Audio clips can be obtained from existing clips by slicing. To extract a portion
+of length $n$ samples starting at $k$th sample in an audio clip \texttt{clip},
+use the \texttt{()}\index{()@\texttt{()}} operator like this:
+\begin{xcasinput}
+subclip:=clip(k,n)
+\end{xcasinput}
+The second argument may be omitted, in which case $n=L-k$ is used, where $L$ is the length
+of \texttt{clip} in samples. You can also use
+\begin{xcasinput}
+subclip:=clip(t1..t2)
+\end{xcasinput}
+to extract the portion between timestamps $t_1$ and $t_2$ (in seconds).
+
+\paragraph{Concatenation.}
+Existing audio clips can be concatenated together by
+using the \texttt{+} operator. Note that clips to be concatenated
+must have the same number of channels, bit depth and sample rate. For example, to
+concatenate two audio clips \texttt{clip1} and \texttt{clip2}, input:
+\begin{xcasinput}
+clip:=clip1+clip2
+\end{xcasinput}
+This is useful for e.g.~padding audio with zeros (silence).
+
+\paragraph{Inverting and reversing.}
+Audio clips can be inverted (which is equivalent to multiplying sample
+data with $-1$ for each channel) by using the unary sign operator
+\texttt{-}\index{-@\texttt{-}}
+or the \texttt{inv}\index{inv@\texttt{inv}}
+command which takes an audio clip as its only argument.
+
+To reverse an audio clip in the time domain, use the
+\texttt{reverse}\index{reverse@\texttt{reverse}}
+command which takes an audio clip as its only argument.
 
 \subsection{Reading \texttt{wav} files from disk%: \texttt{readwav}
 \label{ssec:readwav}}
@@ -54358,7 +54373,7 @@ mix:=mixdown(clip1,[0,g,-0.3,2.0,0.2],    clip2,[5.0,g,0.7,0.5,2.0],
              clip5,[9.8,-6.0,0.0,0.5,4.0],clip6,[10.0,-8.0,0.15,0.5,2.0])
 \end{xcasinput}
 \begin{xcasoutput}
-  \text{``a sound clip with 705600 samples at 44100 Hz (16 bit, stereo)''}
+  \text{a sound clip with 705600 samples at 44100 Hz (16 bit, stereo)}
 \end{xcasoutput}
 Finally, we play the music.
 \begin{xcasinput}

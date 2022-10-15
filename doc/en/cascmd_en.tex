@@ -53467,7 +53467,8 @@ from an existing one. With an image object \textit{img}:
   \item $\textit{img}\texttt{(grey)}$ returns a copy of \textit{img} converted to grayscale.
   \item $\textit{img}\texttt{(}\alpha\texttt{)}$, where $\alpha$ is
   a positive real number, returns a copy \textit{img} with size scaled to $\alpha w\times \alpha h$.
-  \item $\textit{img}\texttt{(}w,h\texttt{)}$ returns a copy of \textit{img} resized to $w\times h$.
+  \item $\textit{img}\texttt{(}w,h\texttt{)}$ returns a copy of \textit{img} resized to $w\times h$
+  (possibly changing the aspect ratio).
   \item $\textit{img}\texttt{(}x,y,w,h\texttt{)}$ returns a new image corresponding to the portion
   with dimensions $w\times h$ and the upper left corner at $(x,y)$.
 \end{itemize}
@@ -53498,6 +53499,7 @@ title:="resized from 512 x 256 to 102 x 51"; display(img(0.2))
 
 \subsection{Modifying images}
 
+\paragraph{Setting pixel data explicitly.}
 Existing image objects can be modified by using the
 \texttt{set\_channel\_data}\index{set\_channel\_data@\texttt{set\_channel\_data}} command.
 \begin{itemize}
@@ -53523,8 +53525,10 @@ Existing image objects can be modified by using the
   pixel $(x+j,y+i)$ in  is set to $\textit{data}_{ij}$ for $i=0,\dots,h-1$ and $j=0,\dots,w-1$.
 \end{itemize}
 
-To produce a negative of an image, use the unary operator
-\texttt{-}\index{-@\texttt{-}} or the command \texttt{inv}\index{inv@\texttt{inv}}.
+\paragraph{Inverting pixel data.}
+To produce a negative of an image, i.e.~to apply the function $p\mapsto 255-p$ to all channel data
+entries, use the unary operator \texttt{-}\index{-@\texttt{-}} or the command
+\texttt{inv}\index{inv@\texttt{inv}}.
 
 \subsection{Extracting data from images}
 
@@ -53580,9 +53584,8 @@ in~\secref{ssec:train}.)
 
 \section{Audio}
 
-\xcas{} has support for audio objects and can read and write such objects
-from/to files on your computer in \texttt{wav} (Waveform Audio File) format.
-In addition, \xcas{} provides the following commands for working with audio objects.
+\xcas{} has support for audio objects in \texttt{wav} (Waveform Audio File) format.
+The following commands are provided for working with audio objects.
 
 \begin{itemize}
 \item For creating and playing audio objects, there are:
@@ -53600,37 +53603,44 @@ In addition, \xcas{} provides the following commands for working with audio obje
   \end{itemize}
 \item For manipulating audio objects, there are:
   \begin{itemize}
-  \item \texttt{set\_channel\_data}, to modify the data of
-    an existing audio clip (see \secref{ssec:setchndata}).
-  \item \texttt{normalize}, to scale the amplitude of an audio clip
+  \item \texttt{set\_channel\_data}, for modifying the data in
+    an audio clip (see \secref{ssec:setchndata}).
+  \item \texttt{normalize}, for scaling the amplitude of an audio clip
     (see \secref{ssec:normalize-audio}).
-  \item \texttt{stereo2mono}, to average channels to a single channel
+  \item \texttt{stereo2mono}, for averaging channels to a single channel
     (see \secref{ssec:stereo2mono}).
-  \item \texttt{resample}, to change the sample rate (see
+  \item \texttt{resample}, for changing of the sample rate (see
     \secref{ssec:resample}).
-  \item \texttt{reverse}, to reverse the audio data with respect to the time axis.
-  \item \texttt{inv} or \texttt{-} (unary operator), to invert audio channels.
-  \item \texttt{splice}, to splice audio clips together with a crossfade
+  \item \texttt{reverse}, for reversing the audio data in time (see~\secref{ssec:audio-clips-from-old}).
+  \item \texttt{inv} or \texttt{-} (unary operator), for inverting channel data
+    (see~\secref{ssec:audio-clips-from-old}).
+  \item \texttt{+} (infixed operator), for concatenation of audio clips
+    (see~\secref{ssec:audio-clips-from-old}).
+  \item \texttt{splice}, for splicing audio clips together with a crossfade
     (see \secref{ssec:splice}).
-  \item \texttt{+}, to concatenate audio clips (infixed operator).
+  \item \texttt{mixdown}, for mixing several clips down to one clip (see~\secref{ssec:mixdown}).
   \end{itemize}
 \item For getting information from an audio object, there are:
   \begin{itemize}
-  \item \texttt{about}, to display the properties of an audio clip.
-  \item \texttt{length} or \texttt{size}, to obtain the audio clip length in samples.
-  \item \texttt{channels}, to find the number of channels (see
+  \item \texttt{about}, for printing out the properties of an audio clip
+    (see \secref{ssec:audioclipprops}).
+  \item \texttt{length} or \texttt{size}, for obtaining the audio clip length in samples
+    (see \secref{ssec:audioclipprops}).
+  \item \texttt{channels}, for finding the number of channels (see
     \secref{ssec:audioclipprops}).
-  \item \texttt{bit\_depth}, to find the number of bits in each sample
+  \item \texttt{bit\_depth}, for finding the number of bits in each sample
     value (see \secref{ssec:audioclipprops}).
-  \item \texttt{samplerate}, to find the number of samples per second (see \secref{ssec:audioclipprops}).
-  \item \texttt{duration}, to find the duration of the audio in seconds (see \secref{ssec:audioclipprops}).
-  \item \texttt{channel\_data}, to extract a sample from an audio (see
+  \item \texttt{samplerate}, for finding the number of samples per second
+    (see \secref{ssec:audioclipprops}).
+  \item \texttt{duration}, for finding the duration of the audio in seconds
+    (see \secref{ssec:audioclipprops}).
+  \item \texttt{channel\_data}, for extracting channel data from an audio clip (see
     \secref{ssec:channeldata}).
-  \item \texttt{rms}, to compute the RMS (root mean square) of an audio clip
+  \item \texttt{rms}, for computing the RMS (root mean square) of an audio clip
     (see \secref{ssec:rms2}).
-  \item \texttt{plotwav}, to visualize a waveform (see
+  \item \texttt{plotwav}, for visualizing a waveform (see
     \secref{ssec:plotwav}).
-  \item \texttt{plotspectrum}, to visualize the power spectra (see
+  \item \texttt{plotspectrum}, for visualizing power spectra (see
     \secref{ssec:plotspectrum}).
   \end{itemize}
 \end{itemize}
@@ -53696,7 +53706,7 @@ playsnd(s)
 \Output{}
 Three seconds of a vibrato effect on a sine wave (stereo).
 
-\subsection{New audio clips from existing ones}
+\subsection{New audio clips from existing ones\label{ssec:audio-clips-from-old}}
 
 You can create audio clips from existing ones by using some standard operators.
 

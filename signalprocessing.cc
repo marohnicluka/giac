@@ -1579,7 +1579,7 @@ gen _bit_depth(const gen &g,GIAC_CONTEXT) {
     if (clip!=NULL)
         return clip->bit_depth();
     if (img!=NULL)
-        return 8;
+        return img->bit_depth();
     return generrtype(gettext("Expected audio clip or image"));
 }
 static const char _bit_depth_s []="bit_depth";

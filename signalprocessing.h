@@ -313,6 +313,7 @@ public:
     int width() const { return _w; }
     int height() const { return _h; }
     int depth() const { return _d; }
+    int bit_depth() const { return 8; }
     bool has_alpha() const { return _d%2==0; }
     const std::string file_name() const { return _filename; }
     const uchar *data_array() const { return _data; }

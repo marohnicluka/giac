@@ -10716,10 +10716,10 @@ im([1+2*i,(1+2*i)^2])
 
 # image
 1 Image d'une application linéaire de matrice M
-2 Image of a linear map with matrix M.
+2 Returns the image of a linear map with matrix M or an image object loaded from file imgfname.
 3 Imagen de una aplicación lineal de matriz M
 4 Εικόνα μιας γραμμικής εφαρμογής ενός πίνακα Μ
-0 Mtrx(M)
+0 Mtrx(M)||Strng(imgfname)
 -1 ker
 -2 rref
 image([[1,2],[3,6]])
@@ -15789,7 +15789,7 @@ cluster([[1.1,1.5],[3.2,2.5],[1.5,0.9],[3.5,2.7],[0.8,1.1],[3.1,2.2]])
 
 # createwav
 0 Lst(data),[opts]
-2 Returns an audio clip from data, optionally setting channel count, bit depth, sample rate, duration and normalization level.
+2 Returns an audio clip created from data, optionally setting channel count, bit depth, sample rate, duration and/or normalization level.
 -1 readwav
 -2 writewav
 -3 playsnd
@@ -15800,16 +15800,16 @@ createwav(10*sin(2*pi*440*soundsec(2)),normalize=-3)
  t:=soundsec(3):;L,R:=sin(2*pi*440*t),sin(2*pi*445*t):;createwav([L,R])
 
 # stereo2mono
-0 Lst(clip)
-2 Returns an audio clip with all channels in the input clip downmixed to a single one.
+0 Audio(clip)
+2 Returns an audio clip with all channels in the input clip averaged to a single one.
 -1 channel_data
 -2 mean
 -3 createwav
 stereo2mono(readwav("/some/file"))
 
 # bit_depth
-0 Lst(clip)
-2 Returns the bit depth of an audio clip.
+0 Audio(clip)||Image(img)
+2 Returns the bit depth of an audio clip or image object.
 -1 channels
 -2 channel_data
 -3 duration
@@ -15817,8 +15817,8 @@ stereo2mono(readwav("/some/file"))
 bit_depth(readwav("/some/file"))
 
 # channels
-0 Lst(clip)
-2 Returns the number of channels in audio clip.
+0 Audio(clip)||Image(img)
+2 Returns the number of channels in an audio clip or image object.
 -1 bit_depth
 -2 channel_data
 -3 duration
@@ -15826,19 +15826,25 @@ bit_depth(readwav("/some/file"))
 channels(readwav("/some/file"))
 
 # channel_data
-0 Lst(clip),[Intg(chn) or matrix],[range=a..b]
-2 Extracts the data from an audio clip (optionally specifying the channel and range).
--1 bit_depth
+0 Audio(clip),[Intg(chn) or matrix],[range=a..b]||Image(img),Intg(chn),Intg(x),Intg(y),Intg(width),Intg(height)
+2 Extracts the data from an audio clip (optionally specifying the channel and range) or image object (by specifying a rectangular portion).
+-1 set_channel_data
 -2 channels
--3 duration
--4 samplerate
 channel_data(readwav("/some/file"))
 channel_data(readwav("/some/file"),matrix)
 channel_data(readwav("/some/file"),2)
 channel_data(readwav("/some/file"),matrix,range=1.0..2.5)
 
+# set_channel_data
+0 Audio(clip),Lst||Mtrx(data),[Intg(offset),Intg(chn)]||Image(img),Intg(chn),Intg(x),Intg(y),Mtrx(data)
+2 Returns a copy of an audio clip/image object with the sample/pixel data (in channel chn starting at offset/(x,y)) set to the values in data.
+-1 channel_data
+-2 channels
+ clip:=readwav("sample.wav");set_channel_data(clip,0$20000,40000,left)
+ logo:=image("xcas-logo.png");set_channel_data(logo,blue,0,0,(-logo)[red])
+
 # duration
-0 Lst(clip)
+0 Audio(clip)
 2 Returns the duration of an audio clip, in seconds.
 -1 bit_depth
 -2 channels
@@ -15847,7 +15853,7 @@ channel_data(readwav("/some/file"),matrix,range=1.0..2.5)
 duration(readwav("/some/file"))
 
 # samplerate
-0 Lst(clip)
+0 Audio(clip)
 2 Returns the sampling rate of an audio clip, in Hertz.
 -1 bit_depth
 -2 channels
@@ -15856,8 +15862,8 @@ duration(readwav("/some/file"))
 samplerate(readwav("/some/file"))
 
 # resample
-0 Lst(clip),[Intg(s),[Intg(q)]]
-2 Returns a copy of the input audio clip resampled to the rate s (by default 44100), optionally with quality level q (from 0 to 4, by default 2).
+0 Audio(clip),[Intg(s),[Intg(q)]]
+2 Returns a copy of an audio clip resampled to the rate s (by default 44100), optionally with quality level q (from 0 to 4, by default 2).
 -1 samplerate
 -2 playsnd
 -3 readwav
@@ -15866,7 +15872,7 @@ resample(readwav("/some/file"),48000)
 resample(readwav("/some/file"),48000,3)
 
 # plotwav
-0 Lst(clip),[range=a..b]
+0 Audio(clip),[range=a..b]
 2 Plots the waveform of an audio clip (optionally at the specified range).
 -1 plotspectrum
 plotwav(readwav("/some/file"))
@@ -15874,7 +15880,7 @@ plotwav(readwav("/some/file"),range=1.0..2.5) // range in seconds
 plotwav(readwav("/some/file"),range=[10000,22000]) // range in samples
 
 # plotspectrum
-0 Lst(clip),[range=a..b]
+0 Audio(clip),[range=a..b]
 2 Plots the power spectrum of an audio clip (on the specified frequency range).
 -1 plotwav
 plotspectrum(readwav("/some/file"))

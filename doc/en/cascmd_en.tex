@@ -44545,96 +44545,10 @@ fclose(f)
 \end{xcasinput}
 This returns \texttt{1} on success and \texttt{0} on failure.
 
-
-\subsection{Using strings as names%: \texttt{make\_symbol}
+\subsection{Converting strings to \giac{} expressions%: \texttt{expr}
 }
 
-Variable and function names are symbols, namely sequences of
-characters, which are different from strings.  For example, you can
-have a variable named \texttt{abc}, but not \texttt{"abc"}.
-The \texttt{make\_symbol}\index{make\_symbol@\texttt{make\_symbol}}
-command turns a string into a symbol; for example
-\texttt{make\_symbol("abc")} is the symbol \texttt{abc}.
-
-\subsubsection*{Examples}
-\begin{xcasinput}
-make_symbol("abc"):=3
-\end{xcasinput}
-then:
-\begin{xcasinput}
-abc
-\end{xcasinput}
-\begin{xcasoutput}
-  3
-\end{xcasoutput}
-The variable \texttt{abc} will have the value \texttt{3}.
-Similarly for functions:
-\begin{xcasinput}
-make_symbol("sin")(pi/4)
-\end{xcasinput}
-\begin{xcasoutput}
-  \frac{\sqrt{2}}{2}
-\end{xcasoutput}
-which is equal to $\sin\frac{\pi}{4}$.
-
-\subsection{Creating array of symbols%: \texttt{symbol\_array}
-}
-
-The \texttt{symbol\_array}\index{symbol\_array@\texttt{symbol\_array}}
-command is used for creating multidimensional arrays of symbols.
-\begin{itemize}
-\item
-  \texttt{symbol\_array} takes two arguments:
-  \begin{itemize}
-  \item \textit{str}, a template string for symbol names.
-  \item $\textit{dim}=n_1,n_2,\dots,n_m$, a sequence of $m$ positive integers.
-  \end{itemize}
-\item
-  \texttt{symbol\_array(}$\textit{str},\textit{dim}$\texttt{)}
-  returns an array with $m$ dimensions $n_1,n_2,\dots,n_m$ with indexed symbols as elements.
-  Symbols are created from the template string \textit{str} by appending indices. Template string may contain
-  $m$ instances of the character \texttt{'\%'}, $k$th of which serves as the placeholder for the $k$th
-  dimension index. If placeholders are omitted, indices are simply appended in case $m=1$,
-  while in case $m>1$ they are separated from \textit{str} and each other by the underscore (\texttt{'\_'}).
-\item
-  The indices are in accordance with the current \xcas{} mode (they are either 0- or 1-based).
-\end{itemize}
-
-\subsubsection*{Examples}
-\begin{xcasinput}
-symbol_array("x",5)
-\end{xcasinput}
-\begin{xcasoutput}
-  \left[x_{0},x_{1},x_{2},x_{3},x_{4}\right]
-\end{xcasoutput}
-\begin{xcasinput}
-symbol_array("a",2,3)
-\end{xcasinput}
-\begin{xcasoutput}
-  \begin{bmatrix}a_{\mathrm{0,0}}&a_{\mathrm{0,1}}&a_{\mathrm{0,2}}\\a_{1,0}&a_{1,1}&a_{1,2}\end{bmatrix}
-\end{xcasoutput}
-\begin{xcasinput}
-maple_mode(1):; symbol_array("a%%",2,3)
-\end{xcasinput}
-\begin{xcasoutput}
-  [[a11,a12,a13],[a21,a22,a23]]
-\end{xcasoutput}
-\begin{xcasinput}
-maple_mode(0):; s:=symbol_array("a%b%c%",2,3,4)
-\end{xcasinput}
-\begin{xcasoutput}
-  \left[\begin{bmatrix}\mathrm{a0b0c0}&\mathrm{a0b0c1}&\mathrm{a0b0c2}&\mathrm{a0b0c3}\\\mathrm{a0b1c0}&\mathrm{a0b1c1}&\mathrm{a0b1c2}&\mathrm{a0b1c3}\\\mathrm{a0b2c0}&\mathrm{a0b2c1}&\mathrm{a0b2c2}&\mathrm{a0b2c3}\end{bmatrix},\begin{bmatrix}\mathrm{a1b0c0}&\mathrm{a1b0c1}&\mathrm{a1b0c2}&\mathrm{a1b0c3}\\\mathrm{a1b1c0}&\mathrm{a1b1c1}&\mathrm{a1b1c2}&\mathrm{a1b1c3}\\\mathrm{a1b2c0}&\mathrm{a1b2c1}&\mathrm{a1b2c2}&\mathrm{a1b2c3}\end{bmatrix}\right]
-\end{xcasoutput}
-\begin{xcasinput}
-s[1][2][3]
-\end{xcasinput}
-\begin{xcasoutput}
-  \mathrm{a1b2c3}
-\end{xcasoutput}
-
-\subsection{Using strings as commands%: \texttt{expr}
-}
-
+\paragraph{Using strings as commands.}
 The \texttt{expr}\index{expr@\texttt{expr}}
 command lets you use a string as a command.
 \begin{itemize}
@@ -44661,7 +44575,7 @@ expr(a)
 \end{xcasoutput}
 which is the same thing as entering \texttt{ifactor(54)} directly.
 
-\paragraph{String to number conversion.}
+\paragraph{Converting strings to numbers.}
 You can also use \texttt{expr} to convert a string to a number. If a
 string is simply a number enclosed by quotation marks, then
 \texttt{expr} will return the number.
@@ -44720,7 +44634,7 @@ expr("0x2a3f")
 \begin{xcasoutput}
   10815
 \end{xcasoutput}
-since \texttt{2a3f} base 16 equals 10815 base 10.
+since 2A3F base 16 equals 10815 base 10.
 
 A string starting with \texttt{0b} followed by digits 0 and 1 will
 be read as a binary integer:
@@ -44732,7 +44646,90 @@ expr("0b1101")
 \end{xcasoutput}
 since 1101 base 2 equals 13 base 10.
 
-\subsection{Converting an expression to a string%: \texttt{string}
+\subsection{Creating symbols from strings}
+
+Variable and function names are symbols, namely sequences of
+characters, which are different from strings.  For example, you can
+have a variable named \texttt{abc}, but not \texttt{"abc"}.
+The \texttt{make\_symbol}\index{make\_symbol@\texttt{make\_symbol}}
+command turns a string into a symbol; for example
+\texttt{make\_symbol("abc")} is the symbol \texttt{abc}.
+
+\subsubsection*{Examples}
+\begin{xcasinput}
+make_symbol("abc"):=3
+\end{xcasinput}
+then:
+\begin{xcasinput}
+abc
+\end{xcasinput}
+\begin{xcasoutput}
+  3
+\end{xcasoutput}
+The variable \texttt{abc} will have the value \texttt{3}.
+Similarly for functions:
+\begin{xcasinput}
+make_symbol("sin")(pi/4)
+\end{xcasinput}
+\begin{xcasoutput}
+  \frac{\sqrt{2}}{2}
+\end{xcasoutput}
+which is equal to $\sin\frac{\pi}{4}$.
+
+\paragraph{Creating arrays of symbols.}
+The \texttt{symbol\_array}\index{symbol\_array@\texttt{symbol\_array}}
+command is used for creating multidimensional arrays of symbols.
+\begin{itemize}
+\item
+  \texttt{symbol\_array} takes two arguments:
+  \begin{itemize}
+  \item \textit{str}, a template string for symbol names.
+  \item $\textit{dim}=n_1,n_2,\dots,n_m$, a sequence of $m$ positive integers.
+  \end{itemize}
+\item
+  \texttt{symbol\_array(}$\textit{str},\textit{dim}$\texttt{)}
+  returns an array with $m$ dimensions $n_1,n_2,\dots,n_m$ with indexed symbols as elements.
+  Symbols are created from the template string \textit{str} by appending indices. Template string may contain
+  $m$ instances of the character \texttt{'\%'}, $k$th of which serves as the placeholder for the $k$th
+  dimension index. If placeholders are omitted, indices are simply appended in case $m=1$,
+  while in case $m>1$ they are separated from \textit{str} and each other by the underscore (\texttt{'\_'}).
+\item
+  The indices are in accordance with the current syntax mode (they are either 0- or 1-based).
+\end{itemize}
+
+\subsubsection*{Examples}
+\begin{xcasinput}
+symbol_array("x",5)
+\end{xcasinput}
+\begin{xcasoutput}
+  \left[x_{0},x_{1},x_{2},x_{3},x_{4}\right]
+\end{xcasoutput}
+\begin{xcasinput}
+symbol_array("a",2,3)
+\end{xcasinput}
+\begin{xcasoutput}
+  \begin{bmatrix}a_{\mathrm{0,0}}&a_{\mathrm{0,1}}&a_{\mathrm{0,2}}\\a_{1,0}&a_{1,1}&a_{1,2}\end{bmatrix}
+\end{xcasoutput}
+\begin{xcasinput}
+maple_mode(1):; symbol_array("a%%",2,3)
+\end{xcasinput}
+\begin{xcasoutput}
+  [[a11,a12,a13],[a21,a22,a23]]
+\end{xcasoutput}
+\begin{xcasinput}
+maple_mode(0):; s:=symbol_array("a%b%c%",2,3,4)
+\end{xcasinput}
+\begin{xcasoutput}
+  \left[\begin{bmatrix}\mathrm{a0b0c0}&\mathrm{a0b0c1}&\mathrm{a0b0c2}&\mathrm{a0b0c3}\\\mathrm{a0b1c0}&\mathrm{a0b1c1}&\mathrm{a0b1c2}&\mathrm{a0b1c3}\\\mathrm{a0b2c0}&\mathrm{a0b2c1}&\mathrm{a0b2c2}&\mathrm{a0b2c3}\end{bmatrix},\begin{bmatrix}\mathrm{a1b0c0}&\mathrm{a1b0c1}&\mathrm{a1b0c2}&\mathrm{a1b0c3}\\\mathrm{a1b1c0}&\mathrm{a1b1c1}&\mathrm{a1b1c2}&\mathrm{a1b1c3}\\\mathrm{a1b2c0}&\mathrm{a1b2c1}&\mathrm{a1b2c2}&\mathrm{a1b2c3}\end{bmatrix}\right]
+\end{xcasoutput}
+\begin{xcasinput}
+s[1][2][3]
+\end{xcasinput}
+\begin{xcasoutput}
+  \mathrm{a1b2c3}
+\end{xcasoutput}
+
+\subsection{Converting \giac{} expressions to strings%: \texttt{string}
 }
 
 The \texttt{string}\index{string@\texttt{string}}
@@ -44744,21 +44741,17 @@ command converts an expression to a string.
   \textit{expr} then converts it to a string.
 \end{itemize}
 
-\subsubsection*{Example}
+\subsubsection*{Examples}
 \begin{xcasinput}
 string(ifactor(6))
 \end{xcasinput}
 \begin{xcasoutput}
   \text{``2*3''}
 \end{xcasoutput}
-This is the same thing as adding the empty string to the expression:
-\begin{xcasinput}
-ifactor(6)+""
-\end{xcasinput}
+This is the same thing as entering \texttt{ifactor(6)+""}, i.e.~adding the empty string to the expression.
 
-\paragraph{Converting expressions without evaluation.}
 If you want to convert an unevaluated expression to a string, you can
-quote the expression (see \secref{ssec:qt}). For example:
+quote the expression (see \secref{ssec:qt}):
 \begin{xcasinput}
 string(quote(ifactor(6)))
 \end{xcasinput}
@@ -44766,11 +44759,11 @@ string(quote(ifactor(6)))
   \text{``ifactor(6)''}
 \end{xcasoutput}
 
-\subsection{Converting a real number into a string%: \texttt{format}
+\subsection{Converting real numbers to strings%: \texttt{format}
 }
 
 The \texttt{format}\index{format@\texttt{format}}
-command converts real numbers into strings.
+command converts a real number to a string.
 \begin{itemize}
 \item \texttt{format} takes two arguments:
   \begin{itemize}
@@ -53270,7 +53263,8 @@ the variable \texttt{a} will contain a list.
 
 Starting from \xcas{} version~1.9.0, image objects are viewed by using
 the \texttt{display}\index{display@\texttt{display}}
-command.
+command. The legacy \xcas{} image structure can be visualized by exporting
+it to a file by using the \texttt{writergb} command (see~\secref{ssec:writergb}).
 \begin{itemize}
   \item \texttt{display} takes one mandatory arguments and one optional argument:
   \begin{itemize}
@@ -53319,7 +53313,7 @@ legend(285+125i,"Here is Africa",display=white)
   \includeimage[0.6]{xcas-mymap.png}
 \end{xcasimage}
 
-\subsubsection{Viewing images as textures}
+\paragraph{Viewing images as textures.}
 \xcas{} can also display image files in rectangles in
 2D or on surfaces in 3D with the
 \texttt{gl\_texture}\index{gl\_texture@\textit{gl\_texture}}
@@ -53342,7 +53336,7 @@ sphere([0,0,0],1,gl_material=[gl_texture,"Exemples/demo/terre.jpg"])
 \end{xcasimage}
 
 \subsection{Exporting images%: \texttt{writergb}
-}
+  \label{ssec:writergb}}
 
 The \texttt{writergb}\index{writergb@\texttt{writergb}}
 command writes images to PNG files. The
@@ -53368,10 +53362,10 @@ full \xcas{} legacy image structure
 \subsubsection*{Examples}
 
 \paragraph*{With image objects.}
-Assuming that the \texttt{myimg} variable contains an image object created with the
+Assuming that the \texttt{img} variable contains an image object created with the
 \texttt{image} command (see~\secref{ssec:creating-images}), input:
 \begin{xcasinput}
-writergb("myimage.png",myimg)
+writergb("image.png",img)
 \end{xcasinput}
 \begin{xcasoutput}
   1
@@ -53417,7 +53411,7 @@ writergb("image2.png",[[4,30,30],makemat(0,30,30),makemat(0,30,30),
   \includeimage{xcas-image2.png}
 \end{xcasimage}
 
-\subsubsection{Writing images with simplified image description}
+\paragraph{Writing images with simplified image description.}
 The simplified version of the \xcas{} image description does not
 involve stating the number of channels, the size of the image, or the
 transparency.  There is a full color version of this simplified form
@@ -53462,17 +53456,17 @@ writergb("image4.png",[[65,125],[185,200]])
 \subsection{New images from existing ones}
 
 The \texttt{()}\index{()@\texttt{()}} operator can be used to create image objects
-from an existing one. With an image object \textit{img}:
+from an existing one. With an image object \texttt{img}:
 \begin{itemize}
-  \item $\textit{img}\texttt{(grey)}$ returns a copy of \textit{img} converted to grayscale.
-  \item $\textit{img}\texttt{(}\alpha\texttt{)}$, where $\alpha$ is
-  a positive real number, returns a copy \textit{img} with size scaled to $\alpha w\times \alpha h$.
-  \item $\textit{img}\texttt{(}w,h\texttt{)}$ returns a copy of \textit{img} resized to $w\times h$
+  \item $\texttt{img}\texttt{(grey)}$ returns a copy of \texttt{img} converted to grayscale.
+  \item $\texttt{img}\texttt{(}\alpha\texttt{)}$, where $\alpha$ is
+  a positive real number, returns a copy \texttt{img} with size scaled to $\alpha w\times \alpha h$.
+  \item $\texttt{img}\texttt{(}w,h\texttt{)}$ returns a copy of \texttt{img} resized to $w\times h$
   (possibly changing the aspect ratio).
-  \item $\textit{img}\texttt{(}x,y,w,h\texttt{)}$ returns a new image corresponding to the portion
-  with dimensions $w\times h$ and the upper left corner at $(x,y)$.
+  \item $\texttt{img}\texttt{(}x,y,w,h\texttt{)}$ returns a new image corresponding to the portion
+  of \texttt{img} with dimensions $w\times h$ and the upper left corner at $(x,y)$.
 \end{itemize}
-Note that \textit{img} itself is not changed.
+Note that \texttt{img} is unaffected by the above operations.
 
 \subsubsection*{Examples}
 Assume that the image \texttt{terre.jpg} (see~\secref{ssec:viewing-images}) is loaded

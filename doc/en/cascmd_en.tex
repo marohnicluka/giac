@@ -4,16 +4,21 @@
 \documentclass[a4paper,11pt,DIV=16,oneside]{scrbook}
 \usepackage{xcolor}
 \usepackage{tocloft}
+\usepackage{helvet}
 \renewcommand\cftsubsecnumwidth{1.3cm}
 \renewcommand\cftsubsubsecindent{3.3cm}
 \setcounter{tocdepth}{3}
 \setlength{\fboxrule}{1.5pt}
 % END LATEX
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage{microtype}
 \usepackage{booktabs}
 \usepackage{upquote}
 \usepackage{fancyvrb}
+\usepackage{latexsym}
+\usepackage{relsize}
 % \usepackage[left=0.75in,right=0.75in,top=1in,bottom=0.75in]{geometry}
 % \textwidth 11,8 cm
 % \textheight 17 cm
@@ -29,9 +34,7 @@
 \usepackage{amsthm}
 \usepackage{stmaryrd}
 \usepackage{makeidx}
-% \usepackage{stix}
 \usepackage{hevea}
-% \usepackage{mathptmx}
 \newtheorem{theorem}{Theorem}
 % HEVEA \newcommand{\leftsetbracket}{\@print@u{X27E6}}
 % HEVEA \newcommand{\rightsetbracket}{\@print@u{X27E7}}
@@ -70,10 +73,6 @@
 \renewcommand{\tt}{}
 \renewcommand{\sl}{}
 % END LATEX
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage{latexsym}
-\usepackage{relsize}
 \allowdisplaybreaks
 % Other software
 \newcommand{\CoCoA}{\textsc{CoCoA}}
@@ -84,6 +83,7 @@
 \newcommand{\Voyage}{\textsc{Voyage}}
 \newcommand{\HP}{\textsc{HP}}
 \newcommand{\Python}{\textsc{Python}}
+\newcommand{\Emacs}{\textsc{Emacs}}
 % BEGIN LATEX
 \newcommand{\TeXmacs}{T\kern-.1667em\lower.5ex\hbox{E}\kern-.125emX\kern-.1em\lower.5ex\hbox{\textsc{m\kern-.05ema\kern-.125emc\kern-.05ems}}}
 % END LATEX
@@ -142,53 +142,8 @@
 % HEVEA \newenvironment{xcasoutput}{\begin{align*}\color{xcasoutputcolor}}{\end{align*}}
 % HEVEA \newcommand{\xcaskey}[1]{{\ttfamily\bfseries\color{xcasoutputcolor}#1}}
 \lstdefinelanguage{Xcas}{
-  sensitive=true,
-  morekeywords={
-    function,
-    endfunction,
-    local,
-    return,
-    begin,
-    end,
-    if,
-    fi,
-    then,
-    else,
-    elif,
-    switch,
-    case,
-    default,
-    for,
-    from,
-    to,
-    step,
-    do,
-    od,
-    end_for,
-    in,
-    repeat,
-    until,
-    break,
-    continue,
-    while,
-    goto,
-    label,
-    try,
-    catch,
-    throw,
-    proc,
-    si,
-    alors,
-    sinon,
-    fsi,
-    repeter,
-    jusqua,
-    tantque,
-    ftantque,
-    pour,
-    fpour,
-    jusque
-  },
+  sensitive=true, 
+  morekeywords={function,endfunction,local,return,begin,end,if,fi,then,else,elif,switch,case,default,for,from,to,step,do,od,end_for,in,repeat,until,break,continue,while,goto,label,try,catch,throw,proc,si,alors,sinon,fsi,repeter,jusqua,tantque,ftantque,pour,fpour,jusque},
   keywordstyle=\color{xcasoutputcolor}\ttfamily\bfseries,
   % ndkeywords={int, \char{}  },
   % ndkeywordstyle=\color{blue}\bfseries,
@@ -798,7 +753,7 @@ you will get the help index.  You can also get the help index with the
 menu item \texttt{Help\menusep{}Index}.
 
 \begin{figure}\centering
-  \includeimage[0.33]{xcas-help-index-plotfunc.png}
+  \includeimage[0.4142]{xcas-help-index-plotfunc.png}
   \caption{\label{fig:help-index}Help index in \xcas{}}
 \end{figure}
 The help index, shown in Figure~\ref{fig:help-index},
@@ -2679,8 +2634,8 @@ The configuration screen can be reopened with the
 \subsection{Spreadsheet window}
 
 \begin{figure}\centering
-  \includeimage[0.4142]{xcas-spreadsheet.png}
-  \caption{\label{fig:spreadsheet}Spreadsheet entry in \xcas{}}
+  \includegraphics[width=\linewidth]{xcas-spreadsheet.png}
+  \caption{\label{fig:spreadsheet}A spreadsheet in \xcas{}}
 \end{figure}
 When you open a spreadsheet, the input line will become the
 spreadsheet, like the one shown in Figure~\ref{fig:spreadsheet}.
@@ -9222,7 +9177,7 @@ dayofweek(15,10,1582)
 \end{xcasoutput}
 This indicates that 15 October 1582 was on a Friday.
 
-
+\paragraph*{Historical note.}
 The Gregorian calendar, the calendar used by most of the world, was
 introduced on 15 October 1582.  Before that, the Julian calendar was
 used, which had a leap year every four years and so used years with an
@@ -9231,11 +9186,9 @@ about 365.242 days.  To deal with this, the Gregorian calendar was
 introduced, where a leap year is a year which is divisible by 4,
 but not divisible by 100 unless it is also divisible by 400.
 This gives an average length of year that is accurate to within 1 day
-every 3000 years.
-
-Many countries switched from the Julian calendar to the Gregorian
-calendar after 4 October 1582 in the Julian calendar, and the next day
-was 15 October 1582.
+every 3000 years. Many countries switched from the Julian calendar to the
+Gregorian calendar after 4 October 1582 in the Julian calendar, and the
+next day was 15 October 1582.
 
 
 \section{Rational numbers}
@@ -9936,8 +9889,8 @@ Since $\frac{ \mathrm{e}^{x}}{x}=\frac{1}{x}+1+\frac{x}{2!} +
 \frac{x^2}{3!}+\cdots$, the Ei function can be extended to
 $\mathbb{C}\setminus\{0\}$ (with a branch cut on the positive real axis) by
 \[ \textrm{Ei}(z)=\ln(z)+\gamma+x+\frac{x^2}{2\cdot 2!} +
-  \frac{x^3}{3\cdot 3!}+\cdots\] where $\gamma=0.57721566490\dots$ is
-Euler's constant.
+  \frac{x^3}{3\cdot 3!}+\cdots\] where $\gamma=0.57721566490\dots$ is the
+Euler-Mascheroni constant.
 
 The \texttt{Ei}\index{Ei@\texttt{Ei}} command takes one or two arguments.
 
@@ -9987,18 +9940,15 @@ Another type of exponential integral is
   E_{1}(x)=\int_{x}^{+\infty}\frac{ \mathrm{e}^{-t}}{t}\,\mathrm{d}t
   =\int_{1}^{+\infty}\frac{ \mathrm{e}^{-tx}}{t}\,\mathrm{d}t
 \]
-which satisfies
-\[
-  E_{1}(x)=-\textrm{Ei}(-x).
-\]
+which satisfies $E_{1}(x)=-\textrm{Ei}(-x)$.
 This can be generalized to
 \[
   E_{n}(x)=\int_{1}^{+\infty}\frac{ \mathrm{e}^{-ntx}}{t}\,\mathrm{d}t.
 \]
 These functions satisfy
 \begin{align*}
-  E_{1}(x) &=-\textrm{Ei}(x)\\
-  E_{2}(x) &=\mathrm{e}^{-x}+ x\,\textrm{Ei}(-x)=\mathrm{e}^{-x}-x\,E_{1}(x)
+  E_{1}(x) &=-\textrm{Ei}(x),\\
+  E_{2}(x) &=\mathrm{e}^{-x}+ x\,\textrm{Ei}(-x)=\mathrm{e}^{-x}-x\,E_{1}(x),
 \end{align*}
 and, for  $n \ge 2$,
 \[
@@ -10060,7 +10010,7 @@ The cosine integral function is defined by
   \textrm{Ci}(x)=\int_{+\infty}^{x} \frac{\cos(t)}{t}\,\mathrm{d}t
                 =\ln(t)+\gamma+\int_{t=0}^{x} \frac{\cos(t)-1}{t}\,\mathrm{d}t.
 \]
-It is shown that $\textrm{Ci}(0)=-\infty, \textrm{Ci}(-\infty)=\mathrm{i}\pi$ and
+It can be shown that $\textrm{Ci}(0)=-\infty, \textrm{Ci}(-\infty)=\mathrm{i}\pi$ and
 $\textrm{Ci}(+\infty)=0$.
 
 The \texttt{Ci}\index{Ci@\texttt{Ci}} command computes the cosine integral function.
@@ -10212,9 +10162,7 @@ The error function erf is defined by:
   \operatorname{erf}(x)=\frac{2}{\sqrt{\pi}}\int_0^{x}\mathrm{e}^{-t^2}\mathrm{d}t,
 \]
 where the constant $\frac{2}{\sqrt{\pi}}$ is chosen so that
-\[
-  \operatorname{erf}(+\infty)=1, \quad \operatorname{erf}(-\infty)=-1
-\]
+$\operatorname{erf}(+\infty)=1$ and $\operatorname{erf}(-\infty)=-1$,
 since
 \[
   \int_0^{+\infty}\mathrm{e}^{-t^2}\mathrm{d}t=\frac{\sqrt{\pi}}{2}.
@@ -10327,15 +10275,9 @@ The Gamma function is defined by
   \Gamma(x)=\int_0^{+\infty}\mathrm{e}^{-t}t^{x-1}\mathrm{d}t, \mbox{ if } x>0.
 \]
 If $x$ is a positive integer, $\Gamma$ is computed by applying the
-recurrence:
-\[
-  \Gamma(x+1)=x\,\Gamma(x), \quad \Gamma(1)=1.
-\]
-Hence:
-\[
-  \Gamma(n+1)=n!
-\]
-and the Gamma function is used to generalize the factorial (see
+recurrence $\Gamma(x+1)=x\,\Gamma(x)$ with $\Gamma(1)=1$.
+Hence $\Gamma(n+1)=n!$
+which is used to generalize the factorial (see
 \secref{ssec:factorial}).
 
 The \texttt{Gamma}\index{Gamma@\texttt{Gamma}} command
@@ -10446,15 +10388,11 @@ since $\Gamma(4)=6$ and $2.11660866731/6=0.352768111218$.
   \label{ssec:beta}}
 
 The $\beta$ function is defined by \[ \beta(x,y)=\int_0^1 t^{x-1}
-  (1-t)^{y-1}=\frac{\Gamma(x)\,\Gamma(y)}{\Gamma(x+y)} \] This is
+  (1-t)^{y-1}=\frac{\Gamma(x)\,\Gamma(y)}{\Gamma(x+y)}. \] This is
 defined for $x$ and $y$ positive reals (to ensure the convergence of
 the integral) and by extension for $x$ and $y$ if they are not
 negative integers.
-
-Notable values:
-\[
-  \beta(1,1)=1, \quad \beta(n,1)=\frac{1}{n}, \quad \beta(n,2)=\frac{1}{n(n+1)}.
-\]
+Notably, $\beta(1,1)=1$, $\beta(n,1)=\frac{1}{n}$ and $\beta(n,2)=\frac{1}{n(n+1)}$.
 
 The \texttt{Beta}\index{Beta@\texttt{Beta}} command computes the $\beta$ function.
 \begin{itemize}
@@ -10487,10 +10425,9 @@ Beta(5.1,2.2)
 }
 
 The DiGamma function is the derivative of the logarithm of the
-$\Gamma$ function (see \secref{ssec:gamma}), \[ \psi(z)=
-  \frac{\mathrm{d}}{\mathrm{d}z}\ln(\Gamma(z))=\frac{\Gamma'(z)}{\Gamma(z)} \] This
-function is used to evaluated sums of rational functions having poles
-at integers.
+$\Gamma$ function (see \secref{ssec:gamma}),
+\[ \psi(z)=\frac{\mathrm{d}}{\mathrm{d}z}\ln(\Gamma(z))=\frac{\Gamma'(z)}{\Gamma(z)}. \]
+This function is used to evaluated sums of rational functions having poles at integers.
 
 The \texttt{Psi}\index{Psi@\texttt{Psi}} function computes
 the DiGamma function and its derivatives.
@@ -10564,24 +10501,21 @@ Zeta(4)
 }
 
 The Airy functions of the first and second kind are defined by
-\begin{align*}
-  \operatorname{Ai}(x) &=\frac{1}{\pi} \int_0^{+\infty} \cos\left(t^3/3+x t\right)\mathrm{d}t \\
-  \operatorname{Bi}(x) &=\frac{1}{\pi} \int_0^{+\infty}\left(\mathrm{e}^{- t^3/3}+\sin\left(t^3/3+x t\right)\right)\mathrm{d}t
-\end{align*}
+\[
+  \operatorname{Ai}(x)=\frac{1}{\pi} \int_0^{+\infty} \cos\left(t^3/3+x t\right)\mathrm{d}t,\quad
+  \operatorname{Bi}(x)=\frac{1}{\pi} \int_0^{+\infty}\left(\mathrm{e}^{- t^3/3}+\sin\left(t^3/3+x t\right)\right)\mathrm{d}t.
+\]
 Let $f$ and $g$ be two entire series solutions of
 $ w''-x w=0 $.
 Then
-\begin{align*}
-  \operatorname{Ai}(x)&=\operatorname{Ai}(0) f(x)+ \operatorname{Ai}' (0) g(x) \\
-  \operatorname{Bi}(x)&=\sqrt{3}(\operatorname{Ai}(0) f(x) -\operatorname{Ai}' (0) g(x))
-\end{align*}
-more precisely:
-\begin{align*}
-  f(x)&=\sum_{k=0}^\infty 3^k\left (\frac{\Gamma(k+\frac{1}{3})}{\Gamma(\frac{1}{3})}\right) \frac{x^{3k}}{(3k)!}\\
-  g(x)&=\sum_{k=0}^\infty 3^k\left
+\[
+  \operatorname{Ai}(x)=\operatorname{Ai}(0) f(x)+ \operatorname{Ai}' (0) g(x),\quad
+  \operatorname{Bi}(x)=\sqrt{3}(\operatorname{Ai}(0) f(x) -\operatorname{Ai}' (0) g(x)),
+\]
+where 
+$f(x)=\sum_{k=0}^\infty 3^k\left (\frac{\Gamma(k+\frac{1}{3})}{\Gamma(\frac{1}{3})}\right) \frac{x^{3k}}{(3k)!}$ and $g(x)=\sum_{k=0}^\infty 3^k\left
         (\frac{\Gamma(k+\frac{2}{3})}{\Gamma(\frac{2}{3})}\right)
-        \frac{x^{3k+1}}{(3k+1)!}
-\end{align*}
+        \frac{x^{3k+1}}{(3k+1)!}$.
 
 The \texttt{Airy\_Ai}\index{Airy\_Ai@\texttt{Airy\_Ai}} and
 \texttt{Airy\_Bi}\index{Airy\_Bi@\texttt{Airy\_Bi}} commands
@@ -12615,17 +12549,17 @@ g(2)
 \begin{xcasoutput}
   y\mapsto 2 \sin y
 \end{xcasoutput}
-\begin{xcasinput}
-g(2)(1)
-\end{xcasinput}
-\begin{xcasoutput}
-  2 \sin \left(1\right)
-\end{xcasoutput}
+% \begin{xcasinput}
+% g(2)(1)
+% \end{xcasinput}
+% \begin{xcasoutput}
+%   2 \sin \left(1\right)
+% \end{xcasoutput}
 
 For another example, suppose that you want to define the function $h:
 (x,y) \rightarrow [x\cos(y),x\sin(y)]$ and then you want to define
 the family of functions $k(t)$ having $t$ as parameter such that
-$k(t)(y):=h(t,y)$. To define the function $h(x,y)$
+$k(t)(y):=h(t,y)$. To define the function $h(x,y)$:
 \begin{xcasinput}
 h(x,y):=(x*cos(y),x*sin(y))
 \end{xcasinput}
@@ -12640,53 +12574,48 @@ k(2)
 \begin{xcasoutput}
   x\mapsto \left(x \cos \left(2\right),x \sin \left(2\right)\right)
 \end{xcasoutput}
-\begin{xcasinput}
-k(2)(1)
-\end{xcasinput}
-\begin{xcasoutput}
-  \cos \left(2\right),\sin \left(2\right)
-\end{xcasoutput}
+% \begin{xcasinput}
+% k(2)(1)
+% \end{xcasinput}
+% \begin{xcasoutput}
+%   \cos \left(2\right),\sin \left(2\right)
+% \end{xcasoutput}
 
 \subsection{Composing functions%: \texttt{@}
 }
 
-With \xcas{}, the composition of functions is done with the
+In \xcas{}, the composition of functions is done with the
 infixed operator \texttt{@}\index{\@@\texttt{\@}} (see \secref{ssec:xcasops}).
-
-\subsubsection*{Examples}
+For example:
 \begin{xcasinput}
 (sq@sin+id)(x)
 \end{xcasinput}
 \begin{xcasoutput}
   \sin^{2}(x)+x
 \end{xcasoutput}
-\begin{xcasinput}
-(sin@sin)(pi/2)
-\end{xcasinput}
-\begin{xcasoutput}
-  \sin \left(1\right)
-\end{xcasoutput}
+% \begin{xcasinput}
+% (sin@sin)(pi/2)
+% \end{xcasinput}
+% \begin{xcasoutput}
+%   \sin \left(1\right)
+% \end{xcasoutput}
 
-\subsection{Repeated function composition%: \texttt{@@}
-}
-
-With \xcas{}, the repeated composition of a function with itself
-$n \in {\mathbb N}$ times is done with the infixed operator
+The repeated composition of a function with itself
+several times is done with the infixed operator
 \texttt{@@}\index{\@\@@\texttt{\@\@}} (see \secref{ssec:xcasops}).
-
-\subsubsection*{Examples}
+For example:
 \begin{xcasinput}
 (sin@@3)(x)
 \end{xcasinput}
 \begin{xcasoutput}
   \sin \left(\sin \left(\sin x\right)\right)
 \end{xcasoutput}
-\begin{xcasinput}
-(sin@@2)(pi/2)
-\end{xcasinput}
-\begin{xcasoutput}
-  \sin \left(1\right)
-\end{xcasoutput}
+% \begin{xcasinput}
+% (sin@@2)(pi/2)
+% \end{xcasinput}
+% \begin{xcasoutput}
+%   \sin \left(1\right)
+% \end{xcasoutput}
 
 \subsection{Defining a function with history%: \texttt{as\_function\_of}
 }
@@ -20898,8 +20827,8 @@ and so $\sum_{k} F(n,k)=1$ for all $n$, implying~\eqref{eq:wilfz}.
 
 \section{Permutations}
 
-A \emph{permutation} $p$ of size $n$ is a bijection from $[0..n-1]$ to
-$[0..n-1]$ and is represented by the list:
+A \emph{permutation} $p$ of size $n$ is a bijection from $\{0,\dots,n-1\}$ to
+itself and is represented by the list:
 \[[p(0),p(1),p(2),\dots,p(n-1)].\]
 For example, the permutation $p$ represented by $[1,3,2,0]$ is the
 function from $[0,1,2,3]$ to $[0,1,2,3]$ defined by $p(0)=1$,
@@ -24243,10 +24172,7 @@ convex(x^2*diff(y(x),x)^2+y^2,y(x))
 Therefore, $y$ minimizes $F$ on $[a,b]$.
 
 Find the function $y$ in
-\[
-  \left\{y\in C^1\left[\frac{1}{2},1\right]:y\left(\frac{1}{2}\right)
-    =-\frac{\sqrt{3}}{2}, y(1)=0\right\}
-\]
+$\left\{y\in C^1\left[\frac{1}{2},1\right]:y\left(\frac{1}{2}\right)=-\frac{\sqrt{3}}{2}, y(1)=0\right\}$
 which minimizes the functional
 \[
   F(y)=\int_{1/2}^1\frac{\sqrt{1+y\Prime(x)^2}}{x}\,\mathrm{d}x.
@@ -24280,14 +24206,15 @@ y0:=normal(subs(y0,c,v[0])
 \begin{xcasoutput}
   -\sqrt{-x^{2}+1}
 \end{xcasoutput}
-To prove that $y_0(x)=-\sqrt{1-x^2}$ is indeed a minimizer for $F$,
-you need to show that the integrand in $F(y)$ is convex.
+If the integrand in $F(y)$ is convex, then $y_0(x)=-\sqrt{1-x^2}$
+is a minimizer for $F$. Indeed:
 \begin{xcasinput}
 convex(sqrt(1+y'^2)/x,y(x))
 \end{xcasinput}
 \begin{xcasoutput}
   \left[x\geq 0\right]
 \end{xcasoutput}
+
 You can similarly find the minimizer for
 \[
   F(y)=\int_0^{\pi}\left(2\,\sin(x)\,y(x)+y\Prime(x)^2\right)\,\mathrm{d}x
@@ -24338,7 +24265,7 @@ convex(y'^4-4y,[x,y])
   \mathrm{true}
 \end{xcasoutput}
 Hence the minimizer is
-\[ y_0(x)=-\frac{3}{4}\,(1.52832425067-x)^{4/3}+2.32032831141,\quad 0\leq x\leq 1. \]
+$y_0(x)=-\frac{3}{4}\,(1.52832425067-x)^{4/3}+2.32032831141$, $0\leq x\leq 1$.
 
 Find Euler-Lagrange equations for a bivariate functional $F$:
 \begin{xcasinput}
@@ -24367,26 +24294,25 @@ you can first find the Euler-Lagrange equations for the Lagrangian
 You can simplify this somewhat by assuming that you are using units
 where $2g=1$.
 \begin{xcasinput}
-assume(y>=0):;
-euler_lagrange(sqrt((1+y'^2)/y),x,y)
+assume(y>=0):; euler_lagrange(sqrt((1+y'^2)/y),x,y)
 \end{xcasinput}
 \begin{xcasoutput}
   \left[-\frac1{\sqrt{\left(\left(\frac{\mathrm{d}}{\mathrm{d}x}y\left(x\right)\right)^{2}+1\right)
         y\left(x\right)}}=K_{2},\frac{\mathrm{d}^{2}}{\mathrm{d}x^{2}}y\left(x\right)=\frac{-\left(\frac{\mathrm{d}}{\mathrm{d}x}y\left(x\right)\right)^{2}-1}{2
       y\left(x\right)}\right]
 \end{xcasoutput}
-It is easier to solve the first equation for $y$, since it is first-order and separable.
-
-The first equation can be rewritten as
+It is easier to solve the first equation for $y$ which can be rewritten as
 \[
   \frac{\mathrm{d}y}{\mathrm{d}x}=-\sqrt{\frac{C}{x}-1}
 \]
 for appropriate $C$, which can be solved by separation of variables,
 getting you the parametric equations
-\begin{align*}
-  x &=\frac{1}{2}C\left(2\theta -\sin(2\theta)\right)\\
-  y &=\frac{1}{2}C\left(1 -\cos(2\theta)\right)
-\end{align*}
+\[
+  \begin{cases}
+    x=\frac{1}{2}C\left(2\theta -\sin(2\theta)\right)\\
+    y=\frac{1}{2}C\left(1 -\cos(2\theta)\right)
+  \end{cases}
+\]
 which parameterize a cycloid.  This implicitly defines a function
 $y=\overline{y}(x)$ as the only stationary function for $L$. The
 problem is to prove that it minimizes $T$, which would be easy if the
@@ -24420,20 +24346,18 @@ objective functional
   U(z)=\int_0^{x_1}P(x,z(x),z'(x))\,\mathrm{d}x.
 \]
 From here and $U(z)=T(y)$ it easily follows that $\overline{y}$
-minimizes $T$ and is therefore the brachistochrone.\footnote{For details see John L.~Troutman,
-\emph{Variational Calculus and Optimal Control} (second edition), page
-257.}
+minimizes $T$ and is therefore the brachistochrone.%\footnote{For details see John L.~Troutman,\emph{Variational Calculus and Optimal Control} (second edition), page 257.}
 
 \subsection{Jacobi equation%: \texttt{jacobi\_equation}
 }
 
-To determine whether a solution $y_{0}$ to the Euler-Lagrange
-equations is an extrema, checking the convexity of the Lagrangian $f$
-does not always work.  Another approach is to look at the Jacobi equation:
+When determining whether a solution $y_{0}$ to the Euler-Lagrange
+equations is an extremum, checking the convexity of the Lagrangian $f$
+does not always work.  In such cases you may use the Jacobi equation:
 \begin{equation}\label{eq:jacobi-equation}
   -\frac{\mathrm{d}}{\mathrm{d}t}\,\left(f_{y\Prime y\Prime}(y_0,y_0',t)\,h'\right)+\left(f_{y y}(y_0,y_0',t)-\frac{\mathrm{d}}{\mathrm{d}t}\,f_{y y\Prime}(y_0,y_0\Prime,t)\right)\,h=0.
 \end{equation}
-for unknown function $h$. 
+for an unknown function $h$. 
 If the Jacobi equation has a solution such that $h(a)=0$, $h(c)=0$ for
 some $c\in(a,b]$ (the interval given in the variational problem) and
 $h$ not identically zero on $[a,c]$, then $c$ is called a
@@ -24449,7 +24373,7 @@ command computes the Jacobi equation.
 \item \texttt{jacobi\_equation} takes five or six arguments:
   \begin{itemize}
   \item  $f(y,y\Prime,x)$, an expression involving an independent
-    variable, a dependent variable, and the dependent variable prime.
+    variable, a dependent variable, and the dependent variable derivative.
   \item \textit{depvar}, the independent variable.
   \item \textit{indvar}, the dependent variable.  This argument and
     the previous one can be combined to a single argument
@@ -24504,16 +24428,14 @@ command computes conjugate points.
   at $\alpha=A$ and $\beta=B$, which is zero if and only if $t$ is
   conjugate to $a$.
 \end{itemize}
-To find any conjugate points, set the returned expression to zero and solve.
+To find any conjugate points, solve for zeros of the returned expression.
 
 \subsubsection*{Example}
 Find a minimum for the functional
 \[
-  F(y)=\int_0^{\frac{\pi}{2}}\left(y\Prime(x)^2-x\,y(x)-y(x)^2\right)\,\mathrm{d}x
+  F(y)=\int_0^{\frac{\pi}{2}}\left(y\Prime(x)^2-x\,y(x)-y(x)^2\right)\mathrm{d}x
 \]
-on $D=\{y\in C^1[0,\pi/2]:y(0)=y(\pi/2)=0\}$. 
-
-The corresponding Euler-Lagrange equation is:
+on $D=\{y\in C^1[0,\pi/2]:y(0)=y(\pi/2)=0\}$. The corresponding Euler-Lagrange equation is:
 \begin{xcasinput}
 eq:=euler_lagrange(y'(x)^2-x*y(x)-y(x)^2,y(x))
 \end{xcasinput}
@@ -24575,16 +24497,13 @@ of the first equation.
 \begin{xcasinput}
 sol:=collect(simplify(dsolve(eq[0],x,y)))
 \end{xcasinput}
-(See \secref{ssec:collect}).
 \begin{xcasoutput}
   \left[-K_{0},\frac{K_{0} \left(-\left(\mathrm{e}^{\frac{x-c_{1}}{K_{0}}}\right)^{2}-1\right)}{2 \mathrm{e}^{\frac{x-c_{1}}{K_{0}}}}\right]
 \end{xcasoutput}
+(See \secref{ssec:collect}.)
 Obviously the constant solution $-K_0$ is not in $D$, so set $y_0$
 to be the second element of the above list. That function, which can
-be written as
-\[
-  y_0(x)=-K_0\,\cosh\left(\frac{x-c_1}{K_0}\right),
-\]
+be written as $y_0(x)=-K_0\,\cosh\left(\frac{x-c_1}{K_0}\right)$,
 is called a \emph{catenary}.
 \begin{xcasinput}
 y0:=sol[1]:; p:=[K_0,c_1]:;
@@ -43056,7 +42975,7 @@ it is briefly explained how to extend and use \giac{} from \CC.
 \textsf{Alt+P} (see Figure~\ref{fig:editor}).
 This can be useful for writing small programs, but
 for writing larger programs you may want to use your usual editor.
-(Note that this requires an editor, such as \texttt{emacs}, and not a
+(Note that this requires an editor, such as \Emacs, and not a
 word processor.) If you use your own editor, then you will need to
 save the program to a file, such as \texttt{myprog.cxx}, and then load
 it into \xcas{} by creating a programming entry with \textsf{Alt+P} and
@@ -43064,7 +42983,7 @@ then selecting \textsf{Prog\menusep{}Load} from the entry menu.
 \begin{figure}
   \centering
   \includegraphics[width=\linewidth]{xcas-editor.png}
-  \caption{\label{fig:editor}Programming editor level in \xcas{}}
+  \caption{\label{fig:editor}Programming editor in \xcas{}}
 \end{figure}
 
 \subsection{Functions%: \xcaskey{function} \xcaskey{endfunction} \texttt{\{} \texttt{\}} \xcaskey{local} \xcaskey{return}
@@ -53348,7 +53267,7 @@ the variable \texttt{a} will contain a list.
 \item \texttt{a[4]}, the blue channel.
 \end{itemize}
 
-\subsection{Viewing images}
+\subsection{Viewing images\label{ssec:viewing-images}}
 
 Starting from \xcas{} version~1.9.0, image objects are viewed by using
 the \texttt{display}\index{display@\texttt{display}}
@@ -53363,15 +53282,9 @@ command.
   \item \texttt{display(}$\textit{img}\,\langle,a,b\,\rangle$\textit{)}
   or \texttt{display(}$\textit{img}\,\langle,a+\mathrm{i}b\,\rangle$\textit{)}
   returns a graphic object showing \textit{img} at location
-  $(a,b)$ (the upper-left corner). The axes will be hidden and the view is
-  orthonormalized so that the image is shown with its original aspect ratio.
+  $(a,b)$ (the upper-left corner). The axes will be automatically hidden and
+  the view orthonormalized in order to preserve the original aspect ratio of the image.
 \end{itemize}
-
-Multiple images can be shown together by calling \texttt{display} several times
-within a single command line (delimited by \texttt{;}) and adjusting $a$ and $b$
-to appropriate values in each call. If desired, individual image captions can be
-inserted by using the \texttt{legend} command
-(See~\secref{ssec:dwt} for an example.)
 
 In the examples that follow, we assume that the current directory in \xcas{}
 is changed (by using the \texttt{cd} command, see~\secref{ssec:wdir})
@@ -53391,7 +53304,23 @@ display(img)
   \includeimage{../../examples/Exemples/demo/terre.jpg}
 \end{xcasimage}
 
-\paragraph*{Viewing images as textures.}
+Multiple images can be shown together by calling \texttt{display} several times
+within a single command line (delimited by \texttt{;}) and adjusting $a$ and $b$
+to appropriate values in each call. If desired, individual image captions can be
+inserted by using the \texttt{legend} command
+(See~\secref{ssec:dwt} for an example.) There is also a possibility
+of combining images with other graphical objects.
+
+\begin{xcasinput}
+display(img);
+rectangle(100+100i,200+100i,1,display=green+line_width_3);
+legend(285+125i,"Here is Africa",display=white)
+\end{xcasinput}
+\begin{xcasimage}
+  \includeimage[0.6]{xcas-mymap.png}
+\end{xcasimage}
+
+\subsubsection{Viewing images as textures}
 \xcas{} can also display image files in rectangles in
 2D or on surfaces in 3D with the
 \texttt{gl\_texture}\index{gl\_texture@\textit{gl\_texture}}
@@ -53413,7 +53342,7 @@ sphere([0,0,0],1,gl_material=[gl_texture,"Exemples/demo/terre.jpg"])
   \includeimage{xcas-terre3d.png}
 \end{xcasimage}
 
-\subsection{Exporting images to PNG format%: \texttt{writergb}
+\subsection{Exporting images%: \texttt{writergb}
 }
 
 The \texttt{writergb}\index{writergb@\texttt{writergb}}
@@ -53474,6 +53403,8 @@ writergb("image1.png",[[4,2,2],[[255,0],[0,0]],[[0,255],[0,0]],
 \end{xcasimage}
 The transparency value of \texttt{125} for the upper right point makes
 it partially transparent and mutes the color.
+Observe that individual pixels are shown as rectangles due to the
+automatic scaling.
 
 For larger images, in some cases the matrix operations of
 \xcas{} can be used to create the channels. The following
@@ -53486,8 +53417,6 @@ writergb("image2.png",[[4,30,30],makemat(0,30,30),makemat(0,30,30),
 \begin{xcasimage}
   \includeimage{xcas-image2.png}
 \end{xcasimage}
-Observe that individual pixels are shown as small squares due to the
-automatic scaling.
 
 \subsubsection{Writing images with simplified image description}
 The simplified version of the \xcas{} image description does not
@@ -53517,7 +53446,6 @@ and a grayscale version.
   draws the image given by $M$ to the file \texttt{filename}.
 \end{itemize}
 
-
 \subsubsection*{Examples}
 \begin{xcasinput}
 writergb("image3.png",[[255,250],[0,120]],[[0,255],[0,0]],[[0,0],[255,100]])
@@ -53531,6 +53459,122 @@ writergb("image4.png",[[65,125],[185,200]])
 \begin{xcasimage}
   \includeimage{xcas-writergbsimplegray.png}
 \end{xcasimage}
+
+\subsection{New images from existing ones}
+
+The \texttt{()}\index{()@\texttt{()}} operator can be used to create image objects
+from an existing one. With an image object \textit{img}:
+\begin{itemize}
+  \item $\textit{img}\texttt{(grey)}$ returns a copy of \textit{img} converted to grayscale.
+  \item $\textit{img}\texttt{(}\alpha\texttt{)}$, where $\alpha$ is
+  a positive real number, returns a copy \textit{img} with size scaled to $\alpha w\times \alpha h$.
+  \item $\textit{img}\texttt{(}w,h\texttt{)}$ returns a copy of \textit{img} resized to $w\times h$.
+  \item $\textit{img}\texttt{(}x,y,w,h\texttt{)}$ returns a new image corresponding to the portion
+  with dimensions $w\times h$ and the upper left corner at $(x,y)$.
+\end{itemize}
+Note that \textit{img} itself is not changed.
+
+\subsubsection*{Examples}
+
+Assume that the image \texttt{terre.jpg} (see~\secref{ssec:viewing-images}) is loaded
+to the variable \texttt{img}. Then:
+\begin{xcasinput}
+cropped:=img(220,20,100,100)
+\end{xcasinput}
+\begin{xcasoutput}
+  \text{an image of size 100×100 (RGB)}
+\end{xcasoutput}
+\begin{xcasinput}
+display(cropped,0); display(cropped(grey),120)
+\end{xcasinput}
+\begin{xcasimage}
+  \includeimage{xcas-europe.png}
+\end{xcasimage}
+\begin{xcasinput}
+title:="resized from 512 x 256 to 102 x 51"; display(img(0.2))
+\end{xcasinput}
+\begin{xcasimage}
+  \includeimage[0.6]{xcas-poormap.png}
+\end{xcasimage}
+
+\subsection{Modifying images}
+
+Existing image objects can be modified by using the
+\texttt{set\_channel\_data}\index{set\_channel\_data@\texttt{set\_channel\_data}} command.
+\begin{itemize}
+  \item \texttt{set\_channel\_data} takes four or five arguments:
+  \begin{itemize}
+    \item \textit{img}, an image object.
+    \item \textit{chn}, a channel specification, which for colored
+    images must be one of:
+    \texttt{red} for the red channel, \texttt{green} for the green channel,
+    \texttt{blue} for the blue channel, \texttt{grey} for the grayscale
+    channel or \texttt{tran} for the transparency channel.
+    
+    For grayscale images without a transparency channel, 
+    this argument should be omitted since there is only one channel.
+    \item $x$, an integer.
+    \item $y$, an integer.
+    \item \textit{data}, a matrix of integers between 0 and 255.
+  \end{itemize}
+  \item \texttt{set\_channel\_data(}$\textit{img}\,\langle,\textit{chn}\,\rangle,x,y,\textit{data}$\texttt{)}
+  returns a modified copy of \textit{img} in which the indicated channel components of pixels in
+  the rectangle with upper left corner $(x,y)$
+  and lower right corner $(x+w-1,y+h-1)$, where $w$ resp.~$h$ is the number of columns resp.~rows of the
+  matrix \textit{data}, are set to the values in \textit{data}; i.e.~the \textit{chn} component in the
+  pixel $(x+j,y+i)$ in  is set to $\textit{data}_{ij}$ for $i=0,\dots,h-1$ and $j=0,\dots,w-1$.
+\end{itemize}
+
+\subsection{Extracting data from images}
+
+\paragraph{Obtaining the size of an image.}
+The size of an image can be obtained by using the
+\texttt{size}\index{size@\texttt{size}} command.
+\begin{itemize}
+  \item \texttt{size} takes \textit{img}, an image object.
+  \item \texttt{size(}\textit{img}\texttt{)} returns a list of two integers
+  representing the width and the height of \textit{img} (in that order).
+\end{itemize}
+
+\paragraph{Obtaining pixel data.}
+Channel data can be extracted from image objects to matrices by using
+the \texttt{[]} operator or the \texttt{channel\_data} command.
+\begin{itemize}
+  \item Let \textit{img} be an image object.
+  \item The command $\textit{img}\texttt{[}\textit{chn}\,\langle,x,y\,\langle,w,h\,\rangle\rangle\texttt{]}$,
+    where
+    \begin{itemize}
+      \item \textit{chn} is a channel specification and should be one of:
+        \texttt{red} for the red channel, \texttt{green} for the green channel,
+        \texttt{blue} for the blue channel, \texttt{tran} for the transparency
+        channel or \texttt{grey} for the grayscale channel,
+      \item (optionally) $x$, $y$ are integers and
+      \item (optionally) $w$, $h$ are positive integers (if these are given, then
+      $x$ and $y$ must also be given),
+    \end{itemize}
+    returns
+    \begin{itemize}
+      \item the full matrix of the channel \textit{chn} if no optional arguments are given,
+      \item the \textit{chn} component of the pixel $(x,y)$ if $w$ and $h$ are not given,
+      \item the matrix of pixel data for the channel \textit{chn} in the
+      rectangle with upper left corner $(x,y)$ and lower right corner $(x+w-1,y+h-1)$
+      if $x$, $y$, $w$ and $h$ are given.
+    \end{itemize}
+  \item If $\textit{chn}=\texttt{grey}$ and \textit{img} is a color image, then the returned
+  pixel value(s) are obtained by averaging the color channels.
+  \item The \texttt{channel\_data}\index{channel\_data@\texttt{channel\_data}}
+  command extracts a channel (sub)matrix. Precisely,
+  \texttt{channel\_data(}$\textit{img},\textit{args}$\textit{)} is equivalent to
+  \textit{img}\texttt{[}\textit{args}\texttt{]}, where \textit{img} is an image object
+  and \textit{args} is a sequence of arguments as described above.
+\end{itemize}
+
+\paragraph{Flattening images.}
+The \texttt{flatten}\index{flatten@\texttt{flatten}} command returns a list
+representation of an image, which is suitable for e.g.~passing the image to a neural
+network. It accepts a single argument, an image object \textit{img}, and returns the
+list in which the pixel data is stored row by row, with individual channel values for
+the same pixel occupying consecutive entries in the list.
 
 \section{Audio}
 
@@ -53629,10 +53673,10 @@ command creates an audio object with specified parameters.
 \item \texttt{createwav(}\textit{$\langle$keys=values$\rangle$}\texttt{)} returns an
   audio object with the requested parameters.
 \item If no sound data is provided, the resulting audio will be silent
-  (i.e.~all samples will be initialized to 0).
+  (all samples will be initialized to 0).
 \item Audio clips can be obtained from existing clips by slicing. To extract a portion
   of length $n$ samples starting at $k$th sample in an audio clip \texttt{clip},
-  use the \texttt{()} operator like this:
+  use the \texttt{()}\index{()@\texttt{()}} operator like this:
 \begin{xcasinput}
 subclip:=clip(k,n)
 \end{xcasinput}
@@ -53645,15 +53689,17 @@ subclip:=clip(t1..t2)
 \item Yet another way to create new audio clips is to concatenate existing clips.
   This is done by using the \texttt{+} operator. Note that clips to be concatenated
   must have the same number of channels, bit depth and sample rate. For example, to
-  concatenate two audio clips \texttt{clip1} and \texttt{clip2}, enter the command:
+  concatenate two audio clips \texttt{clip1} and \texttt{clip2}, input:
 \begin{xcasinput}
 clip:=clip1+clip2
 \end{xcasinput}
   This is useful for e.g.~padding audio with zeros (silence).
 \item Audio clips can be inverted (which is equivalent to multiplying sample
   data with $-1$ for each channel) by using the unary sign operator \texttt{-}
-  or the \texttt{inv} command which takes an audio clip as its only argument.
-\item Audio clips can be reversed in time by using the \texttt{reverse}
+  or the \texttt{inv}\index{inv@\texttt{inv}}
+  command which takes an audio clip as its only argument.
+\item Audio clips can be reversed in time by using the
+  \texttt{reverse}\index{reverse@\texttt{reverse}}
   command which takes an audio clip as its only argument.
 \end{itemize}
 
@@ -53661,9 +53707,7 @@ clip:=clip1+clip2
 (See \secref{ssec:playsnd} for a description of \texttt{playsnd} and
 \secref{ssec:soundsec} for a description of \texttt{soundsec}.)
 \begin{xcasinput}
-wave:=sin(2*pi*440*soundsec(2)):;
-s:=createwav(channel_data=wave,samplerate=48000):;
-playsnd(s)
+playsnd(createwav(channel_data=sin(2*pi*440*soundsec(2)),samplerate=48000))
 \end{xcasinput}
 \Output{}
 Two seconds of the 440 Hz sine wave at rate 48000.
@@ -54262,7 +54306,8 @@ is used for mixing several audio clips down together into one clip.
   \end{itemize}
 \item \texttt{mixdown(}$A,\textit{parm}\,\langle,\dots\,\rangle$\texttt{)}
   returns an audio clip which is the mix of the given clips.
-  The audio is not automatically normalized, so calling \texttt{normalize} may be required
+  The audio is not automatically normalized, so calling \texttt{normalize}
+  (see~\secref{ssec:normalize-audio}) may be required
   afterwards. If clipping occurs while mixing, a warning is printed in the message area.
 \item All audio clips involved in the mix must have the same sample rate,
   but may have different bit depths. The largest bit depth is selected for the

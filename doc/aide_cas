@@ -224,8 +224,8 @@ bezier(point([0,0,0]),point([1,1,0]),point([0,1,1]),plot)
 
 # flatten
 1 Aplatit récursivement une liste contenant des listes.
-2 Recursively flatten a list containing lists.
-0 Lst
+2 Recursively flatten a list containing lists or an image object.
+0 Lst||Image
 -1 mat2list
 flatten([[1,[2,3],4],[5,6]])
 
@@ -1598,11 +1598,11 @@ reverse_rsolve([1,-1,3,3])
 
 # revlist reverse
 1 Renvoie la liste L inversée; L:=revlist(L) ou L.revlist().
-2 Returns the list L in reverse order; L:=revlist(L) or L.revlist().
+2 Returns the list L in reverse order; L:=revlist(L) or L.revlist(). Also reverses audio clips.
 3 Devuelve la lista L al revés; L:=revlist(L) o L.revlist().
 4 Επιστρέφει την λίστα L με αντίστροφη διάταξη; L:=revlist(L) ή L.revlist().
 8 反转数据列。  反转数据列中元素的顺序，并返回为一个新数据列。
-0 Lst(L)
+0 Lst(L)||Audio
 revlist([1,2,3,4])
  L:=[1,2,3,4];L:=revlist(L)
  L:=[1,2,3,4];L.revlist()
@@ -5437,7 +5437,7 @@ matpow([[1,2],[3,4]],n)
 2 Subtraction element by element of 2 expressions or 2 lists or 2 matrices or of 2 points (infixed operator).
 3 resta componente por componente de 2 expresiónes o 2 listas o 2 matrices o 2 puntos (operador infijo).
 4 αφαίρεσ στοιχείο-στοιχείο 2 παραστάσεων ή 2 λιστών ή 2 πινάκων ή 2 σημεία (εντεθειμένος τελεστής).
-0 Lst||Expr||Pnt, ||Lst||Expr||Pnt
+0 Lst||Expr||Pnt,Lst||Expr||Pnt
 -1 .-
  1-2
  [1,2]-[3,4,5]
@@ -5968,7 +5968,7 @@ plotcontour(x^2+y^2,[x,y])
 plotcontour(x^2+2*y^2-2,[x,y],[1.0,2.0,3.0])
 plotcontour(x^2-y^2,[x=-4..4,y=-4..4],seq(k,k,-11,11,3),xstep=0.1,ystep=0.1)
 
-# xstep ystep zstep nstep tstep ustep vstep
+# xstep ystep zstep
 2 Option for plotting commands.
 0 Opt
 
@@ -6149,10 +6149,10 @@ cumSum("a","b","c","d")
 
 # normalize unitV
 1 Renvoie le vecteur divisé par sa norme l2. C'est aussi une option de plotfiefd.
-2 Returns the vector divided by its l2norm. It is also an option for plotfield.
+2 Returns the vector divided by its l2norm or normalizes an audio clip. It is also an option for plotfield.
 3 Devuelve el vector dividido entre su norma l2. Es también una opción de plotfiefd.
 4 Επιστρέφει το διάνυσμα διαιρεμένο με τη l2 νόρμα του. Είναι επίσης επιλογή για την εντολή plotfield.
-0 Lst||Cplx
+0 Lst||Cplx||Audio
 -1 l2norm
 normalize(3+4*i)
 normalize([3,4])
@@ -6979,10 +6979,10 @@ cas_setup(0,0,0,1,0,1e-10,12)
 
 # about
 1 Renvoie les hypothèses faites avec assume sur la variable a.
-2 Returns the hypothesis made with assume on the variable a.
+2 Returns the hypothesis made with assume on the variable a or describes an image object or an audio clip.
 3 Devuelve las hipótesis hechas con assume en la variable a.
 4 Επιστρέφει τις υποθέσεις που έχουν γίνει με την assume για την μεταβλητή a.
-0 Var(a)
+0 Var(a)||Image||Audio
 -1 assume
 -2 purge
 about(a)
@@ -8283,11 +8283,11 @@ sqrfree((x-2)^7*(x+2)^7*(x^4-2*x^2+1))
 
 # inv inverse
 1 Inverse d'une expression ou d'une matrice.
-2 Returns the inverse of an expression or matrix.
+2 Returns the inverse of an expression or matrix or returns a negative of an image object or inverts channels in an audio clip.
 3 Devuelve la inversa de una matriz o de una expresión.
 4 Επιστρέφει τον αντίστροφο ενός πίνακα ή μιας παράστασης.
 8 矩形矩阵的逆运算 (或表达式的逆运算)。  转换矩形矩阵。  如果已启用复数模式，则矩阵可以含有复数元素。
-0 Expr||Mtrx
+0 Expr||Mtrx||Image||Audio
 -1 Inv
 inv(9/5)
 inv([[1,2],[3,4]])
@@ -13254,11 +13254,11 @@ similarity(line(x=y,y=z),2,pi/3,point(-1,2,1))
 
 # size nops length len
 1 Renvoie la longueur d'une liste, d'une chaîne de caractères ou d'une suite.
-2 Returns the size of a list, a string or a sequence.
+2 Returns the size of a list, a string, a sequence, an image object or an audio clip.
 3 Devuelve el tamaño de una lista, cadena o secuencia de caracteres o de una secuencia.
 4 Επιστρέφει το μέγεθος μιας λίστας, μιας συμβολοσειράς ή μιας ακολουθίας.
 8 列大小。  返回列中元素的数量。 实参列可以是列本身或列名。
-0 Lst or Str or Seq
+0 Lst||Str||Seq||Image||Audio
 -1 sizes
 -2 dim
 -3 degree
@@ -18289,14 +18289,4 @@ logistic(1.8)
 logistic(0.0,0.5,10,2)
 -1 atan
 -2 tanh
-
-# markup_cfg
-2 Sets the configuration for markup export routines (LaTeX, MathML and TeXmacs).
-0 opts
--1 export_mathml
--2 latex
-markup_cfg(simplify=[])
-markup_cfg(simplify=apply)
-markup_cfg(simplify=[apply,product,pow])
-markup_cfg(mathml=display)
 

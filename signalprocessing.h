@@ -320,7 +320,7 @@ public:
     bool is_original() const { return !_filename.empty() && !_tmp; }
     uchar get_pixel(int chn,int x,int y) const;
     void set_pixel(int chn,int x,int y,uchar v);
-    int write_png(const char *fname);
+    int write_png(const char *fname) const;
     matrice get_channel_data(int chn,int x=0,int y=0,int w=0,int h=0) const;
     void set_channel_data(int chn,const matrice &data,int x=0,int y=0);
     rgba_image to_grayscale() const;
@@ -338,6 +338,7 @@ public:
     tempimagefilename() { }
     ~tempimagefilename();
     const std::string &make();
+    void pop() { if (!_fnames.empty()) _fnames.pop(); }
 };
 extern tempimagefilename temp_image_file_name;
 

@@ -1734,6 +1734,10 @@ gen _set_channel_data(const gen &g,GIAC_CONTEXT) {
                 case _RED: chn=0; break;
                 case _GREEN: chn=1; break;
                 case _BLUE: chn=2; break;
+                case 44373:
+                    if (img->depth()>2) return gensizeerr(gettext("This is not a grayscale image"));
+                    chn=0;
+                    break;
                 default: return generr(gettext("Invalid channel specification"));
                 }
             } else return generrtype(gettext("Invalid channel specification"));
@@ -5104,9 +5108,14 @@ string rgba_image::color_type_string() const {
 bool rgba_image::assure_on_disk() {
     if (!_filename.empty())
         return true;
-    _filename=temp_image_file_name.make();
-    _tmp=false;
-    return write_png(_filename.c_str())==0;
+    string fn=temp_image_file_name.make();
+    if (write_png(fn.c_str())==0) {
+        _filename=fn;
+        _tmp=false;
+        return true;
+    }
+    temp_image_file_name.pop();
+    return false;
 }
 string rgba_image::print(GIAC_CONTEXT) const {
     stringstream ss;
@@ -5192,6 +5201,8 @@ gen rgba_image::operator()(const gen &g,GIAC_CONTEXT) const {
         return to_grayscale();
     if (evalf_double(g,1,contextptr).type==_DOUBLE_) {
         double s=evalf_double(g,1,contextptr).to_double(contextptr);
+        if (s<=0)
+            return gensizeerr(gettext("Expected a positive real number"));
         w=(int)std::floor(s*_w+0.5);
         h=(int)std::floor(s*_h+0.5);
         task=1;
@@ -5224,7 +5235,7 @@ gen rgba_image::operator()(const gen &g,GIAC_CONTEXT) const {
     if (task==1) {
         if (resize_image_ptr)
             return resize_image_ptr(*this,w,h,ctx);
-        return gensizeerr(gettext("FLTK is required for image resizing"));
+        return gensizeerr(gettext("FLTK is required for resizing the image"));
     } else if (task==2) {
         w=std::min(w,_w-x);
         h=std::min(h,_h-y);
@@ -5260,7 +5271,7 @@ gen rgba_image::operator[](const gen &g) {
     } else start=0;
     if (chn>=_d)
         return gensizeerr(gettext("Invalid channel number"));
-    if (chn<0 && _d==1)
+    if (chn<0 && _d<=2)
         chn=0;
     if (args.size()==1)
         return get_channel_data(chn);
@@ -5326,7 +5337,7 @@ void rgba_image::set_channel_data(int chn,const matrice &data,int x,int y) {
     _filename.clear();
 }
 #ifdef HAVE_LIBPNG
-int rgba_image::write_png(const char *fname) {
+int rgba_image::write_png(const char *fname) const {
     png_bytep *rows=new png_bytep[_h];
     for (int i=0;i<_h;++i)
         rows[i]=_data+i*_w*_d;
@@ -5335,13 +5346,13 @@ int rgba_image::write_png(const char *fname) {
     int retval=0;
     FILE *fp=fopen(fname,"wb");
     if (!fp) {
-        retval=2; goto fail; // could not open file for writing
+        retval=2; goto done; // could not open file for writing
     }
     if (!(png_ptr=png_create_write_struct(PNG_LIBPNG_VER_STRING,NULL,NULL, NULL))) {
-        retval=3; goto fail; // could not create png write struct
+        retval=3; goto done; // could not create png write struct
     }
     if (!(info_ptr=png_create_info_struct(png_ptr)) || setjmp(png_jmpbuf(png_ptr))) {
-        retval=4; goto fail; // could not create png info struct
+        retval=4; goto done; // could not create png info struct
     }
     png_init_io(png_ptr,fp);
     int colortype;
@@ -5350,7 +5361,7 @@ int rgba_image::write_png(const char *fname) {
     case 2: colortype=PNG_COLOR_TYPE_GA; break;
     case 3: colortype=PNG_COLOR_TYPE_RGB; break;
     case 4: colortype=PNG_COLOR_TYPE_RGBA; break;
-    default: retval=5; goto fail; // could not determine color type (should be unreachable)
+    default: retval=5; goto done; // could not determine color type (should be unreachable)
     }
     png_set_IHDR(png_ptr,info_ptr,_w,_h,8,colortype, 
                 PNG_INTERLACE_NONE,PNG_COMPRESSION_TYPE_BASE,PNG_FILTER_TYPE_BASE);
@@ -5358,7 +5369,7 @@ int rgba_image::write_png(const char *fname) {
     png_write_image(png_ptr,rows);
     png_write_end(png_ptr,NULL);
     fclose(fp);
-fail:
+done:
     delete[] rows;
     return retval;
 }

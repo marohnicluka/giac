@@ -44192,6 +44192,153 @@ harmsum(eps):={
 }
 \end{lstlisting}
 
+\section{Errors}
+
+\subsection{Handling errors%: \xcaskey{try} \xcaskey{catch} \xcaskey{throw} \texttt{error} \texttt{ERROR}
+}
+
+Some commands produce errors, and if your program tries to run such a
+command it will halt with an error. 
+The \xcaskey{try}\index{try@\xcaskey{try}} and
+\xcaskey{catch}\index{catch@\xcaskey{catch}}
+commands can help you to avoid halting the program;
+put potentially problematic statements in a block
+following \xcaskey{try}, and immediately after the block put
+\xcaskey{catch} with an argument of an unused symbol, and follow that
+with a block of statements that can handle the error.
+\begin{center}
+  \xcaskey{try} \textit{tryblock} \xcaskey{catch} (\textit{symbol}) \textit{catchblock}
+\end{center}
+If \textit{tryblock} does not produce an error,
+then the code
+\begin{center}
+  \xcaskey{catch} (\textit{symbol}) \textit{catchblock}
+\end{center}
+is not reached. Otherwise,
+if \textit{tryblock} does produce an error, then a
+string describing the error is assigned to \textit{symbol},
+and \textit{catchblock} is evaluated.
+
+\subsubsection*{Examples}
+The command below produces an error:
+\begin{xcasinput}
+[[1,1]]*[[2,2]]
+\end{xcasinput}
+\begin{xcasoutput}
+  \text{Error: Invalid dimension}
+\end{xcasoutput}
+However, the following command does not produce an error:
+\begin{xcasinput}
+try { [[1,1]]*[[2,2]] } catch (err) { print("The error is --- "+err) }
+\end{xcasinput}
+\begin{xcasmsg}
+The error is ---  Error: Invalid dimension
+\end{xcasmsg}
+\begin{xcasoutput}
+  1
+\end{xcasoutput}
+
+With the following program:
+\begin{lstlisting}
+test(x):={
+  local y,str,err;
+  try {
+    y:=[[1,1]]*x;
+    str:="This produced a product.";
+  } catch (err) {
+    y:=x;
+    str:="This produced an error "+err+" The input is returned.";
+  }
+  print(str);
+  return y;
+}
+\end{lstlisting}
+input:
+\begin{xcasinput}
+test([[2],[2]])
+\end{xcasinput}
+\begin{xcasoutput}
+  &\text{``This produced a product.''}\\
+  &\left[4\right]
+\end{xcasoutput}
+with the text in the pane above the output line.
+\begin{xcasinput}
+test([[2,2]])
+\end{xcasinput}
+\begin{xcasoutput}
+  &\text{``This produced an error  Error:~Invalid dimension The input is returned.''}\\
+  &\left[\left[2,2\right]\right]
+\end{xcasoutput}
+with the text in the pane above the output line.
+
+You can catch this error in other programs.  Consider the program:
+\begin{lstlisting}
+g(x):={
+  try {
+    return f(x);
+  } catch (err) {
+    x:=0;
+  }
+  return x;
+}
+\end{lstlisting}
+then:
+\begin{xcasinput}
+g(12)
+\end{xcasinput}
+\begin{xcasoutput}
+  12
+\end{xcasoutput}
+since 12 is an integer. With a non-integer input, \texttt{f(x)} gives an error and so
+\texttt{g(x)} returns 0:
+\begin{xcasinput}
+g(1.2)
+\end{xcasinput}
+\begin{xcasoutput}
+  0
+\end{xcasoutput}
+
+\subsection{Throwing exceptions}
+
+You can produce your own string to describe an error message with the
+\xcaskey{throw}\index{throw@\xcaskey{throw}} or
+\texttt{error}\index{error@\texttt{error}} or
+\texttt{ERROR}\index{ERROR@\texttt{ERROR}} command.
+\begin{itemize}
+\item \xcaskey{throw} takes
+  \textit{str}, a string describing an error.
+\item \texttt{throw(}\textit{str}\texttt{)} generates an error with
+  error string \textit{str}, possibly to be caught by \xcaskey{catch}.
+\end{itemize}
+
+\subsubsection*{Example}
+With the following program:
+\begin{lstlisting}
+f(x):={
+  if (type(x)!=DOM\_INT)
+    throw("Not an integer");
+  else
+    return x;
+}
+\end{lstlisting}
+input:
+\begin{xcasinput}
+f(12)
+\end{xcasinput}
+\begin{xcasoutput}
+  12
+\end{xcasoutput}
+since 12 is an integer.
+\begin{xcasinput}
+f(1.2)
+\end{xcasinput}
+will signal an error
+\begin{xcasoutput}
+  \texttt{Not an integer Error:~Bad Argument Value}
+\end{xcasoutput}
+since 1.2 in not an integer.
+
+
 \section{Other useful instructions}
 
 \subsection{Defining a function with a variable number of arguments%: \texttt{args}
@@ -44450,8 +44597,7 @@ command is used for creating multidimensional arrays of symbols.
   dimension index. If placeholders are omitted, indices are simply appended in case $m=1$,
   while in case $m>1$ they are separated from \textit{str} and each other by the underscore (\texttt{'\_'}).
 \item
-  The indices start from 0 in 0-based modes (such as the default mode in \textsc{Xcas}) resp.~from 1 in 1-based
-  modes (such as the \textsc{\Maple{}} mode).
+  The indices are in accordance with the current \xcas{} mode (they are either 0- or 1-based).
 \end{itemize}
 
 \subsubsection*{Examples}
@@ -44520,82 +44666,71 @@ You can also use \texttt{expr} to convert a string to a number. If a
 string is simply a number enclosed by quotation marks, then
 \texttt{expr} will return the number.
 
-\subsubsection*{Example}
-\begin{xcasinput}
-expr("123")
-\end{xcasinput}
-\begin{xcasoutput}
-  123
-\end{xcasoutput}
-
-In particular, the following strings will be converted to the
+\subsubsection*{Examples}
+% \begin{xcasinput}
+% expr("123")
+% \end{xcasinput}
+% \begin{xcasoutput}
+%   123
+% \end{xcasoutput}
+The following strings will be converted to the
 appropriate number.
-\begin{itemize}
-\item
-  A string consisting of the digits 0 through 9 which does not start
-  with 0 will be converted to an integer. For example:
+
+A string consisting of the digits 0-9 which does not start
+with 0 will be converted to an integer:
 \begin{xcasinput}
 expr("2133")
 \end{xcasinput}
-  \begin{xcasoutput}
-    2133
-  \end{xcasoutput}
-
-\item
-  A string consisting of the digits 0 through 9 which contains a
-  single decimal point will be converted to a decimal. For example:
+\begin{xcasoutput}
+  2133
+\end{xcasoutput}
+A string consisting of the digits 0-9 which contains a
+single decimal point will be converted to a double:
 \begin{xcasinput}
 expr("123.4")
 \end{xcasinput}
-  \begin{xcasoutput}
-    123.4
-  \end{xcasoutput}
-
-\item
-  A string consisting of the digits 0 through 9, possibly containing a
-  single decimal point, followed by \texttt{e} and then more digits 0
-  through 9, will be read as a decimal in exponential notation. For example:
+\begin{xcasoutput}
+  123.4
+\end{xcasoutput}
+A string consisting of the digits 0-9 and a single decimal point,
+followed by \texttt{e} and then more digits,
+will be read as a floating point number:
 \begin{xcasinput}
 expr("1.23e4")
 \end{xcasinput}
-  \begin{xcasoutput}
-    12300.0
-  \end{xcasoutput}
-
-\item
-  A string consisting of the digits 0 through 7 which  starts
-  with 0 will be read as an integer base 8. For example:
+\begin{xcasoutput}
+  12300.0
+\end{xcasoutput}
+A string consisting of the digits 0-7 which  starts
+with 0 will be read as an integer base 8:
 \begin{xcasinput}
 expr("0176")
 \end{xcasinput}
-  \begin{xcasoutput}
-    126
-  \end{xcasoutput}
-  since 176 base 8 equals 126 base 10.
+\begin{xcasoutput}
+  126
+\end{xcasoutput}
+since 176 base 8 equals 126 base 10.
 
-\item
-  A string starting with \texttt{0x} followed by digits 0 through 9
-  and letters \texttt{a} through \texttt{f} will be read as an integer
-  base 16. For example:
+A string starting with \texttt{0x} followed by digits 0-9
+and letters A-F (or a-f) will be read as an integer
+base 16:
 \begin{xcasinput}
 expr("0x2a3f")
 \end{xcasinput}
-  \begin{xcasoutput}
-    10815
-  \end{xcasoutput}
-  since \texttt{2a3f} base 16 equals 10815 base 10.
+\begin{xcasoutput}
+  10815
+\end{xcasoutput}
+since \texttt{2a3f} base 16 equals 10815 base 10.
 
-\item
-  A string starting with \texttt{0b} followed by digits 0 and 1 will
-  be read as a binary integer. For example:
+A string starting with \texttt{0b} followed by digits 0 and 1 will
+be read as a binary integer:
 \begin{xcasinput}
 expr("0b1101")
 \end{xcasinput}
-  \begin{xcasoutput}
-    13
-  \end{xcasoutput}
-  since 1101 base 2 equals 13 base 10.
-\end{itemize}
+\begin{xcasoutput}
+  13
+\end{xcasoutput}
+since 1101 base 2 equals 13 base 10.
 
 \subsection{Converting an expression to a string%: \texttt{string}
 }
@@ -44647,34 +44782,36 @@ command converts real numbers into strings.
 \end{itemize}
 The formatting string can be one of the following:
 \begin{itemize}
-\item \texttt{f} (for \emph{floating} format) followed by the number
-  of digits to put after the decimal point. For example:
-\begin{xcasinput}
-format(sqrt(2)*10^10,"f13")
-\end{xcasinput}
-  \begin{xcasoutput}
-    \text{``14142135623.7308959960938''}
-  \end{xcasoutput}
+\item \texttt{f} (for \emph{floating-point} format) followed by the number
+  of digits to put after the decimal point.
 
 \item \texttt{s} (for \emph{scientific} format) followed by the
-  number of significant digits. For example:
-\begin{xcasinput}
-format(sqrt(2)*10^10,"s13")
-\end{xcasinput}
-  \begin{xcasoutput}
-    \text{``14142135623.73''}
-  \end{xcasoutput}
+  number of significant digits.
  
 \item \texttt{e} (for \emph{engineering} format) followed by the
   number of digits to put after the decimal point, with one digit
-  before the decimal points. For example:
+  before the decimal points.
+\end{itemize}
+
+\subsubsection*{Examples}
+\begin{xcasinput}
+format(sqrt(2)*10^10,"f13")
+\end{xcasinput}
+\begin{xcasoutput}
+  \text{``14142135623.7308959960938''}
+\end{xcasoutput}
+\begin{xcasinput}
+format(sqrt(2)*10^10,"s13")
+\end{xcasinput}
+\begin{xcasoutput}
+  \text{``14142135623.73''}
+\end{xcasoutput}
 \begin{xcasinput}
 format(sqrt(2)*10^10,"e13")
 \end{xcasinput}
-  \begin{xcasoutput}
-    \text{``1.4142135623731e+10''}
-  \end{xcasoutput}
-\end{itemize}
+\begin{xcasoutput}
+  \text{``1.4142135623731e+10''}
+\end{xcasoutput}
 
 \subsection{Working with the graphics screen%: \texttt{DispG} \texttt{DispHome} \texttt{ClrGraph} \texttt{ClrDraw}
 }
@@ -44734,9 +44871,7 @@ command closes the \texttt{DispG} screen.
 The \texttt{Pause}\index{Pause@\texttt{Pause}} command pauses \xcas{}.
 \begin{itemize}
 \item \texttt{Pause} takes one optional argument (with no
-  parentheses).
-
-  Optionally, $r$, a positive number.
+  parentheses): $r$, a positive number.
 \item \texttt{Pause $r$} pauses \xcas{} for $r$ seconds.
 \item \texttt{Pause} without an argument brings up a Pause informational window and
   pauses \xcas{} until you click \texttt{Close} in the Pause window.
@@ -44754,141 +44889,6 @@ WAIT(10)
 \end{xcasinput}
 pauses \xcas{} for 10 seconds.
 
-\subsection{Handling errors%: \xcaskey{try} \xcaskey{catch} \xcaskey{throw} \texttt{error} \texttt{ERROR}
-}
-
-Some commands produce errors, and if your program tries to run such a
-command it will halt with an error. 
-The \xcaskey{try}\index{try@\xcaskey{try}} and
-\xcaskey{catch}\index{catch@\xcaskey{catch}}
-commands can help you to avoid halting the program;
-put potentially problematic statements in a block
-following \xcaskey{try}, and immediately after the block put
-\xcaskey{catch} with an argument of an unused symbol, and follow that
-with a block of statements that can handle the error.
-\begin{center}
-  \xcaskey{try} \textit{tryblock} \xcaskey{catch} (\textit{symbol}) \textit{catchblock}
-\end{center}
-If \textit{tryblock} does not produce an error,
-then the code
-\begin{center}
-  \xcaskey{catch} (\textit{symbol}) \textit{catchblock}
-\end{center}
-is not reached. Otherwise,
-if \textit{tryblock} does produce an error, then a
-string describing the error is assigned to \textit{symbol},
-and \textit{catchblock} is evaluated.
-
-\subsubsection*{Examples}
-The command
-\begin{xcasinput}
-[[1,1]]*[[2,2]]
-\end{xcasinput}
-produces an error saying \texttt{Error:~Invalid dimension}.
-However, the command below does not produce an error:
-\begin{xcasinput}
-try { [[1,1]]*[[2,2]] } catch (err) { print("The error is "+err) }
-\end{xcasinput}
-\begin{xcasoutput}
-  \text{``The error is Error: Invalid dimension''}
-\end{xcasoutput}
-
-With the following program:
-\begin{lstlisting}
-test(x):={
-  local y,str,err;
-  try {
-    y:=[[1,1]]*x;
-    str:="This produced a product.";
-  } catch (err) {
-    y:=x;
-    str:="This produced an error "+err+" The input is returned.";
-  }
-  print(str);
-  return y;
-}
-\end{lstlisting}
-input:
-\begin{xcasinput}
-test([[2],[2]])
-\end{xcasinput}
-\begin{xcasoutput}
-  &\text{``This produced a product.''}\\
-  &\left[4\right]
-\end{xcasoutput}
-with the text in the pane above the output line.
-\begin{xcasinput}
-test([[2,2]])
-\end{xcasinput}
-\begin{xcasoutput}
-  &\text{``This produced an error  Error:~Invalid dimension The input is returned.''}\\
-  &\left[\left[2,2\right]\right]
-\end{xcasoutput}
-with the text in the pane above the output line.
-
-You can produce your own string to describe an error message with the
-\xcaskey{throw}\index{throw@\xcaskey{throw}} or
-\texttt{error}\index{error@\texttt{error}} or
-\texttt{ERROR}\index{ERROR@\texttt{ERROR}} command.
-\begin{itemize}
-\item \xcaskey{throw} takes
-  \textit{str}, a string describing an error.
-\item \texttt{throw(}\textit{str}\texttt{)} generates an error with
-  error string \textit{str}, possibly to be caught by \xcaskey{catch}.
-\end{itemize}
-
-With the following program:
-\begin{lstlisting}
-f(x):={
-  if (type(x)!=DOM\_INT)
-    throw("Not an integer");
-  else
-    return x;
-}
-\end{lstlisting}
-input:
-\begin{xcasinput}
-f(12)
-\end{xcasinput}
-\begin{xcasoutput}
-  12
-\end{xcasoutput}
-since 12 is an integer.
-\begin{xcasinput}
-f(1.2)
-\end{xcasinput}
-will signal an error
-\begin{xcasoutput}
-  \texttt{Not an integer Error:~Bad Argument Value}
-\end{xcasoutput}
-since 1.2 in not an integer.
-
-You can catch this error in other programs.  Consider the program:
-\begin{lstlisting}
-g(x):={
-  try {
-    return f(x);
-  } catch (err) {
-    x:=0;
-  }
-  return x;
-}
-\end{lstlisting}
-then:
-\begin{xcasinput}
-g(12)
-\end{xcasinput}
-\begin{xcasoutput}
-  12
-\end{xcasoutput}
-since 12 is an integer. With a non-integer input, \texttt{f(x)} gives an error and so
-\texttt{g(x)} returns 0:
-\begin{xcasinput}
-g(1.2)
-\end{xcasinput}
-\begin{xcasoutput}
-  0
-\end{xcasoutput}
 
 \section{Debugging\label{sec:debug}}
 

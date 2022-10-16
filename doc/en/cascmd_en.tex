@@ -1793,15 +1793,10 @@ performed.
   \item[Increasing power.]  This is 0 to display polynomials
     in increasing power, and 1 to display polynomials in decreasing powers.
   \end{description}
-\end{itemize}
-
-The \texttt{xcas\_mode} command determines what computer language
-\xcas{} will use (see \secref{ssec:lang}).
-
-The \texttt{xyztrange} command sets or returns the values of the
-graphics configuration.
-
-\begin{itemize}
+\item The \texttt{xcas\_mode} command sets the computer language used by
+  \xcas{} (see \secref{ssec:lang}).
+\item The \texttt{xyztrange} command sets or returns the values of the
+  graphics configuration.
 \item
   To set the values, \texttt{xyztrange} takes 15 arguments:
   \begin{itemize}
@@ -1828,15 +1823,11 @@ graphics configuration.
   \textit{t--},\textit{t+},\textit{wx--},\textit{wx+},\textit{wy--},\textit{wy+},\textit{show\_axes},
   \textit{class\_min},\textit{class\_size}$\texttt{)}
   sets the parameters to the given values.
-\end{itemize}
-Note that the viewing window is not the same as the calculation
-window; if the calculation window is larger than the visible window,
-then you can scroll to bring other parts of the calculation window
-into view.
-
-
-\noindent
-\begin{itemize}
+  
+  Note that the viewing window is not the same as the calculation
+  window; if the calculation window is larger than the visible window,
+  then you can scroll to bring other parts of the calculation window
+  into view.
 \item To return the values, \texttt{xyztrange} takes no arguments.
 \item \texttt{xyztrange()} returns a matrix where each row consists
   of a short description of the first twelve arguments along with
@@ -4724,10 +4715,10 @@ and and return an integer whose base 2 digits are the logical
 \texttt{6} and \texttt{4}, look at their base 2 representations, which
 are \texttt{0b110} (the \texttt{0b} prefix indicates that it's in base
 2, see \secref{sec:numbs}) and \texttt{0b100}, respectively.  The
-logical \textit{or} or their rightmost digits is \texttt{0 or
-  0}=\texttt{0}. The logical \texttt{or} of their next digits is
-\texttt{1 or 0}=\texttt{1}, and the logical \texttt{or} of their
-remaining digits is \texttt{1 or 1}=\texttt{1}.  So the bitwise or of
+logical \textit{or} or their rightmost digits is \texttt{(0 or
+  0)}=\texttt{0}. The logical \texttt{or} of their next digits is
+\texttt{(1 or 0)}=\texttt{1}, and the logical \texttt{or} of their
+remaining digits is \texttt{(1 or 1)}=\texttt{1}.  So the bitwise or of
 \texttt{6} and \texttt{4} is \texttt{0b110}, which is \texttt{6}.
 
 To work with bitwise operators, it isn't necessary but it may be
@@ -4741,12 +4732,15 @@ may also be output in octal or hexadecimal notation (see
 \secref{ssec:confcomp}, item \ref{enum:base}).
 
 There are bitwise versions of the logical operators \texttt{or},
-\texttt{xor} and \texttt{and}; they are all prefixed operators which
+\texttt{xor} and \texttt{and}, called
+\texttt{bitor}\index{bitor@\texttt{bitor}},
+\texttt{bitxor}\index{bitxor@\texttt{bitxor}} and
+\texttt{bitand}\index{bitand@\texttt{bitand}};
+they are all prefixed operators which
 take two arguments, which are both integers.
-\begin{itemize}
-\item
-  \texttt{bitor}\index{bitor@\texttt{bitor}}
-  is bitwise logical inclusive \texttt{or}.
+
+\subsubsection*{Examples}
+
 \begin{xcasinput}
 bitor(0x12,0x38)
 \end{xcasinput}
@@ -4754,16 +4748,13 @@ bitor(0x12,0x38)
 \begin{xcasinput}
 bitor(18,56)
 \end{xcasinput}
-  \begin{xcasoutput}
-    58
-  \end{xcasoutput}
-  because
-  \texttt{18} is written \texttt{0x12} in base 16 or \texttt{0b010010} in base 2 and
-  \texttt{56} is written \texttt{0x38} in base 16 or \texttt{0b111000} in base 2,
-  hence \texttt{bitor(18,56)} is \texttt{0b111010} in base 2 and so is equal to 58.
-\item
-  \texttt{bitxor}\index{bitxor@\texttt{bitxor}}
-  is bitwise logical exclusive \texttt{or}.
+\begin{xcasoutput}
+  58
+\end{xcasoutput}
+because
+\texttt{18} is written \texttt{0x12} in base 16 or \texttt{0b010010} in base 2 and
+\texttt{56} is written \texttt{0x38} in base 16 or \texttt{0b111000} in base 2,
+hence \texttt{bitor(18,56)} is \texttt{0b111010} in base 2 and so is equal to 58.
 \begin{xcasinput}
 bitxor(0x12,0x38)
 \end{xcasinput}
@@ -4771,16 +4762,13 @@ bitxor(0x12,0x38)
 \begin{xcasinput}
 bitxor(18,56)
 \end{xcasinput}
-  \begin{xcasoutput}
-    42
-  \end{xcasoutput}
-  because
-  \texttt{18} is written \texttt{0x12} in base 16 and \texttt{0b010010} in base 2 and
-  \texttt{56} is written \texttt{0x38} in base 16 and \texttt{0b111000} in base 2,
-  \texttt{bitxor(18,56)} is written \texttt{0b101010} in base 2 and so, is equal to 42.
-\item
-  \texttt{bitand}\index{bitand@\texttt{bitand}}
-  is bitwise logical \texttt{and}.
+\begin{xcasoutput}
+  42
+\end{xcasoutput}
+because
+\texttt{18} is written \texttt{0x12} in base 16 and \texttt{0b010010} in base 2 and
+\texttt{56} is written \texttt{0x38} in base 16 and \texttt{0b111000} in base 2,
+\texttt{bitxor(18,56)} is written \texttt{0b101010} in base 2 and so, is equal to 42.
 \begin{xcasinput}
 bitand(0x12,0x38)
 \end{xcasinput}
@@ -4788,14 +4776,13 @@ bitand(0x12,0x38)
 \begin{xcasinput}
 bitand(18,56)
 \end{xcasinput}
-  \begin{xcasoutput}
-    16
-  \end{xcasoutput}
-  because
-  \texttt{18} is written \texttt{0x12} in base 16 and \texttt{0b010010} in base 2 and
-  \texttt{56} is written \texttt{0x38} in base 16 and \texttt{0b111000} in base 2,
-  \texttt{bitand(18,56)} is written \texttt{0b010000} in base 2 and so is equal to 16.
-\end{itemize}
+\begin{xcasoutput}
+  16
+\end{xcasoutput}
+because
+\texttt{18} is written \texttt{0x12} in base 16 and \texttt{0b010010} in base 2 and
+\texttt{56} is written \texttt{0x38} in base 16 and \texttt{0b111000} in base 2,
+\texttt{bitand(18,56)} is written \texttt{0b010000} in base 2 and so is equal to 16.
 
 \subsection{Bitwise Hamming distance}
 \index{Distance function!Bitwise Hamming}
@@ -4836,65 +4823,63 @@ hence \texttt{hamdist(18,56)} is equal to $1+0+1+0+1+0=3$.
 Integers are typically entered and displayed in base 10.  You can also
 enter an integer in base 2 (binary)\index{binary},
 base 8 (octal)\index{octal} or base 16 (hexadecimal)\index{hexadecimal}.
-
+You can enter:
 \begin{itemize}
-\item
-  You can enter a number in base 2 by prefixing it with \texttt{0b}; the
-  remaining digits have to be \texttt{0} or \texttt{1}.
+\item a number in base 2 by prefixing it with \texttt{0b}; the
+  remaining digits have to be 0 or 1.
+\item an octal number by prefixing it with \texttt{0} or
+  \texttt{0o}; the remaining digits have to be 0-7 since it is base 8.
+\item a hexadecimal number by prefixing it with \texttt{0x};
+  the remaining digits have to be 0-9 or
+  A-F (where A is 10, B is 11, \ldots, F is 15).
+  Non-capital letters a-f are allowed to be used instead.
+\end{itemize}
+
+\subsubsection*{Examples}
+
+Since $101$ in binary is the same as $1\cdot 1+0\cdot 2+1\cdot
+2^{2}=5$ in decimal:
 \begin{xcasinput}
 0b101
 \end{xcasinput}
-  \begin{xcasoutput}
-    5
-  \end{xcasoutput}
-  since $101$ in binary is the same as $1\cdot 1+0\cdot 2+1\cdot
-  2^{2}=5$ in decimal.
-\item
-  You can enter a number in octal by prefixing it with \texttt{0} or
-  \texttt{0o}; the remaining digits have to be \texttt{0} through
-  \texttt{7} since it is base 8.
+\begin{xcasoutput}
+  5
+\end{xcasoutput}
+Since $512$ in base 8 is the same as $2\cdot 1+1\cdot 8+5\cdot
+8^{2}=330$ in decimal:
 \begin{xcasinput}
 0512
 \end{xcasinput}
-  \begin{xcasoutput}
-    330
-  \end{xcasoutput}
-  since $512$ in base 8 is the same as $2\cdot 1+1\cdot 8+5\cdot
-  8^{2}=330$ in decimal.
-\item
-  You can enter a number in hexademical by prefixing it with \texttt{0x};
-  the remaining digits have to be \texttt{0} through \texttt{9} or
-  \texttt{A} through \texttt{F} (where \texttt{A} is 10, \texttt{B} is
-  11, \ldots, \texttt{F} is 15). Non-capital letters \texttt{a}-\texttt{f}
-  are allowed to be used instead.
+\begin{xcasoutput}
+  330
+\end{xcasoutput}
+since 2F3 in base 16 is the same as $3\cdot 1+15\cdot 16+2\cdot
+16^{2}=755$ in decimal:
 \begin{xcasinput}
 0x2F3
 \end{xcasinput}
-  \begin{xcasoutput}
-    755
-  \end{xcasoutput}
-  since 2F3 in base 16 is the same as $3\cdot 1+15\cdot 16+2\cdot
-  16^{2}=755$ in decimal.
-\item
-  You can have \xcas{} print integers in octal or hexadecimal, as
-  well as the default decimal.  To change the base used for display, you
-  can click on the red CAS status button and choose from the
-  \textsf{Integer basis} menu (see \secref{ssec:confcomp}, item
-  \ref{enum:base}).  If you have \xcas{} set to display in
-  hexadecimal, you will get the following:
+\begin{xcasoutput}
+  755
+\end{xcasoutput}
+
+You can have \xcas{} print integers in octal or hexadecimal, as
+well as the default decimal.  To change the base used for display, you
+can click on the red CAS status button and choose from the
+\textsf{Integer basis} menu (see \secref{ssec:confcomp}, item
+\ref{enum:base}).  If you have \xcas{} set to display in
+hexadecimal, you will get the following:
 \begin{xcasinput}
 15
 \end{xcasinput}
-  \begin{xcasoutput}
-    0\mathrm{xF}
-  \end{xcasoutput}
+\begin{xcasoutput}
+  0\mathrm{xF}
+\end{xcasoutput}
 \begin{xcasinput}
 0x15
 \end{xcasinput}
-  \begin{xcasoutput}
-    0\mathrm{x15}
-  \end{xcasoutput}
-\end{itemize}
+\begin{xcasoutput}
+  0\mathrm{x15}
+\end{xcasoutput}
 
 \subsection{Writing an integer in an arbitrary base
   \label{sec:convertbase}}
@@ -4932,11 +4917,9 @@ convert(123,base,8)
 \begin{xcasoutput}
   \left[3,7,1\right]
 \end{xcasoutput}
-To check the answer,
-input \texttt{0173} (see \secref{ssec:binocthex}) or
+To verify, input \texttt{0173} (see \secref{ssec:binocthex}) or
 \texttt{horner(revlist([3,7,1]),8)} (see \secref{ssec:horner} and
-\secref{ssec:rlst}) or \texttt{convert([3,7,1],base,8)}. The result
-will be \texttt{123}.
+\secref{ssec:rlst}) or \texttt{convert([3,7,1],base,8)} which all return 123.
 
 The base used for \texttt{convert} can be any integer greater than 1.
 For example, input:
@@ -5097,29 +5080,26 @@ There are two ways to create a list with \texttt{seq}.
 \end{itemize}
 
 \paragraph*{Remarks.}
-\begin{itemize}
-\item In \xcas{} mode, the precedence of \texttt{\$} is not the
-  same as it is, for example, in \Maple{}.  In case of doubt,
-  put the arguments of \texttt{\$} in parenthesis.
-  For example, the equivalent of
+In \xcas{} mode, the precedence of \texttt{\$} is not the
+same as it is, for example, in \Maple{}.  In case of doubt,
+put the arguments of \texttt{\$} in parenthesis.
+For example, the following commands are equivalent:
 \begin{xcasinput}
 seq(j^2,j=-1..3)
 \end{xcasinput}
-  is
+or
 \begin{xcasinput}
 (j^2)$(j=-1..3)
 \end{xcasinput}
-  and returns
-  \begin{xcasoutput}
-    1,0,1,4,9
-  \end{xcasoutput}
-\item
-  With \Maple{} syntax, \texttt{j,a..b,p} is not valid.
-  To specify a step $p$ for the variation of
-  $j$ from $a$ to $b$, use \texttt{j=a..b,p} or use the \TI{} syntax
-  \texttt{j,a,b,p} and get the sequence from the list with
-  \texttt{op(\ldots)}.
-\end{itemize}
+\begin{xcasoutput}
+  1,0,1,4,9
+\end{xcasoutput}
+
+With \Maple{} syntax, \texttt{j,a..b,p} is not valid.
+To specify a step $p$ for the variation of
+$j$ from $a$ to $b$, use \texttt{j=a..b,p} or use the \TI{} syntax
+\texttt{j,a,b,p} and get the sequence from the list with
+\texttt{op(\ldots)}.
 
 \subsubsection*{Examples}
 To create a sequence:
@@ -6005,36 +5985,35 @@ range(10,4,-1)
 \begin{xcasoutput}
   \left[10,9,8,7,6,5\right]
 \end{xcasoutput}
-use the \texttt{range} command to create a list of values
+You can use the \texttt{range} command to create a list of values
 $f(k)$, where $k$ is an integer satisfying a certain condition.  (See
 \secref{ssec:for} for the \xcaskey{for} loop used below.)
-\begin{itemize}
-\item You can list the values of an expression in a variable which
-  goes over a range defined by \texttt{range}. For example:
+
+You can list the values of an expression in a variable which
+goes over a range defined by \texttt{range}. For example:
 \begin{xcasinput}
 [k^2+k for k in range(10)]
 \end{xcasinput}
-  \begin{xcasoutput}
-    \left[0,2,6,12,20,30,42,56,72,90\right]
-  \end{xcasoutput}
-\item
-  You can list the values of an expression in a variable which
-  goes over a range defined by \texttt{range} and which satisfies a
-  given condition. For example:
+\begin{xcasoutput}
+  \left[0,2,6,12,20,30,42,56,72,90\right]
+\end{xcasoutput}
+
+You can list the values of an expression in a variable which
+goes over a range defined by \texttt{range} and which satisfies a
+given condition. For example:
 \begin{xcasinput}
 [k for k in range(4,10) if isprime(k)]
 \end{xcasinput}
-  \begin{xcasoutput}
-    \left[5,7\right]
-  \end{xcasoutput}
-  (See \secref{ssec:isprime} for \texttt{isprime}.)
+\begin{xcasoutput}
+  \left[5,7\right]
+\end{xcasoutput}
+(See \secref{ssec:isprime} for \texttt{isprime}.)
 \begin{xcasinput}
 [k^2+k for k in range(1,10,2) if isprime(k)]
 \end{xcasinput}
-  \begin{xcasoutput}
-    \left[12,30,56\right]
-  \end{xcasoutput}
-\end{itemize}
+\begin{xcasoutput}
+  \left[12,30,56\right]
+\end{xcasoutput}
 
 \subsection{Selecting elements of a list}
 
@@ -6216,7 +6195,7 @@ remove(x->(x>=2),[0,1,2,3,1,5])
   \left[0,1,1\right]
 \end{xcasoutput}
 
-\paragraph*{Remark.} use \texttt{remove} to remove characters from
+\paragraph*{Remark.} Use \texttt{remove} to remove characters from
 a string.  For example, to remove all the \texttt{"a"}s of a string
 (see \secref{ssec:funcs} for writing functions):
 \begin{xcasinput}
@@ -6870,8 +6849,7 @@ list (see \secref{sssec:product}), the elements of the
 columns of a matrix (see \secref{ssec:product1}), and the term-by-term
 (Hadamard) product of two matrices (see \secref{ssec:product2}).
 
-\subsubsection{Product of values of an expression\label{sssec:product0}}
-
+\paragraph{Product of values of an expression.\label{sssec:product0}}
 The \texttt{product}\index{product@\texttt{product}} or
 \texttt{mul}\index{mul@\texttt{mul}} command can
 find the product of the values of an expression as the variable changes.
@@ -6916,8 +6894,7 @@ mul(x^2+1,x,1,5,2)
 \end{xcasoutput}
 Indeed, $(1^{2}+1)(3^{2}+1)(5^{2}+1)=520$.
 
-\subsubsection{Product of elements of a list\label{sssec:product}}
-
+\paragraph{Product of elements of a list.\label{sssec:product}}
 The \texttt{product}\index{product@\texttt{product}} or
 \texttt{mul}\index{mul@\texttt{mul}} command can
 find the products of elements of a list.
@@ -7362,9 +7339,7 @@ or:
 
 \subsection{Cartesian products}
 
-\subsubsection{Defining an $n$-tuple%: \texttt{tuple}
-}
-
+\paragraph{Defining an $n$-tuple.}
 To define an $n$-tuple (rather than a list of $n$ objects), you
 can put the elements, separated by commas, inside the delimiters
 \texttt{tuple[}\index{tuple@\texttt{tuple}} and \texttt{]}.
@@ -7378,9 +7353,7 @@ set[tuple[1,3,4],tuple[1,3,5],tuple[2,3,4]]
   \operatorname{tuple}\left[1,3,4\right],\operatorname{tuple}\left[1,3,5\right],\operatorname{tuple}\left[2,3,4\right]\rightsetbracket
 \end{xcasoutput}
 
-\subsubsection{The Cartesian product of two sets%: \texttt{*}
-}
-
+\paragraph{The Cartesian product of two sets.}
 You can compute the Cartesian product of two sets with the infixed
 \texttt{*}\index{*@\texttt{*}} operator.
 
@@ -8504,7 +8477,7 @@ isprime(14)
   \mathrm{false}
 \end{xcasoutput}
 
-use the command \texttt{pari("isprime",n,1)} (see
+Use the command \texttt{pari("isprime",n,1)} (see
 \secref{ssec:pari}) to get a primality certificate (see the
 documentation \PARI{} with the menu
 \textsf{Help\menusep{}Manuals\menusep{}PARI-GP})
@@ -9804,7 +9777,7 @@ multiplication, division and raising to a power.
 \end{xcasoutput}
 
 \paragraph*{Remark.}
-use the square key or the cube key if your keyboard has one;
+Use the square key or the cube key if your keyboard has one;
 for example, $3^2$ returns~9.
 
 \paragraph*{Remarks on non integral powers.}
@@ -10884,164 +10857,152 @@ and \secref{ssec:cusualinfix}.)
 \subsection{Special \xcas{} operators%: \texttt{\@} \texttt{\@\@} \texttt{\$} \texttt{\%}
   \label{ssec:xcasops}}
 
-\begin{itemize}
-\item
-  \texttt{\$}\index{\$@\texttt{\$}} is the infixed
-  version  of \texttt{seq} (see \secref{ssec:makeseq}).
-  For example (do not forget to put parenthesis around the arguments):
+\paragraph{Sequences.}
+\texttt{\$}\index{\$@\texttt{\$}} is the infixed
+version  of \texttt{seq} (see \secref{ssec:makeseq}).
+For example (do not forget to put parenthesis around the arguments):
 \begin{xcasinput}
 (2^k)$(k=0..3)
 \end{xcasinput}
-  or:
+or:
 \begin{xcasinput}
 seq(2^k,k=0..3)
 \end{xcasinput}
-  \begin{xcasoutput}
-    1,2,4,8
-  \end{xcasoutput}
-\item
-  \texttt{mod}\index{mod@\texttt{mod}} or
-  \texttt{\%}\index{\%@\texttt{\%}}
-  defines a modular number; $a \mod  n$ is
-  the equivalence class of $a$ in $\mathbb{Z}/n\mathbb{Z}$.
-  For example:
+\begin{xcasoutput}
+  1,2,4,8
+\end{xcasoutput}
+\paragraph{Modular numbers.}
+\texttt{mod}\index{mod@\texttt{mod}} or
+\texttt{\%}\index{\%@\texttt{\%}}
+defines a modular number; $a \mod  n$ is
+the equivalence class of $a$ in $\mathbb{Z}/n\mathbb{Z}$.
+For example:
 \begin{xcasinput}
 5 % 7
 \end{xcasinput}
-  or:
+or:
 \begin{xcasinput}
 5 mod 7
 \end{xcasinput}
-  \begin{xcasoutput}
-    \left(-2\right)\mathbin{\%}7
-  \end{xcasoutput}
-\item
-  \texttt{@}\index{\@@\texttt{\@}}
-  is used to compose functions; $(f$\texttt{@}$g)(x)=f(g(x))$.
-  For example:
+\begin{xcasoutput}
+  \left(-2\right)\mathbin{\%}7
+\end{xcasoutput}
+\paragraph{Function composition.}
+\texttt{@}\index{\@@\texttt{\@}}
+is used to compose functions; $(f$\texttt{@}$g)(x)=f(g(x))$.
+For example:
 \begin{xcasinput}
 (sin@exp)(x)
 \end{xcasinput}
-  \begin{xcasoutput}
-    \sin \left(\mathrm{e}^{x}\right)
-  \end{xcasoutput}
-\item
-  \texttt{@@}\index{\@\@@\texttt{\@\@}} is used to compose a function
-  with itself several times (like a power, replacing multiplication by
-  composition), e.g.~$(f$\texttt{@@}$3)(x)=f(f(f(x)))$.
-  For example:
+\begin{xcasoutput}
+  \sin \left(\mathrm{e}^{x}\right)
+\end{xcasoutput}
+\texttt{@@}\index{\@\@@\texttt{\@\@}} is used to compose a function
+with itself several times (like a power, replacing multiplication by
+composition), e.g.~$(f$\texttt{@@}$3)(x)=f(f(f(x)))$.
+For example:
 \begin{xcasinput}
 (sin@@4)(x)
 \end{xcasinput}
-  \begin{xcasoutput}
-    \sin \left(\sin \left(\sin \left(\sin x\right)\right)\right)
-  \end{xcasoutput}
-\item
-  \texttt{minus}, \texttt{union} and \texttt{intersect} return the difference, the union and the
-  intersection of two sets, respectively.  (See \secref{ssec:sets}).
-  For example:
+\begin{xcasoutput}
+  \sin \left(\sin \left(\sin \left(\sin x\right)\right)\right)
+\end{xcasoutput}
+\paragraph{Set operations.}
+\texttt{minus}, \texttt{union} and \texttt{intersect} return the difference, the union and the
+intersection of two sets, respectively.  (See \secref{ssec:sets}).
+For example:
 \begin{xcasinput}
-A:=set[1,2,3,4];
-B:=set[3,4,5,6];
+A:=set[1,2,3,4]:; B:=set[3,4,5,6]:;
 \end{xcasinput}
-  then:
+%then:
 \begin{xcasinput}
 A minus B
 \end{xcasinput}
-  \begin{xcasoutput}
-    \leftsetbracket 1,2\rightsetbracket
-  \end{xcasoutput}
+\begin{xcasoutput}
+  \leftsetbracket 1,2\rightsetbracket
+\end{xcasoutput}
 \begin{xcasinput}
 A union B
 \end{xcasinput}
-  \begin{xcasoutput}
-    \leftsetbracket 1,2,3,4,5,6\rightsetbracket
-  \end{xcasoutput}
-  then:
+\begin{xcasoutput}
+  \leftsetbracket 1,2,3,4,5,6\rightsetbracket
+\end{xcasoutput}
 \begin{xcasinput}
 A intersect B
 \end{xcasinput}
-  \begin{xcasoutput}
-    \leftsetbracket 3,4\rightsetbracket
-  \end{xcasoutput}
-\item
-  \texttt{->} is used to define a function, which can be assigned a name.
-  For example:
+\begin{xcasoutput}
+  \leftsetbracket 3,4\rightsetbracket
+\end{xcasoutput}
+\paragraph{Defining functions.}
+\texttt{->} is used to define a function, which can be assigned a name.
+For example:
 \begin{xcasinput}
 (x->x^2)(3)
 \end{xcasinput}
-  \begin{xcasoutput}
-    9
-  \end{xcasoutput}
+\begin{xcasoutput}
+  9
+\end{xcasoutput}
 \begin{xcasinput}
-f:=x->x^2
+f:=x->x^2:; f(3)
 \end{xcasinput}
-  then:
-\begin{xcasinput}
-f(3)
-\end{xcasinput}
-  \begin{xcasoutput}
-    9
-  \end{xcasoutput}
-\item
-  \texttt{=>} is the infixed version of \texttt{sto} (see
-  \secref{ssec:assign}) and so is used to  store an expression in a
-  variable.
-  For example:
+\begin{xcasoutput}
+  9
+\end{xcasoutput}
+\paragraph{Assignment.}
+\texttt{=>} is the infixed version of \texttt{sto} (see
+\secref{ssec:assign}) and so is used to  store an expression in a
+variable.
+For example:
 \begin{xcasinput}
 2=>a
 \end{xcasinput}
-  then:
-\begin{xcasinput}
-a
-\end{xcasinput}
-  \begin{xcasoutput}
-    2
-  \end{xcasoutput}
-\item
-  \texttt{:=} is used to store an expression in a variable, but the
-  variable comes first (the argument order is switched from \texttt{=>}).
-  For example:
+% then:
+% \begin{xcasinput}
+% a
+% \end{xcasinput}
+\begin{xcasoutput}
+  2
+\end{xcasoutput}
+\texttt{:=} is used to store an expression in a variable, but the
+variable comes first (the argument order is switched from \texttt{=>}).
+For example:
 \begin{xcasinput}
 a:=2
 \end{xcasinput}
-  then:
+% then:
+% \begin{xcasinput}
+% a
+% \end{xcasinput}
+\begin{xcasoutput}
+  2
+\end{xcasoutput}
+\texttt{=<} to store an expression in a variable, but the storage is
+done by reference if the target is a matrix element or a list element.
+This is faster if you modify objects inside an existing list or matrix
+of large size, because no copy is made, the change is done in place.
+Use with care, all objects pointing to this matrix or list will
+be modified.
+For example:
 \begin{xcasinput}
-a
+L:=[2,3]:; L2:=L:;
 \end{xcasinput}
-  \begin{xcasoutput}
-    2
-  \end{xcasoutput}
-\item
-  \texttt{=<} to store an expression in a variable, but the storage is
-  done by reference if the target is a matrix element or a list element.
-  This is faster if you modify objects inside an existing list or matrix
-  of large size, because no copy is made, the change is done in place.
-  Use with care, all objects pointing to this matrix or list will
-  be modified.
-  For example:
+then:
 \begin{xcasinput}
-L:=[2,3];
-L2:=L;
+L[0]=<5:;
 \end{xcasinput}
-  then:
+% and:
+% \begin{xcasinput}
+% L
+% \end{xcasinput}
+% \begin{xcasoutput}
+%   \left[5,3\right]
+% \end{xcasoutput}
 \begin{xcasinput}
-L[0]=<5
+L, L2
 \end{xcasinput}
-  and:
-\begin{xcasinput}
-L
-\end{xcasinput}
-  \begin{xcasoutput}
-    \left[5,3\right]
-  \end{xcasoutput}
-\begin{xcasinput}
-L2
-\end{xcasinput}
-  \begin{xcasoutput}
-    \left[5,3\right]
-  \end{xcasoutput}
-\end{itemize}
+\begin{xcasoutput}
+  \left[5,3\right],\left[5,3\right]
+\end{xcasoutput}
 
 \subsection{Defining custom operators%:  \texttt{user\_operator}
 }
@@ -11434,9 +11395,7 @@ op(pgcd)[2]
 
 \subsection{Context-dependent functions.}
 
-\subsubsection{The \texttt{+} operator
-  \label{sssec:contextplus}}
-
+\paragraph{The \texttt{+} operator.\label{sssec:contextplus}}
 The \texttt{+}\index{+@\texttt{+}} operator is infixed and
 \texttt{'+'} is its prefixed version.  The \texttt{+} operator
 will add numbers (see \secref{ssec:usualinfix}), concatenate strings (see
@@ -11540,9 +11499,7 @@ or:
   \text{``Hello''}
 \end{xcasoutput}
 
-\subsubsection{The \texttt{-}, \texttt{*} and \texttt{/} operators
-}
-
+\paragraph{The \texttt{-}, \texttt{*} and \texttt{/} operators.}
 The \texttt{-}\index{-@\texttt{-}}, \texttt{*}\index{*@\texttt{*}} and
 \texttt{/}\index{/@\texttt{/}} operators (and their
 prefixed versions \texttt{'-'}, \texttt{'*'} and \texttt{'/'}), like
@@ -12115,7 +12072,7 @@ logb(10.0,2)
   3.32192809489
 \end{xcasoutput}
 
-\subsubsection{Trigonometric functions}
+\paragraph{Trigonometric functions.}
 \begin{itemize}
 \item The \texttt{sin}\index{sin@\texttt{sin}} command is the sine function.
 \item The \texttt{cos}\index{cos@\texttt{cos}} command is the cosine function.
@@ -12229,7 +12186,7 @@ csc(30)
   2
 \end{xcasoutput}
 
-\subsubsection{Inverse trigonometric functions}
+\paragraph{Inverse trigonometric functions.}
 The \texttt{asin}\index{asin@\texttt{asin}},
 \texttt{acos}\index{acos@\texttt{acos}},
 \texttt{atan}\index{atan@\texttt{atan}},
@@ -12350,7 +12307,7 @@ acsc(2)
   30
 \end{xcasoutput}
 
-\subsubsection{Hyperbolic functions}
+\paragraph{Hyperbolic functions.}
 The \texttt{sinh}\index{sinh@\texttt{sinh}}, \texttt{cosh}\index{cosh@\texttt{cosh}},
 and \texttt{tanh}\index{tanh@\texttt{tanh}} commands compute the hyperbolic
 sine, hyperbolic cosine, and hyperbolic tangent functions.
@@ -12384,7 +12341,7 @@ tanh(-1.0)
   -0.761594155956
 \end{xcasoutput}
 
-\subsubsection{Inverse hyperbolic functions}
+\paragraph{Inverse hyperbolic functions.}
 The \texttt{asinh}\index{asinh@\texttt{asinh}},
 \texttt{acosh}\index{acosh@\texttt{acosh}}, and
 \texttt{atanh}\index{atanh@\texttt{atanh}} commands compute the inverse
@@ -12427,8 +12384,7 @@ atanh(1/2)
 
 \subsection{Defining algebraic functions}
 
-\subsubsection{Defining a function from $\mathbb{R}^{p}$ to $\mathbb{R}^{q}$}
-
+\paragraph{Defining a function from $\mathbb{R}^{p}$ to $\mathbb{R}^{q}$.}
 If \textit{expr} is an expression possibly involving a variable
 $x$, use it to define a function $f$ either by
 \begin{center}
@@ -12528,8 +12484,7 @@ h(2,pi/4)
   \left[\sqrt{2},\sqrt{2}\right]
 \end{xcasoutput}
 
-\subsubsection{Defining families of function from $\mathbb{R}^{p-1}$ to $\mathbb{R}^q$ using a function from $\mathbb{R}^p$ to $\mathbb{R}^q$}
-
+\paragraph{Defining families of function from $\mathbb{R}^{p-1}$ to $\mathbb{R}^q$ using a function from $\mathbb{R}^p$ to $\mathbb{R}^q$.}
 Suppose that the function $f: (x,y) \rightarrow f(x,y)$ is defined,
 and you want to define a family of functions $g(t)$ such that
 $g(t)(y):=f(t,y)$ (i.e.~$t$ is viewed as a parameter). Since the
@@ -16728,8 +16683,7 @@ variable used for the definition of \texttt{g}.
 \subsection{Natural splines%: \texttt{spline}
 }
 
-\subsubsection{Definition}
-
+\paragraph{Definition.}
 Let $\sigma_n$ be a subdivision of a real interval $[a,b]$:
 \[
   a=x_0,\quad x_1,\quad\ldots,\quad x_n=b.
@@ -16820,8 +16774,7 @@ It follows that the set of all possible $s$ is a real vector space of
 dimension $n+l$.
 \end{proof}
 
-\subsubsection{Types of spline functions}
-
+\paragraph{Types of spline functions.}
 If you want to interpolate a function $f$ on $\sigma_n$ by a spline
 function $s$ of degree $l$, then $s$ must satisfy $s(x_k)=y_k=f(x_k)$
 for all $0\leq k\leq n$. This gives $n+1$ conditions, leaving $l-1$
@@ -17098,7 +17051,7 @@ triginterp([11,10,17,24,32,26,23,19],x=0..21.0)
 The \texttt{fitpoly}\index{fitpoly@\texttt{fitpoly}} command is used
 for replacing tabular data or a function by a polynomial.
 
-\subsubsection{Smoothing data: polynomial regression}
+\paragraph{Smoothing data with polynomial regression.}
 \texttt{fitpoly} can be used for finding a polynomial that fits
 a given tabular data.
 \begin{itemize}
@@ -17187,7 +17140,7 @@ fitpoly(x,y,t=1..10,threshold=0.05)
 \end{xcasoutput}
 Alternatively, we could set the parameter \texttt{length} to a smaller value, e.g.~3.
 
-\subsubsection{Approximating functions by polynomials}
+\paragraph{Approximating functions by polynomials.}
 \texttt{fitpoly} can be used for approximating a continuous function
 $f:[a,b]\to\mathbb{R}$ by a polynomial $p_n$ of certain degree $n$ which
 minimizes the error in the sense of $L^2$-norm.
@@ -19761,40 +19714,37 @@ Since $\mathbb{Z}/p\mathbb{Z}$ is only a field if $p$ is prime, the
 quotient is only guaranteed to exist if $p$ is prime (unless the
 denominator is $0 \pmod{p}$).
 
-\begin{itemize}
-\item For integers in $\mathbb{Z}/p\mathbb{Z}$.
-
-  Since $13$ is prime:
+\paragraph{For integers in $\mathbb{Z}/p\mathbb{Z}$.}
+Since $13$ is prime:
 \begin{xcasinput}
 5%13/2%13
 \end{xcasinput}
-  \begin{xcasoutput}
-    \left(-4\right)\mathbin{\%}13
-  \end{xcasoutput}
-  Since $3\pmod{14}$ is invertible in $Z/14\mathbb{Z}$:
+\begin{xcasoutput}
+  \left(-4\right)\mathbin{\%}13
+\end{xcasoutput}
+Since $3\pmod{14}$ is invertible in $Z/14\mathbb{Z}$:
 \begin{xcasinput}
 5%14/3%14
 \end{xcasinput}
-  \begin{xcasoutput}
-    \left(-3\right)\mathbin{\%}14
-  \end{xcasoutput}
-  Since $7\pmod{14}$ is not invertible in $Z/14\mathbb{Z}$, this results in an error:
+\begin{xcasoutput}
+  \left(-3\right)\mathbin{\%}14
+\end{xcasoutput}
+Since $7\pmod{14}$ is not invertible in $Z/14\mathbb{Z}$, this results in an error:
 \begin{xcasinput}
 5%14/7%14
 \end{xcasinput}
-  \begin{xcasoutput}
-    \text{Not invertible Error: Bad Argument Value}
-  \end{xcasoutput}
+\begin{xcasoutput}
+  \text{Not invertible Error: Bad Argument Value}
+\end{xcasoutput}
 
-\item For polynomials, the result of $P/Q$ is its irreducible
-  representation in $\mathbb{Z}/p\mathbb{Z}[x]$:
+\paragraph{For polynomials.}
+The result of $P/Q$ is its irreducible representation in $\mathbb{Z}/p\mathbb{Z}[x]$:
 \begin{xcasinput}
 (2*x^2+5)%13/(5*x^2+2*x-3)%13
 \end{xcasinput}
-  \begin{xcasoutput}
-    \frac{\left(6\mathbin{\%}13\right) x+1\mathbin{\%}13}{\left(2\mathbin{\%}13\right) x+\left(2\mathbin{\%}13\right)\mathbin{\%}13}
-  \end{xcasoutput}
-\end{itemize}
+\begin{xcasoutput}
+  \frac{\left(6\mathbin{\%}13\right) x+1\mathbin{\%}13}{\left(2\mathbin{\%}13\right) x+\left(2\mathbin{\%}13\right)\mathbin{\%}13}
+\end{xcasoutput}
 
 \subsection{Power in $\mathbb{Z}/p\mathbb{Z}$ and in $\mathbb{Z}/p\mathbb{Z}[x]$%: \texttt{\^{}}}
 }
@@ -24848,9 +24798,7 @@ A:=[[1,2,6],[3,4,8],[1,0,1]]
 
 \subsection{Special matrices}
 
-\subsubsection{Identity matrix%: \texttt{idn} \texttt{identity}
-}
-
+\paragraph{Identity matrix.}
 The \texttt{idn}\index{idn@\texttt{idn}} or
 \texttt{identity}\index{identity@\texttt{identity}}
 command creates identity matrices.
@@ -24877,9 +24825,7 @@ idn([[2,3],[4,5]]
   \begin{bmatrix}1&0\\0&1\end{bmatrix}
 \end{xcasoutput}
 
-\subsubsection{Zero matrix%: \texttt{newMat}
-}
-
+\paragraph{Zero matrix.}
 The \texttt{newMat}\index{newMat@\texttt{newMat}}
 command creates a matrix of all zeros.
 \begin{itemize}
@@ -24896,9 +24842,7 @@ newMat(4,4)
   \begin{bmatrix}0&0&0&0\\0&0&0&0\\0&0&0&0\\0&0&0&0\end{bmatrix}
 \end{xcasoutput}
 
-\subsubsection{Diagonals of matrices and diagonal matrices%: \texttt{BlockDiagonal} \texttt{diag}
-  \label{ssec:diag}}
-
+\paragraph{Diagonals of matrices and diagonal matrices.\label{ssec:diag}}
 The \texttt{diag}\index{diag@\texttt{diag}} or
 \texttt{BlockDiagonal}\index{BlockDiagonal@\texttt{BlockDiagonal}}
 command either creates a diagonal matrix or finds
@@ -24927,9 +24871,7 @@ diag([[1,2],[3,4]])
   \left[1,4\right]
 \end{xcasoutput}
 
-\subsubsection{Jordan blocks%: \texttt{JordanBlock}
-}
-
+\paragraph{Jordan blocks.}
 The \texttt{JordanBlock}\index{JordanBlock@\texttt{JordanBlock}} command
 creates a Jordan block, i.e.~a square matrix with the same value for all diagonal
 elements, ones just above the diagonal, and zeros everywhere else.
@@ -24952,9 +24894,7 @@ JordanBlock(7,3)
   \begin{bmatrix}7&1&0\\0&7&1\\0&0&7\end{bmatrix}
 \end{xcasoutput}
 
-\subsubsection{Hilbert matrix% \texttt{hilbert}
-}
-
+\paragraph{Hilbert matrix.}
 A Hilbert matrix\index{hilbert@\texttt{hilbert}}
 is a square matrix whose element in the $i$th row and
 $j$th column (recall that the indices are zero-based) is
@@ -24976,9 +24916,7 @@ hilbert(4)
   \begin{bmatrix}1&\frac{1}{2}&\frac{1}{3}&\frac{1}{4}\\\frac{1}{2}&\frac{1}{3}&\frac{1}{4}&\frac{1}{5}\\\frac{1}{3}&\frac{1}{4}&\frac{1}{5}&\frac{1}{6}\\\frac{1}{4}&\frac{1}{5}&\frac{1}{6}&\frac{1}{7}\end{bmatrix}
 \end{xcasoutput}
 
-\subsubsection{Vandermonde matrix%: \texttt{vandermonde}
-}
-
+\paragraph{Vandermonde matrix.}
 A Vandermonde matrix is a square matrix where each row starts with a 1
 and is in geometric progression.
 The \texttt{vandermonde}\index{vandermonde@\texttt{vandermonde}} command
@@ -25006,11 +24944,9 @@ vandermonde([a,2,3])
 
 \subsection{Combining matrices}
 
-\subsubsection{Making a matrix with a list of matrices%: \texttt{blockmatrix}
-}
-
+\paragraph{Making a matrix with a list of matrices.}
 The \texttt{blockmatrix}\index{blockmatrix@\texttt{blockmatrix}}
-combines several matrices into one larger matrix.
+command combines several matrices into one larger matrix.
 \begin{itemize}
 \item \texttt{blockmatrix} takes three arguments:
   \begin{itemize}
@@ -25027,8 +24963,8 @@ combines several matrices into one larger matrix.
   each other, and stacking the resulting $n$ matrices on top of each
   other.
  
-  If the matrices in $L$ each have the same dimension $p \times q$,
-  the result will be a matrix with dimension $p n \times q m$.
+%   If the matrices in $L$ each have the same dimension $p \times q$,
+%   the result will be a matrix with dimension $p n \times q m$.
 \end{itemize}
 
 \subsubsection*{Examples}
@@ -25064,9 +25000,7 @@ blockmatrix(2,3,[2*A,3*A,4*A,5*B,newMat(2,4),6*B])
   \begin{bmatrix}2&2&3&3&4&4\\2&2&3&3&4&4\\5&0&0&0&0&6\\5&0&0&0&0&6\end{bmatrix}
 \end{xcasoutput}
 
-\subsubsection{Making a matrix by concatenating columns of two matrices%: \texttt{semi\_augment}
-}
-
+\paragraph{Making a matrix by concatenating columns of two matrices.}
 The \texttt{semi\_augment}\index{semi\_augment@\texttt{semi\_augment}}
 command concatenates two matrices with the same number of columns.
 \begin{itemize}
@@ -25113,9 +25047,7 @@ concat([[3,4],[2,1]],[[1,2],[4,5]]
   \begin{bmatrix}3&4&1&2\\2&1&4&5\end{bmatrix}
 \end{xcasoutput}
 
-\subsubsection{Making a matrix by gluing two matrices together%: \texttt{augment} \texttt{concat}
-}
-
+\paragraph{Making a matrix by gluing two matrices together.}
 The \texttt{augment}\index{augment@\texttt{augment}}
 or \texttt{concat}\index{concat@\texttt{concat}}
 command glues two matrices, either side by side
@@ -25162,9 +25094,7 @@ augment([[3,4,2]],[[1,2,4]]
   \begin{bmatrix}3&4&2&1&2&4\end{bmatrix}
 \end{xcasoutput}
 
-\subsubsection{Appending a column to a matrix%: \texttt{border}
-}
-
+\paragraph{Appending a column to a matrix.}
 The \texttt{border}\index{border@\texttt{border}}
 command adds a column to a matrix.
 \begin{itemize}
@@ -25196,7 +25126,7 @@ border([[1,2,3,4],[4,5,6,8],[7,8,9,10]],[1,3,5])
 \subsection{Creating a matrix with a formula or function%: \texttt{makemat} \texttt{matrix}
   \label{ssec:matrixcommand}}
 
-use a function or a formula to specify the elements of a
+Use a function or a formula to specify the elements of a
 matrix with the \texttt{makemat}\index{makemat@\texttt{makemat}}
 or \texttt{matrix}\index{matrix@\texttt{matrix}} command.
 
@@ -25215,9 +25145,7 @@ or \texttt{matrix}\index{matrix@\texttt{matrix}} command.
 
 The \texttt{matrix} command can be used similarly, but note that the
 arguments are given in a different order and the indices start at 1.
-
-(\texttt{matrix} can also be used to turn tables into matrices; see
-\secref{ssec:spmatrices}.)
+(See \secref{ssec:spmatrices} for other uses of \texttt{matrix}.)
 \begin{itemize}
 \item \texttt{matrix} takes two mandatory arguments and one optional
   argument:
@@ -25267,9 +25195,7 @@ matrix(4,3,h)
 
 \subsection{Getting the parts of a matrix}
 
-\subsubsection{Accessing rows of a matrix%: \texttt{[]} \texttt{at}
-}
-
+\paragraph{Accessing rows of a matrix.}
 The rows of a matrix are the elements of a list, and can be accessed
 with indices using the postfix \texttt{[\ldots]}\index{[]@\texttt{[]}} or the prefix
 \texttt{at}\index{at@\texttt{at}} (see \secref{ssec:getels}).
@@ -25328,7 +25254,7 @@ A[[1,2]]
 \begin{xcasoutput}
   2
 \end{xcasoutput}
-use a range (see \secref{ssec:range}) of indices to get submatrices.
+Use a range (see \secref{ssec:range}) of indices to get submatrices.
 Some examples:
 \begin{xcasinput}
 A[1,0..2]
@@ -25377,9 +25303,7 @@ A[1,-1]
   8
 \end{xcasoutput}
 
-\subsubsection{Extracting rows or columns of a matrix (\Maple{} compatibility)%: \texttt{row} \texttt{col}
-}
-
+\paragraph{Extracting rows or columns of a matrix (\Maple{} compatibility).}
 The \texttt{row}\index{row@\texttt{row}}
 (resp.~\texttt{col}\index{col@\texttt{col}}) command extracts one or several
 rows (resp.~columns) of a matrix.
@@ -25427,9 +25351,7 @@ col([[1,2,3],[4,5,6],[7,8,9]],0..1)
   \left[1,4,7\right],\left[2,5,8\right]
 \end{xcasoutput}
 
-\subsubsection{Extracting a sub-matrix of a matrix (\TI{} compatibility)%: \texttt{subMat}
-}
-
+\paragraph{Extracting a sub-matrix of a matrix (\TI{} compatibility).}
 The \texttt{subMat}\index{subMat@\texttt{subMat}} command finds submatrices of a matrix.
 \begin{itemize}
 \item \texttt{subMat} takes one mandatory argument and four optional arguments:
@@ -25490,9 +25412,7 @@ subMat(A,1,0,1,2)
 
 \subsection{Modifying matrices}
 
-\subsubsection{Modifying matrix elements by assignment%: \texttt{:=}
-}
-
+\paragraph{Modifying matrix elements by assignment.}
 You can change the elements of a named matrix by assignment
 (see \secref{ssec:assign}).\index{:=@\texttt{:=}}
 For example:
@@ -25501,8 +25421,7 @@ A:=[[1,2,6],[3,4,8],[1,0,1]]
 \end{xcasinput}
 then:
 \begin{xcasinput}
-A[0,1]:=5:;
-A
+A[0,1]:=5:; A
 \end{xcasinput}
 \begin{xcasoutput}
   \begin{bmatrix}1&5&6\\3&4&8\\1&0&1\end{bmatrix}
@@ -25510,13 +25429,12 @@ A
 Recall that the elements are indexed starting at 0, using double
 brackets allows you to use indices starting at 1.
 \begin{xcasinput}
-A[[1,2]]:=7:;
-A 
+A[[1,2]]:=7:; A 
 \end{xcasinput}
 \begin{xcasoutput}
   \begin{bmatrix}1&7&6\\3&4&8\\1&0&1\end{bmatrix}
 \end{xcasoutput}
-use assignment to change several entries of a matrix at one.
+Use assignment to change several entries of a matrix at one.
 For example, create a diagonal matrix with a diagonal of \texttt{[1,2,3]}:
 \begin{xcasinput}
 M:=matrix(3,3)
@@ -25538,9 +25456,7 @@ M[0..2,2]:=[4,5,6]
   \begin{bmatrix}1&0&4\\0&2&5\\0&0&6\end{bmatrix}
 \end{xcasoutput}
 
-\subsubsection{Modifying matrix elements by reference%: \texttt{::=} \texttt{=<}
-}
-
+\paragraph{Modifying matrix elements by reference.}
 When you change an element of a matrix with the \texttt{:=}
 assignment, a new copy of the matrix is created with the modified
 element.  Particularly for large matrices, it is more efficient to use
@@ -25602,7 +25518,6 @@ modifies a matrix \texttt{A}, it modifies all objects pointing to
 \texttt{A:=copy(B)} (see \secref{ssec:copy}) so modifications done on
 \texttt{A} do not affect \texttt{B}, and modifications done on
 \texttt{B} do not affect \texttt{A}.
-For example:
 \begin{xcasinput}
 B:=[[4,5],[2,6]]
 \end{xcasinput}
@@ -25626,8 +25541,7 @@ transforms both \texttt{A} and \texttt{B} to
 $\begin{bmatrix}4&5\\3&7\end{bmatrix}$.
 On the other hand, creating \texttt{A} and \texttt{B} with:
 \begin{xcasinput}
-B:=[[4,5],[2,6]];
-A:=copy(B)
+B:=[[4,5],[2,6]]; A:=copy(B)
 \end{xcasinput}
 will again create two matrices equal to
 $\begin{bmatrix}4&5\\2&6\end{bmatrix}$.
@@ -25640,9 +25554,7 @@ $\begin{bmatrix}4&5\\3&7\end{bmatrix}$,
 while \texttt{B} will still be equal to
 $\begin{bmatrix}4&5\\2&6\end{bmatrix}$.
 
-\subsubsection{Modifying an element or a row of a matrix%: \texttt{subsop}
-}
-
+\paragraph{Modifying an element or a row of a matrix.}
 The \texttt{subsop}\index{subsop@\texttt{subsop}} command modifies elements of lists (see
 \secref{ssec:subsoplist}), and so use it to modify elements or rows of matrices.
 It is used mainly for \Maple{} and \MuPAD{} compatibility,
@@ -25655,10 +25567,8 @@ Let \texttt{A} be the matrix given by:
 A:=[[4,5],[2,6]]
 \end{xcasinput}
 We use this variable in the examples that follow.
-
-\paragraph{In \xcas{}, \MuPAD{} and \TI{} modes:}
-Recall that the indexing in \xcas{} mode begins with 0, while in
-\MuPAD{} and \TI{} modes it begins with 1.
+(Recall that the indexing in \xcas{} mode begins with 0, while in
+\MuPAD{} and \TI{} modes it begins with 1.)
 
 \begin{itemize}
 \item To modify an element, \texttt{subsop} takes two arguments:
@@ -25790,9 +25700,7 @@ subsop(A,'1=NULL')
   \begin{bmatrix}4&5\end{bmatrix}
 \end{xcasoutput}
 
-\subsubsection{Removing rows or columns of a matrix%: \texttt{delrows} \texttt{delcols}
-}
-
+\paragraph{Removing rows or columns of a matrix.}
 The \texttt{delrows}\index{delrows@\texttt{delrows}}
 (resp.~\texttt{delcols}\index{delcols@\texttt{delcols}}) command removes
 one or more rows (resp.~columns) from a matrix.
@@ -25805,11 +25713,11 @@ one or more rows (resp.~columns) from a matrix.
   \end{itemize}
 \item \texttt{delrows($A,r$)} returns the matrix equal to $A$ with
   the row(s) given by $r$ removed.
-\end{itemize}
-
-The \texttt{delcols} command behaves like \texttt{delrows}, but for
-columns.
-\begin{itemize}
+% \end{itemize}
+%
+% The \texttt{delcols} command behaves like \texttt{delrows}, but for
+% columns.
+% \begin{itemize}
 \item \texttt{delcols} takes two arguments:
   \begin{itemize}
   \item $A$, a matrix.
@@ -25845,9 +25753,7 @@ delcols([[1,2,3],[4,5,6],[7,8,9]],0..1)
   \begin{bmatrix}3\\6\\9\end{bmatrix}
 \end{xcasoutput}
 
-\subsubsection{Resizing a matrix or vector%: \texttt{REDIM} \texttt{redim}
-}
-
+\paragraph{Resizing a matrix or vector.}
 The \texttt{REDIM}\index{REDIM@\texttt{REDIM}} or
 \texttt{redim}\index{redim@\texttt{redim}}
 command resizes matrices and vectors.
@@ -25897,9 +25803,7 @@ REDIM([4,1,-2,1,2,-1],3)
   \left[4,1,-2\right]
 \end{xcasoutput}
 
-\subsubsection{Replacing part of a matrix or vector%: \texttt{REPLACE} \texttt{replace}
-}
-
+\paragraph{Replacing part of a matrix or vector.}
 The \texttt{REPLACE}\index{REPLACE@\texttt{REPLACE}}
 or \texttt{replace}\index{replace@\texttt{replace}}
 command replaces part of a matrix or vector.
@@ -25953,9 +25857,7 @@ REPLACE([4,1,-2,1,2,-1],1,[10,11,13])
   \left[4,10,11,13,2,-1\right]
 \end{xcasoutput}
 
-\subsubsection{Applying a function to the elements of a matrix%: \texttt{apply}
-  \label{ssec:applymat}}
-
+\paragraph{Applying a function to the elements of a matrix.\label{ssec:applymat}}
 The \texttt{apply}\index{apply@\texttt{apply}} command can apply a function to the elements of a
 matrix.  (See \secref{ssec:applymap} for other uses of \texttt{apply}.)
 \begin{itemize}
@@ -25982,22 +25884,20 @@ apply(x->x^2,[[1,2,3],[4,5,6]],matrix)
 \subsection{Matrix evaluation%: \texttt{evalm}
 }
 
-The \texttt{evalm}\index{evalm@\texttt{evalm}} command is used in \Maple{} to evaluate a
-matrix.  In \xcas{}, matrices are evaluated by default, the
-command \texttt{evalm} is only available for compatibility, it is
-equivalent to \texttt{eval} (see \secref{ssec:eval}).
+In \Maple{}, \texttt{evalm} is used for matrix evaluation.
+In \xcas{}, matrices are evaluated by default, the
+command \texttt{evalm}\index{evalm@\texttt{evalm}}
+is only available for compatibility (it is
+equivalent to \texttt{eval}, see \secref{ssec:eval}).
 
 \subsection{Addition and subtraction of two matrices%: \texttt{+} \texttt{-} \texttt{.+} \texttt{.-}
 }
 
-The infixed operators \texttt{+}\index{+@\texttt{+}} and
-\texttt{.+}\index{.+@\texttt{.+}} (resp. \texttt{-}\index{-@\texttt{-}} and
-\texttt{.-}\index{.-@\texttt{.-}}) are used for the addition (resp. subtraction) of two
-matrices.
-
-\paragraph*{Remark.}
-\texttt{+} and \texttt{-}  can be used as prefixed operators; in this
-case they must be quoted, \texttt{'+'} and \texttt{'-'}
+The infixed operator \texttt{+}\index{+@\texttt{+}} or
+\texttt{.+}\index{.+@\texttt{.+}} (resp. \texttt{-}\index{-@\texttt{-}} or
+\texttt{.-}\index{.-@\texttt{.-}}) is used for matrix addition (resp. subtraction).
+Note that \texttt{+} and \texttt{-} can also be used as prefixed operators, in which
+case they must be quoted, like \texttt{'+'} and \texttt{'-'}
 (see \secref{ssec:pluslists} and \secref{ssec:minuslists}).
 
 \subsubsection*{Examples}
@@ -26203,9 +26103,7 @@ element of $A$ raised to the $b$th power.
 
 \subsection{Elementary row operations}
 
-\subsubsection{Adding a row to another row%: \texttt{rowAdd}
-}
-
+\paragraph{Adding a row to another row.}
 The \texttt{rowAdd}\index{rowAdd@\texttt{rowAdd}} command adds one row of a matrix to another row.
 \begin{itemize}
 \item \texttt{rowAdd} takes three arguments:
@@ -26226,9 +26124,7 @@ rowAdd([[1,2],[3,4]],0,1)
   \begin{bmatrix}1&2\\4&6\end{bmatrix}
 \end{xcasoutput}
 
-\subsubsection{Multiplying a row by an expression%: \texttt{mRow} \texttt{scale} \texttt{SCALE}
-}
-
+\paragraph{Multiplying a row by an expression.}
 The \texttt{mRow}\index{mRow@\texttt{mRow}},
 \texttt{scale}\index{scale@\texttt{scale}} and
 \texttt{SCALE}\index{SCALE@\texttt{SCALE}} commands multiply
@@ -26247,8 +26143,8 @@ a row of a matrix by an expression.
 \end{itemize}
 
 The \texttt{scale} or \texttt{SCALE}
-command is the same as \texttt{mRow} except that it
-takes the arguments in a different order.
+command is similar to \texttt{mRow} except for a different
+order of arguments.
 \begin{itemize}
 \item \texttt{scale} takes three arguments:
   \begin{itemize}
@@ -26275,9 +26171,7 @@ scale([[1,2],[3,4]],12,1)
   \begin{bmatrix}1&2\\36&48\end{bmatrix}
 \end{xcasoutput}
 
-\subsubsection{Adding $k$ times a row to an another row%: \texttt{mRowAdd} \texttt{scaleadd} \texttt{SCALEADD}
-}
-
+\paragraph{Adding $k$ times a row to an another row.}
 The \texttt{mRowAdd}\index{mRowAdd@\texttt{mRowAdd}},
 \texttt{scaleadd}\index{scaleadd@\texttt{scaleadd}} and
 \texttt{SCALEADD}\index{SCALEADD@\texttt{SCALEADD}} commands
@@ -26296,8 +26190,8 @@ add a multiple of one row of a matrix to another.
 \end{itemize}
 
 The \texttt{scaleadd} or \texttt{SCALEADD}
-command is the same as \texttt{mRowAdd} except
-that it takes the arguments in a different order.
+command is similar \texttt{mRowAdd} except
+for a different order of arguments.
 \begin{itemize}
 \item \texttt{scaleadd} takes four arguments:
   \begin{itemize}
@@ -26324,9 +26218,7 @@ scaleadd([[5,7],[3,4],[1,2]],1.1,1,2)
   \begin{bmatrix}5&7\\3&4\\4.3&6.4\end{bmatrix}
 \end{xcasoutput}
 
-\subsubsection{Exchanging two rows%: \texttt{rowSwap} \texttt{rowswap} \texttt{swaprow}
-}
-
+\paragraph{Exchanging two rows.}
 The \texttt{rowSwap}\index{rowSwap@\texttt{rowSwap}} or
 \texttt{rowswap}\index{rowswap@\texttt{rowswap}} or
 \texttt{swaprow}\index{swaprow@\texttt{swaprow}}
@@ -26350,9 +26242,7 @@ rowSwap([[1,2],[3,4]],0,1)
   \begin{bmatrix}3&4\\1&2\end{bmatrix}
 \end{xcasoutput}
 
-\subsubsection{Exchanging two columns%: \texttt{colSwap} \texttt{colswap} \texttt{swapcol}
-}
-
+\paragraph{Exchanging two columns.}
 The \texttt{colSwap}\index{colSwap@\texttt{colSwap}} or
 \texttt{colswap}\index{colswap@\texttt{colswap}} or
 \texttt{swapcol}\index{swapcol@\texttt{swapcol}}
@@ -26380,8 +26270,8 @@ colSwap([[1,2],[3,4]],0,1)
 }
 
 The \texttt{count}\index{count@\texttt{count}} applies a function to the elements of a matrix or
-list and adds the result.  Hence, if the function is a boolean function, then
-\texttt{count} will count the number of elements satifying the
+list and adds up the obtained values.  In particular, if the function returns a boolean, then
+\texttt{count} returns the number of elements satifying the
 property that the function tests for.
 \begin{itemize}
 \item \texttt{count} takes two arguments:
@@ -26543,12 +26433,77 @@ coldim([[1,2,3],[3,4,5]])
 
 \section{Sparse matrices}
 
+\subsection{Tables%: \texttt{table}
+  \label{ssec:table}}
+
+A \emph{table} is a map (associative container) used to store
+information associated to indices which are much more general than
+integers, such as  strings or sequences. For example, use one to
+store a table of phone numbers indexed by names.
+
+In \xcas{}, the indices in a table may be any kind of \xcas{} objects.
+Access is done by a binary search algorithm, where the sorting
+function first sorts by type and then uses an order for each type
+(e.g.~$<$ for numeric types, lexicographic order for strings, etc.)
+
+The \texttt{table}\index{table@\texttt{table}} command creates a table.
+\begin{itemize}
+\item \texttt{table} takes \textit{seq}, a list or sequence of equalities
+  of the form \textit{key}\texttt{=}\textit{value}.
+\item \texttt{table(}\textit{seq}\texttt{)} returns a table.  The
+  elements of the table can be retrieved using index bracket notation.
+  If $T$ is the name of the table, then $T$\texttt{[}\textit{key}\texttt{]}
+  returns \textit{value}.
+\end{itemize}
+
+Tables can also be created and the elements of a table can be changed by using
+the \texttt{:=} assignment.
+\begin{itemize}
+\item If \texttt{T} is a symbolic variable, then
+  \texttt{T[}\textit{key}\texttt{]:=}\textit{value}
+  creates a table \texttt{T} with one element.
+\item If $n$ is an integer, then the assignment
+  \texttt{T[$n$]:=}\textit{obj} will do the following:
+  \begin{itemize}
+  \item If the variable \texttt{T} was assigned to a list or a sequence,
+    then the $n$th element of \texttt{T} is modified.
+  \item If the variable \texttt{T} was not assigned, a table \texttt{T}
+    is created with one entry (corresponding to the index $n$). Note
+    that after the assignment \texttt{T} is not a list, despite the fact that $n$
+    is an integer.
+  \end{itemize}
+\end{itemize}
+
+\subsubsection*{Example}
+\begin{xcasinput}
+T:=table(3=-10,"a"=10,"b"=20,"c"=30,"d"=40):;
+\end{xcasinput}
+\begin{xcasinput}
+T["b"]
+\end{xcasinput}
+\begin{xcasoutput}
+  20
+\end{xcasoutput}
+\begin{xcasinput}
+T[3]
+\end{xcasinput}
+\begin{xcasoutput}
+  -10
+\end{xcasoutput}
+\begin{xcasinput}
+T[3]:=-15:;
+T[3]
+\end{xcasinput}
+\begin{xcasoutput}
+  -15
+\end{xcasoutput}
+
 \subsection{Defining sparse matrices
   \label{ssec:spmatrices}}
 
 A matrix is \emph{sparse} if most of its elements are 0.  To specify a
 sparse matrix, it is easier to define the non-zero elements.
-This can be done with a table (see \secref{sec:table}).
+This can be done with a table (see \secref{ssec:table}).
 The \texttt{matrix} command (see \secref{ssec:matrixcommand}) or the
 \texttt{convert} command (see \secref{ssec:convert}) can then
 turn the table into a matrix.
@@ -26635,182 +26590,99 @@ Let $L$ be a list.
 \item\index{mean}
   \texttt{mean($L$)} computes the arithmetic mean of a list.
   \index{mean@\texttt{mean}}
-  For example:
-\begin{xcasinput}
-mean([3,4,2])
-\end{xcasinput}
-  \begin{xcasoutput}
-    3
-  \end{xcasoutput}
-\begin{xcasinput}
-mean([1,0,1])
-\end{xcasinput}
-  \begin{xcasoutput}
-    \frac{2}{3}
-  \end{xcasoutput}
-
 \item\index{standard deviation}
   \index{standard deviation!of a sample}
-  \texttt{stddev($L$} computes the standard deviation of a population,
+  \texttt{stddev($L$)} computes the standard deviation of a population,
   for the population $L$.\index{stddev@\texttt{stddev}}
-  For example:
-\begin{xcasinput}
-stddev([3,4,2])
-\end{xcasinput}
-  \begin{xcasoutput}
-    \frac{\sqrt{6}}{3}
-  \end{xcasoutput}
-
 \item\index{standard deviation!of the population}
   \texttt{stddevp($L$)} computes an unbiased estimate of
   the standard deviation of the population for the sample $L$.
   The following relation holds:\index{stddevp@\texttt{stddevp}}
   \[
-    \operatorname{stddevp}(L)^2=\frac{\operatorname{size}(L)\cdot\operatorname{stddev}(L)^2}{\operatorname{size}(L)-1}
+    \texttt{stddevp}(L)^2=\frac{\texttt{size}(L)\cdot\texttt{stddev}(L)^2}{\texttt{size}(L)-1}
   \]
-  For example:
-\begin{xcasinput}
-stddevp([3,4,2])
-\end{xcasinput}
-  \begin{xcasoutput}
-    1
-  \end{xcasoutput}
-
 \item\index{variance}
   \texttt{variance($L$)} computes the variance of $L$, which is
   the square of \texttt{stddevp($L$)}.\index{variance@\texttt{variance}}
-  For example:
-\begin{xcasinput}
-variance([3,4,2])
-\end{xcasinput}
-  \begin{xcasoutput}
-    \frac{2}{3}
-  \end{xcasoutput}
-
 \item\index{median}
   \texttt{median($L$)} computes the median of $L$.
   \index{median@\texttt{median}}
-  For example:
-\begin{xcasinput}
-median([0,1,3,4,2,5,6])
-\end{xcasinput}
-  \begin{xcasoutput}
-    3.0
-  \end{xcasoutput}
-
 \item\index{quantiles}
   \texttt{quantile($L,d$)} computes the deciles of $L$,
   where $d$ is the decile.\index{quantile@\texttt{quantile}}
-  For example, to obtain the first quartile:
-\begin{xcasinput}
-quantile([0,1,3,4,2,5,6],0.25)
-\end{xcasinput}
-  \begin{xcasoutput}
-    1.0
-  \end{xcasoutput}
-  To obtain the median:
-\begin{xcasinput}
-quantile([0,1,3,4,2,5,6],0.5)
-\end{xcasinput}
-  \begin{xcasoutput}
-    3.0
-  \end{xcasoutput}
-  To obtain the third quantile:
-\begin{xcasinput}
-quantile([0,1,3,4,2,5,6],0.75)
-\end{xcasinput}
-  \begin{xcasoutput}
-    5.0
-  \end{xcasoutput}
-
 \item\index{quartiles}
   \texttt{quartiles($L$)} returns a list consisting of the minimum,
   the first quartile, the median, the third quartile and the maximum of
   $L$.\index{quartiles@\texttt{quartiles}}
-  For example:
-\begin{xcasinput}
-quartiles([0,1,3,4,2,5,6])
-\end{xcasinput}
-  \begin{xcasoutput}
-    \begin{bmatrix}0.0\\1.0\\3.0\\5.0\\6.0\end{bmatrix}
-  \end{xcasoutput}
-
 \item\index{whisker box}
   \texttt{boxwhisker($L$)} draws the whisker box of a statistics series
   stored in $L$.\index{boxwhisker@\texttt{boxwhisker}}
-  For example:
-\begin{xcasinput}
-boxwhisker([0,1,3,4,2,5,6])
-\end{xcasinput}
-  \begin{xcasimage}
-    \includeimage{xcas-whiskerlist.png}
-  \end{xcasimage}
 \end{itemize}
 
 \subsubsection*{Examples}
-Define the list \texttt{A} by:
 \begin{xcasinput}
-A:=[0,1,2,3,4,5,6,7,8,9,10,11]:;
-\end{xcasinput}
-Then:
-\begin{xcasinput}
-mean(A)
+mean([3,4,2])
 \end{xcasinput}
 \begin{xcasoutput}
-  \frac{11}{2}
+  3
 \end{xcasoutput}
 \begin{xcasinput}
-stddev(A)
+stddev([3,4,2])
 \end{xcasinput}
 \begin{xcasoutput}
-  \frac{2}{12} \sqrt{429}
+  \frac{\sqrt{6}}{3}
 \end{xcasoutput}
 \begin{xcasinput}
-quantile(A,0.1)
+stddevp([3,4,2])
+\end{xcasinput}
+\begin{xcasoutput}
+  1
+\end{xcasoutput}
+\begin{xcasinput}
+variance([3,4,2])
+\end{xcasinput}
+\begin{xcasoutput}
+  \frac{2}{3}
+\end{xcasoutput}
+\begin{xcasinput}
+median([0,1,3,4,2,5,6])
+\end{xcasinput}
+\begin{xcasoutput}
+  3.0
+\end{xcasoutput}
+To obtain the first quartile:
+\begin{xcasinput}
+quantile([0,1,3,4,2,5,6],0.25)
 \end{xcasinput}
 \begin{xcasoutput}
   1.0
 \end{xcasoutput}
+To obtain the median:
 \begin{xcasinput}
-quantile(A,0.25)
+quantile([0,1,3,4,2,5,6],0.5)
 \end{xcasinput}
 \begin{xcasoutput}
-  2.0
+  3.0
 \end{xcasoutput}
+To obtain the third quantile:
 \begin{xcasinput}
-median(A)
-\end{xcasinput}
-or:
-\begin{xcasinput}
-quantile(A,0.5)
+quantile([0,1,3,4,2,5,6],0.75)
 \end{xcasinput}
 \begin{xcasoutput}
   5.0
 \end{xcasoutput}
 \begin{xcasinput}
-quantile(A,0.75)
+quartiles([0,1,3,4,2,5,6])
 \end{xcasinput}
 \begin{xcasoutput}
-  8.0
+  \begin{bmatrix}0.0\\1.0\\3.0\\5.0\\6.0\end{bmatrix}
 \end{xcasoutput}
 \begin{xcasinput}
-quantile(A,0.9)
+boxwhisker([0,1,3,4,2,5,6])
 \end{xcasinput}
-\begin{xcasoutput}
-  10.0
-\end{xcasoutput}
-\begin{xcasinput}
-max(A)
-\end{xcasinput}
-\begin{xcasoutput}
-  11
-\end{xcasoutput}
-\begin{xcasinput}
-quartiles(A)
-\end{xcasinput}
-\begin{xcasoutput}
-  \begin{bmatrix}0.0\\2.0\\5.0\\8.0\\11.0\end{bmatrix}
-\end{xcasoutput}
+\begin{xcasimage}
+  \includeimage{xcas-whiskerlist.png}
+\end{xcasimage}
 
 \subsection{Matrices\label{ssec:matstat}}
 
@@ -26822,185 +26694,119 @@ Let $A$ be a matrix.
 \item\index{mean}
   \texttt{mean($A$)} computes the arithmetic means of the columns of the
   matrix $A$.
-  For example:
-\begin{xcasinput}
-mean([[3,4,2],[1,2,6]])
-\end{xcasinput}
-  \begin{xcasoutput}
-    \left[2,3,4\right]
-  \end{xcasoutput}
-\begin{xcasinput}
-mean([[1,0,0],[0,1,0],[0,0,1]])
-\end{xcasinput}
-  \begin{xcasoutput}
-    \left[\frac{1}{3},\frac{1}{3},\frac{1}{3}\right]
-  \end{xcasoutput}
-
 \item\index{standard deviation}
   \index{standard deviation!of a sample}
   \texttt{stddev($A$} computes the standard deviations for the
   populations given by the columns of $A$.
-  For example:
-\begin{xcasinput}
-stddev([[3,4,2],[1,2,6]])
-\end{xcasinput}
-  \begin{xcasoutput}
-    \left[1,1,2\right]
-  \end{xcasoutput}
-
 \item\index{standard deviation!of the population}
   \texttt{stddevp($A$)} computes the unbiased estimates of
   the standard deviations of the populations for the samples given by
   the columns of $A$.
-  For example:
-\begin{xcasinput}
-stddevp([[3,4,2],[1,2,6]])
-\end{xcasinput}
-  \begin{xcasoutput}
-    \left[\sqrt{2},\sqrt{2},2 \sqrt{2}\right]
-  \end{xcasoutput}
-
 \item\index{variance}
   \texttt{variance($A$)} computes the variances of the columns of $A$.
-  For example:
-\begin{xcasinput}
-variance([[3,4,2],[1,2,6]])
-\end{xcasinput}
-  \begin{xcasoutput}
-    \left[1,1,4\right]
-  \end{xcasoutput}
-
 \item
   \texttt{median($A$)} computes the medians of the columns of $A$.
-  For example:
-\begin{xcasinput}
-median([[6,0,1,3,4,2,5],[0,1,3,4,2,5,6],[1,3,4,2,5,6,0],
-        [3,4,2,5,6,0,1],[4,2,5,6,0,1,3],[2,5,6,0,1,3,4]])
-\end{xcasinput}
-  \begin{xcasoutput}
-    \left[2.0,2.0,3.0,3.0,2.0,2.0,3.0\right]
-  \end{xcasoutput}
-
 \item\index{quantiles}
   \texttt{quantile($A,d$)} computes the deciles of the columns of $A$,
   where $d$ is the decile.
-  For example, to obtain the first quartiles of the columns:
-\begin{xcasinput}
-quantile([[6,0,1,3,4,2,5],[0,1,3,4,2,5,6],[1,3,4,2,5,6,0],
-          [3,4,2,5,6,0,1],[4,2,5,6,0,1,3],[2,5,6,0,1,3,4]],0.25)
-\end{xcasinput}
-  \begin{xcasoutput}
-    \left[1.0,1.0,2.0,2.0,1.0,1.0,1.0\right]
-  \end{xcasoutput}
-  To obtain the third quartiles of the columns:
-\begin{xcasinput}
-quantile([[6,0,1,3,4,2,5],[0,1,3,4,2,5,6],[1,3,4,2,5,6,0],
-          [3,4,2,5,6,0,1],[4,2,5,6,0,1,3],[2,5,6,0,1,3,4]],0.75)
-\end{xcasinput}
-  \begin{xcasoutput}
-    \left[4.0,4.0,5.0,5.0,5.0,5.0,5.0\right]
-  \end{xcasoutput}
-
 \item\index{quartiles}
   \texttt{quartiles($A$)} returns a matrix where each column
   consists of the minimum, the first quartile, the median, the third quartile and
   the maximum of the corresponding column of $A$.
-  For example:
-\begin{xcasinput}
-quartiles([[6,0,1,3,4,2,5],[0,1,3,4,2,5,6],[1,3,4,2,5,6,0],
-           [3,4,2,5,6,0,1],[4,2,5,6,0,1,3],[2,5,6,0,1,3,4]])
-\end{xcasinput}
-  \begin{xcasoutput}
-    \begin{bmatrix}
-      0.0&0.0&1.0&0.0&0.0&0.0&0.0\\
-      1.0&1.0&2.0&2.0&1.0&1.0&1.0\\
-      2.0&2.0&3.0&3.0&2.0&2.0&3.0\\
-      4.0&4.0&5.0&5.0&5.0&5.0&5.0\\
-      6.0&5.0&6.0&6.0&6.0&6.0&6.0
-    \end{bmatrix}
-  \end{xcasoutput}
+
   The output is a matrix, its first row is the minima of each column,
   its second row is the first quartiles of each column,
   its third row the medians
   of each column, its fourth row the third
   quartiles of each column and its last row the maxima of each column.
 \item\index{whisker box}
-  \texttt{boxwhisker($L$)} draws the whisker box of the statistics series
+  \texttt{boxwhisker($A$)} draws the whisker box of the statistics series
   stored in the columns of $A$.
-  For example:
-\begin{xcasinput}
-boxwhisker([[6,0,1,3,4,2,5],[0,1,3,4,2,5,6],[1,3,4,2,5,6,0],
-            [3,4,2,5,6,0,1],[4,2,5,6,0,1,3],[2,5,6,0,1,3,4]])
-\end{xcasinput}
-  \begin{xcasimage}
-    \includeimage{xcas-boxwhiskermatrix.png}
-  \end{xcasimage}
 \end{itemize}
 
-\section{Tables%: \texttt{table}
-  \label{sec:table}}
-
-A \emph{table} is a map (associative container) used to store
-information associated to indices which are much more general than
-integers, such as  strings or sequences. For example, use one to
-store a table of phone numbers indexed by names.
-
-In \xcas{}, the indices in a table may be any kind of \xcas{} objects.
-Access is done by a binary search algorithm, where the sorting
-function first sorts by type and then uses an order for each type
-(e.g.~$<$ for numeric types, lexicographic order for strings, etc.)
-
-The \texttt{table}\index{table@\texttt{table}} command creates a table.
-\begin{itemize}
-\item \texttt{table} takes \textit{seq}, a list or sequence of equalities
-  of the form \textit{key}\texttt{=}\textit{value}.
-\item \texttt{table(}\textit{seq}\texttt{)} returns a table.  The
-  elements of the table can be retrieved using index bracket notation.
-  If $T$ is the name of the table, then $T$\texttt{[}\textit{key}\texttt{]}
-  returns \textit{value}.
-\end{itemize}
-
-Tables can also be created and the elements of a table can be changed by using
-the \texttt{:=} assignment.
-\begin{itemize}
-\item If \texttt{T} is a symbolic variable, then
-  \texttt{T[}\textit{key}\texttt{]:=}\textit{value}
-  creates a table \texttt{T} with one element.
-\item If $n$ is an integer, then the assignment
-  \texttt{T[$n$]:=}\textit{obj} will do the following:
-  \begin{itemize}
-  \item If the variable \texttt{T} was assigned to a list or a sequence,
-    then the $n$th element of \texttt{T} is modified.
-  \item If the variable \texttt{T} was not assigned, a table \texttt{T}
-    is created with one entry (corresponding to the index $n$). Note
-    that after the assignment \texttt{T} is not a list, despite the fact that $n$
-    is an integer.
-  \end{itemize}
-\end{itemize}
-
-\subsubsection*{Example}
+\subsubsection*{Examples}
+With
 \begin{xcasinput}
-T:=table(3=-10,"a"=10,"b"=20,"c"=30,"d"=40):;
+A:=[[3,4,2],[1,2,6]]
 \end{xcasinput}
+input:
 \begin{xcasinput}
-T["b"]
+mean(A)
 \end{xcasinput}
 \begin{xcasoutput}
-  20
+  \left[2,3,4\right]
 \end{xcasoutput}
+% \begin{xcasinput}
+% mean([[1,0,0],[0,1,0],[0,0,1]])
+% \end{xcasinput}
+% \begin{xcasoutput}
+%   \left[\frac{1}{3},\frac{1}{3},\frac{1}{3}\right]
+% \end{xcasoutput}
 \begin{xcasinput}
-T[3]
+stddev(A)
 \end{xcasinput}
 \begin{xcasoutput}
-  -10
+  \left[1,1,2\right]
 \end{xcasoutput}
 \begin{xcasinput}
-T[3]:=-15:;
-T[3]
+stddevp(A)
 \end{xcasinput}
 \begin{xcasoutput}
-  -15
+  \left[\sqrt{2},\sqrt{2},2 \sqrt{2}\right]
 \end{xcasoutput}
+\begin{xcasinput}
+variance(A)
+\end{xcasinput}
+\begin{xcasoutput}
+  \left[1,1,4\right]
+\end{xcasoutput}
+With
+\begin{xcasinput}
+B:=[[6,0,1,3,4,2,5],[0,1,3,4,2,5,6],[1,3,4,2,5,6,0],
+    [3,4,2,5,6,0,1],[4,2,5,6,0,1,3],[2,5,6,0,1,3,4]]
+\end{xcasinput}
+input:
+\begin{xcasinput}
+median(B)
+\end{xcasinput}
+\begin{xcasoutput}
+  \left[2.0,2.0,3.0,3.0,2.0,2.0,3.0\right]
+\end{xcasoutput}
+To obtain the first quartiles of the columns:
+\begin{xcasinput}
+quantile(B,0.25)
+\end{xcasinput}
+\begin{xcasoutput}
+  \left[1.0,1.0,2.0,2.0,1.0,1.0,1.0\right]
+\end{xcasoutput}
+To obtain the third quartiles of the columns:
+\begin{xcasinput}
+quantile(B,0.75)
+\end{xcasinput}
+\begin{xcasoutput}
+  \left[4.0,4.0,5.0,5.0,5.0,5.0,5.0\right]
+\end{xcasoutput}
+\begin{xcasinput}
+quartiles(B)
+\end{xcasinput}
+\begin{xcasoutput}
+  \begin{bmatrix}
+    0.0&0.0&1.0&0.0&0.0&0.0&0.0\\
+    1.0&1.0&2.0&2.0&1.0&1.0&1.0\\
+    2.0&2.0&3.0&3.0&2.0&2.0&3.0\\
+    4.0&4.0&5.0&5.0&5.0&5.0&5.0\\
+    6.0&5.0&6.0&6.0&6.0&6.0&6.0
+  \end{bmatrix}
+\end{xcasoutput}
+\begin{xcasinput}
+boxwhisker(B)
+\end{xcasinput}
+\begin{xcasimage}
+  \includeimage{xcas-boxwhiskermatrix.png}
+\end{xcasimage}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Linear algebra}
 
@@ -27220,10 +27026,12 @@ changebase([[1,1],[0,1]],[[1,2],[3,4]])
 \begin{xcasoutput}
   \begin{bmatrix}-5&-8\\\frac{9}{2}&7\end{bmatrix}
 \end{xcasoutput}
-Indeed, $\displaystyle\begin{bmatrix} 1&2\\3&4\end{bmatrix}^{-1}\cdot
-\begin{bmatrix}1&1\\0&1\end{bmatrix}\cdot
-\begin{bmatrix}1&2\\3&4\end{bmatrix}=
-\begin{bmatrix}-5&-8\\\frac{9}{2}&7\end{bmatrix}$.
+Indeed: \[
+  \begin{bmatrix} 1&2\\3&4\end{bmatrix}^{-1}\cdot
+  \begin{bmatrix}1&1\\0&1\end{bmatrix}\cdot
+  \begin{bmatrix}1&2\\3&4\end{bmatrix}=
+  \begin{bmatrix}-5&-8\\\frac{9}{2}&7\end{bmatrix}.
+\]
 
 \subsection{Basis of a linear subspace%: \texttt{basis}
 }
@@ -27494,6 +27302,7 @@ evalf(eigenvals([[4,1,0],[1,2,-1],[2,1,0]]))
   1.46081112719,4.21431974338,0.324869129433
 \end{xcasoutput}
 
+\subsection{Jordan normal form}
 The \texttt{egvl}\index{egvl@\texttt{egvl}}
 or \texttt{eigenvalues}\index{eigenvalues@\texttt{eigenvalues}}
 or \texttt{eigVl}\index{eigVl@\texttt{eigVl}}
@@ -27514,15 +27323,13 @@ egvl([[4,1,-2],[1,2,-1],[2,1,0]])
 \begin{xcasinput}
 egvl([[4,1,0],[1,2,-1],[2,1,0]])
 \end{xcasinput}
-{\footnotesize
-  \begin{xcasoutput}
-    \begin{bmatrix}
-      \frac{\mathrm{rootof}\left(\left[\left[1,0,-20,0,100\right],\left[1,0,-24,0,144,0,-148\right]\right]\right)}{18}&0&0\\
-      0&\frac{\mathrm{rootof}\left(\left[\left[-1,0,20,18,8\right],\left[1,0,-24,0,144,0,-148\right]\right]\right)}{36}&0\\
-      0&0&\frac{\mathrm{rootof}\left(\left[\left[-1,0,20,-18,8\right],\left[1,0,-24,0,144,0,-148\right]\right]\right)}{36}
-    \end{bmatrix}
-  \end{xcasoutput}
-}
+\begin{xcasoutput}\footnotesize
+  \begin{bmatrix}
+    \frac{\mathrm{rootof}\left(\left[\left[1,0,-20,0,100\right],\left[1,0,-24,0,144,0,-148\right]\right]\right)}{18}&0&0\\
+    0&\frac{\mathrm{rootof}\left(\left[\left[-1,0,20,18,8\right],\left[1,0,-24,0,144,0,-148\right]\right]\right)}{36}&0\\
+    0&0&\frac{\mathrm{rootof}\left(\left[\left[-1,0,20,-18,8\right],\left[1,0,-24,0,144,0,-148\right]\right]\right)}{36}
+  \end{bmatrix}
+\end{xcasoutput}
 See \secref{ssec:rootof} for a discussion of \texttt{rootof}.
 \begin{xcasinput}
 evalf(egvl([[4,1,0],[1,2,-1],[2,1,0]]))
@@ -27648,7 +27455,7 @@ rat_jordan([[4,1,1],[1,4,1],[1,1,4]])
   \begin{bmatrix}1&2&-1\\1&0&2\\1&-2&-1\end{bmatrix},\begin{bmatrix}6&0&0\\0&3&0\\0&0&3\end{bmatrix}
 \end{xcasoutput}
 
-\subsection{Jordan normal form%: \texttt{jordan}
+\subsection{Jordan form of a matrix%: \texttt{jordan}
   \label{ssec:jordan}}
 
 The \texttt{jordan}\index{jordan@\texttt{jordan}} command
@@ -28773,8 +28580,7 @@ Indeed, $\max\{1+3,2+4\}=6$.
 \subsection{Operator norm of a matrix%: \texttt{matrix\_norm} \texttt{l1norm} \texttt{l2norm} \texttt{norm} \texttt{specnorm} \texttt{linfnorm}
   \label{ssec:matrixopnorm}}
 
-\subsubsection{Operator norms}
-
+\paragraph{Operator norms.}
 In mathematics, particularly functional analysis, a linear function
 between two normed spaces $f:E \to F$ is continuous exactly when there
 is a number $K$ such that $\|f(x)\|_F \le K \|x\|$ for all $x$ in $E$.
@@ -28819,8 +28625,7 @@ operator norm of $A$ will be the operator norm of $f$.
   This is given by \texttt{rownorm($A$)} (see \secref{ssec:rownorm}).
 \end{itemize}
 
-\subsubsection{Computing operator norms}
-
+\paragraph{Computing operator norms.}
 The \texttt{matrix\_norm}\index{matrix\_norm@\texttt{matrix\_norm}}
 command is a command which finds any of the above operator norms.
 \begin{itemize}
@@ -29747,7 +29552,7 @@ is checked in the CAS configuration (see \secref{sec:mconf}),
 \texttt{linsolve} will show you the steps in
 getting a solution.
 
-\subsubsection{Solving a system in symbolic form}
+\paragraph{Solving a system in symbolic form.}
 \begin{itemize}
 \item To solve a system of symbolic equations, \texttt{linsolve} takes two arguments:
   \begin{itemize}
@@ -29785,7 +29590,7 @@ linsolve([x+2*y+3*z=1,3*x+2*y+z=2],[x,y,z])
   \left[z+\frac{1}{2},-2 z+\frac{1}{4},z\right]
 \end{xcasoutput}
 
-\subsubsection{Solving a system in matrix form}
+\paragraph{Solving a system in matrix form.}
 \begin{itemize}
 \item To solve a system represented by its
   coefficient matrix, \texttt{linsolve} takes two arguments:
@@ -29842,7 +29647,7 @@ configuration, a window will also pop up showing:
 \end{align*}
 }
 
-\subsubsection{Solving a system in factored form}
+\paragraph{Solving a system in factored form.}
 \begin{itemize}
 \item To solve a system represented by
   its matrix in factored form, \texttt{linsolve} takes four arguments:
@@ -29864,7 +29669,7 @@ linsolve(p,l,u,[1,1,4])
   \left[-\frac{1}{2},\frac{5}{2},-\frac{1}{2}\right]
 \end{xcasoutput}
 
-\subsubsection{Solving a system with coefficients modulo $n$}
+\paragraph{Solving a system with coefficients modulo $n$.}
 The \texttt{linsolve} command also solves systems with coefficients in
 $\mathbb{Z}/n\mathbb{Z}$. For example:
 \begin{xcasinput}
@@ -30091,7 +29896,7 @@ problem to find an initial vertex for the simplex algorithm.
 
 \index{simplex algorithm}
 
-\subsubsection{The simple case}
+\paragraph{The simple case.}
 Linear programming problem in its simplest form
 is to find the maximum of an objective function
 \[
@@ -30118,7 +29923,7 @@ where the vector inequalities mean term-by-term inequalities.
 The constraints determine a simplex in $\mathbb{R}^{n}$ and the
 standard approach to solving this problem is called the \emph{simplex method}.
 
-\subsubsection{The simplex method}
+\paragraph{The simplex method.}
 \xcas{} can apply the simplex method for you, but
 it can still help to get a rough idea of how it works.
 (You can search the Internet for ``simplex method'' to get more details.)
@@ -30227,7 +30032,7 @@ because $\left[1,3,0,0\right]$ is the augmented solution and the reduced matrix 
 Notice that the (non-zero) values of the solution have columns of the
 $m\times m$ identity matrix above them.
 
-\subsubsection{Reducing a more complicated case to the simple case}
+\paragraph{Reducing a more complicated case to the simple case.}
 With the former call of \texttt{simplex\_reduce}, you have to:
 \begin{itemize}
 \item rewrite constraints to the form $x_k \geq 0$,
@@ -30261,7 +30066,7 @@ under the same conditions, hence it is the same problem as
 to find the maximum of $X+2Y$ seen before. You found that the previous
 problem had a maximum of $7$, hence the result here is $7-3=4$.
 
-\subsubsection{The general case}
+\paragraph{The general case.}
 A linear programming problem may not in
 general be directly reduced like above to the simple case. The reason
 is that a starting solution must be found before applying the simplex
@@ -30877,8 +30682,8 @@ lpsolve(c,[[],[],A,b],assume=nonnegint,lp_verbose)
 The \texttt{lpsolve} command provides, in addition to its own exact solver
 implementing the primal simplex method with the upper-bounding technique, an
 interface to GLPK (GNU Linear Programming Kit) library which contains
-sophisticated LP/MIP solvers in floating-point arithmetic, designed to
-be very fast and to handle large problems. Choosing between the
+LP/MIP solvers operating in floating-point arithmetic, designed to
+be fast and to handle larger problems. Choosing between the
 available solvers is done by setting \texttt{lp\_method} option.
 
 By default, \texttt{lp\_method} is set to \texttt{lp\_simplex}, which
@@ -31269,10 +31074,10 @@ equality constraints, by using analytical methods.
     must be equal to $m$).
   \item \textit{vars}, a list of variables.  A variable can be
     specified with bounds, $x=a$\texttt{..}$b$, where $a$ or $b$ is allowed to be
-    \texttt{-infinity} or \texttt{infinity}. 
+    \texttt{-infinity} or \texttt{infinity}. Note that \texttt{extrema} respects
+    the bound constraints set to variables by the \texttt{assume} command.
    
-    If there is only one variable, it
-    does not have to be a list.
+    If there is only one variable, it does not have to be enclosed in square brackets.
    
     The parameter \texttt{vars} can also be entered as a list of values
     of the variables; e.g.~$[x_{1}=a_{1},x_{2}=a_{2},\dots,x_{n}=a_{n}]$, in which case the critical
@@ -31281,28 +31086,24 @@ equality constraints, by using analytical methods.
   \item Optionally, \textit{opt}, which can be either
     \begin{itemize}
     \item \texttt{order=$n$}, to make $n$ the upper bound for the order of derivatives examined
-      in the process (so if $n=1$ only critical points are found, by default \texttt{order=$5$}), or
+      in the process (so if $n=1$ only critical points are found, by default $n=5$), or
     \item \texttt{lagrange} to specify the method of Lagrange multipliers.
     \end{itemize}
   \end{itemize}
 \item \texttt{extrema(}$\textit{expr}\,\langle,\textit{constr}\,\rangle,\textit{vars}\,\langle,\textit{opt}\,\rangle$\texttt{)}
   returns a list \textit{$[$min,max$]$}, where \textit{min} is the list of
   local minima and \textit{max} is the list of local maxima of
-  \texttt{expr}.
- 
-  Saddle and unclassified points are reported in the message area.
-  Also, information about possible (non)strict extrema is printed out.
+  \texttt{expr}. 
+  Saddle, unclassified and indeterminate points are reported in the message area.
   If \texttt{lagrange} is passed as an optional last argument, the
   method of Lagrange multipliers is used. Else, the problem is reduced
   to an unconstrained one by applying implicit differentiation.
- 
-  Note that \texttt{extrema} respects the bound constraints set to variables
-  by the \texttt{assume} command.
+  \item If some critical points are left unclassified, you might consider repeating the
+  process with larger values of the parameter \texttt{order} (e.g.~for $f(x)=x^8$,
+  \texttt{extrema} requires $n\geq 8$ in order to find the minimum),
+  although the success is not guaranteed. Indeterminate critical points are
+  unclassifiable.
 \end{itemize}
-If critical points are left unclassified you might consider repeating the
-process with larger value of $n$, although the success is not
-guaranteed.
-
 
 \subsubsection*{Examples}
 \begin{xcasinput}
@@ -31318,7 +31119,7 @@ extrema(x/2-2*sin(x/2),x=-12..12)
   \begin{bmatrix}-\frac{10}{3} \pi &\frac{2}{3} \pi \\-\frac{2}{3} \pi &\frac{10}{3} \pi \end{bmatrix}
 \end{xcasoutput}
 \begin{xcasinput}
-assume(a>=0);extrema(x^2+a*x,x)
+assume(a>=0):; extrema(x^2+a*x,x)
 \end{xcasinput}
 \begin{xcasoutput}
   \left[\left[-\frac{1}{2} a\right],\left[\right]\right]
@@ -31332,11 +31133,14 @@ extrema(exp(x^2-2x)*ln(x)*ln(1-x),x=0.5)
 \begin{xcasinput}
 extrema(x^3-2x*y+3y^4,[x,y])
 \end{xcasinput}
+\begin{xcasmsg}
+[x=0,y=0]: saddle point
+\end{xcasmsg}
 \begin{xcasoutput}
   \left[\begin{bmatrix}\frac{12^{\frac{1}{5}}}{3}&\frac{\left(12^{\frac{1}{5}}\right)^{2}}{6}\end{bmatrix},\left[\right]\right]
 \end{xcasoutput}
 \begin{xcasinput}
-assume(a>0);extrema(x/a^2+a*y^2,x+y=a,[x,y])
+assume(a>0):; extrema(x/a^2+a*y^2,x+y=a,[x,y],lagrange)
 \end{xcasinput}
 \begin{xcasoutput}
   \left[\begin{bmatrix}\frac{2 a^{4}-1}{2 a^{3}}&\frac1{2 a^{3}}\end{bmatrix},\left[\right]\right]
@@ -31347,11 +31151,25 @@ extrema(x^2+y^2,x*y=1,[x=0..inf,y=0..inf])
 \begin{xcasoutput}
   \left[\begin{bmatrix}1&1\end{bmatrix},\left[\right]\right]
 \end{xcasoutput}
+To find only the critical points of $f(x,y,z)=x y z$ subject to $x+y+z=1$:
 \begin{xcasinput}
 extrema(x*y*z,x+y+z=1,[x,y,z],order=1)
 \end{xcasinput}
 \begin{xcasoutput}
   \begin{bmatrix}0&1&0\\0&0&1\\1&0&0\\\frac{1}{3}&\frac{1}{3}&\frac{1}{3}\end{bmatrix}
+\end{xcasoutput}
+The Peano surface $z=(2x^2-y)(y-x^2)$ was proposed by Giuseppe Peano in 1899 as
+a counter-example to a criterion for the existence of maxima and minima which was
+conjectured at the time. Indeed, it is not possible to classify its only critical
+point $(0,0)$, which turns out to be a saddle, not a maximum:
+\begin{xcasinput}
+extrema((2x^2-y)*(y-x^2),[x,y])
+\end{xcasinput}
+\begin{xcasmsg}
+[x=0,y=0]: indeterminate critical point
+\end{xcasmsg}
+\begin{xcasoutput}
+  \left[\left[\right],\left[\right]\right]
 \end{xcasoutput}
 
 \section{Numerical methods for nonlinear optimization}
@@ -34558,9 +34376,7 @@ frequencies([1,2,1,1,2,1,2,4,3,3])
 \begin{xcasoutput}
   \begin{bmatrix}1&0.4\\2&0.3\\3&0.2\\4&0.1\end{bmatrix}
 \end{xcasoutput}
-
-
-use this, for example, to simulate flipping a fair coin and
+You can use this, for example, to simulate flipping a fair coin and
 seeing how many times each side appears; to flip a coin 1000 times,
 for example:
 \begin{xcasinput}
@@ -35574,9 +35390,9 @@ sample(["r","r","r","r","v","v","v"],4)
   \left[\text{``v''},\text{``v''},\text{``v''},\text{``r''}\right]
 \end{xcasoutput}
 
-\subsection{Generating random numbers from binomial distribution%: \texttt{randbinomial}
-  \label{ssec:randbinomial}}
+\subsection{Sampling from probability distributions}
 
+\paragraph{Generating random numbers from binomial distribution.\label{ssec:randbinomial}}
 The \texttt{randbinomial}\index{randbinomial@\texttt{randbinomial}}
 command finds random numbers chosen
 according to the binomial distribution (see \secref{ssec:binomial}).
@@ -35601,9 +35417,7 @@ randbinomial(100,0.4)
   42
 \end{xcasoutput}
 
-\subsection{Generating random numbers from multinomial distribution%: \texttt{randmultinomial}
-  \label{ssec:randmultinomial}}
-
+\paragraph{Generating random numbers from multinomial distribution.\label{ssec:randmultinomial}}
 The \texttt{randmultinomial}\index{randmultinomial@\texttt{randmultinomial}}
 command finds random numbers chosen
 according to a multinomial distribution  (see \secref{ssec:multinomial}).
@@ -35625,21 +35439,17 @@ according to a multinomial distribution  (see \secref{ssec:multinomial}).
 \begin{xcasinput}
 randmultinomial([1/2, 1/3, 1/6])
 \end{xcasinput}
-
 \begin{xcasoutput}
   1
 \end{xcasoutput}
 \begin{xcasinput}
 randmultinomial([1/2, 1/3, 1/6],["R","V","B"])
 \end{xcasinput}
-
 \begin{xcasoutput}
   \text{``R''}
 \end{xcasoutput}
 
-\subsection{Generating random numbers from Poisson distribution%: \texttt{randpoisson}
-  \label{ssec:randpoisson}}
-
+\paragraph{Generating random numbers from Poisson distribution.\label{ssec:randpoisson}}
 Recall that given a number $\lambda>0$, the corresponding Poisson
 distribution $P(\lambda)$ satisfies
 \[
@@ -35667,9 +35477,7 @@ randpoisson(10.6)
   16
 \end{xcasoutput}
 
-\subsection{Generating random numbers from normal distribution%: \texttt{randnorm} \texttt{randNorm}
-  \label{ssec:randnorm}}
-
+\paragraph{Generating random numbers from normal distribution.\label{ssec:randnorm}}
 The \texttt{randnorm}\index{randnorm@\texttt{randnorm}}
 or \texttt{randNorm}\index{randNorm@\texttt{randNorm}}
 command chooses a random number according to a normal distribution.
@@ -35693,9 +35501,7 @@ randnorm(2,1)
   3.39283224858
 \end{xcasoutput}
 
-\subsection{Generating random numbers from Student's distribution%: \texttt{randstudent}
-  \label{ssec:randstudent}}
-
+\paragraph{Generating random numbers from Student's distribution.\label{ssec:randstudent}}
 The \texttt{randstudent}\index{randstudent@\texttt{randstudent}}
 command finds random numbers chosen according to Student's distribution  (see
 \secref{ssec:student}).
@@ -35715,9 +35521,7 @@ randstudent(5)
   0.268225314184
 \end{xcasoutput}
 
-\subsection{Generating random numbers from $\chi^{2}$ distribution%: \texttt{randchisquare}
-  \label{ssec:randchisquare}}
-
+\paragraph{Generating random numbers from $\chi^{2}$ distribution.\label{ssec:randchisquare}}
 The \texttt{randchisquare}\index{randchisquare@\texttt{randchisquare}}
 command finds random numbers chosen according to the $\chi^{2}$ distribution  (see
 \secref{ssec:chisquare}).
@@ -35737,9 +35541,7 @@ randchisquare(5)
   4.53970828547
 \end{xcasoutput}
 
-\subsection{Generating random numbers from Fisher-Sn\'{e}d\'{e}cor distribution%: \texttt{randfisher}
-  \label{ssec:randfisher}}
-
+\paragraph{Generating random numbers from Fisher-Sn\'{e}d\'{e}cor distribution.\label{ssec:randfisher}}
 The \texttt{randfisher}\index{randfisher@\texttt{randfisher}} command
 finds random numbers chosen according to the Fisher-Sn\'{e}d\'{e}cor distribution  (see
 \secref{ssec:fishersnedecor}).
@@ -35760,11 +35562,9 @@ randfisher(2,3)
   2.33137725333
 \end{xcasoutput}
 
-\subsection{Generating random numbers from gamma distribution%: \texttt{randgammad}
-  \label{ssec:randgammad}}
-
+\paragraph{Generating random numbers from gamma distribution.\label{ssec:randgammad}}
 The \texttt{randgammad}\index{randgammad@\texttt{randgammad}}
-command finds random numbers chosen according to the gamma distribution  (see
+command finds random numbers chosen according to the gamma distribution (see
 \secref{ssec:gammad}).
 \begin{itemize}
 \item \texttt{randgammad} takes two arguments:
@@ -35782,9 +35582,7 @@ randgammad(3,1)
   4.91461463472
 \end{xcasoutput}
 
-\subsection{Generating random numbers from beta distribution%: \texttt{randbetad}
-  \label{ssec:randbetad}}
-
+\paragraph{Generating random numbers from beta distribution.\label{ssec:randbetad}}
 The \texttt{randbetad}\index{randbetad@\texttt{randbetad}}
 command finds random numbers chosen according to the beta distribution  (see
 \secref{ssec:betad}).
@@ -35804,9 +35602,7 @@ randbetad(2,3)
   0.524453873081
 \end{xcasoutput}
 
-\subsection{Generating random numbers from geometric distribution%: \texttt{randgeometric}
-  \label{ssec:randgeometric}}
-
+\paragraph{Generating random numbers from geometric distribution.\label{ssec:randgeometric}}
 The \texttt{randgeometric}\index{randgeometric@\texttt{randgeometric}}
 command finds random numbers chosen according to the geometric distribution  (see
 \secref{ssec:geometric}).
@@ -35826,12 +35622,9 @@ randgeometric(0.2)
   11
 \end{xcasoutput}
 
-\subsection{Generating random numbers from exponential distribution%: \texttt{randexp}
-  \label{ssec:randexp}}
-
+\paragraph{Generating random numbers from exponential distribution.\label{ssec:randexp}}
 The \texttt{randexp}\index{randexp@\texttt{randexp}} command finds random numbers chosen
-according to the exponential distribution  (see
-\secref{ssec:exponentiald}).
+according to the exponential distribution (see~\secref{ssec:exponentiald}).
 \begin{itemize}
 \item \texttt{randexp} takes
   $\lambda$, a positive real number (the parameter).
@@ -35847,7 +35640,6 @@ randexp(2.1)
 \begin{xcasoutput}
   0.0288626239833
 \end{xcasoutput}
-
 
 \subsection{Random variables%: \texttt{random\_variable} \texttt{randvar}
   \label{ssec:randvar}}
@@ -36353,9 +36145,9 @@ command produces random vectors and matrices.
   \end{itemize}
 \item \texttt{randmatrix($n$)} returns a vector of
   length $n$ whose elements are integers chosen randomly from
-  $[-99,-98,\dots,98,99]$ with equal probability.
+  $\{-99,-98,\dots,98,99\}$ with equal probability.
 \item \texttt{randmatrix($n,p$)} returns an $n\times p$ matrix
-  whose elements are integers chosen randomly from $[-99,99]$ with
+  whose elements are integers chosen randomly from $\{-99,\dots,99\}$ with
   equal probability.
 \item \texttt{randmatrix($n,p,a$)} returns an $n\times p$ matrix
   whose elements are integers chosen randomly from $[0,a)$ (or $(a,0]$
@@ -36432,7 +36224,7 @@ $\texttt{Prob}(X \le x)=h$.
 \subsection{Uniform distribution
   \label{ssec:uniform}}
 
-\subsubsection{The probability density function for the uniform distribution}
+\paragraph{The probability density function for the uniform distribution.}
 Given two values $a$ and $b$ with $a < b$, the uniform distribution on
 $[a,b]$ has density function $1/(b-a)$ for $x$ in $[a,b]$.  The
 \texttt{uniform}\index{uniform@\texttt{uniform}}
@@ -36457,7 +36249,7 @@ uniform(2.2,3.5,2.8)
   0.769230769231
 \end{xcasoutput}
 
-\subsubsection{The cumulative distribution function for the uniform distribution}
+\paragraph{The cumulative distribution function for the uniform distribution.}
 The \texttt{uniform\_cdf}\index{uniform\_cdf@\texttt{uniform\_cdf}}
 or \texttt{uniformd\_cdf}\index{uniformd\_cdf@\texttt{uniformd\_cdf}}
 command finds the cumulative distribution
@@ -36492,7 +36284,7 @@ uniform_cdf(2,4,3,3.2)
   0.1
 \end{xcasoutput}
 
-\subsubsection{The inverse distribution function for the uniform distribution}
+\paragraph{The inverse distribution function for the uniform distribution.}
 The \texttt{uniform\_icdf}\index{uniform\_icdf@\texttt{uniform\_icdf}}
 or \texttt{uniformd\_icdf}\index{uniformd\_icdf@\texttt{uniformd\_icdf}}
 command computes the inverse distribution
@@ -36519,7 +36311,7 @@ uniform_icdf(2,3,.6)
 \subsection{Binomial distribution
   \label{ssec:binomial}}
 
-\subsubsection{The probability density function for the binomial distribution\label{sssec:binomial}}
+\paragraph{The probability density function for the binomial distribution.\label{sssec:binomial}}
 If you perform an experiment $n$ times where the probability of
 success each time is $p$, then the probability of exactly $k$
 successes is:
@@ -36564,7 +36356,7 @@ binomial(10,2,0.4)
   0.120932352
 \end{xcasoutput}
 
-\subsubsection{The cumulative distribution function for the binomial distribution}
+\paragraph{The cumulative distribution function for the binomial distribution.}
 The \texttt{binomial\_cdf}\index{binomial\_cdf@\texttt{binomial\_cdf}}
 command computes the cumulative
 distribution function for the binomial distribution.
@@ -36603,7 +36395,7 @@ binomial_cdf(2,0.3,1,2)
   0.51
 \end{xcasoutput}
 
-\subsubsection{The inverse distribution function for the binomial distribution}
+\paragraph{The inverse distribution function for the binomial distribution.}
 The \texttt{binomial\_icdf}\index{binomial\_icdf@\texttt{binomial\_icdf}}
 command computes the inverse distribution
 function for the binomial distribution.
@@ -36635,7 +36427,7 @@ smaller than $0.9$.
 \subsection{Negative binomial distribution
   \label{ssec:negbinomial}}
 
-\subsubsection{The probability density function for the negative binomial distribution}
+\paragraph{The probability density function for the negative binomial distribution.}
 If you repeatedly perform an experiment with probability of success
 $p$, then, given an integer $n$, the probability of $k$ failures that
 occur before you have $n$ successes is given by the negative binomial
@@ -36677,7 +36469,7 @@ and variance ($n(1-p)/p^2$).  The negative binomial is also called the
 Pascal distribution (after Blaise Pascal) or the P\'{o}lya
 distribution (after George P\'{o}lya).
 
-\subsubsection{The cumulative distribution function for the negative binomial distribution}
+\paragraph{The cumulative distribution function for the negative binomial distribution.}
 The \texttt{negbinomial\_cdf}\index{negbinomial\_cdf@\texttt{negbinomial\_cdf}}
 command finds the cumulative distribution function for the negative binomial distribution.
 \begin{itemize}
@@ -36714,7 +36506,7 @@ negbinomial_cdf(4,0.5,2,5)
   0.40234375
 \end{xcasoutput}
 
-\subsubsection{The inverse distribution function for the negative binomial distribution}
+\paragraph{The inverse distribution function for the negative binomial distribution.}
 The \texttt{negbinomial\_icdf}\index{negbinomial\_icdf@\texttt{negbinomial\_icdf}}
 command gives the inverse distribution function for the negative binomial distribution.
 \begin{itemize}
@@ -36738,7 +36530,7 @@ negbinomial_icdf(4,0.5,0.9)
   8
 \end{xcasoutput}
 
-\subsection{Multinomial probability function%: \texttt{multinomial}
+\subsection{Multinomial distribution%: \texttt{multinomial}
   \label{ssec:multinomial}}
 
 If $X$ follows a multinomial probability distribution with $P=
@@ -36780,10 +36572,9 @@ multinomial(10,[0.2,0.3,0.5],[3,2,5])
   0.0567
 \end{xcasoutput}
 
-\subsection{Poisson distribution
-  \label{ssec:poisson}}
+\subsection{Poisson distribution\label{ssec:poisson}}
 
-\subsubsection{The probability density function for the Poisson distribution}
+\paragraph{The probability density function for the Poisson distribution.}
 Recall that for the Poisson distribution with parameter $\lambda$, the
 probability of a non-negative integer $k$ is $\mathrm{e}^{-\lambda}\frac{\lambda^k}{k!}$.  This
 distribution has mean $\lambda$ and variance $\lambda$. 
@@ -36809,7 +36600,7 @@ poisson(10.0,9)
   0.125110035721
 \end{xcasoutput}
 
-\subsubsection{The cumulative distribution function for the Poisson distribution}
+\paragraph{The cumulative distribution function for the Poisson distribution.}
 The \texttt{poisson\_cdf}\index{poisson\_cdf@\texttt{poisson\_cdf}}
 command computes the cumulative distribution function for the Poisson distribution.
 \begin{itemize}
@@ -36846,7 +36637,7 @@ poisson_cdf(10.0,3,10)
   0.580270354477
 \end{xcasoutput}
 
-\subsubsection{The inverse distribution function for the Poisson distribution}
+\paragraph{The inverse distribution function for the Poisson distribution.}
 The \texttt{poisson\_icdf}\index{poisson\_icdf@\texttt{poisson\_icdf}}
 command finds the inverse distribution function for the Poisson distribution.
 \begin{itemize}
@@ -36871,7 +36662,7 @@ poisson_icdf(10.0,0.975)
 \subsection{Normal distributions
   \label{ssec:normald}}
 
-\subsubsection{The probability density function for a normal distribution}
+\paragraph{The probability density function for a normal distribution.}
 The density function of the normal distribution with mean $\mu$ and
 standard deviation $\sigma$ at the point $x$ is
 \begin{equation}\label{eq:normald}
@@ -36908,7 +36699,7 @@ normald(2)
   \frac{1}{\sqrt{2 \pi } \mathrm{e}^{2}}
 \end{xcasoutput}
 
-\subsubsection{The cumulative distribution function for normal distribution\label{sssec:normalcdf}}
+\paragraph{The cumulative distribution function for normal distribution.\label{sssec:normalcdf}}
 The \texttt{normal\_cdf}\index{normal\_cdf@\texttt{normal\_cdf}}
 (or \texttt{normald\_cdf}\index{normald\_cdf@\texttt{normald\_cdf}})
 command computes the cumulative distribution function for the normal distribution.
@@ -36949,7 +36740,7 @@ normal_cdf(1,2.1,1.2,9)
   0.461993238584
 \end{xcasoutput}
 
-\subsubsection{The inverse distribution function for normal distribution}
+\paragraph{The inverse distribution function for normal distribution.}
 The \texttt{normal\_icdf}\index{normal\_icdf@\texttt{normal\_icdf}}
 (or \texttt{normald\_icdf}\index{normald\_icdf@\texttt{normald\_icdf}})
 command computes the inverse distribution for the normal distribution.
@@ -36983,7 +36774,7 @@ normal_icdf(1,2,0.495)
   0.974933060984
 \end{xcasoutput}
 
-\subsubsection{The upper tail cumulative function for normal distributions}
+\paragraph{The upper tail cumulative function for normal distributions.}
 The \texttt{UTPN}\index{UTPN@\texttt{UTPN}}
 (the Upper Tail Probability-Normal distribution)
 computes $\text{Prob}(X > x)$ for a normal distribution.
@@ -37020,7 +36811,7 @@ UTPN(1,4,1.96)
 
 \subsection{Student's distribution\label{ssec:student}}
 
-\subsubsection{The probability density function for Student's distribution}
+\paragraph{The probability density function for Student's distribution.}
 Student's distribution (also called Student's $t$-distribution or
 the $t$-distribution) with $n$ degrees of freedom has density function
 given by
@@ -37062,7 +36853,7 @@ evalf(student(2,3))
   0.0274101222343
 \end{xcasoutput}
 
-\subsubsection{The cumulative distribution function for Student's distribution}
+\paragraph{The cumulative distribution function for Student's distribution.}
 The \texttt{student\_cdf}\index{student\_cdf@\texttt{student\_cdf}}
 command computes the cumulative distribution function for Student's distribution.
 \begin{itemize}
@@ -37094,7 +36885,7 @@ student_cdf(5,-2,2)
   0.89806052117
 \end{xcasoutput}
 
-\subsubsection{The inverse distribution function for Student's distribution}
+\paragraph{The inverse distribution function for Student's distribution.}
 The \texttt{student\_icdf}\index{student\_icdf@\texttt{student\_icdf}}
 command computes the inverse distribution for Student's distribution.
 \begin{itemize}
@@ -37116,7 +36907,7 @@ student_icdf(5,0.95)
   2.01504837333
 \end{xcasoutput}
 
-\subsubsection{The upper tail cumulative function for Student's distribution}
+\paragraph{The upper tail cumulative function for Student's distribution.}
 The \texttt{UTPT}\index{UTPT@\texttt{UTPT}}
 (the Upper Tail Probability-T distribution)
 computes $\text{Prob}(X > x)$ for Student's distribution.
@@ -37141,7 +36932,7 @@ UTPT(5,2)
 
 \subsection{$\chi^2$ distribution\label{ssec:chisquare}}
 
-\subsubsection{The probability density function for the $\chi^2$ distribution}
+\paragraph{The probability density function for the $\chi^2$ distribution.}
 The $\chi^2$ distribution with $n$ degrees of freedom has density
 function given by
 \begin{equation}\label{eq:chisq}
@@ -37174,7 +36965,7 @@ evalf(chisquare(5,2))
   0.138369165807
 \end{xcasoutput}
 
-\subsubsection{The cumulative distribution function for the $\chi^2$ distribution}
+\paragraph{The cumulative distribution function for the $\chi^2$ distribution.}
 The \texttt{chisquare\_cdf}\index{chisquare\_cdf@\texttt{chisquare\_cdf}}
 command computes the cumulative distribution function for the $\chi^{2}$ distribution.
 \begin{itemize}
@@ -37206,7 +36997,7 @@ chisquare_cdf(3,1,2)
   0.22884525243
 \end{xcasoutput}
 
-\subsubsection{The inverse distribution function for the $\chi^2$ distribution}
+\paragraph{The inverse distribution function for the $\chi^2$ distribution.}
 The \texttt{chisquare\_icdf}\index{chisquare\_icdf@\texttt{chisquare\_icdf}}
 command computes the inverse distribution for the $\chi^{2}$ distribution.
 \begin{itemize}
@@ -37229,7 +37020,7 @@ chisquare_icdf(5,0.95)
   11.0704976935
 \end{xcasoutput}
 
-\subsubsection{The upper tail cumulative function for the $\chi^2$ distribution}
+\paragraph{The upper tail cumulative function for the $\chi^2$ distribution.}
 The \texttt{UTPC}\index{UTPC@\texttt{UTPC}}
 (the Upper Tail Probability-Chi-square distribution)
 computes $\operatorname{Prob}(X > x)$ for the $\chi^{2}$ distribution.
@@ -37255,7 +37046,7 @@ UTPC(5,11)
 
 \subsection{Fisher-Sn\'{e}d\'{e}cor distribution\label{ssec:fishersnedecor}}
 
-\subsubsection{The probability density function for the Fisher-Sn\'{e}d\'{e}cor distribution}
+\paragraph{The probability density function for the Fisher-Sn\'{e}d\'{e}cor distribution.}
 The Fisher-Sn\'{e}d\'{e}cor distribution (also called the
 F-distribution) with $n_1$ and $n_2$ degrees of freedom has density
 function given by, for $x \ge 0$,
@@ -37287,7 +37078,7 @@ fisher(5,3,2.5)
   0.10131184472
 \end{xcasoutput}
 
-\subsubsection{The cumulative distribution function  for the Fisher-Sn\'{e}d\'{e}cor distribution}
+\paragraph{The cumulative distribution function  for the Fisher-Sn\'{e}d\'{e}cor distribution.}
 The \texttt{fisher\_cdf}\index{fisher\_cdf@\texttt{fisher\_cdf}}
 (or \texttt{snedecor\_cdf}\index{snedecor\_cdf@\texttt{snedecor\_cdf}})
 command computes  the cumulative distribution function for the
@@ -37329,7 +37120,7 @@ evalf(fisher_cdf(5,3,9,10))
   0.0066824173023
 \end{xcasoutput}
 
-\subsubsection{The inverse distribution function for the Fisher-Sn\'{e}d\'{e}cor distribution}
+\paragraph{The inverse distribution function for the Fisher-Sn\'{e}d\'{e}cor distribution.}
 The \texttt{fisher\_icdf}\index{fisher\_icdf@\texttt{fisher\_icdf}}
 (or \texttt{snedecor\_icdf}\index{snedecor\_icdf@\texttt{snedecor\_icdf}})
 command computes the inverse distribution for the Fisher-Sn\'{e}d\'{e}cor
@@ -37354,7 +37145,7 @@ fisher_icdf(5,3,0.95)
   9.01345516752
 \end{xcasoutput}
 
-\subsubsection{The upper tail cumulative function for the Fisher-Sn\'{e}d\'{e}cor distribution}
+\paragraph{The upper tail cumulative function for the Fisher-Sn\'{e}d\'{e}cor distribution.}
 The \texttt{UTPF}\index{UTPF@\texttt{UTPF}}
 (the Upper Tail Probability-Fisher-Sn\'{e}d\'{e}cor distribution)
 computes $\text{Prob}(X > x)$ for the Fisher-Sn\'{e}d\'{e}cor
@@ -37380,7 +37171,7 @@ UTPF(5,3,9)
 
 \subsection{Gamma distribution\label{ssec:gammad}}
 
-\subsubsection{The probability density function for the gamma distribution}
+\paragraph{The probability density function for the gamma distribution.}
 The gamma distribution depends on two parameters, $a>0$ and $b>0$; the
 value of the density function at $x \ge 0$ is
 \begin{equation}\label{eq:gammad}
@@ -37407,7 +37198,7 @@ gammad(2,1,3)
   \frac{3}{\mathrm{e}^{3}}
 \end{xcasoutput}
 
-\subsubsection{The cumulative distribution function for the gamma distribution}
+\paragraph{The cumulative distribution function for the gamma distribution.}
 The \texttt{gamma\_cdf}\index{gammad\_cdf@\texttt{gammad\_cdf}}
 command computes  the cumulative distribution function for the gamma distribution.
 \begin{itemize}
@@ -37448,7 +37239,7 @@ gammad_cdf(2,1,0.5,1.5)
   0.351970589198
 \end{xcasoutput}
 
-\subsubsection{The inverse distribution function for the gamma distribution}
+\paragraph{The inverse distribution function for the gamma distribution.}
 The \texttt{gammad\_icdf}\index{gammad\_icdf@\texttt{gammad\_icdf}}
 command computes the inverse distribution for the gamma distribution.
 \begin{itemize}
@@ -37472,7 +37263,7 @@ gammad_icdf(2,1,0.5)
 
 \subsection{Beta distribution\label{ssec:betad}}
 
-\subsubsection{The probability density function for the beta distribution}
+\paragraph{The probability density function for the beta distribution.}
 The beta distribution depends on two parameters, $a>0$ and $b>0$; the
 value of the density function at $x$ in $[0,1]$ is (see \secref{ssec:gamma}):
 \begin{equation}\label{eq:betad}
@@ -37500,7 +37291,7 @@ betad(2,1,0.3)
   0.6
 \end{xcasoutput}
 
-\subsubsection{The cumulative distribution function for the beta distribution}
+\paragraph{The cumulative distribution function for the beta distribution.}
 The \texttt{betad\_cdf}\index{betad\_cdf@\texttt{betad\_cdf}} command computes
 the cumulative distribution function for the beta distribution.
 \begin{itemize}
@@ -37536,7 +37327,7 @@ betad_cdf(2,3,0.25,0.5)
   0.42578125
 \end{xcasoutput}
 
-\subsubsection{The inverse distribution function for the beta distribution}
+\paragraph{The inverse distribution function for the beta distribution.}
 The \texttt{betad\_icdf}\index{betad\_icdf@\texttt{betad\_icdf}}
 command computes the inverse distribution for the beta distribution.
 \begin{itemize}
@@ -37560,7 +37351,7 @@ betad_icdf(2,3,0.2)
 
 \subsection{Geometric distribution\label{ssec:geometric}}
 
-\subsubsection{The probability density function for the geometric distribution}
+\paragraph{The probability density function for the geometric distribution.}
 If an experiment with probability of success $p$ is iterated, the
 probability that the first success occurs on the $k$th trial is
 $(1-p)^{k-1}p$.  This gives the geometric distribution (with parameter
@@ -37589,7 +37380,7 @@ geometric(0.2,3)
   0.128
 \end{xcasoutput}
 
-\subsubsection{The cumulative distribution function of the geometric distribution}
+\paragraph{The cumulative distribution function of the geometric distribution.}
 The \texttt{geometric\_cdf}\index{geometric\_cdf@\texttt{geometric\_cdf}}
 command computes  the cumulative distribution function for the geometric distribution.
 \begin{itemize}
@@ -37622,7 +37413,7 @@ geometric_cdf(0.2,3,5)
   0.31232
 \end{xcasoutput}
 
-\subsubsection{The inverse distribution function for the geometric distribution}
+\paragraph{The inverse distribution function for the geometric distribution.}
 The \texttt{geometric\_icdf}\index{geometric\_icdf@\texttt{geometric\_icdf}}
 command computes the inverse distribution for the geometric distribution.
 \begin{itemize}
@@ -37647,7 +37438,7 @@ geometric_icdf(0.2,0.5)
 
 \subsection{Cauchy distribution\label{ssec:cauchy}}
 
-\subsubsection{The probability density function for the Cauchy distribution}
+\paragraph{The probability density function for the Cauchy distribution.}
 The \texttt{cauchy}\index{cauchy@\texttt{cauchy}}
 (or \texttt{cauchyd}\index{cauchyd@\texttt{cauchyd}}) command computes the
 probability density function for the Cauchy distribution (sometimes
@@ -37679,7 +37470,7 @@ cauchy(0.3)
   0.292027418517
 \end{xcasoutput}
 
-\subsubsection{The cumulative distribution function for the Cauchy distribution}
+\paragraph{The cumulative distribution function for the Cauchy distribution.}
 The \texttt{cauchy\_cdf}\index{cauchy\_cdf@\texttt{cauchy\_cdf}}
 (or \texttt{cauchyd\_cdf}\index{cauchyd\_cdf@\texttt{cauchyd\_cdf}})
 command computes the cumulative distribution function for the Cauchy distribution.
@@ -37721,7 +37512,7 @@ cauchy_cdf(2,3,-1.9,1.4)
   0.228452641651
 \end{xcasoutput}
 
-\subsubsection{The inverse distribution function for the Cauchy distribution}
+\paragraph{The inverse distribution function for the Cauchy distribution.}
 The \texttt{cauchy\_icdf}\index{cauchy\_icdf@\texttt{cauchy\_icdf}}
 (or \texttt{cauchyd\_icdf}\index{cauchyd\_icdf@\texttt{cauchyd\_icdf}})
 command computes the inverse distribution for the Cauchy distribution.
@@ -37749,7 +37540,7 @@ cauchy_icdf(2,3,0.23)
 
 \subsection{Exponential distribution\label{ssec:exponentiald}}
 
-\subsubsection{The probability density function for the exponential distribution}
+\paragraph{The probability density function for the exponential distribution.}
 The exponential distribution depends on one parameters, $\lambda>0$;
 the value of the density function at $x \ge 0$ is
 $\texttt{exponential}(\lambda,x)=\lambda \mathrm{e}^{-\lambda x}$.
@@ -37775,7 +37566,7 @@ exponential(2.1,3.5)
   0.00134944395675
 \end{xcasoutput}
 
-\subsubsection{The cumulative distribution function for the exponential distribution}
+\paragraph{The cumulative distribution function for the exponential distribution.}
 The \texttt{exponential\_cdf}\index{exponential\_cdf@\texttt{exponential\_cdf}}
 (or \texttt{exponentiald\_cdf}\index{exponentiald\_cdf@\texttt{exponentiald\_cdf}})
 command computes the cumulative distribution function for the exponential distribution.
@@ -37807,7 +37598,7 @@ exponential_cdf(2.3,0.9,3.2)
   0.125549583246
 \end{xcasoutput}
 
-\subsubsection{The inverse distribution function for the exponential distribution}
+\paragraph{The inverse distribution function for the exponential distribution.}
 The \texttt{exponential\_icdf}\index{exponential\_icdf@\texttt{exponential\_icdf}}
 (or \texttt{exponentiald\_icdf}\index{exponentiald\_icdf@\texttt{exponentiald\_icdf}})
 command computes the inverse distribution for the exponential distribution.
@@ -37834,7 +37625,7 @@ exponential_icdf(2.3,0.87)
 
 \subsection{Weibull distribution\label{ssec:weibull}}
 
-\subsubsection{The probability density function for the Weibull distribution}
+\paragraph{The probability density function for the Weibull distribution.}
 The Weibull distribution depends on three parameters; $k>0$, $\lambda
 > 0$ and a real number $\theta$.  The probability density at $x$ is
 given by
@@ -37869,7 +37660,7 @@ weibull(2,1,0,3)
   \frac{6}{\mathrm{e}^{9}}
 \end{xcasoutput}
 
-\subsubsection{The cumulative distribution function for the Weibull distribution}
+\paragraph{The cumulative distribution function for the Weibull distribution.}
 The \texttt{weibull\_cdf}\index{weibull\_cdf@\texttt{weibull\_cdf}}
 (or \texttt{weibulld\_cdf}\index{weibulld\_cdf@\texttt{weibulld\_cdf}})
 command computes the cumulative distribution function for the Weibull distribution.
@@ -37918,7 +37709,7 @@ weibull_cdf(2.2,1.5,0.4,1.2,1.9)
   0.410267239944
 \end{xcasoutput}
 
-\subsubsection{The inverse distribution function for the Weibull distribution}
+\paragraph{The inverse distribution function for the Weibull distribution.}
 The \texttt{weibull\_icdf}\index{weibull\_icdf@\texttt{weibull\_icdf}}
 (or \texttt{weibulld\_icdf}\index{weibulld\_icdf@\texttt{weibulld\_icdf}})
 command computes the inverse distribution for the Weibull distribution.
@@ -37971,9 +37762,7 @@ kolmogorovd(1.36)
 
 \subsection{Wilcoxon or Mann-Whitney distribution\label{ssec:wilcoxon}}
 
-\subsubsection{The Wilcoxon test polynomial%: \texttt{wilcoxonp}
-}
-
+\paragraph{The Wilcoxon test polynomial.}
 The \texttt{wilcoxonp}\index{wilcoxonp@\texttt{wilcoxonp}}
 command computes the polynomial for the Wilcoxon or Mann-Whitney test.
 \begin{itemize}
@@ -38007,9 +37796,7 @@ wilcoxonp(4,3)
   \rightpolybracket
 \end{xcasoutput}
 
-\subsubsection{The Wilcoxon/Mann-Whitney statistic%: \texttt{wilcoxons}
-}
-
+\paragraph{The Wilcoxon/Mann-Whitney statistic.}
 The \texttt{wilcoxons}\index{wilcoxons@\texttt{wilcoxons}}
 command computes the Wilcoxon or Mann-Whitney statistic.
 \begin{itemize}
@@ -38035,9 +37822,7 @@ wilcoxons([1,3,4,5,7,8,8,12,15,17],[2,6,10,11,13,14,15,18,19,20])
   128.5
 \end{xcasoutput}
 
-\subsubsection{The Wilcoxon or Mann-Whitney test%: \texttt{wilcoxont}
-}
-
+\paragraph{The Wilcoxon or Mann-Whitney test.}
 The \texttt{wilcoxont}\index{wilcoxont@\texttt{wilcoxont}}
 command will perform the Wilcoxon or Mann-Whitney test.
 \begin{itemize}
@@ -42936,7 +42721,7 @@ _c_
 \begin{xcasoutput}
   1\;c
 \end{xcasoutput}
-use the \texttt{mksa} command (see \secref{ssec:mksa})
+Use the \texttt{mksa} command (see \secref{ssec:mksa})
 to put this in terms of standard units:
 \begin{xcasinput}
 mksa(_c_)
@@ -43232,7 +43017,7 @@ output("This is a ",s)
 \begin{xcasimage}
   \includeimage{xcas-output.png}
 \end{xcasimage}
-use \texttt{output} to add
+Use \texttt{output} to add
 information to the input window:
 \begin{xcasinput}
 input(output("Calculate p(a)"),"polynomial",p,"value",a)
@@ -43570,31 +43355,31 @@ the first argument is an element of a list stored in a variable, since
 \texttt{=<} modifies list elements by reference (see section
 \ref{ssec:assignmentdiffs}).
 
-\begin{itemize}
-\item \texttt{=>} is the infixed version of \texttt{sto}, it stores
-  the value in the first argument in the variable in the second
-  argument.  Both
+\texttt{=>} is the infixed version of \texttt{sto}, it stores
+the value in the first argument in the variable in the second
+argument.  Both
 \begin{xcasinput}
 4=>a
 \end{xcasinput}
-  and
+and
 \begin{xcasinput}
 sto(4,a)
 \end{xcasinput}
-  store the value 4 in the variable \texttt{a}.
-\item \texttt{:=} and \texttt{=<} both have a variable as the first
-  argument and the value to store in the variable as the second
-  argument. Both
+store the value 4 in the variable \texttt{a}.
+
+\texttt{:=} and \texttt{=<} both have a variable as the first
+argument and the value to store in the variable as the second
+argument. Both
 \begin{xcasinput}
 a:=4
 \end{xcasinput}
-  and
+and
 \begin{xcasinput}
 a=<4
 \end{xcasinput}
-  store the value 4 in the variable \texttt{a}.
+store the value 4 in the variable \texttt{a}.
 
-  However, suppose you have entered:
+However, suppose you have entered:
 \begin{xcasinput}
 A:=[0,1,2,3,4]:; B:=A
 \end{xcasinput}
@@ -43606,15 +43391,14 @@ A[3]=<33
 \begin{xcasinput}
 A,B
 \end{xcasinput}
-  \begin{xcasoutput}
-    \left[0,1,2,33,4\right],\left[0,1,2,33,4\right]
-  \end{xcasoutput}
-  Here, \texttt{A} pointed to the list \texttt{[0,1,2,3,4]} and
-  after setting \texttt{B} to \texttt{A}, \texttt{B} also pointed to
-  \texttt{[0,1,2,3,4]}.  Changing an element of \texttt{A} by
-  reference changes the list that \texttt{A} points to, which
-  \texttt{B} also points to.
-\end{itemize}
+\begin{xcasoutput}
+  \left[0,1,2,33,4\right],\left[0,1,2,33,4\right]
+\end{xcasoutput}
+Here, \texttt{A} pointed to the list \texttt{[0,1,2,3,4]} and
+after setting \texttt{B} to \texttt{A}, \texttt{B} also pointed to
+\texttt{[0,1,2,3,4]}.  Changing an element of \texttt{A} by
+reference changes the list that \texttt{A} points to, which
+\texttt{B} also points to.
 
 Note that multiple assigments can be made using sequences or lists.
 Both
@@ -45624,9 +45408,7 @@ The parameters for global features and their possible values are:
 
 \subsection{Commands for global display features}
 
-\subsubsection{Adding a legend%: \texttt{legend}
-  \label{sssec:addlegend}}
-
+\paragraph{Adding a legend.\label{sssec:addlegend}}
 The \texttt{legend}\index{legend@\texttt{legend}}
 command creates a legend on the screen.
 \begin{itemize}
@@ -45661,9 +45443,7 @@ legend(1+i,quadrant3,"hello")
   \includeimage{xcas-hello-legend.png}
 \end{xcasimage}
 
-\subsubsection{Changing various features%: \texttt{display} \texttt{color}
-  \label{sssec:display}}
-
+\paragraph{Changing various features.\label{sssec:display}}
 The \texttt{display}\index{display@\texttt{display}}
 or \texttt{color}\index{color@\texttt{color}}
 command changes the properties of graphics; the
@@ -45978,7 +45758,7 @@ In other words, this generates a random triangle.
 \subsection{Points in polar coordinates%: \texttt{polar\_point} \texttt{point\_polar}
 }
 
-use the \texttt{point} command to specify a point in polar
+The \texttt{point} command can be used for specifying a point in polar
 coordinates by using the polar representation of complex numbers, e.g.
 \begin{xcasinput}
 point(2*exp(i*pi/4))
@@ -49701,8 +49481,7 @@ point moving along a curve.  It can draw a locus of points which
 depends on points on a curve, or the envelope of a family of lines
 depending on points on a curve.
 
-\subsubsection{The locus of points depending on points on a curve}
-
+\paragraph{The locus of points depending on points on a curve.}
 \begin{itemize}
 \item For drawing the locus of points depending on points on a curve,
   \texttt{locus} takes two mandatory arguments and
@@ -49748,8 +49527,7 @@ locus(G,P,t=-3..3,tstep=0.1)
   \includeimage[0.25]{xcas-locus2.png}
 \end{xcasimage}
 
-\subsubsection{The envelope of a family of lines which depend on points on a curve}
-
+\paragraph{The envelope of a family of lines which depend on points on a curve.}
 For drawing the envelope of a family of lines which depend on points
 on a curve:
 \begin{itemize}

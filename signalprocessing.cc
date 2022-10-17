@@ -1220,7 +1220,7 @@ define_unary_function_ptr5(at_idwt,alias_at_idwt,&__idwt,0,true);
  * the result as a new audio clip. If the library is not available, an error is thrown. */
 audio_clip audio_clip::resample(int nsr,int quality) const {
 #ifndef HAVE_LIBSAMPLERATE
-    throw std::runtime_error(gettext("libsamplerate is required for resampling audio",contextptr));
+    throw std::runtime_error(gettext("libsamplerate is required for resampling audio"));
 #else
     SRC_DATA data;
     data.src_ratio=double(nsr)/double(_sample_rate);

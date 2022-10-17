@@ -1200,7 +1200,7 @@ operators into the session.  This menu includes the following entries:
   This inserts a new comment level.
 \end{description}
 The other entries let you insert mathematical operations into
-the current level. If \texttt{Auto index help} is chosen
+the current level. If \textsf{Auto index help} is chosen
 (see \secref{sec:mconf}), then the help index will open
 help index (see \secref{sssec:helpind})
 with the chosen command selected.
@@ -1217,7 +1217,7 @@ various transformations.
 \subsection{\textsf{Cmds} menu}
 
 The \textsf{Cmds} menu contains various \giac{} functions and
-constants separated into categories.  If \texttt{Auto index help} is
+constants separated into categories.  If \textsf{Auto index help} is
 chosen (see \secref{sec:mconf}), then when you select a function or
 constant, the help index (see \secref{sssec:helpind}) opens with the
 function or constant selected, which can be used to insert the entry
@@ -1485,7 +1485,7 @@ the status line.  This will open a window with the following options:
 \item[debug] (default: 0) ---
   Here you can input a 0 or 1.  If this is 1, then
   \xcas{} will display intermediate information on the
-  algorithms used by \giac{}.  If this is 0, then no such
+  algorithms used by \xcas{}.  If this is 0, then no such
   information is displayed.
 
 \item[maxiter]\label{enum:maxiter}  (default: 20) ---
@@ -1522,9 +1522,9 @@ the status line.  This will open a window with the following options:
 \item[proba]  (default: $10^{-15}$) ---
   Here you can input a floating point number.
   If this number is greater than zero, then in some cases
-  \giac{} can use probabilistic algorithms and give a result
+  \xcas{} can use probabilistic algorithms and give a result
   with probability of being false less than this value.  (One such
-  example of a probabilistic algorithm that \giac{} can use is
+  example of a probabilistic algorithm that \xcas{} can use is
   the algorithm to compute the determinant of a large matrix with
   integer coefficients.)
 
@@ -1554,7 +1554,7 @@ the status line.  This will open a window with the following options:
   will be measured in degrees.
 
 \item[Complex]  (default: unchecked) ---
-  If checked, then \giac{} will work in complex mode, meaning, for example, that
+  If checked, then \xcas{} will work in complex mode, meaning, for example, that
   polynomials will be factored with complex numbers if necessary.
 
 \item[Cmplx\_var]  (default: unchecked) ---
@@ -1793,10 +1793,14 @@ performed.
   \item[Increasing power.]  This is 0 to display polynomials
     in increasing power, and 1 to display polynomials in decreasing powers.
   \end{description}
-\item The \texttt{xcas\_mode} command sets the computer language used by
+\end{itemize}
+
+The \texttt{xcas\_mode} command sets the computer language used by
   \xcas{} (see \secref{ssec:lang}).
-\item The \texttt{xyztrange} command sets or returns the values of the
+
+The \texttt{xyztrange} command sets or returns the values of the
   graphics configuration.
+\begin{itemize}
 \item
   To set the values, \texttt{xyztrange} takes 15 arguments:
   \begin{itemize}
@@ -2261,7 +2265,7 @@ The command
 \begin{xcasinput}
 markup_cfg(simplify=[product,apply],mathml=display)
 \end{xcasinput}
-enables only implicit multiplication and function application; additionally, it disables
+enables only implicit multiplication and function application; additionally, it prevents
 content \MathML{} from appearing in the output of \texttt{export\_mathml}.
 
 \subsection{Translating a \Maple{} file to \xcas{}\label{ssec:maple2xcas}}
@@ -2271,26 +2275,28 @@ translates a file of \Maple{}\index{Maple} commands to the \xcas{} language.
 \begin{itemize}
 \item \texttt{maple2xcas} takes two arguments:
   \begin{itemize}
-  \item \textit{Maplefile}, the name of the \Maple{} input file.
-  \item \textit{XcasFile}, the file where you want to save the \xcas{}
+  \item \textit{maplefile}, the name of the \Maple{} input file.
+  \item \textit{xcasfile}, the file where you want to save the \xcas{}
     commands.
   \end{itemize}
 \item
-  \texttt{maple2xcas("}\textit{MapleFile}\texttt{","}\textit{XcasFile}\texttt{")}
-  results in an \xcas{} file named \textit{XcasFile} with the
-  \Maple{} commands in \textit{MapleFile} translated to the \xcas{} language.
+  \texttt{maple2xcas("}\textit{maplefile}\texttt{","}\textit{xcasfile}\texttt{")}
+  results in an \xcas{} file named \textit{xcasfile} with the
+  \Maple{} commands from \textit{maplefile} translated to the \xcas{} language.
 \end{itemize}
 
 \section{Entry in \xcas{}}
 
-If you enter a command into \xcas{}, the result will appear in
-the output box below the input, colored in blue. For example:
+If you enter a command into \xcas{} and press \textsf{Enter},
+the result will appear in the output box below the input,
+colored in blue. For example:
 \begin{xcasinput}
 a:=2+2
 \end{xcasinput}
 \begin{xcasoutput}
   4
 \end{xcasoutput}
+Note that line breaks in a command entry are entered by pressing \textsf{Shift+Enter}.
 
 \subsection{Suppressing output}
 
@@ -2327,7 +2333,9 @@ and \texttt{b} will be set to \texttt{6}.
 You can annotate an \xcas{} session by adding comments. You can
 enter a comment on the current line at any time by typing
 \textsf{Alt+C}.  The line will appear in green text and conclude when
-you type \texttt{Enter}.  Comments are not evaluated and so have no
+you type \textsf{Enter}.
+(To force a new line, press \textsf{Shift+Enter}.)
+Comments are not evaluated and so have no
 output.  If you have started entering a command when you begin a
 comment, the command line with the start of the command will be pushed
 down so that you can finish it when you complete the comment.
@@ -2444,7 +2452,7 @@ $x^2-4$ on the bottom, begin
 by typing \texttt{x}.  Selecting this \texttt{x} and typing
 \texttt{\^{}2} will put on the superscript.  Finally, selecting the
 $\texttt{x}^{\texttt{2}}$ and typing \texttt{- 4} will finish the
-bottom.  If you then hit \texttt{Enter}, the expression will be
+bottom.  If you then hit \textsf{Enter}, the expression will be
 evaluated and will appear on the output line.
 
 \subsection{Subexpressions\label{ssec:subexps}}
@@ -3229,30 +3237,24 @@ The \texttt{assume}\index{assume@\texttt{assume}}
 (or \texttt{supposons}\index{supposons@\texttt{supposons}})
 command lets you tell \xcas{} some properties of a variable
 without giving the variable a specific value.
-The \texttt{additionally}\index{additionally@\texttt{additionally}}
-command can be used to add assumptions to a variable.
-The \texttt{about}\index{about@\texttt{about}} command
-will display the current assumptions about a variable, and the
-\texttt{purge}\index{purge@\texttt{purge}} command will remove all
-values and assumptions about a variable.
-
-
-\noindent
-\texttt{assume} (or \texttt{supposons}) takes one mandatory
-argument and one optional argument:
 \begin{itemize}
-\item \textit{assumptions}, statements about a variable (such as
-  equalities and inequalities, possibly combined with \texttt{and} and
-  \texttt{or}, and domains).
-\item Optionally, \texttt{additionally}, which indicates that the
-  assumptions are to be added to previous assumptions, as opposed to
-  replace them.
+\item \texttt{assume} (or \texttt{supposons}) takes one mandatory
+  argument and one optional argument:
+  \begin{itemize}
+  \item \textit{assumptions}, statements about a variable (such as
+    equalities and inequalities, possibly combined with \texttt{and} and
+    \texttt{or}, and domains).
+  \item Optionally, \texttt{additionally}, which indicates that the
+    assumptions are to be added to previous assumptions, as opposed to
+    replace them.
+  \end{itemize}
+\item \texttt{assume(}$\textit{assumptions}\,\langle,\texttt{additionally}\,\rangle$\texttt{)}
+  places the assumptions on the variable.  With no second argument,
+  it will remove any previous assumptions.
 \end{itemize}
-\texttt{assume(}$\textit{assumptions}\,\langle,\texttt{additionally}\,\rangle$\texttt{)}
-places the assumptions on the variable.  With no second argument,
-it will remove any previous assumptions.
 
-
+The \texttt{additionally}\index{additionally@\texttt{additionally}}
+command can be used to place additional assumptions on a variable.
 \begin{itemize}
 \item
   \texttt{additionally} takes
@@ -3262,7 +3264,10 @@ it will remove any previous assumptions.
   assumptions to a variable without removing assumptions.
 \end{itemize}
 
-
+The \texttt{about}\index{about@\texttt{about}} command
+will display the current assumptions about a variable.
+(See~\secref{ssec:imageprops} and~\secref{ssec:audioclipprops} for
+other uses of \texttt{about}.)
 \begin{itemize}
 \item
   \texttt{about} takes
@@ -3272,7 +3277,8 @@ it will remove any previous assumptions.
   on the variable.
 \end{itemize}
 
-
+The \texttt{purge}\index{purge@\texttt{purge}} command will remove all
+values and assumptions about a variable.
 \begin{itemize}
 \item
   \texttt{purge} takes
@@ -4853,7 +4859,7 @@ Since $512$ in base 8 is the same as $2\cdot 1+1\cdot 8+5\cdot
 \begin{xcasoutput}
   330
 \end{xcasoutput}
-since 2F3 in base 16 is the same as $3\cdot 1+15\cdot 16+2\cdot
+Since 2F3 in base 16 is the same as $3\cdot 1+15\cdot 16+2\cdot
 16^{2}=755$ in decimal:
 \begin{xcasinput}
 0x2F3
@@ -6195,30 +6201,32 @@ remove(x->(x>=2),[0,1,2,3,1,5])
   \left[0,1,1\right]
 \end{xcasoutput}
 
-\paragraph*{Remark.} Use \texttt{remove} to remove characters from
-a string.  For example, to remove all the \texttt{"a"}s of a string
-(see \secref{ssec:funcs} for writing functions):
-\begin{xcasinput}
-orda:=ord("a"):;
-\end{xcasinput}
-Then (in a program editor level):
+You can use \texttt{remove} to remove
+characters from a string.  For example, to remove all instances of
+a given letter from a string, enter the following code in a program
+editor level (see \secref{ssec:funcs} for writing functions):
 \begin{lstlisting}
-f(chn):={
-  local l:=length(chn)-1;
-  return remove(x->(ord(x)==orda),seq(chn[k],k,0,l));
+f(s,c):={
+  local ordc,l,r,x,k;
+  ordc:=ord(c);
+  l:=length(s)-1;
+  purge(x,k);
+  r:=remove(x->(ord(x)==ordc),seq(s[k],k,0,l));
+  return char(ord(r));
 }
 \end{lstlisting}
-Now:
+Here \texttt{s} is the input string an \texttt{c} is the letter
+to be removed. Now, for example:
 \begin{xcasinput}
-f("abracadabra")
+f("abracadabra","a")
 \end{xcasinput}
-\begin{xcasoutput}
-  \left[\text{``b''},\text{``r''},\text{``c''},\text{``d''},\text{``b''},\text{``r''}\right]
-\end{xcasoutput}
-To get a string:
-\begin{xcasinput}
-char(ord(["b","r","c","d","b","r"]))
-\end{xcasinput}
+% \begin{xcasoutput}
+%   \left[\text{``b''},\text{``r''},\text{``c''},\text{``d''},\text{``b''},\text{``r''}\right]
+% \end{xcasoutput}
+% To get a string, input:
+% \begin{xcasinput}
+% char(ord(ans()))
+% \end{xcasinput}
 \begin{xcasoutput}
   \text{``brcdbr''}
 \end{xcasoutput}
@@ -7343,8 +7351,7 @@ or:
 To define an $n$-tuple (rather than a list of $n$ objects), you
 can put the elements, separated by commas, inside the delimiters
 \texttt{tuple[}\index{tuple@\texttt{tuple}} and \texttt{]}.
-
-\subsubsection*{Example}
+For example:
 \begin{xcasinput}
 set[tuple[1,3,4],tuple[1,3,5],tuple[2,3,4]]
 \end{xcasinput}
@@ -7356,8 +7363,7 @@ set[tuple[1,3,4],tuple[1,3,5],tuple[2,3,4]]
 \paragraph{The Cartesian product of two sets.}
 You can compute the Cartesian product of two sets with the infixed
 \texttt{*}\index{*@\texttt{*}} operator.
-
-\subsubsection*{Examples}
+For example:
 \begin{xcasinput}
 set[1,2]*set[3,4]
 \end{xcasinput}
@@ -7411,24 +7417,24 @@ endpoints of a range (see \secref{ssec:lrstring}, \secref{ssec:op},
 \secref{ssec:lrinterval}, \secref{ssec:lrlist}, \secref{ssec:lhs} and
 \secref{ssec:rhs} for other uses of \texttt{left} and \texttt{right}.)
 For example:
+% \begin{xcasinput}
+% R:=2..5
+% \end{xcasinput}
+% Then:
+% \begin{xcasinput}
+% sommet(2..5)
+% \end{xcasinput}
+% \begin{xcasoutput}
+%   \mathrm{ .. }
+% \end{xcasoutput}
 \begin{xcasinput}
-R:=2..5
-\end{xcasinput}
-Then:
-\begin{xcasinput}
-sommet(R)
-\end{xcasinput}
-\begin{xcasoutput}
-  \mathrm{ .. }
-\end{xcasoutput}
-\begin{xcasinput}
-left(R)
+left(2..5)
 \end{xcasinput}
 \begin{xcasoutput}
   2
 \end{xcasoutput}
 \begin{xcasinput}
-right(R)
+right(2..5)
 \end{xcasinput}
 \begin{xcasoutput}
   5
@@ -7551,7 +7557,7 @@ find the left and right endpoints of an interval.
 \secref{ssec:range}, \secref{ssec:lhs} and \secref{ssec:rhs} for
 other uses of \texttt{left} and \texttt{right}.)
 \begin{itemize}
-\item \textit{left}\index{left@\texttt{left}} and
+\item \texttt{left}\index{left@\texttt{left}} and
   \texttt{right}\index{right@\texttt{right}} take one argument:
   $I$, an interval.
 \item \texttt{left($I$)} returns the left endpoint of the interval
@@ -7679,7 +7685,6 @@ midpoint(i[2,3])
 }
 
 In \xcas{}, the union of two intervals is their convex hull.
-
 The \texttt{union\index{union@\texttt{union}}} operator is a
 binary infixed operator that finds the union of two intervals.
 
@@ -7723,9 +7728,9 @@ The \texttt{contains} command determines if an object is in an interval.
   \item \textit{obj}, an object.
   \end{itemize}
 \item \texttt{contains(}$I,\textit{obj}$\texttt{)} returns 1 if
-  \textit{obj} is in $I$; i.e., either \textit{obj} is a number which
-  is contained in $I$ or \texttt{obj} is an interval which is
-  a subset of $I$.  It returns 0 otherwise.
+  \textit{obj} is in $I$, meaning that either \textit{obj} is a
+  number which is contained in $I$ or \texttt{obj} is an interval
+  which is a subset of $I$.  It returns 0 otherwise.
 \end{itemize}
 
 \subsubsection*{Examples}
@@ -7957,8 +7962,8 @@ lgcd([18,15,21,36])
   3
 \end{xcasoutput}
 
-\paragraph*{Remark.}
-\texttt{lgcd} does not accept two lists as arguments (even if they have the same size).
+% \paragraph*{Remark.}
+% \texttt{lgcd} does not accept two lists as arguments (even if they have the same size).
 
 \subsection{Least common multiple%: \texttt{lcm}
 }
@@ -8106,7 +8111,7 @@ ifactors([36,52])
 }
 
 The \texttt{maple\_ifactors}\index{maple\_ifactors@\texttt{maple\_ifactors}}
-command decomposes an integer into prime factors,
+command decomposes an integer into prime factors
 and returns the result in \Maple{} syntax.
 \begin{itemize}
 \item \texttt{maple\_ifactors} takes
@@ -8691,7 +8696,7 @@ ichrem(3%5,9%13)
 \begin{xcasoutput}
   \left(-17\right)\mathbin{\%}65
 \end{xcasoutput}
-(note that $48\equiv -17 \pmod{65}$).
+Note that $48\equiv -17 \pmod{65}$.
 
 Recalling that \texttt{chrem} takes its arguments in a different form,
 you can also enter:
@@ -8722,7 +8727,8 @@ ichinrem([3%5,4%7,1%9])
 \begin{xcasoutput}
   \left(-17\right)\mathbin{\%}315
 \end{xcasoutput}
-(note that $298\equiv -17 \pmod{315}$.)\\
+Note that $298\equiv -17 \pmod{315}$.
+
 Again, with the arguments in a different form, you can also enter:
 \begin{xcasinput}
 chrem([3,4,1],[5,7,9])
@@ -8768,7 +8774,7 @@ chrem([3x+1,4x+2,x+3],[5,7,9])
 \begin{xcasoutput}
   \left[298 x+156,315\right]
 \end{xcasoutput}
-(note that $298\equiv -17 \pmod{315}$).
+Note that $298\equiv -17 \pmod{315}$.
 
 \subsection{Solving $au+bv=c$ in $\mathbb{Z}$%: \texttt{iabcuv}
 }
@@ -8965,12 +8971,12 @@ powmod(5,12,21)
 \begin{xcasoutput}
   1
 \end{xcasoutput}
-(see \secref{ssec:powmod}.)
+(See \secref{ssec:powmod}.)
 
 \subsection{Legendre symbol%: \texttt{legendre\_symbol}
 }
 
-If $n$ is prime, the Legendre symbol of $a$ is written
+If $n$ is prime, the Legendre symbol of $a\in\mathbb{Z}$ is written
 $\left(\frac{a}{n}\right)$ and defined by:
 \[
   \left(\frac{a}{n}\right)=\left\{
@@ -8987,12 +8993,12 @@ The Legendre symbol satisfies the following properties.
   If $n$ is prime, then
   $\displaystyle a^{\frac{n-1}{2}}\equiv \left(\frac{a}{n}\right) \pmod{n} $.
 \item The following holds for odd and positive numbers $p$ and $k$:
-  \begin{align*}
+  \[
     \left(\frac{p}{q}\right).\left(\frac{q}{p}\right)
-    &=(-1)^{\frac{p-1}{2}}.(-1)^{\frac{q-1}{2}},\\
-    \left(\frac{2}{p}\right)&=(-1)^{\frac{p^2-1}{8}},\\
-    \left(\frac{-1}{p}\right)&=(-1)^{\frac{p-1}{2}}.
-  \end{align*}
+    =(-1)^{\frac{p-1}{2}}.(-1)^{\frac{q-1}{2}},\quad
+    \left(\frac{2}{p}\right)=(-1)^{\frac{p^2-1}{8}},\quad
+    \left(\frac{-1}{p}\right)=(-1)^{\frac{p-1}{2}}.
+  \]
 \end{itemize}
 The \texttt{legendre\_symbol}\index{legendre\_symbol@\texttt{legendre\_symbol}}
 command computes the Legendre symbol.
@@ -9083,16 +9089,14 @@ compositions of an integer with a given number of elements.
   \begin{itemize}
   \item $n$, a positive integer.
   \item $k$, a positive integer not larger than $n$.
-  \item Optionally, either \texttt{zeros=true} or \texttt{zeros=false}.
+  \item Optionally, either \texttt{zeros=true} (which is the default) or
+    \texttt{zeros=false}.
   \end{itemize}
 \item
-  \texttt{icomp($n,k\,\langle,$zeros=}\textit{bool}$\,\rangle$\texttt{)}
+  \texttt{icomp(}$n,k\,\langle,\texttt{zeros=}\textit{bool}\,\rangle$\texttt{)}
   returns the list of all compositions of $n$ into $k$ parts, where a part can be
-  0.  This is equivalent to the optional argument with
-  \textit{bool} equal to \texttt{true}.  With \textit{bool} equal to
-  \texttt{false},  \texttt{icomp(}$n,k,\texttt{zeros=false}$\texttt{)} returns the
-  list of all compositions of $n$ into $k$ parts, where each part is
-  nonzero (positive).
+  0 if $\textit{bool}=\texttt{true}$ (the default),
+  or where each part is greater than 0 if $\textit{bool}=\texttt{false}$.
 \end{itemize}
 
 \paragraph*{Remark.}
@@ -9109,12 +9113,10 @@ icomp(4,2)
   \end{bmatrix}
 \end{xcasoutput}
 \begin{xcasinput}
-icomp(6,3,zeros=false)
+icomp(5,3,zeros=false)
 \end{xcasinput}
 \begin{xcasoutput}
-  \begin{bmatrix}
-    4&1&1\\3&2&1\\2&3&1\\1&4&1\\3&1&2\\2&2&2\\1&3&2\\2&1&3\\1&2&3\\1&1&4
-  \end{bmatrix}
+  \begin{bmatrix}3&1&1\\2&2&1\\1&3&1\\2&1&2\\1&2&2\\1&1&3\end{bmatrix}
 \end{xcasoutput}
 
 \subsection{Day of the week%: \texttt{dayofweek}
@@ -9130,8 +9132,8 @@ command finds the day of the week for any date after 15 October 1582.
   \item $y$, an integer representing the year.
   \end{itemize}
   The date represented should be after 15 October 1582.
-\item \texttt{dayofweek($d,m,y$)} returns an integer from 0 to 6;
-  0 representing Sunday, 1 representing Monday, etc.
+\item \texttt{dayofweek($d,m,y$)} returns an integer from 0 to 6
+  ($0=\text{Sunday}$, $1=\text{Monday}$, \ldots).
 \end{itemize}
 
 \subsubsection*{Examples}
@@ -9854,14 +9856,14 @@ root(3,sqrt(2))
 }
 
 The exponential integral Ei is defined for non-zero real numbers $x$
-by \[ \textrm{Ei}(x)=\int_{t=-\infty}^{x} \frac{ \mathrm{e}^{t}}{t}\,\mathrm{d}t. \]
+by \[ \operatorname{Ei}(x)=\int_{-\infty}^{x} \frac{ \mathrm{e}^{t}}{t}\,\mathrm{d}t. \]
 For $x>0$, this integral is improper but the principal value exists.
-Also, $\textrm{Ei}(0)=-\infty$, $\mathrm{Ei}(-\infty)=0$.
+Also, $\operatorname{Ei}(0)=-\infty$, $\mathrm{Ei}(-\infty)=0$.
 
 Since $\frac{ \mathrm{e}^{x}}{x}=\frac{1}{x}+1+\frac{x}{2!} +
 \frac{x^2}{3!}+\cdots$, the Ei function can be extended to
 $\mathbb{C}\setminus\{0\}$ (with a branch cut on the positive real axis) by
-\[ \textrm{Ei}(z)=\ln(z)+\gamma+x+\frac{x^2}{2\cdot 2!} +
+\[ \operatorname{Ei}(z)=\ln(z)+\gamma+x+\frac{x^2}{2\cdot 2!} +
   \frac{x^3}{3\cdot 3!}+\cdots\] where $\gamma=0.57721566490\dots$ is the
 Euler-Mascheroni constant.
 
@@ -9913,15 +9915,15 @@ Another type of exponential integral is
   E_{1}(x)=\int_{x}^{+\infty}\frac{ \mathrm{e}^{-t}}{t}\,\mathrm{d}t
   =\int_{1}^{+\infty}\frac{ \mathrm{e}^{-tx}}{t}\,\mathrm{d}t
 \]
-which satisfies $E_{1}(x)=-\textrm{Ei}(-x)$.
+which satisfies $E_{1}(x)=-\operatorname{Ei}(-x)$.
 This can be generalized to
 \[
   E_{n}(x)=\int_{1}^{+\infty}\frac{ \mathrm{e}^{-ntx}}{t}\,\mathrm{d}t.
 \]
 These functions satisfy
 \begin{align*}
-  E_{1}(x) &=-\textrm{Ei}(x),\\
-  E_{2}(x) &=\mathrm{e}^{-x}+ x\,\textrm{Ei}(-x)=\mathrm{e}^{-x}-x\,E_{1}(x),
+  E_{1}(x) &=-\operatorname{Ei}(x),\\
+  E_{2}(x) &=\mathrm{e}^{-x}+ x\,\operatorname{Ei}(-x)=\mathrm{e}^{-x}-x\,E_{1}(x),
 \end{align*}
 and, for  $n \ge 2$,
 \[
@@ -9956,15 +9958,15 @@ Ei(3.0,2)
 \subsection{Logarithmic integral function%: \texttt{Li}
 }
 
-The logarithmic integral function is defined by \[ \textrm{Li}(x)=
-  \textrm{Ei}(\ln(x))=\int_{t=0}^{ \mathrm{e}^{x}}\frac{1}{\ln(t)}\,\mathrm{d}t \]
+The logarithmic integral function is defined by \[ \operatorname{Li}(x)=
+  \operatorname{Ei}(\ln(x))=\int_{t=0}^{ \mathrm{e}^{x}}\frac{1}{\ln(t)}\,\mathrm{d}t \]
 
 The \texttt{Li}\index{Li@\texttt{Li}} command computes the logarithmic integral.
 \begin{itemize}
 \item \texttt{Li} takes
   $z$, a complex number.
 \item \texttt{Li($z$)} returns the value of the logarithmic integral
-  $\textrm{Li}(z)$.
+  $\operatorname{Li}(z)$.
 \end{itemize}
 
 \subsubsection*{Example}
@@ -9980,18 +9982,18 @@ Li(2.0)
 
 The cosine integral function is defined by
 \[
-  \textrm{Ci}(x)=\int_{+\infty}^{x} \frac{\cos(t)}{t}\,\mathrm{d}t
-                =\ln(t)+\gamma+\int_{t=0}^{x} \frac{\cos(t)-1}{t}\,\mathrm{d}t.
+  \operatorname{Ci}(x)=\int_{+\infty}^{x} \frac{\cos(t)}{t}\,\mathrm{d}t
+                =\ln(t)+\gamma+\int_{0}^{x} \frac{\cos(t)-1}{t}\,\mathrm{d}t.
 \]
-It can be shown that $\textrm{Ci}(0)=-\infty, \textrm{Ci}(-\infty)=\mathrm{i}\pi$ and
-$\textrm{Ci}(+\infty)=0$.
+It can be shown that $\operatorname{Ci}(0)=-\infty$, $\operatorname{Ci}(-\infty)=\mathrm{i}\pi$ and
+$\operatorname{Ci}(+\infty)=0$.
 
 The \texttt{Ci}\index{Ci@\texttt{Ci}} command computes the cosine integral function.
 \begin{itemize}
 \item \texttt{Ci} takes
   $z$, a complex number.
 \item \texttt{Ci($z$)} returns the value of the cosine integral function
-  $\textrm{Ci}(z)$.
+  $\operatorname{Ci}(z)$.
 \end{itemize}
 
 \subsubsection*{Examples}
@@ -10017,9 +10019,11 @@ Ci(1.0)-Ci(-1.0)
 \subsection{Sine integral function%: \texttt{Si}
 }
 
-The sine integral function is defined by \[ \textrm{Si}(x)=
-  \int_{0}^{x} \frac{\sin(t)}{t}\,\mathrm{d}t \] and $\textrm{Si}(0)=0,
-\textrm{Si}(-\infty)=-\frac{\pi}{2}$ and $\textrm{Si}(+\infty)=\frac{\pi}{2}$.
+The sine integral function is defined by
+\[ \operatorname{Si}(x)=
+   \int_{0}^{x} \frac{\sin(t)}{t}\,\mathrm{d}t. \]
+It can be shown that $\operatorname{Si}(0)=0$, $\operatorname{Si}(-\infty)=-\frac{\pi}{2}$
+and $\operatorname{Si}(+\infty)=\frac{\pi}{2}$.
 Note that $\mathrm{Si}$ is an odd function.
 
 The \texttt{Si}\index{Si@\texttt{Si}} command computes the sine integral function.
@@ -10027,7 +10031,7 @@ The \texttt{Si}\index{Si@\texttt{Si}} command computes the sine integral functio
 \item \texttt{Si} command takes
   $z$, a complex number.
 \item \texttt{Si($z$)} returns the value of the sine integral function
-  $\textrm{Si}(z)$.
+  $\operatorname{Si}(z)$.
 \end{itemize}
 
 \subsubsection*{Example}
@@ -10096,11 +10100,10 @@ The defining property of the Dirac distribution is that
 \[
   \int_{-\infty}^{+\infty} \delta(x) f(x)\,\mathrm{d}x=f(0)
 \]
-and consequently
+and consequently, for $c\in[a,b]$,
 \[
-  \int_{a}^{b} \delta(x-c)f(x)\,\mathrm{d}x=f(c)
+  \int_{a}^{b} \delta(x-c)f(x)\,\mathrm{d}x=f(c).
 \]
-as long as $c$ is in $[a,b]$.
 
 The \texttt{Dirac}\index{Dirac@\texttt{Dirac}} command
 represents the Dirac distribution.
@@ -10176,20 +10179,17 @@ The relation between \texttt{erf} and \texttt{normal\_cdf} (see
   \operatorname{\texttt{normal\_cdf}}(x)=\frac{1}{2}+\frac{1}{2}\operatorname{erf}\left(\frac{x}{\sqrt{2}}\right)
 \]
 Indeed, making the change of variable $t=u\sqrt{2}$ in
-\[
-  \operatorname{\texttt{normal\_cdf}}(x)=\frac{1}{2}+\frac{1}{\sqrt{2\pi}}\int_0^{x}\mathrm{e}^{-t^2/2}\mathrm{d}t
-\]
-gives:
+$\operatorname{\texttt{normal\_cdf}}(x)=\frac{1}{2}+\frac{1}{\sqrt{2\pi}}\int_0^{x}\mathrm{e}^{-t^2/2}\mathrm{d}t$ yields:
 \[
   \operatorname{\texttt{normal\_cdf}}(x)=\frac{1}{2}+\frac{1}{\sqrt{\pi}}\int_0^{\frac{x}{\sqrt{2}}}\mathrm{e}^{-u^2}\mathrm{d}u=\frac{1}{2}+\frac{1}{2}\operatorname{erf}\left(\frac{x}{\sqrt{2}}\right).
 \]
-To verify:
-\begin{xcasinput}
-normal_cdf(1.0)
-\end{xcasinput}
-\begin{xcasoutput}
-  0.841344746069
-\end{xcasoutput}
+% To verify:
+% \begin{xcasinput}
+% normal_cdf(1.0)
+% \end{xcasinput}
+% \begin{xcasoutput}
+%   0.841344746069
+% \end{xcasoutput}
 
 \subsection{Complementary error function%: \texttt{erfc}
 }
@@ -10232,13 +10232,13 @@ The relation between \texttt{erfc} and \texttt{normal\_cdf} (see
   \operatorname{\texttt{normal\_cdf}}(x)
   =1-\frac{1}{2}\operatorname{erfc}\left(\frac{x}{\sqrt{2}}\right).
 \]
-To verify:
-\begin{xcasinput}
-normal_cdf(1.0)
-\end{xcasinput}
-\begin{xcasoutput}
-  0.841344746069
-\end{xcasoutput}
+% To verify:
+% \begin{xcasinput}
+% normal_cdf(1.0)
+% \end{xcasinput}
+% \begin{xcasoutput}
+%   0.841344746069
+% \end{xcasoutput}
 
 \subsection{$\Gamma$ function%: \texttt{Gamma}
   \label{ssec:gamma}}
@@ -11039,7 +11039,7 @@ you leave spaces around the operator.
 \item To delete an operator, \texttt{user\_operator} takes two arguments:
   \begin{itemize}
   \item \textit{name}, a string which is the name of the operator.
-  \item \texttt{Delete}\index{Delete@\texttt{Delete}}
+  \item \texttt{Delete}\index{Delete@\texttt{Delete}}, the symbol.
   \end{itemize}
 \item \texttt{user\_operator(}$\textit{name},\texttt{Delete}$\texttt{)} deletes
   the operator.
@@ -13199,14 +13199,14 @@ Input in complex mode:
 zeros(x^2+4)
 \end{xcasinput}
 \begin{xcasoutput}
-  \left[-2\textrm{i},2\textrm{i}\right]
+  \left[-2\mathrm{i},2\mathrm{i}\right]
 \end{xcasoutput}
 Input in real or complex mode:
 \begin{xcasinput}
 cZeros(x^2+4)
 \end{xcasinput}
 \begin{xcasoutput}
-  \left[-2\textrm{i},2\textrm{i}\right]
+  \left[-2\mathrm{i},2\mathrm{i}\right]
 \end{xcasoutput}
 Input in real mode:
 \begin{xcasinput}
@@ -17333,14 +17333,16 @@ Quo(x^3+3*x,2*x^2+6*x+5) mod 5
 \begin{xcasoutput}
   -2x+1
 \end{xcasoutput}
-This division was done using modular arithmetic, unlike with:
+This division was done using modular arithmetic, unlike with the
+following command, where the division is done in $\mathbb{Z}[X]$
+and reduction afterwards:
 \begin{xcasinput}
 quo(x^3+3*x,2*x^2+6*x+5) mod 5
 \end{xcasinput}
-where the division is done in $\mathbb{Z}[X]$ and reduced after to:
 \begin{xcasoutput}
   3x+6
 \end{xcasoutput}
+
 If \xcas{} is not in \Maple{} mode, polynomial division
 in $\mathbb{Z}/p\mathbb{Z}[X]$ is done e.g.~by:
 \begin{xcasinput}
@@ -17404,11 +17406,11 @@ Rem(x^3+3*x,2*x^2+6*x+5) mod 5
   2x 
 \end{xcasoutput}
 This division was done using modular arithmetic, unlike with the
-following command, where the division is done in $\mathbb{Z}[X]$ and reduced afterwards:
+following command, where the division is done in $\mathbb{Z}[X]$
+and reduction afterwards:
 \begin{xcasinput}
 rem(x^3+3*x,2*x^2+6*x+5) mod 5
 \end{xcasinput}
- after to:
 \begin{xcasoutput}
   12x
 \end{xcasoutput}
@@ -19134,7 +19136,7 @@ The \texttt{numer}\index{numer@\texttt{numer}}
 command finds the numerator of a rational function,
 after it has been reduced. (See also \secref{sec:inumer}.)
 \begin{itemize}
-\item \noindent\texttt{numer} takes
+\item \texttt{numer} takes
   \textit{rat}, a rational function.
 \item \texttt{numer(}\textit{rat}\texttt{)} returns
   the numerator of the irreducible representation of \textit{rat}.
@@ -19190,7 +19192,7 @@ The \texttt{denom}\index{denom@\texttt{denom}} command
 finds the denominator of a rational function after it has been reduced.
 (See also \secref{sec:idenom}.)
 \begin{itemize}
-\item \noindent\texttt{denom} takes
+\item \texttt{denom} takes
   \textit{rat}, a rational function.
 \item \texttt{denom(}\textit{rat}\texttt{)} returns
   the denominator of the irreducible representation of \textit{rat}.
@@ -19217,7 +19219,7 @@ The \texttt{f2nd}\index{f2nd@\texttt{f2nd}} or
 \texttt{fxnd}\index{fxnd@\texttt{fxnd}} command finds
 the numerator and denominator of rational function after simplification.
 \begin{itemize}
-\item \noindent\texttt{f2nd} takes
+\item \texttt{f2nd} takes
   \textit{rat}, a rational function.
 \item \texttt{f2nd(}\textit{rat}\texttt{)} returns
   the list of the numerator and the denominator of
@@ -20239,7 +20241,7 @@ univariate polynomials with coefficients in a Galois field.
 \end{itemize}
 
 \subsubsection*{Example}
-The command \noindent\texttt{factor} can factorize a univariate polynomial
+The command \texttt{factor} can factorize a univariate polynomial
 with coefficients in a Galois field. For example, to have $G=\mathbb F_4$,
 input:
 \begin{xcasinput}
@@ -27105,7 +27107,7 @@ or \texttt{kernel}\index{kernel@\texttt{kernel}}
 or \texttt{nullspace}\index{nullspace@\texttt{nullspace}}
 command finds a basis for the kernel of a linear function.
 \begin{itemize}
-\item \noindent\texttt{ker} takes
+\item \texttt{ker} takes
   $A$, a matrix representing a linear function with respect to the
   standard basis.
 \item \texttt{ker($A$)} returns a list of vectors that is a basis of
@@ -30761,9 +30763,13 @@ lpsolve(1.06x1+0.56x2+3x3,
 
 \subsubsection{Loading problems from files}
 
-Linear (integer) programming problems can be loaded from MPS\footnote{\url{http://web.mit.edu/lpsolve/doc/mps-format.htm}} or CPLEX
-LP\footnote{\url{http://web.mit.edu/lpsolve/doc/CPLEX-format.htm}} format files. The file name should be a string passed as
-the \textit{obj} parameter. If the file name has extension \texttt{.lp}, then CPLEX LP format is assumed. If the extension is \texttt{.mps} resp.~\texttt{.gz}, then MPS resp.~gzipped MPS format is assumed.
+Linear (integer) programming problems can be loaded from
+\href{http://web.mit.edu/lpsolve/doc/mps-format.htm}{MPS} or
+\href{http://web.mit.edu/lpsolve/doc/CPLEX-format.htm}{CPLEX LP} format files.
+The file name should be a string passed as
+the \textit{obj} parameter. If the file name has extension \texttt{.lp}, then
+CPLEX LP format is assumed. If the extension is \texttt{.mps} resp.~\texttt{.gz},
+then MPS resp.~gzipped MPS format is assumed.
 
 For example, assume that the file \texttt{somefile.lp} is stored in
 the working directory and that it contains the following lines of text:
@@ -31509,8 +31515,8 @@ to equality and/or inequality constraints with continuous and/or integer variabl
   written in the AMPL modeling language (such files commonly have the extension \texttt{.mod}).
   \texttt{nlpsolve} contains a very basic parser for such files and is able to read
   problem variables, objective and constraints. For example, problems from
-  \url{https://www.minlplib.org/instances.html} can be loaded this way. Solver parameters
-  can be specified in \textit{opt}.
+  \href{https://www.minlplib.org/instances.html}{MINLPLib} can be loaded this way.
+  Solver parameters can be specified in \textit{opt}.
 \item[Automatic selection of the optimization method.]
   If objective and constraints are twice differentiable, then interior-point method is used.
   If no initial point is provided and there are only box constraints, then differential evolution
@@ -31725,7 +31731,8 @@ a real-valued cost function is minimized, by using the method of simulated annea
 \end{itemize}
 
 \subsubsection*{Examples}
-(The following examples are adapted from GSL documentation, see \url{https://www.gnu.org/software/gsl/doc/html/siman.html}.)
+(The following examples are adapted from GSL documentation, see
+\href{https://www.gnu.org/software/gsl/doc/html/siman.html}{here}.)
 In the first example we find the global minimum of a damped sine wave function%\footnote{Adapted from \url{https://www.gnu.org/software/gsl/doc/html/siman.html\#trivial-example}}
 $f(x)=\mathrm{e}^{-(x-1)^2}\sin(8x)$.
 This function has many local minima but only a single global minimum in the interval $[1.0,1.5]$.
@@ -36137,7 +36144,7 @@ command produces random vectors and matrices.
       \texttt{'randexp($a$)'} for an exponential distribution (see
       \secref{ssec:exponentiald} and \secref{ssec:randexp}).
     \item \texttt{'fisher($n,m$)'}, \texttt{'fisher,$n,m$'} or
-      \textrm{'randfisher($n,m$)'} for a Fisher-Sn\'{e}d\'{e}cor
+      \texttt{'randfisher($n,m$)'} for a Fisher-Sn\'{e}d\'{e}cor
       distribution (see \secref{ssec:fishersnedecor} and
       \secref{ssec:randfisher}).
     \end{itemize}
@@ -38517,7 +38524,7 @@ chisquaret(L,normald,classes)
 \begin{xcasoutput}
   2.11405080381
 \end{xcasoutput}
-\noindent In this last case, you are given the value of $d^2$ of the statistic
+In this last case, you are given the value of $d^2$ of the statistic
 $D^2=\sum_{j=1}^{k} (n_j-e_j)/e_j$, where $k$ is the number of
 sample classes for \texttt{classes(L,-2,0.25)} (or
 \texttt{classes(L)}), $n_j$ is the size of the $j$th class, and $e_j=
@@ -39764,7 +39771,6 @@ The \texttt{ifft}\index{ifft@\texttt{ifft}} command computes the inverse discret
 
   If $x$ has length which is a power of $2$, then $F_{N}^{-1}(x)$ is
   computed with the Fast Fourier Transform.
-
 \end{itemize}
 
 \subsubsection*{Examples}
@@ -39781,22 +39787,22 @@ ifft([2,-1-i,0,-1+i])
   \left[0.0,1.0,1.0,0.0\right]
 \end{xcasoutput}
 
-\subsubsection{Properties}
+% \subsubsection{Properties}
+%
+% Let $x$ and $y$ be two periodic sequences of period $N$.
+% \begin{itemize}
+% \item The Hadamard product (notation $\odot$) is defined by
+% $\displaystyle {(x\odot y)}_k=x_k y_k$.
+% \item The convolution product (notation $\ast$) is defined by
+% $\displaystyle {(x\ast y)}_k=\sum_{j=0}^{N-1}x_jy_{k-j}$.
+% \end{itemize}
+% The following statements hold:
+% \begin{align*}
+%   F_N(x\odot y)&=\left(\frac{1}{N}\right) F_N(x)\ast F_N(y),\\
+%   F_N(x\ast y)&=F_N(x)\odot F_N(y).
+% \end{align*}
 
-Let $x$ and $y$ be two periodic sequences of period $N$.
-\begin{itemize}
-\item The Hadamard product (notation $\odot$) is defined by
-$\displaystyle {(x\odot y)}_k=x_k y_k$.
-\item The convolution product (notation $\ast$) is defined by
-$\displaystyle {(x\ast y)}_k=\sum_{j=0}^{N-1}x_jy_{k-j}$.
-\end{itemize}
-The following statements hold:
-\begin{align*}
-  F_N(x\odot y)&=\left(\frac{1}{N}\right) F_N(x)\ast F_N(y),\\
-  F_N(x\ast y)&=F_N(x)\odot F_N(y).
-\end{align*}
-
-\subsubsection{Applications}
+\subsubsection*{Applications}
 
 \paragraph{Value of a polynomial.}
 Define a polynomial $P(x)=\sum_{j=0}^{N-1}c_jx^j$ by the vector of its
@@ -40061,8 +40067,8 @@ $b=[b_0,b_1,\dots,b_{m-1},0,\dots,0]$, then:
 \[
   P(x)Q(x)=\sum_{j=0}^{n+m-1}(a\ast b)_jx^j.
 \]
-If you know $F_N(a)$ and $F_N(b)$, then $a\ast b=F_N^{-1}(F_N(a)\odot F_N(b))$
-(see above).
+If you know $F_N(a)$ and $F_N(b)$, then $a\ast b=F_N^{-1}(F_N(a)\odot F_N(b))$,
+where $\odot$ denotes the Hadamard (elementwise) product.
 
 \paragraph{Noise removal with spectral subtraction.}
 We use \xcas{} to implement a simple algorithm for static
@@ -40217,10 +40223,11 @@ the GSL library.
 \end{itemize}
 
 \subsubsection*{Examples}
+\paragraph{Signal compression.}
 In the first example (adapted from the GSL documentation,
-see \url{https://www.gnu.org/software/gsl/doc/html/dwt.html}),
+see \href{https://www.gnu.org/software/gsl/doc/html/dwt.html}{here}),
 we load a sample of size 256 from the
-MIT-BIH Arrhythmia Database (see \url{https://physionet.org/content/mitdb/1.0.0/})
+MIT-BIH Arrhythmia Database (see \href{https://physionet.org/content/mitdb/1.0.0/}{here})
 and attempt to remove the noisy information.
 \begin{xcasinput}
 data:=mid(col(csv2gen("/home/luka/Documents/MIT-BIH.csv","\t"),2),300,256):;
@@ -40242,6 +40249,7 @@ listplot(res)
   \includeimage{mit-bih-2.png}
 \end{xcasimage}
 
+\paragraph{Noise reduction in images.}
 In the second example, we attempt to reduce the noise in a noisy image.
 \begin{xcasinput}
 img:=image("/home/luka/Pictures/noisy.jpg")(grey)
@@ -40260,7 +40268,7 @@ tdata:=dwt(img[0],image):;
 sdata:=threshold(w,55.0=0,'<=',abs=true):;
 nr:=image(1,threshold(round(subMat(idwt(sdata,image),0,0,299,299)),[0,255])):;
 \end{xcasinput}
-Finally, we display the original image and the processed image next to each other for comparison.
+We display the original image and the processed image next to each other for comparison.
 \begin{xcasinput}
 display(img,0); display(nr,320);
 legend(-20i,"original"); legend(320-20i,"denoised")
@@ -40760,8 +40768,8 @@ listplot(welch_window([1$1000]))
 
 \section{Clustering}
 
-Clustering is a form of unsupervised machine learning. \giac{} can perform hierarchical
-clustering and $k$-means clustering.
+Clustering is a form of unsupervised machine learning.
+\xcas{} can perform hierarchical clustering and $k$-means clustering.
 
 \subsection{Hierarchical clustering%: \texttt{cluster}
   \label{sec:hclust}}
@@ -40827,7 +40835,7 @@ taxicab:=(p1,p2)->l1norm(p1-p2)
 
 \subsubsection*{Examples}
 We apply \texttt{cluster} command to an ``aggregation''
-shape dataset\footnote{Source: \url{http://cs.joensuu.fi/sipu/datasets/}}.
+shape dataset (see \href{http://cs.joensuu.fi/sipu/datasets/}{here}).
 The dataset is loaded from file in a table cell in \xcas{} and associated with
 the variable \texttt{data}. We use the \texttt{average} linkage method and \texttt{silhouette}
 index (which is used by default if \texttt{index=true}). By setting \texttt{output} parameter
@@ -40893,8 +40901,8 @@ for clustering numerical multidimensional data.
       \texttt{log-det}, \texttt{log-ss}, \texttt{pbm}, \texttt{ratkowsky-lance},
       \texttt{ray-turi}, \texttt{scott-symons}, \texttt{trace-W}, \texttt{trace-WiB} and \texttt{all}
       (note that you must surround these names by double-quotes).
-      For details, see Desgraupes (2017)\footnote{
-        \url{https://cran.r-project.org/web/packages/clusterCrit/vignettes/clusterCrit.pdf}}.
+      For details, see Desgraupes (2017)
+      (\href{https://cran.r-project.org/web/packages/clusterCrit/vignettes/clusterCrit.pdf}{PDF}).
       \textit{str} may also take a boolean value, in which case either no index is used
       (\textit{str}\texttt{=false}) or the Calinski-Harabasz index is used (\textit{str}\texttt{=true}).
       By default, Hartigan's criterion is used to determine the optimal number of clusters if $k$
@@ -40945,7 +40953,7 @@ kmeans(data,index="calinski-harabasz",output=plot)
 
 \section{Artificial neural networks}
 
-This section explains how to create and train feed-forward neural networks in \giac{}.
+This section explains how to create and train feed-forward neural networks in \xcas{}.
 
 A feed-forward network, more precisely a \textbf{multilayer perceptron}, is comprised of a sequence of at least
 three neuron layers. The first layer is called the \textbf{input layer} and the last layer is
@@ -41174,9 +41182,7 @@ netcopy[block_size]
 
 The command \texttt{train}\index{train@\texttt{train}}
 is used for training neural networks created by the command
-\texttt{neural\_network} (see \secref{sec:nnet1}). Neural networks
-are capable of learning almost any nonlinear function
-if provided with enough training data.
+\texttt{neural\_network} (see \secref{sec:nnet1}).
 \begin{itemize}
 \item \texttt{train} takes three mandatory arguments and one optional argument:
   \begin{itemize}
@@ -41205,6 +41211,8 @@ if provided with enough training data.
 \end{itemize}
 
 \subsubsection*{Examples}
+
+\paragraph{Predicting values of a nonlinear function.}
 In the first example, we demonstrate learning a nonlinear function. Let
 \[ f(x_1,x_2)=x_1\sin(3x_2)\cos(2x_1x_2). \]
 We create a neural network with three hidden layers and train it to predict the value $f(x_1,x_2)$
@@ -41237,8 +41245,8 @@ test_data:=ranm(100,2,uniformd(-1,1)):; test_res:=apply(f,test_data):;
 Next we train the network using 2500 epochs. We test the accuracy in intervals of 250 epochs.
 \begin{xcasinput}
 for epoch from 1 to 2500 do
- net:=train(net,data,res);
- if irem(epoch,250)==0 then print(mean(net(test_data,test_res))); fi;
+  net:=train(net,data,res);
+  if irem(epoch,250)==0 then print(mean(net(test_data,test_res))); fi;
 od:;
 \end{xcasinput}
 \begin{xcasmsg}
@@ -41274,6 +41282,7 @@ To plot the learned surface, use the command:
 plot3d(quote(net([x1,x2])),x1=-1..1,x2=-1..1)
 \end{xcasinput}
 
+\paragraph{Nonlinear separation of data.}
 In the second example we demonstrate learning a simple nonlinear separation of data.
 Let \[f(t)=\frac25+\frac32\left(t-\frac12\right)^2,\] which defines a parabola that splits
 the unit square $S=[0,1]^2$ into two regions. We generate 1024 random points in $S$ and
@@ -41288,7 +41297,7 @@ lab:=apply(g,pts):;
 Next we create a neural network with four hidden layers which we train to label random points in $S$.
 The error function used by default is the log-loss function since we have a binary classifier.
 \begin{xcasinput}
-params:=seq[momentum=adaptive,weight_decay=1e-3,block_size=128]:;
+params:=seq[momentum=adaptive,weight_decay=1e-4,block_size=128]:;
 net:=neural_network([2,10$4,1],classes=["below","above"],params)
 \end{xcasinput}
 \begin{xcasoutput}
@@ -41299,7 +41308,7 @@ Before starting each epoch, the training data is shuffled (thus avoiding symmetr
 \begin{xcasinput}
 for epoch from 1 to 500 do
   p:=randperm(size(pts));
-  net:=train(net,sortperm(pts,p),sortperm(res,p),128);
+  net:=train(net,sortperm(pts,p),sortperm(lab,p),128);
 od:;
 \end{xcasinput}
 Now we test the accuracy of the classifier by using 1000 random test samples which we store in \texttt{tst}.
@@ -41313,17 +41322,26 @@ tst:=ranm(1000,2,uniformd(0,1)):;
   99.8
 \end{xcasoutput}
 
+\paragraph{Computer vision with the MNIST database.}
 In the third example, we train a neural network on the MNIST dataset in PNG format, which can be
-obtained here: \url{https://github.com/myleott/mnist_png}. This dataset contains 60000 training
-grayscale images of handwritten digits in $28\times 28$ resolution, anlogside 10000 testing images.
+obtained \href{https://github.com/myleott/mnist_png}{here}. This dataset contains 60000 training
+grayscale images of handwritten digits in $28\times 28$ resolution, anlogside 10000 testing images
+(see Figure~\ref{fig:mnist}).
+\begin{figure}
+  \centering
+  \includeimage[0.6]{mnist.png}
+  \caption{\label{fig:mnist}Handwritten digits from the MNIST dataset}
+\end{figure}
 Let us assume that the contents of
-\texttt{mnist\_png.tar.gz} is unpacked in the \texttt{Downloads} folder. Now put the files
-\texttt{mnist\_training.csv} and \texttt{mnist\_testing.csv}, which can be obtained here:
-\url{https://github.com/marohnicluka/giac/tree/master/data},
+\texttt{mnist\_png.tar.gz} are unpacked in the \texttt{Downloads} folder. Now put the files
+\texttt{mnist\_training.csv} and \texttt{mnist\_testing.csv}, which can be obtained
+\href{https://github.com/marohnicluka/giac/tree/master/data}{here},
 into the subfolders \texttt{training} and \texttt{testing}, respectively. These CSV files contain
-image paths and labels. We use these files to load and encode training and testing data in \giac{}.
+image paths and labels. We use these files to load and encode training and testing data in \xcas{}.
 
-First we load the training data:
+First we load the training data, which takes several minutes.
+Note that we flatten and normalize the images, so that
+the training vectors contain numbers strictly in $[0,1]$ (see~\secref{sec:images}).
 \begin{xcasinput}
 train_path:="/home/luka/Downloads/mnist_png/training/":;
 train_csv:=csv2gen(train_path+"mnist_training.csv",","):;
@@ -41333,8 +41351,6 @@ for k from 1 to size(train_csv) do
   train_data[k-1]=<flatten(image(train_path+train_csv[k-1,0]))/255.0;
 od:;
 \end{xcasinput}
-Loading images takes several minutes. Note that we flatten and normalize the images, so that
-the training vectors contain numbers strictly in $[0,1]$.
 
 We load the testing images in a similar manner and store the data in \texttt{test\_data} and
 \texttt{test\_lab}.
@@ -41352,7 +41368,8 @@ Note that we use ReLU activation in hidden layers (by default, tanh is used for 
 He normal initialization for weights.
 
 We train the network with batch size 100 by iterating over 5 epochs.
-Training data is shuffled before each epoch and the mean error on testing data is printed after each epoch.
+Training data is shuffled before each epoch and the mean error on testing data
+is printed after each epoch. The training takes about a minute.
 \begin{xcasinput}
 for epoch from 1 to 5 do
   p:=randperm(size(train_data));
@@ -41360,8 +41377,6 @@ for epoch from 1 to 5 do
   print(mean(net(test_data,test_lab)));
 od:;
 \end{xcasinput}
-(The training takes about a minute.)\\
-Output in the message window:
 \begin{xcasmsg}
   0.110725006182\\
   0.104843072908\\
@@ -41369,17 +41384,17 @@ Output in the message window:
   0.0675629083633\\
   0.0626279369745
 \end{xcasmsg}
-The obtained error values are computed using the cross-entropy function, which is
+The printed error values are computed using the cross-entropy function, which is
 used by default in multiclass classifiers.
-To test the accuracy of the network, we use the following command.
+To test the accuracy of the network, use the following command.
 \begin{xcasinput}
 (1-hamdist(net(test_data),test_lab)/size(test_data))*100.0
 \end{xcasinput}
 \begin{xcasoutput}
   97.88
 \end{xcasoutput}
-Therefore, our network recognizes the correct digit upon ``seeing'' an image
-of it in about 98\% of cases.
+Therefore, the network ``reads'' the digit from an image
+correctly in about 98\% of cases.
 
 \chapter{Numerical computations\label{chap:numeric}}
 
@@ -41395,7 +41410,7 @@ optionally followed by the letter \texttt{e} and an integer \emph{exponent}.
 Note that, for example, the real number $10^{-4}$ is an exact number
 but 1e--4 is an approximate representation of this number.
 
-\section{Floating point representation.}
+\section{Floating point representation}
 
 This section discusses how real numbers are represented.
 
@@ -41433,7 +41448,7 @@ point number, otherwise $d$ is denormalized ($\alpha=1-2^{10}$). The
 special exponent $2^{10}$ is used to represent plus or minus infinity
 and NaN (Not a Number). A hardware float is made of 64 bits:
 \begin{itemize}
-\item  the first bit is for the sign of $d$ (0 for $+$ and 1 for $-$)
+\item  the first bit is for the sign of $d$ (0 for $+$ and 1 for $-$),
 \item  the 11 following bits represents the exponent, more precisely
   if $\alpha$ denotes the integer given by the 11 bits,
   the exponent is $\alpha+2^{10}-1$,
@@ -41454,88 +41469,80 @@ Examples of representations of the exponent:
 \item $\alpha=2^{10}$ is coded by 111 1111 1111
 \item $\alpha=2^{-10}-1$ is coded by 000 0000 000
 \end{itemize}
-\paragraph*{Remark.} $2^{-52}=0.2220446049250313$e--15
+\paragraph*{Remark.} $2^{-52}=0.2220446049250313\mathrm{e}{-15}$.
 
 \subsubsection*{Examples of representations of normalized floats}
-\begin{itemize}
-\item Representation of 3.1:
+\paragraph{Representation of 3.1.}
+We have
+\begin{align*}
+  3.1&=2\cdot\left(1+\frac{1}{2}+\frac{1}{2^5}+\frac{1}{2^6}+
+       \frac{1}{2^9}+\frac{1}{2^{10}}+\cdots\right)\\
+     &=2\cdot\left(1+\frac{1}{2}+\sum_{k=1}^\infty\left(\frac{1}{2^{4k+1}}+\frac{1}{2^{4k+2}}\right)\right),
+\end{align*}
+hence $\alpha=1$ and
+$m=\frac{1}{2}+\sum_{k=1}^\infty(\frac{1}{2^{4k+1}}+\frac{1}{2^{4k+2}})$.
+Hence the hexadecimal and binary representation of 3.1 is:
+\begin{center}
+  \begin{tabular}{l}
+    \verb|40 (01000000),  8 (00001000), cc (11001100), cc (11001100),|\\
+    \verb|cc (11001100), cc (11001100), cc (11001100), cd (11001101),|
+  \end{tabular}
+\end{center}
+the last octet is 1101, the last bit is 1, because the
+following digit is 1 (upper rounding).
 
-  We have
-  \begin{align*}
-    3.1&=2\cdot\left(1+\frac{1}{2}+\frac{1}{2^5}+\frac{1}{2^6}+
-         \frac{1}{2^9}+\frac{1}{2^{10}}+\cdots\right)\\
-       &=2\cdot\left(1+\frac{1}{2}+\sum_{k=1}^\infty\left(\frac{1}{2^{4k+1}}+\frac{1}{2^{4k+2}}\right)\right),
-  \end{align*}
-  hence $\alpha=1$ and
-  $m=\frac{1}{2}+\sum_{k=1}^\infty(\frac{1}{2^{4k+1}}+\frac{1}{2^{4k+2}})$.
-  Hence the hexadecimal and binary representation of 3.1 is:
-  \begin{center}
-    \begin{tabular}{l}
-      \verb|40 (01000000),  8 (00001000), cc (11001100), cc (11001100),|\\
-      \verb|cc (11001100), cc (11001100), cc (11001100), cd (11001101),|
-    \end{tabular}
-  \end{center}
-  the last octet is 1101, the last bit is 1, because the
-  following digit is 1 (upper rounding).
-\item  Representation of 3.0:
+\paragraph{Representation of 3.0.}
+We have $3=2\cdot (1+1/2)$.
+Hence the hexadecimal and binary representation of 3 is:
+\begin{center}
+  \begin{tabular}{l}
+    \verb|40 (01000000), 8 (00001000), 0 (00000000), 0 (00000000),|\\
+    \verb|0  (00000000), 0 (00000000), 0 (00000000), 0 (00000000)|
+  \end{tabular}
+\end{center}
+\paragraph{The difference between representations of $3.1-3.0$ and $0.1$.}
+For the representation of 0.1:
+\begin{align*}
+  0.1&=2^{-4}\cdot\left(1+\frac{1}{2}+\frac{1}{2^4}+\frac{1}{2^5}+
+       \frac{1}{2^8}+\frac{1}{2^9}+\cdots\right)\\
+     &=2^{-4}\cdot\sum_{k=0}^\infty\left(\frac{1}{2^{4k}}+\frac{1}{2^{4k+1}}\right),
+\end{align*}
+hence $\alpha=1$ and
+\[
+  m=\frac{1}{2}+\sum_{k=1}^\infty\left(\frac{1}{2^{4k}}+\frac{1}{2^{4k+1}}\right),
+\]
+therefore the representation of 0.1 is
+\begin{center}
+  \begin{tabular}{l}
+    \verb|3f (00111111), b9 (10111001), 99 (10011001), 99 (10011001),|\\
+    \verb|99 (10011001), 99 (10011001), 99 (10011001), 9a (10011010),|
+  \end{tabular}
+\end{center}
+the last octet is 1010, indeed the 2 last bits
+01 became 10  because the following digit is 1 (upper rounding).
 
-  We have $3=2\cdot (1+1/2)$.
-  Hence the hexadecimal and binary representation of 3 is:
-  \begin{center}
-    \begin{tabular}{l}
-      \verb|40 (01000000), 8 (00001000), 0 (00000000), 0 (00000000),|\\
-      \verb|0  (00000000), 0 (00000000), 0 (00000000), 0 (00000000)|
-    \end{tabular}
-  \end{center}
-\item
-  Now let us discuss the difference between the representation
-  of $3.1-3.0$ and of $0.1$.
+For the representation of $a=3.1-3$:
+computing $a$ is done by adjusting exponents (here nothing
+to do), then subtracting the mantissa and adjusting the
+exponent of the result to have a normalized float.
+The exponent is $\alpha=-4$ (that corresponds at $2\cdot2^{-5}$)
+and the bits corresponding to the mantissa begin at $1/2=2\cdot2^{-6}$:
+the bits of the mantissa are shifted to the left 5 positions
+and you get:
+\begin{center}
+  \begin{tabular}{l}
+    \verb|3f (00111111), b9 (10111001), 99 (10011001), 99 (10011001),|\\
+    \verb|99 (10011001), 99 (10011001), 99 (10011001), a0 (10100000),|
+  \end{tabular}
+\end{center}
+Therefore, $a>0.1$ and  $a-0.1=1/2^{50}+1/2^{51}$
+(since $100000-11010=110$).
 
-  For the representation of 0.1:
-  \begin{align*}
-    0.1&=2^{-4}\cdot\left(1+\frac{1}{2}+\frac{1}{2^4}+\frac{1}{2^5}+
-         \frac{1}{2^8}+\frac{1}{2^9}+\cdots\right)\\
-       &=2^{-4}\cdot\sum_{k=0}^\infty\left(\frac{1}{2^{4*k}}+\frac{1}{2^{4*k+1}}\right),
-  \end{align*}
-  hence $\alpha=1$ and
-  \[
-    m=\frac{1}{2}+\sum_{k=1}^\infty\left(\frac{1}{2^{4*k}}+\frac{1}{2^{4*k+1}}\right),
-  \]
-  therefore the representation of 0.1 is
-  \begin{center}
-    \begin{tabular}{l}
-      \verb|3f (00111111), b9 (10111001), 99 (10011001), 99 (10011001),|\\
-      \verb|99 (10011001), 99 (10011001), 99 (10011001), 9a (10011010),|
-    \end{tabular}
-  \end{center}
-  the last octet is 1010, indeed the 2 last bits
-  01 became 10  because the following digit is 1 (upper rounding).
-
-  For the representation of $a=3.1-3$:
- 
-  Computing $a$ is done by adjusting exponents (here nothing
-  to do), then subtracting the mantissa and adjusting the
-  exponent of the result to have a normalized float.
-  The exponent is $\alpha=-4$ (that corresponds at $2\cdot2^{-5}$)
-  and the bits corresponding to the mantissa begin at $1/2=2\cdot2^{-6}$:
-  the bits of the mantissa are shifted to the left 5 positions
-  and you get:
-  \begin{center}
-    \begin{tabular}{l}
-      \verb|3f (00111111), b9 (10111001), 99 (10011001), 99 (10011001),|\\
-      \verb|99 (10011001), 99 (10011001), 99 (10011001), a0 (10100000),|
-    \end{tabular}
-  \end{center}
-  Therefore, $a>0.1$ and  $a-0.1=1/2^{50}+1/2^{51}$
-  (since $100000-11010=110$).
-
-  \paragraph*{Remark.}
-  This is the reason why.
+This is the reason why:
 \begin{xcasinput}
 floor(1/(3.1-3))
 \end{xcasinput}
-  returns \texttt{9} and not \texttt{10} when \texttt{Digits:=14}.
-\end{itemize}
+returns \texttt{9} and not \texttt{10} when \texttt{Digits:=14}.
 
 \subsection{Approximate evaluation%: \texttt{evalf} \texttt{approx} \texttt{Digits}
 }
@@ -41664,14 +41671,6 @@ command finds approximate values of integrals using the Romberg method.
   even powers of the step of the trapezoid rule).
 \end{itemize}
 
-\subsubsection*{Example}
-\begin{xcasinput}
-romberg(exp(x^2),x,0,1)
-\end{xcasinput}
-\begin{xcasoutput}
-  1.46265174591
-\end{xcasoutput}
-
 The \texttt{gaussquad}\index{gaussquad@\texttt{gaussquad}}
 command finds an approximate value of an
 integral, calculated by an adaptive method by Ernst Hairer
@@ -41689,7 +41688,13 @@ which uses a 15-point Gaussian quadrature.
   $\int_a^b\textit{expr}\cdot\mathrm{d}\textit{var}$.
 \end{itemize}
 
-\subsubsection*{Examples}
+\subsubsection*{Example}
+\begin{xcasinput}
+romberg(exp(x^2),x,0,1)
+\end{xcasinput}
+\begin{xcasoutput}
+  1.46265174591
+\end{xcasoutput}
 \begin{xcasinput}
 gaussquad(exp(x^2),x,0,1)
 \end{xcasinput}
@@ -52904,7 +52909,7 @@ icosahedron([0,0,0],[0,0,sqrt(5)],[2,1,0])
 
 \chapter{Multimedia}
 
-\section{Images}
+\section{Images\label{sec:images}}
 
 \subsection{Image structure in \xcas{}\label{sec:imagestruct}}
 
@@ -53301,7 +53306,11 @@ To produce a negative of an image, i.e.~to apply the function $p\mapsto 255-p$ t
 entries, use the unary operator \texttt{-}\index{-@\texttt{-}} or the command
 \texttt{inv}\index{inv@\texttt{inv}}.
 
-\subsection{Extracting data from images}
+\subsection{Extracting data from images\label{ssec:imageprops}}
+
+\paragraph{Printing out information about an image.}
+The \texttt{about} command can be used to print out a brief description
+of an image object, which it takes as its only argument.
 
 \paragraph{Obtaining the size of an image.}
 The size of an image can be obtained by using the
@@ -53611,7 +53620,7 @@ The sound of the single channel of the combination of $L$ and $R$ is
 played.
 
 \subsection{Audio clip properties%: \texttt{about} \texttt{channels} \texttt{bit\_depth} \texttt{samplerate} \texttt{duration}
-\label{ssec:audioclipprops}}
+  \label{ssec:audioclipprops}}
 
 The \texttt{about}\index{about@\texttt{about}},
 \texttt{channels}\index{channels@\texttt{channels}},
@@ -53822,8 +53831,8 @@ command resamples a clip to a desired rate.
   \end{itemize}
 \item \texttt{resample($A\,\langle,r,n\rangle$)}
   returns the audio clip $A$ resampled to rate $r$.
-\item \giac{} does resampling by using the \texttt{libsamplerate}
-  library\footnote{\url{http://www.mega-nerd.com/libsamplerate/}}.
+\item \xcas{} does resampling by using the
+  \href{http://www.mega-nerd.com/libsamplerate/}{\texttt{libsamplerate}} library.
   For more information see the library documentation.
 \end{itemize}
 
@@ -54041,7 +54050,8 @@ command joins two audio clips together with an overlap and optionally a crossfad
 \end{itemize}
 
 \subsubsection*{Example}
-We load an audio file containing a speech\footnote{Source: \url{https://www2.cs.uic.edu/~i101/SoundFiles/}}
+We load an audio file containing a speech
+(see \href{https://www2.cs.uic.edu/~i101/SoundFiles/}{here})
 and normalize it.
 \begin{xcasinput}
 clip:=normalize(readwav("/home/luka/Downloads/gettysburg.wav"),-1)

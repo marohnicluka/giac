@@ -203,8 +203,6 @@ public:
 bool is_mcint(const gen &g,int v=-1);
 vecteur sort_identifiers(const vecteur &v,GIAC_CONTEXT);
 std::vector<int> linearly_dependent_rows(const matrice &m,GIAC_CONTEXT);
-bool get_assumptions(const gen &g,int &dom,matrice &intervals,vecteur &excluded,GIAC_CONTEXT);
-void set_assumptions(const gen &g,const vecteur &cond,const vecteur &excluded,bool additionally,GIAC_CONTEXT);
 bool is_cubic_wrt(const gen &g,const gen &x,gen &a,gen &b,gen &c,gen &d,GIAC_CONTEXT);
 bool is_quartic_wrt(const gen &g,const gen &x,gen &a,gen &b,gen &c,gen &d,gen &e,GIAC_CONTEXT);
 bool is_definitely_positive(const gen &g,GIAC_CONTEXT);

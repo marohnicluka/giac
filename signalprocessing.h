@@ -67,7 +67,10 @@ enum FourierFuncType {
     _FOURIER_FUNCTYPE_PIECEWISE     =22,
     _FOURIER_FUNCTYPE_FUNC          =23,
     _FOURIER_FUNCTYPE_DIFF          =24,
-    _FOURIER_FUNCTYPE_PARTIAL_DIFF  =25
+    _FOURIER_FUNCTYPE_PARTIAL_DIFF  =25,
+    _FOURIER_FUNCTYPE_FOURIER       =26,
+    _FOURIER_FUNCTYPE_ATAN          =27,
+    _FOURIER_FUNCTYPE_DIRAC_F       =28
 };
 
 enum ann_activation_function {
@@ -113,7 +116,19 @@ gen generrarg(int i);
 void print_error(const char *msg,GIAC_CONTEXT);
 void print_warning(const char *msg,GIAC_CONTEXT);
 bool has_rootof(const gen &g);
+bool is_logical(const gen &g);
 int dwt(void *data,int datatype,int n,int wtype,int k,int dir);
+gen simplify_floor(const gen &g,GIAC_CONTEXT);
+bool is_periodic_wrt(const gen &g,const gen &x,gen &T,GIAC_CONTEXT);
+bool is_inZ(const gen &g_orig,GIAC_CONTEXT);
+bool get_assumptions(const gen &g,int &dom,matrice &intervals,vecteur &excluded,GIAC_CONTEXT);
+void set_assumptions(const gen &g,const vecteur &cond,const vecteur &excluded,bool additionally,GIAC_CONTEXT);
+bool laplace_periodic(const gen &g_orig,const gen &x,const gen &s,gen &t,GIAC_CONTEXT);
+bool ilaplace2(const gen &g,const gen &s,const gen &x,gen &orig,GIAC_CONTEXT);
+gen to_piecewise(const gen &g_orig,const identificateur &x,GIAC_CONTEXT);
+gen flatten_piecewise(const gen &g,GIAC_CONTEXT);
+gen sign2Heaviside(const gen &g);
+gen Heaviside2sign(const gen &g);
 
 gen _createwav(const gen &g,GIAC_CONTEXT);
 gen _stereo2mono(const gen &g,GIAC_CONTEXT);
@@ -167,6 +182,13 @@ gen _splice(const gen &g,GIAC_CONTEXT);
 gen _mixdown(const gen &g,GIAC_CONTEXT);
 gen _dwt(const gen &g,GIAC_CONTEXT);
 gen _idwt(const gen &g,GIAC_CONTEXT);
+gen _period(const gen &g,GIAC_CONTEXT);
+gen _sign2Heaviside(const gen &g,GIAC_CONTEXT);
+gen _Heaviside2sign(const gen &g,GIAC_CONTEXT);
+gen _linstep(const gen &g,GIAC_CONTEXT);
+gen _step2abs(const gen &g,GIAC_CONTEXT);
+gen _simplifyDirac(const gen &g,GIAC_CONTEXT);
+gen _simplifyFloor(const gen &g,GIAC_CONTEXT);
 
 extern const unary_function_ptr * const at_createwav;
 extern const unary_function_ptr * const at_plotwav;
@@ -200,6 +222,7 @@ extern const unary_function_ptr * const at_tukey_window;
 extern const unary_function_ptr * const at_welch_window;
 extern const unary_function_ptr * const at_fourier;
 extern const unary_function_ptr * const at_ifourier;
+extern const unary_function_ptr * const at_Fourier;
 extern const unary_function_ptr * const at_addtable;
 extern const unary_function_ptr * const at_rect;
 extern const unary_function_ptr * const at_boxcar;
@@ -216,6 +239,15 @@ extern const unary_function_ptr * const at_splice;
 extern const unary_function_ptr * const at_mixdown;
 extern const unary_function_ptr * const at_dwt;
 extern const unary_function_ptr * const at_idwt;
+extern const unary_function_ptr * const at_period;
+extern const unary_function_ptr * const at_Heaviside2sign;
+extern const unary_function_ptr * const at_sign2Heaviside;
+extern const unary_function_ptr * const at_linstep;
+extern const unary_function_ptr * const at_step2abs;
+extern const unary_function_ptr * const at_simplifyDirac;
+extern const unary_function_ptr * const at_simplifyFloor;
+
+typedef unsigned char uchar;
 
 class audio_clip : public gen_user {
     const context *ctx;

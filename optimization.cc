@@ -255,58 +255,6 @@ void bound_variables(const vecteur &vars,const vecteur &bnds,bool open,GIAC_CONT
     }
 }
 
-/* Get the assumptions on identifier G: obtain the domain, feasible interval(s)
- * and excluded points. */
-bool get_assumptions(const gen &g,int &dom,matrice &intervals,vecteur &excluded,GIAC_CONTEXT) {
-    dom=-1;
-    intervals.clear();
-    excluded.clear();
-    gen res=_about(g,contextptr);
-    if (res.type==_IDNT && res==g)
-        return true; // no assumptions
-    if (res.type!=_VECT || res.subtype!=_ASSUME__VECT)
-        return false;
-    if (res._VECTptr->size()==1) {
-        if (!res._VECTptr->front().is_integer())
-            return false;
-        dom=res._VECTptr->front().val;
-        return true;
-    }
-    if (res._VECTptr->size()!=3)
-        return false;
-    if (res._VECTptr->front().is_integer())
-        dom=res._VECTptr->front().val; // 1 - real, 2 - integer, 4 - complex, 10 - rational
-    intervals=*res._VECTptr->at(1)._VECTptr;
-    excluded=*res._VECTptr->at(2)._VECTptr;
-    return true;
-}
-
-/* Set (additional) assumptions on identifier G: must be either inequality
- * constraints or bounds in form [L,U]. */
-void set_assumptions(const gen &g,const vecteur &cond,const vecteur &excluded,bool additionally,GIAC_CONTEXT) {
-    if (cond.empty())
-        return;
-    vecteur args;
-    for (const_iterateur it=cond.begin();it!=cond.end();++it) {
-        if (it->type==_VECT) {
-            assert(it->_VECTptr->size()==2);
-            const gen &lb=it->_VECTptr->front(),&ub=it->_VECTptr->back();
-            gen l=is_inf(lb)?undef:(contains(excluded,lb)?symb_superieur_strict(g,lb):symb_superieur_egal(g,lb));
-            gen r=is_inf(ub)?undef:(contains(excluded,ub)?symb_inferieur_strict(g,ub):symb_inferieur_egal(g,ub));
-            if (!is_undef(l) && !is_undef(r))
-                args.push_back(symb_and(l,r));
-            else if (!is_undef(l))
-                args.push_back(l);
-            else if (!is_undef(r))
-                args.push_back(r);
-        } else args.push_back(*it);
-    }
-    gen a=symbolic(at_ou,change_subtype(args,_SEQ__VECT));
-    if (additionally)
-        giac_additionally(a,contextptr);
-    else giac_assume(a,contextptr);
-}
-
 void purge_variables(const vecteur &vars,GIAC_CONTEXT) {
 /* Purge identifiers in VARS. */
     for (const_iterateur it=vars.begin();it!=vars.end();++it) {
@@ -12819,6 +12767,7 @@ void FDWeights::setz0(const gen &zeta) {
 }
 /* END OF FDWEIGHTS CLASS */
 
+#ifdef HAVE_LIBGSL
 double siman_energy_func(void *xp) {
     siman_config *x=static_cast<siman_config*>(xp);
     assert(x!=NULL);
@@ -12829,7 +12778,6 @@ double siman_energy_func(void *xp) {
         throw std::runtime_error(gettext("energy function should return a real number"));
     return e.DOUBLE_val();
 }
-
 double siman_distance_func(void *xp,void *yp) {
     siman_config *x=static_cast<siman_config*>(xp);
     siman_config *y=static_cast<siman_config*>(yp);
@@ -12841,7 +12789,6 @@ double siman_distance_func(void *xp,void *yp) {
         throw std::runtime_error(gettext("distance function should return a real number"));
     return d.DOUBLE_val();
 }
-
 void siman_modify_func(const gsl_rng *r,void *xp,double step_size) {
     siman_config *x=static_cast<siman_config*>(xp);
     assert(x!=NULL);
@@ -12851,7 +12798,6 @@ void siman_modify_func(const gsl_rng *r,void *xp,double step_size) {
     if (!x->is_valid())
         throw std::runtime_error(gettext("failed to modify configuration"));
 }
-
 void siman_copy_func(void *source,void *dest) {
     siman_config *src=static_cast<siman_config*>(source);
     siman_config *dst=static_cast<siman_config*>(dest);
@@ -12860,19 +12806,18 @@ void siman_copy_func(void *source,void *dest) {
         throw std::runtime_error(gettext("Invalid configuration"));
     dst->assign(*src);
 }
-
 void *siman_copy_constructor(void *xp) {
     siman_config *x=static_cast<siman_config*>(xp),*copy;
     assert(x!=NULL);
     copy=new siman_config(*x);
     return static_cast<void*>(copy);
 }
-
 void siman_destroy_func(void *xp) {
     siman_config *x=static_cast<siman_config*>(xp);
     assert(x!=NULL);
     delete x;
 }
+#endif
 
 gen _siman(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;

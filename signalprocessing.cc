@@ -44,6 +44,8 @@ namespace giac {
 #define _SP_BAD_SOUND_DATA gettext("Invalid sound data")
 #define _SP_INVALID_RANGE gettext("Invalid range specification")
 #define _SP_BAD_WINDOW gettext("Invalid window parameters")
+#define MAX_TAILLE 500
+#define MAX_FACTORS 10
 
 gen generr(const char* msg,bool translate) {
     string m(translate?gettext(msg):msg);
@@ -100,11 +102,442 @@ bool is_real_interval(const gen &g,gen &a,gen &b,GIAC_CONTEXT) {
     return true;
 }
 
+/* Return true iff G has a boolean value. */
+bool is_logical(const gen &g) {
+    return g.is_symb_of_sommet(at_and) || g.is_symb_of_sommet(at_ou) ||
+        g.is_symb_of_sommet(at_superieur_egal) || g.is_symb_of_sommet(at_inferieur_egal) ||
+        g.is_symb_of_sommet(at_superieur_strict) || g.is_symb_of_sommet(at_inferieur_strict) ||
+        g.is_symb_of_sommet(at_same) || g.is_symb_of_sommet(at_equal);
+}
+
 int nextpow2(int n) {
     int m=1;
     while (m<n) m*=2;
     return m;
 }
+
+/* Return 1 if a<b, -1 if a>=b, and 0 if a and b are not comparable */
+int compexpr(const gen &a,const gen &b,GIAC_CONTEXT) {
+    gen res=_eval(symb_inferieur_strict(a,b),contextptr);
+    if (res.is_integer() && res.subtype==_INT_BOOLEAN)
+        return 2*res.val-1;
+    return 0;
+}
+
+void count_func_instances_recursion(const gen &g,const unary_function_ptr *f,int &cnt,bool nested) {
+    if (g.type==_VECT) {
+        const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
+        for (;it!=itend;++it) count_func_instances_recursion(*it,f,cnt,nested);
+        return;
+    }
+    if (g.is_symb_of_sommet(f)) {
+        ++cnt;
+        if (!nested) return;
+    }
+    if (g.type==_SYMB)
+        count_func_instances_recursion(g._SYMBptr->feuille,f,cnt,nested);
+}
+
+int count_func_instances(const gen &g,const unary_function_ptr *f,bool nested=false) {
+    int c=0;
+    count_func_instances_recursion(g,f,c,nested);
+    return c;
+}
+
+bool indomain(const matrice &intervals,const gen &a,GIAC_CONTEXT) {
+    if (intervals.empty())
+        return false;
+    assert(ckmatrix(intervals) && mcols(intervals)==2);
+    const_iterateur it=intervals.begin(),itend=intervals.end();
+    for (;it!=itend;++it) {
+        const vecteur &i=*it->_VECTptr;
+        if (is_greater(a,i.front(),contextptr) && is_greater(i.back(),a,contextptr))
+            return true;
+    }
+    return false;
+}
+
+/* Get the assumptions on identifier G: obtain the domain, feasible interval(s)
+ * and excluded points.
+ * Return true if assumptions are read successfully, else return false. */
+bool get_assumptions(const gen &g,int &dom,matrice &intervals,vecteur &excluded,GIAC_CONTEXT) {
+    if (g.type!=_IDNT)
+        return false;
+    dom=-1;
+    intervals.clear();
+    excluded.clear();
+    gen res=_about(g,contextptr);
+    if (res.type==_IDNT && res==g) {
+        intervals.push_back(makevecteur(minus_inf,plus_inf));
+        return true; // no assumptions
+    }
+    if (res.type!=_VECT || res.subtype!=_ASSUME__VECT)
+        return false;
+    if (res._VECTptr->size()==1) {
+        if (!res._VECTptr->front().is_integer())
+            return false;
+        dom=res._VECTptr->front().val;
+        return true;
+    }
+    if (res._VECTptr->size()!=3)
+        return false;
+    if (res._VECTptr->front().is_integer())
+        dom=res._VECTptr->front().val; // 1 - real, 2 - integer, 4 - complex, 10 - rational
+    intervals=*res._VECTptr->at(1)._VECTptr;
+    excluded=*res._VECTptr->at(2)._VECTptr;
+    return true;
+}
+
+/* Set (additional) assumptions on identifier G: must be either inequality
+ * constraints or bounds in form [L,U]. */
+void set_assumptions(const gen &g,const vecteur &cond,const vecteur &excluded,bool additionally,GIAC_CONTEXT) {
+    if (cond.empty())
+        return;
+    vecteur args;
+    for (const_iterateur it=cond.begin();it!=cond.end();++it) {
+        if (it->type==_VECT) {
+            assert(it->_VECTptr->size()==2);
+            const gen &lb=it->_VECTptr->front(),&ub=it->_VECTptr->back();
+            gen l=is_inf(lb)?undef:(contains(excluded,lb)?symb_superieur_strict(g,lb):symb_superieur_egal(g,lb));
+            gen r=is_inf(ub)?undef:(contains(excluded,ub)?symb_inferieur_strict(g,ub):symb_inferieur_egal(g,ub));
+            if (!is_undef(l) && !is_undef(r))
+                args.push_back(symb_and(l,r));
+            else if (!is_undef(l))
+                args.push_back(l);
+            else if (!is_undef(r))
+                args.push_back(r);
+        } else args.push_back(*it);
+    }
+    gen a=symbolic(at_ou,change_subtype(args,_SEQ__VECT));
+    if (additionally)
+        giac_additionally(a,contextptr);
+    else giac_assume(a,contextptr);
+}
+
+bool is_simpler(const gen &a,const gen &b) {
+    return taille(a,MAX_TAILLE)<taille(b,MAX_TAILLE);
+}
+
+gen sign2Heaviside(const gen &g) {
+    if (g.type==_VECT) {
+        vecteur res;
+        res.reserve(g._VECTptr->size());
+        for (const_iterateur it=g._VECTptr->begin();it!=g._VECTptr->end();++it) {
+            res.push_back(sign2Heaviside(*it));
+        }
+        return gen(res,g.subtype);
+    }
+    if (g.is_symb_of_sommet(at_sign))
+        return 2*symbolic(at_Heaviside,g._SYMBptr->feuille)-1;
+    if (g.type==_SYMB)
+        return symbolic(g._SYMBptr->sommet,sign2Heaviside(g._SYMBptr->feuille));
+    return g;
+}
+
+gen Heaviside2sign(const gen &g) {
+    if (g.type==_VECT) {
+        vecteur res;
+        res.reserve(g._VECTptr->size());
+        for (const_iterateur it=g._VECTptr->begin();it!=g._VECTptr->end();++it) {
+            res.push_back(Heaviside2sign(*it));
+        }
+        return gen(res,g.subtype);
+    }
+    if (g.is_symb_of_sommet(at_Heaviside))
+        return (symbolic(at_sign,g._SYMBptr->feuille)+1)/2;
+    if (g.type==_SYMB)
+        return symbolic(g._SYMBptr->sommet,Heaviside2sign(g._SYMBptr->feuille));
+    return g;
+}
+
+/* Convert Re(z) and Im(z) to (z+conj(z))/2 and (z-conj(z))/2, respectively. */
+gen reim2conj(const gen &g) {
+    if (g.type==_VECT) {
+        vecteur res;
+        res.reserve(g._VECTptr->size());
+        const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
+        for (;it!=itend;++it) res.push_back(reim2conj(*it));
+        return gen(res,g.subtype);
+    }
+    if (g.is_symb_of_sommet(at_re) || g.is_symb_of_sommet(at_im)) {
+        gen z=g._SYMBptr->feuille,s=g.is_symb_of_sommet(at_re)?1:-1;
+        return (z+s*symb_conj(z))/2;
+    }
+    if (g.type==_SYMB)
+        return symbolic(g._SYMBptr->sommet,reim2conj(g._SYMBptr->feuille));
+    return g;
+}
+
+bool is_const_wrt(const gen &g,const gen &x,GIAC_CONTEXT) {
+    return is_constant_wrt(sign2Heaviside(g),x,contextptr) && !contains(*_lname(g,contextptr)._VECTptr,x);
+}
+
+bool is_integer_idnt(const gen &g,GIAC_CONTEXT) {
+    if (g.type!=_IDNT)
+        return false;
+    matrice i;
+    vecteur e;
+    int d;
+    return get_assumptions(g,d,i,e,contextptr) && d==2;
+}
+
+/* Test whether G necessarily has an integral value. */
+bool is_inZ(const gen &g_orig,GIAC_CONTEXT) {
+    gen g=ratnormal(g_orig,contextptr);
+    if (g.is_integer() || is_integer_idnt(g,contextptr))
+        return true;
+    if (g.type!=_SYMB || !is_one(_denom(g,contextptr)))
+        return false;
+    const gen &ar=g._SYMBptr->feuille;
+    if (g.is_symb_of_sommet(at_neg))
+        return is_inZ(ar,contextptr);
+    gen d;
+    if (g.is_symb_of_sommet(at_pow) && ar.type==_VECT && (d=ar._VECTptr->back()).is_integer() && d.val>=0)
+        return is_inZ(ar._VECTptr->front(),contextptr);
+    if (g.is_symb_of_sommet(at_floor) || g.is_symb_of_sommet(at_ceil) ||
+            g.is_symb_of_sommet(at_sign) || g.is_symb_of_sommet(at_Heaviside) ||
+            g.is_symb_of_sommet(at_legendre_symbol) || g.is_symb_of_sommet(at_jacobi_symbol))
+        return true;
+    if ((g.is_symb_of_sommet(at_plus) || g.is_symb_of_sommet(at_prod)) && ar.type==_VECT) {
+        const_iterateur it=ar._VECTptr->begin(),itend=ar._VECTptr->end();
+        for (;it!=itend;++it) {
+            if (!is_inZ(*it,contextptr))
+                return false;
+        }
+        return true;
+    }
+    return false;
+}
+
+/* Does the expression g contain a symbolic subexpression with sommet f?
+ * set a and rest to the argument of first found f and the multiplier of f(a), respectively. */
+bool contains(const gen &g,const unary_function_ptr *f,gen &a,gen &rest,GIAC_CONTEXT) {
+    bool ret=false;
+    if (g.type!=_SYMB)
+        return ret;
+    if (g.is_symb_of_sommet(f)) {
+        rest=1;
+        a=g._SYMBptr->feuille;
+        return true;
+    }
+    if (g.is_symb_of_sommet(at_prod)) {
+        rest=1;
+        vecteur fac=g._SYMBptr->feuille.type==_VECT?*g._SYMBptr->feuille._VECTptr:vecteur(1,g._SYMBptr->feuille);
+        const_iterateur it=fac.begin(),itend=fac.end();
+        for (;it!=itend;++it) {
+            if (!ret && it->is_symb_of_sommet(f)) {
+                a=it->_SYMBptr->feuille;
+                ret=true;
+            } else rest=*it*rest;
+        }
+    } else if (g.is_symb_of_sommet(at_neg)) {
+        if (contains(g._SYMBptr->feuille,f,a,rest,contextptr)) {
+            rest=-rest;
+            return true;
+        }
+        return false;
+    }
+    return ret;
+}
+
+/* Find linear transformations of x appearing as arguments to other functions. */
+void lintx(const gen &g,const identificateur &x,vecteur &lt,GIAC_CONTEXT) {
+    gen a,b;
+    if (g.type==_VECT) {
+        const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
+        for (;it!=itend;++it) lintx(*it,x,lt,contextptr);
+    } else if (is_linear_wrt(g,x,a,b,contextptr) && !is_zero(a) && is_zero(im(a,contextptr)) && is_zero(im(b,contextptr)))
+        lt.push_back(makevecteur(a,b));
+    else if (g.type==_SYMB)
+        lintx(g._SYMBptr->feuille,x,lt,contextptr);
+}
+
+/* Rewrite a linear combination of instances of f such that the number of f-applications is minimal. */
+gen collect_with_func(const gen &g_orig,const unary_function_ptr *f,gen_map *m,gen *rest,GIAC_CONTEXT) {
+    bool with_m=m!=NULL;
+    assert(!with_m || rest!=NULL);
+    gen g=expand(g_orig,contextptr);
+    vecteur terms;
+    if (g.is_symb_of_sommet(at_plus))
+        terms=g._SYMBptr->feuille.type==_VECT?*g._SYMBptr->feuille._VECTptr:vecteur(1,g._SYMBptr->feuille);
+    else terms=vecteur(1,g);
+    gen ret=0,a,r;
+    gen_map ft;
+    if (with_m) {
+        *rest=0;
+        m->clear();
+    }
+    gen_map &fterms=with_m?*m:ft;
+    const_iterateur it=terms.begin(),itend=terms.end();
+    for (;it!=itend;++it) {
+        if (contains(*it,f,a,r,contextptr))
+            fterms[a]+=r;
+        else if (!with_m)
+            ret+=*it;
+        else *rest+=*it;
+    }
+    gen_map::const_iterator jt=fterms.begin(),jtend=fterms.end();
+    if (!with_m)
+        for (;jt!=jtend;++jt) ret+=ratnormal(jt->second,contextptr)*symbolic(f,jt->first);
+    return with_m?0:ret;
+}
+
+gen simplify_floor(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_VECT) {
+        vecteur res;
+        res.reserve(g._VECTptr->size());
+        const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
+        for (;it!=itend;++it) {
+            res.push_back(simplify_floor(*it,contextptr));
+        }
+        return gen(res,g.subtype);
+    }
+    if (g.type!=_SYMB)
+        return g;
+    const gen &args=g._SYMBptr->feuille;
+    if (g.is_symb_of_sommet(at_floor)) {
+        gen e=expand(ratnormal(simplify_floor(args,contextptr),contextptr),contextptr),ar=0,rest=0,num,den;
+        vecteur terms=e.is_symb_of_sommet(at_plus)?*e._SYMBptr->feuille._VECTptr:vecteur(1,e);
+        const_iterateur it=terms.begin(),itend=terms.end();
+        for (;it!=itend;++it) {
+            if (is_inZ(*it,contextptr))
+                rest+=*it;
+            else if (is_real_number(*it,contextptr)) {
+                gen f=_floor(_abs(*it,contextptr),contextptr),s=_sign(*it,contextptr);
+                rest+=f*s;
+                ar+=*it-f*s;
+            } else ar+=*it;
+        }
+        ar=ratnormal(ar,contextptr);
+        if (is_inZ(ar,contextptr))
+            return ar+rest;
+        if (ar.type==_FRAC)
+            return rest+(is_positive(ar,contextptr)?symbolic(at_floor,ar):
+                         -symbolic(at_floor,(_abs(ar._FRACptr->num,contextptr)-1)/_abs(ar._FRACptr->den,contextptr))-1);
+        /* handle some cases of nesting */
+        if ((den=_denom(ar,contextptr)).is_integer() && den.val>0) {
+            num=expand(simplify_floor(_numer(ar,contextptr),contextptr),contextptr);
+            gen a,b,c(undef);
+            if (num.is_symb_of_sommet(at_floor))
+                return rest+simplify_floor(_floor(num._SYMBptr->feuille/den,contextptr),contextptr);
+            if (num.is_symb_of_sommet(at_neg) && (a=num._SYMBptr->feuille).is_symb_of_sommet(at_ceil))
+                return rest+simplify_floor(_floor(-a._SYMBptr->feuille/den,contextptr),contextptr);
+            if (num.is_symb_of_sommet(at_plus) && num._SYMBptr->feuille.type==_VECT) {
+                const vecteur &terms=*num._SYMBptr->feuille._VECTptr;
+                const_iterateur it=terms.begin(),itend=terms.end(),jt=itend;
+                a=undef;
+                for (;it!=itend;++it) {
+                    if (it->is_symb_of_sommet(at_floor)) {
+                        if (is_undef(a) || is_simpler(a,it->_SYMBptr->feuille)) {
+                            a=it->_SYMBptr->feuille;
+                            jt=it;
+                        }
+                    } else if (it->is_symb_of_sommet(at_neg) && (b=it->_SYMBptr->feuille).is_symb_of_sommet(at_ceil)) {
+                        if (is_undef(a) || is_simpler(a,-b._SYMBptr->feuille)) {
+                            a=-b._SYMBptr->feuille;
+                            jt=it;
+                        }
+                    }
+                }
+                if (jt!=itend) {
+                    vecteur t(terms);
+                    t.erase(t.begin()+(jt-terms.begin()));
+                    b=_sum(t,contextptr);
+                    if (is_inZ(b,contextptr))
+                        return rest+simplify_floor(_floor(ratnormal((a+b)/den,contextptr),contextptr),contextptr);
+                }
+            }
+        }
+        return is_zero(rest)?_floor(ar,contextptr):rest+simplify_floor(_floor(ar,contextptr),contextptr);
+    }
+    if (g.is_symb_of_sommet(at_ceil))
+        return simplify_floor(-symbolic(at_floor,-args),contextptr);
+    return symbolic(g._SYMBptr->sommet,simplify_floor(args,contextptr));
+}
+
+bool is_periodic_wrt(const gen &g_orig,const gen &x,gen &T,GIAC_CONTEXT) {
+    gen g=ratnormal(g_orig,contextptr);
+    if (is_const_wrt(g,x,contextptr))
+        return true;
+    gen f=_lin(trig2exp(g,contextptr),contextptr);
+    vecteur v;
+    lvar(f,v);
+    bool hasx=find(v.begin(),v.end(),x)!=v.end();
+    v.clear();
+    rlvarx(f,x,v);
+    islesscomplexthanf_sort(v.begin(),v.end());
+    int i,s=int(v.size());
+    if (s<2)
+        return false;
+    gen a,b,r,d,U;
+    bool chk=false,upd;
+    for (i=1;i<s && !is_inf(T);++i) {
+        upd=false;
+        if (v[i].is_symb_of_sommet(at_exp) && is_linear_wrt(v[i]._SYMBptr->feuille,x,a,b,contextptr) && !is_zero(a)) {
+            U=ratnormal(cst_two_pi*cst_i/a,contextptr);
+            if (!is_zero(ratnormal(im(U,contextptr),contextptr)))
+                return false;
+            U=_abs(U,contextptr);
+            upd=true;
+        } else if (v[i].is_symb_of_sommet(at_floor) && is_linear_wrt(v[i]._SYMBptr->feuille,x,a,b,contextptr) &&
+                !is_zero(a) && is_const_wrt(b,x,contextptr)) {
+            U=ratnormal(_inv(_abs(a,contextptr),contextptr));
+            upd=true;
+            chk=true;
+        } else if (v[i].type==_SYMB && v[i]._SYMBptr->feuille.type!=_VECT) {
+            if (!is_periodic_wrt(v[i]._SYMBptr->feuille,x,T,contextptr))
+                return false;
+        } else return false;
+        if (upd) {
+            if (is_undef(T))
+                T=U;
+            else {
+                r=ratnormal(T/U,contextptr);
+                if (!is_inZ(_numer(r,contextptr),contextptr) || !is_inZ(d=_denom(r,contextptr),contextptr))
+                    return false;
+                T=T*d;
+            }
+        }
+    }
+    if (chk) {
+        gen s=simplify_floor(g-subst(g,x,x+T,false,contextptr),contextptr);
+        return is_zero(simplify(s,contextptr)) || is_zero(_trigsimplify(s,contextptr));
+    }
+    return !hasx;
+}
+
+/* Return a period of the given expression if it is periodic with respect
+ * to the given real variable, else return +inf.
+ * If the returned value is zero, it means that any positive real number is
+ * a period (e.g. for constant functions). */
+gen _period(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    gen e,x=identificateur("x"),T(undef);
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
+        e=g;
+    else {
+        if (g._VECTptr->size()!=2)
+            return gendimerr(contextptr);
+        if ((x=g._VECTptr->back()).type!=_IDNT)
+            return gentypeerr(contextptr);
+        e=g._VECTptr->front();
+    }
+    e=simplify_floor(recursive_normal(e,contextptr),contextptr);
+    if (!is_periodic_wrt(e,x,T,contextptr))
+        return plus_inf;
+    return is_undef(T)?gen(0):T;
+}
+static const char _period_s[]="period";
+static define_unary_function_eval (__period,&_period,_period_s);
+define_unary_function_ptr5(at_period,alias_at_period,&__period,0,true);
+
+gen _simplifyFloor(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    return simplify_floor(recursive_normal(g,contextptr),contextptr);
+}
+static const char _simplifyFloor_s[]="simplifyFloor";
+static define_unary_function_eval (__simplifyFloor,&_simplifyFloor,_simplifyFloor_s);
+define_unary_function_ptr5(at_simplifyFloor,alias_at_simplifyFloor,&__simplifyFloor,0,true);
 
 //
 // AUDIO CLIP CLASS IMPLEMENTATION
@@ -1093,6 +1526,9 @@ static define_unary_function_eval (__mixdown,&_mixdown,_mixdown_s);
 define_unary_function_ptr5(at_mixdown,alias_at_mixdown,&__mixdown,0,true);
 
 gen discrete_wavelet_transform(const gen &g,int dir,GIAC_CONTEXT) {
+#ifndef HAVE_LIBGSL
+  return undef;
+#else
     if (g.type!=_VECT)
         return gentypeerr(contextptr);
     vecteur *data;
@@ -1188,6 +1624,7 @@ gen discrete_wavelet_transform(const gen &g,int dir,GIAC_CONTEXT) {
     matrice ret=gsl_matrix2matrice(dd);
     gsl_matrix_free(dd);
     return ret;
+#endif
 }
 
 /* Discrete wavelet transform. */
@@ -2106,13 +2543,6 @@ static const char _logistic_s []="logistic";
 static define_unary_function_eval (__logistic,&_logistic,_logistic_s);
 define_unary_function_ptr5(at_logistic,alias_at_logistic,&__logistic,0,true)
 
-#define MAX_TAILLE 500
-
-/* return true iff g is significantly simpler than h */
-bool is_simpler(const gen &g,const gen &h,double scale=1.0) {
-    return scale*taille(h,MAX_TAILLE)>taille(g,MAX_TAILLE);
-}
-
 bool is_rational_wrt(const gen &e,const identificateur &x) {
     return rlvarx(e,x).size()<=1;
 }
@@ -2122,11 +2552,11 @@ gen factorise(const gen &g,GIAC_CONTEXT) {
 }
 
 bool ispoly(const gen &e,const identificateur &x,gen &d,GIAC_CONTEXT) {
-    if (is_constant_wrt(e,x,contextptr)) {
+    if (is_const_wrt(e,x,contextptr)) {
         d=gen(0);
         return true;
     }
-    if (!is_rational_wrt(e,x) || !is_constant_wrt(_denom(e,contextptr),x,contextptr))
+    if (!is_rational_wrt(e,x) || !is_const_wrt(_denom(e,contextptr),x,contextptr))
         return false;
     d=_degree(makesequence(e,x),contextptr);
     return d.is_integer() && !is_zero(d);
@@ -2138,7 +2568,7 @@ void constlin_terms(const gen &g,const identificateur &x,gen &lt,gen &c,gen &res
     gen a,b;
     rest=c=lt=gen(0);
     for (const_iterateur it=terms.begin();it!=terms.end();++it) {
-        if (is_constant_wrt(*it,x,contextptr))
+        if (is_const_wrt(*it,x,contextptr))
             c+=*it;
         else if (is_linear_wrt(*it,x,a,b,contextptr)) {
             lt+=a;
@@ -2163,60 +2593,6 @@ gen logabs_expand(const gen &g,const identificateur &x,GIAC_CONTEXT) {
     if (g.type==_SYMB)
         return symbolic(g._SYMBptr->sommet,logabs_expand(g._SYMBptr->feuille,x,contextptr));
     return g;
-}
-
-vecteur analyze_terms(const gen &g,const identificateur &x,GIAC_CONTEXT) {
-    vecteur terms,ret;
-    if (g.is_symb_of_sommet(at_plus)) {
-        if (g._SYMBptr->feuille.type==_VECT)
-            terms=*g._SYMBptr->feuille._VECTptr;
-        else terms=vecteur(1,g._SYMBptr->feuille);
-    } else terms=vecteur(1,g);
-    for (const_iterateur it=terms.begin();it!=terms.end();++it) {
-        vecteur factors;
-        gen cnst(1),rest(1),deg(0),exprest(0),sh(0),rt=ratnormal(*it,contextptr),st;
-        if (!is_constant_wrt(rt,x,contextptr))
-            rt=factorise(rt,contextptr);
-        if (rt.is_symb_of_sommet(at_neg)) {
-            cnst=gen(-1);
-            rt=rt._SYMBptr->feuille;
-        }
-        if (rt.is_symb_of_sommet(at_prod) && rt._SYMBptr->feuille.type==_VECT)
-            factors=*rt._SYMBptr->feuille._VECTptr;
-        else factors=vecteur(1,rt);
-        for (int i=factors.size();i-->0;) {
-            gen &fac=factors[i];
-            if (fac.is_symb_of_sommet(at_inv)) {
-                if (fac._SYMBptr->feuille.is_symb_of_sommet(at_prod) &&
-                    fac._SYMBptr->feuille._SYMBptr->feuille.type==_VECT) {
-                    const vecteur &d=*fac._SYMBptr->feuille._SYMBptr->feuille._VECTptr;
-                    for (const_iterateur jt=d.begin();jt!=d.end();++jt) {
-                        factors.push_back(symbolic(at_inv,*jt));
-                    }
-                    factors.erase(factors.begin()+i);
-                }
-            }
-        }
-        for (const_iterateur jt=factors.begin();jt!=factors.end();++jt) {
-            if (jt->is_symb_of_sommet(at_exp)) {
-                gen lt1,lt2,c1,c2,rest1,rest2;
-                constlin_terms(re(jt->_SYMBptr->feuille,contextptr),x,lt1,c1,rest1,contextptr);
-                constlin_terms(im(jt->_SYMBptr->feuille,contextptr),x,lt2,c2,rest2,contextptr);
-                cnst=cnst*exp(c1+cst_i*c2,contextptr);
-                sh+=lt2;
-                exprest+=rest1+x*lt1+cst_i*rest2;
-            } else if (is_constant_wrt(*jt,x,contextptr))
-                cnst=cnst*(*jt);
-            else if (ispoly(*jt,x,st,contextptr)) {
-                deg+=st;
-                cnst=cnst*_lcoeff(makesequence(*jt,x),contextptr);
-            } else rest=rest*(*jt);
-        }
-        rest=rest*exp(exprest,contextptr);
-        cnst=recursive_normal(_lin(cnst,contextptr),contextptr);
-        ret.push_back(makevecteur(cnst,sh,deg,rest));
-    }
-    return ret;
 }
 
 bool has_rootof(const gen &g) {
@@ -2262,71 +2638,165 @@ bool is_heavisided(const gen &g,const identificateur &x,gen &rest,gen &a,gen &b,
     return yes;
 }
 
-gen lin_cplx(const gen &g_orig,GIAC_CONTEXT) {
-    gen g=_lin(g_orig,contextptr),ret(1);
-    if (g.is_symb_of_sommet(at_neg)) {
-        ret=gen(-1);
-        g=g._SYMBptr->feuille;
+void split_operands(const vecteur &v,int sel,gen &a,gen &b,const unary_function_ptr *op) {
+    const_iterateur it=v.begin(),itend=v.end();
+    bitset<MAX_FACTORS> bs(sel);
+    vecteur l,r;
+    l.reserve(v.size());
+    r.reserve(v.size());
+    int i=0;
+    for (;it!=itend;++it,++i) {
+        if (bs[i]) l.push_back(*it);
+        else r.push_back(*it);
     }
-    vecteur factors;
-    if (g.is_symb_of_sommet(at_prod) && g._SYMBptr->feuille.type==_VECT)
-        factors=*g._SYMBptr->feuille._VECTptr;
-    else factors=vecteur(1,g);
-    for (const_iterateur it=factors.begin();it!=factors.end();++it) {
-        if (it->is_symb_of_sommet(at_exp)) {
-            gen ex=it->_SYMBptr->feuille;
-            ret=ret*exp(cst_i*im(ex,contextptr),contextptr)*exp(re(ex,contextptr),contextptr);
-        } else ret=ret*(*it);
-    }
-    return ret;
+    if (l.empty()) {
+        if (op==at_prod) a=1;
+        if (op==at_plus) a=0;
+    } else a=symbolic(op,l);
+    if (r.empty()) {
+        if (op==at_prod) b=1;
+        if (op==at_plus) b=0;
+    } else b=symbolic(op,r);
 }
 
-gen hcollect(const gen &g,const gen &h,const identificateur &x,gen &cnst,GIAC_CONTEXT) {
-    gen f=factorise(lin_cplx(g,contextptr)+lin_cplx(h,contextptr),contextptr);
-    gen rest(1),r1,r2,a1,a2,b1,b2,hvs(undef);
-    vecteur factors;
-    cnst=gen(1);
-    if (f.is_symb_of_sommet(at_neg)) {
-        rest=gen(-1);
-        f=f._SYMBptr->feuille;
-    }
-    if (f.is_symb_of_sommet(at_prod) && f._SYMBptr->feuille.type==_VECT)
-        factors=*f._SYMBptr->feuille._VECTptr;
-    else factors=vecteur(1,f);
-    for (const_iterateur it=factors.begin();it!=factors.end();++it) {
-        if (is_undef(hvs) && it->is_symb_of_sommet(at_plus) && it->_SYMBptr->feuille.type==_VECT &&
-                it->_SYMBptr->feuille._VECTptr->size()==2 &&
-                is_heavisided(it->_SYMBptr->feuille._VECTptr->front(),x,r1,a1,b1,contextptr) &&
-                is_heavisided(it->_SYMBptr->feuille._VECTptr->back(),x,r2,a2,b2,contextptr) &&
-                is_zero(ratnormal(b1*a2-b2*a1,contextptr)) && is_strictly_positive(-a1*a2,contextptr) &&
-                is_zero(recursive_normal(subst(r1,x,-b1/a1+_sign(a1,contextptr)*x,false,contextptr)-
-                                         subst(r2,x,-b2/a2+_sign(a2,contextptr)*x,false,contextptr),
-                                         contextptr))) {
-            hvs=subst(r1,x,-b1/a1+_sign(a1,contextptr)*_abs(x+b1/a1,contextptr),false,contextptr);
-        } else if (is_constant_wrt(*it,x,contextptr))
-            cnst=cnst*(*it);
-        else rest=rest*(*it);
-    }
-    return rest*hvs;
+void allcombs(int n,vector<int> &res) {
+    int N=1<<n,k;
+    res.reserve(N);
+    for (k=0;k<N;++k) res.push_back(k);
 }
 
-gen Heaviside2abs(const gen &g,const identificateur &x,GIAC_CONTEXT) {
-    gen h=expand(g,contextptr),e,c;
-    vecteur terms;
-    if (h.is_symb_of_sommet(at_plus) && h._SYMBptr->feuille.type==_VECT)
-        terms=*h._SYMBptr->feuille._VECTptr;
-    else terms=vecteur(1,h);
-    for (int i=terms.size();i-->0;) {
-        for (int j=terms.size();j-->i+1;) {
-            if (!is_undef(e=hcollect(terms[i],terms[j],x,c,contextptr))) {
-                terms.erase(terms.begin()+j);
-                terms.erase(terms.begin()+i);
-                terms.push_back(c*e);
-                break;
+/* Reduce the number of Heavisides in g (by introducing absolute values when possible). */
+gen reduce_Heaviside(const gen &g,const identificateur &x,GIAC_CONTEXT) {
+    gen_map m;
+    gen ret=0,rest,f,f2aminusx,a,b,d,h1,h2,r1,r2,cst,i1,i2,mu,test,retp,restp,p1,p2;
+    collect_with_func(g,at_Heaviside,&m,&rest,contextptr);
+    gen_map::const_iterator it=m.begin(),itend=m.end();
+    vecteur factors;
+    int s,s0;
+    for (;it!=itend;++it) {
+        if (is_linear_wrt(it->first,x,b,a,contextptr) && is_one(b)) {
+            a=-a;
+            f=ratnormal(it->second,contextptr);
+            if (f.is_symb_of_sommet(at_neg)) {
+                cst=-1;
+                f=f._SYMBptr->feuille;
+            } else cst=1;
+            factors=f.is_symb_of_sommet(at_prod) && f._SYMBptr->feuille.type==_VECT?*f._SYMBptr->feuille._VECTptr:vecteur(1,f);
+            for (int i=factors.size();i-->0;) {
+                if (!contains(_lname(factors[i],contextptr),x)) {
+                    cst=cst*factors[i];
+                    factors.erase(factors.begin()+i);
+                }
+            }
+            vector<int> combs,tcombs;
+            if (factors.size()>MAX_FACTORS)
+                combs.push_back(0);
+            else if (!factors.empty())
+                allcombs(factors.size(),combs);
+            vector<int>::const_iterator jt=combs.begin(),kt,jtend=combs.end(),ktend;
+            i1=undef;
+            for (;jt!=jtend;++jt) {
+                split_operands(factors,*jt,r1,r2,at_prod);
+                p1=p2=0;
+                if (r2.is_symb_of_sommet(at_prod))
+                    r2=r2._SYMBptr->feuille.type==_VECT?r2._SYMBptr->feuille._VECTptr->front():r2._SYMBptr->feuille;
+                vecteur terms;
+                if (r2.is_symb_of_sommet(at_plus) && r2._SYMBptr->feuille.type==_VECT)
+                    terms=r2._SYMBptr->feuille._VECTptr->size()>1 && r2._SYMBptr->feuille._VECTptr->size()<=MAX_FACTORS?
+                        *r2._SYMBptr->feuille._VECTptr:vecteur(1,r2);
+                else terms=vecteur(1,r2);
+                tcombs.clear();
+                allcombs(terms.size(),tcombs);
+                gen s1,s2;
+                for (kt=tcombs.begin(),ktend=tcombs.end();kt!=ktend;++kt) {
+                    split_operands(terms,*kt,s1,s2,at_plus);
+                    r2=expand(subst(s1,x,2*a-x,false,contextptr)+s2,contextptr);
+                    p1=r1*subst(s1,x,_abs(x-a,contextptr)+a,false,contextptr);
+                    p2=-r1*subst(s1,x,2*a-x,false,contextptr);
+                    if (is_exactly_zero(r2)) {
+                        h1=h2=0;
+                    } else {
+                        f2aminusx=subst(r2,x,2*a-x,false,contextptr);
+                        if (is_exactly_zero(tsimplify(d=r2-f2aminusx,contextptr)))
+                            continue;
+                        mu=r1*r2/d;
+                        h1=subst(r2,x,_abs(x-a,contextptr)+a,false,contextptr)*ratnormal(mu,contextptr);
+                        h2=ratnormal(-f2aminusx*mu,contextptr);
+                    }
+                    test=ratnormal(ret+cst*(h1+p1)+rest+cst*(h2+p2),contextptr);
+                    s=taille(test,MAX_TAILLE);
+                    if (is_undef(i1) || s<s0) {
+                        i1=h1;
+                        i2=h2;
+                        s0=s;
+                        retp=p1;
+                        restp=p2;
+                    }
+                }
+            }
+            if (!is_undef(i1)) {
+                ret+=cst*(i1+retp);
+                rest+=cst*(i2+restp);
+                continue;
             }
         }
+        ret+=it->second*(_abs(it->first,contextptr)+it->first)/(2*it->first);
     }
-    return symbolic(at_plus,gen(terms,_SEQ__VECT));
+    return ret+ratnormal(rest,contextptr);
+}
+
+void find_func_linarg(const gen &g,const unary_function_ptr *f,const identificateur &x,vecteur &la,bool nested,GIAC_CONTEXT) {
+    gen a,b,c;
+    if (g.type==_VECT) {
+        for (const_iterateur it=g._VECTptr->begin();it!=g._VECTptr->end();++it) {
+            find_func_linarg(*it,f,x,la,nested,contextptr);
+        }
+    } else if (g.type==_SYMB) {
+        const gen &e=g._SYMBptr->feuille;
+        if (g.is_symb_of_sommet(f)) {
+            if (is_linear_wrt(e,x,a,b,contextptr) && !is_zero(a))
+                la.push_back(-b/a);
+            else if (nested)
+                find_func_linarg(e,f,x,la,nested,contextptr);
+        } else find_func_linarg(e,f,x,la,nested,contextptr);
+    }
+}
+
+gen factor_abs_arg(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_VECT) {
+        vecteur res;
+        res.reserve(g._VECTptr->size());
+        const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
+        for (;it!=itend;++it) res.push_back(factor_abs_arg(*it,contextptr));
+        return gen(res,g.subtype);
+    }
+    if (g.is_symb_of_sommet(at_abs))
+        return _abs(_factor(factor_abs_arg(g._SYMBptr->feuille,contextptr),contextptr),contextptr);
+    if (g.type==_SYMB)
+        return symbolic(g._SYMBptr->sommet,factor_abs_arg(g._SYMBptr->feuille,contextptr));
+    return g;
+}
+
+gen abs2Heaviside(const gen &g_orig,const identificateur &x,GIAC_CONTEXT) {
+    vecteur la;
+    gen g=factor_abs_arg(g_orig,contextptr);
+    find_func_linarg(g,at_abs,x,la,true,contextptr);
+    if (la.empty())
+        return g_orig;
+    identificateur t(" abs_var");
+    const_iterateur it=la.begin(),itend=la.end();
+    gen ret=g;
+    for (;it!=itend;++it) {
+        _purge(t,contextptr);
+        gen old=subst(ret,x,t,false,contextptr);
+        ret=0;
+        giac_assume(symb_superieur_egal(t,*it),contextptr);
+        ret+=subst(_eval(old,contextptr),t,x,false,contextptr)*_Heaviside(x-*it,contextptr);
+        //_purge(t,contextptr);
+        giac_assume(symb_inferieur_strict(t,*it),contextptr);
+        ret+=subst(_eval(old,contextptr),t,x,false,contextptr)*_Heaviside(*it-x,contextptr);
+    }
+    return abs2Heaviside(ret,x,contextptr);
 }
 
 bool has_integral(const gen &g) {
@@ -2337,68 +2807,16 @@ bool has_integral(const gen &g) {
         }
         return false;
     }
-    if (g.type==_SYMB)
-        return has_integral(g._SYMBptr->feuille);
+    if (g.type!=_SYMB)
+        return false;
     if (g.is_symb_of_sommet(at_integrate) || g.is_symb_of_sommet(at_int) ||
             g.is_symb_of_sommet(at_Int))
         return true;
-    return false;
+    return has_integral(g._SYMBptr->feuille);
 }
 
 bool is_same(const gen &g,const gen &h,GIAC_CONTEXT) {
     return is_zero(ratnormal(g-h,contextptr));
-}
-
-vecteur fourier_terms(const gen &g_orig,const identificateur &x,bool do_simp,GIAC_CONTEXT) {
-    gen g;
-    if (do_simp)
-        g=expand(ratnormal(logabs_expand(lnexpand(_lin(_trig2exp(_hyp2exp(_pow2exp(g_orig,contextptr),
-                 contextptr),contextptr),contextptr),contextptr),x,contextptr),contextptr),contextptr);
-    else g=g_orig;
-    vecteur terms=analyze_terms(g,x,contextptr);
-    // decompose terms into sums of partial fractions
-    for (int i=terms.size();i-->0;) {
-        assert(terms[i].type==_VECT);
-        const vecteur &v=*terms[i]._VECTptr;
-        if (!is_rational_wrt(v[3],x) ||
-            is_constant_wrt(_denom(v[3],contextptr),x,contextptr)) continue;
-        vecteur rterms=analyze_terms(_cpartfrac(makesequence(v[3],x),contextptr),x,contextptr);
-        for (const_iterateur it=rterms.begin();it!=rterms.end();++it) {
-            assert(it->type==_VECT);
-            const vecteur &w=*(it->_VECTptr);
-            terms.push_back(makevecteur(v[0]*w[0],v[1],v[2]+w[2],expand(w[3],contextptr)));
-        }
-        terms.erase(terms.begin()+i);
-    }
-    // collect terms to reduce complexity
-    for (int i=0;i<int(terms.size());++i) {
-        vecteur &v=*terms[i]._VECTptr;
-        for (int j=terms.size();j-->i+1;) {
-            const vecteur &w=*terms[j]._VECTptr;
-            if (is_same(v[3],w[3],contextptr) && is_same(v[1],w[1],contextptr) &&
-                    is_same(v[2],w[2],contextptr)) {
-                v[0]+=w[0];
-                terms.erase(terms.begin()+j);
-            }
-        }
-    }
-    // convert: f(-x)*Heaviside(x)+f(x)*Heaviside(-x) -> f(-abs(x))
-    for (int i=terms.size();i-->0;) {
-        vecteur &v=*terms[i]._VECTptr;
-        for (int j=terms.size();j-->i+1;) {
-            const vecteur &w=*terms[j]._VECTptr;
-            gen e,c;
-            if (is_same(v[1],w[1],contextptr) && is_zero(v[2]-w[2]) &&
-                    !is_undef(e=hcollect(v[3]*v[0],w[3]*w[0],x,c,contextptr))) {
-                e=makevecteur(c,v[1],v[2],e);
-                terms.erase(terms.begin()+j);
-                terms.erase(terms.begin()+i);
-                terms.push_back(e);
-                break;
-            }
-        }
-    }
-    return terms;
 }
 
 static vecteur fourier_table;
@@ -2452,7 +2870,8 @@ static define_unary_function_eval (__addtable,&_addtable,_addtable_s);
 define_unary_function_ptr5(at_addtable,alias_at_addtable,&__addtable,0,true)
 
 vecteur fourier_table_find(const identificateur &f,int sz) {
-    for (const_iterateur it=fourier_table.begin();it!=fourier_table.end();++it) {
+    const_iterateur it=fourier_table.begin(),itend=fourier_table.end();
+    for (;it!=itend;++it) {
         const vecteur &r=*(it->_VECTptr);
         if (r[2].val!=sz) continue;
         if (r[0]==f) return makevecteur(1,r[1],r[3]);
@@ -2501,49 +2920,120 @@ bool is_partialdiff(const gen &g,identificateur &f,vecteur &vars,vecteur &deg,GI
     return true;
 }
 
-gen lin_Heaviside(const gen &g_orig,const identificateur &x,GIAC_CONTEXT) {
-    gen g=expand(g_orig,contextptr),rest(1),ret(0),a,b;
-    if (g.is_symb_of_sommet(at_plus) && g._SYMBptr->feuille.type==_VECT) {
-        const vecteur &terms=*g._SYMBptr->feuille._VECTptr;
-        for (const_iterateur it=terms.begin();it!=terms.end();++it) {
-            ret+=lin_Heaviside(*it,x,contextptr);
-        }
-        return ret;
+/* Rewrite g_orig in a way that the products of exp and step functions
+ * can be transformed by Fourier transform. */
+gen collect_expHeaviside(const gen &g_orig,GIAC_CONTEXT) {
+    gen g=_lin(g_orig,contextptr),r,hr,ret(0),ef;
+    gen_map em,hm;
+    collect_with_func(g,at_exp,&em,&r,contextptr);
+    gen_map::const_iterator it=em.begin(),itend=em.end();
+    for (;it!=itend;++it) {
+        ef=exp(it->first,contextptr);
+        hm.clear();
+        hr=0;
+        collect_with_func(it->second,at_Heaviside,&hm,&hr,contextptr);
+        if (hm.size()==1 && is_minus_one(ratnormal(hm.begin()->second/hr,contextptr)))
+            ret-=ef*hm.begin()->second*_Heaviside(-hm.begin()->first,contextptr);
+        else ret+=ef*it->second;
     }
+    return r+ret;
+}
+
+/* Simplify Heaviside(ax^2+bx+c) to a linear combination of Heavisides with linear arguments. */
+gen simplify_quadratic_Heaviside(const gen &g,const identificateur &x,GIAC_CONTEXT) {
+    if (g.type==_VECT) {
+        vecteur res;
+        res.reserve(g._VECTptr->size());
+        const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
+        for (;it!=itend;++it) {
+            res.push_back(simplify_quadratic_Heaviside(*it,x,contextptr));
+        }
+        return gen(res,g.subtype);
+    }
+    gen a,b,c;
+    if (g.is_symb_of_sommet(at_Heaviside) && is_quadratic_wrt(g._SYMBptr->feuille,x,a,b,c,contextptr) && !is_zero(a)) {
+        gen d=b*b-4*a*c;
+        if (is_positive(-d,contextptr))
+            return g;
+        gen x1=(-b-sqrt(d,contextptr))/(2*a),x2=(-b+sqrt(d,contextptr))/(2*a);
+        if (is_positive(a,contextptr))
+            return _Heaviside(x1-x,contextptr)+_Heaviside(x-x2,contextptr);
+        return _boxcar(makesequence(x1,x2,x),contextptr);
+    }
+    if (g.type==_SYMB)
+        return symbolic(g._SYMBptr->sommet,simplify_quadratic_Heaviside(g._SYMBptr->feuille,x,contextptr));
+    return g;
+}
+
+gen simplify_linarg(const gen &g,const identificateur &x,GIAC_CONTEXT) {
+    if (g.type==_VECT) {
+        vecteur res;
+        res.reserve(g._VECTptr->size());
+        const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
+        for (;it!=itend;++it) {
+            res.push_back(simplify_linarg(*it,x,contextptr));
+        }
+        return gen(res,g.subtype);
+    }
+    gen a,b;
+    if ((g.is_symb_of_sommet(at_Heaviside) || g.is_symb_of_sommet(at_sign)) &&
+            is_linear_wrt(g._SYMBptr->feuille,x,a,b,contextptr) && !is_zero(a)) {
+        b=symbolic(g._SYMBptr->sommet,g._SYMBptr->feuille/a);
+        return g.is_symb_of_sommet(at_sign)?_sign(a,contextptr)*b:plus_one_half+_sign(a,contextptr)*(b+minus_one_half);
+    }
+    if (g.is_symb_of_sommet(at_Dirac) && g._SYMBptr->feuille.type!=_VECT &&
+            is_linear_wrt(g._SYMBptr->feuille,x,a,b,contextptr) && !is_zero(a))
+        return symbolic(at_Dirac,x+b/a)/_abs(a,contextptr);
+    if (g.is_symb_of_sommet(at_Dirac) && g._SYMBptr->feuille.type==_VECT && g._SYMBptr->feuille._VECTptr->size()==2 &&
+            g._SYMBptr->feuille._VECTptr->front().is_symb_of_sommet(at_neg) && g._SYMBptr->feuille._VECTptr->back().is_integer())
+        return pow(gen(-1),g._SYMBptr->feuille._VECTptr->back().val)*
+            symbolic(at_Dirac,makesequence(g._SYMBptr->feuille._VECTptr->front()._SYMBptr->feuille,g._SYMBptr->feuille._VECTptr->back()));
+    if (g.type==_SYMB)
+        return symbolic(g._SYMBptr->sommet,simplify_linarg(g._SYMBptr->feuille,x,contextptr));
+    return g;
+}
+
+/* Linearize expressions with step functions wrt the variable x.
+ * This rewrites products and powers of step functions as linear combinations of step functions. */
+gen lin_Heaviside(const gen &g_orig,const identificateur &x,GIAC_CONTEXT) {
+    gen ret(1),a,b,g(g_orig);
+    if (g.type==_VECT) {
+        vecteur res;
+        res.reserve(g._VECTptr->size());
+        const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
+        for (;it!=itend;++it) res.push_back(lin_Heaviside(*it,x,contextptr));
+        return gen(res,g.subtype);
+    }
+    if (g.is_symb_of_sommet(at_plus) && g._SYMBptr->feuille.type==_VECT)
+        return symbolic(at_plus,lin_Heaviside(g._SYMBptr->feuille,x,contextptr));
     if (g.is_symb_of_sommet(at_neg)) {
-        rest=gen(-1);
+        ret=gen(-1);
         g=g._SYMBptr->feuille;
     }
-    vecteur factors;
-    matrice L;
+    vecteur fac,L;
     if (g.is_symb_of_sommet(at_prod) && g._SYMBptr->feuille.type==_VECT)
-        factors=*g._SYMBptr->feuille._VECTptr;
-    else factors=vecteur(1,g);
-    int i=0;
-    for (const_iterateur it=factors.begin();it!=factors.end();++it) {
-        if (i<2 && it->is_symb_of_sommet(at_Heaviside) &&
-                is_linear_wrt(it->_SYMBptr->feuille,x,a,b,contextptr)) {
-            L.push_back(makevecteur(_sign(a,contextptr),-b/_abs(a,contextptr)));
-            ++i;
-        } else rest=rest*(*it);
+        fac=*g._SYMBptr->feuille._VECTptr;
+    else fac=vecteur(1,g);
+    const_iterateur it=fac.begin(),itend=fac.end();
+    bool recurse=false;
+    for (;it!=itend;++it) {
+        if (it->is_symb_of_sommet(at_pow) && is_strictly_positive(it->_SYMBptr->feuille._VECTptr->back(),contextptr) &&
+                it->_SYMBptr->feuille._VECTptr->front().is_symb_of_sommet(at_Heaviside)) {
+            ret=ret*it->_SYMBptr->feuille._VECTptr->front();
+            recurse=true;
+        } else if (L.size()<2 && it->is_symb_of_sommet(at_Heaviside) && is_linear_wrt(it->_SYMBptr->feuille,x,a,b,contextptr) && is_one(a))
+            L.push_back(-b);
+        else ret=*it*ret;
     }
-    if (i<2) {
-        if (i==1) rest=rest*_Heaviside(L[0][0]*x-L[0][1],contextptr);
-        return rest;
+    if (L.size()<2) {
+        ret=ret*(L.size()==1?_Heaviside(x-L.front(),contextptr):gen(1));
+        return recurse?lin_Heaviside(ret,x,contextptr):ret;
     }
-    if (is_one(L[0][0]*L[1][0])) {
-        if (is_one(L[0][0]))
-            rest=rest*_Heaviside(x-(is_greater(L[1][1],L[0][1],contextptr)?L[1][1]:L[0][1]),contextptr);
-        else
-            rest=rest*_Heaviside((is_greater(L[1][1],L[0][1],contextptr)?L[0][1]:L[1][1])-x,contextptr);
-    } else {
-        a=is_one(L[0][0])?L[0][1]:L[1][1];
-        b=is_one(L[0][0])?L[1][1]:L[0][1];
-        if (is_greater(b,a,contextptr))
-            rest=rest*(_Heaviside(x-a,contextptr)-_Heaviside(x-b,contextptr));
-        else rest=gen(0);
-    }
-    return lin_Heaviside(rest,x,contextptr);
+    return lin_Heaviside(ret*_Heaviside(x-_max(gen(L,_SEQ__VECT),contextptr),contextptr),x,contextptr);
+}
+
+gen linH(const gen &g,const identificateur &x,GIAC_CONTEXT) {
+    return lin_Heaviside(expand(simplify_linarg(g,x,contextptr),contextptr),x,contextptr);
 }
 
 gen cond2Heaviside(const gen &g,const identificateur &x,GIAC_CONTEXT) {
@@ -2565,139 +3055,365 @@ gen cond2Heaviside(const gen &g,const identificateur &x,GIAC_CONTEXT) {
     }
     if (g.is_symb_of_sommet(at_inferieur_egal) || g.is_symb_of_sommet(at_inferieur_strict)) {
         if (g._SYMBptr->feuille._VECTptr->front()==x &&
-                is_constant_wrt(g._SYMBptr->feuille._VECTptr->back(),x,contextptr))
+                is_const_wrt(g._SYMBptr->feuille._VECTptr->back(),x,contextptr))
             return _Heaviside(g._SYMBptr->feuille._VECTptr->back()-x,contextptr);
         if (g._SYMBptr->feuille._VECTptr->back()==x &&
-                is_constant_wrt(g._SYMBptr->feuille._VECTptr->front(),x,contextptr))
+                is_const_wrt(g._SYMBptr->feuille._VECTptr->front(),x,contextptr))
             return _Heaviside(x-g._SYMBptr->feuille._VECTptr->front(),contextptr);
     }
     if (g.is_symb_of_sommet(at_superieur_egal) || g.is_symb_of_sommet(at_superieur_strict)) {
         if (g._SYMBptr->feuille._VECTptr->front()==x &&
-                is_constant_wrt(g._SYMBptr->feuille._VECTptr->back(),x,contextptr))
+                is_const_wrt(g._SYMBptr->feuille._VECTptr->back(),x,contextptr))
             return _Heaviside(x-g._SYMBptr->feuille._VECTptr->back(),contextptr);
         if (g._SYMBptr->feuille._VECTptr->back()==x &&
-                is_constant_wrt(g._SYMBptr->feuille._VECTptr->front(),x,contextptr))
+                is_const_wrt(g._SYMBptr->feuille._VECTptr->front(),x,contextptr))
             return _Heaviside(g._SYMBptr->feuille._VECTptr->front()-x,contextptr);
     }
     return undef;
 }
 
-gen sign2Heaviside(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_VECT) {
-        vecteur res;
-        for (const_iterateur it=g._VECTptr->begin();it!=g._VECTptr->end();++it) {
-            res.push_back(sign2Heaviside(*it,contextptr));
-        }
-        return gen(res,g.subtype);
-    }
-    if (g.is_symb_of_sommet(at_sign))
-        return 2*symbolic(at_Heaviside,g._SYMBptr->feuille)-1;
-    if (g.type==_SYMB)
-        return symbolic(g._SYMBptr->sommet,sign2Heaviside(g._SYMBptr->feuille,contextptr));
-    return g;
-}
-
-gen Heaviside2sign(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_VECT) {
-        vecteur res;
-        for (const_iterateur it=g._VECTptr->begin();it!=g._VECTptr->end();++it) {
-            res.push_back(Heaviside2sign(*it,contextptr));
-        }
-        return gen(res,g.subtype);
-    }
-    if (g.is_symb_of_sommet(at_Heaviside))
-        return (symbolic(at_sign,g._SYMBptr->feuille)+1)/2;
-    if (g.type==_SYMB)
-        return symbolic(g._SYMBptr->sommet,Heaviside2sign(g._SYMBptr->feuille,contextptr));
-    return g;
-}
-
-gen simplify_signs(const gen &g,const identificateur &x,GIAC_CONTEXT) {
-    if (g.type==_VECT) {
-        vecteur res;
-        for (const_iterateur it=g._VECTptr->begin();it!=g._VECTptr->end();++it) {
-            res.push_back(simplify_signs(*it,x,contextptr));
-        }
-        return gen(res,g.subtype);
-    }
-    gen a,b;
-    if ((g.is_symb_of_sommet(at_Heaviside) || g.is_symb_of_sommet(at_sign)) &&
-            is_linear_wrt(g._SYMBptr->feuille,x,a,b,contextptr) && !is_zero(a))
-        return symbolic(g._SYMBptr->sommet,g._SYMBptr->feuille/_abs(a,contextptr));
-    if (g.is_symb_of_sommet(at_Dirac) && g._SYMBptr->feuille.type!=_VECT &&
-            is_linear_wrt(g._SYMBptr->feuille,x,a,b,contextptr) && !is_zero(a))
-        return symbolic(at_Dirac,x+b/a)/_abs(a,contextptr);
-    if (g.type==_SYMB)
-        return symbolic(g._SYMBptr->sommet,simplify_signs(g._SYMBptr->feuille,x,contextptr));
-    return g;
-}
-
-vecteur find_Dirac(const gen &g,const identificateur &x,gen &rest,GIAC_CONTEXT) {
-    gen a,b,fac;
+bool has_Dirac(const gen &g,const identificateur &x,gen &a,gen &b,int &k,gen &rest,GIAC_CONTEXT) {
+    gen gk,fac;
     rest=gen(1);
-    vecteur res,factors;
+    vecteur factors;
     if (g.is_symb_of_sommet(at_neg)) {
-        res=find_Dirac(g._SYMBptr->feuille,x,rest,contextptr);
+        bool res=has_Dirac(g._SYMBptr->feuille,x,a,b,k,rest,contextptr);
         rest=-rest;
         return res;
     }
     if (g.is_symb_of_sommet(at_prod) && g._SYMBptr->feuille.type==_VECT)
         factors=*g._SYMBptr->feuille._VECTptr;
     else factors=vecteur(1,g);
-    for (const_iterateur it=factors.begin();it!=factors.end();++it) {
-        if (res.empty() && it->is_symb_of_sommet(at_Dirac)) {
+    const_iterateur it=factors.begin(),itend=factors.end();
+    for (;it!=itend;++it) {
+        if (it->is_symb_of_sommet(at_Dirac)) {
             const gen &arg=(it->_SYMBptr->feuille.type==_VECT?it->_SYMBptr->feuille._VECTptr->front()
                                                              :it->_SYMBptr->feuille);
-            if (is_linear_wrt(arg,x,a,b,contextptr) && !is_zero(a)) {
-                res=makevecteur(-b/a,it->_SYMBptr->feuille.type==_VECT?
-                                     it->_SYMBptr->feuille._VECTptr->back():gen(0));
-                continue;
+            if (is_linear_wrt(arg,x,a,b,contextptr) && !is_zero(a) && is_zero(im(a,contextptr)) && is_zero(im(b,contextptr))) {
+                gk=it->_SYMBptr->feuille.type==_VECT?it->_SYMBptr->feuille._VECTptr->back():gen(0);
+                if (!gk.is_integer() || (k=gk.val)<0)
+                    return false;
+                rest=ratnormal(rest*symbolic(at_prod,vecteur(it+1,itend)),contextptr);
+                return true;
             }
         }
         fac=*it;
-        if (fac.is_symb_of_sommet(at_abs))
-            fac=fac._SYMBptr->feuille*(2*_Heaviside(fac,contextptr)-1);
+        //if (fac.is_symb_of_sommet(at_abs))
+        //    fac=fac._SYMBptr->feuille*(2*_Heaviside(fac,contextptr)-1);
         rest=rest*fac;
     }
-    rest=ratnormal(rest,contextptr);
-    return res;
+    return false;
 }
 
-/* expand f(x)*Dirac(x-a,n) to
-   sum((-1)^k*binom(n,k)*(d^k f/dx^k)(a)*(d^(n-k) Dirac/dx^(n-k))(x-a),k=0..n) */
-gen expand_Dirac_prod(const gen &f_orig,const identificateur &x,const gen &a,int n,GIAC_CONTEXT) {
-    gen ret(0),f=f_orig;
-    for (int i=0;i<=n;++i) {
-        ret+=subst(f,x,a,false,contextptr)*pow(gen(-1),i)*_comb(makesequence(n,i),contextptr)*
-             (i==n?_Dirac(x-a,contextptr):_Dirac(makesequence(x-a,n-i),contextptr));
-        if (i<n) f=_derive(makesequence(f,x),contextptr);
+gen expand_Dirac(const gen &g,const identificateur &x,GIAC_CONTEXT) {
+    if (g.type==_VECT) {
+        vecteur res;
+        res.reserve(g._VECTptr->size());
+        const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
+        for (;it!=itend;++it) res.push_back(expand_Dirac(*it,x,contextptr));
+        return gen(res,g.subtype);
     }
-    return ret;
+    if (g.is_symb_of_sommet(at_Dirac)) {
+        const gen &arg=g._SYMBptr->feuille;
+        if (is_constant_wrt(arg,x,contextptr))
+            return g;
+        if (arg.type!=_VECT && is_rational_wrt(arg,x)) {
+            gen dz=_zeros(makesequence(_denom(arg,contextptr),x),contextptr);
+            if (dz.type==_VECT && dz._VECTptr->empty()) {
+                gen z=_zeros(makesequence(_numer(arg,contextptr),x),contextptr);
+                if (z.type==_VECT) {
+                    if (z._VECTptr->empty())
+                        return 0;
+                    gen h=_derive(makesequence(arg,x),contextptr),res(0);
+                    const_iterateur it=z._VECTptr->begin(),itend=z._VECTptr->end();
+                    for (;it!=itend;++it) {
+                        gen hz=ratnormal(subst(h,x,*it,false,contextptr),contextptr);
+                        if (is_exactly_zero(hz))
+                            break;
+                        res+=_Dirac(x-*it,contextptr)/_abs(hz,contextptr);
+                    }
+                    if (it==itend)
+                        return res;
+                }
+            }
+        }
+    } else if (g.type==_SYMB)
+        return expand_Dirac(g._SYMBptr->feuille,x,contextptr);
+    return g;
 }
 
-gen simplify_Dirac(const gen &g_orig,const identificateur &x,int depth,GIAC_CONTEXT) {
-	if (depth>100)
-		return g_orig;
-    gen g=expand(g_orig,contextptr),r,ret(0),rest(0);
+gen simplify_Dirac(const gen &g_orig,const identificateur &x,const unary_function_ptr *simpfunc,GIAC_CONTEXT) {
+    gen g=expand(g_orig,contextptr),r,ret(0),rest(0),z,s,rn,v,a,b;
     vecteur terms;
     if (g.is_symb_of_sommet(at_plus) && g._SYMBptr->feuille.type==_VECT)
         terms=*g._SYMBptr->feuille._VECTptr;
     else terms=vecteur(1,g);
+    gen_map dterms;
+    int k,c;
     for (const_iterateur it=terms.begin();it!=terms.end();++it) {
-        vecteur d=find_Dirac(*it,x,r,contextptr);
-        if (d.empty()) {
-            ret+=*it;
-        } else {
-            assert(d.size()==2 && d.back().is_integer());
-            if (!is_zero(ratnormal(subst(_denom(r,contextptr),x,d.front(),false,contextptr),contextptr)))
-                ret+=expand_Dirac_prod(r,x,d.front(),d.back().val,contextptr);
-            else rest+=r*(is_zero(d.back())?_Dirac(x-d.front(),contextptr):
-                                            _Dirac(makesequence(x-d.front(),d.back()),contextptr));
+        if (has_Dirac(*it,x,a,b,c,r,contextptr)) {
+            if (c==0) {
+                b=ratnormal(b/a,contextptr);
+                r=r/_abs(a,contextptr);
+                a=1;
+            } else if (is_positive(-a,contextptr)) {
+                a=-a;
+                b=-b;
+                if (c%2)
+                    r=-r;
+            }
+            vecteur d=makevecteur(a,b,c);
+            dterms[d]+=r;
+        } else rest+=*it;
+    }
+    int dom;
+    matrice intervals;
+    vecteur excluded;
+    if (!get_assumptions(x,dom,intervals,excluded,contextptr))
+        intervals=vecteur(1,makevecteur(minus_inf,plus_inf));
+    for (gen_map::const_iterator it=dterms.begin();it!=dterms.end();++it) {
+        const vecteur &d=*it->first._VECTptr;
+        int c=d.back().val;
+        gen r=it->second;
+        z=-d[1]/d[0];
+        if (contains(excluded,x) || !indomain(intervals,x,contextptr))
+            continue;
+        for (k=0;k<c;++k) {
+            s=ratnormal(r/(x-z),contextptr);
+            if (!is_real_number(subst(s,x,z,false,contextptr),contextptr))
+                break;
+            r=s;
+        }
+        if (k>0) {
+            r=(k%2?-1:1)*_comb(makesequence(c,k),contextptr)*_factorial(k,contextptr)*r;
+            c-=k;
+        }
+        rn=ratnormal(r/pow(x-z,c),contextptr);
+        v=ratnormal(subst(rn,x,z,false,contextptr),contextptr);
+        if (is_undef(v)) try {
+            v=_limit(makesequence(rn,symb_equal(x,z)),contextptr);
+        } catch (const gen &err) {
+            v=undef;
+        }
+        if (!is_zero(v)) {
+            v=_Dirac(c==0?d[0]*x+d[1]:makesequence(d[0]*x+d[1],c),contextptr)
+                *(simpfunc==NULL?r:_eval(symbolic(simpfunc,r),contextptr));
+            if (k>0)
+                v=simplify_Dirac(v,x,simpfunc,contextptr);
+            ret+=v;
         }
     }
-    if (!is_zero(rest))
-        rest=simplify_Dirac(ratnormal(rest,contextptr),x,depth+1,contextptr);
-    return ret+rest;
+    return ret+(simpfunc==NULL?rest:_eval(symbolic(simpfunc,rest),contextptr));
+}
+
+gen simpfactor(const gen &g,GIAC_CONTEXT) {
+    //return factorise(_tcollect(ratnormal(_texpand(g,contextptr),contextptr),contextptr),contextptr);
+    return ratnormal(g,contextptr);
+}
+
+gen simpcollect(const gen &g,const unary_function_ptr *f,GIAC_CONTEXT) {
+    gen_map m;
+    gen rest,ret=0;
+    collect_with_func(g,f,&m,&rest,contextptr);
+    gen_map::const_iterator mt=m.begin(),mtend=m.end();
+    for (;mt!=mtend;++mt) {
+        ret+=symbolic(f,mt->first)*simpfactor(mt->second,contextptr);
+    }
+    return ret+simpfactor(rest,contextptr);
+}
+
+gen _simplifyDirac(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    bool has_vars=g.type==_VECT && g.subtype==_SEQ__VECT;
+    if (has_vars && g._VECTptr->size()!=2)
+        return gendimerr(contextptr);
+    const gen &e=has_vars?g._VECTptr->front():g;
+    if (count_func_instances(e,at_Dirac)==0)
+        return e;
+    gen x=identificateur("x"),ret;
+    if (has_vars)
+        x=g._VECTptr->back();
+    if (x.type!=_IDNT)
+        return gentypeerr(contextptr);
+    try {
+        ret=simplify_Dirac(expand_Dirac(e,*x._IDNTptr,contextptr),*x._IDNTptr,at_simplify,contextptr);
+    } catch (const gen &err) {
+        return e;
+    }
+    return ret;
+}
+static const char _simplifyDirac_s []="simplifyDirac";
+static define_unary_function_eval (__simplifyDirac,&_simplifyDirac,_simplifyDirac_s);
+define_unary_function_ptr5(at_simplifyDirac,alias_at_simplifyDirac,&__simplifyDirac,0,true)
+
+gen _sign2Heaviside(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    return sign2Heaviside(g);
+}
+static const char _sign2Heaviside_s []="sign2Heaviside";
+static define_unary_function_eval (__sign2Heaviside,&_sign2Heaviside,_sign2Heaviside_s);
+define_unary_function_ptr5(at_sign2Heaviside,alias_at_sign2Heaviside,&__sign2Heaviside,0,true)
+
+gen _Heaviside2sign(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    return Heaviside2sign(g);
+}
+static const char _Heaviside2sign_s []="Heaviside2sign";
+static define_unary_function_eval (__Heaviside2sign,&_Heaviside2sign,_Heaviside2sign_s);
+define_unary_function_ptr5(at_Heaviside2sign,alias_at_Heaviside2sign,&__Heaviside2sign,0,true)
+
+gen _linstep(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    bool has_var=g.type==_VECT && g.subtype==_SEQ__VECT;
+    gen x=identificateur("x");
+    if (has_var) {
+        if (g._VECTptr->size()!=2)
+            return gendimerr(contextptr);
+        x=g._VECTptr->back();
+    }
+    if (x.type!=_IDNT)
+        return gentypeerr(contextptr);
+    const gen &f=has_var?g._VECTptr->front():g;
+    gen res=simplify_quadratic_Heaviside(abs2Heaviside(sign2Heaviside(
+        flatten_piecewise(f,contextptr)),*x._IDNTptr,contextptr),*x._IDNTptr,contextptr);
+    res=linH(res,*x._IDNTptr,contextptr);
+    return simpcollect(res,at_Heaviside,contextptr);
+}
+static const char _linstep_s []="linstep";
+static define_unary_function_eval (__linstep,&_linstep,_linstep_s);
+define_unary_function_ptr5(at_linstep,alias_at_linstep,&__linstep,0,true)
+
+gen _step2abs(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    bool has_var=g.type==_VECT && g.subtype==_SEQ__VECT;
+    gen x=identificateur("x");
+    if (has_var) {
+        if (g._VECTptr->size()!=2)
+            return gendimerr(contextptr);
+        x=g._VECTptr->back();
+    }
+    if (x.type!=_IDNT)
+        return gentypeerr(contextptr);
+    const gen &f=has_var?g._VECTptr->front():g;
+    gen res=simplify_quadratic_Heaviside(abs2Heaviside(sign2Heaviside(
+        flatten_piecewise(f,contextptr)),*x._IDNTptr,contextptr),*x._IDNTptr,contextptr);
+    res=reduce_Heaviside(linH(res,*x._IDNTptr,contextptr),*x._IDNTptr,contextptr);
+    gen res0(res);
+    int s,t0=taille(res,MAX_TAILLE),t=t0;
+    while (true) {
+        gen smp=recursive_normal(res,contextptr);
+        if ((s=taille(smp,MAX_TAILLE))==t)
+            return s<t0?res:res0;
+        res=smp;
+        t=s;
+    }
+    return undef; // unreachable
+}
+static const char _step2abs_s []="step2abs";
+static define_unary_function_eval (__step2abs,&_step2abs,_step2abs_s);
+define_unary_function_ptr5(at_step2abs,alias_at_step2abs,&__step2abs,0,true)
+
+/* Returns an equivalent univariate piecewise expression depending on the variable x. */
+gen to_piecewise(const gen &g_orig,const identificateur &x,GIAC_CONTEXT) {
+    gen g=linH(simplify_quadratic_Heaviside(abs2Heaviside(sign2Heaviside(g_orig),x,contextptr),x,contextptr),x,contextptr);
+    g=collect_with_func(g,at_Heaviside,NULL,NULL,contextptr);
+    vecteur z,p;
+    find_func_linarg(g,at_Heaviside,x,z,false,contextptr);
+    if (!is_numericv(*_evalf(z,contextptr)._VECTptr))
+        return g;
+    z=*_sort(z,contextptr)._VECTptr;
+    int n=z.size();
+    z.push_back(plus_inf);
+    p.reserve(n+1);
+    identificateur t(" t");
+    gen t0=minus_inf,h;
+    const_iterateur it=z.begin(),itend=z.end();
+    for (;it!=itend;++it) {
+        //_purge(t,contextptr);
+        giac_assume(symb_and(symb_superieur_strict(t,t0),symb_inferieur_strict(t,*it)),contextptr);
+        h=_eval(subst(g,x,t,false,contextptr),contextptr);
+        if (contains(h,at_Heaviside))
+            return g;
+        p.push_back(_lin(ratnormal(subst(h,t,x,false,contextptr),contextptr),contextptr));
+        t0=*it;
+    }
+    vecteur args;
+    args.reserve(2*n+1);
+    for (int i=0;i<n;++i) {
+        args.push_back(symb_inferieur_strict(x,z[i]));
+        args.push_back(p[i]);
+    }
+    args.push_back(p.back());
+    return args.size()>1?symbolic(at_piecewise,gen(args,_SEQ__VECT)):args.front();
+}
+
+gen flatten_piecewise_recursion(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_VECT) {
+        vecteur res;
+        res.reserve(g._VECTptr->size());
+        const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
+        for (;it!=itend;++it) res.push_back(flatten_piecewise_recursion(*it,contextptr));
+        return gen(res,g.subtype);
+    }
+    if (g.is_symb_of_sommet(at_piecewise)) {
+        if (g._SYMBptr->feuille.type!=_VECT)
+            return g._SYMBptr->feuille;
+        const vecteur &args=*g._SYMBptr->feuille._VECTptr;
+        int n=args.size()-1,i=0;
+        gen ret(0),last(1),d;
+        for (;i<n;i+=2) {
+            const gen &ci=args[i],&eci=args[i+1];
+            if (ci.is_symb_of_sommet(at_superieur_egal) || ci.is_symb_of_sommet(at_superieur_strict)) {
+                ret+=last*_Heaviside(d=ci._SYMBptr->feuille._VECTptr->front()-ci._SYMBptr->feuille._VECTptr->back(),contextptr)*eci;
+                last=last*_Heaviside(-d,contextptr);
+            } else if (ci.is_symb_of_sommet(at_inferieur_egal) || ci.is_symb_of_sommet(at_inferieur_strict)) {
+                ret+=last*_Heaviside(d=ci._SYMBptr->feuille._VECTptr->back()-ci._SYMBptr->feuille._VECTptr->front(),contextptr)*eci;
+                last=last*_Heaviside(-d,contextptr);
+            } else return g;
+        }
+        return ret+(n%2?0:last*args.back());
+    }
+    if (g.is_symb_of_sommet(at_when)) {
+        if (g._SYMBptr->feuille.type!=_VECT || g._SYMBptr->feuille._VECTptr->size()!=3)
+            return g;
+        const gen &c=g._SYMBptr->feuille._VECTptr->front();
+        gen d;
+        if (c.is_symb_of_sommet(at_superieur_egal) || c.is_symb_of_sommet(at_superieur_strict)) {
+            d=c._SYMBptr->feuille._VECTptr->front()-c._SYMBptr->feuille._VECTptr->back();
+            return _Heaviside(d,contextptr)*g._SYMBptr->feuille._VECTptr->at(1)+_Heaviside(-d,contextptr)*g._SYMBptr->feuille._VECTptr->at(2);
+        }
+        if (c.is_symb_of_sommet(at_inferieur_egal) || c.is_symb_of_sommet(at_inferieur_strict)) {
+            d=c._SYMBptr->feuille._VECTptr->back()-c._SYMBptr->feuille._VECTptr->front();
+            return _Heaviside(d,contextptr)*g._SYMBptr->feuille._VECTptr->at(1)+_Heaviside(-d,contextptr)*g._SYMBptr->feuille._VECTptr->at(2);
+        }
+        return g;
+    }
+    if (g.type==_SYMB)
+        return symbolic(g._SYMBptr->sommet,flatten_piecewise_recursion(g._SYMBptr->feuille,contextptr));
+    return g;
+}
+
+gen flatten_piecewise(const gen &g,GIAC_CONTEXT) {
+    gen ret(g);
+    while (contains(ret,at_piecewise) || contains(ret,at_when)) {
+        ret=flatten_piecewise_recursion(ret,contextptr);
+    }
+    return ret;
+}
+
+bool has_FT(const gen &g) {
+    if (g.type==_VECT) {
+        for (const_iterateur it=g._VECTptr->begin();it!=g._VECTptr->end();++it) {
+            if (has_FT(*it))
+                return true;
+        }
+        return false;
+    }
+    if (g.type!=_SYMB)
+        return false;
+    if (g.is_symb_of_sommet(at_Fourier))
+        return true;
+    return has_FT(g._SYMBptr->feuille);
 }
 
 /* return true iff g = a*(x+b)^2+c */
@@ -2722,7 +3438,7 @@ bool is_poly2(const gen &g,const identificateur &x,gen &a,gen &b,gen &c,GIAC_CON
     if (e.is_symb_of_sommet(at_prod) && e._SYMBptr->feuille.type==_VECT) {
         const vecteur &factors=*e._SYMBptr->feuille._VECTptr;
         for (const_iterateur it=factors.begin();it!=factors.end();++it) {
-            if (is_constant_wrt(*it,x,contextptr))
+            if (is_const_wrt(*it,x,contextptr))
                 a=a*(*it);
             else if (is_undef(s))
                 s=*it;
@@ -2747,7 +3463,7 @@ bool is_monomial(const gen &g,const identificateur &x,gen &n,gen &a,gen &b,gen &
     if (gf.is_symb_of_sommet(at_prod) && gf._SYMBptr->feuille.type==_VECT) {
         const vecteur &factors=*gf._SYMBptr->feuille._VECTptr;
         for (const_iterateur it=factors.begin();it!=factors.end();++it) {
-            if (is_constant_wrt(*it,x,contextptr))
+            if (is_const_wrt(*it,x,contextptr))
                 a=a*(*it);
             else if (is_undef(s))
                 s=*it;
@@ -2771,7 +3487,7 @@ bool is_linabs(const gen &g_orig,const identificateur &x,gen &a,gen &b,GIAC_CONT
         factors=*g._SYMBptr->feuille._VECTptr;
     else factors=vecteur(1,g);
     for (const_iterateur it=factors.begin();it!=factors.end();++it) {
-        if (is_constant_wrt(*it,x,contextptr))
+        if (is_const_wrt(*it,x,contextptr))
             a=a*(*it);
         else if (is_zero(A) && it->is_symb_of_sommet(at_abs) &&
                     is_linear_wrt(it->_SYMBptr->feuille,x,A,B,contextptr) && !is_zero(A)) {
@@ -2794,7 +3510,7 @@ iterateur find_lin(vecteur &lv,const gen &key,GIAC_CONTEXT) {
 void extract_linpow(const gen &g,const identificateur &x,
                     const gen &e,gen &c,vecteur &lv,gen &rest,GIAC_CONTEXT) {
     gen a,b;
-    if (is_constant_wrt(g,x,contextptr))
+    if (is_const_wrt(g,x,contextptr))
         c=c*_pow(makesequence(g,e),contextptr);
     else if (g.is_symb_of_sommet(at_neg)) {
         c=c*_pow(makesequence(-1,e),contextptr);
@@ -2825,11 +3541,11 @@ void extract_linpow(const gen &g,const identificateur &x,
 }
 
 bool is_linpow(const gen &g,const identificateur &x,gen &a,gen &b,gen &c,bool &s,GIAC_CONTEXT) {
-    gen c1(1),c2(1),r1(1),r2(1),h=simplify_signs(g,x,contextptr);
+    gen c1(1),c2(1),r1(1),r2(1),h=simplify_linarg(g,x,contextptr);
     vecteur lv1,lv2;
     gen num=_numer(h,contextptr),den=_denom(h,contextptr);
-    if (!is_constant_wrt(num,x,contextptr)) num=factorise(num,contextptr);
-    if (!is_constant_wrt(den,x,contextptr)) den=factorise(den,contextptr);
+    if (!is_const_wrt(num,x,contextptr)) num=factorise(num,contextptr);
+    if (!is_const_wrt(den,x,contextptr)) den=factorise(den,contextptr);
     extract_linpow(num,x,1,c1,lv1,r1,contextptr);
     extract_linpow(den,x,1,c2,lv2,r2,contextptr);
     if (lv1.size()>1 || lv2.size()>1)
@@ -2863,7 +3579,7 @@ bool is_linpow(const gen &g,const identificateur &x,gen &a,gen &b,gen &c,bool &s
             rest=rest*_sign(x+b,contextptr);
     }
     rest=ratnormal(rest,contextptr);
-    if (is_constant_wrt(rest,x,contextptr)) {
+    if (is_const_wrt(rest,x,contextptr)) {
         c=c*rest;
         s=false;
     } else if (rest.is_symb_of_sommet(at_sign) &&
@@ -2895,7 +3611,7 @@ bool is_expexp(const gen &g_orig,const identificateur &x,gen &a,gen &b,GIAC_CONT
 }
 
 int is_expsum(const gen &g_orig,const identificateur &x,gen &a,gen &b,gen &c,bool &sq,GIAC_CONTEXT) {
-    gen g=factorise(_lin(expand(g_orig,contextptr),contextptr),contextptr);
+    gen g=_lin(expand(g_orig,contextptr),contextptr);
     c=gen(1);
     if (g.is_symb_of_sommet(at_neg)) {
         c=gen(-1);
@@ -2906,11 +3622,11 @@ int is_expsum(const gen &g_orig,const identificateur &x,gen &a,gen &b,gen &c,boo
     gen rpart,ipart,p;
     int i=0;
     sq=false;
-    if (g.is_symb_of_sommet(at_prod))
+    if (g.is_symb_of_sommet(at_prod) && g._SYMBptr->feuille.type==_VECT)
         factors=*g._SYMBptr->feuille._VECTptr;
     else factors=vecteur(1,g);
     for (const_iterateur it=factors.begin();it!=factors.end();++it) {
-        if (is_constant_wrt(*it,x,contextptr))
+        if (is_const_wrt(*it,x,contextptr))
             c=c*(*it);
         else if (it->is_symb_of_sommet(at_plus) && it->_SYMBptr->feuille.type==_VECT &&
                  it->_SYMBptr->feuille._VECTptr->size()>=2) {
@@ -2986,27 +3702,123 @@ bool is_integral(const gen &g,identificateur &x,gen &f,gen &a,gen &b,GIAC_CONTEX
 bool is_convolution(const gen &e,const identificateur &x,gen &f,gen &g,GIAC_CONTEXT) {
     gen a,b,h;
     identificateur t;
-    if (!is_integral(e,t,h,a,b,contextptr) || !a.is_symb_of_sommet(at_neg) ||
-            !is_inf(a._SYMBptr->feuille) || !b.is_symb_of_sommet(at_plus) ||
-            !is_inf(b._SYMBptr->feuille))
+    if (!is_integral(e,t,h,a,b,contextptr))
         return false;
+    if (!is_inf(a))
+        h=h*_Heaviside(t-a,contextptr);
+    if (!is_inf(b))
+        h=h*_Heaviside(b-t,contextptr);
     vecteur factors;
     if (h.is_symb_of_sommet(at_prod) && h._SYMBptr->feuille.type==_VECT)
         factors=*h._SYMBptr->feuille._VECTptr;
     else factors=vecteur(1,h);
     f=g=gen(1);
     for (const_iterateur it=factors.begin();it!=factors.end();++it) {
-        if (is_constant_wrt(*it,x,contextptr))
+        if (is_const_wrt(*it,x,contextptr))
             f=f*(*it);
         else g=g*(*it);
     }
+    f=subst(f,t,x,false,contextptr);
     g=recursive_normal(subst(g,x,x+t,false,contextptr),contextptr);
-    return is_constant_wrt(g,t,contextptr);
+    return is_const_wrt(g,t,contextptr);
+}
+
+vecteur analyze_terms(const gen &g,const identificateur &x,GIAC_CONTEXT) {
+    vecteur terms,ret;
+    if (g.is_symb_of_sommet(at_plus)) {
+        if (g._SYMBptr->feuille.type==_VECT)
+            terms=*g._SYMBptr->feuille._VECTptr;
+        else terms=vecteur(1,g._SYMBptr->feuille);
+    } else terms=vecteur(1,g);
+    for (const_iterateur it=terms.begin();it!=terms.end();++it) {
+        vecteur factors;
+        gen cnst(1),rest(1),deg(0),exprest(0),sh(0),rt=ratnormal(*it,contextptr),st;
+        if (!is_const_wrt(rt,x,contextptr))
+            rt=factorise(rt,contextptr);
+        if (rt.is_symb_of_sommet(at_neg)) {
+            cnst=gen(-1);
+            rt=rt._SYMBptr->feuille;
+        }
+        if (rt.is_symb_of_sommet(at_prod) && rt._SYMBptr->feuille.type==_VECT)
+            factors=*rt._SYMBptr->feuille._VECTptr;
+        else factors=vecteur(1,rt);
+        for (int i=factors.size();i-->0;) {
+            gen &fac=factors[i];
+            if (fac.is_symb_of_sommet(at_inv)) {
+                if (fac._SYMBptr->feuille.is_symb_of_sommet(at_prod) &&
+                    fac._SYMBptr->feuille._SYMBptr->feuille.type==_VECT) {
+                    const vecteur &d=*fac._SYMBptr->feuille._SYMBptr->feuille._VECTptr;
+                    for (const_iterateur jt=d.begin();jt!=d.end();++jt) {
+                        factors.push_back(symbolic(at_inv,*jt));
+                    }
+                    factors.erase(factors.begin()+i);
+                }
+            }
+        }
+        for (const_iterateur jt=factors.begin();jt!=factors.end();++jt) {
+            if (jt->is_symb_of_sommet(at_exp)) {
+                gen lt1,lt2,c1,c2,rest1,rest2;
+                constlin_terms(re(jt->_SYMBptr->feuille,contextptr),x,lt1,c1,rest1,contextptr);
+                constlin_terms(im(jt->_SYMBptr->feuille,contextptr),x,lt2,c2,rest2,contextptr);
+                cnst=cnst*exp(c1+cst_i*c2,contextptr);
+                sh+=lt2;
+                exprest+=rest1+x*lt1+cst_i*rest2;
+            } else if (is_const_wrt(*jt,x,contextptr)) {
+                cnst=cnst*(*jt);
+            } else if (ispoly(*jt,x,st,contextptr)) {
+                deg+=st;
+                cnst=cnst*_lcoeff(makesequence(*jt,x),contextptr);
+            } else rest=rest*(*jt);
+        }
+        rest=rest*exp(exprest,contextptr);
+        cnst=recursive_normal(_lin(cnst,contextptr),contextptr);
+        ret.push_back(makevecteur(cnst,sh,deg,rest));
+    }
+    return ret;
+}
+
+vecteur fourier_terms(const gen &g_orig,const identificateur &x,bool do_simp,GIAC_CONTEXT) {
+    gen g=_lin(_trig2exp(_hyp2exp(_pow2exp(g_orig,contextptr),contextptr),contextptr),contextptr);
+    if (do_simp) {
+        g=ratnormal(logabs_expand(lnexpand(g,contextptr),x,contextptr),contextptr);
+        if (contains(g,at_Dirac))
+            g=simplify_Dirac(g,x,NULL,contextptr);
+    }
+    g=expand(g,contextptr);
+    vecteur terms=analyze_terms(g,x,contextptr);
+    // decompose terms into sums of partial fractions
+    for (int i=terms.size();i-->0;) {
+        assert(terms[i].type==_VECT);
+        vecteur &v=*terms[i]._VECTptr;
+        if (!is_rational_wrt(v[3],x) || is_const_wrt(_denom(v[3],contextptr),x,contextptr) || !v[2].is_integer())
+            continue;
+        v[3]=v[3]*pow(x,v[2].val);
+        v[2]=0;
+        vecteur rterms=analyze_terms(_cpartfrac(makesequence(v[3],x),contextptr),x,contextptr);
+        for (const_iterateur it=rterms.begin();it!=rterms.end();++it) {
+            assert(it->type==_VECT);
+            const vecteur &w=*(it->_VECTptr);
+            terms.push_back(makevecteur(v[0]*w[0],v[1],v[2]+w[2],expand(w[3],contextptr)));
+        }
+        terms.erase(terms.begin()+i);
+    }
+    // collect terms to reduce complexity
+    for (int i=0;i<int(terms.size());++i) {
+        vecteur &v=*terms[i]._VECTptr;
+        for (int j=terms.size();j-->i+1;) {
+            const vecteur &w=*terms[j]._VECTptr;
+            if (is_same(v[3],w[3],contextptr) && is_same(v[1],w[1],contextptr) && is_same(v[2],w[2],contextptr)) {
+                v[0]+=w[0];
+                terms.erase(terms.begin()+j);
+            }
+        }
+    }
+    return terms;
 }
 
 int fourier_func_type(const gen &g,const identificateur &x,vecteur &params,GIAC_CONTEXT) {
     params.clear();
-    if (is_constant_wrt(g,x,contextptr)) {
+    if (is_const_wrt(g,x,contextptr)) {
         params.push_back(g);
         return _FOURIER_FUNCTYPE_ONE;
     }
@@ -3014,14 +3826,15 @@ int fourier_func_type(const gen &g,const identificateur &x,vecteur &params,GIAC_
     vecteur tbl,vars,deg;
     identificateur fcn;
     bool sgn,sq;
-    int dg,hyp;
+    int dg,hyp,k;
     if (is_rational_wrt(g,x)) {
         gen num=_numer(g,contextptr),den=_denom(g,contextptr);
-        assert(is_constant_wrt(num,x,contextptr));
+        if(!is_const_wrt(num,x,contextptr))
+            return _FOURIER_FUNCTYPE_UNKNOWN;
         if (is_linear_wrt(den,x,a,b,contextptr)) {
             params=makevecteur(num/a,b/a,1);
         } else if (is_monomial(den,x,n,a,b,c,contextptr)) {
-            assert(!is_zero(a) && !is_zero(b));
+            //assert(!is_zero(a) && !is_zero(b));
             params=makevecteur(num/(a*_pow(makesequence(b,n),contextptr)),c/b,n);
         } else return _FOURIER_FUNCTYPE_UNKNOWN;
         return _FOURIER_FUNCTYPE_INV_MONOM;
@@ -3038,6 +3851,10 @@ int fourier_func_type(const gen &g,const identificateur &x,vecteur &params,GIAC_
         params=makevecteur(a,b/a,
             g._SYMBptr->feuille.type==_VECT?g._SYMBptr->feuille._VECTptr->back():gen(0));
         return _FOURIER_FUNCTYPE_DIRAC;
+    }
+    if (has_Dirac(g,x,a,b,k,c,contextptr)) {
+        params=makevecteur(a,b,k,c);
+        return _FOURIER_FUNCTYPE_DIRAC_F;
     }
     if (g.is_symb_of_sommet(at_BesselJ) && g._SYMBptr->feuille.type==_VECT &&
             g._SYMBptr->feuille._VECTptr->size()==2 &&
@@ -3108,12 +3925,17 @@ int fourier_func_type(const gen &g,const identificateur &x,vecteur &params,GIAC_
         params=makevecteur(a,b);
         return _FOURIER_FUNCTYPE_EXPEXP;
     }
+    if (g.is_symb_of_sommet(at_atan) && is_linear_wrt(g._SYMBptr->feuille,x,a,b,contextptr) &&
+            is_zero(im(a,contextptr)) && is_zero(im(b,contextptr))) {
+        params=makevecteur(a,b);
+        return _FOURIER_FUNCTYPE_ATAN;
+    }
     if (g.is_symb_of_sommet(at_Airy_Ai) && is_linear_wrt(g._SYMBptr->feuille,x,a,b,contextptr) &&
             is_zero(im(a,contextptr)) && is_zero(im(b,contextptr))) {
         params=makevecteur(a,b/a);
         return _FOURIER_FUNCTYPE_AIRY_AI;
     }
-    if (g.is_symb_of_sommet(at_inv) && (hyp=is_expsum(g._SYMBptr->feuille,x,a,b,c,sq,contextptr))!=0) {
+    if ((hyp=is_expsum(_inv(g,contextptr),x,a,b,c,sq,contextptr))!=0) {
         params=makevecteur(c*gen(sq?4:2),a,b/a);
         if (hyp==1 && !sq) return _FOURIER_FUNCTYPE_COSECH;
         if (hyp==2) return sq?_FOURIER_FUNCTYPE_SECH_2:_FOURIER_FUNCTYPE_SECH;
@@ -3122,36 +3944,6 @@ int fourier_func_type(const gen &g,const identificateur &x,vecteur &params,GIAC_
     if (is_convolution(g,x,a,b,contextptr)) {
         params=makevecteur(a,b);
         return _FOURIER_FUNCTYPE_CONVOLUTION;
-    }
-    if ((g.is_symb_of_sommet(at_piecewise) || g.is_symb_of_sommet(at_when)) &&
-            g._SYMBptr->feuille.type==_VECT) {
-        const vecteur &args=*g._SYMBptr->feuille._VECTptr;
-        bool cnd=true;
-        for (const_iterateur it=args.begin();it!=args.end();++it) {
-            if (cnd) {
-                if (it+1==args.end()) {
-                    params.push_back(symbolic(at_plus,unsigned_inf));
-                    params.push_back(*it);
-                } else if ((it->is_symb_of_sommet(at_inferieur_egal) ||
-                            it->is_symb_of_sommet(at_inferieur_strict)) &&
-                           it->_SYMBptr->feuille.type==_VECT &&
-                           it->_SYMBptr->feuille._VECTptr->front()==x &&
-                           is_constant_wrt(it->_SYMBptr->feuille._VECTptr->back(),x,contextptr))
-                    params.push_back(it->_SYMBptr->feuille._VECTptr->back());
-                else if ((it->is_symb_of_sommet(at_superieur_egal) ||
-                          it->is_symb_of_sommet(at_superieur_strict)) &&
-                         it->_SYMBptr->feuille.type==_VECT &&
-                         it->_SYMBptr->feuille._VECTptr->back()==x &&
-                         is_constant_wrt(it->_SYMBptr->feuille._VECTptr->front(),x,contextptr))
-                    params.push_back(it->_SYMBptr->feuille._VECTptr->front());
-                else return _FOURIER_FUNCTYPE_UNKNOWN;
-            } else params.push_back(*it);
-            cnd=!cnd;
-        }
-        assert(params.size()%2==0);
-        int i,n=params.size()/2;
-        for (i=0;i<n && (i==0 || is_greater(params[2*i],params[2*(i-1)],contextptr));++i);
-        return (n>1 && i==n)?_FOURIER_FUNCTYPE_PIECEWISE:_FOURIER_FUNCTYPE_UNKNOWN;
     }
     if (is_diff(g,x,a,dg)) {
         params=makevecteur(a,dg);
@@ -3167,6 +3959,11 @@ int fourier_func_type(const gen &g,const identificateur &x,vecteur &params,GIAC_
             is_linear_wrt(vars[tbl[2].val],x,a,b,contextptr)) {        
         params=mergevecteur(tbl,mergevecteur(makevecteur(a,b),vars));
         return _FOURIER_FUNCTYPE_FUNC;
+    }
+    if (g.is_symb_of_sommet(at_Fourier) && g._SYMBptr->feuille.type==_VECT && g._SYMBptr->feuille._VECTptr->size()==3 &&
+            g._SYMBptr->feuille._VECTptr->back()==x && ((a=g._SYMBptr->feuille._VECTptr->at(1)).type==_IDNT || a.type==_SYMB)) {
+        params=makevecteur(g._SYMBptr->feuille._VECTptr->front(),a);
+        return _FOURIER_FUNCTYPE_FOURIER;
     }
     // some functions with denominator equal to ax+b
     gen gnorm=ratnormal(g,contextptr);
@@ -3189,163 +3986,223 @@ int fourier_func_type(const gen &g,const identificateur &x,vecteur &params,GIAC_
 gen derive_FT(const gen &g,const identificateur &x,int n,GIAC_CONTEXT) {
     gen d=g;
     for (int i=0;i<n;++i) {
-        d=_derive(makesequence(simplify_signs(sign2Heaviside(d,contextptr),x,contextptr),x),contextptr);
-        //d=simplify_Dirac(d,x,contextptr);
+        d=_derive(makesequence(simplify_linarg(sign2Heaviside(d),x,contextptr),x),contextptr);
     }
-    return d;
+    return ratnormal(_lin(d,contextptr),contextptr);
 }
 
 gen fourier(const gen &f_orig,const identificateur &x,const identificateur &s,
-            bool neg,bool try_diff,GIAC_CONTEXT) {
-    gen fsimp;
-    bool do_simp=!has_integral(f_orig) && !has_partial_diff(f_orig);
-    if (do_simp) {
-        fsimp=lin_Heaviside(sign2Heaviside(simplify_signs(f_orig,x,contextptr),contextptr),x,contextptr);
-    } else fsimp=f_orig;
-    vecteur terms=fourier_terms(fsimp/(neg?2*cst_pi:gen(1)),x,do_simp,contextptr),p;
-    gen ret(0),intgr(0),t,a,b,c,n,minf=symbolic(at_neg,unsigned_inf),pinf=symbolic(at_plus,unsigned_inf);
+            bool try_diff,bool try_int,bool use_lintx,bool verbose,GIAC_CONTEXT) {
+    vecteur terms=fourier_terms(f_orig,x,false,contextptr),p;
+    gen ret(0),intgr(0),t,t_ab,a,b,c,n;
     gen rest(0);
     vecteur vars,degr;
     int ind,sz;
+    string warn;
+    if (verbose) *logptr(contextptr) << "Transforming " << terms.size() << " original term(s)...\n";
     for (int ti=0;ti<int(terms.size());++ti) {
         const gen &term=terms[ti];
         assert(term.type==_VECT);
         const vecteur &v=*term._VECTptr;
         gen cnst=v[0],sh=v[1],d=v[2],f=v[3];
         assert(d.is_integer() && is_positive(d,contextptr));
+        if (verbose) *logptr(contextptr) << " * Transforming original term " << exp(cst_i*x*sh,contextptr)*pow(x,d.val)*f
+                                         << " with constant factor " << cnst << "\n";
         switch (fourier_func_type(f,x,p,contextptr)) {
-        case _FOURIER_FUNCTYPE_PIECEWISE:
-            sz=p.size()/2;
-            a=p[0];
-            b=_Heaviside(a-x,contextptr)*p[1]+_Heaviside(x-p[2*sz-4],contextptr)*p[2*sz-1];
-            t=fourier(b,x,s,false,true,contextptr);
-            for (ind=1;ind<sz-1;++ind) {
-                b=p[2*ind];
-                t+=_integrate(makesequence(exp(-cst_i*x*s,contextptr)*p[2*ind+1],x,a,b),contextptr);
-                a=b;
+        case _FOURIER_FUNCTYPE_ABSX_ALPHA:
+            t=p[2]*exp(cst_i*p[1]*s,contextptr);
+            if (is_greater(-1,p[0],contextptr)) {
+                assert(p[0].is_integer() && is_one(p[3]));
+                n=-p[0]-1;
+                t=-2*t*_pow(makesequence(-cst_i*s,n),contextptr)*
+                    (ln(_abs(s,contextptr),contextptr)+cst_euler_gamma)/_factorial(n,contextptr);
+            } else {
+                t=-2*t*_Gamma(p[0]+1,contextptr)/
+                    _pow(makesequence(_abs(s,contextptr),p[0]+1),contextptr);
+                if (is_one(p[3]))
+                    t=t*cst_i*_sign(s,contextptr)*cos(cst_pi*p[0]/2,contextptr);
+                else t=t*sin(cst_pi*p[0]/2,contextptr);
             }
-            break;
-        case _FOURIER_FUNCTYPE_FUNC:
-            a=p[3];
-            b=p[4];
-            c=p[0];
-            vars=vecteur(p.begin()+5,p.end());
-            vars[p[2].val]=(is_one(c)?s:-s)/a;
-            if (vars.size()==1) vars=makevecteur(p[1],vars.front());
-            else vars=makevecteur(p[1],gen(vars,_SEQ__VECT));
-            t=c*symbolic(at_of,vars)*exp(cst_i*s*b/a,contextptr)/_abs(a,contextptr);
-            break;
-        case _FOURIER_FUNCTYPE_DIFF:
-            t=_pow(makesequence(cst_i*s,p[1]),contextptr)*fourier(p[0],x,s,false,false,contextptr);
-            break;
-        case _FOURIER_FUNCTYPE_PARTIAL_DIFF:
-            a=p[3];
-            b=p[4];
-            c=p[0];
-            vars=vecteur(p.begin()+5,p.end()-(p.size()-5)/2);
-            vars[p[2].val]=(is_one(c)?s:-s)/a;
-            vars=makevecteur(p[1],gen(vars,_SEQ__VECT));
-            degr=vecteur(p.begin()+5+(p.size()-5)/2,p.end());
-            t=c*symbolic(at_of,vars)*exp(cst_i*s*b/a,contextptr)/_abs(a,contextptr);
-            t=t*_pow(makesequence(cst_i*s/a,degr[p[2].val]),contextptr);
-            for (int i=0;i<int(degr.size());++i) {
-                if (i==p[2].val) continue;
-                t=_derive(makesequence(t,vars[i],degr[i]),contextptr);
-            }
-            break;
-        case _FOURIER_FUNCTYPE_ONE:
-            t=2*p[0]*cst_pi*_Dirac(s,contextptr);
-            break;
-        case _FOURIER_FUNCTYPE_DIRAC:
-            t=_pow(makesequence(cst_i*s/p[0],p[2]),contextptr)*exp(cst_i*p[1]*s,contextptr)/
-              _abs(p[0],contextptr);
-            break;
-        case _FOURIER_FUNCTYPE_HEAVISIDE:
-            t=exp(cst_i*s*p[1],contextptr)*
-              (_sign(p[0],contextptr)/(cst_i*s)+cst_pi*_Dirac(s,contextptr));
-            break;
-        case _FOURIER_FUNCTYPE_EXP_HEAVISIDE:
-            t=exp(p[2]*(cst_i*s-p[0])/p[1],contextptr)*_sign(p[1],contextptr)/(cst_i*s-p[0]);
-            break;
-        case _FOURIER_FUNCTYPE_BESSELJ:
-            t=2*_pow(makesequence(-cst_i,p[2]),contextptr)*exp(cst_i*p[1]*s/p[0],contextptr)*
-              _tchebyshev1(makesequence(p[2],s/p[0]),contextptr)*_rect(s/(2*p[0]),contextptr)/
-              (_abs(p[0],contextptr)*sqrt(1-pow(s/p[0],2),contextptr));
             break;
         case _FOURIER_FUNCTYPE_LOGABSX:
-            t=-exp(cst_i*p[0]*s,contextptr)*cst_pi*
-              (_inv(_abs(s,contextptr),contextptr)+2*cst_euler_gamma*_Dirac(s,contextptr));
+            t=-exp(cst_i*p[0]*s,contextptr)*cst_pi
+                *(_inv(_abs(s,contextptr),contextptr)+2*cst_euler_gamma*_Dirac(s,contextptr));
             break;
         case _FOURIER_FUNCTYPE_INVABSX:
             t=-2*p[0]*exp(cst_i*p[1]*s,contextptr)*(ln(_abs(s,contextptr),contextptr)+cst_euler_gamma);
             break;
-        case _FOURIER_FUNCTYPE_GAUSSIAN:
-            if (is_strictly_positive(re(p[2],contextptr),contextptr))
-                t=p[0]*exp(cst_i*p[1]*s,contextptr)*
-                  sqrt(cst_pi/p[2],contextptr)*exp(-pow(s,2)/(4*p[2]),contextptr);
-            else {
-                b=im(-p[2],contextptr);
-                a=_sign(b,contextptr);
-                b=_abs(b,contextptr);
-                assert(!is_zero(b));
-                t=p[0]*sqrt(cst_pi/b,contextptr)*exp(-a*cst_i*(pow(s,2)/(4*b)-cst_pi/4),contextptr);
-            }
-            break;
-        case _FOURIER_FUNCTYPE_GAMMA:
-            t=2*cst_pi*exp(cst_i*p[1]*s-s/p[0]-exp(-s/p[0],contextptr),contextptr)/
-              _abs(p[0],contextptr);
-            break;
         case _FOURIER_FUNCTYPE_EXPABSX:
             t=2*p[0]*exp(cst_i*p[1]*s,contextptr)/(pow(p[0],2)+pow(s,2));
-            break;
-        case _FOURIER_FUNCTYPE_EXPEXP:
-            t=exp(cst_i*p[1]*s/p[0]-p[1],contextptr)*
-              _Gamma(cst_i*s/p[0]+1,contextptr)/_abs(p[0],contextptr);
-            break;
-        case _FOURIER_FUNCTYPE_AIRY_AI:
-            t=exp(cst_i*(p[1]*s+pow(s/p[0],3)/3),contextptr)/_abs(p[0],contextptr);
-            break;
-        case _FOURIER_FUNCTYPE_ATAN_OVERX:
-            t=cst_pi*_sign(p[0],contextptr)*exp(cst_i*p[2]*s,contextptr)*
-              _upper_incomplete_gamma(makesequence(0,_abs(s/p[0],contextptr)),contextptr)/p[1];
             break;
         case _FOURIER_FUNCTYPE_EXPABSX_OVERX:
             t=-2*cst_i*atan(s/p[0],contextptr)*exp(cst_i*p[1]*s,contextptr)/p[2];
             break;
-        case _FOURIER_FUNCTYPE_COSECH:
-            t=-cst_i*cst_pi*exp(cst_i*s*p[2],contextptr)*tanh(cst_pi*s/(2*p[1]),contextptr)/
-              (_abs(p[1],contextptr)*p[0]);
-            break;
-        case _FOURIER_FUNCTYPE_SECH:
-            t=cst_pi*exp(cst_i*p[2]*s,contextptr)/
-              (p[0]*cosh(cst_pi*s/(2*p[1]),contextptr)*_abs(p[1],contextptr));
-            break;
-        case _FOURIER_FUNCTYPE_SECH_2:
-            t=s*cst_pi*exp(cst_i*p[2]*s,contextptr)/
-              (p[0]*p[1]*sinh(cst_pi*s/(2*p[1]),contextptr)*_abs(p[1],contextptr));
-            break;
-        case _FOURIER_FUNCTYPE_CONVOLUTION:
-            t=fourier(p[0],x,s,false,true,contextptr)*fourier(p[1],x,s,false,true,contextptr);
-            break;
-        case _FOURIER_FUNCTYPE_INV_MONOM:
-        case _FOURIER_FUNCTYPE_ABSX_ALPHA:
         default:
             rest+=cnst*exp(cst_i*sh*x,contextptr)*pow(x,d.val)*f;
             continue;
         }
-        t=cnst*subst(_pow(makesequence(cst_i,d),contextptr)*derive_FT(t,s,d.val,contextptr),
-                     s,s-sh,false,contextptr);
-        if (neg) t=subst(t,s,-s,false,contextptr);
+        t=cnst*subst(pow(cst_i,d.val)*derive_FT(t,s,d.val,contextptr),s,s-sh,false,contextptr);
         ret+=_exp2pow(_lin(recursive_normal(t,contextptr),contextptr),contextptr);
     }
+    bool do_simp=!has_integral(rest) && !has_partial_diff(rest);
+    if (do_simp) {
+        rest=collect_expHeaviside(linH(abs2Heaviside(sign2Heaviside(
+                flatten_piecewise(rest,contextptr)),x,contextptr),x,contextptr),contextptr);
+    }
     if (!is_zero(rest)) {
-        terms=fourier_terms(Heaviside2sign(rest,contextptr),x,do_simp,contextptr);
+        terms=fourier_terms(rest,x,do_simp,contextptr);
+        rest=0;
+        if (verbose) *logptr(contextptr) << "Transforming " << terms.size() << " term(s)...\n";
+        for (int ti=0;ti<int(terms.size());++ti) {
+            const gen &term=terms[ti];
+            assert(term.type==_VECT);
+            const vecteur &v=*term._VECTptr;
+            gen cnst=v[0],sh=v[1],d=v[2],f=v[3];
+            assert(d.is_integer() && is_positive(d,contextptr));
+            if (verbose) *logptr(contextptr) << " * Transforming term " << exp(cst_i*x*sh,contextptr)*pow(x,d.val)*f
+                                            << " with constant factor " << cnst << "\n";
+            switch (fourier_func_type(f,x,p,contextptr)) {
+            case _FOURIER_FUNCTYPE_FUNC:
+                if (verbose) *logptr(contextptr) << "   type: function\n";
+                a=p[3];
+                b=p[4];
+                c=p[0];
+                vars=vecteur(p.begin()+5,p.end());
+                vars[p[2].val]=(is_one(c)?s:-s)/a;
+                if (vars.size()==1) vars=makevecteur(p[1],vars.front());
+                else vars=makevecteur(p[1],gen(vars,_SEQ__VECT));
+                t=c*symbolic(at_of,vars)*exp(cst_i*s*b/a,contextptr)/_abs(a,contextptr);
+                break;
+            case _FOURIER_FUNCTYPE_DIFF:
+                if (verbose) *logptr(contextptr) << "   type: derivative\n";
+                t=_pow(makesequence(cst_i*s,p[1]),contextptr)*fourier(p[0],x,s,false,try_int,use_lintx,verbose,contextptr);
+                break;
+            case _FOURIER_FUNCTYPE_PARTIAL_DIFF:
+                if (verbose) *logptr(contextptr) << "   type: partial derivative\n";
+                a=p[3];
+                b=p[4];
+                c=p[0];
+                vars=vecteur(p.begin()+5,p.end()-(p.size()-5)/2);
+                vars[p[2].val]=(is_one(c)?s:-s)/a;
+                vars=makevecteur(p[1],gen(vars,_SEQ__VECT));
+                degr=vecteur(p.begin()+5+(p.size()-5)/2,p.end());
+                t=c*symbolic(at_of,vars)*exp(cst_i*s*b/a,contextptr)/_abs(a,contextptr);
+                t=t*_pow(makesequence(cst_i*s/a,degr[p[2].val]),contextptr);
+                for (int i=0;i<int(degr.size());++i) {
+                    if (i==p[2].val) continue;
+                    t=_derive(makesequence(t,vars[i],degr[i]),contextptr);
+                }
+                break;
+            case _FOURIER_FUNCTYPE_ONE:
+                if (verbose) *logptr(contextptr) << "   type: constant\n";
+                t=2*p[0]*cst_pi*_Dirac(s,contextptr);
+                break;
+            case _FOURIER_FUNCTYPE_DIRAC:
+                if (verbose) *logptr(contextptr) << "   type: Dirac delta distribution\n";
+                t=_pow(makesequence(cst_i*s/p[0],p[2]),contextptr)*exp(cst_i*p[1]*s,contextptr)/_abs(p[0],contextptr);
+                break;
+            case _FOURIER_FUNCTYPE_DIRAC_F:
+                try {
+                    t=_limit(makesequence(_derive(makesequence(subst(p[3],x,(x-p[1])/p[0],false,contextptr)
+                        *exp(-cst_i*s*(x-p[1])/p[0],contextptr),x,p[2]),contextptr),x,0),contextptr)/_abs(p[0],contextptr);
+                } catch (const gen &err) {
+                    return undef;
+                }
+                break;
+            case _FOURIER_FUNCTYPE_HEAVISIDE:
+                if (verbose) *logptr(contextptr) << "   type: Heaviside function\n";
+                t=exp(cst_i*s*p[1],contextptr)*
+                (_sign(p[0],contextptr)/(cst_i*s)+cst_pi*_Dirac(s,contextptr));
+                break;
+            case _FOURIER_FUNCTYPE_EXP_HEAVISIDE:
+                t=exp(p[2]*(cst_i*s-p[0])/p[1],contextptr)*_sign(p[1],contextptr)/(cst_i*s-p[0]);
+                break;
+            case _FOURIER_FUNCTYPE_BESSELJ:
+                t=2*_pow(makesequence(-cst_i,p[2]),contextptr)*exp(cst_i*p[1]*s/p[0],contextptr)*
+                _tchebyshev1(makesequence(p[2],s/p[0]),contextptr)*_rect(s/(2*p[0]),contextptr)/
+                (_abs(p[0],contextptr)*sqrt(1-pow(s/p[0],2),contextptr));
+                break;
+            case _FOURIER_FUNCTYPE_GAUSSIAN:
+                if (is_strictly_positive(re(p[2],contextptr),contextptr))
+                    t=p[0]*exp(cst_i*p[1]*s,contextptr)*sqrt(cst_pi/p[2],contextptr)*exp(-pow(s,2)/(4*p[2]),contextptr);
+                else {
+                    b=im(-p[2],contextptr);
+                    a=_sign(b,contextptr);
+                    b=_abs(b,contextptr);
+                    assert(!is_zero(b));
+                    t=p[0]*sqrt(cst_pi/b,contextptr)*exp(-a*cst_i*(pow(s,2)/(4*b)-cst_pi/4),contextptr);
+                }
+                break;
+            case _FOURIER_FUNCTYPE_GAMMA:
+                t=2*cst_pi*exp(cst_i*p[1]*s-s/p[0]-exp(-s/p[0],contextptr),contextptr)/
+                _abs(p[0],contextptr);
+                break;
+            case _FOURIER_FUNCTYPE_EXPEXP:
+                t=exp(cst_i*p[1]*s/p[0]-p[1],contextptr)*
+                _Gamma(cst_i*s/p[0]+1,contextptr)/_abs(p[0],contextptr);
+                break;
+            case _FOURIER_FUNCTYPE_AIRY_AI:
+                t=exp(cst_i*(p[1]*s+pow(s/p[0],3)/3),contextptr)/_abs(p[0],contextptr);
+                break;
+            case _FOURIER_FUNCTYPE_ATAN:
+                t=-cst_i*cst_pi*_sign(p[0],contextptr)*exp(cst_i*s*p[1]/p[0]-_abs(s/p[0],contextptr),contextptr)/s;
+                break;
+            case _FOURIER_FUNCTYPE_ATAN_OVERX:
+                t=cst_pi*_sign(p[0],contextptr)*exp(cst_i*p[2]*s,contextptr)*
+                _upper_incomplete_gamma(makesequence(0,_abs(s/p[0],contextptr)),contextptr)/p[1];
+                break;
+            case _FOURIER_FUNCTYPE_COSECH:
+                t=-cst_i*cst_pi*exp(cst_i*s*p[2],contextptr)*tanh(cst_pi*s/(2*p[1]),contextptr)/
+                (_abs(p[1],contextptr)*p[0]);
+                break;
+            case _FOURIER_FUNCTYPE_SECH:
+                t=cst_pi*exp(cst_i*p[2]*s,contextptr)/
+                (p[0]*cosh(cst_pi*s/(2*p[1]),contextptr)*_abs(p[1],contextptr));
+                break;
+            case _FOURIER_FUNCTYPE_SECH_2:
+                t=s*cst_pi*exp(cst_i*p[2]*s,contextptr)/
+                (p[0]*p[1]*sinh(cst_pi*s/(2*p[1]),contextptr)*_abs(p[1],contextptr));
+                break;
+            case _FOURIER_FUNCTYPE_CONVOLUTION:
+                if (verbose) *logptr(contextptr) << "   type: convolution\n";
+                t=fourier(p[0],x,s,try_diff,try_int,use_lintx,verbose,contextptr)
+                    *fourier(p[1],x,s,try_diff,try_int,use_lintx,verbose,contextptr);
+                break;
+            case _FOURIER_FUNCTYPE_FOURIER:
+                if (verbose) *logptr(contextptr) << "   type: Fourier transform\n";
+                t=2*cst_pi*subst(p[0],p[1],-s,false,contextptr);
+                break;
+            default:
+                rest+=cnst*exp(cst_i*sh*x,contextptr)*pow(x,d.val)*f;
+                continue;
+            }
+            t=cnst*subst(pow(cst_i,d.val)*derive_FT(t,s,d.val,contextptr),s,s-sh,false,contextptr);
+            ret+=_exp2pow(_lin(recursive_normal(t,contextptr),contextptr),contextptr);
+        }
+    }
+    if (!is_zero(rest)) {
+        terms=fourier_terms(Heaviside2sign(reduce_Heaviside(simplify_linarg(rest,x,contextptr),x,contextptr)),x,do_simp,contextptr);
         for (const_iterateur it=terms.begin();it!=terms.end();++it) {
             assert(it->type==_VECT);
             const vecteur &v=*(it->_VECTptr);
             gen cnst=v[0],sh=v[1],d=v[2],f=v[3];
             assert(d.is_integer() && is_positive(d,contextptr));
+            if (verbose) *logptr(contextptr) << " * Transforming REST term " << exp(cst_i*x*sh,contextptr)*pow(x,d.val)*f
+                                             << " with constant factor " << cnst << "\n";
             switch (fourier_func_type(f,x,p,contextptr)) {
+            case _FOURIER_FUNCTYPE_LOGABSX:
+                t=-exp(cst_i*p[0]*s,contextptr)*cst_pi
+                    *(_inv(_abs(s,contextptr),contextptr)+2*cst_euler_gamma*_Dirac(s,contextptr));
+                break;
+            case _FOURIER_FUNCTYPE_INVABSX:
+                t=-2*p[0]*exp(cst_i*p[1]*s,contextptr)*(ln(_abs(s,contextptr),contextptr)+cst_euler_gamma);
+                break;
+            case _FOURIER_FUNCTYPE_EXPABSX:
+                t=2*p[0]*exp(cst_i*p[1]*s,contextptr)/(pow(p[0],2)+pow(s,2));
+                break;
+            case _FOURIER_FUNCTYPE_EXPABSX_OVERX:
+                t=-2*cst_i*atan(s/p[0],contextptr)*exp(cst_i*p[1]*s,contextptr)/p[2];
+                break;
             case _FOURIER_FUNCTYPE_SGN:
                 t=-2*cst_i*exp(cst_i*p[1]*s/p[0],contextptr)*_sign(p[0],contextptr)/s;
                 break;
@@ -3361,95 +4218,141 @@ gen fourier(const gen &f_orig,const identificateur &x,const identificateur &s,
                 }
                 t=-t*p[0]*cst_pi*cst_i/_factorial(n,contextptr);
                 break;
-            case _FOURIER_FUNCTYPE_ABSX_ALPHA:
-                t=p[2]*exp(cst_i*p[1]*s,contextptr);
-                if (is_greater(-1,p[0],contextptr)) {
-                    assert(p[0].is_integer() && is_one(p[3]));
-                    n=-p[0]-1;
-                    t=-2*t*_pow(makesequence(-cst_i*s,n),contextptr)*
-                      (ln(_abs(s,contextptr),contextptr)+cst_euler_gamma)/_factorial(n,contextptr);
-                } else {
-                    t=-2*t*_Gamma(p[0]+1,contextptr)/
-                      _pow(makesequence(_abs(s,contextptr),p[0]+1),contextptr);
-                    if (is_one(p[3]))
-                        t=t*cst_i*_sign(s,contextptr)*cos(cst_pi*p[0]/2,contextptr);
-                    else t=t*sin(cst_pi*p[0]/2,contextptr);
-                }
-                break;
             default:
-                if (!try_diff)
-                    return undef;
-                f=sign2Heaviside(f,contextptr);
+                if (verbose) *logptr(contextptr) << "   Failed to find the expression in the table\n";
                 if (try_diff) {
                     // check whether we can transform the derivative
                     gen df=derive_FT(f,x,1,contextptr);
-                    gen F=fourier(df,x,s,false,false,contextptr);
-                    if (!is_undef(F) && !is_inf(F)) {
+                    gen F=fourier(df,x,s,false,try_int,false,verbose,contextptr),chk,fchk;
+                    if (!is_undef(F) && !is_inf(F) && !has_FT(F) && !has_integral(F)) {
+                        if (verbose) *logptr(contextptr) << "   Transformed the derivative\n";
                         t=-cst_i*F/s;
-                        break;
+                        chk=f-subst(fourier(t,s,x,false,try_int,false,verbose,contextptr),x,-x,false,contextptr)/cst_two_pi;
+                        if (!is_undef(chk) && !is_inf(chk) && !has_FT(chk)) {
+                            chk=simplify(chk,contextptr);
+                            if (verbose) *logptr(contextptr) << "chk: " << chk << endl;
+                            fchk=fourier(chk,x,s,false,try_int,false,verbose,contextptr);
+                            if (!is_undef(fchk) && !is_inf(fchk) && !has_FT(fchk)) {
+                                t+=fchk;
+                                break;
+                            }
+                        }
                     }
                 }
-                intgr+=cnst*eval(_Int(makesequence(exp(-cst_i*x*((neg?-s:s)-sh),contextptr)*
-                                        pow(x,d.val)*f,x,minf,pinf),contextptr),0,contextptr);
+                gen fr;
+                string intwarn;
+                if (try_int) {
+                    if (verbose) *logptr(contextptr) << "   Trying symbolic integration\n";
+                    log_output_redirect lor(contextptr);
+                    fr=_integrate(makesequence(exp(-cst_i*x*(s-sh),contextptr)*pow(x,d.val)*f,x,minus_inf,plus_inf),contextptr);
+                    intwarn=lor.get_buffer_string();
+                }
+                if (!try_int || is_undef(fr) || is_inf(fr) || has_integral(fr)) {
+                    if (use_lintx) {
+                        vecteur lt;
+                        lintx(_lin(f,contextptr),x,lt,contextptr);
+                        if (!lt.empty()) {
+                            const_iterateur it=lt.begin(),itend=lt.end();
+                            for (;it!=itend;++it) {
+                                const vecteur &ab=*it->_VECTptr;
+                                if (is_one(ab.front()) && is_zero(ab.back()))
+                                    continue;
+                                gen F=fourier(recursive_normal(subst(f,x,(x-ab.back())/ab.front(),false,contextptr),contextptr),
+                                    x,s,try_diff,try_int,false,verbose,contextptr);
+                                if (!is_undef(F) && !is_inf(F) && !has_FT(F) && !has_integral(F)) {
+                                    t=subst(F,s,s/ab.front(),false,contextptr)*exp(cst_i*s*ab.back()/ab.front(),contextptr)
+                                        /_abs(ab.front(),contextptr);
+                                    break;
+                                }
+                            }
+                            if (it!=itend)
+                                break;
+                        }
+                    }
+                    fr=symbolic(at_Fourier,makesequence(pow(x,d.val)*exp(cst_i*x*sh,contextptr)*f,x,s));
+                } else if (try_int && verbose)
+                    warn+=intwarn;
+                intgr+=cnst*fr;
                 continue;
             }
-            t=cnst*subst(_pow(makesequence(cst_i,d),contextptr)*derive_FT(t,s,d.val,contextptr),
-                         s,s-sh,false,contextptr);
-            if (neg) t=subst(t,s,-s,false,contextptr);
-            ret+=_exp2pow(_lin(recursive_normal(t,contextptr),contextptr),contextptr);
+            t=cnst*subst(pow(cst_i,d.val)*derive_FT(t,s,d.val,contextptr),s,s-sh,false,contextptr);
+            ret+=exp2pow(_lin(recursive_normal(t,contextptr),contextptr),contextptr);
         }
     }
-    if (is_zero(recursive_normal(im(ret,contextptr),contextptr)))
+    if (!warn.empty())
+        *logptr(contextptr) << warn;
+    log_output_redirect lor(contextptr);
+    if (contains(ret,at_Dirac))
+        ret=simplify_Dirac(ret,s,NULL,contextptr);
+    ret=simplify_linarg(ret,s,contextptr);
+    gen rcn=reduce_Heaviside(ret,s,contextptr);
+    if (is_simpler(rcn,ret)) ret=rcn;
+    ret=exp2pow(ret,contextptr);
+    if (is_zero(ratnormal(im(ret,contextptr),contextptr)))
         ret=re(ret,contextptr);
-    ret=simplify_signs(ret,s,contextptr);
-    ret=simplify_Dirac(ret,s,0,contextptr);
-    ret=Heaviside2abs(ret,s,contextptr);
-    gen rcn=recursive_normal(ret,contextptr);
-    if (is_rational_wrt(rcn,s))
-        ret=simplify(ret,contextptr);
-    else if (is_simpler(rcn,ret))
-        ret=rcn;
-    if (!is_constant_wrt(ret,s,contextptr)) {
-        gen rcn1=ratnormal(sign2Heaviside(ret,contextptr),contextptr);
-        gen rcn2=ratnormal(Heaviside2sign(ret,contextptr),contextptr);
-        ret=is_simpler(rcn1,rcn2)?rcn1:rcn2;
-        rcn=ratnormal(_exp2trig(ret,contextptr),contextptr);
-        if (is_simpler(rcn,ret)) ret=rcn;
-        rcn=factorise(ret,contextptr);
-        if (is_simpler(rcn,ret)) ret=rcn;
-    }
+    rcn=recursive_normal(ret,contextptr);
+    if (is_rational_wrt(rcn,s)) {
+        ret=simplify(rcn,contextptr);
+    } else if (is_simpler(rcn,ret)) ret=rcn;
+    rcn=ratnormal(_exp2trig(ret,contextptr),contextptr);
+    if (is_simpler(rcn,ret)) ret=rcn;
+    if (contains(ret,at_Heaviside))
+        ret=collect_with_func(ratnormal(sign2Heaviside(ret),contextptr),at_Heaviside,NULL,NULL,contextptr);
+    rcn=factorise(ret,contextptr);
+    if (is_simpler(rcn,ret)) ret=rcn;
+    intgr=ratnormal(intgr,contextptr);
     return ret+intgr;
+}
+
+bool parse_fourier_args(const vecteur &args,gen &f_orig,identificateur &var,gen &tvar,bool &try_int,bool &try_diff,GIAC_CONTEXT) {
+    f_orig=args.front();
+    int optstart=1;
+    if (args.size()>=2 && args[1].type==_IDNT)
+        var=*args[optstart++]._IDNTptr;
+    if (optstart==2 && args.size()>=3 && (args[2].type==_IDNT || (args[2].type==_SYMB && !args[2].is_symb_of_sommet(at_equal))))
+        tvar=args[optstart++];
+    // parse options
+    for (const_iterateur it=args.begin()+optstart;it!=args.end();++it) {
+        if (it->is_symb_of_sommet(at_equal)) {
+            const gen &lh=it->_SYMBptr->feuille._VECTptr->front();
+            const gen &rh=it->_SYMBptr->feuille._VECTptr->back();
+            if (!rh.is_integer() || rh.subtype!=_INT_BOOLEAN)
+                return false;
+            if (lh==at_integrate || lh==at_int || lh==at_Int)
+                try_int=(bool)rh.val;
+            else if (lh==at_derive || lh==at_deriver)
+                try_diff=(bool)rh.val;
+            else return false;
+        } else return false;
+    }
+    if (tvar.type==_IDNT && *tvar._IDNTptr==var) {
+        *logptr(contextptr) << gettext("Original and transform variables must be different") << "\n";
+        return false;
+    }
+    return true;
 }
 
 gen _fourier(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    gen f_orig;
-    identificateur var("x"),tvar(" fourier_s");
-    bool has_tvar=false;
+    gen var(undef),f_orig;
+    identificateur x("t"),s(" fourier_s"),om("omega");
+    bool try_int=false,try_diff=false,verbose=false;
     if (g.type==_VECT) {
         if (g.subtype!=_SEQ__VECT)
             return gentypeerr(contextptr);
-        const vecteur &args=*g._VECTptr;
-        if (args.size()>3 || args.empty())
-            return generrdim(gettext("Wrong number of input arguments"));
-        f_orig=args.front();
-        if (args.size()>=2) {
-            if (args[1].type!=_IDNT)
-                return generrtype(gettext("Expected an identifier"));
-            var=*args[1]._IDNTptr;
-        }
-        if (args.size()==3) {
-            if (args[2].type!=_IDNT)
-                return generrtype(gettext("Expected an identifier"));
-            if ((tvar=*args[2]._IDNTptr)==var)
-                return generr(gettext("Original and transform variables should be different"));
-            has_tvar=true;
-        }
+        if (!parse_fourier_args(*g._VECTptr,f_orig,x,var,try_int,try_diff,contextptr))
+            return gensizeerr(contextptr);
     } else f_orig=g;
-    gen ret=fourier(f_orig,var,tvar,false,true,contextptr);
-    if (!has_tvar)
-        ret=subst(ret,tvar,var,false,contextptr);
-    return ret;
+    if (_eval(x,contextptr).type!=_IDNT)
+        return generr(gettext("Default symbol not available, please specify the original variable."));
+    if (_eval(om,contextptr).type!=_IDNT)
+        return generr(gettext("Default symbol not available, please specify the transform variable."));
+    gen ret=fourier(f_orig,x,s,try_diff,try_int,true,verbose,contextptr);
+    if (has_inf_or_undef(ret))
+        return gensizeerr(gettext("Transform does not exist."));
+    if (!is_undef(var))
+        return subst(ret,s,var,false,contextptr);
+    return subst(ret,s,om,false,contextptr);
 }
 static const char _fourier_s []="fourier";
 static define_unary_function_eval (__fourier,&_fourier,_fourier_s);
@@ -3457,37 +4360,199 @@ define_unary_function_ptr5(at_fourier,alias_at_fourier,&__fourier,0,true)
 
 gen _ifourier(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    gen f_orig;
-    identificateur var("x"),tvar(" fourier_s");
-    bool has_tvar=false;
+    gen var(undef),f_orig;
+    identificateur s("omega"),x(" fourier_x"),t("t");
+    bool try_int=false,try_diff=false,verbose=false;
     if (g.type==_VECT) {
         if (g.subtype!=_SEQ__VECT)
             return gentypeerr(contextptr);
-        const vecteur &args=*g._VECTptr;
-        if (args.size()>3 || args.empty())
-            return generrdim(gettext("Wrong number of input arguments"));
-        f_orig=args.front();
-        if (args.size()>=2) {
-            if (args[1].type!=_IDNT)
-                return generrtype(gettext("Expected an identifier"));
-            var=*args[1]._IDNTptr;
-        }
-        if (args.size()==3) {
-            if (args[2].type!=_IDNT)
-                return generrtype(gettext("Expected an identifier"));
-            if ((tvar=*args[2]._IDNTptr)==var)
-                return generr(gettext("Original and transform variables should be different"));
-            has_tvar=true;
-        }
+        if (!parse_fourier_args(*g._VECTptr,f_orig,s,var,try_int,try_diff,contextptr))
+            return gensizeerr(contextptr);
     } else f_orig=g;
-    gen ret=fourier(f_orig,var,tvar,true,true,contextptr);
-    if (!has_tvar)
-        ret=subst(ret,tvar,var,false,contextptr);
-    return ret;
+    if (_eval(s,contextptr).type!=_IDNT)
+        return generr(gettext("Default symbol not available, please specify the transform variable."));
+    if (_eval(t,contextptr).type!=_IDNT)
+        return generr(gettext("Default symbol not available, please specify the original variable."));
+    gen ret=fourier(f_orig,s,x,try_diff,try_int,true,verbose,contextptr);
+    if (has_inf_or_undef(ret))
+        return gensizeerr(gettext("Inverse transform does not exist."));
+    if (!is_undef(var))
+        return ratnormal(subst(ret,x,-var,false,contextptr)/cst_two_pi,contextptr);
+    return ratnormal(subst(ret,x,-t,false,contextptr)/cst_two_pi,contextptr);
 }
 static const char _ifourier_s []="ifourier";
 static define_unary_function_eval (__ifourier,&_ifourier,_ifourier_s);
 define_unary_function_ptr5(at_ifourier,alias_at_ifourier,&__ifourier,0,true)
+
+// inert form of fourier(f,x,a*s+b) with auto simplification of a*s+b to s
+gen _Fourier(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type==_VECT && g.subtype==_SEQ__VECT && g._VECTptr->size()==3) {
+        const gen &f=g._VECTptr->at(0),&x=g._VECTptr->at(1),&s=g._VECTptr->at(2);
+        vecteur svar=*_lname(s,contextptr)._VECTptr;
+        gen a,b,o;
+        if (x.type==_IDNT && svar.size()==1 && is_linear_wrt(s,o=svar.front(),a,b,contextptr) && !is_zero(a))
+            return symbolic(at_Fourier,makesequence(exp(-cst_i*x*b/a,contextptr)*subst(f,x,x/a,false,contextptr),x,o));
+    }
+    return symbolic(at_Fourier,g);
+}
+static const char _Fourier_s []="Fourier";
+static define_unary_function_eval (__Fourier,&_Fourier,_Fourier_s);
+define_unary_function_ptr5(at_Fourier,alias_at_Fourier,&__Fourier,0,true)
+
+/* Replace every exp(-ax) for a>0 with identifier xa and return pairs (a,xa) in m. */
+gen replace_exp_with_idnt(const gen &g,const gen &x,gen_map &m,GIAC_CONTEXT) {
+    if (g.type==_VECT) {
+        vecteur res;
+        res.reserve(g._VECTptr->size());
+        const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
+        for (;it!=itend;++it) res.push_back(replace_exp_with_idnt(*it,x,m,contextptr));
+        return gen(res,g.subtype);
+    }
+    gen a,b;
+    int s;
+    if (g.is_symb_of_sommet(at_exp) && is_linear_wrt(g._SYMBptr->feuille,x,a,b,contextptr) &&
+            !is_zero(a) && is_exactly_zero(b) && (s=compexpr(0,a,contextptr))!=0) {
+        gen_map::const_iterator it=m.find(s*a);
+        gen v;
+        if (it==m.end()) {
+            v=identificateur(" var"+print_INT_(m.size()));
+            //_purge(v,contextptr);
+            m.insert(make_pair(s*a,v));
+        } else v=it->second;
+        assert(v.type==_IDNT);
+        return s>0?_inv(v,contextptr):v;
+    }
+    if (g.type==_SYMB)
+        return symbolic(g._SYMBptr->sommet,replace_exp_with_idnt(g._SYMBptr->feuille,x,m,contextptr));
+    return g;
+}
+
+/* Return true if there exists integer n and polynomial q such that
+ * p*q=(1-x^n) holds and n is minimal, or false if such n does not exist. */
+bool pq_1minusxn(const gen &p,const gen &x,int &n,gen &q,GIAC_CONTEXT) {
+    gen res=_roots(makesequence(p,x),contextptr);
+    if (!ckmatrix(res) || mcols(*res._VECTptr)!=2)
+        return false;
+    const matrice &r=*res._VECTptr;
+    int nr=mrows(r);
+    vecteur ncand;
+    ncand.reserve(nr);
+    for (int k=0;k<nr;++k) {
+        if (!is_one(r[k][1]) || !is_one(simplify(_abs(r[k][0],contextptr),contextptr)))
+            return false;
+        int mode=get_mode_set_radian(contextptr);
+        gen phi=ratnormal(arg(r[k][0],contextptr)/cst_pi,contextptr),a,b;
+        angle_mode(mode,contextptr);
+        if (phi.is_integer()) {
+            a=phi.val;
+            b=1;
+        } else if (phi.type!=_FRAC || !(a=phi._FRACptr->num).is_integer() || !(b=phi._FRACptr->den).is_integer())
+            return false;
+        ncand.push_back(is_one(_even(a,contextptr))?b:2*b);
+    }
+    gen N=_lcm(ncand,contextptr);
+    if (!N.is_integer())
+        return false;
+    n=N.val;
+    gen pol=1-pow(x,n),qr=_quorem(makesequence(pol,p,x),contextptr);
+    if (qr.type!=_VECT || qr._VECTptr->size()!=2 || !is_exactly_zero(qr._VECTptr->back()))
+        return false;
+    q=qr._VECTptr->front();
+    return true;
+}
+
+/* Split g into terms f1(x)/(1-exp(-a1*x)) + f2(x)/(1-exp(-a2*x)) + ... + fn(x)/(1-exp(-an*x)) + fn+1(x),
+ * where fk(x) = sum(exp(bkj*x)*Rkj(x),j=1..nk), where Rkj are rational for k=1,...,n+1. */
+void expand_lt(const gen &g_orig,const gen &x,vecteur &f,vecteur &a,GIAC_CONTEXT) {
+    gen_map m;
+    gen g=replace_exp_with_idnt(recursive_normal(exp2pow(simplify(expexpand(g_orig,contextptr),
+        contextptr),contextptr),contextptr),x,m,contextptr);
+    gen_map::const_iterator it=m.begin(),itend=m.end();
+    vecteur fac;
+    f.reserve(m.size()+1);
+    a.reserve(m.size());
+    for (;it!=itend;++it) {
+        const gen &y=it->second,&b=it->first;
+        if (y.type!=_IDNT || !is_rational_wrt(g,*y._IDNTptr))
+            continue;
+        if (fac.empty()) {
+            gen facg=_factors(_denom(g,contextptr),contextptr);
+            if (facg.type!=_VECT)
+                continue;
+            fac=*facg._VECTptr;
+        }
+        gen d=1,p=1,q;
+        for (const_iterateur jt=fac.begin();jt!=fac.end();++jt) {
+            if (is_const_wrt(*jt,y,contextptr) || *jt==y)
+                d=d*_pow(makesequence(*jt,*(jt+1)),contextptr);
+            else p=p*_pow(makesequence(*jt,*(jt+1)),contextptr);
+            ++jt;
+        }
+        int n;
+        if (is_one(p) || !pq_1minusxn(p,y,n,q,contextptr))
+            continue;
+        gen qr=_quorem(makesequence(_numer(g,contextptr)*q,1-pow(y,n),y),contextptr);
+        if (qr.type!=_VECT || qr._VECTptr->size()!=2)
+            continue;
+        f.push_back(ratnormal(qr._VECTptr->back()/d,contextptr));
+        a.push_back(n*b);
+        g=ratnormal(qr._VECTptr->front()/d,contextptr);
+        fac.clear();
+    }
+    f.push_back(g);
+    for (it=m.begin();it!=itend;++it)
+        f=subst(f,it->second,exp(-x*it->first,contextptr),false,contextptr);
+}
+
+bool laplace_periodic(const gen &g_orig,const gen &x,const gen &s,gen &t,GIAC_CONTEXT) {
+    gen g=simplify_floor(recursive_normal(g_orig,contextptr),contextptr),T(undef);
+    if (!is_periodic_wrt(g,x,T,contextptr) || is_undef(T) || !is_strictly_positive(T,contextptr)) {
+        if (contains(g_orig,at_floor))
+            t=undef;
+        return false;
+    }
+    if (!contains(g_orig,at_floor))
+        return false;
+    t=_int(makesequence(g*exp(-s*x,contextptr),x,0,T),contextptr)/(1-exp(-s*T,contextptr));
+    return true;
+}
+
+bool ilaplace2(const gen &g,const gen &s,const gen &x,gen &orig,GIAC_CONTEXT) {
+    if (s.type!=_IDNT || x.type!=_IDNT)
+        return false;
+    vecteur f,a;
+    gen F,h,t=identificateur(" t"),n=identificateur(" n"),k=identificateur(" k");
+    //_purge(makesequence(n,k),contextptr);
+    sto(gen(makevecteur(change_subtype(2,1)),_ASSUME__VECT),n,contextptr);
+    orig=0;
+    expand_lt(g,s,f,a,contextptr);
+    if (a.empty())
+        return false;
+    int na=a.size(),i=0;
+    for (;i<=na;++i) {
+        F=_ilaplace(makesequence(f[i],s,x),contextptr);
+        if (i==na) {
+            orig+=F;
+            break;
+        }
+        if (contains(F,at_ilaplace))
+            return false;
+        const gen &T=a[i];
+        //_purge(t,contextptr);
+        giac_assume(symb_inferieur_egal(t,T),contextptr);
+        h=ratnormal(eval(subst(F,x,t,false,contextptr),contextptr),contextptr);
+        orig+=_periodic(makesequence(subst(h,t,x,false,contextptr),x,0,T),contextptr);
+        //_purge(t,contextptr);
+        giac_assume(symb_superieur_egal(t,T),contextptr);
+        h=ratnormal(eval(subst(F,x,t,false,contextptr),contextptr),contextptr);
+        if (!is_zero(h)) {
+            h=_sum(makesequence(subst(h,t,x-T*(k-1),false,contextptr),k,1,n),contextptr);
+            orig+=subst(h,n,_floor(x/T,contextptr),false,contextptr)*_Heaviside(x-T,contextptr);
+        }
+    }
+    return true;
+}
 
 gen apply_window_function(int wf,const gen &arg,GIAC_CONTEXT) {
     if (arg.type==_STRNG && arg.subtype==-1) return arg;
@@ -3852,13 +4917,13 @@ ann::ann(const vector<int> &topology,int bsize,GIAC_CONTEXT) {
     gsl_vector_set_zero(reg_coeff);
     // create temporary symbolic variables
     x=identificateur(" nn_x");
-    _purge(x,ctx);
+    //_purge(x,ctx);
     y.reserve(topology.back());
     t.reserve(topology.back());
     for (int i=0;i<topology.back();++i) {
         y.push_back(identificateur(" y"+print_INT_(i+1)));
         t.push_back(identificateur(" t"+print_INT_(i+1)));
-        _purge(makesequence(y.back(),t.back()),ctx);
+        //_purge(makesequence(y.back(),t.back()),ctx);
     }
     fan=makevecteur(identificateur(" fan_in"),identificateur(" fan_out"));
 }

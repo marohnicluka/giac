@@ -708,6 +708,41 @@ Dirac(1)
 Dirac(-1)
  int(Dirac(x)*(x-1)^2,x,-1,2)
 
+# sign2Heaviside
+2 Replaces sign function by Heaviside function in an expression.
+0 Expr
+-1 Heaviside
+-2 sign
+-3 Heaviside2sign
+-4 simpd
+sign2Heaviside(sign(x))
+
+# Heaviside2sign
+2 Replaces Heaviside function by sign function in an expression.
+0 Expr
+-1 sign
+-2 Heaviside
+-3 sign2Heaviside
+-4 simpd
+Heaviside2sign(Heaviside(x))
+
+# linstep
+2 Rewrites expressions as linear combinations of Heaviside functions.
+0 Expr,[Var]
+-1 Heaviside
+linstep(Heaviside(x-2)*Heaviside(3-x),x)
+linstep(piecewise(x<-1,0,x<1,x+1,2-(x-1)^2),x)
+linstep(abs(abs(x)-abs(x-1)))
+
+# step2abs
+2 Rewrite signum/Heaviside/piecewise subexpressions by using absolute values.
+0 Expr,[Var]
+-1 Heaviside
+-2 sign
+-3 piecewise
+step2abs(x*sign(x))
+step2abs(sin(x)*Heaviside(x)-sin(x)*Heaviside(-x))
+
 # polar_coordinates
 1 Renvoie la liste du module et de l'argument de l'affixe d'un point (en 2D) ou d'un nombre complexe ou de la liste des coordonnées rectangulaires.
 2 Returns the list of the norm and of the argument of the affix of a point (for 2D) or of a complex number or of the the list of rectangular coordinates.
@@ -5420,7 +5455,7 @@ matpow([[1,2],[3,4]],n)
 
 # +
 1 Concaténation de 2 chaînes ou addition terme à terme de 2 expressions ou 2 listes ou 2 matrices ou de 2 points (opérateur infixé).
-2 String concatenation or addition element by element of 2 expressions or 2 lists or 2 matrices or of 2 points (infixed operator).
+2 String/audio concatenation or addition element by element of 2 expressions or 2 lists or 2 matrices or of 2 points (infixed operator).
 3 Concatenación de 2 cadenas o suma componente por componente de 2 expresiónes o 2 listas o 2 matrices o 2 puntos (operador infijo).
 4 Συνένωση αλφαριθμητικών ή πρόσθεση στοιχείο-στοιχείο 2 παραστάσεων ή 2 λιστών ή 2 πινάκων  ή 2 σημεία (εντεθειμένος τελεστής).
 0 Str||Lst||Expr||Pnt, Str||Lst||Expr||Pnt
@@ -14506,6 +14541,24 @@ fourier_bn(x^2,x,2,n,-1)
 fourier_cn(x^2,x,2,0,-1)
 fourier_cn(x^2,x,2,n,-1)
 
+# dwt
+0 (Lst||Mtrx)(data),[opts]
+2 Returns the discrete wavelet transform of data (either 1D or 2D), optionally with a sequence of options.
+-1 idwt
+-2 fft
+-3 ifft
+dwt([0.0,0.5,0.25,1.0,0.75,-0.25,-0.5,0.0])
+dwt([[15,25,5,70],[21,33,12,7],[64,18,50,10],[5,17,35,28]])
+
+# idwt
+0 (Lst||Mtrx)(T),[opts]
+2 Returns the original data from its discrete wavelet transform if called with the same options.
+-1 dwt
+-2 fft
+-3 ifft
+ t:=dwt([0.0,0.5,0.25,1.0,0.75,-0.25,-0.5,0.0]):;idwt(t)
+ t:=dwt([[15,25,5,70],[21,33,12,7],[64,18,50,10],[5,17,35,28]]):;idwt(t)
+
 # f2nd fxnd
 1 Renvoie la liste formée par le numérateur et le dénominateur de la fraction simplifiée.
 2 Returns the list built with the numerator and the denominator of the simplified fraction.
@@ -15011,6 +15064,15 @@ simp2(x^3-1,x^2-1)
 simplify(4*atan(1/5)-atan(1/239))
 simplify(texpand((sin(3*x)+sin(7*x))/sin(5*x)))
 simplify(texpand((cos(3*x)+cos(7*x))/cos(5*x)))
+
+# simplifyDirac
+2 Simplifies expressions involving Dirac delta distribution.
+0 Expr,[Seq(vars)]
+-1 simplify
+-2 Dirac
+simplifyDirac(Dirac(a*x),x)
+simplifyDirac(Dirac(x,1)*x)
+simplifyDirac(Dirac(x^2-x-6))
 
 # sort sorted
 1 Renvoie la liste (ou suite) triée par ordre croissant ou selon la fonction donnée en second argument qui définit un ordre strict faible ou trie et collecte les termes égaux dans les sommes et produits.
@@ -15760,8 +15822,19 @@ implicitdiff(x*y*z,-2x^3+15x^2*y+11y^3-24y=0,[x,z,y],order=2,[1,-1,0])
 # periodic
 1 Cree une expression periodique egale a Expr sur [a,b], periode b-a
 2 Returns the periodic expression equal to Expr on a..b, period b-a.
-0 Expr,Var,a,b
+0 Expr,Var,Real(a),Real(b)||Expr,Var=a..b
+-1 period
+periodic(x^2,x=-1..1)
  plot(periodic(x^2,x,-1,1),x=-5..5)
+
+# period
+1 Rechercher d'une période d'une expression périodique
+2 Returns a period of a given periodic expression with respect to a single real variable (by default x).
+0 Expr,[Var]
+-1 periodic
+period(sin(x*pi/2)/(2+cos(x*pi/3+pi/4)))
+period(sin(x)+sin(sqrt(2)*x),x)
+ f:=periodic(x^2,x,0,3):;g:=periodic(x^3,x,-1,1):;period(f*g/(1+f^2+g^2),x)
 
 # extrema
 1 Recherche des extremas d'une expression
@@ -15885,6 +15958,19 @@ plotwav(readwav("/some/file"),range=[10000,22000]) // range in samples
 -1 plotwav
 plotspectrum(readwav("/some/file"))
 plotspectrum(readwav("/some/file"),range=100..1000)
+
+# splice
+0 Audio(clip1),Audio(clip2),[Intg(len),Real(p)]
+2 Joins clip1 and clip2 with overlap of length len and crossfade determined by p>0.
+-1 +
+-2 mixdown
+ t:=soundsec(2):;clip:=splice(createwav(sin(2*pi*440*t)),createwav(sin(2*pi*220*t)),1000,0.75):;playsnd(clip)
+
+# mixdown
+0 Audio(clip1),(Real||Lst)(parm1),Audio(clip2),(Real||Lst)(parm2),...
+2 Returns audio clips clip1,clip2,... mixed down to a single clip according to the given parameters.
+-2 +
+-1 splice
 
 # boxcar
 2 Returns the value at x of the boxcar function corresponding to a and b.

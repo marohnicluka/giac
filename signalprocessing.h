@@ -186,7 +186,7 @@ gen _period(const gen &g,GIAC_CONTEXT);
 gen _sign2Heaviside(const gen &g,GIAC_CONTEXT);
 gen _Heaviside2sign(const gen &g,GIAC_CONTEXT);
 gen _linstep(const gen &g,GIAC_CONTEXT);
-gen _step2abs(const gen &g,GIAC_CONTEXT);
+gen _linabs(const gen &g,GIAC_CONTEXT);
 gen _simplifyDirac(const gen &g,GIAC_CONTEXT);
 gen _simplifyFloor(const gen &g,GIAC_CONTEXT);
 
@@ -243,7 +243,7 @@ extern const unary_function_ptr * const at_period;
 extern const unary_function_ptr * const at_Heaviside2sign;
 extern const unary_function_ptr * const at_sign2Heaviside;
 extern const unary_function_ptr * const at_linstep;
-extern const unary_function_ptr * const at_step2abs;
+extern const unary_function_ptr * const at_linabs;
 extern const unary_function_ptr * const at_simplifyDirac;
 extern const unary_function_ptr * const at_simplifyFloor;
 

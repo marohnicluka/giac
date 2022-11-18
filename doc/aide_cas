@@ -734,14 +734,15 @@ linstep(Heaviside(x-2)*Heaviside(3-x),x)
 linstep(piecewise(x<-1,0,x<1,x+1,2-(x-1)^2),x)
 linstep(abs(abs(x)-abs(x-1)))
 
-# step2abs
-2 Rewrite signum/Heaviside/piecewise subexpressions by using absolute values.
+# linabs
+2 Rewrites signum/Heaviside/piecewise subexpressions by using absolute values.
 0 Expr,[Var]
 -1 Heaviside
 -2 sign
 -3 piecewise
-step2abs(x*sign(x))
-step2abs(sin(x)*Heaviside(x)-sin(x)*Heaviside(-x))
+linabs(x*sign(x))
+linabs(sin(x)*Heaviside(x)-sin(x)*Heaviside(-x))
+linabs(abs(abs(x-2)+x*abs(x+1)+1))
 
 # polar_coordinates
 1 Renvoie la liste du module et de l'argument de l'affixe d'un point (en 2D) ou d'un nombre complexe ou de la liste des coordonnées rectangulaires.

@@ -2562,6 +2562,42 @@ bool ispoly(const gen &e,const identificateur &x,gen &d,GIAC_CONTEXT) {
     return d.is_integer() && !is_zero(d);
 }
 
+gen eval_for_x_in_ab_recursion(const gen &g,const identificateur &x,const gen &a,const gen &b,bool &changed,GIAC_CONTEXT) {
+    if (g.type==_VECT) {
+        vecteur res;
+        res.reserve(g._VECTptr->size());
+        const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
+        for (;it!=itend;++it) res.push_back(eval_for_x_in_ab_recursion(*it,x,a,b,changed,contextptr));
+        return gen(res,g.subtype);
+    }
+    if (g.type!=_SYMB)
+        return g;
+    const gen &f=g._SYMBptr->feuille;
+    gen c,d;
+    if ((g.is_symb_of_sommet(at_abs) || g.is_symb_of_sommet(at_Heaviside) || g.is_symb_of_sommet(at_sign))
+            && is_linear_wrt(f,x,c,d,contextptr) && !is_zero(c)) {
+        gen z=-d/c;
+        changed=true;
+        if (is_greater(a,z,contextptr))
+            return g.is_symb_of_sommet(at_abs)?f:gen(1);
+        if (is_greater(z,b,contextptr))
+            return g.is_symb_of_sommet(at_abs)?-f:(g.is_symb_of_sommet(at_sign)?gen(-1):gen(0));
+        changed=false;
+    }
+    return symbolic(g._SYMBptr->sommet,eval_for_x_in_ab_recursion(f,x,a,b,changed,contextptr));
+}
+
+gen eval_for_x_in_ab(const gen &g,const identificateur &x,const gen &a,const gen &b,GIAC_CONTEXT) {
+    gen ret(g);
+    while (true) {
+        bool changed=false;
+        ret=eval_for_x_in_ab_recursion(ret,x,a,b,changed,contextptr);
+        if (!changed)
+            break;
+    }
+    return ret;
+}
+
 void constlin_terms(const gen &g,const identificateur &x,gen &lt,gen &c,gen &rest,GIAC_CONTEXT) {
     gen e=expand(g,contextptr);
     vecteur terms=(e.is_symb_of_sommet(at_plus) && e._SYMBptr->feuille.type==_VECT?*e._SYMBptr->feuille._VECTptr:vecteur(1,e));
@@ -2754,49 +2790,13 @@ void find_func_linarg(const gen &g,const unary_function_ptr *f,const identificat
     } else if (g.type==_SYMB) {
         const gen &e=g._SYMBptr->feuille;
         if (g.is_symb_of_sommet(f)) {
-            if (is_linear_wrt(e,x,a,b,contextptr) && !is_zero(a))
-                la.push_back(-b/a);
-            else if (nested)
+            if (is_linear_wrt(e,x,a,b,contextptr) && !is_zero(a)) {
+                if (find(la.begin(),la.end(),-b/a)==la.end())
+                    la.push_back(-b/a);
+            } else if (nested)
                 find_func_linarg(e,f,x,la,nested,contextptr);
         } else find_func_linarg(e,f,x,la,nested,contextptr);
     }
-}
-
-gen factor_abs_arg(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_VECT) {
-        vecteur res;
-        res.reserve(g._VECTptr->size());
-        const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
-        for (;it!=itend;++it) res.push_back(factor_abs_arg(*it,contextptr));
-        return gen(res,g.subtype);
-    }
-    if (g.is_symb_of_sommet(at_abs))
-        return _abs(_factor(factor_abs_arg(g._SYMBptr->feuille,contextptr),contextptr),contextptr);
-    if (g.type==_SYMB)
-        return symbolic(g._SYMBptr->sommet,factor_abs_arg(g._SYMBptr->feuille,contextptr));
-    return g;
-}
-
-gen abs2Heaviside(const gen &g_orig,const identificateur &x,GIAC_CONTEXT) {
-    vecteur la;
-    gen g=factor_abs_arg(g_orig,contextptr);
-    find_func_linarg(g,at_abs,x,la,true,contextptr);
-    if (la.empty())
-        return g_orig;
-    identificateur t(" abs_var");
-    const_iterateur it=la.begin(),itend=la.end();
-    gen ret=g;
-    for (;it!=itend;++it) {
-        _purge(t,contextptr);
-        gen old=subst(ret,x,t,false,contextptr);
-        ret=0;
-        giac_assume(symb_superieur_egal(t,*it),contextptr);
-        ret+=subst(_eval(old,contextptr),t,x,false,contextptr)*_Heaviside(x-*it,contextptr);
-        //_purge(t,contextptr);
-        giac_assume(symb_inferieur_strict(t,*it),contextptr);
-        ret+=subst(_eval(old,contextptr),t,x,false,contextptr)*_Heaviside(*it-x,contextptr);
-    }
-    return abs2Heaviside(ret,x,contextptr);
 }
 
 bool has_integral(const gen &g) {
@@ -2951,14 +2951,20 @@ gen simplify_quadratic_Heaviside(const gen &g,const identificateur &x,GIAC_CONTE
         return gen(res,g.subtype);
     }
     gen a,b,c;
-    if (g.is_symb_of_sommet(at_Heaviside) && is_quadratic_wrt(g._SYMBptr->feuille,x,a,b,c,contextptr) && !is_zero(a)) {
-        gen d=b*b-4*a*c;
-        if (is_positive(-d,contextptr))
-            return g;
-        gen x1=(-b-sqrt(d,contextptr))/(2*a),x2=(-b+sqrt(d,contextptr))/(2*a);
-        if (is_positive(a,contextptr))
-            return _Heaviside(x1-x,contextptr)+_Heaviside(x-x2,contextptr);
-        return _boxcar(makesequence(x1,x2,x),contextptr);
+    if (g.is_symb_of_sommet(at_Heaviside)) {
+        if (is_quadratic_wrt(g._SYMBptr->feuille,x,a,b,c,contextptr) && !is_zero(a)) {
+            gen d=b*b-4*a*c;
+            if (is_positive(-d,contextptr))
+                return _Heaviside(a,contextptr);
+            if (is_strictly_positive(d,contextptr)) {
+                gen x1=(-b-sqrt(d,contextptr))/(2*a),x2=(-b+sqrt(d,contextptr))/(2*a);
+                if (is_positive(a,contextptr))
+                    return _Heaviside(x1-x,contextptr)+_Heaviside(x-x2,contextptr);
+                if (is_positive(-a,contextptr))
+                    return _boxcar(makesequence(x1,x2,x),contextptr);
+            }
+        }
+        return g;
     }
     if (g.type==_SYMB)
         return symbolic(g._SYMBptr->sommet,simplify_quadratic_Heaviside(g._SYMBptr->feuille,x,contextptr));
@@ -3034,6 +3040,38 @@ gen lin_Heaviside(const gen &g_orig,const identificateur &x,GIAC_CONTEXT) {
 
 gen linH(const gen &g,const identificateur &x,GIAC_CONTEXT) {
     return lin_Heaviside(expand(simplify_linarg(g,x,contextptr),contextptr),x,contextptr);
+}
+
+gen factor_abs_arg(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_VECT) {
+        vecteur res;
+        res.reserve(g._VECTptr->size());
+        const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
+        for (;it!=itend;++it) res.push_back(factor_abs_arg(*it,contextptr));
+        return gen(res,g.subtype);
+    }
+    if (g.is_symb_of_sommet(at_abs))
+        return _abs(_factor(factor_abs_arg(g._SYMBptr->feuille,contextptr),contextptr),contextptr);
+    if (g.type==_SYMB)
+        return symbolic(g._SYMBptr->sommet,factor_abs_arg(g._SYMBptr->feuille,contextptr));
+    return g;
+}
+
+gen abs2Heaviside(const gen &g_orig,const identificateur &x,GIAC_CONTEXT) {
+    vecteur la;
+    gen g=factor_abs_arg(g_orig,contextptr);
+    find_func_linarg(g,at_abs,x,la,true,contextptr);
+    if (la.empty() || !is_numericv(*_evalf(la,contextptr)._VECTptr))
+        return g_orig;
+    la=*_sort(la,contextptr)._VECTptr;
+    la.push_back(plus_inf);
+    gen ret=0,last=minus_inf;
+    const_iterateur it=la.begin(),itend=la.end();
+    for (;it!=itend;++it) {
+        ret+=eval_for_x_in_ab(g,x,last,*it,contextptr)*_boxcar(makesequence(last,*it,x),contextptr);
+        last=*it;
+    }
+    return abs2Heaviside(ret,x,contextptr);
 }
 
 gen cond2Heaviside(const gen &g,const identificateur &x,GIAC_CONTEXT) {
@@ -3283,7 +3321,7 @@ static const char _linstep_s []="linstep";
 static define_unary_function_eval (__linstep,&_linstep,_linstep_s);
 define_unary_function_ptr5(at_linstep,alias_at_linstep,&__linstep,0,true)
 
-gen _step2abs(const gen &g,GIAC_CONTEXT) {
+gen _linabs(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     bool has_var=g.type==_VECT && g.subtype==_SEQ__VECT;
     gen x=identificateur("x");
@@ -3303,15 +3341,15 @@ gen _step2abs(const gen &g,GIAC_CONTEXT) {
     while (true) {
         gen smp=recursive_normal(res,contextptr);
         if ((s=taille(smp,MAX_TAILLE))==t)
-            return s<t0?res:res0;
+            return collect_with_func(s<t0?res:res0,at_abs,NULL,NULL,contextptr);
         res=smp;
         t=s;
     }
-    return undef; // unreachable
+    return res0; // unreachable
 }
-static const char _step2abs_s []="step2abs";
-static define_unary_function_eval (__step2abs,&_step2abs,_step2abs_s);
-define_unary_function_ptr5(at_step2abs,alias_at_step2abs,&__step2abs,0,true)
+static const char _linabs_s []="linabs";
+static define_unary_function_eval (__linabs,&_linabs,_linabs_s);
+define_unary_function_ptr5(at_linabs,alias_at_linabs,&__linabs,0,true)
 
 /* Returns an equivalent univariate piecewise expression depending on the variable x. */
 gen to_piecewise(const gen &g_orig,const identificateur &x,GIAC_CONTEXT) {
@@ -3325,17 +3363,14 @@ gen to_piecewise(const gen &g_orig,const identificateur &x,GIAC_CONTEXT) {
     int n=z.size();
     z.push_back(plus_inf);
     p.reserve(n+1);
-    identificateur t(" t");
-    gen t0=minus_inf,h;
+    gen last=minus_inf,h;
     const_iterateur it=z.begin(),itend=z.end();
     for (;it!=itend;++it) {
-        //_purge(t,contextptr);
-        giac_assume(symb_and(symb_superieur_strict(t,t0),symb_inferieur_strict(t,*it)),contextptr);
-        h=_eval(subst(g,x,t,false,contextptr),contextptr);
+        h=ratnormal(eval_for_x_in_ab(g,x,last,*it,contextptr),contextptr);
         if (contains(h,at_Heaviside))
             return g;
-        p.push_back(_lin(ratnormal(subst(h,t,x,false,contextptr),contextptr),contextptr));
-        t0=*it;
+        p.push_back(_lin(h,contextptr));
+        last=*it;
     }
     vecteur args;
     args.reserve(2*n+1);
@@ -4522,7 +4557,7 @@ bool ilaplace2(const gen &g,const gen &s,const gen &x,gen &orig,GIAC_CONTEXT) {
     if (s.type!=_IDNT || x.type!=_IDNT)
         return false;
     vecteur f,a;
-    gen F,h,t=identificateur(" t"),n=identificateur(" n"),k=identificateur(" k");
+    gen F,h,n=identificateur(" n"),k=identificateur(" k");
     //_purge(makesequence(n,k),contextptr);
     sto(gen(makevecteur(change_subtype(2,1)),_ASSUME__VECT),n,contextptr);
     orig=0;
@@ -4539,15 +4574,11 @@ bool ilaplace2(const gen &g,const gen &s,const gen &x,gen &orig,GIAC_CONTEXT) {
         if (contains(F,at_ilaplace))
             return false;
         const gen &T=a[i];
-        //_purge(t,contextptr);
-        giac_assume(symb_inferieur_egal(t,T),contextptr);
-        h=ratnormal(eval(subst(F,x,t,false,contextptr),contextptr),contextptr);
-        orig+=_periodic(makesequence(subst(h,t,x,false,contextptr),x,0,T),contextptr);
-        //_purge(t,contextptr);
-        giac_assume(symb_superieur_egal(t,T),contextptr);
-        h=ratnormal(eval(subst(F,x,t,false,contextptr),contextptr),contextptr);
+        h=ratnormal(eval_for_x_in_ab(F,*x._IDNTptr,minus_inf,T,contextptr),contextptr);
+        orig+=_periodic(makesequence(h,*x._IDNTptr,0,T),contextptr);
+        h=ratnormal(eval_for_x_in_ab(F,*x._IDNTptr,T,plus_inf,contextptr),contextptr);
         if (!is_zero(h)) {
-            h=_sum(makesequence(subst(h,t,x-T*(k-1),false,contextptr),k,1,n),contextptr);
+            h=_sum(makesequence(subst(h,x,x-T*(k-1),false,contextptr),k,1,n),contextptr);
             orig+=subst(h,n,_floor(x/T,contextptr),false,contextptr)*_Heaviside(x-T,contextptr);
         }
     }

@@ -14611,18 +14611,23 @@ simplifies expressions involving Dirac delta distribution (see~\secref{ssec:dira
 \end{itemize}
 
 \subsubsection*{Examples}
+Since $\delta(x)=-x\delta\Prime(x)$:
 \begin{xcasinput}
 simplifyDirac(Dirac(x,1)*x)
 \end{xcasinput}
 \begin{xcasoutput}
   -\operatorname{\delta}\left(x\right)
 \end{xcasoutput}
+$(x-2)^3\delta^{(3)}\left(1-\frac{x}{2}\right)$ simplifies to:
 \begin{xcasinput}
 simplifyDirac((x-2)^3*Dirac(1-x/2,3))
 \end{xcasinput}
 \begin{xcasoutput}
   12 \operatorname{\delta}\left(x-2\right)
 \end{xcasoutput}
+If $f(x)=\frac{p(x)}{q(x)}$ is rational with $p(x)=(x-x_1)(x-x_2)\cdots(x-x_n)$, $x_i\neq x_j$
+for $i\neq j$, and $q(x)\neq 0\ \forall x\in\mathbb{R}$, then $\delta\left(f(x)\right)$
+expands to $\sum_{k=1}^n\frac{\delta(x-x_k)}{f'(x_k)}$. For example:
 \begin{xcasinput}
 simplifyDirac(Dirac(x^2-x-6))
 \end{xcasinput}
@@ -14630,7 +14635,7 @@ simplifyDirac(Dirac(x^2-x-6))
   \frac{\operatorname{\delta}\left(x+2\right)}{5}+\frac{\operatorname{\delta}\left(x-3\right)}{5}
 \end{xcasoutput}
 
-\subsection{Rewriting signum to Heaviside step function and vice versa\label{ssec:signH}}
+\subsection{Replacing signum with Heaviside step function and vice versa\label{ssec:signH}}
 
 The \texttt{sign2Heaviside}\index{sign2Heaviside@\texttt{sign2Heaviside}} command
 rewrites signum function (see~\secref{ssec:standardfns}) to Heaviside step function
@@ -14666,6 +14671,12 @@ and/or absolute values, as a linear combination of Heaviside functions of linear
 
 \subsection*{Examples}
 \begin{xcasinput}
+linstep(Heaviside(x-2)*Heaviside(3-x),x)
+\end{xcasinput}
+\begin{xcasoutput}
+  \operatorname{\theta}\left(x-2\right)-\operatorname{\theta}\left(x-3\right)
+\end{xcasoutput}
+\begin{xcasinput}
 linstep(abs(x-1),x)
 \end{xcasinput}
 \begin{xcasoutput}
@@ -14678,38 +14689,44 @@ linstep(piecewise(x<0,piecewise(x<-1,1,-1),x)*(abs(x-1)+sign(x)),x)
   2 x \operatorname{\theta}\left(x+1\right)+\operatorname{\theta}\left(x\right) \left(-x^{2}+x\right)+\operatorname{\theta}\left(x-1\right) \left(2 x^{2}-2 x\right)-x
 \end{xcasoutput}
 
-\subsection{Rewriting with absolute values\label{ssec:step2abs}}
+\subsection{Rewriting with absolute values\label{ssec:linabs}}
 
-The \texttt{step2abs}\index{step2abs@\texttt{step2abs}} command attempts rewriting
+The \texttt{linabs}\index{linabs@\texttt{linabs}} command attempts rewriting
 piecewise defined expressions, as well as expressions involving step functions (signum
 and Heaviside) and/or absolute values, as a linear combination of absolute values of
-linear functions (see~\secref{ssec:standardfns}).
+linear arguments (see~\secref{ssec:standardfns}).
 \begin{itemize}
-  \item \texttt{step2abs} takes one mandatory argument and one optional argument:
+  \item \texttt{linabs} takes one mandatory argument and one optional argument:
   \begin{itemize}
     \item \textit{expr}, an expression.
     \item Optionally, $x$, a variable (by default, $x=\texttt{x}$).
   \end{itemize}
-  \item \texttt{step2abs(}$\textit{expr}\,\langle,x\,\rangle$\texttt{)} returns \textit{expr}
+  \item \texttt{linabs(}$\textit{expr}\,\langle,x\,\rangle$\texttt{)} returns \textit{expr}
   written as an expression depending on parameters of form $|x-a|$ instead on
   step/piecewise expressions.
-  \item \texttt{step2abs} tries to find a simplest representation with parameters
-  $|x-a|$ by nesting the latter.
+  \item \texttt{linabs} tries to find a simplest representation by nesting the parameters $|x-a|$.
 \end{itemize}
 
 \subsubsection*{Examples}
 \begin{xcasinput}
-step2abs(sin(x)*Heaviside(x)-sin(x)*Heaviside(-x))
+linabs(sin(x)*Heaviside(x)-sin(x)*Heaviside(-x))
 \end{xcasinput}
 \begin{xcasoutput}
   \sin \left|x\right|
 \end{xcasoutput}
 \begin{xcasinput}
 f:=piecewise(x<-1,x+5/2,x<2,2-x^2/2,x-2):;
-step2abs(f,x)
+linabs(f,x)
 \end{xcasinput}
 \begin{xcasoutput}
-  -\frac{x \left|x+1\right|}{4}+\frac{x \left|x-2\right|}{4}-\frac{\left|x+1\right|}{4}+\left|x-2\right|+x+\frac{1}{4}
+  \frac{\left(x+4\right) \left|x-2\right|}{4}+\frac{\left(-x-1\right) \left|x+1\right|}{4}+x+\frac{1}{4}
+\end{xcasoutput}
+\texttt{linabs} is useful for expanding expressions with nested absolute values. For example:
+\begin{xcasinput}
+linabs(abs(abs(x-2)+x*abs(x+1)+1))
+\end{xcasinput}
+\begin{xcasoutput}
+  x^{2}+x \left|x+1\right|+\left(-x+1\right) \left|x+3\right|+\left|x-2\right|+2 x-2
 \end{xcasoutput}
 
 \subsection{Rewriting an expression with different options%: \texttt{convert} \texttt{convertir} \texttt{=>}

@@ -1737,6 +1737,41 @@ fft(ranm(128),22798,35969)
 -1 fft
 ifft([100.0,-52.2842712475+6*i,-8.0*i,4.28427124746-6*i,4.0,4.28427124746+6*i,8*i,-52.2842712475-6*i])
 
+# stft
+2 Short-time Fourier transform.
+0 Lst(data)
+-1 istft
+-2 fft
+stft([0.2,-0.8,0.4,0.6,0.1,-0.2,0.5,-0.3],2)
+stft(randvector(1024,randvar(normal,0,0.1)))
+
+# istft
+2 Inverse short-time Fourier transform.
+0 Mtrx(data)
+-1 stft
+-2 ifft
+ data:=ranv(2^15,normald(0,0.1)):;t:=stft(data):;d:=istft(t):;correlation(data,d)
+
+# emd
+2 Empirical mode decomposition of a discrete real signal.
+0 Lst(data),[opts]
+-1 imfplot
+-2 hht
+emd(apply(x->cos(10*x^2*pi),linspace(-pi,pi)))
+
+# imfplot plotimf
+2 Displays selected intrinsic mode functions in a stacked layout.
+0 Lst(imf),[opts]
+-1 emd
+imfplot(emd(apply(x->cos(10*x^2*pi),linspace(-pi,pi)),residue=false))
+
+# hht
+2 Hilbert-Huang transform.
+0 Lst(data)||Mtrx(imf),[opts]
+-1 emd
+-2 colormap
+hht(apply(x->cos(10*x^2*pi),linspace(-pi,pi,500)),color=false,frequencies=0.1..2.5,output=plot)
+
 # hessenberg
 1 Réduction matricielle sous forme de Hessenberg. Renvoie [P,B] tel que B=inv(P)*A*P, par défaut n=0 les calculs sont exacts, sinon ils sont numériques et pour n=-1 B est triangulaire sup, pour n=-2 P est orthogonale et B a ses coefficients sous-sous-diagonaux nuls et pour n premier les calculs sont modulo n.
 2 Matrix reduction to Hessenberg form. Returns [P,B] such that B=inv(P)*A*P, by default n=0 the result is exact else the result is numeric. For n=-1 B is triangular, n=-2 P is orthogonal and if n is prime the result is mod n.
@@ -5543,6 +5578,14 @@ find_minimum(cosh(x),-1,1,1e-5,20)
 find_minimum(Airy_Ai(x+sin(x))+cos(x^2),-5,5)
 find_minimum(besselJ(x,2)/Gamma(x+1)+(x+1)^sin(x),0,10)
 
+# frank_wolfe
+2 Returns a point in conv(A) which minimizes f, where A is a list of points.
+0 Expr(f),Mtrx(A),[opts]
+-1 find_minimum
+-2 nlpsolve
+-3 fMin
+frank_wolfe((x1-2/3)^2/3+(x2-2/3)^2/5,[[1,0],[0,1],[-1,0],[0,-1]])
+
 # simulated_annealing
 2 Returns the point in a search space which minimizes the cost function using the method of simulated annealing, starting from an initial configuration x0.
 0 x0,Func(cost),Func(dist),Func(step),Lst(csparam),[Lst(iterparam),[Real(maxstep)]]
@@ -6004,7 +6047,7 @@ plotcontour(x^2+y^2,[x,y])
 plotcontour(x^2+2*y^2-2,[x,y],[1.0,2.0,3.0])
 plotcontour(x^2-y^2,[x=-4..4,y=-4..4],seq(k,k,-11,11,3),xstep=0.1,ystep=0.1)
 
-# xstep ystep zstep
+# xstep ystep zstep nstep tstep ustep vstep
 2 Option for plotting commands.
 0 Opt
 
@@ -8602,6 +8645,16 @@ angle(i,1,1+i,"b")
 -2 angleat
  A:=point(0);B:=point(1);C:=point(i);angleatraw(A,B,C,-2-i)
 
+# radians
+2 Converts degrees to radians (inexact).
+0 Real(deg)
+-1 degrees
+
+# degrees
+2 Converts radians to degrees (inexact).
+0 Real(rad)
+-1 radians
+
 # distanceat
 1 distanceat(A,B,z0) affiche au point(z0), avec une légende, la distance entre 2 objets géométriques.
 2 distanceat(A,B,z0) displays at point(z0), with a legend, the distance between 2 geometrical objects
@@ -10518,12 +10571,29 @@ hessian(2*x^2*y-x*z,[x,y,z])
 
 # hilbert
 1 Renvoie la n-ième matrice de Hilbert : Hjk=1/(j+k+1) j,k=1..n
-2 Returns the order n Hilbert matrix : Hjk=1/(j+k+1) j,k=1..n.
+2 Returns the order n Hilbert matrix Hjk=1/(j+k+1), j,k=1..n, or the Hilbert transform of an expression f(x) or the analytic representation of a discrete real signal u.
 3 Devuelve la matriz n-ésima de Hilbert: Hjk=1/(j+k+1) j,k=1..n
 4 Επιστρέφει τον n-στής τάξης πίνακα Hilbert : Hjk=1/(j+k+1) j,k=1..n
-0 Intg(n)
--1 
+0 Intg(n)||(Expr(f),[Var(x)])||Lst(u)
+-1 Hilbert
+-2 fft
+-3 fourier
 hilbert(4)
+hilbert(1/(1+t^2),t)
+hilbert(sinc(x))
+hilbert([0.7,0.2,-0.5,-0.6,-0.2,0.3,0.5,-0.1,-0.3])
+
+# Hilbert
+2 The inert form of hilbert command.
+0 Expr(f),Var(x)
+-1 hilbert
+Hilbert(y(x),x)
+
+# instfreq
+2 Returns the instantaneous angular frequency of an analytic signal x.
+0 Vect(x)
+-1 hilbert
+instfreq(hilbert([0.7,0.2,-0.5,-0.6,-0.2,0.3,0.5,-0.1,-0.3]))
 
 # homothety
 1 homothetie(C,k,A)=point A1 tel que vect(C,A1)=k*vect(C,A) i.e en 2d est la similitude de centre C, de rapport abs(k) et d'angle arg(k).
@@ -10622,6 +10692,7 @@ ibasis([[1,0,0],[0,1,0]],[[1,1,1],[0,0,1]])
 0 
 -1 +infinity
 -2 -infinity
+-3 isinf
 
 # +infinity inf
 1 Plus infini
@@ -10631,6 +10702,7 @@ ibasis([[1,0,0],[0,1,0]],[[1,1,1],[0,0,1]])
 0 
 -1 infinity
 -2 -infinity
+-3 isinf
 
 # -infinity
 1 Moins infini
@@ -10641,6 +10713,24 @@ ibasis([[1,0,0],[0,1,0]],[[1,1,1],[0,0,1]])
 -1 infinity
 -2 +infinity
 -3 inf
+-4 isinf
+
+# isinf
+2 Return true if the argument is an infinity, else return false.
+0 Expr
+-1 infinity
+-2 inf
+
+# undef
+2 Udefined value (NaN).
+0
+-1 isnan
+-2 infinity
+
+# isnan
+2 Return true if the argument is undefined, else return false.
+0 Expr
+-1 undef
 
 # ibpdv
 1 Intégration par parties de f(x)=u(x)*v'(x) avec f(x) comme 1er argument et v(x) (ou 0 pour intégrer directement) comme 2ème argument. On peut rajouter comme argument la variable et aussi les bornes a et b pour une intégrale définie.
@@ -11103,13 +11193,14 @@ Resultant(x^3+x+1,x^2-x-2,x)
 -1 
 kill()
 
-# lagrange interp
+# lagrange
 1 Renvoie le polynôme de degré n-1 tel que P(xk)=yk=f(x_k) k=0..n-1 ou la liste des differences divisees si le dernier argument est lagrange
 2 Returns the polynomial of degree n-1 such that P(xk)=yk=f(x_k) k=0..n-1 or the list of divided differences if the last argument is lagrange.
 3 Devuelve el polinomio de grado n-1 tal que P(xk)=yk=f(x_k) k=0..n-1
 4 Επιστρέφει το πολυώνυμο παρεμβολής βαθμού n-1 έτσι ώστε P(xk)=yk=f(x_k) k=0..n-1
 0 (Lst_xk,Lst_yk)||Mtrx_2*n||(Lst_xk,Fnc(f)),[Var||[]||lagrange]
 -1 spline
+-2 interp
 lagrange([1,3,4],[0,1,2])
 lagrange([1,3,4],[0,1,2],t)
  f(x):=exp(-x); lagrange([1,3,4],f)
@@ -11121,6 +11212,14 @@ lagrange([-1,0,1],[1/e-1,0,e-1])
  f(x):=exp(x)-1;lagrange([-1,0,1],f)
 lagrange([0,1,2],[1,exp(1),exp(2)],lagrange)
 lagrange([0,1,2],exp,lagrange)
+
+# interp
+2 Interpolates between colors or two images or image and color, or computes numerical spline interpolation, or computes the Lagrange polynomial.
+0 Lst(colors)||Seq(Image(A),Image(B)||Color(c))||Seq(Lst(x0),Lst(y0),Lst(x))||Seq(Lst(x),Lst(y))
+-1 lagrange
+interp([blue,red,yellow],20)
+interp(red,blue,0.5)
+ listplot(interp([0,1.2,3.7,4.5,6.2,8.1],[-0.1,0.2,0.5,0.3,0.1,0.0],[1,2,3,4,5,6,7,8]))
 
 # laguerre
 1 Renvoie le n-ième polynôme de Laguerre
@@ -11468,6 +11567,14 @@ ln(e)
 -2 log10
 logb(5,2)
 logb(7,10)
+
+# log2
+2 Binary logarithm (base 2).
+0 Expr
+-1 log
+-2 logb
+-3 log10
+log2(8)
 
 # log10
 1 Logarithme à base 10.
@@ -12209,18 +12316,81 @@ plotpolar(sin(2*x),x,0,pi,tstep=0.1)
 
 # rgb
 1 Option de la commande affichage (ou display) pour définir les couleurs RGB.
-2 Option of the display (or affichage) command to defined colors RGB.
+2 Convert a RGB triple [r,g,b] or a hexadecimal integer or string rrggbb into xcas color or return RGB specification of xcas color c.
 3 Opción de la instrucción display (o affichage) para que definir colores RGB.
 4 Επιλογή της εντολής display (ή affichage) για τον ορισμό των χρώματα RGB.
-0 Opt
--1 display
--2 filled
+0 Lst(r,g,b)||Intg(rrggbb)||Str(rrggbb)||Color(c)
+-1 hsv
+-2 rgb2hsv
+-3 hsv2rgb
+rgb(0x00ff00)
+rgb(red)
+rgb(255,0,255)
  redcolor:=rgb(0.99,0,0);display(square(0,2+i),filled+redcolor)
  greencolor:=rgb(0,0.99,0);display(square(0,2+i),filled+greencolor)
  bluecolor:=rgb(0,0,0.99);display(square(0,2+i),filled+bluecolor)
  greycolor:=rgb(0.5,0.5,0.5);display(square(0,2+i),filled+greycolor)
  F:=display(square(0,2+i),filled+rgb(rand(),rand(),rand()))
  L:=rand(),rand(),rand();affichage(square(0,2+i),rgb(L)+rempli);legend(0.2,[L])
+
+# hsv
+2 Convert a HSV specification [h,s,v] to xcas color or return the HSV specification of a xcas color c.
+0 Lst(h,s,v)||Color(c)
+-1 rgb
+-2 hsv2rgb
+-3 rgb2hsv
+hsv(220,90,100)
+hsv([0.3,0.7,0.5])
+hsv(teal)
+
+# rgb2hsv
+2 Convert RGB to HSV.
+0 Lst(r,g,b)
+-1 hsv2rgb
+-2 rgb
+-3 hsv
+rgb2hsv(32,64,126)
+rgb2hsv([0.3,0.2,0.1])
+rgb2hsv(0.3,0.2,0.1)
+
+# hsv2rgb
+2 Convert HSV to RGB.
+0 Lst(h,s,v)
+-1 rgb2hsv
+-2 rgb
+-3 hsv
+hsv2rgb(220,75,49)
+hsv2rgb([0.0833,0.67,0.3])
+hsv2rgb(0.0833,0.67,0.3)
+
+# rgb2xyz
+2 Convert RGB to XYZ.
+0 Lst(r,g,b)||Color(c)
+-1 xyz2rgb
+-2 rgb
+-3 interp
+rgb2xyz(teal)
+rgb2xyz([0,255,255])
+rgb2xyz(0.7,0.8,0.9)
+
+# xyz2rgb
+2 Convert XYZ to RGB.
+0 Lst(x,y,z)
+-1 rgb2xyz
+-2 interp
+xyz2rgb(0.1,0.2,0.3)
+
+# colormap
+2 Return the colormap index for a given palette name or a extract specified color(s) or display selected colormap(s).
+0 Str(palette)||Lst(palettes),[Intg(n)||Real(t)||Str(colorname)||display]
+-1 color
+-2 rgb
+-3 hsv
+colormap("default")
+colormap("inferno")
+colormap("viridis",25)
+colormap("discrete","vivid")
+colormap(["cubic","isoluminant","haline"],display)
 
 # set_screen
 1 Definit la taille de l'ecran virtuel pour get_key()
@@ -14847,7 +15017,7 @@ display(red+filled);square(0,1);
  F:=display(square(0,2+i),filled)
  C:=display(square(2,2+i),red+filled)
 
-# white black red green blue yellow magenta cyan orange purple pink grey brown
+# white black red green blue yellow magenta cyan orange purple pink grey brown olive teal navy gold violet
 1 Option de la commande affichage (ou display) pour afficher en couleur.
 2 Option of the display command to display with color.
 3 Opción de la instrucción display para colores.
@@ -14927,8 +15097,16 @@ fonction f(a,b) local c;c=a+b;c+gcd(a,b);ffonction;
 1 Renvoie a mod b pour a et b flottants
 2 Returns a mod b for a and b floats.
 0 Real(a),Real(b)
-1 mod
+-1 mod
 fmod(10.0,pi)
+
+# modf
+2 Returns (a-trunc(a),trunc(a)).
+0 Real(a)
+-1 frac
+-2 floor
+modf(2.3)
+modf(-2.3)
 
 # pa2b2
 1 Renvoie [a,b] tels que a^2+b^2=n (pour n premier et n=1 (mod 4)).
@@ -15092,13 +15270,36 @@ sort(y*x*2+x*y)
 
 # split
 1 Sépare les deux variables var1,var2 de l'expression Xpr (si elle n'a pas de dénominateur) ou renvoie [0].
-2 Splits the two variables var1,var2 of the expression Xpr (without denominator) or returns [0].
+2 Splits the two variables var1,var2 of the expression Xpr (without denominator) or returns [0], or splits a string into a list of substrings with respect to a given separator.
 3 Separa las 2 variables var1,var2 de la expresión Xpr (sin no tiene denominador) o devuelve [0].
 4 Διασπά τις 2 μεταβλητές var1,var2 της παράστασης Xpr (αν δεν έχει παρονομαστή) ή επιστρέφει [0].
-0 Expr(Xpr),Lst(var1,var2)
+0 (Expr(Xpr),Lst(var1,var2))||(Str(s),Str(sep))
 -1 factor
+-2 join
 split(x^3*y^2-y^2+x^3-1,[x,y])
 split(x^3*y^2-y^2+x^3+1,[x,y])
+split("This is a phrase"," ")
+
+# join
+2 Returns the string obtained by concatenating strings from a list after inserting a separator string between adjacent elements.
+0 Str(sep),Lst(strlst)
+-1 split
+-2 concat
+join(" ",["This","is","a","phrase"])
+
+# trim
+2 Removes leading/trailing whitespace from strings, zeros from vectors, zero-pixel margins from images, and silence from audio clips, or returns positions specifying that portions.
+0 (Str||Vect||Audio||Image)(s),[opts],[left|right],[index]
+-1 strip
+trim("   an apple     ")
+trim([0,0,1,2,3,0,1e-16,0],right)
+trim([0.01,0.023,0.005,0.12,0.27,0.82,0.53,0.21,0.05,0.001],0.1)
+
+# strip
+2 Removes space characters from the beginning and end of a string.
+0 Str(s)
+-1 trim
+strip("  an apple     ")
 
 # sum_riemann
 1 Renvoie un équivalent au voisinage de var1=+infini de la somme de Xpr(var1,var2) pour var2 allant de 1 à var1 lorsque la somme est une somme de Riemann.
@@ -16005,15 +16206,23 @@ sinc(pi*x)
 2 Returns the Fourier transform F(s) of f(x).
 0 Expr(f(x)),[Var(x),[Var(s)]]
 -1 ifourier
--2 fourier_cn
--3 fft
+-2 Fourier
+-3 fourier_cn
+-4 fft
 fourier(x/(x^3-19x+30),x,s)
-fourier(atan(1/(2x^2)),x,s)
+fourier(atan(t-4))
 fourier(BesselJ(3,x),x,s)
 fourier(sin(x)*sign(x),x,s)
 fourier(log(abs(x)),x,s)
 fourier(rect(x),x,s)
-fourier(piecewise(x<=-1,exp(x+1),x<=1,1,exp(2-2x)),x,s)
+fourier(piecewise(t<=-1,exp(t+1),t<=1,1,exp(2-2t)))
+
+# Fourier
+2 The inert form of fourier command.
+0 Expr(f),Var(t),Var(omega)
+-1 fourier
+-2 ifourier
+ F:=Fourier(y(t),t,omega);ifourier(F)
 
 # ifourier
 2 Returns the inverse Fourier transform f(x) of F(s).

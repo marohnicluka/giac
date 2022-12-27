@@ -30,6 +30,7 @@
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_wavelet.h>
 #include <gsl/gsl_wavelet2d.h>
+#include <gsl/gsl_spline.h>
 #endif
 
 #ifndef NO_NAMESPACE_GIAC
@@ -70,7 +71,8 @@ enum FourierFuncType {
     _FOURIER_FUNCTYPE_PARTIAL_DIFF  =25,
     _FOURIER_FUNCTYPE_FOURIER       =26,
     _FOURIER_FUNCTYPE_ATAN          =27,
-    _FOURIER_FUNCTYPE_DIRAC_F       =28
+    _FOURIER_FUNCTYPE_DIRAC_F       =28,
+    _FOURIER_FUNCTYPE_HILBERT       =29
 };
 
 enum ann_activation_function {
@@ -108,10 +110,11 @@ enum WaveletType {
 
 gen filter(const vecteur &args,filter_type typ,GIAC_CONTEXT);
 bool is_real_number(const gen &g,GIAC_CONTEXT);
+bool is_real_vector(const vecteur &v,GIAC_CONTEXT);
 gen to_real_number(const gen &g,GIAC_CONTEXT);
-gen generr(const char* msg,bool translate=false);
-gen generrtype(const char* msg,bool translate=false);
-gen generrdim(const char* msg,bool translate=false);
+gen generr(const char* msg);
+gen generrtype(const char* msg);
+gen generrdim(const char* msg);
 gen generrarg(int i);
 void print_error(const char *msg,GIAC_CONTEXT);
 void print_warning(const char *msg,GIAC_CONTEXT);
@@ -166,6 +169,8 @@ gen _tukey_window(const gen &g,GIAC_CONTEXT);
 gen _welch_window(const gen &g,GIAC_CONTEXT);
 gen _fourier(const gen &g,GIAC_CONTEXT);
 gen _ifourier(const gen &g,GIAC_CONTEXT);
+gen _Fourier(const gen &g,GIAC_CONTEXT);
+gen _Hilbert(const gen &g,GIAC_CONTEXT);
 gen _addtable(const gen &g,GIAC_CONTEXT);
 gen _rect(const gen &g,GIAC_CONTEXT);
 gen _boxcar(const gen &g,GIAC_CONTEXT);
@@ -189,6 +194,11 @@ gen _linstep(const gen &g,GIAC_CONTEXT);
 gen _linabs(const gen &g,GIAC_CONTEXT);
 gen _simplifyDirac(const gen &g,GIAC_CONTEXT);
 gen _simplifyFloor(const gen &g,GIAC_CONTEXT);
+gen _emd(const gen &g,GIAC_CONTEXT);
+gen _imfplot(const gen &g,GIAC_CONTEXT);
+gen _hilbert(const gen &g,GIAC_CONTEXT);
+gen _trim(const gen &g,GIAC_CONTEXT);
+gen _instfreq(const gen &g,GIAC_CONTEXT);
 
 extern const unary_function_ptr * const at_createwav;
 extern const unary_function_ptr * const at_plotwav;
@@ -223,6 +233,7 @@ extern const unary_function_ptr * const at_welch_window;
 extern const unary_function_ptr * const at_fourier;
 extern const unary_function_ptr * const at_ifourier;
 extern const unary_function_ptr * const at_Fourier;
+extern const unary_function_ptr * const at_Hilbert;
 extern const unary_function_ptr * const at_addtable;
 extern const unary_function_ptr * const at_rect;
 extern const unary_function_ptr * const at_boxcar;
@@ -246,8 +257,15 @@ extern const unary_function_ptr * const at_linstep;
 extern const unary_function_ptr * const at_linabs;
 extern const unary_function_ptr * const at_simplifyDirac;
 extern const unary_function_ptr * const at_simplifyFloor;
+extern const unary_function_ptr * const at_emd;
+extern const unary_function_ptr * const at_imfplot;
+extern const unary_function_ptr * const at_plotimf;
+extern const unary_function_ptr * const at_hilbert;
+extern const unary_function_ptr * const at_trim;
+extern const unary_function_ptr * const at_instfreq;
 
 typedef unsigned char uchar;
+typedef std::vector<std::pair<double,std::vector<uchar> > > colormap_t;
 
 class audio_clip : public gen_user {
     const context *ctx;
@@ -299,7 +317,7 @@ public:
     int play(int pos=0,int len=rand_max2,int repeats=1) const;
     bool write_wav(const char *fname) const;
     audio_clip resample(int nsr,int quality) const;
-    bool get_chunk_span(int c,int offset,int len,double &fmin,double &fmax) const;
+    bool get_chunk_span(int c,int offset,int len,double &fu_max,double &fu_min,double &fl_max,double &fl_min) const;
     audio_clip reverse() const;
     audio_clip to_mono() const;
     audio_clip splice(const audio_clip &other,int pos,double ex=-1) const;
@@ -349,7 +367,7 @@ public:
     bool has_alpha() const { return _d%2==0; }
     const std::string file_name() const { return _filename; }
     const uchar *data_array() const { return _data; }
-    void set_file_name(const char *fname) { _filename=std::string(fname); _tmp=false; }
+    void set_file_name(const char *fname);
     bool is_original() const { return !_filename.empty() && !_tmp; }
     uchar get_pixel(int chn,int x,int y) const;
     void set_pixel(int chn,int x,int y,uchar v);
@@ -358,13 +376,18 @@ public:
     void set_channel_data(int chn,const matrice &data,int x=0,int y=0);
     rgba_image to_grayscale() const;
     rgba_image to_negative() const;
+    rgba_image blend(const rgba_image &other,double t) const;
+    rgba_image blend(int color,double t) const;
     void flatten(vecteur &res) const;
     std::string color_type_string() const;
     bool assure_on_disk();
 };
 extern gen (*load_image_ptr)(const char *fname,GIAC_CONTEXT);
 extern gen (*resize_image_ptr)(const rgba_image &img,int w,int h,GIAC_CONTEXT);
+extern void (*cache_rgba_image_ptr)(const rgba_image &img);
+extern void (*uncache_rgba_image_ptr)(const rgba_image &img);
 
+#if 0
 class tempimagefilename {
     std::stack<std::string> _fnames;
 public:
@@ -374,6 +397,7 @@ public:
     void pop() { if (!_fnames.empty()) _fnames.pop(); }
 };
 extern tempimagefilename temp_image_file_name;
+#endif
 
 /* Neural network class */
 #ifdef HAVE_LIBGSL

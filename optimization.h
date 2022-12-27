@@ -647,7 +647,8 @@ class PermuSort { // permutation sorting in ascending order
         const PermuSort &parent;
     public:
         bool operator()(int i,int j) {
-            return is_strictly_greater(parent.v[j-parent.as],parent.v[i-parent.as],parent.ctx);
+            gen res=eval(symbolic(at_inferieur_strict_sort,makesequence(parent.v[i-parent.as],parent.v[j-parent.as])),1,parent.ctx);
+            return res.is_integer()?(bool)res.val:false;
         }
         comparator(const PermuSort &p) : parent(p) { }
     };

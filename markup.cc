@@ -2303,7 +2303,8 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
     if (g.is_symb_of_sommet(at_laplace) || g.is_symb_of_sommet(at_ilaplace) ||
         g.is_symb_of_sommet(at_invlaplace) || g.is_symb_of_sommet(at_fourier) ||
         g.is_symb_of_sommet(at_Fourier) || g.is_symb_of_sommet(at_ifourier) ||
-        g.is_symb_of_sommet(at_ztrans) || g.is_symb_of_sommet(at_invztrans)) {
+        g.is_symb_of_sommet(at_Hilbert) || g.is_symb_of_sommet(at_ztrans) ||
+        g.is_symb_of_sommet(at_invztrans)) {
       const gen &arg=g._SYMBptr->feuille;
       bool has_func=true,has_var1=false,has_var2=false;
       if (arg.type==_VECT && !arg._VECTptr->empty()) {
@@ -2327,8 +2328,8 @@ MarkupBlock gen2markup(const gen &g,int flags_orig,int &idc,GIAC_CONTEXT) {
         ml.neg=tmp.neg;
         ml.priority=_PRIORITY_APPLY;
         str=g._SYMBptr->sommet.ptr()->s;
-        string L=(is_substr(str,"laplace")?"L":(is_substr(str,"ztrans")?"Z" :
-                          (is_substr(str,"fourier") || is_substr(str,"Fourier")?"F":"?")));
+        string L=(is_substr(str,"laplace")?"L":(is_substr(str,"ztrans")?"Z":
+                          (is_substr(str,"fourier") || is_substr(str,"Fourier")?"F":(is_substr(str,"Hilbert")?"H":"?"))));
         if (mml_content)
           ml.content=mml_tag("apply",mml_tag("ci",str)+tmp.content+left.content+right.content,++idc);
         string lap=mml_tag("mi",L,0,"mathvariant","script");

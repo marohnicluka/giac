@@ -131,63 +131,6 @@ int argmax(const vecteur &v,GIAC_CONTEXT) {
     return argminmax(v,false,contextptr);
 }
 
-gen to_algebraic(const gen &g,vecteur &s,GIAC_CONTEXT) {
-    if (g.type==_IDNT || is_fully_numeric(g,num_mask_withfrac|num_mask_withint))
-        return g;
-    const_iterateur it,itend;
-    if (g.type==_VECT) {
-        vecteur res;
-        res.reserve(g._VECTptr->size());
-        for (it=g._VECTptr->begin(),itend=g._VECTptr->end();it!=itend;++it)
-            res.push_back(to_algebraic(*it,s,contextptr));
-        return change_subtype(res,g.subtype);
-    }
-    if (g.is_symb_of_sommet(at_plus)) {
-        gen ret(0);
-        for (it=g._SYMBptr->feuille._VECTptr->begin(),itend=g._SYMBptr->feuille._VECTptr->end();it!=itend;++it)
-            ret+=to_algebraic(*it,s,contextptr);
-        return ret;
-    }
-    if (g.is_symb_of_sommet(at_prod)) {
-        gen ret(1);
-        for (it=g._SYMBptr->feuille._VECTptr->begin(),itend=g._SYMBptr->feuille._VECTptr->end();it!=itend;++it)
-            ret=ret*to_algebraic(*it,s,contextptr);
-        return ret;
-    }
-    if (g.is_symb_of_sommet(at_inv))
-        return symb_inv(to_algebraic(g._SYMBptr->feuille,s,contextptr));
-    if (g.is_symb_of_sommet(at_div))
-        return to_algebraic(g._SYMBptr->feuille._VECTptr->front(),s,contextptr)/
-               to_algebraic(g._SYMBptr->feuille._VECTptr->back(),s,contextptr);
-    if (g.is_symb_of_sommet(at_neg))
-        return -to_algebraic(g._SYMBptr->feuille,s,contextptr);
-    if (g.is_symb_of_sommet(at_pow) && is_fully_numeric(g._SYMBptr->feuille._VECTptr->back(),num_mask_withfrac|num_mask_withint))
-        return symb_pow(to_algebraic(g._SYMBptr->feuille._VECTptr->front(),s,contextptr),g._SYMBptr->feuille._VECTptr->back());
-    gen u=temp_symb("toalg_tmp",s.size(),contextptr);
-    vecteur cond;
-    if (g.is_symb_of_sommet(at_exp))
-        cond.push_back(symb_superieur_strict(u,0));
-    else if (g.is_symb_of_sommet(at_cosh))
-        cond.push_back(symb_superieur_egal(u,1));
-    else if (g.is_symb_of_sommet(at_cos) || g.is_symb_of_sommet(at_sin) || g.is_symb_of_sommet(at_tanh))
-        cond.push_back(makevecteur(-1,1));
-    else if (g.is_symb_of_sommet(at_atan) || g.is_symb_of_sommet(at_asin))
-        cond.push_back(makevecteur(-cst_pi/2,cst_pi/2));
-    else if (g.is_symb_of_sommet(at_acos))
-        cond.push_back(makevecteur(0,cst_pi));
-    set_assumptions(u,cond,vecteur(0),false,contextptr);
-    s.push_back(u);
-    return u;
-}
-bool is_algebraic(const gen &g,GIAC_CONTEXT) {
-    vecteur s;
-    to_algebraic(g,s,contextptr);
-    if (s.empty())
-        return true;
-    _purge(s,contextptr);
-    return false;
-}
-
 /* Remove elements from V with indices in IND. */
 void remove_elements_with_indices(vecteur &v,const set<int> &ind) {
     set<int>::const_reverse_iterator it=ind.rbegin(),itend=ind.rend();
@@ -247,7 +190,8 @@ void bound_variables(const vecteur &vars,const vecteur &bnds,bool open,GIAC_CONT
     for (int i=vars.size();i-->0;) {
         const gen &v=vars[i],&lb=bnds[i]._VECTptr->front(),&ub=bnds[i]._VECTptr->back();
         if (!is_inf(lb) && !is_inf(ub))
-            assume_t_in_ab(v,lb,ub,open,open,contextptr);
+            giac_assume(symb_and(open?symb_superieur_strict(v,lb):symb_superieur_egal(v,lb),
+                open?symb_inferieur_strict(v,ub):symb_inferieur_egal(v,ub)),contextptr);
         else if (!is_inf(lb))
             giac_assume(open?symb_superieur_strict(v,lb):symb_superieur_egal(v,lb),contextptr);
         else if (!is_inf(ub))
@@ -269,6 +213,7 @@ vecteur sort_identifiers(const vecteur &v,GIAC_CONTEXT) {
     if (v.empty())
         return v;
     vecteur strv=*_apply(makesequence(at_string,v),contextptr)._VECTptr,snv;
+    snv.reserve(strv.size());
     for (const_iterateur it=strv.begin();it!=strv.end();++it) {
         if (it->type!=_STRNG)
             return v;
@@ -1485,7 +1430,7 @@ gen _implicitdiff(const gen &g,GIAC_CONTEXT) {
     if (ci==1 && is_equal(gv[dvi])) {
         vecteur &v=*gv[dvi]._SYMBptr->feuille._VECTptr;
         if (v.front()!=at_order || !v.back().is_integer() || v.back().val<=0)
-            return generrtype("Expected order=<posint>");
+            return generrtype(gettext("Expected order=<posint>"));
         order=v.back().val;
         compute_all=true;
     }
@@ -2426,7 +2371,12 @@ vecteur make_temp_vars(const vecteur &vars,vecteur &constr,GIAC_CONTEXT) {
         for (const_iterateur jt=intrv.begin();jt!=intrv.end();++jt) {
             const vecteur &b=*jt->_VECTptr;
             assert(b.size()==2);
-            adc.push_back(symb_and(symb_superieur_egal(*it,b.front()),symb_inferieur_egal(*it,b.back())));
+            if (!is_inf(b.front()) && !is_inf(b.back()))
+                adc.push_back(symb_and(symb_superieur_egal(*it,b.front()),symb_inferieur_egal(*it,b.back())));
+            else if (!is_inf(b.front()))
+                adc.push_back(symb_superieur_egal(*it,b.front()));
+            else if (!is_inf(b.back()))
+                adc.push_back(symb_inferieur_egal(*it,b.back()));
         }
         if (adc.size()>1)
             constr.push_back(symbolic(at_ou,adc));
@@ -2436,95 +2386,7 @@ vecteur make_temp_vars(const vecteur &vars,vecteur &constr,GIAC_CONTEXT) {
     return tmpvars;
 }
 
-/*
- * Function 'minimize' minimizes a multivariate continuous real function on a
- * closed and bounded region using the method of Lagrange multipliers. The
- * feasible region is specified by bounding variables or by adding one or more
- * (in)equality constraints.
- *
- * Usage
- * ^^^^^
- *     minimize(obj,[constr],vars,[opt])
- *
- * Parameters
- * ^^^^^^^^^^
- *   - obj                 : objective function to minimize
- *   - constr (optional)   : single equality or inequality constraint or
- *                           a list of constraints, if constraint is given as
- *                           expression it is assumed that it is equal to zero
- *   - vars                : single variable or a list of problem variables, where
- *                           optional bounds of a variable may be set by appending '=a..b'
- *   - location (optional) : the option keyword 'locus' or 'coordinates' or 'point'
- *
- * Objective function must be continuous in all points of the feasible region,
- * which is assumed to be closed and bounded. If one of these condinitions is
- * not met, the final result may be incorrect.
- *
- * When the fourth argument is specified, point(s) at which the objective
- * function attains its minimum value are also returned as a list of vector(s).
- * The keywords 'locus', 'coordinates' and 'point' all have the same effect.
- * For univariate problems, a vector of numbers (x values) is returned, while
- * for multivariate problems it is a vector of vectors, i.e. a matrix.
- *
- * The function attempts to obtain the critical points in exact form, if the
- * parameters of the problem are all exact. It works best for problems in which
- * the lagrangian function gradient and the constraints are rational expressions.
- * Points at which the function is not differentiable are also considered critical.
- * This function handles univariate piecewise functions.
- *
- * If no critical points were obtained, the return value is undefined.
- *
- * Examples
- * ^^^^^^^^
- * minimize(sin(x),[x=0..4])
- *    >> sin(4)
- * minimize(asin(x),x=-1..1)
- *    >> -pi/2
- * minimize(x^2+cos(x),x=0..3)
- *    >> 1
- * minimize(x^4-x^2,x=-3..3,locus)
- *    >> [-1/4,[(sqrt(2))/2,-(sqrt(2))/2]]
- * minimize(abs(x),x=-1..1)
- *    >> 0
- * minimize(x-abs(x),x=-1..1)
- *    >> -2
- * minimize(abs(exp(-x^2)-1/2),x=-4..4)
- *    >> 0
- * minimize(piecewise(x<=-2,x+6,x<=1,x^2,3/2-x/2),x=-3..2)
- *    >> 0
- * minimize(x^2-3x+y^2+3y+3,[x=2..4,y=-4..-2],point)
- *    >> -1,[[2,-2]]
- * minimize(2x^2+y^2,x+y=1,[x,y])
- *    >> 2/3
- * minimize(2x^2-y^2+6y,x^2+y^2<=16,[x,y])
- *    >> -40
- * minimize(x*y+9-x^2-y^2,x^2+y^2<=9,[x,y])
- *    >> -9/2
- * minimize(sqrt(x^2+y^2)-z,[x^2+y^2<=16,x+y+z=10],[x,y,z])
- *    >> -4*sqrt(2)-6
- * minimize(x*y*z,x^2+y^2+z^2=1,[x,y,z])
- *    >> -sqrt(3)/9
- * minimize(sin(x)+cos(x),x=0..20,coordinates)
- *    >> -sqrt(2),[5*pi/4,13*pi/4,21*pi/4]
- * minimize((1+x^2+3y+5x-4*x*y)/(1+x^2+y^2),x^2/4+y^2/3=9,[x,y])
- *    >> -2.44662490691
- * minimize(x^2-2x+y^2+1,[x+y<=0,x^2<=4],[x,y],locus)
- *    >> 1/2,[[1/2,-1/2]]
- * minimize(x^2*(y+1)-2y,[y<=2,sqrt(1+x^2)<=y],[x,y])
- *    >> -4
- * minimize(4x^2+y^2-2x-4y+1,4x^2+y^2=1,[x,y])
- *    >> -sqrt(17)+2
- * minimize(cos(x)^2+cos(y)^2,x+y=pi/4,[x,y],locus)
- *    >> (-sqrt(2)+2)/2,[[5*pi/8,-3*pi/8]]
- * minimize(x^2+y^2,x^4+y^4=2,[x,y])
- *    >> 1.41421356237
- * minimize(z*x*exp(y),z^2+x^2+exp(2y)=1,[x,y,z])
- *    >> -sqrt(3)/9
- * minimize(y,x^2-x^4-y^5=0,[x=-1..1,y=0..1])
- *    >> 0
- * minimize(x*y,x^2-x^4-y^5=0,[x=-1..1,y=0..1])
- *    >> -sqrt(7)*42^(1/5)/9
- */
+/* Return the minimal value of a differentiable function on compact domain. */
 gen _minimize(const gen &args,GIAC_CONTEXT) {
     if (args.type==_STRNG && args.subtype==-1) return args;
     if (args.type!=_VECT || args.subtype!=_SEQ__VECT || args._VECTptr->size()>4)
@@ -2532,7 +2394,7 @@ gen _minimize(const gen &args,GIAC_CONTEXT) {
     vecteur &argv=*args._VECTptr,constr,vars,ineq,initial;
     bool location=false;
     int nargs=argv.size();
-    if (argv.back()==at_coordonnees || argv.back()==at_lieu || argv.back()==at_point) {
+    if (argv.back()==at_coordonnees || argv.back()==at_point) {
         location=true;
         --nargs;
     }
@@ -2555,6 +2417,7 @@ gen _minimize(const gen &args,GIAC_CONTEXT) {
         return generr(gettext("Symbolic constants must be real"));
     vecteur tmpvars=make_temp_vars(vars,constr,contextptr);
     f=subst(f,vars,tmpvars,false,contextptr);
+    cout << constr << endl;
     constr=subst(constr,vars,tmpvars,false,contextptr);
     gen mn(undef),mx(undef);
     vecteur loc,ass;
@@ -2593,42 +2456,7 @@ static const char _minimize_s []="minimize";
 static define_unary_function_eval (__minimize,&_minimize,_minimize_s);
 define_unary_function_ptr5(at_minimize,alias_at_minimize,&__minimize,0,true)
 
-/*
- * 'maximize' takes the same arguments as the function 'minimize', but
- * maximizes the objective function. See 'minimize' for details.
- *
- * Examples
- * ^^^^^^^^
- * maximize(cos(x),x=1..3)
- *    >> cos(1)
- * maximize(piecewise(x<=-2,x+6,x<=1,x^2,3/2-x/2),x=-3..2)
- *    >> 4
- * maximize(x^2-3x+y^2+3y+3,[x=2..4,y=-4..-2])
- *    >> 11
- * maximize(x*y*z,x^2+2*y^2+3*z^2<=1,[x,y,z],point)
- *    >> sqrt(2)/18,[[-sqrt(3)/3,sqrt(6)/6,-1/3],[sqrt(3)/3,-sqrt(6)/6,-1/3],
- *                   [-sqrt(3)/3,-sqrt(6)/6,1/3],[sqrt(3)/3,sqrt(6)/6,1/3]]
- * maximize(x^2-x*y+2*y^2,[x=-1..0,y=-1/2..1/2],coordinates)
- *    >> 2,[[-1,1/2]]
- * maximize(x*y,[x+y^2<=2,x>=0,y>=0],[x,y],locus)
- *    >> 4*sqrt(6)/9,[[4/3,sqrt(6)/3]]
- * maximize(y^2-x^2*y,y<=x,[x=0..2,y=0..2])
- *    >> 4
- * maximize(2x+y,4x^2+y^2=8,[x,y])
- *    >> 4
- * maximize(x^2*(y+1)-2y,[y<=2,sqrt(1+x^2)<=y],[x,y])
- *    >> 5
- * maximize(4x^2+y^2-2x-4y+1,4x^2+y^2=1,[x,y])
- *    >> sqrt(17)+2
- * maximize(3x+2y,2x^2+3y^2<=3,[x,y])
- *    >> sqrt(70)/2
- * maximize(x*y,[2x+3y<=10,x>=0,y>=0],[x,y])
- *    >> 25/6
- * maximize(x^2+y^2+z^2,[x^2/16+y^2+z^2=1,x+y+z=0],[x,y,z])
- *    >> 8/3
- * assume(a>0);maximize(x^2*y^2*z^2,x^2+y^2+z^2=a^2,[x,y,z])
- *    >> a^6/27
- */
+/* Return the maximal value of a differentiable function on compact domain. */
 gen _maximize(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT || g._VECTptr->size()<2)
@@ -3080,7 +2908,7 @@ gen _minimax(const gen &g,GIAC_CONTEXT) {
     // detect parameters
     vecteur s(*gv[1]._SYMBptr->feuille._VECTptr);
     if (s[0].type!=_IDNT || !s[1].is_symb_of_sommet(at_interval))
-        return generrtype("Expected x=a..b as the second argument");
+        return generrtype(gettext("Expected x=a..b as the second argument"));
     identificateur x(*s[0]._IDNTptr);
     s=*s[1]._SYMBptr->feuille._VECTptr;
     gen a(_evalf(s[0],contextptr)),b(_evalf(s[1],contextptr));
@@ -3402,7 +3230,7 @@ gen _tpsolve(const gen &g,GIAC_CONTEXT) {
         return generrtype(gettext("Supply and demand quantites must be integers"));
     matrice P(*gv[2]._VECTptr);
     if (is_strictly_greater(0,_min(_min(P,contextptr),contextptr),contextptr))
-        return generr("All costs must be non-negative");
+        return generr(gettext("All costs must be non-negative"));
     vecteur sy(*_lname(P,contextptr)._VECTptr);
     if (sy.size()>1)
         return generr(gettext("At most one symbol is allowed in the cost matrix"));
@@ -3517,7 +3345,7 @@ void nlp_problem::initialize(int method,const meth_parm &parm) {
             obj_gradient=*_grad(makesequence(obj,vars),ctx)._VECTptr;
             if (_smooth_obj=!has_diff(obj_gradient,vars) && !has_breaks(obj_gradient))
                 debug("Objective function is differentiable");
-            else debug ("Objective function is not differentiable");
+            else debug ("Cannot compute the derivative of the objective function");
             eq_jacobian.reserve(eq_cons.size());
             ineq_jacobian.reserve(ineq_cons.size());
             _linconstr=_smooth_constr=_convex_constr=true;
@@ -3563,7 +3391,7 @@ void nlp_problem::initialize(int method,const meth_parm &parm) {
                     _convex_obj=_have_hessian=false;
                 }
                 if (parm.convex==1 && !_convex_obj)
-                    warn("the objective is not twice differentiable, dropping convexity assumption");
+                    warn("Failed to compute Hessian, dropping convexity assumption");
             } else {
                 make_bounded_vars(true);
                 obj_hessian=zero_mat(n,n,ctx);
@@ -6695,11 +6523,11 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
         string fname=gen2string(fnameg),ampl_msg;
         vecteur rest_args=g.type==_VECT?vecteur(g._VECTptr->begin()+1,g._VECTptr->end()):vecteur(0),pv,po,pc;
         if (!nlp_problem::ampl_load(fname,pv,po,pc,ampl_msg,contextptr))
-            return generr(ampl_msg.c_str(),false);
+            return generr(ampl_msg.c_str());
         if (po.empty())
             obj=0;
         else if (po.size()>1)
-            return generr("Multi-objective problems are not supported");
+            return generr(gettext("Multi-objective problems are not supported"));
         else obj=po.front();
         *logptr(contextptr) << gettext("Loaded a problem with") << " " << pv.size() << " " << gettext("variables and")
                             << " " << pc.size() << " " << gettext("constraints") << "\n";
@@ -6739,7 +6567,7 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
     if (g.type==_SYMB) // unconstrained minimization without any options and bounds
         return _nlpsolve(makesequence(g,vecteur(0)),contextptr);
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT || g._VECTptr->size()<2)
-        return generrtype("Expected a sequence of two or more arguments");
+        return generrtype(gettext("Expected a sequence of two or more arguments"));
     const vecteur &gv=*g._VECTptr;
     obj=gv.front();
     add_identifiers(obj,vars,contextptr);
@@ -6823,7 +6651,7 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
                 if (rh.subtype==_INT_BOOLEAN)
                     parm.cluster=rh.val-1;
                 else if (rh.val<1)
-                    return generr("Expected a positive integer");
+                    return generr(gettext("Expected a positive integer"));
                 else parm.cluster=rh.val;
             } else if (lh.is_integer() && lh.val==_NLP_INITIALPOINT && rh.type==_VECT) {
                 initp.resize(vars.size(),undef);
@@ -6836,19 +6664,19 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
                     else break;
                 }
                 if (jt!=pnt.end() || has_inf_or_undef(initp))
-                    return generr("Invalid initial point specification");
+                    return generr(gettext("Invalid initial point specification"));
                 if (is_vect_of_intervals(initp,ipl,ipu,contextptr)) {
                     if (!is_numericv(ipl,num_mask) || !is_numericv(ipu,num_mask))
-                        return generr("Invalid initial area specification");
+                        return generr(gettext("Invalid initial area specification"));
                     initp=makevecteur(at_interval,ipl,ipu);
                 } else {
                     if (ckmatrix(initp)) {
                         if (!is_numericm(initp,num_mask))
-                            return generr("Initial points must be numeric");
+                            return generr(gettext("Initial points must be numeric"));
                         initp=mtran(initp);
                     } else {
                         if (!is_numericv(initp,num_mask))
-                            return generr("Initial point must be numeric");
+                            return generr(gettext("Initial point must be numeric"));
                         initp=vecteur(1,initp);
                     }
                 }
@@ -6861,65 +6689,65 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
                 } else {
                     const vecteur &meth=*rh._VECTptr;
                     if (meth.empty() || meth.front().type!=_STRNG)
-                        return generr("Invalid method specification");
+                        return generr(gettext("Invalid method specification"));
                     method_name=*meth.front()._STRNGptr;
                     /* parse method parameters */
                     for (const_iterateur it=meth.begin()+1;it!=meth.end();++it) {
                         if (!is_equal(*it) || it->_SYMBptr->feuille._VECTptr->front().type!=_STRNG)
-                            return generr("Invalid method parameter specification");
+                            return generr(gettext("Invalid method parameter specification"));
                         string param_name=*it->_SYMBptr->feuille._VECTptr->front()._STRNGptr;
                         const gen &pval=it->_SYMBptr->feuille._VECTptr->back();
                         if (param_name=="penalty") {
                             if (pval.type==_CPLX) {
                                 if (!is_strictly_positive(re(pval,contextptr),contextptr) || !is_strictly_positive(im(pval,contextptr),contextptr))
-                                    return generr("Penalty coefficients must be positive");
+                                    return generr(gettext("Penalty coefficients must be positive"));
                                 parm.penalty=_evalf(pval,contextptr);
                             } else {
                                 if (!is_real_number(pval,contextptr) || is_positive(-pval,contextptr))
-                                    return generr("Expected a positive real number");
+                                    return generr(gettext("Expected a positive real number"));
                                 parm.penalty=to_real_number(pval,contextptr).to_double(contextptr);
                             }
                         } else if (param_name=="cross-probability") {
                             if (!is_real_number(pval,contextptr) || !is_positive(pval,contextptr) || !is_greater(1,pval,contextptr))
-                                return generr("Expected a real number in [0,1]");
+                                return generr(gettext("Expected a real number in [0,1]"));
                             parm.cross_prob=to_real_number(pval,contextptr).to_double(contextptr);
                         } else if (param_name=="scale") {
                             if (!is_real_number(pval,contextptr) || !is_positive(pval,contextptr) || !is_greater(2,pval,contextptr))
-                                return generr("Expected a real number in [0,2]");
+                                return generr(gettext("Expected a real number in [0,2]"));
                             parm.scale=to_real_number(pval,contextptr).to_double(contextptr);
                         } else if (param_name=="contract-ratio") {
                             if (!is_real_number(pval,contextptr) || is_positive(-pval,contextptr) || is_positive(pval-1,contextptr))
-                                return generr("Expected a real number in (0,1)");
+                                return generr(gettext("Expected a real number in (0,1)"));
                             parm.contract_ratio=to_real_number(pval,contextptr).to_double(contextptr);
                         } else if (param_name=="shrink-ratio") {
                             if (!is_real_number(pval,contextptr) || is_positive(-pval,contextptr) || is_positive(pval-1,contextptr))
-                                return generr("Expected a real number in (0,1)");
+                                return generr(gettext("Expected a real number in (0,1)"));
                             parm.shrink_ratio=to_real_number(pval,contextptr).to_double(contextptr);
                         } else if (param_name=="reflect-ratio") {
                             if (!is_real_number(pval,contextptr) || is_positive(-pval,contextptr))
-                                return generr("Expected a positive real number");
+                                return generr(gettext("Expected a positive real number"));
                             parm.reflect_ratio=to_real_number(pval,contextptr).to_double(contextptr);
                         } else if (param_name=="expand-ratio") {
                             if (!is_real_number(pval,contextptr) || is_positive(1-pval,contextptr))
-                                return generr("Expected a real number greater than 1");
+                                return generr(gettext("Expected a real number greater than 1"));
                             parm.expand_ratio=to_real_number(pval,contextptr).to_double(contextptr);
                         } else if (param_name=="search-points") {
                             if (!pval.is_integer() || pval.val<1)
-                                return generr("Expected a positive integer");
+                                return generr(gettext("Expected a positive integer"));
                             parm.search_points=pval.val;
                         } else if (param_name=="postprocess") {
                             if (!pval.is_integer() || pval.subtype!=_INT_BOOLEAN)
-                                return generr("Expected a boolean value");
+                                return generr(gettext("Expected a boolean value"));
                             parm.postprocess=(bool)pval.val;
                         } else if (param_name=="size") {
                             if (!is_real_number(pval,contextptr) || is_positive(-pval,contextptr))
-                                return generr("Expected a positive real number");
+                                return generr(gettext("Expected a positive real number"));
                             parm.size=to_real_number(pval,contextptr).to_double(contextptr);
                         } else if (param_name=="step") {
                             if (!is_real_number(pval,contextptr) || is_positive(-pval,contextptr))
-                                return generr("Expected a positive real number");
+                                return generr(gettext("Expected a positive real number"));
                             parm.step=to_real_number(pval,contextptr).to_double(contextptr);
-                        } else return generr("Unrecognized method parameter");
+                        } else return generr(gettext("Unrecognized method parameter"));
                     }
                 }
                 if (method_name=="differential-evolution" || method_name=="de")
@@ -6932,7 +6760,7 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
                     method=_NLP_INTERIOR_POINT;
                 else if (method_name=="cobyla" || method_name=="cbl")
                     method=_NLP_COBYLA;
-                else return generr("Method not supported");
+                else return generr(gettext("Method not supported"));
             } else if (is_mcint(lh,_NLP_PRESOLVE) && rh.is_integer() && rh.subtype==_INT_BOOLEAN) {
                 parm.presolve=(bool)rh.val;
             } else if (is_mcint(lh,_NLP_MAXIMIZE) && rh.is_integer() && rh.subtype==_INT_BOOLEAN) {
@@ -6958,7 +6786,7 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
                 for (const_iterateur vt=vs.begin();vt!=vs.end();++vt) {
                     int j=indexof(*vt,vars);
                     if (j<0)
-                        return generr("Expected a variable");
+                        return generr(gettext("Expected a variable"));
                     lbv[j]=max(lb,lbv[j],contextptr);
                     ubv[j]=min(ub,ubv[j],contextptr);
                 }
@@ -7002,7 +6830,7 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
     for (const_iterateur it=intvars.begin();it!=intvars.end();++it) {
         int j=indexof(*it,vars);
         if (j<0) // specified variable not found among problem variables
-            return generr("Invalid specification of integer variables");
+            return generr(gettext("Invalid specification of integer variables"));
         intvars_indices.insert(j);
         if (contains(binvars,*it)) { // tighten bounds on binary variable
             lbv[j]=max(lbv[j],0,contextptr);
@@ -7026,7 +6854,7 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
     try {
         res=prob.optimize(method,parm,initp,optsol,optval);
     } catch (const std::runtime_error &e) {
-        return generr(e.what(),false);
+        return generr(e.what());
     }
     switch (res) {
     case _NLP_OPTIMAL:
@@ -7035,10 +6863,10 @@ gen _nlpsolve(const gen &g,GIAC_CONTEXT) {
         return change_subtype(makevecteur(string2gen(gettext("Failed to optimize at given precision"),false),
                                           _zip(makesequence(at_equal,vars,optsol),contextptr)),_LIST__VECT);
     case _NLP_ERROR:
-        return generr("Failed to find a solution");
+        return generr(gettext("Failed to find a solution"));
     case _NLP_INFEAS:
         if (optsol.size()!=vars.size())
-            return generr("The problem is infeasible");
+            return generr(gettext("The problem is infeasible"));
         return change_subtype(makevecteur(string2gen(gettext("Solution is infeasible"),false),
                                           _zip(makesequence(at_equal,vars,optsol),contextptr)),_LIST__VECT);
     case _NLP_UNBOUNDED:
@@ -7118,27 +6946,27 @@ gen thiele(int k,vecteur &xv,vecteur &yv,identificateur &var,map<tprob::ipair,ge
 gen _thiele(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT)
-        return generrtype("Expected a matrix or a sequence of arguments");
+        return generrtype(gettext("Expected a matrix or a sequence of arguments"));
     vecteur xv,yv;
     gen x0=identificateur("x");
     int opt_pos=1;
     if (g.subtype==_SEQ__VECT) {
         const vecteur &gv=*g._VECTptr;
         if (gv[0].type!=_VECT)
-            return generrtype("Expected a list or a matrix");
+            return generrtype(gettext("Expected a list or a matrix"));
         if (ckmatrix(gv[0],false)) {
             matrice m(mtran(*gv[0]._VECTptr));
             if (m.size()!=2)
-                return generr("Expected a two-column matrix");
+                return generr(gettext("Expected a two-column matrix"));
             xv=*m[0]._VECTptr;
             yv=*m[1]._VECTptr;
         } else {
             if (gv.size()<2)
-                return generr("Expected a pair of lists");
+                return generr(gettext("Expected a pair of lists"));
             if (gv[1].type!=_VECT)
-                return generrtype("Expected a list");
+                return generrtype(gettext("Expected a list"));
             if (gv[0]._VECTptr->size()!=gv[1]._VECTptr->size())
-                return generrdim("Expected two lists of equal size");
+                return generrdim(gettext("Expected two lists of equal size"));
             xv=*gv[0]._VECTptr;
             yv=*gv[1]._VECTptr;
             opt_pos=2;
@@ -7147,15 +6975,15 @@ gen _thiele(const gen &g,GIAC_CONTEXT) {
             x0=gv[opt_pos];
     } else {
         if (!ckmatrix(*g._VECTptr,false))
-            return generrtype("Expected a matrix");
+            return generrtype(gettext("Expected a matrix"));
         matrice m(mtran(*g._VECTptr));
         if (m.size()!=2)
-            return generrdim("Expected a two-column matrix");
+            return generrdim(gettext("Expected a two-column matrix"));
         xv=*m[0]._VECTptr;
         yv=*m[1]._VECTptr;
     }
     if (xv.size()<2)
-        return generr("At least two sample points are required");
+        return generr(gettext("At least two sample points are required"));
     gen x=temp_symb("x",-1,contextptr);
     map<tprob::ipair,gen> invdiff;
     gen rat(yv[0]+thiele(1,xv,yv,*x._IDNTptr,invdiff,contextptr));
@@ -7200,7 +7028,7 @@ define_unary_function_ptr5(at_thiele,alias_at_thiele,&__thiele,0,true)
 gen triginterp(const vecteur &data,const gen &a,const gen &b,const identificateur &x,GIAC_CONTEXT) {
     int n=data.size();
     if (n<2)
-        return generr("At least two data points are required");
+        return generr(gettext("At least two data points are required"));
     int N=(n%2)==0?n/2:(n-1)/2;
     gen T=(b-a)*fraction(n,n-1),twopi=2*_IDNT_pi(),X;
     matrice cos_coeff=zero_mat(N,n,contextptr);
@@ -7229,9 +7057,9 @@ gen _triginterp(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     vecteur &args=*g._VECTptr;
     if (args.size()<2)
-        return generr("Too few arguments");
+        return generr(gettext("Too few arguments"));
     if (args.front().type!=_VECT)
-        return generrtype("Expected a list");
+        return generrtype(gettext("Expected a list"));
     vecteur &data=*args.front()._VECTptr;
     gen x,ab,a,b,&vararg=args.at(1);
     if (is_equal(vararg) && (x=_lhs(vararg,contextptr)).type==_IDNT && (ab=_rhs(vararg,contextptr)).is_symb_of_sommet(at_interval)) {
@@ -7240,7 +7068,7 @@ gen _triginterp(const gen &g,GIAC_CONTEXT) {
     } else if (args.size()==4 && (x=args.back()).type==_IDNT) {
         a=args.at(1);
         b=args.at(2);
-    } else return generr("Expected x=a..b or x,a,b");
+    } else return generr(gettext("Expected x=a..b or x,a,b"));
     gen tp=triginterp(data,a,b,*x._IDNTptr,contextptr);
     if (is_approx(data) || is_approx(a) || is_approx(b))
         tp=_evalf(tp,contextptr);
@@ -7259,7 +7087,7 @@ define_unary_function_ptr5(at_triginterp,alias_at_triginterp,&__triginterp,0,tru
 gen _ratinterp(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT)
-        return generrtype("Expected a matrix or a sequence of arguments");
+        return generrtype(gettext("Expected a matrix or a sequence of arguments"));
     vecteur X,Y;
     gen x=temp_symb("x",-1,contextptr),x0=identificateur("x");
     int d=-1,opts_at=2;
@@ -7267,46 +7095,46 @@ gen _ratinterp(const gen &g,GIAC_CONTEXT) {
     if (g.subtype==_SEQ__VECT) {
         const vecteur &gv=*g._VECTptr;
         if (gv.front().type!=_VECT)
-            return generrtype("Expected a list or a matrix");
+            return generrtype(gettext("Expected a list or a matrix"));
         if (ckmatrix(*gv.front()._VECTptr,false)) {
             const matrice &M=*gv.front()._VECTptr;
             if (M.empty() || M.front()._VECTptr->size()!=2)
-                return generr("Expected a two-column matrix");
+                return generr(gettext("Expected a two-column matrix"));
             matrice tM=mtran(M);
             X=*tM.front()._VECTptr;
             Y=*tM.back()._VECTptr;
             opts_at=1;
         } else {
             if (gv.size()<2)
-                return generr("Expected a pair of lists");
+                return generr(gettext("Expected a pair of lists"));
             if (gv[1].type!=_VECT)
-                return generrtype("Expected a list");
+                return generrtype(gettext("Expected a list"));
             X=*gv[0]._VECTptr;
             Y=*gv[1]._VECTptr;
             if (X.empty() || X.size()!=Y.size())
-                return generrdim("Expected two lists of equal size");
+                return generrdim(gettext("Expected two lists of equal size"));
         }
         if (gv.size()-opts_at>=1)
             x0=gv[opts_at];
         if (gv.size()-opts_at>=2) {
             const gen &arg=gv[opts_at+1];
             if (!arg.is_integer() || arg.val<0 || arg.val>=int(X.size()))
-                return generr("Expected an integer 0<=d<|X|");
+                return generr(gettext("Expected an integer 0<=d<|X|"));
             d=arg.val;
         }
     } else {
         if (!ckmatrix(*g._VECTptr,false))
-            return generrtype("Expected a matrix");
+            return generrtype(gettext("Expected a matrix"));
         const matrice &M=*g._VECTptr;
         if (M.empty() || M.front()._VECTptr->size()!=2)
-            return generr("Expected a two-column matrix");
+            return generr(gettext("Expected a two-column matrix"));
         matrice tM=mtran(M);
         X=*tM.front()._VECTptr;
         Y=*tM.back()._VECTptr;
     }
     int n=X.size()-1;
     if (n<1)
-        return generr("At least two sample points are required");
+        return generr(gettext("At least two sample points are required"));
     if (d<0)
         d=0;
     /* compute the interpolant corresponding to d in barycentric form */
@@ -7475,7 +7303,7 @@ bool parse_interval(const gen &feu,double &a,double &b,GIAC_CONTEXT) {
 gen _kernel_density(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT)
-        return generrtype("Expected a list or a sequence of arguments");
+        return generrtype(gettext("Expected a list or a sequence of arguments"));
     gen x=identificateur("x");
     double a=0,b=0,bw=0,sd,d,sx=0,sxsq=0;
     int bins=100,interp=1,method=_KDE_METHOD_LIST,bw_method=_KDE_BW_METHOD_DPI;
@@ -7493,20 +7321,20 @@ gen _kernel_density(const gen &g,GIAC_CONTEXT) {
                     else {
                         gen fv;
                         if (!is_real_number(v,contextptr) || !is_strictly_positive(fv=to_real_number(v,contextptr),contextptr))
-                            return generr("Invalid bandwidth specification");
+                            return generr(gettext("Invalid bandwidth specification"));
                         bw=fv.to_double(contextptr);
                     }
                 } else if (opt==_KDE_BINS) {
                     if (!v.is_integer() || v.val<=0)
-                        return generr("Number of bins must be positive");
+                        return generr(gettext("Number of bins must be positive"));
                     bins=v.val;
                 } else if (opt==at_range) {
                     if (v.type==_VECT) {
                         if (v._VECTptr->size()!=2 || !parse_interval(v,a,b,contextptr))
-                            return generr("Invalid range specification");
+                            return generr(gettext("Invalid range specification"));
                     } else if (!v.is_symb_of_sommet(at_interval) ||
                                !parse_interval(v._SYMBptr->feuille,a,b,contextptr))
-                        return generr("Invalid range specification");
+                        return generr(gettext("Invalid range specification"));
                 } else if (opt==at_output || opt==at_Output) {
                     if (v==at_exact)
                         method=_KDE_METHOD_EXACT;
@@ -7514,46 +7342,46 @@ gen _kernel_density(const gen &g,GIAC_CONTEXT) {
                         method=_KDE_METHOD_PIECEWISE;
                     else if (v==_MAPLE_LIST)
                         method=_KDE_METHOD_LIST;
-                    else return generr("Invalid method specification");
+                    else return generr(gettext("Invalid method specification"));
                 } else if (opt==at_interp) {
                     if (!v.is_integer() || (interp=v.val)<1)
-                        return generr("Invalid interpolation method specification");
+                        return generr(gettext("Invalid interpolation method specification"));
                 } else if (opt==at_spline) {
                     if (!v.is_integer() || (interp=v.val)<1)
-                        return generr("Invalid interpolation method specification");
+                        return generr(gettext("Invalid interpolation method specification"));
                     method=_KDE_METHOD_PIECEWISE;
                 } else if (opt.type==_IDNT) {
                     x=opt;
                     if (!v.is_symb_of_sommet(at_interval) || !parse_interval(v._SYMBptr->feuille,a,b,contextptr))
-                        return generr("Invalid range specification");
+                        return generr(gettext("Invalid range specification"));
                 } else if (opt==at_eval) x=v;
-                else return generr("Unrecognized option");
+                else return generr(gettext("Unrecognized option"));
             } else if (it->type==_IDNT) x=*it;
             else if (it->is_symb_of_sommet(at_interval)) {
                 if (!parse_interval(it->_SYMBptr->feuille,a,b,contextptr))
-                    return generr("Invalid range specification");
+                    return generr(gettext("Invalid range specification"));
             } else if (*it==at_exact)
                 method=_KDE_METHOD_EXACT;
             else if (*it==at_piecewise)
                 method=_KDE_METHOD_PIECEWISE;
-            else return generr("Unrecognized option");
+            else return generr(gettext("Unrecognized option"));
         }
     }
     if (x.type!=_IDNT) {
         if (!is_real_number(x,contextptr))
-            return generr("Expected a real constant");
+            return generr(gettext("Expected a real constant"));
         if (method==_KDE_METHOD_LIST)
-            return generr("Invalid method");
+            return generr(gettext("Invalid method"));
     }
     vecteur &data=g.subtype==_SEQ__VECT?*g._VECTptr->front()._VECTptr:*g._VECTptr;
     int n=data.size();
     if (n<2)
-        return generr("Data too small");
+        return generr(gettext("Data too small"));
     vector<double> ddata(n);
     gen e;
     for (const_iterateur it=data.begin();it!=data.end();++it) {
         if (!is_real_number(*it,contextptr))
-            return generr("Expected a real constant");
+            return generr(gettext("Expected a real constant"));
         d=ddata[it-data.begin()]=to_real_number(*it,contextptr).to_double(contextptr);
         sx+=d;
         sxsq+=d*d;
@@ -7572,11 +7400,11 @@ gen _kernel_density(const gen &g,GIAC_CONTEXT) {
         bins=0;
     else if (method==_KDE_METHOD_LIST) {
         if (bins<1)
-            return generr("Number of bins must be positive");
+            return generr(gettext("Number of bins must be positive"));
         interp=0;
     } else if (method==_KDE_METHOD_PIECEWISE) {
         if (bins<1 || interp<1)
-            return generr("Number of bins and interpolation specification must be positive");
+            return generr(gettext("Number of bins and interpolation specification must be positive"));
     }
     return kernel_density(ddata,bw,sd,bins,a,b,interp,x,contextptr);
 }
@@ -7639,20 +7467,20 @@ gen _fitdistr(const gen &g,GIAC_CONTEXT) {
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
         return gentypeerr(contextptr);
     if (g._VECTptr->size()!=2)
-        return generrdim("Expected a sequence of two arguments");
+        return generrdim(gettext("Expected a sequence of two arguments"));
     if (g._VECTptr->front().type!=_VECT)
-        return generr("Expected a list");
+        return generr(gettext("Expected a list"));
     vecteur &S=*g._VECTptr->front()._VECTptr;
     int n=S.size(); // number of samples
     if (n<2)
-        return generr("At least two samples are required");
+        return generr(gettext("At least two samples are required"));
     const gen &dist=g._VECTptr->back();
     gen N(n);
     /* compute sample mean and variance */
     gen mean(0),var(0),ev;
     for (const_iterateur it=S.begin();it!=S.end();++it) {
         if (!is_real_number(*it,contextptr))
-            return generr("Expected a real constant");
+            return generr(gettext("Expected a real constant"));
         mean+=to_real_number(*it,contextptr);
     }
     mean=mean/(N-1);
@@ -7666,23 +7494,23 @@ gen _fitdistr(const gen &g,GIAC_CONTEXT) {
         return symbolic(at_normald,makesequence(mean,sdev));
     } else if (dist==at_poisson || dist==at_POISSON) {
         for (const_iterateur it=S.begin();it!=S.end();++it) {
-            if (!it->is_integer() || it->val<0) return generr("Expected a nonnegative integer");
+            if (!it->is_integer() || it->val<0) return generr(gettext("Expected a nonnegative integer"));
         }
         return symbolic(at_poisson,mean);
     } else if (dist==at_exp || dist==at_EXP || dist==at_exponential || dist==at_exponentiald) {
         for (const_iterateur it=S.begin();it!=S.end();++it) {
-            if (is_positive(-*it,contextptr)) return generr("Expected a positive number");
+            if (is_positive(-*it,contextptr)) return generr(gettext("Expected a positive number"));
         }
         return symbolic(at_exponentiald,_inv(mean,contextptr));
     } else if (dist==at_geometric) {
         for (const_iterateur it=S.begin();it!=S.end();++it) {
-            if (!it->is_integer() || it->val<1) return generr("Expected a positive integer");
+            if (!it->is_integer() || it->val<1) return generr(gettext("Expected a positive integer"));
         }
         return symbolic(at_geometric,_inv(mean,contextptr));
     } else if (dist==at_gammad || dist==at_Gamma) {
         gen slog(0);
         for (const_iterateur it=S.begin();it!=S.end();++it) {
-            if (is_positive(-*it,contextptr)) return generr("Expected a positive number");
+            if (is_positive(-*it,contextptr)) return generr(gettext("Expected a positive number"));
             slog+=ln(*it,contextptr);
         }
         gen a_init=sq(mean)/var,aidn=temp_symb("a",-1,contextptr);
@@ -7693,7 +7521,7 @@ gen _fitdistr(const gen &g,GIAC_CONTEXT) {
         gen slog(0),s1log(0),aidn=temp_symb("a",-1,contextptr),bidn=temp_symb("b",-1,contextptr);
         for (const_iterateur it=S.begin();it!=S.end();++it) {
             if (!is_greater(*it,0,contextptr) || is_strictly_greater(*it,1,contextptr))
-                return generr("Expected a number in [0,1]");
+                return generr(gettext("Expected a number in [0,1]"));
             slog+=ln(*it,contextptr); s1log+=ln(1-*it,contextptr);
         }
         gen fac=(var+sq(mean)-mean)/var,a_init=-mean*fac,b_init=(mean-1)*fac;
@@ -7701,7 +7529,7 @@ gen _fitdistr(const gen &g,GIAC_CONTEXT) {
         gen e2=Psi(bidn,contextptr)-Psi(aidn+bidn,contextptr)-s1log/N;
         gen tmpsol=_fsolve(makesequence(makevecteur(e1,e2),makevecteur(aidn,bidn),makevecteur(a_init,b_init),_NEWTONJ_SOLVER),contextptr);
         if (tmpsol.type!=_VECT || tmpsol._VECTptr->size()!=2)
-            return generr("Unable to compute parameters for Beta distribution");
+            return generr(gettext("Unable to compute parameters for Beta distribution"));
         vecteur &sol=*tmpsol._VECTptr;
         return symbolic(at_betad,change_subtype(sol,_SEQ__VECT));
     } else if (dist==at_cauchy || dist==at_cauchyd) {
@@ -7709,17 +7537,17 @@ gen _fitdistr(const gen &g,GIAC_CONTEXT) {
         gen gama_init=(_quartile3(S,contextptr)-_quartile1(S,contextptr))/2;
         return cauchy_mle(S,x0_init,gama_init,1e-5,contextptr);
     } else if (dist==at_weibull || dist==at_weibulld) {
-        if (is_zero(var)) return generr("Expected a nonzero variance");
+        if (is_zero(var)) return generr(gettext("Expected a nonzero variance"));
         gen kidn=temp_symb("k",-1,contextptr),slog(0);
         for (const_iterateur it=S.begin();it!=S.end();++it) {
-            if (is_positive(-*it,contextptr)) return generr("Expected a positive number");
+            if (is_positive(-*it,contextptr)) return generr(gettext("Expected a positive number"));
             slog+=ln(*it,contextptr);
         }
         gen e=_Gamma(1+gen(2)/kidn,contextptr)/_Gamma(1+gen(1)/kidn,contextptr)-var/sq(mean)-1;
         gen k_init=_fsolve(makesequence(e,symb_equal(kidn,max(1,_inv(var,contextptr),contextptr)),_NEWTON_SOLVER),contextptr);
         return weibull_mle(S,k_init,1e-5,contextptr);
     }
-    return generr("Unrecognized probability distribution");
+    return generr(gettext("Unrecognized probability distribution"));
 }
 static const char _fitdistr_s []="fitdistr";
 static define_unary_function_eval (__fitdistr,&_fitdistr,_fitdistr_s);
@@ -7879,27 +7707,27 @@ gen _bvpsolve(const gen &g,GIAC_CONTEXT) {
     gen tk(undef);
     int maxiter=RAND_MAX;
     if (gv.size()<3)
-        return generr("Too few input arguments");
+        return generr(gettext("Too few input arguments"));
     gen arg2=_eval(gv[1],contextptr),arg3=_eval(gv[2],contextptr);
     if (arg2.type!=_VECT || arg3.type!=_VECT || arg2._VECTptr->size()!=2 || arg3._VECTptr->size()<2 || arg3._VECTptr->size()>3)
-        return generr("Invalid input arguments");
+        return generr(gettext("Invalid input arguments"));
     gen f=idnteval(gv.front(),contextptr);
     const gen &t=arg2._VECTptr->front(),&y=arg2._VECTptr->back();
     gen y1=arg3._VECTptr->at(0),y2=arg3._VECTptr->at(1);
     if (arg3._VECTptr->size()==3 && !is_real_number(arg3._VECTptr->at(2),contextptr))
-        return generr("Expected a real constant");
+        return generr(gettext("Expected a real constant"));
     tk=to_real_number(arg3._VECTptr->at(2),contextptr);
     if (y.type!=_IDNT)
-        return generr("Expected an identifier");
+        return generr(gettext("Expected an identifier"));
     if (!is_equal(t) || t._SYMBptr->feuille._VECTptr->front().type!=_IDNT ||
             !t._SYMBptr->feuille._VECTptr->back().is_symb_of_sommet(at_interval))
-        return generrtype("Expected a variable with range");
+        return generrtype(gettext("Expected a variable with range"));
     const gen &x=t._SYMBptr->feuille._VECTptr->front();
     const vecteur &rng=*t._SYMBptr->feuille._VECTptr->back()._SYMBptr->feuille._VECTptr;
     gen x1=rng.front(),x2=rng.back();
     if (!is_real_number(x1,contextptr) || !is_real_number(x2,contextptr) ||
             !is_real_number(y1,contextptr) || !is_real_number(y2,contextptr))
-        return generr("Expected a real constant");
+        return generr(gettext("Expected a real constant"));
     x1=to_real_number(x1,contextptr); x2=to_real_number(x2,contextptr);
     if (!is_strictly_greater(x2,x1,contextptr))
         return gensizeerr("It should be x1<x2");
@@ -7920,15 +7748,15 @@ gen _bvpsolve(const gen &g,GIAC_CONTEXT) {
                     output_type=_BVP_PIECEWISE;
                 else if (rh==at_spline)
                     output_type=_BVP_SPLINE;
-                else return generr("Invalid output specification");
+                else return generr(gettext("Invalid output specification"));
             } else if (lh==at_limit) {
                 if (!rh.is_integer() || (maxiter=rh.val)<1)
-                    return generr("Maximum number of iterations must be a positive integer");
-            } else return generr("Unrecognized option");
+                    return generr(gettext("Maximum number of iterations must be a positive integer"));
+            } else return generr(gettext("Unrecognized option"));
         } else if (it->is_integer()) {
             if ((N=it->val)<2)
-                return generr("Too small subdivision size, N>=2 is required");
-        } else return generr("Unrecognized option");
+                return generr(gettext("Too small subdivision size, N>=2 is required"));
+        } else return generr(gettext("Unrecognized option"));
     }
     gen dy=temp_symb("dy",-1,contextptr);
     gen F=subst(f,derive(symb_of(y,x),x,contextptr),dy,false,contextptr);
@@ -8033,14 +7861,14 @@ gen _conjugate_equation(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     const vecteur &gv=*g._VECTptr;
     if (gv.size()!=5)
-        return generr("Invalid number of input arguments");
+        return generr(gettext("Invalid number of input arguments"));
     const gen &y0=gv[0],&parm=gv[1],&pvals=gv[2],&t=gv[3],&a=gv[4];
     if (y0.type!=_SYMB || t.type!=_IDNT || parm.type!=_VECT || parm._VECTptr->size()!=2 ||
             pvals.type!=_VECT || pvals._VECTptr->size()!=2 || !is_real_number(a,contextptr))
-        return generr("Invalid input arguments");
+        return generr(gettext("Invalid input arguments"));
     const gen &alpha=parm._VECTptr->front(),&beta=parm._VECTptr->back();
     if (alpha.type!=_IDNT || beta.type!=_IDNT)
-        return generr("Expected pair of identifiers");
+        return generr(gettext("Expected pair of identifiers"));
     gen y1=derive(y0,alpha,contextptr),y2=derive(y0,beta,contextptr);
     gen ret=_collect(simp(subst(y1*subst(y2,t,a,false,contextptr)-y2*subst(y1,t,a,false,contextptr),
                                      parm,pvals,false,contextptr),contextptr),contextptr);
@@ -8076,16 +7904,16 @@ gen _euler_lagrange(const gen &g,GIAC_CONTEXT) {
                 t=undef;
                 for (const_iterateur it=arg._VECTptr->begin();it!=arg._VECTptr->end();++it) {
                     if (!it->is_symb_of_sommet(at_of))
-                        return generr("Expected a function");
+                        return generr(gettext("Expected a function"));
                     u.push_back(it->_SYMBptr->feuille._VECTptr->front());
                     if (is_undef(t))
                         t=it->_SYMBptr->feuille._VECTptr->back();
                     else if (t!=it->_SYMBptr->feuille._VECTptr->back())
-                        return generr("Expected a single parameter variable");
+                        return generr(gettext("Expected a single parameter variable"));
                 }
             } else t=arg;
             if (t.type!=_IDNT)
-                return generr("Expected a variable");
+                return generr(gettext("Expected a variable"));
         }
         if (gv.size()>2) {
             gen arg=_eval(gv[2],contextptr);
@@ -8093,7 +7921,7 @@ gen _euler_lagrange(const gen &g,GIAC_CONTEXT) {
                 u.front()=arg;
             else if (arg.type==_VECT)
                 u=*arg._VECTptr;
-            else return generr("Expected a variable or a list of variables");
+            else return generr(gettext("Expected a variable or a list of variables"));
         }
     }
     L=idnteval(L,contextptr);
@@ -8101,7 +7929,7 @@ gen _euler_lagrange(const gen &g,GIAC_CONTEXT) {
     vecteur du(n),Du(n),Dut(n),DU(n),D2U(n),d2u(n),ut(n);
     for (int i=0;i<n;++i) {
         if (u[i].type!=_IDNT)
-            return generr("Expected an identifier");
+            return generr(gettext("Expected an identifier"));
         ut[i]=symb_of(u[i],t);
         du[i]=temp_symb("du",i,contextptr);
         d2u[i]=temp_symb("d2u",i,contextptr);
@@ -8168,15 +7996,15 @@ gen _jacobi_equation(const gen &g,GIAC_CONTEXT) {
     vecteur args=*_eval(vecteur(gv.begin()+1,gv.end()),contextptr)._VECTptr;
     if (args.size()==4) {
         if (!args[0].is_symb_of_sommet(at_of))
-            return generr("Expected a function");
+            return generr(gettext("Expected a function"));
         y=args[0]._SYMBptr->feuille._VECTptr->front();
         t=args[0]._SYMBptr->feuille._VECTptr->back();
         Y=args[1]; h=args[2]; a=args[3];
     } else if (args.size()==5) {
         t=args[0]; y=args[1]; Y=args[2]; h=args[3]; a=args[4];
-    } else return generr("Invalid number of input arguments");
+    } else return generr(gettext("Invalid number of input arguments"));
     if (t.type!=_IDNT || h.type!=_IDNT || y.type!=_IDNT || !is_real_number(a,contextptr))
-        return generr("Invalid input arguments");
+        return generr(gettext("Invalid input arguments"));
     L=idnteval(L,contextptr);
     gen dy=temp_symb("dy",-1,contextptr);
     L=parse_functional(L,t,y,dy,contextptr);
@@ -8274,7 +8102,7 @@ gen _convex(const gen &g,GIAC_CONTEXT) {
     const vecteur &gv=*g._VECTptr;
     gen f=gv.front(),t(undef),TRUE=change_subtype(1,_INT_BOOLEAN),FALSE=change_subtype(0,_INT_BOOLEAN);
     if (gv.size()<2)
-        return generr("Too few input arguments");
+        return generr(gettext("Too few input arguments"));
     f=idnteval(f,contextptr);
     vecteur vars;
     gen vars_arg=idnteval(gv[1],contextptr);
@@ -8282,11 +8110,11 @@ gen _convex(const gen &g,GIAC_CONTEXT) {
         vars=*vars_arg._VECTptr;
     else vars.push_back(vars_arg);
     if (vars.empty())
-        return generr("List of variables is empty");
+        return generr(gettext("List of variables is empty"));
     bool dosimp=false;
     if (gv.size()>2) {
         if (gv[2]!=at_simplify)
-            return generr("Invalid optional argument");
+            return generr(gettext("Invalid optional argument"));
         dosimp=true;
     }
     vecteur fvars,depvars;
@@ -8295,17 +8123,17 @@ gen _convex(const gen &g,GIAC_CONTEXT) {
             const gen &u=it->_SYMBptr->feuille._VECTptr->front();
             const gen &v=it->_SYMBptr->feuille._VECTptr->back();
             if (v.type!=_IDNT || u.type!=_IDNT)
-                return generr("Expected an identifier");
+                return generr(gettext("Expected an identifier"));
             if (is_undef(t))
                 t=v;
             else if (t!=v)
-                return generr("Expected a single parameter variable");
+                return generr(gettext("Expected a single parameter variable"));
             if (!contains(depvars,u))
                 depvars.push_back(u);
         } else if (it->type==_IDNT) {
             if (!contains(fvars,*it))
                     fvars.push_back(*it);
-        } else return generr("Invalid variable specification");
+        } else return generr(gettext("Invalid variable specification"));
     }
     vecteur diffvars,diffs;
     int cnt=0;
@@ -8331,12 +8159,12 @@ gen _convex(const gen &g,GIAC_CONTEXT) {
     int n=allvars.size();
     matrice H=*_hessian(makesequence(F,allvars),contextptr)._VECTptr;
     if (has_diff(H,allvars))
-        return generr("Function is not twice differentiable");
+        return generr(gettext("Failed to compute Hessian"));
     vector<int> perm;
     bool sing;
     int mt=is_numericm(H,num_mask_withfrac|num_mask_withint)?2:0;
     if (!ldl(H,perm,mt,sing,0,contextptr))
-        return generr("Factorization failed");
+        return generr(gettext("Factorization failed"));
     gen a11,a12,a22,simb;
     vecteur cond,res;
     cond.reserve(n);
@@ -8398,11 +8226,11 @@ gen _numdiff(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     const vecteur &gv=*g._VECTptr;
     if (gv.size()<3)
-        return generr("Too few input arguments");
+        return generr(gettext("Too few input arguments"));
     if (gv[0].type!=_VECT || gv[1].type!=_VECT)
-        return generrtype("First two arguments must be lists");
+        return generrtype(gettext("First two arguments must be lists"));
     if (gv[0]._VECTptr->size()!=gv[1]._VECTptr->size() || gv[0]._VECTptr->empty())
-        return generr("Lists X and Y must have equal sizes");
+        return generr(gettext("Lists X and Y must have equal sizes"));
     vecteur X=*gv[0]._VECTptr;
     vecteur Y=*gv[1]._VECTptr;
     gen x0=gv[2];
@@ -8412,7 +8240,7 @@ gen _numdiff(const gen &g,GIAC_CONTEXT) {
         rest=vecteur(gv.begin()+3,gv.end());
         for (const_iterateur it=rest.begin();it!=rest.end();++it) {
             if (!it->is_integer() || it->val<0)
-                return generrtype("Expected a nonnegative integer");
+                return generrtype(gettext("Expected a nonnegative integer"));
         }
         M=_max(rest,contextptr).val;
     }
@@ -9523,7 +9351,7 @@ gen _isolve(const gen &g,GIAC_CONTEXT) {
         opts=vecteur(gv.begin()+1,gv.end());
     } else eq=g;
     if (!parse_equations(eq,eqv))
-        return generrtype("Failed to parse input equation(s)");
+        return generrtype(gettext("Failed to parse input equation(s)"));
     vars=sort_identifiers(*_lname(eqv,contextptr)._VECTptr,contextptr);
     gen sol(undef);
     matrice A;
@@ -9543,7 +9371,7 @@ gen _isolve(const gen &g,GIAC_CONTEXT) {
             for (const_iterateur jt=it->_VECTptr->begin();jt!=it->_VECTptr->end();++jt) {
                 if (jt->type==_IDNT)
                     fvars.push_back(*jt);
-                else return generrtype("Expected a variable");
+                else return generrtype(gettext("Expected a variable"));
             }
         }
     }
@@ -9559,7 +9387,7 @@ gen _isolve(const gen &g,GIAC_CONTEXT) {
         /* linear equation with at least three indeterminates or a system of linear equations */
         gen rk=_rank(A,contextptr);
         if (!rk.is_integer() || rk.val<m)
-            return generr("System matrix is not full rank");
+            return generr(gettext("System matrix is not full rank"));
         vecteur tmp(n);
         for (int i=0;i<n;++i) {
             tmp[i]=temp_symb("tmp_",i,contextptr);
@@ -9700,7 +9528,7 @@ gen _isolve(const gen &g,GIAC_CONTEXT) {
                     sol=subst(sol,*it,ph,false,contextptr);
                 }
             }
-        } else return generrtype("Failed to solve equation over integers");
+        } else return generrtype(gettext("Failed to solve equation over integers"));
     }
     if (n>1 && sol.type==_VECT) {
         /* format the output */
@@ -9846,31 +9674,31 @@ gen _fitpoly(const gen &g,GIAC_CONTEXT) {
     bool has_var=false;
     int maxdeg=15,d=5,deg=-1;
     if (g.type!=_VECT)
-        return generrtype("Expected a matrix or a sequence of arguments");
+        return generrtype(gettext("Expected a matrix or a sequence of arguments"));
     if (g.subtype==_SEQ__VECT) {
         const vecteur &args=*g._VECTptr;
         size_t argn=2;
         if (args.size()<2)
-            return generrdim("Too few input arguments");
+            return generrdim(gettext("Too few input arguments"));
         if (args[0].type!=_VECT && args[0].type!=_SYMB)
-            return generrtype("Expected a list of x-values, expression, or matrix");
+            return generrtype(gettext("Expected a list of x-values, expression, or matrix"));
         if (args[0].type==_SYMB) {
             f=args[0];
             vecteur parm;
             if ((parm=*_lname(f,contextptr)._VECTptr).size()!=1)
-                return generr("Expected an univariate expression");
+                return generr(gettext("Expected an univariate expression"));
             var=parm.front();
             --argn;
         } else if (ckmatrix(args[0])) {
             if (args[0]._VECTptr->front()._VECTptr->size()!=2)
-                return generrdim("Expected a two-column matrix");
+                return generrdim(gettext("Expected a two-column matrix"));
             matrice data=mtran(*args[0]._VECTptr);
             x=*data.front()._VECTptr;
             y=*data.back()._VECTptr;
             --argn;
         } else {
             if (args[1].type!=_VECT)
-                return generrtype("Expected a list of y-values");
+                return generrtype(gettext("Expected a list of y-values"));
             x=*args[0]._VECTptr;
             y=*args[1]._VECTptr;
         }
@@ -9886,16 +9714,16 @@ gen _fitpoly(const gen &g,GIAC_CONTEXT) {
                                              v.is_symb_of_sommet(at_interval)) {
                 if (iseq) {
                     if ((var=v._SYMBptr->feuille._VECTptr->front()).type!=_IDNT)
-                        return generr("Expected a variable");
+                        return generr(gettext("Expected a variable"));
                     if (!v._SYMBptr->feuille._VECTptr->back().is_symb_of_sommet(at_interval))
-                        return generr("Expected a range");
+                        return generr(gettext("Expected a range"));
                     has_var=true;
                 }
                 const gen &intrv=iseq?v._SYMBptr->feuille._VECTptr->back():v;
                 a=intrv._SYMBptr->feuille._VECTptr->front();
                 b=intrv._SYMBptr->feuille._VECTptr->back();
                 if (!is_real_number(a,contextptr) || !is_real_number(b,contextptr) || is_greater(a,b,contextptr))
-                    return generr("Invalid range");
+                    return generr(gettext("Invalid range"));
                 a=to_real_number(a,contextptr);
                 b=to_real_number(b,contextptr);
                 argn++;
@@ -9908,28 +9736,28 @@ gen _fitpoly(const gen &g,GIAC_CONTEXT) {
                 const gen &rh=it->_SYMBptr->feuille._VECTptr->back();
                 if (lh==at_limit) {
                     if (!rh.is_integer() || rh.val<1)
-                        return generr("Expected a positive integer");
+                        return generr(gettext("Expected a positive integer"));
                     maxdeg=rh.val;
                 } else if (lh==at_threshold) {
                     if (!is_real_number(rh,contextptr) || is_positive(-rh,contextptr))
-                        return generr("Expected a positive real number");
+                        return generr(gettext("Expected a positive real number"));
                     tol=to_real_number(rh,contextptr);
                 } else if (lh==at_len || lh==at_length) {
                     if (!rh.is_integer() || rh.val<1)
-                        return generr("Expected a positive integer");
+                        return generr(gettext("Expected a positive integer"));
                     d=rh.val;
                 } else if (lh==at_degree) {
                     if (!rh.is_integer() || rh.val<0)
-                        return generr("Expected a nonnegative integer");
+                        return generr(gettext("Expected a nonnegative integer"));
                     deg=rh.val;
-                } else return generr("Option not supported");
+                } else return generr(gettext("Option not supported"));
             } else if (is_real_number(*it,contextptr) && is_strictly_positive(*it,contextptr)) {
                 tol=to_real_number(*it,contextptr);
-            } else return generr("Option not supported");
+            } else return generr(gettext("Option not supported"));
         }
     } else {
         if (!ckmatrix(g) || g._VECTptr->front()._VECTptr->size()!=2)
-            return generrdim("Expected a two-column matrix");
+            return generrdim(gettext("Expected a two-column matrix"));
         matrice data=mtran(*g._VECTptr);
         x=*data.front()._VECTptr;
         y=*data.back()._VECTptr;
@@ -9937,12 +9765,12 @@ gen _fitpoly(const gen &g,GIAC_CONTEXT) {
     vecteur vardata=makevecteur(var,a,b);
     if (is_undef(f)) {
         if (x.size()!=y.size())
-            return generr("Sizes of x-values and y-values do not match");
+            return generr(gettext("Sizes of x-values and y-values do not match"));
         if (tol==0)
             tol=0.01;
         int m=x.size();
         if (m<2)
-            return generrdim("Too few input data points");
+            return generrdim(gettext("Too few input data points"));
         if (d>m)
             d=m;
         p=fitpoly(exact(makevecteur(x,y),contextptr),vardata,tol,maxdeg,deg>=0?-deg:d,contextptr);
@@ -9950,7 +9778,7 @@ gen _fitpoly(const gen &g,GIAC_CONTEXT) {
             p=_e2r(makesequence(p,var),contextptr);
     } else {
         if (is_undef(a) || is_undef(b))
-            return generr("Variable range is required");
+            return generr(gettext("Variable range is required"));
         if (tol==0)
             tol=1e-5;
         p=fitpoly(f,vardata,tol,maxdeg,deg,contextptr);
@@ -11689,20 +11517,30 @@ gen _levenshtein(const gen &g,GIAC_CONTEXT) {
     const gen &arg1=g._VECTptr->front(),&arg2=g._VECTptr->back();
     if ((arg1.type==_VECT && arg2.type==_VECT) || (arg1.type==_STRNG && arg2.type==_STRNG))
         return LevenshteinDistance(arg1,arg2);
-    return generrtype("Both arguments must be either lists or strings");
+    return generrtype(gettext("Both arguments must be either lists or strings"));
 }
 static const char _levenshtein_s []="levenshtein";
 static define_unary_function_eval (__levenshtein,&_levenshtein,_levenshtein_s);
 define_unary_function_ptr5(at_levenshtein,alias_at_levenshtein,&__levenshtein,0,true)
 
+static std::vector<int> cluster_colors;
+
 int cyclic_colormap(int c) {
-    int col=c%16; // 16 colors are available for distinguishing between clusters (cyclic colormap)
-    switch (col) { // make some colors better for displaying
-    case 3: col=94; break;
-    case 6: col=222; break;
-    case 7: col=92; break;
+    int n=cluster_colors.size(),col;
+    if (n>0)
+        return cluster_colors[c%n];
+    int N=16;
+    cluster_colors.reserve(N);
+    for (int i=0;i<N;++i) {
+        col=i;
+        switch (col) { // make some colors better for displaying
+        case 3: col=94; break;
+        case 6: col=222; break;
+        case 7: col=92; break;
+        }
+        cluster_colors.push_back(col);
     }
-    return col;
+    return cyclic_colormap(c);
 }
 
 gen clustering_result(const vecteur &data,int NP,int p,int out_what,int k,int disp,const vector<int> &res,GIAC_CONTEXT) {
@@ -11748,11 +11586,12 @@ gen _kmeans(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     vecteur data=data2list(g.type==_VECT && g.subtype==_SEQ__VECT?g._VECTptr->front():g,contextptr);
     if (data.empty())
-        return generr("No data found");
+        return generr(gettext("No data found"));
     if (!is_fully_numeric(data,num_mask_withint | num_mask_withfrac))
-        return generr("Data must be numeric");
+        return generr(gettext("Data must be numeric"));
     int NP=data.size(),p=data.front().type==_VECT?data.front()._VECTptr->size():1;
     int out_what=2,min_k=2,max_k=NP-1,k=0,maxiter=100,disp=0;
+    cluster_colors.clear();
     if (g.subtype==_SEQ__VECT) for (const_iterateur it=g._VECTptr->begin()+1;it!=g._VECTptr->end();++it) { // parse options
         if (is_equal(*it)) {
             const gen &lh=it->_SYMBptr->feuille._VECTptr->front(),&rh=it->_SYMBptr->feuille._VECTptr->back();
@@ -11760,60 +11599,69 @@ gen _kmeans(const gen &g,GIAC_CONTEXT) {
                 if (rh.is_integer()) {
                     if ((k=rh.val)<=0) {
                         print_error("invalid value for count option",contextptr);
-                        return generr("Expected a positive integer");
+                        return generr(gettext("Expected a positive integer"));
                     }
                 } else if (rh.is_symb_of_sommet(at_interval)) {
                     const gen &lb=rh._SYMBptr->feuille._VECTptr->front();
                     const gen &ub=rh._SYMBptr->feuille._VECTptr->back();
                     if (!lb.is_integer() || !ub.is_integer() || (min_k=lb.val)<=0 || (max_k=ub.val)<min_k) {
                         print_error("Invalid value for count option",contextptr);
-                        return generr("Expected a range of positive integers");
+                        return generr(gettext("Expected a range of positive integers"));
                     }
                 } else {
                     print_error("invalid value for count option",contextptr);
-                    return generrtype("Expected an integer or range");
+                    return generrtype(gettext("Expected an integer or range"));
                 }
             } else if (lh==at_count_sup) {
                 if (!rh.is_integer()) {
                     print_error("invalid value for count_sup option",contextptr);
-                    return generr("Expected a positive integer");
+                    return generr(gettext("Expected a positive integer"));
                 }
                 max_k=std::min(rh.val,NP-1);
             } else if (lh==at_count_inf) {
                 if (!rh.is_integer()) {
                     print_error("invalid value for count_inf option",contextptr);
-                    return generr("Expected a positive integer");
+                    return generr(gettext("Expected a positive integer"));
                 }
                 min_k=std::max(rh.val,2);
             } else if (lh==at_limit) {
                 if (!rh.is_integer() || (maxiter=rh.val)<1) {
                     print_error("invalid value for limit option",contextptr);
-                    return generr("Expected a positive integer");
+                    return generr(gettext("Expected a positive integer"));
                 }
             } else if (lh==at_display) {
                 if (!rh.is_integer() && rh.subtype!=_INT_COLOR) {
                     print_error("invalid value for display option",contextptr);
-                    return generr("Expected an integer");
+                    return generr(gettext("Expected an integer"));
                 }
                 disp=rh.val;
+            } else if (lh==at_couleur) {
+                if (rh.type!=_VECT || !is_integer_vecteur(*rh._VECTptr))
+                    return gentypeerr(gettext("Expected a list of colors"));
+                const_iterateur ct=rh._VECTptr->begin(),ctend=rh._VECTptr->end();
+                for (;ct!=ctend;++ct) {
+                    if (ct->subtype!=_INT_COLOR)
+                        return gentypeerr(gettext("Expected a list of colors"));
+                }
+                cluster_colors=vecteur_2_vector_int(*rh._VECTptr);
             } else if (lh==at_index) {
                 if (rh.is_integer() && rh.subtype==_INT_BOOLEAN) {
                     k=(bool)rh.val?-_CALINSKI_HARABASZ_INDEX:0;
                 } else if (rh.type==_STRNG) {
                     int cr=cluster_crit::name2index(*rh._STRNGptr);
-                    if (cr<0) return generr("Unknown index name");
+                    if (cr<0) return generr(gettext("Unknown index name"));
                     k=-cr;
                 } else if (is_string_list(rh)) {
                     int cr_aggreg=0,cr;
                     for (const_iterateur jt=rh._VECTptr->begin();jt!=rh._VECTptr->end();++jt) {
                         cr=cluster_crit::name2index(*jt->_STRNGptr);
-                        if (cr<0) return generr("Unknown index name");
+                        if (cr<0) return generr(gettext("Unknown index name"));
                         cr_aggreg|=cr;
                     }
                     k=-cr_aggreg;
                 } else {
                     print_error("invalid value for index option",contextptr);
-                    return generrtype("Expected a string or list of strings");
+                    return generrtype(gettext("Expected a string or list of strings"));
                 }
             } else if (lh==at_output) {
                 if (rh==at_part) out_what=1;                    // partition
@@ -11821,22 +11669,22 @@ gen _kmeans(const gen &g,GIAC_CONTEXT) {
                 else if (rh==at_plot) out_what=3;               // plot clusters (only for 2D/3D data)
                 else if (rh==at_count) out_what=4;              // return the number of clusters
                 else if (rh==at_index) out_what=5;              // return values of the first index used
-                else return generr("Invalid output specification");
+                else return generr(gettext("Invalid output specification"));
             }
         } else if (it->is_integer()) {
             if ((k=it->val)<=0) {
                 print_error("invalid number of clusters",contextptr);
-                return generr("Expected a positive integer");
+                return generr(gettext("Expected a positive integer"));
             }
-        } else return generr("Invalid option");
+        } else return generr(gettext("Invalid option"));
     }
     if (out_what==3 && p!=2 && p!=3)
-        return generrdim("Plot output works only with 2D or 3D data");
+        return generrdim(gettext("Plot output works only with 2D or 3D data"));
     if (out_what==5 && k>=0)
-        return generr("No index specified for output");
+        return generr(gettext("No index specified for output"));
     max_k=std::min(max_k,NP-1);
     if (min_k>max_k)
-        return generr("Invalid k-range");
+        return generr(gettext("Invalid k-range"));
     if (min_k==max_k)
         k=max_k;
     vector<int> res;
@@ -11865,10 +11713,11 @@ gen _cluster(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     vecteur data=data2list(g.type==_VECT && g.subtype==_SEQ__VECT?g._VECTptr->front():g,contextptr);
     if (data.empty())
-        return generr("No data found");
+        return generr(gettext("No data found"));
     gen dist_func=is_string_list(data)?at_levenshtein:at_longueur2;
     int NP=data.size(),p=data.front().type==_VECT?data.front()._VECTptr->size():1;
     int out_what=2,k=0,min_k=0,max_k=16,lmeth=_SINGLE_LINKAGE,lab=1,indf=0,disp=0;
+    cluster_colors.clear();
     if (g.subtype==_SEQ__VECT) for (const_iterateur it=g._VECTptr->begin()+1;it!=g._VECTptr->end();++it) { // parse options
         if (is_equal(*it)) {
             const gen &lh=it->_SYMBptr->feuille._VECTptr->front(),&rh=it->_SYMBptr->feuille._VECTptr->back();
@@ -11876,41 +11725,50 @@ gen _cluster(const gen &g,GIAC_CONTEXT) {
                 if (rh.is_integer()) {
                     if ((k=rh.val)<=0) {
                         print_error("invalid value for count option",contextptr);
-                        return generr("Expected a positive integer");
+                        return generr(gettext("Expected a positive integer"));
                     }
                 } else if (rh.is_symb_of_sommet(at_interval)) {
                     const gen &lb=rh._SYMBptr->feuille._VECTptr->front();
                     const gen &ub=rh._SYMBptr->feuille._VECTptr->back();
                     if (!lb.is_integer() || !ub.is_integer() || (min_k=lb.val)<=0 || (max_k=ub.val)<min_k) {
                         print_error("Invalid value for count option",contextptr);
-                        return generr("Expected a range of positive integers");
+                        return generr(gettext("Expected a range of positive integers"));
                     }
                 } else {
                     print_error("invalid value for count option",contextptr);
-                    return generrtype("Expected an integer or range");
+                    return generrtype(gettext("Expected an integer or range"));
                 }
             } else if (lh==at_count_sup) {
                 if (!rh.is_integer()) {
                     print_error("invalid value for count_sup option",contextptr);
-                    return generr("Expected a positive integer");
+                    return generr(gettext("Expected a positive integer"));
                 }
                 max_k=std::min(rh.val,NP-1);
             } else if (lh==at_display) {
                 if (!rh.is_integer() && rh.subtype!=_INT_COLOR) {
                     print_error("invalid value for display option",contextptr);
-                    return generr("Expected an integer");
+                    return generr(gettext("Expected an integer"));
                 }
                 disp=rh.val;
+            } else if (lh==at_couleur) {
+                if (rh.type!=_VECT || !is_integer_vecteur(*rh._VECTptr))
+                    return gentypeerr(gettext("Expected a list of colors"));
+                const_iterateur ct=rh._VECTptr->begin(),ctend=rh._VECTptr->end();
+                for (;ct!=ctend;++ct) {
+                    if (ct->subtype!=_INT_COLOR)
+                        return gentypeerr(gettext("Expected a list of colors"));
+                }
+                cluster_colors=vecteur_2_vector_int(*rh._VECTptr);
             } else if (lh==at_count_inf) {
                 if (!rh.is_integer()) {
                     print_error("invalid value for count_inf option",contextptr);
-                    return generr("Expected a positive integer");
+                    return generr(gettext("Expected a positive integer"));
                 }
                 min_k=std::max(rh.val,2);
             } else if (lh==at_type) {
                 if (rh.type!=_STRNG) {
                     print_error("invalid value for type option (linkage)",contextptr);
-                    return generrtype("Expected a string");
+                    return generrtype(gettext("Expected a string"));
                 }
                 const string &lt=*rh._STRNGptr;
                 if (lt=="single")           lmeth=_SINGLE_LINKAGE;
@@ -11922,10 +11780,10 @@ gen _cluster(const gen &g,GIAC_CONTEXT) {
                 else if (lt=="centroid")    lmeth=_CENTROID_LINKAGE;
                 else if (lt=="median")      lmeth=_MEDIAN_LINKAGE;
 #endif
-                else return generr("Unknown linkage type");
+                else return generr(gettext("Unknown linkage type"));
             } else if (lh==at_longueur) {
                 if (rh.type!=_FUNC && (rh.type!=_SYMB || rh._SYMBptr->sommet!=at_program))
-                    return generrtype("Invalid distance function specification");
+                    return generrtype(gettext("Invalid distance function specification"));
                 dist_func=rh;
             } else if (lh==at_output) { // set desired output
                 if (rh==at_part) out_what=1;                    // partition of the set of points
@@ -11934,47 +11792,47 @@ gen _cluster(const gen &g,GIAC_CONTEXT) {
                 else if (rh==at_count) out_what=4;              // return the number of clusters
                 else if (is_mcint(rh,_GT_TREE)) out_what=5;     // dendrogram drawing
                 else if (rh==at_index) out_what=6;              // return values of the last index used
-                else return generr("Invalid output specification");
+                else return generr(gettext("Invalid output specification"));
             } else if (lh.is_integer() && lh.subtype==_INT_PLOT && lh.val==_LABELS) {
                 if (rh.is_integer() && rh.subtype==_INT_BOOLEAN)
                     lab=(bool)rh.val?1:0;
                 else if (rh==at_index)
                     lab=2;
-                else return generr("Invalid labels specification");
+                else return generr(gettext("Invalid labels specification"));
             } else if (lh==at_index) {
                 if (rh.is_integer() && rh.subtype==_INT_BOOLEAN) {
                     indf=(bool)rh.val?_SILHOUETTE_INDEX:0;
                 } else if (rh.type==_STRNG) {
                     indf=hclust::name2index(*rh._STRNGptr);
-                    if (indf<0) return generr("Unknown index name");
+                    if (indf<0) return generr(gettext("Unknown index name"));
                 } else if (is_string_list(rh)) {
                     int cr;
                     indf=0;
                     for (const_iterateur jt=rh._VECTptr->begin();jt!=rh._VECTptr->end();++jt) {
                         cr=hclust::name2index(*jt->_STRNGptr);
-                        if (cr<0) return generr("Unknown index name");
+                        if (cr<0) return generr(gettext("Unknown index name"));
                         indf|=cr;
                     }
                 } else {
                     print_error("invalid value for index option",contextptr);
-                    return generrtype("Expected a string or list of strings");
+                    return generrtype(gettext("Expected a string or list of strings"));
                 }
-            } else return generr("Invalid option");
+            } else return generr(gettext("Invalid option"));
         } else if (it->is_integer()) {
             if ((k=it->val)<=0) {
                 print_error("invalid number of clusters",contextptr);
-                return generr("Expected a positive integer");
+                return generr(gettext("Expected a positive integer"));
             }
         } else if (it->type==_FUNC) {
             dist_func=*it;
-        } else return generr("Invalid option");
+        } else return generr(gettext("Invalid option"));
     }
     if (out_what==3 && p!=2 && p!=3)
-        return generrdim("Plot output works only with 2D or 3D data");
+        return generrdim(gettext("Plot output works only with 2D or 3D data"));
     if (out_what==6 && indf<=0)
-        return generr("No index specified for output");
+        return generr(gettext("No index specified for output"));
     if (max_k<min_k)
-        return generr("Invalid k-range");
+        return generr(gettext("Invalid k-range"));
     if (max_k==min_k)
         k=min_k;
     hclust hc(data,dist_func,contextptr);
@@ -11982,13 +11840,13 @@ gen _cluster(const gen &g,GIAC_CONTEXT) {
     vector<int> indices;
     if ((k=hc.linkage(dg,indices,lmeth,k>0?k:-indf,min_k,max_k))<=0) {
         print_error("linkage method failed",contextptr);
-        return generr("Bad distance function");
+        return generr(gettext("Bad distance function"));
     }
     if (out_what==6)
         return hc.get_index_values();
     if (out_what==5) { // draw the dendrogram with horizontal orientation (better for labels placement)
         vector<int> ord=hc.order(dg);
-        vecteur drawing;
+        vecteur drawing(1,symb_equal(change_subtype(_AXES,_INT_PLOT),4));
         vecteur pos(2*NP-1,undef);
         int as=array_start(contextptr),ulab=NP;
         for (int i=0;i<NP;++i) {
@@ -11996,11 +11854,11 @@ gen _cluster(const gen &g,GIAC_CONTEXT) {
             pos[j]=makevecteur(makevecteur(0,i+1),indices[j]);
             if (lab>0) {
                 gen label=_string(lab==1?data[j]:gen(j+as),contextptr);
-                gen attr=symb_equal(at_display,change_subtype(_QUADRANT2,_INT_COLOR));
                 const vecteur &p=*pos[j]._VECTptr->front()._VECTptr;
-                drawing.push_back(_legende(makesequence(makecomplex(p[0],p[1]),label,attr),contextptr));
+                drawing.push_back(symb_pnt_name(makecomplex(p[0],p[1]),_POINT_INVISIBLE | _QUADRANT2,label,contextptr));
             }
         }
+        gen miny=plus_inf,maxy=minus_inf;
         for (hclust::dendrogram::const_iterator it=dg.begin();it!=dg.end();++it) {
             int a=it->second.first,b=it->second.second;
             double h=it->first;
@@ -12014,11 +11872,22 @@ gen _cluster(const gen &g,GIAC_CONTEXT) {
                 col=cyclic_colormap(col);
             }
             pos[ulab]=makevecteur(makevecteur(h,(A[1]+B[1])/2),next_ind);
-            drawing.push_back(make_2D_line_segment(A,makevecteur(h,A[1]),col,contextptr));
-            drawing.push_back(make_2D_line_segment(B,makevecteur(h,B[1]),col,contextptr));
-            drawing.push_back(make_2D_line_segment(makevecteur(h,A[1]),makevecteur(h,B[1]),col,contextptr));
+            if (h>0) {
+                drawing.push_back(make_2D_line_segment(A,makevecteur(h,A[1]),col,contextptr));
+                drawing.push_back(make_2D_line_segment(B,makevecteur(h,B[1]),col,contextptr));
+                drawing.push_back(make_2D_line_segment(makevecteur(h,A[1]),makevecteur(h,B[1]),col,contextptr));
+            }
             ulab++;
+            miny=min(miny,min(A[1],B[1],contextptr),contextptr);
+            maxy=max(maxy,max(A[1],B[1],contextptr),contextptr);
         }
+#if 1
+        if (!is_inf(miny) && !is_inf(maxy)) {
+            gen margin=0.07*(maxy-miny);
+            drawing.insert(drawing.begin(),symb_equal(change_subtype(_GL_Y,_INT_PLOT),symb_interval(miny-margin,maxy+margin)));
+            //drawing.push_back(_segment(makesequence(cst_i*(miny-margin),cst_i*(maxy+margin)),contextptr));
+        }
+#endif
         return drawing;
     }
     return clustering_result(data,NP,p,out_what,k,disp,indices,contextptr);
@@ -12444,10 +12313,10 @@ gen find_minimum(const gen &f,const gen &a,const gen &b,bool global,double eps,i
                 val=isfunc?_evalf(f(arg,contextptr),contextptr):subst(f,x,arg,false,contextptr);
             } catch (const std::runtime_error &e) {
                 *logptr(contextptr) << e.what() << endl;
-                return generr("Failed to compute function value");
+                return generr(gettext("Failed to compute function value"));
             }
             if (!is_real_number(val,contextptr))
-                return generr("Function values must be real");
+                return generr(gettext("Function values must be real"));
             value=to_real_number(val,contextptr).to_double(contextptr);
         }
         if (!global) {
@@ -12478,30 +12347,30 @@ gen find_minimum(const gen &f,const gen &a,const gen &b,bool global,double eps,i
 gen _find_minimum(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
-        return generrtype("Expected a sequence of arguments");
+        return generrtype(gettext("Expected a sequence of arguments"));
     const vecteur &args=*g._VECTptr;
     int argc=args.size();
     if (argc<3 || argc>5)
-        return generrdim("Wrong number of input arguments");
+        return generrdim(gettext("Wrong number of input arguments"));
     const gen &f=args[0];
     gen a=args[1],b=args[2];
     if (!is_real_number(a,contextptr) || !is_real_number(b,contextptr))
-        return generr("Range bounds must be real");
+        return generr(gettext("Range bounds must be real"));
     a=to_real_number(a,contextptr);
     b=to_real_number(b,contextptr);
     if (is_greater(a,b,contextptr))
-        return generr("Invalid range");
+        return generr(gettext("Invalid range"));
     double eps=std::pow(epsilon(contextptr),2.0/3.0);
     int maxiter=100;
     for (const_iterateur it=args.begin()+3;it!=args.end();++it) {
         if (!is_real_number(*it,contextptr) || is_positive(-*it,contextptr))
-            return generr("Expected a positive number");
+            return generr(gettext("Expected a positive number"));
         if (it->is_integer())
             maxiter=it->val;
         else {
             eps=to_real_number(*it,contextptr).to_double(contextptr);
             if (is_greater(eps,plus_one,contextptr))
-                return generr("Expected a real number in (0,1)");
+                return generr(gettext("Expected a real number in (0,1)"));
         }
     }
     return find_minimum(f,a,b,true,eps,maxiter,contextptr);
@@ -12584,14 +12453,15 @@ bool is_positive_semidefinite(const matrice &mat,double time_limit,unsigned max_
 gen _isposdef(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (!is_squarematrix(g))
-        return generr("Expected a square matrix");
+        return generr(gettext("Expected a square matrix"));
     return is_positive_definite(*g._VECTptr,-1,contextptr)?1:0;
 }
 static const char _isposdef_s []="isposdef";
 static define_unary_function_eval (__isposdef,&_isposdef,_isposdef_s);
 define_unary_function_ptr5(at_isposdef,alias_at_isposdef,&__isposdef,0,true)
 
-vecteur symbol_array(const vector<int> &sz,vector<int> &ind,int pos,const vector<int> &hashpos,const string &tmpl,int as,GIAC_CONTEXT) {
+vecteur symbol_array(const vector<int> &sz,vector<int> &ind,int pos,const vector<int> &hashpos,
+        const string &tmpl,int as,bool do_purge,GIAC_CONTEXT) {
     int nd=sz.size();
     vecteur ret(sz[pos]);
     iterateur rt=ret.begin(),rtend=ret.end();
@@ -12604,10 +12474,13 @@ vecteur symbol_array(const vector<int> &sz,vector<int> &ind,int pos,const vector
                 name.replace(*it,1,print_INT_(*jt+as));
             }
             *rt=identificateur(name);
-            if (_eval(*rt,contextptr).type!=_IDNT)
-                *logptr(contextptr) << gettext("Warning") << ": " << gettext("variable") << " "
-                                    << name << " " << gettext("should be purged") << "\n";
-        } else *rt=symbol_array(sz,ind,pos+1,hashpos,tmpl,as,contextptr);
+            if (_eval(*rt,contextptr).type!=_IDNT) {
+                if (do_purge)
+                    _purge(*rt,contextptr);
+                else *logptr(contextptr) << gettext("Warning") << ": " << gettext("variable") << " "
+                                         << name << " " << gettext("should be purged") << "\n";
+            }
+        } else *rt=symbol_array(sz,ind,pos+1,hashpos,tmpl,as,do_purge,contextptr);
     }
     return ret;
 }
@@ -12615,16 +12488,21 @@ vecteur symbol_array(const vector<int> &sz,vector<int> &ind,int pos,const vector
 gen _symbol_array(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
-        return generrtype("Expected a sequence of arguments");
-    const vecteur &args=*g._VECTptr;
+        return generrtype(gettext("Expected a sequence of arguments"));
+    vecteur args=*g._VECTptr;
     if (args.size()<2)
-        return generrdim("Too few input arguments");
+        return generrdim(gettext("Too few input arguments"));
     if (args.front().type!=_STRNG)
-        return generrtype("First argument must be a string");
+        return generrtype(gettext("First argument must be a string"));
     string tmpl=*args.front()._STRNGptr;
+    bool do_purge=false;
+    if (args.back()==at_purge) {
+        do_purge=true;
+        args.pop_back();
+    }
     vecteur d(args.begin()+1,args.end());
     if (!is_integer_vecteur(d,true) || is_strictly_greater(1,_min(d,contextptr),contextptr))
-        return generr("Expected a sequence of positive integers");
+        return generr(gettext("Expected a sequence of positive integers"));
     int nd=d.size(),cnt=0,as=array_start(contextptr);
     vector<int> sz=vecteur_2_vector_int(d),ind(nd,0),hashpos(tmpl.size(),-1);
     string::const_iterator st,ststart=tmpl.begin(),stend=tmpl.end();
@@ -12637,7 +12515,7 @@ gen _symbol_array(const gen &g,GIAC_CONTEXT) {
     }
     hashpos.resize(cnt);
     if (st!=stend || (cnt>0 && cnt!=nd))
-        return generr("Invalid name template");
+        return generr(gettext("Invalid name template"));
     if (cnt==0) {
         string suffix(nd,hash_ch);
         hashpos.resize(nd);
@@ -12650,7 +12528,7 @@ gen _symbol_array(const gen &g,GIAC_CONTEXT) {
         }
         tmpl+=suffix;
     }
-    return symbol_array(sz,ind,0,hashpos,tmpl,as,contextptr);
+    return symbol_array(sz,ind,0,hashpos,tmpl,as,do_purge,contextptr);
 }
 static const char _symbol_array_s []="symbol_array";
 static define_unary_function_eval (__symbol_array,&_symbol_array,_symbol_array_s);
@@ -12826,39 +12704,39 @@ gen _siman(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     const vecteur &args=*g._VECTptr;
     if (args.size()<5 || args.size()>7)
-        return generrdim("Wrong number of input arguments");
+        return generrdim(gettext("Wrong number of input arguments"));
     const gen &x0=args[0],&efunc=args[1],&distfunc=args[2],&modfunc=args[3],&tp=args[4];
     if (!efunc.is_symb_of_sommet(at_program) || efunc._SYMBptr->feuille._VECTptr->front()._VECTptr->size()!=1)
-        return generrtype("Energy function should accept one argument");
+        return generrtype(gettext("Energy function should accept one argument"));
     if (!distfunc.is_symb_of_sommet(at_program) || distfunc._SYMBptr->feuille._VECTptr->front()._VECTptr->size()!=2)
-        return generrtype("Distance function should accept two arguments");
+        return generrtype(gettext("Distance function should accept two arguments"));
     if (!modfunc.is_symb_of_sommet(at_program))
-        return generrtype("Invalid step function specification");
+        return generrtype(gettext("Invalid step function specification"));
     int mod_nargs=modfunc._SYMBptr->feuille._VECTptr->front()._VECTptr->size(),mask=num_mask_withfrac|num_mask_withint;
     int n_tries=10,iters_fixed_T=100;
     double step_size=0;
     if (tp.type!=_VECT || tp._VECTptr->size()!=4 || !is_numericv(*tp._VECTptr,mask))
-        return generrtype("Invalid specification of cooling schedule");
+        return generrtype(gettext("Invalid specification of cooling schedule"));
     const vecteur &cooling_params=*tp._VECTptr;
     if (!is_zero__VECT(*im(cooling_params,contextptr)._VECTptr,contextptr) || !is_strictly_positive(_min(cooling_params,contextptr),contextptr))
-        return generr("Cooling schedule parameters must be positive real numbers");
+        return generr(gettext("Cooling schedule parameters must be positive real numbers"));
     if (args.size()>5) { // set iteration parameters
         if (args[5].type!=_VECT || args[5]._VECTptr->size()!=2 || !is_integer_vecteur(*args[5]._VECTptr))
-            return generrtype("Invalid specification of iteration limits");
+            return generrtype(gettext("Invalid specification of iteration limits"));
         n_tries=args[5]._VECTptr->front().val;
         iters_fixed_T=args[5]._VECTptr->back().val;
         if (n_tries<1)
-            return generr("Invalid number of tries per step");
+            return generr(gettext("Invalid number of tries per step"));
         if (iters_fixed_T<1)
-            return generr("Invalid number of iterations per temperature value");
+            return generr(gettext("Invalid number of iterations per temperature value"));
     }
     if (args.size()>6) { // set max step size
         if (!is_real_number(args[6],contextptr) || (step_size=to_real_number(args[6],contextptr).to_double(contextptr))<=0)
-            return generr("Invalid maximum step-size specification");
+            return generr(gettext("Invalid maximum step-size specification"));
         if (modfunc._SYMBptr->feuille._VECTptr->front()._VECTptr->size()!=2)
-            return generrdim("Step function should accept two arguments");
+            return generrdim(gettext("Step function should accept two arguments"));
     } else if (modfunc._SYMBptr->feuille._VECTptr->front()._VECTptr->size()!=1)
-        return generrdim("Step function should accept one argument");
+        return generrdim(gettext("Step function should accept one argument"));
     gsl_siman_params_t params;
     params.n_tries=n_tries;
     params.iters_fixed_T=iters_fixed_T;
@@ -12877,19 +12755,270 @@ gen _siman(const gen &g,GIAC_CONTEXT) {
     } catch (const std::runtime_error &e) {
         delete cfg;
         if (r!=NULL) gsl_rng_free(r);
-        return generr(e.what(),false);
+        return generr(e.what());
     }
     gen ret=cfg->obj();
     if (r!=NULL) gsl_rng_free(r);
     delete cfg;
     return ret;
 #else
-    return generr("GSL is required for simulated annealing");
+    return generr(gettext("GSL is required for simulated annealing"));
 #endif
 }
 static const char _siman_s []="simulated_annealing";
 static define_unary_function_eval (__siman,&_siman,_siman_s);
 define_unary_function_ptr5(at_siman,alias_at_siman,&__siman,0,true)
+
+/* Frank-Wolfe with Backtracking Line-Search
+ * Source: F. Pedregosa et al. (2020)
+ */
+
+vecteur FW_step_size(const gen &f,const vecteur &d,const vecteur &x,const gen &g,const gen &L,const gen &gamma_max,
+        const vecteur &last_f,const gen &dnorm,GIAC_CONTEXT) {
+    double tau=2.0,eta=0.9;
+    gen dn=pow(dnorm,2);
+    gen M=is_undef(last_f[0])?(eta+1)*L/2:max(eta*L,min(L,pow(g,2)/(2*(last_f[0]-last_f[1])*dn),contextptr),contextptr);
+    gen gamma=min(g/(M*dn),gamma_max,contextptr),Q;
+    int k=0;
+    for (;k<100;++k) {
+        Q=last_f[1]-gamma*g+pow(gamma,2)*M*dn/2;
+        if (is_greater(Q,f(gen(addvecteur(x,multvecteur(gamma,d)),_SEQ__VECT),contextptr),contextptr))
+            break;
+        M=tau*M;
+        gamma=min(g/(M*dn),gamma_max,contextptr);
+    }
+    return makevecteur(gamma,M);
+}
+
+gen FW_backtracking(const matrice &A,const gen &f,const gen &df,const vecteur &x0,double tol,int maxiter,int mystep,GIAC_CONTEXT) {
+    gen L_prev=undef,gamma_max=1,g,gamma,f_prev=undef,fk,t,dnorm,fd,alpha_opt,dfval;
+    vecteur res,x(x0),d,dfk,dir(x0.size()),dx(x0.size());
+    int k=0,iter=0,N=5;
+    const_iterateur it,itend;
+    iterateur jt;
+    vecteur c(A.size());
+    identificateur alpha(" FW_alpha");
+    if (mystep)
+        _purge(alpha,contextptr);
+    //*logptr(contextptr) << "Minimizing with eps=" << tol << ", maxiter=" << maxiter << ", x0=" << x0 << endl;
+    //if (mystep) *logptr(contextptr) << "Using optimal step size" << endl;
+    bool ok=true;
+    for (;k<maxiter;++k) {
+        fk=evalf_double(f(gen(x,_SEQ__VECT),contextptr),1,contextptr);
+        if (fk.type!=_DOUBLE_)
+            return generr(gettext("Failed to compute objective function value"));
+        dfval=_evalf(df(gen(x,_SEQ__VECT),contextptr),contextptr);
+        if (dfval.type!=_VECT || dfval._VECTptr->size()!=x.size() || !is_numericv(dfk=*dfval._VECTptr))
+            return generr(gettext("Failed to compute numerical gradient"));
+        g=plus_inf;
+        for (it=A.begin(),itend=A.end(),jt=c.begin();it!=itend;++it,++jt) {
+            subvecteur(*it->_VECTptr,x,dir);
+            if (is_strictly_greater(g,t=scalarproduct(dfk,dir,contextptr),contextptr)) {
+                g=t;
+                d=dir;
+            }
+        }
+        if (is_greater(tol,-g,contextptr))
+            break;
+        dnorm=_l2norm(d,contextptr);
+        if (mystep) {
+            fd=ratnormal(f(gen(addvecteur(x,multvecteur(alpha,d)),_SEQ__VECT),contextptr),contextptr);
+            alpha_opt=find_minimum(fd,0,1,mystep>0,tol,std::abs(mystep),contextptr);
+            multvecteur(alpha_opt,d,dx);
+        } else {
+            if (is_undef(L_prev))
+                L_prev=_l2norm(df(gen(x,_SEQ__VECT),contextptr)-
+                    df(gen(addvecteur(x,multvecteur(tol,d)),_SEQ__VECT),contextptr),contextptr)/(tol*dnorm);
+            res=FW_step_size(f,d,x,-g,L_prev,gamma_max,makevecteur(f_prev,fk),dnorm,contextptr);
+            L_prev=res[1];
+            f_prev=fk;
+            multvecteur(res[0],d,dx);
+        }
+        if (is_zero(_l2norm(dx,contextptr),contextptr)) {
+            //print_warning(gettext("failed to improve the solution, it may not be optimal"),contextptr);
+            ok=false;
+            break;
+        }
+        addvecteur(x,dx,x);
+    }
+    //*logptr(contextptr) << "Total " << k << " iterations done" << endl;
+    if (!ok || k==maxiter)
+        x=makevecteur(string2gen(gettext("Unable to minimize at given precision, last value"),false),x);
+    return x;
+}
+
+vecteur find_pdh_centers(const vecteur &pdh,const vector<int> &ci,int k,GIAC_CONTEXT) {
+    vecteur cc=*_matrix(makesequence(k,mcols(pdh),0),contextptr)._VECTptr;
+    vecteur ccn(k,0);
+    vector<int>::const_iterator ct=ci.begin(),ctend=ci.end();
+    const_iterateur jt=pdh.begin(),jtend;
+    for (;ct!=ctend;++ct,++jt) {
+        addvecteur(*cc[*ct]._VECTptr,*jt->_VECTptr,*cc[*ct]._VECTptr);
+        ccn[*ct]+=1;
+    }
+    iterateur kt=cc.begin(),ktend=cc.end();
+    for (jt=ccn.begin();kt!=ktend;++kt,++jt) {
+        divvecteur(*kt->_VECTptr,*jt,*kt->_VECTptr);
+    }
+    return cc;
+}
+
+gen _frank_wolfe(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT && g.subtype!=_SEQ__VECT)
+        return gentypeerr(contextptr);
+    if (g._VECTptr->size()<2)
+        return gentoofewargs(gettext("Expected at least 2 input arguments"));
+    if (g._VECTptr->size()>5)
+        return gentoomanyargs(gettext("Expected at most 5 input arguments"));
+    const vecteur &args=*g._VECTptr;
+    const gen &obj=args.front();
+    gen f,df;
+    int nv,maxiter=100000;
+    vecteur vars;
+    if (obj.type==_VECT) {
+        if (obj._VECTptr->size()<2)
+            return gendimerr(contextptr);
+        f=obj._VECTptr->at(0);
+        df=obj._VECTptr->at(1);
+        if (!f.is_symb_of_sommet(at_program) || !df.is_symb_of_sommet(at_program))
+            return generrtype(gettext("Expected a pair of functions"));
+        const gen &v=f._SYMBptr->feuille._VECTptr->front(),&w=df._SYMBptr->feuille._VECTptr->front();
+        if (v.type!=_VECT || w.type!=_VECT)
+            return gentypeerr(contextptr);
+        nv=v._VECTptr->size();
+        if (int(w._VECTptr->size())!=nv)
+            return gendimerr(contextptr);
+    } else {
+        if (obj.type!=_SYMB)
+            return gentypeerr(contextptr);
+        vars=*_lname(obj,contextptr)._VECTptr;
+        if (vars.empty())
+            return generr(gettext("The objective function has no variables"));
+        nv=vars.size();
+        f=_eval(symbolic(at_program,makesequence(gen(vars,_SEQ__VECT),gen(vecteur(nv,0),_SEQ__VECT),
+            _evalf(obj,contextptr))),contextptr);
+        gen d=ratnormal(_grad(makesequence(obj,vars),contextptr),contextptr);
+        if (contains(d,at_derive))
+            return generr(gettext("Cannot compute the derivative of the objective function"));
+        if (d.type!=_VECT || int(d._VECTptr->size())!=nv)
+            return generr(gettext("Failed to define the gradient function"));
+        df=_eval(symbolic(at_program,makesequence(gen(vars,_SEQ__VECT),gen(vecteur(nv,0),_SEQ__VECT),
+            symbolic(at_makevector,gen(*_evalf(d,contextptr)._VECTptr,_SEQ__VECT)))),contextptr);
+    }
+    if (nv<2)
+        return generrdim(gettext("Expected at least 2 variables"));
+    if (!ckmatrix(args[1]))
+        return generr(gettext("Expected a list of points"));
+    const matrice &A=*args[1]._VECTptr;
+    if (mcols(A)!=nv || mrows(A)<2)
+        return gendimerr(contextptr);
+    int mask=num_mask_withfrac|num_mask_withint;
+    if (!is_numericm(A,mask))
+        return generr(gettext("Point coordinates must be numeric"));
+    vecteur x0=*_mean(A,contextptr)._VECTptr;
+    double tol=1e-3;
+    int mystep=0,nr=0;
+    if (args.size()>2) {
+        for (const_iterateur it=args.begin()+2;it!=args.end();++it) {
+            if (it->is_symb_of_sommet(at_equal)) {
+                const gen &lh=it->_SYMBptr->feuille._VECTptr->front();
+                const gen &rh=it->_SYMBptr->feuille._VECTptr->back();
+                if (lh==at_exact) {
+                    if (!rh.is_integer() || (mystep=-rh.val)>=0)
+                        return generr("Expected a positive integer");
+                } else if (lh==at_rand) {
+                    if (!is_integer(rh) || (nr=rh.val)<2)
+                        return generr(gettext("Expected an integer greater than 1"));
+                }
+                else return generr(gettext("Invalid option"));
+            } else if (*it==at_exact)
+                mystep=100;
+            else if (*it==at_rand)
+                nr=1000;
+            else if (it->type==_VECT)
+                x0=*it->_VECTptr;
+            else if (it->is_integer())
+                maxiter=it->val;
+            else if (evalf_double(*it,1,contextptr).type==_DOUBLE_)
+                tol=evalf_double(*it,1,contextptr).DOUBLE_val();
+            else return gentypeerr(contextptr);
+        }
+        if (int(x0.size())!=nv)
+            return gendimerr(contextptr);
+        if (!is_numericv(x0,mask))
+            return generr(gettext("Initial point coordinates must be numeric"));
+        if (maxiter<1)
+            return generr(gettext("Maximum number of iterations must be positive"));
+        if (tol<=0)
+            return generr(gettext("Tolerance value must be positive"));
+    }
+    if (nr<=1)
+        return FW_backtracking(A,f,df,x0,tol,maxiter,mystep,contextptr);
+    // make Hessian function
+    gen hf;
+    if (obj.type==_VECT) {
+        if (obj._VECTptr->size()<3)
+            return generr(gettext("Hessian not available"));
+        hf=obj._VECTptr->at(2);
+        if (!hf.is_symb_of_sommet(at_program) || hf._SYMBptr->feuille._VECTptr->front()._VECTptr->size()!=nv)
+            return generr(gettext("Invalid Hessian function"));
+    } else {
+        gen h=ratnormal(_hessian(makesequence(obj,vars),contextptr),contextptr);
+        if (contains(h,at_derive))
+            return generr(gettext("Hessian is not available"));
+        hf=_eval(symbolic(at_program,makesequence(gen(vars,_SEQ__VECT),gen(vecteur(nv,0),_SEQ__VECT),
+            symbolic(at_makevector,gen(*_evalf(h,contextptr)._VECTptr,_SEQ__VECT)))),contextptr);
+    }
+    // generate PDH points
+    vecteur pdh,xk(x0),s;
+    pdh.reserve(nr);
+    int fcnt=0;
+    while (int(pdh.size())<nr && fcnt<100) {
+        s=*_rand(A,contextptr)._VECTptr;
+        addvecteur(xk,multvecteur(rand_uniform(0,1,contextptr),subvecteur(s,xk)),xk);
+        gen hfv=hf(gen(xk,_SEQ__VECT),contextptr);
+        if (!is_squarematrix(hfv) || mrows(*hfv._VECTptr)!=nv || !is_numericm(*hfv._VECTptr,mask))
+            return generrdim(gettext("Invalid Hessian function value"));
+        if (is_positive_definite(*hfv._VECTptr,1,contextptr)) {
+            pdh.push_back(xk);
+            fcnt=0;
+        } else ++fcnt;
+    }
+    if (int(pdh.size())<nr)
+        print_warning(gettext("failed to generate the requested number of PDH points"),contextptr);
+    if (pdh.size()<2)
+        return FW_backtracking(A,f,df,x0,tol,maxiter,mystep,contextptr);
+    // cluster PDH points
+    vector<int> ci;
+    int k=-_CALINSKI_HARABASZ_INDEX,max_k=std::min(100,int(pdh.size()));
+    if (kmeans(pdh,k,2,max_k,100,ci,NULL,NULL,contextptr)==0) {
+        //*logptr(contextptr) << "Found " << k << " PDH clusters" << endl;
+        vecteur cc=find_pdh_centers(pdh,ci,k,contextptr);
+        gen best_obj(plus_inf);
+        vecteur best_sol(0);
+        const_iterateur it=cc.begin(),itend=cc.end();
+        for (;it!=itend;++it) {
+            gen os=FW_backtracking(A,f,df,*it->_VECTptr,tol,maxiter,mystep,contextptr);
+            if (os.type!=_VECT || os._VECTptr->empty())
+                continue;
+            if (os._VECTptr->front().type==_STRNG)
+                os=os._VECTptr->back();
+            gen ov=f(gen(*os._VECTptr,_SEQ__VECT),contextptr);
+            if (is_strictly_greater(best_obj,ov,contextptr)) {
+                best_obj=ov;
+                best_sol=*os._VECTptr;
+            }
+        }
+        if (!best_sol.empty())
+            return best_sol;
+    } 
+    print_warning(gettext("clustering failed, performing local search"),contextptr);
+    return FW_backtracking(A,f,df,x0,tol,maxiter,mystep,contextptr);
+}
+static const char _frank_wolfe_s []="frank_wolfe";
+static define_unary_function_eval (__frank_wolfe,&_frank_wolfe,_frank_wolfe_s);
+define_unary_function_ptr5(at_frank_wolfe,alias_at_frank_wolfe,&__frank_wolfe,0,true)
 
 #ifndef NO_NAMESPACE_GIAC
 }

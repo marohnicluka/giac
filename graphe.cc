@@ -58,6 +58,11 @@ void print_msg_type(int t,GIAC_CONTEXT) {
     }
 }
 
+void graphe::message(const char *str) const {
+    if (!verbose) return;
+    *logptr(ctx) << gettext(str) << "\n";
+}
+
 void graphe::message(int t,const char *str) const {
     if (!verbose) return;
     print_msg_type(t,ctx);

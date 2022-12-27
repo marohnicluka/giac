@@ -21,6 +21,7 @@
 #include "signalprocessing.h"
 #include "graphtheory.h"
 #include "usual.h"
+#include "plot.h"
 
 #ifdef HAVE_LIBSAMPLERATE
 #include "samplerate.h"
@@ -46,21 +47,35 @@ namespace giac {
 #define _SP_BAD_WINDOW gettext("Invalid window parameters")
 #define MAX_TAILLE 500
 #define MAX_FACTORS 10
+#define MIDI_NOTE_0 8.17579891564
+#define GREY_COLOR 47
 
-gen generr(const char* msg,bool translate) {
-    string m(translate?gettext(msg):msg);
+string n2hexstr(char c) {
+    static const char* digits="0123456789ABCDEF";
+    std::string hex(2,'0');
+    for (size_t i=0,j=4;i<2;++i,j-=4)
+        hex[i]=digits[(c>>j) & 0x0f];
+    return hex;
+}
+
+int nextpow2(int n) {
+    return 1<<int(std::ceil(std::log2(n)));
+}
+
+gen generr(const char* msg) {
+    string m(msg);
     m.append(".");
     return gensizeerr(m.c_str());
 }
 
-gen generrtype(const char* msg,bool translate) {
-    string m(translate?gettext(msg):msg);
+gen generrtype(const char* msg) {
+    string m(msg);
     m.append(".");
     return gentypeerr(m.c_str());
 }
 
-gen generrdim(const char* msg,bool translate) {
-    string m(translate?gettext(msg):msg);
+gen generrdim(const char* msg) {
+    string m(msg);
     m.append(".");
     return gendimerr(m.c_str());
 }
@@ -77,10 +92,182 @@ void print_warning(const char *msg,GIAC_CONTEXT) {
     *logptr(contextptr) << gettext("Warning") << ": " << gettext(msg) << "\n";
 }
 
+bool is_whitespace(char c) {
+    return c==32 || (c>8 && c<14);
+}
+
+string trim_left(const string &s) {
+    string::const_iterator it=s.begin(),itend=s.end();
+    for (;it!=itend && is_whitespace(*it);++it);
+    return string(it,itend);
+}
+
+string trim_right(const string &s) {
+    string::const_iterator it=s.end(),itend=s.begin();
+    bool yes=true;
+    while (it!=itend && (yes=is_whitespace(*(--it))));
+    if (it!=itend || !yes) ++it;
+    return string(itend,it);
+}
+
+bool iszero(const gen &g,const gen &t,GIAC_CONTEXT) {
+    return (is_undef(t) && is_zero(_abs(g,contextptr),contextptr)) ||
+        (!is_undef(t) && is_strictly_greater(t,_abs(g,contextptr),contextptr));
+}
+
+gen _trim(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    bool has_opt=g.type==_VECT && g.subtype==_SEQ__VECT,retpos=false;
+    if (has_opt && g._VECTptr->size()<2)
+        return gendimerr(contextptr);
+    const gen &a=has_opt?g._VECTptr->front():g;
+    int optstart=has_opt?g._VECTptr->size()-1:0,dir=0;
+    if (has_opt) {
+        if (g._VECTptr->at(optstart)==at_index) retpos=(bool)(optstart--);
+        if (g._VECTptr->at(optstart)==at_left) dir=-(optstart--);
+        else if (g._VECTptr->at(optstart)==at_right) dir=(optstart--);
+    }
+    if (a.type==_STRNG) { // trim a string
+        if (optstart)
+            return gensizeerr(contextptr);
+        string lstr=dir<=0?trim_left(*a._STRNGptr):*a._STRNGptr;
+        string rstr=dir>=0?trim_right(lstr):lstr;
+        size_t d=a._STRNGptr->length()-lstr.length(),len=rstr.length();
+        return retpos?(dir<0?gen(d):(dir>0?gen(len):makesequence(d,len))):string2gen(rstr,false);
+    }
+    gen thr;
+    rgba_image *img=rgba_image::from_gen(a);
+    if (img!=NULL) { // trim zero pixel margins from an image
+        if (dir)
+            return generr(gettext("One-sided trimming is not supported for images"));
+        if (optstart>1)
+            return gentoomanyargs(gettext("Too many arguments"),contextptr);
+        bool inverted=false;
+        if (optstart==1) {
+            if (g._VECTptr->at(optstart)!=at_inv)
+                return gensizeerr(contextptr);
+            inverted=true;
+        }
+        matrice cd=*(inverted?-(*img):*img)[change_subtype(GREY_COLOR,_INT_COLOR)]._VECTptr;
+        vecteur xw=*_trim(makesequence(_sum(cd,contextptr),at_index),contextptr)._VECTptr;
+        vecteur yh=*_trim(makesequence(_sum(mtran(cd),contextptr),at_index),contextptr)._VECTptr;
+        gen ret=makesequence(xw[0],yh[0],xw[1],yh[1]);
+        return retpos?ret:(*img)(ret,contextptr);
+    }
+    audio_clip *clip=audio_clip::from_gen(a);
+    if (clip!=NULL) { // trim an audio clip
+        int n=clip->length(),sr=clip->sample_rate(),nc=clip->channel_count(),cs=sr/100;
+        gen dbs(-30.0);
+        if (optstart>2)
+            return gentoomanyargs(gettext("Too many arguments"),contextptr);
+        if (optstart==2) {
+            const gen &opt=g._VECTptr->at(optstart);
+            if (!is_real_number(opt,contextptr) || !is_positive(opt,contextptr))
+                return generr(gettext("Expected a nonnegative real number"));
+            cs=_round(sr*to_real_number(opt,contextptr),contextptr).val;
+            --optstart;
+        }
+        if (optstart==1) {
+            const gen &opt=g._VECTptr->at(optstart);
+            if (!is_real_number(opt,contextptr) || !is_strictly_positive(-opt,contextptr))
+                return generr(gettext("Expected a negative real number"));
+            dbs=to_real_number(opt,contextptr);
+        }
+        int N=nextpow2(sr/20);
+        gen data=_channel_data(_stereo2mono(a,contextptr),contextptr);
+        if (data.type!=_VECT)
+            return gensizeerr(gettext("Failed to extract audio data"));
+        thr=_pow(makesequence(10.0,dbs/gen(10.0)),contextptr);
+        double alpha=0.05;
+        int overlap=int(alpha*(N-1)),i;
+        data._VECTptr->resize(((n-overlap)/(N-overlap)+1)*(N-overlap)+overlap,0);
+        int nn=data._VECTptr->size(),lb=0,ub=n;
+        if (dir<=0) {
+            for (i=0;i<nn-N+1;i+=N-overlap) {
+                vecteur v=*_tukey_window(makesequence(vecteur(data._VECTptr->begin()+i,data._VECTptr->begin()+i+N),alpha),contextptr)._VECTptr;
+                vecteur e=*_hilbert(v,contextptr)._VECTptr;
+                iterateur it=e.begin(),itend=e.end();
+                for (;it!=itend;++it)
+                    *it=pow(re(*it,contextptr),2)+pow(im(*it,contextptr),2);
+                v=*_moving_average(makesequence(e,cs),contextptr)._VECTptr;
+                lb=_trim(makesequence(v,thr,at_left,at_index),contextptr).val;
+                if (lb<N-cs+1) {
+                    lb+=i;
+                    break;
+                }
+            }
+            if (i>=nn-N+1)
+                lb=n;
+            lb=std::min(lb,n);
+        }
+        if (dir>=0) {
+            for (i=nn-N;i>=0;i-=N-overlap) {
+                vecteur v=*_tukey_window(makesequence(vecteur(data._VECTptr->begin()+i,data._VECTptr->begin()+i+N),alpha),contextptr)._VECTptr;
+                vecteur e=*_hilbert(v,contextptr)._VECTptr;
+                iterateur it=e.begin(),itend=e.end();
+                for (;it!=itend;++it)
+                    *it=pow(re(*it,contextptr),2)+pow(im(*it,contextptr),2);
+                e=*_moving_average(makesequence(e,cs),contextptr)._VECTptr;
+                ub=_trim(makesequence(e,thr,at_right,at_index),contextptr).val;
+                if (ub>0) {
+                    ub+=i;
+                    break;
+                }
+            }
+            if (i<0)
+                ub=0;
+            ub=std::max(ub,0);
+        }
+        if (!retpos && ub<=lb)
+            return vecteur(0);
+        if (dir<0) return retpos?lb:a(lb,contextptr);
+        if (dir>0) return retpos?ub:a(makesequence(0,ub),contextptr);
+        gen ret=makesequence(lb,ub);
+        return retpos?ret:a(ret,contextptr);
+    }
+    // trim a real or complex vector
+    if (a.type!=_VECT)
+        return gentypeerr(contextptr);
+    if (optstart>1)
+        return gentoomanyargs(gettext("Too many arguments"),contextptr);
+    thr=optstart?g._VECTptr->at(optstart):undef;
+    if (!is_undef(thr) && (!is_real_number(thr,contextptr) || !is_strictly_positive(thr,contextptr)))
+        return generr(gettext("Invalid threshold specification"));
+    const_iterateur it0=a._VECTptr->begin(),it1=it0,itend=a._VECTptr->end(),it2=itend;
+    try {
+        if (dir<=0) for (;it1!=itend && iszero(*it1,thr,contextptr);++it1);
+        if (dir>=0) {
+            bool yes=true;
+            while (it2!=it1 && (yes=iszero(*(--it2),thr,contextptr)));
+            if (it2!=it1 || !yes) ++it2;
+        }
+    } catch (const std::runtime_error &err) {
+        *logptr(contextptr) << err.what() << "\n";
+        return gensizeerr(contextptr);
+    }
+    if (retpos) {
+        int d=it1-it0,len=it2-it1;
+        return dir<0?gen(d):(dir>0?gen(len):makesequence(d,len));
+    }
+    return vecteur(it1,it2);
+}
+static const char _trim_s[]="trim";
+static define_unary_function_eval (__trim,&_trim,_trim_s);
+define_unary_function_ptr5(at_trim,alias_at_trim,&__trim,0,true);
+
 bool is_real_number(const gen &g,GIAC_CONTEXT) {
     if (g.type==_INT_ || g.type==_ZINT || g.type==_FLOAT_ || g.type==_DOUBLE_ || g.type==_REAL || g.type==_FRAC)
         return true;
     return evalf_double(g,1,contextptr).type==_DOUBLE_;
+}
+
+bool is_real_vector(const vecteur &v,GIAC_CONTEXT) {
+    const_iterateur it=v.begin(),itend=v.end();
+    for (;it!=itend;++it) {
+        if (!is_real_number(*it,contextptr))
+            return false;
+    }
+    return true;
 }
 
 gen to_real_number(const gen &g,GIAC_CONTEXT) {
@@ -110,10 +297,18 @@ bool is_logical(const gen &g) {
         g.is_symb_of_sommet(at_same) || g.is_symb_of_sommet(at_equal);
 }
 
-int nextpow2(int n) {
-    int m=1;
-    while (m<n) m*=2;
-    return m;
+/* Set LB and UB to the interval G endpoints.
+ * The interval endpoints may also be specified as a list. */
+bool get_range(const gen &g,gen &lb,gen &ub) {
+    if (g.is_symb_of_sommet(at_interval)) {
+        lb=g._SYMBptr->feuille._VECTptr->front();
+        ub=g._SYMBptr->feuille._VECTptr->back();
+    } else if (g.type==_VECT && g._VECTptr->size()==2 &&
+            is_numericv(*g._VECTptr,num_mask_withint | num_mask_withfrac)) {
+        lb=g._VECTptr->front();
+        ub=g._VECTptr->back();
+    } else return false;
+    return true;
 }
 
 /* Return 1 if a<b, -1 if a>=b, and 0 if a and b are not comparable */
@@ -157,8 +352,7 @@ bool indomain(const matrice &intervals,const gen &a,GIAC_CONTEXT) {
     return false;
 }
 
-/* Get the assumptions on identifier G: obtain the domain, feasible interval(s)
- * and excluded points.
+/* Get the assumptions on identifier G: obtain the domain, feasible interval(s) and excluded points.
  * Return true if assumptions are read successfully, else return false. */
 bool get_assumptions(const gen &g,int &dom,matrice &intervals,vecteur &excluded,GIAC_CONTEXT) {
     if (g.type!=_IDNT)
@@ -311,7 +505,7 @@ bool is_inZ(const gen &g_orig,GIAC_CONTEXT) {
 
 /* Does the expression g contain a symbolic subexpression with sommet f?
  * set a and rest to the argument of first found f and the multiplier of f(a), respectively. */
-bool contains(const gen &g,const unary_function_ptr *f,gen &a,gen &rest,GIAC_CONTEXT) {
+bool contains_f(const gen &g,const unary_function_ptr *f,gen &a,gen &rest,GIAC_CONTEXT) {
     bool ret=false;
     if (g.type!=_SYMB)
         return ret;
@@ -331,7 +525,7 @@ bool contains(const gen &g,const unary_function_ptr *f,gen &a,gen &rest,GIAC_CON
             } else rest=*it*rest;
         }
     } else if (g.is_symb_of_sommet(at_neg)) {
-        if (contains(g._SYMBptr->feuille,f,a,rest,contextptr)) {
+        if (contains_f(g._SYMBptr->feuille,f,a,rest,contextptr)) {
             rest=-rest;
             return true;
         }
@@ -370,7 +564,7 @@ gen collect_with_func(const gen &g_orig,const unary_function_ptr *f,gen_map *m,g
     gen_map &fterms=with_m?*m:ft;
     const_iterateur it=terms.begin(),itend=terms.end();
     for (;it!=itend;++it) {
-        if (contains(*it,f,a,r,contextptr))
+        if (contains_f(*it,f,a,r,contextptr))
             fterms[a]+=r;
         else if (!with_m)
             ret+=*it;
@@ -539,20 +733,117 @@ static const char _simplifyFloor_s[]="simplifyFloor";
 static define_unary_function_eval (__simplifyFloor,&_simplifyFloor,_simplifyFloor_s);
 define_unary_function_ptr5(at_simplifyFloor,alias_at_simplifyFloor,&__simplifyFloor,0,true);
 
+matrice stft(const vecteur &x,int m,const unary_function_ptr *wf,GIAC_CONTEXT) {
+    int n=x.size(),i,j;
+    assert(n%m==0);
+    int N=n/m-1; // number of DFTs
+    matrice res;
+    res.reserve(N);
+    vecteur v(m),a(m),b(m);
+    const_iterateur it;
+    iterateur jt,ait,bit;
+    for (i=0,ait=a.begin(),bit=b.begin();i<m;++i,++ait,++bit) {
+        gen w=cst_i*exp(-i*cst_i*(cst_two_pi/(2.0*m)),contextptr);
+        *ait=(1.0-w)/2.0;
+        *bit=(1.0+w)/2.0;
+    }
+    for (i=0;i<N;++i) {
+        it=x.begin()+i*m;
+        jt=v.begin();
+        for (j=0;j<m;++j,it+=2,++jt)
+            *jt=gen(*it,*(it+1));
+        vecteur u=*_fft(_eval(symbolic(wf,v),contextptr),contextptr)._VECTptr,r;
+        r.reserve(m);
+        for (j=0,ait=a.begin(),bit=b.begin();j<m;++j,++jt,++ait,++bit)
+            r.push_back(*ait*u[j]+*bit*conj(u[(m-j)%m],contextptr));
+        res.push_back(r);
+    }
+    return res;
+}
+
+vecteur istft(const matrice &y,GIAC_CONTEXT) {
+    int N=mrows(y),m=mcols(y),n=(N+1)*m,i,j;
+    vecteur x(n,0),a(m),b(m),c(m);
+    const_iterateur it,ut;
+    iterateur jt,ait,bit;
+    for (i=0,ait=a.begin(),bit=b.begin();i<m;++i,++ait,++bit) {
+        gen w=cst_i*exp(i*cst_i*(cst_two_pi/(2.0*m)),contextptr);
+        *ait=(1.0+w)/2.0;
+        *bit=(1.0-w)/2.0;
+    }
+    for (i=0,it=y.begin();i<N;++i,++it) {
+        const vecteur &r=*it->_VECTptr;
+        for (j=0,jt=c.begin(),ait=a.begin(),bit=b.begin();j<m;++j,++jt,++ait,++bit)
+            *jt=*ait*r[j]+*bit*conj(r[(m-j)%m],contextptr);
+        vecteur u=*_ifft(c,contextptr)._VECTptr;
+        for (j=0,ut=u.begin(),jt=x.begin()+i*m;j<m;++j,++ut) {
+            *(jt++)+=re(*ut,contextptr);
+            *(jt++)+=im(*ut,contextptr);
+        }
+    }
+    return x;
+}
+
+gen _stft(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    if (g._VECTptr->empty())
+        return gendimerr(contextptr);
+    gen wsize=128,wf=at_hamming_window;
+    bool has_opts=g.subtype==_SEQ__VECT;
+    if (has_opts && g._VECTptr->size()>3)
+        return gentoomanyargs(gettext("Too many input arguments"));
+    if (has_opts && g._VECTptr->front().type!=_VECT)
+        return gentypeerr(contextptr);
+    int n=g._VECTptr->size()-1,m;
+    if (has_opts && n==2) {
+        wf=g._VECTptr->at(n--);
+        if (wf.type!=_FUNC)
+            return generrtype(gettext("Expected a window function"));
+    }
+    if (has_opts && n==1) {
+        wsize=g._VECTptr->at(n);
+        if (!wsize.is_integer() || wsize.val<1)
+            return generrtype(gettext("Expected a positive integer"));
+        int e=std::floor(std::log2(wsize.val)+0.5);
+        if ((1<<e)!=wsize.val)
+            return generr(gettext("Window size must be a power of 2"));
+    }
+    vecteur x=has_opts?*g._VECTptr->front()._VECTptr:*g._VECTptr;
+    if (x.empty())
+        return gendimerr(contextptr);
+    if (!is_numericv(x,num_mask_withfrac | num_mask_withint))
+        return gensizeerr(contextptr);
+    if (!is_zero__VECT(*im(x,contextptr)._VECTptr,contextptr)) {
+        print_warning(gettext("ignoring imaginary part of input"),contextptr);
+        x=*re(x,contextptr)._VECTptr;
+    }
+    n=x.size();
+    m=wsize.val;
+    if (n%m) x.resize((n/m+1)*m,0);
+    return stft(x,m,wf._FUNCptr,contextptr);
+}
+static const char _stft_s[]="stft";
+static define_unary_function_eval (__stft,&_stft,_stft_s);
+define_unary_function_ptr5(at_stft,alias_at_stft,&__stft,0,true);
+
+gen _istft(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (!ckmatrix(g))
+        return gentypeerr(contextptr);
+    const matrice &y=*g._VECTptr;
+    if (!is_numericm(y,num_mask_withfrac | num_mask_withint))
+        return gensizeerr(contextptr);
+    return istft(y,contextptr);
+}
+static const char _istft_s[]="istft";
+static define_unary_function_eval (__istft,&_istft,_istft_s);
+define_unary_function_ptr5(at_istft,alias_at_istft,&__istft,0,true);
+
 //
 // AUDIO CLIP CLASS IMPLEMENTATION
 //
-
-string n2hexstr(char c) {
-    static const char* digits="0123456789ABCDEF";
-    std::string hex(2,'0');
-    for (size_t i=0,j=4;i<2;++i,j-=4)
-        hex[i]=digits[(c>>j) & 0x0f];
-    return hex;
-}
-int hexstr2int(const string &hex) {
-    return (int)strtol(hex.c_str(),NULL,16);
-}
 
 audio_clip::audio_clip(int depth,int rate,int nc,int len,GIAC_CONTEXT) {
     if ((depth!=8 && depth!=16 && depth!=24) || len<1 || nc<1 || rate<1)
@@ -772,7 +1063,7 @@ void audio_clip::load_data(const string &s,int offset) {
         j=p0+i;
         if (j<0) continue;
         else if (j>=_size) break;
-        unsigned char c=hexstr2int(s.substr(2*i,2));
+        uchar c=static_cast<uchar>(strtol(s.substr(2*i,2).c_str(),NULL,16));
         _data[j]=static_cast<char>(c);
     }
     _filename.clear();
@@ -952,17 +1243,17 @@ unsigned audio_clip::get_sample(int c,int pos) const {
     unsigned v,d1,d2,d3;
     switch (_bit_depth) {
     case 8:
-        v=static_cast<unsigned char>(_data[i]);
+        v=static_cast<uchar>(_data[i]);
         break;
     case 16:
-        d1=static_cast<unsigned char>(_data[2*i]);
-        d2=static_cast<unsigned char>(_data[2*i+1]);
+        d1=static_cast<uchar>(_data[2*i]);
+        d2=static_cast<uchar>(_data[2*i+1]);
         v=d1 | (d2<<8);
         break;
     case 24:
-        d1=static_cast<unsigned char>(_data[3*i]);
-        d2=static_cast<unsigned char>(_data[3*i+1]);
-        d3=static_cast<unsigned char>(_data[3*i+2]);
+        d1=static_cast<uchar>(_data[3*i]);
+        d2=static_cast<uchar>(_data[3*i+1]);
+        d3=static_cast<uchar>(_data[3*i+2]);
         v=d1 | (d2<<8) | (d3<<16);
         break;
     default:
@@ -1015,7 +1306,7 @@ gen _writewav(const gen &g,GIAC_CONTEXT){
 }
 #else
 void audio_clip::read_header(FILE *f,int &bd,int &sr,int &nc,int &sz) {
-    unsigned char c,channels;
+    uchar c,channels;
     unsigned int u,s,sample_rate,byte_rate,block_align=0,bits_per_sample=0,data_size=0;
     if (fread(&u,4,1,f)!=1 || u!=0x46464952 || // "RIFF"
             fread(&s,4,1,f)!=1 ||
@@ -1161,7 +1452,7 @@ gen _readwav(const gen &g,GIAC_CONTEXT) {
             return audio_clip(fname._STRNGptr->c_str(),t1,t2,contextptr);
         return audio_clip(fname._STRNGptr->c_str(),offset,len,contextptr);
     } catch (const std::runtime_error &e) {
-        return generr(e.what(),false);
+        return generr(e.what());
     }
 }
 
@@ -1559,7 +1850,7 @@ gen discrete_wavelet_transform(const gen &g,int dir,GIAC_CONTEXT) {
                         (wtype==_HAAR_WAVELET && k!=2) ||
                         (wtype==_BSPLINE_WAVELET && (k!=103 && k!=105 && k!=202 && k!=204 && k!=206 && k!=208
                             && k!=301 && k!=303 && k!=305 && k!=307 && k!=309)))
-                    return generr("Wavelet not implemented");
+                    return generr(gettext("Wavelet not implemented"));
             } else if (*it==at_centre)
                 centered=true;
             else if (*it==at_image)
@@ -1706,19 +1997,40 @@ audio_clip audio_clip::resample(int nsr,int quality) const {
 #endif
 }
 
-/* Set FMIN and FMAX to the minimal resp. maximal signal value in chunk starting
- * at OFFSET and with length LEN, channel C. */
-bool audio_clip::get_chunk_span(int c,int offset,int len,double &fmin,double &fmax) const {
-    fmin=fmax=0.0;
+bool audio_clip::get_chunk_span(int c,int offset,int len,double &fu_max,double &fu_min,double &fl_max,double &fl_min) const {
+    fu_max=-DBL_MAX;
+    fl_min=DBL_MAX;
+    fu_min=0.0;
+    fl_max=0.0;
+    int fu_mincount=0,fl_maxcount=0;
     if (offset<0 || offset>=_len || len<1)
         return false;
     if (offset>_len-len)
         len=_len-offset;
     for (int i=0;i<len;++i) {
         double s=decode(get_sample(c,i+offset));
-        if (s<fmin) fmin=s;
-        if (s>fmax) fmax=s;
+        if (s>=0) {
+            fu_max=std::max(fu_max,s);
+            fu_min+=s; fu_mincount++;
+        } else {
+            fl_max+=s; fl_maxcount++;
+            fl_min=std::min(fl_min,s);
+        }
     }
+    if (fu_mincount>0)
+        fu_min/=double(fu_mincount);
+    if (fl_maxcount>0)
+        fl_max/=double(fl_maxcount);
+    if (fu_mincount==0) {
+        fu_min=fl_max;
+        fl_max=fl_min;
+    }
+    if (fl_maxcount==0) {
+        fl_max=fu_min;
+        fu_min=fu_max;
+    }
+    if (fu_max<0) fu_max=fl_max;
+    if (fl_min>0) fl_min=fu_min;
     return true;
 }
 
@@ -1756,7 +2068,7 @@ gen _createwav(const gen &g,GIAC_CONTEXT) {
     string *strdata=NULL;
     if (g.is_integer()) {
         if (g.val<1)
-            return generr("Expected a length in samples (positive integer)");
+            return generr(gettext("Expected a length in samples"));
         len=g.val;
     } else if (g.type==_VECT) {
         if (g.subtype==_SEQ__VECT) {
@@ -1770,7 +2082,7 @@ gen _createwav(const gen &g,GIAC_CONTEXT) {
                             return generr(gettext("Number of channels should be a positive integer"));
                     } else if (lh==at_bit_depth) {
                         if (!rh.is_integer() || (bd=rh.val)<0 || (bd!=8 && bd!=16 && bd!=24))
-                            return generr("Bit depth should be either 8, 16 or 24");
+                            return generr(gettext("Bit depth should be either 8, 16 or 24"));
                     } else if (lh==at_samplerate) {
                         if (!rh.is_integer() || (sr=rh.val)<1)
                             return generr(gettext("Sample rate should be a positive integer"));
@@ -1790,7 +2102,7 @@ gen _createwav(const gen &g,GIAC_CONTEXT) {
                             data=rh._VECTptr;
                         else if (rh.type==_STRNG)
                             strdata=rh._STRNGptr;
-                        else return generr("Channel data should be either a matrix, vector, or string");
+                        else return generr(gettext("Channel data should be either a matrix, vector, or string"));
                     } else return generrarg(it-args.begin()+1);
                 } else if (it->type==_VECT && data==NULL && strdata==NULL)
                     data=it->_VECTptr;
@@ -1842,20 +2154,49 @@ gen _createwav(const gen &g,GIAC_CONTEXT) {
         return clip;
     } catch (const std::runtime_error &e) {
         return generr(e.what());
+        
     }
 }
 static const char _createwav_s []="createwav";
 static define_unary_function_eval (__createwav,&_createwav,_createwav_s);
 define_unary_function_ptr5(at_createwav,alias_at_createwav,&__createwav,0,true)
 
+void drawpoly(vecteur &lo,vecteur &hi,int col,vecteur &d,GIAC_CONTEXT) {
+    if (!lo.empty()) {
+        vecteur pts=mergevecteur(lo,*_revlist(hi,contextptr)._VECTptr);
+        pts.push_back(lo.front());
+        pts.push_back(symb_equal(at_display,change_subtype(col+_FILL_POLYGON,_INT_COLOR)));
+        d.push_back(_polygone(change_subtype(pts,_SEQ__VECT),contextptr));
+        lo.clear();
+        hi.clear();
+    }
+}
+
+void append_filled_polygon(const gen &A,const gen &B,const gen &C,const gen &D,int col,int p,bool f,
+        vecteur &lo,vecteur &hi,vecteur &d,GIAC_CONTEXT) {
+    gen y=im(makevecteur(A,B,C,D),contextptr);
+    bool fill;
+    gen ar0=max(y[0],y[1],contextptr)-min(y[2],y[3],contextptr);
+    fill=f || (!is_zero(ar0,contextptr) && is_greater(0.95,(_abs(y[0]-y[1],contextptr)+_abs(y[2]-y[3],contextptr))/ar0,contextptr));
+    if (!fill) {
+        drawpoly(lo,hi,col,d,contextptr);
+        gen disp=symb_equal(at_display,change_subtype(col,_INT_COLOR));
+        d.push_back(_segment(makesequence(p<0?D:(p>0?A:(A+D)/2),p<0?C:(p>0?B:(B+C)/2),disp),contextptr));
+    }
+    hi.push_back(B);
+    lo.push_back(C);
+}
+
 gen _plotwav(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    bool has_opts=g.type==_VECT && g.subtype==_SEQ__VECT;
+    bool has_opts=g.type==_VECT && g.subtype==_SEQ__VECT,fill;
     audio_clip *clip=audio_clip::from_gen(has_opts?g._VECTptr->front():g);
     if (clip==NULL)
         return generrtype(_SP_BAD_SOUND_DATA);
     int nc=clip->channel_count(),bd=clip->bit_depth(),sr=clip->sample_rate(),len=clip->length(),offset=0;
+    int dispmax_color=216,dispmin_color=227;
     gen a,b;
+    double ts=-1;
     if (has_opts) for (const_iterateur it=g._VECTptr->begin()+1;it!=g._VECTptr->end();++it) {
         if (is_equal(*it)) {
             const gen &lh=it->_SYMBptr->feuille._VECTptr->front();
@@ -1873,42 +2214,90 @@ gen _plotwav(const gen &g,GIAC_CONTEXT) {
                     offset=std::max(offset,rh._VECTptr->front().val);
                     len=std::min(len-offset,rh._VECTptr->back().val-offset);
                 } else return generr(_SP_INVALID_RANGE);
-            }
-        }
+            } else if (lh==at_couleur) {
+                if (rh.is_integer())
+                    dispmax_color=dispmin_color=rh.val;
+                else if (rh.type==_VECT) {
+                    if (rh._VECTptr->size()!=2)
+                        return gendimerr(contextptr);
+                    if (!is_integer_vecteur(*rh._VECTptr))
+                        return gentypeerr(contextptr);
+                    dispmax_color=rh._VECTptr->front().val;
+                    dispmin_color=rh._VECTptr->back().val;
+                } else return generr(gettext("Invalid color specification"));
+            } else if (lh.is_integer() && lh.subtype==_INT_PLOT && lh.val==_TSTEP) {
+                if (!is_real_number(rh,contextptr) || !is_strictly_positive(rh,contextptr))
+                    return generr(gettext("Invalid time step specification"));
+                ts=to_real_number(rh,contextptr).DOUBLE_val();
+            } else return generrarg(it-g._VECTptr->begin());
+        } else return generrarg(it-g._VECTptr->begin());
     }
+    if (dispmax_color<0 || dispmin_color<0 || dispmax_color>=65535 || dispmin_color>=65535)
+        return generr(gettext("Invalid color value"));
     if (len==0)
         return vecteur(0);
-    double dur=double(len)/double(sr),width=600.0,sc=double(len)/width,x,y=nc==1?0.0:1.0;
-    double fmax,fmin,s,t0=double(offset)/double(sr),dt=1.0/sr;
+    int width=500;
+    double dur=double(len)/double(sr);
+    if (ts>0)
+        width=(int)std::floor(dur/ts+0.5);
+    double sc=double(len)/double(width),x,y0=nc==1?0.0:1.0,y=y0;
+    double fu_max,fu_min,fl_max,fl_min,s,t0=double(offset)/double(sr),dt=1.0/sr;
     vecteur drawing,tvec;
-    if (sc<=1.0) tvec.resize(len);
+    drawing.reserve(6+(width+2)*nc);
+    drawing.push_back(symb_equal(change_subtype(_AXES,_INT_PLOT),nc==1?3:4));
+    drawing.push_back(symb_equal(change_subtype(_GL_X,_INT_PLOT),symb_interval(t0,t0+dur)));
+    drawing.push_back(symb_equal(change_subtype(_GL_Y,_INT_PLOT),symb_interval(y0-2.0*nc+1.0,y0+1.0)));
+    //drawing.push_back(symb_equal(change_subtype(_GL_X_AXIS_UNIT,_INT_PLOT),string2gen("sec",false)));
     for (int c=0;c<nc;++c) {
-        vecteur unodes,lnodes;
         if (sc<=1.0) {
+            tvec.resize(len);
             vecteur data=clip->get_channel_data(c,offset,len);
             iterateur it=data.begin(),itend=data.end(),jt=tvec.begin();
             for (int i=0;it!=itend;++it,++jt,++i) {
                 *it+=gen(y);
                 if (c==0) *jt=t0+i*dt;
             }
-            drawing.push_back(_listplot(_zip(makesequence(at_makevector,tvec,data),contextptr),contextptr));
+            drawing.push_back(_listplot(makesequence(mtran(makevecteur(tvec,data)),
+                symb_equal(at_couleur,change_subtype(dispmax_color,_INT_COLOR))),contextptr));
         } else {
-            unodes.reserve(std::floor(width));
-            lnodes.reserve(std::floor(width));
-            int step=std::floor(sc);
-            for (int i=0;i<len;i+=step) {
-                clip->get_chunk_span(c,i,step,fmin,fmax);
-                x=t0+dur*(i/step)/width;
-                unodes.push_back(makecomplex(x,y+fmax));
-                lnodes.push_back(makecomplex(x,y+fmin));
+            //drawing.push_back(_segment(makesequence(gen(t0,y),gen(t0+dur,y),symb_equal(at_couleur,change_subtype(dispmin_color,_INT_COLOR))),contextptr));
+            vecteur cur,prev(0),up_lo,up_hi,mid_lo,mid_hi,low_lo,low_hi;
+            up_lo.reserve(len); up_hi.reserve(len);
+            mid_lo.reserve(len); mid_hi.reserve(len);
+            low_lo.reserve(len); low_hi.reserve(len);
+            double dw=dur/double(width);
+            for (int i=0;i<width;++i) {
+                int p=std::floor(i*sc),np=std::floor((i+1)*sc);
+                clip->get_chunk_span(c,offset+p,np-p,fu_max,fu_min,fl_max,fl_min);
+                x=t0+i*dw;
+                cur=makevecteur(gen(x,y+fu_max),gen(x,y+fu_min),gen(x,y+fl_max),gen(x,y+fl_min));
+                if (!prev.empty()) {
+                    if (std::max(std::abs(fu_max),std::abs(fl_min))<1.e-2) {
+                        drawpoly(up_lo,up_hi,dispmax_color,drawing,contextptr);
+                        drawpoly(low_lo,low_hi,dispmax_color,drawing,contextptr);
+                        drawpoly(mid_lo,mid_hi,dispmin_color,drawing,contextptr);
+                        drawing.push_back(_segment(makesequence(_mean(prev,contextptr),_mean(cur,contextptr),symb_equal(at_couleur,change_subtype(dispmin_color,_INT_COLOR))),contextptr));
+                    } else {
+                        fill=is_strictly_greater(im(prev[0],contextptr),y,contextptr) && is_strictly_greater(y,im(prev[3],contextptr),contextptr) &&
+                            is_strictly_greater(im(cur[0],contextptr),y,contextptr) && is_strictly_greater(y,im(cur[3],contextptr),contextptr);
+                        append_filled_polygon(prev[1],cur[1],cur[2],prev[2],dispmin_color,0,fill,mid_lo,mid_hi,drawing,contextptr);
+                        append_filled_polygon(prev[0],cur[0],cur[1],prev[1],dispmax_color,1,fill,up_lo,up_hi,drawing,contextptr);
+                        append_filled_polygon(prev[2],cur[2],cur[3],prev[3],dispmax_color,-1,fill,low_lo,low_hi,drawing,contextptr);
+                    }
+                }
+                prev=cur;
             }
-            std::reverse(lnodes.begin(),lnodes.end());
-            vecteur nodes=mergevecteur(unodes,lnodes);
-            nodes.push_back(symbolic(at_equal,makesequence(at_display,_FILL_POLYGON)));
-            drawing.push_back(_polygone(change_subtype(nodes,_SEQ__VECT),contextptr));
-            drawing.push_back(_segment(makesequence(makecomplex(t0,y),makecomplex(t0+dur,y)),contextptr));
+            drawpoly(up_lo,up_hi,dispmax_color,drawing,contextptr);
+            drawpoly(low_lo,low_hi,dispmax_color,drawing,contextptr);
+            drawpoly(mid_lo,mid_hi,dispmin_color,drawing,contextptr);
         }
+        if (c<nc-1)
+            drawing.push_back(_segment(makesequence(gen(t0,y-1.0),gen(t0+dur,y-1.0),symb_equal(at_couleur,change_subtype(45+_DASH_LINE,_INT_COLOR))),contextptr));
         y-=2.0;
+    }
+    if (nc==2) {
+        drawing.push_back(_legende(makesequence(gen(t0,1.95),string2gen("L",false),change_subtype(_QUADRANT4,_INT_COLOR)),contextptr));
+        drawing.push_back(_legende(makesequence(gen(t0,-.05),string2gen("R",false),change_subtype(_QUADRANT4,_INT_COLOR)),contextptr));
     }
     return drawing;
 }
@@ -1933,63 +2322,86 @@ define_unary_function_ptr5(at_stereo2mono,alias_at_stereo2mono,&__stereo2mono,0,
 
 gen _plotspectrum(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
-    if (audio_clip *clip=audio_clip::from_gen(g)) {
-        gen intrv=symbolic(at_interval,makesequence(0,clip->sample_rate()/2)); // Shannon sampling theorem
-        return _plotspectrum(makesequence(g,symbolic(at_equal,makesequence(at_range,intrv))),contextptr);
+    bool has_opts=g.type==_VECT && g.subtype==_SEQ__VECT,disp_default=true;
+    if (has_opts && g._VECTptr->empty())
+        return gentoofewargs(gettext("Too few input arguments"));
+    int disp=_FILL_POLYGON,bins=512;
+    vecteur fb;
+    if (has_opts) for (const_iterateur it=g._VECTptr->begin()+1;it!=g._VECTptr->end();++it) {
+        if (it->is_symb_of_sommet(at_equal)) {
+            const gen &lh=it->_SYMBptr->feuille._VECTptr->front();
+            const gen &rh=it->_SYMBptr->feuille._VECTptr->back();
+            if (lh==at_couleur) {
+                if (!rh.is_integer() || rh.val<0)
+                    return generr(gettext("Invalid color specification"));
+                disp|=rh.val;
+                disp_default=false;
+            } else if (lh==at_frequencies) {
+                if (!rh.is_symb_of_sommet(at_interval) || !is_integer_vecteur(*rh._SYMBptr->feuille._VECTptr))
+                    return generr(gettext("Invalid frequency range specification"));
+                fb=*rh._SYMBptr->feuille._VECTptr;
+            } else if (lh.is_integer() && lh.subtype==_INT_MAPLECONVERSION && lh.val==_KDE_BINS) {
+                if (!rh.is_integer() || rh.val<2 || (1<<int(std::log2(rh.val)+0.5))!=rh.val)
+                    return generr(gettext("Invalid bin count specification"));
+                bins=rh.val;
+            } else return generrarg(it-g._VECTptr->begin());
+        } else if (it->type==_VECT) {
+            if (it->_VECTptr->size()!=2 || !is_integer_vecteur(*it->_VECTptr))
+                return generr(gettext("Invalid frequency range specification"));
+            fb=*it->_VECTptr;
+        } else return generrarg(it-g._VECTptr->begin());
     }
-    if (g.type==_VECT && g.subtype==_SEQ__VECT) {
-        const vecteur &gv=*g._VECTptr;
-        if (gv.size()!=2)
-            return generr(gettext("Expected two input arguments"));
-        audio_clip *clip=audio_clip::from_gen(gv.front());
-        if (clip==NULL)
-            return generrtype(_SP_BAD_SOUND_DATA);
-        int nc=clip->channel_count(),bd=clip->bit_depth(),sr=clip->sample_rate(),len=clip->length(),lfreq,ufreq;
-        vecteur data=(nc>1?audio_clip::from_gen(_stereo2mono(*clip,contextptr)):clip)->get_channel_data(0);
-        if (!is_equal(gv.back()))
-            return gensizeerr(contextptr);
-        const gen &lh=gv.back()._SYMBptr->feuille._VECTptr->front();
-        const gen &rh=gv.back()._SYMBptr->feuille._VECTptr->back();
-        if (lh==at_range) {
-            gen a,b;
-            if (rh.type==_VECT) {
-                if (rh._VECTptr->size()!=2 || !is_integer_vecteur(*rh._VECTptr))
-                    return generr(_SP_INVALID_RANGE);
-                a=rh._VECTptr->front();
-                b=rh._VECTptr->back();
-            } else if (rh.is_symb_of_sommet(at_interval)) {
-                a=rh._SYMBptr->feuille._VECTptr->front();
-                b=rh._SYMBptr->feuille._VECTptr->back();
-            } else return generr(_SP_INVALID_RANGE);
-            if (!is_integer(a) || !is_integer(b))
-                return generr(_SP_INVALID_RANGE);
-            lfreq=std::max(0,a.val);
-            ufreq=std::min(sr/2,b.val);
-            if (lfreq>=ufreq)
-                return generr(_SP_INVALID_RANGE);
+    audio_clip *clip=audio_clip::from_gen(has_opts?g._VECTptr->front():g);
+    if (clip==NULL)
+        return generr(gettext("Expected an audio clip"));
+    int nc=clip->channel_count(),bd=clip->bit_depth();
+    long sr=clip->sample_rate(),len=clip->length();
+    int lfreq=0,ufreq=int(sr)/2;
+    if (!fb.empty()) {
+        lfreq=std::max(lfreq,fb.front().val);
+        ufreq=std::min(ufreq,fb.back().val);
+        if (lfreq>=ufreq)
+            return generr(gettext("Invalid frequency range"));
+    }
+    if (disp_default)
+        disp+=219;
+    vecteur data=(nc>1?audio_clip::from_gen(_stereo2mono(*clip,contextptr)):clip)->get_channel_data(0);
+    vecteur spec,nodes,drawing;
+    if (len<2*bins) {
+        vecteur fs=*_fft(data,contextptr)._VECTptr;
+        fs.resize(fs.size()/2);
+        spec=*_pointpow(makesequence(_abs(fs,contextptr),2),contextptr)._VECTptr;
+    } else {
+        if (len%bins) data.resize((len/bins+1)*bins,0);
+        matrice fs=stft(data,bins,at_welch_window,contextptr);
+        spec=*_mean(_pointpow(makesequence(_apply(makesequence(at_abs,fs),contextptr),2),contextptr),contextptr)._VECTptr;
+        len=2*bins;
+    }
+    int n1=(len*(long)lfreq)/sr,n2=(len*(long)ufreq)/sr,dfreq=ufreq-lfreq;
+    int width=std::min(dfreq,std::max(500,dfreq/5)),step=std::max(1,int(n2-n1)/int(2*width));
+    nodes.reserve(width);
+    drawing.reserve(width+2);
+    gen f=0,d=double(sr)/double(len),fmax=0,fthr=1e-3,len2=len*len;
+    for (int i=n1;i<n2;++i) {
+        f+=spec[i];
+        if (i%step==0) {
+            nodes.push_back(makecomplex(i*d,f/len2));
+            fmax=max(fmax,f,contextptr);
+            f=0;
         }
-        int n=nextpow2(len);
-        data.resize(n,0);
-        vecteur spec=*_fft(data,contextptr)._VECTptr;
-        vecteur nodes;
-        int dfreq=ufreq-lfreq,n1=((long)n*(long)lfreq)/(long)sr,n2=((long)n*(long)ufreq)/(long)sr;
-        int width=std::min(dfreq,std::max(1500,dfreq/5));
-        nodes.reserve(std::floor(width));
-        int step=(n2-n1)/(2*width);
-        if (step==0) step=1;
-        double f;
-        for (int i=n1;i<n2;++i) {
-            f=std::max(f,to_real_number(pow(_abs(spec[i],contextptr),2)/gen(n),contextptr).to_double(contextptr));
-            if (i%step==0) {
-                nodes.push_back(makecomplex(((long)i*(long)sr)/(long)n,f));
-                f=0;
-            }
+    }
+    drawing.push_back(symb_equal(change_subtype(_AXES,_INT_PLOT),4));
+    drawing.push_back(symb_equal(change_subtype(_GL_Y,_INT_PLOT),symb_interval(0.0,1.07*fmax/len2)));
+    //drawing.push_back(symb_equal(change_subtype(_GL_X_AXIS_UNIT,_INT_PLOT),string2gen("Hz",false)));
+    fthr=fthr*fmax/len2;
+    const_iterateur it=nodes.begin(),itend=nodes.end();
+    for (;it!=itend;++it) {
+        if (is_greater(im(*it,contextptr),fthr,contextptr)) {
+            gen A(re(*it,contextptr)),B(re(*it+d,contextptr)),C(*it+d);
+            drawing.push_back(pnt_attrib(gen(makevecteur(A,B,C,*it,A),_GROUP__VECT),vecteur(1,disp),contextptr));
         }
-        nodes.push_back(ufreq+1);
-        nodes.push_back(lfreq);
-        nodes.push_back(symbolic(at_equal,makesequence(at_display,_FILL_POLYGON)));
-        return _polygone(change_subtype(nodes,_SEQ__VECT),contextptr);
-    } else return gentypeerr(contextptr);
+    }
+    return drawing;
 }
 static const char _plotspectrum_s []="plotspectrum";
 static define_unary_function_eval (__plotspectrum,&_plotspectrum,_plotspectrum_s);
@@ -2097,7 +2509,7 @@ gen _channel_data(const gen &g,GIAC_CONTEXT) {
         if (!has_opts) {
             if (img->depth()>1)
                 return generr(gettext("No channel specified"));
-            return (*img)[change_subtype(44373,_INT_COLOR)];
+            return (*img)[change_subtype(GREY_COLOR,_INT_COLOR)];
         }
         const vecteur &args=*g._VECTptr;
         return (*img)[change_subtype(vecteur(args.begin()+1,args.end()),_SEQ__VECT)];
@@ -2171,8 +2583,8 @@ gen _set_channel_data(const gen &g,GIAC_CONTEXT) {
                 case _RED: chn=0; break;
                 case _GREEN: chn=1; break;
                 case _BLUE: chn=2; break;
-                case 44373:
-                    if (img->depth()>2) return gensizeerr(gettext("This is not a grayscale image"));
+                case GREY_COLOR:
+                    if (img->depth()>2) return generr(gettext("This is not a grayscale image"));
                     chn=0;
                     break;
                 default: return generr(gettext("Invalid channel specification"));
@@ -2199,6 +2611,25 @@ static const char _set_channel_data_s []="set_channel_data";
 static define_unary_function_eval (__set_channel_data,&_set_channel_data,_set_channel_data_s);
 define_unary_function_ptr5(at_set_channel_data,alias_at_set_channel_data,&__set_channel_data,0,true)
 
+// subroutine for computing cross-correlation and convolution, (I)FFT is performed once
+vecteur fft_conv(const vecteur &A,const vecteur &B,bool cnj,GIAC_CONTEXT) {
+    int lenA=A.size(),lenB=B.size(),len=lenA+(cnj?0:lenB-1);
+    vecteur x;
+    x.reserve(len);
+    const_iterateur iA=A.begin(),iAend=A.end(),iB=B.begin(),iBend=B.end();
+    while (iA!=iAend || iB!=iBend) x.push_back(gen(iA!=iAend?*(iA++):0,iB!=iBend?*(iB++):0));
+    x.resize(len,0);
+    vecteur X=*_fft(x,contextptr)._VECTptr,Y;
+    Y.reserve(len);
+    X.push_back(X.front());
+    const_iterateur it=X.begin();
+    vecteur::reverse_iterator jt=X.rbegin();
+    for (int i=0;i<len;++i,++it,++jt)
+        Y.push_back(pow(cnj?_abs(*it,contextptr):*it,2)-pow(cnj?_abs(*jt,contextptr):conj(*jt,contextptr),2)
+            -(cnj?2*cst_i*im(*it*(*jt),contextptr):0));
+    return divvecteur(*im(_ifft(Y,contextptr),contextptr)._VECTptr,4);
+}
+
 gen _cross_correlation(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG && g.subtype==-1) return g;
     if (g.type!=_VECT || g.subtype!=_SEQ__VECT)
@@ -2210,9 +2641,7 @@ gen _cross_correlation(const gen &g,GIAC_CONTEXT) {
     int m=A.size(),n=B.size(),N=nextpow2(std::max(n,m));
     A.resize(2*N,0);
     B.resize(2*N,0);
-    vecteur a=*_fft(A,contextptr)._VECTptr,b=*_fft(B,contextptr)._VECTptr;
-    vecteur cc_ffted=*_pointprod(makesequence(a,conj(b,contextptr)),contextptr)._VECTptr;
-    vecteur cc=*_apply(makesequence(at_real,_ifft(cc_ffted,contextptr)),contextptr)._VECTptr;
+    vecteur cc=multvecteur(-1,fft_conv(A,B,true,contextptr));
     reverse(cc.begin(),cc.begin()+N);
     reverse(cc.begin()+N,cc.end());
     return vecteur(cc.begin()+N-m,cc.end()-N+n-1);
@@ -2268,7 +2697,7 @@ gen filter(const vecteur &args,filter_type typ,GIAC_CONTEXT) {
         gen opt(undef);
         if (args.size()>2) {
             if (!is_equal(args[2]))
-                return generr("Third argument should be normalize=<real>");
+                return generr(gettext("Third argument should be normalize=<real>"));
             if (args[2]._SYMBptr->feuille._VECTptr->front()==at_normalize)
                 opt=args[2];
         }
@@ -2336,16 +2765,14 @@ gen _moving_average(const gen &g,GIAC_CONTEXT) {
     int n=gv.back().val,len=s.size();
     if (n>len)
         return generr(gettext("Filter length exceeds array size"));
-    vecteur res(len-n+1);
+    vecteur res;
+    res.reserve(len-n+1);
     gen acc(0);
     for (int i=0;i<n;++i) acc+=s[i];
-    res[0]=acc;
-    for (int i=n;i<len;++i) {
-        acc-=s[i-n];
-        acc+=s[i];
-        res[i-n+1]=acc;
-    }
-    return multvecteur(fraction(1,n),res);
+    res.push_back(acc);
+    const_iterateur it=s.begin(),jt=it+n,jtend=s.end();
+    for (;jt!=jtend;++jt,++it) res.push_back(acc+=(*jt)-(*it));
+    return divvecteur(res,n);
 }
 static const char _moving_average_s []="moving_average";
 static define_unary_function_eval (__moving_average,&_moving_average,_moving_average_s);
@@ -2437,7 +2864,7 @@ gen _convolution(const gen &g,GIAC_CONTEXT) {
         gen T(0),var=identificateur("x"),tvar=identificateur(" tau"+print_INT_(++varcount));
         int n=args.size(),optstart=2;
         if (n<2)
-            return generrdim(gettext("Too few input arguments"));
+            return gentoofewargs(gettext("Too few input arguments"));
         const gen &f1=args[0],&f2=args[1];
         if (n>2) {
             if (args[optstart].type==_IDNT)
@@ -2445,13 +2872,14 @@ gen _convolution(const gen &g,GIAC_CONTEXT) {
             // parse options
             for (const_iterateur it=args.begin()+optstart;it!=args.end();++it) {
                 if (!is_equal(*it))
-                    return generr("Expected option=value");
+                    return generr(gettext("Expected option-value pair"));
                 vecteur &s=*it->_SYMBptr->feuille._VECTptr;
                 if (s.front()==at_shift)
                     T=s.back();
-                else return generr(gettext("Unrecognized option"));
+                else return generrarg(it-args.begin());
             }
         }
+        log_output_redirect lor(contextptr);
         giac_assume(symb_superieur_egal(tvar,0),contextptr);
         gen c=_integrate(makesequence(f1*_Heaviside(var,contextptr)*
                                       subst(f2*_Heaviside(var,contextptr),var,tvar-var,false,contextptr),
@@ -2465,17 +2893,12 @@ gen _convolution(const gen &g,GIAC_CONTEXT) {
     // convolve sequences
     if (args.size()!=2 || args.front().type!=_VECT || args.back().type!=_VECT)
         return generr(gettext("Expected a pair of lists"));
-    vecteur A=*args.front()._VECTptr,B=*args.back()._VECTptr;
-    int lenA=A.size(),lenB=B.size(),len=2*nextpow2(std::max(lenA,lenB));
-    A.resize(len-1,0);
-    B.resize(len-1,0);
-    vecteur a=*_fft(A,contextptr)._VECTptr,b=*_fft(B,contextptr)._VECTptr;
-    vecteur cv=*_apply(makesequence(at_real,_ifft(_pointprod(makesequence(a,b),
-                                                             contextptr),
-                                                  contextptr)),
-                       contextptr)._VECTptr;
-    cv.resize(lenA+lenB-1);
-    return cv;
+    const vecteur &A=*args.front()._VECTptr,&B=*args.back()._VECTptr;
+    int mask=num_mask_withfrac | num_mask_withint;
+    if (!is_numericv(A,mask) || !is_numericv(B,mask) ||
+            !is_zero__VECT(*im(A,contextptr)._VECTptr,contextptr) || !is_zero__VECT(*im(B,contextptr)._VECTptr,contextptr))
+        return generr(gettext("Expected real numeric input data"));
+    return fft_conv(A,B,false,contextptr);
 }
 static const char _convolution_s []="convolution";
 static define_unary_function_eval (__convolution,&_convolution,_convolution_s);
@@ -2551,15 +2974,15 @@ gen factorise(const gen &g,GIAC_CONTEXT) {
     return factorcollect(g,false,contextptr);
 }
 
-bool ispoly(const gen &e,const identificateur &x,gen &d,GIAC_CONTEXT) {
+bool ispoly(const gen &e,const identificateur &x,int &d,GIAC_CONTEXT) {
     if (is_const_wrt(e,x,contextptr)) {
-        d=gen(0);
+        d=0;
         return true;
     }
     if (!is_rational_wrt(e,x) || !is_const_wrt(_denom(e,contextptr),x,contextptr))
         return false;
-    d=_degree(makesequence(e,x),contextptr);
-    return d.is_integer() && !is_zero(d);
+    gen dg=_degree(makesequence(e,x),contextptr);
+    return dg.is_integer() && (d=dg.val)>0;
 }
 
 gen eval_for_x_in_ab_recursion(const gen &g,const identificateur &x,const gen &a,const gen &b,bool &changed,GIAC_CONTEXT) {
@@ -2920,6 +3343,68 @@ bool is_partialdiff(const gen &g,identificateur &f,vecteur &vars,vecteur &deg,GI
     return true;
 }
 
+/* return true iff g = a*(x+b)^2+c */
+bool is_poly2(const gen &g,const identificateur &x,gen &a,gen &b,gen &c,GIAC_CONTEXT) {
+    int st;
+    if(!ispoly(g,x,st,contextptr) || st!=2)
+        return false;
+    gen cf=_canonical_form(makesequence(g,x),contextptr),e,s(undef),d;
+    if (cf.is_symb_of_sommet(at_plus) && cf._SYMBptr->feuille.type==_VECT &&
+            cf._SYMBptr->feuille._VECTptr->size()==2) {
+        e=cf._SYMBptr->feuille._VECTptr->front();
+        c=cf._SYMBptr->feuille._VECTptr->back();
+    } else {
+        e=cf;
+        c=0;
+    }
+    a=gen(1);
+    if (e.is_symb_of_sommet(at_neg)) {
+        a=gen(-1);
+        e=e._SYMBptr->feuille;
+    }
+    if (e.is_symb_of_sommet(at_prod) && e._SYMBptr->feuille.type==_VECT) {
+        const vecteur &factors=*e._SYMBptr->feuille._VECTptr;
+        for (const_iterateur it=factors.begin();it!=factors.end();++it) {
+            if (is_const_wrt(*it,x,contextptr))
+                a=a*(*it);
+            else if (is_undef(s))
+                s=*it;
+            else return false;
+        }
+    } else s=e;
+    if (s.is_symb_of_sommet(at_pow) && s._SYMBptr->feuille.type==_VECT &&
+            s._SYMBptr->feuille._VECTptr->size()==2 && is_one(s._SYMBptr->feuille._VECTptr->back()-1)) {
+        gen l=s._SYMBptr->feuille._VECTptr->front();
+        if (!is_linear_wrt(l,x,d,b,contextptr) || !is_one(d))
+            return false;
+    } else return false;
+    return true;
+}
+
+/* return true iff g = a*(b*x+c)^n */
+bool is_monomial(const gen &g,const identificateur &x,int &n,gen &a,gen &b,gen &c,GIAC_CONTEXT) {
+    if (!ispoly(g,x,n,contextptr))
+        return false;
+    gen gf=factorise(makesequence(g,x),contextptr),s(undef);
+    if (gf.is_symb_of_sommet(at_neg)) {
+        gf=g._SYMBptr->feuille;
+        a=gen(-1);
+    } else a=gen(1);
+    if (gf.is_symb_of_sommet(at_prod) && gf._SYMBptr->feuille.type==_VECT) {
+        const vecteur &factors=*gf._SYMBptr->feuille._VECTptr;
+        for (const_iterateur it=factors.begin();it!=factors.end();++it) {
+            if (is_const_wrt(*it,x,contextptr))
+                a=a*(*it);
+            else if (is_undef(s))
+                s=*it;
+            else return false;
+        }
+    } else s=gf;
+    return !has_inf_or_undef(s) && ((n==1 && is_linear_wrt(s,x,b,c,contextptr)) ||
+        (n>1 && s.is_symb_of_sommet(at_pow) && s._SYMBptr->feuille.type==_VECT &&
+           is_linear_wrt(s._SYMBptr->feuille._VECTptr->front(),x,b,c,contextptr)));
+}
+
 /* Rewrite g_orig in a way that the products of exp and step functions
  * can be transformed by Fourier transform. */
 gen collect_expHeaviside(const gen &g_orig,GIAC_CONTEXT) {
@@ -3132,7 +3617,7 @@ bool has_Dirac(const gen &g,const identificateur &x,gen &a,gen &b,int &k,gen &re
                 if (!gk.is_integer() || (k=gk.val)<0)
                     return false;
                 rest=ratnormal(rest*symbolic(at_prod,vecteur(it+1,itend)),contextptr);
-                return true;
+                return !contains(rest,at_Dirac);
             }
         }
         fac=*it;
@@ -3176,71 +3661,80 @@ gen expand_Dirac(const gen &g,const identificateur &x,GIAC_CONTEXT) {
             }
         }
     } else if (g.type==_SYMB)
-        return expand_Dirac(g._SYMBptr->feuille,x,contextptr);
+        return symbolic(g._SYMBptr->sommet,expand_Dirac(g._SYMBptr->feuille,x,contextptr));
     return g;
 }
 
+gen simp_dirac_rat(const gen &g,const identificateur &x,const gen &z,int &n,GIAC_CONTEXT) {
+    gen a,b,r,res;
+    int k;
+    if (is_monomial(g,x,k,r,a,b,contextptr) && is_exactly_zero(ratnormal(z+b/a,contextptr))) {
+        if (k>n)
+            return 0;
+        res=(k%2?-1:1)*_comb(makesequence(n,k),contextptr)*_factorial(k,contextptr)*r;
+        n-=k;
+    } else if (is_monomial(_inv(g,contextptr),x,k,r,a,b,contextptr) && is_exactly_zero(ratnormal(z+b/a,contextptr))) {
+        res=_inv((k%2?-1:1)*_comb(makesequence(n+k,k),contextptr)*_factorial(k,contextptr)*r,contextptr);
+        n+=k;
+    } else return g;
+    return res;
+}
+
 gen simplify_Dirac(const gen &g_orig,const identificateur &x,const unary_function_ptr *simpfunc,GIAC_CONTEXT) {
-    gen g=expand(g_orig,contextptr),r,ret(0),rest(0),z,s,rn,v,a,b;
+    gen g=expand(g_orig,contextptr),r,ret(0),rest(0),zero_rest,z,s,rn,v,a,b,c,te;
     vecteur terms;
     if (g.is_symb_of_sommet(at_plus) && g._SYMBptr->feuille.type==_VECT)
         terms=*g._SYMBptr->feuille._VECTptr;
     else terms=vecteur(1,g);
     gen_map dterms;
-    int k,c;
+    int k,n;
     for (const_iterateur it=terms.begin();it!=terms.end();++it) {
-        if (has_Dirac(*it,x,a,b,c,r,contextptr)) {
-            if (c==0) {
-                b=ratnormal(b/a,contextptr);
-                r=r/_abs(a,contextptr);
-                a=1;
-            } else if (is_positive(-a,contextptr)) {
-                a=-a;
-                b=-b;
-                if (c%2)
-                    r=-r;
-            }
-            vecteur d=makevecteur(a,b,c);
-            dterms[d]+=r;
-        } else rest+=*it;
+        if (has_Dirac(*it,x,a,b,n,r,contextptr))
+            dterms[makevecteur(-b/a,n)]+=r/(_abs(a,contextptr)*pow(a,n));
+        else rest+=*it;
     }
     int dom;
     matrice intervals;
     vecteur excluded;
-    if (!get_assumptions(x,dom,intervals,excluded,contextptr))
+    if (!get_assumptions(x,dom,intervals,excluded,contextptr)) {
+        dom=1; // assume real
         intervals=vecteur(1,makevecteur(minus_inf,plus_inf));
+    } else if (dom==4) { // complex
+        *logptr(contextptr) << gettext("Warning") << ": " << gettext("assuming") << " " << x << " " << gettext("is real") << "\n";
+        giac_additionally(makesequence(x,1),contextptr);
+        dom=1;
+    }
     for (gen_map::const_iterator it=dterms.begin();it!=dterms.end();++it) {
         const vecteur &d=*it->first._VECTptr;
-        int c=d.back().val;
-        gen r=it->second;
-        z=-d[1]/d[0];
-        if (contains(excluded,x) || !indomain(intervals,x,contextptr))
+        const gen &z=d.front(),&r=it->second;
+        n=d.back().val;
+        if (contains(excluded,z) || !indomain(intervals,z,contextptr) || (dom==2 && !is_inZ(z,contextptr)) ||
+                (dom==10 && (!is_inZ(_numer(z,contextptr),contextptr) || !is_inZ(_denom(z,contextptr),contextptr))))
             continue;
-        for (k=0;k<c;++k) {
-            s=ratnormal(r/(x-z),contextptr);
-            if (!is_real_number(subst(s,x,z,false,contextptr),contextptr))
-                break;
-            r=s;
-        }
-        if (k>0) {
-            r=(k%2?-1:1)*_comb(makesequence(c,k),contextptr)*_factorial(k,contextptr)*r;
-            c-=k;
-        }
-        rn=ratnormal(r/pow(x-z,c),contextptr);
-        v=ratnormal(subst(rn,x,z,false,contextptr),contextptr);
-        if (is_undef(v)) try {
-            v=_limit(makesequence(rn,symb_equal(x,z)),contextptr);
-        } catch (const gen &err) {
-            v=undef;
-        }
-        if (!is_zero(v)) {
-            v=_Dirac(c==0?d[0]*x+d[1]:makesequence(d[0]*x+d[1],c),contextptr)
-                *(simpfunc==NULL?r:_eval(symbolic(simpfunc,r),contextptr));
-            if (k>0)
-                v=simplify_Dirac(v,x,simpfunc,contextptr);
-            ret+=v;
+        for (int p=0;p<2;++p) {
+            gen rp=p==0?re(r,contextptr):im(r,contextptr);
+            try {
+                te=_taylor(makesequence(rp,symb_equal(x,z),std::max(1,n),change_subtype(_POLY1__VECT,_INT_MAPLECONVERSION)),contextptr);
+            } catch (const gen &err) {
+                *logptr(contextptr) << err << "\n";
+                ret+=rp*_Dirac(n==0?x-z:makesequence(x-z,n),contextptr);
+                continue;
+            }
+            vecteur tt=te.is_symb_of_sommet(at_plus) && te._SYMBptr->feuille.type==_VECT?
+                *te._SYMBptr->feuille._VECTptr:vecteur(1,te);
+            for (const_iterateur jt=tt.begin();jt!=tt.end();++jt) {
+                k=n;
+                if (!is_exactly_zero(c=simp_dirac_rat(*jt,x,z,k,contextptr)))
+                    ret+=(p==0?1:cst_i)*c*_Dirac(k==0?x-z:makesequence(x-z,k),contextptr);
+            }
         }
     }
+    collect_with_func(ret,at_Dirac,&dterms,&zero_rest,contextptr);
+    ret=0;
+    for (gen_map::const_iterator it=dterms.begin();it!=dterms.end();++it) {
+        ret+=(simpfunc==NULL?it->second:_eval(symbolic(simpfunc,it->second),contextptr))*_Dirac(it->first,contextptr);
+    }
+    rest+=zero_rest;
     return ret+(simpfunc==NULL?rest:_eval(symbolic(simpfunc,rest),contextptr));
 }
 
@@ -3276,6 +3770,7 @@ gen _simplifyDirac(const gen &g,GIAC_CONTEXT) {
     try {
         ret=simplify_Dirac(expand_Dirac(e,*x._IDNTptr,contextptr),*x._IDNTptr,at_simplify,contextptr);
     } catch (const gen &err) {
+        *logptr(contextptr) << e << "\n";
         return e;
     }
     return ret;
@@ -3434,79 +3929,6 @@ gen flatten_piecewise(const gen &g,GIAC_CONTEXT) {
         ret=flatten_piecewise_recursion(ret,contextptr);
     }
     return ret;
-}
-
-bool has_FT(const gen &g) {
-    if (g.type==_VECT) {
-        for (const_iterateur it=g._VECTptr->begin();it!=g._VECTptr->end();++it) {
-            if (has_FT(*it))
-                return true;
-        }
-        return false;
-    }
-    if (g.type!=_SYMB)
-        return false;
-    if (g.is_symb_of_sommet(at_Fourier))
-        return true;
-    return has_FT(g._SYMBptr->feuille);
-}
-
-/* return true iff g = a*(x+b)^2+c */
-bool is_poly2(const gen &g,const identificateur &x,gen &a,gen &b,gen &c,GIAC_CONTEXT) {
-    gen st;
-    if(!ispoly(g,x,st,contextptr) || !is_one(st-1))
-        return false;
-    gen cf=_canonical_form(makesequence(g,x),contextptr),e,s(undef),d;
-    if (cf.is_symb_of_sommet(at_plus) && cf._SYMBptr->feuille.type==_VECT &&
-            cf._SYMBptr->feuille._VECTptr->size()==2) {
-        e=cf._SYMBptr->feuille._VECTptr->front();
-        c=cf._SYMBptr->feuille._VECTptr->back();
-    } else {
-        e=cf;
-        c=0;
-    }
-    a=gen(1);
-    if (e.is_symb_of_sommet(at_neg)) {
-        a=gen(-1);
-        e=e._SYMBptr->feuille;
-    }
-    if (e.is_symb_of_sommet(at_prod) && e._SYMBptr->feuille.type==_VECT) {
-        const vecteur &factors=*e._SYMBptr->feuille._VECTptr;
-        for (const_iterateur it=factors.begin();it!=factors.end();++it) {
-            if (is_const_wrt(*it,x,contextptr))
-                a=a*(*it);
-            else if (is_undef(s))
-                s=*it;
-            else return false;
-        }
-    } else s=e;
-    if (s.is_symb_of_sommet(at_pow) && s._SYMBptr->feuille.type==_VECT &&
-            s._SYMBptr->feuille._VECTptr->size()==2 && is_one(s._SYMBptr->feuille._VECTptr->back()-1)) {
-        gen l=s._SYMBptr->feuille._VECTptr->front();
-        if (!is_linear_wrt(l,x,d,b,contextptr) || !is_one(d))
-            return false;
-    } else return false;
-    return true;
-}
-
-/* return true iff g = a*(b*x+c)^n */
-bool is_monomial(const gen &g,const identificateur &x,gen &n,gen &a,gen &b,gen &c,GIAC_CONTEXT) {
-    if (!ispoly(g,x,n,contextptr))
-        return false;
-    gen gf=factorise(makesequence(g,x),contextptr),s(undef);
-    a=gen(1);
-    if (gf.is_symb_of_sommet(at_prod) && gf._SYMBptr->feuille.type==_VECT) {
-        const vecteur &factors=*gf._SYMBptr->feuille._VECTptr;
-        for (const_iterateur it=factors.begin();it!=factors.end();++it) {
-            if (is_const_wrt(*it,x,contextptr))
-                a=a*(*it);
-            else if (is_undef(s))
-                s=*it;
-            else return false;
-        }
-    } else s=gf;
-    return s.is_symb_of_sommet(at_pow) && s._SYMBptr->feuille.type==_VECT &&
-           is_linear_wrt(s._SYMBptr->feuille._VECTptr->front(),x,b,c,contextptr);
 }
 
 /* return true iff g = a*|x+b| */
@@ -3767,7 +4189,8 @@ vecteur analyze_terms(const gen &g,const identificateur &x,GIAC_CONTEXT) {
     } else terms=vecteur(1,g);
     for (const_iterateur it=terms.begin();it!=terms.end();++it) {
         vecteur factors;
-        gen cnst(1),rest(1),deg(0),exprest(0),sh(0),rt=ratnormal(*it,contextptr),st;
+        gen cnst(1),rest(1),exprest(0),sh(0),rt=ratnormal(*it,contextptr);
+        int deg=0,st;
         if (!is_const_wrt(rt,x,contextptr))
             rt=factorise(rt,contextptr);
         if (rt.is_symb_of_sommet(at_neg)) {
@@ -3857,11 +4280,11 @@ int fourier_func_type(const gen &g,const identificateur &x,vecteur &params,GIAC_
         params.push_back(g);
         return _FOURIER_FUNCTYPE_ONE;
     }
-    gen a,b,c,d,n;
+    gen a,b,c,d;
     vecteur tbl,vars,deg;
     identificateur fcn;
     bool sgn,sq;
-    int dg,hyp,k;
+    int dg,hyp,k,n;
     if (is_rational_wrt(g,x)) {
         gen num=_numer(g,contextptr),den=_denom(g,contextptr);
         if(!is_const_wrt(num,x,contextptr))
@@ -3870,7 +4293,7 @@ int fourier_func_type(const gen &g,const identificateur &x,vecteur &params,GIAC_
             params=makevecteur(num/a,b/a,1);
         } else if (is_monomial(den,x,n,a,b,c,contextptr)) {
             //assert(!is_zero(a) && !is_zero(b));
-            params=makevecteur(num/(a*_pow(makesequence(b,n),contextptr)),c/b,n);
+            params=makevecteur(num/(a*pow(b,n)),c/b,n);
         } else return _FOURIER_FUNCTYPE_UNKNOWN;
         return _FOURIER_FUNCTYPE_INV_MONOM;
     }
@@ -4000,6 +4423,11 @@ int fourier_func_type(const gen &g,const identificateur &x,vecteur &params,GIAC_
         params=makevecteur(g._SYMBptr->feuille._VECTptr->front(),a);
         return _FOURIER_FUNCTYPE_FOURIER;
     }
+    if (g.is_symb_of_sommet(at_Hilbert) && g._SYMBptr->feuille.type==_VECT &&
+            g._SYMBptr->feuille._VECTptr->size()==2 && g._SYMBptr->feuille._VECTptr->back()==x) {
+        params=vecteur(1,g._SYMBptr->feuille._VECTptr->front());
+        return _FOURIER_FUNCTYPE_HILBERT;
+    }
     // some functions with denominator equal to ax+b
     gen gnorm=ratnormal(g,contextptr);
     if (is_linear_wrt(_denom(gnorm,contextptr),x,c,d,contextptr) && !is_zero(c)) {
@@ -4077,7 +4505,7 @@ gen fourier(const gen &f_orig,const identificateur &x,const identificateur &s,
             continue;
         }
         t=cnst*subst(pow(cst_i,d.val)*derive_FT(t,s,d.val,contextptr),s,s-sh,false,contextptr);
-        ret+=_exp2pow(_lin(recursive_normal(t,contextptr),contextptr),contextptr);
+        ret+=exp2pow(_lin(recursive_normal(t,contextptr),contextptr),contextptr);
     }
     bool do_simp=!has_integral(rest) && !has_partial_diff(rest);
     if (do_simp) {
@@ -4085,7 +4513,7 @@ gen fourier(const gen &f_orig,const identificateur &x,const identificateur &s,
                 flatten_piecewise(rest,contextptr)),x,contextptr),x,contextptr),contextptr);
     }
     if (!is_zero(rest)) {
-        terms=fourier_terms(rest,x,do_simp,contextptr);
+        terms=fourier_terms(exp2pow(rest,contextptr),x,do_simp,contextptr);
         rest=0;
         if (verbose) *logptr(contextptr) << "Transforming " << terms.size() << " term(s)...\n";
         for (int ti=0;ti<int(terms.size());++ti) {
@@ -4137,9 +4565,13 @@ gen fourier(const gen &f_orig,const identificateur &x,const identificateur &s,
                 t=_pow(makesequence(cst_i*s/p[0],p[2]),contextptr)*exp(cst_i*p[1]*s,contextptr)/_abs(p[0],contextptr);
                 break;
             case _FOURIER_FUNCTYPE_DIRAC_F:
+                t=subst(p[3],x,-p[1]/p[0],false,contextptr)*exp(cst_i*s*p[1]/p[0],contextptr)/_abs(p[0],contextptr);
+                if (has_inf_or_undef(t) && !is_undef(_eval(t,contextptr)))
+                    return t;
                 try {
-                    t=_limit(makesequence(_derive(makesequence(subst(p[3],x,(x-p[1])/p[0],false,contextptr)
-                        *exp(-cst_i*s*(x-p[1])/p[0],contextptr),x,p[2]),contextptr),x,0),contextptr)/_abs(p[0],contextptr);
+                    if (has_inf_or_undef(t))
+                        t=_limit(makesequence(_derive(makesequence(subst(p[3],x,(x-p[1])/p[0],false,contextptr)
+                            *exp(-cst_i*s*(x-p[1])/p[0],contextptr),x,p[2]),contextptr),x,0),contextptr)/_abs(p[0],contextptr);
                 } catch (const gen &err) {
                     return undef;
                 }
@@ -4207,6 +4639,10 @@ gen fourier(const gen &f_orig,const identificateur &x,const identificateur &s,
                 if (verbose) *logptr(contextptr) << "   type: Fourier transform\n";
                 t=2*cst_pi*subst(p[0],p[1],-s,false,contextptr);
                 break;
+            case _FOURIER_FUNCTYPE_HILBERT:
+                if (verbose) *logptr(contextptr) << "   type: Hilbert transform\n";
+                t=-cst_i*_sign(s,contextptr)*fourier(p[0],x,s,try_diff,try_int,use_lintx,verbose,contextptr);
+                break;
             default:
                 rest+=cnst*exp(cst_i*sh*x,contextptr)*pow(x,d.val)*f;
                 continue;
@@ -4259,15 +4695,15 @@ gen fourier(const gen &f_orig,const identificateur &x,const identificateur &s,
                     // check whether we can transform the derivative
                     gen df=derive_FT(f,x,1,contextptr);
                     gen F=fourier(df,x,s,false,try_int,false,verbose,contextptr),chk,fchk;
-                    if (!is_undef(F) && !is_inf(F) && !has_FT(F) && !has_integral(F)) {
+                    if (!is_undef(F) && !is_inf(F) && !contains(F,at_Fourier) && !has_integral(F)) {
                         if (verbose) *logptr(contextptr) << "   Transformed the derivative\n";
                         t=-cst_i*F/s;
                         chk=f-subst(fourier(t,s,x,false,try_int,false,verbose,contextptr),x,-x,false,contextptr)/cst_two_pi;
-                        if (!is_undef(chk) && !is_inf(chk) && !has_FT(chk)) {
+                        if (!is_undef(chk) && !is_inf(chk) && !contains(chk,at_Fourier)) {
                             chk=simplify(chk,contextptr);
-                            if (verbose) *logptr(contextptr) << "chk: " << chk << endl;
+                            if (verbose) *logptr(contextptr) << "chk: " << chk << "\n";
                             fchk=fourier(chk,x,s,false,try_int,false,verbose,contextptr);
-                            if (!is_undef(fchk) && !is_inf(fchk) && !has_FT(fchk)) {
+                            if (!is_undef(fchk) && !is_inf(fchk) && !contains(fchk,at_Fourier)) {
                                 t+=fchk;
                                 break;
                             }
@@ -4294,7 +4730,7 @@ gen fourier(const gen &f_orig,const identificateur &x,const identificateur &s,
                                     continue;
                                 gen F=fourier(recursive_normal(subst(f,x,(x-ab.back())/ab.front(),false,contextptr),contextptr),
                                     x,s,try_diff,try_int,false,verbose,contextptr);
-                                if (!is_undef(F) && !is_inf(F) && !has_FT(F) && !has_integral(F)) {
+                                if (!is_undef(F) && !is_inf(F) && !contains(F,at_Fourier) && !has_integral(F)) {
                                     t=subst(F,s,s/ab.front(),false,contextptr)*exp(cst_i*s*ab.back()/ab.front(),contextptr)
                                         /_abs(ab.front(),contextptr);
                                     break;
@@ -4331,8 +4767,12 @@ gen fourier(const gen &f_orig,const identificateur &x,const identificateur &s,
     } else if (is_simpler(rcn,ret)) ret=rcn;
     rcn=ratnormal(_exp2trig(ret,contextptr),contextptr);
     if (is_simpler(rcn,ret)) ret=rcn;
-    if (contains(ret,at_Heaviside))
-        ret=collect_with_func(ratnormal(sign2Heaviside(ret),contextptr),at_Heaviside,NULL,NULL,contextptr);
+    if (contains(ret,at_Heaviside)) {
+        rcn=ratnormal(_exp2trig(Heaviside2sign(ret),contextptr),contextptr);
+        if (is_simpler(rcn,ret))
+            ret=collect_with_func(rcn,at_sign,NULL,NULL,contextptr);
+        else ret=collect_with_func(ratnormal(sign2Heaviside(ret),contextptr),at_Heaviside,NULL,NULL,contextptr);
+    }
     rcn=factorise(ret,contextptr);
     if (is_simpler(rcn,ret)) ret=rcn;
     intgr=ratnormal(intgr,contextptr);
@@ -4378,13 +4818,11 @@ gen _fourier(const gen &g,GIAC_CONTEXT) {
         if (!parse_fourier_args(*g._VECTptr,f_orig,x,var,try_int,try_diff,contextptr))
             return gensizeerr(contextptr);
     } else f_orig=g;
-    if (_eval(x,contextptr).type!=_IDNT)
-        return generr(gettext("Default symbol not available, please specify the original variable."));
-    if (_eval(om,contextptr).type!=_IDNT)
-        return generr(gettext("Default symbol not available, please specify the transform variable."));
+    if (_eval(x,contextptr).type!=_IDNT || _eval(om,contextptr).type!=_IDNT)
+        return generr(gettext("Default variable not available"));
     gen ret=fourier(f_orig,x,s,try_diff,try_int,true,verbose,contextptr);
     if (has_inf_or_undef(ret))
-        return gensizeerr(gettext("Transform does not exist."));
+        return generr(gettext("Fourier transform does not exist"));
     if (!is_undef(var))
         return subst(ret,s,var,false,contextptr);
     return subst(ret,s,om,false,contextptr);
@@ -4404,13 +4842,11 @@ gen _ifourier(const gen &g,GIAC_CONTEXT) {
         if (!parse_fourier_args(*g._VECTptr,f_orig,s,var,try_int,try_diff,contextptr))
             return gensizeerr(contextptr);
     } else f_orig=g;
-    if (_eval(s,contextptr).type!=_IDNT)
-        return generr(gettext("Default symbol not available, please specify the transform variable."));
-    if (_eval(t,contextptr).type!=_IDNT)
-        return generr(gettext("Default symbol not available, please specify the original variable."));
+    if (_eval(s,contextptr).type!=_IDNT || _eval(t,contextptr).type!=_IDNT)
+        return generr(gettext("Default variable not available"));
     gen ret=fourier(f_orig,s,x,try_diff,try_int,true,verbose,contextptr);
     if (has_inf_or_undef(ret))
-        return gensizeerr(gettext("Inverse transform does not exist."));
+        return generr(gettext("Inverse Fourier transform does not exist"));
     if (!is_undef(var))
         return ratnormal(subst(ret,x,-var,false,contextptr)/cst_two_pi,contextptr);
     return ratnormal(subst(ret,x,-t,false,contextptr)/cst_two_pi,contextptr);
@@ -4434,6 +4870,72 @@ gen _Fourier(const gen &g,GIAC_CONTEXT) {
 static const char _Fourier_s []="Fourier";
 static define_unary_function_eval (__Fourier,&_Fourier,_Fourier_s);
 define_unary_function_ptr5(at_Fourier,alias_at_Fourier,&__Fourier,0,true)
+
+/* Find the continuous Hilbert transform. */
+gen hilbtrans(const gen &args,GIAC_CONTEXT) {
+    gen x=identificateur("x"),o=identificateur(" hilbert_omega"),f;
+    if (args.type==_VECT) {
+        if (args.subtype!=_SEQ__VECT)
+            return gentypeerr(contextptr);
+        if (args._VECTptr->size()!=2)
+            return gendimerr(contextptr);
+        f=args._VECTptr->front();
+        x=args._VECTptr->back();
+    } else f=args;
+    if (x.type!=_IDNT || f.type==_VECT)
+        return gentypeerr(contextptr);
+    if (_eval(x,contextptr).type!=_IDNT)
+        return generr(gettext("Default variable not available"));
+    if (is_const_wrt(f,x,contextptr))
+        return 0;
+    if (f.type!=_IDNT && f.type!=_SYMB)
+        return gentypeerr(contextptr);
+    _purge(o,contextptr);
+    try {
+        gen F=_fourier(makesequence(f,x,o),contextptr);
+        if (has_inf_or_undef(F))
+            return undef;
+        gen G=_ifourier(makesequence(-cst_i*_sign(o,contextptr)*F,o,x),contextptr);
+        if (has_inf_or_undef(G))
+            return undef;
+        if (contains(G,at_Fourier))
+            return _Hilbert(makesequence(f,x),contextptr);
+        return G;
+    } catch (const gen &err) {
+        *logptr(contextptr) << err << "\n";
+    }
+    return undef;
+}
+
+gen _Hilbert(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT || g.subtype!=_SEQ__VECT || g._VECTptr->size()!=2 || g._VECTptr->back().type!=_IDNT)
+        return gentypeerr(contextptr);
+    return symbolic(at_Hilbert,g);
+}
+static const char _Hilbert_s []="Hilbert";
+static define_unary_function_eval (__Hilbert,&_Hilbert,_Hilbert_s);
+define_unary_function_ptr5(at_Hilbert,alias_at_Hilbert,&__Hilbert,0,true)
+
+/* Return analytic signal from a real data sequence X. */
+gen dht(const vecteur &x,GIAC_CONTEXT) {
+    if (!is_zero__VECT(*im(x,contextptr)._VECTptr,contextptr))
+        *logptr(contextptr) << gettext("Warning") << ": " << gettext("hilbert ignores the imaginary part of input") << "\n";
+    vecteur y=*re(x,contextptr)._VECTptr,u,v;
+    int N=y.size();
+    vector<pair<double,double> > sct;
+    try {
+        u=*_fft(y,contextptr)._VECTptr;
+    } catch (const std::runtime_error &err) {
+        *logptr(contextptr) << err.what() << "\n";
+        return gensizeerr(contextptr);
+    }
+    const_iterateur it=u.begin();
+    v.reserve(N);
+    for (int k=0;k<=N/2;++it,++k) v.push_back(((k==0||k==(N+1)/2)?1:2)*(*it));
+    v.resize(N,0);
+    return _ifft(v,contextptr);
+} 
 
 /* Replace every exp(-ax) for a>0 with identifier xa and return pairs (a,xa) in m. */
 gen replace_exp_with_idnt(const gen &g,const gen &x,gen_map &m,GIAC_CONTEXT) {
@@ -4584,6 +5086,627 @@ bool ilaplace2(const gen &g,const gen &s,const gen &x,gen &orig,GIAC_CONTEXT) {
     }
     return true;
 }
+
+#ifdef HAVE_LIBGSL
+/* Empirical Mode Decomposition (to max IMAX imf components + residual).
+ * Adapted from Matlab code written by Ivan Magrin-Chagnolleau <ivan@ieee.org>.
+ * IMAX is the maximum number of IMFs to be generated.
+ * EMIN is the mminimal number of local extrema that an IMF must have.
+ * VTOL is the variance threshold for stopping the sifting process (usually 0.1). */
+void emd(const vecteur &data,matrice &imf,vecteur &residue,int imax,int emin,double vtol,GIAC_CONTEXT) {
+    int n=data.size(),i;
+    gsl_vector *x,*h,*envu,*envl;
+    double *maxes,*mins,*maxesy,*minsy,var;
+    maxes=new double[n+2];
+    maxesy=new double[n+2];
+    mins=new double[n+2];
+    minsy=new double[n+2];
+    maxes[0]=mins[0]=0;
+    h=gsl_vector_alloc(n);
+    envu=gsl_vector_alloc(n);
+    envl=gsl_vector_alloc(n);
+    x=vecteur2gsl_vector(data,contextptr);
+    gsl_interp_accel *acc;
+    gsl_spline *sp;
+    while (true) {
+        var=1;
+        gsl_vector_memcpy(h,x);
+        int iterc=0,ne;
+        bool isres=false,notimf=true;
+        while (var>vtol || notimf) {
+            // find indices of extremal samples
+            int maxc=1,minc=1,zc=0;
+            maxesy[0]=minsy[0]=gsl_vector_get(h,0);
+            for (i=1;i<n-2;++i) {
+                double h1=gsl_vector_get(h,i-1),h2=gsl_vector_get(h,i),
+                       h3=gsl_vector_get(h,i+1),h4=gsl_vector_get(h,i+2);
+                if (h1==0 || h1*h2<0)
+                    ++zc;
+                double d=h3-h2,dl=h2-h1,dr=h4-h3;
+                if ((d==0 && dl<0 && dr>0) || (dl<0 && d>0)) {
+                    mins[minc]=i; minsy[minc++]=gsl_vector_get(h,i);
+                } else if ((d==0 && dl>0 && dr<0) || (dl>0 && d<0)) {
+                    maxes[maxc]=i; maxesy[maxc++]=gsl_vector_get(h,i);
+                }
+            }
+            mins[minc]=maxes[maxc]=n-1;
+            minsy[minc++]=maxesy[maxc++]=gsl_vector_get(h,n-1);
+            ne=maxc+minc-4;
+            if (ne<emin) { // residue
+                isres=true;
+                break;
+            }
+            notimf=std::abs(zc-ne)>1;
+            // compute the upper envelope
+            acc=gsl_interp_accel_alloc();
+            sp=gsl_spline_alloc(maxc>2?gsl_interp_cspline:gsl_interp_linear,maxc);
+            gsl_spline_init(sp,maxes,maxesy,maxc);
+            for (i=0;i<n;++i) gsl_vector_set(envu,i,gsl_spline_eval(sp,i,acc));
+            gsl_spline_free(sp);
+            gsl_interp_accel_free(acc);
+            // compute the lower envelope
+            acc=gsl_interp_accel_alloc();
+            sp=gsl_spline_alloc(minc>2?gsl_interp_cspline:gsl_interp_linear,minc);
+            gsl_spline_init(sp,mins,minsy,minc);
+            for (i=0;i<n;++i) gsl_vector_set(envl,i,gsl_spline_eval(sp,i,acc));
+            gsl_spline_free(sp);
+            gsl_interp_accel_free(acc);
+            gsl_vector_axpby(0.5,envu,0.5,envl); // compute the mean of envelopes, store it in envl
+            var=0;
+            for (i=0;i<n;++i) {
+                var+=std::pow(gsl_vector_get(envl,i),2)/(std::pow(gsl_vector_get(h,i),2)+1e-7);
+            }
+            var/=n;
+            gsl_vector_sub(h,envl); // subtract mean from h
+        }
+        if (isres) {
+            residue=gsl_vector2vecteur(h);
+            break;
+        }
+        imf.push_back(gsl_vector2vecteur(h));
+        gsl_vector_sub(x,h);
+        if (imax==(int)imf.size()) {
+            residue=gsl_vector2vecteur(x);
+            break;
+        }
+    }
+    delete[] maxes;
+    delete[] mins;
+    delete[] maxesy;
+    delete[] minsy;
+    gsl_vector_free(x);
+    gsl_vector_free(h);
+    gsl_vector_free(envu);
+    gsl_vector_free(envl);
+}
+#endif
+
+gen _emd(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+#ifdef HAVE_LIBGSL
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    if (g._VECTptr->empty())
+        return gendimerr(contextptr);
+    double var_tol=0.1;
+    int imf_limit=INT_MAX,min_extrema=2;
+    bool out_residue=true;
+    if (g.subtype==_SEQ__VECT) { // has options
+        const vecteur &args=*g._VECTptr;
+        if (args.front().type!=_VECT)
+            return gentypeerr(contextptr);
+        const_iterateur it=args.begin()+1,itend=args.end();
+        for (;it!=itend;++it) {
+            if (it->is_symb_of_sommet(at_equal)) {
+                const gen &p=it->_SYMBptr->feuille._VECTptr->front();
+                const gen &v=it->_SYMBptr->feuille._VECTptr->back();
+                if (p==at_threshold) {
+                    gen dv=v.evalf_double(1,contextptr);
+                    if (dv.type!=_DOUBLE_ || is_positive(-dv,contextptr))
+                        return gensizeerr(contextptr);
+                    var_tol=dv.DOUBLE_val();
+                } else if (p==at_limit) {
+                    if (!v.is_integer())
+                        return gentypeerr(contextptr);
+                    imf_limit=v.val;
+                    if (imf_limit<1)
+                        return gensizeerr(contextptr);
+                } else if (p==at_residue) {
+                    if (!v.is_integer() || v.subtype!=_INT_BOOLEAN)
+                        return gentypeerr(contextptr);
+                    out_residue=(bool)v.val;
+                } else if (p==at_extrema) {
+                    if (!v.is_integer())
+                        return gentypeerr(contextptr);
+                    min_extrema=v.val;
+                    if (min_extrema<2)
+                        return gensizeerr(contextptr);
+                } else return generrarg(it-args.begin());
+            } else return generrarg(it-args.begin());
+        }
+    }
+    const vecteur &data=g.subtype==_SEQ__VECT?*g._VECTptr->front()._VECTptr:*g._VECTptr;
+    if (!is_real_vector(data,contextptr))
+        return gensizeerr("Data must be numeric");
+    matrice imf;
+    vecteur residue;
+    try {
+        emd(data,imf,residue,imf_limit,min_extrema,var_tol,contextptr);
+    } catch (const gen &err) {
+        return err;
+    } catch (const std::runtime_error &re) {
+        return gensizeerr(re.what());
+    }
+    if (out_residue)
+        return makesequence(imf,residue);
+    return imf;
+#else
+    return generr(gettext("GSL is required for empirical mode decomposition"));
+#endif
+}
+static const char _emd_s []="emd";
+static define_unary_function_eval (__emd,&_emd,_emd_s);
+define_unary_function_ptr5(at_emd,alias_at_emd,&__emd,0,true)
+
+void draw_imf_plot(const vecteur &imf,const string &lab,int &m,int mode,vecteur &drawing,const gen &disp,GIAC_CONTEXT) {
+    gen a=evalf_double(_max(_abs(imf,contextptr),contextptr),1,contextptr),y=1.15*m;
+    int len=imf.size();
+    drawing.push_back(_legende(makesequence(gen(0,mode!=0?y-0.95:y),string2gen(lab,false),
+        change_subtype(mode!=0?_QUADRANT2:_QUADRANT3,_INT_COLOR)),contextptr));
+    if (mode==1 && a.type==_DOUBLE_)
+        drawing.push_back(_legende(makesequence(gen(0,y),string2gen(print_DOUBLE_(1.11*a.DOUBLE_val(),3),false),
+            symb_equal(at_couleur,change_subtype(_QUADRANT3,_INT_COLOR))),contextptr));
+    drawing.push_back(_listplot(makesequence(addvecteur(divvecteur(imf,a/0.45),vecteur(len,y-0.5)),disp),contextptr));
+    drawing.push_back(_rectangle(makesequence(gen(0,y-1),gen(len,y-1),1.0/len),contextptr));
+    --m;
+}
+
+gen _imfplot(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    bool hasopt=g.subtype==_SEQ__VECT,show_range=true;
+    if (hasopt && g._VECTptr->size()<2)
+        return gendimerr(contextptr);
+    if (hasopt && g._VECTptr->front().type!=_VECT)
+        return gentypeerr(contextptr);
+    const vecteur &imfs=hasopt?*g._VECTptr->front()._VECTptr:*g._VECTptr;
+    int mask=num_mask_withfrac | num_mask_withint;
+    if (!ckmatrix(imfs) || !is_numericm(imfs,mask))
+        return generr(gettext("Expected a matrix of real numbers"));
+    int n=imfs.size(),len=mcols(imfs),m=n;
+    const vecteur *res=NULL,*orig=NULL;
+    gen disp=symb_equal(at_couleur,change_subtype(_BLUE,_INT_COLOR)); // default IMF color
+    set<int> ind;
+    if (hasopt) {
+        if (g._VECTptr->size()==2 && g._VECTptr->back().is_integer()) {
+            m=g._VECTptr->back().val;
+            if (m<1)
+                return generr(gettext("Expected a positive integer"));
+        } else for (const_iterateur it=g._VECTptr->begin()+1;it!=g._VECTptr->end();++it) {
+            if (!it->is_symb_of_sommet(at_equal))
+                return gensizeerr("Invalid optional argument");
+            const gen &p=it->_SYMBptr->feuille._VECTptr->front();
+            const gen &v=it->_SYMBptr->feuille._VECTptr->back();
+            if (p==at_residue) {
+                if (v.type!=_VECT || (int)v._VECTptr->size()!=len || !is_numericv(*v._VECTptr,mask))
+                    return generr(gettext("Invalid residue specification"));
+                res=v._VECTptr;
+            } else if (p==at_max) {
+                if (!v.is_integer() || v.subtype!=_INT_BOOLEAN)
+                    return gensizeerr("Expected a boolean value");
+                show_range=(bool)v.val;
+            } else if (p==at_count) {
+                if (!v.is_integer() || (m=v.val)<1)
+                    return generr(gettext("Expected a positive integer"));
+            } else if (p==at_input) {
+                if (v.type!=_VECT || (int)v._VECTptr->size()!=len || !is_numericv(*v._VECTptr,mask))
+                    return generr(gettext("Invalid original signal specification"));
+                orig=v._VECTptr;
+            } else if (p==at_display || p==at_couleur) {
+                disp=*it;
+            } else if (p==at_index) {
+                vecteur iv(gen2vecteur(v));
+                for (const_iterateur jt=iv.begin();jt!=iv.end();++jt) {
+                    if (jt->is_integer()) {
+                        if (jt->val<0 || jt->val>=n)
+                            return generrdim(gettext("IMF index out of range"));
+                        ind.insert(jt->val);
+                    } else if (jt->is_symb_of_sommet(at_interval)) {
+                        const gen &l=jt->_SYMBptr->feuille._VECTptr->front();
+                        const gen &u=jt->_SYMBptr->feuille._VECTptr->back();
+                        if (!l.is_integer() || !u.is_integer())
+                            return generr(gettext("Expected a range of integers"));
+                        int il=l.val,iu=u.val;
+                        if (il<0 || il>=n || iu<il || iu>=n)
+                            return generrdim(gettext("Invalid IMF index range"));
+                        for (int i=il;i<=iu;++i)
+                            ind.insert(i);
+                    } else return generr(gettext("Invalid IMF index specification"));
+                }
+            } else return generr(gettext("Unknown option"));
+        }
+    }
+    if (ind.empty()) for (int i=0;i<m;++i) ind.insert(i);
+    m=ind.size();
+    vecteur drawing=vecteur(1,symb_equal(change_subtype(_AXES,_INT_PLOT),0));
+    string str="IMF ",sstr=gettext("Signal"),rstr=gettext("Residue");
+    if (orig!=NULL)
+        draw_imf_plot(*orig,sstr,m,0,drawing,disp,contextptr);
+    for (set<int>::const_iterator it=ind.begin();it!=ind.end();++it) {
+        const vecteur &imf=*imfs[*it]._VECTptr;
+        string lab=str+print_INT_(*it);
+        draw_imf_plot(imf,lab,m,show_range?1:0,drawing,disp,contextptr);
+    }
+    if (res!=NULL)
+        draw_imf_plot(*res,rstr,m,show_range?-1:0,drawing,disp,contextptr);
+    return drawing;
+}
+static const char _imfplot_s []="imfplot";
+static define_unary_function_eval (__imfplot,&_imfplot,_imfplot_s);
+define_unary_function_ptr5(at_imfplot,alias_at_imfplot,&__imfplot,0,true)
+static const char _plotimf_s []="plotimf";
+static define_unary_function_eval (__plotimf,&_imfplot,_plotimf_s);
+define_unary_function_ptr5(at_plotimf,alias_at_plotimf,&__plotimf,0,true)
+
+/* Fill RES with instantaneous frequency values for analytic signal AS.
+ * If SR>0 (sample rate), then the values are expressed in Hertz,
+ * otherwise in radians per sample. */
+void inst_freq(const vecteur &as,vecteur &res,int sr,GIAC_CONTEXT) {
+    res.reserve(as.size());
+    res.push_back(0);
+    const_iterateur it=as.begin()+1,itend=as.end();
+    int mode = get_mode_set_radian(contextptr);
+    gen a=sr<=0?1.0:M_1_PI*0.5*sr;
+    for (;it!=itend;++it) {
+        res.push_back(max(0,a*arg(conj(*(it-1),contextptr)*(*it),contextptr),contextptr));
+    }
+    angle_mode(mode,contextptr);
+}
+
+/* Fill RES with instantaneous amplitude values for analytic signal AS. */
+void inst_amp(const vecteur &as,vecteur &res,GIAC_CONTEXT) {
+    res.reserve(as.size());
+    const_iterateur it=as.begin(),itend=as.end();
+    for (;it!=itend;++it) {
+        res.push_back(_abs(*it,contextptr));
+    }
+}
+
+/* Fill the table HS with Hilbert spectrum data for signal with
+ *   EMD decomposition IMF (without the residual part).
+ * If SR>0 (sample rate), then the frequency data will be in Hertz,
+ +   otherwise in radians per sample.
+ * FMIN and FMAX, if defined, specify the frequency band of interest.
+ *   Other frequencies will be discarded. If undef, FMIN is the
+ *   smallest frequency and FMAX is the largest frequency value
+ *   occurring in IMF.
+ * FBINS specifies the frequency resolution, i.e. the size of
+ *   the subdivision of interval [FMIN,FMAX].
+ * LOGF=true means that log frequency axis is used with integers
+ *   corresponding to MIDI note names (middle C = 60). */
+void hht(const matrice &imf,map<pair<int,int>,double> &hs,int sr,gen &fmin,gen &fmax,int fbins,bool logf,GIAC_CONTEXT) {
+    if (imf.empty() || fbins<1)
+        return;
+    matrice f,a;
+    f.reserve(imf.size());
+    a.reserve(imf.size());
+    const_iterateur it=imf.begin(),itend=imf.end();
+    int rc=0,n=mcols(imf),i,j,h;
+    for (;it!=itend;++it) {
+        if (it->type!=_VECT)
+            continue;
+        vecteur fi,ai,as=*_hilbert(*it->_VECTptr,contextptr)._VECTptr;
+        inst_freq(as,fi,sr,contextptr);
+        f.push_back(fi);
+        inst_amp(as,ai,contextptr);
+        a.push_back(ai);
+        ++rc;
+    }
+    if (rc==0)
+        return;
+    if (is_undef(fmin))
+        fmin=_min(_min(f,contextptr),contextptr);
+    if (is_undef(fmax))
+        fmax=_max(_max(f,contextptr),contextptr);
+    if (logf)
+        fmin=_evalf(max(MIDI_NOTE_0,fmin,contextptr),contextptr);
+    gen r=logf?ln(fmax/fmin,contextptr):fmax-fmin;
+    if (!is_strictly_positive(r,contextptr))
+        return;
+    for (j=0;j<n;++j) {
+        for (i=0;i<rc;++i) {
+            h=_floor((fbins-1)*(logf?ln(f[i][j]/fmin,contextptr):f[i][j]-fmin)/r,contextptr).val;
+            if (h>=0 && h<fbins)
+                hs[make_pair(h,j)]+=evalf_double(a[i][j],1,contextptr)._DOUBLE_val;
+        }
+    }
+}
+
+void arrayplot(const matrice &c,const gen &x1,const gen &x2,const gen &y1,const gen &y2,int pal,
+        bool with_colormap,bool with_image,bool with_transparency,vecteur &drawing,GIAC_CONTEXT) {
+    int s1=mrows(c),s2=mcols(c),i,j,col,t,R,G,B;
+    gen w=(x2-x1)/gen(21.0),h=y2-y1,ts=(x2-x1)/gen(s2),fs=(y2-y1)/gen(s1),r=fs/ts,d,hi,minc=plus_inf,maxc=minus_inf;
+    const_iterateur it=c.begin(),itend=c.end(),jt,jtend;
+    for (;it!=itend;++it) for (jt=it->_VECTptr->begin(),jtend=it->_VECTptr->end();jt!=jtend;++jt) {
+        minc=min(minc,*jt,contextptr);
+        maxc=max(maxc,*jt,contextptr);
+    }
+    gen dm=maxc-minc,fr;
+    if (is_zero(dm,contextptr))
+        return;
+    rgba_image *img=with_image?new rgba_image(with_transparency?4:3,s2,s1,contextptr):NULL;
+    bool ok=true;
+    for (i=0;i<s1;++i) {
+        for (j=0;j<s2;++j) {
+            fr=evalf_double((c[i][j]-minc)/dm,1,contextptr);
+            if (fr.type!=_DOUBLE_)
+                continue;
+            if (!colormap_color_rgb(pal,fr.DOUBLE_val(),col,R,G,B,contextptr))
+                ok=false;
+            if (img!=NULL) {
+                t=_floor(256*tanh(5*fr,contextptr),contextptr).val;
+                img->set_pixel(0,j,s1-i-1,R);
+                img->set_pixel(1,j,s1-i-1,G);
+                img->set_pixel(2,j,s1-i-1,B);
+                if (with_transparency)
+                    img->set_pixel(3,j,s1-i-1,t);
+            } else {
+                gen A(x1+j*ts,y1+i*fs),B(x1+(j+1)*ts,y1+i*fs),C(x1+(j+1)*ts,y1+(i+1)*fs),D(x1+j*ts,y1+(i+1)*fs);
+                drawing.push_back(pnt_attrib(gen(makevecteur(A,B,C,D,A),_GROUP__VECT),vecteur(1,_FILL_POLYGON+col),contextptr));
+            }
+        }
+    }
+    if (!ok) print_warning(gettext("failed to convert RGB color"),contextptr);
+    if (img!=NULL) {
+        if (!img->assure_on_disk()) {
+            delete img;
+            return arrayplot(c,x1,x2,y1,y2,pal,with_colormap,false,with_transparency,drawing,contextptr);
+        }
+        drawing.push_back(symbolic(at_rectangle,makesequence(gen(x1,y1),gen(x2,y1),h/(x2-x1),
+                            symb_equal(change_subtype(_GL_TEXTURE,_INT_PLOT),string2gen(img->file_name(),false)))));
+        delete img;
+    }
+    if (with_colormap) {
+        minc=evalf_double(minc,1,contextptr);
+        maxc=evalf_double(maxc,1,contextptr);
+        int cb=50; // the number of color bins
+        for (i=0;i<cb;++i) {
+            d=symb_equal(at_display,change_subtype(_FILL_POLYGON+colormap_color(pal,double(i)/cb),_INT_COLOR));
+            hi=y1+(i*h)/cb;
+            drawing.push_back(_rectangle(makesequence(gen(x2+w,hi),gen(x2+2*w,hi),h/(cb*w),d),contextptr));
+        }
+        drawing.push_back(_rectangle(makesequence(gen(x2+w,y1),gen(x2+2*w,y1),h/w),contextptr));
+        drawing.insert(drawing.begin(),symb_equal(change_subtype(_GL_X,_INT_PLOT),
+                                       symb_interval(_evalf(-w,contextptr),_evalf(x2+3*w,contextptr))));
+#if 0
+        if (minc.type==_DOUBLE_)
+            drawing.push_back(_legende(makesequence(gen(x2+2*w,y1),string2gen(print_DOUBLE_(minc.DOUBLE_val(),4),false)),contextptr));
+        if (maxc.type==_DOUBLE_)
+            drawing.push_back(_legende(makesequence(gen(x2+2*w,y2),string2gen(print_DOUBLE_(maxc.DOUBLE_val(),4),false),change_subtype(_QUADRANT4,_INT_COLOR)),contextptr));
+#endif
+    }
+}
+
+/* Return a visualization of the Hilbert spectrum HS.
+ * S1 and S2 are numbers of columns and rows, respectively, of the spectrum HS.
+ * FRAME is [tmin,tmax,fmin,fmax], specifying the location and size of drawing.
+ * RAINBOW=true uses the rainbow colors (low amplitudes are violet, high are yellow),
+ *              otherwise shades of grey are used (only 24 of them available in FLTK). */
+void plot_hilbert_spectrum(const map<pair<int,int>,double> &hs,int s1,int s2,const vecteur &frame,
+        int sr,int pal,bool with_image,bool cmap,bool transp,vecteur &drawing,GIAC_CONTEXT) {
+    assert(frame.size()==4 && is_numericv(frame,num_mask_withfrac | num_mask_withint));
+    gen t0=frame[0],t1=frame[1],f0=frame[2],f1=frame[3],ts=(t1-t0)/gen(s2);
+    map<pair<int,int>,double>::const_iterator it=hs.begin(),itend=hs.end();
+    matrice c=*_matrix(makesequence(s1,s2,0),contextptr)._VECTptr;
+    for (;it!=itend;++it) {
+        int i=it->first.first,j=it->first.second;
+        double tpos=sr<=0?j:(double)j/(double)sr;
+        if (!is_greater(tpos,t0,contextptr) || is_greater(tpos,t1,contextptr))
+            continue;
+        j=_floor((tpos-t0)/ts,contextptr).val;
+        c[i]._VECTptr->at(j)=max(c[i][j],it->second,contextptr);
+    }
+    arrayplot(c,t0,t1,f0,f1,pal,cmap,with_image,transp,drawing,contextptr);
+}
+
+gen _hilbert(const gen &g,GIAC_CONTEXT){
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    int n,p;
+    if (g.type==_INT_)
+        n=p=g.val;
+    else if (g.type==_VECT && g.subtype==_SEQ__VECT && g._VECTptr->size()==2 &&
+             g._VECTptr->front().type==_INT_ && g._VECTptr->back().type==_INT_) {
+        n=g._VECTptr->front().val;
+        p=g._VECTptr->back().val; 
+    } else if (g.type==_VECT && g.subtype!=_SEQ__VECT && !g._VECTptr->empty() &&
+            is_numericv(*g._VECTptr,num_mask_withfrac | num_mask_withint))
+        return dht(*g._VECTptr,contextptr);
+    else try {
+        return hilbtrans(g,contextptr);
+    } catch (const std::runtime_error &err) {
+        //*logptr(contextptr) << err.what() << "\n";
+        return undef;
+    }
+    if (n<=0 || p<=0)
+        return gensizeerr(contextptr);
+    vecteur c;
+    for (int k=0;k<n;k++) {
+        vecteur l(p);
+        for (int j=0;j<p;j++) {
+            l[j]=rdiv(1,k+j+1,contextptr);
+        }
+        c.push_back(l);
+    } 
+    return gen(c,_MATRIX__VECT);
+}
+static const char _hilbert_s[]="hilbert";
+static define_unary_function_eval (__hilbert,&_hilbert,_hilbert_s);
+define_unary_function_ptr5(at_hilbert,alias_at_hilbert,&__hilbert,0,true);
+
+gen _instfreq(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    int n;
+    if ((n=g._VECTptr->size())<2)
+        return vecteur(0);
+    const_iterateur it=g._VECTptr->begin(),jt=it+1,jtend=g._VECTptr->end();
+    vecteur omega;
+    omega.reserve(n-1);
+    for (;jt!=jtend;++it,++jt) omega.push_back(arg(*jt*conj(*it,contextptr),contextptr));
+    return omega;
+}
+static const char _instfreq_s[]="instfreq";
+static define_unary_function_eval (__instfreq,&_instfreq,_instfreq_s);
+define_unary_function_ptr5(at_instfreq,alias_at_instfreq,&__instfreq,0,true);
+
+/* Converts MIDI note scpecification S to frequency F in Hz.
+ * Example: midi2freq("F#5",f)
+ * If the specification S is invalid, the return value is false, otherwise it is true. */
+bool midi2freq(const string &s,gen &f) {
+    string notes("C#D#EF#G#A#B");
+    size_t name,pos=1;
+    if (s.size()<2 || s.at(0)=='#' || (name=notes.find(toupper(s.at(0))))==string::npos)
+        return false;
+    if (s.at(1)=='#') {
+        name++;
+        pos++;
+    }
+    if (pos==s.size())
+        return false;
+    int oct=0;
+    if (s.at(pos)!='0' && (oct=atoi(s.substr(pos).c_str()))==0)
+        return false;
+    int midi=(int)name+12*(oct+1);
+    f=MIDI_NOTE_0*std::pow(2.0,(double)midi/12.0);
+    return true;
+}
+
+/* Returns the Hilbert-Huang transform of a given signal. */
+gen _hht(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    bool has_opt=g.subtype==_SEQ__VECT;
+    gen fmin(undef),fmax(undef),tmin(0),tmax(undef);
+    int n,sr=0,fbins=0,tbins=0,pal=0,otype=1; // otype = 0: plot, 1: image, 2: matrix
+    bool logf=false,semitones=false,cmap=true,transp=true;
+    if (has_opt) {
+        const vecteur &args=*g._VECTptr;
+        if (args.empty())
+            return gendimerr(contextptr);
+        if (args.front().type!=_VECT)
+            return gentypeerr(contextptr);
+        const_iterateur it=args.begin()+1,itend=args.end();
+        for (;it!=itend;++it) {
+            if (*it==at_ln) {
+                logf=true;
+                continue;
+            }
+            if (!it->is_symb_of_sommet(at_equal))
+                return generr(gettext("Unknown optional argument"));
+            const gen &p=it->_SYMBptr->feuille._VECTptr->front();
+            const gen &v=it->_SYMBptr->feuille._VECTptr->back();
+            if (p==at_frequencies) {
+                if (v.type==_VECT && v._VECTptr->size()==2 && v._VECTptr->front().type==_STRNG && v._VECTptr->back().type==_STRNG) {
+                    if (!midi2freq(*v._VECTptr->front()._STRNGptr,fmin) || !midi2freq(*v._VECTptr->back()._STRNGptr,fmax))
+                        return generr(gettext("Invalid MIDI note range specification"));
+                    semitones=true;
+                } else if (!get_range(v,fmin,fmax))
+                    return generrtype(gettext("Invalid frequency range specification"));
+            } else if (p==at_range) {
+                if (!get_range(v,tmin,tmax))
+                    return generrtype(gettext("Invalid time range specification"));
+            } else if (p==at_samplerate) {
+                if (!v.is_integer() || v.val<1)
+                    return generr(gettext("Sample rate must be a positive integer"));
+                sr=v.val;
+            } else if (p==at_output) {
+                if (v==at_plot)
+                    otype=0;
+                else if (v==at_image)
+                    otype=1; // the default
+                else if (v==at_matrix)
+                    otype=2;
+                else return generr(gettext("Unknown output type"));
+            } else if (p.is_integer() && p.subtype==_INT_MAPLECONVERSION) {
+                if (p.val==_KDE_BINS) {
+                    if (!p.is_integer() || p.val<1)
+                        return generr(gettext("Number of frequency bins must be a positive integer"));
+                    fbins=p.val;
+                }
+                else return generr(gettext("Unknown optional argument"));
+            } else if (p==at_ln) {
+                if (!v.is_integer() || v.subtype!=_INT_BOOLEAN)
+                    return generrtype(gettext("Expected a boolean value"));
+                logf=(bool)v.val;
+            } else if (p==at_legende) {
+                if (v.is_integer() && v.subtype==_INT_BOOLEAN)
+                    cmap=(bool)v.val;
+                else return generr(gettext("Expected a boolean value"));
+            } else if (p==at_tran) {
+                if (v.is_integer() && v.subtype==_INT_BOOLEAN)
+                    transp=(bool)v.val;
+                else return generr(gettext("Expected a boolean value"));
+            } else if (p==at_couleur) {
+                if (!v.is_integer() || (v.subtype!=_INT_BOOLEAN && !is_colormap_index(v.val)))
+                    return generrtype(gettext("Invalid colormap specification"));
+                pal=v.subtype==_INT_BOOLEAN?((v.val==0?1:7)<<2):v.val;
+            } else return generr(gettext("Unknown optional argument"));
+        }
+    }
+    if (logf && sr<=0)
+        return generr(gettext("Log-frequency requires sample rate"));
+    if (fbins<=0) fbins=otype==1?200:100;
+    if (tbins<=0) tbins=otype==1?450:220;
+#if 0
+    if (logf && is_undef(fmin) && is_undef(fmax)) {
+        // set frequency range to match the one of a clavichord
+        fmin=8*MIDI_NOTE_0;
+        fmax=128*MIDI_NOTE_0;
+    }
+#endif
+    const vecteur &data=*(has_opt?g._VECTptr->front():g)._VECTptr;
+    matrice imf;
+    map<pair<int,int>,double> hs;
+    vecteur residue,frame,drawing;
+    bool data_is_imf=ckmatrix(data);
+    n=data_is_imf?mcols(data):data.size();
+    if (!data_is_imf) {
+#ifdef HAVE_LIBGSL
+        emd(data,imf,residue,INT_MAX,2,0.1,contextptr);
+        if (imf.empty())
+            return generr(gettext("No IMF found"));
+#else
+        return generr(gettext("GSL is required for empirical mode decomposition"));
+#endif
+    }
+    hht(data_is_imf?data:imf,hs,sr,fmin,fmax,fbins,logf,contextptr);
+    gen flabel=string2gen(logf?gettext("semitones"):(sr>0?gettext("frequency [Hz]"):gettext("ω [radians/sample]")),false);
+    gen tlabel=string2gen(sr>0?gettext("time [seconds]"):gettext("offset [samples]"),false);
+    if (otype==2) {
+        matrice retm=*_matrix(makesequence(fbins,n,0),contextptr)._VECTptr;
+        map<pair<int,int>,double>::const_iterator it=hs.begin(),itend=hs.end();
+        for (;it!=itend;++it) retm[it->first.first]._VECTptr->at(it->first.second)=it->second;
+        return retm;
+    }
+    if (is_undef(tmax))
+        tmax=sr<=0?n:(double)n/(double)sr;
+    if (logf) {
+        fmin=12*ln(fmin/MIDI_NOTE_0,contextptr)/gen(M_LN2);
+        fmax=12*ln(fmax/MIDI_NOTE_0,contextptr)/gen(M_LN2);
+    }
+    frame=*_evalf(makevecteur(tmin,tmax,fmin,fmax),contextptr)._VECTptr;
+    drawing.push_back(symb_equal(change_subtype(_LABELS,_INT_PLOT),makevecteur(tlabel,flabel)));
+    drawing.push_back(symb_equal(change_subtype(_AXES,_INT_PLOT),3));
+    plot_hilbert_spectrum(hs,fbins,tbins,frame,sr,pal,otype,cmap,transp,drawing,contextptr);
+    return gen(drawing,_SEQ__VECT);
+}
+static const char _hht_s []="hht";
+static define_unary_function_eval (__hht,&_hht,_hht_s);
+define_unary_function_ptr5(at_hht,alias_at_hht,&__hht,0,true)
+
 
 gen apply_window_function(int wf,const gen &arg,GIAC_CONTEXT) {
     if (arg.type==_STRNG && arg.subtype==-1) return arg;
@@ -5904,7 +7027,7 @@ gen _neural_network(const gen &g,GIAC_CONTEXT) {
                             schedule=val._VECTptr->back();
                         } else rate=val;
                         if (!is_real_number(rate,contextptr) || !is_strictly_positive(rate=to_real_number(rate,contextptr),contextptr))
-                            return generr("(Initial) learning rate should be a positive real number");
+                            return generr(gettext("(Initial) learning rate should be a positive real number"));
                         set_rate=true;
                         break;
                     case _ANN_BLOCK_SIZE:
@@ -5922,13 +7045,13 @@ gen _neural_network(const gen &g,GIAC_CONTEXT) {
                         } else if (is_real_number(val,contextptr)) {
                             mom=to_real_number(val,contextptr);
                             if (!is_positive(mom,contextptr) || is_greater(mom,1,contextptr))
-                                return generr("Momentum parameter should be a real number in [0,1)");
+                                return generr(gettext("Momentum parameter should be a real number in [0,1)"));
                         }
                         break;
                     case _ANN_WEIGHT_DECAY:
                         reg=val.type==_VECT?*val._VECTptr:vecteur(1,val);
                         if (!is_numericv(reg,num_mask_withfrac|num_mask_withint) || is_strictly_positive(-_min(reg,contextptr),contextptr))
-                            return generr("Invalid weight decay parameter(s) specification");
+                            return generr(gettext("Invalid weight decay parameter(s) specification"));
                         break;
                     default:
                         return generr(gettext("Invalid property specification"));
@@ -6079,7 +7202,7 @@ gen _neural_network(const gen &g,GIAC_CONTEXT) {
         }
         return network;
     } catch (const std::runtime_error &e) {
-        return generr(e.what(),false);
+        return generr(e.what());
     }
 #else
     return generr(gettext("GNU Scientific Library is required for neural networks"));
@@ -6109,7 +7232,7 @@ gen _train(const gen &g,GIAC_CONTEXT) {
     try {
         net->train(*inp._VECTptr,*out._VECTptr,batch_size);
     } catch (const std::runtime_error &e) {
-        return generr(e.what(),false);
+        return generr(e.what());
     }
     return *net;
 #else
@@ -6123,8 +7246,15 @@ define_unary_function_ptr5(at_train,alias_at_train,&__train,0,true)
 //
 // RGBA IMAGE CLASS IMPLEMENTATION
 //
+static int cached_rgba_image_counter=0;
+string make_image_name() {
+    return ":/"+print_INT_(++cached_rgba_image_counter);
+}
 gen (*load_image_ptr)(const char *fname,GIAC_CONTEXT)=0;
 gen (*resize_image_ptr)(const rgba_image &img,int w,int h,GIAC_CONTEXT)=0;
+void (*cache_rgba_image_ptr)(const rgba_image &img)=0;
+void (*uncache_rgba_image_ptr)(const rgba_image &img)=0;
+#if 0
 tempimagefilename::~tempimagefilename() {
     while (!_fnames.empty()) {
         remove(_fnames.top().c_str());
@@ -6136,12 +7266,20 @@ const string &tempimagefilename::make() {
     return _fnames.top();
 }
 tempimagefilename temp_image_file_name;
+string make_unique_image_filename() {
+    string ret=temp_image_file_name.make();
+    temp_image_file_name.pop();
+    return ret;
+}
+#endif
 rgba_image::rgba_image(int d,int w,int h,GIAC_CONTEXT) {
     ctx=contextptr;
     _d=d;
     _w=w;
     _h=h;
     allocate();
+    _filename=make_image_name();
+    _tmp=true;
 }
 rgba_image::rgba_image(const std::vector<const gen*> &data,GIAC_CONTEXT) {
     ctx=contextptr;
@@ -6172,6 +7310,8 @@ rgba_image::rgba_image(const std::vector<const gen*> &data,GIAC_CONTEXT) {
         }
     }
     allocate();
+    _filename=make_image_name();
+    _tmp=true;
     const_iterateur it,jt;
     for (i=0;i<_d;++i)
         for (k=0,it=chndata[i]->begin();k<_h;++k,++it)
@@ -6187,8 +7327,14 @@ rgba_image::rgba_image(int d,int w,const string &data,GIAC_CONTEXT) {
     if (_d<1 || _d>4 || _w<=0 || _h<=0)
         throw std::runtime_error(gettext("Invalid image parameters"));
     allocate();
+    _filename=make_image_name();
+    _tmp=true;
     for (int i=0;i<sz;++i)
-        _data[j++]=hexstr2int(data.substr(2*i,2));
+        _data[j++]=static_cast<uchar>(strtol(data.substr(2*i,2).c_str(),NULL,16));
+}
+void rgba_image::set_file_name(const char *fname) {
+    _filename=std::string(fname);
+    _tmp=false;
 }
 /* Return the color type description. */
 string rgba_image::color_type_string() const {
@@ -6202,15 +7348,27 @@ string rgba_image::color_type_string() const {
     return "";
 }
 bool rgba_image::assure_on_disk() {
-    if (!_filename.empty())
+    if (is_original())
         return true;
-    string fn=temp_image_file_name.make();
-    if (write_png(fn.c_str())==0) {
-        _filename=fn;
-        _tmp=false;
+#if 1
+    if (cache_rgba_image_ptr) {
+        if (_filename.empty()) {
+            _filename=make_image_name();
+            _tmp=true;
+        } else (*uncache_rgba_image_ptr)(*this);
+        (*cache_rgba_image_ptr)(*this);
         return true;
     }
-    temp_image_file_name.pop();
+#else
+    if (_filename.empty()) {
+        _filename=make_unique_image_filename();
+        active_rgba_filenames[_filename]++;
+        _tmp=true;
+    } else if (ckfileexists(_filename.c_str()))
+        return true;
+    if (write_png(_filename.c_str())==0)
+        return true;
+#endif
     return false;
 }
 string rgba_image::print(GIAC_CONTEXT) const {
@@ -6293,12 +7451,12 @@ void rgba_image::set_pixel(int chn,int x,int y,uchar v) {
 /* crop or resize the image, return a modified copy */
 gen rgba_image::operator()(const gen &g,GIAC_CONTEXT) const {
     int x=0,y=0,w,h,task=0;
-    if (g.is_integer() && g.subtype==_INT_COLOR && g.val==44373)
+    if (g.is_integer() && g.subtype==_INT_COLOR && g.val==GREY_COLOR)
         return to_grayscale();
     if (evalf_double(g,1,contextptr).type==_DOUBLE_) {
         double s=evalf_double(g,1,contextptr).to_double(contextptr);
         if (s<=0)
-            return gensizeerr(gettext("Expected a positive real number"));
+            return generr(gettext("Expected a positive real number"));
         w=(int)std::floor(s*_w+0.5);
         h=(int)std::floor(s*_h+0.5);
         task=1;
@@ -6330,8 +7488,8 @@ gen rgba_image::operator()(const gen &g,GIAC_CONTEXT) const {
     assert(task>0);
     if (task==1) {
         if (resize_image_ptr)
-            return resize_image_ptr(*this,w,h,ctx);
-        return gensizeerr(gettext("FLTK is required for resizing the image"));
+            return (*resize_image_ptr)(*this,w,h,ctx);
+        return generr(gettext("FLTK is required for resizing the image"));
     } else if (task==2) {
         w=std::min(w,_w-x);
         h=std::min(h,_h-y);
@@ -6361,12 +7519,12 @@ gen rgba_image::operator[](const gen &g) {
         case _RED: chn=0; break;
         case _GREEN: chn=1; break;
         case _BLUE: chn=2; break;
-        case 44373: chn=-1; break; // gray
+        case GREY_COLOR: chn=-1; break; // gray
         default: return gensizeerr(ctx);
         }
     } else start=0;
     if (chn>=_d)
-        return gensizeerr(gettext("Invalid channel number"));
+        return generr(gettext("Invalid channel number"));
     if (chn<0 && _d<=2)
         chn=0;
     if (args.size()==1)
@@ -6491,6 +7649,81 @@ rgba_image rgba_image::to_grayscale() const {
         for (int j=0;j<_h;++j) {
             ret.set_pixel(0,i,j,get_pixel(-1,i,j));
             if (ha) ret.set_pixel(1,i,j,get_pixel(_d-1,i,j));
+        }
+    }
+    return ret;
+}
+rgba_image rgba_image::blend(const rgba_image &other,double t) const {
+    const rgba_image *img1=this,*img2=&other,*tmp;
+    int w,h,i,j;
+    gen resized1,resized2;
+    if (img1->depth()>img2->depth()) {
+        tmp=img1; img1=img2; img2=tmp;
+        t=1.-t;
+    }
+    if (img1->width()!=img2->width() || img1->height()!=img2->height()) {
+        // resize each image to an image with geometric mean aspect ratio and average area
+        if (!resize_image_ptr)
+            throw std::runtime_error(gettext("FLTK is required for image resizing"));
+        double w1=img1->width(),h1=img1->height(),w2=img2->width(),h2=img2->height();
+        double p1=w1*h1,p2=w2*h2,ar1=w1/h1,ar2=w2/h2,ar=std::pow(ar1,1.-t)*std::pow(ar2,t),p=(1.-t)*p1+t*p2;
+        w=(int)std::floor(std::sqrt(ar*p)+.5);
+        h=(int)std::floor(std::sqrt(p/ar)+.5);
+        resized1=(*resize_image_ptr)(*img1,w,h,ctx);
+        resized2=(*resize_image_ptr)(*img2,w,h,ctx);
+        img1=from_gen(resized1); img2=from_gen(resized2);
+        if (img1==NULL || img2==NULL)
+            throw std::runtime_error(gettext("Failed to resize images"));
+    } else {
+        w=width();
+        h=height();
+    }
+    int d1=img1->depth(),d2=img2->depth(),d; 
+    if (d1==d2) d=d1;
+    else if (d1%2) d=d2;
+    else d=4;
+    rgba_image ret(d,w,h,ctx);
+    uchar r1,g1,b1,a1,r2,g2,b2,a2,r,g,b,a;
+    for (i=0;i<w;++i) {
+        for (j=0;j<h;++j) {
+            r1=img1->get_pixel(0,i,j);
+            g1=d1<3?r1:img1->get_pixel(1,i,j);
+            b1=d1<3?r1:img1->get_pixel(2,i,j);
+            a1=d1%2?255:img1->get_pixel(d1-1,i,j);
+            r2=img2->get_pixel(0,i,j);
+            g2=d2<3?r2:img2->get_pixel(1,i,j);
+            b2=d2<3?r2:img2->get_pixel(2,i,j);
+            a2=d2%2?255:img2->get_pixel(d2-1,i,j);
+            giac::blend(r1,g1,b1,r2,g2,b2,t,r,g,b);
+            if (d<3) r=(r+g+b)/3;
+            ret.set_pixel(0,i,j,r);
+            if (d>2) {
+                ret.set_pixel(1,i,j,g);
+                ret.set_pixel(2,i,j,b);
+            }
+            if (d%2==0)
+                ret.set_pixel(d-1,i,j,static_cast<uchar>((int)std::floor(a1*(1.-t)+a2*t+.5)));
+        }
+    }
+    return ret;
+}
+rgba_image rgba_image::blend(int color,double t) const {
+    uchar r,g,b,ri,gi,bi,rr,gg,bb;
+    if (!index2rgb(color,r,g,b))
+        throw std::runtime_error(gettext("Not a valid FLTK color"));
+    int w=width(),h=height(),d=depth(),i,j;
+    rgba_image ret(d%2?3:4,w,h,ctx);
+    for (i=0;i<w;++i) {
+        for (j=0;j<h;++j) {
+            ri=get_pixel(0,i,j);
+            gi=d<3?ri:get_pixel(1,i,j);
+            bi=d<3?ri:get_pixel(2,i,j);
+            giac::blend(r,g,b,ri,gi,bi,t,rr,gg,bb);
+            ret.set_pixel(0,i,j,rr);
+            ret.set_pixel(1,i,j,gg);
+            ret.set_pixel(2,i,j,bb);
+            if (d%2==0)
+                ret.set_pixel(3,i,j,get_pixel(3,i,j));
         }
     }
     return ret;

@@ -713,7 +713,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
             if (!is_undef(a) && !is_undef(b)) {
                 if (!is_real_number(a,contextptr) || !is_real_number(b,contextptr) ||
                         !is_strictly_greater(b=to_real_number(b,contextptr),a=to_real_number(a,contextptr),contextptr))
-                    return generr("Invalid distribution parameter(s)");
+                    return generr(gettext("Invalid distribution parameter(s)"));
                 return makesequence(at_uniformd,a,b);
             } else if (!is_undef(mean) && !is_undef(sdev)) {
                 gen sqrt3=sqrt(3,contextptr);
@@ -760,7 +760,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
             gen k=_solve(makesequence(e,symb_equal(tmp,max(1,_inv(var,contextptr),contextptr)),_NEWTON_SOLVER),contextptr);
             gen lambda=mean/_Gamma(1+_inv(k,contextptr),contextptr);
             if (!is_strictly_positive(k,contextptr) || !is_strictly_positive(lambda,contextptr))
-                return generr("Invalid distribution parameter(s)");
+                return generr(gettext("Invalid distribution parameter(s)"));
             return symbolic(at_weibulld,makesequence(k,lambda));
         } else if (is_density(f,at_Gamma)) {
             if (is_undef(mean) || is_undef(sdev) || !is_strictly_positive(mean,contextptr))
@@ -774,7 +774,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
             gen var=sq(sdev),fac=(var+sq(mean)-mean)/var;
             gen par1=-mean*fac,par2=(mean-1)*fac;
             if (!is_strictly_positive(par1,contextptr) || !is_strictly_positive(par2,contextptr))
-                return generr("Invalid distribution parameter(s)");
+                return generr(gettext("Invalid distribution parameter(s)"));
             return symbolic(at_betad,makesequence(par1,par2));
         } else if (is_density(f,at_geometric)) {
             gen p;
@@ -788,7 +788,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
                 p=_ratnormal((sqrt(4*var+1,contextptr)-1)/(2*var),contextptr);
             } else return gensizeerr(contextptr);
             if (is_strictly_positive(-p,contextptr) || is_strictly_greater(p,1,contextptr))
-                return generr("Invalid distribution parameter(s)");
+                return generr(gettext("Invalid distribution parameter(s)"));
             return symbolic(at_geometric,p);
         } else if (f==at_fisher || f==at_fisherd || f==at_snedecor || f==at_chisquare || f==at_chisquared ||
                    f==at_cauchy || f==at_cauchyd || f==at_student || f==at_studentd) {
@@ -807,11 +807,11 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
             if (!is_zero(N-_floor(N,contextptr))) {
                 N=_round(N,contextptr);
                 if (is_zero(N))
-                    return generr("Invalid distribution parameter(s)");
+                    return generr(gettext("Invalid distribution parameter(s)"));
                 p=mean/N;
             } else N=_round(N,contextptr);
             if (!is_greater(p,0,contextptr) || is_strictly_greater(p,1,contextptr))
-                return generr("Invalid distribution parameter(s)");
+                return generr(gettext("Invalid distribution parameter(s)"));
             return symbolic(at_binomial,makesequence(N,_ratnormal(p,contextptr)));
         } else if (is_density(f,at_negbinomial)) {
             if (is_undef(mean) || is_undef(sdev) || !is_strictly_positive(mean,contextptr) ||
@@ -819,7 +819,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
                 return gensizeerr(contextptr);
             gen N=_round(sq(mean)/(sq(sdev)-mean),contextptr),p=mean/sq(sdev);
             if (!is_greater(N,1,contextptr) || is_strictly_positive(-p,contextptr) || is_strictly_greater(p,1,contextptr))
-                return generr("Invalid distribution parameter(s)");
+                return generr(gettext("Invalid distribution parameter(s)"));
             return symbolic(at_negbinomial,makesequence(N,_ratnormal(p,contextptr)));
         } else if (f.type==_FUNC || f.is_symb_of_sommet(at_program)) { // custom discrete distribution
             if (!is_integer(a) || !is_integer(b) || b.val<=a.val)
@@ -841,7 +841,7 @@ gen _randvar(const gen &g,GIAC_CONTEXT) {
         }
     } else if (ckmatrix(g)) {
         if (g._VECTptr->front()._VECTptr->size()!=2)
-            return generrdim("Expected a two-column matrix");
+            return generrdim(gettext("Expected a two-column matrix"));
         int n=g._VECTptr->size();
         weights.reserve(n);
         items.reserve(n);
@@ -1031,7 +1031,7 @@ gen _graph(const gen &g,GIAC_CONTEXT) {
                         return gensizeerr(contextptr);
                     bool size_error=false;
                     if (!parse_vertex_coordinates(G,*rh._VECTptr,size_error))
-                        return size_error?generr("Wrong number of vertex positions;"):
+                        return size_error?generr(gettext("Wrong number of vertex positions;")):
                                           generrtype(gettext("Failed to parse vertex positions"));
                 }
             } else return gentypeerr(contextptr);
@@ -2196,7 +2196,7 @@ gen _sierpinski_graph(const gen &g,GIAC_CONTEXT) {
             trng=true;
     }
     if (trng && k<3)
-        return generr("For Sierpinski triangle graphs it must be k>2");
+        return generr(gettext("For Sierpinski triangle graphs it must be k>2"));
     graphe G(contextptr);
     try {
         G.make_sierpinski_graph(n,k,trng);
@@ -2277,7 +2277,7 @@ gen _petersen_graph(const gen &g,GIAC_CONTEXT) {
             return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
     }
     if (n<3 || k<1 || k>(n-1)/2)
-        return generr("Condition n>=3 and 1<=k<=(n-1)/2 is not satisfied");
+        return generr(gettext("Condition n>=3 and 1<=k<=(n-1)/2 is not satisfied"));
     graphe G(contextptr);
     graphe::layout x;
     G.make_petersen_graph(n,k,&x);
@@ -2395,7 +2395,7 @@ gen _random_bipartite_graph(const gen &g,GIAC_CONTEXT) {
         }
         p=to_real_number(gv.back(),contextptr).to_double(contextptr);
         if (p<=0 || p>=1)
-            return generr("Expected a a real in (0,1)");
+            return generr(gettext("Expected a a real in (0,1)"));
     }
     G.make_default_labels(V,a,0);
     G.make_default_labels(W,b,a);
@@ -2500,7 +2500,7 @@ gen _random_sequence_graph(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     int n=g._VECTptr->size(),m=0;
     if (n==0)
-        return generr("Expected a non-empty list");
+        return generr(gettext("Expected a non-empty list"));
     if (_is_graphic_sequence(g,contextptr)==graphe::FAUX)
         return gt_err(_GT_ERR_NOT_A_GRAPHIC_SEQUENCE);
     graphe::ivector deg(n);
@@ -4549,7 +4549,7 @@ gen _kneser_graph(const gen &g,GIAC_CONTEXT) {
         return generrtype(gettext("Expected an integer"));
     int n=gv.front().val,k=gv.back().val;
     if (n<2 || n>20 || k<1 || k>=n)
-        return generr("Failed to satisfy 2<n<=20 and 1<=k<n");
+        return generr(gettext("Failed to satisfy 2<n<=20 and 1<=k<n"));
     graphe G(contextptr);
     if (!G.make_intersection_graph(n,k,0,true))
         return gensizeerr(contextptr);
@@ -4576,7 +4576,7 @@ gen _johnson_graph(const gen &g,GIAC_CONTEXT) {
         return generrtype(gettext("Expected an integer"));
     int n=gv.front().val,k=gv.back().val;
     if (n<2 || n>20 || k<1 || k>=n)
-        return generr("Failed to satisfy 2<n<=20 and 1<=k<n");
+        return generr(gettext("Failed to satisfy 2<n<=20 and 1<=k<n"));
     graphe G(contextptr);
     if (!G.make_intersection_graph(n,k,k-1,false))
         return gensizeerr(contextptr);
@@ -4597,7 +4597,7 @@ gen _odd_graph(const gen &g,GIAC_CONTEXT) {
         return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
     int n=g.val;
     if (n<2 || n>10)
-        return generr("Failed to satisfy 2<n<=10");
+        return generr(gettext("Failed to satisfy 2<n<=10"));
     graphe G(contextptr);
     if (!G.make_intersection_graph(2*n-1,n-1,0,false))
         return gensizeerr(contextptr);
@@ -6085,7 +6085,7 @@ gen _lowest_common_ancestor(const gen &g,GIAC_CONTEXT) {
         if (!ckmatrix(gv.back()))
             return generrtype(gettext("Expected a matrix"));
         if (gv.back()._VECTptr->front()._VECTptr->size()!=2)
-            return generrdim("Expected a two-column matrix");
+            return generrdim(gettext("Expected a two-column matrix"));
         graphe::ipairs p;
         matrice &m=*gv.back()._VECTptr;
         int n=m.size(),i,j;
@@ -6137,7 +6137,7 @@ gen _st_ordering(const gen &g,GIAC_CONTEXT) {
     if (is_real_number(gv.back(),contextptr)) {
         p=to_real_number(gv.back(),contextptr).to_double(contextptr);
         if (p<0 || p>1)
-            return generr("0<=p<=1 is required");
+            return generr(gettext("0<=p<=1 is required"));
     }
     if (p<0)
         G->compute_st_numbering(s,t);
@@ -6572,7 +6572,7 @@ gen _is_subgraph_isomorphic(const gen &g,GIAC_CONTEXT) {
     if (G1==NULL || G2==NULL)
         return gt_err(_GT_ERR_NOT_A_GRAPH);
     if (G1->is_directed()!=G2->is_directed())
-        return generr("Both graphs must be (un)directed");
+        return generr(gettext("Both graphs must be (un)directed"));
     for (const_iterateur it=gv.begin()+2;it!=gv.end();++it) {
         if (it->type==_IDNT)
             S=*it;
@@ -7165,7 +7165,7 @@ gen _random_network(const gen &g,GIAC_CONTEXT) {
     if (!gv[0].is_integer() || !gv[1].is_integer() || (a=gv[0].val)<1 || (b=gv[1].val)<1)
         return gt_err(_GT_ERR_POSITIVE_INTEGER_REQUIRED);
     if (a+b<3)
-        return generr("a+b>2 is required");
+        return generr(gettext("a+b>2 is required"));
     double p=0.5;
     /* parse options */
     bool acyclic=false,weighted=false;

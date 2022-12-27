@@ -47,6 +47,8 @@
 using namespace std;
 using namespace giac;
 
+#define DISPLAY_COLORS_AS_BOXES
+
 #ifndef NO_NAMESPACE_XCAS
 namespace xcas {
 #endif // ndef NO_NAMESPACE_XCAS
@@ -54,8 +56,132 @@ namespace xcas {
   unsigned max_prettyprint_equation=5000;
   
 #ifdef _HAVE_FL_UTF8_HDR_
-  Fl_Font cst_greek_translate(string & s0){
+  // formatting label text (addition by L.Marohnić)
+  void translate_math(string & s0,bool mm) {
     string s1(s0);
+    int n=s1.size();
+    s0="";
+    bool is_pow_last=false;
+    for (int i=0;i<n;++i) {
+      if (mm && s1[i]=='-' && i<n-1 && s1[i+1]=='-') {
+        s0+="−";
+        i++;
+      } else if (s1[i]=='<' && i<n-1 && s1[i+1]=='=') {
+        s0+="≤";
+        i++;
+      } else if (s1[i]=='>' && i<n-1 && s1[i+1]=='=') {
+        s0+="≥";
+        i++;
+      } else if (mm && s1[i]=='+' && i<n-1 && s1[i+1]=='-') {
+        s0+="±";
+        i++;
+      } else if (mm && s1[i]=='-' && i<n-1 && s1[i+1]=='+') {
+        s0+="∓";
+        i++;
+      } else if (mm && s1[i]=='=' && i<n-1 && s1[i+1]=='=') {
+        s0+="≡";
+        i++;
+      } else if (s1[i]=='!' && i<n-1 && s1[i+1]=='=') {
+        s0+="≠";
+        i++;
+      } else if (mm && s1[i]=='\\' && i<n-1 && s1[i+1]=='/') {
+        s0+="√";
+        i++;
+      } else if (s1[i]=='-' && i<n-1 && s1[i+1]=='>') {
+        s0+="→";
+        i++;
+      } else if (s1[i]=='=' && i<n-1 && s1[i+1]=='>') {
+        s0+="⇒";
+        i++;
+      } else if (mm && s1[i]=='~' && i<n-1 && s1[i+1]=='~') {
+        s0+="≈";
+        i++;
+      } else if (s1[i]=='°' && i<n-1 && s1[i+1]=='C') {
+        s0+="℃";
+        i++;
+      } else if (s1[i]=='°' && i<n-1 && s1[i+1]=='F') {
+        s0+="℉";
+        i++;
+      } else if (mm && s1[i]=='*' && i<n-1 && s1[i+1]=='*') {
+        s0+="⋅⋅⋅";
+        i++;
+      } else if (mm && s1[i]=='*' && i>0 && i<n-1 &&
+          (is_pow_last || s1[i-1]==')' || isalphan(s1[i-1])) && (s1[i+1]=='(' || isalphan(s1[i+1]))) {
+        s0+="⋅";
+      } else if (mm && s1[i]=='@' && i<n-1 && isalpha(s1[i+1])) {
+        switch (s1[i+1]) {
+        // lowercase letters
+        case 'a': s0+="𝑎"; break; case 'b': s0+="𝑏"; break; case 'c': s0+="𝑐"; break;
+        case 'd': s0+="𝑑"; break; case 'e': s0+="𝑒"; break; case 'f': s0+="𝑓"; break;
+        case 'g': s0+="𝑔"; break; case 'h': s0+="ℎ"; break; case 'i': s0+="𝑖"; break;
+        case 'j': s0+="𝑗"; break; case 'k': s0+="𝑘"; break; case 'l': s0+="𝑙"; break;
+        case 'm': s0+="𝑚"; break; case 'n': s0+="𝑛"; break; case 'o': s0+="𝑜"; break;
+        case 'p': s0+="𝑝"; break; case 'q': s0+="𝑞"; break; case 'r': s0+="𝑟"; break;
+        case 's': s0+="𝑠"; break; case 't': s0+="𝑡"; break; case 'u': s0+="𝑢"; break;
+        case 'v': s0+="𝑣"; break; case 'w': s0+="𝑤"; break; case 'x': s0+="𝑥"; break;
+        case 'y': s0+="𝑦"; break; case 'z': s0+="𝑧"; break;
+        // uppercase letters
+        case 'A': s0+="𝐴"; break; case 'B': s0+="𝐵"; break; case 'C': s0+="𝐶"; break;
+        case 'D': s0+="𝐷"; break; case 'E': s0+="𝐸"; break; case 'F': s0+="𝐹"; break;
+        case 'G': s0+="𝐺"; break; case 'H': s0+="𝐻"; break; case 'I': s0+="𝐼"; break;
+        case 'J': s0+="𝐽"; break; case 'K': s0+="𝐾"; break; case 'L': s0+="𝐿"; break;
+        case 'M': s0+="𝑀"; break; case 'N': s0+="𝑁"; break; case 'O': s0+="𝑂"; break;
+        case 'P': s0+="𝑃"; break; case 'Q': s0+="𝑄"; break; case 'R': s0+="𝑅"; break;
+        case 'S': s0+="𝑆"; break; case 'T': s0+="𝑇"; break; case 'U': s0+="𝑈"; break;
+        case 'V': s0+="𝑉"; break; case 'W': s0+="𝑊"; break; case 'X': s0+="𝑋"; break;
+        case 'Y': s0+="𝑌"; break; case 'Z': s0+="𝑍"; break;
+        }
+        i++;
+      } else if (s1[i]=='^' && i+1<n) {
+        bool c=false,has_minus=s1[i+1]=='-';
+        int len=s0.length(),j=i+(has_minus?2:1);
+        for (;j<n && isdigit(s1[j]);++j) {
+          c=true;
+          if (has_minus) {
+            s0+="⁻";
+            has_minus=false;
+          }
+          switch (s1[j]) {
+          case '0': s0+="⁰"; break;
+          case '1': s0+="¹"; break;
+          case '2': s0+="²"; break;
+          case '3': s0+="³"; break;
+          case '4': s0+="⁴"; break;
+          case '5': s0+="⁵"; break;
+          case '6': s0+="⁶"; break;
+          case '7': s0+="⁷"; break;
+          case '8': s0+="⁸"; break;
+          case '9': s0+="⁹"; break;
+          default: c=false; break;
+          }
+          if (!c) break;
+        }
+        if (!c) {
+          s0.resize(len);
+          s0+="^";
+        } else {
+          i=j-1;
+          is_pow_last=true;
+          continue;
+        }
+      } else s0+=s1[i];
+      is_pow_last=false;
+    }
+  }
+
+  /* Uncommend the following line to have slanted Greek characters in math mode.
+   * The default Times font in FLTK does not support these characters. */
+  //#define SLANTED_GREEK_MATH_MODE
+
+  Fl_Font cst_greek_translate(string & s0,bool islabel){
+    if (s0.length()<2)
+      return FL_HELVETICA;
+    string s1(s0);
+#ifdef SLANTED_GREEK_MATH_MODE
+    bool mm=s1[0]=='$' && s1[s1.length()-1]=='$';
+#else
+    bool mm=false;
+#endif
     s0="";
     int n=s1.size();
     for (int i=0;i<n;++i){
@@ -75,75 +201,67 @@ namespace xcas {
       switch (s.size()){
       case 2:
 	if (s=="mu"){
-	  s0+="μ";
+	  s0+=mm?"𝜇":"μ";
 	  done=true;
 	}
 	if (s=="nu"){
-	  s0+="ν";
+	  s0+=mm?"𝜈":"ν";
 	  done=true;
 	}
 	if (s=="pi"){
-	  s0+="π";
+	  s0+=mm?"𝜋":"π";
 	  done=true;
 	}
 	if (s=="xi"){
-	  s0+="ξ";
+	  s0+=mm?"𝜉":"ξ";
 	  done=true;
 	}
 	if (s=="Xi"){
-	  s0+="Ξ";
+	  s0+=mm?"𝛯":"Ξ";
 	  done=true;
 	}
 	break;
       case 3:
 	if (s=="chi"){
-	  s0+="χ";
+	  s0+=mm?"𝜒":"χ";
 	  done=true;
 	}
 	if (s=="phi"){
-	  s0+="φ";
+	  s0+=mm?"𝜑":"φ";
 	  done=true;
 	}
 	if (s=="Phi"){
-	  s0+="Φ";
+	  s0+=mm?"𝛷":"Φ";
 	  done=true;
 	}
 	if (s=="eta"){
-	  s0+="η";
+	  s0+=mm?"𝜂":"η";
 	  done=true;
 	}
 	if (s=="rho"){
-	  s0+="ρ";
+	  s0+=mm?"𝜌":"ρ";
 	  done=true;
 	}
 	if (s=="tau"){
-	  s0+="τ";
+	  s0+=mm?"𝜏":"τ";
 	  done=true;
 	}
 	if (s=="psi"){
-	  s0+="ψ";
+	  s0+=mm?"𝜓":"ψ";
 	  done=true;
 	}
 	if (s=="Psi"){
-	  s0+="Ψ";
+	  s0+=mm?"𝛹":"Ψ";
 	  done=true;
 	}
 	break;
       case 4:
-	if (s=="beta"){
-	  s0+="β";
+	if (s=="beta" || s=="Beta"){
+	  s0+=mm?"𝛽":"β";
 	  done=true;
 	}
-	if (s=="Beta"){
-	  s0+="β";
-	  done=true;
-	}
-	if (s=="zeta"){
-	  s0+="ζ";
-	  done=true;
-	}
-	if (s=="Zeta"){
-	  s0+="ζ";
+	if (s=="zeta" || s=="Zeta"){
+	  s0+=mm?"𝜁":"ζ";
 	  done=true;
 	}
 	if (s=="alef"){
@@ -153,67 +271,63 @@ namespace xcas {
 	break;
       case 5:
 	if (s=="alpha"){
-	  s0+="α";
+	  s0+=mm?"𝛼":"α";
 	  done=true;
 	}
 	if (s=="delta"){
-	  s0+="δ";
+	  s0+=mm?"𝛿":"δ";
 	  done=true;
 	}
 	if (s=="Delta"){
-	  s0+="Δ";
+	  s0+=mm?"𝛥":"Δ";
 	  done=true;
 	}
 	if (s=="gamma"){
-	  s0+="γ";
+	  s0+=mm?"𝛾":"γ";
 	  done=true;
 	}
 	if (s=="Gamma"){
-	  s0+="Γ";
+	  s0+=mm?"𝛤":"Γ";
 	  done=true;
 	}
 	if (s=="kappa"){
-	  s0+="κ";
+	  s0+=mm?"𝜅":"κ";
 	  done=true;
 	}
 	if (s=="theta"){
-	  s0+="θ";
+	  s0+=mm?"𝜃":"θ";
 	  done=true;
 	}
 	if (s=="Theta"){
-	  s0+="Θ";
+	  s0+=mm?"𝛳":"Θ";
 	  done=true;
 	}
 	if (s=="sigma"){
-	  s0+="σ";
+	  s0+=mm?"𝜎":"σ";
 	  done=true;
 	}
 	if (s=="Sigma"){
-	  s0+="Σ";
+	  s0+=mm?"𝛴":"Σ";
 	  done=true;
 	}
 	if (s=="Omega"){
-	  s0+="Ω";
+	  s0+=mm?"𝛺":"Ω";
 	  done=true;
 	}
 	if (s=="omega"){
-	  s0+="ω";
+	  s0+=mm?"𝜔":"ω";
 	  done=true;
 	}
 	break;
       case 6:
-	if (s=="lambda"){
-	  s0+="λ";
-	  done=true;
-	}
-	if (s=="Lambda"){
-	  s0+="λ";
+	if (s=="lambda" || s=="Lambda"){
+	  s0+=mm?"𝜆":"λ";
 	  done=true;
 	}
 	break;
       case 7:
 	if (s=="epsilon"){
-	  s0+="ε";
+	  s0+=mm?"𝜀":"ε";
 	  done=true;
 	}
 	if (s=="product"){
@@ -237,11 +351,26 @@ namespace xcas {
       if (!done)
 	s0+=s;
     } // end for (int i=0;i<n;i++)
-    return FL_HELVETICA;
+    if (!islabel)
+      return FL_HELVETICA;
+    Fl_Font ret;
+    if (s0[0]=='*' && s0[s0.length()-1]=='*') {
+      s0=s0.substr(1,s0.length()-2);
+      ret=FL_HELVETICA_BOLD;
+    } else if (s0[0]=='/' && s0[s0.length()-1]=='/') {
+      s0=s0.substr(1,s0.length()-2);
+      ret=FL_HELVETICA_ITALIC;
+    } else if (s0[0]=='$' && s0[s0.length()-1]=='$') {
+      s0=s0.substr(1,s0.length()-2);
+      ret=FL_TIMES;
+      mm=true;
+    } else ret=FL_HELVETICA;
+    translate_math(s0,mm);
+    return ret;
   }
 #else
 
-  Fl_Font cst_greek_translate(string & s0){
+  Fl_Font cst_greek_translate(string & s0,bool islabel){
     int n=s0.size(),j;
     for (j=n-1;j>=2;--j){
       if (isalpha(s0[j]))
@@ -1107,6 +1236,13 @@ namespace xcas {
      *   VECTORS   *
      ***************/
     if ( (g.type==_VECT) && !g._VECTptr->empty() ){
+#if 0
+      if (g.subtype==_GRAPH__VECT){  
+	string s;
+	if (is_graphe(g,s,contextptr))
+	  return Equation_compute_size(string2gen(s,false),a,windowhsize,contextptr);
+      }
+#endif
       if (g.subtype==_SPREAD__VECT)
 	return Equation_compute_size(string2gen("spreadsheet",false),a,windowhsize,contextptr);
       vecteur v;
@@ -1352,6 +1488,10 @@ namespace xcas {
     }
     if (g.type!=_SYMB){
       string s=g.print(contextptr);
+#ifdef DISPLAY_COLORS_AS_BOXES // addition by L.Marohnić
+      if (g.is_integer() && g.subtype==_INT_COLOR)
+        s="■";
+#endif
       if (s.size()>2000)
 	s=s.substr(0,2000)+"...";
       fl_font(cst_greek_translate(s),a.fontsize);
@@ -1478,6 +1618,22 @@ namespace xcas {
       fl_color(background);
     }
     string s=gg.print(contextptr);
+#ifdef DISPLAY_COLORS_AS_BOXES // addition by L.Marohnić
+    if (gg.is_integer() && gg.subtype==_INT_COLOR) {
+      Fl_Color old_color=fl_color();
+      if (gg.val<256)
+        fl_color((Fl_Color)gg.val);
+      unsigned char col_r,col_g,col_b;
+      if (index2rgb(gg.val,col_r,col_g,col_b))
+        fl_color(col_r,col_g,col_b);
+      else fl_color(FL_BLACK);
+      string s("■");
+      fl_font(cst_greek_translate(s),fontsize);
+      check_fl_draw(s.c_str(),eq->x()+e.x-x,eq->y()+y-e.y,eq->clip_x,eq->clip_y,eq->clip_w,eq->clip_h,0,0);
+      fl_color(old_color);
+      return;
+    }
+#endif
     if (gg.type==_IDNT && !s.empty() && s[0]=='_')
       s=s.substr(1,s.size()-1);
     if (s.size()>2000)

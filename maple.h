@@ -85,13 +85,16 @@ namespace giac {
   gen _Nullspace(const gen & g,GIAC_CONTEXT);
   gen _assign(const gen & g,GIAC_CONTEXT);
   gen _implicitplot3d(const gen & g,GIAC_CONTEXT);
+  //gen _readwav(const gen & g,GIAC_CONTEXT);
+  //gen _writewav(const gen & g,GIAC_CONTEXT);
   gen _animate(const gen & g,GIAC_CONTEXT);
   gen _animate3d(const gen & g,GIAC_CONTEXT);
   gen _even(const gen & g,GIAC_CONTEXT);
   gen _odd(const gen & g,GIAC_CONTEXT);
   gen _writergb(const gen & g,GIAC_CONTEXT);
   gen _readrgb(const gen & g,GIAC_CONTEXT);
-
+  gen _interp(const gen &g,GIAC_CONTEXT); // addition by L.Marohnić
+  
 
   int write_png(const char *file_name, void *rows, int w, int h, int colortype, int bitdepth);
   extern bool (* readrgb_ptr)(const std::string & s,int W,int H,gen & res);
@@ -126,6 +129,7 @@ namespace giac {
   extern const unary_function_ptr * const  at_binprint ;
   extern const unary_function_ptr * const  at_count;
   extern const unary_function_ptr * const  at_time;
+  extern const unary_function_ptr * const  at_interp; // addition by L.Marohnić
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

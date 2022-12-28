@@ -6663,20 +6663,25 @@ gen ann::operator()(const gen &g,GIAC_CONTEXT) const {
     if (g.type!=_VECT)
         return generrtype(gettext("Input should be a vector or a matrix"));
     vecteur res;
-    if (g.subtype==_SEQ__VECT) {
-        if (g._VECTptr->size()!=2)
-            return generrdim(gettext("Expected 2 arguments"));
-        const gen &inp=g._VECTptr->front(),&out=g._VECTptr->back();
-        if (inp.type!=_VECT)
-            return generrtype(gettext("Input should be a vector or a matrix"));
-        if (ckmatrix(inp)) {
-            if (out.type!=_VECT)
-                return generrtype(gettext("Expected output should be a vector"));
-            feed(*inp._VECTptr,res,*out._VECTptr);
-        } else feed(vecteur(1,inp),res,vecteur(1,out));
-    } else if (ckmatrix(g))
-        feed(*g._VECTptr,res);
-    else feed(vecteur(1,g),res);
+    try {
+        if (g.subtype==_SEQ__VECT) {
+            if (g._VECTptr->size()!=2)
+                return generrdim(gettext("Expected 2 arguments"));
+            const gen &inp=g._VECTptr->front(),&out=g._VECTptr->back();
+            if (inp.type!=_VECT)
+                return generrtype(gettext("Input should be a vector or a matrix"));
+            if (ckmatrix(inp)) {
+                if (out.type!=_VECT)
+                    return generrtype(gettext("Expected output should be a vector"));
+                feed(*inp._VECTptr,res,*out._VECTptr);
+            } else feed(vecteur(1,inp),res,vecteur(1,out));
+        } else if (ckmatrix(g))
+            feed(*g._VECTptr,res);
+        else feed(vecteur(1,g),res);
+    } catch (const std::runtime_error &e) {
+        *logptr(contextptr) << e.what() << "\n";
+        return undef;
+    }
     if (ckmatrix(res) && output_size()==1)
         res=*mtran(res).front()._VECTptr;
     return res.size()==1?res.front():res;

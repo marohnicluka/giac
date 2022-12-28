@@ -42841,7 +42841,8 @@ time-dependent features.
       \item \texttt{output=}\textit{out}, where \textit{out} is one of:
       \begin{itemize}
         \item \texttt{image} (the default), which displays the spectrum as an image.
-        \item \texttt{plot}, which displays the spectrum by using \xcas{} graphic commands.
+        \item \texttt{plot}, which draws the spectrum with \xcas{} graphic commands
+        (in lower resolution).
         \item \texttt{matrix}, which outputs the spectrum as a matrix in which rows correspond
         to frequency bins and columns to spectra at individual samples.
       \end{itemize}
@@ -42865,9 +42866,9 @@ time-dependent features.
       (nonnegative integer) as returned by the \texttt{colormap} command
       (see~\secref{ssec:colormap}). \textit{cmap} can also be a boolean value,
       with \texttt{true} corresponding to the default rainbow colormap and \texttt{false}
-      corresponding to the grey ramp with 24 colors from the \fltk{} colormap. By default,
-      the \texttt{viridis} colormap is used. A suitable choice of colormap can help detecting
-      important signal features in the graphic output.
+      corresponding to the grey ramp with 24 colors from the \fltk{} colormap.
+      A suitable choice of colormap can help detecting important signal features in the
+      graphic output. By default, \texttt{color=true}.
     \end{itemize}
   \end{itemize}
   \item \texttt{hht(}$\textit{data}\,\langle,\textit{opts}\,\rangle$\texttt{)} returns

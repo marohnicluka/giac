@@ -5590,7 +5590,7 @@ gen _hht(const gen &g,GIAC_CONTEXT) {
         return gentypeerr(contextptr);
     bool has_opt=g.subtype==_SEQ__VECT;
     gen fmin(undef),fmax(undef),tmin(0),tmax(undef);
-    int n,sr=0,fbins=0,tbins=0,pal=0,otype=1; // otype = 0: plot, 1: image, 2: matrix
+    int n,sr=0,fbins=0,tbins=0,pal=7<<2,otype=1; // otype = 0: plot, 1: image, 2: matrix
     bool logf=false,semitones=false,cmap=true,transp=true;
     if (has_opt) {
         const vecteur &args=*g._VECTptr;

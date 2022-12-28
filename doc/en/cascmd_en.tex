@@ -14266,8 +14266,8 @@ is a rational number). Also, if $f$ is periodic, then $g\circ f$ is periodic for
 any function $g$. For example, define two periodic functions $f$ and $g$ with periods 2 and 3,
 respectively, and then the function $h(x)=\frac{f(x)g(x)}{\ln\left(1+f(x)^2+g(x)^4\right)}$:
 \begin{xcasinput}
-f:=periodic(x^2,x=0..1):;
-g:=periodic(x^3,x=-1..1):;
+f:=periodic(x^2,x=-1..1):;
+g:=periodic(x^3,x=-3/2..3/2):;
 h:=f*g/ln(1+f^2+g^4):;
 plot(h)
 \end{xcasinput}
@@ -14707,7 +14707,7 @@ or not an expression contains a given variable.
   \item $x$, the name of a variable.
   \end{itemize}
 \item \texttt{has(}$\textit{expr},x$\texttt{)} returns 0 if
-  \textit{expr} does not contain $x$ and the 1-based position of $x$
+  \textit{expr} does not contain $x$ and the 1-based index of $x$
   in \texttt{lname(}\textit{expr}\texttt{)} otherwise.
 \end{itemize}
 
@@ -25071,7 +25071,7 @@ which minimizes the functional
 \]
 To obtain the corresponding Euler-Lagrange equation:
 \begin{xcasinput}
-eq:=euler_lagrange(sqrt(1+diff(y(x),x)\verb|^|2)/x)
+eq:=euler_lagrange(sqrt(1+diff(y(x),x)^2)/x)
 \end{xcasinput}
 \begin{xcasoutput}
   \frac{\frac{\mathrm{d}}{\mathrm{d}x}y\left(x\right)}{x \sqrt{\left(\frac{\mathrm{d}}{\mathrm{d}x}y\left(x\right)\right)^{2}+1}}=K_{2}
@@ -25085,8 +25085,7 @@ sol:=dsolve(eq)
 The sought solution is the function of the above form which satisfies
 the boundary conditions.
 \begin{xcasinput}
-y0:=sol[0]:;
-c:=[K_3,c_0]:;
+y0,c:=sol[0],[K_3,c_0]:;
 v:=solve([subs(y0,x=1/2)=-sqrt(3)/2,subs(y0,x=1)=0],c)
 \end{xcasinput}
 \begin{xcasoutput}
@@ -25379,7 +25378,7 @@ The area of the surface of revolution is measured by the functional
 First, set $f(y,y\Prime,x)=y(x)\,\sqrt{1+y\Prime(x)^2}$ and compute the
 associated Euler-Lagrange equation:
 \begin{xcasinput}
-eq:=euler_lagrange(y(x)*sqrt(1+diff(y(x),x)^2))
+f:=y(x)*sqrt(1+diff(y(x),x)^2):; eq:=euler_lagrange(f)
 \end{xcasinput}
 \begin{xcasoutput}
   \left[-\frac{y\left(x\right)}{\sqrt{\left(\frac{\mathrm{d}}{\mathrm{d}x}y\left(x\right)\right)^{2}+1}}=K_{0},\frac{\mathrm{d}^{2}}{\mathrm{d}x^{2}}y\left(x\right)=\frac{\left(\frac{\mathrm{d}}{\mathrm{d}x}y\left(x\right)\right)^{2}+1}{y\left(x\right)}\right]
@@ -25398,14 +25397,14 @@ to be the second element of the above list. That function, which can
 be written as $y_0(x)=-K_0\,\cosh\left(\frac{x-c_1}{K_0}\right)$,
 is called a \emph{catenary}.
 \begin{xcasinput}
-y0:=sol[1]:; p:=[K_0,c_1]:;
+y0,p:=sol[1],[K_0,c_1]:;
 \end{xcasinput}
 To find the values of $K_0$ and $c_1$ from the boundary conditions,
 first plot the curves $y_0(0)=1$ and $y_0(1)=\frac{2}{3}$ for
 $K_0\in[-1,1]$ and $c_1\in[-1,2]$ to see where they intersect each
 other.
 \begin{xcasinput}
-eq1:=subs(y0,x=0)=1:; eq2:=subs(y0,x=1)=2/3:;
+eq1,eq2:=subs(y0,x=0)=1,subs(y0,x=1)=2/3:;
 implicitplot([eq1,eq2],K_0=-1..1,c_1=-1..2)
 \end{xcasinput}
 \begin{xcasimage}
@@ -25417,18 +25416,17 @@ the first with $K_0\approx -0.5$ and $c_1\approx 0.6$  and the second
 with $K_0\approx -0.3$ and $c_1\approx 0.5$. You can obtain the values of
 these constants more precisely by using \texttt{fsolve}.
 \begin{xcasinput}
-p1:=fsolve([eq1,eq2],p,[-0.5,0.6]);
-p2:=fsolve([eq1,eq2],p,[-0.3,0.5])
+p1,p2:=fsolve([eq1,eq2],p,[-0.5,0.6]),fsolve([eq1,eq2],p,[-0.3,0.5])
 \end{xcasinput}
 \begin{xcasoutput}
   [-0.56237423894,0.662588703113],[-0.30613431407,0.567138261119]
 \end{xcasoutput}
 You can check, for each catenary, that $f_{y\Prime y\Prime}(x,y_k,y_k\Prime)>0$ holds for $k=1,2$.
 \begin{xcasinput}
-y1:=subs(y0,p,p1):; y2:=subs(y0,p,p2):;
+y1,y2:=subs(y0,p,p1),subs(y0,p,p2):;
 D2f:=diff(f,diff(y(x),x),2):;
-solve([eval(subs(D2f,y=y1,y(x)=y1))<=0,x>=0,x<=1],x);
-solve([eval(subs(D2f,y=y2,y(x)=y2))<=0,x>=0,x<=1],x)
+solve([eval(exact(subs(D2f,y=y1,y(x)=y1)))<=0,x>=0,x<=1],x);
+solve([eval(exact(subs(D2f,y=y2,y(x)=y2)))<=0,x>=0,x<=1],x)
 \end{xcasinput}
 \begin{xcasoutput}
   [],[]
@@ -25449,12 +25447,9 @@ You can conclude that there are no points conjugate to $0$ in $(0,1]$
 for the catenary $y_1$, so it minimizes the functional $F$. However,
 for the other catenary there is a conjugate point in the relevant
 interval, therefore $y_2$ is not a minimizer.
-
-You can verify the above conclusions by computing surface areas for
-catenaries $y_1$ and $y_2$.
+You can verify this by computing surface areas for catenaries $y_1$ and $y_2$:
 \begin{xcasinput}
-int(y1*sqrt(1+diff(y1,x)^2),x=0..1);
-int(y2*sqrt(1+diff(y2,x)^2),x=0..1)
+int(y1*sqrt(1+diff(y1,x)^2),x=0..1); int(y2*sqrt(1+diff(y2,x)^2),x=0..1)
 \end{xcasinput}
 \begin{xcasoutput}
   0.81396915825,0.826468466845
@@ -25463,13 +25458,13 @@ You can see that the surface formed by rotating the curve $y_1$ is
 indeed smaller than the area of the surface formed by rotating the
 curve $y_2$. Finally, you can visualize both surfaces for convenience.
 \begin{xcasinput}
-plot3d([y1*cos(t),y1*sin(t),x],x=0..1,t=0..2*pi, display=yellow+filled)
+plot3d([y1*cos(t),y1*sin(t),x],x=0..1,t=0..2*pi,display=gold+filled)
 \end{xcasinput}
 \begin{xcasimage}
   \includeimage{xcas-catenoid_1.png}
 \end{xcasimage}
 \begin{xcasinput}
-plot3d([y2*cos(t),y2*sin(t),x],x=0..1,t=0..2*pi, display=yellow+filled)
+plot3d([y2*cos(t),y2*sin(t),x],x=0..1,t=0..2*pi,display=gold+filled)
 \end{xcasinput}
 \begin{xcasimage}
   \includeimage{xcas-catenoid_2.png}
@@ -32360,7 +32355,7 @@ subs(f,x,cb)
 \begin{xcasoutput}
 1.16374646004
 \end{xcasoutput}
-A strength of the Frank-Wolfe method, besides automatic feasibility,
+The strength of the Frank-Wolfe method, besides automatic feasibility,
 is its ability to detect whether the objective function value is sufficiently
 close to the (unknown) otimal value.
 
@@ -32483,7 +32478,7 @@ To define the objective function, enter:
 \begin{xcasinput}
 f(x,y):=-Airy_Ai(1+x)*cos(y-pi/8):;
 \end{xcasinput}
-Computing the gradient of $f$ is difficult for the \texttt{grad} command since it
+Computing the gradient of $f$ automatically is difficult because the \texttt{grad} command
 does not know how to compute the derivative of Ai function, so you will have to provide
 the gradient function yourself. By the relation between Airy functions and modified
 Bessel functions, you get:
@@ -32515,8 +32510,8 @@ g:=proc(x,y)
   return evalf([-Ai_diff(x+1)*cos(y-pi/8),Airy_Ai(x+1)*sin(y-pi/8)]);
 end
 \end{lstlisting}
-To get the coordinates of pentagon vertices, enter (note that you must compute them
-as floating point values):
+To get the coordinates of pentagon vertices, enter
+(note the conversion to floating-point values):
 \begin{xcasinput}
   A:=evalf(coordinates(vertices(boundary)))
 \end{xcasinput}
@@ -32590,8 +32585,8 @@ fMin((x-5)^2+y^2-25,[y>=x^2],[x,y],[1,1])
 The \texttt{nlpsolve}\index{nlpsolve@\texttt{nlpsolve}}
 command computes the optimum of a multivariate objective function subject
 to equality and/or inequality constraints with continuous and/or integer variables.
-\begin{description}
-\item[Input syntax.] \texttt{nlpsolve} takes the following arguments:
+\begin{itemize}
+\item \texttt{nlpsolve} takes the following arguments:
   \begin{itemize}
   \item \textit{obj} or \textit{fname}, an expression to optimize or
     a string containing the path to a problem file.
@@ -32659,7 +32654,7 @@ to equality and/or inequality constraints with continuous and/or integer variabl
         method (by default 0.5).
       \item \texttt{size}, which specifies the initial simplex size for Nelder-Mead method (by default, it is computed automatically by using the variable bounds).
       \item \texttt{step}, which specifies initial step for BGFS method or adaptive penalty step for
-        Nelder-Mead method (by default, it is set to 1 for BGFS and to 0.01 for Nelder \& Mead).
+        Nelder-Mead method (by default, it is set to 1 for BGFS and to 0.01 for Nelder-Mead).
       \item \texttt{search-points}, which specifies the number of agents in differential evolution
         (by default $10n$, where $n$ is the number of variables) or the number of points for determining
         PDH clusters (by default $1000\sqrt{n}$).
@@ -32714,7 +32709,7 @@ to equality and/or inequality constraints with continuous and/or integer variabl
       where \textit{bool} can be either \texttt{true} or \texttt{false}.
       This specifies whether the input problem should be treated as being convex.
       If this option is set, then the convexity check is not performed, speeding up the execution.
-      (By default, convexity of the problem is determined automatically only if it is relevant for
+      (By default, convexity check is performed only if it is relevant for
       choosing a suitable optimization method.)
     \item \texttt{assume=}\textit{asmp}, where \textit{asmp} may be one
       of the following:
@@ -32724,8 +32719,8 @@ to equality and/or inequality constraints with continuous and/or integer variabl
         nonnegative values (existing positive lower bounds are kept, however),
       \item\index{nlp\_nonnegint@\textit{nlp\_nonnegint}}
         \index{nonnegint@\textit{nonnegint}}
-        \texttt{nlp\_nonnegint} or \texttt{nonnegint}, which forces
-        all variables to take nonnegative integer values,
+        \texttt{nlp\_nonnegint} or \texttt{nonnegint}, which makes
+        all variables take nonnegative integer values,
       \item\index{nlp\_integer@\textit{nlp\_integer}}
         \index{integer@\textit{integer}}
         \texttt{nlp\_integer} or \texttt{integer}, which forces
@@ -32737,8 +32732,7 @@ to equality and/or inequality constraints with continuous and/or integer variabl
       \end{itemize}
     \end{itemize}
   \end{itemize}
-\item[Entering problems directly.]
-  \texttt{nlpsolve(}$\textit{obj}\,\langle,\textit{constr},\textit{bd},\textit{opt}\,\rangle$\texttt{)}
+  \item \texttt{nlpsolve(}$\textit{obj}\,\langle,\textit{constr},\textit{bd},\textit{opt}\,\rangle$\texttt{)}
   returns a list  \textit{$[$optobj,optdec$]$}, where \textit{optobj}
   is the optimal value of \textit{obj} and \textit{optdec}
   is a list of of optimal values of the decision variables. If the optimization
@@ -32746,44 +32740,46 @@ to equality and/or inequality constraints with continuous and/or integer variabl
   the last point on the path the solver takes in attempt to find the
   optimal objective value. If the problem is infeasible or if the solver fails
   to find a feasible point, then an error is returned.
-\item[Loading problems from files.]
-  \texttt{nlpsolve(}$\textit{fname}\,\langle,\textit{opt}\,\rangle$\texttt{)}
+  \item \texttt{nlpsolve(}$\textit{fname}\,\langle,\textit{opt}\,\rangle$\texttt{)}
   solves the problem written in the file pointed to by \textit{fname}, which must be
-  written in the AMPL modeling language (such files commonly have the extension \texttt{.mod}).
+  written in the AMPL modeling language (file extension \texttt{.mod}).
   \texttt{nlpsolve} contains a very basic parser for such files and is able to read
-  problem variables, objective and constraints. For example, problems from
-  \href{https://www.minlplib.org/instances.html}{MINLPLib} can be loaded this way.
+  problem variables, objective and constraints (this works with problems from
+  \href{https://www.minlplib.org/instances.html}{MINLPLib}).
   Solver parameters can be specified in \textit{opt}.
-\item[Automatic selection of the optimization method.]
-  If objective and constraints are twice differentiable, then interior-point method is used.
-  If no initial point is provided and there are only box constraints, then differential evolution
-  is applied first to find a good starting point. In the non-differentiable case, \texttt{nlpsolve}
-  applies the Nelder-Mead method and switches to differential evolution in the case of failure.
-  In case of integrality constraints, as well as in the case of a box-constrained problem without
-  additional constraints and initial point(s), differential evolution is selected.
-  Linear problems are solved by calling the \texttt{lpsolve} command,
-  while univariate optimization on a segment is performed by using Brent's algorithm.
-\item[Local vs.~global optimization.]
-  When an initial point is provided, \texttt{nlpsolve} acts like a local optimizer.
-  Without initial point(s), it uses a multistart technique in attempt to
-  find the global minimum: starting points are automatically generated by using
-  the probabilistic restart technique described by Luersen, Riche, and Guyon (2003) until the
-  maximum number of iterations is reached. This technique avoids previously generated points
-  and also the points of convergence, while keeping relatively close to them; thus, the search
-  space is examined in a probabilistic but systematic way. An exception is the method of
-  differential evolution, which is a ``global'' method by design, however not a true one;
-  the initial population is generated uniformly if the search space is compact.
-\item[Automatic detection of variable bounds.]
-  If the constraint derivatives are available, \texttt{nlpsolve} determines rough bounds
-  of the decision variables, and is thus able to detect whether the search domain is compact.
-  In particular, this information is used by the probabilistic restart technique.
-\item[(Mixed) integer optimization.]
-  When integrality constraints are provided, \texttt{nlpsolve} applies a suitable method for finding
-  integer-feasible solutions. For differentiable input, the branch\&bound method is used, unless
-  the problem is convex, in which case the outer-approximation method is used. In the non-differentiable
-  case, differential evolution is applied.
-\end{description}
+\end{itemize}
 
+\paragraph*{Automatic selection of the optimization method.}
+If objective and constraints are twice differentiable, then interior-point method is used.
+If no initial point is provided and there are only box constraints, then differential evolution
+is applied first to find a good starting point. In the non-differentiable case, \texttt{nlpsolve}
+applies the Nelder-Mead method and switches to differential evolution in the case of failure.
+In case of integrality constraints, as well as in the case of a box-constrained problem without
+additional constraints and initial point(s), differential evolution is selected.
+Linear problems are solved by the \texttt{lpsolve} command,
+while univariate optimization on a segment is performed by using Brent's algorithm.
+
+\paragraph*{Local vs.~global optimization.}
+When an initial point is provided, \texttt{nlpsolve} acts like a local optimizer.
+Without initial point(s), it uses a multistart technique in attempt to
+find the global minimum: starting points are automatically generated by using
+the probabilistic restart technique described by Luersen, Riche, and Guyon (2003) until the
+maximum number of iterations is reached. This technique avoids previously generated points
+and also the points of convergence, while keeping relatively close to them; thus, the search
+space is examined in a probabilistic but systematic way. An exception is the method of
+differential evolution, which is a ``global'' method by design (however not a true one);
+the initial population is generated uniformly if the search space is compact.
+
+\paragraph*{Automatic detection of variable bounds.}
+If the constraint derivatives are available, \texttt{nlpsolve} determines rough bounds
+of the decision variables, and is thus able to detect whether the search domain is compact.
+In particular, this information is used by the probabilistic restart technique.
+
+\paragraph*{(Mixed) integer optimization.}
+When integrality constraints are provided, \texttt{nlpsolve} applies a suitable method for finding
+integer-feasible solutions. For differentiable input, the branch\&bound method is used, unless
+the problem is convex, in which case the outer-approximation method is used. In the non-differentiable
+case, differential evolution is applied.
 
 \subsubsection*{Examples}
 The continuous function $f$ defined by

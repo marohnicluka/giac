@@ -412,6 +412,20 @@ bool is_simpler(const gen &a,const gen &b) {
     return taille(a,MAX_TAILLE)<taille(b,MAX_TAILLE);
 }
 
+/* Simplify by applying ratnormal iteratively as far as it goes. */
+gen ratsimp(const gen &g,GIAC_CONTEXT) {
+    gen res(g),smp;
+    int ta=taille(res,MAX_TAILLE),tb;
+    while (true) {
+        smp=ratnormal(res,contextptr);
+        if ((tb=taille(smp,MAX_TAILLE))>=ta)
+            break;
+        res=smp;
+        ta=tb;
+    }
+    return res;
+}
+
 gen sign2Heaviside(const gen &g) {
     if (g.type==_VECT) {
         vecteur res;
@@ -5546,8 +5560,23 @@ define_unary_function_ptr5(at_hilbert,alias_at_hilbert,&__hilbert,0,true);
 
 gen _instfreq(const gen &g,GIAC_CONTEXT) {
     if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type==_SYMB) {
+        if (_eval(identificateur("x"),contextptr).type!=_IDNT)
+            return generr(gettext("Default variable not available"));
+        return _instfreq(makesequence(g,identificateur("x")),contextptr);
+    }
     if (g.type!=_VECT)
         return gentypeerr(contextptr);
+    if (g.subtype==_SEQ__VECT) {
+        if (g._VECTptr->size()!=2)
+            return generrdim(gettext("Expected two arguments"));
+        const gen &u=g._VECTptr->front(),&x=g._VECTptr->back();
+        if (u.type!=_SYMB || x.type!=_IDNT)
+            return gentypeerr(contextptr);
+        gen N=u/_abs(u,contextptr);
+        gen res=im(conj(N,contextptr)*_derive(makesequence(N,x),contextptr),contextptr);
+        return ratsimp(res,contextptr);
+    }
     int n;
     if ((n=g._VECTptr->size())<2)
         return vecteur(0);
@@ -5560,6 +5589,42 @@ gen _instfreq(const gen &g,GIAC_CONTEXT) {
 static const char _instfreq_s[]="instfreq";
 static define_unary_function_eval (__instfreq,&_instfreq,_instfreq_s);
 define_unary_function_ptr5(at_instfreq,alias_at_instfreq,&__instfreq,0,true);
+
+gen _instphase(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG &&g.subtype==-1) return g;
+    if (g.type==_SYMB) {
+        if (_eval(identificateur("x"),contextptr).type!=_IDNT)
+            return generr(gettext("Default variable not available"));
+        return _instphase(makesequence(g,identificateur("x")),contextptr);
+    }
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    if (g.subtype==_SEQ__VECT) {
+        if (g._VECTptr->size()!=2)
+            return generrdim(gettext("Expected two arguments"));
+        const gen &u=g._VECTptr->front(),&x=g._VECTptr->back();
+        if (u.type!=_SYMB || x.type!=_IDNT)
+            return gentypeerr(contextptr);
+        gen N=u/_abs(u,contextptr);
+        gen omega=_instfreq(g,contextptr);
+        gen ph0=subst(arg(N,contextptr),x,0,false,contextptr),tau=identificateur(" tau");
+        log_output_redirect lor(contextptr);
+        gen res=ph0+_int(makesequence(subst(omega,x,tau,false,contextptr),tau,0,x),contextptr);
+        return ratsimp(res,contextptr);
+    }
+    int n;
+    if ((n=g._VECTptr->size())<1)
+        return vecteur(0);
+    const_iterateur it=g._VECTptr->begin(),jt=it+1,jtend=g._VECTptr->end();
+    vecteur phase;
+    phase.reserve(n);
+    phase.push_back(arg(*it,contextptr));
+    if (n>1) for (;jt!=jtend;++it,++jt) phase.push_back(phase.back()+arg(*jt*conj(*it,contextptr),contextptr));
+    return phase;
+}
+static const char _instphase_s[]="instphase";
+static define_unary_function_eval (__instphase,&_instphase,_instphase_s);
+define_unary_function_ptr5(at_instphase,alias_at_instphase,&__instphase,0,true);
 
 /* Converts MIDI note scpecification S to frequency F in Hz.
  * Example: midi2freq("F#5",f)

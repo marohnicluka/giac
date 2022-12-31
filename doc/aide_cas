@@ -10590,10 +10590,20 @@ hilbert([0.7,0.2,-0.5,-0.6,-0.2,0.3,0.5,-0.1,-0.3])
 Hilbert(y(x),x)
 
 # instfreq
-2 Returns the instantaneous angular frequency of an analytic signal x.
-0 Vect(x)
+2 Returns the instantaneous angular frequency of an analytic signal u.
+0 Vect(u)||Expr(u),[Var(x)]
 -1 hilbert
+-2 instphase
 instfreq(hilbert([0.7,0.2,-0.5,-0.6,-0.2,0.3,0.5,-0.1,-0.3]))
+ u:=(t-3+(t-2)^2)/(1+(t-2)^4):;instfreq(u+i*hilbert(u,t),t)
+
+# instphase
+2 Returns the instantaneous phase of an analytic signal u.
+0 Vect(u)||Expr(u),[Var(x)]
+-1 hilbert
+-2 instfreq
+instphase(hilbert([0.7,0.2,-0.5,-0.6,-0.2,0.3,0.5,-0.1,-0.3]))
+ u:=(t-3+(t-2)^2)/(1+(t-2)^4):;instphase(u+i*hilbert(u,t),t)
 
 # homothety
 1 homothetie(C,k,A)=point A1 tel que vect(C,A1)=k*vect(C,A) i.e en 2d est la similitude de centre C, de rapport abs(k) et d'angle arg(k).

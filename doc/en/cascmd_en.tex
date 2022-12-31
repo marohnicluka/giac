@@ -22548,6 +22548,7 @@ numerical approximations to derivatives.
   \item $x_0$, a real number.
   \item Optionally, $m$, an integer or a sequence of integers (by default 1).
   \end{itemize}
+  Note that $X$, $Y$ and $x0$ can also be symbolic expressions.
 \item \texttt{numdiff($X,Y,x_0\,\langle,m\rangle$)}
   returns an approximation of the $m$th derivative of a function $f$
   at $x_0$, or a sequence of derivatives of order given by the
@@ -22567,6 +22568,11 @@ numerical approximations to derivatives.
   considerably slower, but will also avoid numerical instabilities due to the
   unlimited precision arithmetic being used.
 \end{itemize}
+
+In case you need only the first or second derivative at a sequence of points,
+you can use the \texttt{interp} command (see~\secref{ssec:fast-interp}) which
+uses cubic spline interpolation. Note that this method does not accept symbolic
+input.
 
 \subsubsection*{Examples}
 Let $f(x)=\sin(x)\,\mathrm{e}^{-x}$, $x\in[0,1]$. Sample this function
@@ -32309,7 +32315,7 @@ Therefore, \texttt{frank\_wolfe} requires that $n\geq 2$.
 
 \subsubsection*{Examples}
 \paragraph*{The Lasso Problem.}
-Solve the following $\ell^1$ constrained problem in $n$ dimensions:
+Solve the following $\ell^1$-constrained problem in $n$ dimensions:
 \[ \min \frac12\|A\mathbf{x}-\mathbf{b}\|^2,\quad \|\mathbf{x}\|\leq 1,\]
 where $A$ is a $m\times n$ matrix with real coefficients, $\mathbf{x}\in\mathbb{R}^n$ and
 $\mathbf{b}\in\mathbb{R}^m$. It can be shown that vertices of the polyhedron defined
@@ -32347,7 +32353,8 @@ subs(f,x,fw)
 \begin{xcasoutput}
 1.0435553106
 \end{xcasoutput}
-COBYLA, for instance, returns a weaker solution (see~\secref{ssec:cobyla}):
+COBYLA, for instance, returns a weaker solution (see~\secref{ssec:cobyla}),
+which is expected since it does not benefit from gradient information:
 \begin{xcasinput}
 cb:=fMin(f,[l1norm(x)<=1],x,[0.01$n],1e-4):;
 subs(f,x,cb)
@@ -40533,11 +40540,11 @@ numbers $X=[x_1,x_2,\dots,x_n]$, which is defined by
 \[
   \operatorname{RMS}(X)=\sqrt{\frac{\sum_{k=1}^n|x_k|^2}{n}}.
 \]
+(See~\secref{ssec:rms2} for other uses of \texttt{rms}.)
 \begin{itemize}
 \item \texttt{rms} takes
-  $X$, a list of real or complex numbers $[x_1,x_2,\dots,x_n]$ or an audio clip.
-  In the latter case, sample values are mapped to the segment $[-1,1]$ on each individual channel.
-\item \texttt{rms($X$)} returns the root mean square of $X$.
+  $X$, a list of real or complex numbers $[x_1,x_2,\dots,x_n]$.
+\item \texttt{rms($X$)} returns $\operatorname{RMS}(X)$ as defined above.
 \end{itemize}
 
 \subsubsection*{Examples}
@@ -40565,7 +40572,7 @@ for other usages of \texttt{trim}).
   \begin{itemize}
     \item $v$, a vector of real or complex numbers.
     \item Optionally, \textit{threshold}, a positive real number specifying the
-      threshold for zeros (by default, $\textit{threshold}=\texttt{epsilon()}$).
+      threshold for zeros (by default, $\textit{threshold}=\texttt{epsilon()}$, the working precision).
     \item Optionally, either \texttt{left} or \texttt{right}, the symbol specifiying
       one-sided trimming.
     \item Optionally, \texttt{index}, the symbol.
@@ -42491,22 +42498,45 @@ Indeed, $\varphi$ in~\eqref{eq:instphase} is non-decreasing because $\omega(t)\g
 Note that unwrapping the phase introduces uncertainties and requires user-defined
 parameters; in the above definition, $\varphi_0$ can have infinitely many values.
 
+The instantaneous amplitude of $u$ is obtained simply by calling the \texttt{abs}
+command with $u_a$ as its argument. The vector of squared amplitudes is called the
+\emph{energy} of $u$.
+
 The \texttt{instfreq}\index{instfreq@\texttt{instfreq}} command finds instantaneous
 frequency of a discrete signal $u$ given its analytic representation $u_a$.
 \begin{itemize}
-  \item \texttt{instfreq} takes $u_a$, the analytic representation of a real vector $u$,
-  as returned by \texttt{hilbert}.
-  \item \texttt{instfreq} returns $\omega$ as a vector of phase advancements of $u_a$.
+  \item \texttt{instfreq} takes one mandatory argument and one optional argument:
+  \begin{itemize}
+    \item $u_a$, the analytic representation of a real signal $u$,
+    which may be a vector (as returned by \texttt{hilbert}) or a symbolic expression.
+    \item Optionally, $x$, a variable (by default \texttt{x}).
+  \end{itemize}
+  \item \texttt{instfreq(}$u_a\,\langle,x\,\rangle$\texttt{)}
+  returns $\omega$ as a vector of phase advancements of $u_a$ in the
+  discrete case and the expression~\eqref{eq:instfreq} in the continuous case.
   Precisely, if $u_a=[z_1,z_2,\dots,z_n]$, then $\omega$ is a vector of length $n-1$ with
   components
   \[ \omega_i=\arg\left(z_i^\ast z_{i+1}\right)\in[0,\pi],\quad i=1,2,\dots,n-1. \]
   The above formula handles phase wrapping.
-  \item $\omega_i$ is the angular frequency of $u$ at offset $i+1$, where $i=1,2,\dots,n-1$.
+  \item In the discrete case, $\omega_i$ is the angular frequency of $u$ at offset $i+1$,
+  where $i=1,2,\dots,n-1$.
 \end{itemize}
 
-Note that the instantaneous amplitude of $u$ is obtained simply by calling the \texttt{abs}
-command with $u_a$ as its argument.
-The vector of squared amplitudes is called the \emph{energy} of $u$.
+The \texttt{instphase}\index{instphase@\texttt{instphase}} command finds instantaneous
+phase of a discrete signal $u$ given its analytic representation $u_a$, without wrapping.
+\begin{itemize}
+  \item \texttt{instphase} takes one mandatory argument and one optional argument:
+  \begin{itemize}
+    \item $u_a$, the analytic representation of a real signal $u$,
+    which may be a vector (as returned by \texttt{hilbert}) or a symbolic expression.
+    \item Optionally, $x$, a variable (by default \texttt{x}).
+  \end{itemize}
+  \item \texttt{instphase} returns $\varphi$ as a cummulative-sum vector of
+  \texttt{instfreq(}$u_a$\texttt{)} (adjusted so that the first element matches the
+  initial phase) in the discrete case and the expression~\eqref{eq:instphase}
+  in the continuous case.
+  \item In the discrete case, $\varphi_i$ is the phase of $u$ at offset $i$, where $i=1,2,\dots,n$.
+\end{itemize}
 
 \subsubsection*{Examples}
 Sample the function $x(t)=\sin(20\pi\sin(t))$
@@ -42515,7 +42545,7 @@ in the segment $\left[0,\frac{\pi}{2}\right]$ and apply the Hamming window:
 x:=evalf(linspace(0,pi/2,1000)):;
 y:=hamming_window(apply(t->sin(20*pi*sin(t)),x)):;
 \end{xcasinput}
-Compute the analytic representation of $y$ and the relative error
+Compute the analytic representation of $y$ and the relative error (in percentages)
 made by reconstructing the original signal from $h$:
 \begin{xcasinput}
 h:=hilbert(y):;
@@ -42551,8 +42581,9 @@ in green) forms an envelope of the original signal (shown in black), while
 the instantaneous frequency (shown in blue) drops as the oscillations in the
 original signal are slowing down (note that its values are nonnegative).
 
+\paragraph*{Continuous analytic signal.}
 To obtain the instantaneous frequency of a continuous signal you can
-use~\eqref{eq:instfreq}. For example:
+use~\eqref{eq:instfreq} or the \texttt{instfreq} command. For example:
 \begin{xcasinput}
 x:=(t-3+(t-2)^2)/(1+(t-2)^4)
 \end{xcasinput}
@@ -42574,27 +42605,26 @@ y:=normal(hilbert(x,t))
 \end{xcasoutput}
 The analytic representation of $x$ and its normalization are obtained by:
 \begin{xcasinput}
-z:=x+i*y:; A:=abs(z):; N:=z/A:;
+z:=x+i*y:;
 \end{xcasinput}
 To animate unfolding of $z(t)$ in the complex plane for $0\leq t\leq 10$, enter:
 \begin{xcasinput}
-animation(seq([plotparam(a,t=0..s/5),vector(subs(a,t,s/5),color=blue)],s=1..50))
+animation(seq([plotparam(z,t=0..s/5),vector(subs(z,t,s/5),color=blue)],s=1..50))
 \end{xcasinput}
 \begin{xcasimage}
   \includeimage{xcas-hilbert_analytic-animation.png}
 \end{xcasimage}
 To plot the instantaneous amplitude $A(t)$ against $x(t)$, enter:
 \begin{xcasinput}
-plotfunc([x,A],t=0..10,color=[blue,black])
+plotfunc([x,abs(z)],t=0..10,color=[blue,black])
 \end{xcasinput}
 \begin{xcasimage}
   \includeimage{xcas-hilbert_instampl.png}
 \end{xcasimage}
 The instantaneous frequency of $x$ is obtained by entering:
 \begin{xcasinput}
-ifreq:=simplify(im(conj(N)*diff(N,t)))
+ifreq:=instfreq(z,t)
 \end{xcasinput}
-Output (after an additional application of \texttt{simplify}):
 \begin{xcasoutput}
   \frac{t^{2} \sqrt{2}-4 t \sqrt{2}+5 \sqrt{2}}{t^{4}-8 t^{3}+24 t^{2}-32 t+17}
 \end{xcasoutput}
@@ -42613,8 +42643,7 @@ plot(ifreq,t=0..10)
 The unwrapped phase, according to the definition~\eqref{eq:instphase},
 is now obtained by entering:
 \begin{xcasinput}
-phi0:=subs(arg(N),t,0):;
-iphas:=phi0+int(subs(ifreq,t,tau),tau=0..t):;
+iphas:=instphase(z,t):;
 plot(iphas,t=0..10)
 \end{xcasinput}
 \begin{xcasimage}
@@ -42628,27 +42657,10 @@ plot(arg(z),t=0..10)
   \includeimage{xcas-hilbert_wrappedphase.png}
 \end{xcasimage}
 
-As another example, show that sinc function (see~\secref{ssec:sinc})
-has constant instantaneous angular frequency equal to $\frac12$.
-To obtain the analytic representation, enter:
-\begin{xcasinput}
-z:=sinc(t)+i*hilbert(sinc(t),t)
-\end{xcasinput}
-\begin{xcasoutput}
-  \frac{\mathrm{i} \left(-\cos t+1\right)}{t}+\frac{\sin t}{t}
-\end{xcasoutput}
-Then:
-\begin{xcasinput}
-N:=z/abs(z):;
-normal(simplify(-i*conj(N)*diff(N,t)))
-\end{xcasinput}
-\begin{xcasoutput}
-  \frac{1}{2}
-\end{xcasoutput}
-
-The function $u(t)=\frac{a}{a^2+t^2}$ for $a>0$ is itself
-its instantaneous frequency and, in case $a=1$, also its energy.
-To verify, first compute the normalized analytic representation by entering:
+As another example, show that the function $u(t)=\frac{a}{a^2+t^2}$
+for $a>0$ is itself its instantaneous frequency and, in case $a=1$, also
+its energy. To verify, first compute the (normalized) analytic
+representation by entering:
 \begin{xcasinput}
 purge(a):; assume(a>0):;
 u:=a/(a^2+t^2):;
@@ -42661,10 +42673,10 @@ N:=simplify(z/abs(z))
 Then compute the instantaneous frequency and energy of $u$, respectively,
 by entering:
 \begin{xcasinput}
-simplify(im(conj(N)*diff(N,t)),abs(z)^2)
+instfreq(z,t),simplify(abs(z)^2)
 \end{xcasinput}
 \begin{xcasoutput}
-  \frac{a}{a^{2}+t^{2}},\frac{1}{a^{2}+t^{2}}
+  \frac{a}{a^{2}+t^{2}}, \frac{1}{a^{2}+t^{2}}
 \end{xcasoutput}
 
 \subsection{Empirical mode decomposition\label{ssec:emd}}
@@ -42691,8 +42703,8 @@ is iteratively repeated until the number of local extrema goes below
 a predefined threshold (usually 2); the rest of the signal is
 called the \emph{residue} or \emph{trend} (it is not an IMF).
 
-The \texttt{emd}\index{emd@\texttt{emd}} command computes the empirical mode
-decomposition (it requires GSL for cubic spline interpolation).
+The \texttt{emd}\index{emd@\texttt{emd}} command computes empirical mode
+decomposition (GSL is required for cubic spline interpolation).
 \begin{itemize}
   \item \texttt{emd} takes one mandatory argument and a sequence of
   optional arguments:
@@ -42727,9 +42739,9 @@ decomposition (it requires GSL for cubic spline interpolation).
   only the list of computed IMFs.
 \end{itemize}
 
-A convenient way to visualize the empirical mode decomposition is
+A convenient way to visualize intrinsic mode functions is
 to use the \texttt{plotimf}\index{plotimf@\texttt{plotimf}}
-command, which plots (a selection of) IMFs stacked above each other,
+command, which plots (a selection of) IMFs in a stacked layout,
 optionally including the input signal and/or the residue.
 \texttt{imfplot}\index{imfplot@\texttt{imfplot}} is a synonym
 for \texttt{plotimf}.
@@ -42921,14 +42933,17 @@ Evaluation time: 10.01
 To display the Hilbert spectrum of the whale song, enter:
 \begin{xcasinput}
 sr:=samplerate(whale):;
-hht(imf,frequencies=10..500,samplerate=sr)
+hht(imf,frequencies=10..500,samplerate=sr,color=colormap("viridis"))
 \end{xcasinput}
 \begin{xcasimage}
   \includeimage{xcas-hht3.png}
 \end{xcasimage}
 Whale moans occur at about 5, 10, 15 and 20 seconds from the beginning
 of the recording (in reality, these intervals are ten times larger).
-Also, the spectrum reveals that moans have the same frequency.
+Also, the spectrum reveals that moans have the same frequency,
+about 160~Hz in the recording and 16~Hz in reality.
+The magnitude of the first moan is smaller, as suggested by both
+the waveform and spectrum.
 
 To obtain the Hilbert spectrum as a matrix, enter:
 \begin{xcasinput}
@@ -42946,6 +42961,7 @@ listplot(tran([x,y]))
 \begin{xcasimage}
   \includeimage{xcas-hht_energy.png}
 \end{xcasimage}
+You can see that energy is correlated with the amplitude in the above waveform.
 
 \paragraph*{Spectral analysis of music.}
 With the file \texttt{CantinaBand3.wav} downloaded from
@@ -42978,40 +42994,37 @@ the rhythmic section by cutting out the middle band of the spectrum.
 As another example, download the files \texttt{violin-C4.wav} and
 \texttt{flute-G6.wav} from
 \href{https://www.ee.columbia.edu/~dpwe/sounds/instruments/}{here}
-and load them by entering:
+and load them:
 \begin{xcasinput}
-violin:=readwav("/home/luka/Downloads/violin-C4.wav")
-\end{xcasinput}
-\begin{xcasoutput}
-  \text{a sound clip with 38500 samples at 11025 Hz (16 bit, mono)}
-\end{xcasoutput}
-\begin{xcasinput}
+violin:=readwav("/home/luka/Downloads/violin-C4.wav");
 flute:=readwav("/home/luka/Downloads/flute-G6.wav")
 \end{xcasinput}
 \begin{xcasoutput}
-  \text{a sound clip with 40250 samples at 11025 Hz (16 bit, mono)}
+  &\text{a sound clip with 38500 samples at 11025 Hz (16 bit, mono)},\\
+  &\text{a sound clip with 40250 samples at 11025 Hz (16 bit, mono)}
 \end{xcasoutput}
-Now mix the two audio clips down with a one-second delay for the flute sound
-(see~\secref{ssec:mixdown}) and extract channel data from the resulting audio clip:
+Mix the two audio clips with one-second delay for the flute
+(see~\secref{ssec:mixdown}):
 \begin{xcasinput}
-snd:=mixdown(violin,[],flute,[1.0]):;
-data:=channel_data(snd):;
-sr:=samplerate(snd):;
-plotwav(snd)
+snd:=mixdown(violin,[],flute,[1.0])
 \end{xcasinput}
-\begin{xcasimage}
-  \includeimage{xcas-violin_and_flute.png}
-\end{xcasimage}
+\begin{xcasoutput}
+  \text{a sound clip with 51275 samples at 11025 Hz (16 bit, mono)}
+\end{xcasoutput}
+% \begin{xcasimage}
+%   \includeimage{xcas-violin_and_flute.png}
+% \end{xcasimage}
 You can hear the result by using the \texttt{playsnd} command
 (see~\secref{ssec:playsnd}). To display the Hilbert spectrum, enter
 (in this case, EMD is computed automatically by \texttt{hht}):
 \begin{xcasinput}
-hht(data,log,samplerate=sr,legend=false,color=colormap("jet",inv,reverse));
+data,sr:=channel_data(snd),samplerate(snd):;
+hht(data,log,samplerate=sr,color=colormap("jet",inv,reverse));
 \end{xcasinput}
 \begin{xcasimage}
   \includeimage{xcas-hht2.png}
 \end{xcasimage}
-The specified colormap allows you to recognize the individual tones at
+The specified colormap helps you to see two individual tones at
 60 resp.~91 semitones from the MIDI note~0, corresponding to C4 resp.~G6,
 as expected. The flute part of the spectrum (yellow-reddish) is much
 more concentrated than the violin part due to the inherent
@@ -43044,8 +43057,8 @@ the GSL library.
     of the wavelets which align the coefficients of the various sub-bands on edges,
     making the resulting visualization of the coefficients of the wavelet transform in the
     phase plane easier to understand.
-  \item Optionally, \texttt{image}, the symbol which makes use of the ``non-standard''
-    form of the two-dimensional DWT.
+  \item Optionally, \texttt{image}, the symbol which specifies the ``non-standard''
+    form of the 2D DWT.
   \end{itemize}
   Note that the input array \textit{data} will be enlarged, if necessary, such that its size
   is a power of two. If \textit{data} is a matrix, it is augmented to a square matrix of
@@ -43071,9 +43084,7 @@ the GSL library.
 
 \subsubsection*{Examples}
 \paragraph{Signal compression.}
-In the first example (adapted from the GSL documentation,
-see \href{https://www.gnu.org/software/gsl/doc/html/dwt.html}{here}),
-we load a sample of size 256 from the
+In the first example (adapted from GSL documentation), we load a sample of size 256 from the
 MIT-BIH Arrhythmia Database (see \href{https://physionet.org/content/mitdb/1.0.0/}{here})
 and attempt to remove the noisy information.
 \begin{xcasinput}
@@ -43095,28 +43106,33 @@ listplot(res)
 \begin{xcasimage}
   \includeimage{mit-bih-2.png}
 \end{xcasimage}
+As you can see, the fast, low-amplitude oscillations are gone,
+but important features such as the spike are left practically intact.
+As a beneficial side-effect of denoising, you get the signal compressed
+by, in this case, about 92\% in terms of memory usage.
 
 \paragraph{Noise reduction in images.}
-In the second example, we attempt to reduce the noise in a noisy image.
+Assuming that an image \texttt{noisy.jpg} is stored in \texttt{Pictures}
+folder, enter:
 \begin{xcasinput}
 img:=image("/home/luka/Pictures/noisy.jpg")(grey)
 \end{xcasinput}
 \begin{xcasoutput}
   \text{an image of size 300×300 (grayscale)}
 \end{xcasoutput}
-We transform the image matrix and replace each component smaller than 55
-(by absolute value) in the resulting matrix to zero, before transforming
+Use DWT to transform the image matrix and subsequently replace each component smaller
+than 55 (by absolute value) in the resulting matrix to zero, before transforming
 it back to obtain a noise-reduced image. (The threshold value was obtained by
 trial and error.) Note that \texttt{dwt} enlarges the input matrix to the size
-$512\times 512$, so we crop the output of \texttt{idwt} back to $300\times 300$.
-We also make sure that no component gets below zero or above 255, for which
-we use the \texttt{threshold} command (see~\secref{ssec:threshold}).
+$512\times 512$, so be sure to crop the output of \texttt{idwt} back to $300\times 300$.
+To make sure that no component gets below zero or above 255,
+use the \texttt{threshold} command (see~\secref{ssec:threshold}).
 \begin{xcasinput}
 tdata:=dwt(img[0],image):;
-sdata:=threshold(w,55.0=0,'<=',abs=true):;
+sdata:=threshold(tdata,55.0=0,'<=',abs=true):;
 nr:=image(1,threshold(round(subMat(idwt(sdata,image),0,0,299,299)),[0,255])):;
 \end{xcasinput}
-We display the original image and the processed image next to each other for comparison.
+To display the original image and the processed image next to each other for comparison, enter:
 \begin{xcasinput}
 display(img,0); display(nr,320);
 legend(-20i,"original"); legend(320-20i,"denoised")
@@ -43124,6 +43140,7 @@ legend(-20i,"original"); legend(320-20i,"denoised")
 \begin{xcasimage}
   \includeimage{xcas-denoised-image.png}
 \end{xcasimage}
+As you can see, quality of the picture has much improved by denoising.
 
 \section{Window functions\label{sec:window-functions}}
 
@@ -44459,16 +44476,16 @@ command numerically approximates the value of a derivative.
 \item \texttt{nDeriv} takes as arguments:
   \begin{itemize}
   \item \textit{expr}, expression.
-  \item Optionally, \textit{var}, the variable used in the
+  \item Optionally, $x$, the variable used in the
     expression (by default \texttt{x}).
   \item Optionally, $h$ (by default 0.001).
   \end{itemize}
 \item
-  \texttt{nDeriv(}$\textit{ex}\,\langle,\textit{var},h\,\rangle$\texttt{)}
+  \texttt{nDeriv(}$\textit{ex}\,\langle,x,h\,\rangle$\texttt{)}
   returns an approximated value of the derivative of the expression
-  \textit{ex} at the point \textit{var} using the formula:
+  \textit{ex} at the point $x$ using the formula:
   \[
-    \frac{f(\textit{var}+h)-f(\textit{var}-h)}{2h}
+    \frac{f(x+h)-f(x-h)}{2h}
   \]
 \end{itemize}
 For a more general command on numeric differentiation, see~\secref{sec:numdiff}.
@@ -44643,7 +44660,7 @@ Unlike \texttt{solve} (\secref{ssec:solve}) or \texttt{proot}
   \item Optionally, \textit{method}, the name of an iterative method to be
     used by the GSL solver. The possible values are:
     \begin{description}
-    \item[\normalfont\texttt{bisection\_solver}]
+    \item[\normalfont\texttt{bisection\_solver}.]
       \index{bisection\_solver@\textit{bisection\_solver}}
       \index{Bisection method}
       This algorithm of dichotomy is the simplest but also generally the
@@ -44651,14 +44668,14 @@ Unlike \texttt{solve} (\secref{ssec:solve}) or \texttt{proot}
       iteration cuts the interval into two parts, the middle
       point value is calculated. The function sign at this point gives you the
       half-interval on which the next iteration will be performed.
-    \item[\normalfont\texttt{brent\_solver}]
+    \item[\normalfont\texttt{brent\_solver}.]
       \index{brent\_solver@\textit{brent\_solver}}
       \index{Brent method}
       The Brent method interpolates of $f$ at three points, finds the
       intersection of the interpolation with the $x$ axis, computes the sign
       of $f$ at this point and chooses the interval where the sign changes.
       It is generally faster than bisection.
-    \item[\normalfont\texttt{falsepos\_solver}]
+    \item[\normalfont\texttt{falsepos\_solver}.]
       \index{falsepos\_solver@\textit{falsepos\_solver}}
       \index{False positions method}
       The ``false position'' algorithm is an iterative algorithm based on
@@ -44667,7 +44684,7 @@ Unlike \texttt{solve} (\secref{ssec:solve}) or \texttt{proot}
       us the part of the interval containing the root, and on which a new
       iteration is performed. The convergence is linear but generally
       faster than bisection.
-    \item[\normalfont\texttt{newton\_solver}]
+    \item[\normalfont\texttt{newton\_solver}.]
       \index{newton\_solver@\textit{newton\_solver}}
       \index{Newton method}
       This is the classic Newton method. The algorithm
@@ -44680,7 +44697,7 @@ Unlike \texttt{solve} (\secref{ssec:solve}) or \texttt{proot}
       \]
       If the Newton method converges, then the convergence is quadratic for
       roots of multiplicity~1.
-    \item[\normalfont\texttt{secant\_solver}]
+    \item[\normalfont\texttt{secant\_solver}.]
       \index{secant\_solver@\textit{secant\_solver}}
       \index{Secant method}
       The secant method is a simplified version of Newton's method. The
@@ -44692,7 +44709,7 @@ Unlike \texttt{solve} (\secref{ssec:solve}) or \texttt{proot}
       \]
       The convergence for roots of multiplicity 1 is of order
       $(1+\sqrt5)/2 \approx 1.62\ldots $.
-    \item[\normalfont\texttt{steffenson\_solver}]
+    \item[\normalfont\texttt{steffenson\_solver}.]
       \index{steffenson\_solver@\textit{steffenson\_solver}}
       \index{Steffenson method}
       The Steffenson method is generally the fastest method. It combines
@@ -44775,15 +44792,13 @@ but only in complex mode.
     considered to be equal to zero) to solve.
   \item \texttt{vars}, a list of the variables.
   \item Optionally, \texttt{init}, a list initial values for the variables.   
-  \item Optionally, \textit{method}, the method to use. The possible methods are:
-    \begin{itemize}
-    \item \texttt{dnewton\_solver}\index{dnewton\_solver@\textit{dnewton\_solver}}
-    \item \texttt{hybrid\_solver}\index{hybrid\_solver@\textit{hybrid\_solver}}
-    \item \texttt{hybrids\_solver}\index{hybrids\_solver@\textit{hybrids\_solver}}
-    \item \texttt{newtonj\_solver}\index{newtonj\_solver@\textit{newtonj\_solver}}
-    \item \texttt{hybridj\_solver}\index{hybridj\_solver@\textit{hybridj\_solver}}
-    \item \texttt{hybridsj\_solver}\index{hybridsj\_solver@\textit{hybridsj\_solver}}
-    \end{itemize}
+  \item Optionally, \textit{method}, the method to use. The possible methods are:\\
+    \texttt{dnewton\_solver}\index{dnewton\_solver@\textit{dnewton\_solver}},
+    \texttt{hybrid\_solver}\index{hybrid\_solver@\textit{hybrid\_solver}},
+    \texttt{hybrids\_solver}\index{hybrids\_solver@\textit{hybrids\_solver}},
+    \texttt{newtonj\_solver}\index{newtonj\_solver@\textit{newtonj\_solver}},
+    \texttt{hybridj\_solver}\index{hybridj\_solver@\textit{hybridj\_solver}}, and
+    \texttt{hybridsj\_solver}\index{hybridsj\_solver@\textit{hybridsj\_solver}}.
   \end{itemize}
 \item
   \texttt{fsolve(}$\textit{eqns},\textit{vars}\,\langle,\textit{init},\textit{method}\,\rangle$\texttt{)}
@@ -55808,8 +55823,9 @@ of combining images with other graphical objects.
 
 \begin{xcasinput}
 display(img);
-rectangle(100+100i,200+100i,1,display=green+line_width_3);
-legend(285+125i,"Here is Africa",display=white)
+legend(285+125i,"Africa",color=gold); legend(270+200i,"Europe",color=gold);
+legend(380+190i,"Asia",color=yellow); legend(430+90i,"Australia",color=yellow);
+legend(100+190i,"North America",color=gold); legend(160+80i,"South America",color=gold);
 \end{xcasinput}
 \begin{xcasimage}
   \includeimage[0.6]{xcas-mymap.png}
@@ -56987,7 +57003,7 @@ about(s)
 
 The \texttt{rms}\index{rms@\texttt{rms}}
 command computes the RMS (root mean square) of the audio data
-(see \secref{ssec:rms}).
+(see~\secref{ssec:rms} for other uses of \texttt{rms}).
 \begin{itemize}
 \item \texttt{rms} command takes one mandatory argument and two optional arguments:
   \begin{itemize}

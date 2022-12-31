@@ -42961,7 +42961,6 @@ listplot(tran([x,y]))
 \begin{xcasimage}
   \includeimage{xcas-hht_energy.png}
 \end{xcasimage}
-You can see that energy is correlated with the amplitude in the above waveform.
 
 \paragraph*{Spectral analysis of music.}
 With the file \texttt{CantinaBand3.wav} downloaded from
@@ -43130,8 +43129,11 @@ use the \texttt{threshold} command (see~\secref{ssec:threshold}).
 \begin{xcasinput}
 tdata:=dwt(img[0],image):;
 sdata:=threshold(tdata,55.0=0,'<=',abs=true):;
-nr:=image(1,threshold(round(subMat(idwt(sdata,image),0,0,299,299)),[0,255])):;
+nr:=image(1,threshold(round(subMat(idwt(sdata,image),0,0,299,299)),[0,255]))
 \end{xcasinput}
+\begin{xcasoutput}
+  \text{an image of size 300×300 (grayscale)}
+\end{xcasoutput}
 To display the original image and the processed image next to each other for comparison, enter:
 \begin{xcasinput}
 display(img,0); display(nr,320);
@@ -43140,7 +43142,6 @@ legend(-20i,"original"); legend(320-20i,"denoised")
 \begin{xcasimage}
   \includeimage{xcas-denoised-image.png}
 \end{xcasimage}
-As you can see, quality of the picture has much improved by denoising.
 
 \section{Window functions\label{sec:window-functions}}
 

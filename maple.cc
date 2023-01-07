@@ -1601,7 +1601,13 @@ namespace giac {
       case 1: T=gsl_interp_cspline_periodic; break;
       case 2: T=gsl_interp_akima; break;
       case 3: T=gsl_interp_akima_periodic; break;
-      case 4: T=gsl_interp_steffen; break;
+      case 4:
+#if GSL_MAJOR_VERSION>=2 && GSL_MINOR_VERSION>=2
+        T=gsl_interp_steffen;
+        break;
+#else
+        return gensizeerr(gettext("GSL version 2.2 or later is required for Steffen interpolation"));
+#endif
       default: assert(false);
     }
     gsl_interp_accel *acc=gsl_interp_accel_alloc();

@@ -50,6 +50,10 @@ namespace giac {
 #define MIDI_NOTE_0 8.17579891564
 #define GREY_COLOR 47
 
+double mylog2(double x) {
+    return std::log(x)/M_LN2;
+}
+
 string n2hexstr(char c) {
     static const char* digits="0123456789ABCDEF";
     std::string hex(2,'0');
@@ -59,7 +63,7 @@ string n2hexstr(char c) {
 }
 
 int nextpow2(int n) {
-    return 1<<int(std::ceil(std::log2(n)));
+    return 1<<int(std::ceil(mylog2(n)));
 }
 
 gen generr(const char* msg) {
@@ -820,7 +824,7 @@ gen _stft(const gen &g,GIAC_CONTEXT) {
         wsize=g._VECTptr->at(n);
         if (!wsize.is_integer() || wsize.val<1)
             return generrtype(gettext("Expected a positive integer"));
-        int e=std::floor(std::log2(wsize.val)+0.5);
+        int e=std::floor(mylog2(wsize.val)+0.5);
         if ((1<<e)!=wsize.val)
             return generr(gettext("Window size must be a power of 2"));
     }
@@ -1171,9 +1175,9 @@ bool audio_clip::mix(const audio_clip &other,int offset,double gain,double pan,i
     for (int i=0;i<len;++i) {
         r=ratio;
         if (i<fade_in)
-            r*=double(i)/double(fade_in);
+            r*=std::pow(std::cos(M_PI_2*(1.0-double(i)/double(fade_in))),2);
         if (i>=len-fade_out)
-            r*=double(len-i-1)/double(fade_out);
+            r*=std::pow(std::cos(M_PI_2*(1.0-double(len-i-1)/double(fade_out))),2);
         for (int c=0;c<_nc;++c) {
             s1=decode(get_sample(c,i+offset));
             s2=(c==0?pl:pr)*r*other.decode(other.get_sample(std::min(onc-1,c),i));
@@ -2355,7 +2359,7 @@ gen _plotspectrum(const gen &g,GIAC_CONTEXT) {
                     return generr(gettext("Invalid frequency range specification"));
                 fb=*rh._SYMBptr->feuille._VECTptr;
             } else if (lh.is_integer() && lh.subtype==_INT_MAPLECONVERSION && lh.val==_KDE_BINS) {
-                if (!rh.is_integer() || rh.val<2 || (1<<int(std::log2(rh.val)+0.5))!=rh.val)
+                if (!rh.is_integer() || rh.val<2 || (1<<int(mylog2(rh.val)+0.5))!=rh.val)
                     return generr(gettext("Invalid bin count specification"));
                 bins=rh.val;
             } else return generrarg(it-g._VECTptr->begin());
@@ -3013,13 +3017,19 @@ gen eval_for_x_in_ab_recursion(const gen &g,const identificateur &x,const gen &a
     gen c,d;
     if ((g.is_symb_of_sommet(at_abs) || g.is_symb_of_sommet(at_Heaviside) || g.is_symb_of_sommet(at_sign))
             && is_linear_wrt(f,x,c,d,contextptr) && !is_zero(c)) {
-        gen z=-d/c;
-        changed=true;
-        if (is_greater(a,z,contextptr))
-            return g.is_symb_of_sommet(at_abs)?f:gen(1);
-        if (is_greater(z,b,contextptr))
-            return g.is_symb_of_sommet(at_abs)?-f:(g.is_symb_of_sommet(at_sign)?gen(-1):gen(0));
-        changed=false;
+        gen z=-d/c,s=_sign(c,contextptr);
+        if (s.is_integer()) {
+            bool l=is_greater(a,z,contextptr),r=is_greater(z,b,contextptr);
+            if (!changed)
+                changed=l||r;
+            if (g.is_symb_of_sommet(at_Heaviside)) {
+                if (l) return is_one(s)?1:0;
+                if (r) return is_one(s)?0:1;
+            } else {
+                if (l) return s*(g.is_symb_of_sommet(at_abs)?f:gen(1));
+                if (r) return s*(g.is_symb_of_sommet(at_abs)?-f:gen(-1));
+            }
+        }
     }
     return symbolic(g._SYMBptr->sommet,eval_for_x_in_ab_recursion(f,x,a,b,changed,contextptr));
 }
@@ -5165,7 +5175,9 @@ void emd(const vecteur &data,matrice &imf,vecteur &residue,int imax,int emin,dou
             for (i=0;i<n;++i) gsl_vector_set(envl,i,gsl_spline_eval(sp,i,acc));
             gsl_spline_free(sp);
             gsl_interp_accel_free(acc);
-            gsl_vector_axpby(0.5,envu,0.5,envl); // compute the mean of envelopes, store it in envl
+            gsl_vector_scale(envu,0.5);
+            gsl_vector_scale(envl,0.5);
+            gsl_vector_add(envl,envu); // compute the mean of envelopes, store it in envl
             var=0;
             for (i=0;i<n;++i) {
                 var+=std::pow(gsl_vector_get(envl,i),2)/(std::pow(gsl_vector_get(h,i),2)+1e-7);
@@ -5290,7 +5302,7 @@ gen _imfplot(const gen &g,GIAC_CONTEXT) {
         return generr(gettext("Expected a matrix of real numbers"));
     int n=imfs.size(),len=mcols(imfs),m=n;
     const vecteur *res=NULL,*orig=NULL;
-    gen disp=symb_equal(at_couleur,change_subtype(_BLUE,_INT_COLOR)); // default IMF color
+    gen ev,rev,disp=symb_equal(at_couleur,change_subtype(_BLUE,_INT_COLOR)); // default IMF color
     set<int> ind;
     if (hasopt) {
         if (g._VECTptr->size()==2 && g._VECTptr->back().is_integer()) {
@@ -5303,9 +5315,9 @@ gen _imfplot(const gen &g,GIAC_CONTEXT) {
             const gen &p=it->_SYMBptr->feuille._VECTptr->front();
             const gen &v=it->_SYMBptr->feuille._VECTptr->back();
             if (p==at_residue) {
-                if (v.type!=_VECT || (int)v._VECTptr->size()!=len || !is_numericv(*v._VECTptr,mask))
+                rev=_evalf(v,contextptr);
+                if (rev.type!=_VECT || (int)rev._VECTptr->size()!=len || !is_numericv(*(res=rev._VECTptr),mask))
                     return generr(gettext("Invalid residue specification"));
-                res=v._VECTptr;
             } else if (p==at_max) {
                 if (!v.is_integer() || v.subtype!=_INT_BOOLEAN)
                     return gensizeerr("Expected a boolean value");
@@ -5314,9 +5326,9 @@ gen _imfplot(const gen &g,GIAC_CONTEXT) {
                 if (!v.is_integer() || (m=v.val)<1)
                     return generr(gettext("Expected a positive integer"));
             } else if (p==at_input) {
-                if (v.type!=_VECT || (int)v._VECTptr->size()!=len || !is_numericv(*v._VECTptr,mask))
+                ev=_evalf(v,contextptr);
+                if (ev.type!=_VECT || (int)ev._VECTptr->size()!=len || !is_numericv(*(orig=ev._VECTptr),mask))
                     return generr(gettext("Invalid original signal specification"));
-                orig=v._VECTptr;
             } else if (p==at_display || p==at_couleur) {
                 disp=*it;
             } else if (p==at_index) {

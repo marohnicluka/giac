@@ -529,15 +529,15 @@ the level.  Each level can have one of the following:
   You can open an expression editor with
   \textsf{Alt+E}.
 
-\item[Two-dimensional geometry screen] ---
+\item[2D geometry screen] ---
   See \secref{sec:graphscreen}.
-  You can open a two-dimensional geometry screen with \textsf{Alt+G}.
+  You can open a 2D geometry screen with \textsf{Alt+G}.
   This level will have a screen, as well as a control panel, menus and a
   command line to control the screen.
 
-\item[Three-dimensional geometry screen] ---
+\item[3D geometry screen] ---
   See \secref{sec:graphscreen}.
-  You can open a three-dimensional geometry screen with \textsf{Alt+H}.
+  You can open a 3D geometry screen with \textsf{Alt+H}.
   This level will have a screen, as well as a control panel, menus and
   a command line to control the screen.
 
@@ -1086,7 +1086,7 @@ following entries:
     used by \xcas{}.
 
   \item[Geometry] ---
-    This brings up a manual for two-dimensional geometry in
+    This brings up a manual for 2D geometry in
     \xcas{}.
 
   \item[Programmation] ---
@@ -1247,11 +1247,11 @@ commands for creating and manipulating graphs.
 \subsection{\textsf{Geo} menu}
 
 The \textsf{Geo} menu contains commands that are used to work with
-two- and three-dimensional geometric figures.  The first two entries,
+two- and 3D geometric figures.  The first two entries,
 \textsf{Geo\menusep{}New figure 2d} (equivalent to
 \textsf{Alt+G}) and \textsf{Geo\menusep{}New figure 3d}
 (equivalent to \textsf{Alt+H}) create levels for two- and
-three-dimensional figures, respectively. (See
+3D figures, respectively. (See
 \secref{sec:graphscreen}.) The other menu items are for working with
 the figures.
 
@@ -3792,7 +3792,7 @@ into the file, you close the file with the \texttt{fclose} command:
 \begin{xcasinput}
 fclose(f)
 \end{xcasinput}
-This returns \texttt{1} on success and \texttt{0} on failure.\subsection{Reading files
+This returns $1$ on success and \texttt{0} on failure.\subsection{Reading files
   \label{ssec:read}}
 
 Information for \xcas{} can be stored in a file; this
@@ -4103,22 +4103,22 @@ In \xcas{}, they are the following infixed operators:
 \begin{itemize}
 \item\index{==@\texttt{==}}
   $a\texttt{==}b$ tests the equality
-  between $a$ and $b$ and returns \texttt{1} if $a$
+  between $a$ and $b$ and returns $1$ if $a$
   is equal to $b$ and \texttt{0} otherwise.
 \item\index{!=@\texttt{!=}}
-  $a\texttt{!=}b$ returns \texttt{1} if $a$ and
+  $a\texttt{!=}b$ returns $1$ if $a$ and
   $b$ are different and \texttt{0} otherwise.
 \item\index{>=@\texttt{>=}}
-  $a\texttt{>=}b$ returns \texttt{1} if $a$
+  $a\texttt{>=}b$ returns $1$ if $a$
   is greater than or equal to $b$ and \texttt{0} otherwise.
 \item\index{>@\texttt{>}}
-  $a\texttt{>}b$ returns \texttt{1} if $a$ is strictly
+  $a\texttt{>}b$ returns $1$ if $a$ is strictly
   greater than $b$ and \texttt{0} otherwise.
 \item\index{=<@\texttt{=<}}
-  $a\texttt{<=}b$ returns \texttt{1} if $a$ is less
+  $a\texttt{<=}b$ returns $1$ if $a$ is less
   than or equal to $b$ and  \texttt{0} otherwise.
 \item\index{<@\texttt{<}}
-  $a\texttt{<}b$ returns \texttt{1} if $a$
+  $a\texttt{<}b$ returns $1$ if $a$
   is strictly less than $b$ and \texttt{0} otherwise.
 \end{itemize}
 
@@ -4321,13 +4321,13 @@ $b$ are two booleans):
   \index{or@\texttt{or}}\index{\mybigparallel}
   These are infixed operators.
   \texttt{($a$ or $b$)} (or \texttt{($a$ \mybigparallel{}
-    $b$)}) returns \texttt{0} (or \texttt{false}) if $a$
+    $b$)}) returns 0 (or \texttt{false}) if $a$
   and $b$ are both equal to 0 (or \texttt{false}) and returns
-  \texttt{1} (or \texttt{true}) otherwise.
+  1 (or \texttt{true}) otherwise.
 \item\texttt{xor}\index{xor@\texttt{xor}} ---
   This is an infixed operator.  It is the ``exclusive or''
   operator, meaning ``one or the other but not both''.
-  \texttt{($a$ xor $b$)} returns \texttt{1} if $a$
+  \texttt{($a$ xor $b$)} returns $1$ if $a$
   is equal to 1 and $b$ is equal to 0 or if $a$ is equal
   to 0 and $b$ is equal to 1, and returns 0 if $a$ and
   $b$ are both equal to 0 or if $a$ and $b$ are
@@ -4336,12 +4336,12 @@ $b$ are two booleans):
   \index{and@\texttt{and}}\index{\&\&@\texttt{\&\&}}
   These are infixed operators.
   \texttt{($a$ and $b$)} (or \texttt{($a$ \&\&
-    $b$)}) returns \texttt{1} (or \texttt{true}) if $a$
+    $b$)}) returns $1$ (or \texttt{true}) if $a$
   and $b$ are both equal to 1 (or \texttt{true}) and returns
   \texttt{0} (or \texttt{false}) otherwise.
 \item\texttt{not}\index{not@\texttt{not}} ---
   This is a prefixed operator.
-  \texttt{not($a$)} returns \texttt{1} (or \texttt{true}) if $a$
+  \texttt{not($a$)} returns $1$ (or \texttt{true}) if $a$
   is equal to 0 (or \texttt{false}), and \texttt{0} (or
   \texttt{false}) if $a$ is equal to 1 (or \texttt{true}).
 \end{itemize}
@@ -8793,8 +8793,8 @@ even exactly when $a$ and $b$ are both even and odd otherwise.)
 \begin{itemize}
 \item \texttt{even} takes
   $n$, an integer.
-\item \texttt{even($n$)} returns \texttt{1} if $n$ is even and
-  returns \texttt{0} if $n$ is odd.
+\item \texttt{even($n$)} returns $1$ if $n$ is even and
+  $0$ if $n$ is odd.
 \end{itemize}
 
 \subsubsection*{Examples}
@@ -8825,7 +8825,7 @@ tests an integer to see if it is odd.
 \begin{itemize}
 \item \texttt{odd} takes
   $n$, an integer.
-\item \texttt{odd($n$)} returns \texttt{1} if $n$ is odd and returns
+\item \texttt{odd($n$)} returns $1$ if $n$ is odd and returns
   \texttt{0} if $n$ is even.
 \end{itemize}
 
@@ -8857,11 +8857,10 @@ The \texttt{is\_pseudoprime} command is a test for a pseudo-prime.
 \begin{itemize}
 \item \texttt{is\_pseudoprime} takes
   $n$, an integer.
-\item \texttt{is\_pseudoprime($n$)} returns \texttt{0}, \texttt{1} or
-  \texttt{2}.
+\item \texttt{is\_pseudoprime($n$)} returns $0$, $1$ or $2$.
   \begin{itemize}
   \item If it returns 0, then $n$ is not prime. \\
-  \item If it returns \texttt{1}, then $n$ is a prime.
+  \item If it returns $1$, then $n$ is a prime.
 
   \item If it returns \texttt{2}, then $n$ is pseudo-prime (most
     probably prime).
@@ -15169,12 +15168,18 @@ linabs(f,x)
 \begin{xcasoutput}
   \frac{\left(x+4\right) \left|x-2\right|}{4}+\frac{\left(-x-1\right) \left|x+1\right|}{4}+x+\frac{1}{4}
 \end{xcasoutput}
-\texttt{linabs} is useful for expanding expressions with nested absolute values. For example:
+\texttt{linabs} is useful for expanding expressions which contain nested absolute values. For example:
 \begin{xcasinput}
 linabs(abs(abs(x-2)+x*abs(x+1)+1))
 \end{xcasinput}
 \begin{xcasoutput}
   x^{2}+x \left|x+1\right|+\left(-x+1\right) \left|x+3\right|+\left|x-2\right|+2 x-2
+\end{xcasoutput}
+\begin{xcasinput}
+linabs(abs(1-2*abs(2-3*abs(x-3))))
+\end{xcasinput}
+\begin{xcasoutput}
+  -6 \left|x-3\right|+3 \left|2 x-5\right|+3 \left|2 x-7\right|-2 \left|3 x-7\right|-2 \left|3 x-11\right|+\left|6 x-13\right|+\left|6 x-23\right|-5
 \end{xcasoutput}
 
 \subsection{Rewriting an expression with different options%: \texttt{convert} \texttt{convertir} \texttt{=>}
@@ -16028,7 +16033,7 @@ product of exponentials; namely,
 \]
 The \texttt{expexpand}\index{expexpand@\texttt{expexpand}} command
 does this conversion.
-For expansions with other bases, see \secref{ssec:powexpand}.
+For expansions in other bases, see \secref{ssec:powexpand}.
 \begin{itemize}
 \item \texttt{expexpand} takes
   \textit{expr}, an expression.
@@ -17409,710 +17414,6 @@ ranm(3)
 \end{xcasinput}
 \begin{xcasoutput}
   \left[70,22,42\right]
-\end{xcasoutput}
-
-\section{Polynomial interpolation and fitting}
-
-\subsection{Lagrange polynomial%: \texttt{lagrange interp}
-  \label{ssec:lagrange}}
-
-The \texttt{lagrange}\index{lagrange@\texttt{lagrange}} command
-finds the Lagrange polynomial which interpolates given data.
-\begin{itemize}
-\item \texttt{lagrange} takes two mandatory
-  arguments and one optional argument:
-  \begin{itemize}
-  \item $l_{1}$ and $l_{2}$, two lists of the same size.  These can
-    be given as a matrix with two rows.
-
-    The first list (resp. row) corresponds to the abscissa values $x_k$
-    ($k=1,\dots,n$), and the second list (resp. row) corresponds to ordinate
-    values $y_k$ ($k=1,\dots,n$).
-  \item Optionally $x$, the name of a variable (by default
-    \texttt{x}).
-  \end{itemize}
-\item \texttt{lagrange($l_{1},l_{2} \,\langle,x\rangle$)}
-  returns a polynomial expression $P(x)$ of degree $n-1$
-  such that $P(x_i)=y_i$.
-\end{itemize}
-You can use the \texttt{interp} command as a synonym for \texttt{lagrange}.
-
-\subsubsection*{Examples}
-\begin{xcasinput}
-lagrange([[1,3],[0,1]])
-\end{xcasinput}
-or:
-\begin{xcasinput}
-lagrange([1,3],[0,1])
-\end{xcasinput}
-\begin{xcasoutput}
-  \frac{x-1}{2}
-\end{xcasoutput}
-since $\frac{x-1}{2}=0$ for $x=1$ and $\frac{x-1}{2}=1$ for $x=3$.
-\begin{xcasinput}
-lagrange([1,3],[0,1],y)
-\end{xcasinput}
-\begin{xcasoutput}
-  \frac{y-1}{2}
-\end{xcasoutput}
-
-\paragraph*{Remark.}
-An attempted function definition such as
-\texttt{f:=lagrange([1,2],[3,4],y)} does not return a function but an
-expression with respect to $y$. To define $f$ as a function, input:
-\begin{xcasinput}
-f:=unapply(lagrange([1,2],[3,4],x),x)
-\end{xcasinput}
-Avoid \texttt{f(x):=lagrange([1,2],[3,4],x)} since then
-the Lagrange polynomial would be computed each time \texttt{f} is called
-(indeed in a function definition, the second member of the assignment
-is not evaluated).
-Note also that \texttt{g(x):=lagrange([1,2],[3,4])} would not work
-since the default argument of \texttt{lagrange}
-would be global, hence not the same as the local
-variable used for the definition of \texttt{g}.
-
-\subsection{Natural splines%: \texttt{spline}
-}
-
-\paragraph{Definition.}
-Let $\sigma_n$ be a subdivision of a real interval $[a,b]$:
-\[
-  a=x_0,\quad x_1,\quad\ldots,\quad x_n=b.
-\]
-The function $s$ is a \emph{spline} function of
-degree $l$ if $s$ is a function from $[a,b]$ to $\mathbb{R}$ such
-that:
-\begin{itemize}
-\item $s$ has continuous derivatives up to the order $l-1$,
-\item on each interval of the subdivision $\sigma_n$, $s$
-  is a polynomial of degree less or equal than $l$.
-\end{itemize}
-
-\begin{theorem}
-The set of spline functions of degree $l$ on $\sigma_n$ is an
-$\mathbb{R}$-vector space of dimension $n+l$.
-\end{theorem}
-\begin{proof}
-Let $s$ be a spline function of degree $l$ on $\sigma_{n}$.
-
-On $[a,x_1]$, $s$ is a polynomial $A$ of degree less or equal to $l$,
-hence on $[a,x_1]$, $s=A(x)=a_0+a_1x+\cdots+a_lx^l$ and $A$ is a
-linear combination of $1,x,\dots,x^l$.
-
-On $[x_1,x_2]$, $s$ is a polynomial $B$ of degree
-less or equal to $l$, hence on $[x_1,x_2]$, $s=B(x)=b_0+b_1x+\cdots+b_lx^l$.
-Since $s$ has continuous derivatives up to order $l-1$,
-\[
-  \forall 0 \leq j \leq l-1, \quad B^{(j)}(x_1)-A^{(j)}(x_1)=0,
-\]
-therefore $B(x)-A(x)=\alpha_1(x-x_1)^l$, i.e.
-$B(x)=A(x)+\alpha_1(x-x_1)^l$, for some $\alpha_{1}$.
-Define the function:
-\[
-  q_1(x)=
-  \left\{
-    \begin{array}{rcl}
-      0 & \mbox{on} & [a,x_1] \\
-      (x-x_1)^l  & \mbox{on} & [x_1,b]\\
-    \end{array}
-  \right.
-\]
-so:
-\[
-  s|_{[a,x_2]}=a_0+a_1x+\cdots+a_lx^l+\alpha_1q_1(x).
-\]
-
-On $[x_2,x_3]$, $s$ is a polynomial $C$ of degree less or equal than
-$l$, hence on $[x_2,x_3]$, $s=C(x)=c_0+c_1x+\cdots+c_lx^l$.
-
-Since $s$ has continuous derivatives up to order $l-1$:
-\[
-  \forall 0 \leq j \leq l-1, \quad  C^{(j)}(x_2)-B^{(j)}(x_2)=0,
-\]
-therefore $C(x)-B(x)=\alpha_2(x-x_2)^n$ or $C(x)=B(x)+\alpha_2(x-x_2)^n$.
-
-Define the function:
-\[
-  q_2(x)=
-  \left\{
-    \begin{array}{rcl}
-      0 & \mbox{on} & [a,x_2] \\
-      (x-x_2)^l  & \mbox{on} & [x_2,b]\\
-    \end{array}
-  \right.
-\]
-Hence:
-$s|_{[a,x_3]}=a_0+a_1x+\cdots+a_lx^l+\alpha_1q_1(x)+\alpha_2q_2(x)$\\
-
-Continuing, define the functions
-\[
-  \forall 1 \leq j \leq n-1, q_j(x)=
-  \left\{
-    \begin{array}{rcl}
-      0 & \mbox{on} & [a,x_j] \\
-      (x-x_j)^l  & \mbox{on} & [x_j,b]\\
-    \end{array}
-  \right.
-\]
-Then
-\[
-  s|_{[a,b]}=a_0+a_1x+\cdots+a_lx^l+\alpha_1q_1(x)+\cdots+\alpha_{n-1}q_{n-1}(x)
-\]
-and so $s$ is a linear combination of $n+l$ independent functions
-$1,x,\dots,x^l,q_1,\dots,q_{n-1}$.
-
-It follows that the set of all possible $s$ is a real vector space of
-dimension $n+l$.
-\end{proof}
-
-\paragraph{Types of spline functions.}
-If you want to interpolate a function $f$ on $\sigma_n$ by a spline
-function $s$ of degree $l$, then $s$ must satisfy $s(x_k)=y_k=f(x_k)$
-for all $0\leq k\leq n$. This gives $n+1$ conditions, leaving $l-1$
-degrees of freedom. You can therefore add $l-1$ conditions, these
-conditions are on the derivatives of $s$ at $a$ and $b$.
-
-Hermite interpolation, natural interpolation and periodic
-interpolation are three kinds of interpolation obtained by specifying
-three kinds of constraints. The uniqueness of the solution of the
-interpolation problem can be proved for each kind of constraints.
-
-If $l$ is odd ($l=2m-1$), there are $2m-2$ degrees of freedom. The
-constraints are defined as follows.
-\begin{itemize}
-\item Hermite interpolation: $s^{(j)}(a)=f^{(j)}(a)$ and $s^{(j)}(b)=f^{(j)}(b)$, $1\leq j\leq m-1$.
-\item  Natural interpolation: $s^{(j)}(a)=s^{(j)}(b)=0$, $m \leq j \leq 2m-2$.
-\item Periodic interpolation: $s^{(j)}(a)=s^{(j)}(b)$, $1\leq j\leq 2m-2$.
-\end{itemize}
-
-If $l$ is even ($l=2m$), there are $2m-1$ degrees of freedom. The
-constraints are defined as follows.
-\begin{itemize}
-\item Hermite interpolation:
-  $s^{(j)}(a)=f^{(j)}(a)$, $s^{(j)}(b)=f^{(j)}(b)$ and $s^{(m)}(a)=f^{(m)}(a)$,
-  $1\leq j\leq m-1$.
-\item Natural interpolation:
-  $s^{(j)}(a)=s^{(j)}(b)=0$ and $s^{(2m-1)}(a)=0$, $m \leq j \leq 2m-2$.
-\item  Periodic interpolation: $s^{(j)}(a)=s^{(j)}(b)$, $1\leq j\leq 2m-1$.
-\end{itemize}
-
-\subsection{Natural interpolation%: \texttt{spline}
-}
-
-The \texttt{spline}\index{spline@\texttt{spline}} command finds the natural spline.
-\begin{itemize}
-\item \texttt{spline} takes four arguments:
-  \begin{itemize}
-  \item $L_{x}$, a list of abscissas (in increasing order).
-  \item $L_{y}$, a list of ordinates (the same length as $L_{x}$).
-  \item $x$, a variable name.
-  \item $l$, an integer for the degree.
-  \end{itemize}
-\item \texttt{spline($L_{x},L_{y},x,l$)} returns the
-  natural spline function $s$ of degree $l$, where $s(L_{x,j})=L_{y,j}$
-  for $j=0,\dots,\operatorname{\texttt{length}}(L_{x})$, as a list of polynomials, each
-  polynomial being valid on the corresponding interval determined by
-  $L_{x}$.
-\end{itemize}
-
-\subsubsection*{Examples}
-Find the natural spline of degree 3, crossing through the points
-$x_0=0,y_0=1$, $x_1=1,y_1=3$ and  $x_2=2, y_2=0$.
-\begin{xcasinput}
-spline([0,1,2],[1,3,0],x,3)
-\end{xcasinput}
-\begin{xcasoutput}
-  \left[-\frac{5}{4} x^{3}+\frac{13}{4} x+1,\frac{5}{4} \left(x-1\right)^{3}-\frac{15}{4} \left(x-1\right)^{2}-\frac{x-1}{2}+3\right]
-\end{xcasoutput}
-Where the first polynomial, $-\frac{5}{4} x^{3}+\frac{13}{4} x+1$, is
-defined on the interval $[0,1]$ (the first interval defined by the
-list $[0,1,2]$) and the second polynomial $\frac{5}{4}
-\left(x-1\right)^{3}-\frac{15}{4}
-\left(x-1\right)^{2}-\frac{x-1}{2}+3$ is defined on the interval
-$[1,2]$, the second interval defined by the list $[0,1,2]$.
-
-Find the natural spline of degree 4, crossing through the points
-$x_0=0,y_0=1$, $x_1=1,y_1=3$, $x_2=2, y_2=0$ and  $x_3=3, y_3=-1$.
-\begin{xcasinput}
-spline([0,1,2,3],[1,3,0,-1],x,4)
-\end{xcasinput}
-\begin{xcasoutput}
-  \Bigg[-&\frac{62}{121} x^{4}+\frac{304}{121} x+1,\\
-  &\frac{201}{121}\left(x-1\right)^{4}-\frac{248}{121}\left(x-1\right)^{3}-\frac{372}{121}
-  \left(x-1\right)^{2}+\frac{56}{121}
-  \left(x-1\right)+3,\\
-  -&\frac{139}{121} \left(x-2\right)^{4}+\frac{556}{121} \left(x-2\right)^{3}+\frac{90}{121} \left(x-2\right)^{2}-\frac{628}{121} \left(x-2\right)\Bigg]
-\end{xcasoutput}
-Output is a list of three polynomial functions of $x$,
-defined respectively on the intervals $[0,1]$, $[1,2]$ and  $[2,3]$.
-
-Find the natural spline interpolation of $\cos$ on
-$[0,\pi/2,3\pi/2]$.
-\begin{xcasinput}
-spline([0,pi/2,3*pi/2],cos([0,pi/2,3*pi/2]),x,3)
-\end{xcasinput}
-\begin{xcasoutput}
-  \Bigg[\frac{4 x^{3}}{3 \pi ^{3}}-\frac{7 x}{3 \pi }+1,
-    -\frac{2 \left(x-\frac{\pi }{2}\right)^{3}}{3 \pi ^{3}}+\frac{2
-    \left(x-\frac{\pi }{2}\right)^{2}}{\pi ^{2}}-\frac{4 \left(x-\frac{\pi
-      }{2}\right)}{3 \pi }\Bigg]
-\end{xcasoutput}
-
-\subsection{Numerical spline interpolation\label{ssec:fast-interp}}
-
-The \texttt{interp}\index{interp@\texttt{interp}} command interpolates a
-discretized function at a list of given points by using fast spline
-interpolation routines in GSL. You should use this command when you do not
-need the interpolated function itself but only its values at a sequence of
-points.
-
-\begin{itemize}
-  \item \texttt{interp} takes two or three mandatory arguments and a sequence
-    of optional arguments:
-  \begin{itemize}
-    \item \textit{data}, a sequence or list of two vectors $x$ and $y$ of the same length.
-    \item $v$, a vector of $x$-values at which the spline is evaluated.
-    \item Optionally, \textit{opts}, a sequence of options each of which is one of:
-    \begin{itemize}
-      \item \texttt{"}\textit{stype}\texttt{"}, a string specifying spline type.
-      Allowed values for \textit{stype} are \texttt{cubic}, \texttt{akima} and \texttt{steffen}
-      (by default, $\textit{stype}=\texttt{cubic}$).
-      \item \texttt{periodic}, the symbol specifying that interpolation should be periodic
-      (by default, interpolation is non-periodic).
-      This argument gets ignored if $\textit{stype}=\texttt{steffen}$.
-      \item $d$, a nonnegative integer specifying the order of the derivative
-      of interpolated function to be evaluated.
-      Allowed values are 0, 1 and 2 (by default, $d=0$).
-    \end{itemize}
-  \end{itemize}
-  \item \texttt{interp([}$x,y\texttt{]},v\,\langle,\textit{opts}\,\rangle$\texttt{)} or
-  \texttt{interp(}$x,y,v\,\langle,\textit{opts}\,\rangle$\texttt{)}
-  returns the list $z$ of spline (derivative) values at points in $v$.
-  \item Note that \textit{data} and $v$ must be entirely numeric and
-  \textit{data} should also be inexact.
-  \item The elements of $x$ must be strictly ascending. The minimal number of data points is 3.
-  \item The elements of $t$ must be between $\min x$ and $\max x$, otherwise the output list
-    will contain undefined elements (as an effect, plotting would fail).
-\end{itemize}
-
-\subsubsection*{Supported spline types}
-The description of spline types below is quoted from GSL documentation.
-\begin{description}
-  \item[cubic] Cubic spline with natural boundary conditions.
-  The resulting curve is piecewise cubic on each interval,
-  with matching first and second derivatives at the supplied data-points.
-  The second derivative is chosen to be zero at the first point and last point.
-  \item[periodic cubic] Cubic spline with periodic boundary conditions.
-  The resulting curve is piecewise cubic on each interval, with matching first
-  and second derivatives at the supplied data-points.
-  The derivatives at the first and last points are also matched.
-  Note that the last point in the data must have the same $y$-value as the first point,
-  otherwise the resulting periodic interpolation will have a discontinuity at the boundary.
-  \item[(periodic) akima] Non-rounded Akima spline with natural (periodic) boundary conditions.
-  This method uses the non-rounded corner algorithm of Wodicka.
-  \item[steffen] Steffen’s method guarantees the monotonicity of the interpolating
-  function between the given data points. Therefore, minima and maxima can only occur
-  exactly at the data points, and there can never be spurious oscillations between data points.
-  The interpolated function is piecewise cubic in each interval.
-  The resulting curve and its first derivative are guaranteed to be continuous,
-  but the second derivative may be discontinuous.
-\end{description}
-
-\subsubsection*{Example}
-This example is adapted from GSL documentation. To define some synthetic data, enter:
-\begin{xcasinput}
-x,y:=makelist(k->k+0.5*sin(k),0,10),makelist(k->k+cos(k^2),0,10):;
-\end{xcasinput}
-This gives you 11 data points. To interpolate the function at intermediate points, enter:
-\begin{xcasinput}
-t:=linspace(min(x),max(x),1000):; z:=interp(x,y,t):;
-\end{xcasinput}
-Now plot the data and the interpolated values together:
-\begin{xcasinput}
-listplot(tran([t,z]));
-scatterplot(tran([x,y]),display=blue+point_width_2)
-\end{xcasinput}
-\begin{xcasimage}
-  \includeimage{xcas-fastspline1.png}
-\end{xcasimage}
-To see the difference between the supported spline types, interpolate
-in the segment $[4,6]$. Enter:
-\begin{xcasinput}
-t:=linspace(4,6):;
-c,a,s:=interp(x,y,t,"cubic"),interp(x,y,t,"akima"),interp(x,y,t,"steffen"):;
-listplot(tran([t,c]),color=blue+quadrant4,legend="cubic");
-listplot(tran([t,a]),color=red,legend="akima");
-listplot(tran([t,s]),color=magenta,legend="steffen");
-\end{xcasinput}
-\begin{xcasimage}
-  \includeimage{xcas-fastspline2.png}
-\end{xcasimage}
-
-\subsection{Rational interpolation%: \texttt{thiele}
-}
-
-The \texttt{thiele}\index{thiele@\texttt{thiele}}
-command finds the rational interpolation.
-\begin{itemize}
-\item \texttt{thiele} takes two arguments:
-  \begin{itemize}
-  \item \textit{data}, a matrix with two columns.  The first column
-    contains the $x$ coordinates and the second column contains the
-    corresponding $y$ coordinates.
-
-    Instead of a single matrix, data can be given as a vector of
-    $x$ coordinates and a vector of $y$ coordinates (in which casethe call to \texttt{thiele} has three arguments).
-  \item \textit{v}, an identifier, number or symbolic
-    expression (default: $x$).
-  \end{itemize}
-\item \texttt{thiele(}$\textit{data},\textit{v}$\texttt{)} returns
-  $R(v)$ where $R$ is the rational interpolant.
-\end{itemize}
-Instead of a single matrix \texttt{data}, two vectors
-$\mathbf{x}=(x_1,x_2,\dots,x_n)$ and
-$\mathbf{y}=(y_1,y_2,\dots,y_n)$
-This method computes Thiele interpolated continued function based on
-the concept of reciprocal differences.
-
-It is not guaranteed that $R$ is continuous, i.e.~it may have
-singularities in the shortest segment which contains all components of
-the $x$ coordinates.
-
-\subsubsection*{Examples}
-\begin{xcasinput}
-thiele([[1,3],[2,4],[4,5],[5,8]],x)
-\end{xcasinput}
-\begin{xcasoutput}
-  \frac{19 x^{2}-45 x-154}{18 x-78}
-\end{xcasoutput}
-\begin{xcasinput}
-thiele([1,2,a],[3,4,5],3)
-\end{xcasinput}
-\begin{xcasoutput}
-  \frac{13 a-29}{3 a-7}
-\end{xcasoutput}
-In the following example, data is obtained by sampling the function
-$f(x)=(1-x^4)\,\mathrm{e}^{1-x^3}$.
-\begin{xcasinput}
-data_x:=[-1,-0.75,-0.5,-0.25,0,0.25,0.5,0.75,1,1.25,1.5,1.75,2]:;
-data_y:=[0.0,2.83341735599,2.88770329586,
-2.75030303645,2.71828182846,2.66568510781,
-2.24894558809,1.21863761951,0.0,-0.555711613283,
--0.377871362418,-0.107135851128,-0.0136782294833]:;
-thiele(data_x,data_y,x)
-\end{xcasinput}
-\begin{xcasoutput}
-  \big(-&1.55286115659 x^{6}+5.87298387514 x^{5}-5.4439152812
-  x^{4}+1.68655817708 x^{3}\\
-  -&2.40784868317 x^{2}-7.55954205222 x+9.40462512097\big)/\\
-  \big(x^{6}-&1.24295718965 x^{5}-1.33526268624 x^{4}+4.03629272425
-  x^{3}\\
-  -&0.885419321 x^{2}-2.77913222418 x+3.45976823393\big)
-\end{xcasoutput}
-
-\subsection{Rational interpolation without poles%: \texttt{ratinterp}
-}
-
-The \texttt{ratinterp}\index{ratinterp@\texttt{ratinterp}} command
-computes a family of pole-free rational functions which interpolate given data.
-Rational interpolation usually gives better results than the classic
-polynomial interpolation, which may oscillate highly in some cases.
-\begin{itemize}
-\item \texttt{ratinterp} takes up to three arguments:
-  \begin{itemize}
-  \item Matrix \textit{data} with 2 columns with rows corresponding to points $(x_k,y_k)$, $k=0,1,\dots,n$, or the sequence of lists $\textit{data\_x}=[x_0,x_1,\dots,x_n]$ and $\textit{data\_y}=[y_0,y_1,\dots,y_n]$, where $a=x_0<x_1<\cdots<x_n=b$,
-  \item an identifier \textit{var}, which may also be a number, symbolic expression or list of numbers $a$ (optional, by default $x$),
-  \item an integer $d$ such that $0\leq d\leq n$ (optional, by default $0$).
-  \end{itemize}
-\item \texttt{ratinterp(}$\textit{data}\,\langle,\textit{var},d\,\rangle$\texttt{)} or
-\texttt{ratinterp(}$\textit{data\_x},\textit{data\_y}\,\langle,\textit{var},d\,\rangle$\texttt{)}
-returns a rational interpolation $r(a)$ of the given points using the method of Floater and Hormann (2006).
-If $a$ is a list of numbers $a_1,a_2,\dots,a_m$, then the list $[r(a_1)\dots,r(a_m)]$ is returned.
-There are at most $n+1$ distinct interpolants which can be specified by varying the parameter $d$.
-\end{itemize}
-
-\subsubsection*{Examples}
-\begin{xcasinput}
-ratinterp([1,3,5,8],[2,-1,3,4],x,1)
-\end{xcasinput}
-\begin{xcasoutput}
-  \frac{-19 x^{3}+288 x^{2}-1133 x+1200}{6 x^{2}-48 x+210}
-\end{xcasoutput}
-\begin{xcasinput}
-ratinterp([1,3,5,8],[2,-1,3,4],x,2)
-\end{xcasinput}
-\begin{xcasoutput}
-  -\frac{29 x^{3}}{168}+\frac{17 x^{2}}{7}-\frac{1507 x}{168}+\frac{61}{7}
-\end{xcasoutput}
-
-\subsection{Trigonometric interpolation%: \texttt{triginterp}
-  \label{ssec:triginterp}}
-
-The \texttt{triginterp}\index{triginterp@\texttt{triginterp}}
-command computes a trigonometric polynomial which interpolates given data.
-\begin{itemize}
-\item \texttt{triginterp} takes four arguments:
-  \begin{itemize}
-  \item $L$, a list of numbers.
-  \item $a$, a number (the beginning of an interval).
-  \item $b$, a number (the end of the interval).
-  \item $x$, the name of a variable.
-  \end{itemize}
-  The last three arguments can also be given as $x$\texttt{=}$a\texttt{..}b$.
-\item \texttt{triginterp($L,a,b,x$)} or
-  \texttt{triginterp($L,x$=$a$..$b$)}
-  returns the trigonometric polynomial that interpolates data given in the list
-  $L$. It is assumed that the list $L$ contains
-  ordinate components of the points with equidistant abscissa components
-  between $a$ and $b$ such that the first element of $L$
-  corresponds to $a$ and the last element to $b$.
-\end{itemize}
-
-\subsubsection*{Example}
-$L$ may be a list of experimental measurements
-of some quantity taken at regular intervals, with the first
-observation at time $t=a$ and the last observation at time
-$t=b$. The resulting trigonometric polynomial has period
-\[
-  T=\frac{n\,(b-a)}{n-1},
-\]
-where $n=\texttt{size(}L\texttt{)}$ is the number of observations.
-For a concrete example, assume that the following data is obtained by
-measuring the temperature every three hours:
-\begin{center}
-  \begin{tabular}{|l|c|c|c|c|c|c|c|c|}
-    \hline \textbf{Hour of the day}&0&3&6&9&12&15&18&21\\
-    \hline \textbf{Temperature} (${}^\circ$C)&11&10&17&24&32&26&23&19\\\hline
-  \end{tabular}
-\end{center}
-Furthermore, assume that an estimate of the temperature at 13:45 is
-required. To obtain a trigonometric interpolation of the data:
-\begin{xcasinput}
-tp:=triginterp([11,10,17,24,32,26,23,19],x=0..21)
-\end{xcasinput}
-\begin{xcasoutput}
-  & \frac{81}{4}+
-  \frac{1}{8} \left(-21 \sqrt{2}-42\right) \cos \left(\frac{1}{12}
-    \pi  x\right)+
-  \frac{1}{8} \left(-11 \sqrt{2}-12\right) \sin \left(\frac{1}{12}
-    \pi  x\right)+
-  \frac{3}{4} \cos \left(\frac{1}{6} \pi  x\right)-\\
-  & \frac{7}{4} \sin \left(\frac{1}{6} \pi  x\right)+
-  \frac{1}{8} \left(21 \sqrt{2}-42\right) \cos \left(\frac{1}{4}
-    \pi  x\right)+
-  \frac{1}{8} \left(-11 \sqrt{2}+12\right) \sin \left(\frac{1}{4}
-    \pi  x\right)+
-  \frac{\cos \left(\frac{1}{3} \pi  x\right)}{2}
-\end{xcasoutput}
-Now a temperature at 13:45 hrs can be approximated with the value of
-\texttt{tp} for $x=13.75$.
-\begin{xcasinput}
-tp | x=13.75
-\end{xcasinput}
-\begin{xcasoutput}
-  29.4863181684
-\end{xcasoutput}
-If one of the input parameters is inexact, the result will also be inexact.
-For example:
-\begin{xcasinput}
-Digits:=3:;
-triginterp([11,10,17,24,32,26,23,19],x=0..21.0)
-\end{xcasinput}
-\begin{xcasoutput}
-  &20.2-8.96 \cos \left(0.262 x\right)-3.44 \sin \left(0.262 x\right)+
-  0.75 \cos \left(0.524 x\right)-\\
-  &1.75 \sin \left(0.524 x\right)-1.54 \cos \left(0.785 x\right)-
-  0.445 \sin \left(0.785 x\right)+
-  0.5 \cos \left(1.05 x\right)
-\end{xcasoutput}
-
-\subsection{Least-squares polynomial approximation%: \texttt{fitpoly}
-}
-
-The \texttt{fitpoly}\index{fitpoly@\texttt{fitpoly}} command is used
-for replacing tabular data or a function by a polynomial.
-
-\paragraph{Smoothing data with polynomial regression.}
-\texttt{fitpoly} can be used for finding a polynomial that fits
-a given tabular data.
-\begin{itemize}
-\item \texttt{fitpoly} takes one mandatory argument and two optional arguments:
-  \begin{itemize}
-  \item \textit{data}, a two-column matrix or a sequence of two lists,
-    representing the $x$- and $y$-values of data points
-    $(x_0,y_0),(x_1,y_1),\dots,(x_m,y_m)$.
-  \item Optionally, \textit{x}\texttt{[=$a$..$b$]} or \texttt{$a$..$b$},
-    which is a variable $x$ and optionally its domain $[a,b]$ or a segment $[a,b]$
-    (by default, unset).
-  \item Optionally, a sequence of options, each of which may be one of:
-    \begin{itemize}
-    \item \texttt{limit=}$N$, a nonnegative integer,
-      which is the maximal degree for the resulting polynomial (by default, $N=15$).
-    \item \texttt{degree=$d$}, where $d$ is a nonnegative integer,
-      which is the desired degree of the resulting polynomial (by default, unset).
-    \item \texttt{threshold=}\textit{tol}, a positive real number,
-      which is used for finding an appropriate fitting degree,
-      as described below
-      (by default, \texttt{threshold=}$0.01$, ignored when $d$ is set).
-    \item \texttt{length=}$l$, a positive integer,
-      which is used for finding an appropriate fitting degree,
-      as described below (by default, \texttt{length=}$5$, ignored when $d$ is set).
-    \end{itemize}
-  \end{itemize}
-\item If $d$ is set, then \texttt{fitpoly} returns the
-  polynomial of degree $\min\{d,N\}$ which best fits the data
-  in the least-squares sense.
-\item If $d$ is not set,
-  then a polynomial $p_n$ of modest degree $n\leq N$ but a good error suppression
-  (thus representing the trend of the data)
-  is chosen using \textit{tol} and $l$
-  such that raising the degree does not make a significant improvement to
-  the approximation. Precisely, $n$ is the first nonnegative integer such that
-  \[ \frac{\operatorname{stddev}[\sigma^2_n,\sigma^2_{n+1},\dots,\sigma^2_{n+l-1}]}
-    {\operatorname{mean}[\sigma^2_0,\sigma^2_1,\dots,\sigma^2_{n+l-1}]}\leq\text{\textit{tol}}, \]
-  where $\sigma_k^2$ is the sum of squared residuals $\sum_{i=0}^m(y_i-p_k(x_i))^2$
-  and $p_k$ is the best-fitting polynomial of degree $k$. Ideally, $n$ is the
-  smallest degree for which $\sigma^2_n\approx\sigma^2_{n+1}\approx\sigma^2_{n+2}\approx\cdots$, meaning that
-  higher-order polynomials would overfit on the noise.
-\item Lowering the parameter \texttt{length}, as well as increasing
-  \texttt{threshold}, would make the algorithm more greedy,
-  effectively lowering the degree of the output polynomial. Note that when
-  \texttt{degree} is set, these two parameters are ignored.
-\item If no variable is specified, then \texttt{fitpoly} returns the list of
-  polynomial coefficients.
-\item If a segment $[a,b]$ is given, then only the data points $(x_k,y_k)$ for which
-  $a\leq x_k\leq b$ are considered.
-\end{itemize}
-
-\subsubsection*{Example}
-We find a polynomial which best approximates data infected by noise.
-Data is obtained by evaluating the polynomial $f(x)=\frac1{100}x^4-\frac15x^3+6x$
-at 100 points between $x=1$ and $x=20.8$. The noise is generated by a random,
-normally-distributed variable.
-\begin{xcasinput}
-f(x):=x^4/100-x^3/5+6x:;
-x:=[(1+0.2*k)$(k=0..99)]:;
-noise:=randvector(100,randvar(normal,mean=0,stddev=10)):;
-y:=apply(f,x)+noise:;
-fitpoly(x,y)
-\end{xcasinput}
-\begin{xcasoutput}
-  [0.011665,-0.266955,0.844543,2.44967,3.94846]
-\end{xcasoutput}
-We obtain the list of polynomial coefficients, starting with the leading coefficient.
-Note that the polynomial of degree 4 is returned (it has five coefficients),
-which is, in this case, optimal for data smoothing.
-
-When approximating only the data in segment $[1,10]$, we obtain a polynomial of
-9th degree (data curvature is now much smaller and the noise is more prominent).
-\begin{xcasinput}
-degree(fitpoly(x,y,1..10))
-\end{xcasinput}
-\begin{xcasoutput}
-  9
-\end{xcasoutput}
-To make the approximating polynomial less sensitive to noise, we increase the threshold
-value \textit{tol}.
-\begin{xcasinput}
-fitpoly(x,y,t=1..10,threshold=0.05)
-\end{xcasinput}
-\begin{xcasoutput}
-  -1.30984955412 t^{2}+9.3259443857 t-2.6482979067
-\end{xcasoutput}
-Alternatively, we could set the parameter \texttt{length} to a smaller value, e.g.~3.
-
-\paragraph{Approximating functions by polynomials.}
-\texttt{fitpoly} can be used for approximating a continuous function
-$f:[a,b]\to\mathbb{R}$ by a polynomial $p_n$ of certain degree $n$ which
-minimizes the error in the sense of $L^2$-norm.
-\begin{itemize}
-\item \texttt{fitpoly} takes two mandatory arguments and one optional argument:
-  \begin{itemize}
-  \item $f(x)$, which is an univariate expression representing the function $f$.
-  \item An interval \texttt{$a$..$b$}, which is the domain $[a,b]$ of $f$.
-  \item Optionally, a sequence of options, each of which may be one of:
-    \begin{itemize}
-    \item \texttt{limit=}$N$, as before.
-    \item \texttt{degree=$d$}, as before.
-    \item $\varepsilon$ or \texttt{threshold=}$\varepsilon$,
-      which is a positive real number such that for the resulting polynomial $p_n$
-      the following holds:
-      \[\|f-p_n\|^2=\int_a^b(f(x)-p_n(x))^2\mathrm{d}x\leq\varepsilon\]
-      (by default, $\varepsilon=10^{-8}$). This parameter is ignored when $d$ is set.
-    \end{itemize}
-  \end{itemize}
-\item \texttt{fitpoly} finds $p_n$ with smallest $n\leq N$ such that
-  $\|f-p_n\|^2\leq\varepsilon$. If such $n$ does not exist, then $p_N$ is returned.
-\item If the parameter $d$ is set, then $p_d$ which minimizes $\|f-p_d\|$ among all
-  polynomials of degree $d$ is returned.
-\item Polynomial approximation is fast and robust even for large $d$ and $N$ resp.~for
-  small $\varepsilon$.
-\end{itemize}
-
-\subsubsection*{Examples}
-\begin{xcasinput}
-fitpoly(cos(x),0..pi/2,1e-2)
-\end{xcasinput}
-\begin{xcasoutput}
-  -0.244320054366 x^{3}-0.336364730985 x^{2}+1.13004492821 x-0.0107731059645
-\end{xcasoutput}
-\begin{xcasinput}
-f:=exp(-7x)*5x:;
-g:=fitpoly(f,0..1,degree=8)
-\end{xcasinput}
-\begin{xcasoutput}
-  &-21.717636069 x^{8}+107.930784832 x^{7}-232.831655404 x^{6}\\&+286.778708741 x^{5}-222.236631985 x^{4}+111.004732684 x^{3}\\&-33.8769709361 x^{2}+4.95239715728 x+0.000500886757642
-\end{xcasoutput}
-The mean absolute error of the above approximation can be estimated as follows:
-\begin{xcasinput}
-sqrt(romberg((f-g)^2,x=0..1))
-\end{xcasinput}
-\begin{xcasoutput}
-  9.3456615562\times10^{-5}
-\end{xcasoutput}
-
-\subsection{Minimax polynomial approximation%: \texttt{minimax}
-}
-
-The \texttt{minimax}\index{minimax@\texttt{minimax}} command finds
-the minimax polynomial approximation of a
-continuous function on a bounded interval using the Remez algorithm.
-\begin{itemize}
-\item \texttt{minimax} takes three mandatory argument and one
-  optional argument:
-  \begin{itemize}
-  \item \textit{expr}, a univariate expression representing a
-    continuous function.
-  \item \textit{var}\texttt{=$a$..$b$}, a variable and the interval.
-  \item $n$, a positive integer, the degree of the resulting polynomial.
-  \item Optionally \texttt{limit=$m$}, where $m$ is a positive
-    integer specifying the number of iterations of the Remez
-    algorithm.  (By default, the number of iterations is unlimited.)
-  \end{itemize}
-\item
-  \texttt{minimax(}$\textit{expr},\textit{var}\texttt{=}a\texttt{..}b,n\,\langle,$\texttt{limit=}$m\,\rangle$\texttt{)}
-  returns the minimax polynomial approximation of degree $n$ or lower
-  that approximates \textit{expr} on $[a,b]$.   The largest absolute
-  error of the resulting polynomial will be printed in the message area.
-\end{itemize}
-Since the coefficients of $ p $ are computed numerically, you should
-avoid setting $n$ unnecessary high as it may result in a poor
-approximation due to the roundoff errors.
-\subsubsection*{Example}
-\begin{xcasinput}
-minimax(sin(x),x=0..2*pi,10)
-\end{xcasinput}
-\begin{xcasmsg}
-  max.~absolute error:~5.85231264871e-06
-\end{xcasmsg}
-\begin{xcasoutput}
-  &5.85141928628\times10^{-6}+0.999777263417 x+0.001400152516 x^{2}\\
-  &\quad -0.170089663468 x^{3}+0.0042684302281 x^{4}+0.00525794778108 x^{5}\\
-  &\quad +0.00135760211866 x^{6}-0.000570502070425 x^{7}\\
-  &\quad +\left(6.0729711779\times10^{-5}\right) x^{8}
-  -\left(2.14787415748\times10^{-6}\right) x^{9}\\
-  &\quad -\left(1.49765719172\times10^{-15}\right) x^{10}
 \end{xcasoutput}
 
 
@@ -20242,6 +19543,7 @@ cpartfrac((x^5-2*x^3+1)/(x^4-2*x^3+2*x^2-2*x+1))
 \begin{xcasoutput}
   x+2-\frac{1}{2 \left(x-1\right)}+\frac{-1-2 \mathrm{i}}{\left(2-2 \mathrm{i}\right) \left(x+\mathrm{i}\right)}+\frac{2+\mathrm{i}}{\left(2-2 \mathrm{i}\right) \left(x-\mathrm{i}\right)}
 \end{xcasoutput}
+
 
 \section{Exact roots and poles}
 
@@ -23340,9 +22642,9 @@ solutions of differential equations, see \texttt{plotfield}
 \subsection{Solving differential equations%: \texttt{desolve} \texttt{deSolve} \texttt{dsolve}
   \label{ssec:dsolve}}
 
-The \texttt{desolve}\index{desolve@\texttt{desolve}} or
-\texttt{dsolve}\index{dsolve@\texttt{dsolve}}) or
-\texttt{deSolve}\index{deSolve@\texttt{deSolve}} command can solve:
+The \texttt{desolve}\index{desolve@\texttt{desolve}} (or
+\texttt{dsolve}\index{dsolve@\texttt{dsolve}} or
+\texttt{deSolve}\index{deSolve@\texttt{deSolve}}) command can solve:
 \begin{itemize}
 \item linear differential equations with constant coefficients,
 \item first order linear differential equations,
@@ -23811,7 +23113,7 @@ from which follows
 \[ I(t)=\mathcal{L}^{-1}\left(\frac{\mathcal{L}(V_{in})(s)}{Ls+R}\right). \]
 \begin{figure}
   \centering
-  \includeimage[0.75]{series-RL.png}
+  \includeimage[0.75]{Series-RL.png}
   \caption{\label{fig:circuit}RL circuit (\href{https://en.wikipedia.org/wiki/RL_circuit\#/media/File:Series-RL.png}{source})}
 \end{figure}
 
@@ -24710,7 +24012,7 @@ divergence([x*z,-y^2,2*x^y],[x,y,z])
 \subsection{Rotational%: \texttt{curl}
 }
 
-The curl of a three-dimensional vector field
+The curl of a 3D vector field
 $\mathbf{F}=[F_{1},F_{2},F_{3}]$ with variables $[x_{1},x_{2},x_{3}]$
 is
 \[
@@ -24726,7 +24028,7 @@ curl of a three dimensional vector field (note that it must be three dimensional
 \begin{itemize}
 \item \texttt{curl} takes two arguments:
   \begin{itemize}
-  \item $F$, a three-dimensional vector field, given as a list of
+  \item $F$, a 3D vector field, given as a list of
     three expressions depending on three variables.
   \item \textit{vars}, a list of the three variable names.
   \end{itemize}
@@ -28196,8 +27498,9 @@ The \texttt{isposdef}\index{isposdef@\texttt{isposdef}}
 command checks whether the given symmetric matrix $A\in\mathbb{R}^{n\times n}$
 is positive definite, i.e.~whether $x^TAx>0$ for all vectors $x\in\mathbb{R}^n$.
 
-\texttt{isposdef} takes a symmetric matrix $A$ as its only argument and returns 1 if $A$ is positive
-definite and 0 otherwise. Note that this procedure does not check whether $A$ is symmetric.
+\texttt{isposdef} takes a symmetric matrix $A$ as its only argument and returns \texttt{true}
+if $A$ is positive definite and \texttt{false} otherwise.
+Note that this procedure does not check whether $A$ is symmetric.
 
 \subsubsection*{Example}
 \begin{xcasinput}
@@ -33076,6 +32379,1020 @@ polygon(sortperm(colswap(subMat(cities,0,1,11,2),0,1),best))
   \includeimage{xcas-tsptour.png}
 \end{xcasimage}
 
+
+\chapter{Interpolation and fitting}
+
+\section{Interpolation}
+
+\subsection{Lagrange polynomial%: \texttt{lagrange interp}
+  \label{ssec:lagrange}}
+
+The \texttt{lagrange}\index{lagrange@\texttt{lagrange}} command
+finds the Lagrange polynomial which interpolates given data.
+\begin{itemize}
+\item \texttt{lagrange} takes two mandatory
+  arguments and one optional argument:
+  \begin{itemize}
+  \item $l_{1}$ and $l_{2}$, two lists of the same size.  These can
+    be given as a matrix with two rows.
+
+    The first list (resp. row) corresponds to the abscissa values $x_k$
+    ($k=1,\dots,n$), and the second list (resp. row) corresponds to ordinate
+    values $y_k$ ($k=1,\dots,n$).
+  \item Optionally $x$, the name of a variable (by default
+    \texttt{x}).
+  \end{itemize}
+\item \texttt{lagrange($l_{1},l_{2} \,\langle,x\rangle$)}
+  returns a polynomial expression $P(x)$ of degree $n-1$
+  such that $P(x_i)=y_i$.
+\end{itemize}
+You can use the \texttt{interp} command as a synonym for \texttt{lagrange}.
+
+\subsubsection*{Examples}
+\begin{xcasinput}
+lagrange([[1,3],[0,1]])
+\end{xcasinput}
+or:
+\begin{xcasinput}
+lagrange([1,3],[0,1])
+\end{xcasinput}
+\begin{xcasoutput}
+  \frac{x-1}{2}
+\end{xcasoutput}
+since $\frac{x-1}{2}=0$ for $x=1$ and $\frac{x-1}{2}=1$ for $x=3$.
+\begin{xcasinput}
+factor(lagrange([1,2,3,4],[1,a,-2a,0],t))
+\end{xcasinput}
+\begin{xcasoutput}
+  \frac{\left(t-4\right) \left(9 a t^{2}-30 a t+21 a-t^{2}+5 t-6\right)}{6}
+\end{xcasoutput}
+
+\paragraph*{Remark.}
+An attempted function definition such as
+\texttt{f:=lagrange([1,2],[3,4],y)} does not return a function but an
+expression with respect to $y$. To define $f$ as a function, input:
+\begin{xcasinput}
+f:=unapply(lagrange([1,2],[3,4],x),x)
+\end{xcasinput}
+Avoid \texttt{f(x):=lagrange([1,2],[3,4],x)} since then
+the Lagrange polynomial would be computed each time \texttt{f} is called
+(indeed in a function definition, the second member of the assignment
+is not evaluated).
+Note also that \texttt{g(x):=lagrange([1,2],[3,4])} would not work
+since the default argument of \texttt{lagrange}
+would be global, hence not the same as the local
+variable used for the definition of \texttt{g}.
+
+\subsection{Spline interpolation%: \texttt{spline}
+  \label{ssec:spline-interp}}
+
+Spline interpolation is a method of piecewise polynomial interpolation
+in which smaller, low-degree pieces are glued together at given points under
+suitable boundary conditions. With \xcas{} you can do both symbolic and
+numerical spline interpolation.
+
+\paragraph*{Theoretical background.}
+Let $\sigma_n$ be a subdivision of a real interval $[a,b]$:
+\[
+  a=x_0,x_1,\dots,x_n=b.
+\]
+The function $s$ is a \emph{spline} function of
+degree $l$ if $s$ is a function from $[a,b]$ to $\mathbb{R}$ such
+that:
+\begin{itemize}
+\item $s$ has continuous derivatives up to the order $l-1$,
+\item on each interval of the subdivision $\sigma_n$, $s$
+  is a polynomial of degree less or equal than $l$.
+\end{itemize}
+
+\begin{theorem}
+The set of spline functions of degree $l$ on $\sigma_n$ is an
+$\mathbb{R}$-vector space of dimension $n+l$.
+\end{theorem}
+\begin{proof}
+Let $s$ be a spline function of degree $l$ on $\sigma_{n}$.
+For $x\in[a,x_1]$, $s$ is a polynomial $A$ of degree less or equal to $l$,
+hence on $[a,x_1]$, $s=A(x)=a_0+a_1x+\cdots+a_lx^l$ and $A$ is a
+linear combination of $1,x,\dots,x^l$.
+
+For $x\in[x_1,x_2]$, $s$ is a polynomial $B$ of degree
+less or equal to $l$, hence on $[x_1,x_2]$, $s=B(x)=b_0+b_1x+\cdots+b_lx^l$.
+Since $s$ has continuous derivatives up to order $l-1$, it follows
+$B^{(j)}(x_1)-A^{(j)}(x_1)=0$ for $0\leq j<l$, and
+therefore $B(x)-A(x)=\alpha_1(x-x_1)^l$, i.e.
+$B(x)=A(x)+\alpha_1(x-x_1)^l$, for some $\alpha_{1}$.
+Define the function:
+\[ q_1(x)=\begin{cases}0,&a\leq x\leq x_1,\\(x-x_1)^l,&x_1\leq x\leq b.\end{cases} \]
+Now $s|_{[a,x_2]}=a_0+a_1x+\cdots+a_lx^l+\alpha_1q_1(x)$.
+
+For $x\in[x_2,x_3]$, $s$ is a polynomial $C$ of degree less or equal than
+$l$, hence on $[x_2,x_3]$, $s=C(x)=c_0+c_1x+\cdots+c_lx^l$.
+Since $s$ has continuous derivatives up to order $l-1$, it follows
+$C^{(j)}(x_2)-B^{(j)}(x_2)=0$ for $0\leq j<l$, and
+therefore $C(x)-B(x)=\alpha_2(x-x_2)^n$ or $C(x)=B(x)+\alpha_2(x-x_2)^n$ for
+some $\alpha_2\in\mathbb{R}$. Define the function:
+\[ q_2(x)=\begin{cases}0,&a\leq x\leq x_2,\\(x-x_2)^l,&x_2\leq x\leq b.\end{cases} \]
+Now $s|_{[a,x_3]}=a_0+a_1x+\cdots+a_lx^l+\alpha_1q_1(x)+\alpha_2q_2(x)$.
+
+Continuing, define the functions $q_j$ for all $1\leq j<n$:
+\[ q_j(x)=\begin{cases}0,&a\leq x\leq x_j,\\(x-x_j)^l,&x_j\leq x\leq b.\end{cases} \]
+You obtain $s|_{[a,b]}=a_0+a_1x+\cdots+a_lx^l+\alpha_1q_1(x)+\cdots+\alpha_{n-1}q_{n-1}(x)$,
+meaning that $s$ is a linear combination of $n+l$ independent functions
+$1,x,\dots,x^l,q_1,\dots,q_{n-1}$. It follows that the set of all possible $s$ is
+a real vector space of dimension $n+l$.
+\end{proof}
+
+\paragraph{Types of spline functions.}
+If you want to interpolate a function $f$ on $\sigma_n$ by a spline
+function $s$ of degree $l$, then $s$ must satisfy $s(x_k)=y_k=f(x_k)$
+for all $0\leq k\leq n$. This gives $n+1$ conditions, leaving $l-1$
+degrees of freedom. You can therefore add $l-1$ conditions, these
+conditions are on the derivatives of $s$ at $a$ and $b$.
+
+Hermite interpolation, natural interpolation and periodic
+interpolation are three kinds of interpolation obtained by specifying
+three kinds of constraints. The uniqueness of the solution of the
+interpolation problem can be proved for each kind of constraints.
+
+If $l$ is odd (i.e.~$l=2m-1$), there are $2m-2$ degrees of freedom. The
+constraints are defined as follows.
+\begin{itemize}
+\item Hermite interpolation: $s^{(j)}(a)=f^{(j)}(a)$ and $s^{(j)}(b)=f^{(j)}(b)$, $1\leq j\leq m-1$.
+\item Natural interpolation: $s^{(j)}(a)=s^{(j)}(b)=0$, $m \leq j \leq 2m-2$.
+\item Periodic interpolation: $s^{(j)}(a)=s^{(j)}(b)$, $1\leq j\leq 2m-2$.
+\end{itemize}
+
+If $l$ is even ($l=2m$), there are $2m-1$ degrees of freedom. The
+constraints are defined as follows.
+\begin{itemize}
+\item Hermite interpolation:
+  $s^{(j)}(a)=f^{(j)}(a)$, $s^{(j)}(b)=f^{(j)}(b)$ and $s^{(m)}(a)=f^{(m)}(a)$,
+  $1\leq j\leq m-1$.
+\item Natural interpolation:
+  $s^{(j)}(a)=s^{(j)}(b)=0$ and $s^{(2m-1)}(a)=0$, $m \leq j \leq 2m-2$.
+\item Periodic interpolation: $s^{(j)}(a)=s^{(j)}(b)$, $1\leq j\leq 2m-1$.
+\end{itemize}
+
+\paragraph{Natural symbolic interpolation.}
+The \texttt{spline}\index{spline@\texttt{spline}} command finds the natural spline.
+\begin{itemize}
+\item \texttt{spline} takes two mandatory arguments and up to three optional arguments:
+  \begin{itemize}
+  \item $L_{x}$, a list of abscissas (in increasing order).
+  \item $L_{y}$, a list of ordinates (the same length as $L_{x}$).
+  \item Optionally, $x$, either a symbolic variable, real number, or list of reals
+    (by default \texttt{x}).
+  \item Optionally, $l$, a positive integer for the degree (by default, $l=3$).
+  \item Optionally, \texttt{piecewise}, the symbol.
+  \end{itemize}
+\item If $x$ is a variable, then
+  \texttt{spline(}$L_{x},L_{y}\,\langle,x,l\,\rangle\,\langle,\texttt{piecewise}\,\rangle$\texttt{)}
+  returns the natural spline function $s$ of degree $l$, where $s(L_{x,j})=L_{y,j}$
+  for $j=0,\dots,\operatorname{\texttt{length}}(L_{x})$, as a list of polynomials, each
+  polynomial being valid on the corresponding interval determined by
+  $L_{x}$, or, if \texttt{piecewise} is given, a piecewise expression
+  representing the entire spline for $\min L_{x}\leq x\leq \max L_{x}$.
+\item If $x$ is a real number (resp.~a list of numbers), then
+  \texttt{spline(}$L_{x},L_{y},x\,\langle,l\,\rangle$\texttt{)} returns the spline value
+  at $x$ (resp.~the list of spline values at individual components of $x$).
+\end{itemize}
+
+\subsubsection*{Examples}
+Find the natural spline of degree 3, crossing through the points
+$(0,1)$, $(1,3)$ and $(2,0)$:
+\begin{xcasinput}
+spline([0,1,2],[1,3,0])
+\end{xcasinput}
+or:
+\begin{xcasinput}
+spline([0,1,2],[1,3,0],x,3)
+\end{xcasinput}
+\begin{xcasoutput}
+  \left[-\frac{5}{4} x^{3}+\frac{13}{4} x+1,\frac{5}{4} \left(x-1\right)^{3}-\frac{15}{4} \left(x-1\right)^{2}-\frac{x-1}{2}+3\right]
+\end{xcasoutput}
+The first polynomial, $-\frac{5}{4} x^{3}+\frac{13}{4} x+1$, is
+defined on the interval $[0,1]$ (the first interval defined by the
+list $[0,1,2]$) and the second polynomial $\frac{5}{4}
+\left(x-1\right)^{3}-\frac{15}{4}
+\left(x-1\right)^{2}-\frac{x-1}{2}+3$ is defined on the interval
+$[1,2]$, the second interval defined by the list $[0,1,2]$. To obtain the
+result in a piecewise form, enter:
+\begin{xcasinput}
+spline([0,1,2],[1,3,0],x,3,piecewise)
+\end{xcasinput}
+\begin{xcasoutput}
+  \begin{cases}-\frac{5}{4} x^{3}+\frac{13}{4} x+1,&x\geq 0\wedge 1>x\\\frac{5}{4} \left(x-1\right)^{3}-\frac{15}{4} \left(x-1\right)^{2}-\frac{x-1}{2}+3,&2\geq x\\\end{cases}
+\end{xcasoutput}
+
+Find the natural spline of degree 4, crossing through the points
+$(0,1)$, $(1,3)$, $(2,0)$ and $(3,-1)$:
+\begin{xcasinput}
+spline([0,1,2,3],[1,3,0,-1],x,4)
+\end{xcasinput}
+\begin{xcasoutput}
+  \Bigg[-&\frac{62}{121} x^{4}+\frac{304}{121} x+1,\\
+  &\frac{201}{121}\left(x-1\right)^{4}-\frac{248}{121}\left(x-1\right)^{3}-\frac{372}{121}
+  \left(x-1\right)^{2}+\frac{56}{121}
+  \left(x-1\right)+3,\\
+  -&\frac{139}{121} \left(x-2\right)^{4}+\frac{556}{121} \left(x-2\right)^{3}+\frac{90}{121} \left(x-2\right)^{2}-\frac{628}{121} \left(x-2\right)\Bigg]
+\end{xcasoutput}
+The output is a list of three polynomial functions of $x$,
+defined on the intervals $[0,1]$, $[1,2]$ and $[2,3]$, respectively.
+To compute the spline value for points $x=\frac12,\frac43,\frac94$, enter:
+\begin{xcasinput}
+spline([0,1,2,3],[1,3,0,-1],[1/2,4/3,9/4],4)
+\end{xcasinput}
+\begin{xcasoutput}
+  \left[\frac{2153}{968},\frac{9008}{3267},-\frac{36667}{30976}\right]
+\end{xcasoutput}
+
+Find the natural spline interpolation of the cosine function with abscissas
+$\left[0,\frac{\pi}2,\frac{3\pi}2\right]$:
+\begin{xcasinput}
+t:=[0,pi/2,3*pi/2]:; spline(t,cos(t))
+\end{xcasinput}
+\begin{xcasoutput}
+  \Bigg[\frac{4 x^{3}}{3 \pi ^{3}}-\frac{7 x}{3 \pi }+1,
+    -\frac{2 \left(x-\frac{\pi }{2}\right)^{3}}{3 \pi ^{3}}+\frac{2
+    \left(x-\frac{\pi }{2}\right)^{2}}{\pi ^{2}}-\frac{4 \left(x-\frac{\pi
+      }{2}\right)}{3 \pi }\Bigg]
+\end{xcasoutput}
+
+\paragraph*{Numerical spline interpolation.\label{ssec:fast-interp}}
+The \texttt{interp}\index{interp@\texttt{interp}} command interpolates a
+discretized function at a list of given points by using fast spline interpolation
+routines provided by GSL. You should use this command when you do not need the
+interpolated function itself but only its values at a sequence of points.
+\begin{itemize}
+  \item \texttt{interp} takes two or three mandatory arguments and a sequence
+    of optional arguments:
+  \begin{itemize}
+    \item \textit{data}, a sequence or list of two vectors $x$ and $y$ of the same length.
+    \item $v$, a vector of $x$-values at which the spline is evaluated.
+    \item Optionally, \textit{opts}, a sequence of options each of which is one of:
+    \begin{itemize}
+      \item \texttt{"}\textit{stype}\texttt{"}, a string specifying spline type.
+      Allowed values for \textit{stype} are \texttt{cubic}, \texttt{akima} and \texttt{steffen}
+      (by default, $\textit{stype}=\texttt{cubic}$). See below for descriptions of these types.
+      \item \texttt{periodic}, the symbol specifying that interpolation should be periodic
+      (by default, interpolation is not periodic).
+      This argument gets ignored if $\textit{stype}=\texttt{steffen}$.
+      \item $d$, a nonnegative integer specifying the order of the derivative
+      of interpolated function to be evaluated.
+      Allowed values are 0, 1 and 2 (by default, $d=0$).
+    \end{itemize}
+  \end{itemize}
+  \item \texttt{interp([}$x,y\texttt{]},v\,\langle,\textit{opts}\,\rangle$\texttt{)} or
+  \texttt{interp(}$x,y,v\,\langle,\textit{opts}\,\rangle$\texttt{)}
+  returns the list $z$ of spline (derivative) values at points in $v$.
+  \item Note that \textit{data} and $v$ must be entirely numeric and
+  \textit{data} should also be inexact.
+  \item The elements of $x$ must be strictly ascending. The minimal number of data points is 3.
+  \item The elements of $t$ must be between $\min x$ and $\max x$, otherwise the output list
+    will contain undefined elements (as an effect, plotting would fail).
+\end{itemize}
+The description of spline types below is quoted from GSL documentation.
+\begin{description}
+  \item[cubic] Cubic spline with natural boundary conditions.
+  The resulting curve is piecewise cubic on each interval,
+  with matching first and second derivatives at the supplied data-points.
+  The second derivative is chosen to be zero at the first point and last point.
+  \item[periodic cubic] Cubic spline with periodic boundary conditions.
+  The resulting curve is piecewise cubic on each interval, with matching first
+  and second derivatives at the supplied data-points.
+  The derivatives at the first and last points are also matched.
+  Note that the last point in the data must have the same $y$-value as the first point,
+  otherwise the resulting periodic interpolation will have a discontinuity at the boundary.
+  \item[(periodic) akima] Non-rounded Akima spline with natural (periodic) boundary conditions.
+  This method uses the non-rounded corner algorithm of Wodicka.
+  \item[steffen] Steffen’s method guarantees the monotonicity of the interpolating
+  function between the given data points. Therefore, minima and maxima can only occur
+  exactly at the data points, and there can never be spurious oscillations between data points.
+  The interpolated function is piecewise cubic in each interval.
+  The resulting curve and its first derivative are guaranteed to be continuous,
+  but the second derivative may be discontinuous.
+\end{description}
+Note that Steffen interpolation is available only if \giac{} is compiled with GSL version 2.2 or later.
+
+\subsubsection*{Example}
+This example is adapted from GSL documentation. To define some synthetic data, enter:
+\begin{xcasinput}
+x,y:=makelist(k->k+0.5*sin(k),0,10),makelist(k->k+cos(k^2),0,10):;
+\end{xcasinput}
+This gives you 11 data points. To interpolate the function at intermediate points, enter:
+\begin{xcasinput}
+t:=linspace(min(x),max(x),1000):; z:=interp(x,y,t):;
+\end{xcasinput}
+Now plot the data and the interpolated values together:
+\begin{xcasinput}
+listplot(tran([t,z]));
+scatterplot(tran([x,y]),display=blue+point_width_2)
+\end{xcasinput}
+\begin{xcasimage}
+  \includeimage{xcas-fastspline1.png}
+\end{xcasimage}
+To see the difference between the supported spline types, interpolate
+in the segment $[4,6]$. Enter:
+\begin{xcasinput}
+t:=linspace(4,6):;
+c,a,s:=interp(x,y,t,"cubic"),interp(x,y,t,"akima"),interp(x,y,t,"steffen"):;
+listplot(tran([t,c]),color=blue+quadrant4,legend="cubic");
+listplot(tran([t,a]),color=red,legend="akima");
+listplot(tran([t,s]),color=magenta,legend="steffen");
+\end{xcasinput}
+\begin{xcasimage}
+  \includeimage{xcas-fastspline2.png}
+\end{xcasimage}
+
+\subsection{Rational interpolation%: \texttt{thiele}
+}
+
+\paragraph*{Thiele interpolation.}
+The \texttt{thiele}\index{thiele@\texttt{thiele}}
+command finds the rational interpolation given a tabulated function.
+\begin{itemize}
+\item \texttt{thiele} takes two or three arguments:
+  \begin{itemize}
+  \item \textit{data}, a matrix with two columns.  The first column
+    contains the $x$ coordinates and the second column contains the
+    corresponding $y$ coordinates.
+
+    Instead of a single matrix, data can be given as sequence containing
+    the vector of $x$ coordinates and the vector of $y$ coordinates
+    (in which case the call to \texttt{thiele} has three arguments).
+  \item \textit{v}, an identifier, number or symbolic
+    expression (default: $x$).
+  \end{itemize}
+\item \texttt{thiele(}$\textit{data},\textit{v}$\texttt{)} returns
+  $R(v)$ where $R$ is the Thiele rational interpolant.
+\item Note that the obtained interpolant may have
+  singularities in the range $[\min\mathbf{x},\max\mathbf{x}]$.
+\end{itemize}
+
+\subsubsection*{Examples}
+\begin{xcasinput}
+thiele([[1,3],[2,4],[4,5],[5,8]],x)
+\end{xcasinput}
+\begin{xcasmsg}
+Warning: interpolant has singularities in [4,5]
+\end{xcasmsg}
+\begin{xcasoutput}
+  \frac{19 x^{2}-45 x-154}{18 x-78}
+\end{xcasoutput}
+\begin{xcasinput}
+assume(a>1):; f:=unapply(thiele([1,2,a],[3,4,5],t),t)
+\end{xcasinput}
+\begin{xcasoutput}
+  t\mapsto \frac{5 a t-2 a-13 t+10}{a t-3 t+2}
+\end{xcasoutput}
+Indeed:
+\begin{xcasinput}
+simplify(apply(f,[1,2,a]))
+\end{xcasinput}
+\begin{xcasoutput}
+  \left[3,4,5\right]
+\end{xcasoutput}
+
+In the following example, data is obtained by sampling the function
+$f(x)=(1-x^4)\,\mathrm{e}^{1-x^3}$ on $[-1,2]$.
+\begin{xcasinput}
+xdata:=linspace(-1.0,2.0,13):;
+ydata:=apply(x->(1-x^4)*exp(1-x^3),xdata):;
+p:=thiele(xdata,ydata,x)
+\end{xcasinput}
+\begin{xcasoutput}
+  \big(-&1.55286115659 x^{6}+5.87298387514 x^{5}-5.4439152812
+  x^{4}+1.68655817708 x^{3}\\
+  -&2.40784868317 x^{2}-7.55954205222 x+9.40462512097\big)/\\
+  \big(x^{6}-&1.24295718965 x^{5}-1.33526268624 x^{4}+4.03629272425
+  x^{3}\\
+  -&0.885419321 x^{2}-2.77913222418 x+3.45976823393\big)
+\end{xcasoutput}
+\begin{xcasinput}
+plot(t,x=-1..2);
+scatterplot(xdata,ydata,color=blue+point_width_2)
+\end{xcasinput}
+\begin{xcasimage}
+  \includeimage{xcas-thiele.png}
+\end{xcasimage}
+
+\paragraph*{Rational interpolation without poles.}
+The \texttt{ratinterp}\index{ratinterp@\texttt{ratinterp}} command
+computes a family of pole-free rational functions which interpolate given data.
+Rational interpolation usually gives better results than the classic
+polynomial interpolation, which may oscillate highly in some cases.
+\begin{itemize}
+\item \texttt{ratinterp} takes one mandatory argument and one or two optional arguments:
+  \begin{itemize}
+  \item Matrix \textit{data} with 2 columns with rows corresponding to points $(x_k,y_k)$, $k=0,1,\dots,n$, or the sequence of lists $\textit{data\_x}=[x_0,x_1,\dots,x_n]$ and $\textit{data\_y}=[y_0,y_1,\dots,y_n]$, where $a=x_0<x_1<\cdots<x_n=b$,
+  \item an identifier $x$, which may also be a number,
+  symbolic expression or list of numbers $a$ (by default \texttt{x}),
+  \item Optionally, $d$, an integer such that $0\leq d\leq n$ (by default $\lfloor (n+1)/2\rfloor$).
+  \end{itemize}
+\item \texttt{ratinterp(}$\textit{data}\,\langle,\textit{var},d\,\rangle$\texttt{)} or
+\texttt{ratinterp(}$\textit{data\_x},\textit{data\_y}\,\langle,\textit{var},d\,\rangle$\texttt{)}
+returns a rational interpolation $r(a)$ of the given points using the method of Floater and Hormann (2006).
+If $a$ is a list of numbers $a_1,a_2,\dots,a_m$, then the list $[r(a_1)\dots,r(a_m)]$ is returned.
+There are at most $n+1$ distinct interpolants which can be specified by varying the parameter $d$,
+which allows you to choose the most suitable one.
+\end{itemize}
+
+\subsubsection*{Examples}
+\begin{xcasinput}
+ratinterp([1,3,5,8],[2,-1,3,4])
+\end{xcasinput}
+\begin{xcasoutput}
+  -\frac{29 x^{3}}{168}+\frac{17 x^{2}}{7}-\frac{1507 x}{168}+\frac{61}{7}
+\end{xcasoutput}
+\begin{xcasinput}
+ratinterp([1,3,5,8],[2,-1,3,4],x,2)
+\end{xcasinput}
+\begin{xcasoutput}
+  -\frac{29 x^{3}}{168}+\frac{17 x^{2}}{7}-\frac{1507 x}{168}+\frac{61}{7}
+\end{xcasoutput}
+With \texttt{xdata} and \texttt{ydata} as in the third example of \texttt{thiele} above:
+\begin{xcasinput}
+plot(ratinterp(xdata,ydata,x,0),x=-1..2,color=blue);
+plot(ratinterp(xdata,ydata,x,6),x=-1..2,color=red);
+legend(1.5+3i,"$______  @d = 0$",color=blue);
+legend(1.5+2.5i,"$______  @d = 6$",color=red);
+\end{xcasinput}
+\begin{xcasimage}
+  \includeimage{xcas-ratinterp.png}
+\end{xcasimage}
+
+\subsection{Trigonometric interpolation\label{ssec:triginterp}}
+
+The \texttt{triginterp}\index{triginterp@\texttt{triginterp}}
+command computes a trigonometric polynomial which interpolates given data.
+\begin{itemize}
+\item \texttt{triginterp} takes four arguments:
+  \begin{itemize}
+  \item $L$, a list of numbers.
+  \item $a$, a number (the beginning of an interval).
+  \item $b$, a number (the end of the interval).
+  \item $x$, the name of a variable.
+  \end{itemize}
+  The last three arguments can also be given as $x$\texttt{=}$a\texttt{..}b$.
+\item \texttt{triginterp($L,a,b,x$)} or
+  \texttt{triginterp($L,x$=$a$..$b$)}
+  returns the trigonometric polynomial that interpolates data given in the list
+  $L$. It is assumed that the list $L$ contains
+  ordinate components of the points with equidistant abscissa components
+  between $a$ and $b$ such that the first element of $L$
+  corresponds to $a$ and the last element to $b$.
+\end{itemize}
+
+$L$ may be a list of experimental measurements
+of some quantity taken at regular intervals, with the first
+observation at time $t=a$ and the last observation at time
+$t=b$. The resulting trigonometric polynomial has period
+$T=\frac{n}{n-1}(b-a)$, where $n=\texttt{size(}L\texttt{)}$
+is the number of observations.
+
+As an example, assume that the following data is obtained by
+measuring the temperature every three hours during one day:
+\begin{center}
+  \begin{tabular}{lcccccccc}
+    \toprule
+    \textit{Hour of the day}&0&3&6&9&12&15&18&21\\
+    \textit{Temperature} (${}^\circ$C)&11&10&17&24&32&26&23&19\\
+    \bottomrule
+  \end{tabular}
+\end{center}
+Suppose that an estimate of the temperature at 13:45 is
+required. To obtain a trigonometric interpolation of the data:
+\begin{xcasinput}
+tp:=triginterp([11,10,17,24,32,26,23,19],x=0..21)
+\end{xcasinput}
+\begin{xcasoutput}
+  & \frac{81}{4}+
+  \frac{1}{8} \left(-21 \sqrt{2}-42\right) \cos \left(\frac{1}{12}
+    \pi  x\right)+
+  \frac{1}{8} \left(-11 \sqrt{2}-12\right) \sin \left(\frac{1}{12}
+    \pi  x\right)+
+  \frac{3}{4} \cos \left(\frac{1}{6} \pi  x\right)-\\
+  & \frac{7}{4} \sin \left(\frac{1}{6} \pi  x\right)+
+  \frac{1}{8} \left(21 \sqrt{2}-42\right) \cos \left(\frac{1}{4}
+    \pi  x\right)+
+  \frac{1}{8} \left(-11 \sqrt{2}+12\right) \sin \left(\frac{1}{4}
+    \pi  x\right)+
+  \frac{\cos \left(\frac{1}{3} \pi  x\right)}{2}
+\end{xcasoutput}
+To plot the interpolant, enter:
+\begin{xcasinput}
+labels=["time","temperature"]; legend=["hours","°C"]; plot(tp,x=0..21)
+\end{xcasinput}
+\begin{xcasimage}
+  \includeimage{xcas-triginterp.png}
+\end{xcasimage}
+The interpolant is smooth, without oscillations, and appears realistic in
+the given context. Now a temperature at 13:45 can be approximated by
+the value of \texttt{tp} for $x=13.75$:
+\begin{xcasinput}
+tp | x=13.75
+\end{xcasinput}
+\begin{xcasoutput}
+  29.4863181684
+\end{xcasoutput}
+% If one of the input parameters is inexact, the result will also be inexact.
+% For example:
+% \begin{xcasinput}
+% Digits:=3:;
+% triginterp([11,10,17,24,32,26,23,19],x=0..21.0)
+% \end{xcasinput}
+% \begin{xcasoutput}
+%   &20.2-8.96 \cos \left(0.262 x\right)-3.44 \sin \left(0.262 x\right)+
+%   0.75 \cos \left(0.524 x\right)-\\
+%   &1.75 \sin \left(0.524 x\right)-1.54 \cos \left(0.785 x\right)-
+%   0.445 \sin \left(0.785 x\right)+
+%   0.5 \cos \left(1.05 x\right)
+% \end{xcasoutput}
+
+
+\section{Curve fitting}
+
+\subsection{Least-squares polynomial approximation%: \texttt{fitpoly}
+}
+
+The \texttt{fitpoly}\index{fitpoly@\texttt{fitpoly}} command is used
+for replacing tabular data or a function by a polynomial.
+
+\paragraph{Smoothing data with polynomial regression.}
+\texttt{fitpoly} can be used for finding a polynomial that fits
+a given tabular data.
+\begin{itemize}
+\item \texttt{fitpoly} takes one mandatory argument and two optional arguments:
+  \begin{itemize}
+  \item \textit{data}, a two-column matrix or a sequence of two lists,
+    representing the $x$- and $y$-values of data points
+    $(x_0,y_0),(x_1,y_1),\dots,(x_m,y_m)$.
+  \item Optionally, \textit{x}\texttt{[=$a$..$b$]} or \texttt{$a$..$b$},
+    which is a variable $x$ and optionally its domain $[a,b]$ or a segment $[a,b]$
+    (by default, unset).
+  \item Optionally, a sequence of options, each of which may be one of:
+    \begin{itemize}
+    \item \texttt{limit=}$N$, a nonnegative integer,
+      which is the maximal degree for the resulting polynomial (by default, $N=15$).
+    \item \texttt{degree=$d$}, where $d$ is a nonnegative integer,
+      which is the desired degree of the resulting polynomial (by default, unset).
+    \item \texttt{threshold=}\textit{tol}, a positive real number,
+      which is used for finding an appropriate fitting degree,
+      as described below
+      (by default, \texttt{threshold=}$0.01$, ignored when $d$ is set).
+    \item \texttt{length=}$l$, a positive integer,
+      which is used for finding an appropriate fitting degree,
+      as described below (by default, \texttt{length=}$5$, ignored when $d$ is set).
+    \end{itemize}
+  \end{itemize}
+\item If $d$ is set, then \texttt{fitpoly} returns the
+  polynomial of degree $\min\{d,N\}$ which best fits the data
+  in the least-squares sense.
+\item If $d$ is not set,
+  then a polynomial $p_n$ of modest degree $n\leq N$ but a good error suppression
+  (thus representing the trend of the data)
+  is chosen using \textit{tol} and $l$
+  such that raising the degree does not make a significant improvement to
+  the approximation. Precisely, $n$ is the first nonnegative integer such that
+  \[ \frac{\operatorname{stddev}[\sigma^2_n,\sigma^2_{n+1},\dots,\sigma^2_{n+l-1}]}
+    {\operatorname{mean}[\sigma^2_0,\sigma^2_1,\dots,\sigma^2_{n+l-1}]}\leq\text{\textit{tol}}, \]
+  where $\sigma_k^2$ is the sum of squared residuals $\sum_{i=0}^m(y_i-p_k(x_i))^2$
+  and $p_k$ is the best-fitting polynomial of degree $k$. Ideally, $n$ is the
+  smallest degree for which $\sigma^2_n\approx\sigma^2_{n+1}\approx\sigma^2_{n+2}\approx\cdots$, meaning that
+  higher-order polynomials would overfit on the noise.
+\item Lowering the parameter \texttt{length}, as well as increasing
+  \texttt{threshold}, would make the algorithm more greedy,
+  effectively lowering the degree of the output polynomial. Note that when
+  \texttt{degree} is set, these two parameters are ignored.
+\item If no variable is specified, then \texttt{fitpoly} returns the list of
+  polynomial coefficients.
+\item If a segment $[a,b]$ is given, then only the data points $(x_k,y_k)$ for which
+  $a\leq x_k\leq b$ are considered.
+\end{itemize}
+
+\subsubsection*{Example}
+We find a polynomial which best approximates data infected by noise.
+Data is obtained by evaluating the polynomial $f(x)=\frac1{100}x^4-\frac15x^3+6x$
+at 100 points between $x=1$ and $x=20.8$. The noise is generated by a random,
+normally-distributed variable.
+\begin{xcasinput}
+f(x):=x^4/100-x^3/5+6x:;
+X:=linspace(1.0,20.8):;
+Y:=apply(f,x)+randvector(100,randvar(normal,mean=0,stddev=10)):;
+p:=fitpoly(X,Y)
+\end{xcasinput}
+\begin{xcasoutput}
+  [0.011665,-0.266955,0.844543,2.44967,3.94846]
+\end{xcasoutput}
+We obtain the list of polynomial coefficients, starting with the leading coefficient.
+Note that the polynomial of degree 4 is returned (it has five coefficients),
+which is, in this case, obviously optimal for data smoothing.
+To visualize the fit, enter:
+\begin{xcasinput}
+scatterplot(X,Y); plot(r2e(p,x),x=0..20,color=blue+line_width_2)
+\end{xcasinput}
+\begin{xcasimage}
+  \includeimage{xcas-fitpoly1.png}
+\end{xcasimage}
+
+When approximating only the data for $1\leq x\leq 10$, you obtain a polynomial of
+9th degree. This is called \emph{overfitting}. Namely, data curvature
+at the restriction is small, which makes the noise more prominent.
+\begin{xcasinput}
+p1:=fitpoly(X,Y,x=1..10):; degree(p1)
+\end{xcasinput}
+\begin{xcasoutput}
+  9
+\end{xcasoutput}
+To make the approximating polynomial less sensitive to noise,
+you can increase the threshold value \textit{tol}.
+\begin{xcasinput}
+p2:=fitpoly(X,Y,x=1..10,threshold=0.05)
+\end{xcasinput}
+\begin{xcasoutput}
+  -0.256298728063 x^{3}+2.89166276754 x^{2}-9.93723278591 x+19.4201078899
+\end{xcasoutput}
+(Alternatively, you could set the parameter \texttt{length} to a smaller value, e.g.~3.)
+The command lines below show the curves \texttt{p1} and \texttt{p2} against data points
+(the overfitted one is drawn in grey).
+\begin{xcasinput}
+scatterplot(X,Y);
+plot(p1,x=1..10,color=grey);
+plot(p2,x=1..10,color=blue+line_width_2)
+\end{xcasinput}
+\begin{xcasimage}
+  \includeimage{xcas-fitpoly2.png}
+\end{xcasimage}
+
+\paragraph{Approximating functions by polynomials.}
+\texttt{fitpoly} can be used for approximating a continuous function
+$f:[a,b]\to\mathbb{R}$ by a polynomial $p_n$ of certain degree $n$ which
+minimizes the error in the sense of $\ell^2$~norm.
+\begin{itemize}
+\item \texttt{fitpoly} takes two mandatory arguments and one optional argument:
+  \begin{itemize}
+  \item $f$, an univariate symbolic expression representing the function to be approximated.
+  \item An interval \texttt{$a$..$b$}, which is the domain $[a,b]$ of $f$.
+  \item Optionally, \textit{opts}, a sequence of options each of which may be one of:
+    \begin{itemize}
+    \item \texttt{limit=}$N$, as before.
+    \item \texttt{degree=$d$}, as before.
+    \item $\varepsilon$ or \texttt{threshold=}$\varepsilon$,
+      which is a positive real number such that for the resulting polynomial $p_n$
+      the following holds:
+      \begin{equation}\label{eq:l2poly}
+        \|f-p_n\|^2=\int_a^b(f(x)-p_n(x))^2\mathrm{d}x\leq\varepsilon
+      \end{equation}
+      (by default, $\varepsilon=10^{-8}$). This parameter is ignored when $d$ is set.
+    \end{itemize}
+  \end{itemize}
+\item \texttt{fitpoly(}$f,a\texttt{..}b\,\langle,\textit{opts}\,\rangle$\texttt{)}
+  finds $p_n$ with smallest $n\leq N$ such that~\eqref{eq:l2poly} holds.
+  If such $n$ does not exist, then $p_N$ is returned.
+\item If the parameter $d$ is set, then $p_d$ which minimizes $\|f-p_d\|$ among all
+  polynomials of degree $d$ is returned.
+\item Polynomial approximation is fast and robust even for large $d$ and $N$ resp.~for
+  small $\varepsilon$.
+\end{itemize}
+
+\subsubsection*{Examples}
+\begin{xcasinput}
+fitpoly(cos(x),0..pi/2,1e-2)
+\end{xcasinput}
+\begin{xcasoutput}
+  -0.244320054366 x^{3}-0.336364730985 x^{2}+1.13004492821 x-0.0107731059645
+\end{xcasoutput}
+\begin{xcasinput}
+f:=exp(-7x)*5x:;
+g:=fitpoly(f,0..1,degree=8)
+\end{xcasinput}
+\begin{xcasoutput}
+  &-21.717636069 x^{8}+107.930784832 x^{7}-232.831655404 x^{6}\\&+286.778708741 x^{5}-222.236631985 x^{4}+111.004732684 x^{3}\\&-33.8769709361 x^{2}+4.95239715728 x+0.000500886757642
+\end{xcasoutput}
+The mean absolute error of the above approximation can be estimated as follows:
+\begin{xcasinput}
+sqrt(romberg((f-g)^2,x=0..1))
+\end{xcasinput}
+\begin{xcasoutput}
+  9.3456615562\times10^{-5}
+\end{xcasoutput}
+
+\subsection{Rational minimax approximation%: \texttt{minimax}
+}
+
+The \texttt{minimax}\index{minimax@\texttt{minimax}} command finds
+the rational function which approximates a continuous function
+$f:[a,b]\to\mathbb{R}$ most closely in the sense of $\ell^\infty$ norm.
+It operates exclusively in floating-point arithmetic.
+\begin{itemize}
+\item \texttt{minimax} takes three mandatory argument and a sequence of
+  optional arguments:
+  \begin{itemize}
+    \item \textit{expr}, a univariate expression representing the function $f$.
+    \item $x$\texttt{=$a$..$b$}, a variable with bounds.
+    \item \textit{deg}, which is either a positive integer $n$ or a list $[n,m]$ where
+      $n$ is a negative and $m$ a positive integer, specifying the degrees of
+      the numerator (and denominator) of the approximant (by default, $m=0$).
+    \item Optionally, \textit{opts}, a sequence of options each of which is one of:
+    \begin{itemize}
+      \item \texttt{limit=}\textit{maxiter}, where \textit{maxiter} is a positive
+        integer specifying the number of iterations of the Remez
+        algorithm (by default, $\textit{maxiter}=100$).
+      \item $\texttt{rand}\langle\texttt{=}N\rangle$, where $N$ is a positive integer specifying
+        the number of tries with initial node skewing (by default, $N=1$ and no skewing
+        is performed).
+      \item \texttt{threshold=}\textit{tol}, where \textit{tol} is a real number greater than 1
+        specifying the terminating criterion $\max_{x\in[a,b]} e(x)<tol\cdot\min_{x\in[a,b]} e(x)$ for
+        the Remez algorithm, where $e(x)=|f(x)-r(x)|$ is the error function in the current iteration
+        (by default, $\textit{tol}=1.02$).
+    \end{itemize}
+  \end{itemize}
+\item
+  \texttt{minimax(}$\textit{expr},x\texttt{=}a\texttt{..}b,\textit{deg}\,\langle,\texttt{limit=}\textit{maxiter}\,\rangle$\texttt{)}
+  uses the Remez method (see e.g.~\href{https://valelab4.ucsf.edu/svn/3rdpartypublic/boost/libs/math/doc/sf_and_dist/html/math_toolkit/backgrounders/remez.html}{here})
+  to find the rational function $r(x)=\frac{p(x)}{q(x)}$, where $p$ is a polynomial of
+  degree $n$ and $q$ a polynomial of degree $m$ normalized such that its trailing
+  coefficient is equal to 1, which minimizes the $\ell^\infty$ error when approximating
+  \textit{expr} on $[a,b]$. If $r$ has no singularities in $[a,b]$, then a list containing
+  $\|f-r\|_{\infty}$ and $r(x)$ is returned. Otherwise, an approximation of
+  $\frac1{b-a}\int_a^b|f(x)-r(x)|\mathrm{d}x$, computed by using Simpson's rule with $20(n+m+2)$ steps,
+  is returned as the first element (this may serve as an upper bound to the measure of fit outside poles)
+  and a warning is printed in the message area.
+  \item By specifying only the parameter $n$, you get an approximation of $f$ by a polynomial.
+  This is faster and the result is always well-defined, but rational approximants provide more
+  flexibility and can be significantly more accurate even for smaller values of $n$ and $m$
+  (these should be chosen so that $r$ has no singularities in $[a,b]$, however).
+  \item With the $\texttt{rand}\langle\texttt{=}N\rangle$ option, \texttt{minimax} skews the
+  initial nodes randomly before proceeding to the first Remez step. This may help
+  the algorithm to converge to a well-defined result when $m>0$. If $N$ is specified,
+  then the entire computation is performed $N$ times and the best result is selected.
+  This will be a pole-free function when possible. The \texttt{rand} option is usually not
+  needed when $m=0$, i.e.~when the minimax polynomial is sought.
+\end{itemize}
+\subsubsection*{Example}
+Find a function of form $r(x)=\frac{a_2x^2+a_1x+a_0}{b_2x^2+b_1x+b_0}$ which is an optimal
+$\ell^\infty$-approximation of $f(x)=\frac{\ln(x+1)}{2+\sin x}$ on the segment $[0,7]$.
+Define $f$ by entering:
+\begin{xcasinput}
+f:=ln(x+1)/(2+sin(x)):;
+\end{xcasinput}
+Now compute the approximation by entering:
+\begin{xcasinput}
+fit:=minimax(f,x=0..7,[2,2])
+\end{xcasinput}
+\begin{xcasoutput}
+  \left[0.0759657940359,\frac{-0.00264534091503 x^{2}+0.0393947055011 x+0.0759192001346}{0.0386492470797 x^{2}-0.368513748981 x+1}\right]
+\end{xcasoutput}
+To display the approximation, enter:
+\begin{xcasinput}
+tol,r:=op(fit):;
+plot(ln(x+1)/(2+sin(x)),x=0..7);
+plot(r,x=0..7,color=blue)
+\end{xcasinput}
+\begin{xcasimage}
+  \includeimage{xcas-minimax1.png}
+\end{xcasimage}
+(Here, $r(x)$ is drawn in blue.)
+You can conclude that $\max_{0\leq x\leq 7}|f(x)-r(x)|=\texttt{tol}$. Indeed:
+\begin{xcasinput}
+maximize(abs(f-r),x=0..7)
+\end{xcasinput}
+\begin{xcasoutput}
+  0.0759657940359
+\end{xcasoutput}
+The maximal absolute error is attained at $x=3.45532968966$.
+
+As another example, consider the function $f(x)=\frac{x\mathrm{e}^{\sin x}}{10+7\cos x}$ for
+$x\in[0,10]$. To show the graph, enter:
+\begin{xcasinput}
+f:=x*exp(sin(x))/(10+7*cos(x)); D:=0..10:;
+plot(f,x=D)
+\end{xcasinput}
+\begin{xcasimage}
+  \includeimage{xcas-minimax2.png}
+\end{xcasimage}
+In the examples that follow, approximation functions are not output to save space.
+
+To obtain the $\ell^\infty$ error of the 15th order polynomial approximation, enter:
+\begin{xcasinput}
+minimax(f,x=D,15)[0]
+\end{xcasinput}
+\begin{xcasoutput}
+  0.0800812074329
+\end{xcasoutput}
+By requesting a rational approximant, you can achieve significantly better accuracy with
+polynomials of lower degrees:
+\begin{xcasinput}
+p:=minimax(f,x=D,[8,8])[0]
+\end{xcasinput}
+\begin{xcasoutput}
+  0.000495628620328
+\end{xcasoutput}
+Sometimes you get poles in the approximant, for example:
+\begin{xcasinput}
+minimax(f,x=D,[10,3])[0]
+\end{xcasinput}
+\begin{xcasmsg}
+Warning: the result is undefined at point(s) 3.03555290496
+\end{xcasmsg}
+\begin{xcasoutput}
+  0.206238829817
+\end{xcasoutput}
+By using the \texttt{rand} option, you obtain a pole-free result:
+\begin{xcasinput}
+p:=minimax(f,x=D,[10,3],rand=30)[0]
+\end{xcasinput}
+\begin{xcasmsg}
+Evaluation time: 6.11
+\end{xcasmsg}
+\begin{xcasoutput}
+  0.0364254964552
+\end{xcasoutput}
+
+\subsection{B-splines\label{ssec:b-splines}}
+
+\paragraph*{Finding B-splines from control points.}
+The command \texttt{bspline}\index{bspline@\texttt{bspline}} finds a B-spline
+with a given list of control points and, optionally, a list of breakpoints.
+\begin{itemize}
+  \item \texttt{bspline} takes one mandatory argument and up to three optional argument(s):
+  \begin{itemize}
+    \item \textit{cpts}, a list of $m$ control points in $\mathbb{R}^d$ which may be given
+    either as vectors of (Cartesian) coordinates, 2D or 3D points (graphic objects), or
+    (complex) affixes of 2D points.
+    \item Optionally, \textit{var}, a variable specification which can be one of:
+    \begin{itemize}
+      \item $x$, an identifier (by default \texttt{x}).
+      \item $x$\texttt{=}$a$\texttt{..}$b$, where $a$ and $b$ are real numbers
+      such that $a<b$ (by default, $a=0$ and $b=1$).
+      \item $x$\texttt{=[}$x_0,x_1,\dots,x_n$\texttt{]}, where $n=m-p+1$ and $x_i$ are
+      real numbers for $i=0,1,\dots,n$ given in strictly ascending order (by default,
+      $x_k=a+\frac{k}{n}(b-a)$ for $k=0,1,\dots,n$).
+    \end{itemize}
+    \item Optionally, $p$, a positive integer corresponding to the spline degree
+    (by default, $p=3$, which produces a cubic B-spline).
+    \item Optionally, \texttt{piecewise}, the symbol.
+  \end{itemize}
+  \item \texttt{bspline(}$\textit{cpts}\,\langle,\textit{var},p\,\rangle\,\langle,\texttt{piecewise}\,\rangle$\texttt{)}
+  returns a matrix with $n-1$ rows and $d$ columns in which the $k$th row represents a parametric
+  definition of the B-spline with parameter $x$ such that $x\in[x_k,x_{k+1}\rangle$, or,
+  if \texttt{piecewise} is given, a parametric representation of the entire spline in
+  which each component is piecewise-defined.
+  \item The points $x_0,x_1,\dots,x_n$ are called \emph{breakpoints}. B-spline is a piecewise
+  parametric function with parts joining at these points. If no breakpoints are given,
+  a uniform subdivision of the specified segment $[a,b]$ (by default $[0,1]$) is used. Note
+  that the relation $2\leq n=m-p+1$ must hold, which implies $m\geq p+1$.
+  \item B-splines are useful for curve-fitting and numerical differentiation of data.
+\end{itemize}
+
+\subsubsection*{Example}
+To define a sequence of control points, enter:
+\begin{xcasinput}
+c:=2i,1-2i,5-i,6-4i,8+2i,5+i:;
+\end{xcasinput}
+Now compute the B-spline defined by the above points and uniform knots,
+with parameter $t\in[0,1]$:
+\begin{xcasinput}
+bs:=bspline([c],t)
+\end{xcasinput}
+\begin{xcasoutput}
+  \left[\begin{array}{cc}-\frac{99 t^{3}}{2}+27 t^{2}+9 t&-\frac{567 t^{3}}{4}+\frac{243 t^{2}}{2}-36 t+2\\\frac{63 t^{3}}{2}-54 t^{2}+36 t-3&\frac{297 t^{3}}{4}-\frac{189 t^{2}}{2}+36 t-6\\-117 t^{3}+243 t^{2}-162 t+41&-162 t^{3}+378 t^{2}-279 t+64\end{array}\right]
+\end{xcasoutput}
+To plot the result with alternating red-blue color for spline pieces and
+green control points, enter:
+\begin{xcasinput}
+polygon(c,open);
+plotparam(bs[0],t=0..1/3,display=red+line_width_2);
+plotparam(bs[1],t=1/3..2/3,display=blue+line_width_2);
+plotparam(bs[2],t=2/3..1,display=red+line_width_2);
+point(c,display=point_point+point_width_3+green);
+\end{xcasinput}
+\begin{xcasimage}
+  \includeimage{xcas-bspline.png}
+\end{xcasimage}
+% Suppose that the obtained curve is a trajectory of some moving object
+% and you wish to compute the speed of the object along that path, with
+% the parameter $t$ representing time. For a parametric curve given
+% by $x(t)$ and $y(t)$, the magnitude of the derivative at time $t$
+% is equal to $\sqrt{x\Prime(t)^2+y\Prime(t)^2}$. Enter:
+% \begin{xcasinput}
+% v:=simplify(apply(sqrt,diff(col(bs,0),t).^2+diff(col(bs,1),t).^2))
+% \end{xcasinput}
+% \begin{xcasoutput}
+%   \bigg[&\frac94\sqrt{40077 t^{4}-43992 t^{3}+17760 t^{2}-3264 t+272},\\
+%    &\frac94\sqrt{11565 t^{4}-20664 t^{3}+13872 t^{2}-4224 t+512},\\
+%    &9 \sqrt{4437 t^{4}-13284 t^{3}+14724 t^{2}-7152 t+1285}\bigg]
+% \end{xcasoutput}
+% To plot the velocity function, enter:
+% \begin{xcasinput}
+% labels:=["time","velocity"]; plot(piecewise(t<1/3,v[0],t<2/3,v[1],v[2]),t=0..1)
+% \end{xcasinput}
+% \begin{xcasimage}
+%   \includeimage{xcas-bspline_velocity.png}
+% \end{xcasimage}
+Sometimes it is useful to return the result in a piecewise form. Enter:
+\begin{xcasinput}
+bs:=bspline([c],t,piecewise)
+\end{xcasinput}
+\begin{xcasoutput}
+  \left[\begin{cases}-\frac{99}{2} t^{3}+27 t^{2}+9 t,&t\geq 0\wedge \frac{1}{3}>t\\\frac{63}{2} t^{3}-54 t^{2}+36 t-3,&\frac{2}{3}>t\\-117 t^{3}+243 t^{2}-162 t+41,&1\geq t\\\end{cases},\begin{cases}-\frac{567}{4} t^{3}+\frac{243}{2} t^{2}-36 t+2,&t\geq 0\wedge \frac{1}{3}>t\\\frac{297}{4} t^{3}-\frac{189}{2} t^{2}+36 t-6,&\frac{2}{3}>t\\-162 t^{3}+378 t^{2}-279 t+64,&1\geq t\\\end{cases}\right]
+\end{xcasoutput}
+The result is a list of components of the spline function.
+Now, for example, the command line
+\begin{xcasinput}
+plotparam(bs,t=0..1)
+\end{xcasinput}
+draws the entire spline.
+
+\paragraph*{Fitting B-splines to data.}
+The \texttt{fitspline}\index{fitspline@\texttt{fitspline}} command fits
+B-splines to (multidimensional) time-stamped data in the least-squares sense.
+\begin{itemize}
+  \item \texttt{fitspline} takes two mandatory arguments and a sequence of optional arguments:
+  \begin{itemize}
+    \item \textit{data}, a list of time-stamped locations in $\mathbb{R}^d$ given either as
+    $[t_k,x_{k1},x_{k2},\dots,x_{kd}]$ or as $[t_k,[x_{k1},x_{k2},\dots,x_{kd}]]$ for
+    $k=1,2,\dots,m$, where $m\geq 2$ and $d\geq 1$.
+    \item $var$, which is either a variable or a vector of real numbers.
+    \item Optionally, \textit{opts}, a sequence of options each of which may be one of:
+    \begin{itemize}
+      \item $n$, a positive integer specifying the number of spline pieces (by
+      default, $n=\lfloor\sqrt{m}+1/2\rfloor$).
+      \item \texttt{degree=}$p$, where $p$ is a positive integer (spline degree, by default $p=3$).
+      \item \texttt{piecewise}, the symbol.
+    \end{itemize}
+  \end{itemize}
+  \item \texttt{fitspline(}$\textit{data},\textit{var}\,\langle,\textit{opts}\,\rangle$\texttt{)} returns
+  \begin{itemize}
+    \item the list of spline points at elements of \textit{var} if the latter is a vector,
+    \item the spline as returned by \texttt{bspline} for the variable \textit{var} and optionally
+    \texttt{piecewise}, if \textit{var} is an identifier.
+  \end{itemize}
+  The resulting spline (of degree $p$) is computed from a sequence of $n+1$ uniformly spaced
+  breakpoints and $n+p$ control points obtained by minimizing squared distances between spline
+  points at values $t_k$ and data points $(x_{k1},x_{k2},\dots,x_{kd})$ for $k=1,2,\dots,m$.
+  \item The number $m$ of data samples must be larger than the number $n+p$ of control points.
+  Furthermore, it is recommended that $2m\geq n+p$ is satisfied, otherwise the spline
+  would overfit on the noise (if the above inequality does not hold,
+  a warning is printed). This is essentially a Nyquist-frequency argument.
+  \item Note that \texttt{fitspline} operates exclusively in floating-point arithmetic.
+  If \textit{var} is a vector, then GSL fitting routines are used if available.
+\end{itemize}
+
+\subsubsection*{Examples}
+To generate some synthetic data with noise, enter:
+\begin{xcasinput}
+x:=linspace(0,15,200):; y:=apply(t->cos(t)*exp(-0.1*t)*(1+randnorm(0,0.1)),x):;
+\end{xcasinput}
+The following command line computes $y$-values of a B-spline fit:
+\begin{xcasinput}
+ys:=fitspline(tran([x,y]),x)]):;
+\end{xcasinput}
+Essentially, \texttt{ys} is the result of snapping \texttt{y}
+to a smooth curve. Now visualize the result by entering:
+\begin{xcasinput}
+scatterplot(x,y,color=blue); listplot(tran([x,ys]))
+\end{xcasinput}
+\begin{xcasimage}
+  \includeimage{xcas-fitspline1.png}
+\end{xcasimage}
+
+You can use B-spline to trace a sequence of points in time. For example,
+generate a list of 2D locations by entering:
+\begin{xcasinput}
+t:=linspace(0,10,50):;
+\end{xcasinput}
+\begin{xcasinput}
+x:=apply(u->(u^2*sin(u)+u-1)/(1+u*sqrt(u))+randnorm(0,0.1),t):;
+\end{xcasinput}
+\begin{xcasinput}
+y:=apply(u->(u^2*cos(u)-u+1)/(1+u*sqrt(u))+randnorm(0,0.1),t):;
+\end{xcasinput}
+The underlying path of these ``footsteps'' can be visualized like this:
+\begin{xcasinput}
+t1:=linspace(0,10,500):;
+listplot(fitspline(tran([t,x,y]),t1,20)),scatterplot(x,y,color=blue)
+\end{xcasinput}
+\begin{xcasimage}
+  \includeimage{xcas-fitspline2.png}
+\end{xcasimage}
+The spline approximation can be useful for computing the total distance traveled or
+obtaining the velocity as a function of time.
+
+By setting the number of spline pieces (which is 20 in the above graph) to a value that is
+close to 50 (the number of samples), the resulting spline exhibits large oscillations
+(Runge phenomenon):
+\begin{xcasinput}
+listplot(fitspline(tran([t,x,y]),t1,45)),scatterplot(x,y,color=blue)
+\end{xcasinput}
+\begin{xcasmsg}
+Warning: too many control points
+\end{xcasmsg}
+\begin{xcasimage}
+  \includeimage{xcas-fitspline3.png}
+\end{xcasimage}
+
+
 \chapter{Metric properties of curves}
 
 \section{The center of curvature}
@@ -33260,17 +33577,17 @@ are described below.
 
 \subsection{The graphic screen\label{sec:graphscreen}}
 
-A graphic screen, either two- or three-dimensional as appropriate,
+A graphic screen, either two- or 3D as appropriate,
 automatically opens in response to a graphic command.  Alternatively,
 you can open a graphic screen with its own command line with keystrokes;
-\textsf{Alt+G} for a two-dimensional screen and \textsf{Alt+H} for a
-three-dimensional screen. The graphic screen will have an array of
+\textsf{Alt+G} for a 2D screen and \textsf{Alt+H} for a
+3D screen. The graphic screen will have an array of
 buttons at the top right.
 \begin{itemize}
 \item Red arrows move the image in the $x$ direction.
 \item Green arrows move the image in the $y$ direction.
-\item Blue arrows zoom in and out in a two-dimensional screen,
-  and move the image in the $z$ direction in a three-dimensional screen.
+\item Blue arrows zoom in and out in a 2D screen,
+  and move the image in the $z$ direction in a 3D screen.
 \item \button{in} and \button{out} buttons zoom in and out.
 \item \button{$\perp$} button orthonormalizes the graphic.
 \item \button{\ForwardToEnd} button stops and restarts animations.
@@ -33284,7 +33601,7 @@ buttons at the top right.
     buttons.
   \item[Trace] for working with traces.
   \item[Animation] for working with animations.
-  \item[3D] for working with three-dimensional graphics.
+  \item[3D] for working with 3D graphics.
   \item[Export/Print] for exporting and printing the graphic.
   \end{description}
 \end{itemize}
@@ -33349,7 +33666,7 @@ Attributes of different categories may be combined with \texttt{+}, e.g.~in:
 \begin{xcasinput}
 plotfunc(x^2+y^2,[x,y],display=red+line_width_3+filled)
 \end{xcasinput}
-The graphic attributes are:
+You can modify the following graphic attributes:
 \begin{description}
 \item[Color] which is set with \texttt{display=}\textit{value} or
   \texttt{color=}\textit{value}, where \textit{value} is a nonnegative integer.
@@ -33379,11 +33696,8 @@ The graphic attributes are:
   \texttt{square\_point}, \texttt{cross\_point},
   \texttt{triangle\_point}, \texttt{star\_point},
   \texttt{point\_point} or \texttt{invisible\_point}.
-\item[Point width] which is set with \texttt{display=}\textit{value}.
-  The values can be:
-
-  \texttt{point\_width\_$n$} where $n$ is an
-  integer between 1 and 7.
+\item[Point width] which is set with \texttt{display=point\_width\_$n$},
+   where $n$ is an integer between 1 and 7.
 \item[Line thickness] which is set with \texttt{thickness=$n$}
   or \texttt{display=line\_width\_$n$} where $n$ is an
   integer between 1 and 7.
@@ -33536,10 +33850,10 @@ can be used only in 2D plots.
   enables the following mathematical typesetting options:
   \begin{itemize}
     \item \texttt{\^{}}\textit{int}, where \textit{int} is an integer, prints
-    \textit{int} in the exponent (this is also functional outside math mode).
+    \textit{int} in the exponent (also available outside math mode).
     \item \texttt{@}\textit{char}, where \textit{char} is a letter,
     draws \textit{char} with slanted font (useful for variables in formulas).
-    \item \texttt{--} (two hyphens) prints as a minus sign $-$ (which is
+    \item \texttt{--} (double hyphen) prints as a minus sign $-$ (which is
       different than the ordinary hyphen!).
     \item \texttt{<=} resp.~\texttt{>=} prints as $\leq$ resp.~$\geq$.
     \item \texttt{+-} resp.~\texttt{-+} prints as $\pm$ resp.~$\mp$.
@@ -33552,6 +33866,7 @@ can be used only in 2D plots.
     \item \texttt{**} prints as $\cdots$ (vertically centered dots).
     \item \texttt{*}, when preceded/followed by an alphanumeric character or parenthesis,
     is printed as $\cdot$ (the multiplication dot).
+    \item \texttt{\_\_} (double underscore) prints as --- (em dash).
     %\item Greek letters are automatically slanted in math mode.
   \end{itemize}
 \end{itemize}
@@ -33889,7 +34204,7 @@ reference white is D65); thus the white color corresponds to $[1.0,1.0,1.0]$ and
 to $[0.0,0.0,0.0]$ in both RGB and XYZ.
 
 \subsubsection*{Examples}
-To demonstrate conversion between RGB and XYZ, enter:
+To demonstrate the conversion between RGB and XYZ, enter:
 \begin{xcasinput}
 xyz:=rgb2xyz(0,255,255)
 \end{xcasinput}
@@ -33920,8 +34235,8 @@ interp(c,20)
   \includeimage{xcas-interpcolors.png}
 \end{xcasimage}
 The above list consists of RGB565 colors.
-To create a perceptually seamless transition from red to cyan passing
-through yellows and greens, you have to convert $c$ to a
+To visualize a perceptually seamless transition from red to cyan passing
+through yellows and greens, you should convert $c$ to a
 RGB matrix, which can be done by using \texttt{apply} and \texttt{rgb}. Enter:
 \begin{xcasinput}
 res:=interp(apply(rgb,c),1000):;
@@ -33935,7 +34250,7 @@ img:=image(3,r,g,b);
 \begin{xcasoutput}
   \text{an image of size 1000×100 (RGB)}
 \end{xcasoutput}
-To visualize the result with RGB888 colors, enter:
+To display the result with RGB888 colors, enter:
 \begin{xcasinput}
 display(img)
 \end{xcasinput}
@@ -35323,7 +35638,7 @@ To stop or start the animation, click on the button
 }
 
 The \texttt{animate}\index{animate@\texttt{animate}}
-command creates two-dimensional animations using graphs of
+command creates 2D animations using graphs of
 functions depending on a parameter.  (See also \secref{sec:plot2d}.)
 \begin{itemize}
 \item \texttt{animate} takes three mandatory arguments and two optional
@@ -35362,7 +35677,7 @@ The output is an animation beginning with:
 }
 
 The \texttt{animate3d}\index{animate3d@\texttt{animate3d}}
-command creates three-dimensional animations using graphs of
+command creates 3D animations using graphs of
 functions depending on a parameter.  (See also \secref{ssec:plotfunc3}.)
 \begin{itemize}
 \item \texttt{animate} takes three mandatory arguments and two optional
@@ -35906,25 +36221,23 @@ quantile(A,A,0.25)
   6
 \end{xcasoutput}
 
-\subsection{Whisker boxes%: \texttt{boxwhisker} \texttt{mustache}
+\subsection{Box-and-whisker diagrams%: \texttt{boxwhisker} \texttt{mustache}
 }
-\index{whisker box}
+\index{Box-and-whisker plots}
 
-A boxwhisker is a graphical view of the quartiles of a list of
-numbers. The boxwhisker consists of a line segment from the the
+A box-and-whisker diagram is a graphical view of the quartiles of a list of
+numbers. The diagram consists of a line segment from the the
 minimum of the list to the first quartile, leading to a rectangle from
 the first quartile to the third quartile, followed by a line segment
 from the third quartile to the maximum of the list.  The rectangle
-contains a vertical segment indicating the median, and the two
-line segments will contain vertical lines indicating the first and
-ninth decile.
+contains a vertical segment indicating the median.
 
 The \texttt{boxwhisker}\index{boxwhisker@\texttt{boxwhisker}}
 or \texttt{mustache}\index{mustache@\texttt{mustache}}
 or \texttt{boxplot}\index{boxplot@\texttt{boxplot}}
 command creates boxwhisker(s) for given list(s).
 \begin{itemize}
-\item \texttt{boxwhisker} takes one mandatory argument and up to three optional arguments:
+\item \texttt{boxwhisker} takes one mandatory argument and four optional arguments:
   \begin{itemize}
   \item $L$, a list or matrix of real numbers.
   \item Optionally, \texttt{x=}\textit{xmin}\texttt{..}\textit{xmax} or
@@ -35937,15 +36250,17 @@ command creates boxwhisker(s) for given list(s).
   The list may be empty, in which case light grey color is used. By default,
   no fill color is specified and boxwhiskers are drawn only with lines.
   \item Optionally, \texttt{legend=}$d$, where $d$ is a list of strings which
-  are drawn next to the corresponding boxwhiskers (in the given order).
+  are drawn next to boxwhiskers, in the given order.
+  \item Optionally, \texttt{axes}, the symbol specifying that the usual axes
+  should be drawn.
   \end{itemize}
-\item \texttt{boxwhisker(}$L\,\langle\textit{options}\,\rangle$\texttt{)}
+\item \texttt{boxwhisker(}$L\,\langle,\textit{options}\,\rangle$\texttt{)}
 draws a boxwhisker for the list $L$ or one for each column of the matrix $L$,
 aligning them vertically (topmost is the first) or horizontally (leftmost is
 the first).
 \end{itemize}
 
-\subsubsection*{Example}
+\subsubsection*{Examples}
 \begin{xcasinput}
 boxwhisker([-1,1,2,2.2,3,4,-2,5])
 \end{xcasinput}
@@ -35960,7 +36275,7 @@ Vertical alignment (the default, suitable for a small number of boxwhiskers):
 \begin{xcasinput}
 c:=colormap("discrete","vivid"):;
 names:=["first","second","third","fourth","fifth","sixth","seventh"]:;
-boxplot(cols(L,0..6),color=c,legend=names)
+boxplot(tran(col(L,0..6)),color=c,legend=names)
 \end{xcasinput}
 \begin{xcasimage}
   \includeimage{xcas-boxwhisker2.png}
@@ -36233,18 +36548,23 @@ The \texttt{bar\_plot}\index{bar\_plot@\texttt{bar\_plot}}
 or \texttt{barplot}\index{barplot@\texttt{barplot}}
 command draws bar plots.
 \begin{itemize}
-\item \texttt{bar\_plot} takes one mandatory argument and one optional argument:
+\item \texttt{bar\_plot} takes one mandatory argument and up to three optional arguments:
   \begin{itemize}
   \item $M$, a matrix, where each row consists of a label followed by one or
   more values.  If the labels are followed by more than one value,
-  then the first row needs to be identifiers.
-  \item \texttt{color=}\textit{col}, where \textit{col} is a color object
+  then the corresponding elements in the first row need to be identifiers or strings.
+  \item Optionally, \texttt{color=}\textit{col}, where \textit{col} is a color object
   or a list of color objects (see~\secref{ssec:colors}). By default,
   $\textit{col}=\texttt{black}$.
+  \item Optionally, \textit{barwidth}, a real number in $\langle 0,1]$ which specifies
+  the width of bars (by default, $\textit{barwidth}=0.75$).
+  \item Optionally, \texttt{axes}, the symbol specifying that usual axes should be drawn,
+  which is useful if you want to combine the output with other graphic objects.
   \end{itemize}
-\item \texttt{bar\_plot(}$M\,\langle,\texttt{color=}\textit{col}\,\rangle$\texttt{)}
+\item \texttt{bar\_plot(}$M\,\langle,\texttt{color=}\textit{col},\textit{barwidth},\texttt{axes}\,\rangle$\texttt{)}
   draws a bar graph with a bar for each label, whose height is given by the
-  corresponding value.  If the matrix has more than two columns, then there
+  corresponding value. If $M$ is a two-column matrix, then the first column can be numbers
+  specifying bar base midpoints. If the matrix has more than two columns, then there
   will be a bar plot for each column of values. If \textit{col} is a color object, then
   the bars are filled with the specified color. If \textit{col} is a list of colors,
   then the fill color cycles through the list for bars from left to right (each group
@@ -36253,7 +36573,7 @@ command draws bar plots.
 
 \subsubsection*{Examples}
 \begin{xcasinput}
-bar_plot([["France",6],["Germany",12],["Switzerland",5]],color=navy)
+bar_plot([["France",6],["Germany",12],["Switzerland",5]],color=navy,0.618)
 \end{xcasinput}
 \begin{xcasimage}
   \includeimage{xcas-barplot1.png}
@@ -36265,6 +36585,16 @@ bar_plot([[2,"*First group*","*Second group*"],
 \begin{xcasimage}
   \includeimage{xcas-barplot2.png}
 \end{xcasimage}
+To specify the midpoints of bar bases, the first argument
+must be a list of pairs $\texttt{[}\textit{midpoint},\textit{height}\texttt{]}$.
+For example:
+\begin{xcasinput}
+barplot([[1,4],[3,5],[4,2]],color=orange)
+\end{xcasinput}
+\begin{xcasimage}
+  \includeimage{xcas-barplot3.png}
+\end{xcasimage}
+Note that usual axes are automatically drawn in this case.
 
 \subsection{Pie charts%: \texttt{camembert}
 }
@@ -36534,8 +36864,7 @@ title="*Sunflower growth model*";
 labels=["t","h"];
 legend=["days","cm"];
 plotfunc(h(t),t=5..75,color=blue+quadrant4,legend="model");
-scatterplot(tran([tdata,hdata]),
-  display=star_point+point_width_2+red+quadrant4,legend="data");
+scatterplot(tdata,hdata,display=star_point+point_width_2+red+quadrant4,legend="data");
 \end{xcasinput}
 \begin{xcasimage}
   \includeimage{xcas-sunflower.png}
@@ -40800,7 +41129,8 @@ plotwav(ir)
 Convolving data from \texttt{clip} with both channels in
 \texttt{ir} produces a reverberated variant of the recording, in
 stereo. Since the two clips have different sample rates,
-\texttt{clip} should be up-sampled to 44100~Hz before convolving.
+\texttt{clip} should be up-sampled to 44100~Hz before convolving
+(see~\secref{ssec:resample}).
 \begin{xcasinput}
 data:=channel_data(resample(clip,samplerate(ir))):;
 L:=convolution(data,channel_data(ir,left)):;
@@ -41068,14 +41398,8 @@ In the following example, a square-like signal is created from a
 sine wave by clipping sample values.
 \begin{xcasinput}
 data:=threshold(3*sin(2*pi*440*soundsec(2)),[-1.0,1.0]):;
-s:=createwav(data):;
-playsnd(s)
-\end{xcasinput}
-\begin{xcasoutput}
-  \texttt{1}
-\end{xcasoutput}
-\begin{xcasinput}
-plotwav(s,range=[1000,2000])
+snd:=createwav(data):;
+plotwav(snd,range=[1000,2000])
 \end{xcasinput}
 \begin{xcasimage}
   \includeimage{xcas-sound_wav4.png}
@@ -41837,7 +42161,7 @@ Hence $P(1)=2$, $P(\mathrm{i})=P(\omega^1)=-1+\mathrm{i}$,
 $P(-1)=P(\omega^2)=0$, $P(-\mathrm{i})=P(\omega^3)=-1-\mathrm{i}$.
 You find of course the same values as above.
 
-\paragraph{Trigonometric interpolation.}
+\paragraph{Trigonometric interpolation.\label{ssec:triginterp}}
 Let $f$ be periodic function of period $2\pi$ and let $f_{k}=f(2k\pi/N)$
 for $k=0,\dots,N-1$. Find a trigonometric polynomial $p$ that interpolates $f$
 at $x_k=2k\pi/N$, that is find $p_j$ for $j=0,\dots,N-1$ such that
@@ -41852,85 +42176,14 @@ In other words, $(f_k)$ is the inverse DFT of $(p_k)$, hence
 \[
   (p_k)=\frac{1}{N} F_N\left((f_k)\right).
 \]
-If the function $f$ is real, $p_{-k}=\overline p_k$, hence depending
-whether $N$ is even or odd:
+If the function $f$ is real then $p_{-k}=\overline p_k$, hence
 \[
-  p(x)=p_0+ 2 \operatorname{Re}\left(\sum_{k=0}^{\frac{N}{2}-1}p_k \mathrm{e}^{\mathrm{i}kx}\right)
-  +\operatorname{Re}\left(p_{\frac{N}{2}}  \mathrm{e}^{\mathrm{i}\frac{Nx}{2}}\right)
+  p(x)=\begin{cases}p_0+ 2 \operatorname{Re}\left(\sum_{k=0}^{\frac{N}{2}-1}p_k \mathrm{e}^{\mathrm{i}kx}\right)
+  +\operatorname{Re}\left(p_{\frac{N}{2}}  \mathrm{e}^{\mathrm{i}\frac{Nx}{2}}\right),&\text{$N$ even,}\\
+  p(x)=p_0+ 2 \operatorname{Re}\left(\sum_{k=0}^{\frac{N-1}{2}}p_k \mathrm{e}^{\mathrm{i}kx}\right),&
+  \text{$N$ odd.}\end{cases}
 \]
-if $N$ is even and
-\[
-  p(x)=p_0+ 2 \operatorname{Re}\left(\sum_{k=0}^{\frac{N-1}{2}}p_k \mathrm{e}^{\mathrm{i}kx}\right)
-\]
-if $N$ is odd.
-
-As an example, consider the following table which describes how the
-temperature at some location changes during the day.
-\begin{center}
-  \begin{tabular}{|l|c|c|c|c|c|c|c|c|}
-    \hline $t$ (h)&0&3&6&9&12&15&18&21\\
-    \hline $T$ (${}^\circ$C)&11&10&17&24&32&26&23&19\\\hline
-  \end{tabular}
-\end{center}
-Using trigonometric interpolation, predict the temperature at 13:45 h.
-
-Here $N=8=2m$. The interpolation polynomial is (see also~\secref{ssec:triginterp}):
-\[
-  p(t)=\frac{1}{2} p_{-m}\left(\mathrm{e}^{-2\mathrm{i}\frac{\pi mt}{24}}+  \mathrm{e}^{2\mathrm{i}\frac{\pi mt}{24}}\right)+
-  \sum_{k=-m+1}^{m-1}p_k  \mathrm{e}^{2\mathrm{i}\frac{\pi kt}{24}}
-\]
-and
-\[
-  p_k=\frac{1}{N} \sum_{k=j}^{N-1}T_k  \mathrm{e}^{2\mathrm{i}\frac{\pi k}{N}}.
-\]
-\begin{xcasinput}
-q:=1/8*fft([11,10,17,24,32,26,23,19])
-\end{xcasinput}
-\begin{xcasoutput}
-  \big[& 20.25,-4.48115530061+1.72227182413 \mathrm{i},0.375+0.875\mathrm{i},\\
-  & -0.768844699385+0.222271824132, \mathrm{i},0.5,\\
-  & -0.768844699385-0.222271824132, \mathrm{i},\\
-  & 0.375-0.875\mathrm{i}, -4.48115530061-1.72227182413\mathrm{i}\big]
-\end{xcasoutput}
-Therefore:
-\begin{itemize}
-\item $p_0=20.25$,
-\item $p_1=-4.48115530061+1.72227182413\mathrm{i}=\overline{p_{-1}}$,
-\item $p_2=0.375+0.875\mathrm{i}=\overline{p_{-2}}$,
-\item $p_3=-0.768844699385+0.222271824132\mathrm{i}=\overline{p_{-3}}$,
-\item $p_4=0.5$.
-\end{itemize}
-Indeed,
-$q=[q_0,\dots,q_{N-1}]=[p_0,\dots,p_{\frac{N}{2}-1},p_{-\frac{N}{2}},\dots,p_{-1}]=\frac{1}{N}F_N([y_0,\dots,y_{N-1}])=\frac{1}{N}\texttt{fft}(y)$.
-\begin{xcasinput}
-pp:=[q[4],q[5],q[6],q[7],q[0],q[1],q[2],q[3]]:;
-\end{xcasinput}
-Here, $p_k=\texttt{pp}[k+4]$ for $k=-4,\dots,3$.
-It remains to compute the value of the interpolation polynomial at point
-$t_0=13.75=55/4$.
-\begin{xcasinput}
-t0(j):=exp(2*i*pi*(13+3/4)/24*j);
-T0:=1/2*pp[0]*(t0(4)+t0(-4))+sum(pp[j+4]*t0(j),j,-3,3);
-evalf(re(T0))
-\end{xcasinput}
-\begin{xcasoutput}
-  29.4863181684
-\end{xcasoutput}
-The temperature is predicted to be equal to 29.49 degrees Celsius.
-
-Using the Lagrange interpolation polynomial (which is not
-periodic), we obtain the following prediction:
-\begin{xcasinput}
-l1:=[0,3,6,9,12,15,18,21]:;
-l2:=[11,10,17,24,32,26,23,19]:;
-subst(lagrange(l1,l2,13+3/4),x=13+3/4):;
-evalf(ans())
-\end{xcasinput}
-\begin{xcasoutput}
-  30.1144061688
-\end{xcasoutput}
-Note, however, that Lagrange polynomial can suffer from large
-oscillations and is hence not practical.
+For an example, see~\secref{ssec:triginterp}.
 
 \paragraph{Fourier series.}
 Let $f$ be a periodic function of period $2\pi$ and let
@@ -42219,7 +42472,7 @@ the original clip, apply a spectral band-reject filter between 180 and 6000~Hz,
 and obtain the filtered version with \texttt{istft}. In this example the
 filter decays over time, so it appears as if the rest of the band enter with a fade-in.
 
-A window of half-size $m=8192$ is used to obtain a good frequency
+A window of half-size $m=8192$ is used in order to obtain a good frequency
 resolution. Enter:
 \begin{xcasinput}
 data,N,lo,hi,sr:=channel_data(music),8192,180,6000,samplerate(music):;
@@ -42778,7 +43031,7 @@ for \texttt{plotimf}.
   return a graphical object containing plots of the selected EMD components.
 \end{itemize}
 
-\subsection*{Example}
+\subsubsection*{Example}
 
 To define a synthetic non-stationary signal, enter:
 \begin{xcasinput}
@@ -42907,11 +43160,11 @@ hht(synth,color=false,frequencies=0.1..2.0,output=plot)
 You may also pass the list of already computed IMFs as the first argument.
 
 \paragraph*{Whale song.}
-The audio file \texttt{nepblue24s10x.wav} downloaded from
+The file \texttt{nepblue24s10x.wav} downloaded from
 \href{https://www.pmel.noaa.gov/acoustics/whales/sounds/sounds_whales_blue.html}{here}
 contains sounds produced by a blue whale in the northeast Pacific. Since the
-frequency of moans is very low (below 20~Hz), the file is played back
-at 10x speed. To load and show the audio, enter:
+frequency of moans is very low (below 20~Hz, which is inaudible for humans),
+the file is played back at 10x speed. To load and show the audio, enter:
 \begin{xcasinput}
 whale:=readwav("/home/luka/Downloads/nepblue24s10x.wav"):; plotwav(whale)
 \end{xcasinput}
@@ -43071,7 +43324,7 @@ the GSL library.
   where $i=0,\dots,N-1$ is the level index, $j=0,\dots,2^{i}-1$ is the index of the
   coefficient within each level, and $N=\log_2(n)$. The first element $s_{-1,0}$ is the
   smoothing coefficient, which is followed by detail coefficients $d_{i,j}$ for each level $i$.
-\item If \textit{data} is a matrix, then the ``non-standard'' two-dimensional DWT is performed in interleaved
+\item If \textit{data} is a matrix, then the ``non-standard'' 2D DWT is performed in interleaved
   passes on the rows and columns for each level of the transform. The non-standard
   form of DWT is typically used in image analysis. By default, the ``standard'' form is used,
   which performs a complete DWT on the rows of the matrix, followed by a separate complete
@@ -43213,7 +43466,7 @@ The \texttt{blackman\_window}\index{blackman\_window@\texttt{blackman\_window}}
 command applies the Blackman window function to a sequence or its segment.
 \begin{itemize}
 \item \texttt{blackman\_window} takes one mandatory argument
-  and one to three optional arguments:
+  and up to three optional arguments:
   \begin{itemize}
   \item $\mathbf{v}$, a real vector with length $n$.
   \item Optionally, one of:
@@ -43277,7 +43530,7 @@ The \texttt{cosine\_window}\index{cosine\_window@\texttt{cosine\_window}}
 command applies the cosine window function to a sequence or its segment.
 \begin{itemize}
 \item \texttt{cosine\_window} takes one mandatory argument
-  and one to three optional arguments:
+  and up to three optional arguments:
   \begin{itemize}
   \item $\mathbf{v}$, a real vector with length $n$.
   \item Optionally, one of:
@@ -43311,7 +43564,7 @@ The \texttt{gaussian\_window}\index{gaussian\_window@\texttt{gaussian\_window}}
 command applies the Gaussian window function to a sequence or its segment.
 \begin{itemize}
 \item \texttt{gaussian\_window} takes one mandatory argument
-  and one to three optional arguments:
+  and up to three optional arguments:
   \begin{itemize}
   \item $\mathbf{v}$, a real vector with length $n$.
   \item Optionally, one of:
@@ -43374,7 +43627,7 @@ The \texttt{hann\_poisson\_window}\index{hann\_poisson\_window@\texttt{hann\_poi
 command applies the Hann-Poisson window to a sequence or its segment.
 \begin{itemize}
 \item \texttt{hann\_poisson\_window} takes one mandatory argument
-  and one to three optional arguments:
+  and up to three optional arguments:
   \begin{itemize}
   \item $\mathbf{v}$, a real vector with length $n$.
   \item Optionally, one of:
@@ -43470,7 +43723,7 @@ The \texttt{poisson\_window}\index{poisson\_window@\texttt{poisson\_window}}
 command applies the Poisson window function to a sequence or its segment.
 \begin{itemize}
 \item \texttt{poisson\_window} takes one mandatory argument
-  and one to three optional arguments:
+  and up to three optional arguments:
   \begin{itemize}
   \item $\mathbf{v}$, a real vector with length $n$.
   \item Optionally, one of:
@@ -43535,7 +43788,7 @@ The \texttt{triangle\_window}\index{triangle\_window@\texttt{triangle\_window}}
 command applies the triangle window function to a sequence or its segment.
 \begin{itemize}
 \item \texttt{triangle\_window} takes one mandatory argument
-  and one to three optional arguments:
+  and up to three optional arguments:
   \begin{itemize}
   \item $\mathbf{v}$, a real vector with length $n$.
   \item Optionally, one of:
@@ -43570,7 +43823,7 @@ The \texttt{tukey\_window}\index{tukey\_window@\texttt{tukey\_window}}
 command applies the Tukey window function to a sequence or its segment.
 \begin{itemize}
 \item \texttt{tukey\_window} takes one mandatory argument
-  and one to three optional arguments:
+  and up to three optional arguments:
   \begin{itemize}
   \item $\mathbf{v}$, a real vector with length $n$.
   \item Optionally, one of:
@@ -43679,7 +43932,7 @@ taxicab:=(p1,p2)->l1norm(p1-p2)
       \item \texttt{list}, for outputting the list of cluster indices for data points (the default).
       \item \texttt{plot}, for outputting a colored visualization of data points with additional
         specifications given in \texttt{display} option (see below). Note that this is possible only with
-        two- and three-dimensional numerical data.
+        two- and 3D numerical data.
       \item \texttt{count}, for outputting only the number of clusters.
       \item \texttt{index}, for outputting the list of values of the (first) used index.
       \item \texttt{tree}, for outputting a dendrogram drawing which visualizes the linking process.
@@ -43703,19 +43956,25 @@ taxicab:=(p1,p2)->l1norm(p1-p2)
 \end{itemize}
 
 \subsubsection*{Examples}
-We apply \texttt{cluster} command to an ``aggregation''
-shape dataset (see \href{http://cs.joensuu.fi/sipu/datasets/}{here}).
-The dataset is loaded from file in a table cell in \xcas{} and associated with
-the variable \texttt{data}. We use the \texttt{average} linkage method and \texttt{silhouette}
-index (which is used by default if \texttt{index=true}). By setting \texttt{output} parameter
-to \texttt{plot}, we obtain a visualization of colored clusters as shown in Figure~\ref{fig:hclust}.
-\begin{figure}[h]
-  \centering
-  \includeimage[0.4142]{hclust.png}
-  \caption{\label{fig:hclust}Clustering in \xcas{}}
-\end{figure}
+To apply \texttt{cluster} command to a 2D ``aggregation''
+shape dataset which can be downloaded from \href{http://cs.joensuu.fi/sipu/datasets/}{here},
+first load the data by entering:
+\begin{xcasinput}
+data:=csv2gen("/home/luka/Downloads/Aggregation.txt","\t"):;
+\end{xcasinput}
+The original file contains three data columns: first are the $x$-coordinates, second the $y$-coordinates,
+and third are cluster indices. To cluster and plot 2D points specified by the first two columns,
+with the average linkage method and silhouette index (which is used by default if
+\texttt{index=true}), enter:
+\begin{xcasinput}
+cluster(delcols(data,2),type="average",index=true,output=plot)
+\end{xcasinput}
+\begin{xcasimage}
+  \includeimage{hclust.png}
+\end{xcasimage}
 
-For string data, Levenshtein distance is used by default (see \secref{sec:levensthein}).
+Levenshtein distance (see \secref{sec:levensthein}) is used by default for string
+data. For example:
 \begin{xcasinput}
 cluster(["cat","mouse","rat","spouse","house","cut"],output=part)
 \end{xcasinput}
@@ -43726,7 +43985,7 @@ cluster(["cat","mouse","rat","spouse","house","cut"],output=part)
   \end{bmatrix}
 \end{xcasoutput}
 
-In the following example we split genomic sequences into three clusters
+In the following example, genomic sequences are split into three clusters
 by using the \texttt{average} linkage and Hamming distance function.
 \begin{xcasinput}
 data:=["GTCTT","AAGCT","GGTAA","AGGCT","GTCAT","CGGCC",
@@ -43789,7 +44048,7 @@ for clustering numerical multidimensional data.
       \item \texttt{list}, for outputting the list of cluster indices for data points (the default).
       \item \texttt{plot}, for outputting a colored visualization of data points with additional
         specifications given in \texttt{display} option (see below). Note that this is possible only with
-        two- and three-dimensional data.
+        two- and 3D data.
       \item \texttt{count}, for outputting only the number of clusters.
       \item \texttt{index}, for outputting the list of values of the (first) used index.
       \end{itemize}
@@ -44519,7 +44778,7 @@ subst(exp(nDeriv(x^2,x,0.00001)),x=1)
 which is an approximate value of $\mathrm{e}^{2}\approx 7.38905609893$.
 
 \subsection{Approximating definite integrals%: \texttt{romberg} \texttt{nInt}
-}
+ \label{ssec:intapprox}}
 
 The \texttt{romberg}\index{romberg@\texttt{romberg}}
 or \texttt{nInt}\index{nInt@\texttt{nInt}}
@@ -45030,21 +45289,14 @@ difference between a function and an expression).
   \item Optionally, \texttt{curve}, the symbol.
   \end{itemize}
 \item \texttt{odesolve(}$\textit{mandatory}\,\langle,\texttt{curve}\,\rangle$\texttt{)}
-  returns an approximate value of $x(t_1)$ where $x(t)$ is the
-  solution of
-  \[
-    x\Prime(t)=f(t,x(t)), \quad  x(t_0)=x_0.
-  \]
+  returns an approximate value of $x(t_1)$ with $x$ being the particular solution of
+  $x\Prime(t)=f(t,x(t))$ statisfying the initial condition $x(t_0)=x_0$.
   With an optional argument of \texttt{curve}, the list of all the
   $[t,[x(t)]]$ values that were computed by the solver are returned.
 \end{itemize}
 
 \subsubsection*{Examples}
-Solve the system:
-\begin{align*}
-  x\Prime(t)&=-y(t)\\
-  y\Prime(t)&=x(t)
-\end{align*}
+Solve the system of equations $x\Prime(t)=-y(t)$ and $y\Prime(t)=x(t)$:
 \begin{xcasinput}
 odesolve([-y,x],t=0..pi,[x,y],[0,1])
 \end{xcasinput}
@@ -45052,18 +45304,13 @@ odesolve([-y,x],t=0..pi,[x,y],[0,1])
   \left[-1.79045146764\times10^{-15},-1\right]
 \end{xcasoutput}
 
-Solve the system:
-\begin{align*}
-  x\Prime(t)&=-y(t)\\
-  y\Prime(t)&=x(t)
-\end{align*}
+Solve the system of equations $x\Prime(t)=-y(t)$ and $y\Prime(t)=x(t)$:
 \begin{xcasinput}
 odesolve(0..pi,(t,v)->[-v[1],v[0]],[0,1])
 \end{xcasinput}
 or:
 \begin{xcasinput}
-f(t,v):=[-v[1],v[0]]
-odesolve(0..pi,f,[0,1])
+f(t,v):=[-v[1],v[0]]:; odesolve(0..pi,f,[0,1])
 \end{xcasinput}
 \begin{xcasoutput}
   \left[-1.79045146764\times10^{-15},-1\right]
@@ -45084,11 +45331,11 @@ odesolve(0..pi/4,f,[0,1],curve)
     0.785398163397&\left[-0.707106781186,0.707106781186\right]\end{bmatrix}
 \end{xcasoutput}
 
-\subsection{Approximating solutions of $y\dPrime=f(t,y,y\Prime)$ with boundary conditions%: \texttt{bvpsolve}
+\subsection{Approximating solutions of boundary value problems%: \texttt{bvpsolve}
 }
 
 The \texttt{bvpsolve}\index{bvpsolve@\texttt{bvpsolve}}
-command finds an approximate solution of a boundary value problem
+command finds an approximate solution $\hat{y}(t)$ of a boundary value problem
 \[
   y\dPrime=f(t,y,y\Prime),\quad y(a)=\alpha,\ y(b)=\beta
 \]
@@ -45096,40 +45343,39 @@ on the interval $[a,b]$.  The procedure uses the method of nonlinear
 shooting which is based on Newton and Runge-Kutta methods. Values of
 $y$ and its first derivative $y\Prime$ are approximated at points
 $t_k=a+k\,\delta$, where $\delta=\frac{b-a}{N}$ and $k=0,1,\dots,N$.
-For the numeric tolerance (precision) threshold, the algorithm uses
-\texttt{epsilon} specified in the session settings in \xcas{} (see
-\secref{ssec:confcomp}, item \ref{enum:eps}).
+% For the numeric tolerance (precision) threshold, the algorithm uses
+% \texttt{epsilon} specified in the session settings in \xcas{} (see
+% \secref{ssec:confcomp}, item \ref{enum:eps}).
 
 \begin{itemize}
 \item \texttt{bvpsolve} takes three mandatory arguments and four
   optional arguments:
   \begin{itemize}
-  \item $f(t,y,y\Prime)$, an expression involving an independent variable
-    $t$ and dependent variables $y$ and/or $y\Prime$.
-  \item $[t=a\texttt{..}b,y]$, a list specifying the independent variable $t$,
+  \item $f(t,y,y\Prime)$, an expression defining $y\dPrime$.
+  \item $[t=a\texttt{..}b,y]$, a list specifying the variable $t$,
     its range $[a,b]$ and the sought function $y$.
   \item $[\alpha,\beta]$, a list of the boundary values of $y$.
   \item Optionally, $A$, an initial guess for $y\Prime(a)$ (by default,
     $(\beta-\alpha)/(b-a)$).
   \item Optionally, $N$, an integer greater than or equal to 2 (by
     default 100).
-  \item \texttt{output=}\textit{type} or
+  \item Optionally, \texttt{output=}\textit{type} or
     \texttt{Output=}\textit{type}, the type of the output, where
     \textit{type} can be one of: \texttt{list} (the default),
     \texttt{diff}, \texttt{piecewise} or \texttt{spline}.
-  \item \texttt{limit=$M$}, a positive integer for a limit for the
+  \item Optionally, \texttt{limit=$M$}, a positive integer for a limit for the
     number of iterations before the procedure is stopped
     (by default there is no limit). 
   \end{itemize}
 \item \texttt{bvpsolve(}$f(t,y,y\Prime),[t=a\texttt{..}b,y],[\alpha,\beta]\,\langle,A,N,
-  \texttt{output=}\textit{type},\texttt{limit=}M\,\rangle$\texttt{)}
-  returns, for the different output types:
+  \texttt{output=}\textit{type},\texttt{limit=}M\,\rangle$\texttt{)} returns:
   \begin{itemize}
-  \item \texttt{list}, a list of pairs $[t_k,y_k]$ where $y_k\approx y(t_k)$,
-  \item \texttt{diff}, a list of triples $[t_k,y_k,y\Prime_k]$, where $y\Prime_k\approx y\Prime(t_k)$,
-  \item \texttt{piecewise}, a piecewise linear interpolation of the
+  \item with $\textit{type}=\texttt{list}$, a list of pairs $[t_k,y_k]$ where $y_k\approx y(t_k)$,
+  \item with $\textit{type}=\texttt{diff}$, a list of triples $[t_k,y_k,y\Prime_k]$,
+    where $y\Prime_k\approx y\Prime(t_k)$,
+  \item with $\textit{type}=\texttt{piecewise}$, a piecewise linear interpolation of the
     points $(t_k,y_k)$,
-  \item \texttt{spline}, a piecewise spline interpolation of the
+  \item with $\textit{type}=\texttt{spline}$, a piecewise spline interpolation of the
     points $(t_k,y_k)$, based on the values $y\Prime_k$ computed in the
     process. 
   \end{itemize}
@@ -45149,46 +45395,73 @@ may help the shooting algorithm to converge or to converge faster.
 
 \subsubsection*{Examples}
 Solve $y\dPrime=\frac{1}{8}\,(32+2\,t^3-y\,y\Prime)$ with $1\leq t\leq 3$ and
-boundary conditions $y(1)=17$ and $y(3)=\frac{43}{3}$.
-Use $N=20$, which gives an $t$-step of $0.01$.
+boundary conditions $y(1)=17$ and $y(3)=\frac{43}{3}$ (the exact solution is $y(t)=t^2+16/t$).
+Use $N=20$, which gives an $t$-step of $0.01$. To display approximated and exact
+values together, enter:
 \begin{xcasinput}
-bvpsolve((32+2t^3-y*y')/8,[t=1..3,y],[17,43/3],20)
+aprx:=bvpsolve((32+2t^3-y*y')/8,[t=1..3,y],[17,43/3],20):;
+exct:=apply(t->t^2+16/t,linspace(1.0,3.0,21)):;
+prepend(border(aprx,exct),[t,y_k,y(t_k)])
 \end{xcasinput}
-The output is shown in Table~\ref{tab:bvp} (the middle two columns)
-alongside with the values $y(t_k)$ of the exact solution $y(t)=t^2+16/t$
-(the fourth column).
-\begin{table}
-  \centering\small
-  \begin{tabular}{rlll}
-    \toprule
-    $k$ & $t_k$ & $y_k$ & $y(t_k)$\\\midrule
-    0 & 1.0 & 17.0 & 17.0\\
-    1 & 1.1 & 15.7554961579 & 15.7554545455\\
-    2 & 1.2 & 14.7733911821 & 14.7733333333\\
-    3 & 1.3 & 13.9977543159 & 13.9976923077\\
-    4 & 1.4 & 13.388631813 & 13.3885714286\\
-    5 & 1.5 & 12.9167227424 & 12.9166666667\\
-    6 & 1.6 & 12.5600506483 & 12.56\\
-    7 & 1.7 & 12.3018096101 & 12.3017647059\\
-    8 & 1.8 & 12.1289281414 & 12.1288888889\\
-    9 & 1.9 & 12.0310865274 & 12.0310526316\\
-    10 & 2.0 & 12.0000289268 & 12.0\\
-    11 & 2.1 & 12.0290719981 & 12.029047619\\
-    12 & 2.2 & 12.1127475278 & 12.1127272727\\
-    13 & 2.3 & 12.2465382803 & 12.2465217391\\
-    14 & 2.4 & 12.4266798825 & 12.4266666667\\
-    15 & 2.5 & 12.650010254 & 12.65\\
-    16 & 2.6 & 12.9138537834 & 12.9138461538\\
-    17 & 2.7 & 13.2159312426 & 13.2159259259\\
-    18 & 2.8 & 13.5542890043 & 13.5542857143\\
-    19 & 2.9 & 13.9272429048 & 13.9272413793\\
-    20 & 3.0 & 14.3333333333 & 14.3333333333\\
-    \bottomrule
-  \end{tabular}
-  \caption{\label{tab:bvp}Predicted and actual values of the function $y(t)=t^2+16/t$ on $[1,3]$}
-\end{table}
+\begin{xcasoutput}
+  \left[\begin{array}{ccc}t&y_{k}&y\left(t_{k}\right)\\
+  1.0&17.0&17.0\\1.1&15.7554961579&15.7554545455\\
+  1.2&14.7733911821&14.7733333333\\
+  1.3&13.9977543159&13.9976923077\\
+  1.4&13.388631813&13.3885714286\\
+  \vdots&\vdots&\vdots\\
+%   1.5&12.9167227424&12.9166666667\\
+%   1.6&12.5600506483&12.56\\
+%   1.7&12.3018096101&12.3017647059\\
+%   1.8&12.1289281414&12.1288888889\\
+%   1.9&12.0310865274&12.0310526316\\
+%   2.0&12.0000289268&12.0\\
+%   2.1&12.0290719981&12.029047619\\
+%   2.2&12.1127475278&12.1127272727\\
+%   2.3&12.2465382803&12.2465217391\\
+%   2.4&12.4266798825&12.4266666667\\
+%   2.5&12.650010254&12.65\\
+%   2.6&12.9138537834&12.9138461538\\
+%   2.7&13.2159312426&13.2159259259\\
+  2.8&13.5542890043&13.5542857143\\
+  2.9&13.9272429048&13.9272413793\\
+  3.0&14.3333333333&14.3333333333\end{array}\right]
+\end{xcasoutput}
+% The output is shown in Table~\ref{tab:bvp} (the middle two columns)
+% alongside with the values $y(t_k)$ of the exact solution $y(t)=t^2+16/t$
+% (the fourth column).
+% \begin{table}
+%   \centering\small
+%   \begin{tabular}{rlll}
+%     \toprule
+%     $k$ & $t_k$ & $y_k$ & $y(t_k)$\\\midrule
+%     0 & 1.0 & 17.0 & 17.0\\
+%     1 & 1.1 & 15.7554961579 & 15.7554545455\\
+%     2 & 1.2 & 14.7733911821 & 14.7733333333\\
+%     3 & 1.3 & 13.9977543159 & 13.9976923077\\
+%     4 & 1.4 & 13.388631813 & 13.3885714286\\
+%     5 & 1.5 & 12.9167227424 & 12.9166666667\\
+%     6 & 1.6 & 12.5600506483 & 12.56\\
+%     7 & 1.7 & 12.3018096101 & 12.3017647059\\
+%     8 & 1.8 & 12.1289281414 & 12.1288888889\\
+%     9 & 1.9 & 12.0310865274 & 12.0310526316\\
+%     10 & 2.0 & 12.0000289268 & 12.0\\
+%     11 & 2.1 & 12.0290719981 & 12.029047619\\
+%     12 & 2.2 & 12.1127475278 & 12.1127272727\\
+%     13 & 2.3 & 12.2465382803 & 12.2465217391\\
+%     14 & 2.4 & 12.4266798825 & 12.4266666667\\
+%     15 & 2.5 & 12.650010254 & 12.65\\
+%     16 & 2.6 & 12.9138537834 & 12.9138461538\\
+%     17 & 2.7 & 13.2159312426 & 13.2159259259\\
+%     18 & 2.8 & 13.5542890043 & 13.5542857143\\
+%     19 & 2.9 & 13.9272429048 & 13.9272413793\\
+%     20 & 3.0 & 14.3333333333 & 14.3333333333\\
+%     \bottomrule
+%   \end{tabular}
+%   \caption{\label{tab:bvp}Predicted and actual values of the function $y(t)=t^2+16/t$ on $[1,3]$}
+% \end{table}
 
-As another example, solve $y\dPrime=\frac{t^2\,y\Prime^2-9\,y^2+4\,t^6}{t^5}$
+As another example, solve $t^5 y\dPrime=t^2\,y\Prime^2-9\,y^2+4\,t^6$
 with $1\leq t\leq 2$ and boundary conditions $y(1)=0$ and $y(2)=\ln 256$.
 Obtain the solution as a piecewise spline interpolation for $N=10$ and
 estimate the absolute error \texttt{err} of the approximation using
@@ -47072,7 +47345,7 @@ a:=copy([0,1,2,3,4]);
 ...
 a[3]=<33;
 \end{lstlisting}
-Alternately, you could use a command which recreates a list every time
+Alternatively, you could use a command which recreates a list every time
 the program is run, such as \texttt{makelist\index{makelist@\texttt{makelist}}} or
 \texttt{\$}, instead of copying a list;  \texttt{a:=makelist(n,n,0,4)} or
 \texttt{a:=[n\$(n=0..4)]} can also be used in
@@ -47131,7 +47404,7 @@ expr("2133")
 \begin{xcasoutput}
   2133
 \end{xcasoutput}
-A string consisting of the digits 0-9 which contains a
+A string consisting of the digits 0-9 that contains a
 single decimal point will be converted to a double:
 \begin{xcasinput}
 expr("123.4")
@@ -47677,7 +47950,7 @@ monpgcd(30,36)
   6
 \end{xcasoutput}
 
-\chapter{Two-dimensional graphics\label{chap:2dgraphics}}
+\chapter{2D graphics\label{chap:2dgraphics}}
 
 \section{Introduction}
 
@@ -47931,8 +48204,7 @@ beginning of a line, which will set the feature globally; it will
 apply to all the graphic objects created on that line.  For some
 features, both options are available.
 
-\subsubsection{Parameters for local features\label{sssec:localfeatures}}
-
+\paragraph*{Parameters for local features.\label{sssec:localfeatures}}
 Commands which create graphic objects, such as \texttt{triangle}, can
 have optional arguments to change a features of the object. For
 example, the argument \texttt{color=red} will make an object red.
@@ -47995,7 +48267,7 @@ The features and their possible values are:
 \item \texttt{thickness} --- This controls line thickness, it can be
   an integer from 1 to 7.\index{thickness@\textit{thickness}}
 \item \texttt{nstep} --- The number of sampling points
-  for three-dimensional objects.
+  for 3D objects.
   \index{nstep@\textit{nstep}}
 \item \texttt{tstep} --- The step size of the
   parameter when drawing a one parameter parametric plot.
@@ -48054,8 +48326,7 @@ The number of a color is its $x$-coordinate.  To see just
 one color, say the color corresponding to $n$ for $256 \le n \le 381$,
 enter: \texttt{rainbow()[$n$-256]}.
 
-\subsubsection{Parameters for global features\label{sec:globpar}}
-
+\paragraph*{Parameters for global features.\label{sec:globpar}}
 Parameters set at the beginning of a line change features on the
 entire graphic screen.  It only takes effect when the line ends with a
 graphic command. For example, starting the line with
@@ -48130,11 +48401,11 @@ The parameters for global features and their possible values are:
   can be \texttt{true} or \texttt{false}.
 \item \texttt{gl\_rotation}\index{gl\_rotation@\textit{gl\_rotation}} ---
   This sets the axis of rotation for
-  three-dimensional scene animations; it should be a direction vector
+  3D scene animations; it should be a direction vector
   $[x,y,z]$.
 \item \texttt{gl\_quaternion}\index{gl\_quaternion@\textit{gl\_quaternion}} ---
   This sets the quaternion for viewing
-  three-dimensional scenes; it should be a fourtuple
+  3D scenes; it should be a fourtuple
   $[x,y,z,t]$.   (This is not compatible with
   interactive graphs.)
 \end{itemize}
@@ -48769,7 +49040,7 @@ repeats the beginning vertex).
   \label{ssec:element}}
 
 The \texttt{element}\index{element@\texttt{element}}
-command is most useful in a two-dimensional
+command is most useful in a 2D
 geometry screen; it creates objects that are restricted to a geometric
 figure.
 
@@ -50207,8 +50478,7 @@ parabola(-i,i,1/2)
   \label{ssec:affix}}
 
 The \texttt{affix}\index{affix@\texttt{affix}}
-command finds the affix of a point or vector; namely,
-the complex number corresponding to the point or vector.
+command finds the affix of a point or vector (the corresponding complex number).
 \begin{itemize}
 \item \texttt{affix} takes
   $P$, a point or vector.
@@ -50232,7 +50502,7 @@ affix(vector(-1,i))
 \subsection{Abscissa of a point or vector in the plane%: \texttt{abscissa}
   \label{ssec:2dabscissa}}
 
-See \secref{ssec:3dabscissa} for abscissas in three-dimensional
+See \secref{ssec:3dabscissa} for abscissas in 3D
 geometry.
 
 The \texttt{abscissa}\index{abscissa@\texttt{abscissa}}
@@ -50272,7 +50542,7 @@ abscissa([1,2])
 \subsection{Ordinate of a point or vector in the plane%: \texttt{ordinate}
   \label{ssec:2dordinate}}
 
-See \secref{ssec:3dordinate} for ordinates in three-dimensional
+See \secref{ssec:3dordinate} for ordinates in 3D
 geometry.
 
 The \texttt{ordinate}\index{ordinate@\texttt{ordinate}}
@@ -50312,7 +50582,7 @@ ordinate([1,2])
 \subsection{Coordinates of a point, vector or line in the plane%: \texttt{coordinates}
   \label{ssec:2dcoordinates}}
 
-See \secref{ssec:3dcoordinates} for coordinates in three-dimensional
+See \secref{ssec:3dcoordinates} for coordinates in 3D
 geometry.
 
 The \texttt{coordinates}\index{coordinates@\texttt{coordinates}}
@@ -50415,7 +50685,7 @@ The \texttt{rectangular\_coordinates}\index{rectangular\_coordinates@\texttt{rec
 command finds the rectangular coordinates of a point given its polar coordinates.
 \begin{itemize}
 \item \texttt{rectangular\_coordinates} takes two arguments:
-  $r$, $\theta$, two real numbers.
+  $r$ and $\theta$, two real numbers.
 \item \texttt{rectangular\_coordinates($r,\theta$)}
   returns a list of the rectangular coordinates of the point with
   polar coordinates $r$ and $\theta$.
@@ -50465,7 +50735,7 @@ polar_coordinates([1,1])
   \label{ssec:2dcarteq}}
 
 See \secref{ssec:3dcarteq} for Cartesian equations of
-three-dimensional objects.
+3D objects.
 
 The \texttt{equation}\index{equation@\texttt{equation}}
 command finds the Cartesian equation for a geometric object.
@@ -50476,8 +50746,7 @@ command finds the Cartesian equation for a geometric object.
   variables \texttt{x} and \texttt{y} for $G$.
 \end{itemize} 
 Note that \texttt{x} and \texttt{y} must be formal variables, you
-might need to purge them with with \texttt{purge(x)} and
-\texttt{purge(y)}, see \secref{ssec:about}.
+might need to purge them with with \texttt{purge(x,y)}.
 
 \subsubsection*{Example}
 \begin{xcasinput}
@@ -50491,14 +50760,14 @@ equation(line(-1,i))
   \label{ssec:2dparam}}
 
 See \secref{ssec:3dparam} for parametric equations in
-three-dimensional geometry.
+3D geometry.
 
 The \texttt{parameq}\index{parameq@\texttt{parameq}}
 command finds a parametric equation for a curve.
 \begin{itemize}
 \item \texttt{parameq} takes
   $C$, a curve.
-\item \texttt{parameq($G$)} returns a parametric equation for $G$,
+\item \texttt{parameq($C$)} returns a parametric equation for $C$,
   in the form \texttt{$x$(t)+i$y$(t)}.
 \end{itemize}
 Note that \texttt{t} must be a formal variable, it may be necessary to
@@ -50542,17 +50811,14 @@ normal(parameq(ellipse(-1,1,i)))
 
 Many commands to find measures have a version ending in \texttt{at}
 (or \texttt{atraw}) which are used to interactively find and display
-the appropriate measure in a two-dimensional geometry screen.  To use
-them, open a geometry screen with \textsf{Alt+G} and then select the
-appropriate measure from the
-\textsf{Mode\menusep{}Measure} menu.
-Once the mode is selected, then clicking on the names
-of the appropriate objects (or, if a point is being selected, a name
+the measure in a 2D~geometry screen.  To use them, open a geometry screen
+with \textsf{Alt+G} and select a measure from the
+\textsf{Mode\menusep{}Measure} menu.  Now, clicking on the names of
+objects (or, if a point is being selected, a name
 will be automatically generated if clicking on an open point) with the
-mouse, and then clicking on another point will put the measurement at
-the point; if the mode is the version ending in \texttt{at}, then the
-measurement will have a label, if the mode is the version ending in
-\texttt{atraw}, then the measurement will appear without a label.
+mouse and then clicking on another point will put the measurement at
+that point; if the mode is the version ending in \texttt{at} resp.~\texttt{atraw},
+then the measurement will have a label resp.~appear without a label.
 
 The commands with \texttt{at} and \texttt{atraw} versions are the following:
 \begin{itemize}
@@ -50581,7 +50847,7 @@ The commands with \texttt{at} and \texttt{atraw} versions are the following:
 These commands can also be used from the command line.  They are like
 the measurement command but take an extra argument, the point to
 display the measurement.  When using the version ending in
-\texttt{at}, use names for the objects rather create the objects
+\texttt{at}, use names for the objects rather to create the objects
 within the measurement command.
 
 \subsubsection*{Examples}
@@ -50628,7 +50894,7 @@ extract_measure(angleat(A,B,C,0.2i))
   \label{ssec:2ddist}}
 \index{Distance function!Euclidean}
 
-See \secref{ssec:3ddist} for distances in three-dimensional geometry.
+See \secref{ssec:3ddist} for distances in 3D geometry.
 
 The \texttt{distance}\index{distance@\texttt{distance}}
 command finds the distance between two geometric
@@ -50689,7 +50955,7 @@ The \texttt{distance} command has \texttt{distanceat} and
   \label{ssec:2ddist2}}
 \index{Distance function!Squared Euclidean}
 
-See \secref{ssec:3ddist2} for squares of lengths in three-dimensional
+See \secref{ssec:3ddist2} for squares of lengths in 3D
 geometry.
 
 The \texttt{distance2}\index{distance2@\texttt{distance2}}
@@ -50712,7 +50978,7 @@ distance2(-1, 1+i)
 \subsection{Measure of an angle in the plane%: \texttt{angle}
   \label{ssec:2dangle}}
 
-See \secref{ssec:3dangle} for angle measures in three-dimensional
+See \secref{ssec:3dangle} for angle measures in 3D
 geometry.
 
 The \texttt{angle}\index{angle@\texttt{angle}}
@@ -50770,7 +51036,7 @@ command line versions of these commands, the optional fourth argument
 for \texttt{angle} is replaced by a mandatory fourth argument for the
 point to put the measurement.
 
-\subsubsection{Converting between radians and degrees}
+\paragraph*{Converting between radians and degrees.}
 You can use \texttt{radians}\index{radians@\texttt{radians}} and
 \texttt{degrees}\index{degrees@\texttt{degrees}} commands to
 convert from degrees to radians and vice versa, respectively.
@@ -51055,8 +51321,7 @@ command creates a translation.
 
 \subsubsection*{Examples}
 \begin{xcasinput}
-t:=translation(1+i);
-t(-2)
+t:=translation(1+i); t(-2)
 \end{xcasinput}
 \begin{xcasimage}
   \includeimage{xcas-translation1.png}
@@ -51090,8 +51355,7 @@ command creates a reflection.
 
 \subsubsection*{Examples}
 \begin{xcasinput}
-rf:=reflection(-1);
-rf(1+i)
+rf:=reflection(-1); rf(1+i)
 \end{xcasinput}
 or:
 \begin{xcasinput}
@@ -51130,8 +51394,7 @@ command creates a rotation.
 
 \subsubsection*{Examples}
 \begin{xcasinput}
-r:=rotation(i,-pi/3);
-r(square(0,1)
+r:=rotation(i,-pi/3); r(square(0,1)
 \end{xcasinput}
 or:
 \begin{xcasinput}
@@ -51228,9 +51491,9 @@ See \secref{ssec:3dinversion} for inversions in space.
 
 Given a circle $C$ with center $P$ and radius $r$, the
 \emph{inversion}\index{inversion@\texttt{inversion}}
-of a point $A$ with respect to $C$ is the point $A'$
+of a point $A$ with respect to $C$ is the point $A\Prime$
 on the ray $\overrightarrow{PA}$ satisfying
-$\overline{PA}\cdot\overline{PA'}=r^2$.
+$\overline{PA}\cdot\overline{PA\Prime}=r^2$.
 
 The \texttt{inversion} command creates an inversion.
 \begin{itemize}
@@ -51288,8 +51551,7 @@ command creates a projection.
 
 \subsubsection*{Examples}
 \begin{xcasinput}
-L:=line(-1,i,color=grey);
-p1:=projection(L);
+L:=line(-1,i,color=grey); p1:=projection(L);
 Q:=point(i+1); P:=p1(Q)
 \end{xcasinput}
 or:
@@ -51300,8 +51562,7 @@ L:=line(-1,i,color=grey); Q:=point(i+1); P:=projection(L,Q)
   \includeimage{xcas-projection1.png}
 \end{xcasimage}
 \begin{xcasinput}
-C:=circle(-1,1,color=grey);
-p2:=projection(C);
+C:=circle(-1,1,color=grey); p2:=projection(C);
 Q:=point(i); P:=p2(i)
 \end{xcasinput}
 or:
@@ -51317,7 +51578,7 @@ C:=circle(-1,1,color=grey); Q:=point(i); P:=projection(C,i)
 \subsection{Checking whether a point is on an object in the plane%: \texttt{is\_element}
   \label{ssec:2diselem}}
 
-See \secref{ssec:3diselem} for checking elements in three-dimensional
+See \secref{ssec:3diselem} for checking elements in 3D
 geometry.
 
 The \texttt{is\_element}\index{is\_element@\texttt{is\_element}}
@@ -51328,8 +51589,8 @@ command determines whether or not a point lies on a geometric object.
   \item $P$, a point.
   \item $G$, a geometric object.
   \end{itemize}
-\item \texttt{is\_element($P,G$)} returns \texttt{1} if $P$ is an element of
-  $G$ and returns \texttt{0} otherwise.
+\item \texttt{is\_element($P,G$)} returns $1$ if $P$ is an element of
+  $G$ and $0$ otherwise.
 \end{itemize}
 
 \subsubsection*{Examples}
@@ -51350,15 +51611,15 @@ is_element(i,line(0,1+i))
   \label{ssec:2dcheckcollinear}}
 
 See \secref{ssec:3dcheckcollinear} for checking for collinearity in
-three-dimensional geometry.
+3D geometry.
 
 The \texttt{is\_collinear}\index{is\_collinear@\texttt{is\_collinear}}
 command determines whether or not three points are collinear.
 \begin{itemize}
 \item \texttt{is\_collinear} takes three arguments:
   $A,B,C$, three points.
-\item \texttt{is\_collinear($A,B,C$)} returns \texttt{1} if $A,B$
-  and $C$ are collinear and returns \texttt{0} otherwise.
+\item \texttt{is\_collinear($A,B,C$)} returns $1$ if $A,B$
+  and $C$ are collinear and $0$ otherwise.
 \end{itemize}
 
 \subsubsection*{Examples}
@@ -51379,15 +51640,15 @@ is_collinear(i/100,1+i,-1-i)
   \label{ssec:2dcheckconcycle}}
 
 See \secref{ssec:3dcheckconcycle} for checking for concyclicity in
-three-dimensional geometry.
+3D geometry.
 
 The \texttt{is\_concyclic}\index{is\_concyclic@\texttt{is\_concyclic}}
 command determines whether or not points are cyclic.
 \begin{itemize}
 \item \texttt{is\_concyclic} takes
   $L$, a list or sequence of points.
-\item \texttt{is\_concyclic($L$)} returns \texttt{1} if the points
-  in $L$ all lie on the same circle, and returns \texttt{0} otherwise.
+\item \texttt{is\_concyclic($L$)} returns $1$ if the points
+  in $L$ all lie on the same circle, and $0$ otherwise.
 \end{itemize}
 
 \subsubsection*{Examples}
@@ -51415,8 +51676,8 @@ command determines whether or not a point is in a polygon or a circle.
   \item $P$, a point.
   \item $C$, a polygon or a circle.
   \end{itemize}   
-\item \texttt{is\_inside($P,C$)} returns \texttt{1} if $P$ is inside
-  $C$ (including the boundary) and returns \texttt{0} otherwise.
+\item \texttt{is\_inside($P,C$)} returns 1 if $P$ is inside
+  $C$ (including the boundary) and 0 otherwise.
 \end{itemize}
 
 \subsubsection*{Examples}
@@ -51443,7 +51704,7 @@ is_inside(1-i,triangle([1,2-i,3+i]))
   \label{ssec:2dcheckequilateral}}
 
 See \secref{ssec:3dcheckequilateral} for checking for equilateral
-triangles in three-dimensional geometry.
+triangles in 3D geometry.
 
 The \texttt{is\_equilateral}\index{is\_equilateral@\texttt{is\_equilateral}}
 command determines whether or not a geometric object is an equilateral triangle.
@@ -51451,8 +51712,8 @@ command determines whether or not a geometric object is an equilateral triangle.
 \item \texttt{is\_equilateral} takes
   $G$, a geometric object or a sequence of three points assumed to be
   the vertices of a triangle.
-\item \texttt{is\_equilateral($G$)} returns \texttt{1} if the object
-  is an equilateral triangle and returns \texttt{0} otherwise.
+\item \texttt{is\_equilateral($G$)} returns $1$ if the object
+  is an equilateral triangle and $0$ otherwise.
 \end{itemize}
 
 \subsubsection*{Examples}
@@ -51463,8 +51724,7 @@ is_equilateral(0,2,1+i*sqrt(3))
   1
 \end{xcasoutput}
 \begin{xcasinput}
-T:=equilateral_triangle(0,2,C);
-is_equilateral(T[0])
+T:=equilateral_triangle(0,2,C); is_equilateral(T[0])
 \end{xcasinput}
 \begin{xcasoutput}
   1
@@ -51488,7 +51748,7 @@ is_equilateral(1+i,-1+i,-1-i)
   \label{ssec:2dcheckisosceles}}
 
 See \secref{ssec:3dcheckisosceles} for checking for isosceles
-triangles in three-dimensional geometry.
+triangles in 3D geometry.
 
 The \texttt{is\_isosceles}\index{is\_isosceles@\texttt{is\_isosceles}}
 command determines whether or not a geometric object is an isoceles triangle.
@@ -51510,15 +51770,13 @@ is_isosceles(0,1+i,i)
   2
 \end{xcasoutput}
 \begin{xcasinput}
-T:=isosceles_triangle(0,1,pi/4);
-is_isosceles(T)
+T:=isosceles_triangle(0,1,pi/4); is_isosceles(T)
 \end{xcasinput}
 \begin{xcasoutput}
   1
 \end{xcasoutput}
 \begin{xcasinput}
-T:=isosceles_triangle(0,1,pi/4,C);
-is_isosceles(T[0])
+T:=isosceles_triangle(0,1,pi/4,C); is_isosceles(T[0])
 \end{xcasinput}
 \begin{xcasoutput}
   1
@@ -51548,21 +51806,21 @@ is_isosceles(0,2,1+i*sqrt(3))
   \label{ssec:2dcheckrect}}
 
 See \secref{ssec:3dcheckrect} for checking for right triangles and
-rectangles in three-dimensional geometry.
+rectangles in 3D geometry.
 
 The \texttt{is\_rectangle}\index{is\_rectangle@\texttt{is\_rectangle}}
-command determines whether or not a geometric object is an rectangle or a right triangle.
+command determines whether or not a geometric object is a rectangle or right triangle.
 \begin{itemize}
 \item \texttt{is\_rectangle} takes
   $G$, a geometric object or a sequence of three or four points
   assumed to be the vertices of a triangle or a quadrilateral.
 \item \texttt{is\_rectangle($G$)} returns:
   \begin{itemize}
-  \item (for triangle $G$) $1,2$ or $3$ if $G$ is a right
-    triangle (the number indicates which vertex is has the right angle).
-  \item (for quadrilaterals $G$) $1$ if $G$ is a rectangle but not a
+  \item (for triangle $G$) $1$, $2$ or $3$ if $G$ is a right
+    triangle (the number indicates which vertex has the right angle).
+  \item (for quadrilateral $G$) $1$ if $G$ is a rectangle but not a
     square.
-  \item (for quadrilaterals $G$) $2$ if $G$ is square.
+  \item (for quadrilateral $G$) $2$ if $G$ is square.
   \item $0$ otherwise.
   \end{itemize}
 \end{itemize}
@@ -51581,8 +51839,7 @@ is_rectangle(1+i,-2+i,-2-i,1-i)
   1
 \end{xcasoutput}
 \begin{xcasinput}
-R:=rectangle(-2-i,1-i,3,C,D);
-is_rectangle(R[0])
+R:=rectangle(-2-i,1-i,3,C,D); is_rectangle(R[0])
 \end{xcasinput}
 \begin{xcasoutput}
   1
@@ -51600,7 +51857,7 @@ affix(C,D)
   \label{ssec:2dchecksquare}}
 
 See \secref{ssec:3dchecksquare} for checking for squares in
-three-dimensional geometry.
+3D geometry.
 
 The \texttt{is\_square}\index{is\_square@\texttt{is\_square}}
 command determines whether or not a geometric object is a square.
@@ -51620,15 +51877,13 @@ is_square(1+i,-1+i,-1-i,1-i)
   1
 \end{xcasoutput}
 \begin{xcasinput}
-K:=square(1+i,-1+i);
-is_square(K)
+K:=square(1+i,-1+i); is_square(K)
 \end{xcasinput}
 \begin{xcasoutput}
   1
 \end{xcasoutput}
 \begin{xcasinput}
-K:=square(1+i,-1+i,C,D);
-is_square(K[0])
+K:=square(1+i,-1+i,C,D); is_square(K[0])
 \end{xcasinput}
 \begin{xcasoutput}
   1
@@ -51652,7 +51907,7 @@ is_square(i,-1+i,-1-i,1-i)
   \label{ssec:2dcheckrhombus}}
 
 See \secref{ssec:3dcheckrhombus} for checking for rhombuses in
-three-dimensional geometry.
+3D geometry.
 
 The \texttt{is\_rhombus}\index{is\_rhombus@\texttt{is\_rhombus}}
 command determines whether or not a geometric object is a rhombus.
@@ -51673,15 +51928,13 @@ is_rhombus(1+i,-1+i,-1-i,1-i)
   1
 \end{xcasoutput}
 \begin{xcasinput}
-K:=rhombus(1+i,-1+i,pi/4);
-is_rhombus(K)
+K:=rhombus(1+i,-1+i,pi/4); is_rhombus(K)
 \end{xcasinput}
 \begin{xcasoutput}
   1
 \end{xcasoutput}
 \begin{xcasinput}
-K:=rhombus(1+i,-1+i,pi/4,C,D);
-is_rhombus(K[0])
+K:=rhombus(1+i,-1+i,pi/4,C,D); is_rhombus(K[0])
 \end{xcasinput}
 \begin{xcasoutput}
   1
@@ -51705,7 +51958,7 @@ is_rhombus(i,-1+i,-1-i,1-i)
   \label{ssec:2dcheckparallelogram}}
 
 See \secref{ssec:3dcheckparallelogram} for checking for parallelograms
-in three-dimensional geometry.
+in 3D geometry.
 
 The \texttt{is\_parallelogram}\index{is\_parallelogram@\texttt{is\_parallelogram}}
 command determines whether or not an object is a parallelogram.
@@ -51734,15 +51987,13 @@ is_parallelogram(1+i,-1+i,-1-i,1-i)
   1
 \end{xcasoutput}
 \begin{xcasinput}
-Q:=quadrilateral(1+i,-1+i,-1-i,1-i);
-is_parallelogram(Q)
+Q:=quadrilateral(1+i,-1+i,-1-i,1-i); is_parallelogram(Q)
 \end{xcasinput}
 \begin{xcasoutput}
   4
 \end{xcasoutput}
 \begin{xcasinput}
-P:=parallelogram(-1-i,1-i,i,D);
-is_parallelogram(P[0])
+P:=parallelogram(-1-i,1-i,i,D); is_parallelogram(P[0])
 \end{xcasinput}
 \begin{xcasoutput}
   1
@@ -51760,7 +52011,7 @@ affix(D)
   \label{ssec:2dcheckparallel}}
 
 See \secref{ssec:3dcheckparallel} for checking for parallels in
-three-dimensional geometry.
+3D geometry.
 
 The \texttt{is\_parallel}\index{is\_parallel@\texttt{is\_parallel}}
 command determines whether or not two lines are parallel.
@@ -51789,7 +52040,7 @@ is_parallel(line(0,1+i),line(i,-1-i))
   \label{ssec:2dcheckperp}}
 
 See \secref{ssec:3dcheckperp} for checking for perpendicularity in
-three-dimensional geometry.
+3D geometry.
 
 The \texttt{is\_perpendicular}\index{is\_perpendicular@\texttt{is\_perpendicular}}
 command determines whether or not two lines are perpendicular.
@@ -51818,7 +52069,7 @@ is_parallel(line(0,1+i),line(1+i,1))
   \label{ssec:2dcheckorth}}
 
 See \secref{ssec:3dcheckorth} for checking for orthogonality in
-three-dimensional geometry.
+3D geometry.
 
 The \texttt{is\_orthogonal}\index{is\_orthogonal@\texttt{is\_orthogonal}}
 command determines whether or not two lines or circles are orthogonal.
@@ -51869,7 +52120,7 @@ command determines whether or not two objects are conjugates of each other.
   \item $P,Q$, each of which is a point or a line.
   \end{itemize}
 \item \texttt{is\_conjugate($C,P,Q$)} returns $1$ if $P$ and $Q$
-  are conjugate with respect to $C$, otherwise it returns $0$.
+  are conjugate with respect to $C$ and $0$ otherwise.
 \item To check for conjugates with respect to two points or two lines,
   \texttt{is\_conjugate} takes three arguments:
   \begin{itemize}
@@ -51921,8 +52172,8 @@ points form a harmonic division.
 \begin{itemize}
 \item \texttt{is\_harmonic} takes four arguments:
   $P,Q,R,S$, four points.
-\item \texttt{is\_harmonic($P,Q,R,S$)} returns $1$ if $P,Q,R$ and $S$  form a
-  harmonic range and returns $0$ otherwise.
+\item \texttt{is\_harmonic($P,Q,R,S$)} returns $1$ if $P,Q,R$ and $S$ form a
+  harmonic range and $0$ otherwise.
 \end{itemize}
 
 \subsubsection*{Examples}
@@ -51947,13 +52198,11 @@ command determines how lines are related.
 \begin{itemize}
 \item \texttt{is\_harmonic\_line\_bundle} takes
   $L$, a list or sequence of lines.
-\item \texttt{is\_harmonic\_line\_bundle($L$)} returns:
-  \begin{itemize}
-  \item $1$ if the lines pass through a common point
-  \item $2$ if the lines are parallel
-  \item $3$ if the lines are the same
-  \item $0$ otherwise
-  \end{itemize}
+\item \texttt{is\_harmonic\_line\_bundle($L$)} returns
+$1$ if the lines pass through a common point.
+$2$ if the lines are parallel,
+$3$ if the lines are the same,
+and $0$ otherwise.
 \end{itemize}
 
 \subsubsection*{Example}
@@ -51973,13 +52222,11 @@ command determines how circles are related.
 \begin{itemize}
 \item \texttt{is\_harmonic\_circle\_bundle} takes
   $L$, a list or sequence of circles.
-\item \texttt{is\_harmonic\_circle\_bundle($L$)} returns:
-  \begin{itemize}
-  \item $1$ if the circles pass through a common point.
-  \item $2$ if the circles are concentric.
-  \item $3$ if the circles are the same.
-  \item $0$ otherwise.
-  \end{itemize}
+\item \texttt{is\_harmonic\_circle\_bundle($L$)} returns
+$1$ if the circles pass through a common point,
+$2$ if the circles are concentric,
+$3$ if the circles are the same,
+and $0$ otherwise.
 \end{itemize}
 
 \subsubsection*{Example}
@@ -52059,7 +52306,7 @@ case, $D$ is called the harmonic conjugate of $A$, $B$ and $C$.
 Four concurrent lines or four parallel lines are in harmonic division
 if the intersection of any fifth line with these four lines consists
 of four points in harmonic division.  The lines are also said to form
-a harmonic pencil.  The fourth line is called the harmonic conjugate
+a \emph{harmonic pencil}.  The fourth line is called the harmonic conjugate
 of the first three.
 
 The \texttt{harmonic\_division}\index{harmonic\_division@\texttt{harmonic\_division}}
@@ -52073,14 +52320,13 @@ command finds harmonic conjugates.
   \end{itemize}
 \item
   \texttt{harmonic\_division($P_1,P_2,P_3,$}\textit{var}\texttt{)}
-  returns and draws the three points or lines $P_1,P_2$ and $P_3$ with
-  a fourth so the four objects are in harmonic division, and assigns
-  the fourth point or line to \textit{var}.
+  returns and draws the three points or lines $P_1,P_2$ and $P_3$ together with
+  their harmonic conjugate, and assigns the latter to \textit{var}.
 \end{itemize}
 
 \subsubsection*{Examples}
 \begin{xcasinput}
-A:=point(i); B:=point(2+i); C:=point(3/2+i); harmonic_division(A,B,C,D)
+A,B,C:=point(i),point(2+i),point(3/2+i); harmonic_division(A,B,C,D)
 \end{xcasinput}
 \begin{xcasimage}
   \includeimage{xcas-harmdiv.png}
@@ -52099,10 +52345,7 @@ The \texttt{harmonic\_conjugate}\index{harmonic\_conjugate@\texttt{harmonic\_con
 command finds harmonic conjugates.
 \begin{itemize}
 \item \texttt{harmonic\_conjugate} takes three arguments:
-  \begin{itemize}
-  \item $P_1,P_2,P_3$, three collinear points or three concurrent
-    lines, or three parallel lines.
-  \end{itemize}
+  $P_1,P_2,P_3$, three collinear points or three concurrent lines, or three parallel lines.
 \item
   \texttt{harmonic\_conjugate($P_1,P_2,P_3$)} returns and draws the
   harmonic conjugate of $P_1,P_2$ and $P_3$.
@@ -52110,7 +52353,7 @@ command finds harmonic conjugates.
 
 \subsubsection*{Examples}
 \begin{xcasinput}
-A:=point(i); B:=point(2+i); C:=point(1/3+i); D:=harmonic_conjugate(A,B,C)
+A,B,C:=point(i),point(2+i),point(1/3+i); D:=harmonic_conjugate(A,B,C)
 \end{xcasinput}
 \begin{xcasimage}
   \includeimage{xcas-harmconj.png}
@@ -52229,7 +52472,7 @@ depending on points on a curve.
   \item \textit{var$_1$}, a variable name which has already been
     assigned to a point, which itself is a function of
     \textit{var$_2$}, the second argument.
-  \item \textit{var$_2$}, a variable name which is assigned to
+  \item \textit{var$_2$}, a variable name assigned to
     \texttt{element($C$)} for some curve $C$ (see
     \secref{ssec:element}).
   \item Optionally, $t=a\texttt{..}b$, where $t$ is the parameter of the
@@ -52244,7 +52487,7 @@ depending on points on a curve.
   \textit{var$_2$} traces over the curve $C$.
 
   With the optional arguments, $C$ is limited to the part
-  parameterized from $a$ to $b$, with a step size of $c$.
+  parameterized from $a$ to $b$ with step size $c$.
 \end{itemize}
 
 \subsubsection*{Example}
@@ -52252,8 +52495,7 @@ This will draw the set of isobarycenters of the triangles with vertices
 \texttt{-1}, \texttt{1} and \texttt{P}, where \texttt{P} ranges over
 the line through \texttt{i} and \texttt{i+1}.
 \begin{xcasinput}
-P:=element(line(i, i+1));
-G:=isobarycenter(-1,1,P);
+P:=element(line(i,i+1)); G:=isobarycenter(-1,1,P);
 locus(G,P)
 \end{xcasinput}
 \begin{xcasimage}
@@ -52291,7 +52533,7 @@ on a curve:
   \textit{var$_2$} traces over the curve $C$.
 
   With the optional arguments, $C$ is limited to the part
-  parameterized from $a$ to $b$, with a step size of $c$.
+  parameterized from $a$ to $b$ with step size $c$.
 \end{itemize}
 
 \subsubsection*{Examples}
@@ -52299,8 +52541,7 @@ This will draw the envelope of the family of perpendicular bisectors
 of the segments from the point \texttt{1} to the points on the line
 \texttt{x=0}.
 \begin{xcasinput}
-F:=point(1);
-H:=element(line(x=0));
+F,H:=point(1),element(line(x=0));
 d:=perpen_bisector(F,H);
 locus(d,H)
 \end{xcasinput}
@@ -52309,8 +52550,8 @@ locus(d,H)
 \end{xcasimage}
 
 To draw the envelope of a family of lines which depend on a parameter,
-such as the lines given by the equations \[ y+x \tan(t)-2\sin(t)=0
-\] over the parameter $t$, the parameter can be regarded as the
+such as the lines given by the equations $y+x \tan(t)-2\sin(t)=0$
+over the parameter $t$, the parameter can be regarded as the
 affixes of points on the line $y=0$.
 \begin{xcasinput}
 H:=element(line(y=0));
@@ -52338,12 +52579,11 @@ command draws the envelope of a family of curves.
   \item \textit{expr}, an expression of two variables and one
     parameter.
   \item $L$, a list of the names of the variables and the
-    parameters.  If the variables are \texttt{x} and \texttt{y},
+    parameter.  If the variables are \texttt{x} and \texttt{y},
     then $L$ only need to be the name of the parameter.
   \end{itemize}
 \item \texttt{envelope(}$\textit{expr},L$\texttt{)}
-  draws the envelope of the family of curves given by
-  $expr=0$ over the parameter.
+  draws the envelope of the family of curves given by $expr=0$.
 \end{itemize}
 
 \subsubsection*{Example}
@@ -52374,14 +52614,12 @@ command draws the trace of an object.
 For example, to find the locus of points equidistant from a line
 $d$ and a point $F$, you can create a point $H$ on
 the line $d$. To do this, open a graphic
-window (\textsf{Alt+G}) and type in the following commands, one per
-line.
+window (\textsf{Alt+G}) and type in the following commands.
 
 First, create a line $d$ (using sample points) and a
 sample point $F$.
 \begin{xcasinput}
-A:=point(-3-i);
-B:=point(1/2+2*i);
+A,B:=point(-3-i),point(1/2+2*i);
 d:=line(A,B,color=0);
 F:=point(4/3,1/2,color=0)
 \end{xcasinput}
@@ -52407,16 +52645,16 @@ To erase traces, add traces, activate or deactivate them, use the
 \textsf{Trace} menu of the \button{M} button located on
 the right side of the geometry screen.
 
-\chapter{Three-dimensional graphics\label{chap:3dgraphics}}
+\chapter{3D graphics\label{chap:3dgraphics}}
 
 \section{Introduction}
 
 \subsection{3D geometry graphics screen}
 
 The \textsf{Alt+H} command brings up a display screen for
-three-dimensional graphics (see Figure~\ref{fig:3dscreen}).
+3D graphics (see Figure~\ref{fig:3dscreen}).
 This screen has its own menu and command
-lines. This screen also automatically appears whenever there is a three-dimensional
+lines. This screen also automatically appears whenever there is a 3D
 graphic command.
 \begin{figure}
   \centering
@@ -52424,13 +52662,13 @@ graphic command.
   \caption{\label{fig:3dscreen}A 3D-geometry screen in \xcas{}}
 \end{figure}
 
-The plane of vision for a three-dimensional graphic screen is
+The plane of vision for a 3D graphic screen is
 perpendicular to the observer's line of vision.  The plane of vision
 is also indicated by dotted lines showing its intersection with the
-parallelepiped. The axis of vision for a three-dimensional graphic
+parallelepiped. The axis of vision for a 3D graphic
 screen is
 
-The three-dimensional graphic screen starts with the image of a
+The 3D graphic screen starts with the image of a
 parallelepiped bounding the graphics and vectors in the $x$, $y$ and
 $z$ directions.  At the top of the screen is the equation of the plane
 of vision, which is a plane perpendicular to the observer's line of
@@ -52445,8 +52683,8 @@ Scrolling the mouse wheel moves the plane of vision along the line of
 vision.  The \button{in} and \button{out} buttons
 on the graphic screen menu zoom in and out of the picture.
 
-The graphical features available for two-dimensional graphics (see
-\secref{sec:dispfeat}) are also available for three-dimensional
+The graphical features available for 2D graphics (see
+\secref{sec:dispfeat}) are also available for 3D
 graphics, but to see the points the markers must be squares with width
 (\texttt{point\_width}) at least 3.
 
@@ -52466,7 +52704,7 @@ button which brings up a configuration screen.  Among other things, this screen 
 
 \subsection{Changing the view}
 
-The depictions of three-dimensional objects are made with a coordinate
+The depictions of 3D objects are made with a coordinate
 system $Oxyz$, where the $x$ axis is horizontal and directed right,
 the $y$ axis is vertical and directed up, and the $z$ axis is
 perpendicular to the screen and directed out of the screen.  The
@@ -52480,7 +52718,7 @@ system by setting a quaternion (see \secref{sec:globpar}).
 
 The \texttt{Ox\_3d\_unit\_vector}\index{Ox\_3d\_unit\_vector@\texttt{Ox\_3d\_unit\_vector}}
 command takes no arguments and draws the unit vector in the $x$-direction
-on a three-dimensional graphic screen.
+on a 3D graphic screen.
 
 \subsubsection*{Example}
 \begin{xcasinput}
@@ -52499,7 +52737,7 @@ These commands have no parameters, but can be decorated with the
 
 \subsubsection*{Example}
 \begin{xcasinput}
-Ox_3d_unit_vector(), legend(point([1,0,0]),"unit x vector",blue)
+Ox_3d_unit_vector(),legend(point([1,0,0]),"unit x vector",blue)
 \end{xcasinput}
 \begin{xcasimage}
   \includeimage{xcas-3dunitblue.png}
@@ -53141,8 +53379,7 @@ command finds the common perpendicular to two lines.
 
 \subsubsection*{Example}
 \begin{xcasinput}
-L1:=line(point(1,1,0),point(0,1,1)):;
-L2:=line(point(0,-1,0),point(1,-1,1)):;
+L1,L2:=line(point(1,1,0),point(0,1,1)),line(point(0,-1,0),point(1,-1,1)):;
 common_perpendicular(L1,L2)
 \end{xcasinput}
 \begin{xcasimage}
@@ -53352,21 +53589,21 @@ command returns and draws an isosceles triangle.  It can take its arguments in t
 
 \subsubsection*{Examples}
 \begin{xcasinput}
-A:=point(0,0,0); B:=point(3,3,3); P:=point(0,0,3);
+A,B,P:=point(0,0,0),point(3,3,3),point(0,0,3);
 isosceles_triangle(A,B,P);
 \end{xcasinput}
 \begin{xcasimage}
   \includeimage{xcas-3disotriangle.png}
 \end{xcasimage}
 \begin{xcasinput}
-A:=point(0,0,0); B:=point(3,3,3); P:=point(0,0,3);
+A,B,P:=point(0,0,0),point(3,3,3),point(0,0,3);
 isosceles_triangle(A,B,[P,3*pi/4])
 \end{xcasinput}
 \begin{xcasimage}
   \includeimage{xcas-3disotriangle2.png}
 \end{xcasimage}
 \begin{xcasinput}
-A:=point(0,0,0); B:=point(3,3,3); P:=point(0,0,3);
+A,B,P:=point(0,0,0),point(3,3,3),point(0,0,3);
 isosceles_triangle(A,B,[P,3*pi/4],C);
 coordinates(C)
 \end{xcasinput}
@@ -53428,8 +53665,7 @@ It can take its arguments in two different ways.
 
 \subsubsection*{Examples}
 \begin{xcasinput}
-A:=point(0,0,0); B:=point(3,3,3);
-P:=point(0,0,3);
+A,B,P:=point(0,0,0),point(3,3,3),point(0,0,3);
 right_triangle(A,B,P);
 \end{xcasinput}
 \begin{xcasimage}
@@ -53480,18 +53716,14 @@ command returns and draws equilateral triangles.
 
 \subsubsection*{Examples}
 \begin{xcasinput}
-A:=point(0,0,0);
-B:=point(3,3,3);
-P:=point(0,0,3);
+A,B,p:=point(0,0,0),point(3,3,3),point(0,0,3);
 equilateral_triangle(A,B,P)
 \end{xcasinput}
 \begin{xcasimage}
   \includeimage{xcas-3dequitriangle.png}
 \end{xcasimage}
 \begin{xcasinput}
-A:=point(0,0,0);
-B:=point(3,3,3);
-P:=point(0,0,3);
+A,B,P:=point(0,0,0),point(3,3,3),point(0,0,3);
 equilateral_triangle(A,B,P,C);
 simplify(coordinates(C))
 \end{xcasinput}
@@ -53527,20 +53759,16 @@ The \texttt{square}\index{square@\texttt{square}} command creates squares.
 
 \subsubsection*{Examples}
 \begin{xcasinput}
-A:=point(0,0,0);
-B:=point(3,3,3);
-P:=point(0,0,3);
+A,B,P:=point(0,0,0),point(3,3,3),point(0,0,3);
 square(A,B,P)
 \end{xcasinput}
 \begin{xcasimage}
   \includeimage{xcas-3dsquare.png}
 \end{xcasimage}
 \begin{xcasinput}
-A:=point(0,0,0);
-B:=point(3,3,3);
-P:=point(0,0,3);
+A,B,P:=point(0,0,0),point(3,3,3),point(0,0,3);
 square(A,B,P,C,D);
-coordinates(C), coordinates(D)
+coordinates(C),coordinates(D)
 \end{xcasinput}
 \begin{xcasoutput}
   \left[\frac{-3 \sqrt{2}+6}{2},\frac{-3 \sqrt{2}+6}{2},3 \sqrt{2}+3\right],\left[-\frac{3}{2} \sqrt{2},-\frac{3}{2} \sqrt{2},3 \sqrt{2}\right]
@@ -53596,14 +53824,14 @@ arguments in two different ways.
 
 \subsubsection*{Examples}
 \begin{xcasinput}
-A:=point(0,0,0); B:=point(3,3,3); P:=point(0,0,3);
+A,B,P:=point(0,0,0),point(3,3,3),point(0,0,3);
 rhombus(A,B,P)
 \end{xcasinput}
 \begin{xcasimage}
   \includeimage{xcas-3drhombus.png}
 \end{xcasimage}
 \begin{xcasinput}
-A:=point(0,0,0); B:=point(3,3,3); P:=point(0,0,3);
+A,B,P:=point(0,0,0),point(3,3,3),point(0,0,3);
 rhombus(A,B,[P,pi/3])
 \end{xcasinput}
 \begin{xcasimage}
@@ -53667,14 +53895,14 @@ take its arguments in two different ways.
 
 \subsubsection*{Examples}
 \begin{xcasinput}
-A:=point(0,0,0); B:=point(3,3,3); P:=point(0,0,3);
+A,B,P:=point(0,0,0),point(3,3,3),point(0,0,3);
 rectangle(A,B,P)
 \end{xcasinput}
 \begin{xcasimage}
   \includeimage{xcas-3drect.png}
 \end{xcasimage}
 \begin{xcasinput}
-A:=point(0,0,0); B:=point(3,3,3); P:=point(0,0,3);
+A,B,P:=point(0,0,0),point(3,3,3),point(0,0,3);
 rectangle(A,B,[P,1/2])
 \end{xcasinput}
 \begin{xcasimage}
@@ -53713,7 +53941,7 @@ command creates parallelograms in space.
 
 \subsubsection*{Examples}
 \begin{xcasinput}
-A:=point(0,0,0); B:=point(3,3,3); C:=point(0,0,3);
+A,B,C:=point(0,0,0),point(3,3,3),point(0,0,3);
 parallelogram(A,B,C)
 \end{xcasinput}
 \begin{xcasimage}
@@ -53775,9 +54003,7 @@ command creates hexagons in space.
 
 \subsubsection*{Examples}
 \begin{xcasinput}
-A:=point(0,0,0);
-B:=point(3,3,3);
-P:=point(0,0,3);
+A,B,P:=point(0,0,0),point(3,3,3),point(0,0,3);
 hexagon(A,B,P)
 \end{xcasinput}
 \begin{xcasimage}
@@ -53812,7 +54038,7 @@ command creates regular polygons in space.
 
 \subsubsection*{Examples}
 \begin{xcasinput}
-A:=point(0,0,0); B:=point(3,3,3); P:=point(0,0,3);
+A,B,P:=point(0,0,0),point(3,3,3),point(0,0,3);
 isopolygon(A,B,P,5)
 \end{xcasinput}
 \begin{xcasimage}
@@ -53841,8 +54067,7 @@ command creates general polygons in space.
 
 \subsubsection*{Example}
 \begin{xcasinput}
-A:=point(0,0,0); B:=point(3,3,3); C:=point(0,0,3);
-D:=point(-3,-3,0); E:=point(-3,-3,-3);
+A,B,C,D,E:=point(0,0,0),point(3,3,3),point(0,0,3),point(-3,-3,0),point(-3,-3,-3);
 polygon(A,B,C,D,E)
 \end{xcasinput}
 \begin{xcasimage}
@@ -53984,12 +54209,12 @@ parabola(point(0,0,0),point(-1,0,0),point(1,1,1))
   \includeimage{xcas-3dparabola.png}
 \end{xcasimage}
 
-\section{Three-dimensional coordinates}
+\section{3D coordinates}
 
-\subsection{Abscissa of a three-dimensional point%: \texttt{abscissa}
+\subsection{Abscissa of a 3D point%: \texttt{abscissa}
   \label{ssec:3dabscissa}}
 
-See \secref{ssec:2dabscissa} for abscissas in two-dimensional
+See \secref{ssec:2dabscissa} for abscissas in 2D
 geometry.
 
 The \texttt{abscissa}\index{abscissa@\texttt{abscissa}}
@@ -54008,10 +54233,10 @@ abscissa(point(1,2,3))
   1
 \end{xcasoutput}
 
-\subsection{Ordinate of a three-dimensional point%: \texttt{ordinate}
+\subsection{Ordinate of a 3D point%: \texttt{ordinate}
   \label{ssec:3dordinate}}
 
-See \secref{ssec:2dordinate} for ordinates in two-dimensional
+See \secref{ssec:2dordinate} for ordinates in 2D
 geometry.
 
 The \texttt{ordinate}\index{ordinate@\texttt{ordinate}}
@@ -54030,7 +54255,7 @@ ordinate(point(1,2,3))
   2
 \end{xcasoutput}
 
-\subsection{Cote of a three-dimensional point%: \texttt{cote}
+\subsection{Cote of a 3D point%: \texttt{cote}
 }
 
 The \texttt{cote}\index{cote@\texttt{cote}}
@@ -54052,7 +54277,7 @@ cote(point(1,2,3))
 \subsection{Coordinates of a point, vector or line in space%: \texttt{coordinates}
   \label{ssec:3dcoordinates}}
 
-See \secref{ssec:2dcoordinates} for coordinates in two-dimensional
+See \secref{ssec:2dcoordinates} for coordinates in 2D
 geometry.
 
 The \texttt{coordinates}\index{coordinates@\texttt{coordinates}}
@@ -54115,7 +54340,7 @@ coordinates(line(x-2*y+3=0, 6*x+3*y-5*z+3=0))
 \subsection{Cartesian equation of an object in space%: \texttt{equation}
   \label{ssec:3dcarteq}}
 
-See \secref{ssec:2dcarteq} for Cartesian equations of two-dimensional
+See \secref{ssec:2dcarteq} for Cartesian equations of 2D
 objects.
 
 The \texttt{equation}\index{equation@\texttt{equation}}
@@ -54149,7 +54374,7 @@ equation(sphere(point(0,1,0),2))
 \subsection{Parametric equation of an object in space%: \texttt{parameq}
   \label{ssec:3dparam}}
 
-See \secref{ssec:2dparam} for parametric equations in two-dimensional
+See \secref{ssec:2dparam} for parametric equations in 2D
 geometry.
 
 The \texttt{parameq}\index{parameq@\texttt{parameq}}
@@ -54190,7 +54415,7 @@ normal(parameq(ellipse(point(-1,1,1),point(1,1,1),point(0,1,2))))
   \label{ssec:3ddist}}
 \index{Distance function!Euclidean}
 
-See \secref{ssec:2ddist} for distances in two-dimensional geometry.
+See \secref{ssec:2ddist} for distances in 2D geometry.
 
 The \texttt{distance}\index{distance@\texttt{distance}}
 command finds the distance between two points.
@@ -54217,7 +54442,7 @@ distance([-1,1,1],[1,1,1])
   \label{ssec:3ddist2}}
 \index{Distance function!Squared Euclidean}
 
-See \secref{ssec:2ddist2} for squares of lengths in two-dimensional
+See \secref{ssec:2ddist2} for squares of lengths in 2D
 geometry.
 
 The \texttt{distance2}\index{distance2@\texttt{distance2}}
@@ -54244,7 +54469,7 @@ distance2([-1,1,1],[1,1,1])
 \subsection{Measure of an angle in space%: \texttt{angle}
   \label{ssec:3dangle}}
 
-See \secref{ssec:2dangle} for angle measures in two-dimensional
+See \secref{ssec:2dangle} for angle measures in 2D
 geometry.
 
 The \texttt{angle}\index{angle@\texttt{angle}}
@@ -54305,7 +54530,7 @@ angle(line([0,0,0],[1,1,0]),plane(x+y+z=0))
 \subsection{Checking whether object in space is in another object%: \texttt{is\_element}
   \label{ssec:3diselem}}
 
-See \secref{ssec:2diselem} for checking elements in two-dimensional
+See \secref{ssec:2diselem} for checking elements in 2D
 geometry.
 
 The \texttt{is\_element}\index{is\_element@\texttt{is\_element}}
@@ -54313,8 +54538,8 @@ command determines whether or not a geometric object is contained in another.
 \begin{itemize}
 \item \texttt{is\_element} takes two arguments:
   $G,H$, two geometric objects.
-\item \texttt{is\_element($G,H$)} returns \texttt{1} if $G$ is
-  contained in $H$ and returns \texttt{0} otherwise.
+\item \texttt{is\_element($G,H$)} returns $1$ if $G$ is
+  contained in $H$ and $0$ otherwise.
 \end{itemize}
 
 \subsubsection*{Examples}
@@ -54326,8 +54551,7 @@ is_element(point(2,3,-5),P)
   1
 \end{xcasoutput}
 \begin{xcasinput}
-L:=line([2,3,-2],[-1,-1,-1]);
-P:=plane([-1,-1,-1],[1,2,-3],[1,1,-2]);
+L,P:=line([2,3,-2],[-1,-1,-1]),plane([-1,-1,-1],[1,2,-3],[1,1,-2]);
 is_element(L,P)
 \end{xcasinput}
 \begin{xcasoutput}
@@ -54342,8 +54566,8 @@ command determines whether or not several points or several lines are coplanar.
 \begin{itemize}
 \item \texttt{is\_coplanar} takes
   $S$, a sequence where each element is a point or a line.
-\item \texttt{is\_coplanar($S$)} returns \texttt{1} is the elements
-  of $S$ are coplanar and returns \texttt{0} otherwise.
+\item \texttt{is\_coplanar($S$)} returns $1$ is the elements
+  of $S$ are coplanar and $0$ otherwise.
 \end{itemize}
 
 \subsubsection*{Examples}
@@ -54376,21 +54600,20 @@ is_coplanar(line([-1,2,0],[1,2,-3]),line([1,1,-2],[2,1,-3]))
   \label{ssec:3dcheckparallel}}
 
 See \secref{ssec:2dcheckparallel} for checking for parallels in
-two-dimensional geometry.
+2D geometry.
 
 The \texttt{is\_parallel}\index{is\_parallel@\texttt{is\_parallel}}
 command determines if two objects are parallel.
 \begin{itemize}
 \item \texttt{is\_parallel} takes two arguments:
   $L,P$, each one either a line or a plane.
-\item \texttt{is\_parallel($L,P$)} returns \texttt{1} if $L$ and $P$
-  are parallel and returns \texttt{0} otherwise.
+\item \texttt{is\_parallel($L,P$)} returns $1$ if $L$ and $P$
+  are parallel and $0$ otherwise.
 \end{itemize}
 
 \subsubsection*{Examples}
 \begin{xcasinput}
-L1:=line([0,0,0],[-1,-1,-1]);
-L2:=line([2,3,-2],[-1,-1,-1]);
+L1,L2:=line([0,0,0],[-1,-1,-1]),line([2,3,-2],[-1,-1,-1]);
 is_parallel(L1,L2)
 \end{xcasinput}
 \begin{xcasoutput}
@@ -54404,8 +54627,7 @@ is_parallel(P,L2)
   1
 \end{xcasoutput}
 \begin{xcasinput}
-P1:=plane([0,0,0],[1,2,-3],[1,1,-2]);
-P2:=plane([1,1,0],[2,3,-3],[2,2,-2]);
+P1,P2:=plane([0,0,0],[1,2,-3],[1,1,-2]),plane([1,1,0],[2,3,-3],[2,2,-2]);
 is_parallel(P1,P2)
 \end{xcasinput}
 \begin{xcasoutput}
@@ -54416,15 +54638,15 @@ is_parallel(P1,P2)
   \label{ssec:3dcheckperp}}
 
 See \secref{ssec:2dcheckperp} for checking for perpendicularity in
-two-dimensional geometry.
+2D geometry.
 
 The \texttt{is\_perpendicular}\index{is\_perpendicular@\texttt{is\_perpendicular}}
 command determines if two objects are perpendicular.
 \begin{itemize}
 \item \texttt{is\_perpendicular} takes two arguments:
   $L,P$, each one either a line or a plane.
-\item \texttt{is\_perpendicular($L,P$)} returns \texttt{1} if $L$ and $P$
-  are perpendicular and returns \texttt{0} otherwise.
+\item \texttt{is\_perpendicular($L,P$)} returns $1$ if $L$ and $P$
+  are perpendicular and $0$ otherwise.
 \end{itemize}
 Note that two lines must be coplanar to be perpendicular.
 
@@ -54436,8 +54658,7 @@ is_perpendicular(line([2,3,-2],[-1,-1,-1]),line([1,0,0],[1,2,8]))
   0
 \end{xcasoutput}
 \begin{xcasinput}
-P1:=plane([0,0,0],[1,2,-3],[1,1,-2]);
-P2:=plane([-1,-1,-1],1,2,-3],[0,0,0]);
+P1,P2:=plane([0,0,0],[1,2,-3],[1,1,-2]),plane([-1,-1,-1],1,2,-3],[0,0,0]);
 is_perpendicular(P1,P2)
 \end{xcasinput}
 \begin{xcasoutput}
@@ -54455,7 +54676,7 @@ is_perpendicular(L,P1)
   \label{ssec:3dcheckorth}}
 
 See \secref{ssec:2dcheckorth} for checking for orthogonality in
-two-dimensional geometry.
+2D geometry.
 
 The \texttt{is\_orthogonal}\index{is\_orthogonal@\texttt{is\_orthogonal}}
 command determines whether or not two objects are orthogonal.
@@ -54463,8 +54684,8 @@ command determines whether or not two objects are orthogonal.
 \item \texttt{is\_orthogonal} takes two arguments:
   $L,P$, which can be two lines, two spheres, two planes or a line and
   a plane.
-\item \texttt{is\_orthogonal($L,P$)} returns \texttt{1} is the
-  objects are orthogonal; it returns \texttt{0} otherwise.
+\item \texttt{is\_orthogonal($L,P$)} returns $1$ is the
+  objects are orthogonal and $0$ otherwise.
 \end{itemize}
 
 \subsubsection*{Examples}
@@ -54497,7 +54718,7 @@ is_orthogonal(sphere([0,0,0],sqrt(2)),sphere([2,0,0],sqrt(2)))
   \label{ssec:3dcheckcollinear}}
 
 See \secref{ssec:2dcheckcollinear} for checking for collinearity in
-two-dimensional geometry.
+2D geometry.
 
 The \texttt{is\_collinear}\index{is\_collinear@\texttt{is\_collinear}}
 command determines whether or not points in space are collinear.
@@ -54526,15 +54747,15 @@ is_collinear([2,0,0],[0,2,0],[0,1,1])
   \label{ssec:3dcheckconcycle}}
 
 See \secref{ssec:2dcheckconcycle} for checking for concyclicity in
-two-dimensional geometry.
+2D geometry.
 
 The \texttt{is\_concyclic}\index{is\_concyclic@\texttt{is\_concyclic}}
 command determines whether or not points are lying on the same circle.
 \begin{itemize}
 \item \texttt{is\_concyclic} takes
   $L$, a list or sequence of points.
-\item \texttt{is\_concyclic($L$)} returns \texttt{1} if the points
-  in $L$ all lie on the same circle, and returns \texttt{0} otherwise.
+\item \texttt{is\_concyclic($L$)} returns $1$ if the points
+  in $L$ all lie on the same circle, and $0$ otherwise.
 \end{itemize}
 
 \subsubsection*{Examples}
@@ -54561,8 +54782,8 @@ lie on the same sphere.
 \begin{itemize}
 \item \texttt{is\_cospherical} takes
   $L$, a list or sequence of points.
-\item \texttt{is\_cospherical($L$)} returns \texttt{1} if the points
-  in $L$ all lie on the same sphere, and returns \texttt{0} otherwise.
+\item \texttt{is\_cospherical($L$)} returns $1$ if the points
+  in $L$ all lie on the same sphere, and $0$ otherwise.
 \end{itemize}
 
 \subsubsection*{Examples}
@@ -54584,7 +54805,7 @@ is_cospherical([2,0,0],[0,2,0],[1,1,0],[0,0,2],[1,1,1])
   \label{ssec:3dcheckequilateral}}
 
 See \secref{ssec:2dcheckequilateral} for checking for equilateral
-triangles in two-dimensional geometry.
+triangles in 2D geometry.
 
 The \texttt{is\_equilateral}\index{is\_equilateral@\texttt{is\_equilateral}}
 command determines whether or not a geometric object is an equilateral triangle.
@@ -54592,8 +54813,8 @@ command determines whether or not a geometric object is an equilateral triangle.
 \item \texttt{is\_equilateral} takes
   $G$, a geometric object or a sequence of three points assumed to be
   the vertices of a triangle.
-\item \texttt{is\_equilateral($G$)} returns \texttt{1} if the object
-  is an equilateral triangle and returns \texttt{0} otherwise.
+\item \texttt{is\_equilateral($G$)} returns $1$ if the object
+  is an equilateral triangle and $0$ otherwise.
 \end{itemize}
 
 \subsubsection*{Examples}
@@ -54621,7 +54842,7 @@ is_equilateral([2,0,0],[0,2,0],[1,1,0])
   \label{ssec:3dcheckisosceles}}
 
 See \secref{ssec:2dcheckisosceles} for checking for isosceles
-triangles in two-dimensional geometry.
+triangles in 2D geometry.
 
 The \texttt{is\_isosceles}\index{is\_isosceles@\texttt{is\_isosceles}}
 command determines whether or not a geometric object is an isoceles triangle.
@@ -54660,7 +54881,7 @@ is_isosceles([1,1,0],[-1,1,0],[-1,0,0])
   \label{ssec:3dcheckrect}}
 
 See \secref{ssec:2dcheckrect} for checking for right triangles and
-rectangles in two-dimensional geometry.
+rectangles in 2D geometry.
 
 The \texttt{is\_rectangle}\index{is\_rectangle@\texttt{is\_rectangle}}
 command determines whether or not a geometric object is an rectangle or a right triangle.
@@ -54697,7 +54918,7 @@ is_rectangle([2,2,0],[-2,2,0],[-2,-1,0],[2,-1,0])
   \label{ssec:3dchecksquare}}
 
 See \secref{ssec:2dchecksquare} for checking for squares in
-two-dimensional geometry.
+2D geometry.
 
 The \texttt{is\_square}\index{is\_square@\texttt{is\_square}}
 command determines whether or not a geometric object is a square.
@@ -54734,7 +54955,7 @@ is_square([2,2,0],[-2,2,0],[-2,-1,0],[2,-1,0])
   \label{ssec:3dcheckrhombus}}
 
 See \secref{ssec:2dcheckrhombus} for checking for rhombuses in
-two-dimensional geometry.
+2D geometry.
 
 The \texttt{is\_rhombus}\index{is\_rhombus@\texttt{is\_rhombus}}
 command determines whether or not a geometric object is a rhombus.
@@ -54772,7 +54993,7 @@ is_rhombus([2,2,0],[-2,2,0],[-2,-1,0],[2,-1,0])
   \label{ssec:3dcheckparallelogram}}
 
 See \secref{ssec:2dcheckparallelogram} for checking for parallelograms
-in two-dimensional geometry.
+in 2D geometry.
 
 The \texttt{is\_parallelogram}\index{is\_parallelogram@\texttt{is\_parallelogram}}
 command determines whether or not an object is a parallelogram.
@@ -55030,7 +55251,7 @@ color(S,blue),s(S)
   \includeimage{xcas-3dsimsphere.png}
 \end{xcasimage}
 \begin{xcasinput}
-similarity(line(point(0,1,0),point(1,1,1)), 2, 2*pi/3, S))
+similarity(line(point(0,1,0),point(1,1,1)),2,2*pi/3,S))
 \end{xcasinput}
 \begin{xcasimage}
   \includeimage{xcas-3dsimsphere2.png}
@@ -56410,7 +56631,7 @@ command writes \texttt{wav} files to disk.
 \item \texttt{writewav(}$\textit{filename},A$\texttt{)} writes the
   clip $A$ as a \texttt{wav} file named \textit{filename}.
 
-  It returns \texttt{1} on success and \texttt{0} on failure.
+  It returns $1$ on success and \texttt{0} on failure.
 \end{itemize}
 
 \subsubsection*{Example}
@@ -56945,7 +57166,7 @@ hear the audio (see~\secref{ssec:playsnd}).
 The \texttt{playsnd}\index{playsnd@\texttt{playsnd}}
 command plays digitized sound data.
 \begin{itemize}
-\item \texttt{playsnd} takes one mandatory argument and one to
+\item \texttt{playsnd} takes one mandatory argument and up to
   three optional arguments:
   \begin{itemize}
   \item $A$, an audio clip.
@@ -56959,8 +57180,7 @@ command plays digitized sound data.
   loops the sound $r$ times).
 \item The portion to be played is either the block of \textit{len} samples
   starting at \textit{offset} or the sound between $a$ and $b$ seconds.
-\item To stop the playback, press the \button{STOP} button in the
-  respective \xcas{} session.
+\item To stop the playback, press the \button{STOP} button.
 \end{itemize}
 
 \subsection{Normalizing audio%: \texttt{normalize}
@@ -57150,8 +57370,9 @@ is used for mixing several audio clips down together into one clip.
 \item The \textit{gain} parameter is entered in decibels (dB) with negative
   values resulting in a softer mix, and positive values resulting in a louder mix.
 \item If \textit{fadein} and/or \textit{fadeout} parameters are larger than zero,
-  linear fade-in/out is applied to the respective clip while mixing.
-\item If clipping occurs, try mixing again with lower gain values.
+  then fade-in and/or fade-out will be applied to the respective clip while mixing.
+  The fade function is $f(x)=\cos(\pi(1-x)/2)^2$ for $0\leq x\leq 1$.
+\item In case of clipping, try calling \texttt{mixdown} again with lower gain values.
 \end{itemize}
 
 \subsubsection*{Example}

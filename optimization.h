@@ -33,6 +33,8 @@
 #include <gsl/gsl_multimin.h>
 #include <gsl/gsl_siman.h>
 #include <gsl/gsl_rng.h>
+#include <gsl/gsl_bspline.h>
+#include <gsl/gsl_multifit.h>
 #endif
 
 #ifndef NO_NAMESPACE_GIAC
@@ -724,6 +726,9 @@ gen _isposdef(const gen &g,GIAC_CONTEXT);                   // check whether a s
 gen _symbol_array(const gen &g,GIAC_CONTEXT);               // Create vectors and matrices of symbols
 gen _sortperm(const gen &g,GIAC_CONTEXT);                   // permutation that sorts the given vector in ascending order
 gen _siman(const gen &g,GIAC_CONTEXT);                      // simulated annealing optimizer
+gen _frank_wolfe(const gen &g,GIAC_CONTEXT);                // Frank-Wolfe minimizer
+gen _bspline(const gen &g,GIAC_CONTEXT);                    // Constructing B-splines from control points
+gen _fitspline(const gen &g,GIAC_CONTEXT);                  // Fitting B-splines to data
 
 extern const unary_function_ptr * const at_implicitdiff;
 extern const unary_function_ptr * const at_box_constraints;
@@ -752,6 +757,9 @@ extern const unary_function_ptr * const at_isposdef;
 extern const unary_function_ptr * const at_symbol_array;
 extern const unary_function_ptr * const at_sortperm;
 extern const unary_function_ptr * const at_siman;
+extern const unary_function_ptr * const at_frank_wolfe;
+extern const unary_function_ptr * const at_bspline;
+extern const unary_function_ptr * const at_fitspline;
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

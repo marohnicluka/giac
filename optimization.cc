@@ -13151,6 +13151,14 @@ static const char _bspline_s []="bspline";
 static define_unary_function_eval (__bspline,&_bspline,_bspline_s);
 define_unary_function_ptr5(at_bspline,alias_at_bspline,&__bspline,0,true)
 
+/* Return k such that b[k]<=x<b[k+1], else return -1. */
+int subinterval_index(const vecteur &b,const gen &x,GIAC_CONTEXT) {
+    const_iterateur it=std::upper_bound(b.begin(),b.end(),x);
+    if (it==b.begin() || it==b.end())
+        return -1;
+    return (it-b.begin()-1);
+}
+
 /* Return [N_0,p(u),N_1,p(u),...,N_n,p(u)]. */
 void eval_basis_splines(int n,int p,const gen &u,const vecteur &t,vecteur &N,GIAC_CONTEXT) {
     if (N.empty())
@@ -13167,8 +13175,9 @@ void eval_basis_splines(int n,int p,const gen &u,const vecteur &t,vecteur &N,GIA
         N[n]=1;
         return;
     }
-    int k,d,i,np=int(t.size())-2*p-1;
-    k=_floor((np*(u-tmin))/(tmax-tmin),contextptr).val+p;
+    int k,d,i;
+    k=subinterval_index(t,u,contextptr);
+    if (k<0) gensizeerr(gettext("Bad subinterval index"));
     N[k]=1;
     for (d=1;d<=p;++d) {
         N[k-d]=(t[k+1]-u)/(t[k+1]-t[k-d+1])*N[k-d+1];
@@ -13239,11 +13248,11 @@ gen _fitspline(const gen &g,GIAC_CONTEXT) {
     const gen &data=args[0];
     if (!ckmatrix(data))
         return generr(gettext("Expected a matrix"));
-    int m=mrows(*data._VECTptr),p=3,n=(int)std::floor(std::sqrt(m)+.5);
+    int m=mrows(*data._VECTptr),p=3,n=(int)std::floor(std::sqrt(m)+.5),nbp=0;
     if (m<2 || mcols(*data._VECTptr)<2)
         return gendimerr(contextptr);
     matrice tdata=mtran(*evalf_double(data,1,contextptr)._VECTptr);
-    vecteur s=*tdata[0]._VECTptr,res;
+    vecteur s=*tdata[0]._VECTptr,res,t,N;
     matrice P=tdata[1][0].type==_VECT?*tdata[1]._VECTptr:mtran(vecteur(tdata.begin()+1,tdata.end()));
     if (!is_numericv(s) || !is_numericm(P))
         return generr(gettext("Data should be numeric"));
@@ -13256,7 +13265,7 @@ gen _fitspline(const gen &g,GIAC_CONTEXT) {
         if (it->is_integer()) {
             n=it->val;
             if (n<1)
-                return generr(gettext("Expected a positive integer"));
+                return generr(gettext("Number of spline pieces: expected a positive integer"));
         } else if (*it==at_piecewise) {
             pcw=true;
         } else if (it->is_symb_of_sommet(at_equal)) {
@@ -13264,7 +13273,12 @@ gen _fitspline(const gen &g,GIAC_CONTEXT) {
             const gen &rh=it->_SYMBptr->feuille._VECTptr->back();
             if (lh==at_degree) {
                 if (!rh.is_integer() || (p=rh.val)<1)
-                    return generr(gettext("Expected a positive integer"));
+                    return generr(gettext("Spline degree: expected a positive integer"));
+            } else if (lh==at_breakpoint) {
+                if (rh.type!=_VECT || rh._VECTptr->empty() || !is_numericv(t=*_evalf(rh,contextptr)._VECTptr))
+                    return generr(gettext("Breakpoints: expected a list of real numbers"));
+                nbp=t.size();
+                n=nbp-1;
             }
             else return generrarg(it-args.begin());
         } else return generrarg(it-args.begin());
@@ -13323,8 +13337,18 @@ gen _fitspline(const gen &g,GIAC_CONTEXT) {
         return res.size()==1?res.front():mtran(res);
 #endif
     }
-    vecteur t=mergevecteur(vecteur(p,mins),*_linspace(makesequence(mins,maxs,n+1),contextptr)._VECTptr),N;
-    t.resize(n+1+2*p,maxs);
+    if (nbp>0) {
+        if (nbp!=n+1)
+            return generrdim(gettext("Conflicting breakpoint specifications"));
+        t=*_sort(t,contextptr)._VECTptr;
+        if (is_strictly_greater(t.front(),mins,contextptr) || is_strictly_greater(maxs,t.back(),contextptr))
+            return generr(gettext("Spline domain should contain the data domain"));
+        t=mergevecteur(vecteur(p,t.front()),t);
+        t.resize(n+1+2*p,t.back());
+    } else {
+        t=mergevecteur(vecteur(p,mins),*_linspace(makesequence(mins,maxs,n+1),contextptr)._VECTptr);
+        t.resize(n+1+2*p,maxs);
+    }
     matrice A;
     A.reserve(m);
     for (it=s.begin(),itend=s.end();it!=itend;++it) {
@@ -13342,21 +13366,16 @@ gen _fitspline(const gen &g,GIAC_CONTEXT) {
     }
     // x is vecteur
     res.reserve(x._VECTptr->size());
-    for (it=x._VECTptr->begin(),itend=x._VECTptr->end();it!=itend;++it)
-        res.push_back(deBoor(_floor((n*(*it-mins))/(maxs-mins),contextptr).val+p,*it,t,Q,p));
+    for (it=x._VECTptr->begin(),itend=x._VECTptr->end();it!=itend;++it) {
+        int i=subinterval_index(t,*it,contextptr);
+        if (i<0) return generr((gettext("Spline not defined at ")+it->print(contextptr)).c_str());
+        res.push_back(deBoor(i,*it,t,Q,p));
+    }
     return res;
 }
 static const char _fitspline_s []="fitspline";
 static define_unary_function_eval (__fitspline,&_fitspline,_fitspline_s);
 define_unary_function_ptr5(at_fitspline,alias_at_fitspline,&__fitspline,0,true)
-
-gen _breaks(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
-    if (!g.is_symb_of_sommet(at_piecewise)) {
-        ;
-    }
-}
-
 
 #ifndef NO_NAMESPACE_GIAC
 }

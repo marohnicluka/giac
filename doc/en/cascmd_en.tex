@@ -33316,8 +33316,11 @@ B-splines to (multidimensional) time-stamped data in the least-squares sense.
     \item $var$, which is either a variable or a vector of real numbers.
     \item Optionally, \textit{opts}, a sequence of options each of which may be one of:
     \begin{itemize}
-      \item $n$, a positive integer specifying the number of spline pieces (by
-      default, $n=\lfloor\sqrt{m}+1/2\rfloor$).
+      \item \textit{brkpts}, which is either a positive integer $n$ specifying the number of
+      spline pieces (by default, $n=\lfloor\sqrt{m}+1/2\rfloor$), or a list of real numbers
+      $\texttt{[}b_0,b_2,\dots,b_n\texttt{]}$ explicitly specifying the breakpoints. Note that
+      $b_0\leq t_1<t_m\leq b_n$ must hold when the list is sorted (it does not need to be).
+      If $\textit{brkpts}=n$, then uniform breakpoints are generated in the segment $[t_1,t_m]$.
       \item \texttt{degree=}$p$, where $p$ is a positive integer (spline degree, by default $p=3$).
       \item \texttt{piecewise}, the symbol.
     \end{itemize}
@@ -33328,13 +33331,15 @@ B-splines to (multidimensional) time-stamped data in the least-squares sense.
     \item the spline as returned by \texttt{bspline} for the variable \textit{var} and optionally
     \texttt{piecewise}, if \textit{var} is an identifier.
   \end{itemize}
-  The resulting spline (of degree $p$) is computed from a sequence of $n+1$ uniformly spaced
-  breakpoints and $n+p$ control points obtained by minimizing squared distances between spline
-  points at values $t_k$ and data points $(x_{k1},x_{k2},\dots,x_{kd})$ for $k=1,2,\dots,m$.
+  The resulting spline (of degree $p$) is computed from a sequence of $n+1$ breakpoints (either
+  automatically generated or explicitly given) and $n+p$ control points obtained by minimizing
+  squared distances between spline points at values $t_k$ and data points
+  $(x_{k1},x_{k2},\dots,x_{kd})$ for $k=1,2,\dots,m$.
   \item The number $m$ of data samples must be larger than the number $n+p$ of control points.
-  Furthermore, it is recommended that $2m\geq n+p$ is satisfied, otherwise the spline
-  would overfit on the noise (if the above inequality does not hold,
-  a warning is printed). This is essentially a Nyquist-frequency argument.
+  Furthermore, it is recommended that $n+p\leq m/2$ is satisfied when uniformly spaced breakpoints
+  are used; otherwise the spline could easily overfit on the noise resulting in large oscillations
+  (this is essentially a Nyquist-frequency argument). If the above inequality does not hold,
+  a warning is printed.
   \item Note that \texttt{fitspline} operates exclusively in floating-point arithmetic.
   If \textit{var} is a vector, then GSL fitting routines are used if available.
 \end{itemize}
@@ -33348,7 +33353,7 @@ The following command line computes $y$-values of a B-spline fit:
 \begin{xcasinput}
 ys:=fitspline(tran([x,y]),x)]):;
 \end{xcasinput}
-Essentially, \texttt{ys} is the result of snapping \texttt{y}
+Essentially, \texttt{ys} is the result of ``snapping'' \texttt{y}
 to a smooth curve. Now visualize the result by entering:
 \begin{xcasinput}
 scatterplot(x,y,color=blue); listplot(tran([x,ys]))
@@ -33381,7 +33386,7 @@ obtaining the velocity as a function of time.
 
 By setting the number of spline pieces (which is 20 in the above graph) to a value that is
 close to 50 (the number of samples), the resulting spline exhibits large oscillations
-(Runge phenomenon):
+(reminiscent of Runge phenomenon):
 \begin{xcasinput}
 listplot(fitspline(tran([t,x,y]),t1,45)),scatterplot(x,y,color=blue)
 \end{xcasinput}
@@ -33859,6 +33864,7 @@ can be used only in 2D plots.
     \item \texttt{+-} resp.~\texttt{-+} prints as $\pm$ resp.~$\mp$.
     \item \texttt{==} prints as $\equiv$.
     \item \texttt{!=} prints as $\neq$.
+    \item \texttt{~~} prints as $\approx$.
     \item \texttt{\textbackslash/} prints as $\sqrt{\,}$. Note that the backslash must be
     escaped, i.e.~entered as \texttt{\textbackslash\textbackslash}.
     \item \texttt{->} prints as $\rightarrow$.
@@ -33867,6 +33873,8 @@ can be used only in 2D plots.
     \item \texttt{*}, when preceded/followed by an alphanumeric character or parenthesis,
     is printed as $\cdot$ (the multiplication dot).
     \item \texttt{\_\_} (double underscore) prints as --- (em dash).
+    \item \texttt{\^{}C} prints as ${}^\circ\mathrm{C}$.
+    \item \texttt{\^{}F} prints as ${}^\circ\mathrm{F}$.
     %\item Greek letters are automatically slanted in math mode.
   \end{itemize}
 \end{itemize}
@@ -34411,7 +34419,7 @@ plotfunc(x*sin(y),[x=0..2,y=-pi..pi],nstep=300)
 \subsubsection{3D graph with rainbow colors\label{sssec:plotfunc3d}}
 
 If the expression with two variables is purely
-imaginary, \textit{$i$expr}, then \texttt{plotfunc}
+imaginary, $\mathrm{i}\textit{expr}$, then \texttt{plotfunc}
 will still draw the graph, but the color will depend on the height
 $z=\textit{expr}$ resulting in a rainbow colored surface.   This
 provides you with  an easy way to find points having the same third

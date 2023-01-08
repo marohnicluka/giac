@@ -33116,14 +33116,14 @@ It operates exclusively in floating-point arithmetic.
   \textit{expr} on $[a,b]$. If $r$ has no singularities in $[a,b]$, then a list containing
   $\|f-r\|_{\infty}$ and $r(x)$ is returned. Otherwise, an approximation of
   $\frac1{b-a}\int_a^b|f(x)-r(x)|\mathrm{d}x$, computed by using Simpson's rule with $20(n+m+2)$ steps,
-  is returned as the first element (this may serve as an upper bound to the measure of fit outside poles)
+  is returned as the first element (this may serve as a rough estimation of fitness outside poles)
   and a warning is printed in the message area.
   \item By specifying only the parameter $n$, you get an approximation of $f$ by a polynomial.
   This is faster and the result is always well-defined, but rational approximants provide more
   flexibility and can be significantly more accurate even for smaller values of $n$ and $m$
   (these should be chosen so that $r$ has no singularities in $[a,b]$, however).
   \item With the $\texttt{rand}\langle\texttt{=}N\rangle$ option, \texttt{minimax} skews the
-  initial nodes randomly before proceeding to the first Remez step. This may help
+  initial (Chebyshev) nodes randomly before proceeding to the first Remez step. This may help
   the algorithm to converge to a well-defined result when $m>0$. If $N$ is specified,
   then the entire computation is performed $N$ times and the best result is selected.
   This will be a pole-free function when possible. The \texttt{rand} option is usually not

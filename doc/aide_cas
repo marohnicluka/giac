@@ -1432,6 +1432,20 @@ simplex_reduce([[2,1,1,1,0,0,2],[1,2,3,0,1,0,5],[2,2,1,0,0,1,6],[-3,-1,-3,1,-1,2
 -1 lagrange
 spline([0,1,2],[1,3,0],x,3)
 
+# bspline
+2 Returns the B-spline of degree p (default 3) defined by control points c and optionally |c|-p+1 breakpoints t in [a,b] (default a=0, b=1).
+0 Lst(c),[x[=Lst(t)||a..b],Intg(p)]
+-1 spline
+-2 bezier
+bspline([2i,1-2i,5-i,6-4i,8+2i,5+i],x=0..15)
+
+# fitspline
+2 Returns the B-spline which fits data most closely in the least-squares sense.
+0 Mtrx(data),(Var||Lst)(x),[opts]
+-1 bspline
+-2 fitpoly
+ t:=linspace(0,10,50):;x:=apply(u->(u^2*sin(u)+u-1)/(1+u*sqrt(u)),t):;y:=apply(u->(u^2*cos(u)-u+1)/(1+u*sqrt(u)),t):;listplot(fitspline(tran([t,x,y]),linspace(0,10,500))),scatterplot(x,y,color=blue)
+
 # convexhull
 1 Enveloppe convexe d'un ensemble de points du plan.
 2 Convex hull of a list of 2-d points.
@@ -15930,13 +15944,13 @@ maximize(sqrt(x^2+y^2)-z,[x^2+y^2<=16,x+y+z=10],[x,y,z])
 maximize((1+x^2+3y+5x-4*x*y)/(1+x^2+y^2),x^2/4+y^2/3=9,[x,y])
 
 # minimax
-1 Approximation polynomiale de degré n d'une fonction continue bornée sur [a,b] par la méthode de Remez.
-2 Returns polynomial approximation of degree n of a continuous bounded function on a..b using Remez algorithm.
-0 Expr,Var=Real(a)..Real(b),Intg(n),[Options]
+1 Approximation rationnelle de degré n[,m] d'une fonction continue bornée sur [a,b] par la méthode de Remez.
+2 Returns rational approximation of degree n[,m] of a continuous bounded function on a..b using Remez algorithm.
+0 Expr,Var=Real(a)..Real(b),Intg(n)||Lst(Intg(n),Intg(m)),[opts]
 -1 fitpoly
-minimax(x*exp(-x),x=0..10,12)
 minimax(abs(x)*sqrt(abs(x)),x=-2..2,15)
 minimax(min(1/cosh(3*sin(x)),sin(9x/10)),x=-3..4,30)
+minimax(x*exp(-x),x=0..10,[5,3],rand=30)
 
 # fitpoly
 2 Returns the polynomial of suitable degree which best fits the data or function in the sense of least squares.

@@ -3,13 +3,18 @@ My contributions to [Giac/Xcas](https://www-fourier.ujf-grenoble.fr/~parisse/gia
 - graph theory (a comprehensive package containing over 200 commands, see [doc/graphtheory-user_manual.pdf](https://raw.githubusercontent.com/marohnicluka/giac/master/doc/graphtheory-user_manual.pdf) for details)
 - signal processing and audio (creating wave files, convolution and (auto)correlation, filtering, windowing, resampling, noise removal)
 - images
-- continuous Fourier transforms
+- continuous and short-time Fourier transform
+- continuous and discrete Hilbert transform
+- analytic signal representation
+- empirical mode decomposition
+- Hilbert-Huang transform
 - constrained optimization in multivariate calculus (local and global extrema)
 - calculus of variations
 - numerical differentiation (Fornberg's algorithm)
 - (mixed integer) (non)linear programming
 - transportation problems
-- curve interpolation and fitting (Thiele's algorithm, Floater and Hormann's algorithm, trigonometric polynomial fitting, Remez algorithm)
+- curve interpolation and fitting (Thiele's algorithm, Floater and Hormann's algorithm, trigonometric polynomial fitting, Remez algorithm, L^2 polynomial approximation)
+- B-splines with efficient fitting to data
 - simplification of trigonometric expressions
 - statistics (discrete random variables with sampling, kernel density estimation, maximum-likelihood fitting)
 - ordinary differential equations (an implementation of Kovacic's algorithm and a second-degree boundary value problems solver)
@@ -17,4 +22,5 @@ My contributions to [Giac/Xcas](https://www-fourier.ujf-grenoble.fr/~parisse/gia
 - K-means and hierarchical agglomerative clustering
 - feed-forward neural networks
 - LaTeX/MathML/TeXmacs conversion of Giac output
+- colors and colormaps
 - using Giac in TeXmacs

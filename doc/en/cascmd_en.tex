@@ -33317,10 +33317,11 @@ B-splines to (multidimensional) time-stamped data in the least-squares sense.
     \item Optionally, \textit{opts}, a sequence of options each of which may be one of:
     \begin{itemize}
       \item \textit{brkpts}, which is either a positive integer $n$ specifying the number of
-      spline pieces (by default, $n=\lfloor\sqrt{m}+1/2\rfloor$), or a list of real numbers
-      $\texttt{[}b_0,b_2,\dots,b_n\texttt{]}$ explicitly specifying the breakpoints. Note that
-      $b_0\leq t_1<t_m\leq b_n$ must hold when the list is sorted (it does not need to be).
-      If $\textit{brkpts}=n$, then uniform breakpoints are generated in the segment $[t_1,t_m]$.
+      spline pieces (by default, $n=\lfloor\sqrt{m}+1/2\rfloor$), or
+      $\texttt{breakpoint=[}b_0,b_2,\dots,b_n\texttt{]}$ which specifies the breakpoints
+      $b_0,\dots,b_n\in\mathbb{R}$ explicitly (and not necessarily in an ascending order).
+      Note that $\min_ib_i\leq t_1<t_m\leq \max_jb_j$ must hold. If $\textit{brkpts}=n$, then $n+1$
+      uniformly spaces breakpoints are automatically generated in the segment $[t_1,t_m]$.
       \item \texttt{degree=}$p$, where $p$ is a positive integer (spline degree, by default $p=3$).
       \item \texttt{piecewise}, the symbol.
     \end{itemize}
@@ -33340,6 +33341,9 @@ B-splines to (multidimensional) time-stamped data in the least-squares sense.
   are used; otherwise the spline could easily overfit on the noise resulting in large oscillations
   (this is essentially a Nyquist-frequency argument). If the above inequality does not hold,
   a warning is printed.
+  \item You should specify the breakpoints explicitly in cases when data has significant
+  changes in curvature; it is a good idea to provide more resp.~less breakpoints for intervals
+  in which the curvature is large resp.~small.
   \item Note that \texttt{fitspline} operates exclusively in floating-point arithmetic.
   If \textit{var} is a vector, then GSL fitting routines are used if available.
 \end{itemize}
@@ -33366,14 +33370,10 @@ You can use B-spline to trace a sequence of points in time. For example,
 generate a list of 2D locations by entering:
 \begin{xcasinput}
 t:=linspace(0,10,50):;
-\end{xcasinput}
-\begin{xcasinput}
 x:=apply(u->(u^2*sin(u)+u-1)/(1+u*sqrt(u))+randnorm(0,0.1),t):;
-\end{xcasinput}
-\begin{xcasinput}
 y:=apply(u->(u^2*cos(u)-u+1)/(1+u*sqrt(u))+randnorm(0,0.1),t):;
 \end{xcasinput}
-The underlying path of these ``footsteps'' can be visualized like this:
+The underlying smooth path of these ``footsteps'' can be approximated like this:
 \begin{xcasinput}
 t1:=linspace(0,10,500):;
 listplot(fitspline(tran([t,x,y]),t1,20)),scatterplot(x,y,color=blue)
@@ -33381,12 +33381,13 @@ listplot(fitspline(tran([t,x,y]),t1,20)),scatterplot(x,y,color=blue)
 \begin{xcasimage}
   \includeimage{xcas-fitspline2.png}
 \end{xcasimage}
-The spline approximation can be useful for computing the total distance traveled or
-obtaining the velocity as a function of time.
+Such approximation is useful for estimating the total distance traveled or
+the velocity at a certain point in time, assuming that data represents a
+discretized trajectory of a moving object, such as e.g.~a series of GPS positions would.
 
 By setting the number of spline pieces (which is 20 in the above graph) to a value that is
 close to 50 (the number of samples), the resulting spline exhibits large oscillations
-(reminiscent of Runge phenomenon):
+near the beginning and end of the curve, reminiscent of Runge's phenomenon:
 \begin{xcasinput}
 listplot(fitspline(tran([t,x,y]),t1,45)),scatterplot(x,y,color=blue)
 \end{xcasinput}
@@ -33396,6 +33397,8 @@ Warning: too many control points
 \begin{xcasimage}
   \includeimage{xcas-fitspline3.png}
 \end{xcasimage}
+Note that using Chebyshev nodes as breakpoints, which would be beneficial in the case of
+polynomial interpolation, does not make much difference here.
 
 
 \chapter{Metric properties of curves}
@@ -33467,10 +33470,10 @@ trigsimplify(curvature([5*cos(t),5*sin(t)],t))
   \frac{1}{5}
 \end{xcasoutput}
 \begin{xcasinput}
-curvature([2*cos(t),3*sin(t)],t)
+trigsimplify(curvature([2*cos(t),3*sin(t)],t))
 \end{xcasinput}
 \begin{xcasoutput}
-  \frac{\left(6 \cos ^{2}t+6 \sin ^{2}t\right) \sqrt{9 \cos ^{2}t+4 \sin ^{2}t}}{\left(9 \cos ^{2}t+4 \sin ^{2}t\right)^{2}}
+  \frac{24 \sqrt{2} \sqrt{5 \cos \left(2 t\right)+13}}{260 \cos \left(2 t\right)+25 \cos \left(4 t\right)+363}
 \end{xcasoutput}
 \begin{xcasinput}
 curvature([2*cos(t),3*sin(t)],t,pi/2)

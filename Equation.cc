@@ -96,12 +96,14 @@ namespace xcas {
       } else if (mm && s1[i]=='~' && i<n-1 && s1[i+1]=='~') {
         s0+="≈";
         i++;
+#if 0
       } else if (s1[i]=='°' && i<n-1 && s1[i+1]=='C') {
         s0+="℃";
         i++;
       } else if (s1[i]=='°' && i<n-1 && s1[i+1]=='F') {
         s0+="℉";
         i++;
+#endif
       } else if (s1[i]=='_' && i<n-1 && s1[i+1]=='_') {
         s0+="—";
         i++;

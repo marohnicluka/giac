@@ -5215,7 +5215,7 @@ gen _emd(const gen &g,GIAC_CONTEXT) {
     if (g._VECTptr->empty())
         return gendimerr(contextptr);
     double var_tol=0.1;
-    int imf_limit=INT_MAX,min_extrema=2;
+    int imf_limit=RAND_MAX,min_extrema=2;
     bool out_residue=true;
     if (g.subtype==_SEQ__VECT) { // has options
         const vecteur &args=*g._VECTptr;
@@ -5752,7 +5752,7 @@ gen _hht(const gen &g,GIAC_CONTEXT) {
     n=data_is_imf?mcols(data):data.size();
     if (!data_is_imf) {
 #ifdef HAVE_LIBGSL
-        emd(data,imf,residue,INT_MAX,2,0.1,contextptr);
+        emd(data,imf,residue,RAND_MAX,2,0.1,contextptr);
         if (imf.empty())
             return generr(gettext("No IMF found"));
 #else

@@ -3911,7 +3911,7 @@ csv2gen("1 2 3; 4 5 6"," ",";",string)
 \end{xcasoutput}
 Assuming that the file \texttt{hooke.csv} (containing Hooke's Law demo data) is downloaded
 from \href{https://people.sc.fsu.edu/~jburkardt/data/csv/csv.html}{here} to the
-\texttt{Downloads} folder, you can load it by typing e.g.
+\texttt{Downloads} folder, you can load it by typing something like
 \begin{xcasinput}
 hooke:=csv2gen("/home/luka/Downloads/hooke.csv",",")
 \end{xcasinput}
@@ -3924,7 +3924,7 @@ tail(hooke)
 \end{xcasinput}
 is a convenient way to obtain the table with the header row removed (see~\secref{ssec:tail}).
 
-\subsubsection*{Application: loading and sorting real-world data}
+\subsubsection*{Application: loading real-world data to \xcas{}}
 Assume that you require global annual mean temperature anomaly data for
 the last two of centuries (it has been recorded since 1880).
 The corresponding CSV file can be found
@@ -3964,8 +3964,9 @@ to the lexicographic order (effectively along the first column, i.e.~the time ax
 For instance, to plot the \textsf{GCAG} data, enter:
 \begin{xcasinput}
 gcag:=t["GCAG"]:;
-labels=["year","°C"];
-title="Annual mean temperature anomalies [°C]";
+labels=["year",""];
+legend=["","°C"];
+title="Annual mean temperature anomalies";
 listplot(gcag)
 \end{xcasinput}
 \begin{xcasimage}
@@ -33319,9 +33320,9 @@ B-splines to (multidimensional) time-stamped data in the least-squares sense.
       \item \textit{brkpts}, which is either a positive integer $n$ specifying the number of
       spline pieces (by default, $n=\lfloor\sqrt{m}+1/2\rfloor$), or
       $\texttt{breakpoint=[}b_0,b_2,\dots,b_n\texttt{]}$ which specifies the breakpoints
-      $b_0,\dots,b_n\in\mathbb{R}$ explicitly (and not necessarily in an ascending order).
+      $b_0,\dots,b_n\in\mathbb{R}$ explicitly (and not necessarily in ascending order).
       Note that $\min_ib_i\leq t_1<t_m\leq \max_jb_j$ must hold. If $\textit{brkpts}=n$, then $n+1$
-      uniformly spaces breakpoints are automatically generated in the segment $[t_1,t_m]$.
+      evenly spaced breakpoints are automatically generated in the segment $[t_1,t_m]$.
       \item \texttt{degree=}$p$, where $p$ is a positive integer (spline degree, by default $p=3$).
       \item \texttt{piecewise}, the symbol.
     \end{itemize}
@@ -33338,12 +33339,12 @@ B-splines to (multidimensional) time-stamped data in the least-squares sense.
   $(x_{k1},x_{k2},\dots,x_{kd})$ for $k=1,2,\dots,m$.
   \item The number $m$ of data samples must be larger than the number $n+p$ of control points.
   Furthermore, it is recommended that $n+p\leq m/2$ is satisfied when uniformly spaced breakpoints
-  are used; otherwise the spline could easily overfit on the noise resulting in large oscillations
+  are used; otherwise the spline could easily overfit on the noise, resulting in large oscillations
   (this is essentially a Nyquist-frequency argument). If the above inequality does not hold,
   a warning is printed.
-  \item You should specify the breakpoints explicitly in cases when data has significant
-  changes in curvature; it is a good idea to provide more resp.~less breakpoints for intervals
-  in which the curvature is large resp.~small.
+  \item Setting explicit breakpoints can lead to a better fit in some cases, e.g.~when the data
+  curvature varies significantly. It is a good idea to provide more resp.~less breakpoints for
+  intervals in which the curvature is large resp.~small.
   \item Note that \texttt{fitspline} operates exclusively in floating-point arithmetic.
   If \textit{var} is a vector, then GSL fitting routines are used if available.
 \end{itemize}
@@ -33397,8 +33398,6 @@ Warning: too many control points
 \begin{xcasimage}
   \includeimage{xcas-fitspline3.png}
 \end{xcasimage}
-Note that using Chebyshev nodes as breakpoints, which would be beneficial in the case of
-polynomial interpolation, does not make much difference here.
 
 
 \chapter{Metric properties of curves}
@@ -42569,8 +42568,8 @@ for other uses of \texttt{hilbert}.
 \end{itemize}
 
 \subsubsection*{Examples}
-There is no dedicated \xcas{} command for the inverse Hilbert transform, so one has to use
-the identity~\eqref{eq:ihilbert}. Indeed:
+There is no dedicated \xcas{} command for the inverse Hilbert transform,
+so you have to use the identity~\eqref{eq:ihilbert}. Indeed:
 \begin{xcasinput}
 Hy:=hilbert(y(x),x)
 \end{xcasinput}
@@ -43896,6 +43895,49 @@ listplot(welch_window([1$1000]))
 
 \chapter{Data analysis and machine learning\label{chap:data}}
 
+\section{Data conversion routines}
+
+\subsection{Converting between geodetic and ECEF coordinates}
+You can convert between geodetic (LLA: Latitude, Longitude, Altitude) and
+Earth-Fixed Earth-Centered (ECEF) coordinates with respect to the WGS84 ellipsoid
+by using the \texttt{geodetic2ecef} and \texttt{ecef2geodetic} commands.
+
+For more information about geographic coordinate systems and conversion, see
+e.g.~\href{https://en.wikipedia.org/wiki/Geographic_coordinate_conversion}{here}.
+
+\begin{itemize}
+  \item \texttt{geodetic2ecef} takes three arguments:
+  \begin{itemize}
+    \item $\phi$, the latitude (in decimal degrees).
+    \item $\lambda$, the longitude (in decimal degrees).
+    \item $h$, the height (i.e.~altitude, in metres).
+  \end{itemize}
+  Alternatively, you can pass the list $\texttt{[}\phi,\lambda,h\texttt{]}$ as
+  a single argument.
+  \item \texttt{geodetic2ecef(}$\phi,\lambda,h$\texttt{)} returns the list
+  $[x,y,z]$ in the ECEF Cartesian coordinate system (all components are in metres).
+  For invalid locations, \texttt{undef} is returned.
+\end{itemize}
+
+The \texttt{ecef2geodetic} command works the opposite way. With ECEF
+coordinates $x$, $y$ and $z$ supplied as input arguments, you get the list
+$[\phi,\lambda,h]$ of the corresponding geodetic coordinates.
+
+\subsubsection*{Examples}
+
+\begin{xcasinput}
+xyz:=geodetic2ecef(45.1832745,15.7852367,89.541)
+\end{xcasinput}
+\begin{xcasoutput}
+  \left[4333403.44478,1225023.67407,4501791.18176\right]
+\end{xcasoutput}
+\begin{xcasinput}
+ecef2geodetic(xyz)
+\end{xcasinput}
+\begin{xcasoutput}
+  \left[45.1832745,15.7852367,89.5409998717\right]
+\end{xcasoutput}
+
 \section{Clustering}
 
 Clustering is a form of unsupervised machine learning.
@@ -44229,7 +44271,7 @@ is used for creating trainable feed-forward neural networks.
       These symbols are substituted by sizes of the $k$th and $(k+1)$-th layer, respectively.
       The commonly used initializations by He, Glorot and LeCun
       can be specified as strings \texttt{"he"}, \texttt{"glorot"} and \texttt{"lecun"} with the suffix
-      \texttt{"-uniform"} resp.~\texttt{"-normal"} for uniform resp.~Gaussian variant.
+      \texttt{"-uniform"} resp.~\texttt{"-normal"} for uniform resp.~Gaussian variants.
     \end{itemize}
     By default, the uniform random variable
     $U\left(-\frac1{\sqrt{n_{\mathrm{in}}}},\frac1{\sqrt{n_{\mathrm{in}}}}\right)$ is
@@ -44251,9 +44293,9 @@ is used for creating trainable feed-forward neural networks.
   returns the network object \texttt{net} which can be trained by using the
   \texttt{train} command (see \secref{ssec:train}).
 \item After the network is trained to a sufficient accuracy,
-  you feed it with some input \texttt{inp} by calling the command \texttt{net(inp)}, which returns the list
+  you can feed it with some input \texttt{inp} by calling the command \texttt{net(inp)}, which returns the list
   of values in the final layer or output label(s) if the network is a classifier. \texttt{inp} can also
-  be a matrix, in which case each row is processed and the list of results is returned.
+  be a matrix, in which case it is processed row by row and the list of results is returned.
   Alternatively, you can pass two arguments to \texttt{net} as in the command \texttt{net(inp,res)} where
   \texttt{res} is (the list of) expected output(s). The return value in this case is the (list of) error(s)
   made by the network in attempt to predict \texttt{res}.
@@ -44284,7 +44326,7 @@ is used for creating trainable feed-forward neural networks.
   network. This is useful for e.g.~obtaining hidden representations from autoencoders.
 \item Although \texttt{neural\_network} is flexible when it comes to custom activation and error
   functions, the resulting network is optimized for speed only when the options \texttt{func},
-  \texttt{output} and \texttt{erf} are left unset, i.e.~when the default activation/error function(s) are used.
+  \texttt{output} and \texttt{erf} are unset, i.e.~only when the default activation/error function(s) are used.
 \item Networks can be saved to disk by using the command \texttt{write} (see \secref{ssec:write})
   and loaded by using the command \texttt{read} (see \secref{ssec:read}). This is useful for
   storing networks after training and loading them on demand.

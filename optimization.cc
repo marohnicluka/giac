@@ -13152,10 +13152,14 @@ static define_unary_function_eval (__bspline,&_bspline,_bspline_s);
 define_unary_function_ptr5(at_bspline,alias_at_bspline,&__bspline,0,true)
 
 /* Return k such that b[k]<=x<b[k+1], else return -1. */
-int subinterval_index(const vecteur &b,const gen &x,GIAC_CONTEXT) {
+int subinterval_index(const vecteur &b,const gen &x_orig,GIAC_CONTEXT) {
+    gen x=max(b.front(),min(b.back(),x_orig,contextptr),contextptr);
     const_iterateur it=std::upper_bound(b.begin(),b.end(),x);
-    if (it==b.begin() || it==b.end())
+    if (it==b.begin())
         return -1;
+    if (it==b.end())
+        it--;
+    while (is_zero(*(it-1)-*it,contextptr)) --it;
     return (it-b.begin()-1);
 }
 
@@ -13248,26 +13252,28 @@ gen _fitspline(const gen &g,GIAC_CONTEXT) {
     const gen &data=args[0];
     if (!ckmatrix(data))
         return generr(gettext("Expected a matrix"));
-    int m=mrows(*data._VECTptr),p=3,n=(int)std::floor(std::sqrt(m)+.5),nbp=0;
+    int m=mrows(*data._VECTptr),p=3,n=(int)std::floor(std::sqrt(m)+.5),nbp=0,dif=0;
     if (m<2 || mcols(*data._VECTptr)<2)
         return gendimerr(contextptr);
     matrice tdata=mtran(*evalf_double(data,1,contextptr)._VECTptr);
-    vecteur s=*tdata[0]._VECTptr,res,t,N;
+    vecteur s=*tdata[0]._VECTptr,res,t,N,kn;
     matrice P=tdata[1][0].type==_VECT?*tdata[1]._VECTptr:mtran(vecteur(tdata.begin()+1,tdata.end()));
     if (!is_numericv(s) || !is_numericm(P))
         return generr(gettext("Data should be numeric"));
     x=args[1];
     if (x.type!=_IDNT && x.type!=_VECT)
         return gentypeerr(contextptr);
-    bool pcw=false;
+    bool pcw=false,closed=false,unif=false;
     const_iterateur it=args.begin()+2,itend=args.end();
     for (;it!=itend;++it) {
         if (it->is_integer()) {
             n=it->val;
-            if (n<1)
-                return generr(gettext("Number of spline pieces: expected a positive integer"));
         } else if (*it==at_piecewise) {
             pcw=true;
+        } else if (*it==at_close) {
+            closed=true;
+        } else if (*it==at_uniform) {
+            unif=true;
         } else if (it->is_symb_of_sommet(at_equal)) {
             const gen &lh=it->_SYMBptr->feuille._VECTptr->front();
             const gen &rh=it->_SYMBptr->feuille._VECTptr->back();
@@ -13279,13 +13285,15 @@ gen _fitspline(const gen &g,GIAC_CONTEXT) {
                     return generr(gettext("Breakpoints: expected a list of real numbers"));
                 nbp=t.size();
                 n=nbp-1;
-            }
-            else return generrarg(it-args.begin());
+            } else if (lh==at_derive) {
+                if (!rh.is_integer() || (dif=rh.val)<0)
+                    return generr(gettext("Derivative: expected a positive integer"));
+            } else return generrarg(it-args.begin());
         } else return generrarg(it-args.begin());
     }
-    if (n<1)
+    if (n<1 || dif>=p)
         return gendimerr(contextptr);
-    int ncp=n+p;
+    int ncp=n+p-1;
     if (ncp>=m)
         return generr(gettext("Number of control points should be less than number of samples"));
     if (2*ncp>m)
@@ -13296,45 +13304,51 @@ gen _fitspline(const gen &g,GIAC_CONTEXT) {
         if (!is_numericv(*x._VECTptr))
             return generr(gettext("Expected a vector of reals"));
 #ifdef HAVE_LIBGSL
-        gsl_bspline_workspace *bw=gsl_bspline_alloc(p+1,n+1);
-        gsl_vector *B,*y,*c,*xv;
-        int ncoeffs=gsl_bspline_ncoeffs(bw),npts=x._VECTptr->size();
-        B=gsl_vector_alloc(ncoeffs);
-        y=gsl_vector_alloc(m);
-        c=gsl_vector_alloc(ncoeffs);
-        xv=vecteur2gsl_vector(*x._VECTptr,contextptr);
-        gsl_matrix *X=gsl_matrix_alloc(m,ncoeffs);
-        gsl_matrix *cov=gsl_matrix_alloc(ncoeffs,ncoeffs);
-        gsl_multifit_linear_workspace *mw=gsl_multifit_linear_alloc(m,ncoeffs);
-        double xmin=mins.DOUBLE_val(),xmax=maxs.DOUBLE_val(),yi,yerr,chisq;
-        gsl_bspline_knots_uniform(xmin,xmax,bw);
-        for (int i=0;i<m;++i) {
-            gsl_bspline_eval(s[i].DOUBLE_val(),B,bw);
-            for (int j=0;j<ncoeffs;++j)
-                gsl_matrix_set(X,i,j,gsl_vector_get(B,j));
-        }
-        res.reserve(npts);
-        for (it=tdata.begin()+1,itend=tdata.end();it!=itend;++it) {
-            vecteur2gsl_vector(*it->_VECTptr,y,contextptr);
-            gsl_multifit_linear(X,y,c,cov,&chisq,mw);
-            vecteur r;
-            r.reserve(npts);
-            for (int i=0;i<npts;++i) {
-                gsl_bspline_eval(gsl_vector_get(xv,i),B,bw);
-                gsl_multifit_linear_est(B,c,cov,&yi,&yerr);
-                r.push_back(yi);
+        if (!closed && dif==0) {
+            gsl_bspline_workspace *bw=gsl_bspline_alloc(p+1,n+1);
+            gsl_vector *B,*y,*c,*xv,*knots=NULL;
+            int ncoeffs=gsl_bspline_ncoeffs(bw),npts=x._VECTptr->size();
+            B=gsl_vector_alloc(ncoeffs);
+            y=gsl_vector_alloc(m);
+            c=gsl_vector_alloc(ncoeffs);
+            xv=vecteur2gsl_vector(*x._VECTptr,contextptr);
+            gsl_matrix *X=gsl_matrix_alloc(m,ncoeffs);
+            gsl_matrix *cov=gsl_matrix_alloc(ncoeffs,ncoeffs);
+            gsl_multifit_linear_workspace *mw=gsl_multifit_linear_alloc(m,ncoeffs);
+            double xmin=mins.DOUBLE_val(),xmax=maxs.DOUBLE_val(),yi,yerr,chisq;
+            if (nbp>0) {
+                knots=vecteur2gsl_vector(t,contextptr);
+                gsl_bspline_knots(knots,bw);
+            } else gsl_bspline_knots_uniform(xmin,xmax,bw);
+            for (int i=0;i<m;++i) {
+                gsl_bspline_eval(s[i].DOUBLE_val(),B,bw);
+                for (int j=0;j<ncoeffs;++j)
+                    gsl_matrix_set(X,i,j,gsl_vector_get(B,j));
             }
-            res.push_back(r);
+            res.reserve(npts);
+            for (it=tdata.begin()+1,itend=tdata.end();it!=itend;++it) {
+                vecteur2gsl_vector(*it->_VECTptr,y,contextptr);
+                gsl_multifit_linear(X,y,c,cov,&chisq,mw);
+                vecteur r;
+                r.reserve(npts);
+                for (int i=0;i<npts;++i) {
+                    gsl_bspline_eval(gsl_vector_get(xv,i),B,bw);
+                    gsl_multifit_linear_est(B,c,cov,&yi,&yerr);
+                    r.push_back(yi);
+                }
+                res.push_back(r);
+            }
+            gsl_bspline_free(bw);
+            gsl_vector_free(B);
+            gsl_vector_free(y);
+            gsl_vector_free(c);
+            gsl_vector_free(xv);
+            if (knots) gsl_vector_free(knots);
+            gsl_matrix_free(X);
+            gsl_matrix_free(cov);
+            gsl_multifit_linear_free(mw);
+            return res.size()==1?res.front():mtran(res);
         }
-        gsl_bspline_free(bw);
-        gsl_vector_free(B);
-        gsl_vector_free(y);
-        gsl_vector_free(c);
-        gsl_vector_free(xv);
-        gsl_matrix_free(X);
-        gsl_matrix_free(cov);
-        gsl_multifit_linear_free(mw);
-        return res.size()==1?res.front():mtran(res);
 #endif
     }
     if (nbp>0) {
@@ -13359,6 +13373,16 @@ gen _fitspline(const gen &g,GIAC_CONTEXT) {
     if (!linsolve_symmetric_banded(ATA,A,ncp==p+1?p+1:p,contextptr))
         return generr(gettext("Least-squares optimization failed"));
     matrice Q=*ratnormal(mmult(mtran(A),P),contextptr)._VECTptr; // control points
+    for (int d=0;d<dif;++d) {
+        for (int i=0;i<ncp;++i) {
+            subvecteur(*Q[i+1]._VECTptr,*Q[i]._VECTptr,*Q[i]._VECTptr);
+            multvecteur(gen(p)/(t[i+p+1]-t[i+1]),*Q[i]._VECTptr,*Q[i]._VECTptr);
+        }
+        Q.pop_back();
+        p--;
+        ncp--;
+        t=vecteur(t.begin()+1,t.end()-1);
+    }
     if (x.type==_IDNT) {
         vecteur bargs=makevecteur(Q,symb_equal(x,symb_interval(mins,maxs)),p);
         if (pcw) bargs.push_back(at_piecewise);
@@ -13368,7 +13392,7 @@ gen _fitspline(const gen &g,GIAC_CONTEXT) {
     res.reserve(x._VECTptr->size());
     for (it=x._VECTptr->begin(),itend=x._VECTptr->end();it!=itend;++it) {
         int i=subinterval_index(t,*it,contextptr);
-        if (i<0) return generr((gettext("Spline not defined at ")+it->print(contextptr)).c_str());
+        if (i<0) return generr((gettext("Failed to evaluate spline at ")+it->print(contextptr)).c_str());
         res.push_back(deBoor(i,*it,t,Q,p));
     }
     return res;
@@ -13376,6 +13400,84 @@ gen _fitspline(const gen &g,GIAC_CONTEXT) {
 static const char _fitspline_s []="fitspline";
 static define_unary_function_eval (__fitspline,&_fitspline,_fitspline_s);
 define_unary_function_ptr5(at_fitspline,alias_at_fitspline,&__fitspline,0,true)
+
+/* Conversion between geodetic and ECEF coordinates (https://hal.science/hal-01704943v2/document).
+ * Karl Osen: Accurate Conversion of Earth-Fixed Earth-Centered Coordinates to Geodetic Coordinates (2017)
+ */
+#define WGS84_AI        1.56785594288739799723e-7
+#define WGS84_AI2       2.45817225764733181057e-14
+#define WGS84_L         3.34718999507065852867e-3
+#define WGS84_L2        1.12036808631011150655e-5
+#define WGS84_1ME2      9.93305620009858682943e-1
+#define WGS84_1ME2A2    2.44171631847341700642e-14
+#define WGS84_1ME2B     1.56259921876129741211e-7
+#define WGS84_HMIN      2.25010182030430273673e-14
+#define WGS84_1SQ32     7.93700525984099737380e-1
+#define WGS84_A2C       7.79540464078689228919e7
+#define WGS84_B2C2      1.48379031586596594555e2
+/* Convert geodetic LLA coordinates (decimal degrees/metres) to ECEF coordinates (metres). */
+gen geodetic2ecef(const gen &lat,const gen &lon,const gen &h,GIAC_CONTEXT) {
+    gen phi=(M_PI/180.0)*lat,lambda=(M_PI/180.0)*lon;
+    gen cosphi=cos(phi,contextptr);
+    gen N=gen(WGS84_A2C)/sqrt(sq(cosphi)+WGS84_B2C2,contextptr);
+    gen d=(N+h)*cosphi;
+    return makevecteur(d*cos(lambda,contextptr),d*sin(lambda,contextptr),(WGS84_1ME2*N+h)*sin(phi,contextptr));
+}
+/* Convert ECEF coordinates (metres) to geodetic LLA coordinates (decimal degrees/metres). */
+gen ecef2geodetic(const gen &x,const gen &y,const gen &z,GIAC_CONTEXT) {
+    gen w2=sq(x)+sq(y),m=WGS84_AI2*w2,n=sq(WGS84_1ME2B*z),p=(m+n-4.0*WGS84_L2)/6.0;
+    gen G=WGS84_L2*m*n,H=2*pow(p,3)+G;
+    if (is_strictly_greater(WGS84_HMIN,H,contextptr))
+        return undef; // this should not happen normally
+    gen C=WGS84_1SQ32*_pow(makesequence(H+G+2*sqrt(H*G,contextptr),fraction(1,3)),contextptr);
+    gen i=-(2.0*WGS84_L2+m+n)/2.0,P=sq(p),beta=i/3.0-C-P/C,k=WGS84_L2*(WGS84_L2-m-n);
+    gen t=sqrt(sqrt(sq(beta)-k,contextptr)-(beta+i)/2.0,contextptr)-sign(m-n,contextptr)*sqrt(abs(beta-i,contextptr)/2.0,contextptr);
+    gen F=pow(t,4)+2.0*i*sq(t)+2.0*WGS84_L*(m-n)*t+k,dFdt=4.0*pow(t,3)+4.0*i*t+2.0*WGS84_L*(m-n);
+    gen Deltat=-F/dFdt,u=t+Deltat+WGS84_L,v=t+Deltat-WGS84_L,w=sqrt(w2,contextptr);
+    gen phi=evalf_double(symbolic(at_atan2,makesequence(z*u,w*v)),1,contextptr);
+    gen Deltaw=w*(1.0-_inv(u,contextptr)),Deltaz=z*(1.0-WGS84_1ME2*_inv(v,contextptr));
+    gen h=sign(u-1.0,contextptr)*sqrt(sq(Deltaw)+sq(Deltaz),contextptr);
+    gen lambda=evalf_double(symbolic(at_atan2,makesequence(y,x)),1,contextptr);
+    return makevecteur(180.0/M_PI*phi,180.0/M_PI*lambda,h);
+}
+/* geodetic<->ecef conversion routine */
+gen geo_ecef_convert(const vecteur &args,int dir,GIAC_CONTEXT) {
+    if (args.size()!=3)
+        return gendimerr(contextptr);
+    gen v1=evalf_double(args[0],1,contextptr);
+    gen v2=evalf_double(args[1],1,contextptr);
+    gen v3=evalf_double(args[2],1,contextptr);
+    if (v1.type!=_DOUBLE_ || v2.type!=_DOUBLE_ || v3.type!=_DOUBLE_)
+        return gentypeerr(contextptr);
+    if (dir>0)
+        return geodetic2ecef(v1,v2,v3,contextptr);
+    if (dir<0)
+        return ecef2geodetic(v1,v2,v3,contextptr);
+    return args;
+}
+
+gen _geodetic2ecef(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    const vecteur &args=*g._VECTptr;
+    return geo_ecef_convert(args,1,contextptr);
+}
+static const char _geodetic2ecef_s []="geodetic2ecef";
+static define_unary_function_eval (__geodetic2ecef,&_geodetic2ecef,_geodetic2ecef_s);
+define_unary_function_ptr5(at_geodetic2ecef,alias_at_geodetic2ecef,&__geodetic2ecef,0,true)
+
+gen _ecef2geodetic(const gen &g,GIAC_CONTEXT) {
+    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type!=_VECT)
+        return gentypeerr(contextptr);
+    const vecteur &args=*g._VECTptr;
+    return geo_ecef_convert(args,-1,contextptr);
+}
+static const char _ecef2geodetic_s []="ecef2geodetic";
+static define_unary_function_eval (__ecef2geodetic,&_ecef2geodetic,_ecef2geodetic_s);
+define_unary_function_ptr5(at_ecef2geodetic,alias_at_ecef2geodetic,&__ecef2geodetic,0,true)
+
 
 #ifndef NO_NAMESPACE_GIAC
 }

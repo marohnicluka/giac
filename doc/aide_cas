@@ -8992,6 +8992,13 @@ at([[1,2],[3,4]],[1,0])
 -2 atanh
 atan(0)
 
+# atan2
+2 Returns the four-quadrant inverse tangent of real numbers y and x.
+0 Real(y),Real(x)
+-1 tan
+-2 atan
+atan2(-1/2,-sqrt(3)/2)
+
 # atan2acos
 1 Remplace arctan(x) par pi/2-arccos(x/sqrt(1+x^2)) dans l'argument.
 2 Replaces arctan(x) by pi/2-arccos(x/sqrt(1+x^2)) in the argument.
@@ -18615,4 +18622,16 @@ logistic(1.8)
 logistic(0.0,0.5,10,2)
 -1 atan
 -2 tanh
+
+# geodetic2ecef
+2 Converts geodetic LLA coordinates to ECEF (WGS84 standard).
+0 Real(latitude),Real(longitude),Real(height)
+-1 ecef2geodetic
+geodetic2ecef(45.174536,17.584637,89.462)
+
+# ecef2geodetic
+2 Converts ECEF coordinates to geodetic LLA (WGS84 standard).
+0 Real(x),Real(y),Real(z)
+-1 geodetic2ecef
+ecef2geodetic(4293457.10728,1360697.85689,4501106.55299)
 

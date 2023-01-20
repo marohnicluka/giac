@@ -35,9 +35,6 @@
 #ifdef HAVE_LIBPNG
 #include <png.h>
 #endif
-#if defined(EMCC) || defined(EMCC2)
-#include <emscripten.h>
-#endif
 
 using namespace std;
 

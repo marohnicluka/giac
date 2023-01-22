@@ -1484,8 +1484,12 @@ gen _writewav(const gen &g,GIAC_CONTEXT) {
     if (gv.front().type!=_STRNG)
         return generrtype(gettext("Expected a file name"));
     audio_clip *clip=audio_clip::from_gen(gv.back());
-    if (clip==NULL)
+    if (clip==NULL) try {
+        gen ad=_createwav(gv.back(),contextptr);
+        return _writewav(makesequence(gv.front(),ad),contextptr);
+    } catch (const gen &e) {
         return generrtype(_SP_BAD_SOUND_DATA);
+    }
     bool res=clip->write_wav(gv.front()._STRNGptr->c_str());
     return (int)res;
 }
@@ -1660,10 +1664,17 @@ int audio_clip::play(int pos,int len,int repeats) const {
 #endif // HAVE_LIBAO
 
 gen _playsnd(const gen &g,GIAC_CONTEXT) {
-    if (g.type==_STRNG && g.subtype==-1) return g;
+    if (g.type==_STRNG){
+      if (g.subtype==-1) return g;
+      return _playsnd(_readwav(g,contextptr),contextptr);
+    }
     audio_clip *clip=audio_clip::from_gen((g.type==_VECT && !g._VECTptr->empty())?g._VECTptr->front():g);
-    if (clip==NULL)
+    if (clip==NULL) try {
+        gen ad=_createwav(g,contextptr);
+        return _playsnd(ad,contextptr);
+    } catch (const gen &e) {
         return generrtype(_SP_BAD_SOUND_DATA);
+    }
     int offset=0,len=rand_max2,sr=clip->sample_rate(),repeats=1;
     if (g.type==_VECT) {
         if (g.subtype!=_SEQ__VECT)

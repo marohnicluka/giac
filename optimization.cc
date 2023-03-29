@@ -9159,7 +9159,7 @@ gen solve_binary_quadratic(const vecteur &cf,gen &ph,bool set_ph,bool &alt_sols,
         return sol;
     }
     gen dsc=b*b-4*a*c;
-    if (is_positive(dsc,contextptr)) {
+    if (is_strictly_positive(-dsc,contextptr)) {
         /* elliptical case */
         gen A=dsc,B=2*(b*e-2*c*d),C=e*e-4*c*f;
         dsc=B*B-4*A*C;

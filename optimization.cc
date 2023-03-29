@@ -18,6 +18,7 @@
  *
  */
 
+#include "gen.h"
 #include "giacPCH.h"
 #include "giac.h"
 #include "optimization.h"
@@ -9270,54 +9271,84 @@ gen solve_binary_quadratic(const vecteur &cf,gen &ph,bool set_ph,bool &alt_sols,
                 }
             }
         } else { // the non-homogeneous case
-            gen G=2*a*e-b*d,s,g;
-            g=_gcd(makesequence(dsc,G),contextptr);
-            gen F=4*a*(-f*dsc-a*e*e+b*d*e-c*d*d)/g;
-            s=solve_binary_quadratic(makevecteur(-dsc/g,0,g,0,0,F),ph,false,alt_sols,true,contextptr);
-            if (s.type==_VECT) {
-                for (const_iterateur it=s._VECTptr->begin();it!=s._VECTptr->end();++it) {
-                    const gen &x1=it->_VECTptr->front(),&y1=it->_VECTptr->back();
-                    gen y=-(g*y1-G)/dsc;
-                    gen x=(x1-b*y-d)/(2*a);
-                    vecteur Z=*_lname(makevecteur(x,y),contextptr)._VECTptr;
-                    if (Z.empty()) {
-                        if (x.is_integer() && y.is_integer())
-                            sol.push_back(makevecteur(x,y));
-                    } else {
-                        assert(Z.size()==1); // there should be exactly one global variable
-                        const gen &t=Z.front();
-                        gen A,B,C,D;
-                        assert(is_linear_wrt(x,t,A,B,contextptr) && is_linear_wrt(y,t,C,D,contextptr));
-                        if (!B.is_integer() || !D.is_integer())
-                            continue;
-                        gen pA=_numer(A,contextptr),pC=_numer(C,contextptr);
-                        gen qA=_denom(A,contextptr),qC=_denom(C,contextptr);
-                        A=pA/_gcd(makesequence(pA,qA),contextptr);
-                        C=pC/_gcd(makesequence(pC,qC),contextptr);
-                        sol.push_back(makevecteur(A*t+B,C*t+D));
+            if (is_zero(a)) {
+                // reduction to simple hyperbolic case
+                gen s=solve_binary_quadratic(makevecteur(0,b,0,b*e-c*d,d,b*f),ph,false,alt_sols,true,contextptr);
+                if (s.type==_VECT) {
+                    for (const_iterateur it=s._VECTptr->begin();it!=s._VECTptr->end();++it) {
+                        vecteur Z=*_lname(*it,contextptr)._VECTptr;
+                        const gen &x1=it->_VECTptr->front(),&y1=it->_VECTptr->back();
+                        if (Z.empty()) {
+                            gen y=x1;
+                            gen x=ratnormal((y1-c*y)/b,contextptr);
+                            if (x.is_integer())
+                                sol.push_back(makevecteur(x,y));
+                        } else {
+                            assert(Z.size()==1);
+                            gen t=Z.front();
+                            gen g,r;
+                            assert(is_linear_wrt(c*x1-y1,t,g,r,contextptr));
+                            gen sol1=solve_binary_quadratic(makevecteur(0,0,0,b,g,r),t,false,alt_sols,true,contextptr);
+                            if (sol1.type==_VECT && !sol1._VECTptr->empty()) {
+                                gen x=sol1._VECTptr->front(),y;
+                                if (is_constant_wrt(x1,t,contextptr))
+                                    y=x1;
+                                else y=subst(x1,t,sol1._VECTptr->back(),false,contextptr);
+                                sol.push_back(makevecteur(x,y));
+                            }
+                        }
                     }
                 }
-                if (!fund_only && !is_perfect_square(dsc) && !sol.empty()) {
-                    /* find other solutions by solving a system of linear recurrences */
-                    gen n=is_undef(ph)?make_integer_placeholder("Z",contextptr):ph;
-                    for (iterateur it=sol.begin();it!=sol.end();++it) {
-                        gen x=it->_VECTptr->front(),y=it->_VECTptr->back();
-                        vecteur rsv=solve_contfrac(1,b,a*c,-1,false,contextptr);
-                        gen P,Q,R,S,K,L,r,s;
-                        for (const_iterateur jt=rsv.begin();jt!=rsv.end();++jt) {
-                            r=jt->_VECTptr->front(); s=jt->_VECTptr->back();
-                            P=r,Q=-c*s; R=a*s; S=r+b*s;
-                            K=-(c*d*(P+S-2)+e*(b-b*r-2*a*c*s))/dsc;
-                            L=d*s-(d*(b-b*r-2*a*c*s)+a*e*(P+S-2))/dsc;
-                            if (K.is_integer() && L.is_integer())
-                                break;
+            } else {
+                gen G=2*a*e-b*d,s,g;
+                g=_gcd(makesequence(dsc,G),contextptr);
+                gen F=4*a*(-f*dsc-a*e*e+b*d*e-c*d*d)/g;
+                s=solve_binary_quadratic(makevecteur(-dsc/g,0,g,0,0,F),ph,false,alt_sols,true,contextptr);
+                if (s.type==_VECT) {
+                    for (const_iterateur it=s._VECTptr->begin();it!=s._VECTptr->end();++it) {
+                        const gen &x1=it->_VECTptr->front(),&y1=it->_VECTptr->back();
+                        gen y=ratnormal(-(g*y1-G)/dsc,contextptr);
+                        gen x=ratnormal((x1-b*y-d)/(2*a),contextptr);
+                        vecteur Z=*_lname(makevecteur(x,y),contextptr)._VECTptr;
+                        if (Z.empty()) {
+                            if (x.is_integer() && y.is_integer())
+                                sol.push_back(makevecteur(x,y));
+                        } else {
+                            assert(Z.size()==1); // there should be exactly one global variable
+                            const gen &t=Z.front();
+                            gen A,B,C,D;
+                            assert(is_linear_wrt(x,t,A,B,contextptr) && is_linear_wrt(y,t,C,D,contextptr));
+                            if (!B.is_integer() || !D.is_integer())
+                                continue;
+                            gen pA=_numer(A,contextptr),pC=_numer(C,contextptr);
+                            gen qA=_denom(A,contextptr),qC=_denom(C,contextptr);
+                            A=pA/_gcd(makesequence(pA,qA),contextptr);
+                            C=pC/_gcd(makesequence(pC,qC),contextptr);
+                            sol.push_back(makevecteur(A*t+B,C*t+D));
                         }
-                        if (!K.is_integer() || !L.is_integer()) {
-                            r=rsv.front()._VECTptr->front(); s=rsv.front()._VECTptr->back();
-                            P=r*r-a*c*s*s; Q=-c*s*(2*r+b*s); K=-c*d*s*s-e*r*s;
-                            R=a*s*(2*r+b*s); S=r*r+2*b*r*s+(b*b-a*c)*s*s; L=d*s*(r+b*s)-a*e*s*s;
+                    }
+                    if (!fund_only && !is_perfect_square(dsc) && !sol.empty()) {
+                        /* find other solutions by solving a system of linear recurrences */
+                        gen n=is_undef(ph)?make_integer_placeholder("Z",contextptr):ph;
+                        for (iterateur it=sol.begin();it!=sol.end();++it) {
+                            gen x=it->_VECTptr->front(),y=it->_VECTptr->back();
+                            vecteur rsv=solve_contfrac(1,b,a*c,-1,false,contextptr);
+                            gen P,Q,R,S,K,L,r,s;
+                            for (const_iterateur jt=rsv.begin();jt!=rsv.end();++jt) {
+                                r=jt->_VECTptr->front(); s=jt->_VECTptr->back();
+                                P=r,Q=-c*s; R=a*s; S=r+b*s;
+                                K=-(c*d*(P+S-2)+e*(b-b*r-2*a*c*s))/dsc;
+                                L=d*s-(d*(b-b*r-2*a*c*s)+a*e*(P+S-2))/dsc;
+                                if (K.is_integer() && L.is_integer())
+                                    break;
+                            }
+                            if (!K.is_integer() || !L.is_integer()) {
+                                r=rsv.front()._VECTptr->front(); s=rsv.front()._VECTptr->back();
+                                P=r*r-a*c*s*s; Q=-c*s*(2*r+b*s); K=-c*d*s*s-e*r*s;
+                                R=a*s*(2*r+b*s); S=r*r+2*b*r*s+(b*b-a*c)*s*s; L=d*s*(r+b*s)-a*e*s*s;
+                            }
+                            *it=solve_linrec(makevecteur(P,Q,K),makevecteur(R,S,L),x,y,n,contextptr);
                         }
-                        *it=solve_linrec(makevecteur(P,Q,K),makevecteur(R,S,L),x,y,n,contextptr);
                     }
                 }
             }
@@ -9329,7 +9360,7 @@ gen solve_binary_quadratic(const vecteur &cf,gen &ph,bool set_ph,bool &alt_sols,
 
 /* Diophantine equation solver, which can solve:
  *  - (systems of) linear equation(s) (Esmaeili et al., 2001)
- *  - Pell equations (Junod, 2015)TRUE
+ *  - Pell equations (Junod, 2015)
  *  - Thue equations (using PARI) - only in MinGW!
  *  - homogeneous equations Q(x,y,z)=0, where Q is ternary quadratic form (Smart, 1998)
  *  - general quadratic equations in two variables (Alpern)

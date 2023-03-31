@@ -3378,7 +3378,7 @@ void nlp_problem::initialize(int method,const meth_parm &parm) {
         if (_infeas) return;
         if (method<_NLP_NELDER_MEAD) {
             obj_gradient=*_grad(makesequence(obj,vars),ctx)._VECTptr;
-            if (_smooth_obj=!has_diff(obj_gradient,vars) && !has_breaks(obj_gradient))
+            if ((_smooth_obj=!has_diff(obj_gradient,vars) && !has_breaks(obj_gradient)))
                 debug("Objective function is differentiable");
             else debug ("Cannot compute the derivative of the objective function");
             eq_jacobian.reserve(eq_cons.size());
@@ -3797,7 +3797,7 @@ bool nlp_problem::preprocess() {
                 }
             }
         } else return false;
-        if (changed=!fxv.names.empty()) {
+        if ((changed=!fxv.names.empty())) {
             if (!subs_fxvars(fxv))
                 return false;
             fx_subs.push(fxv);
@@ -4848,7 +4848,7 @@ bool nlp_problem::gsl_bfgs(const meth_parm &parm,optima_t &res) {
 /* 
  * INTERIOR POINT IMPLEMENTATION (IPT_SOLVER CLASS)
  */
-nlp_problem::ipt_solver::ipt_solver(nlp_problem &p,const meth_parm &parm) : prob(p), ctx(p.ctx) {
+nlp_problem::ipt_solver::ipt_solver(nlp_problem &p,const meth_parm &parm) : ctx(p.ctx), prob(p) {
     eps_tol=parm.eps;
     feas_tol=parm.tol;
     maxiter=parm.max_iter;
@@ -12607,7 +12607,7 @@ define_unary_function_ptr5(at_sortperm,alias_at_sortperm,&__sortperm,0,true)
  * FDWEIGHTS CLASS IMPLEMENTATION
  * Fast and accurate numerical differentiation
  */
-FDWeights::FDWeights(const vecteur &grid_points,int diff_order,GIAC_CONTEXT) : ctx(contextptr),z(grid_points) {
+FDWeights::FDWeights(const vecteur &grid_points,int diff_order,GIAC_CONTEXT) : z(grid_points), ctx(contextptr) {
     N=grid_points.size();
     M=diff_order;
     w_lagrange.resize(N);

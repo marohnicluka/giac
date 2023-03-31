@@ -919,7 +919,7 @@ private:
     bool mvc_special(ivector &cover,int sg);
     bool mvc_is_unconfined(int i,int sg=0) const;
     bool mvc_is_dominant(int v,int sg) const;
-    bool mvc_reduce_basic(int sg,int c);
+    bool mvc_reduce_basic(int sg,int c,bool iscon);
     void mvc_half_integral(int sg, ivector &in_cover, ivector &out_cover);
     void mvc_alom(ivector &cover,int sg=-1);
     void mvc_dfs(ivector &cover,int sg=-1);

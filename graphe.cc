@@ -14618,28 +14618,30 @@ bool graphe::mvc_special(ivector &cover,int sg) {
 
 bool graphe::mvc_is_unconfined(int i,int sg) const {
     iset S,res,nu,nS;
-    int u,m,dsize,w;
+    int u=0,m,dsize,w;
     assert(node(i).subgraph()==sg);
     S.insert(i);
+    iset_iter it;
+    ivector_iter jt,nt;
     while (true) {
         nS=S;
-        for (iset_iter it=S.begin();it!=S.end();++it) {
+        for (it=S.begin();it!=S.end();++it) {
             const ivector &ngh=node(*it).neighbors();
-            for (ivector_iter jt=ngh.begin();jt!=ngh.end();++jt) {
+            for (jt=ngh.begin();jt!=ngh.end();++jt) {
                 if (node(*jt).subgraph()==sg)
                     nS.insert(*jt);
             }
         }
-        for (iset_iter it=S.begin();it!=S.end();++it) {
+        u=-1;
+        for (it=S.begin();it!=S.end();++it) {
             const ivector &ngh=node(*it).neighbors();
-            u=-1;
-            for (ivector_iter jt=ngh.begin();jt!=ngh.end();++jt) {
+            for (jt=ngh.begin();jt!=ngh.end();++jt) {
                 if (node(*jt).subgraph()!=sg)
                     continue;
                 assert(S.find(*jt)==S.end());
                 const ivector &ngh2=node(*jt).neighbors();
                 nu.clear();
-                for (ivector_iter nt=ngh2.begin();nt!=ngh2.end();++nt) {
+                for (nt=ngh2.begin();nt!=ngh2.end();++nt) {
                     if (node(*nt).subgraph()==sg)
                         nu.insert(*nt);
                 }
@@ -14648,21 +14650,20 @@ bool graphe::mvc_is_unconfined(int i,int sg) const {
                     if (u<0 || dsize<m) {
                         m=dsize;
                         u=*jt;
+                        if (m==0)
+                            break;
                         w=*res.begin();
                     }
                 }
             }
-            if (u<0)
-                return false;
             if (m==0)
                 return true;
-            if (m==1) {
-                S.insert(w);
-                break;
-            }
-            return false;
         }
+        if (u>=0 && m==1)
+            S.insert(w);
+        else break;
     }
+    return false;
 }
 
 bool graphe::mvc_is_dominant(int v,int sg) const {
@@ -14691,13 +14692,13 @@ bool graphe::mvc_is_dominant(int v,int sg) const {
  * -2: vertex is in cover
  * -3: vertex is in cover
  * other: undecided */
-bool graphe::mvc_reduce_basic(int sg,int c) {
-    // sg>=0 is connected
+bool graphe::mvc_reduce_basic(int sg,int c,bool iscon) {
+    // subgraph sg>0 is connected if iscon=true
     ivector V1,V2,cover;
     bool bp=false;
     int i;
     vector<vertex>::iterator it;
-    if (mvc_special(cover,sg) || (bp=is_bipartite(V1,V2,sg,_GT_CC_CONNECTED))) {
+    if (iscon && (mvc_special(cover,sg) || (bp=is_bipartite(V1,V2,sg,_GT_CC_CONNECTED)))) {
         if (bp)
             mvc_bipartite(V1,V2,cover,sg,true);
         for (i=0,it=nodes.begin();it!=nodes.end();++it,++i) {
@@ -14773,13 +14774,16 @@ bool graphe::mvc(ivector &cover,int vc_alg,int sg,int tm_lim,double gap_tol,bool
     if (is_null())
         return true;
     int c=-1,s,s0,cmp,i;
-    bool changed=true;
+    bool changed=true,iscon;
+    ivector sv;
     while (changed) {
         s0=c<0?(sg<0?1:1+max_subgraph_index()):c+3;
         cmp=connected_components_to_subgraphs(c<0?sg:c+2);
         if (c<0) c=cmp+1;
         for (s=s0;s<=cmp;++s) {
-            while (mvc_reduce_basic(s,c));
+            iscon=true;
+            while (mvc_reduce_basic(s,c,iscon))
+                iscon=false;
         }
         changed=false;
         for (int s=s0;s<=cmp;++s) {

@@ -2812,7 +2812,7 @@ gen _rms(const gen &g,GIAC_CONTEXT) {
     audio_clip *clip=audio_clip::from_gen(g);
     if (clip!=NULL)
         return clip->rms();
-	if (g.type!=_VECT)
+    if (g.type!=_VECT)
 		return gentypeerr(contextptr);
     if (g.subtype==_SEQ__VECT) {
         const vecteur &args=*g._VECTptr;
@@ -5055,11 +5055,10 @@ void expand_lt(const gen &g_orig,const gen &x,vecteur &f,vecteur &a,GIAC_CONTEXT
             fac=*facg._VECTptr;
         }
         gen d=1,p=1,q;
-        for (const_iterateur jt=fac.begin();jt!=fac.end();++jt) {
+        for (const_iterateur jt=fac.begin();jt!=fac.end();jt+=2) {
             if (is_const_wrt(*jt,y,contextptr) || *jt==y)
                 d=d*_pow(makesequence(*jt,*(jt+1)),contextptr);
             else p=p*_pow(makesequence(*jt,*(jt+1)),contextptr);
-            ++jt;
         }
         int n;
         if (is_one(p) || !pq_1minusxn(p,y,n,q,contextptr))

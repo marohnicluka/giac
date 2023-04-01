@@ -760,6 +760,8 @@ extern const unary_function_ptr * const at_siman;
 extern const unary_function_ptr * const at_frank_wolfe;
 extern const unary_function_ptr * const at_bspline;
 extern const unary_function_ptr * const at_fitspline;
+extern const unary_function_ptr * const at_geodetic2ecef;
+extern const unary_function_ptr * const at_ecef2geodetic;
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

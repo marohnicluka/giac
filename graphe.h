@@ -815,7 +815,7 @@ private:
     static void scale_point(point &p,double s);
     static double point_vecprod2d(const point &v,const point &w);
     static double point_dotprod(const point &p,const point &q);
-    static void clear_point_coords(point &p) { std:fill(p.begin(),p.end(),0); }
+    static void clear_point_coords(point &p) { std::fill(p.begin(),p.end(),0); }
     static double point_displacement(const point &p,bool sqroot=true);
     static double point_distance(const point &p,const point &q,point &pq);
     static void point_mirror(double a,double b,double c,const point &src,point &dest);

@@ -632,7 +632,7 @@ gen rand_normal(const gen &sigma,bool absolut,GIAC_CONTEXT) {
 /* Generate a multi-dimensional normal random variable.
  * SIGMA is either a single number or a vector of the same length as MU. */
 void rand_multinormal(const vecteur &mu,const gen &sigma,vecteur &res,GIAC_CONTEXT) {
-    int n=mu.size(),i;
+    int n=mu.size();
     res.resize(n);
     iterateur it=res.begin(),itend=res.end();
     const_iterateur mt=mu.begin();
@@ -5123,7 +5123,7 @@ int nlp_problem::ipt_solver::ls_filter_barrier_method(vecteur &x_k,vecteur &lamb
     init_filter();
     mu_j=mu0;
     tau_j=std::max(tau_min,1-mu_j);
-    bool prev_iter_full_step=false,converged=false,feas_restored=false,first_trial_stepsize_rejected,accepted;
+    bool prev_iter_full_step=false,converged=false,first_trial_stepsize_rejected,accepted;
     vecteur pts,p_k,n_k,z_pk,z_nk,d_p,d_n,d_zp,d_zn;
     while (prob._iter_count++<maxiter) {
         ++k;
@@ -8229,7 +8229,7 @@ gen _numdiff(const gen &g,GIAC_CONTEXT) {
     vecteur X=*gv[0]._VECTptr;
     vecteur Y=*gv[1]._VECTptr;
     gen x0=gv[2];
-    int M=1,N=X.size()-1;
+    int M=1;
     vecteur rest(1,M);
     if (gv.size()>=4) {
         rest=vecteur(gv.begin()+3,gv.end());
@@ -12818,7 +12818,7 @@ vecteur FW_step_size(const gen &f,const vecteur &d,const vecteur &x,const gen &g
 gen FW_backtracking(const matrice &A,const gen &f,const gen &df,const vecteur &x0,double tol,int maxiter,int mystep,GIAC_CONTEXT) {
     gen L_prev=undef,gamma_max=1,g,gamma,f_prev=undef,fk,t,dnorm,fd,alpha_opt,dfval;
     vecteur res,x(x0),d,dfk,dir(x0.size()),dx(x0.size());
-    int k=0,iter=0,N=5;
+    int k=0;
     const_iterateur it,itend;
     iterateur jt;
     vecteur c(A.size());
@@ -12876,7 +12876,7 @@ vecteur find_pdh_centers(const vecteur &pdh,const vector<int> &ci,int k,GIAC_CON
     vecteur cc=*_matrix(makesequence(k,mcols(pdh),0),contextptr)._VECTptr;
     vecteur ccn(k,0);
     vector<int>::const_iterator ct=ci.begin(),ctend=ci.end();
-    const_iterateur jt=pdh.begin(),jtend;
+    const_iterateur jt=pdh.begin();
     for (;ct!=ctend;++ct,++jt) {
         addvecteur(*cc[*ct]._VECTptr,*jt->_VECTptr,*cc[*ct]._VECTptr);
         ccn[*ct]+=1;
@@ -13052,7 +13052,7 @@ define_unary_function_ptr5(at_frank_wolfe,alias_at_frank_wolfe,&__frank_wolfe,0,
  * c: a matrix specifying control points (each row defines a CP), with at least |t|-p rows
  * p: degree of B-spline (it should be 3 for cubic splines) */
 gen deBoor(int k,const gen &x,const vecteur &t,const matrice &c,int p) {
-    int n=t.size()-2*p,m=c.size(),q=mcols(c),j,r;
+    int n=t.size()-2*p,m=c.size(),j,r;
     if (p<1 || n<2 || m<n+p-1 || k<p || k>n+p-2)
         return undef;
     matrice d;
@@ -13238,7 +13238,7 @@ void banded_fs_bs(const matrice &A,vecteur &b,int p) {
     }
 }
 bool banded_cholesky(matrice &A,int p,GIAC_CONTEXT) {
-    int n=A.size(),i,j,k,l,m;
+    int n=A.size(),j,k,l,m;
     for (j=1;j<=n;++j) {
         for (k=std::max(1,j-p);k<j;++k) {
             l=std::min(k+p,n);

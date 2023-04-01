@@ -160,7 +160,7 @@ gen _trim(const gen &g,GIAC_CONTEXT) {
     }
     audio_clip *clip=audio_clip::from_gen(a);
     if (clip!=NULL) { // trim an audio clip
-        int n=clip->length(),sr=clip->sample_rate(),nc=clip->channel_count(),cs=sr/100;
+        int n=clip->length(),sr=clip->sample_rate(),cs=sr/100;
         gen dbs(-30.0);
         if (optstart>2)
             return gentoomanyargs(gettext("Too many arguments"),contextptr);
@@ -1076,7 +1076,7 @@ gen audio_clip::operator[](const gen &g) {
 }
 /* Load the wave data from the specified string and offset. */
 void audio_clip::load_data(const string &s,int offset) {
-    int sz=s.size()/2,len=(8*sz)/(_nc*_bit_depth),p0=offset*_nc*_bit_depth/8,j;
+    int sz=s.size()/2,p0=offset*_nc*_bit_depth/8,j;
     for (int i=0;i<sz;++i) {
         j=p0+i;
         if (j<0) continue;
@@ -1847,7 +1847,7 @@ define_unary_function_ptr5(at_mixdown,alias_at_mixdown,&__mixdown,0,true);
 
 gen discrete_wavelet_transform(const gen &g,int dir,GIAC_CONTEXT) {
 #ifndef HAVE_LIBGSL
-  return undef;
+  return generr(gettext("GSL library is required for wavelet transform"));
 #else
     if (g.type!=_VECT)
         return gentypeerr(contextptr);
@@ -1924,6 +1924,8 @@ gen discrete_wavelet_transform(const gen &g,int dir,GIAC_CONTEXT) {
             return generr(gettext("Failed to convert data to GSL matrix"));
         dat=static_cast<void*>(dd);
     }
+    if (centered)
+        wtype++;
     int res=dwt(dat,datatype,n,wtype,k,dir);
     if (res!=0)
         free(d);
@@ -2222,7 +2224,7 @@ gen _plotwav(const gen &g,GIAC_CONTEXT) {
     audio_clip *clip=audio_clip::from_gen(has_opts?g._VECTptr->front():g);
     if (clip==NULL)
         return generrtype(_SP_BAD_SOUND_DATA);
-    int nc=clip->channel_count(),bd=clip->bit_depth(),sr=clip->sample_rate(),len=clip->length(),offset=0;
+    int nc=clip->channel_count(),sr=clip->sample_rate(),len=clip->length(),offset=0;
     int dispmax_color=216,dispmin_color=227;
     gen a,b;
     double ts=-1;
@@ -2270,7 +2272,7 @@ gen _plotwav(const gen &g,GIAC_CONTEXT) {
     if (ts>0)
         width=(int)std::floor(dur/ts+0.5);
     double sc=double(len)/double(width),x,y0=nc==1?0.0:1.0,y=y0;
-    double fu_max,fu_min,fl_max,fl_min,s,t0=double(offset)/double(sr),dt=1.0/sr;
+    double fu_max,fu_min,fl_max,fl_min,t0=double(offset)/double(sr),dt=1.0/sr;
     vecteur drawing,tvec;
     drawing.reserve(6+(width+2)*nc);
     drawing.push_back(symb_equal(change_subtype(_AXES,_INT_PLOT),nc==1?3:4));
@@ -2383,8 +2385,8 @@ gen _plotspectrum(const gen &g,GIAC_CONTEXT) {
     audio_clip *clip=audio_clip::from_gen(has_opts?g._VECTptr->front():g);
     if (clip==NULL)
         return generr(gettext("Expected an audio clip"));
-    int nc=clip->channel_count(),bd=clip->bit_depth();
-    long sr=clip->sample_rate(),len=clip->length();
+    int nc=clip->channel_count();
+    long len=clip->length(),sr=clip->sample_rate();
     int lfreq=0,ufreq=int(sr)/2;
     if (!fb.empty()) {
         lfreq=std::max(lfreq,fb.front().val);
@@ -4495,7 +4497,6 @@ gen fourier(const gen &f_orig,const identificateur &x,const identificateur &s,
     gen ret(0),intgr(0),t,t_ab,a,b,c,n;
     gen rest(0);
     vecteur vars,degr;
-    int ind,sz;
     string warn;
     if (verbose) *logptr(contextptr) << "Transforming " << terms.size() << " original term(s)...\n";
     for (int ti=0;ti<int(terms.size());++ti) {
@@ -5128,7 +5129,7 @@ bool ilaplace2(const gen &g,const gen &s,const gen &x,gen &orig,GIAC_CONTEXT) {
  * EMIN is the mminimal number of local extrema that an IMF must have.
  * VTOL is the variance threshold for stopping the sifting process (usually 0.1). */
 void emd(const vecteur &data,matrice &imf,vecteur &residue,int imax,int emin,double vtol,GIAC_CONTEXT) {
-    int n=data.size(),i;
+    int n=data.size(),i,ne;
     gsl_vector *x,*h,*envu,*envl;
     double *maxes,*mins,*maxesy,*minsy,var;
     maxes=new double[n+2];
@@ -5145,7 +5146,6 @@ void emd(const vecteur &data,matrice &imf,vecteur &residue,int imax,int emin,dou
     while (true) {
         var=1;
         gsl_vector_memcpy(h,x);
-        int iterc=0,ne;
         bool isres=false,notimf=true;
         while (var>vtol || notimf) {
             // find indices of extremal samples
@@ -6227,7 +6227,7 @@ void ann::create() {
     eout=eout=gsl_matrix_alloc(output_size(),block_size);
     if (reg_coeff==NULL || eout==NULL)
         throw std::bad_alloc();
-    int lc=layer_count(),ti,tip,j,sz;
+    int lc=layer_count(),ti,tip,sz;
     for (int i=0;i<lc;++i) {
         ti=topology[i];
         sz=ti+(i==lc-1?0:1);
@@ -6293,7 +6293,7 @@ void ann::set_activation(bool out,const gen &f,const vecteur &params) {
     if (f==at_id)
         pf=_ANN_LINEAR;
     else if (f==at_logistic)
-        pf==_ANN_SIGMOID;
+        pf=_ANN_SIGMOID;
     else if (f==at_tanh)
         pf=_ANN_TANH;
     else if (f.is_integer() && f.subtype==_INT_MAPLECONVERSION)
@@ -6421,7 +6421,7 @@ void ann::activate(int i,double &a,double *b) const {
 }
 /* Propagate a block of samples forward. */
 void ann::propagate_forward(bool comp_deriv) const {
-    int i,j,k,ti,len,lc=layer_count(),os=output_size(),s1;
+    int i,j,k,len,lc=layer_count(),os=output_size(),s1;
     gsl_vector_view mc;
     double s,*o,m;
     bool softmax=is_default_classifier() && os>1;
@@ -6527,7 +6527,7 @@ bool ann::is_default_classifier() const {
 }
 /* Calculate the errors made by neurons. */
 void ann::calc_deltas() const {
-    int i,j,len,lc=layer_count();
+    int i,lc=layer_count();
     if (is_default_classifier()) {
         gsl_matrix_memcpy(deltas.back(),layers.back());
         gsl_matrix_sub(deltas.back(),eout);
@@ -6540,7 +6540,6 @@ void ann::calc_deltas() const {
 }
 /* Accumulate weight deltas. */
 void ann::update_Deltas() {
-    gsl_matrix_view dm,lm;
     int lc=layer_count(),i;
     for (i=0;i<lc-1;++i)
         gsl_blas_dgemm(CblasNoTrans,CblasTrans,1.0,layers[i],deltas[i+1],1.0,Deltas[i]);
@@ -6600,7 +6599,6 @@ void ann::output2gsl_matrix(const vecteur &output,int i0,int n,gsl_matrix *m) co
     int i;
     gsl_matrix_set_zero(m);
     const_iterateur it,jt;
-    bool ck;
     switch (this->task()) {
     case 0:
         if (ckmatrix(output))
@@ -6663,12 +6661,11 @@ void ann::ckinput(const matrice &input,const vecteur &output,bool ignore_output)
  * After batch_size samples are passed forward (or all samples for size 0), update the weights.
  * Setting batch_size to a negative number disables updating the weights. */
 void ann::train(const matrice &input,const vecteur &expected_output,int batch_size) {
-    int nsamp=input.size(),i,j=0,jprev=0,sz=0,ep;
+    int nsamp=input.size(),j=0,jprev=0,sz=0;
     if (batch_size>0 && batch_size>nsamp)
         throw std::runtime_error(gettext("Batch size too large"));
     ckinput(input,expected_output,false);
     bool update=false;
-    gsl_matrix_view ov;
     while (j<nsamp) {
         j=std::min(j+block_size,nsamp);
         sz+=j-jprev;
@@ -6786,7 +6783,7 @@ void ann::weights2vecteur(vecteur &res) const {
 }
 /* Return the given hyperparameter value or the i-th layer (after feed-forward). */
 gen ann::operator[](const gen &g) {
-    int i,j,lc=layer_count();
+    int i,lc=layer_count();
     vecteur ret;
     gsl_matrix_view mv;
     if (!g.is_integer())
@@ -7775,7 +7772,7 @@ rgba_image rgba_image::blend(const rgba_image &other,double t) const {
     else if (d1%2) d=d2;
     else d=4;
     rgba_image ret(d,w,h,ctx);
-    uchar r1,g1,b1,a1,r2,g2,b2,a2,r,g,b,a;
+    uchar r1,g1,b1,a1,r2,g2,b2,a2,r,g,b;
     for (i=0;i<w;++i) {
         for (j=0;j<h;++j) {
             r1=img1->get_pixel(0,i,j);

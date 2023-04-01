@@ -263,6 +263,11 @@ extern const unary_function_ptr * const at_plotimf;
 extern const unary_function_ptr * const at_hilbert;
 extern const unary_function_ptr * const at_trim;
 extern const unary_function_ptr * const at_instfreq;
+extern const unary_function_ptr * const at_instphase;
+extern const unary_function_ptr * const at_stft;
+extern const unary_function_ptr * const at_istft;
+extern const unary_function_ptr * const at_rms;
+extern const unary_function_ptr * const at_hht;
 
 typedef unsigned char uchar;
 typedef std::vector<std::pair<double,std::vector<uchar> > > colormap_t;
